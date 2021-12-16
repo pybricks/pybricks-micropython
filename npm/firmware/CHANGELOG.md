@@ -1,4 +1,8 @@
 
+## 4.14.0 - 2021-12-16
+### Changed
+- Updated firmware to v3.1.0.
+
 ## 4.13.0 - 2021-11-19
 ### Changed
 - Dropped fallback to default name in `encodeHubName()` on empty string.
