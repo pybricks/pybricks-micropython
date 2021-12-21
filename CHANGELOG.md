@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+### Added
+- Added ability to use more than one `DriveBase` in the same script.
+
+### Changed
+- Changed how `DriveBases` and `Motor` classes can be used together.
+  Previously, an individual motor could not be used when a drive base used it.
+  From now on, devices can always be used. If they were already in use by
+  something else, that other class will just be stopped (coast).
+- Changed how unexpected motor problems are handled, such as a cable being
+  unplugged while it was running. Previously, this raised a `SystemExit` no
+  matter which motor was unplugged. Now it will return an `OSError` with
+  `ENODEV`, which is consistent with trying to initialize a motor that isn't
+  there. The `Motor` class must be initialized again to use the motor again.
+- Changing settings while a motor is moving no longer raises an exception. Some
+  settings will not take effect until a new motor command is given.
+
 ## [3.1.0] - 2021-12-16
 
 ### Changed
