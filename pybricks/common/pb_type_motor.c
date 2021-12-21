@@ -104,8 +104,10 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t *)type;
     self->srv = srv;
 
+    #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
     self->control = common_Control_obj_make_new(&self->srv->control);
+    #endif
 
     #if PYBRICKS_PY_COMMON_LOGGER
     // Create an instance of the Logger class
@@ -367,7 +369,9 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&common_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_busy), MP_ROM_PTR(&common_Motor_busy_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Motor_stalled_obj) },
+    #if PYBRICKS_PY_COMMON_CONTROL
     { MP_ROM_QSTR(MP_QSTR_control), MP_ROM_ATTRIBUTE_OFFSET(common_Motor_obj_t, control) },
+    #endif
     #if PYBRICKS_PY_COMMON_LOGGER
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(common_Motor_obj_t, logger) },
     #endif

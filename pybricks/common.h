@@ -65,19 +65,27 @@ extern const mp_obj_module_t pb_module_battery;
 #include <pbio/control.h>
 #include <pbio/servo.h>
 
+#if PYBRICKS_PY_COMMON_CONTROL
 // pybricks._common.Control()
 extern const mp_obj_type_t pb_type_Control;
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control);
+#endif
 
+#if PYBRICKS_PY_COMMON_LOGGER
 // pybricks._common.Logger()
 mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values);
+#endif
 
 // pybricks._common.Motor()
 typedef struct _common_Motor_obj_t {
     mp_obj_base_t base;
     pbio_servo_t *srv;
+    #if PYBRICKS_PY_COMMON_CONTROL
     mp_obj_t control;
+    #endif
+    #if PYBRICKS_PY_COMMON_LOGGER
     mp_obj_t logger;
+    #endif
 } common_Motor_obj_t;
 
 extern const mp_obj_type_t pb_type_Motor;

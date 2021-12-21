@@ -25,12 +25,14 @@ typedef struct _robotics_DriveBase_obj_t {
     pbio_drivebase_t *db;
     mp_obj_t left;
     mp_obj_t right;
-    mp_obj_t heading_control;
-    mp_obj_t distance_control;
     int32_t straight_speed;
     int32_t turn_rate;
     int32_t initial_distance;
     int32_t initial_heading;
+    #if PYBRICKS_PY_COMMON_CONTROL
+    mp_obj_t heading_control;
+    mp_obj_t distance_control;
+    #endif
 } robotics_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.reset
@@ -69,9 +71,11 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     // Create drivebase
     pb_assert(pbio_drivebase_get_drivebase(&self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter_in), pb_obj_get_fix16(axle_track_in)));
 
+    #if PYBRICKS_PY_COMMON_CONTROL
     // Create instances of the Control class
     self->heading_control = common_Control_obj_make_new(&self->db->control_heading);
     self->distance_control = common_Control_obj_make_new(&self->db->control_distance);
+    #endif
 
     // Get defaults for drivebase as 1/3 of maximum for the underlying motors
     int32_t straight_speed_limit, turn_rate_limit, _;
@@ -298,8 +302,10 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_left),             MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, left)            },
     { MP_ROM_QSTR(MP_QSTR_right),            MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, right)           },
+    #if PYBRICKS_PY_COMMON_CONTROL
     { MP_ROM_QSTR(MP_QSTR_heading_control),  MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, heading_control) },
     { MP_ROM_QSTR(MP_QSTR_distance_control), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, distance_control)},
+    #endif
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 

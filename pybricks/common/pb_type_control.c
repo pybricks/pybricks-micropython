@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON_MOTORS
+#if PYBRICKS_PY_COMMON_CONTROL
 
 #include <pbio/control.h>
 
@@ -255,4 +255,4 @@ const mp_obj_type_t pb_type_Control = {
     .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
 };
 
-#endif // PYBRICKS_PY_COMMON_MOTORS
+#endif // PYBRICKS_PY_COMMON_CONTROL

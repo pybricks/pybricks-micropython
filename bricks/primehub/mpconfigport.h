@@ -16,6 +16,7 @@
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
 #define PYBRICKS_PY_COMMON_CHARGER      (1)
+#define PYBRICKS_PY_COMMON_CONTROL      (1)
 #define PYBRICKS_PY_COMMON_IMU          (1)
 #define PYBRICKS_PY_COMMON_KEYPAD       (1)
 #define PYBRICKS_PY_COMMON_LIGHT_MATRIX (1)

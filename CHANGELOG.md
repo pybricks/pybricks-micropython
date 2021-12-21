@@ -23,6 +23,7 @@
   there. The `Motor` class must be initialized again to use the motor again.
 - Changing settings while a motor is moving no longer raises an exception. Some
   settings will not take effect until a new motor command is given.
+- Disabled `Motor.control` and `Motor.log` on Move Hub to save space.
 
 ## [3.1.0] - 2021-12-16
 
