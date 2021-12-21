@@ -6,6 +6,10 @@
 
 ### Added
 - Added ability to use more than one `DriveBase` in the same script.
+- Added `Motor.busy()` and `Motor.stalled()` methods, which
+  (in case of `Motor`) are shorthand for `not Motor.control.done()` and
+  `Motor.control.stalled`. This makes them consistent with their counterparts
+  on `DriveBase`.
 
 ### Changed
 - Changed how `DriveBases` and `Motor` classes can be used together.
