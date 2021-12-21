@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_LOGGER
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <inttypes.h>
@@ -41,29 +45,29 @@ void pbio_logger_stop(pbio_log_t *log) {
     log->active = false;
 }
 
-pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
+void pbio_logger_update(pbio_log_t *log, int32_t *buf) {
 
     // Log nothing if logger is inactive
     if (!log->active) {
-        return PBIO_SUCCESS;
+        return;
     }
 
     // Skip logging if we are not yet at a multiple of sample_div
     if (++log->skipped != log->sample_div) {
-        return PBIO_SUCCESS;
+        return;
     }
     log->skipped = 0;
 
-    // Raise error if log is full, which should not happen
+    // Stop if log is full.
     if (log->sampled > log->len) {
         log->active = false;
-        return PBIO_ERROR_FAILED;
+        return;
     }
 
     // Stop successfully when done
     if (log->sampled == log->len) {
         log->active = false;
-        return PBIO_SUCCESS;
+        return;
     }
 
     // Write time of logging
@@ -77,7 +81,7 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
     // Increment sample counter
     log->sampled++;
 
-    return PBIO_SUCCESS;
+    return;
 }
 
 pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
@@ -102,3 +106,5 @@ pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
 
     return PBIO_SUCCESS;
 }
+
+#endif // PBIO_CONFIG_LOGGER
