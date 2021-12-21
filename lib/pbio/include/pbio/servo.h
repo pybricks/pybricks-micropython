@@ -46,8 +46,6 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings,
 pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state);
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
-pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
-
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
 
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload);
