@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON_MOTORS
+#if PYBRICKS_PY_COMMON_LOGGER
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -211,4 +211,4 @@ mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values) {
     return logger;
 }
 
-#endif // PYBRICKS_PY_COMMON_MOTORS
+#endif // PYBRICKS_PY_COMMON_LOGGER
