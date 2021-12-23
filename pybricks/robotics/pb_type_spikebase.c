@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -43,8 +43,8 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     self->right = right_motor_in;
 
     // Pointers to servos
-    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
-    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor.type))->srv;
+    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor.type))->srv;
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_spikebase(&self->db, srv_left, srv_right));
@@ -181,11 +181,10 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_distance_control, distance_control),
     #endif
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_attr_dict, attribute_table);
 
 // dir(pybricks.robotics.SpikeBase)
 STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_degrees),     MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_degrees_obj)     },
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_time),        MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_time_obj)        },
     { MP_ROM_QSTR(MP_QSTR_tank_move_forever),         MP_ROM_PTR(&robotics_SpikeBase_drive_forever_obj)             },
@@ -195,11 +194,14 @@ STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
 
 // type(pybricks.robotics.SpikeBase)
-const mp_obj_type_t pb_type_spikebase = {
-    { &mp_type_type },
-    .name = MP_QSTR_SpikeBase,
-    .make_new = robotics_SpikeBase_make_new,
-    .locals_dict = (mp_obj_dict_t *)&robotics_SpikeBase_locals_dict,
+const pb_obj_with_attr_type_t pb_type_spikebase = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_SpikeBase,
+        .make_new = robotics_SpikeBase_make_new,
+        .locals_dict = (mp_obj_dict_t *)&robotics_SpikeBase_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&robotics_SpikeBase_attr_dict,
 };
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS && (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)

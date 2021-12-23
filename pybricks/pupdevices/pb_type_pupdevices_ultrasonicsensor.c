@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -60,23 +60,25 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_presence_obj, pupde
 STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(pupdevices_UltrasonicSensor_obj_t, MP_QSTR_lights, lights),
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(pupdevices_UltrasonicSensor_attr_dict, attribute_table);
 
 // dir(pybricks.pupdevices.UltrasonicSensor)
 STATIC const mp_rom_map_elem_t pupdevices_UltrasonicSensor_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_distance),     MP_ROM_PTR(&pupdevices_UltrasonicSensor_distance_obj)              },
     { MP_ROM_QSTR(MP_QSTR_presence),     MP_ROM_PTR(&pupdevices_UltrasonicSensor_presence_obj)              },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_UltrasonicSensor_locals_dict, pupdevices_UltrasonicSensor_locals_dict_table);
 
 // type(pybricks.pupdevices.UltrasonicSensor)
-const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor = {
-    { &mp_type_type },
-    .name = MP_QSTR_UltrasonicSensor,
-    .make_new = pupdevices_UltrasonicSensor_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_locals_dict,
+const pb_obj_with_attr_type_t pb_type_pupdevices_UltrasonicSensor = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_UltrasonicSensor,
+        .make_new = pupdevices_UltrasonicSensor_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_attr_dict,
 };
 
 #endif // PYBRICKS_PY_PUPDEVICES

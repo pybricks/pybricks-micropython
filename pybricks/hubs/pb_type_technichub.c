@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -47,18 +47,20 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
 STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
 
 STATIC const mp_rom_map_elem_t hubs_TechnicHub_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                           },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_TechnicHub_locals_dict, hubs_TechnicHub_locals_dict_table);
 
-const mp_obj_type_t pb_type_ThisHub = {
-    { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
-    .make_new = hubs_TechnicHub_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&hubs_TechnicHub_locals_dict,
+const pb_obj_with_attr_type_t pb_type_ThisHub = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = PYBRICKS_HUB_CLASS_NAME,
+        .make_new = hubs_TechnicHub_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&hubs_TechnicHub_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&attribute_dict,
 };
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_TECHNICHUB

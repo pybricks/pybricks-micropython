@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -29,7 +29,7 @@ typedef struct _common_Control_obj_t {
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 
     common_Control_obj_t *self = m_new_obj(common_Control_obj_t);
-    self->base.type = &pb_type_Control;
+    self->base.type = &pb_type_Control.type;
 
     self->control = control;
 
@@ -237,11 +237,10 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(common_Control_obj_t, MP_QSTR_log, logger),
     #endif // PYBRICKS_PY_COMMON_LOGGER
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(common_Control_attr_dict, attribute_table);
 
 // dir(pybricks.common.Control)
 STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&common_Control_limits_obj) },
     { MP_ROM_QSTR(MP_QSTR_pid), MP_ROM_PTR(&common_Control_pid_obj) },
     { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&common_Control_target_tolerances_obj) },
@@ -254,11 +253,14 @@ STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_dict_table);
 
 // type(pybricks.common.Control)
-const mp_obj_type_t pb_type_Control = {
-    { &mp_type_type },
-    .name = MP_QSTR_Control,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
+const pb_obj_with_attr_type_t pb_type_Control = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_Control,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&common_Control_attr_dict,
 };
 
 #endif // PYBRICKS_PY_COMMON_CONTROL

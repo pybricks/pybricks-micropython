@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 // class Image
 //
@@ -53,7 +53,7 @@ STATIC GrxColor map_color(mp_obj_t obj) {
 STATIC mp_obj_t ev3dev_Image_new(GrxContext *context) {
     ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
 
-    self->base.type = &pb_type_ev3dev_Image;
+    self->base.type = &pb_type_ev3dev_Image.type;
     self->context = context;
     self->mem = context->frame.base_address.plane0;
     self->width = mp_obj_new_int(grx_context_get_width(self->context));
@@ -125,7 +125,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         }
 
         g_free(filename_ext);
-    } else if (mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
+    } else if (mp_obj_is_type(source_in, &pb_type_ev3dev_Image.type)) {
         ev3dev_Image_obj_t *image = MP_OBJ_TO_PTR(source_in);
         if (arg_vals[ARG_sub].u_bool) {
             mp_int_t x1 = pb_obj_get_int(arg_vals[ARG_x1].u_obj);
@@ -331,9 +331,9 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t y = pb_obj_get_int(y_in);
     if (mp_obj_is_str(source_in)) {
         mp_obj_t args[1] = { source_in };
-        source_in = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
+        source_in = ev3dev_Image_make_new(&pb_type_ev3dev_Image.type, 1, 0, args);
     }
-    if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
+    if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image.type)) {
         mp_raise_TypeError(MP_ERROR_TEXT("Image object is required"));
     }
     ev3dev_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
@@ -353,10 +353,10 @@ STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
 
     if (mp_obj_is_str(source_in)) {
         mp_obj_t args[1] = { source_in };
-        source_in = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
+        source_in = ev3dev_Image_make_new(&pb_type_ev3dev_Image.type, 1, 0, args);
     }
 
-    if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
+    if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image.type)) {
         mp_raise_TypeError(MP_ERROR_TEXT("source must be Image or str"));
     }
 
@@ -551,10 +551,9 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(ev3dev_Image_obj_t, MP_QSTR_width, width),
     PB_DEFINE_CONST_ATTR_RO(ev3dev_Image_obj_t, MP_QSTR_height, height),
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_attr_dict, attribute_table);
 
 STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_empty),       MP_ROM_PTR(&ev3dev_Image_empty_obj)                    },
     { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
     { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Image_clear_obj)                    },
@@ -571,10 +570,13 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
 
-const mp_obj_type_t pb_type_ev3dev_Image = {
-    { &mp_type_type },
-    .name = MP_QSTR_Image,
-    .make_new = ev3dev_Image_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&ev3dev_Image_locals_dict,
+const pb_obj_with_attr_type_t pb_type_ev3dev_Image = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_Image,
+        .make_new = ev3dev_Image_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&ev3dev_Image_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&ev3dev_Image_attr_dict,
 };

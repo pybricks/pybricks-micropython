@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 // class Screen
 
@@ -30,7 +30,7 @@ typedef struct _ev3dev_Font_obj_t {
 const ev3dev_Font_obj_t pb_const_ev3dev_Font_DEFAULT_obj;
 
 STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
-    self->base.type = &pb_type_ev3dev_Font;
+    self->base.type = &pb_type_ev3dev_Font.type;
     self->font = font;
 
     const char *family = grx_font_get_family(font);
@@ -141,10 +141,9 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(ev3dev_Font_obj_t, MP_QSTR_width, width),
     PB_DEFINE_CONST_ATTR_RO(ev3dev_Font_obj_t, MP_QSTR_height, height),
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(ev3dev_Font_attr_dict, attribute_table);
 
 STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_DEFAULT), MP_ROM_PTR(&pb_const_ev3dev_Font_DEFAULT_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ev3dev_Font___del___obj) },
     { MP_ROM_QSTR(MP_QSTR_text_width), MP_ROM_PTR(&ev3dev_Font_text_width_obj) },
@@ -152,16 +151,19 @@ STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Font_locals_dict, ev3dev_Font_locals_dict_table);
 
-const mp_obj_type_t pb_type_ev3dev_Font = {
-    { &mp_type_type },
-    .name = MP_QSTR_Font,
-    .make_new = ev3dev_Font_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
+const pb_obj_with_attr_type_t pb_type_ev3dev_Font = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_Font,
+        .make_new = ev3dev_Font_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&ev3dev_Font_attr_dict,
 };
 
 GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj) {
-    if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font)) {
+    if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font.type)) {
         mp_raise_TypeError(MP_ERROR_TEXT("Requires Font object"));
     }
     ev3dev_Font_obj_t *self = MP_OBJ_TO_PTR(obj);

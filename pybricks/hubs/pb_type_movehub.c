@@ -268,21 +268,23 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(hubs_MoveHub_obj_t, MP_QSTR_imu, imu),
     PB_DEFINE_CONST_ATTR_RO(hubs_MoveHub_obj_t, MP_QSTR_light, light),
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_attr_dict, attribute_table);
 
 STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                        },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_locals_dict, hubs_MoveHub_locals_dict_table);
 
-const mp_obj_type_t pb_type_ThisHub = {
-    { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
-    .make_new = hubs_MoveHub_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&hubs_MoveHub_locals_dict,
+const pb_obj_with_attr_type_t pb_type_ThisHub = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = PYBRICKS_HUB_CLASS_NAME,
+        .make_new = hubs_MoveHub_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&hubs_MoveHub_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&hubs_MoveHub_attr_dict,
 };
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_MOVEHUB

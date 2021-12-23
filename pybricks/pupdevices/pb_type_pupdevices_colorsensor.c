@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -155,11 +155,10 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSe
 STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(pupdevices_ColorSensor_obj_t, MP_QSTR_lights, lights),
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_attr_dict, attribute_table);
 
 // dir(pybricks.pupdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&pupdevices_ColorSensor_hsv_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_color),       MP_ROM_PTR(&pupdevices_ColorSensor_color_obj)                },
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorSensor_reflection_obj)           },
@@ -169,12 +168,15 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
 // type(pybricks.pupdevices.ColorSensor)
-const mp_obj_type_t pb_type_pupdevices_ColorSensor = {
-    { &mp_type_type },
-    .name = MP_QSTR_ColorSensor,
-    .make_new = pupdevices_ColorSensor_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_locals_dict,
+const pb_obj_with_attr_type_t pb_type_pupdevices_ColorSensor = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_ColorSensor,
+        .make_new = pupdevices_ColorSensor_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_attr_dict,
 };
 
 #endif // PYBRICKS_PY_PUPDEVICES

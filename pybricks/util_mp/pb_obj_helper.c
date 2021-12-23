@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 #include <pbio/color.h>
 #include <pbio/error.h>
@@ -139,19 +139,21 @@ void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type) {
 }
 
 void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    const mp_obj_type_t *type = mp_obj_get_type(self_in);
 
-    // MP_QSTR__attr is the locals_dict entry for the attribute table. Users
-    // cannot do anything with it, so return in order to suppress autocomplete.
-    if (attr == MP_QSTR__attr) {
-        return;
+    // type may have been subclassed
+    while (type->attr != pb_attribute_handler) {
+        type = type->base.type;
+
+        if (type == &mp_type_type) {
+            // If we get to here, we are at the base type of all types and
+            // there was no parent type that supplied the attributes.In theory,
+            // this should never happen.
+            return;
+        }
     }
 
-    // Get the attribute table, assumed to be first key/value in locals_dict.
-    mp_obj_dict_t *locals_dict = ((mp_obj_base_t *)MP_OBJ_TO_PTR(self_in))->type->locals_dict;
-    mp_obj_dict_t *attribute_dict = locals_dict->map.table[0].value;
-
-    // Assert that the attribute table is indeed the first entry of locals_dict.
-    assert(MP_OBJ_QSTR_VALUE(locals_dict->map.table[0].key) == MP_QSTR__attr);
+    mp_obj_dict_t *attribute_dict = ((pb_obj_with_attr_type_t *)type)->attr_dict;
 
     // Look up the attribute offset.
     mp_map_elem_t *elem = mp_map_lookup(&attribute_dict->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);

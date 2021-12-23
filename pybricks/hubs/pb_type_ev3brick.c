@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -37,7 +37,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t *)type;
 
     mp_obj_t screen_args[] = { MP_ROM_QSTR(MP_QSTR__screen_) };
-    self->screen = pb_type_ev3dev_Image.make_new(&pb_type_ev3dev_Image, 1, 0, screen_args);
+    self->screen = pb_type_ev3dev_Image.type.make_new(&pb_type_ev3dev_Image.type, 1, 0, screen_args);
 
     self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
 
@@ -54,21 +54,23 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(hubs_EV3Brick_obj_t, MP_QSTR_screen, screen),
     PB_DEFINE_CONST_ATTR_RO(hubs_EV3Brick_obj_t, MP_QSTR_speaker, speaker),
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_attr_dict, attribute_table);
 
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                           },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_locals_dict, hubs_EV3Brick_locals_dict_table);
 
-const mp_obj_type_t pb_type_ThisHub = {
-    { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
-    .make_new = hubs_EV3Brick_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&hubs_EV3Brick_locals_dict,
+const pb_obj_with_attr_type_t pb_type_ThisHub = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = PYBRICKS_HUB_CLASS_NAME,
+        .make_new = hubs_EV3Brick_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&hubs_EV3Brick_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&hubs_EV3Brick_attr_dict,
 };
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_EV3BRICK

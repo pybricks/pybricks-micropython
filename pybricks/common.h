@@ -16,6 +16,7 @@
 
 #include "py/obj.h"
 
+#include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_device.h>
 
 #include <pybricks/parameters.h>
@@ -67,7 +68,7 @@ extern const mp_obj_module_t pb_module_battery;
 
 #if PYBRICKS_PY_COMMON_CONTROL
 // pybricks._common.Control()
-extern const mp_obj_type_t pb_type_Control;
+extern const pb_obj_with_attr_type_t pb_type_Control;
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control);
 #endif
 
@@ -88,7 +89,7 @@ typedef struct _common_Motor_obj_t {
     #endif
 } common_Motor_obj_t;
 
-extern const mp_obj_type_t pb_type_Motor;
+extern const pb_obj_with_attr_type_t pb_type_Motor;
 
 // pybricks._common.DCMotor()
 typedef struct _common_DCMotor_obj_t {

@@ -17,7 +17,7 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 static pbio_dcmotor_t *get_dcmotor_from_object(mp_obj_t self_in) {
-    if (mp_obj_is_type(self_in, &pb_type_Motor)) {
+    if (mp_obj_is_type(self_in, &pb_type_Motor.type)) {
         return ((common_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->srv->dcmotor;
     }
     return ((common_DCMotor_obj_t *)MP_OBJ_TO_PTR(self_in))->dcmotor;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -353,11 +353,10 @@ STATIC const mp_rom_map_elem_t attribute_table[] = {
     PB_DEFINE_CONST_ATTR_RO(common_Motor_obj_t, MP_QSTR_log, logger),
     #endif
 };
-STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+STATIC MP_DEFINE_CONST_DICT(common_Motor_attr_dict, attribute_table);
 
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(attribute_dict),
     //
     // Methods common to DC motors and encoded motors
     //
@@ -384,13 +383,16 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
 MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);
 
 // type(pybricks.builtins.Motor)
-const mp_obj_type_t pb_type_Motor = {
-    { &mp_type_type },
-    .name = MP_QSTR_Motor,
-    .print = common_DCMotor_print,
-    .make_new = common_Motor_make_new,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&common_Motor_locals_dict,
+const pb_obj_with_attr_type_t pb_type_Motor = {
+    .type = {
+        .base = { .type = &mp_type_type },
+        .name = MP_QSTR_Motor,
+        .print = common_DCMotor_print,
+        .make_new = common_Motor_make_new,
+        .attr = pb_attribute_handler,
+        .locals_dict = (mp_obj_dict_t *)&common_Motor_locals_dict,
+    },
+    .attr_dict = (mp_obj_dict_t *)&common_Motor_attr_dict,
 };
 
 #endif // PYBRICKS_PY_COMMON_MOTORS
