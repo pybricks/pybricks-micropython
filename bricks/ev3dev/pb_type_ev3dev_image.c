@@ -547,12 +547,6 @@ STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_save_obj, ev3dev_Image_save);
 
-STATIC const mp_rom_map_elem_t attribute_table[] = {
-    PB_DEFINE_CONST_ATTR_RO(ev3dev_Image_obj_t, MP_QSTR_width, width),
-    PB_DEFINE_CONST_ATTR_RO(ev3dev_Image_obj_t, MP_QSTR_height, height),
-};
-STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_attr_dict, attribute_table);
-
 STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_empty),       MP_ROM_PTR(&ev3dev_Image_empty_obj)                    },
     { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
@@ -570,6 +564,11 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
 
+STATIC const pb_attr_dict_entry_t ev3dev_Image_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_width, ev3dev_Image_obj_t, width),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_height, ev3dev_Image_obj_t, height),
+};
+
 const pb_obj_with_attr_type_t pb_type_ev3dev_Image = {
     .type = {
         .base = { .type = &mp_type_type },
@@ -578,5 +577,6 @@ const pb_obj_with_attr_type_t pb_type_ev3dev_Image = {
         .attr = pb_attribute_handler,
         .locals_dict = (mp_obj_dict_t *)&ev3dev_Image_locals_dict,
     },
-    .attr_dict = (mp_obj_dict_t *)&ev3dev_Image_attr_dict,
+    .attr_dict = ev3dev_Image_attr_dict,
+    .attr_dict_size = MP_ARRAY_SIZE(ev3dev_Image_attr_dict),
 };

@@ -48,19 +48,18 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC const mp_rom_map_elem_t attribute_table[] = {
-    PB_DEFINE_CONST_ATTR_RO(hubs_EV3Brick_obj_t, MP_QSTR_buttons, buttons),
-    PB_DEFINE_CONST_ATTR_RO(hubs_EV3Brick_obj_t, MP_QSTR_light, light),
-    PB_DEFINE_CONST_ATTR_RO(hubs_EV3Brick_obj_t, MP_QSTR_screen, screen),
-    PB_DEFINE_CONST_ATTR_RO(hubs_EV3Brick_obj_t, MP_QSTR_speaker, speaker),
-};
-STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_attr_dict, attribute_table);
-
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                           },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_locals_dict, hubs_EV3Brick_locals_dict_table);
+
+STATIC const pb_attr_dict_entry_t hubs_EV3Brick_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_EV3Brick_obj_t, buttons),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_EV3Brick_obj_t, light),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_EV3Brick_obj_t, screen),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_speaker, hubs_EV3Brick_obj_t, speaker),
+};
 
 const pb_obj_with_attr_type_t pb_type_ThisHub = {
     .type = {
@@ -70,7 +69,8 @@ const pb_obj_with_attr_type_t pb_type_ThisHub = {
         .attr = pb_attribute_handler,
         .locals_dict = (mp_obj_dict_t *)&hubs_EV3Brick_locals_dict,
     },
-    .attr_dict = (mp_obj_dict_t *)&hubs_EV3Brick_attr_dict,
+    .attr_dict = hubs_EV3Brick_attr_dict,
+    .attr_dict_size = MP_ARRAY_SIZE(hubs_EV3Brick_attr_dict),
 };
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_EV3BRICK

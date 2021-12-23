@@ -4,6 +4,9 @@
 #ifndef PYBRICKS_INCLUDED_PBOBJ_H
 #define PYBRICKS_INCLUDED_PBOBJ_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include <fixmath.h>
 
 #include <pbio/color.h>
@@ -36,21 +39,35 @@ mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type);
 // Raise error on unexpected type
 void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type);
 
-// Read/write/delete flags for constant attributes in custom types
-enum {
-    PB_ATTR_READABLE = (1 << 16),  /**< Attribute can be read */
-    PB_ATTR_WRITABLE = (1 << 17),  /**< Attribute can be assigned a new object */
-    PB_ATTR_DELETABLE = (1 << 18), /**< Attribute can be deleted with del */
-    PB_ATTR_OFFSET_MASK = 0xFFFF,  /**< Internal use. Mask for the offset value stored in the LSB bytes */
-};
+/**
+ * Key/value pair for an attribute table lookup dictionary that maps an
+ * attribute name to its metadata.
+ */
+typedef struct {
+    /** The name of the attribute (qstr). */
+    uint16_t name;
+    /** The offset of the attribute's mp_obj_t in the object instance structure. */
+    uint8_t offset;
+    /** Indicates if the attribute can be read. */
+    bool readable : 1;
+    /** Indicates if the attribute can be written. */
+    bool writeable : 1;
+    /** Indicates if the attribute can be deleted. */
+    bool deletable : 1;
+} pb_attr_dict_entry_t;
 
 // Generic entry of the attributes dictionary.
-#define PB_DEFINE_CONST_ATTR(type, name, field, flags) \
-    { MP_ROM_QSTR(name), MP_ROM_PTR(&(mp_uint_t) {offsetof(type, field) | (flags)}) }
+#define PB_DEFINE_CONST_ATTR(name_, type, field, r, w, d) {     \
+        .name = (name_),                                        \
+        .offset = offsetof(type, field),                        \
+        .readable = (r),                                        \
+        .writeable = (w),                                       \
+        .deletable = (d),                                       \
+}
 
 // Read-only entry of the attributes dictionary. Dedicated macro because we use it so often.
-#define PB_DEFINE_CONST_ATTR_RO(type, name, field) \
-    PB_DEFINE_CONST_ATTR(type, name, field, PB_ATTR_READABLE)
+#define PB_DEFINE_CONST_ATTR_RO(name, type, field) \
+    PB_DEFINE_CONST_ATTR(name, type, field, true, false, false)
 
 /**
  * Micropython type object struct that is extened to include an attribute map.
@@ -67,7 +84,11 @@ typedef struct {
      * attribute names (qstrs) to an offset in the object instance struct
      * where the value of the attribute is stored.
      */
-    mp_obj_dict_t *attr_dict;
+    const pb_attr_dict_entry_t *attr_dict;
+    /**
+     * The number of entries in attr_dict.
+     */
+    uint8_t attr_dict_size;
 } pb_obj_with_attr_type_t;
 
 /**

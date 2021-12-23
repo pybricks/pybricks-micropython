@@ -173,16 +173,6 @@ STATIC mp_obj_t robotics_SpikeBase_stop(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_SpikeBase_stop_obj, robotics_SpikeBase_stop);
 
-STATIC const mp_rom_map_elem_t attribute_table[] = {
-    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_left, left),
-    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_right, right),
-    #if PYBRICKS_PY_COMMON_CONTROL
-    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_heading_control, heading_control),
-    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_distance_control, distance_control),
-    #endif
-};
-STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_attr_dict, attribute_table);
-
 // dir(pybricks.robotics.SpikeBase)
 STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_degrees),     MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_degrees_obj)     },
@@ -193,6 +183,15 @@ STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
 
+STATIC const pb_attr_dict_entry_t robotics_SpikeBase_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, robotics_SpikeBase_obj_t, left),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, robotics_SpikeBase_obj_t, right),
+    #if PYBRICKS_PY_COMMON_CONTROL
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, robotics_SpikeBase_obj_t, heading_control),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, robotics_SpikeBase_obj_t, distance_control),
+    #endif
+};
+
 // type(pybricks.robotics.SpikeBase)
 const pb_obj_with_attr_type_t pb_type_spikebase = {
     .type = {
@@ -201,7 +200,8 @@ const pb_obj_with_attr_type_t pb_type_spikebase = {
         .make_new = robotics_SpikeBase_make_new,
         .locals_dict = (mp_obj_dict_t *)&robotics_SpikeBase_locals_dict,
     },
-    .attr_dict = (mp_obj_dict_t *)&robotics_SpikeBase_attr_dict,
+    .attr_dict = robotics_SpikeBase_attr_dict,
+    .attr_dict_size = MP_ARRAY_SIZE(robotics_SpikeBase_attr_dict),
 };
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS && (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
