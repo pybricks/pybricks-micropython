@@ -55,7 +55,7 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
 #endif // PYBRICKS_HUB_EV3BRICK
 
-#if PYBRICKS_HUB_PRIMEHUB
+#if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
 
 #include <pybricks/util_pb/pb_flash.h>
 
@@ -121,7 +121,7 @@ STATIC mp_obj_t experimental_restore_firmware(void) {
 }
 MP_DEFINE_CONST_FUN_OBJ_0(experimental_restore_firmware_obj, experimental_restore_firmware);
 
-#endif // PYBRICKS_HUB_PRIMEHUB
+#endif // (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
 
 // pybricks.experimental.hello_world
 STATIC mp_obj_t experimental_hello_world(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -170,12 +170,12 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #else
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     #endif // PYBRICKS_HUB_EV3BRICK
-    #if PYBRICKS_HUB_PRIMEHUB
+    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     { MP_ROM_QSTR(MP_QSTR_flash_read_raw), MP_ROM_PTR(&experimental_flash_read_raw_obj) },
     { MP_ROM_QSTR(MP_QSTR_flash_read_file), MP_ROM_PTR(&experimental_flash_read_file_obj) },
     { MP_ROM_QSTR(MP_QSTR_flash_write_file), MP_ROM_PTR(&experimental_flash_write_file_obj) },
     { MP_ROM_QSTR(MP_QSTR_restore_firmware), MP_ROM_PTR(&experimental_restore_firmware_obj) },
-    #endif // PYBRICKS_HUB_PRIMEHUB
+    #endif // (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);

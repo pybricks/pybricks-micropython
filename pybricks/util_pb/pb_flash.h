@@ -4,7 +4,7 @@
 #ifndef _PB_FLASH_H_
 #define _PB_FLASH_H_
 
-#if PYBRICKS_HUB_PRIMEHUB
+#if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
 
 #include <stdint.h>
 

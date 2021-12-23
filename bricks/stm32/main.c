@@ -186,7 +186,7 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
 
     // If button was pressed, return code to run script in flash
     if (err == PBIO_ERROR_CANCELED) {
-        #if PYBRICKS_HUB_PRIMEHUB
+        #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
         // Open existing main.mpy file from flash
         uint32_t size = 0;
         if (pb_flash_file_open_get_size("/_pybricks/main.mpy", &size) != PBIO_SUCCESS) {
@@ -246,10 +246,10 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
 
     *free_len = len;
 
-    #if PYBRICKS_HUB_PRIMEHUB
+    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     // Save program as file
     pb_flash_file_write("/_pybricks/main.mpy", *buf, len);
-    #endif // PYBRICKS_HUB_PRIMEHUB
+    #endif // (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
 
     return len;
 }
@@ -360,7 +360,7 @@ restart:
 
 static void stm32_main(void) {
 
-    #if PYBRICKS_HUB_PRIMEHUB
+    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     mp_hal_delay_ms(500);
     pb_flash_init();
     #endif

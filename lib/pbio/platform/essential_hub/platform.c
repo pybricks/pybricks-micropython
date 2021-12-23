@@ -434,6 +434,33 @@ void DMA2_Stream0_IRQHandler(void) {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
+void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
+    if (hspi->Instance == SPI2) {
+        // External flash
+        GPIO_InitTypeDef gpio_init;
+
+        // /CS, active low
+        gpio_init.Pin = GPIO_PIN_12;
+        gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+
+        // SPI2_SCK
+        gpio_init.Pin = GPIO_PIN_10;
+        gpio_init.Mode = GPIO_MODE_AF_PP;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        gpio_init.Alternate = GPIO_AF5_SPI2;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
+
+        // SPI2_MISO | SPI2_MOSI
+        gpio_init.Pin = GPIO_PIN_2 | GPIO_PIN_3;
+        HAL_GPIO_Init(GPIOC, &gpio_init);
+    }
+}
+
 // USB
 
 void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
@@ -567,7 +594,7 @@ void SystemInit(void) {
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN | RCC_APB1ENR_UART5EN |
         RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN |
-        RCC_APB1ENR_I2C3EN | RCC_APB1ENR_FMPI2C1EN;
+        RCC_APB1ENR_I2C3EN | RCC_APB1ENR_FMPI2C1EN | RCC_APB1ENR_SPI2EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM8EN | RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 
