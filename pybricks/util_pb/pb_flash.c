@@ -5,7 +5,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_HUB_PRIMEHUB
+#if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
 
 #include <string.h>
 
@@ -25,8 +25,12 @@
 
 #include <pybricks/util_pb/pb_flash.h>
 
+#if PYBRICKS_HUB_PRIMEHUB
+#define FLASH_SIZE_TOTAL (32 * 0x100000)
+#else
+#define FLASH_SIZE_TOTAL (4 * 0x100000)
+#endif
 
-#define FLASH_SIZE_TOTAL (0x2000000)
 #define FLASH_SIZE_BOOT  (0x100000)
 #define FLASH_SIZE_USER  (FLASH_SIZE_TOTAL - FLASH_SIZE_BOOT)
 #define FLASH_SIZE_ERASE  (0x1000)
@@ -38,10 +42,16 @@
 enum {
     FLASH_CMD_GET_STATUS = 0x05,
     FLASH_CMD_WRITE_ENABLE = 0x06,
-    FLASH_CMD_WRITE_DATA = 0x12,
+    FLASH_CMD_GET_ID = 0x9F,
+    #if PYBRICKS_HUB_PRIMEHUB
     FLASH_CMD_READ_DATA = 0x13,
     FLASH_CMD_ERASE_BLOCK = 0x21,
-    FLASH_CMD_GET_ID = 0x9F,
+    FLASH_CMD_WRITE_DATA = 0x12,
+    #else
+    FLASH_CMD_READ_DATA = 0x03,
+    FLASH_CMD_ERASE_BLOCK = 0x20,
+    FLASH_CMD_WRITE_DATA = 0x02,
+    #endif
 };
 
 enum {
@@ -103,8 +113,14 @@ static pbio_error_t pb_flash_spi_init(void) {
     }
     flash_enable(false);
 
+    #if PYBRICKS_HUB_PRIMEHUB
+    const uint8_t valid_id[] = {0xEF, 0x40, 0x19};
+    #else
+    const uint8_t valid_id[] = {0xEF, 0x40, 0x16};
+    #endif
+
     // Verify flash device ID
-    if (id_data[0] != 239 || id_data[1] != 64 || id_data[2] != 25) {
+    if (memcmp(valid_id, id_data, sizeof(valid_id))) {
         return PBIO_ERROR_NO_DEV;
     }
 
@@ -165,8 +181,14 @@ static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t ad
 
     // Pack command and address as big endian. This is the absolute address,
     // starting in the boot partition.
+    #if PYBRICKS_HUB_PRIMEHUB
     uint8_t data[5] = {command};
     pbio_set_uint32_be(&data[1], address);
+    #else
+    uint8_t data[4];
+    pbio_set_uint32_be(&data[0], address);
+    data[0] = command;
+    #endif
 
     // Enable flash
     flash_enable(true);
@@ -353,8 +375,8 @@ static const struct lfs_config cfg = {
 
     .read_size = 256,
     .prog_size = 256,
-    .block_size = 4096,
-    .block_count = 7936,
+    .block_size = FLASH_SIZE_ERASE,
+    .block_count = FLASH_SIZE_USER / FLASH_SIZE_ERASE,
     .lookahead = sizeof(lfs_lookahead_buf) * 8,
 
     .read_buffer = lfs_read_buf,
@@ -556,7 +578,7 @@ pbio_error_t pb_flash_restore_firmware(void) {
     // TODO: Get from platform data or hub type
     #if PYBRICKS_HUB_PRIMEHUB
     mp_int_t valid_device_id = 0x81;
-    #elif PYBRICKS_HUB_ESSENTIALHUB
+    #else
     mp_int_t valid_device_id = 0x83;
     #endif
 
@@ -657,4 +679,4 @@ pbio_error_t pb_flash_restore_firmware(void) {
     return PBIO_SUCCESS;
 }
 
-#endif // PYBRICKS_HUB_PRIMEHUB
+#endif // (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
