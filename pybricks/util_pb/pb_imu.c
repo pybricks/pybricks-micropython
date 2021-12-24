@@ -190,7 +190,7 @@ void pb_imu_accel_read(pb_imu_dev_t *imu_dev, float_t *values) {
     values[1] = data[1] * imu_dev->accel_scale;
     values[2] = data[2] * imu_dev->accel_scale;
 
-    #if PYBRICKS_HUB_PRIMEHUB
+    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     // Sensor is upside down
     values[0] = -values[0];
     values[2] = -values[2];
