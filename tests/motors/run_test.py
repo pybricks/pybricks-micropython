@@ -21,7 +21,7 @@ async def run_pybricks_script(script_name):
     # Connect to the hub.
     print("Searching for a hub.")
     hub = PybricksHub()
-    address = await find_device("Pybricks Hub")
+    address = await find_device()
     await hub.connect(address)
     print("Connected!")
 
