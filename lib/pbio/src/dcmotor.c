@@ -92,8 +92,9 @@ void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t 
 }
 
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
-    // Stop the motor.
+    // Stop the motor and set the passivity state value for data logging.
     dcmotor->is_coasting = true;
+    dcmotor->voltage_now = 0;
     return pbdrv_motor_coast(dcmotor->port);
 }
 
