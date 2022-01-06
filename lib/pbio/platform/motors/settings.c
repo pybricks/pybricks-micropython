@@ -89,9 +89,9 @@ static const pbio_control_settings_t settings_technic_s_angular = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 5000,
-    .pid_kd = 800,
-    .integral_rate = 25,
+    .pid_kp = 7500,
+    .pid_kd = 1000,
+    .integral_rate = 15,
     .use_estimated_rate = true,
 };
 
@@ -114,9 +114,9 @@ static const pbio_control_settings_t settings_technic_m_angular = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 10000,
-    .pid_kd = 1200,
-    .integral_rate = 25,
+    .pid_kp = 15000,
+    .pid_kd = 1800,
+    .integral_rate = 15,
     .use_estimated_rate = true,
 };
 
@@ -139,9 +139,9 @@ static const pbio_control_settings_t settings_technic_l_angular = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 25000,
-    .pid_kd = 4500,
-    .integral_rate = 5,
+    .pid_kp = 35000,
+    .pid_kd = 6000,
+    .integral_rate = 15,
     .use_estimated_rate = true,
 };
 
@@ -164,9 +164,9 @@ static const pbio_control_settings_t settings_interactive = {
     .count_tolerance = 5,
     .stall_rate_limit = 15,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 10000,
-    .pid_kd = 1000,
-    .integral_rate = 3,
+    .pid_kp = 13500,
+    .pid_kd = 1350,
+    .integral_rate = 10,
     .use_estimated_rate = true,
 };
 
@@ -218,8 +218,8 @@ static const pbio_control_settings_t settings_technic_l = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 4000,
-    .pid_kd = 1000,
+    .pid_kp = 20000,
+    .pid_kd = 2500,
     .integral_rate = 5,
     .use_estimated_rate = true,
 };
@@ -243,8 +243,8 @@ static const pbio_control_settings_t settings_technic_xl = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 4000,
-    .pid_kd = 2000,
+    .pid_kp = 17500,
+    .pid_kd = 2500,
     .integral_rate = 5,
     .use_estimated_rate = true,
 };
