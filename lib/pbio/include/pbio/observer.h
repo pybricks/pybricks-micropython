@@ -71,4 +71,6 @@ int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model,
 
 int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque);
 
+int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage);
+
 #endif // _PBIO_OBSERVER_H_

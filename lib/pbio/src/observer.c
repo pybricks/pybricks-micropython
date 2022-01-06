@@ -83,6 +83,10 @@ int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int3
     return (int32_t)((int64_t)desired_torque * (PBIO_OBSERVER_SCALE_HIGH / 1000) / model->k_0);
 }
 
+int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage) {
+    return (int32_t)((int64_t)model->k_0 * (PBIO_OBSERVER_SCALE_TRQ / PBIO_OBSERVER_SCALE_HIGH) * voltage / 1000);
+}
+
 #else
 void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now) {
     obs->est_count = count_now;
@@ -156,4 +160,9 @@ int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model,
 int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque) {
     return (int32_t)(desired_torque / model->k_0 / 1000);
 }
+
+int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage) {
+    return (int32_t)(model->k_0 * voltage * 1000);
+}
+
 #endif // PBIO_CONFIG_CONTROL_MINIMAL

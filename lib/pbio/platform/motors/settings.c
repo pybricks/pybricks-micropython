@@ -39,7 +39,6 @@ static const pbio_control_settings_t settings_ev3_m = {
     .pid_ki = 150,
     .pid_kd = 30,
     .integral_rate = 10,
-    .max_torque = 150000,
     .use_estimated_rate = false,
 };
 
@@ -66,7 +65,6 @@ static const pbio_control_settings_t settings_ev3_l = {
     .pid_ki = 600,
     .pid_kd = 250,
     .integral_rate = 10,
-    .max_torque = 430000,
     .use_estimated_rate = false,
 };
 
@@ -97,7 +95,6 @@ static const pbio_control_settings_t settings_technic_s_angular = {
     .pid_ki = 1200,
     .pid_kd = 800,
     .integral_rate = 25,
-    .max_torque = 60000,
     .use_estimated_rate = true,
 };
 
@@ -124,7 +121,6 @@ static const pbio_control_settings_t settings_technic_m_angular = {
     .pid_ki = 2000,
     .pid_kd = 1200,
     .integral_rate = 25,
-    .max_torque = 160000,
     .use_estimated_rate = true,
 };
 
@@ -151,7 +147,6 @@ static const pbio_control_settings_t settings_technic_l_angular = {
     .pid_ki = 6000,
     .pid_kd = 4500,
     .integral_rate = 5,
-    .max_torque = 330000,
     .use_estimated_rate = true,
 };
 
@@ -178,7 +173,6 @@ static const pbio_control_settings_t settings_interactive = {
     .pid_ki = 1000,
     .pid_kd = 1000,
     .integral_rate = 3,
-    .max_torque = 100000,
     .use_estimated_rate = true,
 };
 
@@ -207,7 +201,6 @@ static const pbio_control_settings_t settings_movehub = {
     .pid_ki = 1500,
     .pid_kd = 500,
     .integral_rate = 5,
-    .max_torque = 150000,
     .use_estimated_rate = true,
 };
 
@@ -236,7 +229,6 @@ static const pbio_control_settings_t settings_technic_l = {
     .pid_ki = 600,
     .pid_kd = 1000,
     .integral_rate = 5,
-    .max_torque = 260000,
     .use_estimated_rate = true,
 };
 
@@ -263,7 +255,6 @@ static const pbio_control_settings_t settings_technic_xl = {
     .pid_ki = 600,
     .pid_kd = 2000,
     .integral_rate = 5,
-    .max_torque = 260000,
     .use_estimated_rate = true,
 };
 
@@ -277,49 +268,55 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
             *model = &model_ev3_m;
             *settings = settings_ev3_m;
-            return PBIO_SUCCESS;
+            break;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
             *model = &model_ev3_l;
             *settings = settings_ev3_l;
-            return PBIO_SUCCESS;
+            break;
         #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
         #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
         case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
             *model = &model_interactive;
             *settings = settings_interactive;
-            return PBIO_SUCCESS;
+            break;
         #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
             *model = &model_movehub;
             *settings = settings_movehub;
-            return PBIO_SUCCESS;
+            break;
         #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
             *model = &model_technic_l;
             *settings = settings_technic_l;
-            return PBIO_SUCCESS;
+            break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
             *model = &model_technic_xl;
             *settings = settings_technic_xl;
-            return PBIO_SUCCESS;
+            break;
         case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
             *model = &model_technic_s_angular;
             *settings = settings_technic_s_angular;
-            return PBIO_SUCCESS;
+            break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
             *model = &model_technic_l_angular;
             *settings = settings_technic_l_angular;
-            return PBIO_SUCCESS;
+            break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
             *model = &model_technic_m_angular;
             *settings = settings_technic_m_angular;
-            return PBIO_SUCCESS;
+            break;
         #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
+    // Given the configured settings, now calculate dependent settings.
+
+    // Initialize maximum torque as the stall torque for maximum voltage.
+    settings->max_torque = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
+
+    return PBIO_SUCCESS;
 }
 
 int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
