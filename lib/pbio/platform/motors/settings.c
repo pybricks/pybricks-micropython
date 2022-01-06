@@ -36,7 +36,6 @@ static const pbio_control_settings_t settings_ev3_m = {
     .stall_rate_limit = 30,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 3000,
-    .pid_ki = 150,
     .pid_kd = 30,
     .integral_rate = 10,
     .use_estimated_rate = false,
@@ -62,7 +61,6 @@ static const pbio_control_settings_t settings_ev3_l = {
     .stall_rate_limit = 30,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 15000,
-    .pid_ki = 600,
     .pid_kd = 250,
     .integral_rate = 10,
     .use_estimated_rate = false,
@@ -92,7 +90,6 @@ static const pbio_control_settings_t settings_technic_s_angular = {
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 5000,
-    .pid_ki = 1200,
     .pid_kd = 800,
     .integral_rate = 25,
     .use_estimated_rate = true,
@@ -118,7 +115,6 @@ static const pbio_control_settings_t settings_technic_m_angular = {
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 10000,
-    .pid_ki = 2000,
     .pid_kd = 1200,
     .integral_rate = 25,
     .use_estimated_rate = true,
@@ -144,7 +140,6 @@ static const pbio_control_settings_t settings_technic_l_angular = {
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 25000,
-    .pid_ki = 6000,
     .pid_kd = 4500,
     .integral_rate = 5,
     .use_estimated_rate = true,
@@ -170,7 +165,6 @@ static const pbio_control_settings_t settings_interactive = {
     .stall_rate_limit = 15,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 10000,
-    .pid_ki = 1000,
     .pid_kd = 1000,
     .integral_rate = 3,
     .use_estimated_rate = true,
@@ -198,7 +192,6 @@ static const pbio_control_settings_t settings_movehub = {
     .stall_rate_limit = 15,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 15000,
-    .pid_ki = 1500,
     .pid_kd = 500,
     .integral_rate = 5,
     .use_estimated_rate = true,
@@ -226,7 +219,6 @@ static const pbio_control_settings_t settings_technic_l = {
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 4000,
-    .pid_ki = 600,
     .pid_kd = 1000,
     .integral_rate = 5,
     .use_estimated_rate = true,
@@ -252,7 +244,6 @@ static const pbio_control_settings_t settings_technic_xl = {
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
     .pid_kp = 4000,
-    .pid_ki = 600,
     .pid_kd = 2000,
     .integral_rate = 5,
     .use_estimated_rate = true,
@@ -315,6 +306,10 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
 
     // Initialize maximum torque as the stall torque for maximum voltage.
     settings->max_torque = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
+
+    // Initialize ki such that integral control saturates in about twos second
+    // if the motor were stuck at the position tolerance.
+    settings->pid_ki = settings->max_torque / settings->count_tolerance / 2;
 
     return PBIO_SUCCESS;
 }
