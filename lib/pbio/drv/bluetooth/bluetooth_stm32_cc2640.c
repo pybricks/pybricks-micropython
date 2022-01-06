@@ -320,6 +320,17 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     // ignoring response data
 
     // make discoverable
+    if (!advertising_now) {
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PUBLIC, NULL,
+            GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        // ignoring response data
+
+
+        advertising_now = true;
+    }
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
@@ -1287,6 +1298,8 @@ static void handle_event(uint8_t *packet) {
                             .connTimeout = 500, // 500 * 10 ms = 5 s
                         };
                         GAP_UpdateLinkParamReq(&req);
+                        // If connection is established advertising is stopped implicitly
+                        advertising_now = false;
                     } else if (data[12] == GAP_PROFILE_CENTRAL) {
                         // we currently only allow connection to one LEGO Powered Up remote peripheral
                         remote_handle = (data[11] << 8) | data[10];

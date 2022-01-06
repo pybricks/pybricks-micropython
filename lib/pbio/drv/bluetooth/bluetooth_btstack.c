@@ -267,9 +267,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             // HCI_ROLE_MASTER means the connecting device is the peripheral and the hub is the central.
             if (hci_subevent_le_connection_complete_get_role(packet) == HCI_ROLE_SLAVE) {
                 le_con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-
-                // don't start advertising again on disconnect
-                gap_advertisements_enable(false);
+                // advertising is not implicitly stopped.
+                // So we need to do this after the connection is established
+                pbdrv_bluetooth_stop_advertising();
             } else {
                 // If we aren't waiting for a handset connection, this must be a different connection.
                 if (handset.con_state != CON_STATE_WAIT_CONNECT) {
@@ -512,10 +512,12 @@ static void init_advertising_data(void) {
 void pbdrv_bluetooth_start_advertising(void) {
     init_advertising_data();
     gap_advertisements_enable(true);
+    advertising_now = true;
 }
 
 void pbdrv_bluetooth_stop_advertising(void) {
     gap_advertisements_enable(false);
+    advertising_now = false;
 }
 
 void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
