@@ -26,7 +26,7 @@
 #define PBIO_OBSERVER_GAINS(LOW, MEDIUM, HIGH) \
     (((LOW) << 16 | (MEDIUM / LOW) << 8 | (HIGH / LOW)))
 
-typedef struct _pbio_observer_settings_t {
+typedef struct _pbio_observer_model_t {
     #if PBIO_CONFIG_CONTROL_MINIMAL
     int32_t phi_01;
     int32_t phi_11;
@@ -48,7 +48,7 @@ typedef struct _pbio_observer_settings_t {
     float f_low;
     #endif
     uint32_t obs_gains;
-} pbio_observer_settings_t;
+} pbio_observer_model_t;
 
 typedef struct _pbio_observer_t {
     #if PBIO_CONFIG_CONTROL_MINIMAL
@@ -58,7 +58,7 @@ typedef struct _pbio_observer_t {
     float est_count;
     float est_rate;
     #endif
-    const pbio_observer_settings_t *settings;
+    const pbio_observer_model_t *model;
 } pbio_observer_t;
 
 void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now);

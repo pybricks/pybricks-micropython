@@ -16,7 +16,7 @@
 
 #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
 
-static const pbio_observer_settings_t settings_observer_ev3_m = {
+static const pbio_observer_model_t model_ev3_m = {
     .phi_01 = SCALE(0.0f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
@@ -28,7 +28,7 @@ static const pbio_observer_settings_t settings_observer_ev3_m = {
     .obs_gains = 0,
 };
 
-static const pbio_control_settings_t settings_servo_ev3_m = {
+static const pbio_control_settings_t settings_ev3_m = {
     .max_rate = 2000,
     .abs_acceleration = 8000,
     .rate_tolerance = 100,
@@ -43,7 +43,7 @@ static const pbio_control_settings_t settings_servo_ev3_m = {
     .use_estimated_rate = false,
 };
 
-static const pbio_observer_settings_t settings_observer_ev3_l = {
+static const pbio_observer_model_t model_ev3_l = {
     .phi_01 = SCALE(0.0f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
@@ -55,7 +55,7 @@ static const pbio_observer_settings_t settings_observer_ev3_l = {
     .obs_gains = 0,
 };
 
-static const pbio_control_settings_t settings_servo_ev3_l = {
+static const pbio_control_settings_t settings_ev3_l = {
     .max_rate = 1600,
     .abs_acceleration = 3200,
     .rate_tolerance = 100,
@@ -74,7 +74,7 @@ static const pbio_control_settings_t settings_servo_ev3_l = {
 
 #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
 
-static const pbio_observer_settings_t settings_observer_technic_s_angular = {
+static const pbio_observer_model_t model_technic_s_angular = {
     .phi_01 = SCALE(0.00468582248829651f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.877017999120650f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(4.49747292641861f, PBIO_OBSERVER_SCALE_LOW),
@@ -86,7 +86,7 @@ static const pbio_observer_settings_t settings_observer_technic_s_angular = {
     .obs_gains = PBIO_OBSERVER_GAINS(100, 500, 500),
 };
 
-static const pbio_control_settings_t settings_servo_technic_s_angular = {
+static const pbio_control_settings_t settings_technic_s_angular = {
     .max_rate = 620,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
@@ -101,7 +101,7 @@ static const pbio_control_settings_t settings_servo_technic_s_angular = {
     .use_estimated_rate = true,
 };
 
-static const pbio_observer_settings_t settings_observer_technic_m_angular = {
+static const pbio_observer_model_t model_technic_m_angular = {
     .phi_01 = SCALE(0.00465623814072756f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.865721137934373f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(2.36522158991640f, PBIO_OBSERVER_SCALE_LOW),
@@ -113,7 +113,7 @@ static const pbio_observer_settings_t settings_observer_technic_m_angular = {
     .obs_gains = PBIO_OBSERVER_GAINS(100, 800, 2000),
 };
 
-static const pbio_control_settings_t settings_servo_technic_m_angular = {
+static const pbio_control_settings_t settings_technic_m_angular = {
     .max_rate = 1000,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
@@ -128,7 +128,7 @@ static const pbio_control_settings_t settings_servo_technic_m_angular = {
     .use_estimated_rate = true,
 };
 
-static const pbio_observer_settings_t settings_observer_technic_l_angular = {
+static const pbio_observer_model_t model_technic_l_angular = {
     .phi_01 = SCALE(0.00476139134919619f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.906099484723787f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(0.684051954862549f, PBIO_OBSERVER_SCALE_LOW),
@@ -140,7 +140,7 @@ static const pbio_observer_settings_t settings_observer_technic_l_angular = {
     .obs_gains = PBIO_OBSERVER_GAINS(1000, 2000, 4000),
 };
 
-static const pbio_control_settings_t settings_servo_technic_l_angular = {
+static const pbio_control_settings_t settings_technic_l_angular = {
     .max_rate = 1000,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
@@ -155,7 +155,7 @@ static const pbio_control_settings_t settings_servo_technic_l_angular = {
     .use_estimated_rate = true,
 };
 
-static const pbio_observer_settings_t settings_observer_interactive = {
+static const pbio_observer_model_t model_interactive = {
     .phi_01 = SCALE(0.00476271917080314f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.906613349592095f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(2.93111612537300f, PBIO_OBSERVER_SCALE_LOW),
@@ -167,7 +167,7 @@ static const pbio_observer_settings_t settings_observer_interactive = {
     .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
 };
 
-static const pbio_control_settings_t settings_servo_interactive = {
+static const pbio_control_settings_t settings_interactive = {
     .max_rate = 1000,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
@@ -184,7 +184,7 @@ static const pbio_control_settings_t settings_servo_interactive = {
 
 #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
-static const pbio_observer_settings_t settings_observer_movehub = {
+static const pbio_observer_model_t model_movehub = {
     .phi_01 = SCALE(0.00482560542071840f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.931062779704023f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(2.20557850267909f, PBIO_OBSERVER_SCALE_LOW),
@@ -196,7 +196,7 @@ static const pbio_observer_settings_t settings_observer_movehub = {
     .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
 };
 
-static const pbio_control_settings_t settings_servo_movehub = {
+static const pbio_control_settings_t settings_movehub = {
     .max_rate = 1500,
     .abs_acceleration = 5000,
     .rate_tolerance = 50,
@@ -213,7 +213,7 @@ static const pbio_control_settings_t settings_servo_movehub = {
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
-static const pbio_observer_settings_t settings_observer_technic_l = {
+static const pbio_observer_model_t model_technic_l = {
     .phi_01 = SCALE(0.00480673379919289f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.923702638108050f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(1.53998720733930f, PBIO_OBSERVER_SCALE_LOW),
@@ -225,7 +225,7 @@ static const pbio_observer_settings_t settings_observer_technic_l = {
     .obs_gains = PBIO_OBSERVER_GAINS(1000, 2000, 2000),
 };
 
-static const pbio_control_settings_t settings_servo_technic_l = {
+static const pbio_control_settings_t settings_technic_l = {
     .max_rate = 1000,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
@@ -240,7 +240,7 @@ static const pbio_control_settings_t settings_servo_technic_l = {
     .use_estimated_rate = true,
 };
 
-static const pbio_observer_settings_t settings_observer_technic_xl = {
+static const pbio_observer_model_t model_technic_xl = {
     .phi_01 = SCALE(0.00481529951016882f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.927040916512593f, PBIO_OBSERVER_SCALE_LOW),
     .gam_0 = SCALE(1.66041757033247f, PBIO_OBSERVER_SCALE_LOW),
@@ -252,7 +252,7 @@ static const pbio_observer_settings_t settings_observer_technic_xl = {
     .obs_gains = PBIO_OBSERVER_GAINS(500, 1500, 2000),
 };
 
-static const pbio_control_settings_t settings_servo_technic_xl = {
+static const pbio_control_settings_t settings_technic_xl = {
     .max_rate = 1000,
     .abs_acceleration = 2500,
     .rate_tolerance = 50,
@@ -269,52 +269,52 @@ static const pbio_control_settings_t settings_servo_technic_xl = {
 
 #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
 
-pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_settings_t **observer_settings, pbio_iodev_type_id_t id) {
+pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id) {
     switch (id) {
         case PBIO_IODEV_TYPE_ID_NONE:
             return PBIO_ERROR_NOT_SUPPORTED;
         #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
-            *observer_settings = &settings_observer_ev3_m;
-            *control_settings = settings_servo_ev3_m;
+            *model = &model_ev3_m;
+            *settings = settings_ev3_m;
             return PBIO_SUCCESS;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
-            *observer_settings = &settings_observer_ev3_l;
-            *control_settings = settings_servo_ev3_l;
+            *model = &model_ev3_l;
+            *settings = settings_ev3_l;
             return PBIO_SUCCESS;
         #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
         #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
         case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
-            *observer_settings = &settings_observer_interactive;
-            *control_settings = settings_servo_interactive;
+            *model = &model_interactive;
+            *settings = settings_interactive;
             return PBIO_SUCCESS;
         #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
-            *observer_settings = &settings_observer_movehub;
-            *control_settings = settings_servo_movehub;
+            *model = &model_movehub;
+            *settings = settings_movehub;
             return PBIO_SUCCESS;
         #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
-            *observer_settings = &settings_observer_technic_l;
-            *control_settings = settings_servo_technic_l;
+            *model = &model_technic_l;
+            *settings = settings_technic_l;
             return PBIO_SUCCESS;
         case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
-            *observer_settings = &settings_observer_technic_xl;
-            *control_settings = settings_servo_technic_xl;
+            *model = &model_technic_xl;
+            *settings = settings_technic_xl;
             return PBIO_SUCCESS;
         case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
-            *observer_settings = &settings_observer_technic_s_angular;
-            *control_settings = settings_servo_technic_s_angular;
+            *model = &model_technic_s_angular;
+            *settings = settings_technic_s_angular;
             return PBIO_SUCCESS;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
-            *observer_settings = &settings_observer_technic_l_angular;
-            *control_settings = settings_servo_technic_l_angular;
+            *model = &model_technic_l_angular;
+            *settings = settings_technic_l_angular;
             return PBIO_SUCCESS;
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
-            *observer_settings = &settings_observer_technic_m_angular;
-            *control_settings = settings_servo_technic_m_angular;
+            *model = &model_technic_m_angular;
+            *settings = settings_technic_m_angular;
             return PBIO_SUCCESS;
         #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
         default:

@@ -185,7 +185,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_control_stop(&srv->control);
 
     // Load default settings for this device type
-    err = pbio_servo_load_settings(&srv->control.settings, &srv->observer.settings, srv->dcmotor->id);
+    err = pbio_servo_load_settings(&srv->control.settings, &srv->observer.model, srv->dcmotor->id);
     if (err != PBIO_SUCCESS) {
         return err;
     }

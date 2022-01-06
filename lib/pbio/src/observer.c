@@ -26,7 +26,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting,
         // TODO
     }
 
-    const pbio_observer_settings_t *s = obs->settings;
+    const pbio_observer_model_t *s = obs->model;
 
     // Torque due to duty cycle
     int64_t tau_e = (int64_t)voltage * s->k_0 / 1000 * (PBIO_OBSERVER_SCALE_TRQ / PBIO_OBSERVER_SCALE_HIGH);
@@ -70,7 +70,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting,
 }
 
 int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref) {
-    const pbio_observer_settings_t *s = obs->settings;
+    const pbio_observer_model_t *s = obs->model;
 
     // Torque terms in micronewtons (TODO: Convert to integer math)
     int32_t friction_compensation_torque = (int32_t)(s->f_low * pbio_math_sign(rate_ref));
@@ -82,7 +82,7 @@ int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_
 }
 
 int32_t pbio_observer_torque_to_voltage(pbio_observer_t *obs, int32_t desired_torque) {
-    return (int32_t)((int64_t)desired_torque * (PBIO_OBSERVER_SCALE_HIGH / 1000) / obs->settings->k_0);
+    return (int32_t)((int64_t)desired_torque * (PBIO_OBSERVER_SCALE_HIGH / 1000) / obs->model->k_0);
 }
 
 #else
@@ -102,7 +102,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting,
         // TODO
     }
 
-    const pbio_observer_settings_t *s = obs->settings;
+    const pbio_observer_model_t *s = obs->model;
 
     // Torque due to voltage
     float tau_e = voltage / 1000 * s->k_0;
@@ -147,7 +147,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting,
 }
 
 int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref) {
-    const pbio_observer_settings_t *s = obs->settings;
+    const pbio_observer_model_t *s = obs->model;
 
     // Torque terms in micronewtons (TODO: Convert to integer math)
     int32_t friction_compensation_torque = (int32_t)(s->f_low * pbio_math_sign(rate_ref) * 1000000);
@@ -159,6 +159,6 @@ int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_
 }
 
 int32_t pbio_observer_torque_to_voltage(pbio_observer_t *obs, int32_t desired_torque) {
-    return (int32_t)(desired_torque / obs->settings->k_0 / 1000);
+    return (int32_t)(desired_torque / obs->model->k_0 / 1000);
 }
 #endif // PBIO_CONFIG_CONTROL_MINIMAL
