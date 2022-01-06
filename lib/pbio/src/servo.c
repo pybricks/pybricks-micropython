@@ -73,7 +73,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
         pbio_control_update(&srv->control, time_now, &state, &ref, &actuation, &feedback_torque);
 
         // Get required feedforward torque for current reference
-        feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, ref.rate, ref.acceleration);
+        feedforward_torque = pbio_observer_get_feedforward_torque(srv->observer.model, ref.rate, ref.acceleration);
 
         // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
         err = pbio_servo_actuate(srv, actuation, feedback_torque + feedforward_torque);
@@ -298,7 +298,7 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
         case PBIO_ACTUATION_VOLTAGE:
             return pbio_dcmotor_set_voltage(srv->dcmotor, payload);
         case PBIO_ACTUATION_TORQUE: {
-            int32_t voltage = pbio_observer_torque_to_voltage(&srv->observer, payload);
+            int32_t voltage = pbio_observer_torque_to_voltage(srv->observer.model, payload);
             return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
         }
     }

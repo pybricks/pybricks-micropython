@@ -67,8 +67,8 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
 
 void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting, int32_t voltage);
 
-int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref);
+int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref);
 
-int32_t pbio_observer_torque_to_voltage(pbio_observer_t *obs, int32_t desired_torque);
+int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque);
 
 #endif // _PBIO_OBSERVER_H_
