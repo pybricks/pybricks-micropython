@@ -62,17 +62,28 @@ void pbio_broadcast_clear_all(void) {
 }
 
 void pbio_broadcast_start(void) {
-    process_start(&pbio_broadcast_process);
-    transmit_signal.process_running = true;
+
+    if (!transmit_signal.process_running) {
+        process_start(&pbio_broadcast_process);
+        transmit_signal.process_running = true;
+    }
 }
 
 void pbio_broadcast_stop(void) {
+
+    static pbio_task_t task;
 
     if (transmit_signal.process_running) {
         // stop broadcast process
         process_exit(&pbio_broadcast_process);
         transmit_signal.process_running = false;
     }
+
+    // stop scanning
+    pbdrv_bluetooth_start_scan(&task, false);
+
+    // stop advertising
+    pbdrv_bluetooth_stop_data_advertising(&task);
 }
 
 pbio_error_t pbio_broadcast_register_signal(uint32_t hash) {
