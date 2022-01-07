@@ -9,29 +9,35 @@ import git
 
 from azure.cosmosdb.table.tableservice import TableService
 
-STORAGE_ACCOUNT = os.environ["STORAGE_ACCOUNT"]
-STORAGE_KEY = os.environ["STORAGE_KEY"]
-FIRMWARE_SIZE_TABLE = os.environ["FIRMWARE_SIZE_TABLE"]
+STORAGE_ACCOUNT = os.environ.get("STORAGE_ACCOUNT")
+STORAGE_KEY = os.environ.get("STORAGE_KEY")
+FIRMWARE_SIZE_TABLE = os.environ.get("FIRMWARE_SIZE_TABLE")
 
 PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("hub", metavar="<hub>")
-parser.add_argument("start_commit", metavar="<start commit>")
-parser.add_argument("end_commit", metavar="<end commit>")
+parser.add_argument("commit", metavar="<commit>")
 args = parser.parse_args()
 
 pybricks = git.Repo(PYBRICKS_PATH)
 assert not pybricks.bare, "Repository not found"
 
-service = TableService(STORAGE_ACCOUNT, STORAGE_KEY)
+# if credentials were given, connect to remote database
+if STORAGE_ACCOUNT:
+    service = TableService(STORAGE_ACCOUNT, STORAGE_KEY)
 
 # build each commit starting with the oldest
-for commit in reversed(
-    list(pybricks.iter_commits(f"{args.start_commit}..{args.end_commit}"))
-):
-    print("Checking out", commit.hexsha)
+start_commit = (
+    subprocess.check_output(["git", "merge-base", "origin/master", args.commit])
+    .decode()
+    .strip()
+)
+end_commit = args.commit
+
+for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}"))):
+    print("Checking out", commit.hexsha[:8], f'"{commit.summary}"', flush=True)
     pybricks.git.checkout(commit.hexsha)
 
     # update only required submodules
@@ -61,13 +67,17 @@ for commit in reversed(
     )
 
     # upload firmware size
-    bin_path = os.path.join(PYBRICKS_PATH, "bricks", args.hub, "build", "firmware.bin")
-    size = os.path.getsize(bin_path)
-    service.insert_or_merge_entity(
-        FIRMWARE_SIZE_TABLE,
-        {
-            "PartitionKey": "size",
-            "RowKey": commit.hexsha,
-            args.hub: size,
-        },
-    )
+    if "service" in globals():
+        bin_path = os.path.join(
+            PYBRICKS_PATH, "bricks", args.hub, "build", "firmware.bin"
+        )
+        size = os.path.getsize(bin_path)
+
+        service.insert_or_merge_entity(
+            FIRMWARE_SIZE_TABLE,
+            {
+                "PartitionKey": "size",
+                "RowKey": commit.hexsha,
+                args.hub: size,
+            },
+        )
