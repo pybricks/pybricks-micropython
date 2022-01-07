@@ -36,7 +36,7 @@ void pbdrv_pwm_init(void) {
  * @param [out] dev     Pointer to hold the returned PWM device.
  * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if
  *                      the ID is not valid, ::PBIO_ERROR_AGAIN if the PWM
- *                      device has not been intialized yet or
+ *                      device has not been initialized yet or
  *                      ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is
  *                      disabled.
  */
@@ -48,7 +48,7 @@ pbio_error_t pbdrv_pwm_get_dev(uint8_t id, pbdrv_pwm_dev_t **dev) {
     *dev = &pbdrv_pwm_dev[id];
 
     if ((*dev)->funcs == NULL) {
-        // has not been intialized yet
+        // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
 

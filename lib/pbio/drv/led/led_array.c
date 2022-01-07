@@ -41,7 +41,7 @@ pbio_error_t pbdrv_led_array_get_dev(uint8_t id, pbdrv_led_array_dev_t **dev) {
     *dev = &pbdrv_led_array_dev[id];
 
     if ((*dev)->funcs == NULL) {
-        // has not been intialized yet
+        // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
 
