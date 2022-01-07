@@ -6,7 +6,7 @@ on:
     - '**'
     tags-ignore:
     - '@pybricks/**'
-  pull_request_target:
+  pull_request:
 
 env:
   MAKEOPTS: -j2
@@ -200,15 +200,18 @@ jobs:
         python-version: '3.8'
     - name: Install Python packages
       run:  python -m pip install azure-cosmosdb-table GitPython
-    - name: Build firmware
-      if: ${{ github.ref != 'refs/heads/master' }}
+    - name: Build firmware (pull request)
+      if: ${{ github.base_ref != null }}
+      run: .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
+    - name: Build firmware (non-master branch)
+      if: ${{ github.base_ref == null && github.ref != 'refs/heads/master' }}
       env:
         STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
         STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
         FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-      run: .github/build-each-commit.py ${{ matrix.hub }} origin/master ${{ github.ref }}
-    - name: Build firmware
-      if: ${{ github.ref == 'refs/heads/master' }}
+      run: .github/build-each-commit.py ${{ matrix.hub }} ${{ github.ref_name }}
+    - name: Build firmware (master branch)
+      if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
       run: make -C bricks/${{ matrix.hub }}
     - name: Extract firmware.zip for upload
       if: ${{ success() && matrix.hub != 'nxt' }}
