@@ -239,7 +239,7 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         priv->grayscale_latch = grayscale_latch[i];
         pwm->pdata = pdata;
         pwm->priv = priv;
-        // don't set funcs yet since we are not fully intialized
+        // don't set funcs yet since we are not fully initialized
         pbdrv_init_busy_up();
     }
 

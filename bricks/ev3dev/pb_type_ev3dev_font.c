@@ -45,7 +45,7 @@ STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
 // otherwise we will crash when trying to access attributes!
 void pb_type_ev3dev_Font_init(void) {
     if (pb_const_ev3dev_Font_DEFAULT_obj.font) {
-        // already intialized
+        // already initialized
         return;
     }
 

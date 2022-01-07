@@ -190,7 +190,7 @@ void pbdrv_pwm_lp50xx_stm32_init(pbdrv_pwm_dev_t *devs) {
         priv->pwm = pwm;
         pwm->pdata = pdata;
         pwm->priv = priv;
-        // don't set funcs yet since we are not fully intialized
+        // don't set funcs yet since we are not fully initialized
         pbdrv_init_busy_up();
     }
 

@@ -24,7 +24,7 @@
 
 typedef struct {
     mp_obj_base_t base;
-    bool intialized;
+    bool initialized;
 } pb_type_Speaker_obj_t;
 
 STATIC pb_type_Speaker_obj_t pb_type_Speaker_singleton;
@@ -68,9 +68,9 @@ STATIC void pb_type_Speaker_stop_beep(void) {
 
 STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     pb_type_Speaker_obj_t *self = &pb_type_Speaker_singleton;
-    if (!self->intialized) {
+    if (!self->initialized) {
         self->base.type = &pb_type_Speaker;
-        self->intialized = true;
+        self->initialized = true;
     }
     return MP_OBJ_FROM_PTR(self);
 }

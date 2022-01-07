@@ -37,7 +37,7 @@
 
 typedef struct _ev3dev_Speaker_obj_t {
     mp_obj_base_t base;
-    bool intialized;
+    bool initialized;
     int beep_fd;
     char language[10];
     char voice[10];
@@ -60,7 +60,7 @@ STATIC ev3dev_Speaker_obj_t ev3dev_speaker_singleton;
 
 STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     ev3dev_Speaker_obj_t *self = &ev3dev_speaker_singleton;
-    if (!self->intialized) {
+    if (!self->initialized) {
         self->base.type = &pb_type_ev3dev_Speaker;
         self->beep_fd = open(EV3DEV_EV3_INPUT_DEV_PATH, O_RDWR, 0);
         if (self->beep_fd == -1) {
@@ -83,7 +83,7 @@ STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args
             // ignore error
         }
 
-        self->intialized = true;
+        self->initialized = true;
     }
     return MP_OBJ_FROM_PTR(self);
 }
