@@ -32,3 +32,22 @@ void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src) {
         dst[i] = src[15 - i];
     }
 }
+
+/**
+ * Performs a rising-edge oneshot test.
+ * @param [in]  value   The value being tested.
+ * @param [in]  state   The current internal state of the oneshot.
+ * @return              True if the value transitioned from false to true since
+ *                      the last call, otherwise false.
+ */
+bool pbio_oneshot(bool value, bool *state) {
+    bool ret = false;
+
+    if (value && !*state) {
+        ret = true;
+    }
+
+    *state = value;
+
+    return ret;
+}

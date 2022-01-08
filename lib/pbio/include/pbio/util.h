@@ -105,6 +105,14 @@ void pbio_set_uint32_le(uint8_t *buf, uint32_t value) {
 bool pbio_uuid128_reverse_compare(const uint8_t *uuid1, const uint8_t *uuid2);
 void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 
+/**
+ * Declares a new oneshot state variable.
+ * @param [in]  name    The name of the variable.
+ */
+#define PBIO_ONESHOT(name) bool name = false
+
+bool pbio_oneshot(bool value, bool *state);
+
 #endif // _PBIO_UTIL_H_
 
 /** @} */

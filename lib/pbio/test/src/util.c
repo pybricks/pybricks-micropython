@@ -44,8 +44,28 @@ static void test_uuid128_reverse_copy(void *env) {
     tt_want_int_op(memcmp(uuid, test_reversed_uuid, 16), ==, 0);
 }
 
+static void test_oneshot(void *env) {
+    PBIO_ONESHOT(test_oneshot);
+
+    // multiple calls with false value don't trigger oneshot
+    tt_want(!pbio_oneshot(false, &test_oneshot));
+    tt_want(!pbio_oneshot(false, &test_oneshot));
+
+    // transition from false to true triggers oneshot only once
+    tt_want(pbio_oneshot(true, &test_oneshot));
+    tt_want(!pbio_oneshot(true, &test_oneshot));
+    tt_want(!pbio_oneshot(true, &test_oneshot));
+
+    // transition from true to false does not trigger oneshot
+    tt_want(!pbio_oneshot(false, &test_oneshot));
+
+    // transition from false to true resets oneshot
+    tt_want(pbio_oneshot(true, &test_oneshot));
+}
+
 struct testcase_t pbio_util_tests[] = {
     PBIO_TEST(test_uuid128_reverse_compare),
     PBIO_TEST(test_uuid128_reverse_copy),
+    PBIO_TEST(test_oneshot),
     END_OF_TESTCASES
 };
