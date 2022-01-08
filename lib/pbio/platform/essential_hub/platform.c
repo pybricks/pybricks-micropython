@@ -23,6 +23,7 @@
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
+#include "../../drv/usb/usb_stm32.h"
 
 // Special symbols for firmware compatibility with official apps
 typedef struct {
@@ -461,8 +462,7 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
 }
 
 void OTG_FS_IRQHandler(void) {
-    extern PCD_HandleTypeDef hpcd;
-    HAL_PCD_IRQHandler(&hpcd);
+    pbdrv_usb_stm32_handle_otg_fs_irq();
 }
 
 // IMU

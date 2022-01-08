@@ -91,7 +91,7 @@
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (6)
 
 #define PBDRV_CONFIG_USB                            (1)
-#define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
+#define PBDRV_CONFIG_USB_STM32F4                    (1)
 
 #define PBDRV_CONFIG_WATCHDOG                       (1)
 #define PBDRV_CONFIG_WATCHDOG_STM32                 (1)

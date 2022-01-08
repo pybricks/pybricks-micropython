@@ -158,33 +158,30 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd) {
                        LL Driver Interface (USB Device Library --> PCD)
 *******************************************************************************/
 
-PCD_HandleTypeDef hpcd;
-
 /**
   * @brief  Initializes the Low Level portion of the Device driver.
   * @param  pdev: Device handle
   * @retval USBD Status
   */
 USBD_StatusTypeDef  USBD_LL_Init(USBD_HandleTypeDef *pdev) {
+    PCD_HandleTypeDef *hpcd = pdev->pData;
     /*Set LL Driver parameters */
-    hpcd.Instance = USB_OTG_FS;
-    hpcd.Init.dev_endpoints = 4;
-    hpcd.Init.use_dedicated_ep1 = 0;
-    hpcd.Init.dma_enable = 0;
-    hpcd.Init.low_power_enable = 0;
-    hpcd.Init.phy_itface = PCD_PHY_EMBEDDED;
-    hpcd.Init.Sof_enable = 0;
-    hpcd.Init.speed = PCD_SPEED_FULL;
-    hpcd.Init.vbus_sensing_enable = 0;
-    /* Link The driver to the stack */
-    hpcd.pData = pdev;
-    pdev->pData = &hpcd;
-    /*Initialize LL Driver */
-    HAL_PCD_Init(&hpcd);
+    hpcd->Instance = USB_OTG_FS;
+    hpcd->Init.dev_endpoints = 4;
+    hpcd->Init.use_dedicated_ep1 = 0;
+    hpcd->Init.dma_enable = 0;
+    hpcd->Init.low_power_enable = 0;
+    hpcd->Init.phy_itface = PCD_PHY_EMBEDDED;
+    hpcd->Init.Sof_enable = 0;
+    hpcd->Init.speed = PCD_SPEED_FULL;
+    hpcd->Init.vbus_sensing_enable = 0;
 
-    HAL_PCDEx_SetRxFiFo(&hpcd, 0x80);
-    HAL_PCDEx_SetTxFiFo(&hpcd, 0, 0x40);
-    HAL_PCDEx_SetTxFiFo(&hpcd, 1, 0x80);
+    /*Initialize LL Driver */
+    HAL_PCD_Init(hpcd);
+
+    HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
+    HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x40);
+    HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x80);
 
     return USBD_OK;
 }

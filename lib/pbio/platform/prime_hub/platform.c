@@ -24,6 +24,7 @@
 #include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/resistor_ladder/resistor_ladder.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
+#include "../../drv/usb/usb_stm32.h"
 
 enum {
     COUNTER_PORT_A,
@@ -681,8 +682,7 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
 }
 
 void OTG_FS_IRQHandler(void) {
-    extern PCD_HandleTypeDef hpcd;
-    HAL_PCD_IRQHandler(&hpcd);
+    pbdrv_usb_stm32_handle_otg_fs_irq();
 }
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {

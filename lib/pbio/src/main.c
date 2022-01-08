@@ -26,15 +26,14 @@
 #include "light/animation.h"
 #include "processes.h"
 
+// DO NOT ADD NEW PROCESSES HERE!
+// We are trying to remove the use of autostart.
 AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
     &pbdrv_adc_process,
 #endif
 #if PBDRV_CONFIG_UART
     &pbdrv_uart_process,
-#endif
-#if PBDRV_CONFIG_USB
-    &pbdrv_usb_process,
 #endif
 #if PBIO_CONFIG_UARTDEV
     &pbio_uartdev_process,

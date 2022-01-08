@@ -41,7 +41,8 @@ static USBD_CDC_LineCodingTypeDef LineCoding = {
     .datatype = 8,
 };
 
-static USBD_HandleTypeDef USBD_Device;
+// moved to usb_stm32.c
+// static USBD_HandleTypeDef USBD_Device;
 extern USBD_DescriptorsTypeDef VCP_Desc;
 
 /**
@@ -173,7 +174,8 @@ static USBD_CDC_ItfTypeDef USBD_CDC_fops = {
 };
 
 static void pbdrv_stm32_usb_serial_init(void) {
-    USBD_Init(&USBD_Device, &VCP_Desc, 0);
+    // This is now done in usb_stm32.c
+    // USBD_Init(&USBD_Device, &VCP_Desc, 0);
     USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);
     USBD_CDC_RegisterInterface(&USBD_Device, &USBD_CDC_fops);
     USBD_Start(&USBD_Device);
@@ -240,6 +242,8 @@ static void pbdrv_stm32_usb_serial_receive(void) {
 //     return PBIO_SUCCESS;
 // }
 
+// TODO: This process needs to be started by the main USB code (we still want
+// a separate process for serial since it can be polled quite frequently).
 PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static struct etimer timer;
 

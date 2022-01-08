@@ -9,7 +9,8 @@
 #include <pbdrv/config.h>
 #include <pbio/config.h>
 
-// All of the contiki processes
+// DO NOT ADD NEW PROCESSES HERE!
+// we are trying to get rid of this file.
 
 #if PBDRV_CONFIG_ADC
 PROCESS_NAME(pbdrv_adc_process);
@@ -17,10 +18,6 @@ PROCESS_NAME(pbdrv_adc_process);
 
 #if PBDRV_CONFIG_UART
 PROCESS_NAME(pbdrv_uart_process);
-#endif
-
-#if PBDRV_CONFIG_USB
-PROCESS_NAME(pbdrv_usb_process);
 #endif
 
 #if PBIO_CONFIG_UARTDEV
