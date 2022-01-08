@@ -436,21 +436,21 @@ void DMA2_Stream0_IRQHandler(void) {
 // USB
 
 void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
-    GPIO_InitTypeDef GPIO_InitStruct;
+    GPIO_InitTypeDef gpio_init;
 
     // Data pins
-    GPIO_InitStruct.Pin = (GPIO_PIN_11 | GPIO_PIN_12);
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    gpio_init.Pin = (GPIO_PIN_11 | GPIO_PIN_12);
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_HIGH;
+    gpio_init.Alternate = GPIO_AF10_OTG_FS;
+    HAL_GPIO_Init(GPIOA, &gpio_init);
 
     // VBUS pin
-    GPIO_InitStruct.Pin = GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    gpio_init.Pin = GPIO_PIN_9;
+    gpio_init.Mode = GPIO_MODE_INPUT;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio_init);
 
     HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
