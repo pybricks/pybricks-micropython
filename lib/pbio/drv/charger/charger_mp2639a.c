@@ -131,6 +131,7 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+        etimer_restart(&timer);
 
         chg_samples[chg_index++] = read_chg();
         if (chg_index >= PBIO_ARRAY_SIZE(chg_samples)) {
