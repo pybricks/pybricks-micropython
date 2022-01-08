@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -37,14 +37,33 @@ STATIC mp_obj_t Charger_status(mp_obj_t self_in) {
         case PBDRV_CHARGER_STATUS_FAULT:
             return MP_OBJ_NEW_QSTR(MP_QSTR_fault);
         default:
-            mp_raise_NotImplementedError(MP_ERROR_TEXT("unknown status"));
+            mp_raise_NotImplementedError(MP_ERROR_TEXT("unknown"));
     }
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(Charger_status_obj, Charger_status);
 
+STATIC mp_obj_t Charger_usb(mp_obj_t self_in) {
+    switch (pbdrv_charger_get_usb_type()) {
+        case PBDRV_CHARGER_USB_TYPE_NONE:
+            return mp_const_none;
+        case PBDRV_CHARGER_USB_TYPE_NONSTANDARD:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_nonstandard);
+        case PBDRV_CHARGER_USB_TYPE_STANDARD_DOWNSTREAM:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_standard);
+        case PBDRV_CHARGER_USB_TYPE_CHARGING_DOWNSTREAM:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_charging);
+        case PBDRV_CHARGER_USB_TYPE_DEDICATED_CHARGING:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_dedicated);
+        default:
+            mp_raise_NotImplementedError(MP_ERROR_TEXT("unknown"));
+    }
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(Charger_usb_obj, Charger_usb);
+
 STATIC const mp_rom_map_elem_t Charger_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_current), MP_ROM_PTR(&Charger_current_obj) },
     { MP_ROM_QSTR(MP_QSTR_status), MP_ROM_PTR(&Charger_status_obj) },
+    { MP_ROM_QSTR(MP_QSTR_usb), MP_ROM_PTR(&Charger_usb_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(Charger_locals_dict, Charger_locals_dict_table);
 

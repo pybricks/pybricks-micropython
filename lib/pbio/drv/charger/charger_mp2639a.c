@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 // driver for MPS MP2639A USB battery charger chip
 
@@ -30,6 +30,8 @@
 #define platform pbdrv_charger_mp2639a_platform_data
 
 PROCESS(pbdrv_charger_mp2639a_process, "MP2639A");
+static pbdrv_charger_usb_type_t usb_type;
+static process_event_t usb_event;
 
 #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 static pbdrv_pwm_dev_t *mode_pwm;
@@ -39,7 +41,17 @@ static pbdrv_charger_status_t pbdrv_charger_status;
 
 void pbdrv_charger_init(void) {
     pbdrv_init_busy_up();
+    usb_event = process_alloc_event();
     process_start(&pbdrv_charger_mp2639a_process);
+}
+
+pbdrv_charger_usb_type_t pbdrv_charger_get_usb_type(void) {
+    return usb_type;
+}
+
+void pbdrv_charger_set_usb_type(pbdrv_charger_usb_type_t type) {
+    usb_type = type;
+    process_post(&pbdrv_charger_mp2639a_process, usb_event, NULL);
 }
 
 pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {

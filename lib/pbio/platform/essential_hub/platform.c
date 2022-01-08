@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2022 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -449,20 +449,36 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
 
     // VBUS pin
     gpio_init.Pin = GPIO_PIN_9;
-    gpio_init.Mode = GPIO_MODE_INPUT;
+    gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
     gpio_init.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
     HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
     HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 6, 1);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+    // ensure correct inital state
+    HAL_GPIO_EXTI_Callback(GPIO_PIN_9);
 }
 
 void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
+    HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
     HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
 }
 
 void OTG_FS_IRQHandler(void) {
     pbdrv_usb_stm32_handle_otg_fs_irq();
+}
+
+void EXTI9_5_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t pin) {
+    if (pin == GPIO_PIN_9) {
+        pbdrv_usb_stm32_handle_vbus_irq(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9));
+    }
 }
 
 // IMU

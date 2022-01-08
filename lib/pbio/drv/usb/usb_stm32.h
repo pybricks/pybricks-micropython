@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 void pbdrv_usb_stm32_handle_otg_fs_irq(void);
+void pbdrv_usb_stm32_handle_vbus_irq(bool active);
 
 #endif // PBDRV_CONFIG_USB_STM32F4
 
