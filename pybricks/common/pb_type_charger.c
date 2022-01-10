@@ -34,6 +34,8 @@ STATIC mp_obj_t Charger_status(mp_obj_t self_in) {
             return MP_OBJ_NEW_QSTR(MP_QSTR_discharge);
         case PBDRV_CHARGER_STATUS_CHARGE:
             return MP_OBJ_NEW_QSTR(MP_QSTR_charge);
+        case PBDRV_CHARGER_STATUS_COMPLETE:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_complete);
         case PBDRV_CHARGER_STATUS_FAULT:
             return MP_OBJ_NEW_QSTR(MP_QSTR_fault);
         default:

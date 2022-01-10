@@ -3,6 +3,13 @@
 
 // driver for MPS MP2639A USB battery charger chip
 
+// NOTE: The datasheet uses CHG and CHGOK interchangeably. We are using CHG
+// here since it is shorter. Also, the datasheet is ambiguous as to whether
+// low means the CHG signal is low or the pin measured with an oscilloscope
+// is logic low. Refer to the pages in the datasheet with oscilloscope captures
+// to see what is really going on. When the (not inverted) CHG signal is "on"
+// it means "charging", not "charging complete".
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_CHARGER_MP2639A
@@ -38,6 +45,7 @@ static pbdrv_pwm_dev_t *mode_pwm;
 #endif
 
 static pbdrv_charger_status_t pbdrv_charger_status;
+static bool mode_pin_is_low;
 
 void pbdrv_charger_init(void) {
     pbdrv_init_busy_up();
@@ -80,10 +88,14 @@ void pbdrv_charger_enable(bool enable) {
         pbdrv_gpio_out_high(&platform.mode_gpio);
     }
     #endif
+
+    // Need to keep track of MODE pin state for charging logic since /ACOK pin
+    // is not wired up.
+    mode_pin_is_low = enable;
 }
 
 /**
- * Gets the current CHG signal status (not inverted)
+ * Gets the current CHG signal status (inverted compared to /CHG pin state).
  */
 static bool read_chg(void) {
     #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
@@ -92,10 +104,10 @@ static bool read_chg(void) {
     if (err != PBIO_SUCCESS) {
         return false;
     }
-    // CHG pin is active low
+    // /CHG pin is active low
     return !(flags & platform.chg_resistor_ladder_ch);
     #else
-    // CHG pin is active low
+    // /CHG pin is active low.
     return !pbdrv_gpio_input(&platform.chg_gpio);
     #endif
 }
@@ -112,14 +124,14 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
     pbdrv_charger_enable(false);
 
     #if !PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
-    // CHG pin is pulled low or open drain
+    // /CHG pin is pulled low or open drain.
     pbdrv_gpio_set_pull(&platform.chg_gpio, PBDRV_GPIO_PULL_UP);
     pbdrv_gpio_input(&platform.chg_gpio);
     #endif
 
     pbdrv_init_busy_down();
 
-    // When there is a fault the CHG pin will toggle on and off at 1Hz, so we
+    // When there is a fault the /CHG pin will toggle on and off at 1Hz, so we
     // have to try to detect that to get 3 possible states out of a digital input.
 
     static bool chg_samples[5];
@@ -143,15 +155,24 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
             sum += chg_samples[i];
         }
 
-        // If there was a fault, the CHG signal should be high/low for 2/3
-        // samples or vice versa.
-
-        if (sum < 2) {
-            pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
-        } else if (sum > 3) {
-            pbdrv_charger_status = PBDRV_CHARGER_STATUS_CHARGE;
+        if (mode_pin_is_low) {
+            // Status is determined by CHG tri-state.
+            if (sum < 2) {
+                // CHG signal is off (/CHG pin is logic high).
+                pbdrv_charger_status = PBDRV_CHARGER_STATUS_COMPLETE;
+            } else if (sum > 3) {
+                // CHG signal is on (/CHG pin is logic low).
+                pbdrv_charger_status = PBDRV_CHARGER_STATUS_CHARGE;
+            } else {
+                // CHG blinking at 1 Hz indicates a fault.
+                pbdrv_charger_status = PBDRV_CHARGER_STATUS_FAULT;
+            }
         } else {
-            pbdrv_charger_status = PBDRV_CHARGER_STATUS_FAULT;
+            // This means the battery is discharging. Note that the MP2639A is
+            // NOT in discharge mode. That mode (used to charge external
+            // devices) requires a momentary pulse on the /PB pin, which is
+            // not wired up.
+            pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
         }
     }
 

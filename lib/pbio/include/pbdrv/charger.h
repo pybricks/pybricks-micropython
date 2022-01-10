@@ -15,9 +15,15 @@
 #include <pbdrv/config.h>
 #include <pbio/error.h>
 
+/** Battery charger status indication. */
 typedef enum {
-    PBDRV_CHARGER_STATUS_CHARGE,
+    /** The battery is being discharged. */
     PBDRV_CHARGER_STATUS_DISCHARGE,
+    /** The battery is being charged. */
+    PBDRV_CHARGER_STATUS_CHARGE,
+    /** Charging is complete/the battery is full. */
+    PBDRV_CHARGER_STATUS_COMPLETE,
+    /** The charger has detected a problem. */
     PBDRV_CHARGER_STATUS_FAULT,
 } pbdrv_charger_status_t;
 
@@ -25,7 +31,7 @@ typedef enum {
  * Indicates the type of the connected USB port.
  */
 typedef enum {
-    /** The USB cable is not connected (no VBUS) */
+    /** The USB cable is not connected (no VBUS). */
     PBDRV_CHARGER_USB_TYPE_NONE,
     /** The USB cable is connected to a non-standard charger or PS/2 port. */
     PBDRV_CHARGER_USB_TYPE_NONSTANDARD,
