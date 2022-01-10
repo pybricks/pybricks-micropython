@@ -134,38 +134,41 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
     // When there is a fault the /CHG pin will toggle on and off at 1Hz, so we
     // have to try to detect that to get 3 possible states out of a digital input.
 
-    static bool chg_samples[5];
+    static bool chg_samples[7];
     static uint8_t chg_index = 0;
     static struct etimer timer;
 
-    // sample at 5Hz
-    etimer_set(&timer, 200);
+    // sample at 4Hz
+    etimer_set(&timer, 250);
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_restart(&timer);
 
-        chg_samples[chg_index++] = read_chg();
-        if (chg_index >= PBIO_ARRAY_SIZE(chg_samples)) {
-            chg_index = 0;
-        }
-
-        int sum = 0;
-        for (int i = 0; i < PBIO_ARRAY_SIZE(chg_samples); i++) {
-            sum += chg_samples[i];
-        }
+        chg_samples[chg_index] = read_chg();
 
         if (mode_pin_is_low) {
-            // Status is determined by CHG tri-state.
-            if (sum < 2) {
-                // CHG signal is off (/CHG pin is logic high).
-                pbdrv_charger_status = PBDRV_CHARGER_STATUS_COMPLETE;
-            } else if (sum > 3) {
-                // CHG signal is on (/CHG pin is logic low).
-                pbdrv_charger_status = PBDRV_CHARGER_STATUS_CHARGE;
-            } else {
-                // CHG blinking at 1 Hz indicates a fault.
+            // Count number of transitions seen during sampling window.
+            int transitions = chg_samples[0] != chg_samples[PBIO_ARRAY_SIZE(chg_samples) - 1];
+            for (int i = 1; i < PBIO_ARRAY_SIZE(chg_samples); i++) {
+                transitions += chg_samples[i] != chg_samples[i - 1];
+            }
+
+            // A single physical transition will be counted as 2 due to the
+            // circular buffer. More than 2 means the signal is cycling.
+            if (transitions > 2) {
+                // CHG blinking indicates a fault.
                 pbdrv_charger_status = PBDRV_CHARGER_STATUS_FAULT;
+            } else {
+                // Otherwise, we are constant, rising, or falling, so
+                // we need only the current (latest) state.
+                if (chg_samples[chg_index]) {
+                    // CHG signal is on (/CHG pin is logic low).
+                    pbdrv_charger_status = PBDRV_CHARGER_STATUS_CHARGE;
+                } else {
+                    // CHG signal is off (/CHG pin is logic high).
+                    pbdrv_charger_status = PBDRV_CHARGER_STATUS_COMPLETE;
+                }
             }
         } else {
             // This means the battery is discharging. Note that the MP2639A is
@@ -173,6 +176,11 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
             // devices) requires a momentary pulse on the /PB pin, which is
             // not wired up.
             pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
+        }
+
+        // Increment sampling index with wrap around.
+        if (++chg_index >= PBIO_ARRAY_SIZE(chg_samples)) {
+            chg_index = 0;
         }
     }
 
