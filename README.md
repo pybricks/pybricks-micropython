@@ -84,15 +84,6 @@ Summing up:
   This gets occasionally rebased when a new MicroPython release comes out.
 
 
-## Cloning
-
-This project uses submodules. However we don't recommend using the
-`--recursive` option of `git` since it will clone unnecessary dependencies.
-Instead, the required submodules will be automatically cloned the first time
-you run `make`.
-
-    git clone https://github.com/pybricks/pybricks-micropython
-
 ## What about all the other repositories?
 Pybricks includes not just firmware for each LEGO hub, but also various tools,
 documentation, and fun projects. Here's an overview of the other repositories:
