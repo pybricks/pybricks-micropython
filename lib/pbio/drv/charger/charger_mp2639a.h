@@ -39,7 +39,12 @@ typedef struct {
     #endif
     /** ADC channel connected to the IB pin. */
     uint8_t ib_adc_ch;
-    // TODO: add optional ISET output
+    #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
+    /** ID of PWM device connected to the ISET pin. */
+    uint8_t iset_pwm_id;
+    /** Channel of PWM device connected to the ISET pin. */
+    uint8_t iset_pwm_ch;
+    #endif
 } pbdrv_charger_mp2639a_platform_data_t;
 
 extern const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data;

@@ -40,6 +40,7 @@
 #define PBDRV_CONFIG_CHARGER_MP2639A                (1)
 #define PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM       (1)
 #define PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER (1)
+#define PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM       (1)
 
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
@@ -69,9 +70,9 @@
 #define PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV          (1)
 
 #define PBDRV_CONFIG_PWM                            (1)
-#define PBDRV_CONFIG_PWM_NUM_DEV                    (6)
+#define PBDRV_CONFIG_PWM_NUM_DEV                    (7)
 #define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
-#define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (5)
+#define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (6)
 #define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (1)
 #define PBDRV_CONFIG_PWM_TLC5955_STM32              (1)
 #define PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV      (1)

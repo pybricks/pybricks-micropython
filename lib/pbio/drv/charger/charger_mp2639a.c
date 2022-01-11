@@ -22,7 +22,7 @@
 #include <pbdrv/adc.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/gpio.h>
-#if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
+#if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM | PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
 #include <pbdrv/pwm.h>
 #endif
 #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
@@ -43,6 +43,9 @@ static process_event_t usb_event;
 #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 static pbdrv_pwm_dev_t *mode_pwm;
 #endif
+#if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
+static pbdrv_pwm_dev_t *iset_pwm;
+#endif
 
 static pbdrv_charger_status_t pbdrv_charger_status;
 static bool mode_pin_is_low;
@@ -59,6 +62,34 @@ pbdrv_charger_usb_type_t pbdrv_charger_get_usb_type(void) {
 
 void pbdrv_charger_set_usb_type(pbdrv_charger_usb_type_t type) {
     usb_type = type;
+
+    #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
+    // Set the current limit (ISET) based on the type of charger attached.
+    // The duty cycle values are hard-coded for SPIKE Prime hardware.
+
+    uint32_t duty_cycle;
+    switch (type) {
+        case PBDRV_CHARGER_USB_TYPE_STANDARD_DOWNSTREAM:
+            // REVISIT: Do we need to wait for negotiation to determine if 500mA
+            // is actually available? The chip monitors VBUS and will reduce the
+            // current being used if it starts to pull down VBUS anyway.
+            // duty_cycle = 2; // 100mA
+            duty_cycle = 15; // 500mA
+            break;
+        case PBDRV_CHARGER_USB_TYPE_CHARGING_DOWNSTREAM:
+        case PBDRV_CHARGER_USB_TYPE_DEDICATED_CHARGING:
+            // Allow max charging current (1.5A max according to spec).
+            duty_cycle = 100;
+            break;
+        default:
+            duty_cycle = 0;
+            break;
+    }
+
+    pbdrv_pwm_set_duty(iset_pwm, platform.iset_pwm_ch, duty_cycle);
+
+    #endif
+
     process_post(&pbdrv_charger_mp2639a_process, usb_event, NULL);
 }
 
@@ -118,6 +149,12 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
 
     #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
     while (pbdrv_pwm_get_dev(platform.mode_pwm_id, &mode_pwm) != PBIO_SUCCESS) {
+        PROCESS_PAUSE();
+    }
+    #endif
+
+    #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
+    while (pbdrv_pwm_get_dev(platform.iset_pwm_id, &iset_pwm) != PBIO_SUCCESS) {
         PROCESS_PAUSE();
     }
     #endif

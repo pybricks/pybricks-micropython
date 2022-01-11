@@ -54,6 +54,7 @@ enum {
     PWM_DEV_3_TIM12,
     PWM_DEV_4_TIM8,
     PWM_DEV_5_TLC5955,
+    PWM_DEV_6_TIM5,
 };
 
 enum {
@@ -138,6 +139,8 @@ const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data 
     .chg_resistor_ladder_id = RESISTOR_LADDER_DEV_0,
     .chg_resistor_ladder_ch = PBDRV_RESISTOR_LADDER_CH_2,
     .ib_adc_ch = 3,
+    .iset_pwm_id = PWM_DEV_6_TIM5,
+    .iset_pwm_ch = 1,
 };
 
 // I/O ports
@@ -309,6 +312,17 @@ static void pwm_dev_4_platform_init(void) {
     TIM8->CCR4 = TIM8->ARR / 2;
 }
 
+static void pwm_dev_6_platform_init(void) {
+    GPIO_InitTypeDef gpio_init;
+
+    gpio_init.Pin = GPIO_PIN_0;
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+    gpio_init.Alternate = GPIO_AF2_TIM5;
+    HAL_GPIO_Init(GPIOA, &gpio_init);
+}
+
 // NOTE: Official LEGO firmware uses 1.2 kHz PWM for motors. We have changed to
 // 12 kHz to reduce the unpleasant noise (similar to the frequency used by the
 // official EV3 firmware).
@@ -368,6 +382,15 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .id = PWM_DEV_4_TIM8,
         // channel 4: Bluetooth 32.768 kHz clock
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+    },
+    {
+        .platform_init = pwm_dev_6_platform_init,
+        .TIMx = TIM5,
+        .prescalar = 10, // results in 9.6 MHz clock
+        .period = 100, // 9.6 MHz divided by 100 makes 96 kHz PWM
+        .id = PWM_DEV_6_TIM5,
+        // channel 1: Battery charger ISET
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
 };
 
@@ -784,8 +807,8 @@ void SystemInit(void) {
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN |
         RCC_APB1ENR_UART7EN | RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
-        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM12EN | RCC_APB1ENR_I2C2EN |
-        RCC_APB1ENR_DACEN;
+        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM5EN | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM12EN |
+        RCC_APB1ENR_I2C2EN | RCC_APB1ENR_DACEN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_TIM8EN | RCC_APB2ENR_UART9EN |
         RCC_APB2ENR_UART10EN | RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
