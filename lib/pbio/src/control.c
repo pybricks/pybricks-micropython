@@ -65,10 +65,17 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     int32_t max_windup_torque = ctl->settings.max_torque + (ctl->settings.pid_kp * abs(state->rate) * PBIO_CONTROL_LOOP_TIME_MS * 2) / MS_PER_SECOND;
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
+    bool pause_integration =
+        // Pause if proportional torque is beyond maximum windup torque:
+        abs(torque_due_to_proportional) >= max_windup_torque &&
+        // But not if we're trying to run in the other direction (else we can get unstuck by just reversing).
+        pbio_math_sign(torque_due_to_proportional) != -pbio_math_sign(rate_err) &&
+        // But not if we should be accelerating in the other direction (else we can get unstuck by just reversing).
+        pbio_math_sign(torque_due_to_proportional) != -pbio_math_sign(ref->acceleration);
 
     // Position anti-windup in case of angle control (accumulated position error may not get too high)
     if (pbio_control_type_is_angle(ctl)) {
-        if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
+        if (pause_integration) {
             // We are at the torque limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, state->count, ref->count);
         } else {
@@ -78,7 +85,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     }
     // Position anti-windup in case of timed speed control (speed integral may not get too high)
     else {
-        if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
+        if (pause_integration) {
             // We are at the torque limit and we should prevent further speed error integration.
             pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, state->count, ref->count);
         } else {
