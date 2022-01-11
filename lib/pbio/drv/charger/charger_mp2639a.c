@@ -104,8 +104,9 @@ static bool read_chg(void) {
     if (err != PBIO_SUCCESS) {
         return false;
     }
-    // /CHG pin is active low
-    return !(flags & platform.chg_resistor_ladder_ch);
+    // Resistor ladder driver sets flag when /CHG pin is logic low so we don't
+    // need to invert here.
+    return flags & platform.chg_resistor_ladder_ch;
     #else
     // /CHG pin is active low.
     return !pbdrv_gpio_input(&platform.chg_gpio);

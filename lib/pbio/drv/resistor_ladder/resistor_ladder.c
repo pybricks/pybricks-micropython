@@ -31,6 +31,10 @@
 
 /**
  * Gets bit flags indicating the state of each input.
+ *
+ * Flags are set when a resistor load is connected and cleared when the resistor
+ * load is disconnected. This means they act as an active low input.
+ *
  * @param [in]  id          The resistor ladder device ID.
  * @param [out] flags       The flags.
  * @return                  ::PBIO_SUCCESS, ::PBIO_ERROR_NO_DEV if @p id is not
