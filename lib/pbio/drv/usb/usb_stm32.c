@@ -14,7 +14,7 @@
 #include <stm32f4xx_hal_pcd_ex.h>
 #include <usbd_core.h>
 
-#include <pbdrv/charger.h>
+#include <pbdrv/usb.h>
 #include <pbio/util.h>
 
 #include "../charger/charger.h"
@@ -22,9 +22,10 @@
 
 PROCESS(pbdrv_usb_process, "USB");
 
-static volatile bool vbus_active;
 static USBD_HandleTypeDef husbd;
 static PCD_HandleTypeDef hpcd;
+static volatile bool vbus_active;
+static pbdrv_usb_bcd_t pbdrv_usb_bcd;
 
 /**
  * Battery charger detection task.
@@ -52,7 +53,7 @@ static PT_THREAD(pbdrv_usb_stm32_bcd_detect(struct pt *pt)) {
         if (etimer_expired(&timer)) {
             USBx->GCCFG &= ~USB_OTG_GCCFG_DCDEN;
             HAL_PCDEx_DeActivateBCD(&hpcd);
-            pbdrv_charger_set_usb_type(PBDRV_CHARGER_USB_TYPE_NONSTANDARD);
+            pbdrv_usb_bcd = PBDRV_USB_BCD_NONSTANDARD;
             PT_EXIT(pt);
         }
         PT_YIELD(pt);
@@ -73,7 +74,7 @@ static PT_THREAD(pbdrv_usb_stm32_bcd_detect(struct pt *pt)) {
     if (!(USBx->GCCFG & USB_OTG_GCCFG_PDET)) {
         /* Case of Standard Downstream Port */
         USBx->GCCFG &= ~USB_OTG_GCCFG_PDEN;
-        pbdrv_charger_set_usb_type(PBDRV_CHARGER_USB_TYPE_STANDARD_DOWNSTREAM);
+        pbdrv_usb_bcd = PBDRV_USB_BCD_STANDARD_DOWNSTREAM;
     } else {
         /* start secondary detection to check connection to Charging Downstream
         Port or Dedicated Charging Port */
@@ -85,10 +86,10 @@ static PT_THREAD(pbdrv_usb_stm32_bcd_detect(struct pt *pt)) {
 
         if ((USBx->GCCFG) & USB_OTG_GCCFG_SDET) {
             /* case Dedicated Charging Port  */
-            pbdrv_charger_set_usb_type(PBDRV_CHARGER_USB_TYPE_DEDICATED_CHARGING);
+            pbdrv_usb_bcd = PBDRV_USB_BCD_DEDICATED_CHARGING;
         } else {
             /* case Charging Downstream Port  */
-            pbdrv_charger_set_usb_type(PBDRV_CHARGER_USB_TYPE_CHARGING_DOWNSTREAM);
+            pbdrv_usb_bcd = PBDRV_USB_BCD_CHARGING_DOWNSTREAM;
         }
 
         USBx->GCCFG &= ~USB_OTG_GCCFG_SDEN;
@@ -134,6 +135,10 @@ void pbdrv_usb_init(void) {
     process_poll(&pbdrv_usb_process);
 }
 
+pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
+    return pbdrv_usb_bcd;
+}
+
 // Event loop
 
 PROCESS_THREAD(pbdrv_usb_process, ev, data) {
@@ -144,7 +149,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
     PROCESS_POLLHANDLER({
         if (!bcd_busy && pbio_oneshot(!vbus_active, &no_vbus_oneshot)) {
-            pbdrv_charger_set_usb_type(PBDRV_CHARGER_USB_TYPE_NONE);
+            pbdrv_usb_bcd = PBDRV_USB_BCD_NONE;
         }
 
         // pbdrv_usb_stm32_bcd_detect() needs to run completely to the end,

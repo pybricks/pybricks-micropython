@@ -37,8 +37,6 @@
 #define platform pbdrv_charger_mp2639a_platform_data
 
 PROCESS(pbdrv_charger_mp2639a_process, "MP2639A");
-static pbdrv_charger_usb_type_t usb_type;
-static process_event_t usb_event;
 
 #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 static pbdrv_pwm_dev_t *mode_pwm;
@@ -52,45 +50,7 @@ static bool mode_pin_is_low;
 
 void pbdrv_charger_init(void) {
     pbdrv_init_busy_up();
-    usb_event = process_alloc_event();
     process_start(&pbdrv_charger_mp2639a_process);
-}
-
-pbdrv_charger_usb_type_t pbdrv_charger_get_usb_type(void) {
-    return usb_type;
-}
-
-void pbdrv_charger_set_usb_type(pbdrv_charger_usb_type_t type) {
-    usb_type = type;
-
-    #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
-    // Set the current limit (ISET) based on the type of charger attached.
-    // The duty cycle values are hard-coded for SPIKE Prime hardware.
-
-    uint32_t duty_cycle;
-    switch (type) {
-        case PBDRV_CHARGER_USB_TYPE_STANDARD_DOWNSTREAM:
-            // REVISIT: Do we need to wait for negotiation to determine if 500mA
-            // is actually available? The chip monitors VBUS and will reduce the
-            // current being used if it starts to pull down VBUS anyway.
-            // duty_cycle = 2; // 100mA
-            duty_cycle = 15; // 500mA
-            break;
-        case PBDRV_CHARGER_USB_TYPE_CHARGING_DOWNSTREAM:
-        case PBDRV_CHARGER_USB_TYPE_DEDICATED_CHARGING:
-            // Allow max charging current (1.5A max according to spec).
-            duty_cycle = 100;
-            break;
-        default:
-            duty_cycle = 0;
-            break;
-    }
-
-    pbdrv_pwm_set_duty(iset_pwm, platform.iset_pwm_ch, duty_cycle);
-
-    #endif
-
-    process_post(&pbdrv_charger_mp2639a_process, usb_event, NULL);
 }
 
 pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
@@ -108,17 +68,46 @@ pbdrv_charger_status_t pbdrv_charger_get_status(void) {
     return pbdrv_charger_status;
 }
 
-void pbdrv_charger_enable(bool enable) {
+void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
+    #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
+
+    // Set the current limit (ISET) based on the type of charger attached.
+    // The duty cycle values are hard-coded for SPIKE Prime hardware.
+
+    uint32_t duty_cycle;
+    switch (limit) {
+        case PBDRV_CHARGER_LIMIT_CHARGING:
+            duty_cycle = 100; // max duty cycle
+            break;
+        case PBDRV_CHARGER_LIMIT_STD_MAX:
+            duty_cycle = 15; // 500 mA
+            break;
+        case PBDRV_CHARGER_LIMIT_STD_MIN:
+            duty_cycle = 2; // 100 mA
+            break;
+        default:
+            duty_cycle = 0;
+            break;
+    }
+
+    pbdrv_pwm_set_duty(iset_pwm, platform.iset_pwm_ch, duty_cycle);
+
+    #endif // PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
+
     #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
+
     // REVISIT: only known use has max duty cycle of UINT16_MAX
     pbdrv_pwm_set_duty(mode_pwm, platform.mode_pwm_ch, enable ? 0 : UINT16_MAX);
-    #else
+
+    #else // PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
+
     if (enable) {
         pbdrv_gpio_out_low(&platform.mode_gpio);
     } else {
         pbdrv_gpio_out_high(&platform.mode_gpio);
     }
-    #endif
+
+    #endif // PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 
     // Need to keep track of MODE pin state for charging logic since /ACOK pin
     // is not wired up.
@@ -159,7 +148,7 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
     }
     #endif
 
-    pbdrv_charger_enable(false);
+    pbdrv_charger_enable(false, PBDRV_CHARGER_LIMIT_NONE);
 
     #if !PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
     // /CHG pin is pulled low or open drain.

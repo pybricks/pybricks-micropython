@@ -10,6 +10,7 @@
 #include <pbdrv/charger.h>
 #include <pbdrv/config.h>
 #include <pbdrv/clock.h>
+#include <pbdrv/usb.h>
 #include <pbsys/status.h>
 
 // period over which the battery voltage is averaged (in milliseconds)
@@ -100,6 +101,27 @@ void pbsys_battery_poll(void) {
 
     // REVISIT: we should be able to make this event driven rather than polled
     #if PBDRV_CONFIG_CHARGER
-    pbdrv_charger_enable(pbdrv_charger_get_usb_type() != PBDRV_CHARGER_USB_TYPE_NONE);
-    #endif
+
+    pbdrv_usb_bcd_t bcd = pbdrv_usb_get_bcd();
+    bool enable = bcd != PBDRV_USB_BCD_NONE;
+    pbdrv_charger_limit_t limit;
+
+    // REVISIT: The only current battery charger chip will automatically monitor
+    // VBUS and limit the current if the VBUS voltage starts to drop, so these
+    // limits are a bit looser than they could be.
+    switch (bcd) {
+        case PBDRV_USB_BCD_NONE:
+            limit = PBDRV_CHARGER_LIMIT_NONE;
+            break;
+        case PBDRV_USB_BCD_STANDARD_DOWNSTREAM:
+            limit = PBDRV_CHARGER_LIMIT_STD_MAX;
+            break;
+        default:
+            limit = PBDRV_CHARGER_LIMIT_CHARGING;
+            break;
+    }
+
+    pbdrv_charger_enable(enable, limit);
+
+    #endif // PBDRV_CONFIG_CHARGER
 }

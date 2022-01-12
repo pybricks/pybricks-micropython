@@ -27,21 +27,34 @@ typedef enum {
     PBDRV_CHARGER_STATUS_FAULT,
 } pbdrv_charger_status_t;
 
-/**
- * Indicates the type of the connected USB port.
- */
+/** Battery charger current limit selection. */
 typedef enum {
-    /** The USB cable is not connected (no VBUS). */
-    PBDRV_CHARGER_USB_TYPE_NONE,
-    /** The USB cable is connected to a non-standard charger or PS/2 port. */
-    PBDRV_CHARGER_USB_TYPE_NONSTANDARD,
-    /** The USB cable is connected to standard downstream port. */
-    PBDRV_CHARGER_USB_TYPE_STANDARD_DOWNSTREAM,
-    /** The USB cable is connected to charging downstream port. */
-    PBDRV_CHARGER_USB_TYPE_CHARGING_DOWNSTREAM,
-    /** The USB cable is connected to dedicated charging port. */
-    PBDRV_CHARGER_USB_TYPE_DEDICATED_CHARGING,
-} pbdrv_charger_usb_type_t;
+    /**
+     * The charger should be limited to 0 mA.
+     *
+     * This can be used when the charger is not charging.
+     */
+    PBDRV_CHARGER_LIMIT_NONE,
+    /**
+     * The charger should be limited to 100 mA.
+     *
+     * This is the standard for USB 2.0 ports.
+     */
+    PBDRV_CHARGER_LIMIT_STD_MIN,
+    /**
+     * The charger should be limited to 500 mA.
+     *
+     * This is the standard for USB 2.0 ports after negotiation.
+     */
+    PBDRV_CHARGER_LIMIT_STD_MAX,
+    /**
+     * The charger should be limited to 1.5A.
+     *
+     * This is the standard for both downstream charging ports and dedicated
+     * charging ports.
+     */
+    PBDRV_CHARGER_LIMIT_CHARGING,
+} pbdrv_charger_limit_t;
 
 #if PBDRV_CONFIG_CHARGER
 
@@ -60,16 +73,11 @@ pbio_error_t pbdrv_charger_get_current_now(uint16_t *current);
 pbdrv_charger_status_t pbdrv_charger_get_status(void);
 
 /**
- * Gets the USB charger type.
- * @return              The type.
- */
-pbdrv_charger_usb_type_t pbdrv_charger_get_usb_type(void);
-
-/**
  * Enables or disables charging.
  * @param [in]  enable  True to enable charging or false for discharging.
+ * @param [in]  limit   The current limit for the charging rate.
  */
-void pbdrv_charger_enable(bool enable);
+void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit);
 
 #else
 
@@ -82,11 +90,7 @@ static inline pbdrv_charger_status_t pbdrv_charger_get_status(void) {
     return PBDRV_CHARGER_STATUS_FAULT;
 }
 
-static inline pbdrv_charger_usb_type_t pbdrv_charger_get_usb_type(void) {
-    return PBDRV_CHARGER_USB_TYPE_NONE;
-}
-
-static inline void pbdrv_charger_enable(bool enable) {
+static inline void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
 }
 
 #endif

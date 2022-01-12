@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_COMMON_CHARGER
 
 #include <pbdrv/charger.h>
+#include <pbdrv/usb.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -45,16 +46,16 @@ STATIC mp_obj_t Charger_status(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(Charger_status_obj, Charger_status);
 
 STATIC mp_obj_t Charger_usb(mp_obj_t self_in) {
-    switch (pbdrv_charger_get_usb_type()) {
-        case PBDRV_CHARGER_USB_TYPE_NONE:
+    switch (pbdrv_usb_get_bcd()) {
+        case PBDRV_USB_BCD_NONE:
             return mp_const_none;
-        case PBDRV_CHARGER_USB_TYPE_NONSTANDARD:
+        case PBDRV_USB_BCD_NONSTANDARD:
             return MP_OBJ_NEW_QSTR(MP_QSTR_nonstandard);
-        case PBDRV_CHARGER_USB_TYPE_STANDARD_DOWNSTREAM:
+        case PBDRV_USB_BCD_STANDARD_DOWNSTREAM:
             return MP_OBJ_NEW_QSTR(MP_QSTR_standard);
-        case PBDRV_CHARGER_USB_TYPE_CHARGING_DOWNSTREAM:
+        case PBDRV_USB_BCD_CHARGING_DOWNSTREAM:
             return MP_OBJ_NEW_QSTR(MP_QSTR_charging);
-        case PBDRV_CHARGER_USB_TYPE_DEDICATED_CHARGING:
+        case PBDRV_USB_BCD_DEDICATED_CHARGING:
             return MP_OBJ_NEW_QSTR(MP_QSTR_dedicated);
         default:
             mp_raise_NotImplementedError(MP_ERROR_TEXT("unknown"));
