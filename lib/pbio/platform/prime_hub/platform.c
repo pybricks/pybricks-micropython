@@ -37,10 +37,10 @@ enum {
 
 enum {
     LED_DEV_0_STATUS,
-    LED_DEV_1_STATUS_TOP,
-    LED_DEV_2_STATUS_BOTTOM,
-    LED_DEV_3_BATTERY,
-    LED_DEV_4_BLUETOOTH,
+    LED_DEV_1_BATTERY,
+    LED_DEV_2_BLUETOOTH,
+    LED_DEV_3_STATUS_TOP,
+    LED_DEV_4_STATUS_BOTTOM,
 };
 
 enum {
@@ -210,14 +210,14 @@ const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
 const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_LED_DUAL_NUM_DEV] = {
     {
         .id = LED_DEV_0_STATUS,
-        .id1 = LED_DEV_1_STATUS_TOP,
-        .id2 = LED_DEV_2_STATUS_BOTTOM,
+        .id1 = LED_DEV_3_STATUS_TOP,
+        .id2 = LED_DEV_4_STATUS_BOTTOM,
     },
 };
 
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
-        .id = LED_DEV_1_STATUS_TOP,
+        .id = LED_DEV_3_STATUS_TOP,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 5,
         .g_id = PWM_DEV_5_TLC5955,
@@ -227,7 +227,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
-        .id = LED_DEV_2_STATUS_BOTTOM,
+        .id = LED_DEV_4_STATUS_BOTTOM,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 8,
         .g_id = PWM_DEV_5_TLC5955,
@@ -237,7 +237,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
-        .id = LED_DEV_3_BATTERY,
+        .id = LED_DEV_1_BATTERY,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 2,
         .g_id = PWM_DEV_5_TLC5955,
@@ -247,7 +247,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
-        .id = LED_DEV_4_BLUETOOTH,
+        .id = LED_DEV_2_BLUETOOTH,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 20,
         .g_id = PWM_DEV_5_TLC5955,

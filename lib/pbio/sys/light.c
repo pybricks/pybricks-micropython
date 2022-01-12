@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020,2022 The Pybricks Authors
 
 #include <assert.h>
 #include <stdbool.h>
@@ -7,6 +7,8 @@
 
 #include <contiki.h>
 
+#include <pbdrv/charger.h>
+#include <pbdrv/config.h>
 #include <pbdrv/led.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
@@ -265,6 +267,36 @@ void pbsys_status_light_poll(void) {
             pbdrv_led_set_hsv(led, &hsv);
         }
     }
+
+    // REVISIT: We should be able to make this event driven instead of polled.
+    #if PBDRV_CONFIG_CHARGER
+
+    // FIXME: battery light is currently hard-coded to id 1 on all platforms
+    if (pbdrv_led_get_dev(1, &led) == PBIO_SUCCESS) {
+        pbio_color_t color;
+        switch (pbdrv_charger_get_status())
+        {
+            case PBDRV_CHARGER_STATUS_CHARGE:
+                color = PBIO_COLOR_GREEN;
+                break;
+            case PBDRV_CHARGER_STATUS_COMPLETE:
+                color = PBIO_COLOR_RED;
+                break;
+            case PBDRV_CHARGER_STATUS_FAULT:
+                // TODO: This state should flash like official LEGO firmware.
+                color = PBIO_COLOR_YELLOW;
+                break;
+            default:
+                color = PBIO_COLOR_NONE;
+                break;
+        }
+
+        pbio_color_hsv_t hsv;
+        pbio_color_to_hsv(color, &hsv);
+        pbdrv_led_set_hsv(led, &hsv);
+    }
+
+    #endif // PBDRV_CONFIG_CHARGER
 }
 
 #endif // PBSYS_CONFIG_STATUS_LIGHT
