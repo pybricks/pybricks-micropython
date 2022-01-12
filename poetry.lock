@@ -41,7 +41,7 @@ cryptography = ">=2.8"
 
 [package.extras]
 bcrypt = ["bcrypt (>=3.1.3)"]
-fido2 = ["fido2 (0.9.1)"]
+fido2 = ["fido2 (==0.9.1)"]
 gssapi = ["gssapi (>=1.2.0)"]
 libnacl = ["libnacl (>=1.4.2)"]
 pkcs11 = ["python-pkcs11 (>=0.7.0)"]
@@ -118,14 +118,14 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "bleak"
-version = "0.13.0"
+version = "0.14.1"
 description = "Bluetooth Low Energy platform Agnostic Klient"
 category = "dev"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-bleak-winrt = {version = ">=1.0.1", markers = "platform_system == \"Windows\""}
+bleak-winrt = {version = ">=1.1.0", markers = "platform_system == \"Windows\""}
 dbus-next = {version = "*", markers = "platform_system == \"Linux\""}
 pyobjc-core = {version = "*", markers = "platform_system == \"Darwin\""}
 pyobjc-framework-CoreBluetooth = {version = "*", markers = "platform_system == \"Darwin\""}
@@ -133,7 +133,7 @@ pyobjc-framework-libdispatch = {version = "*", markers = "platform_system == \"D
 
 [[package]]
 name = "bleak-winrt"
-version = "1.0.1"
+version = "1.1.0"
 description = "Python WinRT bindings for Bleak"
 category = "dev"
 optional = false
@@ -200,12 +200,12 @@ python-versions = ">=3.6"
 cffi = ">=1.12"
 
 [package.extras]
-docs = ["sphinx (>=1.6.5,<1.8.0 || >1.8.0,<3.1.0 || >3.1.0,<3.1.1 || >3.1.1)", "sphinx-rtd-theme"]
+docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx-rtd-theme"]
 docstest = ["pyenchant (>=1.6.11)", "twine (>=1.12.0)", "sphinxcontrib-spelling (>=4.0.1)"]
 pep8test = ["black", "flake8", "flake8-import-order", "pep8-naming"]
 sdist = ["setuptools_rust (>=0.11.4)"]
 ssh = ["bcrypt (>=3.1.5)"]
-test = ["pytest (>=6.2.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,<3.79.2 || >3.79.2)"]
+test = ["pytest (>=6.2.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,!=3.79.2)"]
 
 [[package]]
 name = "cycler"
@@ -312,18 +312,18 @@ python-versions = "*"
 
 [package.dependencies]
 graphql-core = ">=3.1.5,<3.2"
-requests = {version = ">=2.26,<3", optional = true, markers = "extra == \"all\""}
-requests_toolbelt = {version = ">=0.9.1,<1", optional = true, markers = "extra == \"all\""}
-urllib3 = {version = ">=1.26", optional = true, markers = "extra == \"all\""}
+requests = {version = ">=2.26,<3", optional = true, markers = "extra == \"requests\""}
+requests_toolbelt = {version = ">=0.9.1,<1", optional = true, markers = "extra == \"requests\""}
+urllib3 = {version = ">=1.26", optional = true, markers = "extra == \"requests\""}
 yarl = ">=1.6,<2.0"
 
 [package.extras]
 aiohttp = ["aiohttp (>=3.7.1,<3.8.0)"]
 all = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.26,<3)", "requests_toolbelt (>=0.9.1,<1)", "urllib3 (>=1.26)", "websockets (>=9,<10)"]
-dev = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.26,<3)", "requests_toolbelt (>=0.9.1,<1)", "urllib3 (>=1.26)", "websockets (>=9,<10)", "black (19.10b0)", "check-manifest (>=0.42,<1)", "flake8 (3.8.1)", "isort (4.3.21)", "mypy (0.770)", "sphinx (>=3.0.0,<4)", "sphinx_rtd_theme (>=0.4,<1)", "sphinx-argparse (0.2.5)", "parse (1.15.0)", "pytest (5.4.2)", "pytest-asyncio (0.11.0)", "pytest-cov (2.8.1)", "mock (4.0.2)", "vcrpy (4.0.2)", "aiofiles"]
+dev = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.26,<3)", "requests_toolbelt (>=0.9.1,<1)", "urllib3 (>=1.26)", "websockets (>=9,<10)", "black (==19.10b0)", "check-manifest (>=0.42,<1)", "flake8 (==3.8.1)", "isort (==4.3.21)", "mypy (==0.770)", "sphinx (>=3.0.0,<4)", "sphinx_rtd_theme (>=0.4,<1)", "sphinx-argparse (==0.2.5)", "parse (==1.15.0)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)", "aiofiles"]
 requests = ["requests (>=2.26,<3)", "requests_toolbelt (>=0.9.1,<1)", "urllib3 (>=1.26)"]
-test = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.26,<3)", "requests_toolbelt (>=0.9.1,<1)", "urllib3 (>=1.26)", "websockets (>=9,<10)", "parse (1.15.0)", "pytest (5.4.2)", "pytest-asyncio (0.11.0)", "pytest-cov (2.8.1)", "mock (4.0.2)", "vcrpy (4.0.2)", "aiofiles"]
-test_no_transport = ["parse (1.15.0)", "pytest (5.4.2)", "pytest-asyncio (0.11.0)", "pytest-cov (2.8.1)", "mock (4.0.2)", "vcrpy (4.0.2)", "aiofiles"]
+test = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.26,<3)", "requests_toolbelt (>=0.9.1,<1)", "urllib3 (>=1.26)", "websockets (>=9,<10)", "parse (==1.15.0)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)", "aiofiles"]
+test_no_transport = ["parse (==1.15.0)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)", "aiofiles"]
 websockets = ["websockets (>=9,<10)"]
 
 [[package]]
@@ -446,7 +446,7 @@ python-versions = ">=3.6"
 
 [package.extras]
 docs = ["Sphinx (>=4)", "furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-autodoc-typehints (>=1.12)"]
-test = ["appdirs (1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
+test = ["appdirs (==1.4.4)", "pytest (>=6)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)"]
 
 [[package]]
 name = "plotly"
@@ -481,7 +481,7 @@ python-versions = ">=3.8,<4.0"
 
 [[package]]
 name = "pybricksdev"
-version = "1.0.0a19"
+version = "1.0.0a21"
 description = "Pybricks developer tools"
 category = "dev"
 optional = false
@@ -492,7 +492,7 @@ aioserial = ">=1.3.0,<2.0.0"
 appdirs = ">=1.4.4,<2.0.0"
 argcomplete = ">=1.11.1,<2.0.0"
 asyncssh = ">=2.2.1,<3.0.0"
-bleak = ">=0.13.0,<0.14.0"
+bleak = ">=0.14.1,<0.15.0"
 mpy-cross = "1.14"
 prompt-toolkit = ">=3.0.18,<4.0.0"
 pyusb = ">=1.0.2,<2.0.0"
@@ -559,9 +559,9 @@ python-versions = ">=3.6"
 
 [package.extras]
 crypto = ["cryptography (>=3.3.1)"]
-dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (5.0.4)", "mypy", "pre-commit"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
 docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
-tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (5.0.4)"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
 [[package]]
 name = "pynacl"
@@ -577,7 +577,7 @@ six = "*"
 
 [package.extras]
 docs = ["sphinx (>=1.6.5)", "sphinx-rtd-theme"]
-tests = ["pytest (>=3.2.1,<3.3.0 || >3.3.0)", "hypothesis (>=3.27.0)"]
+tests = ["pytest (>=3.2.1,!=3.3.0)", "hypothesis (>=3.27.0)"]
 
 [[package]]
 name = "pyobjc-core"
@@ -688,7 +688,7 @@ idna = {version = ">=2.5,<4", markers = "python_version >= \"3\""}
 urllib3 = ">=1.21.1,<1.27"
 
 [package.extras]
-socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
+socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
@@ -795,7 +795,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
 [package.extras]
 brotli = ["brotlipy (>=0.6.0)"]
 secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
-socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
+socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "validators"
@@ -843,7 +843,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "df60ffa195b473703b21585780a30b0d26d63eb6f247c22898cd7c75b5f7b32e"
+content-hash = "f45226563778f52192064b350a08e2aa059c81f33508e8422274115a806364ac"
 
 [metadata.files]
 aioserial = [
@@ -884,19 +884,19 @@ black = [
     {file = "black-21.12b0.tar.gz", hash = "sha256:77b80f693a569e2e527958459634f18df9b0ba2625ba4e0c2d5da5be42e6f2b3"},
 ]
 bleak = [
-    {file = "bleak-0.13.0-py2.py3-none-any.whl", hash = "sha256:33e92739a8a117628fa1533bf973fd55ade2051c3a12ba3bbfee6ca9eca46959"},
-    {file = "bleak-0.13.0.tar.gz", hash = "sha256:eb0716852cad7e96613934680b6aff4f48d68671d6ab967155497387cd98dcee"},
+    {file = "bleak-0.14.1-py2.py3-none-any.whl", hash = "sha256:af5a57a3c93970525e3d2953c80d69489a2903f1fd28e30bf85e473f22fb657a"},
+    {file = "bleak-0.14.1.tar.gz", hash = "sha256:9794685d25f8f71d48fef04e2ca8ce8cc243b070f5b08ed70e70ae98341d24bb"},
 ]
 bleak-winrt = [
-    {file = "bleak-winrt-1.0.1.tar.gz", hash = "sha256:ffa15cf859eb4c90da946245386983d9036aa510299bdbd0a838cb104203d5b5"},
-    {file = "bleak_winrt-1.0.1-cp310-cp310-win32.whl", hash = "sha256:47c08ba2ba5bbf50892e50f772c01220c0f61055c6b6c0368122e86d8b099a22"},
-    {file = "bleak_winrt-1.0.1-cp310-cp310-win_amd64.whl", hash = "sha256:31aeb236ba59f779d18694be850e23131a02fc77919babf183a876a6cbe2ebc8"},
-    {file = "bleak_winrt-1.0.1-cp37-cp37m-win32.whl", hash = "sha256:bef08a8cffc56e6e84c03ff24764e992212a26ce51cb255164fc800f6c6304d8"},
-    {file = "bleak_winrt-1.0.1-cp37-cp37m-win_amd64.whl", hash = "sha256:d0f92bebbaa91cd23dc3daec29ccc93d34e540d1679cf31f6d63b43b9d0ec6a7"},
-    {file = "bleak_winrt-1.0.1-cp38-cp38-win32.whl", hash = "sha256:d19a19a24c1d5f776e2951e21c961b1fba86f97608f9999586f1698da7dfddce"},
-    {file = "bleak_winrt-1.0.1-cp38-cp38-win_amd64.whl", hash = "sha256:60cb003399f0bd9522356ae39b748c1781cfb93394a47393ae4579f4a6e1d5db"},
-    {file = "bleak_winrt-1.0.1-cp39-cp39-win32.whl", hash = "sha256:6adcb5d3efd0790768bccf8dcf285d937f9fd86ad3b879869d92620af443d8b2"},
-    {file = "bleak_winrt-1.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:7de3d3ce87f420192fa97853e8eaf82ae6aacb1e76fd3d8008a45017cdb048f4"},
+    {file = "bleak-winrt-1.1.0.tar.gz", hash = "sha256:d0e68e9f882c4d18c07adbbb7f77dd30327a3a461f835001c5e83b5a0b379100"},
+    {file = "bleak_winrt-1.1.0-cp310-cp310-win32.whl", hash = "sha256:4f8f0558a8c21215b5cefdeaf731d2dfb6f12dfc7238f18ced5c00f9b096cea8"},
+    {file = "bleak_winrt-1.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:1f0a92952ca1aa75d4a4eb0eeb81a957db3498abb57f80d1032d6cdc0693cb4d"},
+    {file = "bleak_winrt-1.1.0-cp37-cp37m-win32.whl", hash = "sha256:e91d07742e508aa4ebbc139f5c8dceaa1955f7002bd233c848fe181d7599a4a5"},
+    {file = "bleak_winrt-1.1.0-cp37-cp37m-win_amd64.whl", hash = "sha256:a24b1c854975fed5fa6e1142a96bc35eda2674ac54eddb5b0373acba58e61d85"},
+    {file = "bleak_winrt-1.1.0-cp38-cp38-win32.whl", hash = "sha256:9d60b2d5a39bfd0d54719f8dc871194f3e0929e3f821f6b45c4f3b6e7404d3c2"},
+    {file = "bleak_winrt-1.1.0-cp38-cp38-win_amd64.whl", hash = "sha256:2f5cb4743c5826fc2431097a6ffbedf3f5ed3366a6e6b68f497b48bbd185739a"},
+    {file = "bleak_winrt-1.1.0-cp39-cp39-win32.whl", hash = "sha256:95fddeee74acb9e20aa531aeef96af56518cf4b9bd2caf5a6d8ebca4c1fc71ae"},
+    {file = "bleak_winrt-1.1.0-cp39-cp39-win_amd64.whl", hash = "sha256:4039a5ffc099cd2520cd79ecf4f07fa4e605f02d0cb53a7d32a0f1b1486e8330"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -1305,8 +1305,8 @@ pybricks = [
     {file = "pybricks-3.1.0.tar.gz", hash = "sha256:26298ecb3733588c4baf0a6e5a6813f34b99c3487e583377b65d566a37cc62e7"},
 ]
 pybricksdev = [
-    {file = "pybricksdev-1.0.0a19-py3-none-any.whl", hash = "sha256:15d9efb49552010536b22c18bba621fe451a7cf325d83358101b3ded9cb6adbe"},
-    {file = "pybricksdev-1.0.0a19.tar.gz", hash = "sha256:3a91e780b53682565f00285e1918d696ee46965cacb22f36056e452946b56989"},
+    {file = "pybricksdev-1.0.0a21-py3-none-any.whl", hash = "sha256:5d0d7b855b137d9d36f58f2317807469a768c186b4d0c4bf6ce9490c4cfbc8ad"},
+    {file = "pybricksdev-1.0.0a21.tar.gz", hash = "sha256:14de2da6eb7fb7d1c965ac174fd2a29eb928a3833fe0b5c8f7a1ff3a8e863520"},
 ]
 pycodestyle = [
     {file = "pycodestyle-2.7.0-py2.py3-none-any.whl", hash = "sha256:514f76d918fcc0b55c6680472f0a37970994e07bbb80725808c17089be302068"},
@@ -1368,6 +1368,8 @@ pynacl = [
     {file = "PyNaCl-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:7757ae33dae81c300487591c68790dfb5145c7d03324000433d9a2c141f82af7"},
     {file = "PyNaCl-1.4.0-cp35-abi3-macosx_10_10_x86_64.whl", hash = "sha256:757250ddb3bff1eecd7e41e65f7f833a8405fede0194319f87899690624f2122"},
     {file = "PyNaCl-1.4.0-cp35-abi3-manylinux1_x86_64.whl", hash = "sha256:30f9b96db44e09b3304f9ea95079b1b7316b2b4f3744fe3aaecccd95d547063d"},
+    {file = "PyNaCl-1.4.0-cp35-abi3-win32.whl", hash = "sha256:4e10569f8cbed81cb7526ae137049759d2a8d57726d52c1a000a3ce366779634"},
+    {file = "PyNaCl-1.4.0-cp35-abi3-win_amd64.whl", hash = "sha256:c914f78da4953b33d4685e3cdc7ce63401247a21425c16a39760e282075ac4a6"},
     {file = "PyNaCl-1.4.0-cp35-cp35m-win32.whl", hash = "sha256:06cbb4d9b2c4bd3c8dc0d267416aaed79906e7b33f114ddbf0911969794b1cc4"},
     {file = "PyNaCl-1.4.0-cp35-cp35m-win_amd64.whl", hash = "sha256:511d269ee845037b95c9781aa702f90ccc36036f95d0f31373a6a79bd8242e25"},
     {file = "PyNaCl-1.4.0-cp36-cp36m-win32.whl", hash = "sha256:11335f09060af52c97137d4ac54285bcb7df0cef29014a1a4efe64ac065434c4"},
