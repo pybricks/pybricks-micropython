@@ -135,7 +135,7 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
 
 const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data = {
     .mode_pwm_id = PWM_DEV_5_TLC5955,
-    .mode_pwm_ch = 33,
+    .mode_pwm_ch = 15,
     .chg_resistor_ladder_id = RESISTOR_LADDER_DEV_0,
     .chg_resistor_ladder_ch = PBDRV_RESISTOR_LADDER_CH_2,
     .ib_adc_ch = 3,
