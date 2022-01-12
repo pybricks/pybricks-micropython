@@ -96,6 +96,11 @@ $env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 
 
 [cygwin]: https://www.cygwin.com/
 
+#### macOS
+
+    brew install uncrustify
+    brew instal libusb   
+    brew install --cask gcc-arm-embedded
 
 ### Get the code
 
@@ -301,3 +306,24 @@ Then in the `pybricks-micropython` directory:
     yarn build:debug
 
 [wasm]: https://webassembly.org/
+
+Build and deploy firmware
+-------------------------
+
+### Build the firmware
+
+Pick your Hub from the `bricks` sub-directory you want to compile.
+
+    poetry shell
+    make mpy-cross -j8
+    make -C bricks/primehub -j8
+       
+### Deploy the firmware to a hub
+
+1. Follow the guide to prepare your Hub for Pybricks firmware installation:
+   1. https://pybricks.com/install, or 
+   2. https://dfu.pybricks.com for Spike Prime or Mindstorms Inventor    
+2. Execute the deployment:
+    ```shell
+    make -C bricks/primehub -j8 deploy
+    ```
