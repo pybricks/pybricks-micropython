@@ -169,7 +169,9 @@ static void pbsys_status_light_handle_status_change(void) {
     bool shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // This determines which indication has the highest precedence.
-    if (ble_advertising && low_voltage) {
+    if (shutdown) {
+        new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN;
+    } else if (ble_advertising && low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE;
     } else if (ble_advertising) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING;
@@ -181,8 +183,6 @@ static void pbsys_status_light_handle_status_change(void) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL;
     } else if (low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE;
-    } else if (shutdown) {
-        new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN;
     }
 
     // if the indication changed, then reset the indication pattern to the beginning
