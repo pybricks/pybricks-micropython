@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 // Provides battery status indication and shutdown on low battery.
 
 // TODO: need to handle high battery current
-// TOOD: need to handle Li-ion batteries and charger for SPIKE Prime
 // TODO: need to handle battery pack switch and Li-ion batteries for Technic Hub and NXT
 
 #include <pbdrv/battery.h>
+#include <pbdrv/charger.h>
+#include <pbdrv/config.h>
 #include <pbdrv/clock.h>
 #include <pbsys/status.h>
 
@@ -96,4 +97,9 @@ void pbsys_battery_poll(void) {
     } else if (avg_battery_voltage >= battery_ok_mv) {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     }
+
+    // REVISIT: we should be able to make this event driven rather than polled
+    #if PBDRV_CONFIG_CHARGER
+    pbdrv_charger_enable(pbdrv_charger_get_usb_type() != PBDRV_CHARGER_USB_TYPE_NONE);
+    #endif
 }
