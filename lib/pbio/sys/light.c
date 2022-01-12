@@ -277,10 +277,10 @@ void pbsys_status_light_poll(void) {
         switch (pbdrv_charger_get_status())
         {
             case PBDRV_CHARGER_STATUS_CHARGE:
-                color = PBIO_COLOR_GREEN;
+                color = PBIO_COLOR_RED;
                 break;
             case PBDRV_CHARGER_STATUS_COMPLETE:
-                color = PBIO_COLOR_RED;
+                color = PBIO_COLOR_GREEN;
                 break;
             case PBDRV_CHARGER_STATUS_FAULT:
                 // TODO: This state should flash like official LEGO firmware.
