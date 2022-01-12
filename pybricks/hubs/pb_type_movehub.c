@@ -185,7 +185,7 @@ STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
     // Convert to appropriate units and return as tuple
     mp_obj_t values[3];
     for (uint8_t i = 0; i < 3; i++) {
-        values[i] = MP_OBJ_NEW_SMALL_INT((data[i] * 10) >> 6);
+        values[i] = MP_OBJ_NEW_SMALL_INT((data[i] * 158));
     }
     return mp_obj_new_tuple(3, values);
 }
