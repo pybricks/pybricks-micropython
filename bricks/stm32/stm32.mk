@@ -685,12 +685,6 @@ $(BUILD)/%.dfu: $(BUILD)/%.bin
 deploy: $(BUILD)/firmware.zip
 	$(Q)$(PYBRICKSDEV) flash $< --name $(PBIO_PLATFORM)
 
-deploy-dfu-%: $(BUILD)/%.dfu
-	$(ECHO) "Writing $< to the board"
-	$(Q)$(PYTHON) $(PYDFU) -u $< $(if $(DFU_VID),--vid $(DFU_VID)) $(if $(DFU_PID),--pid $(DFU_PID))
-
-deploy-dfu: deploy-dfu-firmware
-
 deploy-openocd: $(BUILD)/firmware-no-checksum.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
 	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
