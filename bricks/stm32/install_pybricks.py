@@ -40,17 +40,32 @@ LEGO_METADATA_PATH = FIRMWARE_DIR + "/lego-firmware.metadata.json"
 ERROR_BAD_FIRMWARE = """Invalid firmware file."""
 ERROR_BAD_HUB = """Incorrect hub type."""
 ERROR_DUAL_BOOT = """You are running dual-boot. Please re-install the official firmware first."""
+ERROR_INCOMPATIBLE_FIRMWARE = """The detected firmware is not compatible with this installer."""
 ERROR_EXTERNAL_FLASH = """Unable to create space for Pybricks firmware."""
 ERROR_FIRMWARE_COPY_FAILED = """Unable to copy the Pybricks firmware."""
 
-# Constants.
+# Flash constants.
 FLASH_FIRMWARE_START = 0x8008000
 FLASH_READ_SIZE = 32
 FLASH_WRITE_SIZE = FLASH_READ_SIZE * 4
+
+# Hub IDs.
+HUB_ID_SPIKE_PRIME = 0x81
+HUB_ID_SPIKE_ESSENTIAL = 0x83
 HUB_IDS = {
-    "LEGO Technic Large Hub(0x0009)": 0x81,
-    "LEGO Technic Large Hub(0x0010)": 0x81,
-    "LEGO Technic Small Hub(0x000D)": 0x83,
+    "LEGO Technic Large Hub(0x0009)": HUB_ID_SPIKE_PRIME,
+    "LEGO Technic Large Hub(0x0010)": HUB_ID_SPIKE_PRIME,
+    "LEGO Technic Small Hub(0x000D)": HUB_ID_SPIKE_ESSENTIAL,
+}
+
+# LEGO firmware versions on which Pybricks installation was successfully tested.
+KNOWN_SPIKE_PRIME_FW_VERSIONS = {
+    "v1.3.00.0000-e8c274a": "SPIKE App v2.0.4",
+    "v1.4.01.0000-594ce3d": "MINDSTORMS Robot Inventor App v10.3.0",
+}
+KNOWN_SPIKE_ESSENTIAL_FW_VERSIONS = {
+    "v1.0.00.0000-d94a557": "SPIKE App v2.0.0",
+    "v1.0.00.0070-51a2ff4": "SPIKE App v2.0.4",
 }
 
 
@@ -75,8 +90,8 @@ def get_lego_firmware_info():
     """Gets information about the running firmware."""
 
     # Get firmware/device ID
-    hub_id = firmware.id_string()
-    if hub_id not in HUB_IDS:
+    id_string = firmware.id_string()
+    if id_string not in HUB_IDS:
         stop_installation(ERROR_BAD_HUB)
 
     # Get firmware reset vector
@@ -90,7 +105,7 @@ def get_lego_firmware_info():
     firmware_version_position = read_internal_flash_int(FLASH_FIRMWARE_START + 0x200)
     firmware_version = read_internal_flash(firmware_version_position, 20).decode()
 
-    return hub_id, firmware_version, firmware_size, firmware_reset_vector
+    return id_string, firmware_version, firmware_size, firmware_reset_vector
 
 
 def get_lego_firmware(size):
@@ -134,7 +149,7 @@ def get_file_hash(path):
 def install(auto_reboot=True):
 
     # Get information about the running original LEGO firmware.
-    hub_id, lego_version, lego_size, lego_reset_vector = get_lego_firmware_info()
+    id_string, lego_version, lego_size, lego_reset_vector = get_lego_firmware_info()
 
     # Exit if user is running (outdated) Pybricks dual-boot firmware.
     if lego_reset_vector >= 0x80C0000:
@@ -144,6 +159,15 @@ def install(auto_reboot=True):
     print("Detected LEGO firmware:")
     print("    Version:", lego_version)
     print("    Size:", lego_size / 1024, "KB")
+
+    if (
+        HUB_IDS[id_string] == HUB_ID_SPIKE_PRIME
+        and lego_version not in KNOWN_SPIKE_PRIME_FW_VERSIONS
+    ) or (
+        HUB_IDS[id_string] == HUB_ID_SPIKE_ESSENTIAL
+        and lego_version not in KNOWN_SPIKE_ESSENTIAL_FW_VERSIONS
+    ):
+        stop_installation(ERROR_INCOMPATIBLE_FIRMWARE)
 
     # Back up the LEGO firmware so we can restore it from Pybricks later.
     print("Creating backup at:", LEGO_FIRMWARE_PATH)
@@ -156,7 +180,7 @@ def install(auto_reboot=True):
     with open(LEGO_METADATA_PATH, "w") as lego_meta_file:
         lego_backup_size, lego_backup_hash = get_file_hash(LEGO_FIRMWARE_PATH)
         lego_info = {
-            "device-id": HUB_IDS[hub_id],
+            "device-id": HUB_IDS[id_string],
             "firmware-sha256": lego_backup_hash,
             "firmware-size": lego_size,
             "firmware-version": lego_version,
@@ -175,7 +199,7 @@ def install(auto_reboot=True):
             stop_installation(ERROR_BAD_FIRMWARE)
 
         # Check that this firmware is made for this hub.
-        if HUB_IDS[hub_id] != pybricks_info["device-id"]:
+        if HUB_IDS[id_string] != pybricks_info["device-id"]:
             stop_installation(ERROR_BAD_HUB)
 
     # Display Pybricks firmware information.
