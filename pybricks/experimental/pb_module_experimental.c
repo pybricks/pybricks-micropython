@@ -76,7 +76,7 @@ STATIC mp_obj_t experimental_flash_read_raw(size_t n_args, const mp_obj_t *pos_a
     // Return bytes read
     return mp_obj_new_bytes(read_data, read_len);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_read_raw_obj, 0, experimental_flash_read_raw);
+MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_read_raw_obj, 0, experimental_flash_read_raw);
 
 STATIC mp_obj_t experimental_flash_read_file(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
@@ -96,7 +96,7 @@ STATIC mp_obj_t experimental_flash_read_file(size_t n_args, const mp_obj_t *pos_
     // Return data
     return mp_obj_new_bytes(file_buf, size);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_read_file_obj, 0, experimental_flash_read_file);
+MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_read_file_obj, 0, experimental_flash_read_file);
 
 STATIC mp_obj_t experimental_flash_write_file(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
@@ -112,7 +112,7 @@ STATIC mp_obj_t experimental_flash_write_file(size_t n_args, const mp_obj_t *pos
     return mp_const_none;
 }
 // See also experimental_globals_table below. This function object is added there to make it importable.
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_write_file_obj, 0, experimental_flash_write_file);
+MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_write_file_obj, 0, experimental_flash_write_file);
 
 // pybricks.experimental.restore_firmware
 STATIC mp_obj_t experimental_restore_firmware(void) {
@@ -171,9 +171,6 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     #endif // PYBRICKS_HUB_EV3BRICK
     #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
-    { MP_ROM_QSTR(MP_QSTR_flash_read_raw), MP_ROM_PTR(&experimental_flash_read_raw_obj) },
-    { MP_ROM_QSTR(MP_QSTR_flash_read_file), MP_ROM_PTR(&experimental_flash_read_file_obj) },
-    { MP_ROM_QSTR(MP_QSTR_flash_write_file), MP_ROM_PTR(&experimental_flash_write_file_obj) },
     { MP_ROM_QSTR(MP_QSTR_restore_firmware), MP_ROM_PTR(&experimental_restore_firmware_obj) },
     #endif // (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
