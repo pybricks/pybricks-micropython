@@ -534,11 +534,11 @@ pbio_error_t pb_flash_restore_firmware(void) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Check that the hub is plugged in and charging.
-    if (pbdrv_charger_get_status() != PBDRV_CHARGER_STATUS_CHARGE) {
-        mp_printf(&mp_plat_print, "Please connect the hub via USB.\n");
-        // TODO: Stop here once charging is fully implemented.
-        // return PBIO_ERROR_FAILED;
+    // Check that usb is plugged in.
+    pbdrv_charger_status_t status = pbdrv_charger_get_status();
+    if (status != PBDRV_CHARGER_STATUS_CHARGE && status != PBDRV_CHARGER_STATUS_COMPLETE) {
+        mp_printf(&mp_plat_print, "Please connect the hub via USB and try again.\n");
+        return PBIO_SUCCESS;
     }
 
     mp_printf(&mp_plat_print, "Checking firmware backup files.\n");
@@ -600,6 +600,13 @@ pbio_error_t pb_flash_restore_firmware(void) {
             return PBIO_ERROR_IO;
         }
         MICROPY_EVENT_POLL_HOOK;
+    }
+
+    // Check that usb is plugged in.
+    status = pbdrv_charger_get_status();
+    if (status != PBDRV_CHARGER_STATUS_CHARGE && status != PBDRV_CHARGER_STATUS_COMPLETE) {
+        mp_printf(&mp_plat_print, "Please connect the hub via USB and try again.\n");
+        return PBIO_SUCCESS;
     }
 
     mp_printf(&mp_plat_print, "Restoring firmware...\n");
