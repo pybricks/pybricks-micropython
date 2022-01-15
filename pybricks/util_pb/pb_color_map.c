@@ -22,7 +22,7 @@
 // This expands pbio_color_rgb_to_hsv with additional calibration steps that
 // ultimately must be properly done in pbio_color_rgb_to_hsv, just like
 // pbio_color_hsv_to_rgb, by adjusting RGB instead of hacking at the HSV value.
-void color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
+void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
 
     // Standard conversion
     pbio_color_rgb_to_hsv(rgb, hsv);

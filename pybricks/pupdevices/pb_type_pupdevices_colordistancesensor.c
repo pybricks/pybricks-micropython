@@ -50,7 +50,7 @@ STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_o
     pbio_color_rgb_t rgb;
     raw_to_rgb(raw, &rgb);
 
-    color_map_rgb_to_hsv(&rgb, hsv);
+    pb_color_map_rgb_to_hsv(&rgb, hsv);
 }
 
 STATIC void pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
