@@ -11,6 +11,7 @@
   (in case of `Motor`) are shorthand for `not Motor.control.done()` and
   `Motor.control.stalled`. This makes them consistent with their counterparts
   on `DriveBase`.
+- Added support for battery charging on Prime and essential hubs.
 
 ### Changed
 - Changed how `DriveBases` and `Motor` classes can be used together.
