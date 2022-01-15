@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2022 The Pybricks Authors
 
 #include <pbdrv/config.h>
 #include <pbdrv/gpio.h>
@@ -142,8 +142,19 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
 
 // LED
 
+// TODO: these are move/city hub values
+static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
+    .r_factor = 1000,
+    .g_factor = 270,
+    .b_factor = 200,
+    .r_brightness = 174,
+    .g_brightness = 1590,
+    .b_brightness = 327,
+};
+
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_0,
         .r_id = PWM_DEV_2,
         .r_ch = 1,

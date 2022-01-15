@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020,2022 The Pybricks Authors
 
 // Driver for PWM-driven RGB LED Devices.
 
@@ -25,6 +25,7 @@
 
 static pbio_error_t pbdrv_led_pwm_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
     const pbdrv_led_pwm_platform_data_t *pdata = dev->pdata;
+    const pbdrv_led_pwm_platform_color_t *color = pdata->color;
 
     // copy of HSV with max V for best color match
     pbio_color_hsv_t hsv2 = {
@@ -35,24 +36,16 @@ static pbio_error_t pbdrv_led_pwm_set_hsv(pbdrv_led_dev_t *dev, const pbio_color
     pbio_color_rgb_t rgb;
     pbio_color_hsv_to_rgb(&hsv2, &rgb);
 
-    // REVISIT: The constants below are derived from the SunLED XZM2CRKM2DGFBB45SCCB
-    // datasheet parameters. This is probably the LED used on the Move hub and
-    // City hub (looks like it anyway). However, the values seem to work reasonably
-    // well for other LEDs, so they are hard-coded for now. If we need other values
-    // for other devices in the future, we can add them to the platform data.
-
     // Adjust for chromacity
-    uint32_t r = rgb.r * 1000;
-    uint32_t g = rgb.g * 270;
-    uint32_t b = rgb.b * 200;
+    uint32_t r = rgb.r * color->r_factor;
+    uint32_t g = rgb.g * color->g_factor;
+    uint32_t b = rgb.b * color->b_factor;
 
     // Adjust for apparent brightness
 
-    // These are basically the luminous intensity values from the datasheet
-    // with red multiplied by 0.35 (it has different resistor and voltage drop).
     // Right-shift avoids need for large scale factor that would overflow 32-bit
     // integer. Plus 1 avoids divide by 0.
-    uint32_t Y = ((174 * r + 1590 * g + 327 * b) >> 12) + 1;
+    uint32_t Y = ((color->r_brightness * r + color->g_brightness * g + color->b_brightness * b) >> 12) + 1;
 
     // Reapply V from HSV for brightness. V is squared for gamma correction.
     uint32_t scale_factor = hsv->v * hsv->v * pdata->scale_factor / 128;

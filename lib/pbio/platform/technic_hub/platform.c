@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2022 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -228,8 +228,18 @@ const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
 
 // LED
 
+static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
+    .r_factor = 1000,
+    .g_factor = 130,
+    .b_factor = 110,
+    .r_brightness = 240,
+    .g_brightness = 875,
+    .b_brightness = 415,
+};
+
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_0,
         .r_id = PWM_DEV_3,
         .r_ch = 2,

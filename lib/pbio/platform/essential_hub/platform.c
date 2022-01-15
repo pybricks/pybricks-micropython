@@ -177,8 +177,18 @@ const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
 
 // LED
 
+static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
+    .r_factor = 1200,
+    .g_factor = 380,
+    .b_factor = 190,
+    .r_brightness = 210,
+    .g_brightness = 1400,
+    .b_brightness = 315,
+};
+
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_0_STATUS,
         .r_id = PWM_DEV_3_LP50XX,
         .r_ch = 3,
@@ -189,6 +199,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_1_BATTERY,
         .r_id = PWM_DEV_3_LP50XX,
         .r_ch = 0,

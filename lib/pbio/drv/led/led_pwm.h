@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020,2022 The Pybricks Authors
 
 // Driver for PWM-driven RGB LED Devices.
 
@@ -14,8 +14,26 @@
 
 #include <pbdrv/led.h>
 
+/** LED-specific color profile. */
+typedef struct {
+    /** Red correction factor. */
+    uint16_t r_factor;
+    /** Green correction factor. */
+    uint16_t g_factor;
+    /** Blue correction factor. */
+    uint16_t b_factor;
+    /** Red brightness factor. */
+    uint16_t r_brightness;
+    /** Green brightness factor. */
+    uint16_t g_brightness;
+    /** Blue brightness factor. */
+    uint16_t b_brightness;
+} pbdrv_led_pwm_platform_color_t;
+
 /** Platform-specific data for PWM LED devices. */
 typedef struct {
+    /** LED color profile. */
+    const pbdrv_led_pwm_platform_color_t *color;
     /** LED device id. */
     uint8_t id;
     /** Red LED PWM device id. */

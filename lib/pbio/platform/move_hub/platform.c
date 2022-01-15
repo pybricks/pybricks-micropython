@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2022 The Pybricks Authors
 
 #include <string.h>
 
@@ -94,8 +94,23 @@ const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
 
 // LED
 
+// The constants below are derived from the SunLED XZM2CRKM2DGFBB45SCCB
+// datasheet parameters. This is probably the LED used on the Move hub and
+// City hub (looks like it anyway). The red brightness factor is multiplied by
+// 0.35 compared to the datasheet since it has different resistor value that
+// affects the brightness.
+static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
+    .r_factor = 1000,
+    .g_factor = 270,
+    .b_factor = 200,
+    .r_brightness = 174,
+    .g_brightness = 1590,
+    .b_brightness = 327,
+};
+
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_0,
         .r_id = PWM_DEV_3,
         .r_ch = 1,

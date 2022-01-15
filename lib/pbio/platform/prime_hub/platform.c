@@ -215,8 +215,18 @@ const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_L
     },
 };
 
+static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
+    .r_factor = 1000,
+    .g_factor = 140,
+    .b_factor = 110,
+    .r_brightness = 50,
+    .g_brightness = 910,
+    .b_brightness = 140,
+};
+
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_3_STATUS_TOP,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 5,
@@ -227,6 +237,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_4_STATUS_BOTTOM,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 8,
@@ -237,6 +248,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_1_BATTERY,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 2,
@@ -247,6 +259,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .scale_factor = 35,
     },
     {
+        .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_2_BLUETOOTH,
         .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 20,
