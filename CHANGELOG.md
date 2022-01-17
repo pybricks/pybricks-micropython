@@ -26,7 +26,7 @@
 - Changing settings while a motor is moving no longer raises an exception. Some
   settings will not take effect until a new motor command is given.
 - Disabled `Motor.control` and `Motor.log` on Move Hub to save space.
-- Changed LED color calibration on Technic, Prime and Essential hubs.
+- Changed LED color calibration on Prime hub to make yellow less green.
 
 ## [3.1.0] - 2021-12-16
 

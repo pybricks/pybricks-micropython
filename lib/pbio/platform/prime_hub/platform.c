@@ -217,7 +217,7 @@ const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_L
 
 static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
     .r_factor = 1000,
-    .g_factor = 270,
+    .g_factor = 170,
     .b_factor = 200,
     .r_brightness = 174,
     .g_brightness = 1590,
