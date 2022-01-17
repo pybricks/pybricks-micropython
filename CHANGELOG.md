@@ -27,6 +27,7 @@
   settings will not take effect until a new motor command is given.
 - Disabled `Motor.control` and `Motor.log` on Move Hub to save space.
 - Changed LED color calibration on Prime hub to make yellow less green.
+- Updated to upstream MicroPython v1.18.
 
 ### Fixed
 - Fixed color calibration on Powered Up remote control ([support#424]).
