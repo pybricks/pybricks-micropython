@@ -28,6 +28,12 @@
 - Disabled `Motor.control` and `Motor.log` on Move Hub to save space.
 - Changed LED color calibration on Prime hub to make yellow less green.
 
+### Fixed
+- Fixed color calibration on Powered Up remote control ([support#424]).
+
+
+[support#424]: https://github.com/pybricks/support/issues/424
+
 ## [3.1.0] - 2021-12-16
 
 ### Changed

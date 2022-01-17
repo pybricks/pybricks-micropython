@@ -112,6 +112,11 @@ STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_h
 
     pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
 
+    // The red LED on the handset is weak, so we have to reduce green and blue
+    // to get the colors right.
+    msg.payload[1] = msg.payload[1] * 3 / 8;
+    msg.payload[2] = msg.payload[2] * 3 / 8;
+
     pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
     pb_wait_task(&remote->task, -1);
 }
