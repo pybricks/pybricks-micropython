@@ -276,10 +276,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     }
 
     // If some values are given, set them, bound by the control limits
-    self->straight_speed = min(straight_speed_limit, abs(pb_obj_get_default_int(straight_speed_in, self->straight_speed)));
-    self->turn_rate = min(turn_rate_limit, abs(pb_obj_get_default_int(turn_rate_in, self->turn_rate)));
-    straight_acceleration = abs(pb_obj_get_default_int(straight_acceleration_in, straight_acceleration));
-    turn_acceleration = abs(pb_obj_get_default_int(turn_acceleration_in, turn_acceleration));
+    self->straight_speed = min(straight_speed_limit, abs((int)pb_obj_get_default_int(straight_speed_in, self->straight_speed)));
+    self->turn_rate = min(turn_rate_limit, abs((int)pb_obj_get_default_int(turn_rate_in, self->turn_rate)));
+    straight_acceleration = abs((int)pb_obj_get_default_int(straight_acceleration_in, straight_acceleration));
+    turn_acceleration = abs((int)pb_obj_get_default_int(turn_acceleration_in, turn_acceleration));
     pbio_control_settings_set_limits(&self->db->control_distance.settings, self->straight_speed, straight_acceleration, straight_torque);
     pbio_control_settings_set_limits(&self->db->control_heading.settings, self->turn_rate, turn_acceleration, turn_torque);
 
