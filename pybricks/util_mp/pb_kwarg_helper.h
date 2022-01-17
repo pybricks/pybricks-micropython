@@ -42,7 +42,11 @@
 
 // Generate table entry from an argument name, its requirements, and its default value
 #define GET_ARG_NAME(name, required, value) name##_in
-#define GET_ARG_SPEC(name, required, value) {MAKE_QSTR(name), required, value}
+#define GET_ARG_SPEC(name, required, value) { \
+        .qst = MAKE_QSTR(name), \
+        .flags = required, \
+        .defval = value, \
+}
 
 // Unpack a table entry into three arguments
 #define PB_ARG_DO(IDX, arg_spec) GET_ARG_SPEC arg_spec,
@@ -77,7 +81,7 @@
     PB_PARSE_GENERIC(n_args, pos_and_kw_args, &kw_args, 0, __VA_ARGS__)
 
 // Required argument
-#define PB_ARG_REQUIRED(name) (name, MP_ARG_OBJ | MP_ARG_REQUIRED, )
+#define PB_ARG_REQUIRED(name) (name, MP_ARG_OBJ | MP_ARG_REQUIRED, { })
 
 // Optional keyword argument with default integer value
 #define PB_ARG_DEFAULT_INT(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_INT(value)})
