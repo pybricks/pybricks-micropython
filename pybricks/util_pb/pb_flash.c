@@ -174,8 +174,8 @@ static HAL_StatusTypeDef flash_write_enable(void) {
 
 static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t address, bool keep_flash_enabled) {
 
-    // Can only read/write user partition
-    if (address > FLASH_SIZE_USER) {
+    // Can't read past end.
+    if (address > FLASH_SIZE_TOTAL) {
         return HAL_ERROR;
     }
 
