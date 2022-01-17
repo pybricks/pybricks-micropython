@@ -217,11 +217,11 @@ const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_L
 
 static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
     .r_factor = 1000,
-    .g_factor = 140,
-    .b_factor = 110,
-    .r_brightness = 50,
-    .g_brightness = 910,
-    .b_brightness = 140,
+    .g_factor = 270,
+    .b_factor = 200,
+    .r_brightness = 174,
+    .g_brightness = 1590,
+    .b_brightness = 327,
 };
 
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {

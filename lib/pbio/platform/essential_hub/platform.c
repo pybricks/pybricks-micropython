@@ -178,12 +178,12 @@ const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
 // LED
 
 static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
-    .r_factor = 1200,
-    .g_factor = 380,
-    .b_factor = 190,
-    .r_brightness = 210,
-    .g_brightness = 1400,
-    .b_brightness = 315,
+    .r_factor = 1000,
+    .g_factor = 270,
+    .b_factor = 200,
+    .r_brightness = 174,
+    .g_brightness = 1590,
+    .b_brightness = 327,
 };
 
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
