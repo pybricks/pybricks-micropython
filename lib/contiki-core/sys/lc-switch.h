@@ -63,11 +63,17 @@
 /** \hideinitializer */
 typedef unsigned short lc_t;
 
+#if defined(__GNUC__) && __GNUC__ >= 7
+#define LC_FALLTHROUGH __attribute__((fallthrough));
+#else
+#define LC_FALLTHROUGH
+#endif
+
 #define LC_INIT(s) s = 0;
 
 #define LC_RESUME(s) switch(s) { case 0:
 
-#define LC_SET(s) s = __LINE__; case __LINE__:
+#define LC_SET(s) s = __LINE__; LC_FALLTHROUGH; case __LINE__:
 
 #define LC_END(s) }
 
