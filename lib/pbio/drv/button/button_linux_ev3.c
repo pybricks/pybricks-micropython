@@ -15,7 +15,7 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 
-static uint8_t f_btn = -1; // Button file descriptor
+static int f_btn = -1; // Button file descriptor
 
 void _pbdrv_button_init(void) {
     f_btn = open("/dev/input/by-path/platform-gpio_keys-event", O_RDONLY);

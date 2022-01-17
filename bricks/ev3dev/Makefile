@@ -397,7 +397,7 @@ test-ev3dev: $(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
 
 test: $(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
 	$(eval DIRNAME=../bricks/$(notdir $(CURDIR)))
-	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) \
+	cd $(TOP)/tests && MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests.py
 
