@@ -597,41 +597,17 @@ pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left
 
 pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
 
-    // Steering must be bounded
+    // Steering must be bounded.
     if (steering < -100 || steering > 100) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Hard coded special cases
-    if (steering == 100) {
-        // In-place turn to the right.
-        *speed_left = speed;
-        *speed_right = -speed;
-        return PBIO_SUCCESS;
-    }
-    if (steering == -100) {
-        // In-place turn to the left.
-        *speed_left = -speed;
-        *speed_right = speed;
-        return PBIO_SUCCESS;
-    }
-
-    // 99 will be what 100 would have been if 100 wasn't a special case.
-    if (steering == 99) {
-        // 99 is treated as 100, thus turning the left wheel only.
-        steering = 100;
-    }
-    if (steering == -99) {
-        // -99 is treated as -100, thus turning the right wheel only.
-        steering = -100;
-    }
-
-    // Generic case, where one wheel drives slower, given by steering ratio.
+    // Initialize both at the given speed.
     *speed_left = speed;
     *speed_right = speed;
 
     // Depending on steering direction, one wheel moves slower.
-    *(steering > 0 ? speed_right : speed_left) = speed * (100 - abs(steering)) / 100;
+    *(steering > 0 ? speed_right : speed_left) = speed * (100 - 2 * abs(steering)) / 100;
     return PBIO_SUCCESS;
 }
 
