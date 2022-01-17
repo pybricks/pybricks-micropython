@@ -72,7 +72,7 @@ STATIC mp_obj_t ev3dev_Image_new(GrxContext *context) {
 STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     enum { ARG_source, ARG_sub, ARG_x1, ARG_y1, ARG_x2, ARG_y2 };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_source, MP_ARG_REQUIRED | MP_ARG_OBJ },
+        { MP_QSTR_source, MP_ARG_REQUIRED | MP_ARG_OBJ, { } },
         { MP_QSTR_sub, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = FALSE} },
         { MP_QSTR_x1, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
         { MP_QSTR_y1, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
