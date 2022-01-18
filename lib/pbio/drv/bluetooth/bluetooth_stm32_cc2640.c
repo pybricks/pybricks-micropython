@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 // Bluetooth for STM32 MCU with TI CC2640
+
+// Useful docs:
+// - https://dev.ti.com/tirex/explore/content/simplelink_cc13x2_26x2_sdk_3_10_00_53/docs/ble5stack/ble_user_guide/html/ble-stack-common/npi-index.html#npi-handshake
+// - http://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/538/3583.BLE-SPI-Driver-Design-External.pdf
 
 #include <pbdrv/config.h>
 
@@ -100,6 +104,8 @@ static uint8_t write_xfer_size;
 
 // reflects state of SRDY signal
 volatile bool spi_srdy;
+// count of SRDY signal falling edges
+volatile uint8_t spi_n_srdy_count;
 // set to false when xfer is started and true when xfer is complete
 volatile bool spi_xfer_complete;
 
@@ -735,6 +741,11 @@ void pbdrv_bluetooth_disconnect_remote(void) {
 
 void pbdrv_bluetooth_stm32_cc2640_srdy_irq(bool srdy) {
     spi_srdy = srdy;
+
+    if (!srdy) {
+        spi_n_srdy_count++;
+    }
+
     process_poll(&pbdrv_bluetooth_spi_process);
 }
 
@@ -1707,22 +1718,16 @@ start:
             &read_buf[NPI_SPI_HEADER_LEN], xfer_size);
         PROCESS_WAIT_UNTIL(spi_xfer_complete);
 
-        // HACK: SRDY can transition from low and back to high in the time
-        // between we set MRDY and when we read SRDY again. So we use a timer
-        // prevent a lockup in case we miss detecting the transitions.
-
-        // See Δt6 + Δt7 in the timing diagram at:
-        // https://dev.ti.com/tirex/explore/content/simplelink_cc13x2_26x2_sdk_3_10_00_53/docs/ble5stack/ble_user_guide/html/ble-stack-common/npi-index.html#npi-handshake
-
-        // This document suggests that this timing varies from 0.181ms to 1.2 ms.
-        // http://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/538/3583.BLE-SPI-Driver-Design-External.pdf
-
-        // REVISIT: maybe there is a way to get individual oneshots for the
-        // rising and falling edges of the interrupt instead of the timer hack?
-
-        etimer_set(&timer, 2);
+        // After the transfer is complete, we release the MRDY signal to the
+        // Bluetooth chip and it acknowledges by releasing the SRDY signal.
+        static uint8_t prev_n_srdy_count;
+        prev_n_srdy_count = spi_n_srdy_count;
         spi_set_mrdy(false);
-        PROCESS_WAIT_UNTIL(!spi_srdy || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
+        // Multiple interrupts can happen between line above and line below,
+        // so we can't use PROCESS_WAIT_UNTIL(!spi_srdy) as the SRDY signal may
+        // go off and back on again before we can read it once. So we have a
+        // separate falling edge trigger to ensure we catch the event.
+        PROCESS_WAIT_UNTIL(spi_n_srdy_count != prev_n_srdy_count);
 
         // set to 0 to indicate that xfer is complete
         write_xfer_size = 0;
