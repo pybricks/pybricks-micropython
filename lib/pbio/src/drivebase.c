@@ -577,19 +577,15 @@ pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left
     // In the classic tank drive, we flip the left motor here instead of at the low level.
     speed_left *= -1;
 
-    // Get relative angle, signed by the direction in which we want to go.
-    int32_t angle_left = (abs(angle) * 2 * speed_left) / (abs(speed_left) + abs(speed_right));
-    int32_t angle_right = (abs(angle) * 2 * speed_right) / (abs(speed_left) + abs(speed_right));
+    // Work out angles for each motor.
+    int32_t max_speed = max(abs(speed_left), abs(speed_right));
+    int32_t angle_left = angle * speed_left / max_speed;
+    int32_t angle_right = angle * speed_right / max_speed;
 
     // Work out the required total and difference angles to achieve this.
     int32_t sum = angle_left + angle_right;
     int32_t dif = angle_left - angle_right;
     int32_t rate = abs(speed_left) + abs(speed_right);
-
-    // If the angle was negative, we need to reverse the result.
-    if (angle < 0) {
-        rate *= -1;
-    }
 
     // Execute the maneuver.
     return pbio_drivebase_drive_counts_relative(db, sum, rate, dif, rate, after_stop);
