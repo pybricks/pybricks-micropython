@@ -60,7 +60,7 @@ typedef enum {
 
 /**
  * Gets the current being applied to the battery as measured by the charger.
- * @param [out] current     The current in mV.
+ * @param [out] current     The current in mA.
  * @return                  ::PBIO_SUCCESS or ::PBIO_ERROR_NOT_SUPPORTED if
  *                          the charger driver is not enabled.
  */

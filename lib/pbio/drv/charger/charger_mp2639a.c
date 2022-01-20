@@ -59,7 +59,9 @@ pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
         return err;
     }
 
-    // TODO: find and apply scaling
+    // Scaling from raw to mA determined emperically by measuring USB current
+    // on a few hubs.
+    *current = (*current * 35116 >> 16) - 123;
 
     return PBIO_SUCCESS;
 }
