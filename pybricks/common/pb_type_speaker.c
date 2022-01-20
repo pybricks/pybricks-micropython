@@ -12,6 +12,7 @@
 
 #if PYBRICKS_PY_COMMON_SPEAKER
 
+#include <math.h>
 #include <pbdrv/sound.h>
 
 #include "py/mphal.h"
@@ -25,31 +26,65 @@
 typedef struct {
     mp_obj_base_t base;
     bool initialized;
+
+    // volume in 0..100 range
+    uint8_t volume;
+
+    // The number to multiply the sample amplitude by, to attenuate the amplitude based on the defined speaker volume.
+    // The original sample amplitude must be in the -1..1 range.
+    uint16_t sample_attenuator;
 } pb_type_Speaker_obj_t;
 
 STATIC pb_type_Speaker_obj_t pb_type_Speaker_singleton;
 
 STATIC uint16_t waveform_data[128];
 
-STATIC void pb_type_Speaker_start_beep(uint32_t frequency) {
+STATIC mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_Speaker_obj_t, self,
+        PB_ARG_DEFAULT_NONE(volume));
+
+    if (volume_in == mp_const_none) {
+        return MP_OBJ_NEW_SMALL_INT(self->volume);
+    }
+
+    self->volume = pb_obj_get_pct(volume_in);
+
+    // exponential amplification (human ear perceives sample amplitude in a logarithmic way)
+    self->sample_attenuator = (powf(10, self->volume / 100.0F) - 1) / 9 * INT16_MAX;
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_volume_obj, 1, pb_type_Speaker_volume);
+
+STATIC void pb_type_Speaker_generate_square_wave(uint16_t sample_attenuator) {
+    uint16_t lo_amplitude_value = INT16_MAX - sample_attenuator;
+    uint16_t hi_amplitude_value = sample_attenuator + INT16_MAX;
+
+    int i = 0;
+    for (; i < MP_ARRAY_SIZE(waveform_data) / 2; i++) {
+        waveform_data[i] = lo_amplitude_value;
+    }
+    for (; i < MP_ARRAY_SIZE(waveform_data); i++) {
+        waveform_data[i] = hi_amplitude_value;
+    }
+}
+
+// For 0 frequencies that are just flat lines.
+STATIC void pb_type_Speaker_generate_line_wave() {
+    for (int i = 0; i < MP_ARRAY_SIZE(waveform_data); i++) {
+        waveform_data[i] = INT16_MAX;
+    }
+}
+
+STATIC void pb_type_Speaker_start_beep(uint32_t frequency, uint16_t sample_attenuator) {
     // TODO: allow other wave shapes - sine, triangle, sawtooth
-    // TODO: apply scaling for volume level
     // TODO: don't recreate waveform if it hasn't changed shape or volume
 
     if (frequency == 0) {
-        // 0 frequency is just a flat line
-        for (int i = 0; i < MP_ARRAY_SIZE(waveform_data); i++) {
-            waveform_data[i] = INT16_MAX;
-        }
+        pb_type_Speaker_generate_line_wave();
     } else {
-        // create square wave
-        int i = 0;
-        for (; i < MP_ARRAY_SIZE(waveform_data) / 2; i++) {
-            waveform_data[i] = 0;
-        }
-        for (; i < MP_ARRAY_SIZE(waveform_data); i++) {
-            waveform_data[i] = UINT16_MAX;
-        }
+        pb_type_Speaker_generate_square_wave(sample_attenuator);
     }
 
     if (frequency < 64) {
@@ -72,6 +107,12 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
         self->base.type = &pb_type_Speaker;
         self->initialized = true;
     }
+
+    // REVISIT: If a user creates two Speaker instances, this will reset the volume settings for both.
+    // If done only once per singleton, however, altered volume settings would be persisted between program runs.
+    self->volume = 100;
+    self->sample_attenuator = INT16_MAX;
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -81,11 +122,10 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
         PB_ARG_DEFAULT_INT(frequency, 500),
         PB_ARG_DEFAULT_INT(duration, 100));
 
-    (void)self; // unused
     mp_int_t frequency = pb_obj_get_int(frequency_in);
     mp_int_t duration = pb_obj_get_int(duration_in);
 
-    pb_type_Speaker_start_beep(frequency);
+    pb_type_Speaker_start_beep(frequency, self->sample_attenuator);
 
     if (duration < 0) {
         return mp_const_none;
@@ -265,7 +305,7 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
         pos--;
     }
 
-    pb_type_Speaker_start_beep((uint32_t)freq);
+    pb_type_Speaker_start_beep((uint32_t)freq, self->sample_attenuator);
 
     // Normally, we want there to be a period of no sound (release) so that
     // notes are distinct instead of running together. To sound good, the
@@ -309,6 +349,7 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 
 STATIC const mp_rom_map_elem_t pb_type_Speaker_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_volume), MP_ROM_PTR(&pb_type_Speaker_volume_obj) },
     { MP_ROM_QSTR(MP_QSTR_beep), MP_ROM_PTR(&pb_type_Speaker_beep_obj) },
     { MP_ROM_QSTR(MP_QSTR_play_notes), MP_ROM_PTR(&pb_type_Speaker_play_notes_obj) },
 };
