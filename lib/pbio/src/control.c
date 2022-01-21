@@ -54,7 +54,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Total torque signal, capped by the actuation limit
     torque = torque_due_to_proportional + torque_due_to_integral + torque_due_to_derivative;
-    torque = max(-ctl->settings.max_torque, min(torque, ctl->settings.max_torque));
+    torque = pbio_math_clamp(torque, ctl->settings.max_torque);
 
     // This completes the computation of the control signal.
     // The next steps take care of handling windup, or triggering a stop if we are on target.

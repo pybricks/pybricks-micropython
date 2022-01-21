@@ -5,6 +5,16 @@
 #include <inttypes.h>
 #include <fixmath.h>
 
+int32_t pbio_math_clamp(int32_t value, int32_t abs_max) {
+    if (value > abs_max) {
+        return abs_max;
+    }
+    if (value < -abs_max) {
+        return abs_max;
+    }
+    return value;
+}
+
 int32_t pbio_math_sign(int32_t a) {
     if (a == 0) {
         return 0;
