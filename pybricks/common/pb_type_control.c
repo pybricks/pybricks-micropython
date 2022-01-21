@@ -70,9 +70,9 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
     }
 
     // Set user settings
-    speed = pb_obj_get_default_int(speed_in, speed);
-    acceleration = pb_obj_get_default_int(acceleration_in, acceleration);
-    torque = pb_obj_get_default_int(torque_in, torque);
+    speed = pb_obj_get_default_abs_int(speed_in, speed);
+    acceleration = pb_obj_get_default_abs_int(acceleration_in, acceleration);
+    torque = pb_obj_get_default_abs_int(torque_in, torque);
 
     pb_assert(pbio_control_settings_set_limits(&self->control->settings, speed, acceleration, torque));
 
@@ -110,10 +110,10 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
     }
 
     // Set user settings
-    kp = pb_obj_get_default_int(kp_in, kp);
-    ki = pb_obj_get_default_int(ki_in, ki);
-    kd = pb_obj_get_default_int(kd_in, kd);
-    integral_rate = pb_obj_get_default_int(integral_rate_in, integral_rate);
+    kp = pb_obj_get_default_abs_int(kp_in, kp);
+    ki = pb_obj_get_default_abs_int(ki_in, ki);
+    kd = pb_obj_get_default_abs_int(kd_in, kd);
+    integral_rate = pb_obj_get_default_abs_int(integral_rate_in, integral_rate);
 
     pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_rate));
 
@@ -142,8 +142,8 @@ STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *
     }
 
     // Set user settings
-    speed = pb_obj_get_default_int(speed_in, speed);
-    position = pb_obj_get_default_int(position_in, position);
+    speed = pb_obj_get_default_abs_int(speed_in, speed);
+    position = pb_obj_get_default_abs_int(position_in, position);
 
     pb_assert(pbio_control_settings_set_target_tolerances(&self->control->settings, speed, position));
 
@@ -172,8 +172,8 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
     }
 
     // Set user settings
-    speed = pb_obj_get_default_int(speed_in, speed);
-    time = pb_obj_get_default_int(time_in, time);
+    speed = pb_obj_get_default_abs_int(speed_in, speed);
+    time = pb_obj_get_default_abs_int(time_in, time);
 
     pb_assert(pbio_control_settings_set_stall_tolerances(&self->control->settings, speed, time));
 

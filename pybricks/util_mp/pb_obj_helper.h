@@ -30,8 +30,8 @@ mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator);
 
 fix16_t pb_obj_get_fix16(mp_obj_t arg);
 
-// Get value if object is not none, else return default
-mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val);
+// Get absolute value if object is not none, else return default
+mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val);
 
 // Get base instance if object is instance of subclass of type
 mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type);

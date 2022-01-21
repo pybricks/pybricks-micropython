@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include <pbio/drivebase.h>
+#include <pbio/math.h>
 
 #include "py/mphal.h"
 
@@ -275,11 +276,15 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         pb_assert(PBIO_ERROR_BUSY);
     }
 
-    // If some values are given, set them, bound by the control limits
-    self->straight_speed = min(straight_speed_limit, abs((int)pb_obj_get_default_int(straight_speed_in, self->straight_speed)));
-    self->turn_rate = min(turn_rate_limit, abs((int)pb_obj_get_default_int(turn_rate_in, self->turn_rate)));
-    straight_acceleration = abs((int)pb_obj_get_default_int(straight_acceleration_in, straight_acceleration));
-    turn_acceleration = abs((int)pb_obj_get_default_int(turn_acceleration_in, turn_acceleration));
+    // Get the speed and turn rate if given, bounded by the limit.
+    self->straight_speed = pbio_math_clamp(pb_obj_get_default_abs_int(straight_speed_in, self->straight_speed), straight_speed_limit);
+    self->turn_rate = pbio_math_clamp(pb_obj_get_default_abs_int(turn_rate_in, self->turn_rate), turn_rate_limit);
+
+    // Get the accelerations if given, bounded by the limit.
+    straight_acceleration = pb_obj_get_default_abs_int(straight_acceleration_in, straight_acceleration);
+    turn_acceleration = pb_obj_get_default_abs_int(turn_acceleration_in, turn_acceleration);
+
+    // Update the settings.
     pbio_control_settings_set_limits(&self->db->control_distance.settings, self->straight_speed, straight_acceleration, straight_torque);
     pbio_control_settings_set_limits(&self->db->control_heading.settings, self->turn_rate, turn_acceleration, turn_torque);
 

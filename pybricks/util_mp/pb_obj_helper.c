@@ -108,8 +108,12 @@ fix16_t pb_obj_get_fix16(mp_obj_t arg) {
     return fix16_from_int(mp_obj_get_int(arg));
 }
 
-mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val) {
-    return obj == mp_const_none ? default_val : pb_obj_get_int(obj);
+mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val) {
+    if (obj == mp_const_none) {
+        return default_val;
+    }
+    mp_int_t value = pb_obj_get_int(obj);
+    return value > 0 ? value: -value;
 }
 
 mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type) {
