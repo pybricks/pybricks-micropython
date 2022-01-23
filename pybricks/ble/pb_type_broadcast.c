@@ -13,7 +13,7 @@
 #include <pbio/broadcast.h>
 #include <pbio/util.h>
 
-#include <pybricks/ble.h>
+#include <pybricks/experimental.h>
 
 #include <pybricks/util_pb/pb_error.h>
 

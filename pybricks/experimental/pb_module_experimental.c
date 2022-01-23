@@ -18,6 +18,7 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
+#include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 
 #if PYBRICKS_HUB_EV3BRICK
@@ -100,6 +101,9 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #else
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     #endif // PYBRICKS_HUB_EV3BRICK
+    #if PYBRICKS_PY_BLE
+    { MP_ROM_QSTR(MP_QSTR_Broadcast),    MP_ROM_PTR(&pb_type_Broadcast) },
+    #endif // PYBRICKS_PY_BLE
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);

@@ -10,7 +10,7 @@ Description: Tests broadcast receive and transmit.
 from pybricks.hubs import ThisHub
 from pybricks.parameters import Color
 from pybricks.tools import wait
-from pybricks.ble import Broadcast
+from pybricks.experimental import Broadcast
 
 
 hub = ThisHub()

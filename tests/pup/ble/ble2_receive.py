@@ -7,7 +7,7 @@ Description: Tests broadcast receive and transmit.
 """
 
 from pybricks.tools import wait
-from pybricks.ble import Broadcast
+from pybricks.experimental import Broadcast
 
 
 # Initialize broadcast with one topic.
