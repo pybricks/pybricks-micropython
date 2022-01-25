@@ -54,7 +54,8 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
         tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(index));
 
-    mp_int_t index = pb_obj_get_default_abs_int(index_in, -1);
+    // Get index, or set to -1 if not given.
+    mp_int_t index = index_in == mp_const_none ? -1 : pb_obj_get_int(index_in);
 
     // Data buffer for this sample
     mp_obj_t ret[MAX_LOG_VALUES];
