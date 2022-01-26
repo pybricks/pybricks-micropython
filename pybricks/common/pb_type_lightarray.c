@@ -61,7 +61,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightArray_on_obj, 1, common_LightArray
 STATIC mp_obj_t common_LightArray_off(mp_obj_t self_in) {
     common_LightArray_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t brightness[4] = {0};
+    int32_t brightness[4] = { };
     pb_device_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
 
     return mp_const_none;

@@ -520,8 +520,8 @@ const uint32_t MSIRangeTable[12] = {
 };
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
-    GPIO_InitTypeDef gpio_init = { 0 };
-    ADC_ChannelConfTypeDef adc_ch_config = { 0 };
+    GPIO_InitTypeDef gpio_init = { };
+    ADC_ChannelConfTypeDef adc_ch_config = { };
 
     // clocks are enabled in SystemInit
     assert_param(__HAL_RCC_TIM6_IS_CLK_ENABLED());
@@ -567,7 +567,7 @@ void DMA1_Channel1_IRQHandler(void) {
 }
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
-    GPIO_InitTypeDef gpio_init = { 0 };
+    GPIO_InitTypeDef gpio_init = { };
 
     gpio_init.Mode = GPIO_MODE_AF_OD;
     gpio_init.Pull = GPIO_NOPULL;
@@ -611,7 +611,7 @@ void SystemInit(void) {
     SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
 
     // Using internal RC oscillator (MSI)
-    RCC_OscInitTypeDef osc_init = { 0 };
+    RCC_OscInitTypeDef osc_init = { };
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_MSI;
     osc_init.MSIState = RCC_MSI_ON;
     osc_init.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
@@ -648,7 +648,7 @@ void SystemInit(void) {
         RCC_APB2ENR_USART1EN | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN;
 
     // Keep main power on (PC12)
-    GPIO_InitTypeDef gpio_init = { 0 };
+    GPIO_InitTypeDef gpio_init = { };
     gpio_init.Pin = GPIO_PIN_12;
     gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);

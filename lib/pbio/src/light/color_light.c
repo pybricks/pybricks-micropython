@@ -94,7 +94,7 @@ pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color) 
  *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  */
 pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
-    pbio_color_hsv_t hsv = { 0 };
+    pbio_color_hsv_t hsv = { };
     return pbio_color_light_on_hsv(light, &hsv);
 }
 
@@ -110,7 +110,7 @@ static uint32_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
         light->current_cell = 1;
     }
 
-    pbio_color_hsv_t off = { 0 };
+    pbio_color_hsv_t off = { };
     light->funcs->set_hsv(light, light->current_cell % 2 ? &light->hsv : &off);
     return *interval;
 }

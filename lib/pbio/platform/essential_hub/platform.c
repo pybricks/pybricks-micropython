@@ -367,8 +367,8 @@ const uint8_t AHBPrescTable[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8,
 const uint8_t APBPrescTable[8] = { 0, 0, 0, 0, 1, 2, 3, 4 };
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
-    GPIO_InitTypeDef gpio_init = { 0 };
-    ADC_ChannelConfTypeDef adc_ch_config = { 0 };
+    GPIO_InitTypeDef gpio_init = { };
+    ADC_ChannelConfTypeDef adc_ch_config = { };
 
     // clocks are enabled in SystemInit
     assert_param(__HAL_RCC_TIM8_IS_CLK_ENABLED());

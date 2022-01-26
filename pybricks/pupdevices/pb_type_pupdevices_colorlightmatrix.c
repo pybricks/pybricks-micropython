@@ -99,7 +99,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
     pupdevices_ColorLightMatrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Turn off all pixels.
-    int32_t color_ids[9] = {0};
+    int32_t color_ids[9] = { };
     pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, MP_ARRAY_SIZE(color_ids));
     return mp_const_none;
 }
