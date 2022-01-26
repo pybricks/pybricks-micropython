@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020,2022 The Pybricks Authors
 
 /**
  * @addtogroup Color Color Conversion Functions.
@@ -42,6 +42,7 @@ typedef enum {
     PBIO_COLOR_ORANGE = PBIO_COLOR_ENCODE(30, 100, 100), /**< orange */
     PBIO_COLOR_YELLOW = PBIO_COLOR_ENCODE(60, 100, 100), /**< yellow */
     PBIO_COLOR_GREEN = PBIO_COLOR_ENCODE(120, 100, 100), /**< green */
+    PBIO_COLOR_SPRING_GREEN = PBIO_COLOR_ENCODE(150, 100, 100), /**< spring green */
     PBIO_COLOR_CYAN = PBIO_COLOR_ENCODE(180, 100, 100), /**< cyan */
     PBIO_COLOR_BLUE = PBIO_COLOR_ENCODE(240, 100, 100), /**< blue */
     PBIO_COLOR_VIOLET = PBIO_COLOR_ENCODE(270, 100, 100), /**< violet */
@@ -60,6 +61,8 @@ typedef enum {
     PBIO_COLOR_HUE_YELLOW = 60,
     /** Green. */
     PBIO_COLOR_HUE_GREEN = 120,
+    /** Spring green. */
+    PBIO_COLOR_HUE_SPRING_GREEN = 150,
     /** Cyan. */
     PBIO_COLOR_HUE_CYAN = 180,
     /** Blue. */
@@ -69,6 +72,9 @@ typedef enum {
     /** Magenta. */
     PBIO_COLOR_HUE_MAGENTA = 300,
 } pbio_color_hue_t;
+
+/** The modulo value to get colors into 0 to 359 value range. */
+#define PBIO_COLOR_HUE_MODULO 360
 
 /** 24-bit RGB color. */
 typedef struct {

@@ -44,6 +44,7 @@ STATIC uint8_t get_color_id(mp_obj_t color_in) {
 
     // Brightness is defined in 10 increments.
     uint8_t brightness = hsv->v / 10;
+    pb_powered_up_color_id_t color;
 
     // For low saturation, assume grayscale.
     if (hsv->s < 30) {
@@ -51,12 +52,15 @@ STATIC uint8_t get_color_id(mp_obj_t color_in) {
         if (brightness == 1) {
             brightness = 0;
         }
-        // Base id for white is 10, plus 16 for each brightness step.
-        return 10 + (brightness << 4);
+        color = PB_PUP_COLOR_ID_WHITE;
+    } else {
+        // Everything else is rounded to nearest available hue.
+        color = pb_powered_up_color_id_from_hue(hsv->h);
     }
 
-    // Everything else is rounded to nearest available hue.
-    return pb_powered_up_color_id_from_hue(hsv->h) + (brightness << 4);
+    // The light matrix data format is a 4-bit brightness in the MSBs and a
+    // 4-bit color ID in the LSBs.
+    return (brightness << 4) | color;
 }
 
 // pybricks.pupdevices.ColorLightMatrix.on

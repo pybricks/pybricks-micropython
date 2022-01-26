@@ -31,9 +31,11 @@
 
 ### Fixed
 - Fixed color calibration on Powered Up remote control ([support#424]).
+- Fixed 3x3 Light Matrix colors with hue > 255 not working correctly ([support#619]).
 
 
 [support#424]: https://github.com/pybricks/support/issues/424
+[support#619]: https://github.com/pybricks/support/issues/619
 
 ## [3.1.0] - 2021-12-16
 
