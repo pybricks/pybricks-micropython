@@ -15,6 +15,7 @@ This is the recommended development environment used by the Pybricks maintainers
 - [GNU ARM Embedded Toolchain][arm-gcc] v10-2020-q4
 - [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
+- [rust][rust] virtual enviroment build requires Rust >=1.41.0
 
 Optional:
 - [Docker][docker] (only needed if building for ev3dev)
@@ -32,6 +33,7 @@ Optional:
 [docker]: https://docs.docker.com/engine/install/ubuntu/
 [emsdk]: https://emscripten.org/docs/getting_started/downloads.html
 [yarn]: https://classic.yarnpkg.com/en/docs/install
+[rust]: https://www.rust-lang.org/tools/install
 
 
 ### Installation tips
@@ -69,7 +71,8 @@ gets the GCC compiler for the host system and Make.
 
     sudo apt-add-repository ppa:pybricks/ppa
     sudo apt update
-    sudo apt install git python3 uncrustify build-essential
+    sudo apt install git python3 uncrustify build-essential libssl-dev libjpeg-dev
+    
 
 Other tools (VS Code, Poetry, ARM Embedded Toolchain, Docker) can be installed
 via the recommended install methods found in the links above.
