@@ -1,0 +1,686 @@
+\documentclass[12pt, a4paper]
+{article}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage{svg}
+\setsvg{inkscape=inkscape -z -D,svgpath=images/}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{todonotes}
+\usepackage{xspace}
+\usepackage{booktabs}
+\usepackage[]{algorithm2e}
+
+
+\title{Pybricks motor control algorithms}
+\author{The Pybricks authors}
+
+% Generic macros
+\providecommand{\lr}[1]{\left(#1\right)}
+\providecommand{\sub}[1]{_{\text{#1}}}
+\renewcommand{\sup}[1]{^{\text{#1}}}
+
+% omega symbols
+\providecommand{\w}{\omega}
+\providecommand{\wt}{\w^*}
+\providecommand{\wref}{\w\sub{ref}}
+\providecommand{\wmax}{\w\sub{max}}
+
+% theta symbols
+\renewcommand{\th}{\theta}
+\providecommand{\thref}{\th\sub{ref}}
+
+% alpha symbols
+\renewcommand{\a}{\alpha}
+
+% math
+\providecommand{\minab}[2]{\min\,\lr{{#1},\,\,{#2}}}
+\providecommand{\abs}[1]{\left|#1\right|}
+\providecommand{\inlineadd}{\,\,+\!\!=\,\,}
+\providecommand{\inlinesubtract}{\,\,-\!\!=\,\,}
+
+%
+%
+% Begin Document
+%
+%
+\begin{document}
+\maketitle
+
+\tableofcontents
+\pagebreak
+\section{Reference trajectories}
+
+When the user gives a motor command, we compute the reference trajectories for
+the motor angle ($\thref$) and angular velocity ($\wref$) as a function of
+time ($t$). These trajectories describe the ideal motion that would be followed
+if the motor is not subject to external loads or disturbances.
+
+\subsection{Trajectory definition}
+
+For a typical maneuver, the reference trajectories for $\thref$ and $\wref$
+are shown in Figure \ref{fig:plots}. Initially, when the user executes the
+command at time $t_0$, the motor has a given initial angle $\th_0$ and a given
+initial angular velocity $\w_0$. The motor accelerates with a magnitude
+$\abs{\a_0}$ until it reaches the user-specified target angular velocity $\wt$
+at time $t_1$. The target speed is maintained until it begins decelerating at
+time $t_2$, in order to stop precisely at $t_3$. During this maneuver, at the
+corresponding times, the motor angle reference traverses from $\th_0$ through
+$\th_3$.
+
+The reference trajectories $\thref(t)$ and $\wref(t)$ are uniquely specified by
+the time instants $t_0$, $t_1$, $t_2$, $t_3$, the angles $\th_0$, $\th_1$,
+$\th_2$, $\th_3$, the initial velocity $\w_0$, the target velocity $\wt$, the
+final velocity $\w_3$, the acceleration $\a_0$ and deceleration $\a_2$.
+
+Depending on which command is executed, we are given a subset of these
+parameters and we have to compute the dependent variables.
+
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.9\textwidth]{trajectory}
+    \caption{
+        Reference velocity (top) and reference angle (bottom).
+        \label{fig:plots}}
+\end{figure}
+
+
+If these parameters are known, the trajectories $\wref(t)$ and $\thref(t)$ are
+given by
+%
+\begin{align}
+    \label{eq:wref}
+    \wref(t)&=
+    \begin{cases}
+    \w_0 & \text{if} \quad t = t_0\\ 
+    \w_0 + \a_0(t-t_0) & \text{if} \quad t < t_1\\
+    \w_1=\w_2=\wt  & \text{if} \quad t_1 \leq t \leq t_2\\
+    \w_2 + \a_2(t-t_2) & \text{if}\quad t_2 < t < t_3\\
+    \w_3 & \text{if} \quad t = t_3
+    \end{cases}\\[1em]
+    \label{eq:thref}
+    \thref(t)&=
+    \begin{cases}
+        \th_0 & \text{if} \quad t = t_0\\
+        \th_0 + \w_0(t-t_0) + \dfrac{1}{2}\a_0(t-t_0)^2 &
+            \text{if} \quad t_0 < t \leq t_1\\
+        \th_1 + \w_1(t-t_1)  & \text{if} \quad t_1 < t \leq t_2\\
+        \th_2 +\w_2(t-t_2)+\dfrac{1}{2}\a_2(t-t_2)^2 &
+            \text{if}\quad t_2 < t < t_3\\
+        \th_3 & \text{if} \quad t = t_3
+    \end{cases}
+\end{align}
+
+Some parameters are known because they are measured or because they are
+specified by the user, while others are to be computed from the known
+parameters. Which of the parameters are known depends on the user-specified
+maneuver.
+
+If the user specifies to rotate the motor for a certain duration with
+\texttt{run\_time(speed, duration)}, the final time $t_3=t_0+t\sub{duration}$
+is known but we must compute the corresponding angle $\th_3$. If instead the
+final angle $\th_3$ is specified by the user command, we have to compute the
+final time $t_3$. This applies to \texttt{run\_target(speed, target)}, where
+$\th_3=\th\sub{target}$. The following two sections provide the formulas to
+compute the unknown parameters for both cases.
+
+
+\begin{table}[H]
+    \centering
+    \caption{Overview of known and computed trajectory parameters}
+    \label{tab:parameters}
+    \begin{tabular}{@{}lllll@{}}
+    \toprule
+                & Known    & Obtained from & Computed & Method \\
+                &          & user command  &          &        \\ \midrule
+    Time-based  &
+        $t_0$, $\th_0$, $\w_0$ &
+        $\abs{\a_0}$, $\abs{\a_2}$, $\wt$, $t_3$, $\w_3$ &
+        $\a_0$, $\a_2$, $t_1$, $t_2$, $\th_1$, $\th_2$, $\boldsymbol{\th_3}$
+        & Section \ref{sec:timebasedref}\\
+    Angle-based &
+        $t_0$, $\th_0$, $\w_0$ &
+        $\abs{\a_0}$, $\abs{\a_2}$, $\wt$, $\th_3$, $\w_3$ &
+        $\a_0$, $\a_2$, $t_1$, $t_2$, $\boldsymbol{t_3}$, $\th_1$, $\th_2$ &
+        Section \ref{sec:anglebasedref}  \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+For a single command, the final speed is always zero ($\w_3$), in which case
+$\th(t) \equiv \th_3$ for $t > t_3$. A nonzero $\w_3$ for a particular command
+makes sense only if the next command starts with this speed: $\w_{0, next} =
+\w_{3, current}$. The math below assumes that $\w_3$ can be nonzero for
+generality.
+
+
+\subsection{Calculating trajectory parameters given time target}
+\label{sec:timebasedref}
+This section derives the parameters in Table \ref{tab:parameters} for a
+time-based maneuver. Without loss of generality, we will assume that the
+target angular velocity is greater than the final velocity and that the final
+velocity is non-negative:
+%
+\begin{align}
+    \label{eq:t:forwardmaneuver}
+    \wt \geq \w_3 \geq 0
+\end{align}
+%
+If it is not, we can mirror the inputs along the $\w_3$ line, perform the
+following computations, and mirror back the final result. This is discussed
+in Section \ref{sec:t:reversing}.
+
+In a time-based maneuver, we are only concerned with angular velocity control,
+while the final angle is arbitrary. In principle, this means we are only
+concerned with tracking $\wref(t)$ as shown in the top graph of
+Figure \ref{fig:plots}. However, that graph depicts only one possible angular
+velocity trajectory, for a particular set of parameters.
+Figure \ref{fig:time} captures three possible types of angular velocity
+reference trajectories, which differ in initial speed compared to the
+target speed and final speed.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.85\textwidth]{timebased}
+    \caption{
+        Three time-based motions with a duration of $t_3-t_0$.
+        The trajectory is determined by the initial speed $\w_0$,
+        which may be equal or greater than the
+        target $\wt$ (blue), lower (green), or so low that it will not be able
+        to reach the target speed before completion (orange).\label{fig:time}}
+\end{figure}
+
+Because we allow only positive duration arguments, we have $t_3-t_0 > 0$ by
+definition. In order to ensure that the motor is able to decelerate at the
+desired rate and reach $\w_3$ at time $t_3$, the initial angular velocity must
+be bound by the gray area in Figure \ref{fig:time}. This imposes the necessary
+inequality to which $\w_0$ must be capped:
+%
+\begin{align}
+    \label{eq:t:timeboundary1}
+    \w_3 - \abs{\a_2} \lr{t_3-t_0} \leq \w_0 \leq \w_3 + \abs{\a_2}\lr{t_3-t_0}
+\end{align}
+%
+The same cap is applied to the target angular velocity $\wt$:
+%
+\begin{align}
+    \label{eq:t:timeboundary2}
+    \w_3 - \abs{\a_2} \lr{t_3-t_0} \leq \wt \leq \w_3 + \abs{\a_2} \lr{t_3-t_0}
+\end{align}
+
+We will now look at four possible trajectories, as indicated by the pink, blue,
+green, and orange lines in Figure \ref{fig:time}.
+
+\subsubsection{Standard case}
+\label{sec:t:standard}
+If $\w_0 < \wt$, the initial angular velocity is less than target velocity and
+the motor must accelerate. In a typical maneuver, it accelerates
+until it reaches the target $\wt$, as shown by the first segment of the green
+line in Figure \ref{fig:time}.
+In this case we have $\a_0 = \abs{a_0} > 0$ and $\a_2 = -\abs{a_2} < 0$.
+Solving for the intersection time $t_1$ gives:
+%
+\begin{align}
+    \label{eq:t:t1mt0:standard}
+    \lr{t_1 - t_0}\sub{standard} &= \dfrac{\wt-\w_0}{\a_0}
+\end{align}
+%
+Similarly, the time when we start decelerating ($t_2$) becomes defined by:
+%
+\begin{align}
+    \label{eq:t:t3mt2:standard}
+    \lr{t_3 - t_2}\sub{standard} &= \dfrac{\w_3-\wt}{\a_2}\\[1em]
+    \label{eq:t:t2mt1:standard}
+    \lr{t_2 - t_1}\sub{standard} &=
+        (t_3-t_0) - \lr{t_1 - t_0}\sub{standard} - \lr{t_3 - t_2}\sub{standard}
+\end{align}
+%
+Since the target speed is reached the constant speed value is simply
+\begin{align}
+    \lr{\w_1}\sub{standard} &= \wt
+\end{align}
+
+\subsubsection{Cut short case}
+\label{sec:t:cutshort}
+If $\w_0 < \wt$ but the initial velocity is too low or if the
+maneuver is too short to be able to reach the target velocity, it accelerates
+until it must begin to decelerate, as shown by the first segment of the orange
+line in Figure \ref{fig:time}.
+In this case we have $\a_0 = \abs{a_0} > 0$ and $\a_2 = -\abs{a_2} < 0$.
+Solving for the intersection time $t_1$ gives:
+%
+\begin{align}
+    \label{eq:t:t1mt0:cutshort}
+    \lr{t_1 - t_0}\sub{cut short} &=
+        \dfrac{\w_3-\w_0 - \a_2(t_3-t_0)}{\a_0-\a_2}
+\end{align}
+%
+Similarly, the time when we start decelerating ($t_2$) becomes defined by:
+%
+\begin{align}
+    \label{eq:t:t3mt2:cutshort}
+    \lr{t_3 - t_2}\sub{cut short} &= (t_3 - t_0) - (t_1 - t_0)\sub{cut short}
+    \\[1em]
+    \label{eq:t:t2mt1:cutshort}
+    \lr{t_2 - t_1}\sub{cut short} &= 0
+\end{align}
+%
+When cut short, the target speed $\wt$ is not reached but it peaks out at
+%
+\begin{align}
+    \lr{\w_1}\sub{cut short} &= \w_0 + \a_0(t_1 - t_0)\sub{cut short}
+\end{align}
+
+\subsubsection{Decreasing case}
+\label{sec:t:decreasing}
+If $\w_0 \geq \wt$, the initial angular velocity is higher (or equal to) than
+the target velocity and the motor must decelerate until it reaches the target
+$\wt$, as shown by the first segment of the blue line in Figure \ref{fig:time}.
+In this case we have $\a_0 = -\abs{a_0} < 0$ and $\a_2 = -\abs{a_2} < 0$.
+Solving for the intersection time $t_1$ gives:
+%
+\begin{align}
+    \label{eq:t:t1mt0:decreasing}
+    \lr{t_1 - t_0}\sub{decreasing} &= \dfrac{\wt-\w_0}{\a_0}\\[1em]
+    \label{eq:t:t3mt2:decreasing}
+    \lr{t_3 - t_2}\sub{decreasing} &= \dfrac{\w_3-\wt}{\a_2}\\[1em]
+    \label{eq:t:t2mt1:decreasing}
+    \lr{t_2 - t_1}\sub{decreasing} &=
+        (t_3 - t_0) - \lr{t_1 - t_0}\sub{decreasing} -
+        \lr{t_3 - t_2}\sub{decreasing}
+\end{align}
+%
+Since the target speed is reached the constant speed value is simply
+\begin{align}
+    \lr{\w_1}\sub{standard} &= \wt
+\end{align}
+%
+Note that these equations are the same as the standard case, except for the
+sign of the initial acceleration $\a_0$.
+
+We will also use these formulas if $\w_0 \equiv \wt$. In these cases, $\a_0$
+will still have nonzero values as to avoid zero division, but the value is not
+used in practice since then $\lr{t_1 - t_0}\sub{decreasing}\equiv0$
+
+\subsubsection{Selecting the standard, cut short, or decreasing case}
+\label{sec:t:selectionprocedure}
+The procedure is then as follows:
+% 
+\begin{enumerate}
+    \item If $\w_0 \geq \wt$, apply decreasing case (Section
+    \ref{sec:t:decreasing}), otherwise;
+    \item If $\lr{t_1 - t_0}\sub{cut short} < \lr{t_1 - t_0}\sub{standard}$,
+    apply cut short case (Section \ref{sec:t:cutshort}), otherwise;
+    \item Apply standard case (Section \ref{sec:t:standard})
+\end{enumerate}
+%
+For efficiency, the decreasing and standard case can share the same code if the
+sign of $\a_0$ is set appropriately.
+
+\subsubsection{Reversing and unreversing the final and target speed}
+\label{sec:t:reversing}
+The aforementioned derivation assumes $\wt \geq \w_3 \geq 0$
+\eqref{eq:t:forwardmaneuver} to reduce the number of (similar) cases that must
+be accounted for. This section shows how to transform a given time based
+maneuver to match this assumption, calculate the trajectory, and map the final
+result back to obtain the originally requested command.
+
+\begin{itemize}
+    \item Cap $\w_0$ and $\wt$ using \eqref{eq:t:timeboundary1} and
+        \eqref{eq:t:timeboundary2}.
+    \item Let the boolean $a := \w_3 < 0$.
+    \item If $a$, then invert all speeds: $\w_0 := \w_0$, $\wt := -\wt$,
+        $\w_3 := -\w_3$.
+    \item Let the boolean $b := \wt < w_3$.
+    \item If $b$, wrap speeds around $\w_3$, essentially inverting the gray
+    triangle in Figure \ref{fig:time}:\\
+        $\wt \inlineadd 2 (\w_3 - \wt)$ and $\w_0 \inlineadd 2 (\w_3 - \w_0)$
+    \item Calculate time and speed intersections using
+    \eqref{sec:t:selectionprocedure}.
+    \item If $b$, wrap speeds back around $\w_3$:\\
+        $\wt \inlinesubtract 2 (\wt-\w_3)$,
+        $\w_0 \inlinesubtract 2 (\w_0-\w_3)$, and
+        $\w_1 \inlinesubtract 2 (\w_1-\w_3)$
+    \item If $a$, then invert the results as shown in Section \ref{sec:invert}.
+\end{itemize}
+
+
+\subsubsection{Intermediate angles (all cases)}
+
+Having derived expressions to evaluate $t_1$, $t_2$, and $\w_1$, the remaining
+parameters of Table \ref{tab:parameters} to compute are the angles
+$\th_1$, $\th_2$, and $\th_3$, which can be derived by integrating the
+angular velocity reference signal \eqref{eq:thref}:
+% %
+\begin{align}
+    \label{eq:t:anglepar1}
+    \th_1  &= \th_0  + \w_0(t_1-t_0)+\dfrac{1}{2}\a_0(t_1-t_0)^2\\
+    \label{eq:t:anglepar2}
+    \th_2&=\th_1+ \w_1(t_2-t_1)\\
+    \label{eq:t:anglepar3}
+    \th_3  &=\th_2+ \w_2(t_3-t_2)+\dfrac{1}{2}\a_2(t_3-t_2)^2    
+\end{align}
+%
+
+\subsection{Calculating trajectory parameters given angle target}
+\label{sec:anglebasedref}
+This section derives the parameters in Table \ref{tab:parameters} for an
+angle-based maneuver. For simplicity of the derivation will assume that
+the target angle  is greater than the initial angle. This
+means that the motor must move forward to reach its goal:
+%
+\begin{align}
+    \label{eq:a:forwardmaneuver}
+    \th_3 &> \th_0\\
+    \wt &> 0
+\end{align}
+%
+If it is not, we can mirror the inputs along the $\th_3$ line, perform the
+following computations, and mirror back the final result. This is discussed
+in Section \ref{sec:a:reversing}.
+
+In an angle-based maneuver, the end time $t_3$ is arbitrary, so the trajectory
+is best analyzed in a ($\th$, $\w$) phase plot. This is shown in Figure
+\ref{fig:positions} for various initial conditions indicated with blue dots.
+To reduce the complexity of quadratic solutions on the microcontroller, we
+restrict the final velocity to be either $\w_3=0$ or $\w_3=\w_2$, implying
+either deceleration to zero or no deceleration at all. Possible end states are
+indicated with orange dots. In all cases $\a_2 < 0$.
+
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1\textwidth]{angbased}
+    \caption{
+        Phase portrait of trajectory from different types of initial conditions
+        indicated with blue dots:
+        (a) nonnegative initial speed with a
+        sufficient distance from target to have a constant speed phase.
+        (b) Same as (a), except with negative initial speed.
+        (c) nonnegative initial speed without a constant speed phase because
+        the target is too close.
+        (d) Same as (c), except with negative initial speed.
+        \label{fig:positions}}
+\end{figure}
+
+
+The typical trajectory is similar to case (a) and (c): The motor starts
+with a nonnegative velocity, accelerates, optionally runs through a constant
+speed phase, and then decelerates to standstill at the target.
+If the initial speed is negative ($\w_0 < 0$) as in initial conditions (b)
+and (d), the motor slows down and goes backwards in the process. Once the
+velocity passes through zero, the remaining trajectory is just like case (a)
+and (c). For all trajectory types, it is convenient to define the common
+zero-speed angle $\th_f$ as indicated
+with green dots in Figure~\ref{fig:positions}:
+%
+\begin{align}
+    \th_f = \th_0 - \dfrac{1}{2 \a_0}\w_0^2
+\end{align}
+
+
+
+\subsubsection{Standard case (a, b) with $\w_3 \in \{0, \wt\}$}
+\label{sec:a:standard}
+If $\w_0 < \wt$, the initial angular velocity is less than target velocity and
+the motor must accelerate. In the standard maneuver, it accelerates
+until it reaches the target $\w_1$, as shown for cases (a), (b), (c), and (d)
+in Figure \ref{fig:positions}. In this case we have $\a_0 = \abs{a_0} > 0$
+and $\a_2 = -\abs{a_2} < 0$. Solving for the intersection with $\wt$ gives:
+%
+\begin{align}
+    \label{eq:a:t1mt0:standard}
+    \lr{\th_1}\sub{standard} &= \th_f  + \dfrac{1}{2\a_0}(\wt)^2\\[1em]
+    \lr{\th_2}\sub{standard} &=
+        \begin{cases}
+        \th_3  + \dfrac{1}{2\a_2}(\wt)^2 & \text{if} \quad \w_3 = 0\\ 
+        \th_3 &  \text{if} \quad\w_3 = \w_t
+        \end{cases}
+\end{align}
+%
+%
+Since the target speed is reached the constant speed value is simply
+\begin{align}
+    \lr{\w_1}\sub{standard} &= \wt
+\end{align}
+%
+The standard case is valid if and only if:
+\begin{align}
+    \label{eq:a:t1mt0:standardvalidity}
+    \lr{\th_1}\sub{standard} &< \lr{\th_2}\sub{standard}
+\end{align}
+%
+Otherwise, we have to evaluate the cut-short case.
+%
+
+\subsubsection{Cut short case (c, d) with $\w_3 = 0$}
+\label{sec:a:cutshortw3is0}
+If $\w_0 < \wt$ but the initial velocity is too low or if the
+maneuver is too short to be able to reach the target velocity, it accelerates
+until it must begin to decelerate, as in cases (c) and (d) in
+Figure \ref{fig:positions}.
+In this case we have $\a_0 = \abs{a_0} > 0$ and $\a_2 = -\abs{a_2} < 0$.
+Solving for the intersection angle $\th_1=\th_2$ for $\w_1=\w_2$ gives:
+%
+\begin{align}
+    \label{eq:a:cutshort}
+    \lr{\th_1}\sub{cut short} &= \lr{\th_2}\sub{cut short}\\[1em]
+    \dfrac{1}{2\a_0}\w_1^2 + \th_f  &= \th_3 + \dfrac{1}{2\a_2} \w_1^2 
+\end{align}
+%
+which can be solved for $\w_1$ as:
+%
+\begin{align}
+    \label{eq:a:cutshortsolve}
+    \w_1^2 = 2 \dfrac{\a_0\a_2}{\a_2-\a_0}\lr{\th_3 - \th_f}
+\end{align}
+%
+from which $\th_1=\th_2$ follow via \eqref{eq:a:cutshort}.
+%
+When cut short, the target speed $\wt$ is not reached but the
+peak $\w_1 \geq 0$ can be obtained as the square root
+of \eqref{eq:a:cutshortsolve}.
+%
+\subsubsection{Cut short case (c, d) with $\w_3 = \w_1$}
+\label{sec:a:cutshortw3isw1}
+
+If there is no deceleration phase but we still can't reach the target speed,
+we have $\w_3=\w_1 < \wt$ with $\th_1=\th_2=\th_3$:
+%
+\begin{align}
+    \label{eq:a:cutshortw1}
+    \w_1^2  &= 2\a_0\lr{\th_3 - \th_f}
+\end{align}
+
+\subsubsection{Basic decreasing case (e)  with $\w_3 \in \{0, \wt\}$}
+\label{sec:a:decreasing}
+If $\w_0 \geq \wt$, the initial angular velocity is higher (or equal to) than
+the target velocity and the motor must decelerate until it reaches the target
+$\wt$, as shown for case (e) in Figure \ref{fig:positions}.
+In this case we have $\a_0 = -\abs{a_0} < 0$ and $\a_2 = -\abs{a_2} < 0$.
+
+In order to be able to reach $\w_3$ with the allowed deceleration $\a_2$,
+the initial velocity $\w_0$ must be less than the upper bound of the
+gray regions of Figure \ref{fig:positions}, which holds if:
+%
+\begin{align}
+    \label{eq:a:decreaselimit}
+    - \dfrac{1}{2 \a_2}\lr{\w_0^2 - \w_3^2} < \th_3 - \th_0
+\end{align}
+%
+If it holds, then there is a nonzero constant speed phase ($\th_1 \neq \th_2$)
+and we can proceed to compute the relevant intersections as: 
+
+\begin{align}
+    \label{eq:a:t1mt0:decreasing}
+    \lr{\th_1}\sub{decreasing} &= \th_f  + \dfrac{1}{2\a_0}(\wt)^2\\[1em]
+    \lr{\th_2}\sub{decreasing} &=
+        \begin{cases}
+        \th_3  + \dfrac{1}{2\a_2}(\wt)^2 & \text{if} \quad \w_3 = 0\\ 
+        \th_3 &  \text{if} \quad\w_3 = \w_t
+        \end{cases}
+\end{align}
+%
+Since the target speed is reached the constant speed value is simply
+\begin{align}
+    \lr{\w_1}\sub{standard} &= \wt
+\end{align}
+
+\subsubsection{Limited decreasing case (f) with $\w_3 \in \{0, \wt\}$}
+
+If \eqref{eq:a:decreaselimit} does not hold, we are going faster than we
+can feasibly slow down without overshooting. To handle this, we cut the
+initial speed value to within the allowed bound causing an abrupt deceleration:
+%
+\begin{align}
+    \w_0 := \sqrt{\w_3^2 - \dfrac{1}{2\a_2}\lr{\th_3-\th_0}}
+\end{align}
+%
+By definition, this means that there is only a deceleration phase, so
+$\th_1 = \th_2 = \th_3$, $\w_1=\w_2=\w_3$, $t_1=t_2=t_3$ with:
+%
+\begin{align}
+    \label{eq:a:decreaselimittime}
+    t_1 = \dfrac{\w_0-\w_3}{\a_2}
+\end{align}
+
+\subsubsection{Selecting the standard, cut short, or decreasing case}
+\label{sec:a:selectionprocedure}
+The procedure is then as follows:
+% % 
+\begin{enumerate}
+    \item If $\w_0 \geq \wt$, apply decreasing case (Section
+    \ref{sec:a:decreasing}), otherwise;
+    \item Try to apply the standard case (Section \ref{sec:a:standard}) and
+    check validity \eqref{eq:a:t1mt0:standardvalidity}.
+    \item If it is not valid, apply cut short case (Section
+    \ref{sec:a:cutshortw3is0} or \ref{sec:a:cutshortw3isw1}).
+\end{enumerate}
+%
+For efficiency, the decreasing and standard case can share the same code if the
+sign of $\a_0$ is set appropriately.
+
+\subsubsection{Reversing and unreversing the final and target speed}
+\label{sec:a:reversing}
+The aforementioned derivation assumes $\th_3 > \th_0$ and so $\wt > 0$ to
+reduce the number of (similar) cases that must be accounted for. This section
+shows how to transform a given angle based maneuver to match this assumption,
+calculate the trajectory, and map the final result back to obtain the
+originally requested command.
+
+\begin{itemize}
+    \item Let the boolean $a := \wt < 0$.
+    \item If $a$, then invert targets as:
+          $\th_3 := 2 \th_0 - \th_3$, $\wt := -\wt$, $\w_0 := -\w_0$,
+          $\w_3 := -\w_3$.
+    \item Calculate angle and speed intersections using
+    \eqref{sec:a:selectionprocedure}.
+    \item If $a$, then reverse results using Section \ref{sec:invert}.
+\end{itemize}
+
+
+\subsubsection{Intermediate times (all cases)}
+
+Having derived expressions to evaluate $\th_1$, $\th_2$, and $\w_1$, the
+remaining parameters of Table \ref{tab:parameters} to compute are the times
+$t_1$, $t_2$, and $t_3$:
+%
+\begin{align}
+    t_1 - t_0 &= \dfrac{\w_1-\w_0}{\a_0}\\[1em]
+    t_2 - t_1 &= \dfrac{\th_2-\th_1}{\w_1}\\[1em]
+    t_3 - t_2 &= \dfrac{\w_3-\w_1}{\a_2}
+\end{align}
+
+\subsection{Making a stationary trajectory}
+\label{sec:stationary}
+For a stationary hold trajectory, we have:
+%
+\begin{align}
+    t_3 = t_2 = t_1 = t_0 \\[1em]
+    \th_3 = \th_2 = \th_1 = \th_0 \\[1em]
+    \w_1 = \w_0 = 0 \\[1em]
+    \a_0 = \a_2 = 0
+\end{align}
+
+
+\subsection{Reversing a trajectory}
+\label{sec:invert}
+In Sections \ref{sec:timebasedref} and \ref{sec:anglebasedref} several
+assumptions were made to ensure that the calculated trajectory is always
+forwards with $\wt > 0$. If the original target speed was negative, the
+newly computed maneuver can be reversed as follows:
+%
+\begin{align}
+    \th_1 &:= 2 \th_0 - \th_1\\[1em]
+    \th_2 &:= 2 \th_0 - \th_2\\[1em]
+    \th_3 &:= 2 \th_0 - \th_3\\[1em]
+    \w_0 &:= -\w_0\\[1em]
+    \w_1 &:= -\w_1\\[1em]
+    \a_0 &:= -\a_0\\[1em]
+    \a_2 &:= -\a_2
+\end{align}
+
+\subsection{Stretching trajectories for synchronization}
+
+In some applications, two or more separate trajectories are executed in
+parallel to synchronize their movements. Typically, each trajectory has its own
+target angle $\th_3$. To make them run in parallel, we slow down the shorter
+maneuvers such that they take as long as the longest maneuver. For this
+analysis, let the trajectory with superscript $0$ take the longest, so that
+%
+\begin{align}
+    t^0_3 - t^0_0 \geq t^i_3 - t^i_0  \quad \forall \quad i
+\end{align}
+
+For synchronization we require that for all other trajectories $i$ we have:
+%
+\begin{align}
+    t^i_1 &= t^0_1=t_1\\[1em]
+    t^i_2 &= t^0_2=t_2\\[1em]
+    t^i_3 &= t^0_3=t_3
+\end{align}
+%
+Each trajectory still has to reach its own target $\th^i_3$.
+Using (\ref{eq:t:anglepar1}--\ref{eq:t:anglepar3}) this gives the constraint:
+%
+\begin{align}
+    \label{eq:stretchconstraint1}
+    \th^i_3 - \th^i_0  &=  \w^i_0(t_1-t_0)+\dfrac{1}{2}\a^i_0(t_1-t_0)^2+
+        \w^i_1(t_2-t_1)+ \w^i_1(t_3-t_2)+\dfrac{1}{2}\a^i_2(t_3-t_2)^2    
+\end{align}
+%
+Likewise, each trajectory has to reach its top speed $\w^i_1$ and its final
+speed $\w^i_3$ in the same time spans as the longest maneuver, which gives the
+two additional constraints:
+%
+\begin{align}
+    \label{eq:stretchconstraint2}
+    \a^i_0 &= \dfrac{\w^i_1-\w_0^i}{t_1 - t_0}\\[1em]
+    \label{eq:stretchconstraint3}
+    \a_2^i &= \dfrac{\w_3^i-\w_1^i}{t_3 - t_2}
+\end{align}
+%
+With three constraints we can solve for the three unknowns $\a^i_0$, $\a^i_1$.
+and $\w^i_1$. To do so, solve for $\w^i_1$ by substituting
+\eqref{eq:stretchconstraint2}, \eqref{eq:stretchconstraint3} into
+\eqref{eq:stretchconstraint1}:
+%
+\begin{align}
+    \label{eq:stretchconstraintsolved}
+    \w^i_1 = \dfrac{2\lr{\th_3^i-\th_0^i}-\w_0^i\lr{t_1-t_0} -
+    \w_3^i\lr{t_3-t_2}}{t_3-t_0 + t_2 - t_1}
+\end{align}
+%
+Since $t_2 - t_1 \geq 0$, zero division is avoided if $t_3 - t_0 > 0$. If $t_3
+- t_0 = 0$, then we have a stationary trajectory as per Section
+\ref{sec:stationary}.
+
+Once $\w^i_1$ is known, $\a^i_0$, $\a^i_1$ follow directly from
+\eqref{eq:stretchconstraint2}, \eqref{eq:stretchconstraint3}. Zero division is
+avoided because $\a^i_0$ is undefined (not used) when $t_1 = t_0$ and $\a^i_2$
+is undefined (not used) when $t_3 = t_2$. The intermediate angles $\th_1^i$
+and $\th_2^i$ can be obtained from
+(\ref{eq:t:anglepar1}--\ref{eq:t:anglepar2}).
+
+\end{document}

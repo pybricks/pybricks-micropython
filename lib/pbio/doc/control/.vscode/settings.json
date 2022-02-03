@@ -1,0 +1,60 @@
+{
+    "rewrap.wrappingColumn": 78,
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk",
+            "command": "latexmk",
+            "args": [
+                "-shell-escape",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-pdf",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "pdflatex",
+            "command": "pdflatex",
+            "args": [
+                "-synctex=1",
+                "-pdflatex=pdflatex -shell-escape %O %S",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "bibtex",
+            "command": "bibtex",
+            "args": [
+                "%DOCFILE%"
+            ]
+        }
+    ],
+    "spellright.latexSpellParameters": [
+        "author",
+        "title",
+        "date",
+        "caption",
+        "ctparttext",
+        "chapter",
+        "section\\*?",
+        "subsection\\*?",
+        "subsubsection\\*?",
+        "part",
+        "diagram",
+        "paragraph",
+        "frametitle",
+        "subparagraph",
+        "text(rm|sf|tt|md|bf|up|it|sl|sc|normal)",
+        "underline",
+        "emph",
+        "item",
+        "footnote(text)?",
+        "caption",
+        "multicolumn",
+        "href",
+        "hyperref"
+    ],
+}
