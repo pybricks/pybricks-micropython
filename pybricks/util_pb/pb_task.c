@@ -24,9 +24,9 @@ void pb_wait_task(pbio_task_t *task, mp_int_t timeout) {
     nlr_buf_t nlr;
 
     if (nlr_push(&nlr) == 0) {
-        mp_int_t start = mp_hal_ticks_ms();
+        mp_uint_t start = mp_hal_ticks_ms();
 
-        while (timeout < 0 || mp_hal_ticks_ms() - start < timeout) {
+        while (timeout < 0 || mp_hal_ticks_ms() - start < (mp_uint_t)timeout) {
             MICROPY_EVENT_POLL_HOOK
 
             if (task->status != PBIO_ERROR_AGAIN) {
