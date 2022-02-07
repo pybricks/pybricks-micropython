@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_PUPDEVICES
 
 #include <stdint.h>
+#include <string.h>
 
 #include <lego_lwp3.h>
 
