@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2021 The Pybricks Authors
+# Copyright (c) 2019-2022 The Pybricks Authors
 
 # ensure micropython submodule is checked out for building mpy-cross
 ifeq ("$(wildcard micropython/README.md)","")
@@ -28,9 +28,9 @@ doc:
 clean-doc:
 	@$(MAKE) -C lib/pbio/doc clean
 
-all: movehub cityhub technichub primehub essentialhub nxt debug ev3dev-armel doc
+all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3dev-armel doc
 
-clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-nxt clean-debug clean-ev3dev-armel clean-doc
+clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3dev-armel clean-doc
 
 ifeq ($(HOST_OS),Linux)
 
@@ -111,6 +111,12 @@ essentialhub: mpy-cross
 
 clean-essentialhub: clean-mpy-cross
 	@$(MAKE) -C bricks/essentialhub clean
+
+virtualhub: mpy-cross
+	@$(MAKE) -C bricks/virtualhub CROSS_COMPILE=
+
+clean-virtualhub: clean-mpy-cross
+	@$(MAKE) -C bricks/virtualhub clean CROSS_COMPILE=
 
 debug: mpy-cross
 	@$(MAKE) -C bricks/debug build/firmware.dfu

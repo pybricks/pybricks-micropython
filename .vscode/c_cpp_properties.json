@@ -352,6 +352,30 @@
             "intelliSenseMode": "gcc-x64"
         },
         {
+            "name": "virtualhub",
+            "includePath": [
+                "${workspaceFolder}/bricks/virtualhub",
+                "${workspaceFolder}/bricks/virtualhub/build",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/virtual_hub",
+                "${workspaceFolder}/micropython/ports/unix",
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}"
+            ],
+            "defines": [
+                "UNIX",
+                "MICROPY_USE_READLINE=1"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-x64"
+        },
+        {
             "name": "pbio/test",
             "includePath": [
                 "${workspaceFolder}/micropython/lib/tinytest",
