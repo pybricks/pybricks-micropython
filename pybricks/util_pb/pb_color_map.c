@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <fix16_trig.c>
+
 #include <pbio/error.h>
 
 #include "py/obj.h"
@@ -68,31 +70,53 @@ void pb_color_map_save_default(mp_obj_t *color_map) {
 }
 
 // Cost function between two colors a and b. The lower, the closer they are.
-static int32_t get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) {
+static int32_t get_hsv_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b) {
+    
+    // normalize h to radians, s/v to (0,1)
+    fix16_t a_h = fix16_deg_to_rad(fix16_from_int(a->h));
+    fix16_t b_h = fix16_deg_to_rad(fix16_from_int(b->h));
+    fix16_t a_s = fix16_div(fix16_from_int(a->s), fix16_from_int(100));
+    fix16_t b_s = fix16_div(fix16_from_int(b->s), fix16_from_int(100));
+    fix16_t a_v = fix16_div(fix16_from_int(a->v), fix16_from_int(100));
+    fix16_t b_v = fix16_div(fix16_from_int(b->v), fix16_from_int(100));
+    fix16_t piovertwo = fix16_div(fix16_pi, fix16_from_int(2));
 
-    // Calculate the hue error
-    int32_t hue_error;
+    // x, y and z deltas between cartesian coordinates of a and b in HSV cone
+    // delx = b_s*b_v*cos(b_h) - a_s*a_v*cos(a_h)
+    fix16_t delx = fix16_sub(
+        fix16_mul(
+            fix16_mul(
+                fix16_sin_parabola(fix16_add(b_h, piovertwo)),
+                b_v),
+            a_s),
+        fix16_mul(
+            fix16_mul(
+                fix16_sin_parabola(fix16_add(a_h, piovertwo)),
+                a_v),
+            b_s));
 
-    if (c->s <= 5 || x->s <= 5) {
-        // When comparing against unsaturated colors,
-        // the hue error is not so relevant.
-        hue_error = 0;
-    } else {
-        hue_error = c->h > x->h ? c->h - x->h : x->h - c->h;
-        if (hue_error > 180) {
-            hue_error = 360 - hue_error;
-        }
-    }
+    // dely = b_s*b_v*sin(b_h) - a_s*a_v*sin(a_h)
+    fix16_t dely = fix16_sub(
+        fix16_mul(
+            fix16_mul(
+                fix16_sin_parabola(b_h),
+                b_v),
+            a_s),
+        fix16_mul(
+            fix16_mul(
+                fix16_sin_parabola(a_h),
+                a_v),
+            b_s));
+    // delz = b_v - a_v
+    fix16_t delz = fix16_sub(b_v, a_v);
 
-    // Calculate the value error:
-    int32_t value_error = x->v > c->v ? x->v - c->v : c->v - x->v;
-
-    // Calculate the saturation error, with extra penalty for low saturation
-    int32_t saturation_error = x->s > c->s ? x->s - c->s : c->s - x->s;
-    saturation_error += (100 - c->s) / 2;
-
-    // Total error
-    return hue_error * hue_error + 5 * saturation_error * saturation_error + 2 * value_error * value_error;
+    // cdist = delx*delx + dely*dely + delz*delz
+    fix16_t cdist = fix16_add(
+        fix16_add(
+            fix16_sq(delx),
+            fix16_sq(dely)),
+        fix16_sq(delz));
+    return fix16_to_int(cdist);
 }
 
 // Get a discrete color that matches the given hsv values most closely
