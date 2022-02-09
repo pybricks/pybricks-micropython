@@ -5,6 +5,11 @@
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 #define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)
 
+#define PBDRV_CONFIG_LED                                    (1)
+#define PBDRV_CONFIG_LED_NUM_DEV                            (1)
+#define PBDRV_CONFIG_LED_VIRTUAL                            (1)
+#define PBDRV_CONFIG_LED_VIRTUAL_NUM_DEV                    (1)
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)

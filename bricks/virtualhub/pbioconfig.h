@@ -2,7 +2,7 @@
 // Copyright (c) 2022 The Pybricks Authors
 
 #define PBIO_CONFIG_DCMOTOR                 (1)
-#define PBIO_CONFIG_LIGHT                   (0)
+#define PBIO_CONFIG_LIGHT                   (1)
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_LIGHT_MATRIX            (0)
 #define PBIO_CONFIG_TACHO                   (1)
