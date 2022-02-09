@@ -17,7 +17,6 @@
 //
 // via the System Properties. Restarting VS Code after this should be sufficient,
 // but you may need to log out and log back in if that doesn't work.
-
 {
     "env": {
         "gcc10ArmNoneEabi": "${env:GCC_10_ARM_NONE_EABI_BIN}arm-none-eabi-gcc"
@@ -365,7 +364,8 @@
                 "${workspaceFolder}/lib/pbio/platform/virtual_hub",
                 "${workspaceFolder}/micropython/ports/unix",
                 "${workspaceFolder}/micropython",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "/usr/include/python3.8"
             ],
             "defines": [
                 "UNIX",

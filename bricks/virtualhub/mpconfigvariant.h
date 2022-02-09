@@ -42,9 +42,16 @@
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS          (1)
 #define MICROPY_PY_BUILTINS_SLICE_INDICES       (1)
 
+#define MICROPY_MPHALPORT_H "mpvarianthal.h"
+
 #define MICROPY_PORT_INIT_FUNC do { \
         extern void pb_virtualhub_port_init(void); \
         pb_virtualhub_port_init(); \
+} while (0)
+
+#define MICROPY_PORT_DEINIT_FUNC do { \
+        extern void pb_virtualhub_port_deinit(void); \
+        pb_virtualhub_port_deinit(); \
 } while (0)
 
 extern const struct _mp_obj_module_t pb_package_pybricks;
@@ -64,8 +71,6 @@ extern const struct _mp_obj_module_t pb_package_pybricks;
 // #define MICROPY_GC_HOOK_LOOP MICROPY_VM_HOOK_LOOP
 
 #define MICROPY_EVENT_POLL_HOOK do { \
-        extern void mp_handle_pending(bool); \
-        mp_handle_pending(true); \
-        extern int pbio_do_one_event(void); \
-        while (pbio_do_one_event()) { } \
+        extern void pb_virtualhub_event_poll(void); \
+        pb_virtualhub_event_poll(); \
 } while (0);

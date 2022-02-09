@@ -3,6 +3,7 @@
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
+#define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)

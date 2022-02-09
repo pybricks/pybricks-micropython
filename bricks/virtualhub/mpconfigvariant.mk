@@ -179,3 +179,15 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/sys/supervisor.c \
 	pbio/sys/user_program.c \
 	)
+
+# realtime library for timer signals
+LIB += -lrt
+
+# embedded Python
+
+EMBEDED_PYTHON ?= python3.8
+PYTHON_CONFIG := $(EMBEDED_PYTHON)-config
+
+INC += $(shell $(PYTHON_CONFIG) --includes)
+LIB += -l$(EMBEDED_PYTHON)
+LDFLAGS += $(shell $(PYTHON_CONFIG) --ldflags)
