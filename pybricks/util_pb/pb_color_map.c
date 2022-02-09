@@ -88,12 +88,12 @@ static int32_t get_hsv_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b
             fix16_mul(
                 fix16_sin_parabola(fix16_add(b_h, piovertwo)),
                 b_v),
-            a_s),
+            b_s),
         fix16_mul(
             fix16_mul(
                 fix16_sin_parabola(fix16_add(a_h, piovertwo)),
                 a_v),
-            b_s));
+            a_s));
 
     // dely = b_s*b_v*sin(b_h) - a_s*a_v*sin(a_h)
     fix16_t dely = fix16_sub(
@@ -101,12 +101,12 @@ static int32_t get_hsv_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b
             fix16_mul(
                 fix16_sin_parabola(b_h),
                 b_v),
-            a_s),
+            b_s),
         fix16_mul(
             fix16_mul(
                 fix16_sin_parabola(a_h),
                 a_v),
-            b_s));
+            a_s));
     // delz = b_v - a_v
     fix16_t delz = fix16_sub(b_v, a_v);
 
