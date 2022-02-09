@@ -103,6 +103,7 @@
 
 #define MICROPY_PERSISTENT_CODE_LOAD    (1)
 #define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
+#define MICROPY_MODULE_BUILTIN_INIT     (1)
 
 // type definitions for the specific machine
 
