@@ -406,11 +406,12 @@ LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
 # libfixmath
 
-COPT += -DFIXMATH_NO_CTYPE
+COPT += -DFIXMATH_NO_CTYPE -DFIXMATH_NO_CACHE
 
 LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
+	fix16_trig.c \
 	fix16.c \
 	uint32.c \
 	)

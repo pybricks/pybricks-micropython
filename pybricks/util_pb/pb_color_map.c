@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <fix16_trig.c>
+#include <fixmath.h>
 
 #include <pbio/error.h>
 
