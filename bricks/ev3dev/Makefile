@@ -307,6 +307,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	ev3dev/src/ev3dev_stretch/sysfs.c \
 	libfixmath/libfixmath/fix16_sqrt.c \
 	libfixmath/libfixmath/fix16_str.c \
+	libfixmath/libfixmath/fix16_trig.c \
 	libfixmath/libfixmath/fix16.c \
 	libfixmath/libfixmath/uint32.c \
 	pbio/drv/battery/battery_linux_ev3.c \

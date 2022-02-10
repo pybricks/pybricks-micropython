@@ -65,7 +65,7 @@ INC += -I../../lib/pbio
 INC += -I../..
 INC += -I$(BUILD)
 
-COPT += -DFIXMATH_NO_CTYPE
+COPT += -DFIXMATH_NO_CTYPE -DFIXMATH_NO_CACHE -DFIXMATH_FAST_SIN
 
 CFLAGS_MCU = -mthumb -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT) $(CFLAGS_EXTRA)
@@ -188,6 +188,7 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
+	fix16_trig.c \
 	fix16.c \
 	uint32.c \
 	)

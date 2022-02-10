@@ -54,7 +54,9 @@
                 "STM32_H=<stm32f4xx.h>",
                 "STM32_HAL_H=<stm32f4xx_hal.h>",
                 "USE_FULL_LL_DRIVER",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
@@ -97,7 +99,9 @@
                 "STM32_H=<stm32f0xx.h>",
                 "STM32_HAL_H=<stm32f0xx_hal.h>",
                 "USE_FULL_LL_DRIVER",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
@@ -138,7 +142,9 @@
                 "STM32_H=<stm32f0xx.h>",
                 "STM32_HAL_H=<stm32f0xx_hal.h>",
                 "USE_FULL_LL_DRIVER",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
@@ -183,7 +189,9 @@
                 "STM32_H=<stm32l4xx.h>",
                 "STM32_HAL_H=<stm32l4xx_hal.h>",
                 "USE_FULL_LL_DRIVER",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
@@ -234,7 +242,9 @@
                 "STM32_H=<stm32f4xx.h>",
                 "STM32_HAL_H=<stm32f4xx_hal.h>",
                 "USE_FULL_LL_DRIVER",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
@@ -271,7 +281,9 @@
             ],
             "defines": [
                 "MICROPY_ROM_TEXT_COMPRESSION",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
@@ -305,7 +317,9 @@
                 "STM32F070xB",
                 "STM32_H=<stm32f4xx.h>",
                 "STM32_HAL_H=<stm32f4xx_hal.h>",
-                "FIXMATH_NO_CTYPE"
+                "FIXMATH_NO_CTYPE",
+                "FIXMATH_NO_CACHE",
+                "FIXMATH_FAST_SIN"
             ],
             "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
