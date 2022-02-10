@@ -32,6 +32,11 @@ void pbsys_user_program_prepare(const pbsys_user_program_callbacks_t *callbacks)
         pbsys_bluetooth_rx_set_callback(NULL);
     }
     pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+
+    // Handle pending events triggered by the status change, e.g. start status
+    // light animation.
+    while (pbio_do_one_event()) {
+    }
 }
 
 /**

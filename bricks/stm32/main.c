@@ -304,10 +304,6 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
 restart:
     // Hook into pbsys
     pbsys_user_program_prepare(&user_program_callbacks);
-    // make sure any pending events, e.g. starting status light pattern, are
-    // handled before starting MicroPython user program
-    while (pbio_do_one_event()) {
-    }
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
