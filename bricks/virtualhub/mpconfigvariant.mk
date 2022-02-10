@@ -138,13 +138,13 @@ LIB_SRC_C += $(addprefix lib/,\
 	libfixmath/libfixmath/fix16_str.c \
 	libfixmath/libfixmath/fix16.c \
 	libfixmath/libfixmath/uint32.c \
-	pbio/drv/battery/battery_linux_ev3.c \
-	pbio/drv/button/button_linux_ev3.c \
+	pbio/drv/battery/battery_virtual.c \
 	pbio/drv/clock/clock_linux.c \
 	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/led/led_core.c \
 	pbio/drv/led/led_virtual.c \
+	pbio/drv/virtual.c \
 	pbio/platform/motors/settings.c \
 	pbio/platform/virtual_hub/sys.c \
 	pbio/src/battery.c \

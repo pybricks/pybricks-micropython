@@ -2,6 +2,32 @@
 # Copyright (c) 2022 The Pybricks Authors
 
 
+from enum import IntEnum
+
+
+class BatteryType(IntEnum):
+    """
+    Battery types.
+
+    These values match ``pbdrv_battery_type_t``.
+    """
+
+    UNKNOWN = 0
+    """
+    The battery type is not known.
+    """
+
+    ALKALINE = 1
+    """
+    The batteries are alkaline (e.g. AA/AAA).
+    """
+
+    LIION = 2
+    """
+    The batteries are Li-ion.
+    """
+
+
 class VirtualHub:
     """
     Base class for virtual hub implementations.
@@ -31,3 +57,60 @@ class VirtualHub:
             b: The requested blue value (0 - 255).
         """
         pass
+
+    @property
+    def battery_voltage(self) -> int:
+        """
+        Gets the current battery voltage.
+
+        The virtual battery driver uses this value.
+
+        The default implementation returns a constant value of 7V.
+
+        Returns:
+            The current battery voltage in mV.
+        """
+        return 7000
+
+    @property
+    def battery_current(self) -> int:
+        """
+        Gets the current battery current.
+
+        The virtual battery driver uses this value.
+
+        The default implementation returns a constant value of 100mA.
+
+        Returns:
+            The current current voltage in mA.
+        """
+        return 100
+
+    @property
+    def battery_temperature(self) -> int:
+        """
+        Gets the current battery temperature.
+
+        The virtual battery driver uses this value.
+
+        The default implementation returns a constant value of 23°C.
+
+        Returns:
+            The current current temperature in m°C.
+        """
+        return 23000
+
+    @property
+    def battery_type(self) -> BatteryType:
+        """
+        Gets the battery type.
+
+        The virtual battery driver uses this value.
+
+        The default implementation returns a constant value of
+        ``BatteryType.UNKNOWN``.
+
+        Returns:
+            The the battery type.
+        """
+        return BatteryType.UNKNOWN

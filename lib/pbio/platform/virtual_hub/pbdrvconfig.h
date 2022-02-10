@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2022 The Pybricks Authors
 
+#define PBDRV_CONFIG_BATTERY                                (1)
+#define PBDRV_CONFIG_BATTERY_VIRTUAL                        (1)
+
 #define PBDRV_CONFIG_CLOCK                                  (1)
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 #define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)
@@ -9,6 +12,8 @@
 #define PBDRV_CONFIG_LED_NUM_DEV                            (1)
 #define PBDRV_CONFIG_LED_VIRTUAL                            (1)
 #define PBDRV_CONFIG_LED_VIRTUAL_NUM_DEV                    (1)
+
+#define PBDRV_CONFIG_VIRTUAL                                (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
