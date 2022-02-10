@@ -4,6 +4,9 @@
 #define PBDRV_CONFIG_BATTERY                                (1)
 #define PBDRV_CONFIG_BATTERY_VIRTUAL                        (1)
 
+#define PBDRV_CONFIG_BUTTON                                 (1)
+#define PBDRV_CONFIG_BUTTON_VIRTUAL                         (1)
+
 #define PBDRV_CONFIG_CLOCK                                  (1)
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 #define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)

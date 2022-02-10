@@ -2,7 +2,7 @@
 # Copyright (c) 2022 The Pybricks Authors
 
 
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 
 class BatteryType(IntEnum):
@@ -26,6 +26,24 @@ class BatteryType(IntEnum):
     """
     The batteries are Li-ion.
     """
+
+
+class Buttons(IntFlag):
+    """
+    Hub buttons.
+
+    These values match ``pbio_button_flags_t``.
+    """
+
+    LEFT_DOWN = 1 << 1
+    DOWN = 1 << 2
+    RIGHT_DOWN = 1 << 3
+    LEFT = 1 << 4
+    CENTER = 1 << 5
+    RIGHT = 1 << 6
+    LEFT_UP = 1 << 7
+    UP = 1 << 8
+    RIGHT_UP = 1 << 9
 
 
 class VirtualHub:
@@ -114,3 +132,17 @@ class VirtualHub:
             The the battery type.
         """
         return BatteryType.UNKNOWN
+
+    @property
+    def buttons(self) -> Buttons:
+        """
+        Gets the buttons that are currently pressed.
+
+        The virtual button driver uses this value.
+
+        The default implementation returns a constant value of ``Buttons(0)``.
+
+        Returns:
+            The button flags of the currently pressed buttons.
+        """
+        return Buttons(0)
