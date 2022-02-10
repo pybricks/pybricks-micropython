@@ -43,6 +43,7 @@
 #define MICROPY_PY_BUILTINS_SLICE_INDICES       (1)
 
 #define MICROPY_MPHALPORT_H "mpvarianthal.h"
+#define MICROPY_VARIANT_QSTR_DEFS_H "../pybricks_qstrdefs.h"
 
 #define MICROPY_PORT_INIT_FUNC do { \
         extern void pb_virtualhub_port_init(void); \
