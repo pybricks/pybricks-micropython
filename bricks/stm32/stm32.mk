@@ -406,7 +406,7 @@ LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
 # libfixmath
 
-COPT += -DFIXMATH_NO_CTYPE -DFIXMATH_NO_CACHE
+COPT += -DFIXMATH_NO_CTYPE -DFIXMATH_NO_CACHE -DFIXMATH_FAST_SIN
 
 LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
