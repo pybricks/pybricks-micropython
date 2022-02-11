@@ -7,6 +7,7 @@
 
 #include <pbdrv/battery.h>
 
+#include <pbio/battery.h>
 #include <pbio/button.h>
 
 #include "py/obj.h"
@@ -20,9 +21,7 @@
 // C types and the high level Python API.
 
 STATIC mp_obj_t battery_voltage(void) {
-    uint16_t volt;
-    pb_assert(pbdrv_battery_get_voltage_now(&volt));
-    return mp_obj_new_int(volt);
+    return mp_obj_new_int(pbio_battery_get_average_voltage());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
 
