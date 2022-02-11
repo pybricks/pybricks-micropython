@@ -113,7 +113,7 @@ STATIC PT_THREAD(pb_imu_configure(struct pt *pt, pb_imu_dev_t *imu_dev)) {
     // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_hp_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_HP_ODR_DIV_100));
 
     /* Gyroscope - filtering chain */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_band_pass_set(&child, ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT));
+    // PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_band_pass_set(&child, ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT));
 
     PT_END(pt);
 }
