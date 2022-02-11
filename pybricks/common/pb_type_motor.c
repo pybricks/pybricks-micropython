@@ -341,7 +341,8 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_busy_obj, common_Motor_busy);
 // pybricks._common.Motor.stalled
 STATIC mp_obj_t common_Motor_stalled(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_bool(pbio_control_is_stalled(&self->srv->control));
+    int32_t stall_duration;
+    return mp_obj_new_bool(pbio_control_is_stalled(&self->srv->control, &stall_duration));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_stalled_obj, common_Motor_stalled);
 

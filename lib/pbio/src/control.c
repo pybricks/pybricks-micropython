@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include <pbdrv/clock.h>
+
 #include <pbio/config.h>
 #include <pbio/control.h>
 #include <pbio/math.h>
@@ -448,8 +450,19 @@ bool pbio_control_type_is_time(pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_TIMED;
 }
 
-bool pbio_control_is_stalled(pbio_control_t *ctl) {
-    return ctl->type != PBIO_CONTROL_NONE && ctl->stalled;
+bool pbio_control_is_stalled(pbio_control_t *ctl, int32_t *stall_duration) {
+
+    // Return false if no control is active or if we're not stalled.
+    if (!pbio_control_is_active(ctl) || !ctl->stalled) {
+        *stall_duration = 0;
+        return false;
+    }
+
+    // Get time since stalling began.
+    int32_t time_pause_begin = ctl->type == PBIO_CONTROL_ANGLE ? ctl->count_integrator.time_pause_begin : ctl->rate_integrator.time_pause_begin;
+    *stall_duration = (pbdrv_clock_get_us() - time_pause_begin) / US_PER_MS;
+
+    return true;
 }
 
 bool pbio_control_is_done(pbio_control_t *ctl) {

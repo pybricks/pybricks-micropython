@@ -244,7 +244,8 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
                 pbio_test_counter_set_rate(speed);
             } else {
                 // allow test to pass even if there is no motor simulator given
-                if (pbio_control_is_stalled(&servo->control)) {
+                int32_t stall_duration;
+                if (pbio_control_is_stalled(&servo->control, &stall_duration)) {
                     break;
                 }
             }

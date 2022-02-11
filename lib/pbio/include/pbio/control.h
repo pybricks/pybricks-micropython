@@ -120,7 +120,7 @@ bool pbio_control_is_active(pbio_control_t *ctl);
 bool pbio_control_type_is_angle(pbio_control_t *ctl);
 bool pbio_control_type_is_time(pbio_control_t *ctl);
 
-bool pbio_control_is_stalled(pbio_control_t *ctl);
+bool pbio_control_is_stalled(pbio_control_t *ctl, int32_t *stall_duration);
 bool pbio_control_is_done(pbio_control_t *ctl);
 int32_t pbio_control_get_load(pbio_control_t *ctl);
 

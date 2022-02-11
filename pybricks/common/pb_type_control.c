@@ -227,7 +227,8 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_Control_load_obj, common_Control_load);
 // pybricks._common.Control.stalled
 STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_bool(pbio_control_is_stalled(self->control));
+    int32_t stall_duration;
+    return mp_obj_new_bool(pbio_control_is_stalled(self->control, &stall_duration));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_stalled_obj, common_Control_stalled);
 
