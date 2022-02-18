@@ -1199,6 +1199,8 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     PT_WAIT_UNTIL(pt, pbdrv_uart_get(pdata->uart_id, &port_data->uart) == PBIO_SUCCESS);
     port_data->iodev.info = &infos[id].info;
     port_data->iodev.ops = &pbio_uartdev_ops;
+    // FIXME: uartdev should not have to care about port numbers
+    port_data->iodev.port = PBIO_CONFIG_UARTDEV_FIRST_PORT + id;
     port_data->info = &infos[id].info;
     port_data->tx_msg = &bufs[id][BUF_TX_MSG][0];
     port_data->rx_msg = &bufs[id][BUF_RX_MSG][0];

@@ -469,7 +469,6 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                         debug_pr("ioport(%c): UART device detected.\n", i + PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT);
                         ioport_enable_uart(ioport);
                         pbio_uartdev_get(i, &ioport->iodev);
-                        ioport->iodev->port = i + PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT;
                     } else if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_NONE) {
                         debug_pr("ioport(%c): Device unplugged.\n", i + PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT);
                         ioport->iodev = NULL;

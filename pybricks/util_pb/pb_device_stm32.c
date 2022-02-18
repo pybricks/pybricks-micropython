@@ -92,8 +92,6 @@ pb_device_t *pb_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t vali
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
-    // Return pointer to device
-    iodev->port = port;
     return (pb_device_t *)iodev;
 }
 
