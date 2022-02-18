@@ -162,7 +162,17 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
     return pbio_parent_stop(&srv->parent, clear_parent);
 }
 
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
+/**
+ * Sets up the servo instance to be used in an application.
+ *
+ * @param [in]  srv         The servo instance.
+ * @param [in]  id          The I/O device type ID of the motor.
+ * @param [in]  direction   The direction of positive rotation.
+ * @param [in]  gear_ratio  The gear ratio of the mechanism attached to the motor.
+ * @param [in]  reset_angle If true, reset the current angle to the current absolute position if supported or 0.
+ * @return                  Error code.
+ */
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_iodev_type_id_t id, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     pbio_error_t err;
 
     // Unregister this servo from control loop updates.
@@ -174,7 +184,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return err;
     }
     // Coast and configure dcmotors, and stop its parents, if any.
-    err = pbio_dcmotor_setup(srv->dcmotor, direction);
+    err = pbio_dcmotor_setup(srv->dcmotor, id, direction);
     if (err != PBIO_SUCCESS) {
         return err;
     }

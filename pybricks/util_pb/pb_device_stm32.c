@@ -8,7 +8,7 @@
 #include <pbio/color.h>
 #include <pbio/iodev.h>
 
-#include "py/mphal.h"
+#include "py/mpconfig.h"
 #include "py/mphal.h"
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -212,5 +212,28 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
     return 0;
 }
 
-void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+void pb_device_setup_motor(pbio_port_id_t port, bool is_servo, pbio_iodev_type_id_t *id) {
+    // Special case for Move hub since it doesn't have iodev for ports A and B
+    // which are the built-in motors.
+    #if PYBRICKS_HUB_MOVEHUB
+    if (port == PBIO_PORT_ID_A || port == PBIO_PORT_ID_B) {
+        *id = PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR;
+        return;
+    }
+    #endif
+
+    pbio_error_t err;
+    pbio_iodev_t *iodev;
+
+    while ((err = pbdrv_ioport_get_iodev(port, &iodev)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(50);
+    }
+
+    pb_assert(err);
+
+    if (!PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    *id = iodev->info->type_id;
 }

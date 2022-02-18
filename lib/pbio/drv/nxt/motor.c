@@ -28,12 +28,4 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle)
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-    *id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR;
-    return PBIO_SUCCESS;
-}
-
 #endif // PBDRV_CONFIG_MOTOR

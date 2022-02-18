@@ -241,7 +241,7 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
     return mode;
 }
 
-void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+void pb_device_setup_motor(pbio_port_id_t port, bool is_servo, pbio_iodev_type_id_t *id) {
     pbio_error_t err;
 
     while ((err = ev3dev_motor_setup(port, is_servo)) == PBIO_ERROR_AGAIN) {
@@ -249,4 +249,6 @@ void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
     }
 
     pb_assert(err);
+
+    pb_assert(ev3dev_motor_get_id(port, id));
 }

@@ -34,12 +34,13 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
-    pb_device_setup_motor(port, false);
+    pbio_iodev_type_id_t id;
+    pb_device_setup_motor(port, false, &id);
 
     // Get and initialize DC Motor
     pbio_dcmotor_t *dcmotor;
     pb_assert(pbio_dcmotor_get_dcmotor(port, &dcmotor));
-    pb_assert(pbio_dcmotor_setup(dcmotor, direction));
+    pb_assert(pbio_dcmotor_setup(dcmotor, id, direction));
 
     // On success, create and return the MicroPython object
     common_DCMotor_obj_t *self = m_new_obj(common_DCMotor_obj_t);

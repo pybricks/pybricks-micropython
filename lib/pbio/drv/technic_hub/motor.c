@@ -130,26 +130,4 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle)
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
-
-    pbio_iodev_t *iodev;
-    pbio_error_t err;
-
-    err = pbdrv_ioport_get_iodev(port, &iodev);
-    if (err == PBIO_ERROR_NO_DEV) {
-        *id = PBIO_IODEV_TYPE_ID_NONE;
-        return PBIO_SUCCESS;
-    } else if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    if (!PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    *id = iodev->info->type_id;
-
-    return PBIO_SUCCESS;
-}
-
 #endif // PBDRV_CONFIG_MOTOR

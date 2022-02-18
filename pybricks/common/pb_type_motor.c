@@ -47,7 +47,8 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     pbio_error_t err;
     pbio_servo_t *srv;
 
-    pb_device_setup_motor(port, true);
+    pbio_iodev_type_id_t id;
+    pb_device_setup_motor(port, true, &id);
 
     // Default gear ratio
     fix16_t gear_ratio = F16C(1, 0);
@@ -92,7 +93,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     pb_assert(err);
 
     // Set up servo
-    pb_assert(pbio_servo_setup(srv, positive_direction, gear_ratio, reset_angle));
+    pb_assert(pbio_servo_setup(srv, id, positive_direction, gear_ratio, reset_angle));
 
     // On success, proceed to create and return the MicroPython object
     common_Motor_obj_t *self = m_new_obj(common_Motor_obj_t);

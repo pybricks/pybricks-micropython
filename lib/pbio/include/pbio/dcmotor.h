@@ -34,7 +34,7 @@ void pbio_dcmotor_stop_all(bool clear_parents);
 
 // Setup and status
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id, pbio_direction_t direction);
 void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now);
 
 // Settings

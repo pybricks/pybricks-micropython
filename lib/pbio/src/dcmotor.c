@@ -41,9 +41,18 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
     }
 }
 
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
+/**
+ * Sets up the DC motor instance to be used in an application.
+ *
+ * @param [in]  dcmotor     The DC motor instance.
+ * @param [in]  id          The I/O device type ID of the motor.
+ * @param [in]  direction   The direction of positive rotation.
+ */
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id, pbio_direction_t direction) {
 
     pbio_error_t err;
+
+    dcmotor->id = id;
 
     // Assuming we have just run the device getter, we can now read and verify
     // the device id here.
@@ -72,6 +81,13 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
     return PBIO_SUCCESS;
 }
 
+/**
+ * Gets the DC motor instance for the specified port.
+ *
+ * @param [in]  port        The port the motor is connected to.
+ * @param [out] dcmotor     The motor instance.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
@@ -82,8 +98,7 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
     *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     (*dcmotor)->port = port;
 
-    // Get device ID to ensure we are dealing with a supported device.
-    return pbdrv_motor_get_id(port, &((*dcmotor)->id));
+    return PBIO_SUCCESS;
 }
 
 void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now) {

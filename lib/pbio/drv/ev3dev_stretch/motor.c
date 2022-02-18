@@ -32,14 +32,4 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle)
     return ev3dev_motor_run(mtr, duty_cycle / 100);
 }
 
-pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
-    ev3dev_motor_t *mtr;
-    pbio_error_t err = ev3dev_motor_get(&mtr, port);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    return ev3dev_motor_get_id(mtr, id);
-}
-
 #endif // PBDRV_CONFIG_MOTOR

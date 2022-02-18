@@ -157,12 +157,19 @@ pbio_error_t ev3dev_motor_setup(pbio_port_id_t port, bool is_servo) {
 /**
  * Gets the motor type ID of the currently connected motor.
  *
- * @param [in]  mtr         The motor reference.
+ * @param [in]  port        The port the motor is attached to.
  * @param [out] id          The type identifier.
  * @return                  Error code.
  */
-pbio_error_t ev3dev_motor_get_id(ev3dev_motor_t *mtr, pbio_iodev_type_id_t *id) {
+pbio_error_t ev3dev_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
+    ev3dev_motor_t *mtr;
+    pbio_error_t err = ev3dev_motor_get(&mtr, port);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     *id = mtr->id;
+
     return ev3dev_motor_connect_status(mtr, PBIO_SUCCESS);
 }
 
