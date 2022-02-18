@@ -18,14 +18,14 @@
 
 #define MAX_PATH_LENGTH 120
 
-struct _ev3dev_motor_t {
+typedef struct {
     int n_motor;
     bool connected;
     bool coasting;
     pbio_iodev_type_id_t id;
     FILE *f_command;
     FILE *f_duty;
-};
+} ev3dev_motor_t;
 
 static ev3dev_motor_t motors[PBDRV_CONFIG_LAST_MOTOR_PORT - PBDRV_CONFIG_FIRST_MOTOR_PORT + 1];
 
@@ -116,7 +116,7 @@ static pbio_error_t ev3dev_motor_connect_status(ev3dev_motor_t *mtr, pbio_error_
  * @param [in]  port    The requested port.
  * @return              Error code.
  */
-pbio_error_t ev3dev_motor_get(ev3dev_motor_t **mtr, pbio_port_id_t port) {
+static pbio_error_t ev3dev_motor_get(ev3dev_motor_t **mtr, pbio_port_id_t port) {
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -176,12 +176,18 @@ pbio_error_t ev3dev_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) 
 /**
  * Runs the motor using the "run-direct" command.
  *
- * @param [in]  mtr         The motor reference.
+ * @param [in]  port        The port the motor is attached to.
  * @param [in]  duty_cycle  The requested duty cycle -100 to 100.
  * @return                  Error code.
  */
-pbio_error_t ev3dev_motor_run(ev3dev_motor_t *mtr, int duty_cycle) {
+pbio_error_t ev3dev_motor_run(pbio_port_id_t port, int duty_cycle) {
     pbio_error_t err;
+    ev3dev_motor_t *mtr;
+
+    err = ev3dev_motor_get(&mtr, port);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // If we are coasting, we must first set the command to run-direct
     if (mtr->coasting) {
@@ -204,10 +210,18 @@ pbio_error_t ev3dev_motor_run(ev3dev_motor_t *mtr, int duty_cycle) {
 /**
  * Stops the motor using the "stop" command.
  *
- * @param [in]  mtr         The motor reference.
+ * @param [in]  port        The port the motor is attached to.
  * @return                  Error code.
  */
-pbio_error_t ev3dev_motor_stop(ev3dev_motor_t *mtr) {
+pbio_error_t ev3dev_motor_stop(pbio_port_id_t port) {
+    pbio_error_t err;
+    ev3dev_motor_t *mtr;
+
+    err = ev3dev_motor_get(&mtr, port);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Do nothing if we are already coasting
     if (mtr->coasting) {
         return PBIO_SUCCESS;
@@ -215,7 +229,7 @@ pbio_error_t ev3dev_motor_stop(ev3dev_motor_t *mtr) {
 
     // Send the stop command to trigger coast
     mtr->coasting = true;
-    pbio_error_t err = sysfs_write_str(mtr->f_command, "stop");
+    err = sysfs_write_str(mtr->f_command, "stop");
     if (err != PBIO_SUCCESS) {
         return ev3dev_motor_connect_status(mtr, err);
     }

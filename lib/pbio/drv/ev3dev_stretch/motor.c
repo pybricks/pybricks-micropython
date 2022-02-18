@@ -13,23 +13,11 @@
 #include <ev3dev_stretch/lego_port.h>
 
 pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
-    ev3dev_motor_t *mtr;
-    pbio_error_t err = ev3dev_motor_get(&mtr, port);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    return ev3dev_motor_stop(mtr);
+    return ev3dev_motor_stop(port);
 }
 
 pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
-    ev3dev_motor_t *mtr;
-    pbio_error_t err = ev3dev_motor_get(&mtr, port);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    return ev3dev_motor_run(mtr, duty_cycle / 100);
+    return ev3dev_motor_run(port, duty_cycle / 100);
 }
 
 #endif // PBDRV_CONFIG_MOTOR
