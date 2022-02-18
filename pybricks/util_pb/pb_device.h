@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #ifndef _PBDEVICE_H_
 #define _PBDEVICE_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
+#include <pbio/port.h>
 
 typedef struct _pb_device_t pb_device_t;
 
@@ -27,6 +29,8 @@ uint8_t pb_device_get_mode(pb_device_t *pbdev);
 uint8_t pb_device_get_num_values(pb_device_t *pbdev);
 
 int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str);
+
+void pb_device_setup_motor(pbio_port_id_t port, bool is_servo);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

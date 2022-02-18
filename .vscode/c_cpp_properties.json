@@ -332,6 +332,7 @@
                 "${workspaceFolder}/bricks/ev3dev",
                 "${workspaceFolder}/bricks/ev3dev/build",
                 "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/ev3dev/include",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/libfixmath/libfixmath",
                 "${workspaceFolder}/lib/lwrb/src/include",

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -17,6 +17,7 @@
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
@@ -46,13 +47,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     pbio_error_t err;
     pbio_servo_t *srv;
 
-    #if PYBRICKS_PY_EV3DEVICES
-    #include <pbdrv/motor.h>
-    while ((err = pbdrv_motor_setup(port, true)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(2000);
-    }
-    pb_assert(err);
-    #endif
+    pb_device_setup_motor(port, true);
 
     // Default gear ratio
     fix16_t gear_ratio = F16C(1, 0);

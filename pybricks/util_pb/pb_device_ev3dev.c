@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2020,2022 The Pybricks Authors
 
 #include <dirent.h>
 #include <stdbool.h>
@@ -11,6 +11,7 @@
 #include <pbio/iodev.h>
 #include <pbio/port.h>
 
+#include <ev3dev_stretch/lego_motor.h>
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/nxtcolor.h>
 
@@ -238,4 +239,14 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
     uint8_t mode;
     pb_assert(lego_sensor_get_mode_id_from_str(pbdev->sensor, mode_str, &mode));
     return mode;
+}
+
+void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+    pbio_error_t err;
+
+    while ((err = ev3dev_motor_setup(port, is_servo)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(100);
+    }
+
+    pb_assert(err);
 }

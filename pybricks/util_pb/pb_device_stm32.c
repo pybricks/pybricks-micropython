@@ -211,3 +211,6 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     return 0;
 }
+
+void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+}

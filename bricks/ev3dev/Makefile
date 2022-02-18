@@ -300,6 +300,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
 	contiki-core/sys/timer.c \
+	ev3dev/src/ev3dev_stretch/lego_motor.c \
 	ev3dev/src/ev3dev_stretch/lego_port.c \
 	ev3dev/src/ev3dev_stretch/lego_sensor.c \
 	ev3dev/src/ev3dev_stretch/nxtcolor.c \

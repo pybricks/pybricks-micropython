@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -13,6 +13,7 @@
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
@@ -33,14 +34,7 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
-    #if PYBRICKS_PY_EV3DEVICES
-    #include <pbdrv/motor.h>
-    pbio_error_t err;
-    while ((err = pbdrv_motor_setup(port, false)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(2000);
-    }
-    pb_assert(err);
-    #endif
+    pb_device_setup_motor(port, false);
 
     // Get and initialize DC Motor
     pbio_dcmotor_t *dcmotor;
