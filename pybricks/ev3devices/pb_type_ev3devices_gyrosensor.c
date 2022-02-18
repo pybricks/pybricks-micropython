@@ -16,7 +16,6 @@
 // pybricks.ev3devices.GyroSensor class object
 typedef struct _ev3devices_GyroSensor_obj_t {
     mp_obj_base_t base;
-    pbio_port_id_t port; // FIXME: Shouldn't be here
     pb_device_t *pbdev;
     pbio_direction_t direction;
     mp_int_t offset;
@@ -46,9 +45,9 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
     self->base.type = (mp_obj_type_t *)type;
     self->direction = pb_type_enum_get_value(direction_in, &pb_enum_type_Direction);
 
-    self->port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(self->port, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR);
 
     self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, 0);
     return MP_OBJ_FROM_PTR(self);
