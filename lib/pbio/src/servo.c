@@ -7,7 +7,6 @@
 
 #include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
-#include <pbdrv/motor.h>
 
 #include <pbio/math.h>
 #include <pbio/observer.h>

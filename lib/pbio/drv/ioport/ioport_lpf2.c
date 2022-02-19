@@ -22,7 +22,6 @@
 #include <lego_uart.h>
 
 #include <pbdrv/gpio.h>
-#include <pbdrv/motor.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 #include <pbio/uartdev.h>

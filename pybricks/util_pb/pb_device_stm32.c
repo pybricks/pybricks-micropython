@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <string.h>
 
 #include <pbdrv/ioport.h>
-#include <pbdrv/motor.h>
+#include <pbdrv/motor_driver.h>
 #include <pbio/color.h>
 #include <pbio/iodev.h>
 
@@ -192,7 +192,7 @@ void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty) {
         duty = 100;
     }
     // Apply duty cycle in reverse to activate power
-    pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -100 * duty));
+    pb_assert(pbdrv_motor_driver_set_duty_cycle(pbdev->iodev.port, -PBDRV_MOTOR_DRIVER_MAX_DUTY * duty / 100));
 }
 
 pbio_iodev_type_id_t pb_device_get_id(pb_device_t *pbdev) {

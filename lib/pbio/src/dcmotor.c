@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <pbio/config.h>
 
@@ -10,7 +10,7 @@
 #include <fixmath.h>
 
 #include <pbdrv/config.h>
-#include <pbdrv/motor.h>
+#include <pbdrv/motor_driver.h>
 
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
@@ -110,7 +110,7 @@ pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     // Stop the motor and set the passivity state value for data logging.
     dcmotor->is_coasting = true;
     dcmotor->voltage_now = 0;
-    return pbdrv_motor_coast(dcmotor->port);
+    return pbdrv_motor_driver_coast(dcmotor->port);
 }
 
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
@@ -134,7 +134,7 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     }
 
     // Apply the duty cycle.
-    pbio_error_t err = pbdrv_motor_set_duty_cycle(dcmotor->port, duty_cycle);
+    pbio_error_t err = pbdrv_motor_driver_set_duty_cycle(dcmotor->port, duty_cycle);
     if (err != PBIO_SUCCESS) {
         return err;
     }

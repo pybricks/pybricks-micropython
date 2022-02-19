@@ -14,7 +14,6 @@
 #include <pbdrv/config.h>
 #include <pbdrv/core.h>
 #include <pbdrv/ioport.h>
-#include <pbdrv/motor.h>
 #include <pbdrv/sound.h>
 #include <pbio/config.h>
 #include <pbio/dcmotor.h>

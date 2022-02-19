@@ -9,7 +9,6 @@
 #include <fixmath.h>
 
 #include <pbdrv/config.h>
-#include <pbdrv/motor.h>
 #include <pbdrv/counter.h>
 
 #include <pbio/error.h>

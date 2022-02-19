@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 #ifndef _PBDRVCONFIG_H_
 #define _PBDRVCONFIG_H_
@@ -60,6 +60,9 @@
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (2)
 
+#define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_HBRIDGE_PWM       (1)
+
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (4)
 #define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
@@ -81,8 +84,6 @@
 
 #define PBDRV_CONFIG_WATCHDOG                       (1)
 #define PBDRV_CONFIG_WATCHDOG_STM32                 (1)
-
-#define PBDRV_CONFIG_MOTOR          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)

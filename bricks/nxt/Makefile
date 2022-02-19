@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2020 The Pybricks Authors
+# Copyright (c) 2019-2022 The Pybricks Authors
 
 PBIO_PLATFORM = nxt
 
@@ -193,13 +193,13 @@ LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	)
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
-	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/battery/battery_nxt.c \
 	drv/button/button_nxt.c \
 	drv/clock/clock_nxt.c \
 	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_nxt.c \
+	drv/motor_driver/motor_driver_nxt.c \
 	drv/reset/reset_nxt.c \
 	platform/motors/settings.c \
 	platform/$(PBIO_PLATFORM)/platform.c \

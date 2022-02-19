@@ -19,10 +19,11 @@
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
-#include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/resistor_ladder/resistor_ladder.h"
+#include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 #include "../../drv/usb/usb_stm32.h"
 
@@ -283,6 +284,90 @@ const pbdrv_led_array_pwm_platform_data_t pbdrv_led_array_pwm_platform_data[PBDR
         .num_pwm_chs = 25,
         .pwm_id = PWM_DEV_5_TLC5955,
         .id = LED_ARRAY_DEV_0_LIGHT_MATRIX,
+    },
+};
+
+// Motor driver
+
+const pbdrv_motor_driver_hbridge_pwm_platform_data_t
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    // Port A
+    {
+        .pin1_gpio.bank = GPIOE,
+        .pin1_gpio.pin = 9,
+        .pin1_alt = GPIO_AF1_TIM1,
+        .pin1_pwm_id = PWM_DEV_0_TIM1,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOE,
+        .pin2_gpio.pin = 11,
+        .pin2_alt = GPIO_AF1_TIM1,
+        .pin2_pwm_id = PWM_DEV_0_TIM1,
+        .pin2_pwm_ch = 2,
+    },
+    // Port B
+    {
+        .pin1_gpio.bank = GPIOE,
+        .pin1_gpio.pin = 13,
+        .pin1_alt = GPIO_AF1_TIM1,
+        .pin1_pwm_id = PWM_DEV_0_TIM1,
+        .pin1_pwm_ch = 3,
+        .pin2_gpio.bank = GPIOE,
+        .pin2_gpio.pin = 14,
+        .pin2_alt = GPIO_AF1_TIM1,
+        .pin2_pwm_id = PWM_DEV_0_TIM1,
+        .pin2_pwm_ch = 4,
+    },
+    // Port C
+    {
+        .pin1_gpio.bank = GPIOB,
+        .pin1_gpio.pin = 6,
+        .pin1_alt = GPIO_AF2_TIM4,
+        .pin1_pwm_id = PWM_DEV_2_TIM4,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 7,
+        .pin2_alt = GPIO_AF2_TIM4,
+        .pin2_pwm_id = PWM_DEV_2_TIM4,
+        .pin2_pwm_ch = 2,
+    },
+    // Port D
+    {
+        .pin1_gpio.bank = GPIOB,
+        .pin1_gpio.pin = 8,
+        .pin1_alt = GPIO_AF2_TIM4,
+        .pin1_pwm_id = PWM_DEV_2_TIM4,
+        .pin1_pwm_ch = 3,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 9,
+        .pin2_alt = GPIO_AF2_TIM4,
+        .pin2_pwm_id = PWM_DEV_2_TIM4,
+        .pin2_pwm_ch = 4,
+    },
+    // Port E
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 6,
+        .pin1_alt = GPIO_AF2_TIM3,
+        .pin1_pwm_id = PWM_DEV_1_TIM3,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOC,
+        .pin2_gpio.pin = 7,
+        .pin2_alt = GPIO_AF2_TIM3,
+        .pin2_pwm_id = PWM_DEV_1_TIM3,
+        .pin2_pwm_ch = 2,
+    },
+    // Port F
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 8,
+        .pin1_alt = GPIO_AF2_TIM3,
+        .pin1_pwm_id = PWM_DEV_1_TIM3,
+        .pin1_pwm_ch = 3,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 1,
+        .pin2_alt = GPIO_AF2_TIM3,
+        .pin2_pwm_id = PWM_DEV_1_TIM3,
+        .pin2_pwm_ch = 4,
     },
 };
 

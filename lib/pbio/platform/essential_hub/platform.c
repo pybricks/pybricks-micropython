@@ -19,6 +19,7 @@
 #include "../../drv/charger/charger_mp2639a.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_lp50xx_stm32.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
@@ -208,6 +209,38 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .b_id = PWM_DEV_3_LP50XX,
         .b_ch = 2,
         .scale_factor = 35,
+    },
+};
+
+// Motor driver
+
+const pbdrv_motor_driver_hbridge_pwm_platform_data_t
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    // Port A
+    {
+        .pin1_gpio.bank = GPIOB,
+        .pin1_gpio.pin = 6,
+        .pin1_alt = GPIO_AF2_TIM4,
+        .pin1_pwm_id = PWM_DEV_2_TIM4,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 7,
+        .pin2_alt = GPIO_AF2_TIM4,
+        .pin2_pwm_id = PWM_DEV_2_TIM4,
+        .pin2_pwm_ch = 2,
+    },
+    // Port B
+    {
+        .pin1_gpio.bank = GPIOB,
+        .pin1_gpio.pin = 4,
+        .pin1_alt = GPIO_AF2_TIM3,
+        .pin1_pwm_id = PWM_DEV_1_TIM3,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 5,
+        .pin2_alt = GPIO_AF2_TIM3,
+        .pin2_pwm_id = PWM_DEV_1_TIM3,
+        .pin2_pwm_ch = 2,
     },
 };
 

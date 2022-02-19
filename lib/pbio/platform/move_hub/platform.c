@@ -11,6 +11,7 @@
 #include "../../drv/counter/counter_stm32f0_gpio_quad_enc.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f0.h"
 
@@ -122,20 +123,74 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
     }
 };
 
+// Motor driver
+
+const pbdrv_motor_driver_hbridge_pwm_platform_data_t
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    // Port A
+    {
+        .pin1_gpio.bank = GPIOA,
+        .pin1_gpio.pin = 8,
+        .pin1_alt = 2,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOA,
+        .pin2_gpio.pin = 10,
+        .pin2_alt = 2,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 3,
+    },
+    // Port B
+    {
+        .pin1_gpio.bank = GPIOA,
+        .pin1_gpio.pin = 9,
+        .pin1_alt = 2,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 2,
+        .pin2_gpio.bank = GPIOA,
+        .pin2_gpio.pin = 11,
+        .pin2_alt = 2,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 4,
+    },
+    // Port C
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 8,
+        .pin1_alt = 0,
+        .pin1_pwm_id = PWM_DEV_1,
+        .pin1_pwm_ch = 3,
+        .pin2_gpio.bank = GPIOC,
+        .pin2_gpio.pin = 6,
+        .pin2_alt = 0,
+        .pin2_pwm_id = PWM_DEV_1,
+        .pin2_pwm_ch = 1,
+    },
+    // Port D
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 7,
+        .pin1_alt = 0,
+        .pin1_pwm_id = PWM_DEV_1,
+        .pin1_pwm_ch = 2,
+        .pin2_gpio.bank = GPIOC,
+        .pin2_gpio.pin = 9,
+        .pin2_alt = 0,
+        .pin2_pwm_id = PWM_DEV_1,
+        .pin2_pwm_ch = 4,
+    },
+};
+
 // PWM
 
 static void pwm_dev_0_platform_init(void) {
     // port A: PA8, PA10 - port B: PA9, PA11
-    for (pbdrv_gpio_t gpio = { .bank = GPIOA, .pin = 8 }; gpio.pin <= 11; gpio.pin++) {
-        pbdrv_gpio_alt(&gpio, 2);
-    }
+    // pin mux handled by motor driver
 }
 
 static void pwm_dev_1_platform_init(void) {
     // port C: PC6, PC8 - port D: PC7, PC9
-    for (pbdrv_gpio_t gpio = { .bank = GPIOC, .pin = 6 }; gpio.pin <= 9; gpio.pin++) {
-        pbdrv_gpio_alt(&gpio, 0);
-    }
+    // pin mux handled by motor driver
 }
 
 static void pwm_dev_2_platform_init(void) {
@@ -167,8 +222,10 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .period = 1000, // 12 MHz divided by 1k makes 12 kHz PWM
         .id = PWM_DEV_0,
         // channel 1/3: Port A motor driver; channel 2/4: Port B motor driver
-        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
-            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
     },
     {
         .platform_init = pwm_dev_1_platform_init,
@@ -177,8 +234,10 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .period = 1000, // 12 MHz divided by 1k makes 12 kHz PWM
         .id = PWM_DEV_1,
         // channel 1/3: Port C motor driver; channel 3/4: Port D motor driver
-        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
-            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
     },
     {
         .platform_init = pwm_dev_2_platform_init,

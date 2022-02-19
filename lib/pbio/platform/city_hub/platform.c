@@ -7,10 +7,11 @@
 #include <pbio/button.h>
 #include <pbio/uartdev.h>
 
-#include "../../drv/button/button_gpio.h"
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
+#include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f0.h"
 
@@ -216,26 +217,44 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
     }
 };
 
+// Motor driver
+
+const pbdrv_motor_driver_hbridge_pwm_platform_data_t
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    // Port A
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 9,
+        .pin1_alt = 0,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 4,
+        .pin2_gpio.bank = GPIOC,
+        .pin2_gpio.pin = 7,
+        .pin2_alt = 0,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 2,
+    },
+    // Port B
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 8,
+        .pin1_alt = 0,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 3,
+        .pin2_gpio.bank = GPIOC,
+        .pin2_gpio.pin = 6,
+        .pin2_alt = 0,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 1,
+    },
+};
+
 // PWM
 
 static void pwm_dev_0_platform_init(void) {
     // port A motor PWM on TIM3 CH2/4
-    // init pins as gpio out low (coasting) and prepare alternate function
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_7;
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_9;
-    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL7_Msk) | (0 << GPIO_AFRL_AFSEL7_Pos);
-    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (0 << GPIO_AFRH_AFSEL9_Pos);
-
     // port B motor PWM on TIM3 CH1/3
-    // init pins as gpio out low (coasting) and prepare alternate function
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_6;
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_8;
-    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (0 << GPIO_AFRL_AFSEL6_Pos);
-    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (0 << GPIO_AFRH_AFSEL8_Pos);
+    // the motor driver handles these pins, so nothing to do here
 }
 
 static void pwm_dev_1_platform_init(void) {
@@ -267,8 +286,10 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .period = 1000, // 12 MHz divided by 1k makes 12 kHz PWM
         .id = PWM_DEV_0,
         // channel 1/3: Port B motor driver; channel 2/4: Port A motor driver
-        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
-            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
     },
     {
         .platform_init = pwm_dev_1_platform_init,

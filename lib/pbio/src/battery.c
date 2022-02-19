@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 #include <pbio/config.h>
 
@@ -8,7 +8,8 @@
 #include <inttypes.h>
 
 #include <pbdrv/battery.h>
-#include <pbdrv/motor.h>
+#include <pbdrv/motor_driver.h>
+#include <pbio/math.h>
 
 // Slow moving average battery voltage.
 static int32_t battery_voltage_avg_scaled;
@@ -57,21 +58,14 @@ int32_t pbio_battery_get_average_voltage(void) {
 // Gets the duty cycle required to output the desired voltage.
 int32_t pbio_battery_get_duty_from_voltage(int32_t voltage) {
     // Calculate unbounded duty cycle value.
-    int32_t duty_cycle = voltage * PBDRV_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
+    int32_t duty_cycle = voltage * PBDRV_MOTOR_DRIVER_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
 
-    // Return bounded duty cycle value.
-    if (duty_cycle > PBDRV_MAX_DUTY) {
-        return PBDRV_MAX_DUTY;
-    }
-    if (duty_cycle < -PBDRV_MAX_DUTY) {
-        return -PBDRV_MAX_DUTY;
-    }
-    return duty_cycle;
+    return pbio_math_clamp(duty_cycle, PBDRV_MOTOR_DRIVER_MAX_DUTY);
 }
 
 // Gets the voltage resulting from the given duty cycle.
 int32_t pbio_battery_get_voltage_from_duty(int32_t duty) {
-    return duty * (battery_voltage_avg_scaled / SCALE) / PBDRV_MAX_DUTY;
+    return duty * (battery_voltage_avg_scaled / SCALE) / PBDRV_MOTOR_DRIVER_MAX_DUTY;
 }
 
 #endif // PBIO_CONFIG_DCMOTOR

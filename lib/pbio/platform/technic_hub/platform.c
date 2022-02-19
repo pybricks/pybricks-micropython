@@ -11,6 +11,7 @@
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32l4_ll_dma.h"
 
@@ -249,6 +250,64 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .b_ch = 1,
         .scale_factor = 5,
     }
+};
+
+// Motor driver
+
+const pbdrv_motor_driver_hbridge_pwm_platform_data_t
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    // Port A
+    {
+        .pin1_gpio.bank = GPIOA,
+        .pin1_gpio.pin = 1,
+        .pin1_alt = GPIO_AF14_TIM15,
+        .pin1_pwm_id = PWM_DEV_1,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 14,
+        .pin2_alt = GPIO_AF14_TIM15,
+        .pin2_pwm_id = PWM_DEV_1,
+        .pin2_pwm_ch = 1,
+    },
+    // Port B
+    {
+        .pin1_gpio.bank = GPIOA,
+        .pin1_gpio.pin = 9,
+        .pin1_alt = GPIO_AF1_TIM1,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 2,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 0,
+        .pin2_alt = GPIO_AF1_TIM1,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 2,
+    },
+    // Port C
+    {
+        .pin1_gpio.bank = GPIOB,
+        .pin1_gpio.pin = 13,
+        .pin1_alt = GPIO_AF1_TIM1,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOA,
+        .pin2_gpio.pin = 8,
+        .pin2_alt = GPIO_AF1_TIM1,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 1,
+    },
+    // Port D
+    {
+        .pin1_gpio.bank = GPIOA,
+        .pin1_gpio.pin = 10,
+        .pin1_alt = GPIO_AF1_TIM1,
+        .pin1_pwm_id = PWM_DEV_0,
+        .pin1_pwm_ch = 3,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 1,
+        .pin2_alt = GPIO_AF1_TIM1,
+        .pin2_pwm_id = PWM_DEV_0,
+        .pin2_pwm_ch = 3,
+    },
 };
 
 // PWM

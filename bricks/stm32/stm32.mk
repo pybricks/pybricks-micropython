@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2021 The Pybricks Authors
+# Copyright (c) 2019-2022 The Pybricks Authors
 
 # This file is shared by all STM32-based Pybricks ports
 # Other ports should not use this file
@@ -418,7 +418,6 @@ LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 # Pybricks I/O library
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
-	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
@@ -446,6 +445,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_core.c \
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
+	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \

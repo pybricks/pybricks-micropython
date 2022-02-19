@@ -1,19 +1,11 @@
 // SPDX-License-Identifier: MIT OR GPL-2.0-only
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 /*
  * Based on:
  * LEGO MINDSTORMS EV3 UART Sensor tty line discipline
  *
  * Copyright (c) 2014-2016,2018-2019 David Lechner <david@lechnology.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- * This program is distributed "as is" WITHOUT ANY WARRANTY of any
- * kind, whether express or implied; without even the implied warranty
- * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  *
  * Relicensed under MIT license by author for Pybricks I/O library.
  * This file may be redistributed under either or both licenses.
@@ -50,7 +42,7 @@
 #include "pbio/uartdev.h"
 #include "pbio/util.h"
 #include "../drv/counter/counter.h"
-#include <pbdrv/motor.h>
+#include <pbdrv/motor_driver.h>
 
 #define EV3_UART_MAX_MESSAGE_SIZE   (LUMP_MAX_MSG_SIZE + 3)
 
@@ -927,11 +919,11 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     // Turn on power for devices that need it
     if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
-        pbdrv_motor_set_duty_cycle(data->iodev.port, -10000);
+        pbdrv_motor_driver_set_duty_cycle(data->iodev.port, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
     } else if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
-        pbdrv_motor_set_duty_cycle(data->iodev.port, 10000);
+        pbdrv_motor_driver_set_duty_cycle(data->iodev.port, PBDRV_MOTOR_DRIVER_MAX_DUTY);
     } else {
-        pbdrv_motor_coast(data->iodev.port);
+        pbdrv_motor_driver_coast(data->iodev.port);
     }
 
     while (data->status == PBIO_UARTDEV_STATUS_DATA) {
@@ -977,7 +969,7 @@ err:
     data->err_count++;
 
     // Turn off battery supply to this port
-    pbdrv_motor_coast(data->iodev.port);
+    pbdrv_motor_driver_coast(data->iodev.port);
 
     process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, &data->iodev);
 

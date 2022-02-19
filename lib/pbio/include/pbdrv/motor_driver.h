@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2020,2022 The Pybricks Authors
 
 /**
- * @addtogroup MotorDriver Driver: Motor
+ * @addtogroup MotorDriverDriver Driver: Motor driver chip
  * @{
  */
 
-#ifndef _PBDRV_MOTOR_H_
-#define _PBDRV_MOTOR_H_
+#ifndef _PBDRV_MOTOR_DRIVER_H_
+#define _PBDRV_MOTOR_DRIVER_H_
 
 #include <stdint.h>
 
@@ -18,11 +18,11 @@
 #include <pbio/port.h>
 
 /**
- * Motor constants across devices
+ * The duty cycle value cooresponding to 100% duty cycle.
  */
-#define PBDRV_MAX_DUTY (10000)
+#define PBDRV_MOTOR_DRIVER_MAX_DUTY 10000
 
-#if PBDRV_CONFIG_MOTOR
+#if PBDRV_CONFIG_MOTOR_DRIVER
 
 /**
  * Instructs the motor to coast freely.
@@ -32,31 +32,31 @@
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_coast(pbio_port_id_t port);
+pbio_error_t pbdrv_motor_driver_coast(pbio_port_id_t port);
 
 /**
  * Sets the PWM duty cycle for the motor. Setting a duty cycle of 0 will "brake" the motor.
  * @param [in]  port        The motor port
- * @param [in]  duty_cycle  The duty cycle -10000 to 10000
+ * @param [in]  duty_cycle  The duty cycle -::PBDRV_MOTOR_DRIVER_MAX_DUTY to ::PBDRV_MOTOR_DRIVER_MAX_DUTY
  * @return                  ::PBIO_SUCCESS if the call was successful,
  *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                          ::PBIO_ERROR_INVALID_ARG if duty_cycle is out of range
  *                          ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle);
+pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle);
 
 #else
 
-static inline pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
+static inline pbio_error_t pbdrv_motor_driver_coast(pbio_port_id_t port) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
+static inline pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif
 
-#endif // _PBDRV_MOTOR_H_
+#endif // _PBDRV_MOTOR_DRIVER_H_
 
 /** @} */

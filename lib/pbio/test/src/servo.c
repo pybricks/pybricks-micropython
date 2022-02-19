@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2022 The Pybricks Authors
 
 #include <errno.h>
 #include <signal.h>
@@ -40,13 +40,13 @@ static struct {
     h_bridge_output_t output;
 } test_motor_driver;
 
-pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
+pbio_error_t pbdrv_motor_driver_coast(pbio_port_id_t port) {
     test_motor_driver.output = H_BRIDGE_OUTPUT_LL;
     test_motor_driver.duty_cycle = 0;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
     if (duty_cycle > 0) {
         test_motor_driver.output = H_BRIDGE_OUTPUT_LH;
     } else if (duty_cycle < 0) {
@@ -56,6 +56,9 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle)
     }
     test_motor_driver.duty_cycle = abs(duty_cycle);
     return PBIO_SUCCESS;
+}
+
+void pbdrv_motor_driver_init(void) {
 }
 
 /**

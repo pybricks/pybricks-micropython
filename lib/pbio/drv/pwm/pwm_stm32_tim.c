@@ -60,10 +60,10 @@ void pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev_t *devs) {
         if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE) {
             ccmr1 |= (0x6 << TIM_CCMR1_OC1M_Pos) | TIM_CCMR1_OC1PE;
             ccer |= TIM_CCER_CC1E;
-            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT) {
                 ccer |= TIM_CCER_CC1P;
             }
+            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT) {
                 ccer |= TIM_CCER_CC1NE;
             }
@@ -73,10 +73,10 @@ void pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev_t *devs) {
         if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE) {
             ccmr1 |= (0x6 << TIM_CCMR1_OC2M_Pos) | TIM_CCMR1_OC2PE;
             ccer |= TIM_CCER_CC2E;
-            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT) {
                 ccer |= TIM_CCER_CC2P;
             }
+            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_2_COMPLEMENT) {
                 ccer |= TIM_CCER_CC2NE;
             }
@@ -86,10 +86,10 @@ void pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev_t *devs) {
         if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE) {
             ccmr2 |= (0x6 << TIM_CCMR2_OC3M_Pos) | TIM_CCMR2_OC3PE;
             ccer |= TIM_CCER_CC3E;
-            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT) {
                 ccer |= TIM_CCER_CC3P;
             }
+            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_3_COMPLEMENT) {
                 ccer |= TIM_CCER_CC3NE;
             }
@@ -99,11 +99,9 @@ void pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev_t *devs) {
         if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE) {
             ccmr2 |= (0x6 << TIM_CCMR2_OC4M_Pos) | TIM_CCMR2_OC4PE;
             ccer |= TIM_CCER_CC4E;
-            #if PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
             if (pdata->channels & PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT) {
                 ccer |= TIM_CCER_CC4P;
             }
-            #endif // PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS
         }
 
         TIMx->CCMR1 = ccmr1;

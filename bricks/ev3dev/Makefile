@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2020 The Pybricks Authors
+# Copyright (c) 2019-2022 The Pybricks Authors
 
 # ensure required git submodules checked out
 ifeq ("$(wildcard ../../micropython/README.md)","")
@@ -315,9 +315,9 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
-	pbio/drv/ev3dev_stretch/motor.c \
-	pbio/platform/motors/settings.c \
+	pbio/drv/motor_driver/motor_driver_ev3dev_stretch.c \
 	pbio/platform/ev3dev_stretch/status_light.c \
+	pbio/platform/motors/settings.c \
 	pbio/src/battery.c \
 	pbio/src/color/conversion.c \
 	pbio/src/control.c \
