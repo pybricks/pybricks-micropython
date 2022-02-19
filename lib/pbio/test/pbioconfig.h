@@ -1,4 +1,5 @@
 
+#define PBIO_CONFIG_BATTERY                 (1)
 #define PBIO_CONFIG_DCMOTOR                 (1)
 
 #define PBIO_CONFIG_LIGHT                   (1)

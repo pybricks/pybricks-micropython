@@ -3,7 +3,7 @@
 
 #include <pbio/config.h>
 
-#if PBIO_CONFIG_DCMOTOR
+#if PBIO_CONFIG_BATTERY
 
 #include <inttypes.h>
 
@@ -97,4 +97,4 @@ int32_t pbio_battery_get_voltage_from_duty_pct(int32_t duty) {
     return duty * (battery_voltage_avg_scaled / SCALE) / 100;
 }
 
-#endif // PBIO_CONFIG_DCMOTOR
+#endif // PBIO_CONFIG_BATTERY
