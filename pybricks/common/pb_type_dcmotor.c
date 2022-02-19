@@ -71,7 +71,7 @@ STATIC mp_obj_t common_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_
 
     // pbio has only voltage setters now, but the .dc() method will continue to
     // exist for backwards compatibility. So, we convert duty cycle to voltages.
-    int32_t voltage = pbio_battery_get_voltage_from_duty(pb_obj_get_int(duty_in) * 100);
+    int32_t voltage = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_int(duty_in));
     pb_assert(pbio_dcmotor_user_command(get_dcmotor_from_object(pos_args[0]), false, voltage));
     return mp_const_none;
 }

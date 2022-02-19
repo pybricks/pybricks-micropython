@@ -75,7 +75,7 @@ int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model,
     int32_t back_emf_compensation_torque = (int32_t)((int64_t)model->k_0 * model->k_2 * rate_ref * (PBIO_OBSERVER_SCALE_TRQ / PBIO_OBSERVER_SCALE_HIGH) / PBIO_OBSERVER_SCALE_HIGH);
     int32_t acceleration_torque = (int32_t)((int64_t)model->k_0 * model->k_1 * acceleration_ref * (PBIO_OBSERVER_SCALE_TRQ / PBIO_OBSERVER_SCALE_HIGH) / PBIO_OBSERVER_SCALE_HIGH);
 
-    // Scale micronewtons by battery voltage to duty (0 to PBDRV_MOTOR_DRIVER_MAX_DUTY)
+    // Scale micronewtons by battery voltage to duty (0 to PBIO_BATTERY_MAX_DUTY)
     return (int32_t)(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque);
 }
 

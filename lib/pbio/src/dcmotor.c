@@ -15,6 +15,10 @@
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
 
+#if PBIO_BATTERY_MAX_DUTY != PBDRV_MOTOR_DRIVER_MAX_DUTY
+#error "this file is written with the assumption that we can pass battery duty to motor driver without scaling"
+#endif
+
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 // Stop all motors and their parent objects.

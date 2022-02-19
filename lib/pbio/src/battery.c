@@ -8,7 +8,7 @@
 #include <inttypes.h>
 
 #include <pbdrv/battery.h>
-#include <pbdrv/motor_driver.h>
+#include <pbio/battery.h>
 #include <pbio/math.h>
 
 // Slow moving average battery voltage.
@@ -55,17 +55,46 @@ int32_t pbio_battery_get_average_voltage(void) {
     return battery_voltage_avg_scaled / SCALE;
 }
 
-// Gets the duty cycle required to output the desired voltage.
+/**
+ * Gets the duty cycle required to output the desired voltage given the
+ * current battry voltage.
+ *
+ * @param [in]  voltage     The desired voltage in mV.
+ * @return                  A duty cycle in the range negative ::PBIO_BATTERY_MAX_DUTY
+ *                          to positive ::PBIO_BATTERY_MAX_DUTY.
+ */
 int32_t pbio_battery_get_duty_from_voltage(int32_t voltage) {
     // Calculate unbounded duty cycle value.
-    int32_t duty_cycle = voltage * PBDRV_MOTOR_DRIVER_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
+    int32_t duty_cycle = voltage * PBIO_BATTERY_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
 
-    return pbio_math_clamp(duty_cycle, PBDRV_MOTOR_DRIVER_MAX_DUTY);
+    return pbio_math_clamp(duty_cycle, PBIO_BATTERY_MAX_DUTY);
 }
 
-// Gets the voltage resulting from the given duty cycle.
+/**
+ * Gets the effective voltage resulting from @p duty given the current battery voltage.
+ *
+ * If @p duty it outside of the specified range, it will be clamped to that range.
+ *
+ * @param [in]  duty    The duty cycle in the range negative ::PBIO_BATTERY_MAX_DUTY
+ *                      to positive ::PBIO_BATTERY_MAX_DUTY.
+ * @return              The battery voltage in mV.
+ */
 int32_t pbio_battery_get_voltage_from_duty(int32_t duty) {
-    return duty * (battery_voltage_avg_scaled / SCALE) / PBDRV_MOTOR_DRIVER_MAX_DUTY;
+    duty = pbio_math_clamp(duty, PBIO_BATTERY_MAX_DUTY);
+    return duty * (battery_voltage_avg_scaled / SCALE) / PBIO_BATTERY_MAX_DUTY;
+}
+
+/**
+ * Gets the effective voltage resulting from @p duty given the current battery voltage.
+ *
+ * If @p duty it outside of the specified range, it will be clamped to that range.
+ *
+ * @param [in]  duty    The duty cycle percentage in the range -100 to 100.
+ * @return              The battery voltage in mV.
+ */
+int32_t pbio_battery_get_voltage_from_duty_pct(int32_t duty) {
+    duty = pbio_math_clamp(duty, 100);
+    return duty * (battery_voltage_avg_scaled / SCALE) / 100;
 }
 
 #endif // PBIO_CONFIG_DCMOTOR
