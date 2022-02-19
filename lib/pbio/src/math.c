@@ -1,16 +1,31 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
-#include <stdbool.h>
+#include <assert.h>
 #include <inttypes.h>
+#include <stdbool.h>
+
 #include <fixmath.h>
 
+/**
+ * Clamps a value to a +/- limit.
+ *
+ * If @p value is greater than positive @p abs_max, then positive @p abs_max is
+ * returned. If @p value is less than negative @p abs_max, then negative
+ * @p abs_max is returned. Otherwise @p value is returned.
+ *
+ * @param [in]  value   The value to clamp.
+ * @param [in]  abs_max The clamp limit. This must be a positive value.
+ * @return              The clamped value.
+ */
 int32_t pbio_math_clamp(int32_t value, int32_t abs_max) {
+    assert(abs_max > 0);
+
     if (value > abs_max) {
         return abs_max;
     }
     if (value < -abs_max) {
-        return abs_max;
+        return -abs_max;
     }
     return value;
 }

@@ -9,6 +9,13 @@
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
+static void test_clamp(void *env) {
+    tt_want_int_op(pbio_math_clamp(200, 100), ==, 100);
+    tt_want_int_op(pbio_math_clamp(50, 100), ==, 50);
+    tt_want_int_op(pbio_math_clamp(-50, 100), ==, -50);
+    tt_want_int_op(pbio_math_clamp(-200, 100), ==, -100);
+}
+
 static void test_sqrt(void *env) {
     tt_want(pbio_math_sqrt(0) == 0);
     tt_want(pbio_math_sqrt(1) == 1);
@@ -69,6 +76,7 @@ static void test_div_i32_fix16(void *env) {
 }
 
 struct testcase_t pbio_math_tests[] = {
+    PBIO_TEST(test_clamp),
     PBIO_TEST(test_sqrt),
     PBIO_TEST(test_mul_i32_fix16),
     PBIO_TEST(test_div_i32_fix16),
