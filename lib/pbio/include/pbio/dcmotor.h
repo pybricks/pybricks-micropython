@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #ifndef _PBIO_DCMOTOR_H_
 #define _PBIO_DCMOTOR_H_
 
 #include <stdint.h>
+
+#include <pbdrv/motor_driver.h>
 #include <pbio/config.h>
 #include <pbio/iodev.h>
 #include <pbio/parent.h>
@@ -18,13 +20,13 @@ typedef enum {
 #define PBIO_DUTY_USER_STEPS (100)
 
 typedef struct _pbio_dcmotor_t {
-    pbio_port_id_t port;
     pbio_iodev_type_id_t id;
     pbio_direction_t direction;
     bool is_coasting;
     int32_t voltage_now;
     int32_t max_voltage;
     pbio_parent_t parent;
+    pbdrv_motor_driver_dev_t *motor_driver;
 } pbio_dcmotor_t;
 
 #if PBIO_CONFIG_DCMOTOR

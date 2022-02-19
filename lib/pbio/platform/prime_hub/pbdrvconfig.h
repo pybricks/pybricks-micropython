@@ -70,6 +70,7 @@
 #define PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV          (1)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (6)
 #define PBDRV_CONFIG_MOTOR_DRIVER_HBRIDGE_PWM       (1)
 
 #define PBDRV_CONFIG_PWM                            (1)

@@ -22,6 +22,7 @@
 #define PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE              (2)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (4)
 #define PBDRV_CONFIG_MOTOR_DRIVER_EV3DEV_STRETCH            (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)

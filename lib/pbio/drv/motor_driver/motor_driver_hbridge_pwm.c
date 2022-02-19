@@ -7,21 +7,37 @@
 
 #if PBDRV_CONFIG_MOTOR_DRIVER_HBRIDGE_PWM
 
+#include <assert.h>
+
 #include <pbdrv/gpio.h>
 #include <pbdrv/motor_driver.h>
 #include <pbdrv/pwm.h>
-#include <pbio/port.h>
 
 #include "motor_driver_hbridge_pwm.h"
 
-pbio_error_t pbdrv_motor_driver_coast(pbio_port_id_t port) {
-    const pbdrv_motor_driver_hbridge_pwm_platform_data_t *data;
+struct _pbdrv_motor_driver_dev_t {
+    const pbdrv_motor_driver_hbridge_pwm_platform_data_t *pdata;
+};
 
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+static pbdrv_motor_driver_dev_t motor_drivers[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
+
+pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
+    if (id >= PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
+        return PBIO_ERROR_INVALID_ARG;
     }
 
-    data = &pbdrv_motor_driver_hbridge_pwm_platform_data[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    *driver = &motor_drivers[id];
+
+    // if pdata is not set, then driver hasn't been intialized
+    if (!(*driver)->pdata) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver) {
+    const pbdrv_motor_driver_hbridge_pwm_platform_data_t *data = driver->pdata;
 
     pbdrv_gpio_out_low(&data->pin1_gpio);
     pbdrv_gpio_out_low(&data->pin2_gpio);
@@ -52,18 +68,11 @@ static void pbdrv_motor_driver_run_rev(const pbdrv_motor_driver_hbridge_pwm_plat
     pbdrv_gpio_alt(&data->pin2_gpio, data->pin2_alt);
 }
 
-pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
-    const pbdrv_motor_driver_hbridge_pwm_platform_data_t *data;
+pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver, int16_t duty_cycle) {
+    assert(duty_cycle >= -PBDRV_MOTOR_DRIVER_MAX_DUTY);
+    assert(duty_cycle <= PBDRV_MOTOR_DRIVER_MAX_DUTY);
 
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    if (duty_cycle < -PBDRV_MOTOR_DRIVER_MAX_DUTY || duty_cycle > PBDRV_MOTOR_DRIVER_MAX_DUTY) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    data = &pbdrv_motor_driver_hbridge_pwm_platform_data[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    const pbdrv_motor_driver_hbridge_pwm_platform_data_t *data = driver->pdata;
 
     if (duty_cycle > 0) {
         pbdrv_motor_driver_run_fwd(data, duty_cycle);
@@ -77,8 +86,12 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty
 }
 
 void pbdrv_motor_driver_init(void) {
-    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbdrv_motor_driver_coast(i + PBDRV_CONFIG_FIRST_MOTOR_PORT);
+    // REVISIT: We should be getting the PWM devices during init, but this
+    // requires adding a contiki process only for that, which doesn't seem
+    // worth the space it takes up in firmware size (~150 bytes on move hub).
+    for (int i = 0; i < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; i++) {
+        motor_drivers[i].pdata = &pbdrv_motor_driver_hbridge_pwm_platform_data[i];
+        pbdrv_motor_driver_coast(&motor_drivers[i]);
     }
 }
 

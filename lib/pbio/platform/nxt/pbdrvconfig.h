@@ -25,6 +25,7 @@
 #define PBDRV_CONFIG_COUNTER_NXT_NUM_DEV            (3)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (3)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NXT               (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)

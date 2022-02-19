@@ -9,31 +9,52 @@
 
 #include <pbdrv/motor_driver.h>
 #include <pbio/error.h>
-#include <pbio/port.h>
 
 #include <nxt/nxt_motors.h>
 
-pbio_error_t pbdrv_motor_driver_coast(pbio_port_id_t port) {
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+#if PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV != NXT_N_MOTORS
+#error "PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV must be set to the same value as NXT_N_MOTORS"
+#endif
+
+struct _pbdrv_motor_driver_dev_t {
+    uint8_t index;
+};
+
+static pbdrv_motor_driver_dev_t motor_ports[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV] = {
+    [0 ... PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV - 1] = { .index = UINT8_MAX },
+};
+
+pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
+    if (id >= PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
+        return PBIO_ERROR_INVALID_ARG;
     }
 
-    nxt_motor_set_speed(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, 0, 0);
+    *driver = &motor_ports[id];
+
+    // if port has not been set, then driver has not been intialized
+    if ((*driver)->index == UINT8_MAX) {
+        return PBIO_ERROR_AGAIN;
+    }
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
+pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver) {
+    nxt_motor_set_speed(driver->index, 0, 0);
 
-    nxt_motor_set_speed(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, 100 * duty_cycle / PBDRV_MOTOR_DRIVER_MAX_DUTY, 1);
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver, int16_t duty_cycle) {
+    nxt_motor_set_speed(driver->index, 100 * duty_cycle / PBDRV_MOTOR_DRIVER_MAX_DUTY, 1);
 
     return PBIO_SUCCESS;
 }
 
 void pbdrv_motor_driver_init(void) {
+    for (int i = 0; i < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; i++) {
+        motor_ports[i].index = i;
+    }
 }
 
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_NXT

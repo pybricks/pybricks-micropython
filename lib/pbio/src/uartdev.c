@@ -722,6 +722,19 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     PT_BEGIN(&data->pt);
 
+    // FIXME: The pin1/pin2 power control should be implemented via a callback
+    // to the port that the I/O device is attached to instead of poking the
+    // motor driver directly. The current implementation is only valid on
+    // Powered Up platforms and it assumes that motor driver id cooresponds to
+    // the port.
+
+    static pbdrv_motor_driver_dev_t *motor_driver;
+    #ifdef PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT
+    if (pbdrv_motor_driver_get_dev(data->iodev.port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT, &motor_driver) != PBIO_SUCCESS) {
+        motor_driver = NULL;
+    }
+    #endif
+
     // TODO: wait for ioport to be ready for a uartdevice
 
     // reset state for new device
@@ -918,12 +931,14 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     }
 
     // Turn on power for devices that need it
-    if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
-        pbdrv_motor_driver_set_duty_cycle(data->iodev.port, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
-    } else if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
-        pbdrv_motor_driver_set_duty_cycle(data->iodev.port, PBDRV_MOTOR_DRIVER_MAX_DUTY);
-    } else {
-        pbdrv_motor_driver_coast(data->iodev.port);
+    if (motor_driver) {
+        if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
+            pbdrv_motor_driver_set_duty_cycle(motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
+        } else if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
+            pbdrv_motor_driver_set_duty_cycle(motor_driver, PBDRV_MOTOR_DRIVER_MAX_DUTY);
+        } else {
+            pbdrv_motor_driver_coast(motor_driver);
+        }
     }
 
     while (data->status == PBIO_UARTDEV_STATUS_DATA) {
@@ -969,7 +984,9 @@ err:
     data->err_count++;
 
     // Turn off battery supply to this port
-    pbdrv_motor_driver_coast(data->iodev.port);
+    if (motor_driver) {
+        pbdrv_motor_driver_coast(motor_driver);
+    }
 
     process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, &data->iodev);
 

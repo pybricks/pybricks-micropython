@@ -290,7 +290,7 @@ const pbdrv_led_array_pwm_platform_data_t pbdrv_led_array_pwm_platform_data[PBDR
 // Motor driver
 
 const pbdrv_motor_driver_hbridge_pwm_platform_data_t
-    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV] = {
     // Port A
     {
         .pin1_gpio.bank = GPIOE,

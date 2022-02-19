@@ -17,6 +17,13 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
+static pbio_port_id_t get_port_from_object(mp_obj_t self_in) {
+    if (mp_obj_is_type(self_in, &pb_type_Motor.type)) {
+        return ((common_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->port;
+    }
+    return ((common_DCMotor_obj_t *)MP_OBJ_TO_PTR(self_in))->port;
+}
+
 static pbio_dcmotor_t *get_dcmotor_from_object(mp_obj_t self_in) {
     if (mp_obj_is_type(self_in, &pb_type_Motor.type)) {
         return ((common_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->srv->dcmotor;
@@ -46,6 +53,7 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
     common_DCMotor_obj_t *self = m_new_obj(common_DCMotor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->dcmotor = dcmotor;
+    self->port = port;
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -53,12 +61,11 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
 // pybricks._common.Motor.__repr__
 void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
-    // Get the dcmotor from self, which is either Motor or DCMotor
+    pbio_port_id_t port = get_port_from_object(self_in);
     pbio_dcmotor_t *dcmotor = get_dcmotor_from_object(self_in);
 
     mp_printf(print, "%q(Port.%c, %q.%q)",
-        ((mp_obj_base_t *)MP_OBJ_TO_PTR(self_in))->type->name,
-        dcmotor->port, MP_QSTR_Direction,
+        ((mp_obj_base_t *)MP_OBJ_TO_PTR(self_in))->type->name, port, MP_QSTR_Direction,
         dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? MP_QSTR_CLOCKWISE : MP_QSTR_COUNTERCLOCKWISE);
 }
 

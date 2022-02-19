@@ -15,6 +15,7 @@
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
+#include <pbdrv/motor_driver.h>
 #include <pbio/control.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
@@ -35,26 +36,42 @@ typedef enum {
     H_BRIDGE_OUTPUT_HH,
 } h_bridge_output_t;
 
-static struct {
+static struct _pbdrv_motor_driver_dev_t {
     uint16_t duty_cycle;
     h_bridge_output_t output;
-} test_motor_driver;
+} test_motor_drivers[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
 
-pbio_error_t pbdrv_motor_driver_coast(pbio_port_id_t port) {
-    test_motor_driver.output = H_BRIDGE_OUTPUT_LL;
-    test_motor_driver.duty_cycle = 0;
+pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
+    if (id >= PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    *driver = &test_motor_drivers[id];
+
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver) {
+    driver->output = H_BRIDGE_OUTPUT_LL;
+    driver->duty_cycle = 0;
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver, int16_t duty_cycle) {
+    tt_want_int_op(duty_cycle, >=, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
+    tt_want_int_op(duty_cycle, <=, PBDRV_MOTOR_DRIVER_MAX_DUTY);
+
     if (duty_cycle > 0) {
-        test_motor_driver.output = H_BRIDGE_OUTPUT_LH;
+        driver->output = H_BRIDGE_OUTPUT_LH;
     } else if (duty_cycle < 0) {
-        test_motor_driver.output = H_BRIDGE_OUTPUT_HL;
+        driver->output = H_BRIDGE_OUTPUT_HL;
     } else {
-        test_motor_driver.output = H_BRIDGE_OUTPUT_HH;
+        driver->output = H_BRIDGE_OUTPUT_HH;
     }
-    test_motor_driver.duty_cycle = abs(duty_cycle);
+
+    driver->duty_cycle = abs(duty_cycle);
+
     return PBIO_SUCCESS;
 }
 
@@ -88,12 +105,15 @@ static pbio_iodev_type_id_t get_test_motor_type(void) {
  * @param [in]  func    Callback for invoking pbio_servo_run_*
  */
 static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error_t (*func)(pbio_servo_t *servo))) {
+    static pbdrv_motor_driver_dev_t *driver;
     static pbio_servo_t *servo;
     static int32_t *log_buf = NULL;
     static FILE *log_file;
     static uint32_t control_done_count;
 
     PT_BEGIN(pt);
+
+    tt_uint_op(pbdrv_motor_driver_get_dev(0, &driver), ==, PBIO_SUCCESS);
 
     process_start(&pbio_motor_process);
     tt_want(process_is_running(&pbio_motor_process));
@@ -213,8 +233,8 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
             // it to get a more accurate test
             if (motor_sim_pid) {
                 // write current output state to the motor simulator
-                fprintf(motor_sim_in, "%d ", test_motor_driver.output);
-                fprintf(motor_sim_in, "%d ", test_motor_driver.duty_cycle);
+                fprintf(motor_sim_in, "%d ", driver->output);
+                fprintf(motor_sim_in, "%d ", driver->duty_cycle);
                 fprintf(motor_sim_in, "\n");
 
                 // need to check if child process is still running, otherwise
@@ -268,8 +288,8 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
             // write current state to log file
             if (pbio_logger_rows(&servo->control.log)) {
                 fprintf(log_file, "%d,", pbdrv_clock_get_ms());
-                fprintf(log_file, "%d,", test_motor_driver.output);
-                fprintf(log_file, "%d,", test_motor_driver.duty_cycle);
+                fprintf(log_file, "%d,", driver->output);
+                fprintf(log_file, "%d,", driver->duty_cycle);
 
                 for (int i = 0; i < pbio_logger_cols(&servo->control.log); i++) {
                     fprintf(log_file, "%d,", log_buf[i]);

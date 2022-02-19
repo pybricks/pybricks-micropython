@@ -64,6 +64,7 @@ extern const mp_obj_module_t pb_module_battery;
 #if PYBRICKS_PY_COMMON_MOTORS
 
 #include <pbio/control.h>
+#include <pbio/port.h>
 #include <pbio/servo.h>
 
 #if PYBRICKS_PY_COMMON_CONTROL
@@ -87,6 +88,7 @@ typedef struct _common_Motor_obj_t {
     #if PYBRICKS_PY_COMMON_LOGGER
     mp_obj_t logger;
     #endif
+    pbio_port_id_t port;
 } common_Motor_obj_t;
 
 extern const pb_obj_with_attr_type_t pb_type_Motor;
@@ -95,6 +97,7 @@ extern const pb_obj_with_attr_type_t pb_type_Motor;
 typedef struct _common_DCMotor_obj_t {
     mp_obj_base_t base;
     pbio_dcmotor_t *dcmotor;
+    pbio_port_id_t port;
 } common_DCMotor_obj_t;
 
 extern const mp_obj_type_t pb_type_DCMotor;

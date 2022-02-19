@@ -26,7 +26,7 @@ typedef struct {
 } pbdrv_motor_driver_hbridge_pwm_platform_data_t;
 
 extern const pbdrv_motor_driver_hbridge_pwm_platform_data_t
-    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+    pbdrv_motor_driver_hbridge_pwm_platform_data[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
 
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_HBRIDGE_PWM
 

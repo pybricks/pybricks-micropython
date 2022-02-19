@@ -99,6 +99,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     common_Motor_obj_t *self = m_new_obj(common_Motor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->srv = srv;
+    self->port = port;
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class

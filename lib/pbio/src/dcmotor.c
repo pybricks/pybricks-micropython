@@ -5,15 +5,17 @@
 
 #if PBIO_CONFIG_DCMOTOR
 
+#include <stdbool.h>
 #include <inttypes.h>
 
 #include <fixmath.h>
 
 #include <pbdrv/config.h>
 #include <pbdrv/motor_driver.h>
-
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
+#include <pbio/error.h>
+#include <pbio/port.h>
 
 #if PBIO_BATTERY_MAX_DUTY != PBDRV_MOTOR_DRIVER_MAX_DUTY
 #error "this file is written with the assumption that we can pass battery duty to motor driver without scaling"
@@ -98,9 +100,18 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    // Get pointer to dcmotor
     *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    (*dcmotor)->port = port;
+
+    // if this is the first time getting the device, we need to get the motor
+    // driver instance
+    if ((*dcmotor)->motor_driver == NULL) {
+        // REVISIT: this assumes that the motor driver id cooresponds to the port
+        pbio_error_t err = pbdrv_motor_driver_get_dev(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &(*dcmotor)->motor_driver);
+
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
 
     return PBIO_SUCCESS;
 }
@@ -114,7 +125,7 @@ pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     // Stop the motor and set the passivity state value for data logging.
     dcmotor->is_coasting = true;
     dcmotor->voltage_now = 0;
-    return pbdrv_motor_driver_coast(dcmotor->port);
+    return pbdrv_motor_driver_coast(dcmotor->motor_driver);
 }
 
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
@@ -138,7 +149,7 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     }
 
     // Apply the duty cycle.
-    pbio_error_t err = pbdrv_motor_driver_set_duty_cycle(dcmotor->port, duty_cycle);
+    pbio_error_t err = pbdrv_motor_driver_set_duty_cycle(dcmotor->motor_driver, duty_cycle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
