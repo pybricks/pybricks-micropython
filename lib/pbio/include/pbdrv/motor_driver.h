@@ -20,7 +20,7 @@
 /**
  * The duty cycle value cooresponding to 100% duty cycle.
  */
-#define PBDRV_MOTOR_DRIVER_MAX_DUTY 10000
+#define PBDRV_MOTOR_DRIVER_MAX_DUTY 1000
 
 #if PBDRV_CONFIG_MOTOR_DRIVER
 

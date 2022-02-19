@@ -37,7 +37,7 @@ static void pbdrv_motor_driver_brake(const pbdrv_motor_driver_hbridge_pwm_platfo
 static void pbdrv_motor_driver_run_fwd(const pbdrv_motor_driver_hbridge_pwm_platform_data_t *data, int16_t duty_cycle) {
     pbdrv_pwm_dev_t *pwm_dev;
     if (pbdrv_pwm_get_dev(data->pin1_pwm_id, &pwm_dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(pwm_dev, data->pin1_pwm_ch, duty_cycle / 10);
+        pbdrv_pwm_set_duty(pwm_dev, data->pin1_pwm_ch, duty_cycle);
     }
     pbdrv_gpio_alt(&data->pin1_gpio, data->pin1_alt);
     pbdrv_gpio_out_high(&data->pin2_gpio);
@@ -46,7 +46,7 @@ static void pbdrv_motor_driver_run_fwd(const pbdrv_motor_driver_hbridge_pwm_plat
 static void pbdrv_motor_driver_run_rev(const pbdrv_motor_driver_hbridge_pwm_platform_data_t *data, int16_t duty_cycle) {
     pbdrv_pwm_dev_t *pwm_dev;
     if (pbdrv_pwm_get_dev(data->pin2_pwm_id, &pwm_dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(pwm_dev, data->pin2_pwm_ch, duty_cycle / 10);
+        pbdrv_pwm_set_duty(pwm_dev, data->pin2_pwm_ch, duty_cycle);
     }
     pbdrv_gpio_out_high(&data->pin1_gpio);
     pbdrv_gpio_alt(&data->pin2_gpio, data->pin2_alt);

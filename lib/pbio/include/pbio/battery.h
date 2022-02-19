@@ -12,7 +12,7 @@
 /**
  * The value that cooresponds to 100% duty cycle.
  */
-#define PBIO_BATTERY_MAX_DUTY 10000
+#define PBIO_BATTERY_MAX_DUTY 1000
 
 #if PBIO_CONFIG_DCMOTOR
 
