@@ -6,17 +6,22 @@
         {
             "label": "build ev3dev-host",
             "type": "shell",
-            "command": "make -C bricks/ev3dev DEBUG=1 -j8"
+            "command": "poetry run make -C bricks/ev3dev DEBUG=1 -j8"
+        },
+        {
+            "label": "build virtualhub",
+            "type": "shell",
+            "command": "poetry run make -C bricks/virtualhub DEBUG=1 CROSS_COMPILE= -j8"
         },
         {
             "label": "build test-pbio",
             "type": "shell",
-            "command": "make -C lib/pbio/test/ -j8"
+            "command": "poetry run make -C lib/pbio/test DEBUG=1 -j8"
         },
         {
             "label": "build debug",
             "type": "shell",
-            "command": "make -C bricks/debug DEBUG=1 build/firmware-no-checksum.bin -j8"
+            "command": "poetry run make -C bricks/debug DEBUG=1 build/firmware-no-checksum.bin -j8"
         }
     ]
 }

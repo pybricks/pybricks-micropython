@@ -83,6 +83,42 @@
             "preLaunchTask": "build ev3dev-host"
         },
         {
+            "name": "virtualhub",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bricks/virtualhub/build/virtualhub-micropython",
+            "args": [
+                "./tests/pup/motors/busy.py"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PYTHONPATH",
+                    "value": "tests"
+                },
+                {
+                    "name": "VIRTUALHUB_MODULE",
+                    "value": "virtualhub.turtle"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore timer signal",
+                    "text": "handle SIG34 noprint pass",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build virtualhub"
+        },
+        {
             "name": "test-pbio",
             "type": "cppdbg",
             "request": "launch",
