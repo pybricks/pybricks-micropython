@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
  * @addtogroup ResetDriver Driver: System Power and Reset
@@ -8,6 +8,8 @@
 
 #ifndef _PBDRV_RESET_H_
 #define _PBDRV_RESET_H_
+
+#include <pbdrv/config.h>
 
 /** Reset/power actions. */
 typedef enum {
@@ -28,6 +30,8 @@ typedef enum {
     /** Reset was triggered by watchdog timer. */
     PBDRV_RESET_REASON_WATCHDOG = 2,
 } pbdrv_reset_reason_t;
+
+#if PBDRV_CONFIG_RESET
 
 /**
  * Resets or powers off the hub/brick. This function does not return.
@@ -50,6 +54,20 @@ void pbdrv_reset_power_off(void);
  * @return The reason.
  */
 pbdrv_reset_reason_t pbdrv_reset_get_reason(void);
+
+#else // PBDRV_CONFIG_RESET
+
+static inline void pbdrv_reset(pbdrv_reset_action_t action) {
+}
+
+static inline void pbdrv_reset_power_off(void) {
+}
+
+static inline pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
+    return PBDRV_RESET_REASON_NONE;
+}
+
+#endif // PBDRV_CONFIG_RESET
 
 #endif // _PBDRV_RESET_H_
 
