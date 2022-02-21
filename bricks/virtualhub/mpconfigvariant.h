@@ -42,6 +42,19 @@
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS          (1)
 #define MICROPY_PY_BUILTINS_SLICE_INDICES       (1)
 
+// REVISIT: This list currently matches the stm32 builds. We may consider
+// adding more like the ev3dev build.
+#define MICROPY_PY_UERRNO_LIST \
+    X(EPERM) \
+    X(EIO) \
+    X(EBUSY) \
+    X(ENODEV) \
+    X(EINVAL) \
+    X(EOPNOTSUPP) \
+    X(EAGAIN) \
+    X(ETIMEDOUT) \
+    X(ECANCELED) \
+
 #define MICROPY_MPHALPORT_H "mpvarianthal.h"
 #define MICROPY_VARIANT_QSTR_DEFS_H "../pybricks_qstrdefs.h"
 
