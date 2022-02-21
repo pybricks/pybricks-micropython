@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020,2022 The Pybricks Authors
 
-#ifndef _PBDRVCONFIG_H_
-#define _PBDRVCONFIG_H_
-
 // platform-specific configuration for LEGO MINDSTORMS EV3 running ev3dev-stretch
 
 #define PBDRV_CONFIG_BATTERY                                (1)
@@ -40,5 +37,3 @@
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT PBIO_PORT_ID_A
 #define PBDRV_CONFIG_LAST_MOTOR_PORT PBIO_PORT_ID_D
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER (4)
-
-#endif // _PBDRVCONFIG_H_

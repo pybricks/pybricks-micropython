@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021-2022 The Pybricks Authors
 
-#ifndef _PBDRVCONFIG_H_
-#define _PBDRVCONFIG_H_
-
 #define PBDRV_CONFIG_ADC                            (1)
 #define PBDRV_CONFIG_ADC_STM32_HAL                  (1)
 #define PBDRV_CONFIG_ADC_STM32_HAL_ADC_INSTANCE     ADC1
@@ -95,5 +92,3 @@
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER   (2)
 
 #define PBDRV_CONFIG_SYS_CLOCK_RATE 96000000
-
-#endif // _PBDRVCONFIG_H_

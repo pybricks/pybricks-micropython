@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
-#ifndef _PBDRVCONFIG_H_
-#define _PBDRVCONFIG_H_
-
 // platform-specific configuration for LEGO MINDSTORMS NXT
 
 #define PBDRV_CONFIG_ADC                            (0)
@@ -38,5 +35,3 @@
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_NXT                      (1)
-
-#endif // _PBDRVCONFIG_H_

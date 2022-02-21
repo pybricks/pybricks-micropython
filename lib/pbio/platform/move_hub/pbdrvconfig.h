@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
-#ifndef _PBDRVCONFIG_H_
-#define _PBDRVCONFIG_H_
-
 // platform-specific configuration for LEGO BOOST Move Hub
 
 #define PBDRV_CONFIG_ADC                            (1)
@@ -82,5 +79,3 @@
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER   (4)
 
 #define PBDRV_CONFIG_SYS_CLOCK_RATE 48000000
-
-#endif // _PBDRVCONFIG_H_
