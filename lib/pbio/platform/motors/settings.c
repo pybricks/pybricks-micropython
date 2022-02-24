@@ -29,7 +29,7 @@ static const pbio_observer_model_t model_ev3_m = {
 };
 
 static const pbio_control_settings_t settings_ev3_m = {
-    .max_rate = 2000,
+    .rate_max = 2000,
     .abs_acceleration = 8000,
     .rate_tolerance = 100,
     .count_tolerance = 10,
@@ -54,7 +54,7 @@ static const pbio_observer_model_t model_ev3_l = {
 };
 
 static const pbio_control_settings_t settings_ev3_l = {
-    .max_rate = 1600,
+    .rate_max = 1600,
     .abs_acceleration = 3200,
     .rate_tolerance = 100,
     .count_tolerance = 10,
@@ -83,7 +83,7 @@ static const pbio_observer_model_t model_technic_s_angular = {
 };
 
 static const pbio_control_settings_t settings_technic_s_angular = {
-    .max_rate = 620,
+    .rate_max = 620,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
     .count_tolerance = 10,
@@ -108,7 +108,7 @@ static const pbio_observer_model_t model_technic_m_angular = {
 };
 
 static const pbio_control_settings_t settings_technic_m_angular = {
-    .max_rate = 1080,
+    .rate_max = 1080,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
     .count_tolerance = 10,
@@ -133,7 +133,7 @@ static const pbio_observer_model_t model_technic_l_angular = {
 };
 
 static const pbio_control_settings_t settings_technic_l_angular = {
-    .max_rate = 970,
+    .rate_max = 970,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
     .count_tolerance = 10,
@@ -158,7 +158,7 @@ static const pbio_observer_model_t model_interactive = {
 };
 
 static const pbio_control_settings_t settings_interactive = {
-    .max_rate = 1000,
+    .rate_max = 1000,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
     .count_tolerance = 5,
@@ -185,7 +185,7 @@ static const pbio_observer_model_t model_movehub = {
 };
 
 static const pbio_control_settings_t settings_movehub = {
-    .max_rate = 1500,
+    .rate_max = 1500,
     .abs_acceleration = 5000,
     .rate_tolerance = 50,
     .count_tolerance = 6,
@@ -212,7 +212,7 @@ static const pbio_observer_model_t model_technic_l = {
 };
 
 static const pbio_control_settings_t settings_technic_l = {
-    .max_rate = 1470,
+    .rate_max = 1470,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
     .count_tolerance = 10,
@@ -237,7 +237,7 @@ static const pbio_observer_model_t model_technic_xl = {
 };
 
 static const pbio_control_settings_t settings_technic_xl = {
-    .max_rate = 1525,
+    .rate_max = 1525,
     .abs_acceleration = 2500,
     .rate_tolerance = 50,
     .count_tolerance = 10,

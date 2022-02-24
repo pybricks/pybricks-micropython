@@ -37,7 +37,7 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
     // All rate/count acceleration limits add up, because distance state is two motors counts added
-    s_distance->max_rate = s_left->max_rate + s_right->max_rate;
+    s_distance->rate_max = s_left->rate_max + s_right->rate_max;
     s_distance->rate_tolerance = s_left->rate_tolerance + s_right->rate_tolerance;
     s_distance->count_tolerance = s_left->count_tolerance + s_right->count_tolerance;
     s_distance->stall_rate_limit = s_left->stall_rate_limit + s_right->stall_rate_limit;
@@ -128,7 +128,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         }
         // Hold is achieved by driving 0 distance.
         case PBIO_ACTUATION_HOLD:
-            return pbio_drivebase_drive_curve(db, 0, 0, db->control_distance.settings.max_rate, db->control_heading.settings.max_rate, PBIO_ACTUATION_HOLD);
+            return pbio_drivebase_drive_curve(db, 0, 0, db->control_distance.settings.rate_max, db->control_heading.settings.rate_max, PBIO_ACTUATION_HOLD);
         case PBIO_ACTUATION_VOLTAGE:
             return PBIO_ERROR_NOT_IMPLEMENTED;
         case PBIO_ACTUATION_TORQUE:
@@ -516,9 +516,9 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    *drive_speed = pbio_control_counts_to_user(sd, sd->max_rate);
+    *drive_speed = pbio_control_counts_to_user(sd, sd->rate_max);
     *drive_acceleration = pbio_control_counts_to_user(sd, sd->abs_acceleration);
-    *turn_rate = pbio_control_counts_to_user(sh, sh->max_rate);
+    *turn_rate = pbio_control_counts_to_user(sh, sh->rate_max);
     *turn_acceleration = pbio_control_counts_to_user(sh, sh->abs_acceleration);
 
     return PBIO_SUCCESS;
@@ -529,9 +529,9 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    sd->max_rate = pbio_control_user_to_counts(sd, drive_speed);
+    sd->rate_max = pbio_control_user_to_counts(sd, drive_speed);
     sd->abs_acceleration = pbio_control_user_to_counts(sd, drive_acceleration);
-    sh->max_rate = pbio_control_user_to_counts(sh, turn_rate);
+    sh->rate_max = pbio_control_user_to_counts(sh, turn_rate);
     sh->abs_acceleration = pbio_control_user_to_counts(sh, turn_acceleration);
 
     return PBIO_SUCCESS;

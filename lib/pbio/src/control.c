@@ -164,7 +164,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     // Compute the trajectory
     if (!pbio_control_is_active(ctl)) {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_calc_time_new(&ctl->trajectory, time_now, state->count, target_count, state->rate, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_calc_time_new(&ctl->trajectory, time_now, state->count, target_count, state->rate, target_rate, ctl->settings.rate_max, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -173,7 +173,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
         // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_calc_time_extend(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_calc_time_extend(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.rate_max, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -261,7 +261,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     // Compute the trajectory
     if (pbio_control_type_is_time(ctl)) {
         // If timed control is already ongoing make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_calc_angle_extend(&ctl->trajectory, time_now, duration, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_calc_angle_extend(&ctl->trajectory, time_now, duration, target_rate, ctl->settings.rate_max, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -272,13 +272,13 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
 
         // Now start the timed trajectory from there
-        err = pbio_trajectory_calc_angle_new(&ctl->trajectory, time_now, duration, ref.count, 0, ref.rate, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_calc_angle_new(&ctl->trajectory, time_now, duration, ref.count, 0, ref.rate, target_rate, ctl->settings.rate_max, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     } else {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_calc_angle_new(&ctl->trajectory, time_now, duration, state->count, 0, state->rate, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_calc_angle_new(&ctl->trajectory, time_now, duration, state->count, 0, state->rate, target_rate, ctl->settings.rate_max, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -354,7 +354,7 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user) {
 }
 
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *torque) {
-    *speed = pbio_control_counts_to_user(s, s->max_rate);
+    *speed = pbio_control_counts_to_user(s, s->rate_max);
     *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
     *torque = s->max_torque / 1000;
 }
@@ -363,7 +363,7 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     if (speed < 1 || acceleration < 1 || torque < 1) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    s->max_rate = pbio_control_user_to_counts(s, speed);
+    s->rate_max = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
     s->max_torque = torque * 1000;
     return PBIO_SUCCESS;
