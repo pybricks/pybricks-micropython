@@ -241,9 +241,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
 
     // Read acceleration and speed limit settings from control
     int32_t straight_speed, turn_rate;
-    int32_t straight_acceleration, turn_acceleration;
+    int32_t straight_acceleration, turn_acceleration, _;
 
-    pbio_drivebase_get_drive_settings(self->db, &straight_speed, &straight_acceleration, &turn_rate, &turn_acceleration);
+    // Get current settings. Deceleration values are currently ignored, so not accessible from Python API.
+    pbio_drivebase_get_drive_settings(self->db, &straight_speed, &straight_acceleration, &_, &turn_rate, &turn_acceleration, &_);
 
     // If all given values are none, return current values
     if (straight_speed_in == mp_const_none &&
@@ -266,8 +267,8 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     straight_acceleration = pb_obj_get_default_abs_int(straight_acceleration_in, straight_acceleration);
     turn_acceleration = pb_obj_get_default_abs_int(turn_acceleration_in, turn_acceleration);
 
-    // Update the settings.
-    pbio_drivebase_set_drive_settings(self->db, straight_speed, straight_acceleration, turn_rate, turn_acceleration);
+    // Update the settings. Acceleration and deceleration are set to the same acceleration magnitude.
+    pbio_drivebase_set_drive_settings(self->db, straight_speed, straight_acceleration, straight_acceleration, turn_rate, turn_acceleration, turn_acceleration);
 
     return mp_const_none;
 }

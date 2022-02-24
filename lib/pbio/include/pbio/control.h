@@ -32,7 +32,8 @@ typedef struct _pbio_control_settings_t {
     int32_t rate_default;           /**< Default rate in run commands when no explicit speed value is given */
     int32_t rate_tolerance;         /**< Allowed deviation (counts/s) from target speed. Hence, if speed target is zero, any speed below this tolerance is considered to be standstill. */
     int32_t count_tolerance;        /**< Allowed deviation (counts) from target before motion is considered complete */
-    int32_t abs_acceleration;       /**< Encoder acceleration/deceleration rate when beginning to move or stopping. Positive value in counts per second per second */
+    int32_t acceleration;           /**< Encoder acceleration rate when beginning to move. Positive value in counts per second per second */
+    int32_t deceleration;           /**< Encoder deceleration rate when stopping. Positive value in counts per second per second */
     int32_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
     int32_t pid_ki;                 /**< Integral position control constant */
     int32_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
@@ -96,8 +97,8 @@ typedef struct _pbio_control_t {
 int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts);
 int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user);
 
-void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *torque);
-pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t torque);
+void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *torque);
+pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration, int32_t torque);
 
 void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_rate);
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_rate);
