@@ -24,7 +24,7 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db);
 
 // Finite point to point control
 
-pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop);
+pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_actuation_t after_stop);
 
 // Infinite driving
 

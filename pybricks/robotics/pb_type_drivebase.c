@@ -26,8 +26,6 @@ typedef struct _robotics_DriveBase_obj_t {
     pbio_drivebase_t *db;
     mp_obj_t left;
     mp_obj_t right;
-    int32_t straight_speed;
-    int32_t turn_rate;
     int32_t initial_distance;
     int32_t initial_heading;
     #if PYBRICKS_PY_COMMON_CONTROL
@@ -78,15 +76,6 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->distance_control = common_Control_obj_make_new(&self->db->control_distance);
     #endif
 
-    // Get defaults for drivebase as 1/3 of maximum for the underlying motors
-    int32_t straight_speed_limit, turn_rate_limit, _;
-    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &_, &_);
-    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &_, &_);
-
-    // By default, the straight(), turn() and curve() methods use 50% of rated speed.
-    self->straight_speed = straight_speed_limit / 2;
-    self->turn_rate = turn_rate_limit / 2;
-
     // Reset drivebase state
     robotics_DriveBase_reset(MP_OBJ_FROM_PTR(self));
 
@@ -114,7 +103,7 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Driving straight is done as a curve with infinite radius and a given distance.
-    pb_assert(pbio_drivebase_drive_curve(self->db, PBIO_RADIUS_INF, distance, self->straight_speed, self->turn_rate, then));
+    pb_assert(pbio_drivebase_drive_curve(self->db, PBIO_RADIUS_INF, distance, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -136,7 +125,7 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Turning in place is done as a curve with zero radius and a given angle.
-    pb_assert(pbio_drivebase_drive_curve(self->db, 0, angle, self->straight_speed, self->turn_rate, then));
+    pb_assert(pbio_drivebase_drive_curve(self->db, 0, angle, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -159,7 +148,7 @@ STATIC mp_obj_t robotics_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args
     mp_int_t angle = pb_obj_get_int(angle_in);
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    pb_assert(pbio_drivebase_drive_curve(self->db, radius, angle, self->straight_speed, self->turn_rate, then));
+    pb_assert(pbio_drivebase_drive_curve(self->db, radius, angle, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -251,11 +240,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(turn_acceleration));
 
     // Read acceleration and speed limit settings from control
-    int32_t straight_speed_limit, turn_rate_limit;
+    int32_t straight_speed, turn_rate;
     int32_t straight_acceleration, turn_acceleration;
-    int32_t straight_torque, turn_torque;
-    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration, &straight_torque);
-    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration, &turn_torque);
+
+    pbio_drivebase_get_drive_settings(self->db, &straight_speed, &straight_acceleration, &turn_rate, &turn_acceleration);
 
     // If all given values are none, return current values
     if (straight_speed_in == mp_const_none &&
@@ -265,28 +253,21 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         ) {
 
         mp_obj_t ret[4];
-        ret[0] = mp_obj_new_int(self->straight_speed);
+        ret[0] = mp_obj_new_int(straight_speed);
         ret[1] = mp_obj_new_int(straight_acceleration);
-        ret[2] = mp_obj_new_int(self->turn_rate);
+        ret[2] = mp_obj_new_int(turn_rate);
         ret[3] = mp_obj_new_int(turn_acceleration);
         return mp_obj_new_tuple(4, ret);
     }
 
-    if (self->db->control_distance.type != PBIO_CONTROL_NONE || self->db->control_heading.type != PBIO_CONTROL_NONE) {
-        pb_assert(PBIO_ERROR_BUSY);
-    }
-
-    // Get the speed and turn rate if given, bounded by the limit.
-    self->straight_speed = pbio_math_clamp(pb_obj_get_default_abs_int(straight_speed_in, self->straight_speed), straight_speed_limit);
-    self->turn_rate = pbio_math_clamp(pb_obj_get_default_abs_int(turn_rate_in, self->turn_rate), turn_rate_limit);
-
-    // Get the accelerations if given, bounded by the limit.
+    // Get the speeds and accelerations if given, bounded by the limit.
+    straight_speed = pb_obj_get_default_abs_int(straight_speed_in, straight_speed);
+    turn_rate = pb_obj_get_default_abs_int(turn_rate_in, turn_rate);
     straight_acceleration = pb_obj_get_default_abs_int(straight_acceleration_in, straight_acceleration);
     turn_acceleration = pb_obj_get_default_abs_int(turn_acceleration_in, turn_acceleration);
 
     // Update the settings.
-    pbio_control_settings_set_limits(&self->db->control_distance.settings, self->straight_speed, straight_acceleration, straight_torque);
-    pbio_control_settings_set_limits(&self->db->control_heading.settings, self->turn_rate, turn_acceleration, turn_torque);
+    pbio_drivebase_set_drive_settings(self->db, straight_speed, straight_acceleration, turn_rate, turn_acceleration);
 
     return mp_const_none;
 }

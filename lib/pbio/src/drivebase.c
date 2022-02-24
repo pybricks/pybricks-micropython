@@ -131,7 +131,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         }
         // Hold is achieved by driving 0 distance.
         case PBIO_ACTUATION_HOLD:
-            return pbio_drivebase_drive_curve(db, 0, 0, db->control_distance.settings.rate_max, db->control_heading.settings.rate_max, PBIO_ACTUATION_HOLD);
+            return pbio_drivebase_drive_curve(db, 0, 0, PBIO_ACTUATION_HOLD);
         case PBIO_ACTUATION_VOLTAGE:
             return PBIO_ERROR_NOT_IMPLEMENTED;
         case PBIO_ACTUATION_TORQUE:
@@ -425,7 +425,7 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop) {
+pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_actuation_t after_stop) {
 
     int32_t arc_angle, arc_length;
     if (radius == PBIO_RADIUS_INF) {
@@ -440,15 +440,14 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
         arc_length = (10 * abs(angle_or_distance) * radius) / 573;
     }
 
-    // Convert arc length and speed to motor counts based on drivebase geometry
+    // Convert arc length to motor counts based on drivebase geometry.
     int32_t relative_sum = pbio_control_user_to_counts(&db->control_distance.settings, arc_length);
-    int32_t sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
 
-    // Convert arc angle and speed to motor counts based on drivebase geometry
+    // Convert arc angle to motor counts based on drivebase geometry.
     int32_t relative_dif = pbio_control_user_to_counts(&db->control_heading.settings, arc_angle);
-    int32_t dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
 
-    return pbio_drivebase_drive_counts_relative(db, relative_sum, sum_rate, relative_dif, dif_rate, after_stop);
+    // Execute the common drive command.
+    return pbio_drivebase_drive_counts_relative(db, relative_sum, db->control_distance.settings.rate_default, relative_dif, db->control_heading.settings.rate_default, after_stop);
 }
 
 static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
@@ -519,9 +518,9 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    *drive_speed = pbio_control_counts_to_user(sd, sd->rate_max);
+    *drive_speed = pbio_control_counts_to_user(sd, sd->rate_default);
     *drive_acceleration = pbio_control_counts_to_user(sd, sd->abs_acceleration);
-    *turn_rate = pbio_control_counts_to_user(sh, sh->rate_max);
+    *turn_rate = pbio_control_counts_to_user(sh, sh->rate_default);
     *turn_acceleration = pbio_control_counts_to_user(sh, sh->abs_acceleration);
 
     return PBIO_SUCCESS;
@@ -532,9 +531,9 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    sd->rate_max = pbio_control_user_to_counts(sd, drive_speed);
+    sd->rate_default = pbio_math_clamp(pbio_control_user_to_counts(sd, drive_speed), sd->rate_max);
     sd->abs_acceleration = pbio_control_user_to_counts(sd, drive_acceleration);
-    sh->rate_max = pbio_control_user_to_counts(sh, turn_rate);
+    sh->rate_default = pbio_math_clamp(pbio_control_user_to_counts(sh, turn_rate), sh->rate_max);
     sh->abs_acceleration = pbio_control_user_to_counts(sh, turn_acceleration);
 
     return PBIO_SUCCESS;
