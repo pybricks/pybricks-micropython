@@ -161,19 +161,36 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target = false;
     ctl->on_target_func = pbio_control_on_target_angle;
 
+    // Common trajectory parameters for all cases covered here.
+    pbio_trajectory_command_t command = {
+        .type = PBIO_TRAJECTORY_TYPE_ANGLE,
+        .th3 = target_count,
+        .wt = target_rate,
+        .wmax = ctl->settings.rate_max,
+        .a0_abs = ctl->settings.acceleration,
+        .a2_abs = ctl->settings.deceleration,
+    };
+
     // Compute the trajectory
     if (!pbio_control_is_active(ctl)) {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_calc_time_new(&ctl->trajectory, time_now, state->count, target_count, state->rate, target_rate, ctl->settings.rate_max, ctl->settings.acceleration);
+        command.t0 = time_now;
+        command.th0 = state->count;
+        command.w0 = state->rate;
+
+        // Make the new trajectory from the given constraints.
+        err = pbio_trajectory_calculate_new(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     } else {
-        // If control is ongoing, start from its current reference. First get time on current reference signal
-        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
+        // If control is ongoing, start from its current reference, starting from its current reference time.
+        command.t0 = pbio_control_get_ref_time(ctl, time_now);
 
-        // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_calc_time_extend(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.rate_max, ctl->settings.acceleration);
+        // Make the new trajectory and try to patch to existing one. In this
+        // case we don't need to pass an initial position and speed because
+        // we will get those from the current trajectory.
+        err = pbio_trajectory_extend(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -258,10 +275,22 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target = false;
     ctl->on_target_func = stop_func;
 
+
+    // Common trajectory parameters for the cases covered here. th0 and w0 are selected below.
+    pbio_trajectory_command_t command = {
+        .type = duration == DURATION_FOREVER ? PBIO_TRAJECTORY_TYPE_FOREVER : PBIO_TRAJECTORY_TYPE_TIME,
+        .t0 = time_now,
+        .duration = duration,
+        .wt = target_rate,
+        .wmax = ctl->settings.rate_max,
+        .a0_abs = ctl->settings.acceleration,
+        .a2_abs = ctl->settings.deceleration,
+    };
+
     // Compute the trajectory
     if (pbio_control_type_is_time(ctl)) {
         // If timed control is already ongoing make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_calc_angle_extend(&ctl->trajectory, time_now, duration, target_rate, ctl->settings.rate_max, ctl->settings.acceleration);
+        err = pbio_trajectory_extend(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -272,13 +301,17 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
 
         // Now start the timed trajectory from there
-        err = pbio_trajectory_calc_angle_new(&ctl->trajectory, time_now, duration, ref.count, 0, ref.rate, target_rate, ctl->settings.rate_max, ctl->settings.acceleration);
+        command.th0 = ref.count;
+        command.w0 = ref.rate;
+        err = pbio_trajectory_calculate_new(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     } else {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_calc_angle_new(&ctl->trajectory, time_now, duration, state->count, 0, state->rate, target_rate, ctl->settings.rate_max, ctl->settings.acceleration);
+        command.th0 = state->count;
+        command.w0 = state->rate;
+        err = pbio_trajectory_calculate_new(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }

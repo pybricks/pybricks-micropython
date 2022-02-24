@@ -28,8 +28,33 @@
 // Macro to evaluate division of speed by acceleration (w/a), yielding time, in the appropriate units
 #define wdiva(w, a) ((((w) * US_PER_MS) / a) * MS_PER_SECOND)
 
+typedef enum {
+    PBIO_TRAJECTORY_TYPE_FOREVER,  /**< A trajectory that runs forever. */
+    PBIO_TRAJECTORY_TYPE_TIME,     /**< A trajectory constrained by a final time */
+    PBIO_TRAJECTORY_TYPE_ANGLE,    /**< A trajectory constrained by a final angle or position */
+} pbio_trajectory_type_t;
+
 /**
- * Motor trajectory parameters for an ideal maneuver without disturbances
+ * Minimal set of trajectory parameters from which a full trajectory is calculated.
+ */
+typedef struct _pbio_trajectory_command_t {
+    pbio_trajectory_type_t type;   /**<  Type of trajectory constraint */
+    int32_t t0;                    /**<  Time at start of maneuver */
+    int32_t th0;                   /**<  Encoder count at start of maneuver */
+    int32_t th0_ext;               /**<  As above, but millicounts. REVISIT: Unify millicounts and counts into one variable. */
+    union {
+        int32_t th3;               /**<  Encoder count at end of maneuver (for angle-constrained trajectory) */
+        int32_t duration;          /**<  Duration of maneuver (for time-constrained trajectory) */
+    };
+    int32_t w0;                    /**<  Encoder rate at start of maneuver */
+    int32_t wt;                    /**<  Encoder target rate target when not accelerating */
+    int32_t wmax;                  /**<  Max target rate target */
+    int32_t a0_abs;                /**<  Encoder acceleration magnitude during in-phase */
+    int32_t a2_abs;                /**<  Encoder acceleration magnitude during out-phase */
+} pbio_trajectory_command_t;
+
+/**
+ * Complete set of motor trajectory parameters for an ideal maneuver without disturbances.
  */
 typedef struct _pbio_trajectory_t {
     bool forever;                       /**<  Whether maneuver has end-point */
@@ -52,7 +77,7 @@ typedef struct _pbio_trajectory_t {
 } pbio_trajectory_t;
 
 /**
- * Trajectory evaluated at a given point in time
+ * Trajectory evaluated at a given point in time.
  */
 typedef struct _pbio_trajectory_reference_t {
     int32_t count;        /**<  Reference count */
@@ -61,26 +86,18 @@ typedef struct _pbio_trajectory_reference_t {
     int32_t acceleration; /**<  Reference acceleration */
 } pbio_trajectory_reference_t;
 
-// Core trajectory generators
+// Make a new full trajectory from user command, starting from the given initial conditions.
+pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
 
+// Try to extend current trajectory, or else make a new one.
+pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
+
+// Make a stationary trajectory for holding position.
 void pbio_trajectory_make_stationary(pbio_trajectory_t *trj, int32_t t0, int32_t th0);
-
-// Make a trajectory with a fixed speed and final time, with arbitrary final angle.
-pbio_error_t pbio_trajectory_calc_angle_new(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
-
-// Make a trajectory with a fixed speed and final angle, with arbitrary final time
-pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
 // Stretches out a given trajectory time-wise to make it match time frames of other trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0);
 
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
-
-// Extended and patched trajectories
-
-pbio_error_t pbio_trajectory_calc_angle_extend(pbio_trajectory_t *trj, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);
-
-pbio_error_t pbio_trajectory_calc_time_extend(pbio_trajectory_t *trj, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a);
-
 
 #endif // _PBIO_TRAJECTORY_H_
