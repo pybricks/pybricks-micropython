@@ -304,6 +304,10 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
     }
     // Given the configured settings, now calculate dependent settings.
 
+    // The default speed is not used for servos currently (an explicit speed
+    // is given for all run commands), so we initialize it to the maximum.
+    settings->rate_default = settings->rate_max;
+
     // Initialize maximum torque as the stall torque for maximum voltage.
     settings->max_torque = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
 

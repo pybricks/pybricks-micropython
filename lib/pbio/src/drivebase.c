@@ -44,6 +44,9 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
     s_distance->abs_acceleration = s_left->abs_acceleration + s_right->abs_acceleration;
 
+    // The default speed is half the maximum speed.
+    s_distance->rate_default = s_distance->rate_max / 2;
+
     // Use minimum PID of both motors, to avoid overly aggressive control if
     // one of the two motors has much higher PID values.
     s_distance->pid_kp = min(s_left->pid_kp, s_right->pid_kp);

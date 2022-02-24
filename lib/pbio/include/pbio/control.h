@@ -29,6 +29,7 @@ typedef struct _pbio_control_settings_t {
     int32_t stall_rate_limit;       /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled */
     int32_t stall_time;             /**< Minimum stall time before the run_stalled action completes */
     int32_t rate_max;               /**< Soft limit on the reference encoder rate in all run commands */
+    int32_t rate_default;           /**< Default rate in run commands when no explicit speed value is given */
     int32_t rate_tolerance;         /**< Allowed deviation (counts/s) from target speed. Hence, if speed target is zero, any speed below this tolerance is considered to be standstill. */
     int32_t count_tolerance;        /**< Allowed deviation (counts) from target before motion is considered complete */
     int32_t abs_acceleration;       /**< Encoder acceleration/deceleration rate when beginning to move or stopping. Positive value in counts per second per second */
