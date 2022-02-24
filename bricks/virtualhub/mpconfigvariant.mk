@@ -167,7 +167,6 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/src/servo.c \
 	pbio/src/tacho.c \
 	pbio/src/task.c \
-	pbio/src/trajectory_ext.c \
 	pbio/src/trajectory.c \
 	pbio/src/uartdev.c \
 	pbio/sys/battery.c \

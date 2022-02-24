@@ -484,7 +484,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/servo.c \
 	src/tacho.c \
 	src/task.c \
-	src/trajectory_ext.c \
 	src/trajectory.c \
 	src/uartdev.c \
 	src/util.c \
