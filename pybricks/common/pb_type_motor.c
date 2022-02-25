@@ -188,7 +188,7 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
     mp_int_t speed = pb_obj_get_int(speed_in);
     mp_int_t time = pb_obj_get_int(time_in);
 
-    if (time < 0 || time > DURATION_MAX_S * MS_PER_SECOND) {
+    if (time < 0 || time > DURATION_MAX_MS) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 

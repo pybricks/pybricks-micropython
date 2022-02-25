@@ -107,21 +107,30 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     // Save (low-pass filtered) load for diagnostics
     ctl->load = (ctl->load * (100 - PBIO_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONTROL_LOOP_TIME_MS) / 100;
 
-    // If we are done and the next action is passive then return zero actuation
-    if (ctl->on_target && ctl->after_stop != PBIO_ACTUATION_HOLD) {
-        *actuation = ctl->after_stop;
-        *control = 0;
-        pbio_control_stop(ctl);
-    } else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && pbio_control_type_is_time(ctl)) {
-        // If we are going to hold and we are already doing angle control, there is nothing we need to do.
-        // But if we are going to hold when we are doing speed control right now, we must trigger a hold first.
-        pbio_control_start_hold_control(ctl, time_now, state->count);
+    // Check if we're on target.
+    if (ctl->on_target) {
+        // If on target, decide what to do next based on the after-stop actuation type.
+        if (ctl->after_stop == PBIO_ACTUATION_HOLD || ctl->after_stop == PBIO_ACTUATION_CONTINUE) {
+            // Holding position or continuing the trajectory just means we have
+            // to keep actuating with the PID torque value that has just been calculated.
+            *actuation = PBIO_ACTUATION_TORQUE;
+            *control = torque;
 
-        // The new hold control does not take effect until the next iteration, so keep actuating for now.
-        *actuation = PBIO_ACTUATION_TORQUE;
-        *control = torque;
+            // If we are getting here on completion of a timed command with a
+            // stationary endpoint, convert it to a stationary angle based
+            // command and hold it.
+            if (pbio_control_type_is_time(ctl) && ctl->trajectory.w3 == 0) {
+                pbio_control_start_hold_control(ctl, time_now, state->count);
+            }
+        } else {
+            // For other (passive) actuations, just return that and stop control.
+            *actuation = ctl->after_stop;
+            *control = 0;
+            pbio_control_stop(ctl);
+        }
     } else {
-        // The end point not reached, or we have to keep holding, so return the calculated torque for actuation
+        // If we're not on target yet, we keep actuating with
+        // the PID torque value that has just been calculated.
         *actuation = PBIO_ACTUATION_TORQUE;
         *control = torque;
     }
@@ -167,6 +176,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         .th3 = target_count,
         .wt = target_rate,
         .wmax = ctl->settings.rate_max,
+        .w3 = after_stop == PBIO_ACTUATION_CONTINUE ? target_rate : 0,
         .a0_abs = ctl->settings.acceleration,
         .a2_abs = ctl->settings.deceleration,
     };
@@ -248,7 +258,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     ctl->on_target_func = pbio_control_on_target_always;
 
     // Compute new maneuver based on user argument, starting from the initial state
-    pbio_trajectory_make_stationary(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), target_count);
+    pbio_trajectory_make_constant(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), target_count, 0);
     // If called for the first time, set state and reset PID
     if (!pbio_control_type_is_angle(ctl)) {
         // Initialize or reset the PID control status for the given maneuver
@@ -278,11 +288,12 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 
     // Common trajectory parameters for the cases covered here. th0 and w0 are selected below.
     pbio_trajectory_command_t command = {
-        .type = duration == DURATION_FOREVER ? PBIO_TRAJECTORY_TYPE_FOREVER : PBIO_TRAJECTORY_TYPE_TIME,
+        .type = PBIO_TRAJECTORY_TYPE_TIME,
         .t0 = time_now,
         .duration = duration,
         .wt = target_rate,
         .wmax = ctl->settings.rate_max,
+        .w3 = after_stop == PBIO_ACTUATION_CONTINUE ? target_rate : 0,
         .a0_abs = ctl->settings.acceleration,
         .a2_abs = ctl->settings.deceleration,
     };
@@ -343,27 +354,31 @@ static bool _pbio_control_on_target_never(pbio_trajectory_t *trajectory, pbio_co
 pbio_control_on_target_t pbio_control_on_target_never = _pbio_control_on_target_never;
 
 static bool _pbio_control_on_target_angle(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    // if not enough time has expired to be done even in the ideal case, we are certainly not done
+    // If not enough time has expired to be done even in the ideal case,
+    // we are certainly not done yet.
     if (time - trajectory->t3 < 0) {
         return false;
     }
 
-    // If distance to target is still bigger than the tolerance, we are not there yet.
-    if (trajectory->th3 - count > settings->count_tolerance) {
+    // If endpoint is stationary and the distance to target is still bigger
+    // than the tolerance, we are not there yet.
+    if (trajectory->w3 == 0 && abs(trajectory->th3 - count) > settings->count_tolerance) {
         return false;
     }
 
-    // // If distance past target is still bigger than the tolerance, we are too far, so not there yet
-    if (count - trajectory->th3 > settings->count_tolerance) {
+    // If endpoint is stationary but the motor moving faster than the tolerance,
+    // we are not ready yet.
+    if (trajectory->w3 == 0 && abs(rate) > settings->rate_tolerance) {
         return false;
     }
 
-    // If the motor is not standing still, we are not there yet
-    if (abs(rate) > settings->rate_tolerance) {
+    // If endpoint is a nonzero speed but we're not yet past the target
+    // position, we're not there yet.
+    if (trajectory->w3 != 0 && pbio_math_sign(trajectory->th3 - count) == pbio_math_sign(trajectory->w3)) {
         return false;
     }
 
-    // There's nothing left to do, so we must be on target
+    // There's nothing left to check, so we must be on target
     return true;
 }
 pbio_control_on_target_t pbio_control_on_target_angle = _pbio_control_on_target_angle;

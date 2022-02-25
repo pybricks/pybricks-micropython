@@ -43,7 +43,7 @@ void reverse_trajectory(pbio_trajectory_t *trj) {
     trj->a2 *= -1;
 }
 
-void pbio_trajectory_make_stationary(pbio_trajectory_t *trj, int32_t t0, int32_t th0) {
+void pbio_trajectory_make_constant(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t w3) {
     // All times equal to initial time:
     trj->t0 = t0;
     trj->t1 = t0;
@@ -68,8 +68,8 @@ void pbio_trajectory_make_stationary(pbio_trajectory_t *trj, int32_t t0, int32_t
     trj->a0 = 0;
     trj->a2 = 0;
 
-    // This is a finite maneuver
-    trj->forever = false;
+    // Set final speed
+    trj->w3 = w3;
 }
 
 static int64_t x_time(int32_t b, int32_t t) {
@@ -82,25 +82,14 @@ static int64_t x_time2(int32_t b, int32_t t) {
 
 static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
 
+    // TODO: Deal with deceleration and nonzero final speed.
+    trj->w3 = 0;
+
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
-    int32_t t3mt0;
+    int32_t t3mt0 = c->duration;
     int32_t t3mt2;
     int32_t t2mt1;
     int32_t t1mt0;
-
-    // Duration of the maneuver
-    if (c->duration == DURATION_FOREVER) {
-        // In case of forever, we set the duration to a fictitious 60 seconds.
-        t3mt0 = 60 * US_PER_SECOND;
-        // This is an infinite maneuver. (This means we'll just ignore the deceleration
-        // phase when computing references later, so we keep going even after 60 seconds.)
-        trj->forever = true;
-    } else {
-        // Otherwise, the interval is just the duration
-        t3mt0 = c->duration;
-        // This is a finite maneuver
-        trj->forever = false;
-    }
 
     // Return error for negative user-specified duration
     if (t3mt0 < 0) {
@@ -193,14 +182,17 @@ static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, pbi
 
 static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
 
+    // TODO: Deal with deceleration and nonzero final speed.
+    trj->w3 = 0;
+
     // Return error for maneuver that is too long
-    if (abs((c->th3 - c->th0) / c->wt) + 1 > DURATION_MAX_S) {
+    if (abs((c->th3 - c->th0) / c->wt) + 1 > DURATION_MAX_MS / 1000) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     // Return empty maneuver for zero angle or zero speed
     if (c->th3 == c->th0 || c->wt == 0) {
-        pbio_trajectory_make_stationary(trj, c->t0, c->th0);
+        pbio_trajectory_make_constant(trj, c->t0, c->th0, 0);
         return PBIO_SUCCESS;
     }
 
@@ -287,9 +279,6 @@ static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, pb
         reverse_trajectory(trj);
     }
 
-    // This is a finite maneuver
-    trj->forever = false;
-
     return PBIO_SUCCESS;
 }
 
@@ -331,7 +320,7 @@ pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, pbio_trajecto
     if (c->type == PBIO_TRAJECTORY_TYPE_ANGLE) {
         return pbio_trajectory_new_angle_command(trj, c);
     }
-    // Otherwise, the end point is in time, or forever (which is just a long time). We calculate the unknown end angle.
+    // Otherwise, the end point is in time. We calculate the unknown end angle.
     return pbio_trajectory_new_time_command(trj, c);
 }
 
@@ -370,7 +359,7 @@ pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_comm
             c->w0 = trj->w0;
             c->th0 = trj->th0;
             c->th0_ext = trj->th0_ext;
-        } else if (trj->forever || c->t0 - trj->t2 < 0) {
+        } else if (c->t0 - trj->t2 < 0) {
             // We are in the constant speed phase, so we can restart from its starting point
             c->t0 = trj->t1;
             c->w0 = trj->w1;
@@ -390,10 +379,8 @@ pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_comm
             c->th0_ext = trj->th3_ext;
         }
 
-        // We shifted the start time into the past, so we must adjust duration accordingly. But forever remains forever.
-        if (c->type != PBIO_TRAJECTORY_TYPE_FOREVER) {
-            c->duration += (nominal.t0 - c->t0);
-        }
+        // We shifted the start time into the past, so we must adjust duration accordingly.
+        c->duration += (nominal.t0 - c->t0);
 
         // Now we can make the new trajectory with a starting point coincident
         // with a point on the existing trajectory
@@ -421,7 +408,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbi
         ref->rate = trj->w0 + timest(trj->a0, time_ref - trj->t0);
         mcount_ref = as_mcount(trj->th0, trj->th0_ext) + x_time(trj->w0, time_ref - trj->t0) + x_time2(trj->a0, time_ref - trj->t0);
         ref->acceleration = trj->a0;
-    } else if (trj->forever || time_ref - trj->t2 <= 0) {
+    } else if (time_ref - trj->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         ref->rate = trj->w1;
         mcount_ref = as_mcount(trj->th1, trj->th1_ext) + x_time(trj->w1, time_ref - trj->t1);
@@ -432,43 +419,22 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbi
         mcount_ref = as_mcount(trj->th2, trj->th2_ext) + x_time(trj->w1, time_ref - trj->t2) + x_time2(trj->a2, time_ref - trj->t2);
         ref->acceleration = trj->a2;
     } else {
-        // If we are here, we are in the zero speed phase (relevant when holding position)
-        ref->rate = 0;
-        mcount_ref = as_mcount(trj->th3, trj->th3_ext);
+        // If we are here, we are in the constant speed phase after the maneuver completes
+        ref->rate = trj->w3;
+        mcount_ref = as_mcount(trj->th3, trj->th3_ext) + x_time(trj->w3, time_ref - trj->t3);
         ref->acceleration = 0;
+
+        // To avoid any overflows of the aforementioned time comparisons,
+        // rebase the trajectory if it has been running a long time.
+        if (time_ref - trj->t0 > DURATION_MAX_MS * US_PER_MS) {
+            // REVISIT: update with new ext value or implement resolution fix.
+            as_count(mcount_ref, &ref->count, &ref->count_ext);
+            pbio_trajectory_make_constant(trj, time_ref, ref->count, trj->w3);
+            trj->th3_ext = ref->count_ext;
+        }
     }
 
     // Split high res angle into counts and millicounts
     as_count(mcount_ref, &ref->count, &ref->count_ext);
 
-    // Rebase the reference before it overflows after 35 minutes
-    if (time_ref - trj->t0 > (DURATION_MAX_S + 120) * MS_PER_SECOND * US_PER_MS) {
-        // Infinite maneuvers just maintain the same reference speed, continuing again from current time
-        if (trj->forever) {
-
-            // REVISIT: Once the final speed is settable, we no longer need a special case for forever anywhere.
-
-            pbio_trajectory_command_t command = {
-                .type = PBIO_TRAJECTORY_TYPE_FOREVER,
-                .t0 = time_ref,
-                .th0 = ref->count,
-                .th0_ext = ref->count_ext,
-                .duration = (int32_t) DURATION_FOREVER,
-                .w0 = trj->w1,
-                .wt = trj->w1,
-                .wmax = trj->w1,
-                .a0_abs = abs(trj->a2),
-                .a2_abs = abs(trj->a2),
-            };
-
-            pbio_trajectory_new_time_command(trj, &command);
-        }
-        // All other maneuvers are considered complete and just stop. In practice, other maneuvers are not
-        // allowed to be this long. This just ensures that if a motor stops and holds, it will continue to
-        // do so forever, by rebasing the stationary trajectory before it overflows.
-        else {
-            pbio_trajectory_make_stationary(trj, time_ref, ref->count);
-        }
-
-    }
 }

@@ -48,6 +48,7 @@ typedef enum {
     PBIO_ACTUATION_VOLTAGE,        /**< Apply a given voltage */
     PBIO_ACTUATION_TORQUE,         /**< Apply a given torque */
     PBIO_ACTUATION_HOLD,           /**< Actively hold the motor in place */
+    PBIO_ACTUATION_CONTINUE,       /**< Keep moving at current speed */
 } pbio_actuation_t;
 
 // State of a system being controlled.

@@ -472,18 +472,13 @@ static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int3
         return err;
     }
 
-    // Scale duration to microseconds unless it's forever.
-    if (duration != DURATION_FOREVER) {
-        duration *= US_PER_MS;
-    }
-
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration, sum_rate, stop_func, after_stop);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration * US_PER_MS, sum_rate, stop_func, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration, dif_rate, stop_func, after_stop);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration * US_PER_MS, dif_rate, stop_func, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -495,7 +490,7 @@ pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, i
     return pbio_drivebase_drive_counts_timed(db,
         pbio_control_user_to_counts(&db->control_distance.settings, speed),
         pbio_control_user_to_counts(&db->control_heading.settings, turn_rate),
-        DURATION_FOREVER, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+        DURATION_MAX_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -561,7 +556,7 @@ pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_le
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_MAX_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
 }
 
 // Drive for a given duration, given two motor speeds.

@@ -310,6 +310,8 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
             int32_t voltage = pbio_observer_torque_to_voltage(srv->observer.model, payload);
             return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
         }
+        case PBIO_ACTUATION_CONTINUE:
+            return PBIO_ERROR_INVALID_OP;
     }
 
     return PBIO_SUCCESS;
@@ -372,28 +374,23 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32
         return err;
     }
 
-    // Scale duration to microseconds unless it's forever.
-    if (duration != DURATION_FOREVER) {
-        duration *= US_PER_MS;
-    }
-
-    // Start a timed maneuver, duration finite
-    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration, target_rate, stop_func, after_stop);
+    // Start a timed maneuver with duration converted to microseconds.
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, stop_func, after_stop);
 }
 
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
-    // Start a timed maneuver, duration forever
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    // Start a timed maneuver and restart it when it is done, thus running forever.
+    return pbio_servo_run_timed(srv, speed, DURATION_MAX_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
-    // Start a timed maneuver, duration finite
+    // Start a timed maneuver, duration specified by user.
     return pbio_servo_run_timed(srv, speed, duration, pbio_control_on_target_time, after_stop);
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
-    // Start a timed maneuver, duration forever and ending on stall
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER, pbio_control_on_target_stalled, after_stop);
+    // Start a timed maneuver, and stop on stall
+    return pbio_servo_run_timed(srv, speed, DURATION_MAX_MS, pbio_control_on_target_stalled, after_stop);
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {

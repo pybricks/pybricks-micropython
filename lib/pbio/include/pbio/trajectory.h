@@ -15,8 +15,7 @@
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
 
-#define DURATION_FOREVER (-1)
-#define DURATION_MAX_S (30 * 60)
+#define DURATION_MAX_MS (10 * 60 * MS_PER_SECOND)
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -29,7 +28,6 @@
 #define wdiva(w, a) ((((w) * US_PER_MS) / a) * MS_PER_SECOND)
 
 typedef enum {
-    PBIO_TRAJECTORY_TYPE_FOREVER,  /**< A trajectory that runs forever. */
     PBIO_TRAJECTORY_TYPE_TIME,     /**< A trajectory constrained by a final time */
     PBIO_TRAJECTORY_TYPE_ANGLE,    /**< A trajectory constrained by a final angle or position */
 } pbio_trajectory_type_t;
@@ -49,6 +47,7 @@ typedef struct _pbio_trajectory_command_t {
     int32_t w0;                    /**<  Encoder rate at start of maneuver */
     int32_t wt;                    /**<  Encoder target rate target when not accelerating */
     int32_t wmax;                  /**<  Max target rate target */
+    int32_t w3;                    /**<  Encoder rate at the end of maneuver */
     int32_t a0_abs;                /**<  Encoder acceleration magnitude during in-phase */
     int32_t a2_abs;                /**<  Encoder acceleration magnitude during out-phase */
 } pbio_trajectory_command_t;
@@ -57,7 +56,6 @@ typedef struct _pbio_trajectory_command_t {
  * Complete set of motor trajectory parameters for an ideal maneuver without disturbances.
  */
 typedef struct _pbio_trajectory_t {
-    bool forever;                       /**<  Whether maneuver has end-point */
     int32_t t0;                        /**<  Time at start of maneuver */
     int32_t t1;                        /**<  Time after the acceleration in-phase */
     int32_t t2;                        /**<  Time at start of acceleration out-phase */
@@ -72,6 +70,7 @@ typedef struct _pbio_trajectory_t {
     int32_t th3_ext;                     /**<  As above, but additional  millicounts */
     int32_t w0;                          /**<  Encoder rate at start of maneuver */
     int32_t w1;                          /**<  Encoder rate target when not accelerating */
+    int32_t w3;                          /**<  Encoder rate target after the maneuver ends */
     int32_t a0;                          /**<  Encoder acceleration during in-phase */
     int32_t a2;                          /**<  Encoder acceleration during out-phase */
 } pbio_trajectory_t;
@@ -93,7 +92,7 @@ pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, pbio_trajecto
 pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
 
 // Make a stationary trajectory for holding position.
-void pbio_trajectory_make_stationary(pbio_trajectory_t *trj, int32_t t0, int32_t th0);
+void pbio_trajectory_make_constant(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t w3);
 
 // Stretches out a given trajectory time-wise to make it match time frames of other trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0);
