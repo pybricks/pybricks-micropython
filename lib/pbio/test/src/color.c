@@ -348,11 +348,24 @@ static void test_color_hsv_compression(void *env) {
     tt_want_int_op(hsv.v, ==, expanded.v);
 }
 
+static void test_color_hsv_cost(void *env) {
+    pbio_color_hsv_t color_a;
+    // pbio_color_hsv_t color_b;
+
+    // red
+    color_a.h = 0;
+    color_a.s = 100;
+    color_a.v = 100;
+
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_a), ==, 0);
+}
+
 struct testcase_t pbio_color_tests[] = {
     PBIO_TEST(test_rgb_to_hsv),
     PBIO_TEST(test_hsv_to_rgb),
     PBIO_TEST(test_color_to_hsv),
     PBIO_TEST(test_color_to_rgb),
     PBIO_TEST(test_color_hsv_compression),
+    PBIO_TEST(test_color_hsv_cost),
     END_OF_TESTCASES
 };
