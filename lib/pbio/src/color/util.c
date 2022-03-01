@@ -77,5 +77,5 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b)
             fix16_sq(delx),
             fix16_sq(dely)),
         fix16_sq(delz));
-    return fix16_to_int(cdist);
+    return fix16_to_int(fix16_mul(cdist, fix16_from_int(5000)));
 }
