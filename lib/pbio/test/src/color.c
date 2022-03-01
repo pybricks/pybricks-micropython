@@ -350,14 +350,33 @@ static void test_color_hsv_compression(void *env) {
 
 static void test_color_hsv_cost(void *env) {
     pbio_color_hsv_t color_a;
-    // pbio_color_hsv_t color_b;
+    pbio_color_hsv_t color_b;
 
-    // red
+    // color compared to itself should give 0
     color_a.h = 0;
     color_a.s = 100;
     color_a.v = 100;
-
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_a), ==, 0);
+
+    // blacks with different saturations/hues should be the same
+    color_a.h = 230;
+    color_a.s = 23;
+    color_a.v = 0;
+
+    color_b.h = 23;
+    color_b.s = 99;
+    color_b.v = 0;
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, 0);
+
+    // max value with different saturations/hues should be different
+    color_a.h = 230;
+    color_a.s = 23;
+    color_a.v = 100;
+
+    color_b.h = 23;
+    color_b.s = 99;
+    color_b.v = 100;
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, 0);
 }
 
 struct testcase_t pbio_color_tests[] = {
