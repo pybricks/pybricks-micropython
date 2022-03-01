@@ -461,6 +461,36 @@ static void test_color_hsv_cost(void *env) {
     color_b.v = 70;
 
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, dist);
+
+    // hues 360 and 0 should be the same
+    color_a.h = 360;
+    color_a.s = 100;
+    color_a.v = 100;
+
+    color_b.h = 0;
+    color_b.s = 100;
+    color_b.v = 100;
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, 0);
+
+    // distance between hues 359 and 1 should be smaller than hues 1 and 5
+    color_a.h = 359;
+    color_a.s = 100;
+    color_a.v = 100;
+
+    color_b.h = 1;
+    color_b.s = 100;
+    color_b.v = 100;
+    dist = pbio_get_cone_cost(&color_a, &color_b);
+
+    color_a.h = 1;
+    color_a.s = 100;
+    color_a.v = 100;
+
+    color_b.h = 5;
+    color_b.s = 100;
+    color_b.v = 100;
+
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, dist);
 }
 
 struct testcase_t pbio_color_tests[] = {

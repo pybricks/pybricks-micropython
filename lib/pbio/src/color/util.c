@@ -33,13 +33,16 @@ int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) 
 }
 
 int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b) {
-    // normalize h to radians, s/v to (0,1)
+
     fix16_t by100 = fix16_div(fix16_one, fix16_from_int(100));
+
+    // normalize h to radians, s/v to (0,1)
     fix16_t a_h = fix16_deg_to_rad(fix16_from_int(a->h));
-    fix16_t b_h = fix16_deg_to_rad(fix16_from_int(b->h));
     fix16_t a_s = fix16_mul(fix16_from_int(a->s), by100);
-    fix16_t b_s = fix16_mul(fix16_from_int(b->s), by100);
     fix16_t a_v = fix16_mul(fix16_from_int(a->v), by100);
+
+    fix16_t b_h = fix16_deg_to_rad(fix16_from_int(b->h));
+    fix16_t b_s = fix16_mul(fix16_from_int(b->s), by100);
     fix16_t b_v = fix16_mul(fix16_from_int(b->v), by100);
 
     // x, y and z deltas between cartesian coordinates of a and b in HSV cone
