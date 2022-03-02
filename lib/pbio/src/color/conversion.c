@@ -2,6 +2,8 @@
 // Copyright (c) 2020 The Pybricks Authors
 // Copyright (c) 2013 FastLED
 
+#include <fixmath.h>
+
 #include <pbio/color.h>
 
 /**
@@ -232,4 +234,19 @@ void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_c
     hsv->h = compressed->h;
     hsv->s = compressed->s;
     hsv->v = compressed->v;
+}
+
+/**
+ * Converts HSV to normalized HSV for fixed point operations.
+ *
+ * @param [in]  hsv         The source HSV color value.
+ * @param [out] hsv_fix16   The destination HSV_fix16 color value.
+ */
+void pbio_color_hsv_to_fix16(const pbio_color_hsv_t *hsv, pbio_color_hsv_fix16_t *hsv_fix16) {
+    const fix16_t by100 = F16C(0,0100);
+
+    // normalize h to radians, s/v to (0,1)
+    hsv_fix16->h = fix16_deg_to_rad(fix16_from_int(hsv->h));
+    hsv_fix16->s = fix16_mul(fix16_from_int(hsv->s), by100);
+    hsv_fix16->v = fix16_mul(fix16_from_int(hsv->v), by100);
 }

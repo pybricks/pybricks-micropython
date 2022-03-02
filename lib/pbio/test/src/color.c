@@ -399,7 +399,6 @@ static void test_color_hsv_cost(void *env) {
     color_b.v = 70;
 
     dist = pbio_get_cone_cost(&color_a, &color_b);
-    printf("\n\nhello world %d\n", dist);
 
     color_a.h = 30;
     color_a.s = 40;

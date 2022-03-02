@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <fixmath.h>
 
@@ -32,47 +32,40 @@ int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) 
     return hue_error * hue_error + 5 * saturation_error * saturation_error + 2 * value_error * value_error;
 }
 
-int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b) {
+int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b) {
 
-    fix16_t by100 = fix16_div(fix16_one, fix16_from_int(100));
-
-    // normalize h to radians, s/v to (0,1)
-    fix16_t a_h = fix16_deg_to_rad(fix16_from_int(a->h));
-    fix16_t a_s = fix16_mul(fix16_from_int(a->s), by100);
-    fix16_t a_v = fix16_mul(fix16_from_int(a->v), by100);
-
-    fix16_t b_h = fix16_deg_to_rad(fix16_from_int(b->h));
-    fix16_t b_s = fix16_mul(fix16_from_int(b->s), by100);
-    fix16_t b_v = fix16_mul(fix16_from_int(b->v), by100);
+    pbio_color_hsv_fix16_t a, b;
+    pbio_color_hsv_to_fix16(hsv_a, &a);
+    pbio_color_hsv_to_fix16(hsv_b, &b);
 
     // x, y and z deltas between cartesian coordinates of a and b in HSV cone
     // delx = b_s*b_v*cos(b_h) - a_s*a_v*cos(a_h)
     fix16_t delx = fix16_sub(
         fix16_mul(
             fix16_mul(
-                fix16_cos(b_h),
-                b_v),
-            b_s),
+                fix16_cos(b.h),
+                b.v),
+            b.s),
         fix16_mul(
             fix16_mul(
-                fix16_cos(a_h),
-                a_v),
-            a_s));
+                fix16_cos(a.h),
+                a.v),
+            a.s));
 
     // dely = b_s*b_v*sin(b_h) - a_s*a_v*sin(a_h)
     fix16_t dely = fix16_sub(
         fix16_mul(
             fix16_mul(
-                fix16_sin(b_h),
-                b_v),
-            b_s),
+                fix16_sin(b.h),
+                b.v),
+            b.s),
         fix16_mul(
             fix16_mul(
-                fix16_sin(a_h),
-                a_v),
-            a_s));
+                fix16_sin(a.h),
+                a.v),
+            a.s));
     // delz = b_v - a_v
-    fix16_t delz = fix16_sub(b_v, a_v);
+    fix16_t delz = fix16_sub(b.v, a.v);
 
     // cdist = delx*delx + dely*dely + delz*delz
     fix16_t cdist = fix16_add(

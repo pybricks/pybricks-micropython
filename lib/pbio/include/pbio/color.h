@@ -13,6 +13,8 @@
 
 #include <stdint.h>
 
+#include <fixmath.h>
+
 /** @cond INTERNAL */
 
 /**
@@ -106,12 +108,24 @@ typedef struct __attribute__((__packed__)) {
     uint8_t v;
 } pbio_color_compressed_hsv_t;
 
+/** HSV color with fix16 components */
+typedef struct {
+    /** The hue component. radians. */
+    fix16_t h;
+    /** The saturation component. 0 to 1. */
+    fix16_t s;
+    /** The value component. 0 to 1. */
+    fix16_t v;
+} pbio_color_hsv_fix16_t;
+
 void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
 void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
 void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed);
 void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv);
+void pbio_color_hsv_to_fix16(const pbio_color_hsv_t *hsv, pbio_color_hsv_fix16_t *hsv_fix16);
+
 int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c);
 int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b);
 
