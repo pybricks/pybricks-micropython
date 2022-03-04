@@ -41,13 +41,14 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
     // x, y and z deltas between cartesian coordinates of a and b in HSV cone
     // delx = b_s*b_v*cos(b_h) - a_s*a_v*cos(a_h)
     fix16_t delx = fix16_sub(
-        fix16_mul(fix16_mul(fix16_cos(b.h), b.v), b.s),
-        fix16_mul(fix16_mul(fix16_cos(a.h), a.v), a.s));
+        fix16_mul(fix16_mul(b.v, b.s), fix16_cos(b.h)),
+        fix16_mul(fix16_mul(a.v, a.s), fix16_cos(a.h)));
 
     // dely = b_s*b_v*sin(b_h) - a_s*a_v*sin(a_h)
     fix16_t dely = fix16_sub(
-        fix16_mul(fix16_mul(fix16_sin(b.h), b.v), b.s),
-        fix16_mul(fix16_mul(fix16_sin(a.h), a.v), a.s));
+        fix16_mul(fix16_mul(b.v, b.s), fix16_sin(b.h)),
+        fix16_mul(fix16_mul(a.v, a.s), fix16_sin(a.h)));
+
     // delz = cone_height * (b_v - a_v)
     fix16_t delz = fix16_mul(F16C(1,000), fix16_sub(b.v, a.v));
 
@@ -57,5 +58,7 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
             fix16_sq(delx),
             fix16_sq(dely)),
         fix16_sq(delz));
+
+    // multiply by large number to increase resolution when converting to int
     return fix16_to_int(fix16_mul(cdist, F16C(5000, 0000)));
 }
