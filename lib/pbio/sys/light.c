@@ -216,7 +216,7 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     if (event == PBIO_EVENT_STATUS_SET || event == PBIO_EVENT_STATUS_CLEARED) {
         pbsys_status_light_handle_status_change();
     }
-    if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
+    if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         pbio_light_animation_init(&pbsys_status_light->animation, default_user_program_light_animation_next);
         pbio_light_animation_start(&pbsys_status_light->animation);
     }

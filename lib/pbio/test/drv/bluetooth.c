@@ -503,7 +503,7 @@ static const btstack_uart_block_t *test_uart_block_instance(void) {
     static const btstack_uart_block_t uart_block = {
         .init = test_uart_block_init,
         .open = test_uart_block_open,
-        .open = test_uart_block_close,
+        .close = test_uart_block_close,
         .set_block_received = test_uart_block_set_block_received,
         .set_block_sent = test_uart_block_set_block_sent,
         .set_baudrate = test_uart_block_set_baudrate,

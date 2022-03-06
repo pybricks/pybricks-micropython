@@ -60,7 +60,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     pbio_trajectory_reference_t ref;
 
     // Control action to be calculated
-    pbio_actuation_t actuation;
+    pbio_actuation_t actuation = PBIO_ACTUATION_COAST;
     int32_t feedback_torque = 0;
     int32_t feedforward_torque = 0;
     int32_t voltage;

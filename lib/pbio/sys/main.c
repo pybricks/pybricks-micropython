@@ -9,7 +9,7 @@
 #include <pbsys/status.h>
 #include <pbsys/user_program.h>
 
-static intptr_t pbsys_main_jmp_buf[5];
+static void *pbsys_main_jmp_buf[5];
 
 static void pb_sys_main_check_for_shutdown(void) {
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {

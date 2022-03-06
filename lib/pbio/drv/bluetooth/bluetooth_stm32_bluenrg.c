@@ -400,12 +400,12 @@ try_again:
 
     for (;;) {
         advertising_data_received = false;
-        PT_WAIT_UNTIL(pt, {
+        PT_WAIT_UNTIL(pt, ({
             if (task->cancel) {
                 goto cancel_discovery;
             }
             advertising_data_received;
-        });
+        }));
 
         /** 00001623-1212-EFDE-1623-785FEABCD123 */
         static const uint8_t lwp3_hub_service_uuid[] = {
@@ -443,12 +443,12 @@ try_again:
 
     for (;;) {
         advertising_data_received = false;
-        PT_WAIT_UNTIL(pt, {
+        PT_WAIT_UNTIL(pt, ({
             if (task->cancel) {
                 goto cancel_discovery;
             }
             advertising_data_received;
-        });
+        }));
 
         le_advertising_info *subevt = (void *)&read_buf[5];
 
@@ -487,12 +487,12 @@ try_again:
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gap_create_connection_end();
 
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
             goto cancel_connect;
         }
         remote_handle;
-    });
+    }));
 
     // discover LWP3 characteristic to get attribute handle
 
@@ -507,7 +507,7 @@ try_again:
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gatt_disc_charac_by_uuid_end();
 
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         void *payload;
         uint16_t event;
         (payload = get_vendor_event(&event))
@@ -526,7 +526,7 @@ try_again:
             evt_gatt_procedure_complete *subevt = payload;
             subevt->conn_handle == remote_handle;
         });
-    });
+    }));
 
     // enable notifications
 
@@ -553,12 +553,12 @@ retry:
     }
 
     evt_gatt_procedure_complete *payload;
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         uint16_t event;
         (payload = get_vendor_event(&event))
         && event == EVT_BLUE_GATT_PROCEDURE_COMPLETE
         && payload->conn_handle == remote_handle;
-    });
+    }));
 
     context->status = payload->error_code;
     task->status = ble_error_to_pbio_error(context->status);
@@ -623,7 +623,7 @@ retry:
     }
 
     evt_gatt_procedure_complete *payload;
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         if (remote_handle == 0) {
             task->status = PBIO_ERROR_NO_DEV;
             PT_EXIT(pt);
@@ -633,7 +633,7 @@ retry:
         (payload = get_vendor_event(&event))
         && event == EVT_BLUE_GATT_PROCEDURE_COMPLETE
         && payload->conn_handle == remote_handle;
-    });
+    }));
 
     task->status = ble_error_to_pbio_error(payload->error_code);
 

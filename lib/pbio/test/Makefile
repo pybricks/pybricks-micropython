@@ -123,7 +123,7 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/platform/posix/,\
 PBIO_DIR = ..
 PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
 PBIO_SRC = \
-	$(shell find $(PBIO_DIR)/drv/ ! -wholename "*/ev3dev_stretch/*" -and ! -wholename "*/stm32_usbd/*" -and -name "*.c") \
+	$(shell find $(PBIO_DIR)/drv ! -wholename "*/ev3dev_stretch/*" -and ! -wholename "*/stm32_usbd/*" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
 	$(shell find $(PBIO_DIR)/sys -name "*.c") \
 	$(shell find $(PBIO_DIR)/platform/motors -name "*.c") \
@@ -147,8 +147,7 @@ $(BUILD_DIR)/genhdr/%.h: $(PBIO_DIR)/drv/bluetooth/%.gatt
 	$(Q)python3 $(BTSTACK_DIR)/tool/compile_gatt.py $< $@
 
 
-CFLAGS += -std=gnu99 -g -O0 -Wall -Werror -fshort-enums
-CFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
+CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
 CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(FIXMATH_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
 CFLAGS += -DPBIO_TEST_BUILD=1
@@ -179,7 +178,7 @@ $(BUILD_PREFIX)/%.o: %.c $(BUILD_PREFIX)/%.d Makefile
 	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
 
 $(PROG): $(OBJ)
-	$(Q)$(CC) $(CFLAGS) -o $@ $^ -lrt
+	$(Q)$(CC) $(CFLAGS) -o $@ $^
 
 build-coverage/lcov.info: Makefile $(SRC)
 	$(Q)$(MAKE) COVERAGE=1

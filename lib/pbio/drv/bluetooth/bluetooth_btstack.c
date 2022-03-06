@@ -79,7 +79,9 @@ typedef struct {
 } pup_handset_t;
 
 // hub name goes in special section so that it can be modified when flashing firmware
+#if !PBIO_TEST_BUILD
 __attribute__((section(".name")))
+#endif
 char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 LIST(task_queue);
@@ -556,13 +558,13 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     gap_start_scan();
     handset.con_state = CON_STATE_WAIT_ADV_IND;
 
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
             goto cancel;
         }
 
         handset.con_state == CON_STATE_CONNECTED;
-    });
+    }));
 
     // TODO: set task->status to error on CON_STATE_CONNECT_FAILED
 
@@ -609,7 +611,7 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 
     // NB: Value buffer must remain valid until GATT_EVENT_QUERY_COMPLETE, so
     // this wait is not cancelable.
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         if (handset.con_handle == HCI_CON_HANDLE_INVALID) {
             // disconnected
             task->status = PBIO_ERROR_NO_DEV;
@@ -618,7 +620,7 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
         event_packet &&
         hci_event_packet_get_type(event_packet) == GATT_EVENT_QUERY_COMPLETE &&
         gatt_event_query_complete_get_handle(event_packet) == handset.con_handle;
-    });
+    }));
 
     uint8_t status = gatt_event_query_complete_get_att_status(event_packet);
     task->status = att_error_to_pbio_error(status);

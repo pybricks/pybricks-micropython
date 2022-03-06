@@ -446,12 +446,12 @@ try_again:
 
     for (;;) {
         advertising_data_received = false;
-        PT_WAIT_UNTIL(pt, {
+        PT_WAIT_UNTIL(pt, ({
             if (task->cancel) {
                 goto cancel_discovery;
             }
             advertising_data_received;
-        });
+        }));
 
         // TODO: Properly parse advertising data. For now, we are assuming that
         // the service UUID is at a fixed position and we are getting only
@@ -482,12 +482,12 @@ try_again:
 
     for (;;) {
         advertising_data_received = false;
-        PT_WAIT_UNTIL(pt, {
+        PT_WAIT_UNTIL(pt, ({
             if (task->cancel) {
                 goto cancel_discovery;
             }
             advertising_data_received;
-        });
+        }));
 
         // TODO: Properly parse scan response data. For now, we are assuming
         // that the saved Bluetooth address is sufficient to recognize correct device
@@ -521,12 +521,12 @@ try_again:
 
     context->status = read_buf[8]; // debug
 
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
             goto cancel_connect;
         }
         remote_handle != NO_CONNECTION;
-    });
+    }));
 
     // discover LWP3 characteristic to get attribute handle
 
@@ -552,7 +552,7 @@ try_again:
     // multiple responses received before the procedure is complete.
     // REVISIT: what happens when remote is disconnected while waiting here?
 
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         uint8_t *payload;
         uint16_t event;
         HCI_StatusCodes_t status;
@@ -579,7 +579,7 @@ try_again:
 
             status == bleProcedureComplete;
         });
-    });
+    }));
 
     // enable notifications
 
@@ -681,7 +681,7 @@ retry:
     // could be confused with the next request). The device could also become
     // disconnected, in which case we never receive a response.
 
-    PT_WAIT_UNTIL(pt, {
+    PT_WAIT_UNTIL(pt, ({
         if (remote_handle == NO_CONNECTION) {
             task->status = PBIO_ERROR_NO_DEV;
             PT_EXIT(pt);
@@ -699,7 +699,7 @@ retry:
 
             event == ATT_EVENT_WRITE_RSP;
         });
-    });
+    }));
 
 exit:
     task->status = ble_error_to_pbio_error(status);
