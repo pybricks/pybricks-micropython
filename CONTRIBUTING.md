@@ -12,7 +12,7 @@ This is the recommended development environment used by the Pybricks maintainers
 - [Python][python] v3.8.x
 - [Poetry][poetry] v1.x
 - [Uncrustify][uncrustify] v0.71.x
-- [GNU ARM Embedded Toolchain][arm-gcc] v10-2020-q4
+- [ARM GNU Toolchain][gcc-arm] v11.2-2022.02
 - [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
 
@@ -26,7 +26,7 @@ Optional:
 [python]: https://www.python.org/downloads/
 [poetry]: https://python-poetry.org/docs/
 [uncrustify]: http://uncrustify.sourceforge.net/
-[arm-gcc]: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+[gcc-arm]: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads
 [gcc]: https://gcc.gnu.org/
 [make]: https://www.gnu.org/software/make/
 [docker]: https://docs.docker.com/engine/install/ubuntu/
@@ -61,6 +61,18 @@ Then install tools like this:
     pipx install poetry
 
 
+#### Asdf
+
+[Asdf](https://asdf-vm.com/) is a universal version manager tool for Linux and
+Mac (Windows users can use it with WSL). This is useful if you need to use
+different versions of the required tools on different projects. If you have
+`asdf` installed, you can install the dependencies from `.tool-versions` by
+running:
+
+    asdf install
+
+Other dependencies will need to be installed as described elsewhere.
+
 #### Ubuntu
 
 Some of the prerequisites are available as Debian packages. The correct version
@@ -86,12 +98,12 @@ Cygwin from the link. Select the following packages during installation:
     python3
     zip
 
-Cygwin and the [GNU ARM Embedded Toolchain][arm-gcc] need to be added to the
+Cygwin and the [ARM GNU Toolchain][gcc-arm] need to be added to the
 `PATH` environment variable. We recommend doing this in the local terminal
 rather than globally via *System Properties*. For example using PowerShell:
 
 ```powershell
-$env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2020-q4-major\bin;$env:PATH"
+$env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\11.2 2022.02\bin;$env:PATH"
 ```
 
 [cygwin]: https://www.cygwin.com/
@@ -99,7 +111,7 @@ $env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 
 #### macOS
 
     brew install uncrustify
-    brew instal libusb   
+    brew install libusb
     brew install --cask gcc-arm-embedded
 
 ### Get the code
@@ -162,15 +174,6 @@ To activate the environment, run:
 The command prompt will now start with `(.venv)` to remind you that you are
 working in the virtual environment. You should run `poetry shell` any time you
 open a new terminal window while working on `pybricks-micropython`.
-
-
-### Set up VS Code
-
-When using the Microsoft C/C++ extension for VS Code, you will need to set the
-`GCC_10_ARM_NONE_EABI_BIN` environment variable to the directory where the Arm
-toolchain was installed so that it can find the compiler to assist with code
-analysis. See [.vscode/c_cpp_properties.json](.vscode/c_cpp_properties.json)
-for more info.
 
 
 Building the code
@@ -317,12 +320,12 @@ Pick your Hub from the `bricks` sub-directory you want to compile.
     poetry shell
     make mpy-cross -j8
     make -C bricks/primehub -j8
-       
+
 ### Deploy the firmware to a hub
 
 1. Follow the guide to prepare your Hub for Pybricks firmware installation:
-   1. https://pybricks.com/install, or 
-   2. https://dfu.pybricks.com for Spike Prime or Mindstorms Inventor    
+   1. https://pybricks.com/install, or
+   2. https://dfu.pybricks.com for Spike Prime or Mindstorms Inventor
 2. Execute the deployment:
     ```shell
     make -C bricks/primehub -j8 deploy
