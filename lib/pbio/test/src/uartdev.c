@@ -522,7 +522,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
         test_uart_dev.baud == 2400;
     }));
 
-    // send BOOST Color and Distance sensor info
+    // send BOOST Interactive Motor info
     SIMULATE_RX_MSG(msg0);
     SIMULATE_RX_MSG(msg1);
     SIMULATE_RX_MSG(msg2);
@@ -707,7 +707,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg_speed_115200);
     SIMULATE_RX_MSG(msg_ack);
 
-    // send BOOST Color and Distance sensor info
+    // send Technic Large Motor info
     SIMULATE_RX_MSG(msg2);
     SIMULATE_RX_MSG(msg3);
     SIMULATE_RX_MSG(msg4);
@@ -915,7 +915,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg_speed_115200);
     SIMULATE_RX_MSG(msg_ack);
 
-    // send BOOST Color and Distance sensor info
+    // send Technic XL Motor info
     SIMULATE_RX_MSG(msg2);
     SIMULATE_RX_MSG(msg3);
     SIMULATE_RX_MSG(msg4);
