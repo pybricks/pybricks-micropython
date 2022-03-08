@@ -506,7 +506,7 @@ gray regions of Figure \ref{fig:positions}, which holds if:
 %
 \begin{align}
     \label{eq:a:decreaselimit}
-    - \dfrac{1}{2 \a_2}\lr{\w_0^2 - \w_3^2} < \th_3 - \th_0
+     \dfrac{1}{2 \a_2}\lr{\w_3^2 - \w_0^2} < \th_3 - \th_0
 \end{align}
 %
 If it holds, then there is a nonzero constant speed phase ($\th_1 \neq \th_2$)
@@ -534,15 +534,15 @@ can feasibly slow down without overshooting. To handle this, we cut the
 initial speed value to within the allowed bound causing an abrupt deceleration:
 %
 \begin{align}
-    \w_0 := \sqrt{\w_3^2 - \dfrac{1}{2\a_2}\lr{\th_3-\th_0}}
+    \w_0 := \sqrt{\w_3^2 - 2\a_2\lr{\th_3-\th_0}}
 \end{align}
 %
 By definition, this means that there is only a deceleration phase, so
-$\th_1 = \th_2 = \th_3$, $\w_1=\w_2=\w_3$, $t_1=t_2=t_3$ with:
+$\th_1 = \th_2 = \th_0$, $\w_1=\w_2=\w_0$, $t_1=t_2=t_0$ with:
 %
 \begin{align}
     \label{eq:a:decreaselimittime}
-    t_1 = \dfrac{\w_0-\w_3}{\a_2}
+    t_3 - t_2 = \dfrac{\w_0-\w_3}{\a_2}
 \end{align}
 
 \subsubsection{Selecting the standard, cut short, or decreasing case}
@@ -558,8 +558,6 @@ The procedure is then as follows:
     \ref{sec:a:cutshortw3is0} or \ref{sec:a:cutshortw3isw1}).
 \end{enumerate}
 %
-For efficiency, the decreasing and standard case can share the same code if the
-sign of $\a_0$ is set appropriately.
 
 \subsubsection{Reversing and unreversing the final and target speed}
 \label{sec:a:reversing}
@@ -570,7 +568,7 @@ calculate the trajectory, and map the final result back to obtain the
 originally requested command.
 
 \begin{itemize}
-    \item Let the boolean $a := \wt < 0$.
+    \item Let the boolean $a := \th_3 < \th_0$.
     \item If $a$, then invert targets as:
           $\th_3 := 2 \th_0 - \th_3$, $\wt := -\wt$, $\w_0 := -\w_0$,
           $\w_3 := -\w_3$.
