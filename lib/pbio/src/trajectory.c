@@ -260,7 +260,6 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     trj->t2 = trj->t1 + wdiva(trj->th2 - trj->th1, trj->w1);
     trj->t3 = trj->t2 + wdiva(trj->w3 - trj->w1, trj->a2);
 }
-
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0) {
 
     if (t3mt0 == 0) {
@@ -273,13 +272,13 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt
     // Setting the speed integral equal to (th3 - th0) gives three constraint
     // equations with three unknowns (a0, a2, wt), for which we can solve.
 
-    // Solve constraint to find initial acceleration
-    trj->a0 = ((int64_t)(trj->th3 - trj->th0) * US_PER_SECOND * 2 - (int64_t)trj->w0 * (t3mt0 + t2mt0)) /
-        t1mt0 * US_PER_SECOND / (t3mt0 + t2mt0 - t1mt0);
+    // Solve constraint to find peak velocity
+    trj->w1 = (2 * (trj->th3 - trj->th0) - timest(trj->w0, t1mt0) - timest(trj->w3, t3mt0 - t2mt0)) * US_PER_MS /
+        ((t3mt0 + t2mt0 - t1mt0) / US_PER_MS);
 
-    // Get corresponding target speed and final deceleration
-    trj->w1 = timest(trj->a0, t1mt0) + trj->w0;
-    trj->a2 = (int64_t)trj->w1 * US_PER_SECOND / (t2mt0 - t3mt0);
+    // Get corresponding accelerations
+    trj->a0 = t1mt0 == 0 ? 0 : (trj->w1 - trj->w0) * US_PER_MS / t1mt0 * MS_PER_SECOND;
+    trj->a2 = (t3mt0 - t2mt0) == 0 ? 0 : (trj->w3 - trj->w1) * US_PER_MS / (t3mt0 - t2mt0) * MS_PER_SECOND;
 
     // Stretch time arguments
     trj->t1 = trj->t0 + t1mt0;
@@ -289,8 +288,8 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt
     // With all constraints already satisfied, we can just compute the
     // intermediate positions relative to the endpoints, given the now-known
     // accelerations and speeds.
-    trj->th1 = trj->th0 + (trj->w1 * trj->w1 - trj->w0 * trj->w0) / (2 * trj->a0);
-    trj->th2 = trj->th3 + (trj->w1 * trj->w1) / (2 * trj->a2);
+    trj->th1 = trj->th0 + timest(trj->w0, t1mt0) + timest2(trj->a0, t1mt0);
+    trj->th2 = trj->th1 + timest(trj->w1, t2mt0 - t1mt0);
 }
 
 static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
