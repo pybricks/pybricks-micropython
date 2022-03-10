@@ -158,77 +158,107 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
 // Computes a trajectory for an angle command assuming *positive* speed
 static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
-    // TODO: Deal with deceleration and nonzero final speed.
-    trj->w3 = 0;
-
-    // In a forward maneuver, the target speed is always positive.
-    int32_t wt = abs(c->wt);
-    wt = min(wt, c->wmax);
-
-    // Limit initial speed
-    int32_t w0 = pbio_math_clamp(c->w0, c->wmax);
-
-    // Limit initial speed, but evaluate square root only if necessary (usually not)
-    if (w0 > 0 && (w0 * w0) / (2 * c->a0_abs) > c->th3 - c->th0) {
-        w0 = pbio_math_sqrt(2 * c->a0_abs * (c->th3 - c->th0));
-
-        // In this situation, speed is just a linearly descending line
-        // from the (capped) starting speed towards zero. Hence, t2=t1 which is
-        // anywhere between t3 and t0. We have to pick something, so set it to
-        // the way point.
-        wt = w0 / 2;
-    }
-
-    // Initial speed is less than the target speed
-    if (w0 < wt) {
-        // Therefore accelerate towards intersection from below,
-        // either by reaching constant speed phase or not.
-        trj->a0 = c->a0_abs;
-
-        // Fictitious zero speed angle (ahead of us if we have negative initial speed; behind us if we have initial positive speed)
-        int32_t thf = c->th0 - (w0 * w0) / (2 * c->a0_abs);
-
-        // Test if we can get to trj speed
-        if (c->th3 - thf >= (wt * wt) / c->a0_abs) {
-            //  If so, find both constant speed intersections
-            trj->th1 = thf + (wt * wt) / (2 * c->a0_abs);
-            trj->th2 = c->th3 - (wt * wt) / (2 * c->a0_abs);
-            trj->w1 = wt;
-        } else {
-            // Otherwise, intersect halfway between accelerating and decelerating square root arcs
-            trj->th1 = (c->th3 + thf) / 2;
-            trj->th2 = trj->th1;
-            trj->w1 = pbio_math_sqrt(2 * c->a0_abs * (trj->th1 - thf));
-        }
-    }
-    // Initial speed is equal to or more than the target speed
-    else {
-        // Therefore decelerate towards intersection from above
-        trj->a0 = -c->a0_abs;
-        trj->th1 = c->th0 + (w0 * w0 - wt * wt) / (2 * c->a0_abs);
-        trj->th2 = c->th3 - (wt * wt) / (2 * c->a0_abs);
-        trj->w1 = wt;
-    }
-    // Corresponding time intervals
-    int32_t t1mt0 = wdiva(trj->w1 - w0, trj->a0);
-    int32_t t2mt1 = trj->th2 == trj->th1 ? 0 : wdiva(trj->th2 - trj->th1, trj->w1);
-    int32_t t3mt2 = wdiva(trj->w1, c->a0_abs);
-
-    // Store other results/arguments
-    trj->w0 = w0;
+    // The given angle constraints won't change, so store them right away.
     trj->th0 = c->th0;
     trj->th3 = c->th3;
+    trj->w3 = c->w3;
     trj->t0 = c->t0;
-    trj->t1 = c->t0 + t1mt0;
-    trj->t2 = trj->t1 + t2mt1;
-    trj->t3 = trj->t2 + t3mt2;
-    trj->a2 = -c->a0_abs;
 
-    // FIXME: Angle based does not have high res yet
+    // Revisit: Drop ext and switch to increased angle resolution everywhere.
     trj->th0_ext = 0;
     trj->th1_ext = 0;
     trj->th2_ext = 0;
     trj->th3_ext = 0;
+
+    // Initial acceleration sign depends on initial speed. It accelerates if
+    // the initial speed is equal to or less than the target speed. Otherwise
+    // it decelerates. The equality case is intrinsicaly dealt with in the
+    // nominal acceleration case down below.
+    trj->a0 = c->w0 <= c->wt ? c->a0_abs : -c->a0_abs;
+
+    // Since our maneuver is forward, final deceleration is always negative.
+    trj->a2 = -c->a2_abs;
+
+    // Check if we are going faster than the target speed already. If we are,
+    // also check if slowing down still means we'd overshoot the angle target.
+    if (trj->a0 < 0 && trj->w3 * trj->w3 - c->w0 * c->w0 >= 2 * trj->a2 * (trj->th3 - trj->th0)) {
+        // We're going too fast to reach the target speed before overshooting
+        // the angle target. So we cut down the initial speed to match.
+        trj->w0 = pbio_math_sqrt(trj->w3 * trj->w3 - 2 * trj->a2 * (trj->th3 - trj->th0));
+
+        // The initial speed is now cut down to make the out-phase just
+        // feasible, so there is only that phase by definition. Everything else
+        // has a zero duration and rotation.
+        trj->th1 = trj->th0;
+        trj->th2 = trj->th0;
+        trj->t1 = trj->t0;
+        trj->t2 = trj->t0;
+        trj->w1 = trj->w0;
+
+        // The final time is the end-time of the deceleration phase.
+        trj->t3 = trj->t2 + wdiva(trj->w0 - trj->w3, trj->a2);
+
+        // All trajectory parameters for the too-fast-decreasing case are now
+        // set, so return the result.
+        return;
+    }
+
+    // For all other cases, we can use the initial speed as-is.
+    trj->w0 = c->w0;
+
+    // Now we can evaluate the nominal cases and check if they hold. First get
+    // a fictitious zero-speed angle for computational convenience. This is the
+    // angle on the speed-angle phase plot where the in-phase square root
+    // function intersects the zero speed axis if we kept (de)accelerating.
+    int32_t thf = trj->th0 - trj->w0 * trj->w0 / (2 * trj->a0);
+
+    // The in-phase completes at the point where it reaches the target speed.
+    trj->th1 = thf + c->wt * c->wt / (2 * trj->a0);
+
+    // The out-phase rotation is the angle traveled while slowing down. But if
+    // the end speed equals the target speed, there is no out-phase.
+    trj->th2 = trj->w3 == 0 ? trj->th3 + c->wt * c->wt / (2 * trj->a2): trj->th3;
+
+    // In the decreasing case, we always reach the target speed, since the case
+    // where it isn't reached is already handled above. For the increasing case
+    // we still need to verify the feasibility. So as a starting point:
+    trj->w1 = c->wt;
+
+    // The aforementioned results are valid for the increasing case only if
+    // the computed angle th2 is indeed larger than th1.
+    if (trj->a0 > 0 && trj->th2 < trj->th1) {
+        // The result is invalid. Then we will not reach the target speed, but
+        // begin decelerating at the point where the in/out phases intersect.
+        int32_t w1_sq = trj->w3 == 0 ?
+            // When decelerating to zero, the insersection is as follows.
+            // Zero division is avoided since a2 < 0 and a0 > 0 so the
+            // denominator is strictly negative.
+            2 * trj->a0 * trj->a2 * (trj->th3 - thf) / (trj->a2 - trj->a0) :
+            // When skipping deceleration, it simplifies to:
+            2 * trj->a0 * (trj->th3 - thf);
+
+        // The peak speed is then the square root of aforementioned result
+        // and the th1 and th2 angles are equal by definition.
+        trj->w1 = pbio_math_sqrt(w1_sq);
+
+        // The intermediate angle th1 depends on the end speed condition.
+        if (trj->w3 == 0) {
+            trj->th1 = thf + w1_sq / (2 * trj->a0);
+        } else {
+            trj->th1 = trj->th3;
+            // The final speed is not reached either, so reaching
+            // w1 is the best we can do in the given time.
+            trj->w3 = trj->w1;
+        }
+        // There is no constant speed phase, so th2 = th1.
+        trj->th2 = trj->th1;
+    }
+
+    // With the intermediate angles and speeds now known, we can calculate the
+    // corresponding durations to match.
+    trj->t1 = trj->t0 + wdiva(trj->w1 - trj->w0, trj->a0);
+    trj->t2 = trj->t1 + wdiva(trj->th2 - trj->th1, trj->w1);
+    trj->t3 = trj->t2 + wdiva(trj->w3 - trj->w1, trj->a2);
 }
 
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0) {
@@ -307,10 +337,26 @@ static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, pb
         return PBIO_SUCCESS;
     }
 
-    // Remember if the original user-specified maneuver was backward
+    // Final speed can only be zero or equal to target speed.
+    if (c->w3 != 0 && c->w3 != c->wt) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Direction is solely defined in terms of th3 position relative to th0.
+    // For speed, only the *magnitude* is relevant. Certain end-user APIs
+    // allow specifying phyically impossible scenarios like negative speed
+    // with a positive relative position. Those cases are not handled here and
+    // should be appropriately handled at higher levels.
+    c->wt = abs(c->wt);
+    c->w3 = abs(c->w3);
+
+    // Bind target speed by maximum speed.
+    c->wt = min(c->wt, c->wmax);
+
+    // Check if the original user-specified maneuver is backward.
     bool backward = c->th3 < c->th0;
 
-    // Convert user parameters into a forward maneuver to simplify computations (we negate results at the end)
+    // Convert user command into a forward maneuver to simplify computations.
     if (backward) {
         c->th3 = 2 * c->th0 - c->th3;
         c->w0 *= -1;
