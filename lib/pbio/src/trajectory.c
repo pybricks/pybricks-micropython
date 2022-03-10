@@ -81,7 +81,7 @@ static int64_t x_time2(int32_t b, int32_t t) {
 }
 
 // Computes a trajectory for a timed command assuming *positive* speed
-static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
+static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // TODO: Deal with deceleration and nonzero final speed.
     trj->w3 = 0;
@@ -95,40 +95,40 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, pbi
     // Limit initial speed
     int32_t max_init = timest(c->a0_abs, t3mt0);
     int32_t abs_max = min(c->wmax, max_init);
-    c->w0 = pbio_math_clamp(c->w0, abs_max);
-    c->wt = pbio_math_clamp(c->wt, abs_max);
+    int32_t w0 = pbio_math_clamp(c->w0, abs_max);
+    int32_t wt = pbio_math_clamp(c->wt, abs_max);
 
     // Initial speed is less than the target speed
-    if (c->w0 < c->wt) {
+    if (w0 < wt) {
         // Therefore accelerate
         trj->a0 = c->a0_abs;
         // If target speed can be reached
-        if (wdiva(c->wt - c->w0, c->a0_abs) - (t3mt0 - wdiva(c->w0, c->a0_abs)) / 2 < 0) {
-            t1mt0 = wdiva(c->wt - c->w0, c->a0_abs);
-            trj->w1 = c->wt;
+        if (wdiva(wt - w0, c->a0_abs) - (t3mt0 - wdiva(w0, c->a0_abs)) / 2 < 0) {
+            t1mt0 = wdiva(wt - w0, c->a0_abs);
+            trj->w1 = wt;
         }
         // If target speed cannot be reached
         else {
-            t1mt0 = (t3mt0 - wdiva(c->w0, c->a0_abs)) / 2;
-            trj->w1 = timest(c->a0_abs, t3mt0) / 2 + c->w0 / 2;
+            t1mt0 = (t3mt0 - wdiva(w0, c->a0_abs)) / 2;
+            trj->w1 = timest(c->a0_abs, t3mt0) / 2 + w0 / 2;
         }
     }
     // Initial speed is more than the target speed
-    else if (c->w0 > c->wt) {
+    else if (w0 > wt) {
         // Therefore decelerate
         trj->a0 = -c->a0_abs;
-        t1mt0 = wdiva(c->w0 - c->wt, c->a0_abs);
-        trj->w1 = c->wt;
+        t1mt0 = wdiva(w0 - wt, c->a0_abs);
+        trj->w1 = wt;
     }
     // Initial speed is equal to the target speed
     else {
         // Therefore no acceleration
         trj->a0 = 0;
         t1mt0 = 0;
-        trj->w1 = c->wt;
+        trj->w1 = wt;
     }
 
-    // # Deceleration phase
+    // Deceleration phase
     trj->a2 = -c->a0_abs;
     t3mt2 = wdiva(trj->w1, c->a0_abs);
 
@@ -136,7 +136,7 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, pbi
     t2mt1 = t3mt0 - t3mt2 - t1mt0;
 
     // Store other results/arguments
-    trj->w0 = c->w0;
+    trj->w0 = w0;
     trj->t0 = c->t0;
     trj->t1 = c->t0 + t1mt0;
     trj->t2 = c->t0 + t1mt0 + t2mt1;
@@ -156,44 +156,44 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, pbi
 }
 
 // Computes a trajectory for an angle command assuming *positive* speed
-static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
+static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // TODO: Deal with deceleration and nonzero final speed.
     trj->w3 = 0;
 
     // In a forward maneuver, the target speed is always positive.
-    c->wt = abs(c->wt);
-    c->wt = min(c->wt, c->wmax);
+    int32_t wt = abs(c->wt);
+    wt = min(wt, c->wmax);
 
     // Limit initial speed
-    c->w0 = pbio_math_clamp(c->w0, c->wmax);
+    int32_t w0 = pbio_math_clamp(c->w0, c->wmax);
 
     // Limit initial speed, but evaluate square root only if necessary (usually not)
-    if (c->w0 > 0 && (c->w0 * c->w0) / (2 * c->a0_abs) > c->th3 - c->th0) {
-        c->w0 = pbio_math_sqrt(2 * c->a0_abs * (c->th3 - c->th0));
+    if (w0 > 0 && (w0 * w0) / (2 * c->a0_abs) > c->th3 - c->th0) {
+        w0 = pbio_math_sqrt(2 * c->a0_abs * (c->th3 - c->th0));
 
         // In this situation, speed is just a linearly descending line
         // from the (capped) starting speed towards zero. Hence, t2=t1 which is
         // anywhere between t3 and t0. We have to pick something, so set it to
         // the way point.
-        c->wt = c->w0 / 2;
+        wt = w0 / 2;
     }
 
     // Initial speed is less than the target speed
-    if (c->w0 < c->wt) {
+    if (w0 < wt) {
         // Therefore accelerate towards intersection from below,
         // either by reaching constant speed phase or not.
         trj->a0 = c->a0_abs;
 
         // Fictitious zero speed angle (ahead of us if we have negative initial speed; behind us if we have initial positive speed)
-        int32_t thf = c->th0 - (c->w0 * c->w0) / (2 * c->a0_abs);
+        int32_t thf = c->th0 - (w0 * w0) / (2 * c->a0_abs);
 
         // Test if we can get to trj speed
-        if (c->th3 - thf >= (c->wt * c->wt) / c->a0_abs) {
+        if (c->th3 - thf >= (wt * wt) / c->a0_abs) {
             //  If so, find both constant speed intersections
-            trj->th1 = thf + (c->wt * c->wt) / (2 * c->a0_abs);
-            trj->th2 = c->th3 - (c->wt * c->wt) / (2 * c->a0_abs);
-            trj->w1 = c->wt;
+            trj->th1 = thf + (wt * wt) / (2 * c->a0_abs);
+            trj->th2 = c->th3 - (wt * wt) / (2 * c->a0_abs);
+            trj->w1 = wt;
         } else {
             // Otherwise, intersect halfway between accelerating and decelerating square root arcs
             trj->th1 = (c->th3 + thf) / 2;
@@ -205,17 +205,17 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, pb
     else {
         // Therefore decelerate towards intersection from above
         trj->a0 = -c->a0_abs;
-        trj->th1 = c->th0 + (c->w0 * c->w0 - c->wt * c->wt) / (2 * c->a0_abs);
-        trj->th2 = c->th3 - (c->wt * c->wt) / (2 * c->a0_abs);
-        trj->w1 = c->wt;
+        trj->th1 = c->th0 + (w0 * w0 - wt * wt) / (2 * c->a0_abs);
+        trj->th2 = c->th3 - (wt * wt) / (2 * c->a0_abs);
+        trj->w1 = wt;
     }
     // Corresponding time intervals
-    int32_t t1mt0 = wdiva(trj->w1 - c->w0, trj->a0);
+    int32_t t1mt0 = wdiva(trj->w1 - w0, trj->a0);
     int32_t t2mt1 = trj->th2 == trj->th1 ? 0 : wdiva(trj->th2 - trj->th1, trj->w1);
     int32_t t3mt2 = wdiva(trj->w1, c->a0_abs);
 
     // Store other results/arguments
-    trj->w0 = c->w0;
+    trj->w0 = w0;
     trj->th0 = c->th0;
     trj->th3 = c->th3;
     trj->t0 = c->t0;
