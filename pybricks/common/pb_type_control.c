@@ -186,7 +186,7 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_trajectory_t trajectory;
 
-    mp_obj_t parms[12];
+    mp_obj_t parms[13];
 
     trajectory = self->control->trajectory;
 
@@ -201,9 +201,10 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
         parms[7] = mp_obj_new_int(trajectory.th3);
         parms[8] = mp_obj_new_int(trajectory.w0);
         parms[9] = mp_obj_new_int(trajectory.w1);
-        parms[10] = mp_obj_new_int(trajectory.a0);
-        parms[11] = mp_obj_new_int(trajectory.a2);
-        return mp_obj_new_tuple(12, parms);
+        parms[10] = mp_obj_new_int(trajectory.w3);
+        parms[11] = mp_obj_new_int(trajectory.a0);
+        parms[12] = mp_obj_new_int(trajectory.a2);
+        return mp_obj_new_tuple(13, parms);
     }
     return mp_const_none;
 }

@@ -83,8 +83,31 @@ static int64_t x_time2(int32_t b, int32_t t) {
 // Computes a trajectory for a timed command assuming *positive* speed
 static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
-    // TODO: Deal with deceleration and nonzero final speed.
-    trj->w3 = 0;
+    // The given time constraints won't change, so store them right away.
+    trj->th0 = c->th0;
+    trj->t0 = c->t0;
+    trj->t3 = c->t0 + c->duration;
+
+    // Store target speed.
+    trj->w3 = c->w3;
+
+    // Initial acceleration sign depends on initial speed. It accelerates if
+    // the initial speed is equal to or less than the target speed. Otherwise
+    // it decelerates. The equality case is intrinsicaly dealt with in the
+    // nominal acceleration case down below.
+    trj->a0 = c->w0 <= c->wt ? c->a0_abs : -c->a0_abs;
+
+    // Since our maneuver is forward, final deceleration is always negative.
+    trj->a2 = -c->a2_abs;
+
+    // Bind the initial speed and target speeds to feasible regions such that
+    // we can still decelerate to the final speed within the duration.
+    int32_t wmin = -timest(c->a0_abs, c->duration);
+    int32_t wmax = c->w3 + timest(c->a2_abs, c->duration);
+    int32_t wt = min(c->wt, wmax);
+    trj->w0 = min(c->w0, wmax);
+    trj->w0 = max(trj->w0, wmin);
+    trj->w3 = trj->w3 == 0 ? 0 : c->wt;
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt0 = c->duration;
@@ -92,52 +115,39 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     int32_t t2mt1;
     int32_t t1mt0;
 
-    // Limit initial speed
-    int32_t max_init = timest(c->a0_abs, t3mt0);
-    int32_t abs_max = min(c->wmax, max_init);
-    int32_t w0 = pbio_math_clamp(c->w0, abs_max);
-    int32_t wt = pbio_math_clamp(c->wt, abs_max);
+    // The in-phase completes at the point where it reaches the target speed.
+    t1mt0 = wdiva(wt - trj->w0, trj->a0);
 
-    // Initial speed is less than the target speed
-    if (w0 < wt) {
-        // Therefore accelerate
-        trj->a0 = c->a0_abs;
-        // If target speed can be reached
-        if (wdiva(wt - w0, c->a0_abs) - (t3mt0 - wdiva(w0, c->a0_abs)) / 2 < 0) {
-            t1mt0 = wdiva(wt - w0, c->a0_abs);
-            trj->w1 = wt;
+    // The out-phase rotation is the time passed while slowing down.
+    t3mt2 = wdiva(trj->w3 - wt, trj->a2);
+
+    // In the decreasing case, we always reach the target speed, since the case
+    // where it isn't reached is already handled above. For the increasing case
+    // we still need to verify the feasibility. So as a starting point:
+    t2mt1 = t3mt0 - t1mt0 - t3mt2;
+    trj->w1 = wt;
+
+    // The aforementioned results are valid for the increasing case only if
+    // the computed time intervals don't overlap, so t2mt1 must be positive.
+    if (trj->a0 > 0 && t2mt1 < 0) {
+        // The result is invalid. Then we will not reach the target speed, but
+        // begin decelerating at the point where the in/out phases intersect.
+        // The valid result depends on whether there is an end speed or not.
+        if (trj->w3 == 0) {
+            t1mt0 = wdiva(trj->w0 + timest(trj->a2, t3mt0), trj->a2 - trj->a0);
+        } else {
+            t1mt0 = t3mt0;
+            trj->w3 = trj->w0 + timest(trj->a0, t3mt0);
         }
-        // If target speed cannot be reached
-        else {
-            t1mt0 = (t3mt0 - wdiva(w0, c->a0_abs)) / 2;
-            trj->w1 = timest(c->a0_abs, t3mt0) / 2 + w0 / 2;
-        }
-    }
-    // Initial speed is more than the target speed
-    else if (w0 > wt) {
-        // Therefore decelerate
-        trj->a0 = -c->a0_abs;
-        t1mt0 = wdiva(w0 - wt, c->a0_abs);
-        trj->w1 = wt;
-    }
-    // Initial speed is equal to the target speed
-    else {
-        // Therefore no acceleration
-        trj->a0 = 0;
-        t1mt0 = 0;
-        trj->w1 = wt;
-    }
+        // In both cases, there is no constant speed phase.
+        t2mt1 = 0;
+        t3mt2 = t3mt0 - t1mt0;
 
-    // Deceleration phase
-    trj->a2 = -c->a0_abs;
-    t3mt2 = wdiva(trj->w1, c->a0_abs);
-
-    // Constant speed duration
-    t2mt1 = t3mt0 - t3mt2 - t1mt0;
+        // The target speed is not reached; this is the best we can reach.
+        trj->w1 = trj->w0 + timest(trj->a0, t1mt0);
+    }
 
     // Store other results/arguments
-    trj->w0 = w0;
-    trj->t0 = c->t0;
     trj->t1 = c->t0 + t1mt0;
     trj->t2 = c->t0 + t1mt0 + t2mt1;
     trj->t3 = c->t0 + t3mt0;
@@ -161,8 +171,10 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     // The given angle constraints won't change, so store them right away.
     trj->th0 = c->th0;
     trj->th3 = c->th3;
-    trj->w3 = c->w3;
     trj->t0 = c->t0;
+
+    // Store target speed.
+    trj->w3 = c->w3;
 
     // Revisit: Drop ext and switch to increased angle resolution everywhere.
     trj->th0_ext = 0;
@@ -260,6 +272,7 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     trj->t2 = trj->t1 + wdiva(trj->th2 - trj->th1, trj->w1);
     trj->t3 = trj->t2 + wdiva(trj->w3 - trj->w1, trj->a2);
 }
+
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0) {
 
     if (t3mt0 == 0) {
@@ -294,29 +307,46 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt
 
 static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
 
-    // Return error for negative user-specified duration
-    if (c->duration < 0) {
+    // Return error for negative or too long user-specified duration
+    if (c->duration < 0 || c->duration / 1000 > DURATION_MAX_MS) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Remember if the original user-specified maneuver was backward
+    // Return empty maneuver for zero time
+    if (c->duration == 0) {
+        pbio_trajectory_make_constant(trj, c->t0, c->th0, 0);
+        return PBIO_SUCCESS;
+    }
+
+    // Final speed can only be zero or equal to target speed.
+    if (c->w3 != 0 && c->w3 != c->wt) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Remember if the original user-specified maneuver was backward.
     bool backward = c->wt < 0;
 
-    // Convert user parameters into a forward maneuver to simplify computations
+    // Convert user command into a forward maneuver to simplify computations.
     if (backward) {
         c->wt *= -1;
         c->w0 *= -1;
+        c->w3 *= -1;
     }
+
+    // Bind target speed by maximum speed.
+    c->wt = min(c->wt, c->wmax);
+
+    // REVISIT: Send w3 same as bool flag.
 
     // Calculate the trajectory, assumed to be forward.
     pbio_trajectory_new_forward_time_command(trj, c);
 
-    // Assert that all time intervals are positive
+    // Assert that all resulting time intervals are positive.
     if (trj->t1 - trj->t0 < 0 || trj->t2 - trj->t1 < 0 || trj->t3 - trj->t2 < 0) {
         return PBIO_ERROR_FAILED;
     }
 
-    // Reverse the maneuver if the original arguments imposed backward motion
+    // Reverse the maneuver if the original arguments imposed backward motion.
     if (backward) {
         reverse_trajectory(trj);
     }
