@@ -148,26 +148,24 @@ compute the unknown parameters for both cases.
     \end{tabular}
 \end{table}
 
-For a single command, the final speed is always zero ($\w_3$), in which case
-$\th(t) \equiv \th_3$ for $t > t_3$. A nonzero $\w_3$ for a particular command
-makes sense only if the next command starts with this speed: $\w_{0, next} =
-\w_{3, current}$. The math below assumes that $\w_3$ can be nonzero for
-generality.
+For a typical single command, the final speed is always zero ($\w_3 = 0$), in
+which case $\th(t) \equiv \th_3$ for $t > t_3$. We will also allow the user to
+specify $\w_3 = \wt$. This can be used to blend subsequent commands together
+without stopping.
 
 
 \subsection{Calculating trajectory parameters given time target}
 \label{sec:timebasedref}
 This section derives the parameters in Table \ref{tab:parameters} for a
 time-based maneuver. Without loss of generality, we will assume that the
-target angular velocity is greater than the final velocity and that the final
-velocity is non-negative:
+target angular velocity is nonnegative:
 %
 \begin{align}
     \label{eq:t:forwardmaneuver}
-    \wt \geq \w_3 \geq 0
+    \wt \geq 0, \quad \w_3 \in \{0, \wt\}
 \end{align}
 %
-If it is not, we can mirror the inputs along the $\w_3$ line, perform the
+If it is not, we can mirror the inputs along the $\w=0$ line, perform the
 following computations, and mirror back the final result. This is discussed
 in Section \ref{sec:t:reversing}.
 
@@ -182,44 +180,36 @@ target speed and final speed.
 
 \begin{figure}[H]
     \centering
-    \includesvg[width=0.85\textwidth]{timebased}
+    \includesvg[width=0.5\textwidth]{timebased}
     \caption{
         Three time-based motions with a duration of $t_3-t_0$.
         The trajectory is determined by the initial speed $\w_0$,
         which may be equal or greater than the
         target $\wt$ (blue), lower (green), or so low that it will not be able
-        to reach the target speed before completion (orange).\label{fig:time}}
+        to reach the target speed before completion (red).\label{fig:time}}
 \end{figure}
 
-Because we allow only positive duration arguments, we have $t_3-t_0 > 0$ by
-definition. In order to ensure that the motor is able to decelerate at the
-desired rate and reach $\w_3$ at time $t_3$, the initial angular velocity must
-be bound by the gray area in Figure \ref{fig:time}. This imposes the necessary
-inequality to which $\w_0$ must be capped:
+In all cases, the trajectory decelerates between $t_2$ and $t_3$, so that
+$\a_2  = - \abs{\a_2} < 0$. Because we allow only positive duration arguments,
+we have $t_3-t_0 > 0$ by definition. In order to ensure that the motor is able
+to decelerate at the desired rate and reach $\w_3$ at time $t_3$, the initial
+angular velocity must be bound by the gray area in Figure \ref{fig:time}. This
+imposes the necessary inequality to which $\w_0$ and $\wt$ must be capped:
 %
 \begin{align}
     \label{eq:t:timeboundary1}
-    \w_3 - \abs{\a_2} \lr{t_3-t_0} \leq \w_0 \leq \w_3 + \abs{\a_2}\lr{t_3-t_0}
+    \a_0 \lr{t_3-t_0} \leq \w_0 \leq \w_3 - \a_2\lr{t_3-t_0}\\[1em]
+    \a_0 \lr{t_3-t_0} \leq \wt \leq \w_3 - \a_2\lr{t_3-t_0}
 \end{align}
 %
-The same cap is applied to the target angular velocity $\wt$:
-%
-\begin{align}
-    \label{eq:t:timeboundary2}
-    \w_3 - \abs{\a_2} \lr{t_3-t_0} \leq \wt \leq \w_3 + \abs{\a_2} \lr{t_3-t_0}
-\end{align}
-
-We will now look at four possible trajectories, as indicated by the pink, blue,
-green, and orange lines in Figure \ref{fig:time}.
 
 \subsubsection{Standard case}
 \label{sec:t:standard}
 If $\w_0 < \wt$, the initial angular velocity is less than target velocity and
-the motor must accelerate. In a typical maneuver, it accelerates
-until it reaches the target $\wt$, as shown by the first segment of the green
-line in Figure \ref{fig:time}.
-In this case we have $\a_0 = \abs{a_0} > 0$ and $\a_2 = -\abs{a_2} < 0$.
-Solving for the intersection time $t_1$ gives:
+the motor must accelerate with $\a_0 = \abs{a_0} > 0$. In a typical maneuver,
+it accelerates until it reaches the target $\wt$, as shown by the first
+segment of the green line in Figure \ref{fig:time}. Solving for the
+intersection time $t_1$ gives:
 %
 \begin{align}
     \label{eq:t:t1mt0:standard}
@@ -240,20 +230,22 @@ Since the target speed is reached the constant speed value is simply
 \begin{align}
     \lr{\w_1}\sub{standard} &= \wt
 \end{align}
+%
+The result is valid if and only if $\lr{t_2 - t_1}\sub{standard}\geq 0$.
+Otherwise, we resort to the cut-short case covered below.
 
-\subsubsection{Cut short case}
+\subsubsection{Cut short case with $\w_3 = 0$}
 \label{sec:t:cutshort}
 If $\w_0 < \wt$ but the initial velocity is too low or if the
 maneuver is too short to be able to reach the target velocity, it accelerates
 until it must begin to decelerate, as shown by the first segment of the orange
-line in Figure \ref{fig:time}.
-In this case we have $\a_0 = \abs{a_0} > 0$ and $\a_2 = -\abs{a_2} < 0$.
-Solving for the intersection time $t_1$ gives:
+line in Figure \ref{fig:time}. When $\w_3 = 0$,
+solving for the intersection time $t_1$ gives:
 %
 \begin{align}
     \label{eq:t:t1mt0:cutshort}
     \lr{t_1 - t_0}\sub{cut short} &=
-        \dfrac{\w_3-\w_0 - \a_2(t_3-t_0)}{\a_0-\a_2}
+        \dfrac{\w_0 + \a_2(t_3-t_0)}{\a_2-\a_0}
 \end{align}
 %
 Similarly, the time when we start decelerating ($t_2$) becomes defined by:
@@ -271,6 +263,18 @@ When cut short, the target speed $\wt$ is not reached but it peaks out at
 \begin{align}
     \lr{\w_1}\sub{cut short} &= \w_0 + \a_0(t_1 - t_0)\sub{cut short}
 \end{align}
+
+\subsubsection{Cut short case with $\w_3 = \w_1$}
+\label{sec:t:cutshort}
+
+If instead $\w_3 = \wt$, there is only the increasing ramp for the whole
+duration of the maneuver, giving:
+%
+\begin{align}
+    \w_1 = \w_3 := \w_0 + \a_0(t_3 - t_0)
+\end{align}
+%
+and accordingly $t_3=t_2=t_1$.
 
 \subsubsection{Decreasing case}
 \label{sec:t:decreasing}
@@ -310,15 +314,18 @@ The procedure is then as follows:
 \begin{enumerate}
     \item If $\w_0 \geq \wt$, apply decreasing case (Section
     \ref{sec:t:decreasing}), otherwise;
-    \item If $\lr{t_1 - t_0}\sub{cut short} < \lr{t_1 - t_0}\sub{standard}$,
-    apply cut short case (Section \ref{sec:t:cutshort}), otherwise;
-    \item Apply standard case (Section \ref{sec:t:standard})
+    \item Apply standard case (Section \ref{sec:t:standard}) and check that its
+          solution is valid.
+    \item If it is not valid, apply the cut-short
+          case (Section \ref{sec:t:cutshort}).
+    
 \end{enumerate}
 %
 For efficiency, the decreasing and standard case can share the same code if the
 sign of $\a_0$ is set appropriately.
 
 \subsubsection{Reversing and unreversing the final and target speed}
+
 \label{sec:t:reversing}
 The aforementioned derivation assumes $\wt \geq \w_3 \geq 0$
 \eqref{eq:t:forwardmaneuver} to reduce the number of (similar) cases that must
@@ -327,21 +334,12 @@ maneuver to match this assumption, calculate the trajectory, and map the final
 result back to obtain the originally requested command.
 
 \begin{itemize}
-    \item Cap $\w_0$ and $\wt$ using \eqref{eq:t:timeboundary1} and
-        \eqref{eq:t:timeboundary2}.
-    \item Let the boolean $a := \w_3 < 0$.
-    \item If $a$, then invert all speeds: $\w_0 := \w_0$, $\wt := -\wt$,
+    \item Cap $\w_0$ and $\wt$ using \eqref{eq:t:timeboundary1}.
+    \item Let the boolean $a := \wt < 0$.
+    \item If $a$, then invert all speeds: $\w_0 := -\w_0$, $\wt := -\wt$,
         $\w_3 := -\w_3$.
-    \item Let the boolean $b := \wt < w_3$.
-    \item If $b$, wrap speeds around $\w_3$, essentially inverting the gray
-    triangle in Figure \ref{fig:time}:\\
-        $\wt \inlineadd 2 (\w_3 - \wt)$ and $\w_0 \inlineadd 2 (\w_3 - \w_0)$
     \item Calculate time and speed intersections using
     \eqref{sec:t:selectionprocedure}.
-    \item If $b$, wrap speeds back around $\w_3$:\\
-        $\wt \inlinesubtract 2 (\wt-\w_3)$,
-        $\w_0 \inlinesubtract 2 (\w_0-\w_3)$, and
-        $\w_1 \inlinesubtract 2 (\w_1-\w_3)$
     \item If $a$, then invert the results as shown in Section \ref{sec:invert}.
 \end{itemize}
 
