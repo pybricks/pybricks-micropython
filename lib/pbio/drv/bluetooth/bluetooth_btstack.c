@@ -23,8 +23,11 @@
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
 
-// for now, there is only one hub kind that uses this driver
-#define HUB_KIND LWP3_HUB_KIND_TECHNIC_LARGE
+#ifdef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
+#define HUB_KIND PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
+#else
+#error "PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND is required"
+#endif
 
 // location of product variant in bootloader flash memory of Technic Large hubs
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
