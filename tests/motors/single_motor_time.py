@@ -8,15 +8,17 @@ print(version)
 # Initialize the motor.
 motor = Motor(Port.A)
 
-motor.dc(100)
+# Start the motor at 1000 deg/s.
+motor.run(1000)
 wait(1000)
 
 # Allocate the data logs.
 DURATION = 4000
 motor.log.start(DURATION)
 motor.control.log.start(DURATION)
+wait(500)
 
-# Run the motor.
+# Run the motor with a short timed command.
 motor.run_time(500, 1200, wait=False)
 print(motor.control.trajectory())
 

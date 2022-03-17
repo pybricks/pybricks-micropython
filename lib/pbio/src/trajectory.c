@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -86,26 +87,28 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     trj->t0 = c->t0;
     trj->t3 = c->t0 + c->duration;
 
-    // Store target speed.
+    // Speed continues at target speed or goes to zero.
     trj->w3 = c->continue_running ? c->wt : 0;
 
+    // Bind initial speed to make solution feasible.
+    trj->w0 = pbio_math_bind(c->w0,
+        -timest(c->a0_abs, c->duration),
+        trj->w3 + timest(max(c->a0_abs, c->a2_abs), c->duration));
+
+    // Bind target speed to make solution feasible.
+    int32_t wt = pbio_math_bind(c->wt, 0, trj->w3 + timest(c->a2_abs, c->duration));
+
+    // Since the target speed may have dropped now, make the end speed match.
+    trj->w3 = min(wt, trj->w3);
+
     // Initial acceleration sign depends on initial speed. It accelerates if
-    // the initial speed is equal to or less than the target speed. Otherwise
-    // it decelerates. The equality case is intrinsicaly dealt with in the
+    // the initial speed is less than the target speed. Otherwise it
+    // decelerates. The equality case is intrinsicaly dealt with in the
     // nominal acceleration case down below.
-    trj->a0 = c->w0 <= c->wt ? c->a0_abs : -c->a0_abs;
+    trj->a0 = trj->w0 <= wt ? c->a0_abs : -c->a0_abs;
 
     // Since our maneuver is forward, final deceleration is always negative.
     trj->a2 = -c->a2_abs;
-
-    // Bind the initial speed and target speeds to feasible regions such that
-    // we can still decelerate to the final speed within the duration.
-    int32_t wmin = -timest(c->a0_abs, c->duration);
-    int32_t wmax = trj->w3 + timest(c->a2_abs, c->duration);
-    int32_t wt = min(c->wt, wmax);
-    trj->w0 = min(c->w0, wmax);
-    trj->w0 = max(trj->w0, wmin);
-    trj->w3 = trj->w3 == 0 ? 0 : c->wt;
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt0 = c->duration;
@@ -119,30 +122,38 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     // The out-phase rotation is the time passed while slowing down.
     t3mt2 = wdiva(trj->w3 - wt, trj->a2);
 
-    // In the decreasing case, we always reach the target speed, since the case
-    // where it isn't reached is already handled above. For the increasing case
-    // we still need to verify the feasibility. So as a starting point:
+    // Get the time and speed for the constant speed phase.
     t2mt1 = t3mt0 - t1mt0 - t3mt2;
     trj->w1 = wt;
 
-    // The aforementioned results are valid for the increasing case only if
-    // the computed time intervals don't overlap, so t2mt1 must be positive.
-    if (trj->a0 > 0 && t2mt1 < 0) {
+    // The aforementioned results are valid only if the computed time intervals
+    // don't overlap, so t2mt1 must be positive.
+    if (t2mt1 < 0) {
         // The result is invalid. Then we will not reach the target speed, but
         // begin decelerating at the point where the in/out phases intersect.
         // The valid result depends on whether there is an end speed or not.
-        if (trj->w3 == 0) {
-            t1mt0 = wdiva(trj->w0 + timest(trj->a2, t3mt0), trj->a2 - trj->a0);
-        } else {
-            t1mt0 = t3mt0;
-            trj->w3 = trj->w0 + timest(trj->a0, t3mt0);
-        }
-        // In both cases, there is no constant speed phase.
-        t2mt1 = 0;
-        t3mt2 = t3mt0 - t1mt0;
 
-        // The target speed is not reached; this is the best we can reach.
-        trj->w1 = trj->w0 + timest(trj->a0, t1mt0);
+        if (c->continue_running && trj->a0 > 0) {
+            // The result a nonzero final speed and initial positive
+            // acceleration, the result can only be invalid if there is not
+            // enough time to reach the final speed. Then, we just accelerate
+            // the best we can in the available time.
+            t1mt0 = t3mt0;
+            t2mt1 = 0;
+            t3mt2 = 0;
+            trj->w1 = trj->w0 + timest(trj->a0, t3mt0);
+            trj->w3 = trj->w1;
+        } else {
+            // Otherwise, we can just take the intersection of the accelerating
+            // and decelerating ramps to find the speed at t1 = t2.
+            assert(trj->a0 != trj->a2);
+            t1mt0 = wdiva(trj->w3 - trj->w0 - timest(trj->a2, t3mt0), trj->a0 - trj->a2);
+
+            // There is no constant speed phase in this case.
+            t2mt1 = 0;
+            t3mt2 = t3mt0 - t1mt0;
+            trj->w1 = trj->w0 + timest(trj->a0, t1mt0);
+        }
     }
 
     // Store other results/arguments

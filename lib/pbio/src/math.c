@@ -8,6 +8,30 @@
 #include <fixmath.h>
 
 /**
+ * Binds a value between a lower and upper limit.
+ *
+ * If @p value is greater than @p max, then @p max is
+ * returned. If @p value is less than @p min, then
+ * @p min is returned. Otherwise @p value is returned.
+ *
+ * @param [in]  value   The value to bind.
+ * @param [in]  min     The lower boundary value.
+ * @param [in]  max     The upper boundary value.
+ * @return              The bounded value.
+ */
+int32_t pbio_math_bind(int32_t value, int32_t min, int32_t max) {
+    assert(max >= min);
+
+    if (value > max) {
+        return max;
+    }
+    if (value < min) {
+        return min;
+    }
+    return value;
+}
+
+/**
  * Clamps a value to a +/- limit.
  *
  * If @p value is greater than positive @p abs_max, then positive @p abs_max is
