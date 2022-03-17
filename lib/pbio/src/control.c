@@ -176,9 +176,9 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         .th3 = target_count,
         .wt = target_rate,
         .wmax = ctl->settings.rate_max,
-        .w3 = after_stop == PBIO_ACTUATION_CONTINUE ? target_rate : 0,
         .a0_abs = ctl->settings.acceleration,
         .a2_abs = ctl->settings.deceleration,
+        .continue_running = after_stop == PBIO_ACTUATION_CONTINUE,
     };
 
     // Compute the trajectory
@@ -258,7 +258,14 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     ctl->on_target_func = pbio_control_on_target_always;
 
     // Compute new maneuver based on user argument, starting from the initial state
-    pbio_trajectory_make_constant(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), target_count, 0);
+    pbio_trajectory_command_t command = {
+        .t0 = pbio_control_get_ref_time(ctl, time_now),
+        .th0 = target_count,
+        .th0_ext = 0,
+        .wt = 0,
+        .continue_running = false,
+    };
+    pbio_trajectory_make_constant(&ctl->trajectory, &command);
     // If called for the first time, set state and reset PID
     if (!pbio_control_type_is_angle(ctl)) {
         // Initialize or reset the PID control status for the given maneuver
@@ -293,9 +300,9 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         .duration = duration,
         .wt = target_rate,
         .wmax = ctl->settings.rate_max,
-        .w3 = after_stop == PBIO_ACTUATION_CONTINUE ? target_rate : 0,
         .a0_abs = ctl->settings.acceleration,
         .a2_abs = ctl->settings.deceleration,
+        .continue_running = after_stop == PBIO_ACTUATION_CONTINUE,
     };
 
     // Compute the trajectory

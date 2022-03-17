@@ -47,9 +47,9 @@ typedef struct _pbio_trajectory_command_t {
     int32_t w0;                    /**<  Encoder rate at start of maneuver */
     int32_t wt;                    /**<  Encoder target rate target when not accelerating */
     int32_t wmax;                  /**<  Max target rate target */
-    int32_t w3;                    /**<  Encoder rate at the end of maneuver */
     int32_t a0_abs;                /**<  Encoder acceleration magnitude during in-phase */
     int32_t a2_abs;                /**<  Encoder acceleration magnitude during out-phase */
+    bool continue_running;         /**<  Whether it movement continues after t3 (true) or not (false) */
 } pbio_trajectory_command_t;
 
 /**
@@ -92,7 +92,7 @@ pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, pbio_trajecto
 pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
 
 // Make a stationary trajectory for holding position.
-void pbio_trajectory_make_constant(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t w3);
+void pbio_trajectory_make_constant(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
 
 // Stretches out a given trajectory time-wise to make it match time frames of other trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0);
