@@ -11,7 +11,9 @@ import os
 import pathlib
 import shutil
 
-from pybricksdev.connections import PybricksHub, REPLHub
+from pybricksdev.connections.pybricks import PybricksHub
+from pybricksdev.connections.lego import REPLHub
+
 from pybricksdev.ble import find_device
 
 
