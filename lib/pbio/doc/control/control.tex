@@ -362,7 +362,7 @@ In an angle-based maneuver, the end time $t_3$ is arbitrary, so the trajectory
 is best analyzed in a ($\th$, $\w$) phase plot. This is shown in Figure
 \ref{fig:positions} for various initial conditions indicated with blue dots.
 To reduce the complexity of quadratic solutions on the microcontroller, we
-restrict the final velocity to be either $\w_3=0$ or $\w_3=\w_2$, implying
+restrict the final velocity to be either $\w_3=0$ or $\w_3=\w_2=\w_1$, implying
 either deceleration to zero or no deceleration at all. Possible end states are
 indicated with orange dots. In all cases $\a_2 < 0$.
 
@@ -397,24 +397,62 @@ with green dots in Figure~\ref{fig:positions}:
     \th_f = \th_0 - \dfrac{1}{2 \a_0}\w_0^2
 \end{align}
 
+Because we allow only positive speeds we have $\th_3-\th_0 > 0$ by
+definition. In order to ensure that the motor is able to reach $\w_3$ at time
+$t_3$, the initial angular velocity must be bound by the gray area in Figure
+\ref{fig:positions}. The upper boundary corresponds to the maximum speed
+we can be at initially and still decelerate to the target angle on time.
+
+In particular, we restrict the initial speed to the value from which we can
+decelerate with either $\abs{\a_0}$ or $\abs{\a_2}$, whichever is larger.
+There is no need for a negative lower bound. To see this, consider cases (b)
+and (d) in Figure~\ref{fig:positions}: a negative initial speed makes it move
+farther from the target angle, eliminating the risk of overshooting it. This
+gives the constraint:
+%
+\begin{align}
+    \w_0 \leq \sqrt{\w_3^2 + 2 \max\{ \abs{\a_0}, \abs{\a_2}\}\lr{\th_3-\th_0}}
+\end{align}
+%
+Likewise, we bind the strictly positive target speed to a value from which we
+can still decelerate to the final speed with the given deceleration
+$\abs{\a_2}$:
+%
+\begin{align}
+    0 < \wt \leq \sqrt{\w_3^2 + 2\abs{\a_2}\lr{\th_3-\th_0}}
+\end{align}
+%
+
+In all cases, the trajectory decelerates between $t_2$ and $t_3$, so that
+$\a_2  = - \abs{\a_2} < 0$. The initial acceleration between $t_0$ and $t_1$
+depends on the initial speed $\w_0$ with respect to the \mbox{target $\wt$},
+which gives
+%
+\begin{align}
+    \label{eq:a:accel0}
+    \a_0 &= 
+        \begin{cases}
+        \phantom{-}\abs{\a_0} & \text{if} \quad \w_0 < \wt\\ 
+        -\abs{\a_0} &  \text{otherwise}
+        \end{cases}
+\end{align}
+%
+The case of equality is handled intrinsically within the
+second case by ensuring that $\a_0$ is never used if $\w_0 = \wt$.
 
 
-\subsubsection{Standard case (a, b) with $\w_3 \in \{0, \wt\}$}
+
+\subsubsection{Standard case with $\w_3 \in \{0, \wt\}$}
 \label{sec:a:standard}
-If $\w_0 < \wt$, the initial angular velocity is less than target velocity and
-the motor must accelerate. In the standard maneuver, it accelerates
-until it reaches the target $\w_1$, as shown for cases (a), (b), (c), and (d)
-in Figure \ref{fig:positions}. In this case we have $\a_0 = \abs{a_0} > 0$
-and $\a_2 = -\abs{a_2} < 0$. Solving for the intersection with $\wt$ gives:
+In the standard maneuver, it accelerates or decelerates
+until it reaches the target speed $\w_1$, as shown for cases (a), (b), (c),
+(d), and (e) in Figure \ref{fig:positions}. 
+Solving for the intersection with $\wt$ gives:
 %
 \begin{align}
     \label{eq:a:t1mt0:standard}
     \lr{\th_1}\sub{standard} &= \th_f  + \dfrac{1}{2\a_0}(\wt)^2\\[1em]
-    \lr{\th_2}\sub{standard} &=
-        \begin{cases}
-        \th_3  + \dfrac{1}{2\a_2}(\wt)^2 & \text{if} \quad \w_3 = 0\\ 
-        \th_3 &  \text{if} \quad\w_3 = \w_t
-        \end{cases}
+    \lr{\th_2}\sub{standard} &= \th_3  + \dfrac{1}{2\a_2}\lr{(\wt)^2 - \w_3^2}
 \end{align}
 %
 %
@@ -432,13 +470,12 @@ The standard case is valid if and only if:
 Otherwise, we have to evaluate the cut-short case.
 %
 
-\subsubsection{Cut short case (c, d) with $\w_3 = 0$}
+\subsubsection{Cut short case with $\w_3 = 0$}
 \label{sec:a:cutshortw3is0}
-If $\w_0 < \wt$ but the initial velocity is too low or if the
+If initial velocity is too low or if the
 maneuver is too short to be able to reach the target velocity, it accelerates
 until it must begin to decelerate, as in cases (c) and (d) in
 Figure \ref{fig:positions}.
-In this case we have $\a_0 = \abs{a_0} > 0$ and $\a_2 = -\abs{a_2} < 0$.
 Solving for the intersection angle $\th_1=\th_2$ for $\w_1=\w_2$ gives:
 %
 \begin{align}
@@ -460,82 +497,16 @@ When cut short, the target speed $\wt$ is not reached but the
 peak $\w_1 \geq 0$ can be obtained as the square root
 of \eqref{eq:a:cutshortsolve}.
 %
-\subsubsection{Cut short case (c, d) with $\w_3 = \w_1$}
+\subsubsection{Cut short case with $\w_3 = \w_1$ and $\a_0 > 0$}
 \label{sec:a:cutshortw3isw1}
 
-If there is no deceleration phase but we still can't reach the target speed,
-we have $\w_3=\w_1 < \wt$ with $\th_1=\th_2=\th_3$:
+If $\a_0 > 0$ and there is no deceleration phase but we still can't reach the
+target speed, we have $\w_3=\w_1 < \wt$ with $\th_1=\th_2=\th_3$:
 %
 \begin{align}
     \label{eq:a:cutshortw1}
     \w_1^2  &= 2\a_0\lr{\th_3 - \th_f}
 \end{align}
-
-\subsubsection{Basic decreasing case (e)  with $\w_3 \in \{0, \wt\}$}
-\label{sec:a:decreasing}
-If $\w_0 \geq \wt$, the initial angular velocity is higher (or equal to) than
-the target velocity and the motor must decelerate until it reaches the target
-$\wt$, as shown for case (e) in Figure \ref{fig:positions}.
-In this case we have $\a_0 = -\abs{a_0} < 0$ and $\a_2 = -\abs{a_2} < 0$.
-
-In order to be able to reach $\w_3$ with the allowed deceleration $\a_2$,
-the initial velocity $\w_0$ must be less than the upper bound of the
-gray regions of Figure \ref{fig:positions}, which holds if:
-%
-\begin{align}
-    \label{eq:a:decreaselimit}
-     \dfrac{1}{2 \a_2}\lr{\w_3^2 - \w_0^2} < \th_3 - \th_0
-\end{align}
-%
-If it holds, then there is a nonzero constant speed phase ($\th_1 \neq \th_2$)
-and we can proceed to compute the relevant intersections as: 
-
-\begin{align}
-    \label{eq:a:t1mt0:decreasing}
-    \lr{\th_1}\sub{decreasing} &= \th_f  + \dfrac{1}{2\a_0}(\wt)^2\\[1em]
-    \lr{\th_2}\sub{decreasing} &=
-        \begin{cases}
-        \th_3  + \dfrac{1}{2\a_2}(\wt)^2 & \text{if} \quad \w_3 = 0\\ 
-        \th_3 &  \text{if} \quad\w_3 = \w_t
-        \end{cases}
-\end{align}
-%
-Since the target speed is reached the constant speed value is simply
-\begin{align}
-    \lr{\w_1}\sub{standard} &= \wt
-\end{align}
-
-\subsubsection{Limited decreasing case (f) with $\w_3 \in \{0, \wt\}$}
-
-If \eqref{eq:a:decreaselimit} does not hold, we are going faster than we
-can feasibly slow down without overshooting. To handle this, we cut the
-initial speed value to within the allowed bound causing an abrupt deceleration:
-%
-\begin{align}
-    \w_0 := \sqrt{\w_3^2 - 2\a_2\lr{\th_3-\th_0}}
-\end{align}
-%
-By definition, this means that there is only a deceleration phase, so
-$\th_1 = \th_2 = \th_0$, $\w_1=\w_2=\w_0$, $t_1=t_2=t_0$ with:
-%
-\begin{align}
-    \label{eq:a:decreaselimittime}
-    t_3 - t_2 = \dfrac{\w_0-\w_3}{\a_2}
-\end{align}
-
-\subsubsection{Selecting the standard, cut short, or decreasing case}
-\label{sec:a:selectionprocedure}
-The procedure is then as follows:
-% % 
-\begin{enumerate}
-    \item If $\w_0 \geq \wt$, apply decreasing case (Section
-    \ref{sec:a:decreasing}), otherwise;
-    \item Try to apply the standard case (Section \ref{sec:a:standard}) and
-    check validity \eqref{eq:a:t1mt0:standardvalidity}.
-    \item If it is not valid, apply cut short case (Section
-    \ref{sec:a:cutshortw3is0} or \ref{sec:a:cutshortw3isw1}).
-\end{enumerate}
-%
 
 \subsubsection{Reversing and unreversing the final and target speed}
 \label{sec:a:reversing}
@@ -551,7 +522,7 @@ originally requested command.
           $\th_3 := 2 \th_0 - \th_3$, $\wt := -\wt$, $\w_0 := -\w_0$,
           $\w_3 := -\w_3$.
     \item Calculate angle and speed intersections using
-    \eqref{sec:a:selectionprocedure}.
+          Sections \ref{sec:a:standard}--\ref{sec:a:cutshortw3isw1}.
     \item If $a$, then reverse results using Section \ref{sec:invert}.
 \end{itemize}
 
