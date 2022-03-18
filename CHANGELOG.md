@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- Made motor deceleration configurable separately from acceleration.
 - Enabled `ujson` module.
 - Added ability to use more than one `DriveBase` in the same script.
 - Added `Motor.busy()` and `Motor.stalled()` methods, which

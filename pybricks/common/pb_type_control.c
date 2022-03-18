@@ -63,17 +63,43 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
     // If all given values are none, return current values
     if (speed_in == mp_const_none && acceleration_in == mp_const_none && torque_in == mp_const_none) {
         mp_obj_t ret[3];
+        mp_obj_t accel[2];
         ret[0] = mp_obj_new_int(speed);
-        ret[1] = mp_obj_new_int(acceleration);
         ret[2] = mp_obj_new_int(torque);
+        // For backwards compatibility, return acceleration and deceleration
+        // as a single integer if they are equal. Otherwise, return as tuple.
+        if (acceleration == deceleration) {
+            ret[1] = mp_obj_new_int(acceleration);
+        } else {
+            accel[0] = mp_obj_new_int(acceleration);
+            accel[1] = mp_obj_new_int(deceleration);
+            ret[1] = mp_obj_new_tuple(2, accel);
+        }
         return mp_obj_new_tuple(3, ret);
     }
 
     // Set user settings
     speed = pb_obj_get_default_abs_int(speed_in, speed);
-    acceleration = pb_obj_get_default_abs_int(acceleration_in, acceleration);
     torque = pb_obj_get_default_abs_int(torque_in, torque);
 
+    // If single value is given for acceleration, use it for deceleration too.
+    if (mp_obj_is_int(acceleration_in) || mp_obj_is_float(acceleration_in)) {
+        acceleration = pb_obj_get_int(acceleration_in);
+        deceleration = acceleration;
+    }
+    // Otherwise, unpack acceleration and deceleration from tuple.
+    else {
+        mp_obj_t *values;
+        size_t n;
+        mp_obj_get_array(acceleration_in, &n, &values);
+        if (n != 2) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        acceleration = pb_obj_get_int(values[0]);
+        deceleration = pb_obj_get_int(values[1]);
+    }
+
+    // Set new values.
     pb_assert(pbio_control_settings_set_limits(&self->control->settings, speed, acceleration, deceleration, torque));
 
     return mp_const_none;
