@@ -220,6 +220,8 @@
                 "src/task/test_task_removed_when_complete",
                 "src/task/test_task_cancelation",
                 "src/task/test_task_removal",
+                "src/trajectory/test_simple_trajectory",
+                "src/trajectory/test_infinite_trajectory",
                 "src/uartdev/test_boost_color_distance_sensor",
                 "src/uartdev/test_boost_interactive_motor",
                 "src/uartdev/test_technic_large_motor",
