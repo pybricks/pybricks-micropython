@@ -442,9 +442,9 @@ pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_comm
             c->th0 = trj->th2;
             c->th0_ext = trj->th2_ext;
         } else {
-            // We are in the zero speed phase, so we can restart from its starting point
+            // We are in the final speed phase, so we can restart from its starting point
             c->t0 = trj->t3;
-            c->w0 = 0;
+            c->w0 = trj->w3;
             c->th0 = trj->th3;
             c->th0_ext = trj->th3_ext;
         }
