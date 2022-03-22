@@ -91,12 +91,19 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     trj->w3 = c->continue_running ? c->wt : 0;
 
     // Bind initial speed to make solution feasible.
-    trj->w0 = pbio_math_bind(c->w0,
-        -timest(c->a0_abs, c->duration),
-        trj->w3 + timest(max(c->a0_abs, c->a2_abs), c->duration));
+    trj->w0 = c->w0;
+    if (trj->w0 * US_PER_SECOND / c->duration < -c->a0_abs) {
+        trj->w0 = -timest(c->a0_abs, c->duration);
+    }
+    if ((trj->w0 - trj->w3) * US_PER_SECOND / c->duration > max(c->a0_abs, c->a2_abs)) {
+        trj->w0 = trj->w3 + timest(max(c->a0_abs, c->a2_abs), c->duration);
+    }
 
     // Bind target speed to make solution feasible.
-    int32_t wt = pbio_math_bind(c->wt, 0, trj->w3 + timest(c->a2_abs, c->duration));
+    int32_t wt = c->wt;
+    if ((wt - trj->w3) * US_PER_SECOND / c->duration > c->a2_abs) {
+        wt = trj->w3 + timest(c->a2_abs, c->duration);
+    }
 
     // Initial acceleration sign depends on initial speed. It accelerates if
     // the initial speed is less than the target speed. Otherwise it
