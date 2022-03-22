@@ -86,13 +86,13 @@ typedef struct _pbio_trajectory_reference_t {
 } pbio_trajectory_reference_t;
 
 // Make a new full trajectory from user command, starting from the given initial conditions.
-pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
+pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 
 // Try to extend current trajectory, or else make a new one.
 pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
 
 // Make a stationary trajectory for holding position.
-void pbio_trajectory_make_constant(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
+void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 
 // Stretches out a given trajectory time-wise to make it match time frames of other trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0);

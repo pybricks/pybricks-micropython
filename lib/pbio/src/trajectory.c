@@ -44,7 +44,7 @@ void reverse_trajectory(pbio_trajectory_t *trj) {
     trj->a2 *= -1;
 }
 
-void pbio_trajectory_make_constant(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
+void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
     // All times equal to initial time:
     trj->t0 = c->t0;
     trj->t1 = c->t0;
@@ -305,35 +305,38 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt
     trj->th2 = trj->th1 + timest(trj->w1, t2mt0 - t1mt0);
 }
 
-static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
+static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
+
+    // Copy the command so we can modify it.
+    pbio_trajectory_command_t c = *command;
 
     // Return error for negative or too long user-specified duration
-    if (c->duration < 0 || c->duration / 1000 > DURATION_MAX_MS) {
+    if (c.duration < 0 || c.duration / 1000 > DURATION_MAX_MS) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     // Return empty maneuver for zero time
-    if (c->duration == 0) {
-        c->wt = 0;
-        c->continue_running = false;
-        pbio_trajectory_make_constant(trj, c);
+    if (c.duration == 0) {
+        c.wt = 0;
+        c.continue_running = false;
+        pbio_trajectory_make_constant(trj, &c);
         return PBIO_SUCCESS;
     }
 
     // Remember if the original user-specified maneuver was backward.
-    bool backward = c->wt < 0;
+    bool backward = c.wt < 0;
 
     // Convert user command into a forward maneuver to simplify computations.
     if (backward) {
-        c->wt *= -1;
-        c->w0 *= -1;
+        c.wt *= -1;
+        c.w0 *= -1;
     }
 
     // Bind target speed by maximum speed.
-    c->wt = min(c->wt, c->wmax);
+    c.wt = min(c.wt, c.wmax);
 
     // Calculate the trajectory, assumed to be forward.
-    pbio_trajectory_new_forward_time_command(trj, c);
+    pbio_trajectory_new_forward_time_command(trj, &c);
 
     // Assert that all resulting time intervals are positive.
     if (trj->t1 - trj->t0 < 0 || trj->t2 - trj->t1 < 0 || trj->t3 - trj->t2 < 0) {
@@ -347,18 +350,21 @@ static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, pbi
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
+static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
+
+    // Copy the command so we can modify it.
+    pbio_trajectory_command_t c = *command;
 
     // Return error for maneuver that is too long
-    if (abs((c->th3 - c->th0) / c->wt) + 1 > DURATION_MAX_MS / 1000) {
+    if (abs((c.th3 - c.th0) / c.wt) + 1 > DURATION_MAX_MS / 1000) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     // Return empty maneuver for zero angle or zero speed
-    if (c->th3 == c->th0 || c->wt == 0) {
-        c->wt = 0;
-        c->continue_running = false;
-        pbio_trajectory_make_constant(trj, c);
+    if (c.th3 == c.th0 || c.wt == 0) {
+        c.wt = 0;
+        c.continue_running = false;
+        pbio_trajectory_make_constant(trj, &c);
         return PBIO_SUCCESS;
     }
 
@@ -367,22 +373,22 @@ static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, pb
     // allow specifying phyically impossible scenarios like negative speed
     // with a positive relative position. Those cases are not handled here and
     // should be appropriately handled at higher levels.
-    c->wt = abs(c->wt);
+    c.wt = abs(c.wt);
 
     // Bind target speed by maximum speed.
-    c->wt = min(c->wt, c->wmax);
+    c.wt = min(c.wt, c.wmax);
 
     // Check if the original user-specified maneuver is backward.
-    bool backward = c->th3 < c->th0;
+    bool backward = c.th3 < c.th0;
 
     // Convert user command into a forward maneuver to simplify computations.
     if (backward) {
-        c->th3 = 2 * c->th0 - c->th3;
-        c->w0 *= -1;
+        c.th3 = 2 * c.th0 - c.th3;
+        c.w0 *= -1;
     }
 
     // Calculate the trajectory, assumed to be forward.
-    pbio_trajectory_new_forward_angle_command(trj, c);
+    pbio_trajectory_new_forward_angle_command(trj, &c);
 
     // Reverse the maneuver if the original arguments imposed backward motion.
     if (backward) {
@@ -392,13 +398,13 @@ static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, pb
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
+pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
     // Handle trajectory with angle end point constraint, and we calculate the unknown end time.
-    if (c->type == PBIO_TRAJECTORY_TYPE_ANGLE) {
-        return pbio_trajectory_new_angle_command(trj, c);
+    if (command->type == PBIO_TRAJECTORY_TYPE_ANGLE) {
+        return pbio_trajectory_new_angle_command(trj, command);
     }
     // Otherwise, the end point is in time. We calculate the unknown end angle.
-    return pbio_trajectory_new_time_command(trj, c);
+    return pbio_trajectory_new_time_command(trj, command);
 }
 
 pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
