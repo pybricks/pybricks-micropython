@@ -4,11 +4,12 @@
 #include <stdio.h>
 
 #include <pbio/trajectory.h>
+#include <pbio/util.h>
+
 #include <test-pbio.h>
 
 #include <tinytest.h>
 #include <tinytest_macros.h>
-
 
 static void test_simple_trajectory(void *env) {
 
@@ -52,7 +53,55 @@ static void test_simple_trajectory(void *env) {
     tt_want_int_op(trj.a2, ==, -command.a2_abs);
 }
 
+static void test_infinite_trajectory(void *env) {
+
+    int32_t accelerations[] = { // FIXME: Large accelerations are not working.
+        10, 50, 100, 500, 1000, 2000, // 5000, 10000, 20000
+    };
+
+    int32_t speeds[] = {
+        -10, -10000, -1000, -500, -10, 0, 10, 500, 1000, 10000
+    };
+
+    int32_t times[] = {
+        INT32_MIN, INT32_MIN / 2, -1, 0, 1, INT32_MAX / 2, INT32_MAX
+    };
+
+    // Go through range of accelerations.
+    for (int a = 0; a < PBIO_ARRAY_SIZE(accelerations); a++) {
+        // Go through range of target speeds.
+        for (int wt = 0; wt < PBIO_ARRAY_SIZE(speeds); wt++) {
+            // Go through range of initial speeds.
+            for (int w0 = 0; w0 < PBIO_ARRAY_SIZE(speeds); w0++) {
+                // Go through range of initial times.
+                for (int t = 0; t < PBIO_ARRAY_SIZE(times); t++) {
+                    // Define the command for this permutation of parameters.
+                    pbio_trajectory_command_t command = {
+                        .type = PBIO_TRAJECTORY_TYPE_TIME,
+                        .t0 = times[t],
+                        .duration = DURATION_MAX_MS * US_PER_MS,
+                        .th0 = 0,
+                        .th0_ext = 0,
+                        .w0 = speeds[w0],
+                        .wt = speeds[wt],
+                        .wmax = 1000,
+                        .a0_abs = accelerations[a],
+                        .a2_abs = accelerations[a],
+                        .continue_running = true,
+                    };
+
+                    // Calculate the trajectory.
+                    pbio_trajectory_t trj;
+                    pbio_error_t err = pbio_trajectory_calculate_new(&trj, &command);
+                    tt_want_int_op(err, ==, PBIO_SUCCESS);
+                }
+            }
+        }
+    }
+}
+
 struct testcase_t pbio_trajectory_tests[] = {
     PBIO_TEST(test_simple_trajectory),
+    PBIO_TEST(test_infinite_trajectory),
     END_OF_TESTCASES
 };
