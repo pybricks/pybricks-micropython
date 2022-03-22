@@ -40,6 +40,7 @@ void reverse_trajectory(pbio_trajectory_t *trj) {
     // Negate speeds and accelerations
     trj->w0 *= -1;
     trj->w1 *= -1;
+    trj->w3 *= -1;
     trj->a0 *= -1;
     trj->a2 *= -1;
 }
