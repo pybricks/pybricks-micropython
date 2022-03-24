@@ -27,16 +27,10 @@
 // Macro to evaluate division of speed by acceleration (w/a), yielding time, in the appropriate units
 #define wdiva(w, a) ((((w) * US_PER_MS) / (a)) * MS_PER_SECOND)
 
-typedef enum {
-    PBIO_TRAJECTORY_TYPE_TIME,     /**< A trajectory constrained by a final time */
-    PBIO_TRAJECTORY_TYPE_ANGLE,    /**< A trajectory constrained by a final angle or position */
-} pbio_trajectory_type_t;
-
 /**
  * Minimal set of trajectory parameters from which a full trajectory is calculated.
  */
 typedef struct _pbio_trajectory_command_t {
-    pbio_trajectory_type_t type;   /**<  Type of trajectory constraint */
     int32_t t0;                    /**<  Time at start of maneuver */
     int32_t th0;                   /**<  Encoder count at start of maneuver */
     int32_t th0_ext;               /**<  As above, but millicounts. REVISIT: Unify millicounts and counts into one variable. */
@@ -85,11 +79,13 @@ typedef struct _pbio_trajectory_reference_t {
     int32_t acceleration; /**<  Reference acceleration */
 } pbio_trajectory_reference_t;
 
-// Make a new full trajectory from user command, starting from the given initial conditions.
-pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
+// Make a new full trajectory from user command, with angle target as endpoint.
+pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 
-// Try to extend current trajectory, or else make a new one.
-pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *command);
+// Make a new full trajectory from user command, with time based endpoint.
+pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
+
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, int32_t *time, pbio_trajectory_reference_t *ref);
 
 // Make a stationary trajectory for holding position.
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);

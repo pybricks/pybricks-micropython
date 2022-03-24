@@ -172,7 +172,6 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
     // Common trajectory parameters for all cases covered here.
     pbio_trajectory_command_t command = {
-        .type = PBIO_TRAJECTORY_TYPE_ANGLE,
         .th3 = target_count,
         .wt = target_rate,
         .wmax = ctl->settings.rate_max,
@@ -181,28 +180,58 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         .continue_running = after_stop == PBIO_ACTUATION_CONTINUE,
     };
 
-    // Compute the trajectory
+    // Given the control status, fill in remaining commands and get trajectory.
     if (!pbio_control_is_active(ctl)) {
-        // If no control is ongoing, start from physical state
+        // If no control is ongoing, we just start from the measured state.
         command.t0 = time_now;
         command.th0 = state->count;
         command.w0 = state->rate;
 
-        // Make the new trajectory from the given constraints.
-        err = pbio_trajectory_calculate_new(&ctl->trajectory, &command);
+        // With the command fully populated, we can calculate the trajectory.
+        err = pbio_trajectory_new_angle_command(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     } else {
-        // If control is ongoing, start from its current reference, starting from its current reference time.
+        // Otherwise, If control is active, (re)start from the current
+        // reference. This way the reference just branches off on a new
+        // trajectory instead of falling back slightly, avoiding a speed drop.
         command.t0 = pbio_control_get_ref_time(ctl, time_now);
+        pbio_trajectory_reference_t ref;
+        pbio_trajectory_get_reference(&ctl->trajectory, command.t0, &ref);
+        command.th0 = ref.count;
+        command.w0 = ref.rate;
 
-        // Make the new trajectory and try to patch to existing one. In this
-        // case we don't need to pass an initial position and speed because
-        // we will get those from the current trajectory.
-        err = pbio_trajectory_extend(&ctl->trajectory, &command);
+        // Before we override the trajectory to renew it, get the starting
+        // point of the current speed/angle segment of the reference. We may
+        // need it below.
+        int32_t time_vertex;
+        pbio_trajectory_reference_t ref_vertex;
+        pbio_trajectory_get_last_vertex(&ctl->trajectory, command.t0, &time_vertex, &ref_vertex);
+
+        // With the command fully populated, we can calculate the trajectory.
+        err = pbio_trajectory_new_angle_command(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
+        }
+
+        // If the new trajectory is tangent to the current one, we can do
+        // better than just branching off. Instead, we can adjust the command
+        // so it starts from the same point as the previous trajectory. This
+        // avoids rounding errors when restarting commands in a tight loop.
+        if (ctl->trajectory.a0 == ref.acceleration) {
+
+            // Update command with shifted starting point, equal to ongoing
+            // maneuver.
+            command.t0 = time_vertex;
+            command.th0 = ref_vertex.count;
+            command.w0 = ref_vertex.rate;
+
+            // Recalculate the trajectory from the shifted starting point.
+            err = pbio_trajectory_new_angle_command(&ctl->trajectory, &command);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
         }
     }
 
@@ -292,10 +321,8 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target = false;
     ctl->on_target_func = stop_func;
 
-
-    // Common trajectory parameters for the cases covered here. th0 and w0 are selected below.
+    // Common trajectory parameters for the cases covered here.
     pbio_trajectory_command_t command = {
-        .type = PBIO_TRAJECTORY_TYPE_TIME,
         .t0 = time_now,
         .duration = duration,
         .wt = target_rate,
@@ -305,33 +332,64 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         .continue_running = after_stop == PBIO_ACTUATION_CONTINUE,
     };
 
-    // Compute the trajectory
-    if (pbio_control_type_is_time(ctl)) {
-        // If timed control is already ongoing make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_extend(&ctl->trajectory, &command);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    } else if (pbio_control_type_is_angle(ctl)) {
-        // If position based control is ongoing, start from its current reference. First get current reference signal.
-        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
-        pbio_trajectory_reference_t ref;
-        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
+    // Given the control status, fill in remaining commands and get trajectory.
+    if (!pbio_control_is_active(ctl)) {
+        // If no control is ongoing, we just start from the measured state.
+        command.t0 = time_now;
+        command.th0 = state->count;
+        command.w0 = state->rate;
 
-        // Now start the timed trajectory from there
-        command.th0 = ref.count;
-        command.w0 = ref.rate;
-        err = pbio_trajectory_calculate_new(&ctl->trajectory, &command);
+        // With the command fully populated, we can calculate the trajectory.
+        err = pbio_trajectory_new_time_command(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     } else {
-        // If no control is ongoing, start from physical state
-        command.th0 = state->count;
-        command.w0 = state->rate;
-        err = pbio_trajectory_calculate_new(&ctl->trajectory, &command);
+        // Otherwise, If control is active, (re)start from the current
+        // reference. This way the reference just branches off on a new
+        // trajectory instead of falling back slightly, avoiding a speed drop.
+        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
+        pbio_trajectory_reference_t ref;
+        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
+        command.th0 = ref.count;
+        command.th0_ext = ref.count_ext;
+        command.w0 = ref.rate;
+
+        // Before we override the trajectory to renew it, get the starting
+        // point of the current speed/angle segment of the reference. We may
+        // need it below.
+        int32_t time_vertex;
+        pbio_trajectory_reference_t ref_vertex;
+        pbio_trajectory_get_last_vertex(&ctl->trajectory, command.t0, &time_vertex, &ref_vertex);
+
+        // With the command fully populated, we can calculate the trajectory.
+        err = pbio_trajectory_new_time_command(&ctl->trajectory, &command);
         if (err != PBIO_SUCCESS) {
             return err;
+        }
+
+        // If the new trajectory is tangent to the current one, we can do
+        // better than just branching off. Instead, we can adjust the command
+        // so it starts from the same point as the previous trajectory. This
+        // avoids rounding errors when restarting commands in a tight loop.
+        if (pbio_control_type_is_time(ctl) && ctl->trajectory.a0 == ref.acceleration) {
+
+            // Update command with shifted starting point, equal to ongoing
+            // maneuver.
+            command.t0 = time_vertex;
+            command.th0 = ref_vertex.count;
+            command.th0_ext = ref_vertex.count_ext;
+            command.w0 = ref_vertex.rate;
+
+            // We shifted the start time into the past, so we must adjust
+            // duration accordingly.
+            command.duration += (time_now - time_vertex);
+
+            // Recalculate the trajectory from the shifted starting point.
+            err = pbio_trajectory_new_time_command(&ctl->trajectory, &command);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
         }
     }
 

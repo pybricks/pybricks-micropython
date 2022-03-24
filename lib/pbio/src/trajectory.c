@@ -306,7 +306,7 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt
     trj->th2 = trj->th1 + timest(trj->w1, t2mt0 - t1mt0);
 }
 
-static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
+pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
 
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
@@ -351,7 +351,7 @@ static pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, con
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
+pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
 
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
@@ -399,88 +399,35 @@ static pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, co
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_trajectory_calculate_new(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
-    // Handle trajectory with angle end point constraint, and we calculate the unknown end time.
-    if (command->type == PBIO_TRAJECTORY_TYPE_ANGLE) {
-        return pbio_trajectory_new_angle_command(trj, command);
-    }
-    // Otherwise, the end point is in time. We calculate the unknown end angle.
-    return pbio_trajectory_new_time_command(trj, command);
-}
-
-pbio_error_t pbio_trajectory_extend(pbio_trajectory_t *trj, pbio_trajectory_command_t *c) {
-
-    // Get current reference point and acceleration, which will be the 0-point for the new trajectory.
-    pbio_trajectory_reference_t ref;
-    pbio_trajectory_get_reference(trj, c->t0, &ref);
-
-    c->th0 = ref.count;
-    c->th0_ext = ref.count_ext;
-    c->w0 = ref.rate;
-    int32_t acceleration_ref = ref.acceleration;
-
-    // First get the nominal commanded trajectory. This will be our default if we can't patch onto the existing one.
-    pbio_error_t err;
-    pbio_trajectory_t nominal;
-    if (c->type == PBIO_TRAJECTORY_TYPE_ANGLE) {
-        err = pbio_trajectory_new_angle_command(&nominal, c);
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, int32_t *time, pbio_trajectory_reference_t *ref) {
+    // Find which section of the ongoing maneuver we were in, and take
+    // corresponding segment starting point.
+    if (time_ref - trj->t1 < 0) {
+        // Acceleration segment.
+        *time = trj->t0;
+        ref->rate = trj->w0;
+        ref->count = trj->th0;
+        ref->count_ext = trj->th0_ext;
+    } else if (time_ref - trj->t2 < 0) {
+        // Constant speed segment.
+        *time = trj->t1;
+        ref->rate = trj->w1;
+        ref->count = trj->th1;
+        ref->count_ext = trj->th1_ext;
+    } else if (time_ref - trj->t3 < 0) {
+        // Deceleration segment.
+        *time = trj->t2;
+        ref->rate = trj->w1;
+        ref->count = trj->th2;
+        ref->count_ext = trj->th2_ext;
     } else {
-        err = pbio_trajectory_new_time_command(&nominal, c);
-    }
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // If the reference acceleration equals the acceleration of the new nominal trajectory,
-    // the trajectories are tangent at this point. Then we can patch the new trajectory
-    // by letting its first segment be equal to the current segment of the ongoing trajectory.
-    // This provides a seamless transition without having to resort to numerical tricks.
-    if (acceleration_ref == nominal.a0) {
-        // Find which section of the ongoing maneuver we were in, and take corresponding segment starting point
-        if (c->t0 - trj->t1 < 0) {
-            // We are still in the acceleration segment, so we can restart from its starting point
-            c->t0 = trj->t0;
-            c->w0 = trj->w0;
-            c->th0 = trj->th0;
-            c->th0_ext = trj->th0_ext;
-        } else if (c->t0 - trj->t2 < 0) {
-            // We are in the constant speed phase, so we can restart from its starting point
-            c->t0 = trj->t1;
-            c->w0 = trj->w1;
-            c->th0 = trj->th1;
-            c->th0_ext = trj->th1_ext;
-        } else if (c->t0 - trj->t3 < 0) {
-            // We are in the deceleration phase, so we can restart from its starting point
-            c->t0 = trj->t2;
-            c->w0 = trj->w1;
-            c->th0 = trj->th2;
-            c->th0_ext = trj->th2_ext;
-        } else {
-            // We are in the final speed phase, so we can restart from its starting point
-            c->t0 = trj->t3;
-            c->w0 = trj->w3;
-            c->th0 = trj->th3;
-            c->th0_ext = trj->th3_ext;
-        }
-
-        // We shifted the start time into the past, so we must adjust duration accordingly.
-        c->duration += (nominal.t0 - c->t0);
-
-        // Now we can make the new trajectory with a starting point coincident
-        // with a point on the existing trajectory
-        if (c->type == PBIO_TRAJECTORY_TYPE_ANGLE) {
-            return pbio_trajectory_new_angle_command(trj, c);
-        } else {
-            return pbio_trajectory_new_time_command(trj, c);
-        }
-
-    } else {
-        // Trajectories were not tangent, so just return the nominal, unpatched trajectory
-        *trj = nominal;
-        return PBIO_SUCCESS;
+        // Final speed segment.
+        *time = trj->t3;
+        ref->rate = trj->w3;
+        ref->count = trj->th3;
+        ref->count_ext = trj->th3_ext;
     }
 }
-
 
 // Evaluate the reference speed and velocity at the (shifted) time
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref) {

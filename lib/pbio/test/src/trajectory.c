@@ -17,7 +17,6 @@ static void test_simple_trajectory(void *env) {
     // Ramping up and down takes 500 ms this way, during which we travel 250
     // degrees, so overal expected duration is 10500 ms.
     pbio_trajectory_command_t command = {
-        .type = PBIO_TRAJECTORY_TYPE_ANGLE,
         .t0 = 0,
         .th0 = 0,
         .th0_ext = 0,
@@ -31,7 +30,7 @@ static void test_simple_trajectory(void *env) {
     };
 
     pbio_trajectory_t trj;
-    pbio_error_t err = pbio_trajectory_calculate_new(&trj, &command);
+    pbio_error_t err = pbio_trajectory_new_angle_command(&trj, &command);
     tt_want_int_op(err, ==, PBIO_SUCCESS);
 
     tt_want_int_op(trj.t0, ==, command.t0);
@@ -78,7 +77,6 @@ static void test_infinite_trajectory(void *env) {
                 for (int t = 0; t < PBIO_ARRAY_SIZE(times); t++) {
                     // Define the command for this permutation of parameters.
                     pbio_trajectory_command_t command = {
-                        .type = PBIO_TRAJECTORY_TYPE_TIME,
                         .t0 = times[t],
                         .duration = DURATION_MAX_MS * US_PER_MS,
                         .th0 = 0,
@@ -93,7 +91,7 @@ static void test_infinite_trajectory(void *env) {
 
                     // Calculate the trajectory.
                     pbio_trajectory_t trj;
-                    pbio_error_t err = pbio_trajectory_calculate_new(&trj, &command);
+                    pbio_error_t err = pbio_trajectory_new_time_command(&trj, &command);
                     tt_want_int_op(err, ==, PBIO_SUCCESS);
 
                     // Verify that we maintain a constant speed when done.
