@@ -97,6 +97,17 @@ static void test_infinite_trajectory(void *env) {
                     // Verify that we maintain a constant speed when done.
                     tt_want_int_op(trj.w1, ==, trj.w3);
 
+                    // Initial speed may now be bounded. Verify that the sign
+                    // is the same and that it did not grow in size.
+                    if (command.w0 > 0) {
+                        tt_want_int_op(trj.w0, <=, command.w0);
+                    }
+                    if (command.w0 < 0) {
+                        tt_want_int_op(trj.w0, >=, command.w0);
+                    } else {
+                        tt_want_int_op(trj.w0, ==, command.w0);
+                    }
+
                     // Verify that the target speed is reached, which should
                     // always be the case in an infinite maneuver.
                     if (command.wt > command.wmax) {
