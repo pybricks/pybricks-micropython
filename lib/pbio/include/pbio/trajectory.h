@@ -15,7 +15,16 @@
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
 
+// Maximum duration to ensure the math stays numerically bounded. Maneuvers
+// longer than 10 minutes should probably use run forever combined with a user
+// defined end condition.
 #define DURATION_MAX_MS (10 * 60 * MS_PER_SECOND)
+
+// The duration argument of infinite maneuvers is essentially irrelevant since
+// motion keeps going due to the absence of a deceleration phase. Still, we
+// need a nonzero number within which we can find a valid solution for the
+// acceleration part of the maneuver.
+#define DURATION_FOREVER_MS (DURATION_MAX_MS / 2)
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

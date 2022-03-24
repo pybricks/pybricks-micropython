@@ -78,7 +78,7 @@ static void test_infinite_trajectory(void *env) {
                     // Define the command for this permutation of parameters.
                     pbio_trajectory_command_t command = {
                         .t0 = times[t],
-                        .duration = DURATION_MAX_MS * US_PER_MS,
+                        .duration = DURATION_FOREVER_MS * US_PER_MS,
                         .th0 = 0,
                         .th0_ext = 0,
                         .w0 = speeds[w0],

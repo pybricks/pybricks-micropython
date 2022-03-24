@@ -457,7 +457,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbi
 
         // To avoid any overflows of the aforementioned time comparisons,
         // rebase the trajectory if it has been running a long time.
-        if (time_ref - trj->t0 > DURATION_MAX_MS * US_PER_MS) {
+        if (time_ref - trj->t0 > DURATION_FOREVER_MS * US_PER_MS) {
             pbio_trajectory_command_t command = {
                 .t0 = time_ref,
                 .wt = trj->w3,

@@ -490,7 +490,7 @@ pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, i
     return pbio_drivebase_drive_counts_timed(db,
         pbio_control_user_to_counts(&db->control_distance.settings, speed),
         pbio_control_user_to_counts(&db->control_heading.settings, turn_rate),
-        DURATION_MAX_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
+        DURATION_FOREVER_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -556,7 +556,7 @@ pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_le
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_MAX_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
 }
 
 // Drive for a given duration, given two motor speeds.
