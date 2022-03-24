@@ -5,7 +5,7 @@ import itertools
 import asyncio
 
 
-from pybricksdev.connections import PybricksHub
+from pybricksdev.connections.pybricks import PybricksHub
 from pybricksdev.ble import find_device
 
 
