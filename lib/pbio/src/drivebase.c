@@ -451,7 +451,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     return pbio_drivebase_drive_counts_relative(db, relative_sum, db->control_distance.settings.rate_default, relative_dif, db->control_heading.settings.rate_default, after_stop);
 }
 
-static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
+static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_objective_t objective, pbio_actuation_t after_stop) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -473,12 +473,12 @@ static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int3
     }
 
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration * US_PER_MS, sum_rate, stop_func, after_stop);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration * US_PER_MS, sum_rate, objective, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration * US_PER_MS, dif_rate, stop_func, after_stop);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration * US_PER_MS, dif_rate, objective, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -490,7 +490,7 @@ pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, i
     return pbio_drivebase_drive_counts_timed(db,
         pbio_control_user_to_counts(&db->control_distance.settings, speed),
         pbio_control_user_to_counts(&db->control_heading.settings, turn_rate),
-        DURATION_FOREVER_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
+        DURATION_FOREVER_MS, PBIO_CONTROL_DONE_NEVER, PBIO_ACTUATION_CONTINUE);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -556,7 +556,7 @@ pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_le
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER_MS, pbio_control_on_target_never, PBIO_ACTUATION_CONTINUE);
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_DONE_NEVER, PBIO_ACTUATION_CONTINUE);
 }
 
 // Drive for a given duration, given two motor speeds.
@@ -565,7 +565,7 @@ pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left,
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, duration, pbio_control_on_target_time, after_stop);
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, duration, PBIO_CONTROL_DONE_ON_TIME, after_stop);
 }
 
 // Drive given two speeds and one angle.

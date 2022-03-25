@@ -11,6 +11,45 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
+
+static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int32_t count, int32_t rate) {
+    switch (ctl->objective) {
+        case PBIO_CONTROL_DONE_ALWAYS:
+            return true;
+        case PBIO_CONTROL_DONE_NEVER:
+            return false;
+        case PBIO_CONTROL_DONE_ON_STALL:
+            return ctl->stalled;
+        case PBIO_CONTROL_DONE_ON_TIME:
+            return time - ctl->trajectory.t3 >= 0;
+        case PBIO_CONTROL_DONE_ON_ANGLE:
+            // If not enough time has expired to be done even in the ideal
+            // case, we are certainly not done yet.
+            if (time - ctl->trajectory.t3 < 0) {
+                return false;
+            }
+            // If endpoint is stationary and the distance to target is still bigger
+            // than the tolerance, we are not there yet.
+            if (ctl->trajectory.w3 == 0 && abs(ctl->trajectory.th3 - count) > ctl->settings.count_tolerance) {
+                return false;
+            }
+            // If endpoint is stationary but the motor moving faster than the tolerance,
+            // we are not ready yet.
+            if (ctl->trajectory.w3 == 0 && abs(rate) > ctl->settings.rate_tolerance) {
+                return false;
+            }
+            // If endpoint is a nonzero speed but we're not yet past the target
+            // position, we're not there yet.
+            if (ctl->trajectory.w3 != 0 && pbio_math_sign(ctl->trajectory.th3 - count) == pbio_math_sign(ctl->trajectory.w3)) {
+                return false;
+            }
+            // There's nothing left to check, so we must be on target
+            return true;
+        default:
+            return false;
+    }
+}
+
 void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_actuation_t *actuation, int32_t *control) {
 
     // Declare current time, positions, rates, and their reference value and error
@@ -102,12 +141,12 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, state->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if we are on target
-    ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, state->count, state->rate, ctl->stalled);
+    ctl->on_target = pbio_control_check_completion(ctl, time_ref, state->count, state->rate);
 
     // Save (low-pass filtered) load for diagnostics
     ctl->load = (ctl->load * (100 - PBIO_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONTROL_LOOP_TIME_MS) / 100;
 
-    // Check if we're on target.
+    // Decide actuation based on whether control is on target.
     if (ctl->on_target) {
         // If on target, decide what to do next based on the after-stop actuation type.
         if (ctl->after_stop == PBIO_ACTUATION_HOLD || ctl->after_stop == PBIO_ACTUATION_CONTINUE) {
@@ -157,7 +196,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
     ctl->on_target = true;
-    ctl->on_target_func = pbio_control_on_target_always;
+    ctl->objective = PBIO_CONTROL_DONE_ALWAYS;
     ctl->stalled = false;
 }
 
@@ -168,7 +207,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
     ctl->on_target = false;
-    ctl->on_target_func = pbio_control_on_target_angle;
+    ctl->objective = PBIO_CONTROL_DONE_ON_ANGLE;
 
     // Common trajectory parameters for all cases covered here.
     pbio_trajectory_command_t command = {
@@ -284,7 +323,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     // Set new maneuver action and stop type, and state
     ctl->after_stop = PBIO_ACTUATION_HOLD;
     ctl->on_target = false;
-    ctl->on_target_func = pbio_control_on_target_always;
+    ctl->objective = PBIO_CONTROL_DONE_ALWAYS;
 
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_command_t command = {
@@ -312,14 +351,14 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 }
 
 
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_objective_t objective, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
     ctl->on_target = false;
-    ctl->on_target_func = stop_func;
+    ctl->objective = objective;
 
     // Common trajectory parameters for the cases covered here.
     pbio_trajectory_command_t command = {
@@ -407,56 +446,6 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 
     return PBIO_SUCCESS;
 }
-
-static bool _pbio_control_on_target_always(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return true;
-}
-pbio_control_on_target_t pbio_control_on_target_always = _pbio_control_on_target_always;
-
-static bool _pbio_control_on_target_never(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return false;
-}
-pbio_control_on_target_t pbio_control_on_target_never = _pbio_control_on_target_never;
-
-static bool _pbio_control_on_target_angle(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    // If not enough time has expired to be done even in the ideal case,
-    // we are certainly not done yet.
-    if (time - trajectory->t3 < 0) {
-        return false;
-    }
-
-    // If endpoint is stationary and the distance to target is still bigger
-    // than the tolerance, we are not there yet.
-    if (trajectory->w3 == 0 && abs(trajectory->th3 - count) > settings->count_tolerance) {
-        return false;
-    }
-
-    // If endpoint is stationary but the motor moving faster than the tolerance,
-    // we are not ready yet.
-    if (trajectory->w3 == 0 && abs(rate) > settings->rate_tolerance) {
-        return false;
-    }
-
-    // If endpoint is a nonzero speed but we're not yet past the target
-    // position, we're not there yet.
-    if (trajectory->w3 != 0 && pbio_math_sign(trajectory->th3 - count) == pbio_math_sign(trajectory->w3)) {
-        return false;
-    }
-
-    // There's nothing left to check, so we must be on target
-    return true;
-}
-pbio_control_on_target_t pbio_control_on_target_angle = _pbio_control_on_target_angle;
-
-static bool _pbio_control_on_target_time(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return time >= trajectory->t3;
-}
-pbio_control_on_target_t pbio_control_on_target_time = _pbio_control_on_target_time;
-
-static bool _pbio_control_on_target_stalled(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return stalled;
-}
-pbio_control_on_target_t pbio_control_on_target_stalled = _pbio_control_on_target_stalled;
 
 int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts) {
     return pbio_math_div_i32_fix16(counts, s->counts_per_unit);
