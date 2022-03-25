@@ -5,6 +5,8 @@
 ## [Unreleased]
 
 ### Added
+- Added `Stop.NONE` as `then` option for motors. This allows subsequent
+  motor and drive base commands to transition without stopping.
 - Made motor deceleration configurable separately from acceleration.
 - Enabled `ujson` module.
 - Added ability to use more than one `DriveBase` in the same script.
