@@ -729,8 +729,8 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     // Powered Up platforms and it assumes that motor driver id cooresponds to
     // the port.
 
-    #ifdef PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT
-    if (pbdrv_motor_driver_get_dev(data->iodev.port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT, &data->motor_driver) != PBIO_SUCCESS) {
+    #ifdef PBDRV_CONFIG_FIRST_MOTOR_PORT
+    if (pbdrv_motor_driver_get_dev(data->iodev.port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &data->motor_driver) != PBIO_SUCCESS) {
         data->motor_driver = NULL;
     }
     #endif
