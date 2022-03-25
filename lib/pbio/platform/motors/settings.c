@@ -321,11 +321,4 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
     return PBIO_SUCCESS;
 }
 
-int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
-    if (id == PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR) {
-        return 6000;
-    }
-    return 9000;
-}
-
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0

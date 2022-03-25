@@ -121,6 +121,13 @@ void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t 
     *voltage_now = dcmotor->voltage_now;
 }
 
+int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
+    if (id == PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR) {
+        return 6000;
+    }
+    return 9000;
+}
+
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     // Stop the motor and set the passivity state value for data logging.
     dcmotor->is_coasting = true;
