@@ -169,6 +169,7 @@ typedef struct {
     struct etimer timer;
     pbdrv_uart_dev_t *uart;
     pbio_iodev_info_t *info;
+    pbdrv_motor_driver_dev_t *motor_driver;
     pbio_uartdev_status_t status;
     pbio_iodev_type_id_t type_id;
     uint8_t requested_mode;
@@ -728,10 +729,9 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     // Powered Up platforms and it assumes that motor driver id cooresponds to
     // the port.
 
-    static pbdrv_motor_driver_dev_t *motor_driver;
     #ifdef PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT
-    if (pbdrv_motor_driver_get_dev(data->iodev.port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT, &motor_driver) != PBIO_SUCCESS) {
-        motor_driver = NULL;
+    if (pbdrv_motor_driver_get_dev(data->iodev.port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT, &data->motor_driver) != PBIO_SUCCESS) {
+        data->motor_driver = NULL;
     }
     #endif
 
@@ -931,13 +931,13 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     }
 
     // Turn on power for devices that need it
-    if (motor_driver) {
+    if (data->motor_driver) {
         if (data->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
-            pbdrv_motor_driver_set_duty_cycle(motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
+            pbdrv_motor_driver_set_duty_cycle(data->motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
         } else if (data->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
-            pbdrv_motor_driver_set_duty_cycle(motor_driver, PBDRV_MOTOR_DRIVER_MAX_DUTY);
+            pbdrv_motor_driver_set_duty_cycle(data->motor_driver, PBDRV_MOTOR_DRIVER_MAX_DUTY);
         } else {
-            pbdrv_motor_driver_coast(motor_driver);
+            pbdrv_motor_driver_coast(data->motor_driver);
         }
     }
 
@@ -984,8 +984,8 @@ err:
     data->err_count++;
 
     // Turn off battery supply to this port
-    if (motor_driver) {
-        pbdrv_motor_driver_coast(motor_driver);
+    if (data->motor_driver) {
+        pbdrv_motor_driver_coast(data->motor_driver);
     }
 
     process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, &data->iodev);
