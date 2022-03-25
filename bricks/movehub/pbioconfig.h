@@ -3,6 +3,7 @@
 
 #define PBIO_CONFIG_BATTERY                 (1)
 #define PBIO_CONFIG_DCMOTOR                 (1)
+#define PBIO_CONFIG_DCMOTOR_MOVE_HUB_HACK   (1)
 #define PBIO_CONFIG_LIGHT                   (1)
 #define PBIO_CONFIG_LOGGER                  (0)
 #define PBIO_CONFIG_TACHO                   (1)

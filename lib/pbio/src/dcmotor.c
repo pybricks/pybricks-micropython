@@ -35,6 +35,11 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
 
         if (err != PBIO_SUCCESS || !PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
             // If this is not a motor, we don't want to turn it off.
+            #if PBIO_CONFIG_DCMOTOR_MOVE_HUB_HACK
+            // HACK: Special case for Move hub since it doesn't have iodev for
+            // ports A and B which are the built-in motors.
+            if (port != PBIO_PORT_ID_A && port != PBIO_PORT_ID_B)
+            #endif
             continue;
         }
 
