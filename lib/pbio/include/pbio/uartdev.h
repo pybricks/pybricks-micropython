@@ -11,6 +11,11 @@
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
+typedef struct {
+    uint8_t uart_id;    /**< The ID of a UART device used by this uartdev */
+    uint8_t counter_id; /**< The ID of a counter device provided by this uartdev */
+} pbio_uartdev_platform_data_t;
+
 #if PBIO_CONFIG_UARTDEV
 
 pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev);
@@ -18,11 +23,6 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev);
 #if !PBIO_CONFIG_UARTDEV_NUM_DEV
 #error Must define PBIO_CONFIG_UARTDEV_NUM_DEV
 #endif
-
-typedef struct {
-    uint8_t uart_id;    /**< The ID of a UART device used by this uartdev */
-    uint8_t counter_id; /**< The ID of a counter device provided by this uartdev */
-} pbio_uartdev_platform_data_t;
 
 extern const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV];
 
