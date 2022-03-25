@@ -932,9 +932,9 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     // Turn on power for devices that need it
     if (motor_driver) {
-        if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
+        if (data->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
             pbdrv_motor_driver_set_duty_cycle(motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
-        } else if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
+        } else if (data->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
             pbdrv_motor_driver_set_duty_cycle(motor_driver, PBDRV_MOTOR_DRIVER_MAX_DUTY);
         } else {
             pbdrv_motor_driver_coast(motor_driver);
