@@ -11,6 +11,7 @@
 #include <fixmath.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/ioport.h>
 #include <pbdrv/motor_driver.h>
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
@@ -28,13 +29,20 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
 
     // Go through all ports.
     for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+        pbio_iodev_t *iodev;
 
-        // Get the motor.
+        pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
+
+        if (err != PBIO_SUCCESS || !PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
+            // If this is not a motor, we don't want to turn it off.
+            continue;
+        }
+
         pbio_dcmotor_t *dcmotor;
-        pbio_error_t err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
-        if (err == PBIO_ERROR_NO_DEV) {
-            // There is a device but it is not a motor, so we are done.
-            // We let other errors pass in this reset-like function.
+
+        err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
+
+        if (err != PBIO_SUCCESS) {
             continue;
         }
 
