@@ -10,10 +10,6 @@
 - Made motor deceleration configurable separately from acceleration.
 - Enabled `ujson` module.
 - Added ability to use more than one `DriveBase` in the same script.
-- Added `Motor.busy()` and `Motor.stalled()` methods, which
-  (in case of `Motor`) are shorthand for `not Motor.control.done()` and
-  `Motor.control.stalled`. This makes them consistent with their counterparts
-  on `DriveBase`.
 - Added support for battery charging on Prime and essential hubs.
 
 ### Changed
