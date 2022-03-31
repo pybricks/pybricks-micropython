@@ -294,6 +294,9 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt
     trj->a0 = t1mt0 == 0 ? 0 : (trj->w1 - trj->w0) * US_PER_MS / t1mt0 * MS_PER_SECOND;
     trj->a2 = (t3mt0 - t2mt0) == 0 ? 0 : (trj->w3 - trj->w1) * US_PER_MS / (t3mt0 - t2mt0) * MS_PER_SECOND;
 
+    // Since the target speed may have been lowered, we need to adjust w3 too.
+    trj->w3 = (t3mt0 - t2mt0) == 0 ? trj->w1 : 0;
+
     // Stretch time arguments
     trj->t1 = trj->t0 + t1mt0;
     trj->t2 = trj->t0 + t2mt0;
