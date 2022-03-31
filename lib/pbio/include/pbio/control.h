@@ -68,7 +68,6 @@ typedef enum {
 typedef enum {
     PBIO_CONTROL_DONE_ALWAYS,   /**< Controller is always done */
     PBIO_CONTROL_DONE_NEVER,    /**< Controller is never done */
-    PBIO_CONTROL_DONE_ON_STALL, /**< Controller is done when it stalls */
     PBIO_CONTROL_DONE_ON_TIME,  /**< Controller is done after given time duration */
     PBIO_CONTROL_DONE_ON_ANGLE, /**< Controller is done when stationary on angle */
 } pbio_control_objective_t;

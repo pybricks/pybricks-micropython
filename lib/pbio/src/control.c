@@ -18,8 +18,6 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int
             return true;
         case PBIO_CONTROL_DONE_NEVER:
             return false;
-        case PBIO_CONTROL_DONE_ON_STALL:
-            return ctl->stalled;
         case PBIO_CONTROL_DONE_ON_TIME:
             return time - ctl->trajectory.t3 >= 0;
         case PBIO_CONTROL_DONE_ON_ANGLE:

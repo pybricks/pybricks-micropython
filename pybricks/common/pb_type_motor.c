@@ -214,9 +214,9 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         PB_ARG_DEFAULT_NONE(duty_limit));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // If duty_limit argument, given, limit duty during this maneuver
+    // If duty_limit argument given, limit duty during this maneuver.
     bool override_max_voltage = duty_limit_in != mp_const_none;
     int32_t max_voltage_old;
 
@@ -237,12 +237,19 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     mp_obj_t ex = MP_OBJ_NULL;
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        // Call pbio with parsed user/default arguments
-        pb_assert(pbio_servo_run_until_stalled(self->srv, speed, then));
+        // Start moving forever.
+        pb_assert(pbio_servo_run_forever(self->srv, speed));
 
-        // In this command we always wait for completion, so we can return the
-        // final angle below.
-        wait_for_completion(self->srv);
+        // Wait until the motor stalls or stops on failure.
+        int32_t stall_duration;
+        while (!pbio_control_is_stalled(&self->srv->control, &stall_duration)) {
+            mp_hal_delay_ms(5);
+        }
+
+        // Assert that no errors happened in the update loop.
+        if (!pbio_servo_update_loop_is_running(self->srv)) {
+            pb_assert(PBIO_ERROR_NO_DEV);
+        }
 
         nlr_pop();
     } else {
@@ -261,6 +268,9 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     // Read the angle upon completion of the stall maneuver
     int32_t stall_point;
     pb_assert(pbio_tacho_get_angle(self->srv->tacho, &stall_point));
+
+    // Stop moving.
+    pb_assert(pbio_servo_stop(self->srv, after_stop));
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);

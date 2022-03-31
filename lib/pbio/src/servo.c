@@ -388,11 +388,6 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     return pbio_servo_run_timed(srv, speed, duration, PBIO_CONTROL_DONE_ON_TIME, after_stop);
 }
 
-pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
-    // Start a timed maneuver, and stop on stall
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_MS, PBIO_CONTROL_DONE_ON_STALL, after_stop);
-}
-
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
     // Don't allow new user command if update loop not registered.
