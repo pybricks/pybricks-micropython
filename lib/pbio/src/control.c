@@ -13,39 +13,39 @@
 
 
 static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int32_t count, int32_t rate) {
-    switch (ctl->objective) {
-        case PBIO_CONTROL_DONE_ALWAYS:
-            return true;
-        case PBIO_CONTROL_DONE_NEVER:
-            return false;
-        case PBIO_CONTROL_DONE_ON_TIME:
-            return time - ctl->trajectory.t3 >= 0;
-        case PBIO_CONTROL_DONE_ON_ANGLE:
-            // If not enough time has expired to be done even in the ideal
-            // case, we are certainly not done yet.
-            if (time - ctl->trajectory.t3 < 0) {
-                return false;
-            }
-            // If endpoint is stationary and the distance to target is still bigger
-            // than the tolerance, we are not there yet.
-            if (ctl->trajectory.w3 == 0 && abs(ctl->trajectory.th3 - count) > ctl->settings.count_tolerance) {
-                return false;
-            }
-            // If endpoint is stationary but the motor moving faster than the tolerance,
-            // we are not ready yet.
-            if (ctl->trajectory.w3 == 0 && abs(rate) > ctl->settings.rate_tolerance) {
-                return false;
-            }
-            // If endpoint is a nonzero speed but we're not yet past the target
-            // position, we're not there yet.
-            if (ctl->trajectory.w3 != 0 && pbio_math_sign(ctl->trajectory.th3 - count) == pbio_math_sign(ctl->trajectory.w3)) {
-                return false;
-            }
-            // There's nothing left to check, so we must be on target
-            return true;
-        default:
-            return false;
+
+    // If no control is active, then all targets are complete.
+    if (!pbio_control_is_active(ctl)) {
+        return true;
     }
+
+    // Timed maneuvers are done when the full duration has passed.
+    if (pbio_control_type_is_time(ctl)) {
+        return time - ctl->trajectory.t3 >= 0;
+    }
+
+    // What remains now is to deal with angle-based maneuvers. As with time
+    // based trajectories, we want at least the duration to pass.
+    if (time - ctl->trajectory.t3 < 0) {
+        return false;
+    }
+
+    // For a nonzero final speed, we're done once we're at or past
+    // the target, no matter the tolerances. Equivalently, we're done
+    // once the sign of the angle error differs from the speed sign.
+    if (ctl->trajectory.w3 != 0) {
+        return pbio_math_sign(ctl->trajectory.th3 - count) != pbio_math_sign(ctl->trajectory.w3);
+    }
+
+    // For zero final speed, we need to at least stand still, so return false
+    // when we're still moving faster than the tolerance.
+    if (abs(rate) > ctl->settings.rate_tolerance) {
+        return false;
+    }
+
+    // Once we stand still, we're complete if the distance to the
+    // target is equal to or less than the allowed tolerance.
+    return abs(ctl->trajectory.th3 - count) <= ctl->settings.count_tolerance;
 }
 
 void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_actuation_t *actuation, int32_t *control) {
@@ -194,7 +194,6 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
     ctl->on_target = true;
-    ctl->objective = PBIO_CONTROL_DONE_ALWAYS;
     ctl->stalled = false;
 }
 
@@ -205,7 +204,6 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
     ctl->on_target = false;
-    ctl->objective = PBIO_CONTROL_DONE_ON_ANGLE;
 
     // Common trajectory parameters for all cases covered here.
     pbio_trajectory_command_t command = {
@@ -321,7 +319,6 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     // Set new maneuver action and stop type, and state
     ctl->after_stop = PBIO_ACTUATION_HOLD;
     ctl->on_target = false;
-    ctl->objective = PBIO_CONTROL_DONE_ALWAYS;
 
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_command_t command = {
@@ -349,14 +346,13 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 }
 
 
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_objective_t objective, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
     ctl->on_target = false;
-    ctl->objective = objective;
 
     // Common trajectory parameters for the cases covered here.
     pbio_trajectory_command_t command = {

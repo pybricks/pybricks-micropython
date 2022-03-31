@@ -348,7 +348,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
-static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_objective_t objective, pbio_actuation_t after_stop) {
+static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
@@ -375,17 +375,17 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32
     }
 
     // Start a timed maneuver with duration converted to microseconds.
-    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, objective, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, after_stop);
 }
 
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
     // Start a timed maneuver and restart it when it is done, thus running forever.
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_MS, PBIO_CONTROL_DONE_NEVER, PBIO_ACTUATION_CONTINUE);
+    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_MS, PBIO_ACTUATION_CONTINUE);
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
     // Start a timed maneuver, duration specified by user.
-    return pbio_servo_run_timed(srv, speed, duration, PBIO_CONTROL_DONE_ON_TIME, after_stop);
+    return pbio_servo_run_timed(srv, speed, duration, after_stop);
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
