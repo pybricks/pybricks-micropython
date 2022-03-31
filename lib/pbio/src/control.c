@@ -526,14 +526,13 @@ int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s) {
 }
 
 int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
-
+    // Angle controllers may pause the time so the reference position does not
+    // keep accumulating while the controller is stuck.
     if (pbio_control_type_is_angle(ctl)) {
         return pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
     }
-    if (pbio_control_type_is_time(ctl)) {
-        return time_now;
-    }
-    return 0;
+    // In all other cases, it is just the current time.
+    return time_now;
 }
 
 bool pbio_control_is_active(pbio_control_t *ctl) {
