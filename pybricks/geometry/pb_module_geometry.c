@@ -63,7 +63,6 @@ STATIC const mp_rom_map_elem_t pb_Axis_table[] = {
     { MP_ROM_QSTR(MP_QSTR_X),     MP_ROM_PTR(&pb_Axis_X_obj)},
     { MP_ROM_QSTR(MP_QSTR_Y),     MP_ROM_PTR(&pb_Axis_Y_obj)},
     { MP_ROM_QSTR(MP_QSTR_Z),     MP_ROM_PTR(&pb_Axis_Z_obj)},
-    { MP_ROM_QSTR(MP_QSTR_ANY),   MP_ROM_PTR(mp_const_none) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_Axis_locals_dict, pb_Axis_table);
 
