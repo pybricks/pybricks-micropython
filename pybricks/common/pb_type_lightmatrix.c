@@ -328,7 +328,7 @@ mp_obj_t pb_type_LightMatrix_obj_new(pbio_light_matrix_t *light_matrix) {
     common_LightMatrix_obj_t *self = m_new_obj(common_LightMatrix_obj_t);
     self->base.type = &pb_type_LightMatrix;
     self->light_matrix = light_matrix;
-    pbio_light_matrix_set_orientation(light_matrix, PBIO_SIDE_TOP);
+    pbio_light_matrix_set_orientation(light_matrix, PBIO_ORIENTATION_SIDE_TOP);
     return MP_OBJ_FROM_PTR(self);
 }
 
