@@ -14,37 +14,37 @@
 const pb_obj_enum_member_t pb_Side_BACK_obj = {
     {&pb_enum_type_Side},
     .name = MP_QSTR_BACK,
-    .value = PBIO_SIDE_BACK
+    .value = PBIO_ORIENTATION_SIDE_BACK
 };
 
 const pb_obj_enum_member_t pb_Side_BOTTOM_obj = {
     {&pb_enum_type_Side},
     .name = MP_QSTR_BOTTOM,
-    .value = PBIO_SIDE_BOTTOM
+    .value = PBIO_ORIENTATION_SIDE_BOTTOM
 };
 
 const pb_obj_enum_member_t pb_Side_FRONT_obj = {
     {&pb_enum_type_Side},
     .name = MP_QSTR_FRONT,
-    .value = PBIO_SIDE_FRONT
+    .value = PBIO_ORIENTATION_SIDE_FRONT
 };
 
 const pb_obj_enum_member_t pb_Side_LEFT_obj = {
     {&pb_enum_type_Side},
     .name = MP_QSTR_LEFT,
-    .value = PBIO_SIDE_LEFT
+    .value = PBIO_ORIENTATION_SIDE_LEFT
 };
 
 const pb_obj_enum_member_t pb_Side_RIGHT_obj = {
     {&pb_enum_type_Side},
     .name = MP_QSTR_RIGHT,
-    .value = PBIO_SIDE_RIGHT
+    .value = PBIO_ORIENTATION_SIDE_RIGHT
 };
 
 const pb_obj_enum_member_t pb_Side_TOP_obj = {
     {&pb_enum_type_Side},
     .name = MP_QSTR_TOP,
-    .value = PBIO_SIDE_TOP
+    .value = PBIO_ORIENTATION_SIDE_TOP
 };
 
 STATIC const mp_rom_map_elem_t pb_enum_Side_table[] = {

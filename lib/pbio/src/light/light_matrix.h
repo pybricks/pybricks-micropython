@@ -41,7 +41,7 @@ struct _pbio_light_matrix_t {
     /** Size of the matrix (assumes matrix is square). */
     uint8_t size;
     /** Orientation of the matrix: which side is "up". */
-    pbio_side_t up_side;
+    pbio_orientation_side_t up_side;
 };
 
 void pbio_light_matrix_init(pbio_light_matrix_t *light_matrix, uint8_t size, const pbio_light_matrix_funcs_t *funcs);

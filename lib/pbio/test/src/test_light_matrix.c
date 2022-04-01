@@ -132,7 +132,7 @@ static void test_light_matrix_rotation(void *env) {
     // Check that other orientations work
 
     test_light_matrix_reset();
-    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_SIDE_LEFT);
+    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_ORIENTATION_SIDE_LEFT);
     tt_want_uint_op(pbio_light_matrix_set_image(&test_light_matrix,
         IMAGE_DATA(1, 2, 3, 4, 5, 6, 7, 8, 9)), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(
@@ -141,7 +141,7 @@ static void test_light_matrix_rotation(void *env) {
         1, 4, 7);
 
     test_light_matrix_reset();
-    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_SIDE_BOTTOM);
+    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_ORIENTATION_SIDE_BOTTOM);
     tt_want_uint_op(pbio_light_matrix_set_image(&test_light_matrix,
         IMAGE_DATA(1, 2, 3, 4, 5, 6, 7, 8, 9)), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(
@@ -150,7 +150,7 @@ static void test_light_matrix_rotation(void *env) {
         3, 2, 1);
 
     test_light_matrix_reset();
-    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_SIDE_RIGHT);
+    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_ORIENTATION_SIDE_RIGHT);
     tt_want_uint_op(pbio_light_matrix_set_image(&test_light_matrix,
         IMAGE_DATA(1, 2, 3, 4, 5, 6, 7, 8, 9)), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(
@@ -160,7 +160,7 @@ static void test_light_matrix_rotation(void *env) {
 
     // front is same as top
     test_light_matrix_reset();
-    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_SIDE_FRONT);
+    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_ORIENTATION_SIDE_FRONT);
     tt_want_uint_op(pbio_light_matrix_set_image(&test_light_matrix,
         IMAGE_DATA(1, 2, 3, 4, 5, 6, 7, 8, 9)), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(
@@ -170,7 +170,7 @@ static void test_light_matrix_rotation(void *env) {
 
     // back is same as bottom
     test_light_matrix_reset();
-    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_SIDE_BACK);
+    pbio_light_matrix_set_orientation(&test_light_matrix, PBIO_ORIENTATION_SIDE_BACK);
     tt_want_uint_op(pbio_light_matrix_set_image(&test_light_matrix,
         IMAGE_DATA(1, 2, 3, 4, 5, 6, 7, 8, 9)), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(

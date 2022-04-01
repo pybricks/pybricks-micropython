@@ -32,21 +32,21 @@ static pbio_error_t _pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matr
 
     // Rotate user input based on screen orientation
     switch (light_matrix->up_side) {
-        case PBIO_SIDE_TOP:
-        case PBIO_SIDE_FRONT:
+        case PBIO_ORIENTATION_SIDE_TOP:
+        case PBIO_ORIENTATION_SIDE_FRONT:
             break;
-        case PBIO_SIDE_LEFT: {
+        case PBIO_ORIENTATION_SIDE_LEFT: {
             uint8_t _col = col;
             col = row;
             row = size - 1 - _col;
             break;
         }
-        case PBIO_SIDE_BOTTOM:
-        case PBIO_SIDE_BACK:
+        case PBIO_ORIENTATION_SIDE_BOTTOM:
+        case PBIO_ORIENTATION_SIDE_BACK:
             col = size - 1 - col;
             row = size - 1 - row;
             break;
-        case PBIO_SIDE_RIGHT: {
+        case PBIO_ORIENTATION_SIDE_RIGHT: {
             uint8_t _col = col;
             col = size - 1 - row;
             row = _col;
@@ -83,7 +83,7 @@ void pbio_light_matrix_init(pbio_light_matrix_t *light_matrix, uint8_t size, con
  * @param [in]  light_matrix    The light matrix.
  * @param [in]  up_side         Orientation of the light matrix: which side is up.
  */
-void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_side_t up_side) {
+void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_orientation_side_t up_side) {
     light_matrix->up_side = up_side;
 }
 
