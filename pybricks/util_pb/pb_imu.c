@@ -91,7 +91,7 @@ STATIC PT_THREAD(pb_imu_configure(struct pt *pt, pb_imu_dev_t *imu_dev)) {
      * Set scale
      */
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_full_scale_set(&child, ctx, LSM6DS3TR_C_2g));
-    imu_dev->accel_scale = lsm6ds3tr_c_from_fs2g_to_mg(1) * 0.00981f;
+    imu_dev->accel_scale = lsm6ds3tr_c_from_fs2g_to_mg(1) * 9.81f;
 
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_250dps));
     imu_dev->gyro_scale = lsm6ds3tr_c_from_fs250dps_to_mdps(1) / 1000.0f;
@@ -216,7 +216,7 @@ void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, float_t *values) {
     values[1] = data[1] * imu_dev->gyro_scale;
     values[2] = data[2] * imu_dev->gyro_scale;
 
-    #if PYBRICKS_HUB_PRIMEHUB
+    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     // Sensor is upside down
     values[0] = -values[0];
     values[2] = -values[2];
