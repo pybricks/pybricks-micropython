@@ -202,6 +202,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/motor_process.c \
 	src/motor/servo_settings.c \
 	src/observer.c \
+	src/orientation.c \
 	src/parent.c \
 	src/protocol/lwp3.c \
 	src/protocol/nus.c \
