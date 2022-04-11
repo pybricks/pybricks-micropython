@@ -68,11 +68,6 @@ void pb_color_map_save_default(mp_obj_t *color_map) {
     *color_map = MP_OBJ_FROM_PTR(&pb_color_map_default);
 }
 
-// Cost function between two colors a and b. The lower, the closer they are.
-static int32_t get_hsv_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b) {
-    return pbio_get_cone_cost(a, b);
-}
-
 // Get a discrete color that matches the given hsv values most closely
 mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
 
@@ -90,7 +85,7 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     for (size_t i = 0; i < n; i++) {
 
         // Evaluate the cost function
-        cost_now = get_hsv_cost(hsv, pb_type_Color_get_hsv(colors[i]));
+        cost_now = pbio_get_hsv_cost(hsv, pb_type_Color_get_hsv(colors[i]));
 
         // If cost is less than before, update the minimum and the match
         if (cost_now < cost_min) {

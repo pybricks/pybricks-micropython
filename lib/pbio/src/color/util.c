@@ -5,6 +5,7 @@
 
 #include <pbio/color.h>
 
+// Cost function between two colors a and b. The lower, the closer they are.
 int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) {
 
     // Calculate the hue error
@@ -32,6 +33,7 @@ int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) 
     return hue_error * hue_error + 5 * saturation_error * saturation_error + 2 * value_error * value_error;
 }
 
+// gets squared cartesian distance between hsv colors mapped into a chroma-value-cone
 int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b) {
 
     pbio_color_hsv_fix16_t a, b;
