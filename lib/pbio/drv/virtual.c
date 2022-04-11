@@ -151,15 +151,15 @@ static pbio_error_t pbdrv_virtual_check_cpython_exception(void) {
  */
 static PyObject *pbdrv_virtual_get_platform(void) {
     // new ref
-    PyObject *main = PyImport_ImportModule("__main__");
-    if (!main) {
+    PyObject *main_obj = PyImport_ImportModule("__main__");
+    if (!main_obj) {
         return NULL;
     }
 
     // new ref
-    PyObject *result = PyObject_GetAttrString(main, "platform");
+    PyObject *result = PyObject_GetAttrString(main_obj, "platform");
 
-    Py_DECREF(main);
+    Py_DECREF(main_obj);
 
     return result;
 }
