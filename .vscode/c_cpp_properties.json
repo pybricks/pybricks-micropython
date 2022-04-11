@@ -4,23 +4,7 @@
 // * include paths should be in same order as in makefiles
 // * defines are only needed for things defined in makefiles
 // * compiler options should match what is selected in the makefiles
-//
-// Note: to correctly find the cross compiler if it isn't in $PATH, add:
-//
-//    export GCC_10_ARM_NONE_EABI_BIN=/path/to/gcc-10-arm-none-eabi/bin/
-//
-// in .bashrc or .zshrc (trailing slash is required), then restart VS Code.
-//
-// On Windows, you can set this environment variable to (trailing slash is required):
-//
-//    C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2020-q4-major>code bin\
-//
-// via the System Properties. Restarting VS Code after this should be sufficient,
-// but you may need to log out and log back in if that doesn't work.
 {
-    "env": {
-        "gcc10ArmNoneEabi": "${env:GCC_10_ARM_NONE_EABI_BIN}arm-none-eabi-gcc"
-    },
     "configurations": [
         {
             "name": "primehub",
@@ -56,7 +40,6 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -99,7 +82,6 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -140,7 +122,6 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -185,7 +166,6 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -236,7 +216,6 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -273,7 +252,6 @@
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-mthumb",
                 "-mtune=arm7tdmi",
@@ -307,7 +285,6 @@
                 "STM32_HAL_H=<stm32f4xx_hal.h>",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",

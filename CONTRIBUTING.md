@@ -99,7 +99,7 @@ $env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 
 #### macOS
 
     brew install uncrustify
-    brew instal libusb   
+    brew instal libusb
     brew install --cask gcc-arm-embedded
 
 ### Get the code
@@ -162,15 +162,6 @@ To activate the environment, run:
 The command prompt will now start with `(.venv)` to remind you that you are
 working in the virtual environment. You should run `poetry shell` any time you
 open a new terminal window while working on `pybricks-micropython`.
-
-
-### Set up VS Code
-
-When using the Microsoft C/C++ extension for VS Code, you will need to set the
-`GCC_10_ARM_NONE_EABI_BIN` environment variable to the directory where the Arm
-toolchain was installed so that it can find the compiler to assist with code
-analysis. See [.vscode/c_cpp_properties.json](.vscode/c_cpp_properties.json)
-for more info.
 
 
 Building the code
@@ -317,12 +308,12 @@ Pick your Hub from the `bricks` sub-directory you want to compile.
     poetry shell
     make mpy-cross -j8
     make -C bricks/primehub -j8
-       
+
 ### Deploy the firmware to a hub
 
 1. Follow the guide to prepare your Hub for Pybricks firmware installation:
-   1. https://pybricks.com/install, or 
-   2. https://dfu.pybricks.com for Spike Prime or Mindstorms Inventor    
+   1. https://pybricks.com/install, or
+   2. https://dfu.pybricks.com for Spike Prime or Mindstorms Inventor
 2. Execute the deployment:
     ```shell
     make -C bricks/primehub -j8 deploy
