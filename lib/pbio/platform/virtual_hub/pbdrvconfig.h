@@ -11,6 +11,11 @@
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 #define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)
 
+#define PBDRV_CONFIG_COUNTER                                (1)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                        (6)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL                        (1)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV                (6)
+
 #define PBDRV_CONFIG_LED                                    (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                            (1)
 #define PBDRV_CONFIG_LED_VIRTUAL                            (1)

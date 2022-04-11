@@ -146,3 +146,36 @@ class VirtualHub:
             The button flags of the currently pressed buttons.
         """
         return Buttons(0)
+
+    @property
+    def counter_count(self) -> Sequence[int]:
+        """
+        Gets the current counter count for each counter.
+
+        The virtual counter driver uses this value.
+
+        The default implementation returns a constant value of 0 for 6 counters.
+        """
+        return [0] * 6
+
+    @property
+    def counter_abs_count(self) -> Sequence[int]:
+        """
+        Gets the current counter absolute count for each counter.
+
+        The virtual counter driver uses this value.
+
+        The default implementation returns a constant value of 0 for 6 counters.
+        """
+        return [0] * 6
+
+    @property
+    def counter_abs_rate(self) -> Sequence[int]:
+        """
+        Gets the current counter rate for each counter in counts per second.
+
+        The virtual counter driver uses this value.
+
+        The default implementation returns a constant value of 0 for 6 counters.
+        """
+        return [0] * 6

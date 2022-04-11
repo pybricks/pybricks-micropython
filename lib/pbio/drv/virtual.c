@@ -34,6 +34,79 @@ static PyObject *pbdrv_virtual_get_result(void) {
 }
 
 /**
+ * Gets the value of `hub.<property>` from the `__main__` module as a signed
+ * long.
+ *
+ * @param [in]  property    The name of the property.
+ * @return                  The value or `(long)-1` on error.
+ */
+unsigned long pbdrv_virtual_get_signed_long(const char *property) {
+    long result = (long)-1;
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    char buf[50];
+    snprintf(buf, sizeof(buf), "_ = hub.%s\n", property);
+
+    int ret = PyRun_SimpleString(buf);
+    if (ret != 0) {
+        goto out;
+    }
+
+    // new ref
+    PyObject *result_obj = pbdrv_virtual_get_result();
+    if (!result_obj) {
+        goto out;
+    }
+
+    result = PyLong_AsLong(result_obj);
+
+    Py_DECREF(result_obj);
+
+out:
+    PyGILState_Release(state);
+
+    return result;
+}
+
+/**
+ * Gets the value of `hub.<property>[<index>]` from the `__main__` module as a
+ * signed long.
+ *
+ * @param [in]  property    The name of the property.
+ * @param [in]  index       The index in the value returned by the property.
+ * @return                  The value or `(long)-1` on error.
+ */
+unsigned long pbdrv_virtual_get_indexed_signed_long(const char *property, uint8_t index) {
+    long result = (long)-1;
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    char buf[50];
+    snprintf(buf, sizeof(buf), "_ = hub.%s[%d]\n", property, index);
+
+    int ret = PyRun_SimpleString(buf);
+    if (ret != 0) {
+        goto out;
+    }
+
+    // new ref
+    PyObject *result_obj = pbdrv_virtual_get_result();
+    if (!result_obj) {
+        goto out;
+    }
+
+    result = PyLong_AsLong(result_obj);
+
+    Py_DECREF(result_obj);
+
+out:
+    PyGILState_Release(state);
+
+    return result;
+}
+
+/**
  * Gets the value of `hub.<property>` from the `__main__` module as an unsigned
  * long.
  *
@@ -47,6 +120,43 @@ unsigned long pbdrv_virtual_get_unsigned_long(const char *property) {
 
     char buf[50];
     snprintf(buf, sizeof(buf), "_ = hub.%s\n", property);
+
+    int ret = PyRun_SimpleString(buf);
+    if (ret != 0) {
+        goto out;
+    }
+
+    // new ref
+    PyObject *result_obj = pbdrv_virtual_get_result();
+    if (!result_obj) {
+        goto out;
+    }
+
+    result = PyLong_AsUnsignedLong(result_obj);
+
+    Py_DECREF(result_obj);
+
+out:
+    PyGILState_Release(state);
+
+    return result;
+}
+
+/**
+ * Gets the value of `hub.<property>[<index>]` from the `__main__` module as an
+ * unsigned long.
+ *
+ * @param [in]  property    The name of the property.
+ * @param [in]  index       The index in the value returned by the property.
+ * @return                  The value or `(unsigned long)-1` on error.
+ */
+unsigned long pbdrv_virtual_get_indexed_unsigned_long(const char *property, uint8_t index) {
+    unsigned long result = (unsigned long)-1;
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    char buf[50];
+    snprintf(buf, sizeof(buf), "_ = hub.%s[%d]\n", property, index);
 
     int ret = PyRun_SimpleString(buf);
     if (ret != 0) {
