@@ -236,174 +236,6 @@ err:;
 }
 
 /**
- * Gets the value of `_` in the `__main__` module.
- *
- * The GIL must be held when calling this function.
- *
- * @return A new reference to `_` or `NULL` on error.
- */
-static PyObject *pbdrv_virtual_get_result(void) {
-    // new ref
-    PyObject *main = PyImport_ImportModule("__main__");
-    if (!main) {
-        return NULL;
-    }
-
-    // new ref
-    PyObject *result = PyObject_GetAttrString(main, "_");
-
-    Py_DECREF(main);
-
-    return result;
-}
-
-/**
- * Gets the value of `platform.<property>` from the `__main__` module as a signed
- * long.
- *
- * @param [in]  property    The name of the property.
- * @return                  The value or `(long)-1` on error.
- */
-unsigned long pbdrv_virtual_get_signed_long(const char *property) {
-    long result = (long)-1;
-
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    char buf[50];
-    snprintf(buf, sizeof(buf), "_ = platform.%s\n", property);
-
-    int ret = PyRun_SimpleString(buf);
-    if (ret != 0) {
-        goto out;
-    }
-
-    // new ref
-    PyObject *result_obj = pbdrv_virtual_get_result();
-    if (!result_obj) {
-        goto out;
-    }
-
-    result = PyLong_AsLong(result_obj);
-
-    Py_DECREF(result_obj);
-
-out:
-    PyGILState_Release(state);
-
-    return result;
-}
-
-/**
- * Gets the value of `platform.<property>[<index>]` from the `__main__` module as a
- * signed long.
- *
- * @param [in]  property    The name of the property.
- * @param [in]  index       The index in the value returned by the property.
- * @return                  The value or `(long)-1` on error.
- */
-unsigned long pbdrv_virtual_get_indexed_signed_long(const char *property, uint8_t index) {
-    long result = (long)-1;
-
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    char buf[50];
-    snprintf(buf, sizeof(buf), "_ = platform.%s[%d]\n", property, index);
-
-    int ret = PyRun_SimpleString(buf);
-    if (ret != 0) {
-        goto out;
-    }
-
-    // new ref
-    PyObject *result_obj = pbdrv_virtual_get_result();
-    if (!result_obj) {
-        goto out;
-    }
-
-    result = PyLong_AsLong(result_obj);
-
-    Py_DECREF(result_obj);
-
-out:
-    PyGILState_Release(state);
-
-    return result;
-}
-
-/**
- * Gets the value of `platform.<property>` from the `__main__` module as an unsigned
- * long.
- *
- * @param [in]  property    The name of the property.
- * @return                  The value or `(unsigned long)-1` on error.
- */
-unsigned long pbdrv_virtual_get_unsigned_long(const char *property) {
-    unsigned long result = (unsigned long)-1;
-
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    char buf[50];
-    snprintf(buf, sizeof(buf), "_ = platform.%s\n", property);
-
-    int ret = PyRun_SimpleString(buf);
-    if (ret != 0) {
-        goto out;
-    }
-
-    // new ref
-    PyObject *result_obj = pbdrv_virtual_get_result();
-    if (!result_obj) {
-        goto out;
-    }
-
-    result = PyLong_AsUnsignedLong(result_obj);
-
-    Py_DECREF(result_obj);
-
-out:
-    PyGILState_Release(state);
-
-    return result;
-}
-
-/**
- * Gets the value of `platform.<property>[<index>]` from the `__main__` module as an
- * unsigned long.
- *
- * @param [in]  property    The name of the property.
- * @param [in]  index       The index in the value returned by the property.
- * @return                  The value or `(unsigned long)-1` on error.
- */
-unsigned long pbdrv_virtual_get_indexed_unsigned_long(const char *property, uint8_t index) {
-    unsigned long result = (unsigned long)-1;
-
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    char buf[50];
-    snprintf(buf, sizeof(buf), "_ = platform.%s[%d]\n", property, index);
-
-    int ret = PyRun_SimpleString(buf);
-    if (ret != 0) {
-        goto out;
-    }
-
-    // new ref
-    PyObject *result_obj = pbdrv_virtual_get_result();
-    if (!result_obj) {
-        goto out;
-    }
-
-    result = PyLong_AsUnsignedLong(result_obj);
-
-    Py_DECREF(result_obj);
-
-out:
-    PyGILState_Release(state);
-
-    return result;
-}
-
-/**
  * Calls `platform.on_event_poll()`.
  *
  * This should be called whenever the runtime is "idle".
@@ -417,16 +249,17 @@ pbio_error_t pbdrv_virtual_poll_events(void) {
 
 /**
  * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as an unsigned long value.
+ * `platform.<component>[<index>].<attribute>` from the `__main__` module.
+ *
+ * NOTE: The GIL must be held when calling this function!
  *
  * @param [in]  component   The name of the component.
  * @param [in]  index       The index on component or -1 to not use an index.
  * @param [in]  attribute   The name of the attribute.
- * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ * @return                  A new reference to the value object or NULL on CPython exception.
  */
-static pbio_error_t pbdrv_virtual_platform_get_unsigned_long(const char *component, int index, const char *attribute, unsigned long *value) {
-    PyGILState_STATE state = PyGILState_Ensure();
+static PyObject *pbdrv_virtual_platform_get_value(const char *component, int index, const char *attribute) {
+    PyObject *value_obj = NULL;
 
     // new ref
     PyObject *platform = pbdrv_virtual_get_platform();
@@ -466,19 +299,71 @@ static pbio_error_t pbdrv_virtual_platform_get_unsigned_long(const char *compone
     }
 
     // new ref
-    PyObject *attr_obj = PyObject_GetAttrString(component_obj, attribute);
+    value_obj = PyObject_GetAttrString(component_obj, attribute);
 
-    if (!attr_obj) {
-        goto err_unref_component;
-    }
-
-    *value = PyLong_AsUnsignedLong(attr_obj);
-
-    Py_DECREF(attr_obj);
 err_unref_component:
     Py_DECREF(component_obj);
 err_unref_platform:
     Py_DECREF(platform);
+err:;
+    return value_obj;
+}
+
+
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as a long value.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+static pbio_error_t pbdrv_virtual_platform_get_long(const char *component, int index, const char *attribute, long *value) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // new ref
+    PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
+
+    if (!value_obj) {
+        goto err;
+    }
+
+    *value = PyLong_AsLong(value_obj);
+
+    Py_DECREF(value_obj);
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
+}
+
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as an unsigned long value.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+static pbio_error_t pbdrv_virtual_platform_get_unsigned_long(const char *component, int index, const char *attribute, unsigned long *value) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // new ref
+    PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
+
+    if (!value_obj) {
+        goto err;
+    }
+
+    *value = PyLong_AsUnsignedLong(value_obj);
+
+    Py_DECREF(value_obj);
 err:;
     pbio_error_t err = pbdrv_virtual_check_cpython_exception();
 
@@ -540,4 +425,23 @@ pbio_error_t pbdrv_virtual_get_u32(const char *component, int index, const char 
     *value = long_value;
     return err;
 }
+
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as a signed 32-bit integer.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_i32(const char *component, int index, const char *attribute, int32_t *value) {
+    long long_value;
+    pbio_error_t err = pbdrv_virtual_platform_get_long(component, index, attribute, &long_value);
+    *value = long_value;
+    return err;
+}
+
 #endif // PBDRV_CONFIG_VIRTUAL

@@ -29,12 +29,9 @@ pbio_error_t pbdrv_virtual_platform_stop(void);
 pbio_error_t pbdrv_virtual_poll_events(void);
 
 pbio_error_t pbdrv_virtual_platform_call_method(const char *name, const char *fmt, ...);
-unsigned long pbdrv_virtual_get_signed_long(const char *property);
-unsigned long pbdrv_virtual_get_indexed_signed_long(const char *property, uint8_t index);
-unsigned long pbdrv_virtual_get_unsigned_long(const char *property);
-unsigned long pbdrv_virtual_get_indexed_unsigned_long(const char *property, uint8_t index);
 pbio_error_t pbdrv_virtual_get_u8(const char *component, int index,  const char *attribute, uint8_t *value);
 pbio_error_t pbdrv_virtual_get_u16(const char *component, int index, const char *attribute, uint16_t *value);
 pbio_error_t pbdrv_virtual_get_u32(const char *component, int index, const char *attribute, uint32_t *value);
+pbio_error_t pbdrv_virtual_get_i32(const char *component, int index, const char *attribute, int32_t *value);
 
 #endif // _INTERNAL_PBDRV_VIRTUAL_H_

@@ -2,10 +2,10 @@
 # Copyright (c) 2022 The Pybricks Authors
 
 
-from typing import Sequence
-
+from typing import Dict
 from ..drv.battery import VirtualBattery
 from ..drv.button import VirtualButtons
+from ..drv.counter import VirtualCounter
 
 
 class DefaultPlatform:
@@ -15,10 +15,12 @@ class DefaultPlatform:
 
     battery: VirtualBattery
     buttons: VirtualButtons
+    counter: Dict[int, VirtualCounter]
 
     def __init__(self):
         self.battery = VirtualBattery()
         self.buttons = VirtualButtons()
+        self.counter = {}
 
     def on_event_poll(self) -> None:
         """
@@ -44,36 +46,3 @@ class DefaultPlatform:
             b: The requested blue value (0 - 255).
         """
         pass
-
-    @property
-    def counter_count(self) -> Sequence[int]:
-        """
-        Gets the current counter count for each counter.
-
-        The virtual counter driver uses this value.
-
-        The default implementation returns a constant value of 0 for 6 counters.
-        """
-        return [0] * 6
-
-    @property
-    def counter_abs_count(self) -> Sequence[int]:
-        """
-        Gets the current counter absolute count for each counter.
-
-        The virtual counter driver uses this value.
-
-        The default implementation returns a constant value of 0 for 6 counters.
-        """
-        return [0] * 6
-
-    @property
-    def counter_abs_rate(self) -> Sequence[int]:
-        """
-        Gets the current counter rate for each counter in counts per second.
-
-        The virtual counter driver uses this value.
-
-        The default implementation returns a constant value of 0 for 6 counters.
-        """
-        return [0] * 6

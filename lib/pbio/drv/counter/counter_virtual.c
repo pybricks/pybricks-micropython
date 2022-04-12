@@ -34,43 +34,19 @@ static private_data_t private_data[PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV];
 static pbio_error_t pbdrv_counter_virtual_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     private_data_t *priv = dev->priv;
 
-    long value = pbdrv_virtual_get_indexed_signed_long("counter_count", priv->index);
-
-    if (value == -1L && PyErr_Occurred()) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    *count = value;
-
-    return PBIO_SUCCESS;
+    return pbdrv_virtual_get_i32("counter", priv->index, "count", count);
 }
 
 static pbio_error_t pbdrv_counter_virtual_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     private_data_t *priv = dev->priv;
 
-    long value = pbdrv_virtual_get_indexed_signed_long("counter_abs_count", priv->index);
-
-    if (value == -1L && PyErr_Occurred()) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    *count = value;
-
-    return PBIO_SUCCESS;
+    return pbdrv_virtual_get_i32("counter", priv->index, "abs_count", count);
 }
 
 static pbio_error_t pbdrv_counter_virtual_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
     private_data_t *priv = dev->priv;
 
-    long value = pbdrv_virtual_get_indexed_signed_long("counter_rate", priv->index);
-
-    if (value == -1L && PyErr_Occurred()) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    *rate = value;
-
-    return PBIO_SUCCESS;
+    return pbdrv_virtual_get_i32("counter", priv->index, "rate", rate);
 }
 
 static const pbdrv_counter_funcs_t pbdrv_counter_virtual_funcs = {
@@ -87,6 +63,7 @@ void pbdrv_counter_virtual_init(pbdrv_counter_dev_t *devs) {
 
         // FIXME: assuming that these are the only counter devices
         // counter_id should be passed from platform data instead
+        // i.e. enumerate CPython `platform.counter.keys()`.
         _Static_assert(PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV == PBDRV_CONFIG_COUNTER_NUM_DEV,
             "need to fix counter_virtual implementation to allow other counter devices");
 
