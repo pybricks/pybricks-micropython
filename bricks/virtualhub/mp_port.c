@@ -11,11 +11,16 @@
 
 #include <pbio/main.h>
 #include <pbsys/user_program.h>
+#include "../../lib/pbio/drv/virtual.h"
 
 #include "py/mpconfig.h"
-#include "py/objtuple.h"
 #include "py/obj.h"
+#include "py/objexcept.h"
+#include "py/objstr.h"
+#include "py/objtuple.h"
 #include "py/runtime.h"
+
+#include "pybricks/util_pb/pb_error.h"
 
 // from micropython/ports/unix/main.c
 #define FORCED_EXIT (0x100)
@@ -30,7 +35,7 @@ static PyThreadState *thread_state;
 
 // callback for when stop button is pressed in IDE or on hub
 static void user_program_stop_func(void) {
-    static const mp_obj_tuple_t args = {
+    static const mp_rom_obj_tuple_t args = {
         .base = { .type = &mp_type_tuple },
         .len = 2,
         .items = {
@@ -59,8 +64,54 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event = NULL,
 };
 
+static MP_DEFINE_EXCEPTION(CPythonException, Exception)
+
+static bool cpython_exception_handler(PyObject *type, PyObject *value, PyObject *traceback) {
+    // special case for CPython SystemExit - raise SystemExit in MicroPython
+    if (PyObject_IsSubclass(type, PyExc_SystemExit) == 1) {
+        static const MP_DEFINE_STR_OBJ(message, "SystemExit from CPython");
+
+        static const mp_rom_obj_tuple_t args = {
+            .base = { .type = &mp_type_tuple },
+            .len = 2,
+            .items = {
+                // NB: currently, first arg has to be FORCED_EXIT for default
+                // unix unhandled exception handler.
+                // https://github.com/micropython/micropython/pull/8151
+                MP_ROM_INT(FORCED_EXIT),
+                MP_ROM_PTR(&message),
+            },
+        };
+
+        static mp_obj_exception_t system_exit;
+
+        // Schedule SystemExit exception.
+        system_exit.base.type = &mp_type_SystemExit;
+        system_exit.traceback_alloc = 0;
+        system_exit.traceback_len = 0;
+        system_exit.traceback_data = NULL;
+        system_exit.args = (mp_obj_tuple_t *)&args;
+
+        mp_sched_exception(MP_OBJ_FROM_PTR(&system_exit));
+
+        return true;
+    }
+
+    // special case for CPython KeyboardInterrupt - raise KeyboardInterrupt in MicroPython
+    if (PyObject_IsSubclass(type, PyExc_KeyboardInterrupt) == 1) {
+        mp_sched_keyboard_interrupt();
+        return true;
+    }
+
+    mp_sched_exception(mp_obj_new_exception(&mp_type_CPythonException));
+
+    return false;
+}
+
 // MICROPY_PORT_INIT_FUNC
 void pb_virtualhub_port_init(void) {
+    pbdrv_virtual_set_cpython_exception_handler(cpython_exception_handler);
+
     // embedding Python to provide virtual hardware implementation
     Py_Initialize();
 
@@ -95,9 +146,5 @@ void pb_virtualhub_event_poll(void) {
     while (pbio_do_one_event()) {
     }
 
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    PyRun_SimpleString("hub.on_event_poll()\n");
-
-    PyGILState_Release(state);
+    pb_assert(pbdrv_virtual_poll_events());
 }

@@ -7,9 +7,181 @@
 
 #if PBDRV_CONFIG_VIRTUAL
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <Python.h>
+
+#include <pbio/error.h>
+#include "virtual.h"
+
+static pbdrv_virtual_cpython_exception_handler_t cpython_exception_handler;
+
+/**
+ * Registers a callback to be called whenever there is an unhandled CPython
+ * exception when a CPython callback returns.
+ * @param [in]  handler The callback or NULL.
+ */
+void pbdrv_virtual_set_cpython_exception_handler(pbdrv_virtual_cpython_exception_handler_t handler) {
+    cpython_exception_handler = handler;
+}
+
+/**
+ * This checks for pending CPython exceptions and converts them to the
+ * corresponding PBIO error code.
+ *
+ * NOTE: This function must be called with the GIL held!
+ *
+ * Errors named `PbioError` will use the first arg as the error code.
+ *
+ * `SystemExit` and `KeyboardInterrupt` will be passed to the the registered
+ * callbacks, if any, and ::PBIO_ERROR_FAILED is returned.
+ *
+ * Other CPython will print the exception and return ::PBIO_ERROR_FAILED.
+ *
+ * If there is no pending error, ::PBIO_SUCCESS is returned.
+ *
+ * @return  The error code.
+ */
+static pbio_error_t pbdrv_virtual_check_cpython_exception(void) {
+    PyObject *type, *value, *traceback;
+
+    // returns new references
+    PyErr_Fetch(&type, &value, &traceback);
+
+    // if type is NULL, it means that there is no pending error
+    if (!type) {
+        return PBIO_SUCCESS;
+    }
+
+    pbio_error_t err = PBIO_ERROR_FAILED;
+    bool handled = false;
+
+    // If the exception instance object has an attribute pbio_error with an
+    // integer value, then use that for the err return value.
+
+    // new reference
+    PyObject *pbio_error = value ? PyObject_GetAttrString(value, "pbio_error") : NULL;
+
+    if (pbio_error) {
+        unsigned long value = PyLong_AsUnsignedLong(pbio_error);
+
+        if (value != (unsigned long)-1 || !PyErr_Occurred()) {
+            err = value;
+            handled = true;
+        }
+
+        Py_DECREF(pbio_error);
+    } else if (cpython_exception_handler) {
+        handled = cpython_exception_handler(type, value, traceback);
+    }
+
+    // steals references
+    PyErr_Restore(type, value, traceback);
+
+    if (handled) {
+        PyErr_Clear();
+    } else {
+        PyErr_WriteUnraisable(PyUnicode_FromString(
+            "Virtual hub CPython exception: if this error is expected, catch it and raise PbioError instead."));
+    }
+
+    return err;
+}
+
+/**
+ * Gets the value of `hub` in the `__main__` module.
+ *
+ * NOTE: The GIL must be held when calling this function!
+ *
+ * @return A new reference to `hub` or `NULL` on error.
+ */
+static PyObject *pbdrv_virtual_get_hub(void) {
+    // new ref
+    PyObject *main = PyImport_ImportModule("__main__");
+    if (!main) {
+        return NULL;
+    }
+
+    // new ref
+    PyObject *result = PyObject_GetAttrString(main, "hub");
+
+    Py_DECREF(main);
+
+    return result;
+}
+
+/**
+ * Calls a method on the `hub` object.
+ *
+ * Refer to https://docs.python.org/3/c-api/arg.html#c.Py_BuildValue for formatting.
+ *
+ * Note that for single args, the format string needs to include `()` so that
+ * it returns a tuple.
+ *
+ * @param [in]  name    The name of the method.
+ * @param [in]  fmt     The format of each argument.
+ * @param [in]  ...     The values for @p fmt or NULL if there are no args.
+ * @returns             ::PBIO_SUCCESS if the call was successful or an error
+ *                      if there was a CPython exception.
+ */
+pbio_error_t pbdrv_virtual_hub_call_method(const char *name, const char *fmt, ...) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    PyObject *hub = pbdrv_virtual_get_hub();
+
+    if (!hub) {
+        goto err;
+    }
+
+    // There is no va_list version of PyObject_CallMethod, so we have to get
+    // the method and use Py_VaBuildValue() instead.
+
+    // new reference
+    PyObject *method = PyObject_GetAttrString(hub, name);
+
+    if (!method) {
+        goto err_unref_hub;
+    }
+
+    va_list va;
+    va_start(va, fmt);
+    // new reference
+    PyObject *args = (!fmt || !*fmt) ? PyTuple_New(0) : Py_VaBuildValue(fmt, va);
+    va_end(va);
+
+    if (!args) {
+        goto err_unref_method;
+    }
+
+    if (!PyTuple_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "args must be a tuple");
+        goto err_unref_args;
+    }
+
+    PyObject *ret = PyObject_Call(method, args, NULL);
+
+    if (!ret) {
+        goto err_unref_args;
+    }
+
+    // return value is ignored
+    Py_DECREF(ret);
+
+err_unref_args:
+    Py_DECREF(args);
+err_unref_method:
+    Py_DECREF(method);
+err_unref_hub:
+    Py_DECREF(hub);
+
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
+}
 
 /**
  * Gets the value of `_` in the `__main__` module.
@@ -177,6 +349,13 @@ out:
     PyGILState_Release(state);
 
     return result;
+}
+
+/**
+ * Calls `hub.on_event_poll()`.
+ */
+pbio_error_t pbdrv_virtual_poll_events(void) {
+    return pbdrv_virtual_hub_call_method("on_event_poll", NULL);
 }
 
 #endif // PBDRV_CONFIG_VIRTUAL

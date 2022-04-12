@@ -16,6 +16,7 @@
 #include <pbio/util.h>
 
 #include "led.h"
+#include "../virtual.h"
 
 #ifndef PBDRV_CONFIG_LED_VIRTUAL_NUM_DEV
 #error "Must define PBDRV_CONFIG_LED_VIRTUAL_NUM_DEV"
@@ -27,17 +28,7 @@ static pbio_error_t pbdrv_led_virtual_set_hsv(pbdrv_led_dev_t *dev, const pbio_c
     pbio_color_rgb_t rgb;
     pbio_color_hsv_to_rgb(hsv, &rgb);
 
-    PyGILState_STATE state = PyGILState_Ensure();
-
-    char command[50];
-    snprintf(command, PBIO_ARRAY_SIZE(command),
-        "hub.on_light(%u, %u, %u, %u)\n", id, rgb.r, rgb.g, rgb.b);
-
-    int ret = PyRun_SimpleString(command);
-
-    PyGILState_Release(state);
-
-    return ret == 0 ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
+    return pbdrv_virtual_hub_call_method("on_light", "BBBB", id, rgb.r, rgb.g, rgb.b);
 }
 
 static const pbdrv_led_funcs_t pbdrv_led_virtual_funcs = {

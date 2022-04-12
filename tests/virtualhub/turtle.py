@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import threading
 import turtle
 import tkinter as tk
 from typing import Tuple, Union
@@ -92,6 +93,7 @@ class VirtualHub(BaseVirtualHub):
         super().__init__()
 
         self._buttons = Buttons(0)
+        self._window_close_event = threading.Event()
 
         # we are using turtle just for drawing, so disable animations, etc.
         turtle.hideturtle()
@@ -100,6 +102,11 @@ class VirtualHub(BaseVirtualHub):
         turtle.colormode(255)
 
         # event hooks
+
+        turtle.getcanvas().winfo_toplevel().protocol(
+            "WM_DELETE_WINDOW", self._window_close_event.set
+        )
+
         turtle.onscreenclick(lambda x, y: on_click(x, y, True, self))
         _onscreenrelease(turtle.Turtle._screen, lambda x, y: on_click(x, y, False, self))
 
@@ -108,6 +115,10 @@ class VirtualHub(BaseVirtualHub):
         draw_light("black")
 
     def on_event_poll(self) -> None:
+        # send SystemExit to MicroPython runtime when window close button is clicked
+        if self._window_close_event.is_set():
+            raise SystemExit
+
         do_events()
 
     def on_light(self, id: int, r: int, g: int, b: int) -> None:
