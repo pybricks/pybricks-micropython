@@ -415,4 +415,129 @@ pbio_error_t pbdrv_virtual_poll_events(void) {
     return pbdrv_virtual_platform_call_method("on_event_poll", NULL);
 }
 
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as an unsigned long value.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+static pbio_error_t pbdrv_virtual_platform_get_unsigned_long(const char *component, int index, const char *attribute, unsigned long *value) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // new ref
+    PyObject *platform = pbdrv_virtual_get_platform();
+
+    if (!platform) {
+        goto err;
+    }
+
+    // new ref
+    PyObject *component_obj = PyObject_GetAttrString(platform, component);
+
+    if (!component_obj) {
+        goto err_unref_platform;
+    }
+
+    // if there is an index replace component_obj with the object at component_obj[index]
+    if (index >= 0) {
+        // new ref
+        PyObject *index_obj = PyLong_FromLong(index);
+
+        if (!index_obj) {
+            goto err_unref_component;
+        }
+
+        // new ref
+        PyObject *sub_component_obj = PyObject_GetItem(component_obj, index_obj);
+
+        Py_DECREF(index_obj);
+
+        if (!sub_component_obj) {
+            goto err_unref_component;
+        }
+
+        // discard original component and steal the ref from sub_component_obj
+        Py_DECREF(component_obj);
+        component_obj = sub_component_obj;
+    }
+
+    // new ref
+    PyObject *attr_obj = PyObject_GetAttrString(component_obj, attribute);
+
+    if (!attr_obj) {
+        goto err_unref_component;
+    }
+
+    *value = PyLong_AsUnsignedLong(attr_obj);
+
+    Py_DECREF(attr_obj);
+err_unref_component:
+    Py_DECREF(component_obj);
+err_unref_platform:
+    Py_DECREF(platform);
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
+}
+
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as an unsigned 8-bit integer.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_u8(const char *component, int index, const char *attribute, uint8_t *value) {
+    unsigned long long_value;
+    pbio_error_t err = pbdrv_virtual_platform_get_unsigned_long(component, index, attribute, &long_value);
+    *value = long_value;
+    return err;
+}
+
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as an unsigned 16-bit integer.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_u16(const char *component, int index, const char *attribute, uint16_t *value) {
+    unsigned long long_value;
+    pbio_error_t err = pbdrv_virtual_platform_get_unsigned_long(component, index, attribute, &long_value);
+    *value = long_value;
+    return err;
+}
+
+/**
+ * Gets the value of `platform.<component>.<attribute>` or
+ * `platform.<component>[<index>].<attribute>` from the `__main__`
+ * module as an unsigned 32-bit integer.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_u32(const char *component, int index, const char *attribute, uint32_t *value) {
+    unsigned long long_value;
+    pbio_error_t err = pbdrv_virtual_platform_get_unsigned_long(component, index, attribute, &long_value);
+    *value = long_value;
+    return err;
+}
 #endif // PBDRV_CONFIG_VIRTUAL

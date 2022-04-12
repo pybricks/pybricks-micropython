@@ -18,27 +18,22 @@ void pbdrv_battery_init(void) {
 }
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
-    *value = pbdrv_virtual_get_unsigned_long("battery_voltage");
-
-    return *value == (uint16_t)-1 ? PBIO_ERROR_FAILED : PBIO_SUCCESS;
+    return pbdrv_virtual_get_u16("battery", -1, "voltage", value);
 }
 
 pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
-    *value = pbdrv_virtual_get_unsigned_long("battery_current");
-
-    return *value == (uint16_t)-1 ? PBIO_ERROR_FAILED : PBIO_SUCCESS;
+    return pbdrv_virtual_get_u16("battery", -1, "current", value);
 }
 
 pbio_error_t pbdrv_battery_get_temperature(uint32_t *value) {
-    *value = pbdrv_virtual_get_unsigned_long("battery_temperature");
-
-    return *value == (uint32_t)-1 ? PBIO_ERROR_FAILED : PBIO_SUCCESS;
+    return pbdrv_virtual_get_u32("battery", -1, "temperature", value);
 }
 
 pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
-    *value = pbdrv_virtual_get_unsigned_long("battery_type");
-
-    return *value == (pbdrv_battery_type_t)-1 ? PBIO_ERROR_FAILED : PBIO_SUCCESS;
+    uint8_t int_value;
+    pbio_error_t err = pbdrv_virtual_get_u8("battery", -1, "type", &int_value);
+    *value = int_value;
+    return err;
 }
 
 #endif // PBDRV_CONFIG_BATTERY_VIRTUAL

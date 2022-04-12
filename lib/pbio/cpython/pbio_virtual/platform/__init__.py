@@ -4,7 +4,7 @@
 
 from typing import Sequence
 
-from ..drv.battery import BatteryType
+from ..drv.battery import VirtualBattery
 from ..drv.button import ButtonFlags
 
 
@@ -12,6 +12,9 @@ class DefaultPlatform:
     """
     Base class for virtual hub implementations.
     """
+
+    def __init__(self):
+        self.battery = VirtualBattery()
 
     def on_event_poll(self) -> None:
         """
@@ -37,63 +40,6 @@ class DefaultPlatform:
             b: The requested blue value (0 - 255).
         """
         pass
-
-    @property
-    def battery_voltage(self) -> int:
-        """
-        Gets the current battery voltage.
-
-        The virtual battery driver uses this value.
-
-        The default implementation returns a constant value of 7V.
-
-        Returns:
-            The current battery voltage in mV.
-        """
-        return 7000
-
-    @property
-    def battery_current(self) -> int:
-        """
-        Gets the current battery current.
-
-        The virtual battery driver uses this value.
-
-        The default implementation returns a constant value of 100mA.
-
-        Returns:
-            The current current voltage in mA.
-        """
-        return 100
-
-    @property
-    def battery_temperature(self) -> int:
-        """
-        Gets the current battery temperature.
-
-        The virtual battery driver uses this value.
-
-        The default implementation returns a constant value of 23°C.
-
-        Returns:
-            The current current temperature in m°C.
-        """
-        return 23000
-
-    @property
-    def battery_type(self) -> BatteryType:
-        """
-        Gets the battery type.
-
-        The virtual battery driver uses this value.
-
-        The default implementation returns a constant value of
-        ``BatteryType.UNKNOWN``.
-
-        Returns:
-            The the battery type.
-        """
-        return BatteryType.UNKNOWN
 
     @property
     def buttons(self) -> ButtonFlags:
