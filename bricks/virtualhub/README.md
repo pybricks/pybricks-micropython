@@ -21,16 +21,18 @@ Building with the commands above will result in a `virtualhub-micropython`
 executable in the `bricks/virtualhub/build/` directory. Running this executable
 by itself will likely result in the error:
 
-    ModuleNotFoundError: No module named 'virtualhub'
+    ModuleNotFoundError: No module named 'pbio_virtual'
 
-This is because it requires a module named `virtualhub` to be in the Python
-path. To solve this, set the `PYTHONPATH` environment variable to a directory
-containing this module. You can also use a different module name by setting
-the `VIRTUALHUB_MODULE` environment variable.
+This is because it requires a module named `pbio_virtual` to be in the Python
+path. Technically, it is trying to import `pbio_virtual.platform.default` but
+the error only shows the first module in the chain that fails. To solve this,
+set the `PYTHONPATH` environment variable to a directory containing the
+`pbio_virtual` module. You can also use a different platform module by setting
+the `PBIO_VIRTUAL_PLATFORM_MODULE` environment variable.
 
 For example, this will run a virtual hub implemented using Python turtle graphics:
 
-    PYTHONPATH=tests VIRTUALHUB_MODULE=virtualhub.turtle ./bricks/virtualhub/build/virtualhub-micropython
+    PYTHONPATH=lib/pbio/cpython PBIO_VIRTUAL_PLATFORM_MODULE=pbio_virtual.platform.turtle ./bricks/virtualhub/build/virtualhub-micropython
 
 
 ## Internals
@@ -49,6 +51,6 @@ that are by the MicroPython runtime whenever it needs to use the value.
 ## Implementing virtual hub drivers in Python
 
 To start a new virtual hub implementation, create a Python module with a class
-named `VirtualHub`. The class needs to contain all of the required methods and
+named `Platform`. The class needs to contain all of the required methods and
 properties used by the virtual drivers enabled in the MicroPython build. See
-`tests/virtualhub/__init__.py` for a trivial implementation.
+`lib/pbio/cpython/pbio_virtual/platform/` for example implementations.

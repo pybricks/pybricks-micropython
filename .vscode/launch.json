@@ -95,11 +95,11 @@
             "environment": [
                 {
                     "name": "PYTHONPATH",
-                    "value": "tests"
+                    "value": "lib/pbio/cpython"
                 },
                 {
-                    "name": "VIRTUALHUB_MODULE",
-                    "value": "virtualhub.turtle"
+                    "name": "PBIO_VIRTUAL_PLATFORM_MODULE",
+                    "value": "pbio_virtual.platform.turtle"
                 }
             ],
             "externalConsole": false,

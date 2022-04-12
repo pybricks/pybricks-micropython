@@ -24,11 +24,11 @@ typedef struct _object PyObject;
 typedef bool (*pbdrv_virtual_cpython_exception_handler_t)(PyObject *type, PyObject *value, PyObject *traceback);
 
 // REVISIT: these are high-level APIs and might need to be moved to a different header file
-pbio_error_t pbdrv_virtual_start(pbdrv_virtual_cpython_exception_handler_t handler);
-pbio_error_t pbdrv_virtual_stop(void);
+pbio_error_t pbdrv_virtual_platform_start(pbdrv_virtual_cpython_exception_handler_t handler);
+pbio_error_t pbdrv_virtual_platform_stop(void);
 pbio_error_t pbdrv_virtual_poll_events(void);
 
-pbio_error_t pbdrv_virtual_hub_call_method(const char *name, const char *fmt, ...);
+pbio_error_t pbdrv_virtual_platform_call_method(const char *name, const char *fmt, ...);
 unsigned long pbdrv_virtual_get_signed_long(const char *property);
 unsigned long pbdrv_virtual_get_indexed_signed_long(const char *property, uint8_t index);
 unsigned long pbdrv_virtual_get_unsigned_long(const char *property);

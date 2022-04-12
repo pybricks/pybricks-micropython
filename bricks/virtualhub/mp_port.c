@@ -102,7 +102,7 @@ static bool cpython_exception_handler(PyObject *type, PyObject *value, PyObject 
 
 // MICROPY_PORT_INIT_FUNC
 void pb_virtualhub_port_init(void) {
-    pbio_error_t err = pbdrv_virtual_start(cpython_exception_handler);
+    pbio_error_t err = pbdrv_virtual_platform_start(cpython_exception_handler);
 
     if (err != PBIO_SUCCESS) {
         fprintf(stderr, "failed to start virtual hub\n");
@@ -118,7 +118,7 @@ void pb_virtualhub_port_init(void) {
 void pb_virtualhub_port_deinit(void) {
     pbsys_user_program_unprepare();
 
-    pbio_error_t err = pbdrv_virtual_stop();
+    pbio_error_t err = pbdrv_virtual_platform_stop();
 
     if (err != PBIO_SUCCESS) {
         exit(120);

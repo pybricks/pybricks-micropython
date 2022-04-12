@@ -20,6 +20,7 @@ codeformat.PATHS = [
     "pybricks/**/*.[ch]",
     # Python
     "bricks/**/*.py",
+    "lib/pbio/cpython/**/*.py",
     "tests/**/*.py",
     "tools/**/*.py",
 ]

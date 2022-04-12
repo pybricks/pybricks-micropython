@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import threading
-import turtle
 import tkinter as tk
+import turtle
 from typing import Tuple, Union
 
-from . import Buttons, VirtualHub as BaseVirtualHub
+from ..drv.button import ButtonFlags
+from . import DefaultPlatform
 
 
 # Counterpart to turtle.onscreenclick() since the standard library does not
@@ -74,25 +75,25 @@ def draw_light(color: Union[str, Tuple[int, int, int]]) -> None:
     turtle.end_fill()
 
 
-def on_click(x: float, y: float, mouse_down: bool, hub: VirtualHub) -> None:
+def on_click(x: float, y: float, mouse_down: bool, hub: Platform) -> None:
     if -15 <= x <= 15 and -90 <= y <= -60:
         # mouse click is within bounds of light/button
         if mouse_down:
-            hub._buttons |= Buttons.CENTER
+            hub._buttons |= ButtonFlags.CENTER
         else:
-            hub._buttons &= ~Buttons.CENTER
+            hub._buttons &= ~ButtonFlags.CENTER
 
 
-class VirtualHub(BaseVirtualHub):
+class Platform(DefaultPlatform):
     """
-    This is a ``VirtualHub`` implementation that uses turtle graphics to draw
+    This is a ``Platform`` implementation that uses turtle graphics to draw
     the virtual hub.
     """
 
     def __init__(self) -> None:
         super().__init__()
 
-        self._buttons = Buttons(0)
+        self._buttons = ButtonFlags(0)
         self._window_close_event = threading.Event()
 
         # we are using turtle just for drawing, so disable animations, etc.
@@ -128,5 +129,5 @@ class VirtualHub(BaseVirtualHub):
         draw_light((r, g, b))
 
     @property
-    def buttons(self) -> Buttons:
+    def buttons(self) -> ButtonFlags:
         return self._buttons
