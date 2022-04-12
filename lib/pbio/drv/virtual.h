@@ -24,7 +24,8 @@ typedef struct _object PyObject;
 typedef bool (*pbdrv_virtual_cpython_exception_handler_t)(PyObject *type, PyObject *value, PyObject *traceback);
 
 // REVISIT: these are high-level APIs and might need to be moved to a different header file
-void pbdrv_virtual_set_cpython_exception_handler(pbdrv_virtual_cpython_exception_handler_t handler);
+pbio_error_t pbdrv_virtual_start(pbdrv_virtual_cpython_exception_handler_t handler);
+pbio_error_t pbdrv_virtual_stop(void);
 pbio_error_t pbdrv_virtual_poll_events(void);
 
 pbio_error_t pbdrv_virtual_hub_call_method(const char *name, const char *fmt, ...);

@@ -25,14 +25,6 @@
 // from micropython/ports/unix/main.c
 #define FORCED_EXIT (0x100)
 
-#define CREATE_VIRTUAL_HUB \
-    "import importlib, os\n" \
-    "virtualhub_module = os.environ.get('VIRTUALHUB_MODULE', 'virtualhub')\n" \
-    "virtualhub = importlib.import_module(virtualhub_module)\n" \
-    "hub = virtualhub.VirtualHub()\n"
-
-static PyThreadState *thread_state;
-
 // callback for when stop button is pressed in IDE or on hub
 static void user_program_stop_func(void) {
     static const mp_rom_obj_tuple_t args = {
@@ -110,18 +102,12 @@ static bool cpython_exception_handler(PyObject *type, PyObject *value, PyObject 
 
 // MICROPY_PORT_INIT_FUNC
 void pb_virtualhub_port_init(void) {
-    pbdrv_virtual_set_cpython_exception_handler(cpython_exception_handler);
+    pbio_error_t err = pbdrv_virtual_start(cpython_exception_handler);
 
-    // embedding Python to provide virtual hardware implementation
-    Py_Initialize();
-
-    if (PyRun_SimpleString(CREATE_VIRTUAL_HUB) < 0) {
-        fprintf(stderr, "failed to create virtualhub\n");
+    if (err != PBIO_SUCCESS) {
+        fprintf(stderr, "failed to start virtual hub\n");
         exit(1);
     }
-
-    // release the GIL to allow MicroPython to run
-    thread_state = PyEval_SaveThread();
 
     pbio_init();
 
@@ -132,9 +118,9 @@ void pb_virtualhub_port_init(void) {
 void pb_virtualhub_port_deinit(void) {
     pbsys_user_program_unprepare();
 
-    PyEval_RestoreThread(thread_state);
+    pbio_error_t err = pbdrv_virtual_stop();
 
-    if (Py_FinalizeEx() < 0) {
+    if (err != PBIO_SUCCESS) {
         exit(120);
     }
 }

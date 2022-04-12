@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2022 The Pybricks Authors
 
-// Common functions used by virtual (Python) drivers.
+// Common functions used by virtual (CPython) drivers.
 
 #include <pbdrv/config.h>
 
@@ -15,15 +15,60 @@
 #include <pbio/error.h>
 #include "virtual.h"
 
+#define CREATE_VIRTUAL_HUB \
+    "import importlib, os\n" \
+    "virtualhub_module = os.environ.get('VIRTUALHUB_MODULE', 'virtualhub')\n" \
+    "virtualhub = importlib.import_module(virtualhub_module)\n" \
+    "hub = virtualhub.VirtualHub()\n"
+
+static PyThreadState *thread_state;
 static pbdrv_virtual_cpython_exception_handler_t cpython_exception_handler;
 
 /**
- * Registers a callback to be called whenever there is an unhandled CPython
- * exception when a CPython callback returns.
- * @param [in]  handler The callback or NULL.
+ * Starts the CPython runtime and instantiates the virtual hub driver object.
+ *
+ * NOTE: This must be called before `pbdrv_init()`!
+ *
+ * When this function returns, the CPython runtime is intialized and the CPython
+ * GIL is released.
+ *
+ * @param [in]  handler A callback to be called on an unhandled CPython exception or NULL.
+ * @returns             ::PBIO_SUCCESS if
  */
-void pbdrv_virtual_set_cpython_exception_handler(pbdrv_virtual_cpython_exception_handler_t handler) {
+pbio_error_t pbdrv_virtual_start(pbdrv_virtual_cpython_exception_handler_t handler) {
     cpython_exception_handler = handler;
+
+    // embedding Python to provide virtual hardware implementation
+    Py_Initialize();
+
+    if (PyRun_SimpleString(CREATE_VIRTUAL_HUB) < 0) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // release the GIL to allow pbio to run without blocking CPython
+    thread_state = PyEval_SaveThread();
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Stops the CPython runtime.
+ *
+ * NOTE: No other pbio functions may be called after calling this function!
+ *
+ * The CPython GIL must not be held when calling this function.
+ *
+ * @returns ::PBIO_SUCCESS if the runtime was stopped successfully, otherwise
+ *          ::PBIO_ERROR_FAILED.
+ */
+pbio_error_t pbdrv_virtual_stop(void) {
+    PyEval_RestoreThread(thread_state);
+
+    if (Py_FinalizeEx() < 0) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -353,6 +398,11 @@ out:
 
 /**
  * Calls `hub.on_event_poll()`.
+ *
+ * This should be called whenever the runtime is "idle".
+ *
+ * @returns ::PBIO_SUCCESS if there were no unhandled CPython exception or
+ *          ::PBIO_ERROR_FAILED if there was an unhandled exception.
  */
 pbio_error_t pbdrv_virtual_poll_events(void) {
     return pbdrv_virtual_hub_call_method("on_event_poll", NULL);
