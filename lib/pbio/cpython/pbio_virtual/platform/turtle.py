@@ -79,9 +79,9 @@ def on_click(x: float, y: float, mouse_down: bool, hub: Platform) -> None:
     if -15 <= x <= 15 and -90 <= y <= -60:
         # mouse click is within bounds of light/button
         if mouse_down:
-            hub._buttons |= ButtonFlags.CENTER
+            hub.buttons.pressed |= ButtonFlags.CENTER
         else:
-            hub._buttons &= ~ButtonFlags.CENTER
+            hub.buttons.pressed &= ~ButtonFlags.CENTER
 
 
 class Platform(DefaultPlatform):
@@ -93,7 +93,6 @@ class Platform(DefaultPlatform):
     def __init__(self) -> None:
         super().__init__()
 
-        self._buttons = ButtonFlags(0)
         self._window_close_event = threading.Event()
 
         # we are using turtle just for drawing, so disable animations, etc.
@@ -127,7 +126,3 @@ class Platform(DefaultPlatform):
             return
 
         draw_light((r, g, b))
-
-    @property
-    def buttons(self) -> ButtonFlags:
-        return self._buttons

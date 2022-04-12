@@ -20,3 +20,13 @@ class ButtonFlags(IntFlag):
     LEFT_UP = 1 << 7
     UP = 1 << 8
     RIGHT_UP = 1 << 9
+
+
+class VirtualButtons:
+    pressed: ButtonFlags = ButtonFlags(0)
+    """
+    Provides the button flags returned by ``pbdrv_button_is_pressed()``.
+
+    CPython code should write to this attribute to simulate the buttons currently
+    pressed and the PBIO driver will read this attribute.
+    """

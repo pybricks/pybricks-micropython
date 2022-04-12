@@ -5,7 +5,7 @@
 from typing import Sequence
 
 from ..drv.battery import VirtualBattery
-from ..drv.button import ButtonFlags
+from ..drv.button import VirtualButtons
 
 
 class DefaultPlatform:
@@ -13,8 +13,12 @@ class DefaultPlatform:
     Base class for virtual hub implementations.
     """
 
+    battery: VirtualBattery
+    buttons: VirtualButtons
+
     def __init__(self):
         self.battery = VirtualBattery()
+        self.buttons = VirtualButtons()
 
     def on_event_poll(self) -> None:
         """
@@ -40,20 +44,6 @@ class DefaultPlatform:
             b: The requested blue value (0 - 255).
         """
         pass
-
-    @property
-    def buttons(self) -> ButtonFlags:
-        """
-        Gets the buttons that are currently pressed.
-
-        The virtual button driver uses this value.
-
-        The default implementation returns a constant value of ``ButtonFlags(0)``.
-
-        Returns:
-            The button flags of the currently pressed buttons.
-        """
-        return ButtonFlags(0)
 
     @property
     def counter_count(self) -> Sequence[int]:
