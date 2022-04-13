@@ -21,6 +21,10 @@
 #define PBDRV_CONFIG_LED_VIRTUAL                            (1)
 #define PBDRV_CONFIG_LED_VIRTUAL_NUM_DEV                    (1)
 
+#define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (6)
+#define PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL                   (1)
+
 #define PBDRV_CONFIG_VIRTUAL                                (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)

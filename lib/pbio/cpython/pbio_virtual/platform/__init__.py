@@ -9,6 +9,7 @@ from ..drv.battery import VirtualBattery
 from ..drv.button import VirtualButtons
 from ..drv.counter import VirtualCounter
 from ..drv.led import VirtualLed
+from ..drv.motor_driver import VirtualMotorDriver
 
 
 class DefaultPlatform(abc.ABC):
@@ -48,11 +49,20 @@ class DefaultPlatform(abc.ABC):
     each LED device during init.
     """
 
+    motor_driver: Dict[int, VirtualMotorDriver]
+    """
+    The motor driver driver components.
+
+    Overriding classes should assign ``motor_driver[<id>] = VirtualMotorDriver()``
+    for each motor driver device during init.
+    """
+
     def __init__(self):
         self.battery = {}
         self.button = {}
         self.counter = {}
         self.led = {}
+        self.motor_driver = {}
 
     def on_event_poll(self) -> None:
         """
