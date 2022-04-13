@@ -458,7 +458,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/usb_stm32.c \
 	drv/watchdog/watchdog_stm32.c \
-	platform/motors/settings.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
 	src/battery.c \
@@ -476,6 +475,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/main.c \
 	src/math.c \
 	src/motor_process.c \
+	src/motor/servo_settings.c \
 	src/observer.c \
 	src/parent.c \
 	src/protocol/lwp3.c \

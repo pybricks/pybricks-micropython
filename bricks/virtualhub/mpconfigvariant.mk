@@ -148,7 +148,6 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/drv/led/led_virtual.c \
 	pbio/drv/motor_driver/motor_driver_virtual.c \
 	pbio/drv/virtual.c \
-	pbio/platform/motors/settings.c \
 	pbio/platform/virtual_hub/sys.c \
 	pbio/src/battery.c \
 	pbio/src/color/conversion.c \
@@ -164,6 +163,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/src/main.c \
 	pbio/src/math.c \
 	pbio/src/motor_process.c \
+	pbio/src/motor/servo_settings.c \
 	pbio/src/observer.c \
 	pbio/src/parent.c \
 	pbio/src/servo.c \

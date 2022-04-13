@@ -1,8 +1,19 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Servo Motor: Servo control functions.
+ *
+ * API for motors with position feedback (servos).
+ * @{
+ */
 
 #ifndef _PBIO_SERVO_H_
 #define _PBIO_SERVO_H_
+
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_SERVO
 
 #include <stdint.h>
 
@@ -21,8 +32,6 @@
 #include <pbio/logger.h>
 
 #include <pbio/iodev.h>
-
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 #define PBIO_SERVO_LOG_COLS (9)
 
@@ -58,6 +67,8 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 void pbio_servo_update_all(void);
 
-#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
+#endif // PBIO_CONFIG_SERVO
 
 #endif // _PBIO_SERVO_H_
+
+/** @} */

@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 // SPDX-License-Identifier: BSD-3-Clause
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_SERVO
 
 #include <pbio/control.h>
 #include <pbio/observer.h>
 #include <pbio/iodev.h>
-
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 #if PBIO_CONFIG_CONTROL_MINIMAL
 #define SCALE(value, scalar) ((int32_t)((value) * (scalar)))
@@ -14,7 +16,8 @@
 #define SCALE(value, scalar) ((value) * (scalar))
 #endif
 
-#if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
+// Servos compatible with LEGO MINDSTORMS NXT and EV3.
+#if PBIO_CONFIG_SERVO_EV3_NXT
 
 static const pbio_observer_model_t model_ev3_m = {
     .phi_01 = SCALE(0.0f, PBIO_OBSERVER_SCALE_HIGH),
@@ -66,9 +69,10 @@ static const pbio_control_settings_t settings_ev3_l = {
     .use_estimated_rate = false,
 };
 
-#endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
+#endif // PBIO_CONFIG_SERVO_EV3_NXT
 
-#if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
+// Servos compatible with the Powered Up system.
+#if PBIO_CONFIG_SERVO_PUP
 
 static const pbio_observer_model_t model_technic_s_angular = {
     .phi_01 = SCALE(0.00468582248829651f, PBIO_OBSERVER_SCALE_HIGH),
@@ -170,7 +174,7 @@ static const pbio_control_settings_t settings_interactive = {
     .use_estimated_rate = true,
 };
 
-#if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
+#if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
 
 static const pbio_observer_model_t model_movehub = {
     .phi_01 = SCALE(0.00482560542071840f, PBIO_OBSERVER_SCALE_HIGH),
@@ -197,7 +201,7 @@ static const pbio_control_settings_t settings_movehub = {
     .use_estimated_rate = true,
 };
 
-#endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
+#endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
 
 static const pbio_observer_model_t model_technic_l = {
     .phi_01 = SCALE(0.00480673379919289f, PBIO_OBSERVER_SCALE_HIGH),
@@ -249,13 +253,13 @@ static const pbio_control_settings_t settings_technic_xl = {
     .use_estimated_rate = true,
 };
 
-#endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
+#endif // PBIO_CONFIG_SERVO_PUP
 
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id) {
     switch (id) {
         case PBIO_IODEV_TYPE_ID_NONE:
             return PBIO_ERROR_NOT_SUPPORTED;
-        #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
+        #if PBIO_CONFIG_SERVO_EV3_NXT
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
             *model = &model_ev3_m;
             *settings = settings_ev3_m;
@@ -264,18 +268,18 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
             *model = &model_ev3_l;
             *settings = settings_ev3_l;
             break;
-        #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
-        #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
+        #endif // PBIO_CONFIG_SERVO_EV3_NXT
+        #if PBIO_CONFIG_SERVO_PUP
         case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
             *model = &model_interactive;
             *settings = settings_interactive;
             break;
-        #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
+        #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
             *model = &model_movehub;
             *settings = settings_movehub;
             break;
-        #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
+        #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
             *model = &model_technic_l;
             *settings = settings_technic_l;
@@ -298,7 +302,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
             *model = &model_technic_m_angular;
             *settings = settings_technic_m_angular;
             break;
-        #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
+        #endif // PBIO_CONFIG_SERVO_PUP
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
@@ -321,4 +325,4 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
     return PBIO_SUCCESS;
 }
 
-#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+#endif // PBIO_CONFIG_SERVO
