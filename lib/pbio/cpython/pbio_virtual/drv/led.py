@@ -1,21 +1,55 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2022 The Pybricks Authors
 
-from ..error import PbioError, PbioErrorCode
+from typing import Callable, List, NamedTuple
 
 
 class VirtualLed:
-    def on_set_hsv(self, timestamp: int, h: int, s: int, v: int) -> None:
+    class SetHsvEvent(NamedTuple):
+        timestamp: int
         """
-        This method called from ``pbdrv_led_virtual_set_hsv()``.
+        The time when the event occurred as 32-bit unsigned microseconds.
+        """
+        h: int
+        """
+        The requested hue (0 - 359).
+        """
+        s: int
+        """
+        The requested saturation (0 - 100).
+        """
+        v: int
+        """
+        The requested value (0 - 100).
+        """
 
-        The default implementation raises ``PBIO_ERROR_NOT_IMPLEMENTED`` so
-        overriding methods should not call ``super().on_event_poll()``.
+    SetHsvCallback = Callable[[SetHsvEvent], None]
+    Unsubscribe = Callable[[], None]
+
+    _set_hsv_subscriptions: List[SetHsvCallback]
+
+    def __init__(self) -> None:
+        self._set_hsv_subscriptions = []
+
+    def subscribe_set_hsv(self, callback: SetHsvCallback) -> Unsubscribe:
+        """
+        Subscribes to set HSV events.
 
         Args:
-            timestamp: The time when the value was set as 32-bit unsigned microseconds.
-            h: The requested hue (0 - 359).
-            s: The requested saturation (0 - 100).
-            v: The requested value (0 - 100).
+            callback:
+                A function that will be called each time :meth:`on_set_hsv()` is called.
+
+        Returns:
+            A function that, when called, will unsubscribe from the events.
         """
-        raise PbioError(PbioErrorCode.NOT_IMPLEMENTED)
+        self._set_hsv_subscriptions.append(callback)
+        return lambda: self._set_hsv_subscriptions.remove(callback)
+
+    def on_set_hsv(self, *args) -> None:
+        """
+        This method called from ``pbdrv_led_virtual_set_hsv()``.
+        """
+        event = self.SetHsvEvent(*args)
+
+        for callback in self._set_hsv_subscriptions:
+            callback(event)

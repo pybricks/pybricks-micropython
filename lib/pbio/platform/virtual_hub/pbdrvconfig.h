@@ -16,6 +16,9 @@
 #define PBDRV_CONFIG_COUNTER_VIRTUAL                        (1)
 #define PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV                (6)
 
+#define PBDRV_CONFIG_IOPORT                                 (1)
+#define PBDRV_CONFIG_IOPORT_VIRTUAL                         (1)
+
 #define PBDRV_CONFIG_LED                                    (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                            (1)
 #define PBDRV_CONFIG_LED_VIRTUAL                            (1)

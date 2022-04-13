@@ -8,6 +8,7 @@ from typing import Dict
 from ..drv.battery import VirtualBattery
 from ..drv.button import VirtualButtons
 from ..drv.counter import VirtualCounter
+from ..drv.ioport import PortId, VirtualIOPort
 from ..drv.led import VirtualLed
 from ..drv.motor_driver import VirtualMotorDriver
 
@@ -41,6 +42,14 @@ class DefaultPlatform(abc.ABC):
     each counter device during init.
     """
 
+    ioport: Dict[PortId, VirtualIOPort]
+    """
+    The I/O port driver components.
+
+    Overriding classes should assign ``ioport[<port>] = VirtualIOPort(<port>)`` for
+    each I/O port during init.
+    """
+
     led: Dict[int, VirtualLed]
     """
     The LED driver components.
@@ -61,6 +70,7 @@ class DefaultPlatform(abc.ABC):
         self.battery = {}
         self.button = {}
         self.counter = {}
+        self.ioport = {}
         self.led = {}
         self.motor_driver = {}
 

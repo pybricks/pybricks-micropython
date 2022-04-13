@@ -7,45 +7,15 @@ import colorsys
 import threading
 import tkinter as tk
 import turtle
-from typing import Tuple, Union
+from typing import NamedTuple, Optional
 
 from ..drv.battery import VirtualBattery
 from ..drv.button import ButtonFlags, VirtualButtons
+from ..drv.counter import VirtualCounter
+from ..drv.ioport import PortId, VirtualIOPort
 from ..drv.led import VirtualLed
+from ..drv.motor_driver import VirtualMotorDriver
 from . import DefaultPlatform
-
-
-# Counterpart to turtle.onscreenclick() since the standard library does not
-# provide this function.
-def _onscreenrelease(self, fun, num=1, add=None):
-    """Bind fun to mouse-release event on canvas.
-    fun must be a function with two arguments, the coordinates
-    of the clicked point on the canvas.
-    num, the number of the mouse-button defaults to 1
-    If a turtle is clicked, first _onrelease-event will be performed,
-    then _onscreenrelease-event.
-    """
-    if fun is None:
-        self.cv.unbind("<Button%s-ButtonRelease>" % num)
-    else:
-
-        def eventfun(event):
-            x, y = (
-                self.cv.canvasx(event.x) / self.xscale,
-                -self.cv.canvasy(event.y) / self.yscale,
-            )
-            fun(x, y)
-
-        self.cv.bind("<Button%s-ButtonRelease>" % num, eventfun, add)
-
-
-def do_events() -> None:
-    """
-    Processes any pending TCL events without blocking wait.
-    """
-    root = turtle.getcanvas().winfo_toplevel()
-    while root.dooneevent(tk._tkinter.DONT_WAIT):
-        pass
 
 
 def draw_hub() -> None:
@@ -62,34 +32,126 @@ def draw_hub() -> None:
     turtle.goto(-100, -100)
 
 
-def draw_light(color: Union[str, Tuple[int, int, int]]) -> None:
+class StatusLightButton:
     """
-    Draws the hub status light.
-
-    Args:
-        color: The name of a color or a tuple of RGB values.
+    A status light/button combo like the one on SPIKE Prime.
     """
-    turtle.up()
-    turtle.goto(0, -75)
-    turtle.down()
-    turtle.color("black", color)
-    turtle.begin_fill()
-    turtle.circle(15)
-    turtle.end_fill()
+
+    _turtle: turtle.Turtle
+
+    def __init__(self, light: VirtualLed, button: VirtualButtons) -> None:
+        self._turtle = turtle.Turtle(shape="circle")
+        self._turtle.shapesize(2)
+        self._turtle.penup()
+        self._turtle.goto(0, -70)
+
+        light.subscribe_set_hsv(
+            lambda event: self._turtle.color(
+                colorsys.hsv_to_rgb(event.h / 360, event.s / 100, event.v / 100)
+            )
+        )
+
+        def press_center_button():
+            button.pressed |= ButtonFlags.CENTER
+
+        self._turtle.onclick(lambda x, y: press_center_button())
+
+        def release_center_button():
+            button.pressed &= ~ButtonFlags.CENTER
+
+        self._turtle.onrelease(lambda x, y: release_center_button())
 
 
-def on_click(x: float, y: float, mouse_down: bool, hub: Platform) -> None:
-    if -15 <= x <= 15 and -90 <= y <= -60:
-        # mouse click is within bounds of light/button
-        if mouse_down:
-            hub.button[-1].pressed |= ButtonFlags.CENTER
-        else:
-            hub.button[-1].pressed &= ~ButtonFlags.CENTER
+class Motor:
+    """
+    A fake motor. With turtle graphics.
+    """
 
+    DUTY_SCALE_FACTOR = 0.1
 
-class StatusLight(VirtualLed):
-    def on_set_hsv(self, timestamp: int, h: int, s: int, v: int) -> None:
-        draw_light(colorsys.hsv_to_rgb(h / 360, s / 100, v / 100))
+    class State(NamedTuple):
+        timestamp: int
+        is_coasting: bool = True
+        duty_cycle: float = 0
+        count: float = 0
+        rate: float = 0
+
+    _turtle: turtle.Turtle
+    _state: State
+    _port: Optional[VirtualIOPort]
+    _driver: Optional[VirtualMotorDriver]
+    _counter: Optional[VirtualCounter]
+
+    def __init__(self) -> None:
+        self._turtle = turtle.Turtle(shape="arrow")
+        self._turtle.penup()
+        self._turtle.goto(-200, 0)
+        self._turtle.resizemode("user")
+        self._turtle.shapesize(3, 3)
+
+        # TODO: get real timestamp
+        self._state = Motor.State(timestamp=0)
+
+        self._port = None
+        self._driver = None
+        self._counter = None
+
+    def attach(
+        self,
+        port: VirtualIOPort,
+        driver: VirtualMotorDriver,
+        counter: VirtualCounter,
+    ) -> None:
+        # SPIKE medium motor
+        # TODO: should fill all fields
+        port._info.type_id = 48
+        port._info.capability_flags = 0xF
+
+        # REVISIT: if we need to detach the motor, we will need to save the
+        # returned unsubscribe functions
+        driver.subscribe_coast(self._on_coast)
+        driver.subscribe_duty_cycle(self._on_duty_cycle)
+
+        self._port = port
+        self._driver = driver
+        self._counter = counter
+
+        # TODO: get real timestamp
+        self._state = Motor.State(timestamp=0)
+        self._apply_state()
+
+    def _apply_state(self) -> None:
+        self._counter.count = int(self._state.count)
+        self._counter.abs_count = int(self._state.count % 360)
+        self._counter.rate = int(self._state.rate)
+        self._turtle.tiltangle(self._counter.abs_count)
+
+    def _on_coast(self, event: VirtualMotorDriver.CoastEvent) -> None:
+        count = self._state.count
+
+        # integrate every 1 millisecond since last timestamp
+        for _ in range(self._state.timestamp, event.timestamp, 1000):
+            count += self._state.duty_cycle * self.DUTY_SCALE_FACTOR
+
+        self._state = self._state._replace(
+            timestamp=event.timestamp, is_coasting=True, duty_cycle=0, count=count
+        )
+        self._apply_state()
+
+    def _on_duty_cycle(self, event: VirtualMotorDriver.DutyCycleEvent) -> None:
+        count = self._state.count
+
+        # integrate every 1 millisecond since last timestamp
+        for _ in range(self._state.timestamp, event.timestamp, 1000):
+            count += event.duty_cycle * self.DUTY_SCALE_FACTOR
+
+        self._state = self._state._replace(
+            timestamp=event.timestamp,
+            is_coasting=False,
+            duty_cycle=event.duty_cycle,
+            count=count,
+        )
+        self._apply_state()
 
 
 class Platform(DefaultPlatform):
@@ -101,33 +163,46 @@ class Platform(DefaultPlatform):
     def __init__(self) -> None:
         super().__init__()
 
-        self.battery[-1] = VirtualBattery()
-        self.button[-1] = VirtualButtons()
-        self.led[0] = StatusLight()
-
-        self._window_close_event = threading.Event()
-
         # we are using turtle just for drawing, so disable animations, etc.
         turtle.hideturtle()
-        turtle.delay(0)
         turtle.tracer(0, 0)
-
-        # event hooks
-
-        turtle.getcanvas().winfo_toplevel().protocol(
-            "WM_DELETE_WINDOW", self._window_close_event.set
-        )
-
-        turtle.onscreenclick(lambda x, y: on_click(x, y, True, self))
-        _onscreenrelease(turtle.Turtle._screen, lambda x, y: on_click(x, y, False, self))
 
         # draw initial hub
         draw_hub()
-        draw_light("black")
+
+        # drivers
+        self.battery[-1] = VirtualBattery()
+        self.button[-1] = VirtualButtons()
+        for i in range(6):
+            self.counter[i] = VirtualCounter()
+        for p in range(PortId.A, PortId.F + 1):
+            self.ioport[p] = VirtualIOPort(p)
+        self.led[0] = VirtualLed()
+        for i in range(6):
+            self.motor_driver[i] = VirtualMotorDriver()
+
+        # built-in devices
+        self._status_light = StatusLightButton(self.led[0], self.button[-1])
+
+        # attached I/O devices
+        self._motor = Motor()
+        self._motor.attach(self.ioport[PortId.A], self.motor_driver[0], self.counter[0])
+
+        # event hooks
+
+        self._window_close_event = threading.Event()
+        turtle.getcanvas().winfo_toplevel().protocol(
+            "WM_DELETE_WINDOW", self._window_close_event.set
+        )
 
     def on_event_poll(self) -> None:
         # send SystemExit to MicroPython runtime when window close button is clicked
         if self._window_close_event.is_set():
             raise SystemExit
 
-        do_events()
+        turtle.update()
+
+        root = turtle.getcanvas().winfo_toplevel()
+
+        while root.dooneevent(tk._tkinter.DONT_WAIT):
+            pass

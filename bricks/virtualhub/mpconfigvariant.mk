@@ -144,6 +144,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_virtual.c \
+	pbio/drv/ioport/ioport_virtual.c \
 	pbio/drv/led/led_core.c \
 	pbio/drv/led/led_virtual.c \
 	pbio/drv/motor_driver/motor_driver_virtual.c \

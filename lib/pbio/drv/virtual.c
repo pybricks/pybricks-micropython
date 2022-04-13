@@ -460,4 +460,36 @@ pbio_error_t pbdrv_virtual_get_i32(const char *component, int index, const char 
     return err;
 }
 
+/**
+ * Gets the value of `platform.<component>[<index>].<attribute>` as a C pointer.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  attribute   The name of the attribute.
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_ctype_pointer(const char *component, int index, const char *attribute, void **value) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // new ref
+    PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
+
+    if (!value_obj) {
+        goto err;
+    }
+
+    *value = PyLong_AsVoidPtr(value_obj);
+
+    Py_DECREF(value_obj);
+
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
+}
+
+
 #endif // PBDRV_CONFIG_VIRTUAL
