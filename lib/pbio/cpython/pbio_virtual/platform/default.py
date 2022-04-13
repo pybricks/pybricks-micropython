@@ -9,33 +9,33 @@ from ..drv.led import VirtualLed
 from . import DefaultPlatform
 
 
-class RGB(NamedTuple):
+class HSV(NamedTuple):
     """
-    An RGB value
+    Hue, saturation, value tuple.
     """
 
-    r: int
+    h: int
     """
-    red
+    hue
     """
-    g: int
+    s: int
     """
-    green
+    saturation
     """
-    b: int
+    v: int
     """
-    blue
+    value
     """
 
 
 class DefaultLed(VirtualLed):
-    rgb = RGB(0, 0, 0)
+    hsv = HSV(0, 0, 0)
     """
-    The most recent receive RGB value.
+    The most recently receive HSV value.
     """
 
-    def on_set_hsv(self, r: int, g: int, b: int) -> None:
-        self.rgb = RGB(r, g, b)
+    def on_set_hsv(self, timesamp: int, h: int, s: int, v: int) -> None:
+        self.hsv = HSV(h, s, v)
 
 
 class Platform(DefaultPlatform):

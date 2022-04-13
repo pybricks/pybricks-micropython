@@ -9,6 +9,7 @@
 
 #include <Python.h>
 
+#include <pbdrv/clock.h>
 #include <pbdrv/led.h>
 
 #include <pbio/color.h>
@@ -25,10 +26,7 @@
 static pbio_error_t pbdrv_led_virtual_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
     uint8_t id = (intptr_t)dev->pdata;
 
-    pbio_color_rgb_t rgb;
-    pbio_color_hsv_to_rgb(hsv, &rgb);
-
-    return pbdrv_virtual_call_method("led", id, "on_set_hsv", "BBB", rgb.r, rgb.g, rgb.b);
+    return pbdrv_virtual_call_method("led", id, "on_set_hsv", "IBBB", pbdrv_clock_get_us(), hsv->h, hsv->s, hsv->v);
 }
 
 static const pbdrv_led_funcs_t pbdrv_led_virtual_funcs = {

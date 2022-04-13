@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import colorsys
 import threading
 import tkinter as tk
 import turtle
@@ -87,8 +88,8 @@ def on_click(x: float, y: float, mouse_down: bool, hub: Platform) -> None:
 
 
 class StatusLight(VirtualLed):
-    def on_set_hsv(self, r: int, g: int, b: int) -> None:
-        draw_light((r, g, b))
+    def on_set_hsv(self, timestamp: int, h: int, s: int, v: int) -> None:
+        draw_light(colorsys.hsv_to_rgb(h / 360, s / 100, v / 100))
 
 
 class Platform(DefaultPlatform):
@@ -110,7 +111,6 @@ class Platform(DefaultPlatform):
         turtle.hideturtle()
         turtle.delay(0)
         turtle.tracer(0, 0)
-        turtle.colormode(255)
 
         # event hooks
 
