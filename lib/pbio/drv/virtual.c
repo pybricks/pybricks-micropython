@@ -164,25 +164,84 @@ static PyObject *pbdrv_virtual_get_platform(void) {
 }
 
 /**
- * Calls a method on the `platform` object.
+ * Gets the value of `platform.<component>` or `platform.<component>[<index>]` in the `__main__` module.
+ *
+ * NOTE: The GIL must be held when calling this function!
+ *
+ * @return A new reference to the component or `NULL` on error.
+ */
+static PyObject *pbdrv_virtual_get_component(const char *component, int index) {
+    PyObject *component_obj = NULL;
+
+    // new ref
+    PyObject *platform = pbdrv_virtual_get_platform();
+
+    if (!platform) {
+        return NULL;
+    }
+
+    // new ref
+    component_obj = PyObject_GetAttrString(platform, component);
+
+    if (!component_obj) {
+        goto err_unref_platform;
+    }
+
+    // if there is an index replace component_obj with the object at component_obj[index]
+    if (index >= 0) {
+        // new ref
+        PyObject *index_obj = PyLong_FromLong(index);
+
+        if (!index_obj) {
+            Py_DECREF(component_obj);
+            component_obj = NULL;
+            goto err_unref_platform;
+        }
+
+        // new ref
+        PyObject *sub_component_obj = PyObject_GetItem(component_obj, index_obj);
+
+        Py_DECREF(index_obj);
+
+        if (!sub_component_obj) {
+            Py_DECREF(component_obj);
+            component_obj = NULL;
+            goto err_unref_platform;
+        }
+
+        // discard original component and steal the ref from sub_component_obj
+        Py_DECREF(component_obj);
+        component_obj = sub_component_obj;
+    }
+
+err_unref_platform:
+    Py_DECREF(platform);
+
+    return component_obj;
+}
+
+/**
+ * Calls a method on the `platform.<component>` or `platform.<component>[<index>]` object.
  *
  * Refer to https://docs.python.org/3/c-api/arg.html#c.Py_BuildValue for formatting.
  *
  * Note that for single args, the format string needs to include `()` so that
  * it returns a tuple.
  *
- * @param [in]  name    The name of the method.
- * @param [in]  fmt     The format of each argument.
- * @param [in]  ...     The values for @p fmt or NULL if there are no args.
- * @returns             ::PBIO_SUCCESS if the call was successful or an error
- *                      if there was a CPython exception.
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  method      The name of the method.
+ * @param [in]  format      The format of each argument.
+ * @param [in]  ...         The values for @p fmt or NULL if there are no args.
+ * @returns                 ::PBIO_SUCCESS if the call was successful or an error
+ *                          if there was a CPython exception.
  */
-pbio_error_t pbdrv_virtual_platform_call_method(const char *name, const char *fmt, ...) {
+pbio_error_t pbdrv_virtual_call_method(const char *component, int index, const char *method, const char *format, ...) {
     PyGILState_STATE state = PyGILState_Ensure();
 
-    PyObject *platform = pbdrv_virtual_get_platform();
+    PyObject *component_obj = pbdrv_virtual_get_component(component, index);
 
-    if (!platform) {
+    if (!component_obj) {
         goto err;
     }
 
@@ -190,42 +249,43 @@ pbio_error_t pbdrv_virtual_platform_call_method(const char *name, const char *fm
     // the method and use Py_VaBuildValue() instead.
 
     // new reference
-    PyObject *method = PyObject_GetAttrString(platform, name);
+    PyObject *method_obj = PyObject_GetAttrString(component_obj, method);
 
-    if (!method) {
-        goto err_unref_platform;
+    if (!method_obj) {
+        goto err_unref_component;
     }
 
     va_list va;
-    va_start(va, fmt);
+    va_start(va, format);
     // new reference
-    PyObject *args = (!fmt || !*fmt) ? PyTuple_New(0) : Py_VaBuildValue(fmt, va);
+    PyObject *args_obj = (!format || !*format) ? PyTuple_New(0) : Py_VaBuildValue(format, va);
     va_end(va);
 
-    if (!args) {
+    if (!args_obj) {
         goto err_unref_method;
     }
 
-    if (!PyTuple_Check(args)) {
+    if (!PyTuple_Check(args_obj)) {
         PyErr_SetString(PyExc_TypeError, "args must be a tuple");
         goto err_unref_args;
     }
 
-    PyObject *ret = PyObject_Call(method, args, NULL);
+    // new reference
+    PyObject *ret_obj = PyObject_Call(method_obj, args_obj, NULL);
 
-    if (!ret) {
+    if (!ret_obj) {
         goto err_unref_args;
     }
 
     // return value is ignored
-    Py_DECREF(ret);
+    Py_DECREF(ret_obj);
 
 err_unref_args:
-    Py_DECREF(args);
+    Py_DECREF(args_obj);
 err_unref_method:
-    Py_DECREF(method);
-err_unref_platform:
-    Py_DECREF(platform);
+    Py_DECREF(method_obj);
+err_unref_component:
+    Py_DECREF(component_obj);
 
 err:;
     pbio_error_t err = pbdrv_virtual_check_cpython_exception();
@@ -244,7 +304,25 @@ err:;
  *          ::PBIO_ERROR_FAILED if there was an unhandled exception.
  */
 pbio_error_t pbdrv_virtual_poll_events(void) {
-    return pbdrv_virtual_platform_call_method("on_event_poll", NULL);
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    PyObject *platform = pbdrv_virtual_get_platform();
+
+    if (!platform) {
+        goto err;
+    }
+
+    PyObject *ret = PyObject_CallMethod(platform, "on_event_poll", NULL);
+
+    // ignore return value/error
+    Py_XDECREF(ret);
+
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
 }
 
 /**
@@ -259,53 +337,18 @@ pbio_error_t pbdrv_virtual_poll_events(void) {
  * @return                  A new reference to the value object or NULL on CPython exception.
  */
 static PyObject *pbdrv_virtual_platform_get_value(const char *component, int index, const char *attribute) {
-    PyObject *value_obj = NULL;
-
-    // new ref
-    PyObject *platform = pbdrv_virtual_get_platform();
-
-    if (!platform) {
-        goto err;
-    }
-
-    // new ref
-    PyObject *component_obj = PyObject_GetAttrString(platform, component);
+    // new reference
+    PyObject *component_obj = pbdrv_virtual_get_component(component, index);
 
     if (!component_obj) {
-        goto err_unref_platform;
+        return NULL;
     }
 
-    // if there is an index replace component_obj with the object at component_obj[index]
-    if (index >= 0) {
-        // new ref
-        PyObject *index_obj = PyLong_FromLong(index);
+    // new reference
+    PyObject *value_obj = PyObject_GetAttrString(component_obj, attribute);
 
-        if (!index_obj) {
-            goto err_unref_component;
-        }
-
-        // new ref
-        PyObject *sub_component_obj = PyObject_GetItem(component_obj, index_obj);
-
-        Py_DECREF(index_obj);
-
-        if (!sub_component_obj) {
-            goto err_unref_component;
-        }
-
-        // discard original component and steal the ref from sub_component_obj
-        Py_DECREF(component_obj);
-        component_obj = sub_component_obj;
-    }
-
-    // new ref
-    value_obj = PyObject_GetAttrString(component_obj, attribute);
-
-err_unref_component:
     Py_DECREF(component_obj);
-err_unref_platform:
-    Py_DECREF(platform);
-err:;
+
     return value_obj;
 }
 

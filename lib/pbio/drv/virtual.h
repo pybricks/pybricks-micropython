@@ -28,7 +28,7 @@ pbio_error_t pbdrv_virtual_platform_start(pbdrv_virtual_cpython_exception_handle
 pbio_error_t pbdrv_virtual_platform_stop(void);
 pbio_error_t pbdrv_virtual_poll_events(void);
 
-pbio_error_t pbdrv_virtual_platform_call_method(const char *name, const char *fmt, ...);
+pbio_error_t pbdrv_virtual_call_method(const char *component, int index, const char *method, const char *format, ...);
 pbio_error_t pbdrv_virtual_get_u8(const char *component, int index,  const char *attribute, uint8_t *value);
 pbio_error_t pbdrv_virtual_get_u16(const char *component, int index, const char *attribute, uint16_t *value);
 pbio_error_t pbdrv_virtual_get_u32(const char *component, int index, const char *attribute, uint32_t *value);

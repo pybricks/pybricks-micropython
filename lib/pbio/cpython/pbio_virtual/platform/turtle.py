@@ -9,6 +9,7 @@ import turtle
 from typing import Tuple, Union
 
 from ..drv.button import ButtonFlags
+from ..drv.led import VirtualLed
 from . import DefaultPlatform
 
 
@@ -84,6 +85,11 @@ def on_click(x: float, y: float, mouse_down: bool, hub: Platform) -> None:
             hub.buttons.pressed &= ~ButtonFlags.CENTER
 
 
+class StatusLight(VirtualLed):
+    def on_set_hsv(self, r: int, g: int, b: int) -> None:
+        draw_light((r, g, b))
+
+
 class Platform(DefaultPlatform):
     """
     This is a ``Platform`` implementation that uses turtle graphics to draw
@@ -92,6 +98,8 @@ class Platform(DefaultPlatform):
 
     def __init__(self) -> None:
         super().__init__()
+
+        self.led[0] = StatusLight()
 
         self._window_close_event = threading.Event()
 
@@ -120,9 +128,3 @@ class Platform(DefaultPlatform):
             raise SystemExit
 
         do_events()
-
-    def on_light(self, id: int, r: int, g: int, b: int) -> None:
-        if id != 0:
-            return
-
-        draw_light((r, g, b))
