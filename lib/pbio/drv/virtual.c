@@ -164,14 +164,14 @@ static PyObject *pbdrv_virtual_get_platform(void) {
 }
 
 /**
- * Gets the value of `platform.<component>` or `platform.<component>[<index>]` in the `__main__` module.
+ * Gets the value of `platform.<component>[<index>]`.
  *
  * NOTE: The GIL must be held when calling this function!
  *
  * @return A new reference to the component or `NULL` on error.
  */
 static PyObject *pbdrv_virtual_get_component(const char *component, int index) {
-    PyObject *component_obj = NULL;
+    PyObject *value_obj = NULL;
 
     // new ref
     PyObject *platform = pbdrv_virtual_get_platform();
@@ -181,43 +181,29 @@ static PyObject *pbdrv_virtual_get_component(const char *component, int index) {
     }
 
     // new ref
-    component_obj = PyObject_GetAttrString(platform, component);
+    PyObject *component_obj = PyObject_GetAttrString(platform, component);
 
     if (!component_obj) {
         goto err_unref_platform;
     }
 
-    // if there is an index replace component_obj with the object at component_obj[index]
-    if (index >= 0) {
-        // new ref
-        PyObject *index_obj = PyLong_FromLong(index);
+    // new ref
+    PyObject *index_obj = PyLong_FromLong(index);
 
-        if (!index_obj) {
-            Py_DECREF(component_obj);
-            component_obj = NULL;
-            goto err_unref_platform;
-        }
-
-        // new ref
-        PyObject *sub_component_obj = PyObject_GetItem(component_obj, index_obj);
-
-        Py_DECREF(index_obj);
-
-        if (!sub_component_obj) {
-            Py_DECREF(component_obj);
-            component_obj = NULL;
-            goto err_unref_platform;
-        }
-
-        // discard original component and steal the ref from sub_component_obj
-        Py_DECREF(component_obj);
-        component_obj = sub_component_obj;
+    if (!index_obj) {
+        goto error_unref_component;
     }
 
+    // new ref
+    value_obj = PyObject_GetItem(component_obj, index_obj);
+
+    Py_DECREF(index_obj);
+error_unref_component:
+    Py_DECREF(component_obj);
 err_unref_platform:
     Py_DECREF(platform);
 
-    return component_obj;
+    return value_obj;
 }
 
 /**
@@ -326,13 +312,12 @@ err:;
 }
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__` module.
+ * Gets the value of `platform.<component>[<index>].<attribute>`.
  *
  * NOTE: The GIL must be held when calling this function!
  *
  * @param [in]  component   The name of the component.
- * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  index       The index on @p component.
  * @param [in]  attribute   The name of the attribute.
  * @return                  A new reference to the value object or NULL on CPython exception.
  */
@@ -354,12 +339,10 @@ static PyObject *pbdrv_virtual_platform_get_value(const char *component, int ind
 
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as a long value.
+ * Gets the value of `platform.<component>[<index>].<attribute>` as a long value.
  *
  * @param [in]  component   The name of the component.
- * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  index       The index on @p component.
  * @param [in]  attribute   The name of the attribute.
  * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
  */
@@ -385,12 +368,10 @@ err:;
 }
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as an unsigned long value.
+ * Gets the value of `platform.<component>[<index>].<attribute>` as an unsigned long value.
  *
  * @param [in]  component   The name of the component.
- * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  index       The index on @p component.
  * @param [in]  attribute   The name of the attribute.
  * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
  */
@@ -416,12 +397,10 @@ err:;
 }
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as an unsigned 8-bit integer.
+ * Gets the value of `platform.<component>[<index>].<attribute>` module as an unsigned 8-bit integer.
  *
  * @param [in]  component   The name of the component.
- * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  index       The index on @p component.
  * @param [in]  attribute   The name of the attribute.
  * @param [out] value       The value read from CPython.
  * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
@@ -434,12 +413,10 @@ pbio_error_t pbdrv_virtual_get_u8(const char *component, int index, const char *
 }
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as an unsigned 16-bit integer.
+ * Gets the value of `platform.<component>[<index>].<attribute>` as an unsigned 16-bit integer.
  *
  * @param [in]  component   The name of the component.
- * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  index       The index on @p component.
  * @param [in]  attribute   The name of the attribute.
  * @param [out] value       The value read from CPython.
  * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
@@ -452,12 +429,10 @@ pbio_error_t pbdrv_virtual_get_u16(const char *component, int index, const char 
 }
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as an unsigned 32-bit integer.
+ * Gets the value of `platform.<component>[<index>].<attribute>` as an unsigned 32-bit integer.
  *
  * @param [in]  component   The name of the component.
- * @param [in]  index       The index on component or -1 to not use an index.
+ * @param [in]  index       The index on @p component.
  * @param [in]  attribute   The name of the attribute.
  * @param [out] value       The value read from CPython.
  * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
@@ -470,9 +445,7 @@ pbio_error_t pbdrv_virtual_get_u32(const char *component, int index, const char 
 }
 
 /**
- * Gets the value of `platform.<component>.<attribute>` or
- * `platform.<component>[<index>].<attribute>` from the `__main__`
- * module as a signed 32-bit integer.
+ * Gets the value of `platform.<component>[<index>].<attribute>` as a signed 32-bit integer.
  *
  * @param [in]  component   The name of the component.
  * @param [in]  index       The index on component or -1 to not use an index.

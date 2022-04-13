@@ -2,6 +2,7 @@
 # Copyright (c) 2022 The Pybricks Authors
 
 
+import abc
 from typing import Dict
 
 from ..drv.battery import VirtualBattery
@@ -10,19 +11,46 @@ from ..drv.counter import VirtualCounter
 from ..drv.led import VirtualLed
 
 
-class DefaultPlatform:
+class DefaultPlatform(abc.ABC):
     """
     Base class for virtual hub implementations.
     """
 
-    battery: VirtualBattery
-    buttons: VirtualButtons
+    battery: Dict[int, VirtualBattery]
+    """
+    The battery driver components.
+
+    PBIO currently only supports a single battery instance, so overriding
+    classes should assign ``battery[-1] = VirtualBattery()`` during init.
+    """
+
+    button: Dict[int, VirtualButtons]
+    """
+    The button driver components.
+
+    PBIO currently only supports a single button instance, so overriding
+    classes should assign ``button[-1] = VirtualButton()`` during init.
+    """
+
     counter: Dict[int, VirtualCounter]
+    """
+    The counter driver components.
+
+    Overriding classes should assign ``counter[<id>] = VirtualCounter()`` for
+    each counter device during init.
+    """
+
     led: Dict[int, VirtualLed]
+    """
+    The LED driver components.
+
+    Overriding classes should assign ``led[<id>] = VirtualLed()`` for
+    each LED device during init.
+    """
 
     def __init__(self):
-        self.battery = VirtualBattery()
-        self.buttons = VirtualButtons()
+        self.battery = {}
+        self.button = {}
         self.counter = {}
         self.led = {}
 

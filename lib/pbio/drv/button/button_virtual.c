@@ -15,7 +15,7 @@ void _pbdrv_button_init(void) {
 
 pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
     uint32_t int_flags;
-    pbio_error_t err = pbdrv_virtual_get_u32("buttons", -1, "pressed", &int_flags);
+    pbio_error_t err = pbdrv_virtual_get_u32("button", -1, "pressed", &int_flags);
     *pressed = int_flags;
     return err;
 }

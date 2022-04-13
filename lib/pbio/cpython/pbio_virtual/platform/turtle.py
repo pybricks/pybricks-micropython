@@ -8,7 +8,8 @@ import tkinter as tk
 import turtle
 from typing import Tuple, Union
 
-from ..drv.button import ButtonFlags
+from ..drv.battery import VirtualBattery
+from ..drv.button import ButtonFlags, VirtualButtons
 from ..drv.led import VirtualLed
 from . import DefaultPlatform
 
@@ -80,9 +81,9 @@ def on_click(x: float, y: float, mouse_down: bool, hub: Platform) -> None:
     if -15 <= x <= 15 and -90 <= y <= -60:
         # mouse click is within bounds of light/button
         if mouse_down:
-            hub.buttons.pressed |= ButtonFlags.CENTER
+            hub.button[-1].pressed |= ButtonFlags.CENTER
         else:
-            hub.buttons.pressed &= ~ButtonFlags.CENTER
+            hub.button[-1].pressed &= ~ButtonFlags.CENTER
 
 
 class StatusLight(VirtualLed):
@@ -99,6 +100,8 @@ class Platform(DefaultPlatform):
     def __init__(self) -> None:
         super().__init__()
 
+        self.battery[-1] = VirtualBattery()
+        self.button[-1] = VirtualButtons()
         self.led[0] = StatusLight()
 
         self._window_close_event = threading.Event()
