@@ -112,7 +112,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         PB_ARG_DEFAULT_NONE(path));
     const char *path = path_in == mp_const_none ? "log.txt" : mp_obj_str_get_str(path_in);
 
-    #if PYBRICKS_HUB_EV3BRICK
+    #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
     // Create an empty log file
     FILE *log_file;
 
@@ -123,7 +123,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     }
     #else
     mp_printf(&mp_plat_print, "PB_OF:%s\n", path);
-    #endif // PYBRICKS_HUB_EV3BRICK
+    #endif // PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
 
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
@@ -149,7 +149,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         // Make one string of values
         make_data_row_str(row_str, data, num_values);
 
-        #if PYBRICKS_HUB_EV3BRICK
+        #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
         // Append the row to file
         if (fprintf(log_file, "%s", row_str) < 0) {
             err = PBIO_ERROR_IO;
@@ -158,20 +158,20 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         #else
         // Print the row
         mp_print_str(&mp_plat_print, row_str);
-        #endif // PYBRICKS_HUB_EV3BRICK
+        #endif // PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
 
         // Writing data can take a while, so give MicroPython some time too
         mp_handle_pending(true);
     }
 
-    #if PYBRICKS_HUB_EV3BRICK
+    #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
     // Close the file
     if (fclose(log_file) != 0) {
         err = PBIO_ERROR_IO;
     }
     #else
     mp_print_str(&mp_plat_print, "PB_EOF\n");
-    #endif // PYBRICKS_HUB_EV3BRICK
+    #endif // PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
 
     pb_assert(err);
     return mp_const_none;
