@@ -7,6 +7,7 @@
 #define _INTERNAL_PBDRV_VIRTUAL_H_
 
 #include <stdbool.h>
+#include <unistd.h>
 
 #include <pbio/error.h>
 
@@ -33,6 +34,8 @@ pbio_error_t pbdrv_virtual_get_u8(const char *component, int index,  const char 
 pbio_error_t pbdrv_virtual_get_u16(const char *component, int index, const char *attribute, uint16_t *value);
 pbio_error_t pbdrv_virtual_get_u32(const char *component, int index, const char *attribute, uint32_t *value);
 pbio_error_t pbdrv_virtual_get_i32(const char *component, int index, const char *attribute, int32_t *value);
+pbio_error_t pbdrv_virtual_get_u64(const char *component, int index, const char *attribute, uint64_t *value);
 pbio_error_t pbdrv_virtual_get_ctype_pointer(const char *component, int index, const char *attribute, void **value);
+pbio_error_t pbdrv_virtual_get_thread_ident(ssize_t *value);
 
 #endif // _INTERNAL_PBDRV_VIRTUAL_H_

@@ -8,8 +8,7 @@
 #define PBDRV_CONFIG_BUTTON_VIRTUAL                         (1)
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
-#define PBDRV_CONFIG_CLOCK_LINUX                            (1)
-#define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)
+#define PBDRV_CONFIG_CLOCK_VIRTUAL                          (1)
 
 #define PBDRV_CONFIG_COUNTER                                (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                        (6)

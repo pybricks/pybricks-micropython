@@ -11,6 +11,7 @@ from typing import NamedTuple, Optional
 
 from ..drv.battery import VirtualBattery
 from ..drv.button import ButtonFlags, VirtualButtons
+from ..drv.clock import WallClock
 from ..drv.counter import VirtualCounter
 from ..drv.ioport import PortId, VirtualIOPort
 from ..drv.led import VirtualLed
@@ -173,6 +174,7 @@ class Platform(DefaultPlatform):
         # drivers
         self.battery[-1] = VirtualBattery()
         self.button[-1] = VirtualButtons()
+        self.clock[-1] = WallClock()
         for i in range(6):
             self.counter[i] = VirtualCounter()
         for p in range(PortId.A, PortId.F + 1):

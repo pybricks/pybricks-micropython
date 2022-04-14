@@ -141,6 +141,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/drv/battery/battery_virtual.c \
 	pbio/drv/button/button_virtual.c \
 	pbio/drv/clock/clock_linux.c \
+	pbio/drv/clock/clock_virtual.c \
 	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_virtual.c \

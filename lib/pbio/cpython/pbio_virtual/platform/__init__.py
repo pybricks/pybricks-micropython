@@ -5,8 +5,10 @@
 import abc
 from typing import Dict
 
+
 from ..drv.battery import VirtualBattery
 from ..drv.button import VirtualButtons
+from ..drv.clock import VirtualClock
 from ..drv.counter import VirtualCounter
 from ..drv.ioport import PortId, VirtualIOPort
 from ..drv.led import VirtualLed
@@ -32,6 +34,14 @@ class DefaultPlatform(abc.ABC):
 
     PBIO currently only supports a single button instance, so overriding
     classes should assign ``button[-1] = VirtualButton()`` during init.
+    """
+
+    clock: Dict[int, VirtualClock]
+    """
+    The clock driver component.
+
+    PBIO requires a single clock instance, so overriding classes must assign
+    ``clock[-1] = VirtualClock()`` during init.
     """
 
     counter: Dict[int, VirtualCounter]
@@ -69,6 +79,7 @@ class DefaultPlatform(abc.ABC):
     def __init__(self):
         self.battery = {}
         self.button = {}
+        self.clock = {}
         self.counter = {}
         self.ioport = {}
         self.led = {}

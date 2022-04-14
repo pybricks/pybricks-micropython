@@ -337,7 +337,6 @@ static PyObject *pbdrv_virtual_platform_get_value(const char *component, int ind
     return value_obj;
 }
 
-
 /**
  * Gets the value of `platform.<component>[<index>].<attribute>` as a long value.
  *
@@ -388,6 +387,36 @@ static pbio_error_t pbdrv_virtual_platform_get_unsigned_long(const char *compone
     *value = PyLong_AsUnsignedLong(value_obj);
 
     Py_DECREF(value_obj);
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
+}
+
+/**
+ * Gets the value of `platform.<component>[<index>].<attribute>` as an unsigned long long value.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on @p component.
+ * @param [in]  attribute   The name of the attribute.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+static pbio_error_t pbdrv_virtual_platform_get_unsigned_long_long(const char *component, int index, const char *attribute, unsigned long long *value) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // new ref
+    PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
+
+    if (!value_obj) {
+        goto err;
+    }
+
+    *value = PyLong_AsUnsignedLongLong(value_obj);
+
+    Py_DECREF(value_obj);
+
 err:;
     pbio_error_t err = pbdrv_virtual_check_cpython_exception();
 
@@ -461,6 +490,22 @@ pbio_error_t pbdrv_virtual_get_i32(const char *component, int index, const char 
 }
 
 /**
+ * Gets the value of `platform.<component>[<index>].<attribute>` as an unsigned 64-bit integer.
+ *
+ * @param [in]  component   The name of the component.
+ * @param [in]  index       The index on @p component.
+ * @param [in]  attribute   The name of the attribute.
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_u64(const char *component, int index, const char *attribute, uint64_t *value) {
+    unsigned long long long_value;
+    pbio_error_t err = pbdrv_virtual_platform_get_unsigned_long_long(component, index, attribute, &long_value);
+    *value = long_value;
+    return err;
+}
+
+/**
  * Gets the value of `platform.<component>[<index>].<attribute>` as a C pointer.
  *
  * @param [in]  component   The name of the component.
@@ -482,6 +527,43 @@ pbio_error_t pbdrv_virtual_get_ctype_pointer(const char *component, int index, c
     *value = PyLong_AsVoidPtr(value_obj);
 
     Py_DECREF(value_obj);
+
+err:;
+    pbio_error_t err = pbdrv_virtual_check_cpython_exception();
+
+    PyGILState_Release(state);
+
+    return err;
+}
+
+/**
+ * Gets the value of `threading.get_ident()`.
+ *
+ * @param [out] value       The value read from CPython.
+ * @return                  ::PBIO_SUCCESS or an error from a caught CPython exception.
+ */
+pbio_error_t pbdrv_virtual_get_thread_ident(ssize_t *value) {
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // new ref
+    PyObject *threading = PyImport_ImportModule("threading");
+
+
+    if (!threading) {
+        goto err;
+    }
+
+    PyObject *ident = PyObject_CallMethod(threading, "get_ident", NULL);
+
+    if (!ident) {
+        goto error_unref_threading;
+    }
+
+    *value = PyLong_AsSsize_t(ident);
+
+    Py_DECREF(ident);
+error_unref_threading:
+    Py_DECREF(threading);
 
 err:;
     pbio_error_t err = pbdrv_virtual_check_cpython_exception();
