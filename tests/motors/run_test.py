@@ -10,6 +10,7 @@ import numpy
 import os
 import pathlib
 import shutil
+import subprocess
 
 from pybricksdev.connections.pybricks import PybricksHub
 from pybricksdev.connections.lego import REPLHub
@@ -185,13 +186,20 @@ def plot_control_data(time, data, build_dir, subtitle=None):
 parser = argparse.ArgumentParser(description="Run motor script and show log.")
 parser.add_argument("file", help="Script to run")
 parser.add_argument("--show", dest="show", default=False, action="store_true")
-parser.add_argument("--usb", dest="usb", default=False, action="store_true")
+parser.add_argument(
+    "--target",
+    dest="target",
+    help="target type: %(choices)s",
+    choices=["ble", "usb", "virtual"],
+    default="ble",
+)
 args = parser.parse_args()
 
 # Local paths and data directories.
 time_string = datetime.datetime.now().strftime("-%Y-%m-%d-%H%M-%S")
 script_base_name, _ = os.path.splitext(os.path.split(args.file)[-1])
-build_dir = pathlib.Path(__file__).parent / "build" / (script_base_name + time_string)
+test_dir = pathlib.Path(__file__).parent
+build_dir = test_dir / "build" / (script_base_name + time_string)
 pathlib.Path(build_dir).mkdir(parents=True, exist_ok=True)
 
 # Copy script to data directory to archive experiment.
@@ -202,11 +210,24 @@ shutil.copyfile(args.file, script_archive)
 matplotlib.use("TkAgg")
 matplotlib.interactive(True)
 
-# Run the script.
-if args.usb:
+# Run the script on physical or virtual platform.
+if args.target == "usb":
     hub_output = asyncio.run(run_usb_repl_script(script_archive))
-else:
+elif args.target == "ble":
     hub_output = asyncio.run(run_pybricks_script(script_archive))
+else:
+    top_path = (test_dir / "../..").absolute()
+    bin_path = top_path / "bricks/virtualhub/build/virtualhub-micropython"
+    if "PYTHONPATH" not in os.environ:
+        os.environ["PYTHONPATH"] = str(top_path / "lib/pbio/cpython")
+    if "PBIO_VIRTUAL_PLATFORM_MODULE" not in os.environ:
+        os.environ["PBIO_VIRTUAL_PLATFORM_MODULE"] = "pbio_virtual.platform.turtle"
+    result = subprocess.run(
+        [bin_path, script_archive.absolute()], capture_output=True, cwd=build_dir.absolute()
+    )
+    hub_output = (result.stdout or result.stderr).split(b"\n")
+    for line in hub_output:
+        print(line.decode())
 
 # Save its standard output.
 with open(build_dir / "hub_output.txt", "wb") as f:
