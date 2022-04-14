@@ -174,3 +174,25 @@ start:
     // restore "interrupts"
     pthread_sigmask(SIG_SETMASK, &origmask, NULL);
 }
+
+uint64_t pb_virtualhub_time_ns(void) {
+    uint64_t value;
+    pb_assert(pbdrv_virtual_get_u64("clock", -1, "nanoseconds", &value));
+    return value;
+}
+
+mp_uint_t pb_virtualhub_ticks_us(void) {
+    return pb_virtualhub_time_ns() / 1000;
+}
+
+mp_uint_t pb_virtualhub_ticks_ms(void) {
+    return pb_virtualhub_time_ns() / 1000000;
+}
+
+void pb_virtualhub_delay_us(mp_uint_t us) {
+    mp_uint_t start = pb_virtualhub_ticks_us();
+
+    while (pb_virtualhub_ticks_us() - start < us) {
+        pb_virtualhub_poll();
+    }
+}
