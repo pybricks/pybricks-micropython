@@ -315,6 +315,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
+	pbio/drv/ioport/ioport_ev3dev_stretch.c \
 	pbio/drv/motor_driver/motor_driver_ev3dev_stretch.c \
 	pbio/platform/ev3dev_stretch/status_light.c \
 	pbio/src/battery.c \

@@ -24,6 +24,7 @@
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
+#include <pbio/port.h>
 #include <pbio/uartdev.h>
 
 #include "ioport_lpf2.h"
@@ -202,6 +203,39 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
     if ((*iodev)->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
         return PBIO_ERROR_AGAIN;
     }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_ioport_get_motor_device_type_id(pbio_port_id_t port, pbio_iodev_type_id_t *type_id) {
+    #if PBDRV_CONFIG_IOPORT_LPF2_MOVE_HUB_HACK
+    if (port == PBIO_PORT_ID_A || port == PBIO_PORT_ID_B) {
+        *type_id = PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR;
+        return PBIO_SUCCESS;
+    }
+    #endif
+
+    // Try to get iodev.
+    pbio_iodev_t *iodev;
+    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
+
+    // PBIO_ERROR_NO_DEV is allowed; it means nothing is attached.
+    if (err == PBIO_ERROR_NO_DEV) {
+        *type_id = PBIO_IODEV_TYPE_ID_NONE;
+        return PBIO_SUCCESS;
+    }
+
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // This operation is invalid for non-motors like powered sensors.
+    if (!PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Get the device ID for the motor or light.
+    *type_id = iodev->info->type_id;
 
     return PBIO_SUCCESS;
 }

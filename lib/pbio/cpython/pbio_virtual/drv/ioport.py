@@ -54,6 +54,156 @@ class PortId(IntEnum):
     """
 
 
+class IODeviceTypeId(IntEnum):
+    """
+    I/O device type identifiers.
+
+    Values are the same as ``pbio_iodev_type_id_t``.
+    """
+
+    NONE = 0
+    """
+    No device is present
+    """
+
+    # LEGO Powered Up non-UART devices - some of these don't exist in real-life
+    LPF2_MMOTOR = 1
+    """
+    45303 Powered Up Medium Motor (aka WeDo 2.0 motor)
+    """
+    LPF2_TRAIN = 2
+    """
+    Powered Up Train Motor
+    """
+    LPF2_TURN = 3
+    LPF2_POWER = 4
+    LPF2_TOUCH = 5
+    LPF2_LMOTOR = 6
+    LPF2_XMOTOR = 7
+    LPF2_LIGHT = 8
+    """
+    88005 Powered Up Lights
+    """
+    LPF2_LIGHT1 = 9
+    LPF2_LIGHT2 = 10
+    LPF2_TPOINT = 11
+    LPF2_EXPLOD = 12
+    LPF2_3_PART = 13
+    LPF2_UNKNOWN_UART = 14
+    """
+    Temporary ID for UART devices until real ID is read from the device.
+    """
+
+    # LEGO EV3 UART devices
+
+    EV3_COLOR_SENSOR = 29
+    """
+    MINDSTORMS EV3 Color Sensor
+    """
+
+    EV3_ULTRASONIC_SENSOR = 30
+    """
+    MINDSTORMS EV3 Ultrasonic Sensor
+    """
+
+    EV3_GYRO_SENSOR = 32
+    """
+    MINDSTORMS EV3 Gyro Sensor
+    """
+
+    EV3_IR_SENSOR = 33
+    """
+    MINDSTORMS EV3 Infrared Sensor
+    """
+
+    # WeDo 2.0 UART devices
+
+    WEDO2_TILT_SENSOR = 34
+    """
+    WeDo 2.0 Tilt Sensor
+    """
+
+    WEDO2_MOTION_SENSOR = 35
+    """
+    WeDo 2.0 Motion Sensor
+    """
+
+    WEDO2_GENERIC_SENSOR = 36
+
+    # BOOST UART devices and motors
+
+    COLOR_DIST_SENSOR = 37
+    """
+    BOOST Color and Distance Sensor
+    """
+
+    INTERACTIVE_MOTOR = 38
+    """
+    BOOST Interactive Motor
+    """
+
+    MOVE_HUB_MOTOR = 39
+    """
+    BOOST Move Hub built-in Motor
+    """
+
+    # Technic motors
+
+    TECHNIC_L_MOTOR = 46
+    """
+    Technic Large Motor
+    """
+
+    TECHNIC_XL_MOTOR = 47
+    """
+    Technic XL Motor
+    """
+
+    # SPIKE motors
+
+    SPIKE_M_MOTOR = 48
+    """
+    SPIKE Medium Motor
+    """
+
+    SPIKE_L_MOTOR = 49
+    """
+    SPIKE Large Motor
+    """
+
+    # SPIKE sensors
+
+    SPIKE_COLOR_SENSOR = 61
+    """
+    SPIKE Color Sensor
+    """
+
+    SPIKE_ULTRASONIC_SENSOR = 62
+    """
+    SPIKE Ultrasonic Sensor
+    """
+
+    SPIKE_FORCE_SENSOR = 63
+    """
+    SPIKE Prime Force Sensor
+    """
+
+    TECHNIC_COLOR_LIGHT_MATRIX = 64
+    """
+    Technic Color Light Matrix
+    """
+
+    SPIKE_S_MOTOR = 65
+    """
+    SPIKE Small Motor
+    """
+
+    # Technic Angular Motors
+    TECHNIC_M_ANGULAR_MOTOR = 75
+
+    TECHNIC_L_ANGULAR_MOTOR = 76
+
+
 class pbio_port_id_t(ctypes.c_uint32):
     pass
 
@@ -141,6 +291,14 @@ pbio_iodev_t._fields_ = [
 
 
 class VirtualIOPort:
+    motor_type_id: IODeviceTypeId = IODeviceTypeId.NONE
+    """
+    The I/O device type ID of the motor (or non-UART light) connected to this port.
+
+    This should be set to ``IODeviceTypeId.NONE`` when a non-motor sensor is
+    attached or if nothing is attached.
+    """
+
     def __init__(self, port: PortId) -> None:
         """
         Creates a new virtual I/O port.

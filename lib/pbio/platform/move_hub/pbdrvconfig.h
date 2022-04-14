@@ -42,6 +42,7 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (2)
 #define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_ID_C
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_ID_D
+#define PBDRV_CONFIG_IOPORT_LPF2_MOVE_HUB_HACK      (1)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (1)
