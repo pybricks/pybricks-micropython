@@ -353,6 +353,7 @@ static pbio_error_t pbdrv_virtual_platform_get_long(const char *component, int i
     PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
 
     if (!value_obj) {
+        *value = 0;
         goto err;
     }
 
@@ -382,6 +383,7 @@ static pbio_error_t pbdrv_virtual_platform_get_unsigned_long(const char *compone
     PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
 
     if (!value_obj) {
+        *value = 0;
         goto err;
     }
 
@@ -411,6 +413,7 @@ static pbio_error_t pbdrv_virtual_platform_get_unsigned_long_long(const char *co
     PyObject *value_obj = pbdrv_virtual_platform_get_value(component, index, attribute);
 
     if (!value_obj) {
+        *value = 0;
         goto err;
     }
 
