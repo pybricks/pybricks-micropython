@@ -27,7 +27,7 @@ typedef bool (*pbdrv_virtual_cpython_exception_handler_t)(PyObject *type, PyObje
 // REVISIT: these are high-level APIs and might need to be moved to a different header file
 pbio_error_t pbdrv_virtual_platform_start(pbdrv_virtual_cpython_exception_handler_t handler);
 pbio_error_t pbdrv_virtual_platform_stop(void);
-pbio_error_t pbdrv_virtual_poll_events(void);
+pbio_error_t pbdrv_virtual_platform_poll(void);
 
 pbio_error_t pbdrv_virtual_call_method(const char *component, int index, const char *method, const char *format, ...);
 pbio_error_t pbdrv_virtual_get_u8(const char *component, int index,  const char *attribute, uint8_t *value);

@@ -132,5 +132,5 @@ void pb_virtualhub_event_poll(void) {
     while (pbio_do_one_event()) {
     }
 
-    pb_assert(pbdrv_virtual_poll_events());
+    pb_assert(pbdrv_virtual_platform_poll());
 }

@@ -12,6 +12,7 @@
 
 #include <Python.h>
 
+#include <pbdrv/clock.h>
 #include <pbio/error.h>
 #include "virtual.h"
 
@@ -282,14 +283,14 @@ err:;
 }
 
 /**
- * Calls `platform.on_event_poll()`.
+ * Calls `platform.on_poll()`.
  *
  * This should be called whenever the runtime is "idle".
  *
  * @returns ::PBIO_SUCCESS if there were no unhandled CPython exception or
  *          ::PBIO_ERROR_FAILED if there was an unhandled exception.
  */
-pbio_error_t pbdrv_virtual_poll_events(void) {
+pbio_error_t pbdrv_virtual_platform_poll(void) {
     PyGILState_STATE state = PyGILState_Ensure();
 
     PyObject *platform = pbdrv_virtual_get_platform();
@@ -298,7 +299,7 @@ pbio_error_t pbdrv_virtual_poll_events(void) {
         goto err;
     }
 
-    PyObject *ret = PyObject_CallMethod(platform, "on_event_poll", NULL);
+    PyObject *ret = PyObject_CallMethod(platform, "on_poll", "I", pbdrv_clock_get_us());
 
     // ignore return value/error
     Py_XDECREF(ret);

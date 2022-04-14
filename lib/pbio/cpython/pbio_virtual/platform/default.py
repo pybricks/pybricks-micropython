@@ -8,10 +8,10 @@ from ..drv.counter import VirtualCounter
 from ..drv.ioport import VirtualIOPort, PortId
 from ..drv.led import VirtualLed
 from ..drv.motor_driver import VirtualMotorDriver
-from . import DefaultPlatform
+from . import VirtualPlatform
 
 
-class Platform(DefaultPlatform):
+class Platform(VirtualPlatform):
     def __init__(self):
         super().__init__()
 

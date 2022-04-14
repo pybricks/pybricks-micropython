@@ -3,7 +3,7 @@
 
 
 import abc
-from typing import Dict
+from typing import Callable, Dict, List, NamedTuple
 
 
 from ..drv.battery import VirtualBattery
@@ -15,7 +15,7 @@ from ..drv.led import VirtualLed
 from ..drv.motor_driver import VirtualMotorDriver
 
 
-class DefaultPlatform(abc.ABC):
+class VirtualPlatform(abc.ABC):
     """
     Base class for virtual hub implementations.
     """
@@ -76,6 +76,17 @@ class DefaultPlatform(abc.ABC):
     for each motor driver device during init.
     """
 
+    class PollEvent(NamedTuple):
+        timestamp: int
+        """
+        The time when the event occurred as 32-bit unsigned microseconds.
+        """
+
+    PollCallback = Callable[[PollEvent], None]
+    Unsubscribe = Callable[[], None]
+
+    _poll_subscriptions: List[PollCallback]
+
     def __init__(self):
         self.battery = {}
         self.button = {}
@@ -85,11 +96,27 @@ class DefaultPlatform(abc.ABC):
         self.led = {}
         self.motor_driver = {}
 
-    def on_event_poll(self) -> None:
-        """
-        This method is called during MICROPY_EVENT_POLL_HOOK in MicroPython.
+        self._poll_subscriptions = []
 
-        The default implementation does nothing, so overriding methods don't
-        need to call ``super().on_event_poll()``.
+    def subscribe_poll(self, callback: PollCallback) -> Unsubscribe:
         """
-        pass
+        Subscribes to poll events.
+
+        Args:
+            callback:
+                A function that will be called each time :meth:`on_poll()` is called.
+
+        Returns:
+            A function that, when called, will unsubscribe from the events.
+        """
+        self._poll_subscriptions.append(callback)
+        return lambda: self._poll_subscriptions.remove(callback)
+
+    def on_poll(self, *args) -> None:
+        """
+        This method is called when ``pbdrv_virtual_platform_poll()`` is called.
+        """
+        event = self.PollEvent(*args)
+
+        for callback in self._poll_subscriptions:
+            callback(event)
