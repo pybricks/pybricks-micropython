@@ -77,10 +77,13 @@ extern const struct _mp_obj_module_t pb_package_pybricks;
     mp_obj_dict_t *pb_type_Color_dict;
 
 #define MICROPY_VM_HOOK_LOOP do { \
-        extern void pb_virtualhub_event_poll(void); \
-        pb_virtualhub_event_poll(); \
+        extern void pb_virtualhub_poll(void); \
+        pb_virtualhub_poll(); \
 } while (0);
 
 #define MICROPY_GC_HOOK_LOOP MICROPY_VM_HOOK_LOOP
 
-#define MICROPY_EVENT_POLL_HOOK MICROPY_VM_HOOK_LOOP
+#define MICROPY_EVENT_POLL_HOOK do { \
+        extern void pb_virtualhub_event_poll(void); \
+        pb_virtualhub_event_poll(); \
+} while (0);

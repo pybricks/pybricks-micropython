@@ -3,10 +3,14 @@
 
 // MicroPython port-specific implementation hooks
 
+#include <pthread.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/select.h>
 
+#include <contiki.h>
 #include <Python.h>
 
 #include <pbio/main.h>
@@ -125,12 +129,48 @@ void pb_virtualhub_port_deinit(void) {
     }
 }
 
+// MICROPY_VM_HOOK_LOOP
+void pb_virtualhub_poll(void) {
+    while (pbio_do_one_event()) {
+    }
+
+    // it is probably a bit inefficient, but we need to keep calling into the
+    // CPython runtime here in case MicroPython is running in a tight loop,
+    // e.g. `while True: pass`.
+    pb_assert(pbdrv_virtual_platform_poll());
+}
+
 // MICROPY_EVENT_POLL_HOOK
 void pb_virtualhub_event_poll(void) {
+start:
     mp_handle_pending(true);
 
     while (pbio_do_one_event()) {
     }
 
     pb_assert(pbdrv_virtual_platform_poll());
+
+    sigset_t sigmask;
+    sigfillset(&sigmask);
+
+    // disable "interrupts"
+    sigset_t origmask;
+    pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
+
+    if (process_nevents()) {
+        // somthing was scheduled since the event loop above
+        pthread_sigmask(SIG_SETMASK, &origmask, NULL);
+        goto start;
+    }
+
+    struct timespec timeout = {
+        .tv_sec = 0,
+        .tv_nsec = 1000000,
+    };
+
+    // "sleep" with "interrupts" enabled
+    pselect(0, NULL, NULL, NULL, &timeout, &origmask);
+
+    // restore "interrupts"
+    pthread_sigmask(SIG_SETMASK, &origmask, NULL);
 }
