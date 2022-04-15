@@ -6,7 +6,7 @@ from pybricks import version
 print(version)
 
 # Initialize the motor.
-motor = Motor(Port.D)
+motor = Motor(Port.A)
 
 # Allocate the data logs.
 DURATION = 10 * 1000

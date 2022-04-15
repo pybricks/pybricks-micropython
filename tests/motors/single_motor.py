@@ -14,7 +14,7 @@ motor.log.start(DURATION)
 motor.control.log.start(DURATION)
 
 # Run the motor.
-motor.run_target(100, 360)
+motor.run_target(500, 360)
 
 # Wait so we can also log the stopped behavior.
 wait(500)
