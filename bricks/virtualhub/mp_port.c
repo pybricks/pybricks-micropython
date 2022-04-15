@@ -145,10 +145,19 @@ void pb_virtualhub_event_poll(void) {
 start:
     mp_handle_pending(true);
 
+    int events_handled = 0;
+
     while (pbio_do_one_event()) {
+        events_handled++;
     }
 
     pb_assert(pbdrv_virtual_platform_poll());
+
+    // If there were any pbio events handled, don't sleep because there may
+    // be something waiting on one of the events that was just handled.
+    if (events_handled) {
+        return;
+    }
 
     sigset_t sigmask;
     sigfillset(&sigmask);
