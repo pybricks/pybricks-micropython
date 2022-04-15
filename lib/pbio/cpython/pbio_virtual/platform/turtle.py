@@ -16,7 +16,7 @@ from ..drv.battery import VirtualBattery
 from ..drv.button import ButtonFlags, VirtualButtons
 from ..drv.clock import WallClock, VirtualClock
 from ..drv.counter import VirtualCounter
-from ..drv.ioport import PortId, VirtualIOPort
+from ..drv.ioport import IODeviceTypeId, PortId, VirtualIOPort
 from ..drv.led import VirtualLed
 from ..drv.motor_driver import VirtualMotorDriver
 from . import VirtualPlatform
@@ -147,10 +147,7 @@ class Motor:
         clock: VirtualClock,
         platform: VirtualPlatform,
     ) -> None:
-        # SPIKE medium motor
-        # TODO: should fill all fields
-        port._info.type_id = 48
-        port._info.capability_flags = 0xF
+        port.motor_type_id = IODeviceTypeId.SPIKE_M_MOTOR
 
         # REVISIT: if we need to detach the motor, we will need to save the
         # returned unsubscribe functions

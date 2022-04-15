@@ -37,9 +37,8 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str);
  *
  * @param [in]  port        The port the motor is attached to.
  * @param [in]  is_servo    True if the motor is to be used with position feedback, otherwise false.
- * @param [out] id          The I/O device type ID of the motor attached to the port.
  */
-void pb_device_setup_motor(pbio_port_id_t port, bool is_servo, pbio_iodev_type_id_t *id);
+void pb_device_setup_motor(pbio_port_id_t port, bool is_servo);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

@@ -78,21 +78,20 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
 void pbdrv_motor_driver_init(void) {
 }
 
-/**
- * Gets the test motor type ID.
- *
- * If the @c PBIO_TEST_MOTOR_TYPE environment variable is set, then that value
- * is used. Otherwise ::PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR is returned.
- */
-static pbio_iodev_type_id_t get_test_motor_type(void) {
+// I/O port driver implementation
+
+pbio_error_t pbdrv_ioport_get_motor_device_type_id(pbio_port_id_t id, pbio_iodev_type_id_t *type_id) {
     const char *motor_id = getenv("PBIO_TEST_MOTOR_TYPE");
 
-    if (!motor_id) {
+    if (motor_id) {
+        *type_id = atoi(motor_id);
+    } else {
         // default value if environment variable is not set
-        return PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR;
+        *type_id = PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR;
     }
 
-    return atoi(motor_id);
+
+    return PBIO_SUCCESS;
 }
 
 
@@ -119,7 +118,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     tt_want(process_is_running(&pbio_motor_process));
 
     tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_A, &servo), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(servo, get_test_motor_type(), PBIO_DIRECTION_CLOCKWISE, F16C(1, 0), true), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0), true), ==, PBIO_SUCCESS);
 
     // only logging one row since we read it after every iteration
     log_buf = malloc(sizeof(*log_buf) * pbio_logger_cols(&servo->control.log));

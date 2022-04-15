@@ -19,6 +19,9 @@
 #define PBDRV_CONFIG_LED_ARRAY                      (1)
 #define PBDRV_CONFIG_LED_ARRAY_NUM_DEV              (0)
 
+#define PBDRV_CONFIG_IOPORT                         (1)
+#define PBDRV_CONFIG_IOPORT_TEST                    (1)
+
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_TEST              (1)

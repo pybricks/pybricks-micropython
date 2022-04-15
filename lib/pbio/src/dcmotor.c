@@ -29,25 +29,19 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
 
     // Go through all ports.
     for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
-        pbio_iodev_t *iodev;
 
-        pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
-
-        if (err != PBIO_SUCCESS || !PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
-            // If this is not a motor, we don't want to turn it off.
-            #if PBIO_CONFIG_DCMOTOR_MOVE_HUB_HACK
-            // HACK: Special case for Move hub since it doesn't have iodev for
-            // ports A and B which are the built-in motors.
-            if (port != PBIO_PORT_ID_A && port != PBIO_PORT_ID_B)
-            #endif
+        // Get device from port index.
+        pbio_dcmotor_t *dcmotor;
+        pbio_error_t err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
+        if (err != PBIO_SUCCESS) {
             continue;
         }
 
-        pbio_dcmotor_t *dcmotor;
-
-        err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
-
+        // Get the device type ID to ensure we are dealing with a motor.
+        pbio_iodev_type_id_t type_id;
+        err = pbdrv_ioport_get_motor_device_type_id(port, &type_id);
         if (err != PBIO_SUCCESS) {
+            // It's something other than a motor, so don't touch it.
             continue;
         }
 
@@ -64,18 +58,14 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
  * Sets up the DC motor instance to be used in an application.
  *
  * @param [in]  dcmotor     The DC motor instance.
- * @param [in]  id          The I/O device type ID of the motor.
  * @param [in]  direction   The direction of positive rotation.
  */
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id, pbio_direction_t direction) {
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
 
-    pbio_error_t err;
-
-    dcmotor->id = id;
-
-    // Assuming we have just run the device getter, we can now read and verify
-    // the device id here.
-    if (dcmotor->id == PBIO_IODEV_TYPE_ID_NONE) {
+    // Get the device type ID to ensure we are dealing with a motor.
+    pbio_iodev_type_id_t type_id;
+    pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(dcmotor->port, &type_id);
+    if (err != PBIO_SUCCESS || type_id == PBIO_IODEV_TYPE_ID_NONE) {
         return PBIO_ERROR_NO_DEV;
     }
 
@@ -92,7 +82,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id
     }
 
     // Load settings for this motor
-    dcmotor->max_voltage = pbio_dcmotor_get_max_voltage(dcmotor->id);
+    dcmotor->max_voltage = pbio_dcmotor_get_max_voltage(type_id);
 
     // Set direction and state
     dcmotor->direction = direction;
@@ -118,6 +108,8 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
     // if this is the first time getting the device, we need to get the motor
     // driver instance
     if ((*dcmotor)->motor_driver == NULL) {
+        // since there is no dcmotor module init, we init the port here
+        (*dcmotor)->port = port;
         // REVISIT: this assumes that the motor driver id cooresponds to the port
         pbio_error_t err = pbdrv_motor_driver_get_dev(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &(*dcmotor)->motor_driver);
 
@@ -197,8 +189,16 @@ void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
 }
 
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage) {
+
+    // Get the device type.
+    pbio_iodev_type_id_t type_id;
+    pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(dcmotor->port, &type_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // New maximum voltage must be positive and at or below hardware limit.
-    if (max_voltage < 0 || max_voltage > pbio_dcmotor_get_max_voltage(dcmotor->id)) {
+    if (max_voltage < 0 || max_voltage > pbio_dcmotor_get_max_voltage(type_id)) {
         return PBIO_ERROR_INVALID_ARG;
     }
     // Set the new value.
