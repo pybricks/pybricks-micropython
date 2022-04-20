@@ -21,6 +21,7 @@
 typedef struct _pupdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t color_map;
+    int32_t chroma_weight;
     pb_device_t *pbdev;
     mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
@@ -82,6 +83,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     // Save default settings
     pb_color_map_save_default(&self->color_map);
+    self->chroma_weight = 50;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -122,7 +124,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
     }
 
     // Get and return discretized color
-    return pb_color_map_get_color(&self->color_map, &hsv);
+    return pb_color_map_get_color(&self->color_map, &hsv, self->chroma_weight);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
 

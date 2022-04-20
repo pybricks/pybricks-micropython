@@ -352,12 +352,13 @@ static void test_color_hsv_cost(void *env) {
     pbio_color_hsv_t color_a;
     pbio_color_hsv_t color_b;
     int32_t dist;
+    int32_t chroma_weight = 50;
 
     // color compared to itself should give 0
     color_a.h = 0;
     color_a.s = 100;
     color_a.v = 100;
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_a), ==, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_a, chroma_weight), ==, 0);
 
     // blacks with different saturations/hues should be the same
     color_a.h = 230;
@@ -367,7 +368,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 23;
     color_b.s = 99;
     color_b.v = 0;
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), ==, 0);
 
     // colors with different hues should be different when value>0 and saturation>0
     color_a.h = 230;
@@ -377,7 +378,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 23;
     color_b.s = 99;
     color_b.v = 100;
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, 0);
 
     // grays with different hues should be the same
     color_a.h = 230;
@@ -387,7 +388,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 23;
     color_b.s = 0;
     color_b.v = 50;
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), ==, 0);
 
     // distance should be greater when saturation is greater
     color_a.h = 30;
@@ -398,7 +399,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 20;
     color_b.v = 70;
 
-    dist = pbio_get_cone_cost(&color_a, &color_b);
+    dist = pbio_get_cone_cost(&color_a, &color_b, chroma_weight);
 
     color_a.h = 30;
     color_a.s = 40;
@@ -408,7 +409,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 40;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, dist);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, dist);
 
     // resolve colors that are very close
     color_a.h = 30;
@@ -419,7 +420,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 20;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, 0);
 
     color_a.h = 30;
     color_a.s = 20;
@@ -429,7 +430,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 25;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, 0);
 
     color_a.h = 30;
     color_a.s = 20;
@@ -439,7 +440,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 20;
     color_b.v = 71;
 
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, 0);
 
     // distance of opposite colors should be the same as double saturation to gray
     color_a.h = 20;
@@ -449,7 +450,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 200;
     color_b.s = 20;
     color_b.v = 70;
-    dist = pbio_get_cone_cost(&color_a, &color_b);
+    dist = pbio_get_cone_cost(&color_a, &color_b, chroma_weight);
 
     color_a.h = 20;
     color_a.s = 40;
@@ -459,7 +460,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 0;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, dist);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), ==, dist);
 
     // hues 360 and 0 should be the same
     color_a.h = 360;
@@ -469,7 +470,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 0;
     color_b.s = 100;
     color_b.v = 100;
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), ==, 0);
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), ==, 0);
 
     // distance between hues 359 and 1 should be smaller than hues 1 and 5
     color_a.h = 359;
@@ -479,7 +480,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 1;
     color_b.s = 100;
     color_b.v = 100;
-    dist = pbio_get_cone_cost(&color_a, &color_b);
+    dist = pbio_get_cone_cost(&color_a, &color_b, chroma_weight);
 
     color_a.h = 1;
     color_a.s = 100;
@@ -489,6 +490,27 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 100;
     color_b.v = 100;
 
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, dist);
+
+    // when chroma_weight is 0, all colors with same values should be the same
+    color_a.h = 0;
+    color_a.s = 100;
+    color_a.v = 100;
+
+    color_b.h = 180;
+    color_b.s = 100;
+    color_b.v = 100;
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, 0), ==, 0);
+
+    // when chroma_weight is 100, all colors with same hue and chroma (s*v) should be the same
+    color_a.h = 0;
+    color_a.s = 100;
+    color_a.v = 50;
+
+    color_b.h = 0;
+    color_b.s = 50;
+    color_b.v = 100;
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, 100), ==, 0);
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b), >, dist);
 }
 

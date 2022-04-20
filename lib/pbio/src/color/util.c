@@ -34,7 +34,7 @@ int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) 
 }
 
 // gets squared cartesian distance between hsv colors mapped into a chroma-value-cone
-int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b) {
+int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b, const int32_t chroma_weight) {
 
     pbio_color_hsv_fix16_t a, b;
     pbio_color_hsv_to_fix16(hsv_a, &a);
@@ -54,13 +54,17 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
     // delz = cone_height * (b_v - a_v)
     fix16_t delz = fix16_mul(F16C(1,000), fix16_sub(b.v, a.v));
 
-    // cdist = delx*delx + dely*dely + delz*delz
+    // cdist = chroma_weight*(delx*delx + dely*dely) + (100-chroma_weight)*delz*delz
     fix16_t cdist = fix16_add(
-        fix16_add(
-            fix16_sq(delx),
-            fix16_sq(dely)),
-        fix16_sq(delz));
+        fix16_mul(
+            fix16_from_int(100*chroma_weight),
+            fix16_add(
+                fix16_sq(delx),
+                fix16_sq(dely))),
+        fix16_mul(
+            fix16_from_int(10000-100*chroma_weight),
+            fix16_sq(delz)));
 
-    // multiply by large number to increase resolution when converting to int
-    return fix16_to_int(fix16_mul(cdist, F16C(5000, 0000)));
+    // multiply by 100 to increase resolution when converting to int
+    return fix16_to_int(cdist);
 }

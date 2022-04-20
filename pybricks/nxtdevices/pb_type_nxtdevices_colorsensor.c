@@ -18,6 +18,7 @@
 typedef struct _nxtdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t color_map;
+    int32_t chroma_weight;
     mp_obj_t light;
     pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
@@ -59,6 +60,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     // Save default color settings
     pb_color_map_save_default(&self->color_map);
+    self->chroma_weight = 50;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -137,7 +139,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
     pb_color_map_rgb_to_hsv(&rgb, &hsv);
 
     // Get and return discretized color based on HSV
-    return pb_color_map_get_color(&self->color_map, &hsv);
+    return pb_color_map_get_color(&self->color_map, &hsv, self->chroma_weight);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_color_obj, nxtdevices_ColorSensor_color);
 

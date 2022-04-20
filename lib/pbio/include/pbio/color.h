@@ -127,7 +127,7 @@ void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_c
 void pbio_color_hsv_to_fix16(const pbio_color_hsv_t *hsv, pbio_color_hsv_fix16_t *hsv_fix16);
 
 int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c);
-int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b);
+int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b, const int32_t chroma_weight);
 
 #endif // _PBIO_COLOR_H_
 

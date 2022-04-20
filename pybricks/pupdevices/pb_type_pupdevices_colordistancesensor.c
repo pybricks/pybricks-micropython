@@ -21,6 +21,7 @@
 typedef struct _pupdevices_ColorDistanceSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t color_map;
+    int32_t chroma_weight;
     pb_device_t *pbdev;
     mp_obj_t light;
 } pupdevices_ColorDistanceSensor_obj_t;
@@ -91,6 +92,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 
     // Save default color settings
     pb_color_map_save_default(&self->color_map);
+    self->chroma_weight = 50;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -103,7 +105,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor__hsv(self, &hsv);
 
     // Get and return discretized color based on HSV
-    return pb_color_map_get_color(&self->color_map, &hsv);
+    return pb_color_map_get_color(&self->color_map, &hsv, self->chroma_weight);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupdevices_ColorDistanceSensor_color);
 
