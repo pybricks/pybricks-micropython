@@ -35,9 +35,9 @@ class SimulationModel(ABC):
 
         # Empty buffers to hold results, starting with the initial time/state.
         self.times = array([t0])
-        self.states = self.x0.reshape(self.n, 1) if x0 else zeros((self.n, 1))
+        self.states = zeros((self.n, 1)) if x0 is None else x0.reshape(self.n, 1)
         self.inputs = zeros((self.m, 1))
-        self.outputs = zeros((self.p, 1))
+        self.outputs = self.output(t0, x0).reshape(self.p, 1)
 
     def simulate(self, te, u):
         """Simulates the system until time te, subject to constant input u.
