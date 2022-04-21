@@ -84,7 +84,7 @@ class CountingClock(VirtualClock):
     """
 
     def __init__(
-        self, start: int = (2 ** 32 - 3) * 1000, step: int = 1000, fuzz: int = 100
+        self, start: int = (2**32 - 3) * 1000, step: int = 1000, fuzz: int = 100
     ) -> None:
         """
         Args:
