@@ -128,6 +128,7 @@ void pbio_color_hsv_to_fix16(const pbio_color_hsv_t *hsv, pbio_color_hsv_fix16_t
 
 int32_t pbio_get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c);
 int32_t pbio_get_cone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b, const int32_t chroma_weight);
+int32_t pbio_get_bicone_cost(const pbio_color_hsv_t *a, const pbio_color_hsv_t *b, const int32_t chroma_weight);
 
 #endif // _PBIO_COLOR_H_
 

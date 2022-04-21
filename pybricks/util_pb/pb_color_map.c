@@ -85,7 +85,7 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv, cons
     for (size_t i = 0; i < n; i++) {
 
         // Evaluate the cost function
-        cost_now = pbio_get_cone_cost(hsv, pb_type_Color_get_hsv(colors[i]), chroma_weight);
+        cost_now = pbio_get_bicone_cost(hsv, pb_type_Color_get_hsv(colors[i]), chroma_weight);
 
         // If cost is less than before, update the minimum and the match
         if (cost_now < cost_min) {

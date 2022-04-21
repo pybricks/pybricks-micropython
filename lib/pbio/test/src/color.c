@@ -507,13 +507,34 @@ static void test_color_hsv_cost(void *env) {
 
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, dist);
 
+    //test with bicone as well
 
-    color_b.h = 0;
-    color_b.s = 50;
+    chroma_weight = 10;
+
+    color_a.h = 135;
+    color_a.s = 91;
+    color_a.v = 51;
+
+    //GREEN
+    color_b.h = 120;
+    color_b.s = 120;
     color_b.v = 100;
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, 100), ==, 0);
 
+    dist = pbio_get_bicone_cost(&color_a, &color_b, chroma_weight);
 
+    //WHITE
+    color_b.h = 0;
+    color_b.s = 0;
+    color_b.v = 100;
+
+    tt_want_int_op(pbio_get_bicone_cost(&color_a, &color_b, chroma_weight), >, dist);
+
+    //BLACK
+    color_b.h = 0;
+    color_b.s = 0;
+    color_b.v = 0;
+
+    tt_want_int_op(pbio_get_bicone_cost(&color_a, &color_b, chroma_weight), >, dist);
 }
 
 struct testcase_t pbio_color_tests[] = {
