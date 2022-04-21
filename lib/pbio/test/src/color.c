@@ -493,43 +493,47 @@ static void test_color_hsv_cost(void *env) {
     color_a.s = 91;
     color_a.v = 51;
 
-    //GREEN
+    // GREEN
     color_b.h = 120;
     color_b.s = 120;
     color_b.v = 100;
 
     dist = pbio_get_cone_cost(&color_a, &color_b, chroma_weight);
 
-    //WHITE
+    // WHITE
     color_b.h = 0;
     color_b.s = 0;
     color_b.v = 100;
 
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, dist);
 
-    //test with bicone as well
+    // test with bicone as well
 
-    chroma_weight = 10;
+    chroma_weight = 50;
 
     color_a.h = 135;
     color_a.s = 91;
     color_a.v = 51;
 
-    //GREEN
+    color_a.h = 130;
+    color_a.s = 89;
+    color_a.v = 52;
+
+    // GREEN
     color_b.h = 120;
     color_b.s = 120;
     color_b.v = 100;
 
     dist = pbio_get_bicone_cost(&color_a, &color_b, chroma_weight);
 
-    //WHITE
+    // WHITE
     color_b.h = 0;
     color_b.s = 0;
     color_b.v = 100;
 
     tt_want_int_op(pbio_get_bicone_cost(&color_a, &color_b, chroma_weight), >, dist);
 
-    //BLACK
+    // BLACK
     color_b.h = 0;
     color_b.s = 0;
     color_b.v = 0;
