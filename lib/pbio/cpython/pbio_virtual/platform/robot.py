@@ -22,21 +22,15 @@ class VirtualMotorDriver:
 
     def __init__(self, sim_motor):
         self.sim_motor = sim_motor
+        self.coasting = True
 
     def on_coast(self, *args):
         """
         Called when ``pbdrv_motor_driver_coast()`` is called.
         """
-        # For now, actuates just as 0 duty.
-        self.on_set_duty_cycle(args[0], 0)
-
-    def on_set_duty_cycle(self, *args):
-        """
-        Called when ``pbdrv_motor_driver_set_duty_cycle()`` is called.
-        """
-
-        # Nothing to do if there is no motor.
-        if self.sim_motor is None:
+        # Don't simulate repeated coasts. This also ensures we skip
+        # simulating motors that are attached but otherwise not used.
+        if self.coasting:
             return
 
         # Simulate the motor up to the current time, with previous actuation.
@@ -44,7 +38,21 @@ class VirtualMotorDriver:
         self.sim_motor.simulate(time)
 
         # Set new actuation signal from now on.
+        self.sim_motor.actuate(time, numpy.array([self.sim_motor.COAST_DUTY]))
+        self.coasting = True
+
+    def on_set_duty_cycle(self, *args):
+        """
+        Called when ``pbdrv_motor_driver_set_duty_cycle()`` is called.
+        """
+
+        # Simulate the motor up to the current time, with previous actuation.
+        time = args[0] / 1000000
+        self.sim_motor.simulate(time)
+
+        # Set new actuation signal from now on.
         self.sim_motor.actuate(time, numpy.array([args[1]]))
+        self.coasting = False
 
 
 class VirtualCounter:
@@ -107,9 +115,9 @@ class Platform:
     # Ports and attached devices.
     PORTS = {
         PortId.A: IODeviceTypeId.TECHNIC_L_ANGULAR_MOTOR,
-        PortId.B: IODeviceTypeId.NONE,
-        PortId.C: IODeviceTypeId.NONE,
-        PortId.D: IODeviceTypeId.NONE,
+        PortId.B: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
+        PortId.C: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
+        PortId.D: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
         PortId.E: IODeviceTypeId.NONE,
         PortId.F: IODeviceTypeId.NONE,
     }

@@ -19,6 +19,9 @@ class SimpleMotor(SimulationModel):
     # The output is the angle (deg) and speed (deg/s)
     OUTPUTS = ("angle", "speed")
 
+    # Out-of-bounds numeric "duty" value used to indicate coast.
+    COAST_DUTY = 10
+
     # System constants
     c0 = 22.48
     c1 = 0.0455 * 10000
@@ -34,7 +37,12 @@ class SimpleMotor(SimulationModel):
         (duty,) = u
 
         # Evaluate equation of motion, which is just the acceleration.
-        alpha_dotdot = -self.c0 * alpha_dot + duty * self.c1
+        if duty == self.COAST_DUTY:
+            # For coast, reduce deceleration, as if removing back EMF.
+            alpha_dotdot = -self.c0 * alpha_dot / 4
+        else:
+            # Otherwise, apply normal DC motor model.
+            alpha_dotdot = -self.c0 * alpha_dot + duty * self.c1
 
         # Return the state derivative.
         return array([alpha_dot, alpha_dotdot])
