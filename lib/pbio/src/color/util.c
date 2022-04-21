@@ -40,6 +40,10 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
     pbio_color_hsv_to_fix16(hsv_a, &a);
     pbio_color_hsv_to_fix16(hsv_b, &b);
 
+    // v = (1-(1-v)*(1-v))
+    a.v = fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, a.v)));
+    b.v = fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, b.v)));
+
     // x, y and z deltas between cartesian coordinates of a and b in HSV cone
     // delx = b_s*b_v*cos(b_h) - a_s*a_v*cos(a_h)
     fix16_t delx = fix16_sub(
@@ -52,7 +56,7 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
         fix16_mul(fix16_mul(a.v, a.s), fix16_sin(a.h)));
 
     // delz = cone_height * (b_v - a_v)
-    fix16_t delz = fix16_mul(F16C(1,000), fix16_sub(b.v, a.v));
+    fix16_t delz = fix16_sub(b.v, a.v);
 
     // cdist = chroma_weight*(delx*delx + dely*dely) + (100-chroma_weight)*delz*delz
     fix16_t cdist = fix16_add(

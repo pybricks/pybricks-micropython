@@ -438,29 +438,9 @@ static void test_color_hsv_cost(void *env) {
 
     color_b.h = 30;
     color_b.s = 20;
-    color_b.v = 71;
+    color_b.v = 75;
 
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, 0);
-
-    // distance of opposite colors should be the same as double saturation to gray
-    color_a.h = 20;
-    color_a.s = 20;
-    color_a.v = 70;
-
-    color_b.h = 200;
-    color_b.s = 20;
-    color_b.v = 70;
-    dist = pbio_get_cone_cost(&color_a, &color_b, chroma_weight);
-
-    color_a.h = 20;
-    color_a.s = 40;
-    color_a.v = 70;
-
-    color_b.h = 0;
-    color_b.s = 0;
-    color_b.v = 70;
-
-    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), ==, dist);
 
     // hues 360 and 0 should be the same
     color_a.h = 360;
@@ -502,10 +482,31 @@ static void test_color_hsv_cost(void *env) {
     color_b.v = 100;
     tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, 0), ==, 0);
 
-    // when chroma_weight is 100, all colors with same hue and chroma (s*v) should be the same
-    color_a.h = 0;
-    color_a.s = 100;
-    color_a.v = 50;
+    // should be GREEN not WHITE
+    // h=135 s=91, v=51
+    // WHITE = 0,0,100
+    // GREEN = 120, 120, 100
+
+    chroma_weight = 50;
+
+    color_a.h = 135;
+    color_a.s = 91;
+    color_a.v = 51;
+
+    //GREEN
+    color_b.h = 120;
+    color_b.s = 120;
+    color_b.v = 100;
+
+    dist = pbio_get_cone_cost(&color_a, &color_b, chroma_weight);
+
+    //WHITE
+    color_b.h = 0;
+    color_b.s = 0;
+    color_b.v = 100;
+
+    tt_want_int_op(pbio_get_cone_cost(&color_a, &color_b, chroma_weight), >, dist);
+
 
     color_b.h = 0;
     color_b.s = 50;
