@@ -36,10 +36,13 @@ class SimulationModel(ABC):
         # Empty buffers to hold results, starting with the initial time/state.
         self.times = array([t0])
         self.states = zeros((self.n, 1)) if x0 is None else x0.reshape(self.n, 1)
-        self.inputs = zeros((self.m, 1))
         self.outputs = self.output(t0, x0).reshape(self.p, 1)
 
-    def simulate(self, te, u):
+        # Empty buffers to hold externally set input data.
+        self.input_values = zeros((self.m, 1))
+        self.input_times = array([t0])
+
+    def simulate(self, te, u=None):
         """Simulates the system until time te, subject to constant input u.
 
         The system starts from the initial state. When this is called again, it
@@ -47,7 +50,7 @@ class SimulationModel(ABC):
 
         Arguments:
             te (float): End time.
-            u (array): Control signal vector.
+            u (array): Control signal vector, or None to use the previous value.
 
         Returns:
             tuple: Time (array: 1 x samples) and
@@ -59,9 +62,17 @@ class SimulationModel(ABC):
         nsamples = int((te - t0) / self.DT) + 1
         times = array([t0 + i * self.DT for i in range(nsamples)])
 
+        # Update input data.
+        if u is None:
+            # Keep using last input if no new input given.
+            u = self.inputs[:, -1]
+        else:
+            # If input given, update logs.
+            self.input_times = concatenate((self.input_times, array([t0])))
+            self.input_values = concatenate((self.input_values, u.reshape(self.m, 1)), axis=1)
+
         # Create empty state vector samples
         states = zeros((self.n, nsamples))
-        inputs = zeros((self.m, nsamples))
         outputs = zeros((self.p, nsamples))
 
         # Start at current state
@@ -72,7 +83,6 @@ class SimulationModel(ABC):
 
             # Save the state and output
             states[:, i] = state
-            inputs[:, i] = u
             outputs[:, i] = self.output(t, state)
 
             # Single RK4 step to evaluate the next state.
@@ -85,7 +95,6 @@ class SimulationModel(ABC):
         # Concatenate results
         self.times = concatenate((self.times, times))
         self.states = concatenate((self.states, states), axis=1)
-        self.inputs = concatenate((self.inputs, inputs), axis=1)
         self.outputs = concatenate((self.outputs, outputs), axis=1)
 
     @abstractmethod
