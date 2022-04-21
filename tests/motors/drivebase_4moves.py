@@ -1,6 +1,6 @@
 from pybricks.pupdevices import Motor
 from pybricks.tools import wait
-from pybricks.parameters import Port, Direction, Stop
+from pybricks.parameters import Port, Direction
 from pybricks.robotics import DriveBase
 from pybricks import version
 
@@ -20,8 +20,10 @@ drive_base.distance_control.log.start(DURATION, DIV)
 drive_base.heading_control.log.start(DURATION, DIV)
 
 # Drive straight forward and back again.
-drive_base.straight(500, Stop.NONE)
-drive_base.turn(-90)
+drive_base.straight(500)
+drive_base.turn(-500)
+drive_base.straight(500)
+drive_base.turn(-500)
 
 # Wait so we can also log hold capability, then turn off the motor completely.
 wait(100)
