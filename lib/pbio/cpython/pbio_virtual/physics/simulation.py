@@ -42,15 +42,25 @@ class SimulationModel(ABC):
         self.input_values = zeros((self.m, 1))
         self.input_times = array([t0])
 
-    def simulate(self, te, u=None):
-        """Simulates the system until time te, subject to constant input u.
+    def actuate(self, t, u):
+        """Sets the actuation state of the system. This will be used by
+        the simulation until something else is set.
+
+        Arguments:
+            t (float): Current time.
+            u (array): Control signal vector.
+        """
+        self.input_times = concatenate((self.input_times, array([t])))
+        self.input_values = concatenate((self.input_values, u.reshape(self.m, 1)), axis=1)
+
+    def simulate(self, time_end):
+        """Simulates the system until time_end, subject to the ongoing input.
 
         The system starts from the initial state. When this is called again, it
         continues from where it left off.
 
         Arguments:
             te (float): End time.
-            u (array): Control signal vector, or None to use the previous value.
 
         Returns:
             tuple: Time (array: 1 x samples) and
@@ -59,17 +69,11 @@ class SimulationModel(ABC):
 
         # Time samples for this segment
         t0 = self.times[-1]
-        nsamples = int((te - t0) / self.DT) + 1
+        nsamples = int((time_end - t0) / self.DT) + 1
         times = array([t0 + i * self.DT for i in range(nsamples)])
 
-        # Update input data.
-        if u is None:
-            # Keep using last input if no new input given.
-            u = self.inputs[:, -1]
-        else:
-            # If input given, update logs.
-            self.input_times = concatenate((self.input_times, array([t0])))
-            self.input_values = concatenate((self.input_values, u.reshape(self.m, 1)), axis=1)
+        # Continue using last input.
+        u = self.input_values[:, -1]
 
         # Create empty state vector samples
         states = zeros((self.n, nsamples))
@@ -126,10 +130,32 @@ class SimulationModel(ABC):
         """
         return zeros(self.p)
 
-    def get_latest_output(self):
-        """Gets the latest (newest) output data.
+    def get_output_at_time(self, time, tolerance):
+        """Gets the system output at a particular time.
+
+        Arguments:
+            t (float): Time at which output is requested.
+            tolerance (float): How far the requested time may be ahead of
+                the latest simulation time before triggering a simulation
+                update.
 
         Returns:
-            array: Lasest available output.
+            array: The output vector.
         """
+        # If time is in the past, interpolate from available results.
+        if time < self.times[-1]:
+
+            # Find first index larger than given time, which always exists.
+            i = next(i for i, t in enumerate(self.times) if t > time)
+
+            # Interpolate output in time
+            ratio = (time - self.times[i - 1]) / (self.times[i] - self.times[i - 1])
+            return self.outputs[:, i - 1] + ratio * (self.outputs[:, i] - self.outputs[:, i - 1])
+
+        # If time is farther into the future than our tolerance, simulate up
+        # to the given time. Otherwise we avoid simulating negligible time.
+        if time > self.times[-1] + tolerance:
+            self.simulate(time)
+
+        # Return latest available data.
         return self.outputs[:, -1]

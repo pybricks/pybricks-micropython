@@ -39,10 +39,12 @@ class VirtualMotorDriver:
         if self.sim_motor is None:
             return
 
-        # Simulate the motor up to the current time, plus 5 milliseconds.
-        end_time = args[0] / 1000000 + 0.005
-        u = numpy.array([args[1]])
-        self.sim_motor.simulate(end_time, u)
+        # Simulate the motor up to the current time, with previous actuation.
+        time = args[0] / 1000000
+        self.sim_motor.simulate(time)
+
+        # Set new actuation signal from now on.
+        self.sim_motor.actuate(time, numpy.array([args[1]]))
 
 
 class VirtualCounter:
@@ -51,60 +53,53 @@ class VirtualCounter:
     dc motor with rotation sensors attached to it.
     """
 
-    def __init__(self, sim_motor):
+    def get_counter_data(self):
+        """Get all encoder data"""
+
+        # Return zeros if there is no motor.
+        if self.sim_motor is None:
+            return 0, 0, 0
+
+        # Get data from model.
+        time = self.clock.microseconds / 1e6
+        angle, speed = self.sim_motor.get_output_at_time(time, tolerance=2e-3)
+
+        # Get "absolute" angle.
+        mod_angle = angle % 360
+        abs_angle = mod_angle if mod_angle < 180 else mod_angle - 360
+
+        # Return all values.
+        return angle - self.initial_angle, abs_angle, speed
+
+    def __init__(self, sim_motor, clock):
+        # Store references to motor and clock
         self.sim_motor = sim_motor
+        self.clock = clock
 
-        # Nothing left to do if there is no motor.
-        if self.sim_motor is None:
-            return
-
-        # Since all counter drivers count 0 from the point where it started,
-        # we need to keep track of the starting point.
-        self.initial_angle, speed = self.sim_motor.get_latest_output()
-
-    @property
-    def abs_count(self):
-        """
-        Provides the value for ``pbdrv_counter_virtual_get_abs_count()``.
-        """
-        # Return 0 if there is no motor.
-        if self.sim_motor is None:
-            return 0
-
-        # Return the latest available data from the simulation model.
-        angle, speed = self.sim_motor.get_latest_output()
-
-        abs_angle = angle % 360
-        return abs_angle if abs_angle < 180 else abs_angle - 360
+        # Initialize starting position
+        self.initial_angle = 0
+        self.initial_angle, _, _ = self.get_counter_data()
 
     @property
     def count(self):
         """
         Provides the value for ``pbdrv_counter_virtual_get_count()``.
         """
+        return self.get_counter_data()[0]
 
-        # Return 0 if there is no motor.
-        if self.sim_motor is None:
-            return 0
-
-        # Get the latest available data from the simulation model.
-        angle, speed = self.sim_motor.get_latest_output()
-
-        # Counter drivers count from the angle where they started.
-        return angle - self.initial_angle
+    @property
+    def abs_count(self):
+        """
+        Provides the value for ``pbdrv_counter_virtual_get_abs_count()``.
+        """
+        return self.get_counter_data()[1]
 
     @property
     def rate(self):
         """
         Provides the value for ``pbdrv_counter_virtual_get_rate()``.
         """
-        # Return 0 if there is no motor.
-        if self.sim_motor is None:
-            return 0
-
-        # Return the latest available data from the simulation model.
-        angle, speed = self.sim_motor.get_latest_output()
-        return speed
+        return self.get_counter_data()[2]
 
 
 class Platform:
@@ -163,5 +158,5 @@ class Platform:
                 self.sim_motor[i] = SimMotor(t0=initial_time, x0=initial_state)
 
             # Initialize counter and motor drivers with the given motor.
-            self.counter[i] = VirtualCounter(self.sim_motor[i])
+            self.counter[i] = VirtualCounter(self.sim_motor[i], self.clock[-1])
             self.motor_driver[i] = VirtualMotorDriver(self.sim_motor[i])
