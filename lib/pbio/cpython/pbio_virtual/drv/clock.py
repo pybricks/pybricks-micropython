@@ -38,6 +38,13 @@ class VirtualClock:
         self._thread_id = thread_id
         self._signum = signum
 
+    @property
+    def microseconds(self) -> int:
+        """
+        The current clock time in microseconds.
+        """
+        return self.nanoseconds // 1000
+
 
 class WallClock(VirtualClock):
     """
