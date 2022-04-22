@@ -43,7 +43,7 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
     // radial coordinates of a and b
     fix16_t radius_a = fix16_mul(fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, a.v))), a.s);
     fix16_t radius_b = fix16_mul(fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, b.v))), b.s);
-    
+
     // x, y and z deltas between cartesian coordinates of a and b in HSV cone
     // delx = radius_b*cos(b_h) - radius_a*cos(a_h)
     fix16_t delx = fix16_sub(
