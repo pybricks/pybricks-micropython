@@ -40,20 +40,20 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
     pbio_color_hsv_to_fix16(hsv_a, &a);
     pbio_color_hsv_to_fix16(hsv_b, &b);
 
-    // v = (1-(1-v)*(1-v))
-    a.v = fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, a.v)));
-    b.v = fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, b.v)));
-
+    // radial coordinates of a and b
+    fix16_t radius_a = fix16_mul(fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, a.v))), a.s);
+    fix16_t radius_b = fix16_mul(fix16_sub(fix16_one, fix16_sq(fix16_sub(fix16_one, b.v))), b.s);
+    
     // x, y and z deltas between cartesian coordinates of a and b in HSV cone
-    // delx = b_s*b_v*cos(b_h) - a_s*a_v*cos(a_h)
+    // delx = radius_b*cos(b_h) - radius_a*cos(a_h)
     fix16_t delx = fix16_sub(
-        fix16_mul(fix16_mul(b.v, b.s), fix16_cos(b.h)),
-        fix16_mul(fix16_mul(a.v, a.s), fix16_cos(a.h)));
+        fix16_mul(radius_b, fix16_cos(b.h)),
+        fix16_mul(radius_a, fix16_cos(a.h)));
 
-    // dely = b_s*b_v*sin(b_h) - a_s*a_v*sin(a_h)
+    // dely = radius_b*sin(b_h) - radius_a*sin(a_h)
     fix16_t dely = fix16_sub(
-        fix16_mul(fix16_mul(b.v, b.s), fix16_sin(b.h)),
-        fix16_mul(fix16_mul(a.v, a.s), fix16_sin(a.h)));
+        fix16_mul(radius_b, fix16_sin(b.h)),
+        fix16_mul(radius_a, fix16_sin(a.h)));
 
     // delz = cone_height * (b_v - a_v)
     fix16_t delz = fix16_sub(b.v, a.v);
@@ -69,7 +69,6 @@ int32_t pbio_get_cone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t
             fix16_from_int(10000 - 100 * chroma_weight),
             fix16_sq(delz)));
 
-    // multiply by 100 to increase resolution when converting to int
     return fix16_to_int(cdist);
 }
 
@@ -80,18 +79,19 @@ int32_t pbio_get_bicone_cost(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv
     pbio_color_hsv_to_fix16(hsv_a, &a);
     pbio_color_hsv_to_fix16(hsv_b, &b);
 
+    // radial coordinates of a and b
     fix16_t radius_a = fix16_mul(fix16_mul(a.v, fix16_sub(F16C(2,0), a.v)), fix16_mul(a.s, fix16_sub(F16C(2,0), a.s)));
     fix16_t radius_b = fix16_mul(fix16_mul(b.v, fix16_sub(F16C(2,0), b.v)), fix16_mul(b.s, fix16_sub(F16C(2,0), b.s)));
 
     // x, y and z deltas between cartesian coordinates of a and b in HSV bicone
-    // delx = b_s*b_v*cos(b_h) - a_s*a_v*cos(a_h)
+    // delx = radius_b*cos(b_h) - radius_a*cos(a_h)
     fix16_t delx = fix16_sub(
         fix16_mul(radius_b, fix16_cos(b.h)),
-        fix16_mul(radius_b, fix16_cos(a.h)));
+        fix16_mul(radius_a, fix16_cos(a.h)));
 
-    // dely = b_s*b_v*sin(b_h) - a_s*a_v*sin(a_h)
+    // dely = radius_b*sin(b_h) - radius_a*sin(a_h)
     fix16_t dely = fix16_sub(
-        fix16_mul(radius_a, fix16_sin(b.h)),
+        fix16_mul(radius_b, fix16_sin(b.h)),
         fix16_mul(radius_a, fix16_sin(a.h)));
 
     // delz = cone_height * ((b_v-b_s/2) - (a_v-a_s/2))
