@@ -77,7 +77,7 @@ class VirtualCounter:
         abs_angle = mod_angle if mod_angle < 180 else mod_angle - 360
 
         # Return all values.
-        return angle - self.initial_angle, abs_angle, speed
+        return int(angle - self.initial_angle), int(abs_angle), int(speed)
 
     def __init__(self, sim_motor, clock):
         # Store references to motor and clock
