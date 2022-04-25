@@ -27,7 +27,7 @@ typedef struct _ev3dev_Font_obj_t {
     mp_obj_t height;
 } ev3dev_Font_obj_t;
 
-const ev3dev_Font_obj_t pb_const_ev3dev_Font_DEFAULT_obj;
+ev3dev_Font_obj_t pb_const_ev3dev_Font_DEFAULT_obj;
 
 STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
     self->base.type = &pb_type_ev3dev_Font.type;
@@ -57,7 +57,7 @@ void pb_type_ev3dev_Font_init(void) {
         g_error_free(error);
         nlr_raise(ex);
     }
-    ev3dev_Font_init((ev3dev_Font_obj_t *)&pb_const_ev3dev_Font_DEFAULT_obj, font);
+    ev3dev_Font_init(&pb_const_ev3dev_Font_DEFAULT_obj, font);
 }
 
 STATIC mp_obj_t ev3dev_Font_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
