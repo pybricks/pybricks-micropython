@@ -103,8 +103,8 @@ jobs:
         name: pybricks-micropython
         path: bricks/ev3dev/pybricks-micropython
 
-  ev3dev_bionic:
-    name: ev3dev-bionic
+  ev3dev_ubuntu_lts:
+    name: ev3dev-ubuntu-lts
     needs: mpy_cross
     runs-on: ubuntu-20.04
     env:
