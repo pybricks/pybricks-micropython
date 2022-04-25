@@ -24,7 +24,7 @@ class VirtualMotorDriver:
         self.sim_motor = sim_motor
         self.coasting = True
 
-    def on_coast(self, *args):
+    def on_coast(self, timestamp: int):
         """
         Called when ``pbdrv_motor_driver_coast()`` is called.
         """
@@ -34,24 +34,24 @@ class VirtualMotorDriver:
             return
 
         # Simulate the motor up to the current time, with previous actuation.
-        time = args[0] / 1000000
+        time = timestamp / 1000000
         self.sim_motor.simulate(time)
 
         # Set new actuation signal from now on.
         self.sim_motor.actuate(time, numpy.array([self.sim_motor.COAST_DUTY]))
         self.coasting = True
 
-    def on_set_duty_cycle(self, *args):
+    def on_set_duty_cycle(self, timestamp: int, duty_cycle: float):
         """
         Called when ``pbdrv_motor_driver_set_duty_cycle()`` is called.
         """
 
         # Simulate the motor up to the current time, with previous actuation.
-        time = args[0] / 1000000
+        time = timestamp / 1000000
         self.sim_motor.simulate(time)
 
         # Set new actuation signal from now on.
-        self.sim_motor.actuate(time, numpy.array([args[1]]))
+        self.sim_motor.actuate(time, numpy.array([duty_cycle]))
         self.coasting = False
 
 
