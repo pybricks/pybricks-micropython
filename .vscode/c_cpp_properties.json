@@ -322,7 +322,12 @@
             ],
             "defines": [
                 "UNIX",
-                "MICROPY_USE_READLINE=1"
+                "MICROPY_USE_READLINE=1",
+                "MICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool",
+                "MICROPY_MODULE_FROZEN_MPY",
+                "MPZ_DIG_SIZE=16",
+                "MICROPY_MODULE_FROZEN_STR"
+
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",

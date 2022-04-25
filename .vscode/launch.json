@@ -54,13 +54,19 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "ev3dev-host",
+            "name": "ev3dev-test",
             "type": "cppdbg",
             "request": "launch",
+            "cwd": "${workspaceFolder}/micropython/tests",
             "program": "${workspaceFolder}/bricks/ev3dev/pybricks-micropython",
+            "args": [
+                "../../tests/ev3dev/brick/battery.py"
+            ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/ports/pybricks",
-            "environment": [],
+            "environment": [
+                {"name": "GRX_PLUGIN_PATH", "value": "../../bricks/ev3dev/build-test"},
+                {"name": "GRX_DRIVER", "value": "test"}
+            ],
             "externalConsole": true,
             "MIMode": "gdb",
             "setupCommands": [
@@ -71,16 +77,19 @@
                 },
                 {
                     "description": "ignore SIGUSR1",
-                    "text": "handle SIGUSR1 noprint pass",
-                    "ignoreFailures": false
+                    "text": "handle SIGUSR1 noprint pass"
                 },
                 {
                     "description": "ignore SIGUSR2",
-                    "text": "handle SIGUSR2 noprint pass",
-                    "ignoreFailures": false
+                    "text": "handle SIGUSR2 noprint pass"
+                },
+                {
+                    "description": "ignore SIGRT39",
+                    "text": "handle SIGUSR2 noprint pass"
                 }
             ],
-            "preLaunchTask": "build ev3dev-host"
+            "logging": { "engineLogging": true, "trace": true, "traceResponse": true },
+            "preLaunchTask": "build ev3dev-test"
         },
         {
             "name": "virtualhub",

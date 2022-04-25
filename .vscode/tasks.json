@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build ev3dev-host",
+            "label": "build ev3dev-test",
             "type": "shell",
-            "command": "poetry run make -C bricks/ev3dev DEBUG=1 -j8"
+            "command": "poetry run make -C bricks/ev3dev pybricks-micropython build-test/libgrx-3.0-vdriver-test.so DEBUG=1 BUILD=build-test CROSS_COMPILE= -j8"
         },
         {
             "label": "build virtualhub",
