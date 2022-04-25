@@ -191,7 +191,7 @@ LIB += -lrt
 
 # embedded Python
 
-EMBEDED_PYTHON ?= python3.8
+EMBEDED_PYTHON ?= python3.10
 PYTHON_CONFIG := $(EMBEDED_PYTHON)-config
 
 INC += $(shell $(PYTHON_CONFIG) --includes)

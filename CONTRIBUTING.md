@@ -6,10 +6,10 @@ This is the recommended development environment used by the Pybricks maintainers
 
 ### Requirements
 
-- Ubuntu 20.04 (Focal Fossa)
+- Ubuntu 22.04 (Jammy Jellyfish)
 - [Git SCM][git] any recent-ish version
 - [VS Code][vscode] latest version
-- [Python][python] v3.8.x
+- [Python][python] v3.10.x
 - [Poetry][poetry] v1.x
 - [Uncrustify][uncrustify] v0.71.x
 - [GNU ARM Embedded Toolchain][arm-gcc] v10-2020-q4
@@ -145,11 +145,11 @@ source code, then run:
 
     poetry env info
 
-Verify that the Python version listed is 3.8.x. If it is not, run:
+Verify that the Python version listed is 3.10.x. If it is not, run:
 
-    poetry env use <path-to-python3.8>
+    poetry env use <path-to-python3.10>
 
-where `<path-to-python3.8>` is the full path to the Python 3.8 installation.
+where `<path-to-python3.10>` is the full path to the Python 3.10 installation.
 
 Then run the following to set up the Python environment:
 

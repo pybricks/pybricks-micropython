@@ -343,7 +343,7 @@
                 "${workspaceFolder}/micropython/ports/unix",
                 "${workspaceFolder}/micropython",
                 "${workspaceFolder}",
-                "/usr/include/python3.8"
+                "/usr/include/python3.10"
             ],
             "defines": [
                 "UNIX",
