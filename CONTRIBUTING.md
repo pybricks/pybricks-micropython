@@ -45,7 +45,7 @@ like Poetry.
 
 Linux (Ubuntu):
 
-    sudo apt update && sudo apt install python-pipx
+    sudo apt update && sudo apt install pipx
 
 macOS:
 
