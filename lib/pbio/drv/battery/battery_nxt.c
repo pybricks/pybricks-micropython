@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #include <contiki.h>
-#include <nxt/nxt_avr.h>
+#include <base/drivers/avr.h>
 
 #include <pbdrv/battery.h>
 #include <pbio/error.h>
@@ -20,8 +20,8 @@ void pbdrv_battery_init(void) {
 }
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
-    // Battery voltage includes bit 0x8000 to indicate rechargeable battery
-    *value = battery_voltage() & 0x7FFF;
+    // REVISIT: Voltage appears off by a factor 2
+    *value = nx_avr_get_battery_voltage() * 2;
     return PBIO_SUCCESS;
 }
 
@@ -31,9 +31,7 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
 }
 
 pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
-    // Battery voltage includes bit 0x8000 to indicate rechargeable battery
-    *value = (battery_voltage() & 0x8000) ? PBDRV_BATTERY_TYPE_LIION
-                                          : PBDRV_BATTERY_TYPE_ALKALINE;
+    *value = nx_avr_battery_is_aa() ? PBDRV_BATTERY_TYPE_ALKALINE : PBDRV_BATTERY_TYPE_LIION;
     return PBIO_SUCCESS;
 }
 

@@ -128,11 +128,11 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#include <nxt/interrupts.h>
-#include <nxt/systick.h>
+#include <base/interrupts.h>
+#include <base/drivers/systick.h>
 
-#define MICROPY_BEGIN_ATOMIC_SECTION()     interrupts_get_and_disable()
-#define MICROPY_END_ATOMIC_SECTION(state)  if (state) { interrupts_enable(); }
+#define MICROPY_BEGIN_ATOMIC_SECTION()     nx_interrupts_disable()
+#define MICROPY_END_ATOMIC_SECTION(state)  if (state) { nx_interrupts_enable(); }
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \

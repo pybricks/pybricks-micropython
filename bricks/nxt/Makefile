@@ -12,13 +12,6 @@ ifeq ("$(wildcard ../../micropython/README.md)","")
 $(error failed)
 endif
 endif
-ifeq ("$(wildcard nxt-firmware-drivers/README.md)","")
-$(info GIT cloning nxt-firmware-drivers submodule)
-$(info $(shell cd ../.. && git submodule update --checkout --init bricks/nxt/nxt-firmware-drivers))
-ifeq ("$(wildcard nxt-firmware-drivers/README.md)","")
-$(error failed)
-endif
-endif
 ifeq ("$(wildcard ../../lib/nxos/README.md)","")
 $(info GIT cloning nxos submodule)
 $(info $(shell cd ../.. && git submodule update --init lib/nxos))
@@ -55,23 +48,23 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I../../lib/contiki-core
 INC += -I../../lib/lego
-INC += -Inxt-firmware-drivers
-INC += -Inxt-firmware-drivers/nxt
+INC += -I../../lib/nxos/nxos
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I../../lib/pbio
 INC += -I../..
 INC += -I$(BUILD)
 
-CFLAGS_MCU = -mthumb -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
-CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
-CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
+COPT += -DFIXMATH_NO_CTYPE
+
+CFLAGS_MCU = -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT) $(CFLAGS_EXTRA)
 LDSCRIPT = $(PBIO_PLATFORM).ld
 LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
 $(BUILD)/nxt-firmware-drivers/%.o: CFLAGS += -Wno-sign-compare
 
 # avoid doubles
-CFLAGS += -fsingle-precision-constant -Wdouble-promotion
+CFLAGS += -fsingle-precision-constant -Wdouble-promotion -DHAVE_STDBOOL_H
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -85,7 +78,7 @@ LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 SRC_C = \
 	main.c \
-	systick.c \
+	mphalport.c \
 
 # Extra core MicroPython files
 
@@ -98,41 +91,54 @@ SRC_C = \
 SRC_C += $(addprefix shared/,\
 	libc/string0.c \
 	readline/readline.c \
+	runtime/gchelper_native.c \
 	runtime/interrupt_char.c \
 	runtime/pyexec.c \
 	runtime/stdout_helpers.c \
+	runtime/sys_stdio_mphal.c \
 	)
 
 SRC_S = \
 	shared/runtime/gchelper_arm7tdmi.s \
 
-SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
-	aic.c \
-	bt.c \
-	data_abort.c \
-	display.c \
-	flashprog.c \
-	flashwrite.c \
-	hs.c \
-	i2c.c \
-	nxt_avr.c \
-	nxt_lcd.c \
-	nxt_motors.c \
-	nxt_spi.c \
-	printf.c \
-	sensors.c \
-	sound.c \
-	systick.c \
-	twi.c \
-	udp.c \
-	usart.c \
+SRC_C_NXOS = $(addprefix lib/nxos/nxos/,\
+	base/_abort.c \
+	base/assert.c \
+	base/display.c \
+	base/drivers/_efc.c \
+	base/drivers/_lcd.c \
+	base/drivers/_twi.c \
+	base/drivers/_uart.c \
+	base/drivers/aic.c \
+	base/drivers/avr.c \
+	base/drivers/bt.c \
+	base/drivers/i2c_memory.c \
+	base/drivers/i2c.c \
+	base/drivers/motors.c \
+	base/drivers/radar.c \
+	base/drivers/rs485.c \
+	base/drivers/sensors.c \
+	base/drivers/sound.c \
+	base/drivers/systick.c \
+	base/drivers/usb.c \
+	base/lib/fs/fs.c \
+	base/lib/gui/gui.c \
+	base/lib/memalloc/memalloc.c \
+	base/lib/rcmd/rcmd.c \
+	base/lib/tracing/tracing.c \
 	)
 
-SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
-	init.s \
-	interrupts.s \
-	irq.s \
-	vectors.s \
+# Override nxos/base/util to use string.h to avoid conflict with MicroPython.
+SRC_C_NXOS_EXT = $(addprefix bricks/nxt/,\
+	base/util.c \
+	)
+
+SRC_S_NXOS = $(addprefix lib/nxos/nxos/,\
+	base/init.s \
+	base/interrupts.s \
+	base/lock.s \
+	base/samba_init.s \
+	base/vectors.s \
 	)
 
 # Pybricks modules
@@ -217,19 +223,24 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/tacho.c \
 	src/trajectory.c \
 	sys/battery.c \
+	sys/bluetooth.c \
 	sys/command.c \
 	sys/core.c \
 	sys/hmi.c \
 	sys/main.c \
 	sys/program_load.c \
 	sys/program_stop.c \
+	sys/io_ports.c \
+	sys/light_matrix.c \
+	sys/light.c \
 	sys/status.c \
 	sys/supervisor.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXT:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXOS:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXOS_EXT:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXOS:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
@@ -258,7 +269,7 @@ $(BUILD)/firmware.elf: $(LDSCRIPT) $(OBJ)
 # firmware blob with main.mpy - can be flashed to hub
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user $^ $@
+	$(Q)$(OBJCOPY) -O binary $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 include $(TOP)/py/mkrules.mk

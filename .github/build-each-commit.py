@@ -50,7 +50,7 @@ for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}
         pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
     if args.hub == "nxt":
         pybricks.git.submodule(
-            "update", "--init", "--checkout", "bricks/nxt/nxt-firmware-drivers"
+            "update", "--init", "--checkout", "lib/nxos"
         )
 
     # build the firmware

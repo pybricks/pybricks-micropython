@@ -9,27 +9,27 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 
-#include <nxt/nxt_avr.h>
+#include <base/drivers/avr.h>
 
 void _pbdrv_button_init(void) {
 }
 
 pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
-    uint32_t buttons;
 
-    buttons = buttons_get();
+    nx_avr_button_t button = nx_avr_get_button();
 
     *pressed = 0;
-    if (buttons & BUTTON_ENTER) {
+
+    if (button == BUTTON_OK) {
         *pressed |= PBIO_BUTTON_CENTER;
     }
-    if (buttons & BUTTON_LEFT) {
+    if (button == BUTTON_LEFT) {
         *pressed |= PBIO_BUTTON_LEFT;
     }
-    if (buttons & BUTTON_RIGHT) {
+    if (button == BUTTON_RIGHT) {
         *pressed |= PBIO_BUTTON_RIGHT;
     }
-    if (buttons & BUTTON_ESCAPE) {
+    if (button == BUTTON_CANCEL) {
         *pressed |= PBIO_BUTTON_DOWN;
     }
 

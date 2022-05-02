@@ -276,13 +276,14 @@
                 "${workspaceFolder}/lib/contiki-core",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/lwrb/src/include",
-                "${workspaceFolder}/bricks/nxt/nxt-firmware-drivers",
+                "${workspaceFolder}/lib/nxos/nxos",
                 "${workspaceFolder}/lib/pbio/include",
                 "${workspaceFolder}/lib/pbio/platform/nxt",
                 "${workspaceFolder}/lib/pbio",
                 "${workspaceFolder}/bricks/nxt/build",
                 "${workspaceFolder}/lib/pbio/include",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/micropython"
             ],
             "defines": [
                 "MICROPY_ROM_TEXT_COMPRESSION"

@@ -26,7 +26,6 @@ codeformat.PATHS = [
 ]
 
 codeformat.EXCLUSIONS = [
-    "bricks/nxt/nxt-firmware-drivers/**",
     "bricks/**/build*/**",
     "micropython/**",
     "tests/**/build/**",

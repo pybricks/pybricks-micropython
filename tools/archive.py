@@ -63,7 +63,7 @@ def archive(hub: str) -> None:
         # extra library for NXT
         if hub == "nxt":
             nxt_tar = pathlib.Path(d, "nxt.tar")
-            git_archive("bricks/nxt/nxt-firmware-drivers", nxt_tar)
+            git_archive("lib/nxos", nxt_tar)
             archives.append(nxt_tar)
 
         # merge all of the individual tar files

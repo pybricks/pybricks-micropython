@@ -1,13 +1,18 @@
+from pybricks.hubs import NXTBrick
 from pybricks.tools import wait
-from pybricks.nxtdevices import Motor
-from pybricks.parameters import Port
 
-motor = Motor(Port.A)
+hub = NXTBrick()
 
-print("1")
+last = True
 
-motor.dc(50)
-wait(1000)
-motor.stop()
+while True:
 
-print("2")
+    now = bool(hub.buttons.pressed())
+
+    if last != now:
+        last = now
+        if now:
+            print("You pressed a button!")
+        else:
+            print("Released!")
+    wait(10)
