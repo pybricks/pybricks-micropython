@@ -14,3 +14,6 @@
 	path = lib/ev3rt-lib
 	url = https://github.com/pybricks/ev3rt-lib.git
 	update = none
+[submodule "lib/nxos"]
+	path = lib/nxos
+	url = https://github.com/pybricks/nxos.git
