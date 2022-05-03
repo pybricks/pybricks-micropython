@@ -143,6 +143,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_battery.c \
 	common/pb_type_control.c \
 	common/pb_type_dcmotor.c \
+	common/pb_type_keypad.c \
 	common/pb_type_logger.c \
 	common/pb_type_motor.c \
 	common/pb_type_system.c \

@@ -40,7 +40,7 @@ STATIC const pb_attr_dict_entry_t hubs_NXTBrick_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_NXTBrick_obj_t, system),
 };
 
-const mp_obj_type_t pb_type_ThisHub = {
+const pb_obj_with_attr_type_t pb_type_ThisHub = {
     .type = {
         .base = { .type = &mp_type_type },
         .name = PYBRICKS_HUB_CLASS_NAME,
