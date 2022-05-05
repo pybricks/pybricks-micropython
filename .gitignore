@@ -35,6 +35,7 @@ tests/*.exp
 # Python virtual environment
 ############################
 .venv/
+.python-version
 
 # Python cache files
 ######################
