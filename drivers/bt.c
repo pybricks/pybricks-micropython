@@ -61,7 +61,7 @@ typedef enum {
   BT_MSG_SET_FRIENDLY_NAME = 0x21,
   BT_MSG_GET_LINK_QUALITY = 0x23,
   BT_MSG_SET_FACTORY_SETTINGS = 0x25,
-  BT_MSG_GET_LOCAL_ADDR = 0x26,
+  BT_MSG_GET_LOCAL_ADDR = 0x27,
   BT_MSG_GET_FRIENDLY_NAME = 0x29,
   BT_MSG_GET_DISCOVERABLE = 0x2A,
   BT_MSG_GET_PORT_OPEN = 0x2B,
@@ -167,6 +167,12 @@ static const U8 bt_msg_get_friendly_name[] = {
   0xD7
 };
 
+static const U8 bt_msg_get_local_addr[] = {
+  0x03,
+  BT_MSG_GET_LOCAL_ADDR,
+  0xFF,
+  0xD9
+};
 
 static const U8 bt_msg_open_port[] = {
   0x03,
@@ -679,6 +685,27 @@ int nx_bt_get_friendly_name(char *name)
     name[0] = '\0';
     return 0;
 
+  }
+}
+
+
+int nx_bt_get_local_addr(U8 *addr)
+{
+  int i;
+
+  nx__uart_write(bt_msg_get_local_addr, sizeof(bt_msg_get_local_addr));
+
+  if (bt_wait_msg(BT_MSG_GET_LOCAL_ADDR_RESULT)) {
+
+    for (i = 0 ; i < 7; i++) {
+      addr[i] = bt_state.args[i];
+    }
+    addr[i] = '\0';
+
+    return i;
+
+  } else {
+    return 0;
   }
 }
 

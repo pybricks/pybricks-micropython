@@ -131,6 +131,12 @@ bt_version_t nx_bt_get_version(void);
  */
 int nx_bt_get_friendly_name(char *name);
 
+/**
+ * @param[out] addr will be filled in with the local address name. An '\0' will
+ *             be appended, so this area must have a size of 7.
+ * @return address length, 0 if failure
+ */
+int nx_bt_get_local_addr(U8 *addr);
 
 /**
  * return the number of messages from the BC4
