@@ -20,9 +20,9 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
     *rate = (int32_t)(obs->est_rate / PBIO_OBSERVER_SCALE_DEG);
 }
 
-void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting, int32_t voltage) {
+void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_dcmotor_actuation_t actuation, int32_t voltage) {
 
-    if (is_coasting) {
+    if (actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
         // TODO
     }
 
@@ -98,9 +98,9 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
     *rate = (int32_t)obs->est_rate;
 }
 
-void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting, int32_t voltage) {
+void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_dcmotor_actuation_t actuation, int32_t voltage) {
 
-    if (is_coasting) {
+    if (actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
         // TODO
     }
 

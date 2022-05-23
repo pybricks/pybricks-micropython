@@ -80,6 +80,7 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     # Read state columns.
     count = data[:, 2]
     rate = data[:, 3]
+    applied_actuation_type = data[:, 4]
     voltage = data[:, 5]
     count_est = data[:, 6]
     rate_est = data[:, 7]
@@ -129,7 +130,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     maneuver_time = data[:, 1]
     count = data[:, 2]
     rate = data[:, 3]
-    actuation_type = data[:, 4]
+    requested_actuation_type = data[:, 4]
     torque_total = data[:, 5]
     count_ref = data[:, 6]
     rate_ref = data[:, 7]

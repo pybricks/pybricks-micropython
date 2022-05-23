@@ -61,36 +61,36 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     pbio_trajectory_reference_t ref;
 
     // Control action to be calculated
-    pbio_dcmotor_actuation_t actuation = PBIO_DCMOTOR_ACTUATION_COAST;
     int32_t feedback_torque = 0;
     int32_t feedforward_torque = 0;
-    int32_t voltage;
 
     // Check if a control update is needed
     if (pbio_control_is_active(&srv->control)) {
 
         // Calculate feedback control signal
-        pbio_control_update(&srv->control, time_now, &state, &ref, &actuation, &feedback_torque);
+        pbio_dcmotor_actuation_t requested_actuation;
+        pbio_control_update(&srv->control, time_now, &state, &ref, &requested_actuation, &feedback_torque);
 
         // Get required feedforward torque for current reference
         feedforward_torque = pbio_observer_get_feedforward_torque(srv->observer.model, ref.rate, ref.acceleration);
 
         // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
-        err = pbio_servo_actuate(srv, actuation, feedback_torque + feedforward_torque);
+        err = pbio_servo_actuate(srv, requested_actuation, feedback_torque + feedforward_torque);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
     // Whether or not there is control, get the ongoing actuation state so we can log it and update observer.
-    bool is_coasting;
-    pbio_dcmotor_get_state(srv->dcmotor, &is_coasting, &voltage);
+    pbio_dcmotor_actuation_t applied_actuation;
+    int32_t voltage;
+    pbio_dcmotor_get_state(srv->dcmotor, &applied_actuation, &voltage);
 
     // Log servo state
-    int32_t log_data[] = {time_now, state.count, state.rate, actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
+    int32_t log_data[] = {time_now, state.count, state.rate, applied_actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, state.count, is_coasting, voltage);
+    pbio_observer_update(&srv->observer, state.count, applied_actuation, voltage);
 
     return PBIO_SUCCESS;
 }
