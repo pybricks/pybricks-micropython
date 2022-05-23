@@ -51,6 +51,9 @@ typedef enum {
     PBIO_CONTROL_ON_COMPLETION_HOLD,
     /** On completion, keep moving at target speed */
     PBIO_CONTROL_ON_COMPLETION_CONTINUE,
+    /** On completion, coast the motor, but use endpoint of this maneuver
+     * as starting point for the next relative angle maneuver. */
+    PBIO_CONTROL_ON_COMPLETION_COAST_SMART,
 } pbio_control_on_completion_t;
 
 // State of a system being controlled.

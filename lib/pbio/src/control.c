@@ -154,14 +154,31 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         // If on target, decide what to do next using the on-completion type.
         switch (ctl->on_completion) {
             case PBIO_CONTROL_ON_COMPLETION_COAST:
+                // Coast the motor and stop the control loop.
                 *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
                 *control = 0;
                 pbio_control_stop(ctl);
                 break;
             case PBIO_CONTROL_ON_COMPLETION_BRAKE:
+                // Passively brake and stop the control loop.
                 *actuation = PBIO_DCMOTOR_ACTUATION_BRAKE;
                 *control = 0;
                 pbio_control_stop(ctl);
+                break;
+            case PBIO_CONTROL_ON_COMPLETION_COAST_SMART:
+                // For smart coast, keep actuating (holding) briefly to enforce
+                // standstill. It also gives some time for two subsequent
+                // blocks to smoothly transition without going through coast.
+                if (time_ref - ctl->trajectory.t3 < 100 * US_PER_MS) {
+                    *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
+                    *control = torque;
+                }
+                // After that, coast the motor and stop the control loop.
+                else {
+                    *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
+                    *control = 0;
+                    pbio_control_stop(ctl);
+                }
                 break;
             case PBIO_CONTROL_ON_COMPLETION_CONTINUE:
             // Fall through, same as hold.
@@ -298,19 +315,34 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
 pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_control_on_completion_t on_completion) {
 
-    // Get the count from which the relative count is to be counted
+    // First, we need to decide where the relative motion starts from.
     int32_t count_start;
 
-    // If no control is active, count from the physical count
-    if (!pbio_control_is_active(ctl)) {
-        count_start = state->count;
-    }
-    // Otherwise count from the current reference
-    else {
+    if (pbio_control_is_active(ctl)) {
+        // If control is already active, restart from current reference.
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
         pbio_trajectory_reference_t ref;
         pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
         count_start = ref.count;
+    } else {
+        // Control is inactive. We still have two options.
+        // If the previous command used smart coast and we're still close to
+        // its target, we want to start from there. This avoids accumulating
+        // errors in programs that use mostly relative motions like run_angle.
+        if (ctl->on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART &&
+            abs(ctl->trajectory.th3 - state->count) < ctl->settings.count_tolerance * 2) {
+            // We're close enough, so make the new target relative to the
+            // endpoint of the last one.
+            count_start = ctl->trajectory.th3;
+
+            // FIXME: We need to clear the on-completion state between program
+            // to make each program run independent.
+
+        } else {
+            // No special cases apply, so the best we can do is just start from
+            // the current state.
+            count_start = state->count;
+        }
     }
 
     // The target count is the start count plus the count to be traveled.  If speed is negative, traveled count also flips.
@@ -359,6 +391,11 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
+
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART) {
+        // For timed maneuvers, the end point has no meaning, so just coast.
+        on_completion = PBIO_CONTROL_ON_COMPLETION_COAST;
+    }
 
     // Set new maneuver action and stop type, and state
     ctl->on_completion = on_completion;

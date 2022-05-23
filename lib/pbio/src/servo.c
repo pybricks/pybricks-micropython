@@ -333,8 +333,9 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
         return err;
     }
 
-    switch (on_completion)
-    {
+    switch (on_completion) {
+        case PBIO_CONTROL_ON_COMPLETION_COAST_SMART:
+        // Same as normal coast, so fall through.
         case PBIO_CONTROL_ON_COMPLETION_COAST:
             return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_COAST, 0);
         case PBIO_CONTROL_ON_COMPLETION_BRAKE:

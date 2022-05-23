@@ -17,6 +17,12 @@ const pb_obj_enum_member_t pb_Stop_COAST_obj = {
     .value = PBIO_CONTROL_ON_COMPLETION_COAST
 };
 
+const pb_obj_enum_member_t pb_Stop_COAST_SMART_obj = {
+    {&pb_enum_type_Stop},
+    .name = MP_QSTR_COAST_SMART,
+    .value = PBIO_CONTROL_ON_COMPLETION_COAST_SMART,
+};
+
 const pb_obj_enum_member_t pb_Stop_BRAKE_obj = {
     {&pb_enum_type_Stop},
     .name = MP_QSTR_BRAKE,
@@ -36,10 +42,11 @@ const pb_obj_enum_member_t pb_Stop_NONE_obj = {
 };
 
 STATIC const mp_rom_map_elem_t pb_enum_Stop_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_COAST),   MP_ROM_PTR(&pb_Stop_COAST_obj) },
-    { MP_ROM_QSTR(MP_QSTR_BRAKE),   MP_ROM_PTR(&pb_Stop_BRAKE_obj) },
-    { MP_ROM_QSTR(MP_QSTR_HOLD),    MP_ROM_PTR(&pb_Stop_HOLD_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_NONE),    MP_ROM_PTR(&pb_Stop_NONE_obj)},
+    { MP_ROM_QSTR(MP_QSTR_COAST),       MP_ROM_PTR(&pb_Stop_COAST_obj) },
+    { MP_ROM_QSTR(MP_QSTR_COAST_SMART), MP_ROM_PTR(&pb_Stop_COAST_SMART_obj) },
+    { MP_ROM_QSTR(MP_QSTR_BRAKE),       MP_ROM_PTR(&pb_Stop_BRAKE_obj) },
+    { MP_ROM_QSTR(MP_QSTR_HOLD),        MP_ROM_PTR(&pb_Stop_HOLD_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_NONE),        MP_ROM_PTR(&pb_Stop_NONE_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Stop_locals_dict, pb_enum_Stop_table);
 

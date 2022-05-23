@@ -7,6 +7,11 @@
 ### Added
 - Added `Stop.NONE` as `then` option for motors. This allows subsequent
   motor and drive base commands to transition without stopping.
+- Added `Stop.COAST_SMART` as `then` option for motors. This still coasts the
+  motor, but it keeps track of the previously used position target. When a new
+  relative angle command is given (e.g. rotate 90 degrees), it uses that
+  position as the starting point. This avoids accumulation of errors when using
+  relative angles in succession.
 - Made motor deceleration configurable separately from acceleration.
 - Enabled `ujson` module.
 - Added ability to use more than one `DriveBase` in the same script.
