@@ -11,6 +11,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
 
 from pybricksdev.connections.pybricks import PybricksHub
 from pybricksdev.connections.lego import REPLHub
@@ -183,6 +184,43 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     figure.savefig(build_dir / (title + ".png"))
 
 
+def make_plots(build_dir, show=True):
+    # Plot single motor data if available.
+    try:
+        servo_time, servo_data = get_data(build_dir / "servo.txt")
+        plot_servo_data(servo_time, servo_data, build_dir)
+    except FileNotFoundError:
+        pass
+
+    # Plot control data if available.
+    try:
+        control_time, control_data = get_data(build_dir / "control.txt")
+        plot_control_data(control_time, control_data, build_dir)
+    except (IndexError, FileNotFoundError):
+        pass
+
+    # Plot drive base data if available.
+    try:
+        # Drive base case
+        servo_time, servo_data = get_data(build_dir / "servo_left.txt")
+        plot_servo_data(servo_time, servo_data, build_dir, "left")
+
+        servo_time, servo_data = get_data(build_dir / "servo_right.txt")
+        plot_servo_data(servo_time, servo_data, build_dir, "right")
+
+        control_time, control_data = get_data(build_dir / "control_distance.txt")
+        plot_control_data(control_time, control_data, build_dir, "distance")
+
+        control_time, control_data = get_data(build_dir / "control_heading.txt")
+        plot_control_data(control_time, control_data, build_dir, "heading")
+    except FileNotFoundError:
+        pass
+
+    # If requested, show blocking windows with plots.
+    if show:
+        matplotlib.pyplot.show(block=True)
+
+
 # Parse user argument.
 parser = argparse.ArgumentParser(description="Run motor script and show log.")
 parser.add_argument("file", help="Script to run")
@@ -195,6 +233,11 @@ parser.add_argument(
     default="ble",
 )
 args = parser.parse_args()
+
+# Sometimes we don't want to do new experiments but just visualize old data.
+if pathlib.Path(args.file).is_dir():
+    make_plots(pathlib.Path(args.file), args.show)
+    sys.exit()
 
 # Local paths and data directories.
 time_string = datetime.datetime.now().strftime("-%Y-%m-%d-%H%M-%S")
@@ -235,37 +278,5 @@ with open(build_dir / "hub_output.txt", "wb") as f:
     for line in hub_output:
         f.write(line + b"\n")
 
-# Plot single motor data if available.
-try:
-    servo_time, servo_data = get_data(build_dir / "servo.txt")
-    plot_servo_data(servo_time, servo_data, build_dir)
-except FileNotFoundError:
-    pass
-
-# Plot control data if available.
-try:
-    control_time, control_data = get_data(build_dir / "control.txt")
-    plot_control_data(control_time, control_data, build_dir)
-except (IndexError, FileNotFoundError):
-    pass
-
-# Plot drive base data if available.
-try:
-    # Drive base case
-    servo_time, servo_data = get_data(build_dir / "servo_left.txt")
-    plot_servo_data(servo_time, servo_data, build_dir, "left")
-
-    servo_time, servo_data = get_data(build_dir / "servo_right.txt")
-    plot_servo_data(servo_time, servo_data, build_dir, "right")
-
-    control_time, control_data = get_data(build_dir / "control_distance.txt")
-    plot_control_data(control_time, control_data, build_dir, "distance")
-
-    control_time, control_data = get_data(build_dir / "control_heading.txt")
-    plot_control_data(control_time, control_data, build_dir, "heading")
-except FileNotFoundError:
-    pass
-
-# If requested, show blocking windows with plots.
-if args.show:
-    matplotlib.pyplot.show(block=True)
+# Visualize the data.
+make_plots(build_dir, args.show)
