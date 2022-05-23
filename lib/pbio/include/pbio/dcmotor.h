@@ -17,7 +17,12 @@ typedef enum {
     PBIO_DIRECTION_COUNTERCLOCKWISE,  /**< Positive means counterclockwise */
 } pbio_direction_t;
 
-#define PBIO_DUTY_USER_STEPS (100)
+typedef enum {
+    PBIO_DCMOTOR_ACTUATION_COAST,   /**< Coast the motor */
+    PBIO_DCMOTOR_ACTUATION_BRAKE,   /**< Brake the motor */
+    PBIO_DCMOTOR_ACTUATION_VOLTAGE, /**< Apply a voltage */
+    PBIO_DCMOTOR_ACTUATION_TORQUE,  /**< Apply a torque */
+} pbio_dcmotor_actuation_t;
 
 typedef struct _pbio_dcmotor_t {
     pbio_port_id_t port;

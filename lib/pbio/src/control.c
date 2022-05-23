@@ -48,7 +48,7 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int
     return abs(ctl->trajectory.th3 - count) <= ctl->settings.count_tolerance;
 }
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_actuation_t *actuation, int32_t *control) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control) {
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
@@ -148,18 +148,18 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     if (!ctl->on_target) {
         // If we're not on target yet, we keep actuating with
         // the PID torque value that has just been calculated.
-        *actuation = PBIO_ACTUATION_TORQUE;
+        *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
         *control = torque;
     } else {
         // If on target, decide what to do next using the on-completion type.
         switch (ctl->on_completion) {
             case PBIO_CONTROL_ON_COMPLETION_COAST:
-                *actuation = PBIO_ACTUATION_COAST;
+                *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
                 *control = 0;
                 pbio_control_stop(ctl);
                 break;
             case PBIO_CONTROL_ON_COMPLETION_BRAKE:
-                *actuation = PBIO_ACTUATION_BRAKE;
+                *actuation = PBIO_DCMOTOR_ACTUATION_BRAKE;
                 *control = 0;
                 pbio_control_stop(ctl);
                 break;
@@ -169,7 +169,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
                 // Holding position or continuing the trajectory just means we
                 // have to keep actuating with the PID torque value that has
                 // just been calculated.
-                *actuation = PBIO_ACTUATION_TORQUE;
+                *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
                 *control = torque;
 
                 // If we are getting here on completion of a timed command with

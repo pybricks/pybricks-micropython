@@ -197,7 +197,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
 
     // Reset both motors to a passive state
     pbio_drivebase_stop_servo_control(db);
-    pbio_error_t err = pbio_drivebase_stop(db, PBIO_ACTUATION_COAST);
+    pbio_error_t err = pbio_drivebase_stop(db, PBIO_DCMOTOR_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -237,7 +237,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t actuation) {
+pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_dcmotor_actuation_t actuation) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -245,7 +245,8 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t actuatio
     }
 
     // Only coast and brake are allowed.
-    if (actuation != PBIO_ACTUATION_COAST && actuation != PBIO_ACTUATION_BRAKE) {
+    if (actuation != PBIO_DCMOTOR_ACTUATION_COAST &&
+        actuation != PBIO_DCMOTOR_ACTUATION_BRAKE) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -286,17 +287,19 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     pbio_trajectory_reference_t ref_distance;
     pbio_trajectory_reference_t ref_heading;
     int32_t sum_torque, dif_torque;
-    pbio_actuation_t sum_actuation, dif_actuation;
+    pbio_dcmotor_actuation_t sum_actuation, dif_actuation;
     pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &sum_actuation, &sum_torque);
     pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &dif_actuation, &dif_torque);
 
     // If either controller coasts, coast both, thereby also stopping control.
-    if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
-        return pbio_drivebase_stop(db, PBIO_ACTUATION_COAST);
+    if (sum_actuation == PBIO_DCMOTOR_ACTUATION_COAST ||
+        dif_actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
+        return pbio_drivebase_stop(db, PBIO_DCMOTOR_ACTUATION_COAST);
     }
     // If either controller brakes, brake both, thereby also stopping control.
-    if (sum_actuation == PBIO_ACTUATION_BRAKE || dif_actuation == PBIO_ACTUATION_BRAKE) {
-        return pbio_drivebase_stop(db, PBIO_ACTUATION_BRAKE);
+    if (sum_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE ||
+        dif_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE) {
+        return pbio_drivebase_stop(db, PBIO_DCMOTOR_ACTUATION_BRAKE);
     }
 
     // Both controllers are able to stop the other when it stalls. This ensures

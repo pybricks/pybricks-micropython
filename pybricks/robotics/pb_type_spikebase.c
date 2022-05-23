@@ -216,7 +216,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_forever_obj, 
 // pybricks.robotics.SpikeBase.stop
 STATIC mp_obj_t robotics_SpikeBase_stop(mp_obj_t self_in) {
     robotics_SpikeBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_drivebase_stop(self->db, PBIO_ACTUATION_COAST));
+    pb_assert(pbio_drivebase_stop(self->db, PBIO_DCMOTOR_ACTUATION_COAST));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_SpikeBase_stop_obj, robotics_SpikeBase_stop);

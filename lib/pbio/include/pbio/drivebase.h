@@ -30,7 +30,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
 
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate);
 
-pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t actuation);
+pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_dcmotor_actuation_t actuation);
 
 bool pbio_drivebase_is_busy(pbio_drivebase_t *db);
 

@@ -61,7 +61,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     pbio_trajectory_reference_t ref;
 
     // Control action to be calculated
-    pbio_actuation_t actuation = PBIO_ACTUATION_COAST;
+    pbio_dcmotor_actuation_t actuation = PBIO_DCMOTOR_ACTUATION_COAST;
     int32_t feedback_torque = 0;
     int32_t feedforward_torque = 0;
     int32_t voltage;
@@ -301,17 +301,17 @@ pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state
 }
 
 // Actuate a single motor
-pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload) {
+pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload) {
 
     // Apply the calculated actuation, by type
     switch (actuation_type) {
-        case PBIO_ACTUATION_COAST:
+        case PBIO_DCMOTOR_ACTUATION_COAST:
             return pbio_dcmotor_coast(srv->dcmotor);
-        case PBIO_ACTUATION_BRAKE:
+        case PBIO_DCMOTOR_ACTUATION_BRAKE:
             return pbio_dcmotor_set_voltage(srv->dcmotor, 0);
-        case PBIO_ACTUATION_VOLTAGE:
+        case PBIO_DCMOTOR_ACTUATION_VOLTAGE:
             return pbio_dcmotor_set_voltage(srv->dcmotor, payload);
-        case PBIO_ACTUATION_TORQUE: {
+        case PBIO_DCMOTOR_ACTUATION_TORQUE: {
             int32_t voltage = pbio_observer_torque_to_voltage(srv->observer.model, payload);
             return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
         }
@@ -336,9 +336,9 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
     switch (on_completion)
     {
         case PBIO_CONTROL_ON_COMPLETION_COAST:
-            return pbio_servo_actuate(srv, PBIO_ACTUATION_COAST, 0);
+            return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_COAST, 0);
         case PBIO_CONTROL_ON_COMPLETION_BRAKE:
-            return pbio_servo_actuate(srv, PBIO_ACTUATION_BRAKE, 0);
+            return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_BRAKE, 0);
         case PBIO_CONTROL_ON_COMPLETION_HOLD: {
             int32_t count;
             pbio_error_t err = pbio_tacho_get_count(srv->tacho, &count);

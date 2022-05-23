@@ -43,17 +43,14 @@ typedef struct _pbio_control_settings_t {
 } pbio_control_settings_t;
 
 typedef enum {
-    PBIO_ACTUATION_COAST,          /**< Coast the motor */
-    PBIO_ACTUATION_BRAKE,          /**< Brake the motor */
-    PBIO_ACTUATION_VOLTAGE,        /**< Apply a given voltage */
-    PBIO_ACTUATION_TORQUE,         /**< Apply a given torque */
-} pbio_actuation_t;
-
-typedef enum {
-    PBIO_CONTROL_ON_COMPLETION_COAST,          /**< On completion, coast the motor and reset control state. */
-    PBIO_CONTROL_ON_COMPLETION_BRAKE,          /**< On completion, brake the motor and reset control state. */
-    PBIO_CONTROL_ON_COMPLETION_HOLD,           /**< On completion, actively hold the motor in place */
-    PBIO_CONTROL_ON_COMPLETION_CONTINUE,       /**< On completion, keep moving at target speed */
+    /** On completion, coast the motor and reset control state. */
+    PBIO_CONTROL_ON_COMPLETION_COAST = PBIO_DCMOTOR_ACTUATION_COAST,
+    /** On completion, brake the motor and reset control state. */
+    PBIO_CONTROL_ON_COMPLETION_BRAKE = PBIO_DCMOTOR_ACTUATION_BRAKE,
+    /** On completion, actively hold the motor in place */
+    PBIO_CONTROL_ON_COMPLETION_HOLD,
+    /** On completion, keep moving at target speed */
+    PBIO_CONTROL_ON_COMPLETION_CONTINUE,
 } pbio_control_on_completion_t;
 
 // State of a system being controlled.
@@ -116,6 +113,6 @@ bool pbio_control_is_stalled(pbio_control_t *ctl, int32_t *stall_duration);
 bool pbio_control_is_done(pbio_control_t *ctl);
 int32_t pbio_control_get_load(pbio_control_t *ctl);
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_actuation_t *actuation, int32_t *control);
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control);
 
 #endif // _PBIO_CONTROL_H_
