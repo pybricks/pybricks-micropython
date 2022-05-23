@@ -304,28 +304,23 @@ pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload) {
 
     // Apply the calculated actuation, by type
-    switch (actuation_type)
-    {
+    switch (actuation_type) {
         case PBIO_ACTUATION_COAST:
             return pbio_dcmotor_coast(srv->dcmotor);
         case PBIO_ACTUATION_BRAKE:
             return pbio_dcmotor_set_voltage(srv->dcmotor, 0);
-        case PBIO_ACTUATION_HOLD:
-            return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), payload);
         case PBIO_ACTUATION_VOLTAGE:
             return pbio_dcmotor_set_voltage(srv->dcmotor, payload);
         case PBIO_ACTUATION_TORQUE: {
             int32_t voltage = pbio_observer_torque_to_voltage(srv->observer.model, payload);
             return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
         }
-        case PBIO_ACTUATION_CONTINUE:
-            return PBIO_ERROR_INVALID_OP;
     }
 
-    return PBIO_SUCCESS;
+    return PBIO_ERROR_INVALID_ARG;
 }
 
-pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
+pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
@@ -338,25 +333,26 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
         return err;
     }
 
-    // Get control payload
-    int32_t control;
-    if (after_stop == PBIO_ACTUATION_HOLD) {
-        // For hold, the actuation payload is the current count
-        pbio_error_t err = pbio_tacho_get_count(srv->tacho, &control);
-        if (err != PBIO_SUCCESS) {
-            return err;
+    switch (on_completion)
+    {
+        case PBIO_CONTROL_ON_COMPLETION_COAST:
+            return pbio_servo_actuate(srv, PBIO_ACTUATION_COAST, 0);
+        case PBIO_CONTROL_ON_COMPLETION_BRAKE:
+            return pbio_servo_actuate(srv, PBIO_ACTUATION_BRAKE, 0);
+        case PBIO_CONTROL_ON_COMPLETION_HOLD: {
+            int32_t count;
+            pbio_error_t err = pbio_tacho_get_count(srv->tacho, &count);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), count);
         }
-    } else {
-        // Otherwise the payload is zero and control stops
-        control = 0;
-        pbio_control_stop(&srv->control);
+        default:
+            return PBIO_ERROR_INVALID_ARG;
     }
-
-    // Apply the actuation
-    return pbio_servo_actuate(srv, after_stop, control);
 }
 
-static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
+static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
@@ -383,20 +379,20 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32
     }
 
     // Start a timed maneuver with duration converted to microseconds.
-    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, on_completion);
 }
 
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
     // Start a timed maneuver and restart it when it is done, thus running forever.
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_MS, PBIO_ACTUATION_CONTINUE);
+    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_completion_t on_completion) {
     // Start a timed maneuver, duration specified by user.
-    return pbio_servo_run_timed(srv, speed, duration, after_stop);
+    return pbio_servo_run_timed(srv, speed, duration, on_completion);
 }
 
-pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
+pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
@@ -423,10 +419,10 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         return err;
     }
 
-    return pbio_control_start_angle_control(&srv->control, time_now, &state, target_count, target_rate, after_stop);
+    return pbio_control_start_angle_control(&srv->control, time_now, &state, target_count, target_rate, on_completion);
 }
 
-pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
+pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
@@ -454,7 +450,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     }
 
     // Start the relative angle control
-    return pbio_control_start_relative_angle_control(&srv->control, time_now, &state, relative_target_count, target_rate, after_stop);
+    return pbio_control_start_relative_angle_control(&srv->control, time_now, &state, relative_target_count, target_rate, on_completion);
 }
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {

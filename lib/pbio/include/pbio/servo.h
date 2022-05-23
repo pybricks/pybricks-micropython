@@ -54,15 +54,15 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings,
 pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state);
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
-pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
+pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_completion);
 
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload);
 pbio_error_t pbio_servo_set_voltage_passive(pbio_servo_t *srv, int32_t voltage);
 
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed);
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop);
-pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop);
-pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop);
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 void pbio_servo_update_all(void);

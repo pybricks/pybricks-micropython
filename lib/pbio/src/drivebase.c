@@ -116,32 +116,6 @@ static void pbio_drivebase_stop_servo_control(pbio_drivebase_t *db) {
     pbio_control_stop(&db->right->control);
 }
 
-// Actuate a drivebase
-static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t actuation, int32_t sum_control, int32_t dif_control) {
-
-    switch (actuation) {
-        // Coast and brake are both passed on to servo_actuate as-is.
-        case PBIO_ACTUATION_COAST:
-        case PBIO_ACTUATION_BRAKE: {
-            pbio_drivebase_stop_drivebase_control(db);
-            pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            return pbio_servo_actuate(db->right, actuation, 0);
-        }
-        // Hold is achieved by driving 0 distance.
-        case PBIO_ACTUATION_HOLD:
-            return pbio_drivebase_drive_curve(db, 0, 0, PBIO_ACTUATION_HOLD);
-        case PBIO_ACTUATION_VOLTAGE:
-            return PBIO_ERROR_NOT_IMPLEMENTED;
-        case PBIO_ACTUATION_TORQUE:
-            return PBIO_ERROR_NOT_IMPLEMENTED;
-        default:
-            return PBIO_ERROR_INVALID_ARG;
-    }
-}
-
 // This function is attached to a servo object, so it is able to
 // stop the drivebase if the servo needs to execute a new command.
 static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_parent) {
@@ -223,7 +197,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
 
     // Reset both motors to a passive state
     pbio_drivebase_stop_servo_control(db);
-    pbio_error_t err = pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
+    pbio_error_t err = pbio_drivebase_stop(db, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -263,33 +237,27 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
+pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t actuation) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Stop servo control in case it was running.
-    pbio_drivebase_stop_servo_control(db);
-
-    if (after_stop == PBIO_ACTUATION_HOLD) {
-
-        // Get drive base state
-        pbio_control_state_t state_distance;
-        pbio_control_state_t state_heading;
-        pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // When holding, the control payload is the count to hold
-        return pbio_drivebase_actuate(db, after_stop, state_distance.count, state_heading.count);
-
-    } else {
-        // Otherwise the payload is zero and control stops
-        return pbio_drivebase_actuate(db, after_stop, 0, 0);
+    // Only coast and brake are allowed.
+    if (actuation != PBIO_ACTUATION_COAST && actuation != PBIO_ACTUATION_BRAKE) {
+        return PBIO_ERROR_INVALID_ARG;
     }
+
+    // Stop control.
+    pbio_drivebase_stop_drivebase_control(db);
+
+    // Apply the actuation to both motors.
+    pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    return pbio_servo_actuate(db->right, actuation, 0);
 }
 
 bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {
@@ -324,11 +292,11 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // If either controller coasts, coast both, thereby also stopping control.
     if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
-        return pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
+        return pbio_drivebase_stop(db, PBIO_ACTUATION_COAST);
     }
     // If either controller brakes, brake both, thereby also stopping control.
     if (sum_actuation == PBIO_ACTUATION_BRAKE || dif_actuation == PBIO_ACTUATION_BRAKE) {
-        return pbio_drivebase_actuate(db, PBIO_ACTUATION_BRAKE, 0, 0);
+        return pbio_drivebase_stop(db, PBIO_ACTUATION_BRAKE);
     }
 
     // Both controllers are able to stop the other when it stalls. This ensures
@@ -365,7 +333,7 @@ void pbio_drivebase_update_all(void) {
     }
 }
 
-static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_actuation_t after_stop) {
+static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -387,13 +355,13 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     }
 
     // Start controller that controls the sum of both motor counts
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, sum, sum_rate, after_stop);
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, sum, sum_rate, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start controller that controls the difference between both motor counts
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, dif, dif_rate, after_stop);
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, dif, dif_rate, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -426,7 +394,7 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_actuation_t after_stop) {
+pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_control_on_completion_t on_completion) {
 
     int32_t arc_angle, arc_length;
     if (radius == PBIO_RADIUS_INF) {
@@ -448,10 +416,10 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     int32_t relative_dif = pbio_control_user_to_counts(&db->control_heading.settings, arc_angle);
 
     // Execute the common drive command.
-    return pbio_drivebase_drive_counts_relative(db, relative_sum, db->control_distance.settings.rate_default, relative_dif, db->control_heading.settings.rate_default, after_stop);
+    return pbio_drivebase_drive_counts_relative(db, relative_sum, db->control_distance.settings.rate_default, relative_dif, db->control_heading.settings.rate_default, on_completion);
 }
 
-static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_actuation_t after_stop) {
+static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -473,12 +441,12 @@ static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int3
     }
 
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration * US_PER_MS, sum_rate, after_stop);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration * US_PER_MS, sum_rate, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration * US_PER_MS, dif_rate, after_stop);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration * US_PER_MS, dif_rate, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -490,7 +458,7 @@ pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, i
     return pbio_drivebase_drive_counts_timed(db,
         pbio_control_user_to_counts(&db->control_distance.settings, speed),
         pbio_control_user_to_counts(&db->control_heading.settings, turn_rate),
-        DURATION_FOREVER_MS, PBIO_ACTUATION_CONTINUE);
+        DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -556,33 +524,28 @@ pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_le
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER_MS, PBIO_ACTUATION_CONTINUE);
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 // Drive for a given duration, given two motor speeds.
-pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_actuation_t after_stop) {
+pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion) {
     // Flip left tank motor orientation.
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, duration, after_stop);
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, duration, on_completion);
 }
 
 // Drive given two speeds and one angle.
-pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_actuation_t after_stop) {
-
-    // Ignore two zero speeds or zero angle by making drivebase stop.
-    if (angle == 0 || (speed_left == 0 && speed_right == 0)) {
-        return pbio_drivebase_stop(db, after_stop);
-    }
+pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion) {
 
     // In the classic tank drive, we flip the left motor here instead of at the low level.
     speed_left *= -1;
 
     // Work out angles for each motor.
     int32_t max_speed = max(abs(speed_left), abs(speed_right));
-    int32_t angle_left = angle * speed_left / max_speed;
-    int32_t angle_right = angle * speed_right / max_speed;
+    int32_t angle_left = max_speed == 0 ? 0 : angle * speed_left / max_speed;
+    int32_t angle_right = max_speed == 0 ? 0 : angle * speed_right / max_speed;
 
     // Work out the required total and difference angles to achieve this.
     int32_t sum = angle_left + angle_right;
@@ -590,7 +553,7 @@ pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left
     int32_t rate = abs(speed_left) + abs(speed_right);
 
     // Execute the maneuver.
-    return pbio_drivebase_drive_counts_relative(db, sum, rate, dif, rate, after_stop);
+    return pbio_drivebase_drive_counts_relative(db, sum, rate, dif, rate, on_completion);
 }
 
 pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {

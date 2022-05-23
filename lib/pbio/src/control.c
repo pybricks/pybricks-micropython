@@ -145,31 +145,41 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     ctl->load = (ctl->load * (100 - PBIO_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONTROL_LOOP_TIME_MS) / 100;
 
     // Decide actuation based on whether control is on target.
-    if (ctl->on_target) {
-        // If on target, decide what to do next based on the after-stop actuation type.
-        if (ctl->after_stop == PBIO_ACTUATION_HOLD || ctl->after_stop == PBIO_ACTUATION_CONTINUE) {
-            // Holding position or continuing the trajectory just means we have
-            // to keep actuating with the PID torque value that has just been calculated.
-            *actuation = PBIO_ACTUATION_TORQUE;
-            *control = torque;
-
-            // If we are getting here on completion of a timed command with a
-            // stationary endpoint, convert it to a stationary angle based
-            // command and hold it.
-            if (pbio_control_type_is_time(ctl) && ctl->trajectory.w3 == 0) {
-                pbio_control_start_hold_control(ctl, time_now, state->count);
-            }
-        } else {
-            // For other (passive) actuations, just return that and stop control.
-            *actuation = ctl->after_stop;
-            *control = 0;
-            pbio_control_stop(ctl);
-        }
-    } else {
+    if (!ctl->on_target) {
         // If we're not on target yet, we keep actuating with
         // the PID torque value that has just been calculated.
         *actuation = PBIO_ACTUATION_TORQUE;
         *control = torque;
+    } else {
+        // If on target, decide what to do next using the on-completion type.
+        switch (ctl->on_completion) {
+            case PBIO_CONTROL_ON_COMPLETION_COAST:
+                *actuation = PBIO_ACTUATION_COAST;
+                *control = 0;
+                pbio_control_stop(ctl);
+                break;
+            case PBIO_CONTROL_ON_COMPLETION_BRAKE:
+                *actuation = PBIO_ACTUATION_BRAKE;
+                *control = 0;
+                pbio_control_stop(ctl);
+                break;
+            case PBIO_CONTROL_ON_COMPLETION_CONTINUE:
+            // Fall through, same as hold.
+            case PBIO_CONTROL_ON_COMPLETION_HOLD:
+                // Holding position or continuing the trajectory just means we
+                // have to keep actuating with the PID torque value that has
+                // just been calculated.
+                *actuation = PBIO_ACTUATION_TORQUE;
+                *control = torque;
+
+                // If we are getting here on completion of a timed command with
+                // a stationary endpoint, convert it to a stationary angle
+                // based command and hold it.
+                if (pbio_control_type_is_time(ctl) && ctl->trajectory.w3 == 0) {
+                    pbio_control_start_hold_control(ctl, time_now, state->count);
+                }
+                break;
+        }
     }
 
     // Log control data
@@ -197,12 +207,12 @@ void pbio_control_stop(pbio_control_t *ctl) {
     ctl->stalled = false;
 }
 
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
-    ctl->after_stop = after_stop;
+    ctl->on_completion = on_completion;
     ctl->on_target = false;
 
     // Common trajectory parameters for all cases covered here.
@@ -212,7 +222,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         .wmax = ctl->settings.rate_max,
         .a0_abs = ctl->settings.acceleration,
         .a2_abs = ctl->settings.deceleration,
-        .continue_running = after_stop == PBIO_ACTUATION_CONTINUE,
+        .continue_running = on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE,
     };
 
     // Given the control status, fill in remaining commands and get trajectory.
@@ -286,7 +296,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_control_on_completion_t on_completion) {
 
     // Get the count from which the relative count is to be counted
     int32_t count_start;
@@ -311,13 +321,13 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
         return pbio_control_start_hold_control(ctl, time_now, target_count);
     }
 
-    return pbio_control_start_angle_control(ctl, time_now, state, target_count, target_rate, after_stop);
+    return pbio_control_start_angle_control(ctl, time_now, state, target_count, target_rate, on_completion);
 }
 
 pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_now, int32_t target_count) {
 
     // Set new maneuver action and stop type, and state
-    ctl->after_stop = PBIO_ACTUATION_HOLD;
+    ctl->on_completion = PBIO_CONTROL_ON_COMPLETION_HOLD;
     ctl->on_target = false;
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -346,12 +356,12 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 }
 
 
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
-    ctl->after_stop = after_stop;
+    ctl->on_completion = on_completion;
     ctl->on_target = false;
 
     // Common trajectory parameters for the cases covered here.
@@ -362,7 +372,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         .wmax = ctl->settings.rate_max,
         .a0_abs = ctl->settings.acceleration,
         .a2_abs = ctl->settings.deceleration,
-        .continue_running = after_stop == PBIO_ACTUATION_CONTINUE,
+        .continue_running = on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE,
     };
 
     // Given the control status, fill in remaining commands and get trajectory.

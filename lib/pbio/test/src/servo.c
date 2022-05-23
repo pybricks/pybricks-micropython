@@ -328,7 +328,7 @@ end:
 }
 
 static pbio_error_t test_servo_run_angle_func(pbio_servo_t *servo) {
-    return pbio_servo_run_angle(servo, 500, 180, PBIO_ACTUATION_HOLD);
+    return pbio_servo_run_angle(servo, 500, 180, PBIO_CONTROL_ON_COMPLETION_HOLD);
 }
 
 static PT_THREAD(test_servo_run_angle(struct pt *pt)) {
@@ -342,7 +342,7 @@ static PT_THREAD(test_servo_run_angle(struct pt *pt)) {
 }
 
 static pbio_error_t test_servo_run_time_func(pbio_servo_t *servo) {
-    return pbio_servo_run_time(servo, 500, 1000, PBIO_ACTUATION_HOLD);
+    return pbio_servo_run_time(servo, 500, 1000, PBIO_CONTROL_ON_COMPLETION_HOLD);
 }
 
 static PT_THREAD(test_servo_run_time(struct pt *pt)) {

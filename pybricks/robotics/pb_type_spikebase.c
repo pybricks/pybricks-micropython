@@ -78,7 +78,7 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_degrees(size_t n_args, const mp
     mp_int_t angle = pb_obj_get_int(angle_in);
     mp_int_t speed_left = pb_obj_get_int(speed_left_in);
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     pb_assert(pbio_spikebase_drive_angle(self->db, speed_left, speed_right, angle, then));
 
@@ -103,7 +103,7 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_degrees(size_t n_args, cons
     mp_int_t angle = pb_obj_get_int(angle_in);
     mp_int_t speed = pb_obj_get_int(speed_in);
     mp_int_t steering = pb_obj_get_int(steering_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Convert steering to tank drive
     int32_t speed_left;
@@ -133,7 +133,7 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_time(size_t n_args, const mp_ob
     mp_int_t time = pb_obj_get_int(time_in);
     mp_int_t speed_left = pb_obj_get_int(speed_left_in);
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     pb_assert(pbio_spikebase_drive_time(self->db, speed_left, speed_right, time, then));
 
@@ -158,7 +158,7 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_time(size_t n_args, const m
     mp_int_t time = pb_obj_get_int(time_in);
     mp_int_t speed = pb_obj_get_int(speed_in);
     mp_int_t steering = pb_obj_get_int(steering_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Convert steering to tank drive
     int32_t speed_left;

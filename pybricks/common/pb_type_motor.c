@@ -170,7 +170,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
 // pybricks._common.Motor.hold
 STATIC mp_obj_t common_Motor_hold(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_servo_stop(self->srv, PBIO_ACTUATION_HOLD));
+    pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_hold_obj, common_Motor_hold);
@@ -191,7 +191,7 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_time(self->srv, speed, time, then));
@@ -213,7 +213,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         PB_ARG_DEFAULT_NONE(duty_limit));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t on_completion = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // If duty_limit argument given, limit duty during this maneuver.
     bool override_max_voltage = duty_limit_in != mp_const_none;
@@ -269,7 +269,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     pb_assert(pbio_tacho_get_angle(self->srv->tacho, &stall_point));
 
     // Stop moving.
-    pb_assert(pbio_servo_stop(self->srv, after_stop));
+    pb_assert(pbio_servo_stop(self->srv, on_completion));
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
@@ -287,7 +287,7 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     mp_int_t angle = pb_obj_get_int(rotation_angle_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_angle(self->srv, speed, angle, then));
@@ -311,7 +311,7 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
-    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_target(self->srv, speed, target_angle, then));

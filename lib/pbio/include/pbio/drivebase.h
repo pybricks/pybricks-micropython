@@ -24,13 +24,13 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db);
 
 // Finite point to point control
 
-pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_actuation_t after_stop);
+pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_control_on_completion_t on_completion);
 
 // Infinite driving
 
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate);
 
-pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop);
+pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t actuation);
 
 bool pbio_drivebase_is_busy(pbio_drivebase_t *db);
 
@@ -50,9 +50,9 @@ pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_se
 
 pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right);
 
-pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_actuation_t after_stop);
+pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion);
 
-pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_actuation_t after_stop);
+pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion);
 
 pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right);
 

@@ -47,9 +47,14 @@ typedef enum {
     PBIO_ACTUATION_BRAKE,          /**< Brake the motor */
     PBIO_ACTUATION_VOLTAGE,        /**< Apply a given voltage */
     PBIO_ACTUATION_TORQUE,         /**< Apply a given torque */
-    PBIO_ACTUATION_HOLD,           /**< Actively hold the motor in place */
-    PBIO_ACTUATION_CONTINUE,       /**< Keep moving at current speed */
 } pbio_actuation_t;
+
+typedef enum {
+    PBIO_CONTROL_ON_COMPLETION_COAST,          /**< On completion, coast the motor and reset control state. */
+    PBIO_CONTROL_ON_COMPLETION_BRAKE,          /**< On completion, brake the motor and reset control state. */
+    PBIO_CONTROL_ON_COMPLETION_HOLD,           /**< On completion, actively hold the motor in place */
+    PBIO_CONTROL_ON_COMPLETION_CONTINUE,       /**< On completion, keep moving at target speed */
+} pbio_control_on_completion_t;
 
 // State of a system being controlled.
 typedef struct _pbio_control_state_t {
@@ -68,7 +73,7 @@ typedef enum {
 typedef struct _pbio_control_t {
     pbio_control_type_t type;
     pbio_control_settings_t settings;
-    pbio_actuation_t after_stop;
+    pbio_control_on_completion_t on_completion;
     pbio_trajectory_t trajectory;
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
@@ -98,9 +103,9 @@ int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s);
 int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now);
 
 void pbio_control_stop(pbio_control_t *ctl);
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_actuation_t after_stop);
-pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_actuation_t after_stop);
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_actuation_t after_stop);
+pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_now, int32_t target_count);
 
 bool pbio_control_is_active(pbio_control_t *ctl);
