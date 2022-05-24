@@ -217,11 +217,24 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     pbio_logger_update(&ctl->log, log_data);
 }
 
-
+// Stops the update loop from updating this controller.
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
     ctl->on_target = true;
     ctl->stalled = false;
+}
+
+// Initializes the control state when creating the control object.
+void pbio_control_reset(pbio_control_t *ctl) {
+
+    // Stop the control loop update.
+    pbio_control_stop(ctl);
+
+    // Reset the previous on-completion state.
+    ctl->on_completion = PBIO_CONTROL_ON_COMPLETION_COAST;
+
+    // The on_completion state is the only persistent setting between
+    // subsequent maneuvers, so nothing else needs to be reset explicitly.
 }
 
 pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_control_on_completion_t on_completion) {
@@ -334,10 +347,6 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
             // We're close enough, so make the new target relative to the
             // endpoint of the last one.
             count_start = ctl->trajectory.th3;
-
-            // FIXME: We need to clear the on-completion state between program
-            // to make each program run independent.
-
         } else {
             // No special cases apply, so the best we can do is just start from
             // the current state.

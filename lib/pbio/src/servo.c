@@ -113,7 +113,7 @@ void pbio_servo_update_all(void) {
                 pbio_dcmotor_coast(srv->dcmotor);
 
                 // Stop the control state.
-                pbio_control_stop(&srv->control);
+                pbio_control_reset(&srv->control);
 
                 // Stop higher level controls, such as drive bases.
                 pbio_parent_stop(&srv->parent, false);
@@ -148,7 +148,7 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
     // electrically. All we have to do here is stop the control loop,
     // so it won't override the dcmotor to do something else.
     if (pbio_control_is_active(&srv->control)) {
-        pbio_control_stop(&srv->control);
+        pbio_control_reset(&srv->control);
 
         // If we're not clearing the parent, we are done here. We don't want
         // to keep calling the drive base stop over and over.
@@ -192,7 +192,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_parent_set(&srv->dcmotor->parent, srv, pbio_servo_stop_from_dcmotor);
 
     // Reset state
-    pbio_control_stop(&srv->control);
+    pbio_control_reset(&srv->control);
 
     // Get the device type to load relevant settings.
     pbio_iodev_type_id_t type_id;

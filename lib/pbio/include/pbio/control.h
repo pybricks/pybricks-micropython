@@ -102,7 +102,18 @@ pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t 
 int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s);
 int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now);
 
+/**
+ * Resets and initializes the control state. This is called when a device that
+ * uses this controller is first initialized or when it is disconnected.
+ */
+void pbio_control_reset(pbio_control_t *ctl);
+
+/**
+ * Stops (but not resets) the update loop from updating this controller. This
+ * is normally called when a motor coasts or brakes.
+ */
 void pbio_control_stop(pbio_control_t *ctl);
+
 pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_on_completion_t on_completion);

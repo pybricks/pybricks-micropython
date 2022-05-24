@@ -188,7 +188,8 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     pbio_parent_set(&right->parent, db, pbio_drivebase_stop_from_servo);
 
     // Stop any existing drivebase controls
-    pbio_drivebase_stop_drivebase_control(db);
+    pbio_control_reset(&db->control_distance);
+    pbio_control_reset(&db->control_heading);
 
     // Drivebase geometry
     if (wheel_diameter <= 0 || axle_track <= 0) {
