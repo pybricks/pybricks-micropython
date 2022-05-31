@@ -196,5 +196,4 @@ EMBEDED_PYTHON ?= python3.10
 PYTHON_CONFIG := $(EMBEDED_PYTHON)-config
 
 INC += $(shell $(PYTHON_CONFIG) --includes)
-LIB += -l$(EMBEDED_PYTHON)
-LDFLAGS += $(shell $(PYTHON_CONFIG) --ldflags)
+LDFLAGS += $(shell $(PYTHON_CONFIG) --ldflags --embed)
