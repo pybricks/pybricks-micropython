@@ -1,4 +1,15 @@
 {
+    "python.defaultInterpreterPath": "../../../../.venv/bin/python",
+    "python.formatting.provider": "black",
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.pycodestyleEnabled": false,
+    "python.linting.enabled": true,
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.python"
+    },
+    "python.languageServer": "Pylance",
     "rewrap.wrappingColumn": 78,
     "latex-workshop.latex.tools": [
         {
