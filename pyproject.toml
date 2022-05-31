@@ -22,6 +22,8 @@ pycryptodomex = "^3.9.9"
 PyGithub = "^1.51"
 python-dotenv = "^0.15.0"
 pyusb = "^1.0.2"
+scipy = "^1.8.1"
+sympy = "^1.10.1"
 
 [build-system]
 requires = ["poetry>=0.12"]
