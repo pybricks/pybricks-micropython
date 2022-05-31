@@ -43,10 +43,10 @@ runtime only runs during callback from the MicroPython runtime, so the main
 thread does not run continuously.
 
 There are two basic kinds of hooks for passing information between the Pybricks
-MicroPython runtime and the virtual driver Python runtime. For events, there
+MicroPython runtime and the virtual driver Python runtime. For events, there are
 `on_<event>()` methods in Python that will be called whenever the MicroPython
 runtime emits the event. For polled values, there are properties/attributes
-that are by the MicroPython runtime whenever it needs to use the value.
+that are read by the MicroPython runtime whenever it needs to use the value.
 
 ## Implementing virtual hub drivers in Python
 
