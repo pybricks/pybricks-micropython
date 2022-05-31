@@ -130,6 +130,7 @@ EXTMOD_SRC_C += $(addprefix pybricks/,\
 	)
 
 LIB_SRC_C += $(addprefix lib/,\
+	contiki-core/lib/list.c \
 	contiki-core/sys/autostart.c \
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
