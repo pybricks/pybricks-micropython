@@ -191,9 +191,8 @@ LIB_SRC_C += $(addprefix lib/,\
 LIB += -lrt
 
 # embedded Python
-
-EMBEDED_PYTHON ?= python3.10
-PYTHON_CONFIG := $(EMBEDED_PYTHON)-config
+EMBEDDED_PYTHON ?= python3.10
+PYTHON_CONFIG := $(EMBEDDED_PYTHON)-config
 
 INC += $(shell $(PYTHON_CONFIG) --includes)
-LDFLAGS += $(shell $(PYTHON_CONFIG) --ldflags --embed)
+LDFLAGS += -rdynamic $(shell $(PYTHON_CONFIG) --ldflags --embed)
