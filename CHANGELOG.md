@@ -8,6 +8,10 @@
 - Fixed motor not stopping at the end of `run_until_stalled` ([support#662]).
 - Fixed incorrect battery current reading on Technic hub ([support#665]).
 
+### Changed
+- Reworked internal motor model that is used to estimate speed. This results
+  in better speed estimation at low speeds, which makes PID control smoother.
+
 [support#662]: https://github.com/pybricks/support/issues/662
 [support#665]: https://github.com/pybricks/support/issues/665
 
