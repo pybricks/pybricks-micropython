@@ -97,7 +97,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build/virtualhub-micropython",
             "args": [
-                "./tests/pup/motors/busy.py"
+                "./tests/motors/single_motor.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -108,7 +108,11 @@
                 },
                 {
                     "name": "PBIO_VIRTUAL_PLATFORM_MODULE",
-                    "value": "pbio_virtual.platform.turtle"
+                    "value": "pbio_virtual.platform.robot"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}",
                 }
             ],
             "externalConsole": false,
