@@ -41,13 +41,14 @@ typedef struct _pbio_observer_model_t {
 } pbio_observer_model_t;
 
 typedef struct _pbio_observer_t {
-    int32_t angle; /**< Angle in millidegrees. */
-    int32_t speed; /**< Speed in millidegrees per second */
-    int32_t current; /**< Current in tenths of milliAmperes: 10000 = 1A */
+    int32_t angle;        /**< Angle in millidegrees. */
+    int32_t angle_offset; /**< Angle offset to prevent millidegree buffer from overflowing. */
+    int32_t speed;        /**< Speed in millidegrees per second */
+    int32_t current;      /**< Current in tenths of milliAmperes: 10000 = 1A */
     const pbio_observer_model_t *model;
 } pbio_observer_t;
 
-void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now);
+void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now);
 
 void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int32_t *rate);
 

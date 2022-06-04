@@ -132,7 +132,7 @@ static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
     }
 
     // Use count to initialize observer.
-    pbio_observer_reset(&srv->observer, count_now, 0);
+    pbio_observer_reset(&srv->observer, count_now);
     return PBIO_SUCCESS;
 }
 
