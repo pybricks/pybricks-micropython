@@ -337,6 +337,16 @@ STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_arg
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_track_target_obj, 1, common_Motor_track_target);
 
+// pybricks._common.Motor.stalled
+STATIC mp_obj_t common_Motor_stalled(mp_obj_t self_in) {
+    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t stall_duration;
+    bool stalled;
+    pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
+    return mp_obj_new_bool(stalled);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_stalled_obj, common_Motor_stalled);
+
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     //
@@ -358,6 +368,7 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_until_stalled), MP_ROM_PTR(&common_Motor_run_until_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&common_Motor_run_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&common_Motor_run_target_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Motor_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&common_Motor_track_target_obj) },
 };
 MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);

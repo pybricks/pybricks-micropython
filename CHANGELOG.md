@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Added `Motor.stalled()`.
+
 ### Fixed
 - Fixed motor not stopping at the end of `run_until_stalled` ([support#662]).
 - Fixed incorrect battery current reading on Technic hub ([support#665]).

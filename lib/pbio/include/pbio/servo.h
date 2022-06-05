@@ -59,6 +59,8 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
 pbio_error_t pbio_servo_set_voltage_passive(pbio_servo_t *srv, int32_t voltage);
 
+pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, int32_t *stall_duration);
+
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed);
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_on_completion_t on_completion);

@@ -476,4 +476,38 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     return pbio_control_start_hold_control(&srv->control, time_start, target_count);
 }
 
+pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, int32_t *stall_duration) {
+
+    // Don't allow access if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // If control is active, this provides the most accurate stall detection.
+    if (pbio_control_is_active(&srv->control)) {
+        *stalled = pbio_control_is_stalled(&srv->control, stall_duration);
+        return PBIO_SUCCESS;
+    }
+
+    // If we're coasting, we're not stalled.
+    pbio_dcmotor_actuation_t actuation;
+    int32_t voltage;
+    pbio_dcmotor_get_state(srv->dcmotor, &actuation, &voltage);
+    if (actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
+        *stall_duration = 0;
+        *stalled = false;
+        return PBIO_SUCCESS;
+    }
+
+    // If we're here, the user has set their own voltage or duty cycle value.
+    // In this case, the best we can do is ask the observer if we're stuck.
+
+    // TODO
+    *stalled = false;
+    *stall_duration = 0;
+
+    return PBIO_SUCCESS;
+
+}
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
