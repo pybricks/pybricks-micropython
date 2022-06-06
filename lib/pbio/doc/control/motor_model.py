@@ -42,6 +42,7 @@ dw_dt = Kt / In * i - tau / In
 
 # Steady state input/output conversions for legacy observer conversions.
 dtau_dv = Kt / R * c_tau / c_V
+dv_dtau = 1 / dtau_dv
 dtau_dw = Kt / R * Ke * c_tau / c_th
 dtau_da = In * c_tau / c_th
 
@@ -121,6 +122,7 @@ HEADER = textwrap.dedent(
         int32_t d_angle_d_torque;
         int32_t d_speed_d_torque;
         int32_t d_current_d_torque;
+        int32_t d_voltage_d_torque;
         int32_t d_torque_d_voltage;
         int32_t d_torque_d_speed;
         int32_t d_torque_d_acceleration;
@@ -184,6 +186,7 @@ def make_model(name, *, V, tau_0, tau_x, w_0, w_x, i_0, i_x, a, Lm, h, gain):
             .d_angle_d_torque = {round(PRESCALE_TORQUE / B[0, 1])},
             .d_speed_d_torque = {round(PRESCALE_TORQUE / B[1, 1])},
             .d_current_d_torque = {round(PRESCALE_TORQUE / B[2, 1])},
+            .d_voltage_d_torque = {round(PRESCALE_TORQUE / dv_dtau.subs(model).evalf())},
             .d_torque_d_voltage = {round(PRESCALE_VOLTAGE / dtau_dv.subs(model).evalf())},
             .d_torque_d_speed = {round(PRESCALE_SPEED / dtau_dw.subs(model).evalf())},
             .d_torque_d_acceleration = {round(PRESCALE_ACCELERATION / dtau_da.subs(model).evalf())},

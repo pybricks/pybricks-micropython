@@ -22,6 +22,7 @@ typedef struct _pbio_observer_model_t {
     int32_t d_angle_d_torque;
     int32_t d_speed_d_torque;
     int32_t d_current_d_torque;
+    int32_t d_voltage_d_torque;
     int32_t d_torque_d_voltage;
     int32_t d_torque_d_speed;
     int32_t d_torque_d_acceleration;
