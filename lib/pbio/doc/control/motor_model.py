@@ -77,7 +77,7 @@ MAX_SI_SPEED = 2500 / 180 * sympy.pi
 MAX_SI_ACCELERATION = MAX_SI_SPEED / 0.1
 MAX_SI_CURRENT = 3.0
 MAX_SI_VOLTAGE = 12
-MAX_SI_TORQUE = 100
+MAX_SI_TORQUE = 1
 
 # Maximum numeric value that we might reach.
 MAX_NUM_SPEED = math.floor((MAX_SI_SPEED * c_th).evalf())

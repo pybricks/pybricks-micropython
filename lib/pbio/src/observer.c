@@ -21,12 +21,12 @@
 #define MAX_NUM_ACCELERATION (2500000)
 #define MAX_NUM_CURRENT (30000)
 #define MAX_NUM_VOLTAGE (12000)
-#define MAX_NUM_TORQUE (100000000)
+#define MAX_NUM_TORQUE (1000000)
 #define PRESCALE_SPEED (858)
 #define PRESCALE_ACCELERATION (858)
 #define PRESCALE_CURRENT (71582)
 #define PRESCALE_VOLTAGE (178956)
-#define PRESCALE_TORQUE (21)
+#define PRESCALE_TORQUE (2147)
 
 // FIXME: Use millidegrees consistently throughout the code.
 // In the long run, we can improve control performance by
