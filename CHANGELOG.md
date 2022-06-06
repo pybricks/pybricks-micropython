@@ -5,7 +5,10 @@
 ## [Unreleased]
 
 ### Added
-- Added `Motor.stalled()`.
+- Added `Motor.stalled()`. It can detect stall during speed and position
+  control (`run`, `run_angle`, ...) just like `Motor.control.stalled()`, but
+  it also detects stall for `dc()` command when the user controls the voltage
+  directly.
 
 ### Fixed
 - Fixed motor not stopping at the end of `run_until_stalled` ([support#662]).

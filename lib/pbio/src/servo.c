@@ -90,7 +90,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, state.count, applied_actuation, voltage);
+    pbio_observer_update(&srv->observer, time_now, state.count, applied_actuation, voltage);
 
     return PBIO_SUCCESS;
 }
@@ -501,13 +501,9 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, int32_t *st
 
     // If we're here, the user has set their own voltage or duty cycle value.
     // In this case, the best we can do is ask the observer if we're stuck.
-
-    // TODO
-    *stalled = false;
-    *stall_duration = 0;
+    *stalled = pbio_observer_is_stalled(&srv->observer, pbdrv_clock_get_us(), stall_duration);
 
     return PBIO_SUCCESS;
-
 }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
