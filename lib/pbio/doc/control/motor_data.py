@@ -101,7 +101,7 @@ print(
         a=math.radians(3000 / 0.1),
         Lm=0.0003 * 30,
         h=0.005,
-        gain=2500,
+        gain=1500,
     )
 )
 
