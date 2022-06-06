@@ -56,6 +56,42 @@
             "intelliSenseMode": "gcc-arm"
         },
         {
+            "name": "ev3rt",
+            "includePath": [
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/ev3rt",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/ev3rt",
+                "${workspaceFolder}/bricks/ev3rt/build",
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}/lib/ev3rt-lib/sdk/common",
+                "${workspaceFolder}/lib/ev3rt-lib",
+                "${workspaceFolder}/lib/ev3rt-lib/include",
+                "${workspaceFolder}/lib/ev3rt-lib/target/ev3_gcc",
+                "${workspaceFolder}/lib/ev3rt-lib/arch/arm_gcc/am1808",
+                "${workspaceFolder}/lib/ev3rt-lib/arch/arm_gcc/common",
+                "${workspaceFolder}/lib/ev3rt-lib/arch/gcc"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HSE_VALUE=16000000",
+                "TOPPERS_OMIT_TECS"
+            ],
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
+                "-nostdlib",
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
             "name": "movehub",
             "includePath": [
                 "${workspaceFolder}/micropython/lib/cmsis/inc",

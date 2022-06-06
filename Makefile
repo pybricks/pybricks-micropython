@@ -28,7 +28,7 @@ doc:
 clean-doc:
 	@$(MAKE) -C lib/pbio/doc clean
 
-all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3dev-armel doc
+all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3dev-armel ev3rt doc
 
 clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3dev-armel clean-doc
 
@@ -65,16 +65,10 @@ clean-ev3dev-armel:
 	fi
 
 ev3rt: mpy-cross
-	@if [ ! -d bricks/ev3rt/build/ports ]; then \
-		bricks/ev3rt/docker/setup.sh; \
-	fi
-	@docker exec --tty pybricks-ev3rt bash -c 'make && mv libmicropython.a build/'
-	@docker exec --tty pybricks-ev3rt bash -c '\
-		cd ev3rt-hrp2/sdk/workspace && \
-		make img=pybricks && \
-		cd ../../../ && \
-		cp ev3rt-hrp2/sdk/workspace/uImage build/ \
-	'
+	@$(MAKE) -C bricks/ev3rt
+
+clean-ev3rt: clean-mpy-cross
+	@$(MAKE) -C bricks/ev3rt clean
 
 movehub: mpy-cross
 	@$(MAKE) -C bricks/movehub
