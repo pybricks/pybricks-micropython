@@ -135,8 +135,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Check if controller is stalled
     ctl->stalled = pbio_control_type_is_angle(ctl) ?
-        pbio_count_integrator_stalled(&ctl->count_integrator, time_now, state->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit) :
-        pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, state->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
+        pbio_count_integrator_stalled(&ctl->count_integrator, time_now, state->rate, ref->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit) :
+        pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, state->rate, ref->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if we are on target
     ctl->on_target = pbio_control_check_completion(ctl, time_ref, state->count, state->rate);

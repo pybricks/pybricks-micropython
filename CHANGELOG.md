@@ -13,6 +13,9 @@
 ### Fixed
 - Fixed motor not stopping at the end of `run_until_stalled` ([support#662]).
 - Fixed incorrect battery current reading on Technic hub ([support#665]).
+- When the motor was pushed backwards while stalled, the `control.stalled()`
+  was inadvertently cleared because a nonzero speed was detected. This is fixed
+  by checking the intended direction as well.
 
 ### Changed
 - Reworked internal motor model that is used to estimate speed. This results

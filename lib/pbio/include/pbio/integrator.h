@@ -28,7 +28,7 @@ void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
     int32_t *rate_err,
     int32_t *rate_err_integral);
 
-bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall);
+bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate_now, int32_t rate_ref, int32_t time_stall, int32_t rate_stall);
 
 typedef struct _pbio_count_integrator_t {
     bool trajectory_running; // Whether the trajectory is running (1) or paused (0)
@@ -52,6 +52,6 @@ void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now
 
 void pbio_count_integrator_get_errors(pbio_count_integrator_t *itg, int32_t count, int32_t count_ref, int32_t *count_err, int32_t *count_err_integral);
 
-bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall);
+bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_now, int32_t rate_now, int32_t rate_ref, int32_t time_stall, int32_t rate_stall);
 
 #endif // _PBIO_INTEGRATOR_H_

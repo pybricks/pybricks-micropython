@@ -77,14 +77,20 @@ void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
     }
 }
 
-bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall) {
+bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate_now, int32_t rate_ref, int32_t time_stall, int32_t rate_stall) {
     // If were running, we're not stalled
     if (itg->running) {
         return false;
     }
 
+    // Equivalent to checking both directions, flip to positive for simplicity.
+    if (rate_ref < 0) {
+        rate_ref *= -1;
+        rate_now *= -1;
+    }
+
     // If we're still running faster than the stall limit, we're certainly not stalled.
-    if (abs(rate) > rate_stall) {
+    if (rate_ref != 0 && rate_now > rate_stall) {
         return false;
     }
 
@@ -196,14 +202,20 @@ void pbio_count_integrator_get_errors(pbio_count_integrator_t *itg, int32_t coun
     *count_err_integral = itg->count_err_integral;
 }
 
-bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall) {
+bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_now, int32_t rate_now, int32_t rate_ref, int32_t time_stall, int32_t rate_stall) {
     // If we're running and the integrator is not saturated, we're not stalled
     if (itg->trajectory_running && abs(itg->count_err_integral) < itg->count_err_integral_max) {
         return false;
     }
 
+    // Equivalent to checking both directions, flip to positive for simplicity.
+    if (rate_ref < 0) {
+        rate_ref *= -1;
+        rate_now *= -1;
+    }
+
     // If we're still running faster than the stall limit, we're certainly not stalled.
-    if (abs(rate) > rate_stall) {
+    if (rate_ref != 0 && rate_now > rate_stall) {
         return false;
     }
 
