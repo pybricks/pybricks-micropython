@@ -580,18 +580,6 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
 endif
-ifeq ($(PB_INCLUDE_MAIN_MPY),1)
-OBJ += $(BUILD)/main.mpy.o
-endif
-
-$(BUILD)/main.mpy: main.py
-	$(ECHO) "MPY $<"
-	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $<
-	$(ECHO) "`wc -c < $@` bytes"
-
-$(BUILD)/main.mpy.o: $(BUILD)/main.mpy
-	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
-		--rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
@@ -643,9 +631,10 @@ ZIP_FILES := \
 	$(BUILD)/firmware.metadata.json \
 	ReadMe_OSS.txt \
 
-ifeq ($(PB_INCLUDE_MAIN_MPY),1)
+ifeq ($(PB_FW_ZIP_INCLUDE_MAIN_MPY),1)
 ZIP_FILES += main.py
-else
+endif
+ifeq ($(PB_FW_ZIP_INCLUDE_INSTALL_SCRIPT),1)
 ZIP_FILES += $(PBTOP)/bricks/stm32/install_pybricks.py
 endif
 
