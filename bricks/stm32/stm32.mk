@@ -139,7 +139,7 @@ CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
 # linker scripts
 LD_FILES = $(PBIO_PLATFORM).ld $(PBTOP)/bricks/stm32/common.ld
 
-LDFLAGS = -nostdlib $(addprefix -T,$(LD_FILES)) -Map=$@.map --cref --gc-sections
+LDFLAGS = $(addprefix -T,$(LD_FILES)) -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
 
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
@@ -148,7 +148,7 @@ CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 ifeq ($(DEBUG), 1)
 CFLAGS += -O0 -ggdb
 else
-CFLAGS += -Os -DNDEBUG
+CFLAGS += -Os -DNDEBUG -flto
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
@@ -634,7 +634,7 @@ endif
 
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(CC) -Wl,--defsym=CHECKSUM=0 $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) -A $@
 
 # firmware blob used to calculate checksum
@@ -643,7 +643,7 @@ $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "RELINK $@"
-	$(Q)$(LD) --defsym=CHECKSUM=$(FW_CHECKSUM) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(CC) -Wl,--defsym=CHECKSUM=$(FW_CHECKSUM) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 # firmware blob with main.mpy and checksum appended - can be flashed to hub
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
