@@ -91,7 +91,7 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
                 "-C",
                 os.path.join(PYBRICKS_PATH, "bricks", target),
                 "clean",
-                "build/firmware.bin",
+                "build/firmware-base.bin",
             ]
         )
         for target in hubs
@@ -104,7 +104,7 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
 
         # Get build size on success
         bin_path = os.path.join(
-            PYBRICKS_PATH, "bricks", target, "build", "firmware.bin"
+            PYBRICKS_PATH, "bricks", target, "build", "firmware-base.bin"
         )
         try:
             sizes[target] = os.path.getsize(bin_path)

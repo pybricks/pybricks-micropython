@@ -253,14 +253,14 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
-all: $(BUILD)/firmware.bin
+all: $(BUILD)/firmware-base.bin
 
 $(BUILD)/firmware.elf: $(LDSCRIPT) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 # firmware blob with main.mpy - can be flashed to hub
-$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+$(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user $^ $@
 	$(ECHO) "`wc -c < $@` bytes"

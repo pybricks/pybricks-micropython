@@ -94,7 +94,7 @@ SECTIONS
     {
         . = ALIGN(4);
         _checksum = .;
-        LONG(CHECKSUM)
+        LONG(0) /* This gets replaced later with proper checksum by other tools. */
     } >FLASH
 
     .ARM.attributes 0 : { *(.ARM.attributes) }

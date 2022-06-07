@@ -17,7 +17,7 @@ gql = {version = "3.0.0b0", extras = ["requests"], allow-prereleases = true}
 matplotlib = "^3.4.3"
 plotly = "^4.14.1"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
-pybricksdev = {version = "1.0.0a25", allow-prereleases = true}
+pybricksdev = "1.0.0a26"
 pycryptodomex = "^3.9.9"
 PyGithub = "^1.51"
 python-dotenv = "^0.15.0"

@@ -21,7 +21,7 @@
         {
             "label": "build debug",
             "type": "shell",
-            "command": "poetry run make -C bricks/debug DEBUG=1 build/firmware-no-checksum.bin -j8"
+            "command": "poetry run make -C bricks/debug DEBUG=1 build/firmware-base.bin -j8"
         }
     ]
 }

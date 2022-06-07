@@ -61,7 +61,7 @@ for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}
             "-C",
             os.path.join(PYBRICKS_PATH, "bricks", args.hub),
             "clean",
-            "build/firmware.bin",
+            "build/firmware-base.bin",
             "all",
         ]
     )
@@ -69,7 +69,7 @@ for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}
     # upload firmware size
     if "service" in globals():
         bin_path = os.path.join(
-            PYBRICKS_PATH, "bricks", args.hub, "build", "firmware.bin"
+            PYBRICKS_PATH, "bricks", args.hub, "build", "firmware-base.bin"
         )
         size = os.path.getsize(bin_path)
 

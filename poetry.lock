@@ -493,7 +493,7 @@ python-versions = ">=3.8,<4.0"
 
 [[package]]
 name = "pybricksdev"
-version = "1.0.0a25"
+version = "1.0.0a26"
 description = "Pybricks developer tools"
 category = "dev"
 optional = false
@@ -887,7 +887,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "e4ceb7f2adc295c654d00f9ce8225a7d75cb83abf8eceb9c34869a0b40b24963"
+content-hash = "f011f2be0544ec00eceb85ca8b9a4c2eb711a61d3dc8c9248815a3a178637833"
 
 [metadata.files]
 aioserial = [
@@ -1351,8 +1351,8 @@ pybricks = [
     {file = "pybricks-3.1.0.tar.gz", hash = "sha256:26298ecb3733588c4baf0a6e5a6813f34b99c3487e583377b65d566a37cc62e7"},
 ]
 pybricksdev = [
-    {file = "pybricksdev-1.0.0a25-py3-none-any.whl", hash = "sha256:f1154bb72014706ccc5cded861e77b473a1f29624a557781125222ecf5bba98b"},
-    {file = "pybricksdev-1.0.0a25.tar.gz", hash = "sha256:2207a8b745b5dee85c19caef3f90532ee6db6db633166646cac989352585b17f"},
+    {file = "pybricksdev-1.0.0a26-py3-none-any.whl", hash = "sha256:abceb822d85d0c6f636e53fef6455c27b9b34a441dbbfe56404922e51cb2e301"},
+    {file = "pybricksdev-1.0.0a26.tar.gz", hash = "sha256:28219ca80b115e44d704160d8ff75596b6fe09d6fbb4c9130672fe87a9d251bf"},
 ]
 pycodestyle = [
     {file = "pycodestyle-2.7.0-py2.py3-none-any.whl", hash = "sha256:514f76d918fcc0b55c6680472f0a37970994e07bbb80725808c17089be302068"},

@@ -121,8 +121,6 @@ ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 PYBRICKSDEV = pybricksdev
-CHECKSUM = $(PBTOP)/tools/checksum.py
-CHECKSUM_TYPE ?= xor
 METADATA = $(PBTOP)/tools/metadata.py
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
@@ -601,7 +599,7 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 SRC_QSTR_AUTO_DEPS +=
 
 # Main firmware build targets
-TARGETS := $(BUILD)/firmware.zip $(BUILD)/firmware.bin
+TARGETS := $(BUILD)/firmware.zip
 
 all: $(TARGETS)
 
@@ -622,34 +620,12 @@ $(BUILD)/genhdr/%.h: $(PBTOP)/lib/pbio/drv/bluetooth/%.gatt
 
 endif
 
-FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
-
-# Sections to include in the binary
-ifeq ($(PB_INCLUDE_MAIN_MPY),1)
-SECTIONS := -j .isr_vector -j .text -j .data -j .name -j .user -j .checksum
-else
-SECTIONS := -j .isr_vector -j .text -j .data -j .name -j .checksum
-endif
 
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) -Wl,--defsym=CHECKSUM=0 $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) -A $@
-
-# firmware blob used to calculate checksum
-$(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
-	$(Q)$(OBJCOPY) -O binary $(SECTIONS) $^ $@
-
-$(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
-	$(ECHO) "RELINK $@"
-	$(Q)$(CC) -Wl,--defsym=CHECKSUM=$(FW_CHECKSUM) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
-
-# firmware blob with main.mpy and checksum appended - can be flashed to hub
-$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary $(SECTIONS) $^ $@
-	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
@@ -663,13 +639,13 @@ $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 
 # firmware.zip file
 ZIP_FILES := \
+	$(BUILD)/firmware-base.bin \
 	$(BUILD)/firmware.metadata.json \
 	ReadMe_OSS.txt \
 
 ifeq ($(PB_INCLUDE_MAIN_MPY),1)
-ZIP_FILES += main.py $(BUILD)/firmware-base.bin
+ZIP_FILES += main.py
 else
-ZIP_FILES += $(BUILD)/firmware.bin
 ZIP_FILES += $(PBTOP)/bricks/stm32/install_pybricks.py
 endif
 
@@ -678,14 +654,14 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(Q)$(ZIP) -j $@ $^
 
 # firmware in DFU format
-$(BUILD)/%.dfu: $(BUILD)/%.bin
+$(BUILD)/%.dfu: $(BUILD)/%-base.bin
 	$(ECHO) "DFU Create $@"
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
 deploy: $(BUILD)/firmware.zip
 	$(Q)$(PYBRICKSDEV) flash $< --name $(PBIO_PLATFORM)
 
-deploy-openocd: $(BUILD)/firmware-no-checksum.bin
+deploy-openocd: $(BUILD)/firmware-base.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
 	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
 

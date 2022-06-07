@@ -1,22 +1,16 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2018-2021 The Pybricks Authors
+# Copyright (c) 2018-2022 The Pybricks Authors
 #
 # This is a Pybricks firmware installer for:
 # - SPIKE Prime Hub
 # - SPIKE Essential Hub
 # - MINDSTORMS Robot Inventor Hub
 #
-# Manual installation instructions:
-# - Ensure that the hub is powered via USB.
-# - Upload the contents of firmware.zip to _firmware/ on the hub.
-# - Run this script. If you use the REPL, you can do it this way:
-#
-#    from _firmware.install_pybricks import install
-#    install()
-#
-# - On success, the hub reboots and installs the Pybricks firmware.
-#
-# You can also use Pybricksdev or Pybricks Code, which will do this for you.
+# This script is used to flash Pybricks frimware on hubs that are currently
+# running official LEGO firmware (it calls LEGO-specific APIs). Before running
+# this script, `firmware.bin`` and `firmware.metadata.json`` to be installed
+# to `/_firmware/` on the external flash on the hub. Tools like `pybricksdev`
+# and Pybricks Code will do this for you.
 
 
 import firmware
