@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PYBRICKS_PUPDEVICES_H
 #define PYBRICKS_INCLUDED_PYBRICKS_PUPDEVICES_H
@@ -22,7 +22,7 @@ extern const mp_obj_type_t pb_type_pupdevices_ForceSensor;
 extern const mp_obj_type_t pb_type_pupdevices_InfraredSensor;
 extern const mp_obj_type_t pb_type_pupdevices_Light;
 extern const mp_obj_type_t pb_type_pupdevices_PFMotor;
-extern const mp_obj_type_t pb_type_pupdevices_Remote;
+extern const pb_obj_with_attr_type_t pb_type_pupdevices_Remote;
 extern const mp_obj_type_t pb_type_pupdevices_TiltSensor;
 extern const pb_obj_with_attr_type_t pb_type_pupdevices_UltrasonicSensor;
 
