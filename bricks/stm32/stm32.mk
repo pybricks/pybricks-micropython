@@ -622,18 +622,18 @@ endif
 
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
 
-$(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
+$(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) -A $@
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
-$(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
+$(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware base file"
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
-$(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
 	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
 
