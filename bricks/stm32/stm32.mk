@@ -657,9 +657,9 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
-$(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(BUILD)/firmware.bin $(METADATA)
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
-	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $(word 2,$^) $@
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
 
 # firmware.zip file
 ZIP_FILES := \

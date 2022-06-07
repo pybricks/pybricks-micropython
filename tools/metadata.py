@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2021 The Pybricks Authors
+# Copyright (c) 2019-2022 The Pybricks Authors
 
 """
 Pybricks firmware metadata file generation tool.
@@ -19,11 +19,9 @@ v1.1.0:
     max-firmware-size   number
     hub-name-offset     number [v1.1.0]
     max-hub-name-size   number [v1.1.0]
-    firmware-sha256     sha256 string of firmware.bin [v1.1.0]
 """
 
 import argparse
-import hashlib
 import importlib
 import io
 import json
@@ -57,7 +55,6 @@ def generate(
     hub_type: str,
     mpy_options: typing.List[str],
     map_file: io.FileIO,
-    bin_file: io.FileIO,
     out_file: io.FileIO,
 ):
     metadata = {
@@ -65,7 +62,6 @@ def generate(
         "firmware-version": fw_version,
         "mpy-abi-version": mpy_tool.config.MPY_VERSION,
         "mpy-cross-options": mpy_options,
-        "firmware-sha256": hashlib.sha256(bin_file.read()).hexdigest(),
     }
 
     if hub_type not in HUB_INFO:
@@ -152,12 +148,6 @@ if __name__ == "__main__":
         help="firmware linker map file name",
     )
     parser.add_argument(
-        "bin_file",
-        metavar="<bin-file>",
-        type=argparse.FileType("rb"),
-        help="firmware binary file name",
-    )
-    parser.add_argument(
         "out_file",
         metavar="<output-file>",
         type=argparse.FileType("w"),
@@ -170,6 +160,5 @@ if __name__ == "__main__":
         args.hub_type,
         args.mpy_options,
         args.map_file,
-        args.bin_file,
         args.out_file,
     )
