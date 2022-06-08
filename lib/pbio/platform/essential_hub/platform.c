@@ -38,7 +38,7 @@ typedef struct {
 // defined in linker script
 extern const uint32_t _checksum;
 
-const lego_fw_info_t __attribute__((section(".fw_info"))) fw_info = {
+const lego_fw_info_t __attribute__((section(".fw_info"), used)) fw_info = {
     // These values are not used.
     .fw_ver = PBIO_VERSION_STR,
     .checksum = &_checksum,
