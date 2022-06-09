@@ -248,8 +248,8 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     // must go after the reset, we'll make it stop and hold right here right now.
 
     // Get the old angle
-    int32_t angle_old;
-    err = pbio_tacho_get_angle(srv->tacho, &angle_old);
+    int32_t angle_old, speed_old;
+    err = pbio_servo_get_state_user(srv, &angle_old, &speed_old);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -297,6 +297,26 @@ pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state
     // Get estimated state
     pbio_observer_get_estimated_state(&srv->observer, &state->count_est, &state->rate_est);
 
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_t *speed) {
+
+    // Don't allow user command if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Get servo state.
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Scale by gear ratio to whole degrees.
+    *angle = pbio_control_counts_to_user(&srv->control.settings, state.count);
+    *speed = pbio_control_counts_to_user(&srv->control.settings, state.rate);
     return PBIO_SUCCESS;
 }
 

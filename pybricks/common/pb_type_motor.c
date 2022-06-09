@@ -116,9 +116,8 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
 // pybricks._common.Motor.angle
 STATIC mp_obj_t common_Motor_angle(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t angle;
-
-    pb_assert(pbio_tacho_get_angle(self->srv->tacho, &angle));
+    int32_t angle, speed;
+    pb_assert(pbio_servo_get_state_user(self->srv, &angle, &speed));
 
     return mp_obj_new_int(angle);
 }
@@ -146,10 +145,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_
 // pybricks._common.Motor.speed
 STATIC mp_obj_t common_Motor_speed(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t speed;
-
-    pb_assert(pbio_tacho_get_angular_rate(self->srv->tacho, &speed));
-
+    int32_t angle, speed;
+    pb_assert(pbio_servo_get_state_user(self->srv, &angle, &speed));
     return mp_obj_new_int(speed);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_speed_obj, common_Motor_speed);
@@ -265,14 +262,14 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     }
 
     // Read the angle upon completion of the stall maneuver
-    int32_t stall_point;
-    pb_assert(pbio_tacho_get_angle(self->srv->tacho, &stall_point));
+    int32_t stall_angle, stall_speed;
+    pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
 
     // Stop moving.
     pb_assert(pbio_servo_stop(self->srv, on_completion));
 
     // Return angle at which the motor stalled
-    return mp_obj_new_int(stall_point);
+    return mp_obj_new_int(stall_angle);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_until_stalled_obj, 1, common_Motor_run_until_stalled);
 

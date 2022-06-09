@@ -52,6 +52,7 @@ bool pbio_servo_update_loop_is_running(pbio_servo_t *srv);
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id);
 
 pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state);
+pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_t *speed);
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_completion);
