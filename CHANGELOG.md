@@ -2,6 +2,13 @@
 
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- Fixed motor not stopping at the end of `run_until_stalled` ([support#662]).
+
+[support#662]: https://github.com/pybricks/support/issues/662
+
 ## [3.2.0b1]
 
 ### Added
