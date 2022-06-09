@@ -28,7 +28,6 @@
 typedef struct {
     pbdrv_counter_dev_t *dev;
     FILE *count;
-    FILE *rate;
 } private_data_t;
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV];
@@ -51,27 +50,8 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_count(pbdrv_counter_dev
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    private_data_t *priv = dev->priv;
-
-    if (!priv->rate) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    if (fseek(priv->rate, 0, SEEK_SET) == -1) {
-        return PBIO_ERROR_IO;
-    }
-
-    if (fscanf(priv->rate, "%d", rate) == EOF) {
-        return PBIO_ERROR_IO;
-    }
-
-    return PBIO_SUCCESS;
-}
-
 static const pbdrv_counter_funcs_t pbdrv_counter_ev3dev_stretch_iio_funcs = {
     .get_count = pbdrv_counter_ev3dev_stretch_iio_get_count,
-    .get_rate = pbdrv_counter_ev3dev_stretch_iio_get_rate,
 };
 
 void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs) {
@@ -125,15 +105,6 @@ void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs) {
         }
 
         setbuf(priv->count, NULL);
-
-        snprintf(buf, sizeof(buf), "%s/in_frequency%d_input", udev_list_entry_get_name(entry), (int)i);
-        priv->rate = fopen(buf, "r");
-        if (!priv->rate) {
-            dbg_err("failed to open rate attribute");
-            continue;
-        }
-
-        setbuf(priv->rate, NULL);
 
         // FIXME: assuming that these are the only counter devices
         // counter_id should be passed from platform data instead

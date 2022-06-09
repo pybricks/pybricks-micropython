@@ -42,15 +42,6 @@ print(m.angle())  # expect 0
 write_iio("in_count0_raw", "360")
 print(m.angle())  # expect 180
 
-
-# testing speed
-
-print(m.speed())  # expect 0
-
-write_iio("in_frequency0_input", "1000")
-print(m.speed())  # expect 500
-
-
 # testing stalled
 
 print(m.control.stalled())  # expect False

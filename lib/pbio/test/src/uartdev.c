@@ -337,7 +337,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
-    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_ERROR_NO_DEV);
 
     // should be synced now are receive regular pings
     static int i;
@@ -582,8 +581,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NOT_SUPPORTED);
-    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, -1400);
 
     // should be synced now are receive regular pings
     static int i;
@@ -784,8 +781,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, 23);
-    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, 1470);
 
     // should be synced now are receive regular pings
     static int i;
@@ -992,8 +987,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, 65);
-    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, 1525);
 
     // should be synced now are receive regular pings
     static int i;

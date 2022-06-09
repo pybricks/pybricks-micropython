@@ -147,33 +147,4 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t *reset_angle, b
     }
 }
 
-pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *rate) {
-    pbio_error_t err;
-
-    err = pbdrv_counter_get_rate(tacho->counter, rate);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
-        *rate = -*rate;
-    }
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate) {
-    int32_t encoder_rate;
-    pbio_error_t err;
-
-    err = pbio_tacho_get_rate(tacho, &encoder_rate);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    *angular_rate = pbio_math_div_i32_fix16(encoder_rate, tacho->counts_per_degree);
-
-    return PBIO_SUCCESS;
-}
-
 #endif // PBIO_CONFIG_TACHO

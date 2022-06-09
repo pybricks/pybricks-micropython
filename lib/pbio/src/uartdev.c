@@ -1174,23 +1174,9 @@ static pbio_error_t pbio_uartdev_get_abs_count(pbdrv_counter_dev_t *dev, int32_t
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    uartdev_port_data_t *port_data = dev->priv;
-
-    if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    // tacho_rate is in percent, so we need to convert it to counts per second
-    *rate = port_data->max_tacho_rate * port_data->tacho_rate / 100;
-
-    return PBIO_SUCCESS;
-}
-
 static const pbdrv_counter_funcs_t pbio_uartdev_counter_funcs = {
     .get_count = pbio_uartdev_get_count,
     .get_abs_count = pbio_uartdev_get_abs_count,
-    .get_rate = pbio_uartdev_get_rate,
 };
 
 void pbio_uartdev_counter_init(pbdrv_counter_dev_t *devs) {

@@ -48,16 +48,9 @@ static pbio_error_t test_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count)
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t test_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    test_private_data_t *priv = dev->priv;
-    *rate = priv->rate;
-    return PBIO_SUCCESS;
-}
-
 static const pbdrv_counter_funcs_t test_funcs = {
     .get_count = test_get_count,
     .get_abs_count = test_get_abs_count,
-    .get_rate = test_get_rate,
 };
 
 void pbdrv_counter_test_init(pbdrv_counter_dev_t *devs) {

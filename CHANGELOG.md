@@ -20,6 +20,9 @@
 ### Changed
 - Reworked internal motor model that is used to estimate speed. This results
   in better speed estimation at low speeds, which makes PID control smoother.
+- The `Motor.speed()` method and `DriveBase` equivalents now provide the
+  estimated speed instead of the value reported by the motor. This is generally
+  more responsive.
 
 [support#662]: https://github.com/pybricks/support/issues/662
 [support#665]: https://github.com/pybricks/support/issues/665

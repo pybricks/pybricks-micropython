@@ -13,7 +13,6 @@
 typedef struct {
     pbio_error_t (*get_count)(pbdrv_counter_dev_t *dev, int32_t *count);
     pbio_error_t (*get_abs_count)(pbdrv_counter_dev_t *dev, int32_t *count);
-    pbio_error_t (*get_rate)(pbdrv_counter_dev_t *dev, int32_t *rate);
 } pbdrv_counter_funcs_t;
 
 struct _pbdrv_counter_dev_t {

@@ -73,16 +73,4 @@ pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *coun
     return dev->funcs->get_abs_count(dev, count);
 }
 
-/**
- * Gets the counter rate in counts per second.
- * @param [in]  dev     Pointer to the counter device
- * @param [out] rate    Returns the rate on success
- * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if the
- *                      counter has not been initialized, ::PBIO_ERROR_NOT_SUPPORTED
- *                      if the counter driver is disabled.
- */
-pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    return dev->funcs->get_rate(dev, rate);
-}
-
 #endif // PBDRV_CONFIG_COUNTER

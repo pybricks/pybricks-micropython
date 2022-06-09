@@ -43,16 +43,9 @@ static pbio_error_t pbdrv_counter_virtual_get_abs_count(pbdrv_counter_dev_t *dev
     return pbdrv_virtual_get_i32("counter", priv->index, "abs_count", count);
 }
 
-static pbio_error_t pbdrv_counter_virtual_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    private_data_t *priv = dev->priv;
-
-    return pbdrv_virtual_get_i32("counter", priv->index, "rate", rate);
-}
-
 static const pbdrv_counter_funcs_t pbdrv_counter_virtual_funcs = {
     .get_count = pbdrv_counter_virtual_get_count,
     .get_abs_count = pbdrv_counter_virtual_get_abs_count,
-    .get_rate = pbdrv_counter_virtual_get_rate,
 };
 
 void pbdrv_counter_virtual_init(pbdrv_counter_dev_t *devs) {

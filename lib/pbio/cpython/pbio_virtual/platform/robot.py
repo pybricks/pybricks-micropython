@@ -102,13 +102,6 @@ class VirtualCounter:
         """
         return self.get_counter_data()[1]
 
-    @property
-    def rate(self):
-        """
-        Provides the value for ``pbdrv_counter_virtual_get_rate()``.
-        """
-        return self.get_counter_data()[2]
-
 
 class Platform:
 
