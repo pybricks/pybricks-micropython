@@ -60,7 +60,6 @@ typedef enum {
 typedef struct _pbio_control_state_t {
     int32_t count;
     int32_t count_est;
-    int32_t rate;
     int32_t rate_est;
 } pbio_control_state_t;
 

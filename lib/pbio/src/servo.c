@@ -86,7 +86,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     pbio_dcmotor_get_state(srv->dcmotor, &applied_actuation, &voltage);
 
     // Log servo state
-    int32_t log_data[] = {time_now, state.count, state.rate, applied_actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
+    int32_t log_data[] = {time_now, state.count, 0, applied_actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
@@ -288,12 +288,6 @@ pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state
         return err;
     }
 
-    // Read physical anglular rate
-    err = pbio_tacho_get_rate(srv->tacho, &state->rate);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // Get estimated state
     pbio_observer_get_estimated_state(&srv->observer, &state->count_est, &state->rate_est);
 
@@ -316,7 +310,7 @@ pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_
 
     // Scale by gear ratio to whole degrees.
     *angle = pbio_control_counts_to_user(&srv->control.settings, state.count);
-    *speed = pbio_control_counts_to_user(&srv->control.settings, state.rate);
+    *speed = pbio_control_counts_to_user(&srv->control.settings, state.rate_est);
     return PBIO_SUCCESS;
 }
 

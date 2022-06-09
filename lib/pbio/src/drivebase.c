@@ -89,14 +89,12 @@ static pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, pbio_control_
 
     // Take sum to get distance state
     state_distance->count = state_left.count + state_right.count;
-    state_distance->rate = state_left.rate + state_right.rate;
 
     state_distance->count_est = state_left.count_est + state_right.count_est;
     state_distance->rate_est = state_left.rate_est + state_right.rate_est;
 
     // Take difference to get heading state
     state_heading->count = state_left.count - state_right.count;
-    state_heading->rate = state_left.rate - state_right.rate;
 
     state_heading->count_est = state_left.count_est - state_right.count_est;
     state_heading->rate_est = state_left.rate_est - state_right.rate_est;
@@ -475,9 +473,9 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
         return err;
     }
     *distance = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.count);
-    *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.rate);
+    *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.rate_est);
     *angle = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.count);
-    *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.rate);
+    *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.rate_est);
     return PBIO_SUCCESS;
 }
 
