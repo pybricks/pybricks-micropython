@@ -579,8 +579,22 @@ const uint32_t MSIRangeTable[12] = {
 };
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
-    GPIO_InitTypeDef gpio_init = { };
-    ADC_ChannelConfTypeDef adc_ch_config = { };
+    GPIO_InitTypeDef gpio_init = {
+        .Pin = 0, // variable
+        .Mode = GPIO_MODE_ANALOG_ADC_CONTROL,
+        .Pull = GPIO_NOPULL,
+        .Speed = GPIO_SPEED_FREQ_LOW,
+        .Alternate = 0, // not used
+    };
+
+    ADC_ChannelConfTypeDef adc_ch_config = {
+        .Channel = 0, // variable
+        .Rank = 0, // variable
+        .SamplingTime = ADC_SAMPLETIME_640CYCLES_5,
+        .SingleDiff = ADC_SINGLE_ENDED,
+        .OffsetNumber = ADC_OFFSET_NONE,
+        .Offset = 0, // not used
+    };
 
     // clocks are enabled in SystemInit
     assert_param(__HAL_RCC_TIM6_IS_CLK_ENABLED());
@@ -592,32 +606,25 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     // PC1, battery voltage
 
     gpio_init.Pin = GPIO_PIN_1;
-    gpio_init.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-    gpio_init.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_2;
     adc_ch_config.Rank = ADC_REGULAR_RANK_1;
-    adc_ch_config.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 
     // PC2, battery current
 
     gpio_init.Pin = GPIO_PIN_2;
-    gpio_init.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-    gpio_init.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_3;
     adc_ch_config.Rank = ADC_REGULAR_RANK_2;
-    adc_ch_config.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 
     // internal, temperature
 
     adc_ch_config.Channel = ADC_CHANNEL_TEMPSENSOR;
     adc_ch_config.Rank = ADC_REGULAR_RANK_3;
-    adc_ch_config.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 }
 

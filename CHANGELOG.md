@@ -6,8 +6,10 @@
 
 ### Fixed
 - Fixed motor not stopping at the end of `run_until_stalled` ([support#662]).
+- Fixed incorrect battery current reading on Technic hub ([support#665]).
 
 [support#662]: https://github.com/pybricks/support/issues/662
+[support#665]: https://github.com/pybricks/support/issues/665
 
 ## [3.2.0b1]
 
