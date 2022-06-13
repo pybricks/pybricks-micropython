@@ -248,7 +248,7 @@ void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
 
     // Choose mode based on device capabilities.
     uint8_t mode_id = PBIO_IODEV_IS_ABS_MOTOR(iodev) ?
-        PBIO_IODEV_MODE_PUP_ABS_MOTOR__APOS:
+        PBIO_IODEV_MODE_PUP_ABS_MOTOR__CALIB:
         PBIO_IODEV_MODE_PUP_REL_MOTOR__POS;
 
     // Activate mode.

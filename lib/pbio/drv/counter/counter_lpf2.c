@@ -51,7 +51,7 @@ static pbio_error_t pbdrv_counter_lpf2_get_count(pbdrv_counter_dev_t *dev, int32
 
     // Ensure that we are on expected mode.
     uint8_t mode_id = PBIO_IODEV_IS_ABS_MOTOR(iodev) ?
-        PBIO_IODEV_MODE_PUP_ABS_MOTOR__APOS:
+        PBIO_IODEV_MODE_PUP_ABS_MOTOR__CALIB:
         PBIO_IODEV_MODE_PUP_REL_MOTOR__POS;
     if (iodev->mode != mode_id) {
         return PBIO_ERROR_INVALID_OP;
@@ -69,19 +69,19 @@ static pbio_error_t pbdrv_counter_lpf2_get_count(pbdrv_counter_dev_t *dev, int32
     }
 
     // For absolute encoders, we need to keep track of whole rotations.
-    int32_t abs_pos = (int16_t)pbio_get_uint16_le(data);
+    int32_t abs_pos = (int16_t)pbio_get_uint16_le(data + 2);
 
-    // Update rotation counter as encoder passes through -180
-    if (abs_pos < -90 && priv->last_abs_pos > 90) {
+    // Update rotation counter as encoder passes through 0
+    if (priv->last_abs_pos > 2700 && abs_pos < 900) {
         priv->rotations += 1;
     }
-    if (abs_pos > 90 && priv->last_abs_pos < -90) {
+    if (priv->last_abs_pos < 900 && abs_pos > 2700) {
         priv->rotations -= 1;
     }
     priv->last_abs_pos = abs_pos;
 
     // The total count is the position in this circle plus full rotations.
-    *count = priv->rotations * 360 + abs_pos;
+    *count = priv->rotations * 360 + (abs_pos + 5) / 10;
     return PBIO_SUCCESS;
 }
 
@@ -98,7 +98,11 @@ static pbio_error_t pbdrv_counter_lpf2_get_abs_count(pbdrv_counter_dev_t *dev, i
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    *count = priv->last_abs_pos;
+    // Convert last absolute angle to signed angle in (-180, 179).
+    *count = (priv->last_abs_pos + 5) / 10;
+    if (*count >= 180) {
+        *count -= 360;
+    }
 
     return PBIO_SUCCESS;
 }
