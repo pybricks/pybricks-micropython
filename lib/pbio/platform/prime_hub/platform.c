@@ -15,6 +15,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/charger/charger_mp2639a.h"
+#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -142,6 +143,35 @@ const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data 
     .ib_adc_ch = 3,
     .iset_pwm_id = PWM_DEV_6_TIM5,
     .iset_pwm_ch = 1,
+};
+
+// counters
+
+const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
+    [COUNTER_PORT_A] = {
+        .counter_id = COUNTER_PORT_A,
+        .port_id = PBIO_PORT_ID_A,
+    },
+    [COUNTER_PORT_B] = {
+        .counter_id = COUNTER_PORT_B,
+        .port_id = PBIO_PORT_ID_B,
+    },
+    [COUNTER_PORT_C] = {
+        .counter_id = COUNTER_PORT_C,
+        .port_id = PBIO_PORT_ID_C,
+    },
+    [COUNTER_PORT_D] = {
+        .counter_id = COUNTER_PORT_D,
+        .port_id = PBIO_PORT_ID_D,
+    },
+    [COUNTER_PORT_E] = {
+        .counter_id = COUNTER_PORT_E,
+        .port_id = PBIO_PORT_ID_E,
+    },
+    [COUNTER_PORT_F] = {
+        .counter_id = COUNTER_PORT_F,
+        .port_id = PBIO_PORT_ID_F,
+    },
 };
 
 // I/O ports
@@ -622,30 +652,23 @@ void UART10_IRQHandler(void) {
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [COUNTER_PORT_A] = {
         .uart_id = UART_PORT_A,
-        .counter_id = COUNTER_PORT_A,
     },
     [COUNTER_PORT_B] = {
         .uart_id = UART_PORT_B,
-        .counter_id = COUNTER_PORT_B,
     },
     [COUNTER_PORT_C] = {
         .uart_id = UART_PORT_C,
-        .counter_id = COUNTER_PORT_C,
     },
     [COUNTER_PORT_D] = {
         .uart_id = UART_PORT_D,
-        .counter_id = COUNTER_PORT_D,
     },
     [COUNTER_PORT_E] = {
         .uart_id = UART_PORT_E,
-        .counter_id = COUNTER_PORT_E,
     },
     [COUNTER_PORT_F] = {
         .uart_id = UART_PORT_F,
-        .counter_id = COUNTER_PORT_F,
     },
 };
-
 
 // STM32 HAL integration
 

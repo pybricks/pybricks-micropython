@@ -9,6 +9,7 @@
 #include "../../drv/battery/battery_adc.h"
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
@@ -180,6 +181,27 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_CENTER,
         .active_low = true,
+    },
+};
+
+// counters
+
+const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
+    [COUNTER_PORT_A] = {
+        .counter_id = COUNTER_PORT_A,
+        .port_id = PBIO_PORT_ID_A,
+    },
+    [COUNTER_PORT_B] = {
+        .counter_id = COUNTER_PORT_B,
+        .port_id = PBIO_PORT_ID_B,
+    },
+    [COUNTER_PORT_C] = {
+        .counter_id = COUNTER_PORT_C,
+        .port_id = PBIO_PORT_ID_C,
+    },
+    [COUNTER_PORT_D] = {
+        .counter_id = COUNTER_PORT_D,
+        .port_id = PBIO_PORT_ID_D,
     },
 };
 
@@ -548,22 +570,17 @@ void LPUART1_IRQHandler(void) {
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
         .uart_id = UART_PORT_A,
-        .counter_id = COUNTER_PORT_A,
     },
     [1] = {
         .uart_id = UART_PORT_B,
-        .counter_id = COUNTER_PORT_B,
     },
     [2] = {
         .uart_id = UART_PORT_C,
-        .counter_id = COUNTER_PORT_C,
     },
     [3] = {
         .uart_id = UART_PORT_D,
-        .counter_id = COUNTER_PORT_D,
     },
 };
-
 
 // STM32 HAL integration
 

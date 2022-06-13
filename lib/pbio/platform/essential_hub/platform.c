@@ -17,6 +17,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/charger/charger_mp2639a.h"
+#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
@@ -148,6 +149,19 @@ const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data 
     .mode_gpio = { .bank = GPIOA, .pin = 10 },
     .chg_gpio = { .bank = GPIOC, .pin = 6 },
     .ib_adc_ch = 3,
+};
+
+// counters
+
+const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
+    [COUNTER_PORT_A] = {
+        .counter_id = COUNTER_PORT_A,
+        .port_id = PBIO_PORT_ID_A,
+    },
+    [COUNTER_PORT_B] = {
+        .counter_id = COUNTER_PORT_B,
+        .port_id = PBIO_PORT_ID_B,
+    },
 };
 
 // I/O ports
@@ -381,14 +395,11 @@ void USART3_IRQHandler(void) {
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [COUNTER_PORT_A] = {
         .uart_id = UART_PORT_A,
-        .counter_id = COUNTER_PORT_A,
     },
     [COUNTER_PORT_B] = {
         .uart_id = UART_PORT_B,
-        .counter_id = COUNTER_PORT_B,
     },
 };
-
 
 // STM32 HAL integration
 

@@ -9,6 +9,7 @@
 
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
@@ -160,6 +161,19 @@ void EXTI2_3_IRQHandler(void) {
     // clear the interrupt
     EXTI->PR = EXTI_PR_PR2;
 }
+
+// counters
+
+const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
+    [COUNTER_PORT_A] = {
+        .counter_id = COUNTER_PORT_A,
+        .port_id = PBIO_PORT_ID_A,
+    },
+    [COUNTER_PORT_B] = {
+        .counter_id = COUNTER_PORT_B,
+        .port_id = PBIO_PORT_ID_B,
+    },
+};
 
 // I/O ports
 
@@ -340,11 +354,9 @@ void USART3_6_IRQHandler(void) {
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
         .uart_id = UART_ID_0,
-        .counter_id = COUNTER_PORT_A,
     },
     [1] = {
         .uart_id = UART_ID_1,
-        .counter_id = COUNTER_PORT_B,
     },
 };
 

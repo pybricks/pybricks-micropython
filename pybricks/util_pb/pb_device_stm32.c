@@ -225,4 +225,32 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
 }
 
 void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+
+    // Get the iodevice
+    pbio_iodev_t *iodev;
+    pbio_error_t err;
+
+    // Set up device
+    while ((err = pbdrv_ioport_get_iodev(port, &iodev)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(50);
+    }
+    pb_assert(err);
+
+    // Only motors are allowed.
+    if (!PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // If it's a DC motor, no further setup is needed.
+    if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(iodev)) {
+        return;
+    }
+
+    // Choose mode based on device capabilities.
+    uint8_t mode_id = PBIO_IODEV_IS_ABS_MOTOR(iodev) ?
+        PBIO_IODEV_MODE_PUP_ABS_MOTOR__APOS:
+        PBIO_IODEV_MODE_PUP_REL_MOTOR__POS;
+
+    // Activate mode.
+    set_mode(iodev, mode_id);
 }

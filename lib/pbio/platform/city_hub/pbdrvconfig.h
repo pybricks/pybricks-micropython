@@ -31,6 +31,8 @@
 
 #define PBDRV_CONFIG_COUNTER                        (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (2)
+#define PBDRV_CONFIG_COUNTER_LPF2                   (1)
+#define PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV           (2)
 
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F0                   (1)

@@ -345,6 +345,28 @@ enum {
 };
 
 /**
+ * Modes for Powered Up motors with relative encoders
+ */
+enum {
+    PBIO_IODEV_MODE_PUP_REL_MOTOR__POWER = 0,
+    PBIO_IODEV_MODE_PUP_REL_MOTOR__SPEED = 1,
+    PBIO_IODEV_MODE_PUP_REL_MOTOR__POS   = 2,
+    PBIO_IODEV_MODE_PUP_REL_MOTOR__TEST  = 3,
+};
+
+/**
+ * Modes for Powered Up motors with absolute encoders
+ */
+enum {
+    PBIO_IODEV_MODE_PUP_ABS_MOTOR__POWER = 0,
+    PBIO_IODEV_MODE_PUP_ABS_MOTOR__SPEED = 1,
+    PBIO_IODEV_MODE_PUP_ABS_MOTOR__POS   = 2,
+    PBIO_IODEV_MODE_PUP_ABS_MOTOR__APOS  = 3,
+    PBIO_IODEV_MODE_PUP_ABS_MOTOR__CALIB = 4,
+    PBIO_IODEV_MODE_PUP_ABS_MOTOR__STATS = 5,
+};
+
+/**
  * Data types used by I/O devices.
  */
 typedef enum {
@@ -440,6 +462,14 @@ typedef enum {
  * @param [in] d    Pointer to pbio_iodev_t.
  */
 #define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS)
+
+/**
+ * Macro for testing if I/O device is a motor with absolute position feedback.
+ *
+ * @param [in] d    Pointer to pbio_iodev_t.
+ */
+#define PBIO_IODEV_IS_ABS_MOTOR(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS)
+
 
 
 /**

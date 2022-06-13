@@ -13,7 +13,6 @@
 
 typedef struct {
     uint8_t uart_id;    /**< The ID of a UART device used by this uartdev */
-    uint8_t counter_id; /**< The ID of a counter device provided by this uartdev */
 } pbio_uartdev_platform_data_t;
 
 #if PBIO_CONFIG_UARTDEV

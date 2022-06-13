@@ -13,6 +13,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
@@ -133,11 +134,22 @@ void DMA2_Stream0_IRQHandler(void) {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
+// buttons
+
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
         .gpio = { .bank = GPIOC, .pin = 13 },
         .button = PBIO_BUTTON_CENTER,
     }
+};
+
+// counters
+
+const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
+    [0] = {
+        .counter_id = 0,
+        .port_id = PBIO_PORT_ID_1,
+    },
 };
 
 // LED
@@ -230,7 +242,6 @@ const pbdrv_uart_stm32f4_ll_irq_platform_data_t
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
         .uart_id = UART_ID_0,
-        .counter_id = COUNTER_DEV_0,
     },
 };
 

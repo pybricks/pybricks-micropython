@@ -10,8 +10,8 @@
 #include <pbdrv/counter.h>
 #include <pbio/error.h>
 
-#include "../src/uartdev.h"
 #include "counter_ev3dev_stretch_iio.h"
+#include "counter_lpf2.h"
 #include "counter_nxt.h"
 #include "counter_stm32f0_gpio_quad_enc.h"
 #include "counter_test.h"
@@ -22,11 +22,11 @@ static pbdrv_counter_dev_t pbdrv_counter_devs[PBDRV_CONFIG_COUNTER_NUM_DEV];
 
 void pbdrv_counter_init(void) {
     pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_devs);
+    pbdrv_counter_lpf2_init(pbdrv_counter_devs);
     pbdrv_counter_nxt_init(pbdrv_counter_devs);
     pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_devs);
     pbdrv_counter_test_init(pbdrv_counter_devs);
     pbdrv_counter_virtual_init(pbdrv_counter_devs);
-    pbio_uartdev_counter_init(pbdrv_counter_devs);
 }
 
 pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
