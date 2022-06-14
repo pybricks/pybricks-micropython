@@ -225,6 +225,13 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
 }
 
 void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+    // HACK: Built-in motors on BOOST Move hub do not have I/O ports associated
+    // with them.
+    #if PYBRICKS_HUB_MOVEHUB
+    if (port == PBIO_PORT_ID_A || port == PBIO_PORT_ID_B) {
+        return;
+    }
+    #endif
 
     // Get the iodevice
     pbio_iodev_t *iodev;
