@@ -402,67 +402,69 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     return PBIO_SUCCESS;
 }
 
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, int32_t *time, pbio_trajectory_reference_t *ref) {
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *vertex) {
     // Find which section of the ongoing maneuver we were in, and take
     // corresponding segment starting point.
     if (time_ref - trj->t1 < 0) {
         // Acceleration segment.
-        *time = trj->t0;
-        ref->rate = trj->w0;
-        ref->count = trj->th0;
-        ref->count_ext = trj->th0_ext;
+        vertex->time = trj->t0;
+        vertex->rate = trj->w0;
+        vertex->count = trj->th0;
+        vertex->count_ext = trj->th0_ext;
     } else if (time_ref - trj->t2 < 0) {
         // Constant speed segment.
-        *time = trj->t1;
-        ref->rate = trj->w1;
-        ref->count = trj->th1;
-        ref->count_ext = trj->th1_ext;
+        vertex->time = trj->t1;
+        vertex->rate = trj->w1;
+        vertex->count = trj->th1;
+        vertex->count_ext = trj->th1_ext;
     } else if (time_ref - trj->t3 < 0) {
         // Deceleration segment.
-        *time = trj->t2;
-        ref->rate = trj->w1;
-        ref->count = trj->th2;
-        ref->count_ext = trj->th2_ext;
+        vertex->time = trj->t2;
+        vertex->rate = trj->w1;
+        vertex->count = trj->th2;
+        vertex->count_ext = trj->th2_ext;
     } else {
         // Final speed segment.
-        *time = trj->t3;
-        ref->rate = trj->w3;
-        ref->count = trj->th3;
-        ref->count_ext = trj->th3_ext;
+        vertex->time = trj->t3;
+        vertex->rate = trj->w3;
+        vertex->count = trj->th3;
+        vertex->count_ext = trj->th3_ext;
     }
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref) {
+void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time, pbio_trajectory_reference_t *ref) {
+
+    ref->time = time;
 
     int64_t mcount_ref;
 
-    if (time_ref - trj->t1 < 0) {
+    if (time - trj->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
-        ref->rate = trj->w0 + timest(trj->a0, time_ref - trj->t0);
-        mcount_ref = as_mcount(trj->th0, trj->th0_ext) + x_time(trj->w0, time_ref - trj->t0) + x_time2(trj->a0, time_ref - trj->t0);
+        ref->rate = trj->w0 + timest(trj->a0, time - trj->t0);
+        mcount_ref = as_mcount(trj->th0, trj->th0_ext) + x_time(trj->w0, time - trj->t0) + x_time2(trj->a0, time - trj->t0);
         ref->acceleration = trj->a0;
-    } else if (time_ref - trj->t2 <= 0) {
+    } else if (time - trj->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         ref->rate = trj->w1;
-        mcount_ref = as_mcount(trj->th1, trj->th1_ext) + x_time(trj->w1, time_ref - trj->t1);
+        mcount_ref = as_mcount(trj->th1, trj->th1_ext) + x_time(trj->w1, time - trj->t1);
         ref->acceleration = 0;
-    } else if (time_ref - trj->t3 <= 0) {
+    } else if (time - trj->t3 <= 0) {
         // If we are here, then we are in the deceleration phase
-        ref->rate = trj->w1 + timest(trj->a2, time_ref - trj->t2);
-        mcount_ref = as_mcount(trj->th2, trj->th2_ext) + x_time(trj->w1, time_ref - trj->t2) + x_time2(trj->a2, time_ref - trj->t2);
+        ref->rate = trj->w1 + timest(trj->a2, time - trj->t2);
+        mcount_ref = as_mcount(trj->th2, trj->th2_ext) + x_time(trj->w1, time - trj->t2) + x_time2(trj->a2, time - trj->t2);
         ref->acceleration = trj->a2;
     } else {
         // If we are here, we are in the constant speed phase after the maneuver completes
         ref->rate = trj->w3;
-        mcount_ref = as_mcount(trj->th3, trj->th3_ext) + x_time(trj->w3, time_ref - trj->t3);
+        mcount_ref = as_mcount(trj->th3, trj->th3_ext) + x_time(trj->w3, time - trj->t3);
         ref->acceleration = 0;
 
         // To avoid any overflows of the aforementioned time comparisons,
         // rebase the trajectory if it has been running a long time.
-        if (time_ref - trj->t0 > DURATION_FOREVER_MS * US_PER_MS) {
+        if (time - trj->t0 > DURATION_FOREVER_MS * US_PER_MS) {
             pbio_trajectory_command_t command = {
-                .t0 = time_ref,
+                .t0 = time,
                 .wt = trj->w3,
                 .continue_running = true,
             };

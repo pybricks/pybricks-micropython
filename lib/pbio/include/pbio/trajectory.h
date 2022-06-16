@@ -82,6 +82,7 @@ typedef struct _pbio_trajectory_t {
  * Trajectory evaluated at a given point in time.
  */
 typedef struct _pbio_trajectory_reference_t {
+    int32_t time;         /**<  Reference time */
     int32_t count;        /**<  Reference count */
     int32_t count_ext;    /**<  Reference count extra (sub-degree) */
     int32_t rate;         /**<  Reference rate */
@@ -94,7 +95,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 // Make a new full trajectory from user command, with time based endpoint.
 pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, int32_t *time, pbio_trajectory_reference_t *ref);
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
 
 // Make a stationary trajectory for holding position.
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);

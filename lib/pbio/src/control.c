@@ -51,17 +51,13 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int
 void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control) {
 
     // Declare current time, positions, rates, and their reference value and error
-    int32_t time_ref;
     int32_t count_err, count_err_integral, rate_err_integral;
     int32_t rate_err;
     int32_t torque, torque_due_to_proportional, torque_due_to_integral, torque_due_to_derivative;
 
-    // Get the time at which we want to evaluate the reference position/velocities.
+    // Get reference signals at the reference time point in the trajectory.
     // This compensates for any time we may have spent pausing when the motor was stalled.
-    time_ref = pbio_control_get_ref_time(ctl, time_now);
-
-    // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), ref);
 
     // Calculate control errors, depending on whether we do angle control or speed control
     if (pbio_control_type_is_angle(ctl)) {
@@ -136,7 +132,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, state->rate_est, ref->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if we are on target
-    ctl->on_target = pbio_control_check_completion(ctl, time_ref, state->count, state->rate_est);
+    ctl->on_target = pbio_control_check_completion(ctl, ref->time, state->count, state->rate_est);
 
     // Save (low-pass filtered) load for diagnostics
     ctl->load = (ctl->load * (100 - PBIO_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONTROL_LOOP_TIME_MS) / 100;
@@ -166,7 +162,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
                 // For smart coast, keep actuating (holding) briefly to enforce
                 // standstill. It also gives some time for two subsequent
                 // blocks to smoothly transition without going through coast.
-                if (time_ref - ctl->trajectory.t3 < 100 * US_PER_MS) {
+                if (ref->time - ctl->trajectory.t3 < 100 * US_PER_MS) {
                     *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
                     *control = torque;
                 }
@@ -198,7 +194,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Log control data
     int32_t log_data[] = {
-        time_ref - ctl->trajectory.t0,
+        ref->time - ctl->trajectory.t0,
         state->count,
         0,
         *actuation,
@@ -277,9 +273,8 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         // Before we override the trajectory to renew it, get the starting
         // point of the current speed/angle segment of the reference. We may
         // need it below.
-        int32_t time_vertex;
         pbio_trajectory_reference_t ref_vertex;
-        pbio_trajectory_get_last_vertex(&ctl->trajectory, command.t0, &time_vertex, &ref_vertex);
+        pbio_trajectory_get_last_vertex(&ctl->trajectory, command.t0, &ref_vertex);
 
         // With the command fully populated, we can calculate the trajectory.
         err = pbio_trajectory_new_angle_command(&ctl->trajectory, &command);
@@ -295,7 +290,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
             // Update command with shifted starting point, equal to ongoing
             // maneuver.
-            command.t0 = time_vertex;
+            command.t0 = ref_vertex.time;
             command.th0 = ref_vertex.count;
             command.w0 = ref_vertex.rate;
 
@@ -444,9 +439,8 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         // Before we override the trajectory to renew it, get the starting
         // point of the current speed/angle segment of the reference. We may
         // need it below.
-        int32_t time_vertex;
         pbio_trajectory_reference_t ref_vertex;
-        pbio_trajectory_get_last_vertex(&ctl->trajectory, command.t0, &time_vertex, &ref_vertex);
+        pbio_trajectory_get_last_vertex(&ctl->trajectory, command.t0, &ref_vertex);
 
         // With the command fully populated, we can calculate the trajectory.
         err = pbio_trajectory_new_time_command(&ctl->trajectory, &command);
@@ -462,14 +456,14 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 
             // Update command with shifted starting point, equal to ongoing
             // maneuver.
-            command.t0 = time_vertex;
+            command.t0 = ref_vertex.time;
             command.th0 = ref_vertex.count;
             command.th0_ext = ref_vertex.count_ext;
             command.w0 = ref_vertex.rate;
 
             // We shifted the start time into the past, so we must adjust
             // duration accordingly.
-            command.duration += (time_now - time_vertex);
+            command.duration += (time_now - ref_vertex.time);
 
             // Recalculate the trajectory from the shifted starting point.
             err = pbio_trajectory_new_time_command(&ctl->trajectory, &command);
