@@ -12,7 +12,7 @@
 #include <pbio/integrator.h>
 
 
-static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int32_t count, int32_t rate) {
+static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, pbio_control_state_t *state, pbio_trajectory_reference_t *end) {
 
     // If no control is active, then all targets are complete.
     if (!pbio_control_is_active(ctl)) {
@@ -21,31 +21,31 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, int32_t time, int
 
     // Timed maneuvers are done when the full duration has passed.
     if (pbio_control_type_is_time(ctl)) {
-        return time - ctl->trajectory.t3 >= 0;
+        return time - end->time >= 0;
     }
 
     // What remains now is to deal with angle-based maneuvers. As with time
     // based trajectories, we want at least the duration to pass.
-    if (time - ctl->trajectory.t3 < 0) {
+    if (time - end->time < 0) {
         return false;
     }
 
     // For a nonzero final speed, we're done once we're at or past
     // the target, no matter the tolerances. Equivalently, we're done
     // once the sign of the angle error differs from the speed sign.
-    if (ctl->trajectory.w3 != 0) {
-        return pbio_math_sign(ctl->trajectory.th3 - count) != pbio_math_sign(ctl->trajectory.w3);
+    if (end->rate != 0) {
+        return pbio_math_sign(end->count - state->count) != pbio_math_sign(end->rate);
     }
 
     // For zero final speed, we need to at least stand still, so return false
     // when we're still moving faster than the tolerance.
-    if (abs(rate) > ctl->settings.rate_tolerance) {
+    if (abs(state->rate_est) > ctl->settings.rate_tolerance) {
         return false;
     }
 
     // Once we stand still, we're complete if the distance to the
     // target is equal to or less than the allowed tolerance.
-    return abs(ctl->trajectory.th3 - count) <= ctl->settings.count_tolerance;
+    return abs(end->count - state->count) <= ctl->settings.count_tolerance;
 }
 
 void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control) {
@@ -59,6 +59,10 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     // This compensates for any time we may have spent pausing when the motor was stalled.
     pbio_trajectory_get_reference(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), ref);
 
+    // Get reference point we want to be at in the end, to check for completion.
+    pbio_trajectory_reference_t ref_end;
+    pbio_trajectory_get_endpoint(&ctl->trajectory, &ref_end);
+
     // Calculate control errors, depending on whether we do angle control or speed control
     if (pbio_control_type_is_angle(ctl)) {
 
@@ -68,7 +72,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         int32_t integral_range = (ctl->settings.max_torque / ctl->settings.pid_kp) * 2;
 
         // Update count integral error and get current error state
-        pbio_count_integrator_update(&ctl->count_integrator, time_now, state->count, ref->count, ctl->trajectory.th3, integral_range, ctl->settings.integral_rate);
+        pbio_count_integrator_update(&ctl->count_integrator, time_now, state->count, ref->count, ref_end.count, integral_range, ctl->settings.integral_rate);
         pbio_count_integrator_get_errors(&ctl->count_integrator, state->count, ref->count, &count_err, &count_err_integral);
         rate_err = ref->rate - state->rate_est;
     } else {
@@ -132,7 +136,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, state->rate_est, ref->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if we are on target
-    ctl->on_target = pbio_control_check_completion(ctl, ref->time, state->count, state->rate_est);
+    ctl->on_target = pbio_control_check_completion(ctl, ref->time, state, &ref_end);
 
     // Save (low-pass filtered) load for diagnostics
     ctl->load = (ctl->load * (100 - PBIO_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONTROL_LOOP_TIME_MS) / 100;
@@ -162,7 +166,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
                 // For smart coast, keep actuating (holding) briefly to enforce
                 // standstill. It also gives some time for two subsequent
                 // blocks to smoothly transition without going through coast.
-                if (ref->time - ctl->trajectory.t3 < 100 * US_PER_MS) {
+                if (ref->time - ref_end.time < 100 * US_PER_MS) {
                     *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
                     *control = torque;
                 }
@@ -334,11 +338,13 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
         // If the previous command used smart coast and we're still close to
         // its target, we want to start from there. This avoids accumulating
         // errors in programs that use mostly relative motions like run_angle.
+        pbio_trajectory_reference_t prev_end;
+        pbio_trajectory_get_endpoint(&ctl->trajectory, &prev_end);
         if (ctl->on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART &&
-            abs(ctl->trajectory.th3 - state->count) < ctl->settings.count_tolerance * 2) {
+            abs(prev_end.count - state->count) < ctl->settings.count_tolerance * 2) {
             // We're close enough, so make the new target relative to the
             // endpoint of the last one.
-            count_start = ctl->trajectory.th3;
+            count_start = prev_end.count;
         } else {
             // No special cases apply, so the best we can do is just start from
             // the current state.

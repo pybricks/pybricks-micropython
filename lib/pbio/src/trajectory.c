@@ -432,6 +432,15 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, p
     }
 }
 
+// Get trajectory endpoint.
+void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end) {
+    end->time = trj->t3;
+    end->count = trj->th3;
+    end->count_ext = 0;
+    end->rate = trj->w3;
+    end->acceleration = 0;
+}
+
 // Evaluate the reference speed and velocity at the (shifted) time
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time, pbio_trajectory_reference_t *ref) {
 
