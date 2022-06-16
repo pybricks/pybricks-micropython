@@ -103,6 +103,8 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
 // Stretches out a given trajectory time-wise to make it match time frames of leading trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader);
 
+int32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj);
+
 void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
 
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);

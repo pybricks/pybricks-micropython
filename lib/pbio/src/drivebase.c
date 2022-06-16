@@ -375,8 +375,8 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     pbio_control_t *control_leader;
     pbio_control_t *control_follower;
 
-    if (db->control_distance.trajectory.t3 - db->control_distance.trajectory.t0 >
-        db->control_heading.trajectory.t3 - db->control_heading.trajectory.t0) {
+    if (pbio_trajectory_get_duration(&db->control_distance.trajectory) >
+        pbio_trajectory_get_duration(&db->control_heading.trajectory)) {
         // Distance control takes the longest, so it will take the lead
         control_leader = &db->control_distance;
         control_follower = &db->control_heading;
