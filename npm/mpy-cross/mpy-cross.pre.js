@@ -30,6 +30,19 @@ Module['onExit'] = (status) => {
         status === 0
             ? FS.readFile(outputFileName, { encoding: 'binary' })
             : undefined;
+
+    try {
+        FS.unlink(inputFileName);
+    } catch {
+        // might leak memory, but not critical
+    }
+
+    try {
+        FS.unlink(outputFileName);
+    } catch {
+        // might leak memory, but not critical
+    }
+
     Module['callback'](status, mpy, collectedOut, collectedErr);
 };
 
