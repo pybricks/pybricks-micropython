@@ -100,8 +100,8 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, p
 // Make a stationary trajectory for holding position.
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 
-// Stretches out a given trajectory time-wise to make it match time frames of other trajectory
-void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0);
+// Stretches out a given trajectory time-wise to make it match time frames of leading trajectory
+void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader);
 
 void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
 

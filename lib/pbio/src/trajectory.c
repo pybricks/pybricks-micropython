@@ -274,7 +274,11 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     trj->t3 = trj->t2 + wdiva(trj->w3 - trj->w1, trj->a2);
 }
 
-void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0) {
+void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader) {
+
+    int32_t t1mt0 = leader->t1 - leader->t0;
+    int32_t t2mt0 = leader->t2 - leader->t0;
+    int32_t t3mt0 = leader->t3 - leader->t0;
 
     if (t3mt0 == 0) {
         // This is a stationary maneuver, so there's nothing to recompute.

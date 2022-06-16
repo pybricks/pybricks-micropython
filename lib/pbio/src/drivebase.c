@@ -388,10 +388,7 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
 
     // Revise follower trajectory so it takes as long as the leader, achieved
     // by picking a lower speed and accelerations that makes the times match.
-    pbio_trajectory_stretch(&control_follower->trajectory,
-        control_leader->trajectory.t1 - control_leader->trajectory.t0,
-        control_leader->trajectory.t2 - control_leader->trajectory.t0,
-        control_leader->trajectory.t3 - control_leader->trajectory.t0);
+    pbio_trajectory_stretch(&control_follower->trajectory, &control_leader->trajectory);
 
     return PBIO_SUCCESS;
 }
