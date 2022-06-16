@@ -189,7 +189,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
                 // If we are getting here on completion of a timed command with
                 // a stationary endpoint, convert it to a stationary angle
                 // based command and hold it.
-                if (pbio_control_type_is_time(ctl) && ctl->trajectory.w3 == 0) {
+                if (pbio_control_type_is_time(ctl) && ref_end.rate == 0) {
                     pbio_control_start_hold_control(ctl, time_now, state->count);
                 }
                 break;
@@ -308,9 +308,14 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
     // Reset PID control if needed
     if (!pbio_control_type_is_angle(ctl)) {
+        // Get (again) the reference at current time, so we get the correct
+        // value regardless of the command path followed above.
+        pbio_trajectory_reference_t ref_new;
+        pbio_trajectory_get_reference(&ctl->trajectory, time_now, &ref_new);
+
         // New angle maneuver, so reset the rate integrator
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
+        pbio_count_integrator_reset(&ctl->count_integrator, ref_new.time, ref_new.count, ref_new.count, integrator_max);
 
         // Reset load filter
         ctl->load = 0;
@@ -382,7 +387,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     if (!pbio_control_type_is_angle(ctl)) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, time_now, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
+        pbio_count_integrator_reset(&ctl->count_integrator, time_now, command.th0, command.th0, integrator_max);
 
         // Reset load filter
         ctl->load = 0;
