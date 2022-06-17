@@ -204,6 +204,49 @@ class IODeviceTypeId(IntEnum):
     TECHNIC_L_ANGULAR_MOTOR = 76
 
 
+class IODeviceCapabilityFlags(IntEnum):
+    """
+    I/O device device capability flags.
+
+    Values are the same as ``pbio_iodev_capability_flags_t``.
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_NONE = 0
+    """
+    Convience value for no flags set.
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT = 1 << 0
+    """
+    Indicates that this device is a DC output such as a motor or a light.
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED = 1 << 1
+    """
+    Indicates that the motor provides speed feedback.
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS = 1 << 2
+    """
+    Indicates that the motor provides relative position feedback.
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS = 1 << 3
+    """
+    Indicates that the motor provides absolute position feedback.
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1 = 1 << 4
+    """
+    Indicates that the device requires power supply across pin 1 (+) and pin 2 (-).
+    """
+
+    PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2 = 1 << 5
+    """
+    Indicates that the device requires power supply across pin 1 (-) and pin 2 (+).
+    """
+
+
 class pbio_port_id_t(ctypes.c_uint32):
     pass
 

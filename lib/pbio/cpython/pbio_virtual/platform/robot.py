@@ -5,7 +5,12 @@ from ..drv.button import VirtualButtons
 from ..drv.battery import VirtualBattery
 from ..drv.led import VirtualLed
 from ..drv.clock import CountingClock
-from ..drv.ioport import VirtualIOPort, PortId, IODeviceTypeId
+from ..drv.ioport import (
+    VirtualIOPort,
+    PortId,
+    IODeviceTypeId,
+    IODeviceCapabilityFlags,
+)
 
 import numpy
 import random
@@ -137,6 +142,10 @@ class Platform:
             # Initialize IO Port.
             self.ioport[port_id] = VirtualIOPort(port_id)
             self.ioport[port_id].motor_type_id = type_id
+            self.ioport[port_id]._iodev.info[0].capability_flags = (
+                IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT
+                | IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS
+            )
 
             # Initialize motor simulation model.
             self.sim_motor[i] = None
