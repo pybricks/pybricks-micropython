@@ -40,18 +40,18 @@
  * Minimal set of trajectory parameters from which a full trajectory is calculated.
  */
 typedef struct _pbio_trajectory_command_t {
-    int32_t t0;                    /**<  Time at start of maneuver */
-    int32_t th0;                   /**<  Encoder count at start of maneuver */
-    int32_t th0_ext;               /**<  As above, but millicounts. REVISIT: Unify millicounts and counts into one variable. */
+    int32_t time_start;            /**<  Time at start of maneuver */
+    int32_t angle_start;           /**<  Encoder count at start of maneuver */
+    int32_t angle_start_ext;       /**<  As above, but millicounts. REVISIT: Unify millicounts and counts into one variable. */
     union {
-        int32_t th3;               /**<  Encoder count at end of maneuver (for angle-constrained trajectory) */
+        int32_t angle_end;         /**<  Encoder count at end of maneuver (for angle-constrained trajectory) */
         int32_t duration;          /**<  Duration of maneuver (for time-constrained trajectory) */
     };
-    int32_t w0;                    /**<  Encoder rate at start of maneuver */
-    int32_t wt;                    /**<  Encoder target rate target when not accelerating */
-    int32_t wmax;                  /**<  Max target rate target */
-    int32_t a0_abs;                /**<  Encoder acceleration magnitude during in-phase */
-    int32_t a2_abs;                /**<  Encoder acceleration magnitude during out-phase */
+    int32_t speed_start;           /**<  Encoder rate at start of maneuver */
+    int32_t speed_target;          /**<  Encoder target rate target when not accelerating */
+    int32_t speed_max;             /**<  Max target rate target */
+    int32_t acceleration;          /**<  Encoder acceleration magnitude during in-phase */
+    int32_t deceleration;          /**<  Encoder acceleration magnitude during out-phase */
     bool continue_running;         /**<  Whether it movement continues after t3 (true) or not (false) */
 } pbio_trajectory_command_t;
 
