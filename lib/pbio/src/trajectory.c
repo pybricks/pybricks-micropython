@@ -80,6 +80,11 @@ static int64_t x_time2(int32_t b, int32_t t) {
     return x_time(x_time(b, t), t) / (2 * US_PER_MS);
 }
 
+// Gets the angle traversed while accelerating from w_start to w_end
+static int32_t w2_over_a(int32_t w_end, int32_t w_start, int32_t a) {
+    return (w_end * w_end - w_start * w_start) / a / 2;
+}
+
 // Computes a trajectory for a timed command assuming *positive* speed
 static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
@@ -166,17 +171,10 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     trj->t2 = c->t0 + t1mt0 + t2mt1;
     trj->t3 = c->t0 + t3mt0;
 
-    // Corresponding angle values with millicount/millideg precision
-    int64_t mth0 = as_mcount(c->th0, c->th0_ext);
-    int64_t mth1 = mth0 + x_time(trj->w0, t1mt0) + x_time2(trj->a0, t1mt0);
-    int64_t mth2 = mth1 + x_time(trj->w1, t2mt1);
-    int64_t mth3 = mth2 + x_time(trj->w1, t3mt2) + x_time2(trj->a2, t3mt2);
-
-    // Store as counts and millicount
-    as_count(mth0, &trj->th0, &trj->th0_ext);
-    as_count(mth1, &trj->th1, &trj->th1_ext);
-    as_count(mth2, &trj->th2, &trj->th2_ext);
-    as_count(mth3, &trj->th3, &trj->th3_ext);
+    // Corresponding angle values
+    trj->th1 = trj->th0 + w2_over_a(trj->w1, trj->w0, trj->a0);
+    trj->th2 = trj->th1 + (trj->w1 * (t2mt1 / US_PER_MS)) / MS_PER_SECOND;
+    trj->th3 = trj->th2 + w2_over_a(trj->w3, trj->w1, trj->a2);
 }
 
 // Computes a trajectory for an angle command assuming *positive* speed
