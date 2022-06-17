@@ -56,29 +56,6 @@ typedef struct _pbio_trajectory_command_t {
 } pbio_trajectory_command_t;
 
 /**
- * Complete set of motor trajectory parameters for an ideal maneuver without disturbances.
- */
-typedef struct _pbio_trajectory_t {
-    int32_t t0;                        /**<  Time at start of maneuver */
-    int32_t t1;                        /**<  Time after the acceleration in-phase */
-    int32_t t2;                        /**<  Time at start of acceleration out-phase */
-    int32_t t3;                        /**<  Time at end of maneuver */
-    int32_t th0;                        /**<  Encoder count at start of maneuver */
-    int32_t th1;                        /**<  Encoder count after the acceleration in-phase */
-    int32_t th2;                        /**<  Encoder count at start of acceleration out-phase */
-    int32_t th3;                        /**<  Encoder count at end of maneuver */
-    int32_t th0_ext;                     /**<  As above, but additional millicounts */
-    int32_t th1_ext;                     /**<  As above, but additional  millicounts */
-    int32_t th2_ext;                     /**<  As above, but additional  millicounts */
-    int32_t th3_ext;                     /**<  As above, but additional  millicounts */
-    int32_t w0;                          /**<  Encoder rate at start of maneuver */
-    int32_t w1;                          /**<  Encoder rate target when not accelerating */
-    int32_t w3;                          /**<  Encoder rate target after the maneuver ends */
-    int32_t a0;                          /**<  Encoder acceleration during in-phase */
-    int32_t a2;                          /**<  Encoder acceleration during out-phase */
-} pbio_trajectory_t;
-
-/**
  * Trajectory evaluated at a given point in time.
  */
 typedef struct _pbio_trajectory_reference_t {
@@ -88,6 +65,27 @@ typedef struct _pbio_trajectory_reference_t {
     int32_t rate;         /**<  Reference rate */
     int32_t acceleration; /**<  Reference acceleration */
 } pbio_trajectory_reference_t;
+
+/**
+ * Complete set of motor trajectory parameters for an ideal maneuver without disturbances.
+ */
+typedef struct _pbio_trajectory_t {
+    pbio_trajectory_reference_t start;   /**<  Starting point of the trajectory. */
+    int32_t t1;                          /**<  Time after the acceleration in-phase */
+    int32_t t2;                          /**<  Time at start of acceleration out-phase */
+    int32_t t3;                          /**<  Time at end of maneuver */
+    int32_t th1;                         /**<  Encoder count after the acceleration in-phase */
+    int32_t th2;                         /**<  Encoder count at start of acceleration out-phase */
+    int32_t th3;                         /**<  Encoder count at end of maneuver */
+    int32_t th1_ext;                     /**<  As above, but additional  millicounts */
+    int32_t th2_ext;                     /**<  As above, but additional  millicounts */
+    int32_t th3_ext;                     /**<  As above, but additional  millicounts */
+    int32_t w0;                          /**<  Encoder rate at start of maneuver */
+    int32_t w1;                          /**<  Encoder rate target when not accelerating */
+    int32_t w3;                          /**<  Encoder rate target after the maneuver ends */
+    int32_t a0;                          /**<  Encoder acceleration during in-phase */
+    int32_t a2;                          /**<  Encoder acceleration during out-phase */
+} pbio_trajectory_t;
 
 // Make a new full trajectory from user command, with angle target as endpoint.
 pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);

@@ -33,15 +33,12 @@ static void test_simple_trajectory(void *env) {
     pbio_error_t err = pbio_trajectory_new_angle_command(&trj, &command);
     tt_want_int_op(err, ==, PBIO_SUCCESS);
 
-    tt_want_int_op(trj.t0, ==, command.time_start);
-    tt_want_int_op(trj.t1 - command.time_start, ==, 500 * US_PER_MS);
-    tt_want_int_op(trj.t2 - command.time_start, ==, 10000 * US_PER_MS);
-    tt_want_int_op(trj.t3 - command.time_start, ==, 10500 * US_PER_MS);
-    tt_want_int_op(trj.th0, ==, command.angle_start);
+    tt_want_int_op(trj.t1, ==, 500 * US_PER_MS);
+    tt_want_int_op(trj.t2, ==, 10000 * US_PER_MS);
+    tt_want_int_op(trj.t3, ==, 10500 * US_PER_MS);
     tt_want_int_op(trj.th1, ==, 250);
     tt_want_int_op(trj.th2, ==, 9750);
     tt_want_int_op(trj.th3, ==, command.angle_end);
-    tt_want_int_op(trj.th0_ext, ==, 0);
     tt_want_int_op(trj.th1_ext, ==, 0);
     tt_want_int_op(trj.th2_ext, ==, 0);
     tt_want_int_op(trj.th3_ext, ==, 0);

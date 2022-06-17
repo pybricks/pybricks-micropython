@@ -198,7 +198,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Log control data
     int32_t log_data[] = {
-        ref->time - ctl->trajectory.t0,
+        ref->time - ctl->trajectory.start.time,
         state->count,
         0,
         *actuation,

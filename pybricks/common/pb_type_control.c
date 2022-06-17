@@ -210,26 +210,24 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_stall_tolerances_obj, 1, common
 // pybricks._common.Control.trajectory
 STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_trajectory_t trajectory;
+    pbio_trajectory_t *trj = &self->control->trajectory;
 
     mp_obj_t parms[13];
 
-    trajectory = self->control->trajectory;
-
     if (pbio_control_is_active(self->control)) {
-        parms[0] = mp_obj_new_int((trajectory.t0 - trajectory.t0) / 1000);
-        parms[1] = mp_obj_new_int((trajectory.t1 - trajectory.t0) / 1000);
-        parms[2] = mp_obj_new_int((trajectory.t2 - trajectory.t0) / 1000);
-        parms[3] = mp_obj_new_int((trajectory.t3 - trajectory.t0) / 1000);
-        parms[4] = mp_obj_new_int(trajectory.th0);
-        parms[5] = mp_obj_new_int(trajectory.th1);
-        parms[6] = mp_obj_new_int(trajectory.th2);
-        parms[7] = mp_obj_new_int(trajectory.th3);
-        parms[8] = mp_obj_new_int(trajectory.w0);
-        parms[9] = mp_obj_new_int(trajectory.w1);
-        parms[10] = mp_obj_new_int(trajectory.w3);
-        parms[11] = mp_obj_new_int(trajectory.a0);
-        parms[12] = mp_obj_new_int(trajectory.a2);
+        parms[0] = mp_obj_new_int(0);
+        parms[1] = mp_obj_new_int(trj->t1 / 1000);
+        parms[2] = mp_obj_new_int(trj->t2 / 1000);
+        parms[3] = mp_obj_new_int(trj->t3 / 1000);
+        parms[4] = mp_obj_new_int(0);
+        parms[5] = mp_obj_new_int(trj->th1);
+        parms[6] = mp_obj_new_int(trj->th2);
+        parms[7] = mp_obj_new_int(trj->th3);
+        parms[8] = mp_obj_new_int(trj->w0);
+        parms[9] = mp_obj_new_int(trj->w1);
+        parms[10] = mp_obj_new_int(trj->w3);
+        parms[11] = mp_obj_new_int(trj->a0);
+        parms[12] = mp_obj_new_int(trj->a2);
         return mp_obj_new_tuple(13, parms);
     }
     return mp_const_none;
