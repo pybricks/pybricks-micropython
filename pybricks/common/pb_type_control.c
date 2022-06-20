@@ -216,16 +216,16 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
 
     if (pbio_control_is_active(self->control)) {
         parms[0] = mp_obj_new_int(0);
-        parms[1] = mp_obj_new_int(trj->t1 / 1000);
-        parms[2] = mp_obj_new_int(trj->t2 / 1000);
-        parms[3] = mp_obj_new_int(trj->t3 / 1000);
+        parms[1] = mp_obj_new_int(trj->t1 / 10);
+        parms[2] = mp_obj_new_int(trj->t2 / 10);
+        parms[3] = mp_obj_new_int(trj->t3 / 10);
         parms[4] = mp_obj_new_int(0);
-        parms[5] = mp_obj_new_int(trj->th1);
-        parms[6] = mp_obj_new_int(trj->th2);
-        parms[7] = mp_obj_new_int(trj->th3);
-        parms[8] = mp_obj_new_int(trj->w0);
-        parms[9] = mp_obj_new_int(trj->w1);
-        parms[10] = mp_obj_new_int(trj->w3);
+        parms[5] = mp_obj_new_int(trj->th1 / 1000);
+        parms[6] = mp_obj_new_int(trj->th2 / 1000);
+        parms[7] = mp_obj_new_int(trj->th3 / 1000);
+        parms[8] = mp_obj_new_int(trj->w0 / 10);
+        parms[9] = mp_obj_new_int(trj->w1 / 10);
+        parms[10] = mp_obj_new_int(trj->w3 / 10);
         parms[11] = mp_obj_new_int(trj->a0);
         parms[12] = mp_obj_new_int(trj->a2);
         return mp_obj_new_tuple(13, parms);

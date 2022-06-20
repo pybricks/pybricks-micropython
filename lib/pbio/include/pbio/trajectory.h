@@ -15,6 +15,11 @@
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
 
+#define US_PER_Se_4 (100)    // Internal trajectory time measured in (s e-4)
+#define Se_4_PER_MS (US_PER_MS / US_PER_Se_4)
+#define DDEGS_PER_DEGS (10)  // Internal trajectory speed measured in (ddeg/s)
+#define MDEG_PER_DEG (1000)  // Internal trajectory angle measured in (mdeg)
+
 // Maximum duration to ensure the math stays numerically bounded. Maneuvers
 // longer than 10 minutes should probably use run forever combined with a user
 // defined end condition.
@@ -28,13 +33,6 @@
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
-
-// Macro to evaluate b*t/US_PER_SECOND in two steps to avoid excessive round-off errors and overflows.
-#define timest(b, t) (((b) * ((t) / US_PER_MS)) / MS_PER_SECOND)
-// Same trick to evaluate formulas of the form 1/2*b*t^2/US_PER_SECOND^2
-#define timest2(b, t) ((timest(timest((b), (t)),(t))) / 2)
-// Macro to evaluate division of speed by acceleration (w/a), yielding time, in the appropriate units
-#define wdiva(w, a) ((((w) * US_PER_MS) / (a)) * MS_PER_SECOND)
 
 /**
  * Minimal set of trajectory parameters from which a full trajectory is calculated.
@@ -71,15 +69,12 @@ typedef struct _pbio_trajectory_reference_t {
  */
 typedef struct _pbio_trajectory_t {
     pbio_trajectory_reference_t start;   /**<  Starting point of the trajectory. */
-    int32_t t1;                          /**<  Time after the acceleration in-phase */
-    int32_t t2;                          /**<  Time at start of acceleration out-phase */
-    int32_t t3;                          /**<  Time at end of maneuver */
+    int32_t t1;                          /**<  Signed time from start to end of acceleration phase */
+    int32_t t2;                          /**<  Signed time from start to start of deceleration phase */
+    int32_t t3;                          /**<  Signed time from start to end of maneuver */
     int32_t th1;                         /**<  Encoder count after the acceleration in-phase */
     int32_t th2;                         /**<  Encoder count at start of acceleration out-phase */
     int32_t th3;                         /**<  Encoder count at end of maneuver */
-    int32_t th1_ext;                     /**<  As above, but additional  millicounts */
-    int32_t th2_ext;                     /**<  As above, but additional  millicounts */
-    int32_t th3_ext;                     /**<  As above, but additional  millicounts */
     int32_t w0;                          /**<  Encoder rate at start of maneuver */
     int32_t w1;                          /**<  Encoder rate target when not accelerating */
     int32_t w3;                          /**<  Encoder rate target after the maneuver ends */

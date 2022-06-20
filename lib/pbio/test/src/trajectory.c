@@ -33,17 +33,14 @@ static void test_simple_trajectory(void *env) {
     pbio_error_t err = pbio_trajectory_new_angle_command(&trj, &command);
     tt_want_int_op(err, ==, PBIO_SUCCESS);
 
-    tt_want_int_op(trj.t1, ==, 500 * US_PER_MS);
-    tt_want_int_op(trj.t2, ==, 10000 * US_PER_MS);
-    tt_want_int_op(trj.t3, ==, 10500 * US_PER_MS);
-    tt_want_int_op(trj.th1, ==, 250);
-    tt_want_int_op(trj.th2, ==, 9750);
-    tt_want_int_op(trj.th3, ==, command.angle_end);
-    tt_want_int_op(trj.th1_ext, ==, 0);
-    tt_want_int_op(trj.th2_ext, ==, 0);
-    tt_want_int_op(trj.th3_ext, ==, 0);
+    tt_want_int_op(trj.t1, ==, 500 * Se_4_PER_MS);
+    tt_want_int_op(trj.t2, ==, 10000 * Se_4_PER_MS);
+    tt_want_int_op(trj.t3, ==, 10500 * Se_4_PER_MS);
+    tt_want_int_op(trj.th1, ==, 250 * MDEG_PER_DEG);
+    tt_want_int_op(trj.th2, ==, 9750 * MDEG_PER_DEG);
+    tt_want_int_op(trj.th3, ==, command.angle_end * MDEG_PER_DEG);
     tt_want_int_op(trj.w0, ==, 0);
-    tt_want_int_op(trj.w1, ==, command.speed_target);
+    tt_want_int_op(trj.w1, ==, command.speed_target * DDEGS_PER_DEGS);
     tt_want_int_op(trj.w3, ==, 0);
     tt_want_int_op(trj.a0, ==, command.acceleration);
     tt_want_int_op(trj.a2, ==, -command.deceleration);
@@ -97,22 +94,22 @@ static void test_infinite_trajectory(void *env) {
                     // Initial speed may now be bounded. Verify that the sign
                     // is the same and that it did not grow in size.
                     if (command.speed_start > 0) {
-                        tt_want_int_op(trj.w0, <=, command.speed_start);
+                        tt_want_int_op(trj.w0, <=, command.speed_start * DDEGS_PER_DEGS);
                     }
                     if (command.speed_start < 0) {
-                        tt_want_int_op(trj.w0, >=, command.speed_start);
+                        tt_want_int_op(trj.w0, >=, command.speed_start * DDEGS_PER_DEGS);
                     } else {
-                        tt_want_int_op(trj.w0, ==, command.speed_start);
+                        tt_want_int_op(trj.w0, ==, command.speed_start * DDEGS_PER_DEGS);
                     }
 
                     // Verify that the target speed is reached, which should
                     // always be the case in an infinite maneuver.
                     if (command.speed_target > command.speed_max) {
-                        tt_want_int_op(trj.w1, ==, command.speed_max);
+                        tt_want_int_op(trj.w1, ==, command.speed_max * DDEGS_PER_DEGS);
                     } else if (command.speed_target < -command.speed_max) {
-                        tt_want_int_op(trj.w1, ==, -command.speed_max);
+                        tt_want_int_op(trj.w1, ==, -command.speed_max * DDEGS_PER_DEGS);
                     } else {
-                        tt_want_int_op(trj.w1, ==, command.speed_target);
+                        tt_want_int_op(trj.w1, ==, command.speed_target * DDEGS_PER_DEGS);
                     }
                 }
             }
