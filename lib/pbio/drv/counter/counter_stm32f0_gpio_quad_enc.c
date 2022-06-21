@@ -31,10 +31,11 @@ typedef struct {
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
 
-static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     private_data_t *priv = dev->priv;
 
-    *count = priv->count;
+    *millidegrees = (priv->count % 360) * 1000;
+    *rotations = priv->count / 360;
 
     return PBIO_SUCCESS;
 }
@@ -73,7 +74,7 @@ void EXTI0_1_IRQHandler(void) {
 }
 
 static const pbdrv_counter_funcs_t pbdrv_counter_stm32f0_gpio_quad_enc_funcs = {
-    .get_count = pbdrv_counter_stm32f0_gpio_quad_enc_get_count,
+    .get_angle = pbdrv_counter_stm32f0_gpio_quad_enc_get_angle,
 };
 
 void pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_dev_t *devs) {

@@ -5,7 +5,7 @@
 //
 // This driver parses type-specific position readouts from LPF2 motors.
 //
-// This driver currently requires that pbdrv_counter_lpf2_get_count gets
+// This driver currently requires that pbdrv_counter_lpf2_get_angle gets
 // called often enough to observe full-rotation transitions of motors that
 // use absolute encoders.
 
@@ -85,15 +85,8 @@ static pbio_error_t pbdrv_counter_lpf2_update(pbdrv_counter_dev_t *dev) {
 
         // Store as (rotations, millidegree) pair. This is slightly redundant,
         // but this makes it easy to deal with both motor types consistently.
-        // In practice, this is only used on the BOOST interactive motor, so
-        // the overall overhead is minimal.
-        int32_t degrees_abs = degrees % 360;
-        if (degrees_abs < 0) {
-            degrees_abs += 360;
-        }
-        priv->millidegrees = degrees_abs * 1000;
-        priv->rotations = (degrees - degrees_abs) / 360;
-
+        priv->millidegrees = (degrees % 360) * 1000;
+        priv->rotations = degrees / 360;
         return PBIO_SUCCESS;
     }
 
@@ -115,7 +108,7 @@ static pbio_error_t pbdrv_counter_lpf2_update(pbdrv_counter_dev_t *dev) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbdrv_counter_lpf2_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t pbdrv_counter_lpf2_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
 
     // Read sensor to update position buffer.
     pbio_error_t err = pbdrv_counter_lpf2_update(dev);
@@ -125,11 +118,12 @@ static pbio_error_t pbdrv_counter_lpf2_get_count(pbdrv_counter_dev_t *dev, int32
 
     // Return total angle.
     private_data_t *priv = dev->priv;
-    *count = priv->rotations * 360 + (priv->millidegrees + 500) / 1000;
+    *rotations = priv->rotations;
+    *millidegrees = priv->millidegrees;
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbdrv_counter_lpf2_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t pbdrv_counter_lpf2_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
 
     private_data_t *priv = dev->priv;
 
@@ -144,17 +138,17 @@ static pbio_error_t pbdrv_counter_lpf2_get_abs_count(pbdrv_counter_dev_t *dev, i
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    // Convert absolute angle to signed angle in (-180, 179).
-    *count = (priv->millidegrees + 500) / 1000;
-    if (*count >= 180) {
-        *count -= 360;
+    // Convert absolute angle to signed angle in (-180000, 179999).
+    *millidegrees = priv->millidegrees;
+    if (*millidegrees >= 180000) {
+        *millidegrees -= 360000;
     }
     return PBIO_SUCCESS;
 }
 
 static const pbdrv_counter_funcs_t pbdrv_counter_lpf2_funcs = {
-    .get_count = pbdrv_counter_lpf2_get_count,
-    .get_abs_count = pbdrv_counter_lpf2_get_abs_count,
+    .get_angle = pbdrv_counter_lpf2_get_angle,
+    .get_abs_angle = pbdrv_counter_lpf2_get_abs_angle,
 };
 
 void pbdrv_counter_lpf2_init(pbdrv_counter_dev_t *devs) {

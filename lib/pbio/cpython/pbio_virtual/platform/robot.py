@@ -75,37 +75,44 @@ class VirtualCounter:
 
         # Get data from model.
         time = self.clock.microseconds / 1e6
-        angle, speed = self.sim_motor.get_output_at_time(time, tolerance=2e-3)
+        (angle,) = self.sim_motor.get_output_at_time(time, tolerance=2e-3)
 
         # Get "absolute" angle.
-        mod_angle = angle % 360
-        abs_angle = mod_angle if mod_angle < 180 else mod_angle - 360
+        mod_angle = angle % 360000
+        abs_angle = mod_angle if mod_angle < 180000 else mod_angle - 360000
+
+        # Split angle to rotations and millidegrees
+        millidegrees = math.remainder(angle, 360000)
+        rotations = round((angle - millidegrees) / 360000)
 
         # Return all values.
-        return int(angle - self.initial_angle), int(abs_angle), int(speed)
+        return int(rotations), int(millidegrees), int(abs_angle)
 
     def __init__(self, sim_motor, clock):
         # Store references to motor and clock
         self.sim_motor = sim_motor
         self.clock = clock
 
-        # Initialize starting position
-        self.initial_angle = 0
-        self.initial_angle, _, _ = self.get_counter_data()
-
     @property
-    def count(self):
+    def rotations(self):
         """
-        Provides the value for ``pbdrv_counter_virtual_get_count()``.
+        Provides rotations for ``pbdrv_counter_virtual_get_angle()``.
         """
         return self.get_counter_data()[0]
 
     @property
-    def abs_count(self):
+    def millidegrees(self):
         """
-        Provides the value for ``pbdrv_counter_virtual_get_abs_count()``.
+        Provides rotations for ``pbdrv_counter_virtual_get_angle()``.
         """
         return self.get_counter_data()[1]
+
+    @property
+    def millidegrees_abs(self):
+        """
+        Provides the value for ``pbdrv_counter_virtual_get_abs_angle()``.
+        """
+        return self.get_counter_data()[2]
 
 
 class Platform:

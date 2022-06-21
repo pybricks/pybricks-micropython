@@ -31,21 +31,26 @@ typedef struct {
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV];
 
-static pbio_error_t pbdrv_counter_virtual_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t pbdrv_counter_virtual_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     private_data_t *priv = dev->priv;
 
-    return pbdrv_virtual_get_i32("counter", priv->index, "count", count);
+    pbio_error_t err = pbdrv_virtual_get_i32("counter", priv->index, "rotations", rotations);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    return pbdrv_virtual_get_i32("counter", priv->index, "millidegrees", millidegrees);
 }
 
-static pbio_error_t pbdrv_counter_virtual_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t pbdrv_counter_virtual_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
     private_data_t *priv = dev->priv;
 
-    return pbdrv_virtual_get_i32("counter", priv->index, "abs_count", count);
+    return pbdrv_virtual_get_i32("counter", priv->index, "millidegrees_abs", millidegrees);
 }
 
 static const pbdrv_counter_funcs_t pbdrv_counter_virtual_funcs = {
-    .get_count = pbdrv_counter_virtual_get_count,
-    .get_abs_count = pbdrv_counter_virtual_get_abs_count,
+    .get_angle = pbdrv_counter_virtual_get_angle,
+    .get_abs_angle = pbdrv_counter_virtual_get_abs_angle,
 };
 
 void pbdrv_counter_virtual_init(pbdrv_counter_dev_t *devs) {

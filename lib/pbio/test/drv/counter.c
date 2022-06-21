@@ -13,44 +13,41 @@
 #include "../drv/counter/counter.h"
 
 typedef struct {
-    int32_t count;
-    int32_t abs_count;
-    int32_t rate;
+    int32_t rotations;
+    int32_t millidegrees;
 } test_private_data_t;
 
 static test_private_data_t test_private_data;
 
 // Functions for tests to poke counter state
 
-void pbio_test_counter_set_count(int32_t count) {
-    test_private_data.count = count;
+void pbio_test_counter_set_angle(int32_t rotations, int32_t millidegrees) {
+    test_private_data.rotations = rotations;
+    test_private_data.millidegrees = millidegrees;
 }
 
-void pbio_test_counter_set_abs_count(int32_t count) {
-    test_private_data.abs_count = count;
-}
-
-void pbio_test_counter_set_rate(int32_t rate) {
-    test_private_data.rate = rate;
+void pbio_test_counter_set_abs_count(int32_t millidegrees) {
+    test_private_data.millidegrees = millidegrees;
 }
 
 // Counter driver implementation
 
-static pbio_error_t test_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t test_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     test_private_data_t *priv = dev->priv;
-    *count = priv->count;
+    *millidegrees = priv->millidegrees;
+    *rotations = priv->rotations;
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t test_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static pbio_error_t test_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
     test_private_data_t *priv = dev->priv;
-    *count = priv->abs_count;
+    *millidegrees = priv->millidegrees;
     return PBIO_SUCCESS;
 }
 
 static const pbdrv_counter_funcs_t test_funcs = {
-    .get_count = test_get_count,
-    .get_abs_count = test_get_abs_count,
+    .get_angle = test_get_angle,
+    .get_abs_angle = test_get_abs_angle,
 };
 
 void pbdrv_counter_test_init(pbdrv_counter_dev_t *devs) {

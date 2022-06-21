@@ -7,52 +7,22 @@
 
 #include <inttypes.h>
 
+#include <pbdrv/counter.h>
+
 #include <pbio/angle.h>
 #include <pbio/math.h>
 #include <pbio/port.h>
 #include <pbio/tacho.h>
 
-// REVISIT: This is a placeholder for use until pbdrv/counter gets upgraded.
-// This lets us upgrade the code incrementally without breaking changes.
-static pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *counter, int32_t *rotations, int32_t *millidegrees) {
-
-    // Get counter value.
-    int32_t count;
-    pbio_error_t err = pbdrv_counter_get_count(counter, &count);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Output in expected format.
-    *rotations = count / 360;
-    *millidegrees = (count % 360) * 1000;
-    return PBIO_SUCCESS;
-}
-
-// REVISIT: This is a placeholder for use until pbdrv/counter gets upgraded.
-// This lets us upgrade the code incrementally without breaking changes.
-static pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *counter, int32_t *millidegrees) {
-
-    // Get counter value.
-    int32_t count;
-    pbio_error_t err = pbdrv_counter_get_abs_count(counter, &count);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    *millidegrees = count * 1000;
-    return PBIO_SUCCESS;
-}
-
 /**
  * The tacho module is a wrapper around a counter driver to provide rotation
  * sensing with a configurable positive direction and zero point, without
  * poking at hardware to reset it. The output angle is defined as:
- * 
+ *
  *     angle = (raw_angle - zero_angle) * direction.
- * 
+ *
  * Here direction is +1 if the tacho should increase for increasing raw angles
- * or -1 if it should decrease for increasing raw angles.  
+ * or -1 if it should decrease for increasing raw angles.
  */
 struct _pbio_tacho_t {
     pbio_direction_t direction;  /**< Direction of tacho for increasing raw driver counts. */
@@ -126,8 +96,7 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *angle, bo
     if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         // direction = -1, so as per above we should add.
         pbio_angle_sum(&raw, angle, &tacho->zero_angle);
-    }
-    else {
+    } else {
         // direction = +1, so as per above we should subtract.
         pbio_angle_diff(&raw, angle, &tacho->zero_angle);
     }

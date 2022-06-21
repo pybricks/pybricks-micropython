@@ -16,8 +16,8 @@ class SimpleMotor(SimulationModel):
     # The input is the duty cycle (-1.0 to 1.0)
     INPUTS = ("duty",)
 
-    # The output is the angle (deg) and speed (deg/s)
-    OUTPUTS = ("angle", "speed")
+    # The output is the angle (mdeg).
+    OUTPUTS = ("angle",)
 
     # Out-of-bounds numeric "duty" value used to indicate coast.
     COAST_DUTY = 10
@@ -27,9 +27,9 @@ class SimpleMotor(SimulationModel):
     c1 = 0.0455 * 10000
 
     def output(self, t, x):
-        # In this simple model, both states are "measured" directly.
+        # Only position is measured as an output.
         alpha, alpha_dot = x
-        return array([degrees(alpha), degrees(alpha_dot)])
+        return array([degrees(alpha) * 1000])
 
     def state_change(self, t, x, u):
         # Unpack the current state.

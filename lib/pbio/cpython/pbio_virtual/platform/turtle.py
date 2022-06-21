@@ -16,7 +16,7 @@ from ..drv.battery import VirtualBattery
 from ..drv.button import ButtonFlags, VirtualButtons
 from ..drv.clock import WallClock, VirtualClock
 from ..drv.counter import VirtualCounter
-from ..drv.ioport import IODeviceTypeId, PortId, VirtualIOPort
+from ..drv.ioport import IODeviceTypeId, IODeviceCapabilityFlags, PortId, VirtualIOPort
 from ..drv.led import VirtualLed
 from ..drv.motor_driver import VirtualMotorDriver
 from . import VirtualPlatform
@@ -148,6 +148,10 @@ class Motor:
         platform: VirtualPlatform,
     ) -> None:
         port.motor_type_id = IODeviceTypeId.SPIKE_M_MOTOR
+        port._iodev.info[0].capability_flags = (
+            IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT
+            | IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS
+        )
 
         # REVISIT: if we need to detach the motor, we will need to save the
         # returned unsubscribe functions
@@ -163,11 +167,11 @@ class Motor:
         self._apply_state()
 
     def _apply_state(self) -> None:
-        self._counter.count = int(self._state.count)
-        self._counter.abs_count = int(self._state.count % 360)
-        self._counter.rate = int(self._state.rate)
+        self._counter.rotations = 0
+        self._counter.millidegrees = int(self._state.count * 1000)
+        self._counter.millidegrees_abs = int((self._state.count % 360) * 1000)
         # positive is clockwise in Pybricks
-        self._turtle.tiltangle(-self._counter.abs_count)
+        self._turtle.tiltangle(-self._counter.millidegrees_abs / 1000)
 
     def _calc_new_output(self, new_timestamp: int) -> Tuple(int, int):
         delta = new_timestamp - self._state.timestamp

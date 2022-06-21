@@ -11,8 +11,8 @@
 #include <pbio/error.h>
 
 typedef struct {
-    pbio_error_t (*get_count)(pbdrv_counter_dev_t *dev, int32_t *count);
-    pbio_error_t (*get_abs_count)(pbdrv_counter_dev_t *dev, int32_t *count);
+    pbio_error_t (*get_angle)(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
+    pbio_error_t (*get_abs_angle)(pbdrv_counter_dev_t *dev, int32_t *millidegrees);
 } pbdrv_counter_funcs_t;
 
 struct _pbdrv_counter_dev_t {

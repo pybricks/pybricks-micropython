@@ -32,7 +32,7 @@ static inline pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_
 static inline pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, pbio_angle_t *angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *reset_angle, bool reset_to_abs) {
+static inline pbio_tacho_reset_angle(pbio_tacho_t * tacho, pbio_angle_t * reset_angle, bool reset_to_abs) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

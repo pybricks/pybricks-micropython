@@ -3,25 +3,33 @@
 
 
 class VirtualCounter:
-    count: int = 0
+    rotations: int = 0
     """
-    Provides the counter count returned by ``pbdrv_counter_virtual_get_count()``.
+    Provides the rotations returned by ``pbdrv_counter_virtual_get_angle()``.
 
-    CPython code should write to this attribute to simulate the current counter
-    count and the PBIO driver will read this attribute.
+    CPython code should write to this attribute to simulate the current value
+    and the PBIO driver will read this attribute.
     """
 
-    abs_count: int = 0
+    millidegrees: int = 0
     """
-    Provides the counter absolute count returned by ``pbdrv_counter_virtual_get_abs_count()``.
+    Provides the millidegrees returned by ``pbdrv_counter_virtual_get_angle()``.
 
-    CPython code should write to this attribute to simulate the current counter
-    absolute count and the PBIO driver will read this attribute.
+    CPython code should write to this attribute to simulate the current value
+    and the PBIO driver will read this attribute.
+    """
 
-    To simulate a device that does not support ``abs_count``, override with a
+    millidegrees_abs: int = 0
+    """
+    Provides the absolute angle returned by ``pbdrv_counter_virtual_get_abs_angle()``.
+
+    CPython code should write to this attribute to simulate the current value
+    and the PBIO driver will read this attribute.
+
+    To simulate a device that does not support this, override with a
     property like this::
 
         @property
-        def abs_count(self):
+        def millidegrees_abs(self):
             raise PbioError(PbioErrorCode.NOT_SUPPORTED)
     """

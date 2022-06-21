@@ -41,8 +41,7 @@ typedef enum {
 pbio_test_bluetooth_control_state_t pbio_test_bluetooth_get_control_state(void);
 
 // these can be used by tests that consume a counter device
-void pbio_test_counter_set_count(int32_t count);
-void pbio_test_counter_set_abs_count(int32_t count);
-void pbio_test_counter_set_rate(int32_t rate);
+void pbio_test_counter_set_angle(int32_t rotations, int32_t millidegrees);
+void pbio_test_counter_set_abs_angle(int32_t millidegrees);
 
 #endif // _TEST_PBIO_H_

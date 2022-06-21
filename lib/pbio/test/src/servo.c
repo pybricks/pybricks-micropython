@@ -274,8 +274,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
                 free(line);
 
                 // apply new input state from the motor simulator
-                pbio_test_counter_set_count(position);
-                pbio_test_counter_set_rate(speed);
+                pbio_test_counter_set_angle(position / 360, position % 360);
             } else {
                 // allow test to pass even if there is no motor simulator given
                 int32_t stall_duration;

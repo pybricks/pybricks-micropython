@@ -20,9 +20,8 @@ typedef struct _pbdrv_counter_dev_t pbdrv_counter_dev_t;
 #if PBDRV_CONFIG_COUNTER
 
 pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev);
-pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count);
-pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count);
-pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate);
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
+pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees);
 
 #if !PBDRV_CONFIG_COUNTER_NUM_DEV
 #error Must define PBDRV_CONFIG_COUNTER_NUM_DEV
@@ -34,16 +33,12 @@ static inline pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t
     *dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static inline pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     *count = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+static inline pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
     *count = 0;
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    *rate = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

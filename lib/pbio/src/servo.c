@@ -212,7 +212,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     }
 
     // For a servo, counts per output unit is counts per degree at the gear train output
-    srv->control.settings.counts_per_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
+    srv->control.settings.counts_per_unit = gear_ratio;
 
     // Initialize observer.
     err = pbio_servo_observer_reset(srv);

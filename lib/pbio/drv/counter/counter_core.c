@@ -45,32 +45,41 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
 }
 
 /**
- * Gets the current count.
- * @param [in]  dev     Pointer to the counter device
- * @param [out] count   Returns the count on success
- * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if the
- *                      counter has not been initialized, ::PBIO_ERROR_NOT_SUPPORTED
- *                      if the counter driver is disabled.
+ * Gets the current angle as a pair of whole rotations and millidegrees.
+ *
+ * The implementation may choose how the angle is distributed across the output
+ * values, as long as the total angle equals:
+ *
+ *     rotations * 360 000 + millidegrees.
+ *
+ * @param [in]  dev           Pointer to the counter device
+ * @param [out] rotations     Returns whole rotaions on success
+ * @param [out] millidegrees  Returns the count on success
+ * @return                    ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if
+ *                            the counter has not been initialized,
+ *                            ::PBIO_ERROR_NOT_SUPPORTED if the counter driver
+ *                            is disabled.
  */
-pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    return dev->funcs->get_count(dev, count);
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+    return dev->funcs->get_angle(dev, rotations, millidegrees);
 }
 
 /**
- * Gets the absolute count if the counter supports it.
- * @param [in]  dev     Pointer to the counter device
- * @param [out] count   Returns the count on success
- * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if the
- *                      counter has not been initialized, ::PBIO_ERROR_NOT_SUPPORTED
- *                      if this counter does not support reading the absolute count
- *                      or the counter driver is disabled.
+ * Gets the absolute angle if the counter supports it.
+ * @param [in]  dev            Pointer to the counter device
+ * @param [out] millidegrees   Returns the angle on success
+ * @return                     ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV
+ *                             if the counter has not been initialized,
+ *                             ::PBIO_ERROR_NOT_SUPPORTED if this counter does
+ *                             not support reading the absolute count or the
+ *                             counter driver is disabled.
  */
-pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    if (!dev->funcs->get_abs_count) {
+pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
+    if (!dev->funcs->get_abs_angle) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    return dev->funcs->get_abs_count(dev, count);
+    return dev->funcs->get_abs_angle(dev, millidegrees);
 }
 
 #endif // PBDRV_CONFIG_COUNTER
