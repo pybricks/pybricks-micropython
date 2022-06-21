@@ -9,6 +9,7 @@
 #include <pbdrv/counter.h>
 #include <pbdrv/ioport.h>
 
+#include <pbio/angle.h>
 #include <pbio/math.h>
 #include <pbio/observer.h>
 #include <pbio/parent.h>
@@ -125,11 +126,14 @@ void pbio_servo_update_all(void) {
 static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
 
     // Get current count.
-    int32_t count_now;
-    pbio_error_t err = pbio_tacho_get_count(srv->tacho, &count_now);
+    pbio_angle_t angle;
+    pbio_error_t err = pbio_tacho_get_angle(srv->tacho, &angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // TODO: Update observer with angle type. For now cast to angle.
+    int32_t count_now = pbio_angle_get_mdeg(&angle) / 1000;
 
     // Use count to initialize observer.
     pbio_observer_reset(&srv->observer, count_now);
@@ -178,7 +182,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_servo_update_loop_set_state(srv, false);
 
     // Configure tacho.
-    err = pbio_tacho_setup(srv->tacho, direction, gear_ratio, reset_angle);
+    err = pbio_tacho_setup(srv->tacho, direction, reset_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -233,10 +237,13 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
         return err;
     }
 
+    pbio_angle_t new_angle;
+    pbio_angle_from_deg(&new_angle, reset_angle);
+
     // If the motor was in a passive mode (coast, brake, user duty),
     // just reset angle and observer and leave physical motor state unchanged.
     if (!pbio_control_is_active(&srv->control)) {
-        err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
+        err = pbio_tacho_reset_angle(srv->tacho, &new_angle, reset_to_abs);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -261,7 +268,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, ref.count);
 
     // Reset the angle
-    err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
+    err = pbio_tacho_reset_angle(srv->tacho, &new_angle, reset_to_abs);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -282,11 +289,15 @@ pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state
 
     pbio_error_t err;
 
-    // Read physical angle/counts
-    err = pbio_tacho_get_count(srv->tacho, &state->count);
+    // Read physical angle.
+    pbio_angle_t angle;
+    err = pbio_tacho_get_angle(srv->tacho, &angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // TODO: Update state with angle type. For now cast to angle.
+    state->count = pbio_angle_get_mdeg(&angle) / 1000;
 
     // Get estimated state
     pbio_observer_get_estimated_state(&srv->observer, &state->count_est, &state->rate_est);
@@ -357,11 +368,13 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
             pbio_control_stop(&srv->control);
             return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_BRAKE, 0);
         case PBIO_CONTROL_ON_COMPLETION_HOLD: {
-            int32_t count;
-            pbio_error_t err = pbio_tacho_get_count(srv->tacho, &count);
+            pbio_angle_t angle;
+            pbio_error_t err = pbio_tacho_get_angle(srv->tacho, &angle);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
+            // TODO: Update observer with angle type. For now cast to angle.
+            int32_t count = pbio_angle_get_mdeg(&angle) / 1000;
             return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), count);
         }
         default:
