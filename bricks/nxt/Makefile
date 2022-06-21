@@ -207,6 +207,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/reset/reset_nxt.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
+	src/angle.c \
 	src/battery.c \
 	src/color/conversion.c \
 	src/control.c \

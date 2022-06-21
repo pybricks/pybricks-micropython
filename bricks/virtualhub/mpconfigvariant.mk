@@ -152,6 +152,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/drv/motor_driver/motor_driver_virtual.c \
 	pbio/drv/virtual.c \
 	pbio/platform/virtual_hub/sys.c \
+	pbio/src/angle.c \
 	pbio/src/battery.c \
 	pbio/src/color/conversion.c \
 	pbio/src/control.c \
