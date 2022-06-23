@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -38,11 +38,7 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
     self->logger = common_Logger_obj_make_new(&self->control->log, PBIO_CONTROL_LOG_COLS);
     #endif
 
-    #if MICROPY_PY_BUILTINS_FLOAT
-    self->scale = mp_obj_new_float(fix16_to_float(control->settings.counts_per_unit));
-    #else
-    self->scale = mp_obj_new_int(fix16_to_int(control->settings.counts_per_unit));
-    #endif
+    self->scale = mp_obj_new_int(control->settings.ctl_steps_per_app_step);
 
     return self;
 }
@@ -119,8 +115,8 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     // Read current values
     int32_t kp, ki, kd;
-    int32_t integral_rate;
-    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_rate);
+    int32_t integral_change_max;
+    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_change_max);
 
     // If all given values are none, return current values
     (void)reserved_in;
@@ -131,7 +127,7 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         ret[1] = mp_obj_new_int(ki);
         ret[2] = mp_obj_new_int(kd);
         ret[3] = mp_const_none;
-        ret[4] = mp_obj_new_int(integral_rate);
+        ret[4] = mp_obj_new_int(integral_change_max);
         return mp_obj_new_tuple(5, ret);
     }
 
@@ -139,9 +135,9 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
     kp = pb_obj_get_default_abs_int(kp_in, kp);
     ki = pb_obj_get_default_abs_int(ki_in, ki);
     kd = pb_obj_get_default_abs_int(kd_in, kd);
-    integral_rate = pb_obj_get_default_abs_int(integral_rate_in, integral_rate);
+    integral_change_max = pb_obj_get_default_abs_int(integral_rate_in, integral_change_max);
 
-    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_rate));
+    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_change_max));
 
     return mp_const_none;
 }
@@ -186,14 +182,15 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
         PB_ARG_DEFAULT_NONE(time));
 
     // Read current values
-    int32_t speed, time;
+    int32_t speed;
+    uint32_t time;
     pbio_control_settings_get_stall_tolerances(&self->control->settings, &speed, &time);
 
     // If all given values are none, return current values
     if (speed_in == mp_const_none && time_in == mp_const_none) {
         mp_obj_t ret[2];
         ret[0] = mp_obj_new_int(speed);
-        ret[1] = mp_obj_new_int(time);
+        ret[1] = mp_obj_new_int_from_uint(time);
         return mp_obj_new_tuple(2, ret);
     }
 
@@ -252,7 +249,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_Control_load_obj, common_Control_load);
 // pybricks._common.Control.stalled
 STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t stall_duration;
+    uint32_t stall_duration;
     return mp_obj_new_bool(pbio_control_is_stalled(self->control, &stall_duration));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_stalled_obj, common_Control_stalled);

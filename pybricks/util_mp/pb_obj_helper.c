@@ -4,8 +4,6 @@
 #include <pbio/color.h>
 #include <pbio/error.h>
 
-#include <fixmath.h>
-
 #include "py/mpconfig.h"
 #include "py/obj.h"
 #include "py/objstr.h"
@@ -97,15 +95,6 @@ mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator) {
     #else
     return mp_obj_new_int(numerator / denominator);
     #endif
-}
-
-fix16_t pb_obj_get_fix16(mp_obj_t arg) {
-    #if MICROPY_PY_BUILTINS_FLOAT
-    if (mp_obj_is_float(arg)) {
-        return fix16_from_float((float)mp_obj_get_float(arg));
-    }
-    #endif
-    return fix16_from_int(mp_obj_get_int(arg));
 }
 
 mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val) {

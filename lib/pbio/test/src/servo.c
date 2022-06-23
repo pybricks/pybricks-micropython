@@ -118,7 +118,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     tt_want(process_is_running(&pbio_motor_process));
 
     tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_A, &servo), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0), true), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, 1000, true), ==, PBIO_SUCCESS);
 
     // only logging one row since we read it after every iteration
     log_buf = malloc(sizeof(*log_buf) * pbio_logger_cols(&servo->control.log));
@@ -277,7 +277,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
                 pbio_test_counter_set_angle(position / 360, position % 360);
             } else {
                 // allow test to pass even if there is no motor simulator given
-                int32_t stall_duration;
+                uint32_t stall_duration;
                 if (pbio_control_is_stalled(&servo->control, &stall_duration)) {
                     break;
                 }

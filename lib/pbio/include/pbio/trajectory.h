@@ -6,19 +6,12 @@
 
 #include <stdint.h>
 
-#include <pbdrv/config.h>
-
+#include <pbio/angle.h>
 #include <pbio/error.h>
-#include <pbio/port.h>
 
 #define MS_PER_SECOND (1000)
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
-
-#define US_PER_Se_4 (100)    // Internal trajectory time measured in (s e-4)
-#define Se_4_PER_MS (US_PER_MS / US_PER_Se_4)
-#define DDEGS_PER_DEGS (10)  // Internal trajectory speed measured in (ddeg/s)
-#define MDEG_PER_DEG (1000)  // Internal trajectory angle measured in (mdeg)
 
 // Maximum duration to ensure the math stays numerically bounded. Maneuvers
 // longer than 10 minutes should probably use run forever combined with a user
@@ -35,16 +28,14 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 /**
- * Minimal set of trajectory parameters from which a full trajectory is calculated.
+ * Minimal set of trajectory parameters from which a full trajectory is
+ * calculated. All values in control units.
  */
 typedef struct _pbio_trajectory_command_t {
-    int32_t time_start;            /**<  Time at start of maneuver */
-    int32_t angle_start;           /**<  Encoder count at start of maneuver */
-    int32_t angle_start_ext;       /**<  As above, but millicounts. REVISIT: Unify millicounts and counts into one variable. */
-    union {
-        int32_t angle_end;         /**<  Encoder count at end of maneuver (for angle-constrained trajectory) */
-        int32_t duration;          /**<  Duration of maneuver (for time-constrained trajectory) */
-    };
+    uint32_t time_start;           /**<  Time at start of maneuver */
+    pbio_angle_t position_start;   /**<  Position at start of maneuver */
+    pbio_angle_t position_end;     /**<  Position at end of maneuver. Only used for position commands. */
+    uint32_t duration;             /**<  Duration of maneuver. Only used for timed commands. */
     int32_t speed_start;           /**<  Encoder rate at start of maneuver */
     int32_t speed_target;          /**<  Encoder target rate target when not accelerating */
     int32_t speed_max;             /**<  Max target rate target */
@@ -54,18 +45,20 @@ typedef struct _pbio_trajectory_command_t {
 } pbio_trajectory_command_t;
 
 /**
- * Trajectory evaluated at a given point in time.
+ * Trajectory evaluated at a given point in time, in control units.
  */
 typedef struct _pbio_trajectory_reference_t {
-    int32_t time;         /**<  Reference time */
-    int32_t count;        /**<  Reference count */
-    int32_t count_ext;    /**<  Reference count extra (sub-degree) */
-    int32_t rate;         /**<  Reference rate */
-    int32_t acceleration; /**<  Reference acceleration */
+    uint32_t time;          /**<  Reference time */
+    pbio_angle_t position;  /**<  Reference position */
+    int32_t speed;          /**<  Reference speed */
+    int32_t acceleration;   /**<  Reference acceleration */
 } pbio_trajectory_reference_t;
 
 /**
- * Complete set of motor trajectory parameters for an ideal maneuver without disturbances.
+ * Complete set of motor trajectory parameters for an ideal maneuver without
+ * disturbances. These values have custom units to keep them within safe
+ * numerical bounds. Reference getters should be used to get outputs in
+ * control units instead.
  */
 typedef struct _pbio_trajectory_t {
     pbio_trajectory_reference_t start;   /**<  Starting point of the trajectory. */
@@ -88,7 +81,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 // Make a new full trajectory from user command, with time based endpoint.
 pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 
 // Make a stationary trajectory for holding position.
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
@@ -96,10 +89,10 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
 // Stretches out a given trajectory time-wise to make it match time frames of leading trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader);
 
-int32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj);
+uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj);
 
 void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
 
-void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
+void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 
 #endif // _PBIO_TRAJECTORY_H_

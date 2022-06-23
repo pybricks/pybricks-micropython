@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <fixmath.h>
-
 #include <pbio/color.h>
 
 #include "py/obj.h"
@@ -27,8 +25,6 @@ void pb_obj_get_hsv(mp_obj_t arg, pbio_color_hsv_t *hsv);
 
 // like mp_obj_new_int / mp_obj_new_float to create object as a ratio of two integers
 mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator);
-
-fix16_t pb_obj_get_fix16(mp_obj_t arg);
 
 // Get absolute value if object is not none, else return default
 mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val);

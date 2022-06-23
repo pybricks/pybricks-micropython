@@ -68,7 +68,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor.type))->srv;
 
     // Create drivebase
-    pb_assert(pbio_drivebase_get_drivebase(&self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter_in), pb_obj_get_fix16(axle_track_in)));
+    pb_assert(pbio_drivebase_get_drivebase(&self->db, srv_left, srv_right, pb_obj_get_int(wheel_diameter_in), pb_obj_get_int(axle_track_in)));
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create instances of the Control class
@@ -102,8 +102,7 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
     mp_int_t distance = pb_obj_get_int(distance_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // Driving straight is done as a curve with infinite radius and a given distance.
-    pb_assert(pbio_drivebase_drive_curve(self->db, PBIO_RADIUS_INF, distance, then));
+    pb_assert(pbio_drivebase_drive_straight(self->db, distance, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);

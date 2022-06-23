@@ -1,57 +1,59 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #ifndef _PBIO_INTEGRATOR_H_
 #define _PBIO_INTEGRATOR_H_
 
 #include <stdint.h>
 
-typedef struct _pbio_rate_integrator_t {
+#include <pbio/config.h>
+
+/**
+ * Multiplies a value by the loop time in seconds.
+ *
+ * @param [in] input          Input value.
+ * @return                    Input scaled by loop time.
+ */
+static inline bool pbio_integrator_times_loop_time(int32_t input) {
+    return input / (1000 / PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
+}
+
+typedef struct _pbio_speed_integrator_t {
     bool running; // Whether the integrator is running (1) or paused (0)
-    int32_t time_pause_begin; // Time at which we began pausing, stopping integration
-    int32_t count_resumed; // Count at which rate integration resumed again
-    int32_t count_ref_resumed; // Idealized reference count at restart
-    int32_t rate_err_integral_paused; // Total integrated state up to previous pause.
-} pbio_rate_integrator_t;
+    uint32_t time_pause_begin; // Time at which we began pausing, stopping integration
+    int32_t position_error_resumed; // Position error when integration resumed again
+    int32_t speed_err_integral_paused; // Total integrated state up to previous pause.
+} pbio_speed_integrator_t;
 
-void pbio_rate_integrator_pause(pbio_rate_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
+void pbio_speed_integrator_pause(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error);
 
-void pbio_rate_integrator_resume(pbio_rate_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
+void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error);
 
-void pbio_rate_integrator_reset(pbio_rate_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
+void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error);
 
-void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
-    int32_t rate,
-    int32_t rate_ref,
-    int32_t count,
-    int32_t count_ref,
-    int32_t *rate_err,
-    int32_t *rate_err_integral);
+int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t position_error);
 
-bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate_now, int32_t rate_ref, int32_t time_stall, int32_t rate_stall);
+bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref, uint32_t time_stall, int32_t speed_stall);
 
-typedef struct _pbio_count_integrator_t {
+typedef struct _pbio_position_integrator_t {
     bool trajectory_running; // Whether the trajectory is running (1) or paused (0)
-    int32_t time_pause_begin; // Time at which we began pausing most recently, stopping integration
-    int32_t time_paused_total; // Total time we spent in a paused state
+    uint32_t time_pause_begin; // Time at which we began pausing most recently, stopping integration
+    uint32_t time_paused_total; // Total time we spent in a paused state
     int32_t count_err_prev; // Position error in the previous control iteration
-    int32_t time_prev; // Time at the previous control iteratiom
     int32_t count_err_integral; // Ongoing integral of position error
     int32_t count_err_integral_max; // Maximum value of integrator
-} pbio_count_integrator_t;
+} pbio_position_integrator_t;
 
-int32_t pbio_count_integrator_get_ref_time(pbio_count_integrator_t *itg, int32_t time_now);
+uint32_t pbio_position_integrator_get_ref_time(pbio_position_integrator_t *itg, uint32_t time_now);
 
-void pbio_count_integrator_pause(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
+void pbio_position_integrator_pause(pbio_position_integrator_t *itg, uint32_t time_now);
 
-void pbio_count_integrator_resume(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
+void pbio_position_integrator_resume(pbio_position_integrator_t *itg, uint32_t time_now);
 
-void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t max);
+void pbio_position_integrator_reset(pbio_position_integrator_t *itg, uint32_t time_now);
 
-void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target, int32_t integral_range, int32_t integral_rate);
+int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, uint32_t time_now, int32_t position_error, int32_t position_remaining, int32_t integral_range, int32_t integral_max, int32_t integral_change_max);
 
-void pbio_count_integrator_get_errors(pbio_count_integrator_t *itg, int32_t count, int32_t count_ref, int32_t *count_err, int32_t *count_err_integral);
-
-bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_now, int32_t rate_now, int32_t rate_ref, int32_t time_stall, int32_t rate_stall);
+bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref, uint32_t time_stall, int32_t speed_stall, int32_t integral_max);
 
 #endif // _PBIO_INTEGRATOR_H_

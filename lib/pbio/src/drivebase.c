@@ -9,13 +9,11 @@
 #include <pbio/math.h>
 #include <pbio/servo.h>
 
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+#if PBIO_CONFIG_NUM_DRIVEBASES != 0
 
 // Drivebase objects
 
-#define NUM_DRIVEBASES (PBDRV_CONFIG_NUM_MOTOR_CONTROLLER / 2)
-
-static pbio_drivebase_t drivebases[NUM_DRIVEBASES];
+static pbio_drivebase_t drivebases[PBIO_CONFIG_NUM_DRIVEBASES];
 
 // The drivebase update can run if both servos are successfully updating
 bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
@@ -37,16 +35,16 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
     // All rate/count acceleration limits add up, because distance state is two motors counts added
-    s_distance->rate_max = s_left->rate_max + s_right->rate_max;
-    s_distance->rate_tolerance = s_left->rate_tolerance + s_right->rate_tolerance;
-    s_distance->count_tolerance = s_left->count_tolerance + s_right->count_tolerance;
-    s_distance->stall_rate_limit = s_left->stall_rate_limit + s_right->stall_rate_limit;
-    s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
+    s_distance->speed_max = s_left->speed_max + s_right->speed_max;
+    s_distance->speed_tolerance = s_left->speed_tolerance + s_right->speed_tolerance;
+    s_distance->position_tolerance = s_left->position_tolerance + s_right->position_tolerance;
+    s_distance->stall_speed_limit = s_left->stall_speed_limit + s_right->stall_speed_limit;
+    s_distance->integral_change_max = s_left->integral_change_max + s_right->integral_change_max;
     s_distance->acceleration = s_left->acceleration + s_right->acceleration;
     s_distance->deceleration = s_left->deceleration + s_right->deceleration;
 
     // The default speed is half the maximum speed.
-    s_distance->rate_default = s_distance->rate_max / 2;
+    s_distance->speed_default = s_distance->speed_max / 2;
 
     // Use minimum PID of both motors, to avoid overly aggressive control if
     // one of the two motors has much higher PID values.
@@ -55,14 +53,8 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->pid_kd = min(s_left->pid_kd, s_right->pid_kd);
 
     // Maxima are bound by the least capable motor
-    s_distance->max_torque = min(s_left->max_torque, s_right->max_torque);
+    s_distance->actuation_max = min(s_left->actuation_max, s_right->actuation_max);
     s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
-
-    // Copy rate estimator usage, required to be the same on both motors
-    if (s_left->use_estimated_rate != s_right->use_estimated_rate) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    s_distance->use_estimated_rate = s_left->use_estimated_rate;
 
     // By default, heading control is the same as distance control
     *s_heading = *s_distance;
@@ -71,33 +63,31 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
 }
 
 // Get the physical and estimated state of a drivebase
-static pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
+static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
 
     // Get left servo state
     pbio_control_state_t state_left;
-    pbio_error_t err = pbio_servo_get_state(db->left, &state_left);
+    pbio_error_t err = pbio_servo_get_state_control(db->left, &state_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Get right servo state
     pbio_control_state_t state_right;
-    err = pbio_servo_get_state(db->right, &state_right);
+    err = pbio_servo_get_state_control(db->right, &state_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Take sum to get distance state
-    state_distance->count = state_left.count + state_right.count;
-
-    state_distance->count_est = state_left.count_est + state_right.count_est;
-    state_distance->rate_est = state_left.rate_est + state_right.rate_est;
+    pbio_angle_sum(&state_left.position, &state_right.position, &state_distance->position);
+    pbio_angle_sum(&state_left.position_estimate, &state_right.position_estimate, &state_distance->position_estimate);
+    state_distance->speed_estimate = state_left.speed_estimate + state_right.speed_estimate;
 
     // Take difference to get heading state
-    state_heading->count = state_left.count - state_right.count;
-
-    state_heading->count_est = state_left.count_est - state_right.count_est;
-    state_heading->rate_est = state_left.rate_est - state_right.rate_est;
+    pbio_angle_diff(&state_left.position, &state_right.position, &state_heading->position);
+    pbio_angle_diff(&state_left.position_estimate, &state_right.position_estimate, &state_heading->position_estimate);
+    state_heading->speed_estimate = state_left.speed_estimate - state_right.speed_estimate;
 
     return PBIO_SUCCESS;
 }
@@ -139,7 +129,7 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     return pbio_dcmotor_coast(db->right->dcmotor);
 }
 
-pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track) {
 
     // Can't build a drive base with just one motor.
     if (left == right) {
@@ -147,7 +137,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     }
 
     // Assert that both motors have the same gearing
-    if (left->control.settings.counts_per_unit != right->control.settings.counts_per_unit) {
+    if (left->control.settings.ctl_steps_per_app_step != right->control.settings.ctl_steps_per_app_step) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -161,13 +151,13 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     // Now we know that the servos are free, there must be an available
     // drivebase. We can just use the first one that isn't running.
     uint8_t index;
-    for (index = 0; index < NUM_DRIVEBASES; index++) {
+    for (index = 0; index < PBIO_CONFIG_NUM_DRIVEBASES; index++) {
         if (!pbio_drivebase_update_loop_is_running(&drivebases[index])) {
             break;
         }
     }
     // Verify result is in range.
-    if (index == NUM_DRIVEBASES) {
+    if (index == PBIO_CONFIG_NUM_DRIVEBASES) {
         return PBIO_ERROR_FAILED;
     }
 
@@ -208,31 +198,13 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     }
 
     // Count difference between the motors for every 1 degree drivebase rotation
-    db->control_heading.settings.counts_per_unit =
-        fix16_mul(
-            left->control.settings.counts_per_unit,
-            fix16_div(
-                fix16_mul(
-                    axle_track,
-                    fix16_from_int(2)
-                    ),
-                wheel_diameter
-                )
-            );
+    db->control_heading.settings.ctl_steps_per_app_step =
+        left->control.settings.ctl_steps_per_app_step * axle_track * 2 / wheel_diameter;
 
     // Sum of motor counts for every 1 mm forward
-    db->control_distance.settings.counts_per_unit =
-        fix16_mul(
-            left->control.settings.counts_per_unit,
-            fix16_div(
-                fix16_mul(
-                    fix16_from_int(180),
-                    FOUR_DIV_PI
-                    ),
-                wheel_diameter
-                )
-            );
-
+    db->control_distance.settings.ctl_steps_per_app_step =
+        left->control.settings.ctl_steps_per_app_step * 2292 /
+        wheel_diameter / 10;
     return PBIO_SUCCESS;
 }
 
@@ -272,12 +244,12 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     }
 
     // Get current time
-    int32_t time_now = pbdrv_clock_get_us();
+    uint32_t time_now = pbio_control_get_time_ticks();
 
     // Get drive base state
     pbio_control_state_t state_distance;
     pbio_control_state_t state_heading;
-    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
+    pbio_error_t err = pbio_drivebase_get_state_control(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -303,28 +275,28 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // Both controllers are able to stop the other when it stalls. This ensures
     // they complete at exactly the same time.
-    if (pbio_control_type_is_angle(&db->control_distance) && !db->control_distance.count_integrator.trajectory_running) {
-        pbio_count_integrator_pause(&db->control_heading.count_integrator, time_now, state_heading.count, ref_heading.count);
+    if (pbio_control_type_is_position(&db->control_distance) && !db->control_distance.position_integrator.trajectory_running) {
+        pbio_position_integrator_pause(&db->control_heading.position_integrator, time_now);
     }
-    if (pbio_control_type_is_angle(&db->control_heading) && !db->control_heading.count_integrator.trajectory_running) {
-        pbio_count_integrator_pause(&db->control_distance.count_integrator, time_now, state_distance.count, ref_distance.count);
+    if (pbio_control_type_is_position(&db->control_heading) && !db->control_heading.position_integrator.trajectory_running) {
+        pbio_position_integrator_pause(&db->control_distance.position_integrator, time_now);
     }
 
     // The left servo drives at a torque and speed of sum / 2 + dif / 2
-    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.rate / 2 + ref_heading.rate / 2, ref_distance.acceleration / 2 + ref_heading.acceleration / 2);
+    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.speed / 2 + ref_heading.speed / 2, ref_distance.acceleration / 2 + ref_heading.acceleration / 2);
     err = pbio_servo_actuate(db->left, sum_actuation, sum_torque / 2 + dif_torque / 2 + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // The right servo drives at a torque and speed of sum / 2 - dif / 2
-    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.rate / 2 - ref_heading.rate / 2, ref_distance.acceleration / 2 - ref_heading.acceleration / 2);
+    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.speed / 2 - ref_heading.speed / 2, ref_distance.acceleration / 2 - ref_heading.acceleration / 2);
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
 }
 
 void pbio_drivebase_update_all(void) {
     // Go through all drive base candidates
-    for (uint8_t i = 0; i < NUM_DRIVEBASES; i++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_NUM_DRIVEBASES; i++) {
 
         pbio_drivebase_t *db = &drivebases[i];
 
@@ -335,7 +307,7 @@ void pbio_drivebase_update_all(void) {
     }
 }
 
-static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_control_on_completion_t on_completion) {
+static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t angle, int32_t turn_speed, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -346,24 +318,24 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     pbio_drivebase_stop_servo_control(db);
 
     // Get current time
-    int32_t time_now = pbdrv_clock_get_us();
+    uint32_t time_now = pbio_control_get_time_ticks();
 
     // Get drive base state
     pbio_control_state_t state_distance;
     pbio_control_state_t state_heading;
-    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
+    pbio_error_t err = pbio_drivebase_get_state_control(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start controller that controls the sum of both motor counts
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, sum, sum_rate, on_completion);
+    err = pbio_control_start_position_control_relative(&db->control_distance, time_now, &state_distance, distance, drive_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start controller that controls the difference between both motor counts
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, dif, dif_rate, on_completion);
+    err = pbio_control_start_position_control_relative(&db->control_heading, time_now, &state_heading, angle, turn_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -393,32 +365,23 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_drivebase_drive_straight(pbio_drivebase_t *db, int32_t distance, pbio_control_on_completion_t on_completion) {
+    // Execute the common drive command at default speed.
+    return pbio_drivebase_drive_relative(db, distance, 0, 0, 0, on_completion);
+}
+pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle, pbio_control_on_completion_t on_completion) {
 
-    int32_t arc_angle, arc_length;
-    if (radius == PBIO_RADIUS_INF) {
-        // For infinite radius, we want to drive straight, and
-        // the angle_or_distance input is interpreted as distance.
-        arc_angle = 0;
-        arc_length = angle_or_distance;
-    } else {
-        // In the normal case, angle_or_distance is interpreted as the angle,
-        // signed by the radius. Arc length is computed accordingly.
-        arc_angle = radius < 0 ? -angle_or_distance : angle_or_distance;
-        arc_length = (10 * abs(angle_or_distance) * radius) / 573;
-    }
+    // The angle is signed by the radius so we can go both ways.
+    int32_t arc_angle = radius < 0 ? -angle : angle;
 
-    // Convert arc length to motor counts based on drivebase geometry.
-    int32_t relative_sum = pbio_control_user_to_counts(&db->control_distance.settings, arc_length);
+    // Arc length is computed accordingly.
+    int32_t arc_length = (10 * abs(angle) * radius) / 573;
 
-    // Convert arc angle to motor counts based on drivebase geometry.
-    int32_t relative_dif = pbio_control_user_to_counts(&db->control_heading.settings, arc_angle);
-
-    // Execute the common drive command.
-    return pbio_drivebase_drive_counts_relative(db, relative_sum, db->control_distance.settings.rate_default, relative_dif, db->control_heading.settings.rate_default, on_completion);
+    // Execute the common drive command at default speed.
+    return pbio_drivebase_drive_relative(db, arc_length, 0, arc_angle, 0, on_completion);
 }
 
-static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_completion_t on_completion) {
+static pbio_error_t pbio_drivebase_drive_timed(pbio_drivebase_t *db, int32_t drive_speed, int32_t turn_speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -429,23 +392,23 @@ static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int3
     pbio_drivebase_stop_servo_control(db);
 
     // Get current time
-    int32_t time_now = pbdrv_clock_get_us();
+    uint32_t time_now = pbio_control_get_time_ticks();
 
     // Get drive base state
     pbio_control_state_t state_distance;
     pbio_control_state_t state_heading;
-    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
+    pbio_error_t err = pbio_drivebase_get_state_control(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration * US_PER_MS, sum_rate, on_completion);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration, drive_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration * US_PER_MS, dif_rate, on_completion);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration, turn_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -454,10 +417,7 @@ static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int3
 }
 
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
-    return pbio_drivebase_drive_counts_timed(db,
-        pbio_control_user_to_counts(&db->control_distance.settings, speed),
-        pbio_control_user_to_counts(&db->control_heading.settings, turn_rate),
-        DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_drivebase_drive_timed(db, speed, turn_rate, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -465,14 +425,14 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
     // Get drive base state
     pbio_control_state_t state_distance;
     pbio_control_state_t state_heading;
-    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
+    pbio_error_t err = pbio_drivebase_get_state_control(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.count);
-    *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.rate_est);
-    *angle = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.count);
-    *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.rate_est);
+    *distance = pbio_control_position_ctl_to_app_long(&db->control_distance.settings, &state_distance.position);
+    *drive_speed = pbio_control_position_ctl_to_app(&db->control_distance.settings, state_distance.speed_estimate);
+    *angle = pbio_control_position_ctl_to_app_long(&db->control_heading.settings, &state_heading.position);
+    *turn_rate = pbio_control_position_ctl_to_app(&db->control_heading.settings, state_heading.speed_estimate);
     return PBIO_SUCCESS;
 }
 
@@ -481,12 +441,12 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    *drive_speed = pbio_control_counts_to_user(sd, sd->rate_default);
-    *drive_acceleration = pbio_control_counts_to_user(sd, sd->acceleration);
-    *drive_deceleration = pbio_control_counts_to_user(sd, sd->deceleration);
-    *turn_rate = pbio_control_counts_to_user(sh, sh->rate_default);
-    *turn_acceleration = pbio_control_counts_to_user(sh, sh->acceleration);
-    *turn_deceleration = pbio_control_counts_to_user(sh, sh->deceleration);
+    *drive_speed = pbio_control_position_ctl_to_app(sd, sd->speed_default);
+    *drive_acceleration = pbio_control_position_ctl_to_app(sd, sd->acceleration);
+    *drive_deceleration = pbio_control_position_ctl_to_app(sd, sd->deceleration);
+    *turn_rate = pbio_control_position_ctl_to_app(sh, sh->speed_default);
+    *turn_acceleration = pbio_control_position_ctl_to_app(sh, sh->acceleration);
+    *turn_deceleration = pbio_control_position_ctl_to_app(sh, sh->deceleration);
 
     return PBIO_SUCCESS;
 }
@@ -496,12 +456,12 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    sd->rate_default = pbio_math_clamp(pbio_control_user_to_counts(sd, drive_speed), sd->rate_max);
-    sd->acceleration = pbio_control_user_to_counts(sd, drive_acceleration);
-    sd->deceleration = pbio_control_user_to_counts(sd, drive_deceleration);
-    sh->rate_default = pbio_math_clamp(pbio_control_user_to_counts(sh, turn_rate), sh->rate_max);
-    sh->acceleration = pbio_control_user_to_counts(sh, turn_acceleration);
-    sh->deceleration = pbio_control_user_to_counts(sh, turn_deceleration);
+    sd->speed_default = pbio_math_clamp(pbio_control_position_app_to_ctl(sd, drive_speed), sd->speed_max);
+    sd->acceleration = pbio_control_position_app_to_ctl(sd, drive_acceleration);
+    sd->deceleration = pbio_control_position_app_to_ctl(sd, drive_deceleration);
+    sh->speed_default = pbio_math_clamp(pbio_control_position_app_to_ctl(sh, turn_rate), sh->speed_max);
+    sh->acceleration = pbio_control_position_app_to_ctl(sh, turn_acceleration);
+    sh->deceleration = pbio_control_position_app_to_ctl(sh, turn_deceleration);
 
     return PBIO_SUCCESS;
 }
@@ -514,16 +474,13 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 
 // Set up a drive base without drivebase geometry.
 pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
-    return pbio_drivebase_get_drivebase(db_address, left, right, fix16_one, fix16_one);
-}
+    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1, 1);
 
-// Drive forever given two motor speeds.
-pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
-    // Flip left tank motor orientation.
-    speed_left = -speed_left;
-
-    // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    // The application input for spike bases is degrees per second average
+    // between both wheels, so the sum or diff in millidegrees is x2000.
+    (*db_address)->control_heading.settings.ctl_steps_per_app_step = 2000;
+    (*db_address)->control_distance.settings.ctl_steps_per_app_step = 2000;
+    return err;
 }
 
 // Drive for a given duration, given two motor speeds.
@@ -532,7 +489,15 @@ pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left,
     speed_left = -speed_left;
 
     // Start driving forever with the given sum and dif rates.
-    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, duration, on_completion);
+    int32_t drive_speed = (speed_left + speed_right) / 2;
+    int32_t turn_speed = (speed_left - speed_right) / 2;
+    return pbio_drivebase_drive_timed(db, drive_speed, turn_speed, duration, on_completion);
+}
+
+// Drive forever given two motor speeds.
+pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
+    // Same as driving for time, just without an endpoint.
+    return pbio_spikebase_drive_time(db, speed_left, speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 // Drive given two speeds and one angle.
@@ -541,18 +506,25 @@ pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left
     // In the classic tank drive, we flip the left motor here instead of at the low level.
     speed_left *= -1;
 
+    // If both speeds are zero, we can't do anything meaningful, but most users
+    // find it confusing if we return an error. To make sure it won't block
+    // forever, we set the angle to zero instead, so we're "done" right away.
+    if (speed_left == 0 && speed_right == 0) {
+        return pbio_drivebase_drive_relative(db, 0, 0, 0, 0, on_completion);
+    }
+
     // Work out angles for each motor.
     int32_t max_speed = max(abs(speed_left), abs(speed_right));
     int32_t angle_left = max_speed == 0 ? 0 : angle * speed_left / max_speed;
     int32_t angle_right = max_speed == 0 ? 0 : angle * speed_right / max_speed;
 
     // Work out the required total and difference angles to achieve this.
-    int32_t sum = angle_left + angle_right;
-    int32_t dif = angle_left - angle_right;
-    int32_t rate = abs(speed_left) + abs(speed_right);
+    int32_t distance = (angle_left + angle_right) / 2;
+    int32_t turn_angle = (angle_left - angle_right) / 2;
+    int32_t speed = (abs(speed_left) + abs(speed_right)) / 2;
 
     // Execute the maneuver.
-    return pbio_drivebase_drive_counts_relative(db, sum, rate, dif, rate, on_completion);
+    return pbio_drivebase_drive_relative(db, distance, speed, turn_angle, speed, on_completion);
 }
 
 pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
@@ -573,4 +545,4 @@ pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, in
 
 #endif // !PBIO_CONFIG_CONTROL_MINIMAL
 
-#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
+#endif // PBIO_CONFIG_NUM_DRIVEBASES

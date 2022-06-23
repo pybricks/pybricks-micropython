@@ -5,8 +5,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <fixmath.h>
-
 /**
  * Binds a value between a lower and upper limit.
  *
@@ -59,25 +57,6 @@ int32_t pbio_math_sign(int32_t a) {
         return 0;
     }
     return a > 0 ? 1 : -1;
-}
-
-int32_t pbio_math_mul_i32_fix16(int32_t a, fix16_t b) {
-    int64_t product = (int64_t)a * b;
-    if (product < 0) {
-        product--;
-    }
-
-    int32_t result = product >> 16;
-    result += (product & 0x8000) >> 15;
-
-    return result;
-}
-
-int32_t pbio_math_div_i32_fix16(int32_t a, fix16_t b) {
-    if (b == fix16_one) {
-        return a;
-    }
-    return pbio_math_mul_i32_fix16(a, fix16_div(fix16_one, b));
 }
 
 int32_t pbio_math_sqrt(int32_t n) {

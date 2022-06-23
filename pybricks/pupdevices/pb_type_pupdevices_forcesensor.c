@@ -118,8 +118,11 @@ STATIC mp_obj_t pupdevices_ForceSensor_pressed(size_t n_args, const mp_obj_t *po
         pupdevices_ForceSensor_obj_t, self,
         PB_ARG_DEFAULT_INT(force, 3));
 
-    // Get force threshold in hundreds of newtons
-    int32_t f_arg = pbio_math_mul_i32_fix16(1000, pb_obj_get_fix16(force_in));
+    #if MICROPY_PY_BUILTINS_FLOAT
+    int32_t f_arg = (int32_t)(mp_obj_get_float(force_in) * 1000);
+    #else
+    int32_t f_arg = pb_obj_get_int(force_in) * 1000;
+    #endif
 
     // Return true if the force is bigger than given threshold
     return mp_obj_new_bool(pupdevices_ForceSensor__force(self) >= f_arg);

@@ -6,9 +6,12 @@
 
 #include <stdint.h>
 
-#include <pbio/control.h>
+#include <pbio/dcmotor.h>
+#include <pbio/angle.h>
 
-
+/**
+ * Device-type specific constants that describe the motor model.
+ */
 typedef struct _pbio_observer_model_t {
     int32_t d_angle_d_speed;
     int32_t d_speed_d_speed;
@@ -27,26 +30,81 @@ typedef struct _pbio_observer_model_t {
     int32_t d_torque_d_speed;
     int32_t d_torque_d_acceleration;
     int32_t torque_friction;
+    /**
+     * Control gain to correct the observer for a given estimation error.
+     */
     int32_t gain;
 } pbio_observer_model_t;
 
+/**
+ * Motor state observer object.
+ */
 typedef struct _pbio_observer_t {
-    int32_t angle;        /**< Angle in millidegrees. */
-    int32_t angle_offset; /**< Angle offset to prevent millidegree buffer from overflowing. */
-    int32_t speed;        /**< Speed in millidegrees per secon. */
-    int32_t current;      /**< Current in tenths of milliAmperes: 10000 = 1A */
-    bool stalled;         /**< Whether the motor is stalled according to model. */
-    int32_t stall_start;  /**< Time at which stall was first detected. */
+    /**
+     * Angle state of observer (estimated system angle) in millidegrees
+     */
+    pbio_angle_t angle;
+    /**
+     * Speed state of observer (estimated system speed) in millidegrees/second.
+     */
+    int32_t speed;
+    /**
+     * Current state of observer (estimated system current) in tenths of milliAmperes: 10000 = 1A.
+     */
+    int32_t current;
+    /**
+     * Whether the motor is stalled according to the model.
+     */
+    bool stalled;
+    /**
+     * If stalled, this is the time that stall was first detected.
+     */
+    uint32_t stall_start;
+    /**
+     * Model parameters used by this model.
+     */
     const pbio_observer_model_t *model;
 } pbio_observer_t;
 
-void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now);
+/**
+ * Resets the observer to a new angle. Speed and current are reset to zero.
+ *
+ * @param [in]  obs            The observer instance.
+ * @param [in]  angle          Angle to which the observer should be reset.
+ */
+void pbio_observer_reset(pbio_observer_t *obs, pbio_angle_t *angle);
 
-void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int32_t *rate);
+/**
+ * Gets the observer state, which is the estimated state of the real system.
+ *
+ * @param [in]  obs            The observer instance.
+ * @param [out] angle          Estimated angle in millidegrees.
+ * @param [out] speed          Estimated speed in millidegrees/second.
+ */
+void pbio_observer_get_estimated_state(pbio_observer_t *obs, pbio_angle_t *angle, int32_t *speed);
 
-void pbio_observer_update(pbio_observer_t *obs, int32_t time, int32_t count, pbio_dcmotor_actuation_t actuation, int32_t voltage);
+/**
+ * Predicts next system state and corrects the model using a measurement.
+ *
+ * @param [in]  obs            The observer instance.
+ * @param [in]  time           Wall time.
+ * @param [in]  angle          Measured angle used to correct the model.
+ * @param [in]  actuation      Actuation type currently applied to the motor.
+ * @param [in]  voltage        If actuation type is voltage, this is the payload in mV.
+ */
+void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
 
-bool pbio_observer_is_stalled(pbio_observer_t *obs, int32_t time, int32_t *stall_duration);
+/**
+ * Checks whether system is stalled by testing how far the estimate is ahead of
+ * the measured angle, which is a measure for an unmodeled load.
+ *
+ * @param [in]  obs             The observer instance.
+ * @param [in]  time            Wall time.
+ * @param [out] stall_threshold Minimum time for it to be considered stalled.
+ * @param [out] stall_duration  For how long it has been stalled.
+ * @return                      True if stalled, false if not.
+ */
+bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t stall_threshold, uint32_t *stall_duration);
 
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref);
 

@@ -35,4 +35,4 @@
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT               PBIO_PORT_ID_A
 #define PBDRV_CONFIG_LAST_MOTOR_PORT                PBIO_PORT_ID_A
-#define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER           (1)
+#define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER           (2)

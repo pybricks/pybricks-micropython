@@ -10,99 +10,94 @@
 #include <pbio/observer.h>
 #include <pbio/iodev.h>
 
+#define DEG_TO_MDEG(deg) ((deg) * 1000)
+
 // Servos compatible with the Powered Up system.
 #if PBIO_CONFIG_SERVO_PUP
 
 static const pbio_control_settings_t settings_technic_s_angular = {
-    .rate_max = 620,
-    .acceleration = 2000,
-    .rate_tolerance = 50,
-    .count_tolerance = 10,
-    .stall_rate_limit = 20,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(620),
+    .acceleration = DEG_TO_MDEG(2000),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(20),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 7500,
     .pid_kd = 1000,
-    .integral_rate = 15,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(15),
 };
 
 static const pbio_control_settings_t settings_technic_m_angular = {
-    .rate_max = 1080,
-    .acceleration = 2000,
-    .rate_tolerance = 50,
-    .count_tolerance = 10,
-    .stall_rate_limit = 20,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(1080),
+    .acceleration = DEG_TO_MDEG(2000),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(20),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 15000,
     .pid_kd = 1800,
-    .integral_rate = 15,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(15),
 };
 static const pbio_control_settings_t settings_technic_l_angular = {
-    .rate_max = 970,
-    .acceleration = 1500,
-    .rate_tolerance = 50,
-    .count_tolerance = 10,
-    .stall_rate_limit = 20,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(970),
+    .acceleration = DEG_TO_MDEG(1500),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(20),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 35000,
     .pid_kd = 6000,
-    .integral_rate = 15,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(15),
 };
 
 static const pbio_control_settings_t settings_interactive = {
-    .rate_max = 1000,
-    .acceleration = 2000,
-    .rate_tolerance = 50,
-    .count_tolerance = 5,
-    .stall_rate_limit = 15,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(1000),
+    .acceleration = DEG_TO_MDEG(2000),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(5),
+    .stall_speed_limit = DEG_TO_MDEG(15),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 13500,
     .pid_kd = 1350,
-    .integral_rate = 10,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(10),
 };
 
 static const pbio_control_settings_t settings_technic_l = {
-    .rate_max = 1470,
-    .acceleration = 2000,
-    .rate_tolerance = 50,
-    .count_tolerance = 10,
-    .stall_rate_limit = 20,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(1470),
+    .acceleration = DEG_TO_MDEG(2000),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(20),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 17500,
     .pid_kd = 2500,
-    .integral_rate = 5,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(5),
 };
 
 static const pbio_control_settings_t settings_technic_xl = {
-    .rate_max = 1525,
-    .acceleration = 2500,
-    .rate_tolerance = 50,
-    .count_tolerance = 10,
-    .stall_rate_limit = 20,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(1525),
+    .acceleration = DEG_TO_MDEG(2500),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(20),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 17500,
     .pid_kd = 2500,
-    .integral_rate = 5,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(5),
 };
 
 #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
 
 static const pbio_control_settings_t settings_movehub = {
-    .rate_max = 1500,
-    .acceleration = 5000,
-    .rate_tolerance = 50,
-    .count_tolerance = 6,
-    .stall_rate_limit = 15,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(1500),
+    .acceleration = DEG_TO_MDEG(5000),
+    .speed_tolerance = DEG_TO_MDEG(50),
+    .position_tolerance = DEG_TO_MDEG(6),
+    .stall_speed_limit = DEG_TO_MDEG(15),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 15000,
     .pid_kd = 500,
-    .integral_rate = 5,
-    .use_estimated_rate = true,
+    .integral_change_max = DEG_TO_MDEG(5),
 };
 
 #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
@@ -113,29 +108,27 @@ static const pbio_control_settings_t settings_movehub = {
 #if PBIO_CONFIG_SERVO_EV3_NXT
 
 static const pbio_control_settings_t settings_ev3_m = {
-    .rate_max = 2000,
-    .acceleration = 8000,
-    .rate_tolerance = 100,
-    .count_tolerance = 10,
-    .stall_rate_limit = 30,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(2000),
+    .acceleration = DEG_TO_MDEG(8000),
+    .speed_tolerance = DEG_TO_MDEG(100),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(30),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 3000,
     .pid_kd = 30,
-    .integral_rate = 10,
-    .use_estimated_rate = false,
+    .integral_change_max = DEG_TO_MDEG(10),
 };
 
 static const pbio_control_settings_t settings_ev3_l = {
-    .rate_max = 1600,
-    .acceleration = 3200,
-    .rate_tolerance = 100,
-    .count_tolerance = 10,
-    .stall_rate_limit = 30,
-    .stall_time = 200 * US_PER_MS,
+    .speed_max = DEG_TO_MDEG(1600),
+    .acceleration = DEG_TO_MDEG(3200),
+    .speed_tolerance = DEG_TO_MDEG(100),
+    .position_tolerance = DEG_TO_MDEG(10),
+    .stall_speed_limit = DEG_TO_MDEG(30),
+    .stall_time = pbio_control_time_ms_to_ticks(200),
     .pid_kp = 15000,
     .pid_kd = 250,
-    .integral_rate = 10,
-    .use_estimated_rate = false,
+    .integral_change_max = DEG_TO_MDEG(10),
 };
 
 #endif // PBIO_CONFIG_SERVO_EV3_NXT
@@ -397,17 +390,17 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
 
     // The default speed is not used for servos currently (an explicit speed
     // is given for all run commands), so we initialize it to the maximum.
-    settings->rate_default = settings->rate_max;
+    settings->speed_default = settings->speed_max;
 
     // Deceleration defaults to same value as acceleration
     settings->deceleration = settings->acceleration;
 
     // Initialize maximum torque as the stall torque for maximum voltage.
-    settings->max_torque = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
+    settings->actuation_max = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
 
     // Initialize ki such that integral control saturates in about twos second
     // if the motor were stuck at the position tolerance.
-    settings->pid_ki = settings->max_torque / settings->count_tolerance / 2;
+    settings->pid_ki = settings->actuation_max / (settings->position_tolerance / 1000) / 2;
 
     return PBIO_SUCCESS;
 }

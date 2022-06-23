@@ -6,8 +6,30 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <pbio/angle.h>
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
+
+/**
+ * Position (mdeg) and time (1e-4 s) are the same as in control module.
+ * But speed is in millidegrees/second in control units, but this module uses
+ * decidegrees per second to keep the math numerically bounded.
+ */
+#define TO_TRAJECTORY_SPEED(speed) ((speed) / 100)
+#define TO_CONTROL_SPEED(speed) ((speed) * 100)
+
+/**
+ * Acceleration is in millidegrees/second^2 in control units, but this module
+ * uses deg/s^2 per second to keep the math numerically bounded.
+ */
+#define TO_TRAJECTORY_ACCEL(acc) ((acc) / 1000)
+#define TO_CONTROL_ACCEL(acc) ((acc) * 1000)
+
+/**
+ * Time is unsigned everywhere except in the trajectory module.
+ */
+#define TO_TRAJECTORY_TIME(time) ((int32_t)(time))
+#define TO_CONTROL_TIME(time) ((uint32_t)(time))
 
 static void reverse_trajectory(pbio_trajectory_t *trj) {
     // Negate positions, essentially flipping around starting point.
@@ -23,16 +45,15 @@ static void reverse_trajectory(pbio_trajectory_t *trj) {
     trj->a2 *= -1;
 
     // Negate starting point data
-    trj->start.rate *= -1;
+    trj->start.speed *= -1;
     trj->start.acceleration *= -1;
 }
 
 // Populates the starting point of a trajectory based on user command.
 static void pbio_trajectory_set_start(pbio_trajectory_reference_t *start, const pbio_trajectory_command_t *c) {
     start->acceleration = 0;
-    start->count = c->angle_start;
-    start->count_ext = c->angle_start_ext;
-    start->rate = c->speed_start;
+    start->position = c->position_start;
+    start->speed = c->speed_start;
     start->time = c->time_start;
 }
 
@@ -45,9 +66,9 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
     pbio_trajectory_set_start(&trj->start, c);
 
     // Set speeds, scaled to ddeg/s.
-    trj->w0 = c->speed_target * DDEGS_PER_DEGS;
-    trj->w1 = c->speed_target * DDEGS_PER_DEGS;
-    trj->w3 = c->continue_running ? c->speed_target * DDEGS_PER_DEGS: 0;
+    trj->w0 = TO_TRAJECTORY_SPEED(c->speed_target);
+    trj->w1 = TO_TRAJECTORY_SPEED(c->speed_target);
+    trj->w3 = c->continue_running ? TO_TRAJECTORY_SPEED(c->speed_target): 0;
 }
 
 // Divides speed^2 (ddeg/s)^2 by acceleration (deg/s^2)*2, giving angle (mdeg).
@@ -121,35 +142,37 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     // Fill out starting point based on user command.
     pbio_trajectory_set_start(&trj->start, c);
 
-    // Save duration, scaled to (s e-4)
-    trj->t3 = c->duration / US_PER_Se_4;
+    // Save duration.
+    trj->t3 = TO_TRAJECTORY_TIME(c->duration);
 
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
-    trj->w3 = c->continue_running ? c->speed_target * DDEGS_PER_DEGS : 0;
-    trj->w0 = c->speed_start * DDEGS_PER_DEGS;
-    int32_t wt = c->speed_target * DDEGS_PER_DEGS;
+    trj->w3 = c->continue_running ? TO_TRAJECTORY_SPEED(c->speed_target) : 0;
+    trj->w0 = TO_TRAJECTORY_SPEED(c->speed_start);
+    int32_t wt = TO_TRAJECTORY_SPEED(c->speed_target);
+    int32_t accel = TO_TRAJECTORY_ACCEL(c->acceleration);
+    int32_t decel = TO_TRAJECTORY_ACCEL(c->deceleration);
 
     // Bind initial speed to make solution feasible.
-    if (div_w_by_a(trj->w0, c->acceleration) < -trj->t3) {
-        trj->w0 = -mul_a_by_t(c->acceleration, trj->t3);
+    if (div_w_by_a(trj->w0, accel) < -trj->t3) {
+        trj->w0 = -mul_a_by_t(accel, trj->t3);
     }
-    if (div_w_by_a(trj->w0 - trj->w3, max(c->acceleration, c->deceleration)) > trj->t3) {
-        trj->w0 = trj->w3 + mul_a_by_t(max(c->acceleration, c->deceleration), trj->t3);
+    if (div_w_by_a(trj->w0 - trj->w3, max(accel, decel)) > trj->t3) {
+        trj->w0 = trj->w3 + mul_a_by_t(max(accel, decel), trj->t3);
     }
 
     // Bind target speed to make solution feasible.
-    if (div_w_by_a(wt - trj->w3, c->deceleration) > trj->t3) {
-        wt = trj->w3 + mul_a_by_t(c->deceleration, trj->t3);
+    if (div_w_by_a(wt - trj->w3, decel) > trj->t3) {
+        wt = trj->w3 + mul_a_by_t(decel, trj->t3);
     }
 
     // Initial acceleration sign depends on initial speed. It accelerates if
     // the initial speed is less than the target speed. Otherwise it
     // decelerates. The equality case is intrinsicaly dealt with in the
     // nominal acceleration case down below.
-    trj->a0 = trj->w0 < wt ? c->acceleration : -c->acceleration;
+    trj->a0 = trj->w0 < wt ? accel : -accel;
 
     // Since our maneuver is forward, final deceleration is always negative.
-    trj->a2 = -c->deceleration;
+    trj->a2 = -decel;
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt2;
@@ -211,18 +234,20 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     pbio_trajectory_set_start(&trj->start, c);
 
     // Get angle to travel.
-    trj->th3 = (c->angle_end - c->angle_start) * MDEG_PER_DEG - c->angle_start_ext;
+    trj->th3 = pbio_angle_diff_mdeg((pbio_angle_t *)&c->position_end, (pbio_angle_t *)&c->position_start);
 
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
-    trj->w3 = c->continue_running ? c->speed_target * DDEGS_PER_DEGS : 0;
-    trj->w0 = c->speed_start * DDEGS_PER_DEGS;
-    int32_t wt = c->speed_target * DDEGS_PER_DEGS;
+    trj->w3 = c->continue_running ? TO_TRAJECTORY_SPEED(c->speed_target) : 0;
+    trj->w0 = TO_TRAJECTORY_SPEED(c->speed_start);
+    int32_t wt = TO_TRAJECTORY_SPEED(c->speed_target);
+    int32_t accel = TO_TRAJECTORY_ACCEL(c->acceleration);
+    int32_t decel = TO_TRAJECTORY_ACCEL(c->deceleration);
 
     // Bind initial speed to make solution feasible. Do the larger-than check
     // using quadratic terms to avoid square root evaluations in most cases.
     // This is only needed for positive initial speed, because negative initial
     // speeds are always feasible in angle-based maneuvers.
-    int32_t a_max = max(c->acceleration, c->deceleration);
+    int32_t a_max = max(accel, decel);
     if (trj->w0 > 0 && div_w2_by_a(trj->w0, trj->w3, a_max) > trj->th3) {
         trj->w0 = bind_w0(trj->w3, a_max, trj->th3);
     }
@@ -230,18 +255,18 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     // Do the same check for the target speed, but now use the deceleration
     // magnitude as the only constraint. The target speed is always positive,
     // so we can omit that additional check here.
-    if (div_w2_by_a(wt, trj->w3, c->deceleration) > trj->th3) {
-        wt = bind_w0(trj->w3, c->deceleration, trj->th3);
+    if (div_w2_by_a(wt, trj->w3, decel) > trj->th3) {
+        wt = bind_w0(trj->w3, decel, trj->th3);
     }
 
     // Initial acceleration sign depends on initial speed. It accelerates if
     // the initial speed is less than the target speed. Otherwise it
     // decelerates. The equality case is intrinsicaly dealt with in the
     // nominal acceleration case down below.
-    trj->a0 = trj->w0 < wt ? c->acceleration : -c->acceleration;
+    trj->a0 = trj->w0 < wt ? accel : -accel;
 
     // Since our maneuver is forward, final deceleration is always negative.
-    trj->a2 = -c->deceleration;
+    trj->a2 = -decel;
 
     // Now we can evaluate the nominal cases and check if they hold. First get
     // a fictitious zero-speed angle for computational convenience. This is the
@@ -334,7 +359,7 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     pbio_trajectory_command_t c = *command;
 
     // Return error for negative or too long user-specified duration
-    if (c.duration < 0 || c.duration / 1000 > DURATION_MAX_MS) {
+    if (c.duration / 10 > DURATION_MAX_MS) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -378,17 +403,20 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
 
+    // Return error for maneuver that is too long
+    if (!pbio_angle_diff_is_small(&c.position_end, &c.position_start)) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Travel distance.
+    int32_t distance = pbio_angle_diff_mdeg(&c.position_end, &c.position_start);
+
     // Return empty maneuver for zero angle or zero speed
-    if (c.angle_end == c.angle_start || c.speed_target == 0) {
+    if (c.speed_target == 0 || distance == 0) {
         c.speed_target = 0;
         c.continue_running = false;
         pbio_trajectory_make_constant(trj, &c);
         return PBIO_SUCCESS;
-    }
-
-    // Return error for maneuver that is too long
-    if (abs((c.angle_end - c.angle_start) / c.speed_target) + 1 > DURATION_MAX_MS / 1000) {
-        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Direction is solely defined in terms of th3 position relative to th0.
@@ -402,12 +430,12 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     c.speed_target = min(c.speed_target, c.speed_max);
 
     // Check if the original user-specified maneuver is backward.
-    bool backward = c.angle_end < c.angle_start;
+    bool backward = distance < 0;
 
     // Convert user command into a forward maneuver to simplify computations.
     if (backward) {
-        c.angle_end = 2 * c.angle_start - c.angle_end;
-        c.speed_start *= -1;
+        c.position_end = c.position_start;
+        pbio_angle_add_mdeg(&c.position_end, -distance);
     }
 
     // Calculate the trajectory, assumed to be forward.
@@ -425,33 +453,19 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, pbio_trajectory_reference_t *start, int32_t t, int32_t th, int32_t w, int32_t a) {
 
     // Convert local trajectory units to global pbio units.
-    ref->time = t * US_PER_Se_4;
-    ref->count = th / MDEG_PER_DEG;
-    ref->count_ext = th % MDEG_PER_DEG;
-    ref->rate = w / DDEGS_PER_DEGS;
-    ref->acceleration = a;
+    ref->time = TO_CONTROL_TIME(t) + start->time;
+    ref->speed = TO_CONTROL_SPEED(w);
+    ref->acceleration = TO_CONTROL_ACCEL(a);
 
-    // Ofset position by starting point.
-    ref->count += start->count;
-
-    // REVISIT: Generalize position wrapping generally, move this to tacho.
-    ref->count_ext += start->count_ext;
-    if (ref->count_ext > MDEG_PER_DEG) {
-        ref->count_ext -= MDEG_PER_DEG;
-        ref->count += 1;
-    } else if (ref->count_ext < -MDEG_PER_DEG) {
-        ref->count_ext += MDEG_PER_DEG;
-        ref->count -= 1;
-    }
-
-    // Ofset time by starting point. REVISIT: Use unsigned timestamps.
-    ref->time += start->time;
+    // Reference position is starting point plus progress in this maneuver.
+    ref->position = start->position;
+    pbio_angle_add_mdeg(&ref->position, th);
 }
 
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *vertex) {
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex) {
 
     // Relative time within ongoing manauver.
-    int32_t time = (time_ref - trj->start.time) / US_PER_Se_4;
+    int32_t time = TO_TRAJECTORY_TIME(time_ref - trj->start.time);
 
     // Find which section of the ongoing maneuver we were in, and take
     // corresponding segment starting point. Acceleration is undefined but not
@@ -464,7 +478,6 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, int32_t time_ref, p
         pbio_trajectory_offset_start(vertex, &trj->start, trj->t1, trj->th1, trj->w1, 0);
     } else if (time - trj->t3 < 0) {
         // Deceleration segment.
-        vertex->count = trj->th2;
         pbio_trajectory_offset_start(vertex, &trj->start, trj->t2, trj->th2, trj->w1, 0);
     } else {
         // Final speed segment.
@@ -478,16 +491,15 @@ void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_refere
 }
 
 // Get trajectory endpoint.
-int32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj) {
-    // Convert to time units of code outside this module (us)
-    return trj->t3 * US_PER_Se_4;
+uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj) {
+    return TO_CONTROL_TIME(trj->t3);
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref) {
+void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref) {
 
-    // Time within maneuver (s e-4), so time since start.
-    int32_t time = (time_ref - trj->start.time) / US_PER_Se_4;
+    // Time within maneuver since start.
+    int32_t time = TO_TRAJECTORY_TIME(time_ref - trj->start.time);
 
     // Get angle, speed, and acceleration along reference
     int32_t th, w, a;
@@ -518,7 +530,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbi
         if (time > DURATION_FOREVER_MS * 10) {
             pbio_trajectory_command_t command = {
                 .time_start = time_ref,
-                .speed_target = trj->w3 / DDEGS_PER_DEGS,
+                .speed_target = TO_CONTROL_SPEED(trj->w3),
                 .continue_running = true,
             };
             pbio_trajectory_make_constant(trj, &command);

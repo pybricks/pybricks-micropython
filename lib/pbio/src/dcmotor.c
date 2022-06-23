@@ -8,8 +8,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#include <fixmath.h>
-
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor_driver.h>

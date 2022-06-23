@@ -23,7 +23,7 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
     // Initialize motors in stopped state.
     pbio_dcmotor_stop_all(true);
 
-    etimer_set(&timer, PBIO_CONTROL_LOOP_TIME_MS);
+    etimer_set(&timer, PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));

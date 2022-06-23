@@ -32,6 +32,52 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
     }
 }
 
+// Gets the number of millidegrees of the motor, for each whole degree
+// of rotation at the gear train output. For example, if the gear train
+// slows the motor down using a 12 teeth and a 36 teeth gear, the result
+// should be (36 / 12) * 1000 = 3000.
+static int32_t get_gear_ratio(mp_obj_t gears_in) {
+
+    // No gears means gear ratio is one.
+    if (gears_in == mp_const_none) {
+        return 1000;
+    }
+
+    // Unpack the main list of multiple gear trains.
+    mp_obj_t *trains, *gear_list;
+    size_t n_trains, n_gears;
+    mp_obj_get_array(gears_in, &n_trains, &trains);
+
+    // Parse gear argument of the form [[12, 20, 36], [20, 40]]
+    int32_t first_gear_product = 1;
+    int32_t last_gear_product = 1;
+
+    // Check type of gear train given.
+    if (mp_obj_is_int(trains[0]) && mp_obj_is_int(trains[n_trains - 1])) {
+        // If the first and last element is an integer, assume just one list of
+        // gears, e.g. [12, 20, 36]. Take ratio of last and first.
+        first_gear_product = mp_obj_get_int(trains[0]);
+        last_gear_product = mp_obj_get_int(trains[n_trains - 1]);
+    } else {
+        // Otherwise, parse gear argument of the form [[12, 20, 36], [20, 40]].
+        for (size_t train = 0; train < n_trains; train++) {
+            // Unpack the list of gears for this train
+            mp_obj_get_array(trains[train], &n_gears, &gear_list);
+
+            first_gear_product *= mp_obj_get_int(gear_list[0]);
+            last_gear_product *= mp_obj_get_int(gear_list[n_gears - 1]);
+        }
+    }
+
+    // Verify the result.
+    if (first_gear_product < 1 || last_gear_product < 1) {
+        mp_raise_msg(&mp_type_ZeroDivisionError, MP_ERROR_TEXT("Gears must be positive integers."));
+    }
+
+    // Return ratio scaled to millidegrees.
+    return 1000 * last_gear_product / first_gear_product;
+}
+
 // pybricks._common.Motor.__init__
 STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -47,43 +93,11 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     pbio_error_t err;
     pbio_servo_t *srv;
 
+    // Setup motor device and raise error if not connected or ready.
     pb_device_setup_motor(port, true);
 
-    // Default gear ratio
-    fix16_t gear_ratio = F16C(1, 0);
-
-    // Parse gear argument of the form [[12, 20, 36], [20, 40]] or [12, 20, 36]
-    if (gears_in != mp_const_none) {
-        // Unpack the main list
-        mp_obj_t *trains, *gear_list;
-        size_t n_trains, n_gears;
-        mp_obj_get_array(gears_in, &n_trains, &trains);
-
-        // If the first and last element is an integer, assume the user gave just one list of gears, i.e. [12, 20, 36]
-        bool is_one_train = MP_OBJ_IS_SMALL_INT(trains[0]) && MP_OBJ_IS_SMALL_INT(trains[n_trains - 1]);
-        // This means we don't have a list of gear trains, but just one gear train with a given number of gears
-        if (is_one_train) {
-            n_gears = n_trains;
-            gear_list = trains;
-            n_trains = 1;
-        }
-
-        // Iterate through each of the n_trains lists
-        for (size_t train = 0; train < n_trains; train++) {
-            // Unless we have just one list of gears, unpack the list of gears for this train
-            if (!is_one_train) {
-                mp_obj_get_array(trains[train], &n_gears, &gear_list);
-            }
-            // For this gear train, compute the ratio from the first and last gear
-            fix16_t first_gear = fix16_from_int(mp_obj_get_int(gear_list[0]));
-            fix16_t last_gear = fix16_from_int(mp_obj_get_int(gear_list[n_gears - 1]));
-            if (first_gear < 1 || last_gear < 1) {
-                pb_assert(PBIO_ERROR_INVALID_ARG);
-            }
-            // Include the ratio of this train in the overall gear train
-            gear_ratio = fix16_div(fix16_mul(gear_ratio, last_gear), first_gear);
-        }
-    }
+    // Parse gears argument to get gear ratio.
+    int32_t gear_ratio = get_gear_ratio(gears_in);
 
     // Get pointer to servo and allow tacho to finish syncing
     while ((err = pbio_servo_get_servo(port, &srv)) == PBIO_ERROR_AGAIN) {
@@ -237,7 +251,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         pb_assert(pbio_servo_run_forever(self->srv, speed));
 
         // Wait until the motor stalls or stops on failure.
-        int32_t stall_duration;
+        uint32_t stall_duration;
         while (!pbio_control_is_stalled(&self->srv->control, &stall_duration)) {
             mp_hal_delay_ms(5);
         }
@@ -337,7 +351,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_track_target_obj, 1, common_Motor
 // pybricks._common.Motor.stalled
 STATIC mp_obj_t common_Motor_stalled(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t stall_duration;
+    uint32_t stall_duration;
     bool stalled;
     pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
     return mp_obj_new_bool(stalled);

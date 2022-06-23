@@ -6,8 +6,6 @@
 
 #include <stdint.h>
 
-#include <fixmath.h>
-
 #include <pbio/angle.h>
 #include <pbio/config.h>
 #include <pbdrv/counter.h>
@@ -25,9 +23,14 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *reset_ang
 
 #else
 
-static inline pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio) {
+static inline pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+
+static inline pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, pbio_direction_t direction, bool reset_angle) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 
 static inline pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, pbio_angle_t *angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
