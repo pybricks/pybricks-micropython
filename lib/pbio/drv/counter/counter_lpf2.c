@@ -59,7 +59,10 @@ static pbio_error_t pbdrv_counter_lpf2_get_count(pbdrv_counter_dev_t *dev, int32
 
     // Get LPF2 data buffer.
     uint8_t *data;
-    pbio_iodev_get_data(iodev, &data);
+    err = pbio_iodev_get_data(iodev, &data);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // For incremental encoders, we can just return the LPF2 data directly.
     if (!PBIO_IODEV_IS_ABS_MOTOR(iodev)) {
