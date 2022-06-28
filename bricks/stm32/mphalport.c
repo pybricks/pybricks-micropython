@@ -32,7 +32,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         // IRQs disabled, so need to use a busy loop for the delay.
         // To prevent possible overflow of the counter we use a double loop.
         const uint32_t count_1ms = PBDRV_CONFIG_SYS_CLOCK_RATE / 4000;
-        for (int i = 0; i < Delay; i++) {
+        for (mp_uint_t i = 0; i < Delay; i++) {
             for (uint32_t count = 0; ++count <= count_1ms;) {
             }
         }

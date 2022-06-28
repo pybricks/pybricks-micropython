@@ -82,9 +82,9 @@ static pbio_error_t wait_for_button_release(void) {
 }
 
 // Wait for data from an IDE
-static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out) {
+static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int time_out) {
     // Maximum time between two bytes/chunks
-    const int32_t time_interval = 500;
+    const mp_uint_t time_interval = 500;
 
     // Acknowledge at the end of each message or each data chunk
     const uint32_t chunk_size = 100;
@@ -147,7 +147,7 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out)
         // Check if we have timed out
         if (rx_count == 0) {
             // Use given timeout for first byte
-            if (time_out != -1 && time_now - time_start > time_out) {
+            if (time_out >= 0 && time_now - time_start > (mp_uint_t)time_out) {
                 return PBIO_ERROR_TIMEDOUT;
             }
         } else if (time_now - time_start > time_interval) {
