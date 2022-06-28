@@ -234,16 +234,18 @@ void pbio_uartdev_ready(uint8_t id) {
         return;
     }
 
+    uartdev_port_data_t *data = &dev_data[id];
+
     // REVISIT: For now we are assuming that this function is never called
     // at the wrong time. If this assumption turns out to be false, we will
     // need to return PBIO_ERROR_AGAIN and modify callers to retry.
-    if (dev_data[id].status != PBIO_UARTDEV_STATUS_WAITING) {
+    if (data->status != PBIO_UARTDEV_STATUS_WAITING) {
         return;
     }
 
     // notify pbio_uartdev_update() that there should be a device ready to
     // communicate with now
-    dev_data[id].status = PBIO_UARTDEV_STATUS_SYNCING;
+    data->status = PBIO_UARTDEV_STATUS_SYNCING;
     process_poll(&pbio_uartdev_process);
 }
 
