@@ -491,7 +491,7 @@ pbio_error_t pb_flash_file_read(uint8_t *buf, uint32_t size) {
     }
 
     // Read whole file to buffer
-    if (lfs_file_read(&lfs, &file, buf, size) != size) {
+    if (lfs_file_read(&lfs, &file, buf, size) != (lfs_ssize_t)size) {
         return PBIO_ERROR_FAILED;
     }
 
@@ -515,7 +515,7 @@ pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t 
     }
 
     // write file contents
-    if (lfs_file_write(&lfs, &file, buf, size) != size) {
+    if (lfs_file_write(&lfs, &file, buf, size) != (lfs_ssize_t)size) {
         return PBIO_ERROR_FAILED;
     }
 
@@ -551,7 +551,7 @@ pbio_error_t pb_flash_restore_firmware(void) {
     // Read meta file
     size_t meta_size = file.size;
     char *meta_data = m_new(char, meta_size);
-    if (lfs_file_read(&lfs, &file, meta_data, file.size) != file.size) {
+    if (lfs_file_read(&lfs, &file, meta_data, file.size) != (lfs_ssize_t)file.size) {
         mp_printf(&mp_plat_print, "Unable to read backup meta data file.\n");
         return PBIO_ERROR_FAILED;
     }
@@ -618,7 +618,7 @@ pbio_error_t pb_flash_restore_firmware(void) {
     }
 
     // All known back up firmwares are much larger than this.
-    if (file.size < 128 * 1024 || file.size != meta_firmware_size) {
+    if (file.size < 128 * 1024 || file.size != (lfs_size_t)meta_firmware_size) {
         // TODO: Check that sha256 matches metadata
         mp_printf(&mp_plat_print, "Invalid backup firmware file.\n");
         return PBIO_ERROR_FAILED;
@@ -658,7 +658,7 @@ pbio_error_t pb_flash_restore_firmware(void) {
         }
 
         // Read data from the firmware backup file
-        if (lfs_file_read(&lfs, &file, buf_start, read_size) != read_size) {
+        if (lfs_file_read(&lfs, &file, buf_start, read_size) != (lfs_ssize_t)read_size) {
             mp_printf(&mp_plat_print, "Unable to read backup firmware file.\n");
             return PBIO_ERROR_FAILED;
         }
