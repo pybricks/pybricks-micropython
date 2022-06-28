@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 #include "py/mperrno.h"
@@ -10,7 +10,7 @@
 #include <pybricks/util_pb/pb_error.h>
 
 /**
- * Raise an exception if *error* is not *PBIO_SUCCESS*. Most errors translate
+ * Raise an exception if @p error is not ::PBIO_SUCCESS. Most errors translate
  * to an OSError with the appropriate error code. There are a few special
  * cases that use another built-in python exception when it is more appropriate.
  */
@@ -26,14 +26,14 @@ void pb_assert(pbio_error_t error) {
             return;
         case PBIO_ERROR_FAILED:
             mp_raise_msg(&mp_type_RuntimeError, NULL);
-            return;
+            __builtin_unreachable();
         case PBIO_ERROR_INVALID_ARG:
         case PBIO_ERROR_INVALID_PORT:
             mp_raise_ValueError(NULL);
-            return;
+            __builtin_unreachable();
         case PBIO_ERROR_NOT_IMPLEMENTED:
             mp_raise_NotImplementedError(NULL);
-            return;
+            __builtin_unreachable();
         case PBIO_ERROR_IO:
             os_err = MP_EIO;
             break;
@@ -61,6 +61,7 @@ void pb_assert(pbio_error_t error) {
     }
 
     mp_raise_OSError(os_err);
+    __builtin_unreachable();
     #else // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
     static const MP_DEFINE_STR_OBJ(msg_io_obj, "\n\n"
         "Unexpected hardware input/output error with a motor or sensor:\n"
@@ -97,14 +98,14 @@ void pb_assert(pbio_error_t error) {
             return;
         case PBIO_ERROR_FAILED:
             mp_raise_msg(&mp_type_RuntimeError, (mp_rom_error_text_t)pbio_error_str(error));
-            return;
+            __builtin_unreachable();
         case PBIO_ERROR_INVALID_ARG:
         case PBIO_ERROR_INVALID_PORT:
             mp_raise_ValueError((mp_rom_error_text_t)pbio_error_str(error));
-            return;
+            __builtin_unreachable();
         case PBIO_ERROR_NOT_IMPLEMENTED:
             mp_raise_NotImplementedError((mp_rom_error_text_t)pbio_error_str(error));
-            return;
+            __builtin_unreachable();
         case PBIO_ERROR_IO:
             args[0] = MP_OBJ_NEW_SMALL_INT(MP_EIO);
             args[1] = MP_OBJ_FROM_PTR(&msg_io_obj);
@@ -140,5 +141,6 @@ void pb_assert(pbio_error_t error) {
     }
 
     nlr_raise(mp_obj_new_exception_args(&mp_type_OSError, 2, args));
+    __builtin_unreachable();
     #endif // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
 }
