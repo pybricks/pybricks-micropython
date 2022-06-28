@@ -179,7 +179,7 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
         if (mode_pin_is_low) {
             // Count number of transitions seen during sampling window.
             int transitions = chg_samples[0] != chg_samples[PBIO_ARRAY_SIZE(chg_samples) - 1];
-            for (int i = 1; i < PBIO_ARRAY_SIZE(chg_samples); i++) {
+            for (size_t i = 1; i < PBIO_ARRAY_SIZE(chg_samples); i++) {
                 transitions += chg_samples[i] != chg_samples[i - 1];
             }
 

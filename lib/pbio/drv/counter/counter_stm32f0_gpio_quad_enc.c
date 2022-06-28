@@ -77,7 +77,7 @@ static const pbdrv_counter_funcs_t pbdrv_counter_stm32f0_gpio_quad_enc_funcs = {
 };
 
 void pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_dev_t *devs) {
-    for (int i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
         const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata =
             &pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[i];
         private_data_t *priv = &private_data[i];
