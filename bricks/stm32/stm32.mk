@@ -129,7 +129,11 @@ TEXT0_ADDR ?= 0x08000000
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
+CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
+$(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
+$(BUILD)/lib/stm32lib/%.o: CFLAGS += -Wno-sign-compare
+$(BUILD)/lib/STM32_USB_Device_Library/%.o: CFLAGS += -Wno-sign-compare
 
 # define external oscillator frequency
 CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)

@@ -70,9 +70,9 @@ INC += -I../..
 INC += -I$(TOP)/ports/unix
 
 # compiler settings
-CWARN = -Wall -Werror
-CWARN += -Wextra -Wno-unused-parameter -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
-CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
+CFLAGS_WARN += -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
+CFLAGS += $(INC)-std=gnu99 -DUNIX $(CFLAGS_WARN) $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 
 # Debugging/Optimization
 ifdef DEBUG

@@ -43,6 +43,9 @@
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
                 "-nostdlib",
                 "-fshort-enums",
                 "-mthumb",
@@ -50,8 +53,7 @@
                 "-mcpu=cortex-m4",
                 "-mfpu=fpv4-sp-d16",
                 "-mfloat-abi=hard",
-                "-fsingle-precision-constant",
-                "-Wdouble-promotion"
+                "-fsingle-precision-constant"
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"
@@ -85,6 +87,9 @@
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
                 "-nostdlib",
                 "-fshort-enums",
                 "-mthumb",
@@ -125,6 +130,9 @@
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
                 "-nostdlib",
                 "-fshort-enums",
                 "-mthumb",
@@ -169,6 +177,9 @@
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
                 "-nostdlib",
                 "-fshort-enums",
                 "-mthumb",
@@ -176,8 +187,7 @@
                 "-mcpu=cortex-m4",
                 "-mfpu=fpv4-sp-d16",
                 "-mfloat-abi=hard",
-                "-fsingle-precision-constant",
-                "-Wdouble-promotion"
+                "-fsingle-precision-constant"
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"
@@ -219,6 +229,9 @@
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
                 "-nostdlib",
                 "-fshort-enums",
                 "-mthumb",
@@ -226,8 +239,7 @@
                 "-mcpu=cortex-m4",
                 "-mfpu=fpv4-sp-d16",
                 "-mfloat-abi=hard",
-                "-fsingle-precision-constant",
-                "-Wdouble-promotion"
+                "-fsingle-precision-constant"
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"
@@ -288,6 +300,9 @@
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
                 "-nostdlib",
                 "-fshort-enums",
                 "-mthumb",
@@ -295,8 +310,7 @@
                 "-mcpu=cortex-m4",
                 "-mfpu=fpv4-sp-d16",
                 "-mfloat-abi=hard",
-                "-fsingle-precision-constant",
-                "-Wdouble-promotion"
+                "-fsingle-precision-constant"
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"

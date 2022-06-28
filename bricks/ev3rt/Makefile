@@ -31,9 +31,9 @@ INC +=  -I$(MPTOP)/ports/unix
 INC += -I$(BUILD)
 
 # compiler settings
-CWARN = -Wall -Werror
-CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameters -Wextra -Wno-maybe-uninitialized
+CFLAGS_WARN += -Wpointer-arith -Wuninitialized
+CFLAGS = $(INC) -std=gnu99 $(CFLAGS_WARN) $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 # NXT:
 # CFLAGS += -DMP_ENDIANNESS_LITTLE -mthumb-interwork
 
