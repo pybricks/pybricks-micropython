@@ -113,11 +113,18 @@ enum ev3_uart_info_flags {
  * Indicates the current state of the UART device.
  */
 typedef enum {
-    PBIO_UARTDEV_STATUS_ERR,        /**< Something bad happended */
-    PBIO_UARTDEV_STATUS_SYNCING,    /**< Waiting for data that looks like LEGO UART protocol */
-    PBIO_UARTDEV_STATUS_INFO,       /**< Reading device info before changing baud rate */
-    PBIO_UARTDEV_STATUS_ACK,        /**< ACK received, delay changing baud rate */
-    PBIO_UARTDEV_STATUS_DATA,       /**< Ready to send commands and receive data */
+    /** Something bad happened. */
+    PBIO_UARTDEV_STATUS_ERR,
+    /** Waiting for port to be placed in UART mode with device attached. */
+    PBIO_UARTDEV_STATUS_WAITING,
+    /**< Waiting for data that looks like LEGO UART protocol. */
+    PBIO_UARTDEV_STATUS_SYNCING,
+    /**< Reading device info before changing baud rate. */
+    PBIO_UARTDEV_STATUS_INFO,
+    /**< ACK received, delay changing baud rate. */
+    PBIO_UARTDEV_STATUS_ACK,
+    /**< Ready to send commands and receive data. */
+    PBIO_UARTDEV_STATUS_DATA,
 } pbio_uartdev_status_t;
 
 /**
@@ -215,6 +222,29 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
     }
 
     return PBIO_SUCCESS;
+}
+
+/**
+ * Indicates to the uartdev driver that the port has been placed in uart mode
+ * (i.e. pin mux) and is ready to start syncing with the attached I/O device.
+ * @param [in] id The uartdev device id.
+ */
+void pbio_uartdev_ready(uint8_t id) {
+    if (id >= PBIO_CONFIG_UARTDEV_NUM_DEV) {
+        return;
+    }
+
+    // REVISIT: For now we are assuming that this function is never called
+    // at the wrong time. If this assumption turns out to be false, we will
+    // need to return PBIO_ERROR_AGAIN and modify callers to retry.
+    if (dev_data[id].status != PBIO_UARTDEV_STATUS_WAITING) {
+        return;
+    }
+
+    // notify pbio_uartdev_update() that there should be a device ready to
+    // communicate with now
+    dev_data[id].status = PBIO_UARTDEV_STATUS_SYNCING;
+    process_poll(&pbio_uartdev_process);
 }
 
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
@@ -694,13 +724,14 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     }
     #endif
 
-    // TODO: wait for ioport to be ready for a uartdevice
-
     // reset state for new device
     data->info->type_id = PBIO_IODEV_TYPE_ID_NONE;
     data->info->capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE;
     data->ext_mode = 0;
-    data->status = PBIO_UARTDEV_STATUS_SYNCING;
+    data->status = PBIO_UARTDEV_STATUS_WAITING;
+
+    // block until pbio_uartdev_ready() is called
+    PT_WAIT_UNTIL(&data->pt, data->status == PBIO_UARTDEV_STATUS_SYNCING);
 
     pbdrv_uart_flush(data->uart);
 

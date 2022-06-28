@@ -16,6 +16,7 @@
 - When the motor was pushed backwards while stalled, the `control.stalled()`
   was inadvertently cleared because a nonzero speed was detected. This is fixed
   by checking the intended direction as well.
+- Fixed I/O devices not syncing at high baud rate.
 
 ### Changed
 - Reworked internal motor model that is used to estimate speed. This results

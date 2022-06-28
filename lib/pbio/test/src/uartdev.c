@@ -221,6 +221,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     PT_BEGIN(pt);
 
     process_start(&pbio_uartdev_process);
+    pbio_uartdev_ready(0);
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
@@ -497,6 +498,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     PT_BEGIN(pt);
 
     process_start(&pbio_uartdev_process);
+    pbio_uartdev_ready(0);
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
@@ -666,6 +668,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     PT_BEGIN(pt);
 
     process_start(&pbio_uartdev_process);
+    pbio_uartdev_ready(0);
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
@@ -854,6 +857,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     PT_BEGIN(pt);
 
     process_start(&pbio_uartdev_process);
+    pbio_uartdev_ready(0);
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
