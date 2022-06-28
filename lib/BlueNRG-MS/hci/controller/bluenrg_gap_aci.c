@@ -84,8 +84,9 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   uint8_t buffer[40];
   uint8_t indx = 0;
 
-  if ((LocalNameLen+ServiceUUIDLen+14) > sizeof(buffer))
+  if ((size_t)(LocalNameLen + ServiceUUIDLen + 14) > sizeof(buffer)) {
     return BLE_STATUS_INVALID_PARAMS;
+  }
 
   buffer[indx] = AdvType;
   indx++;
