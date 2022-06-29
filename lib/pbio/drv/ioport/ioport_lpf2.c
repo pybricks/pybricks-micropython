@@ -29,6 +29,9 @@
 
 #include "ioport_lpf2.h"
 
+/** The number of consecutive repeated detections needed for an affirmative ID. */
+#define AFFIRMATIVE_MATCH_COUNT 20
+
 typedef enum {
     DEV_ID_GROUP_GND,
     DEV_ID_GROUP_VCC,
@@ -194,7 +197,14 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    *iodev = ioport_devs[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT].iodev;
+    ioport_dev_t *ioport = &ioport_devs[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
+
+    if (ioport->dcm.dev_id_match_count < AFFIRMATIVE_MATCH_COUNT) {
+        // the device connection manager hasn't figured out what is or isn't connected yet
+        return PBIO_ERROR_AGAIN;
+    }
+
+    *iodev = ioport->iodev;
     if (*iodev == NULL) {
         return PBIO_ERROR_NO_DEV;
     }
@@ -417,16 +427,18 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
     pbdrv_gpio_out_high(&pdata.uart_tx);
     pbdrv_gpio_out_low(&pdata.uart_buf);
 
+    // We don't consider the detected device "affirmative" until we have
+    // detected the same device multiple times in a row. Similarly,
     if (data->type_id == data->prev_type_id) {
-        if (++data->dev_id_match_count >= 20) {
-
-            if (data->type_id != ioport->connected_type_id) {
-                ioport->connected_type_id = data->type_id;
-            }
-
-            // don't want to wrap around and re-trigger
-            data->dev_id_match_count--;
+        if (data->dev_id_match_count < UINT8_MAX) {
+            data->dev_id_match_count++;
         }
+
+        if (data->dev_id_match_count >= AFFIRMATIVE_MATCH_COUNT) {
+            ioport->connected_type_id = data->type_id;
+        }
+    } else {
+        data->dev_id_match_count = 0;
     }
 
     data->prev_type_id = data->type_id;

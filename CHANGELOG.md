@@ -17,6 +17,7 @@
   was inadvertently cleared because a nonzero speed was detected. This is fixed
   by checking the intended direction as well.
 - Fixed I/O devices not syncing at high baud rate.
+- Fixed `ENODEV` error while device connection manager is busy ([support#674]).
 
 ### Changed
 - Reworked internal motor model that is used to estimate speed. This results
@@ -27,6 +28,7 @@
 
 [support#662]: https://github.com/pybricks/support/issues/662
 [support#665]: https://github.com/pybricks/support/issues/665
+[support#674]: https://github.com/pybricks/support/issues/674
 
 ## [3.2.0b1]
 
