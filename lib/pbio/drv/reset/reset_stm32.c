@@ -18,7 +18,7 @@
 // Bootloader reads the value at this RAM address to know if BLE firmware loader
 // should run or not.
 // NB: this can't be static, otherwise section attribute is ignored.
-uint32_t pbdrv_reset_stm32_bootloader_selector __attribute__((section(".magic")));
+uint32_t pbdrv_reset_stm32_bootloader_selector __attribute__((section(".magic"), used));
 
 // This value enables the BLE firmware loader.
 #define BOOTLOADER_FIRMWARE_UPDATE_MODE 0xAAAAAAAA
