@@ -12,7 +12,7 @@
 [submodule "micropython"]
 	path = micropython
 	url = https://github.com/pybricks/micropython
-	branch = master
+	branch = pybricks-v3.x
 [submodule "lib/btstack"]
 	path = lib/btstack
 	url = https://github.com/bluekitchen/btstack
