@@ -47,6 +47,12 @@ void pbio_angle_sum(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
     pbio_angle_flush(result);
 }
 
+void pbio_angle_avg(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
+    pbio_angle_sum(a, b, result);
+    result->millidegrees = result->millidegrees / 2 + (result->rotations % 2) * MDEG_PER_ROT / 2;
+    result->rotations /= 2;
+}
+
 void pbio_angle_add_mdeg(pbio_angle_t *a, int32_t increment) {
     pbio_angle_flush(a);
     a->millidegrees += increment;

@@ -68,6 +68,15 @@ bool pbio_angle_diff_is_small(pbio_angle_t *a, pbio_angle_t *b);
 void pbio_angle_sum(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
 
 /**
+ * Gets the angular average as: result = (a + b) / 2.
+ *
+ * @param [in]  a       Angle a.
+ * @param [in]  b       Angle b.
+ * @param [out] result  Result.
+ */
+void pbio_angle_avg(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
+
+/**
  * Adds a given number of millidegrees to an existing angle.
  *
  * @param [in]  a         Angle a.

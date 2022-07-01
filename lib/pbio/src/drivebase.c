@@ -34,31 +34,43 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
-    // All rate/count acceleration limits add up, because distance state is two motors counts added
-    s_distance->speed_max = s_left->speed_max + s_right->speed_max;
-    s_distance->speed_tolerance = s_left->speed_tolerance + s_right->speed_tolerance;
-    s_distance->position_tolerance = s_left->position_tolerance + s_right->position_tolerance;
-    s_distance->stall_speed_limit = s_left->stall_speed_limit + s_right->stall_speed_limit;
-    s_distance->integral_change_max = s_left->integral_change_max + s_right->integral_change_max;
-    s_distance->acceleration = s_left->acceleration + s_right->acceleration;
-    s_distance->deceleration = s_left->deceleration + s_right->deceleration;
-
-    // The default speed is half the maximum speed.
-    s_distance->speed_default = s_distance->speed_max / 2;
-
-    // Use minimum PID of both motors, to avoid overly aggressive control if
-    // one of the two motors has much higher PID values.
-    s_distance->pid_kp = min(s_left->pid_kp, s_right->pid_kp);
-    s_distance->pid_ki = min(s_left->pid_ki, s_right->pid_ki);
-    s_distance->pid_kd = min(s_left->pid_kd, s_right->pid_kd);
-
-    // Maxima are bound by the least capable motor
+    // For all settings, take the value of the least powerful motor to ensure
+    // that the drivebase can meet the given specs.
+    s_distance->speed_max = min(s_left->speed_max, s_right->speed_max);
+    s_distance->speed_tolerance = min(s_left->speed_tolerance, s_right->speed_tolerance);
+    s_distance->stall_speed_limit = min(s_left->stall_speed_limit, s_right->stall_speed_limit);
+    s_distance->integral_change_max = min(s_left->integral_change_max, s_right->integral_change_max);
     s_distance->actuation_max = min(s_left->actuation_max, s_right->actuation_max);
     s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
 
-    // By default, heading control is the same as distance control
+    // Make acceleration a bit slower for smoother driving.
+    s_distance->acceleration = min(s_left->acceleration, s_right->acceleration) * 3 / 4;
+    s_distance->deceleration = min(s_left->deceleration, s_right->deceleration) * 3 / 4;
+
+    // Use minimum PID of both motors, to avoid overly aggressive control if
+    // one of the two motors has much higher PID values. For proportional
+    // control, take a much lower gain. Drivebases don't need it, and it makes
+    // for a smoother ride.
+    s_distance->pid_kp = min(s_left->pid_kp, s_right->pid_kp) / 4;
+    s_distance->pid_kd = min(s_left->pid_kd, s_right->pid_kd);
+
+    // Integral control is not necessary since there is constant external
+    // force to overcome that wouldn't be done by proportional control.
+    s_distance->pid_ki = 0;
+
+    // Instead, we can adjust the position tolerance to ensure we always apply
+    // enough proportional torque to keep moving near the end.
+    s_distance->position_tolerance = s_distance->actuation_max / s_distance->pid_kp * 1000;
+
+    // The default speed is 40% of the maximum speed.
+    s_distance->speed_default = s_distance->speed_max * 10 / 25;
+
+    // By default, heading control is the nearly same as distance control.
     *s_heading = *s_distance;
 
+    // We make the default turn speed a bit slower. Given the typical wheel
+    // diameter, the wheels are often quite close together, so this compensates.
+    s_heading->speed_default = s_heading->speed_max / 3;
     return PBIO_SUCCESS;
 }
 
@@ -80,14 +92,15 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     }
 
     // Take sum to get distance state
-    pbio_angle_sum(&state_left.position, &state_right.position, &state_distance->position);
-    pbio_angle_sum(&state_left.position_estimate, &state_right.position_estimate, &state_distance->position_estimate);
-    state_distance->speed_estimate = state_left.speed_estimate + state_right.speed_estimate;
+    pbio_angle_avg(&state_left.position, &state_right.position, &state_distance->position);
+    pbio_angle_avg(&state_left.position_estimate, &state_right.position_estimate, &state_distance->position_estimate);
+    state_distance->speed_estimate = (state_left.speed_estimate + state_right.speed_estimate) / 2;
 
-    // Take difference to get heading state
-    pbio_angle_diff(&state_left.position, &state_right.position, &state_heading->position);
-    pbio_angle_diff(&state_left.position_estimate, &state_right.position_estimate, &state_heading->position_estimate);
-    state_heading->speed_estimate = state_left.speed_estimate - state_right.speed_estimate;
+    // Take difference to get heading state, which is implemented as
+    // (left - right) / 2 = (left + right) / 2 - right = avg - right.
+    pbio_angle_diff(&state_distance->position, &state_right.position, &state_heading->position);
+    pbio_angle_diff(&state_distance->position_estimate, &state_right.position_estimate, &state_heading->position_estimate);
+    state_heading->speed_estimate = state_distance->speed_estimate - state_right.speed_estimate;
 
     return PBIO_SUCCESS;
 }
@@ -197,14 +210,14 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
         return err;
     }
 
-    // Count difference between the motors for every 1 degree drivebase rotation
+    // Average rotation of the motors for every 1 degree drivebase rotation.
     db->control_heading.settings.ctl_steps_per_app_step =
-        left->control.settings.ctl_steps_per_app_step * axle_track * 2 / wheel_diameter;
+        left->control.settings.ctl_steps_per_app_step * axle_track / wheel_diameter;
 
-    // Sum of motor counts for every 1 mm forward
+    // Average rotation of the motors for every 1 mm forward.
     db->control_distance.settings.ctl_steps_per_app_step =
         left->control.settings.ctl_steps_per_app_step * 2292 /
-        wheel_diameter / 10;
+        wheel_diameter / 20;
     return PBIO_SUCCESS;
 }
 
@@ -282,16 +295,16 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         pbio_position_integrator_pause(&db->control_distance.position_integrator, time_now);
     }
 
-    // The left servo drives at a torque and speed of sum / 2 + dif / 2
-    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.speed / 2 + ref_heading.speed / 2, ref_distance.acceleration / 2 + ref_heading.acceleration / 2);
-    err = pbio_servo_actuate(db->left, sum_actuation, sum_torque / 2 + dif_torque / 2 + feed_forward_left);
+    // The left servo drives at a torque and speed of sum + dif
+    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.speed + ref_heading.speed, ref_distance.acceleration + ref_heading.acceleration);
+    err = pbio_servo_actuate(db->left, sum_actuation, sum_torque + dif_torque + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // The right servo drives at a torque and speed of sum / 2 - dif / 2
-    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.speed / 2 - ref_heading.speed / 2, ref_distance.acceleration / 2 - ref_heading.acceleration / 2);
-    return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
+    // The right servo drives at a torque and speed of sum - dif
+    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.speed - ref_heading.speed, ref_distance.acceleration - ref_heading.acceleration);
+    return pbio_servo_actuate(db->right, dif_actuation, sum_torque - dif_torque + feed_forward_right);
 }
 
 void pbio_drivebase_update_all(void) {
@@ -477,9 +490,9 @@ pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_se
     pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1, 1);
 
     // The application input for spike bases is degrees per second average
-    // between both wheels, so the sum or diff in millidegrees is x2000.
-    (*db_address)->control_heading.settings.ctl_steps_per_app_step = 2000;
-    (*db_address)->control_distance.settings.ctl_steps_per_app_step = 2000;
+    // between both wheels, so in millidegrees this is x1000.
+    (*db_address)->control_heading.settings.ctl_steps_per_app_step = 1000;
+    (*db_address)->control_distance.settings.ctl_steps_per_app_step = 1000;
     return err;
 }
 

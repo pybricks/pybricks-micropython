@@ -24,8 +24,19 @@
 // acceleration part of the maneuver.
 #define DURATION_FOREVER_MS (DURATION_MAX_MS / 2)
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define max(a, b) ((a) > (b) ? (a) : (b))
+static inline int32_t min(int32_t a, int32_t b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
+static inline int32_t max(int32_t a, int32_t b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
 
 /**
  * Minimal set of trajectory parameters from which a full trajectory is

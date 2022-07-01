@@ -27,6 +27,7 @@
   more responsive.
 - Overhauled the control code to make it smaller and more numerically robust
   while using higher position resolution where it is available.
+- Changed drive base default speed to go a little slower.
 
 [support#662]: https://github.com/pybricks/support/issues/662
 [support#665]: https://github.com/pybricks/support/issues/665
