@@ -73,7 +73,13 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
 
 // Divides speed^2 (ddeg/s)^2 by acceleration (deg/s^2)*2, giving angle (mdeg).
 static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
-    return (w_end * w_end - w_start * w_start) * (10 / 2) / a;
+    int32_t product = w_end * w_end - w_start * w_start;
+    if (abs(product) > INT32_MAX / (10 / 2)) {
+        // Divide first if we have to.
+        return product / a * (10 / 2);
+    }
+    // Higher resolution result if possible.
+    return product * (10 / 2) / a;
 }
 
 // Divides speed (ddeg/s) by acceleration (deg/s^2), giving time (s e-4).
@@ -83,10 +89,10 @@ static int32_t div_w_by_a(int32_t w, int32_t a) {
 
 // Divides angle (mdeg) by time (s e-4), giving speed (ddeg/s).
 static int32_t div_th_by_t(int32_t th, int32_t t) {
-    if (abs(th) < INT32_MAX / 10) {
-        return th * 10 / t;
+    if (abs(th) < INT32_MAX / 100) {
+        return th * 100 / t;
     }
-    return th / t * 10;
+    return th / t * 100;
 }
 
 // Divides speed (ddeg/s) by time (s e-4), giving acceleration (deg/s^2).
@@ -134,6 +140,18 @@ static int32_t mul_a_by_t2(int32_t a, int32_t t) {
 static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
     // Evaluates sqrt(w_end^2 + 2 * a * th), with scaling for units.
     return pbio_math_sqrt(w_end * w_end + a * th / (10 / 2));
+}
+
+// Given a stationary starting and final angle (mdeg), computes the
+// intersection of the speed curves if we accelerate (deg/s^2) up and down
+// without a stationary speed phase.
+static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) {
+    if (abs(th3 - th0) > INT32_MAX / abs(a2)) {
+        // Divide first if numerator too large.
+        return th0 + (th3 - th0) / (a2 - a0) * a2;
+    }
+    // Higher resolution result for small angles.
+    return th0 + (th3 - th0) * a2 / (a2 - a0);
 }
 
 // Computes a trajectory for a timed command assuming *positive* speed
@@ -207,7 +225,7 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
             trj->w3 = trj->w1;
         } else {
             // Otherwise, we can just take the intersection of the accelerating
-            // and decelerating ramps to find the speed at t1 = t2.
+            // and decelerating ramps to find the angle at t1 = t2.
             assert(trj->a0 != trj->a2);
             trj->t1 = div_w_by_a(trj->w3 - trj->w0 - mul_a_by_t(trj->a2, trj->t3), trj->a0 - trj->a2);
 
@@ -305,7 +323,7 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
         } else {
             // Otherwise, we can just take the intersection of the accelerating
             // and decelerating ramps to find the speed at t1 = t2.
-            trj->th1 = thf + (trj->th3 - thf) * trj->a2 / (trj->a2 - trj->a0);
+            trj->th1 = intersect_ramp(trj->th3, thf, trj->a0, trj->a2);
             trj->th2 = trj->th1;
             trj->w1 = bind_w0(0, trj->a0, trj->th1 - thf);
         }
@@ -440,6 +458,11 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 
     // Calculate the trajectory, assumed to be forward.
     pbio_trajectory_new_forward_angle_command(trj, &c);
+
+    // Ensure computed motion points are ordered.
+    if (trj->th1 < 0 || trj->th2 < trj->th1 || trj->th3 < trj->th2) {
+        return PBIO_ERROR_FAILED;
+    }
 
     // Reverse the maneuver if the original arguments imposed backward motion.
     if (backward) {
