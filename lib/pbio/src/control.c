@@ -248,7 +248,7 @@ void pbio_control_reset(pbio_control_t *ctl) {
     // subsequent maneuvers, so nothing else needs to be reset explicitly.
 }
 
-pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion) {
+static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_angle_t *target, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
 
@@ -258,13 +258,14 @@ pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t t
 
     // Common trajectory parameters for all cases covered here.
     pbio_trajectory_command_t command = {
-        .speed_target = speed == 0 ? ctl->settings.speed_default : pbio_control_position_app_to_ctl(&ctl->settings, speed),
+        .position_end = *target,
+        .speed_target = speed == 0 ? ctl->settings.speed_default : speed,
         .speed_max = ctl->settings.speed_max,
         .acceleration = ctl->settings.acceleration,
         .deceleration = ctl->settings.deceleration,
         .continue_running = on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE,
     };
-    pbio_control_position_app_to_ctl_long(&ctl->settings, position, &command.position_end);
+
 
     // Given the control status, fill in remaining commands and get trajectory.
     if (!pbio_control_is_active(ctl)) {
@@ -340,17 +341,32 @@ pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t t
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion) {
+
+    // Convert target position to control units.
+    pbio_angle_t target;
+    pbio_control_position_app_to_ctl_long(&ctl->settings, position, &target);
+
+    // Start position control in control units.
+    return _pbio_control_start_position_control(ctl, time_now, state, &target, pbio_control_position_app_to_ctl(&ctl->settings, speed), on_completion);
+}
+
 pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion) {
 
-    // First, we need to decide where the relative motion starts from.
-    pbio_angle_t start;
+    // Convert distance to control units.
+    pbio_angle_t increment;
+    pbio_control_position_app_to_ctl_long(&ctl->settings, (speed < 0 ? -distance : distance), &increment);
+
+    // We need to decide where the relative motion starts from, and use that
+    // to compute the position target by adding the increment.
+    pbio_angle_t target;
 
     if (pbio_control_is_active(ctl)) {
         // If control is already active, restart from current reference.
         uint32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
         pbio_trajectory_reference_t ref;
         pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
-        start = ref.position;
+        pbio_angle_sum(&ref.position, &increment, &target);
     } else {
         // Control is inactive. We still have two options.
         // If the previous command used smart coast and we're still close to
@@ -363,18 +379,15 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
             abs(pbio_angle_diff_mdeg(&prev_end.position, &state->position)) < ctl->settings.position_tolerance * 2) {
             // We're close enough, so make the new target relative to the
             // endpoint of the last one.
-            start = prev_end.position;
+            pbio_angle_sum(&prev_end.position, &increment, &target);
         } else {
             // No special cases apply, so the best we can do is just start from
             // the current state.
-            start = state->position;
+            pbio_angle_sum(&state->position, &increment, &target);
         }
     }
 
-    // The target count is the start count plus the count to be traveled.  If speed is negative, traveled count also flips.
-    int32_t target_position = pbio_control_position_ctl_to_app_long(&ctl->settings, &start) + (speed < 0 ? -distance : distance);
-
-    return pbio_control_start_position_control(ctl, time_now, state, target_position, speed, on_completion);
+    return _pbio_control_start_position_control(ctl, time_now, state, &target, pbio_control_position_app_to_ctl(&ctl->settings, speed), on_completion);
 }
 
 pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint32_t time_now, int32_t position) {
