@@ -26,6 +26,10 @@ uint32_t pbdrv_clock_get_ms(void) {
     return clock_ticks;
 }
 
+uint32_t pbdrv_clock_get_100us(void) {
+    return clock_ticks * 10;
+}
+
 uint32_t pbdrv_clock_get_us(void) {
     return clock_ticks * 1000;
 }

@@ -19,6 +19,7 @@
 #include "../virtual.h"
 
 #define NSEC_PER_MSEC       1000000
+#define NSEC_PER_100USEC    100000
 #define NSEC_PER_USEC       1000
 
 #define TIMER_SIGNAL        SIGRTMIN
@@ -74,6 +75,18 @@ uint32_t pbdrv_clock_get_ms(void) {
     }
 
     return value / NSEC_PER_MSEC;
+}
+
+uint32_t pbdrv_clock_get_100us(void) {
+    uint64_t value;
+    pbio_error_t err = pbdrv_virtual_get_u64("clock", -1, "nanoseconds", &value);
+
+    if (err != PBIO_SUCCESS) {
+        fprintf(stderr, "fatal error: pbdrv_clock_get_us failed\n");
+        exit(1);
+    }
+
+    return value / NSEC_PER_100USEC;
 }
 
 uint32_t pbdrv_clock_get_us(void) {

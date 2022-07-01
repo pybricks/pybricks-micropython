@@ -23,6 +23,11 @@ uint32_t pbdrv_clock_get_ms(void) {
     return systick_get_ms();
 }
 
+uint32_t pbdrv_clock_get_100us(void) {
+    // Revisit: derive from ns counter properly.
+    return systick_get_ms() * 10;
+}
+
 uint32_t pbdrv_clock_get_us(void) {
     return systick_get_us();
 }

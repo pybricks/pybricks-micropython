@@ -12,8 +12,7 @@
 #include <pbio/integrator.h>
 
 uint32_t pbio_control_get_time_ticks(void) {
-    // REVISIT: Get a counter that overflows only after ticks run out.
-    return pbdrv_clock_get_us() / 100;
+    return pbdrv_clock_get_100us();
 }
 
 static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pbio_control_state_t *state, pbio_trajectory_reference_t *end) {

@@ -97,6 +97,12 @@ uint32_t pbdrv_clock_get_ms(void) {
     return time_val.tv_sec * 1000 + time_val.tv_nsec / 1000000;
 }
 
+uint32_t pbdrv_clock_get_100us(void) {
+    struct timespec time_val;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);
+    return time_val.tv_sec * 10000 + time_val.tv_nsec / 100000;
+}
+
 uint32_t pbdrv_clock_get_us(void) {
     struct timespec time_val;
     clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);

@@ -12,8 +12,8 @@ class VirtualClock:
     """
     The current clock time in nanoseconds.
 
-    This value is read when ``pbdrv_clock_get_ms()`` or ``pbdrv_clock_get_us``
-    is called.
+    This value is read when ``pbdrv_clock_get_ms()`` or ``pbdrv_clock_get_us()``
+    or ``pbdrv_clock_get_100us()`` is called.
     """
 
     _thread_id: int

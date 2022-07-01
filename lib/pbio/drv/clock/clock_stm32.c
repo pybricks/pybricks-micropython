@@ -24,7 +24,7 @@ uint32_t pbdrv_clock_get_ms(void) {
 
 // The SysTick timer counts down at 168 MHz, so we can use that knowledge
 // to grab a microsecond counter.
-uint32_t pbdrv_clock_get_us(void) {
+static uint32_t pbdrv_clock_get_time(uint32_t ticks_per_ms) {
     uint32_t irq_state, counter, msec, status;
 
     irq_state = __get_PRIMASK();
@@ -52,14 +52,24 @@ uint32_t pbdrv_clock_get_us(void) {
     //
     // counter / ((load + 1) / 1000) scales from the systick clock to microseconds
     // and is the same thing as (counter * 1000) / (load + 1)
-    return msec * 1000 + (counter * 1000) / (load + 1);
+    //
+    // Generalizing to a given number of ticks per millisecond, we get:
+    return msec * ticks_per_ms + (counter * ticks_per_ms) / (load + 1);
+}
+
+uint32_t pbdrv_clock_get_100us(void) {
+    return pbdrv_clock_get_time(10);
+}
+
+uint32_t pbdrv_clock_get_us(void) {
+    return pbdrv_clock_get_time(1000);
 }
 
 void SysTick_Handler(void) {
     pbdrv_clock_ticks++;
 
     // Read the systick control regster. This has the side effect of clearing
-    // the COUNTFLAG bit, which makes the logic in pbdrv_clock_get_us
+    // the COUNTFLAG bit, which makes the logic in pbdrv_clock_get_time
     // work properly.
     SysTick->CTRL;
 

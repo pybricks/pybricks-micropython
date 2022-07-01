@@ -12,12 +12,17 @@
 #include <stdint.h>
 
 /**
- * Gets the current clock time in milliseconds.
+ * Gets the current clock time in milliseconds (1e-3 seconds).
  */
 uint32_t pbdrv_clock_get_ms(void);
 
 /**
- * Gets the current clock time in microseconds.
+ * Gets the current clock time in steps of 1e-4 seconds.
+ */
+uint32_t pbdrv_clock_get_100us(void);
+
+/**
+ * Gets the current clock time in microseconds (1e-6 seconds).
  */
 uint32_t pbdrv_clock_get_us(void);
 
