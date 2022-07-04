@@ -66,44 +66,12 @@ typedef struct _pbio_observer_t {
     const pbio_observer_model_t *model;
 } pbio_observer_t;
 
-/**
- * Resets the observer to a new angle. Speed and current are reset to zero.
- *
- * @param [in]  obs            The observer instance.
- * @param [in]  angle          Angle to which the observer should be reset.
- */
 void pbio_observer_reset(pbio_observer_t *obs, pbio_angle_t *angle);
 
-/**
- * Gets the observer state, which is the estimated state of the real system.
- *
- * @param [in]  obs            The observer instance.
- * @param [out] angle          Estimated angle in millidegrees.
- * @param [out] speed          Estimated speed in millidegrees/second.
- */
 void pbio_observer_get_estimated_state(pbio_observer_t *obs, pbio_angle_t *angle, int32_t *speed);
 
-/**
- * Predicts next system state and corrects the model using a measurement.
- *
- * @param [in]  obs            The observer instance.
- * @param [in]  time           Wall time.
- * @param [in]  angle          Measured angle used to correct the model.
- * @param [in]  actuation      Actuation type currently applied to the motor.
- * @param [in]  voltage        If actuation type is voltage, this is the payload in mV.
- */
 void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
 
-/**
- * Checks whether system is stalled by testing how far the estimate is ahead of
- * the measured angle, which is a measure for an unmodeled load.
- *
- * @param [in]  obs             The observer instance.
- * @param [in]  time            Wall time.
- * @param [out] stall_threshold Minimum time for it to be considered stalled.
- * @param [out] stall_duration  For how long it has been stalled.
- * @return                      True if stalled, false if not.
- */
 bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t stall_threshold, uint32_t *stall_duration);
 
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref);

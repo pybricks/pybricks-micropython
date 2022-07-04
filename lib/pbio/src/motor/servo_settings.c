@@ -214,6 +214,14 @@ static const pbio_observer_model_t model_ev3_m = {
 
 #define DEG_TO_MDEG(deg) ((deg) * 1000)
 
+/**
+ * Loads device specific model parameters and control settings.
+ *
+ * @param [out]  settings      Control settings like PID constants.
+ * @param [out]  model         Model parameters for the state observer.
+ * @param [in]   id            Type identifier for which to look up the settings.
+ * @return                     Error code.
+ */
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id) {
 
     // Base settings for all motors.
