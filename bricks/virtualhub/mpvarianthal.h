@@ -84,7 +84,6 @@ uint64_t pb_virtualhub_time_ns(void);
             ret = syscall; \
             MP_THREAD_GIL_ENTER(); \
             if (ret == -1) { \
-                MICROPY_EVENT_POLL_HOOK \
                 int err = errno; \
                 if (err == EINTR) { \
                     MICROPY_EVENT_POLL_HOOK \
