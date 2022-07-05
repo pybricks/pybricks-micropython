@@ -10,12 +10,14 @@
   re-initialized later ([support#904]).
 - Fixed workaround for motor hold drifting away under external input
   movement ([support#863]).
+- Added `MoveHub.imu.tilt()` ([support#539]).
 
 ### Fixed
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).
 - Reduced motor motion while holding position and added configurable setter and
   getter for this deadzone.
 
+[support#913]: https://github.com/pybricks/support/issues/539
 [support#829]: https://github.com/pybricks/support/issues/829
 [support#863]: https://github.com/pybricks/support/issues/863
 [support#904]: https://github.com/pybricks/support/issues/904
