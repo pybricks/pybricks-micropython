@@ -8,6 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 
+
 [tool.poetry.dev-dependencies]
 azure-cosmosdb-table = "^1.0.6"
 black = "^22.3.0"
@@ -15,6 +16,8 @@ flake8 = "^3.8.3"
 GitPython = "^3.1.11"
 gql = {version = "3.0.0b0", extras = ["requests"], allow-prereleases = true}
 matplotlib = "^3.4.3"
+nbstripout = "^0.5.0"
+notebook = "^6.4.12"
 plotly = "^4.14.1"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
 pybricksdev = "1.0.0a26"
