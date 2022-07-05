@@ -11,11 +11,15 @@
 #include <pbdrv/reset.h>
 #include <pbsys/light.h>
 
+#include <pbio/int_math.h>
+#include <pbio/geometry.h>
+
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // LIS3DH motion sensor
 
@@ -123,7 +127,7 @@ static void motion_spi_write(uint8_t reg, uint8_t value) {
     GPIOA->BSRR = GPIO_BSRR_BS_4;
 }
 
-static void motion_get_acceleration(int8_t *data) {
+static void motion_get_acceleration_raw(int8_t *data) {
     motion_spi_read(OUT_Y_H, (uint8_t *)&data[0]);
     motion_spi_read(OUT_Z_H, (uint8_t *)&data[2]);
     motion_spi_read(OUT_X_H, (uint8_t *)&data[1]);
@@ -138,7 +142,7 @@ typedef struct {
 STATIC mp_obj_t hubs_MoveHub_IMU_up(mp_obj_t self_in) {
 
     int8_t values[3];
-    motion_get_acceleration(values);
+    motion_get_acceleration_raw(values);
 
     // Find index and sign of maximum component
     int8_t abs_max = 0;
@@ -181,7 +185,7 @@ STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 
     // Gets signed acceleration data
     int8_t data[3];
-    motion_get_acceleration(data);
+    motion_get_acceleration_raw(data);
 
     // Convert to appropriate units and return as tuple
     mp_obj_t values[3];
@@ -192,9 +196,61 @@ STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_acceleration_obj, hubs_MoveHub_IMU_acceleration);
 
+// pybricks._common.SimpleAccelerometer.tilt
+STATIC mp_obj_t hubs_MoveHub_IMU_tilt(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        hubs_MoveHub_IMU_obj_t, self,
+        PB_ARG_DEFAULT_OBJ(up, pb_Side_TOP_obj),
+        PB_ARG_DEFAULT_OBJ(forward, pb_Side_FRONT_obj));
+
+    (void)self;
+
+    // REVISIT: Re-orientation should be a one-off in the hub init like
+    // we do on the other hubs.
+
+    // Get the local X and Z axes corresponding to given sides.
+    uint8_t index[3];
+    int8_t sign[3];
+    pbio_geometry_side_get_axis(pb_type_enum_get_value(up_in, &pb_enum_type_Side), &index[2], &sign[2]);
+    pbio_geometry_side_get_axis(pb_type_enum_get_value(forward_in, &pb_enum_type_Side), &index[0], &sign[0]);
+
+    // Given axes may not be parallel (i.e. not same or opposite sides).
+    if (index[2] == index[0]) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Get the remaining Y axis to complete the coordinate system.
+    pbio_geometry_get_complementary_axis(index, sign);
+
+    // Get acceleration data in arbitrary units.
+    int8_t data[3];
+    motion_get_acceleration_raw(data);
+
+    // Based on given orientation, shift and flip the data.
+    int32_t accel[3];
+    for (uint8_t i = 0; i < 3; i++) {
+        accel[index[i]] = data[i] * sign[index[i]];
+    }
+
+    // Now we can compute the tilt values.
+    mp_obj_t tilt[2];
+
+    // Pitch
+    tilt[0] = mp_obj_new_int(pbio_int_math_atan2(-accel[0], pbio_int_math_sqrt(accel[2] * accel[2] + accel[1] * accel[1])));
+
+    // Roll
+    tilt[1] = mp_obj_new_int(pbio_int_math_atan2(accel[1], accel[2]));
+
+    // Return as tuple
+    return mp_obj_new_tuple(2, tilt);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(hubs_MoveHub_IMU_tilt_obj, 1, hubs_MoveHub_IMU_tilt);
+
 STATIC const mp_rom_map_elem_t hubs_MoveHub_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acceleration), MP_ROM_PTR(&hubs_MoveHub_IMU_acceleration_obj) },
     { MP_ROM_QSTR(MP_QSTR_up),           MP_ROM_PTR(&hubs_MoveHub_IMU_up_obj)           },
+    { MP_ROM_QSTR(MP_QSTR_tilt),         MP_ROM_PTR(&hubs_MoveHub_IMU_tilt_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_IMU_locals_dict, hubs_MoveHub_IMU_locals_dict_table);
 
