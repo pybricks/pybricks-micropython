@@ -11,7 +11,7 @@
 // The following macro is a direct copy of https://stackoverflow.com/a/50371430/11744630
 #define EXPAND(x) x
 #define _GET_NTH_ARG(_1, _2, _3, _4, _5, _6, _7, _9, _10, N, ...) N
-#define NUM_ARGS(...) EXPAND(_GET_NTH_ARG(__VA_ARGS__,9,8,7,6,5,4,3,2,1,0))
+#define NUM_ARGS(...) EXPAND(_GET_NTH_ARG(__VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
 
 // Perform an action on a variable number of arguments. Extended from https://stackoverflow.com/a/11994395/11744630
 #define FI_1(WHAT, N, X)      WHAT(N - 1, X)
@@ -23,9 +23,9 @@
 #define FI_7(WHAT, N, X, ...) WHAT(N - 7, X) FI_6(WHAT, N, __VA_ARGS__)
 #define FI_8(WHAT, N, X, ...) WHAT(N - 8, X) FI_7(WHAT, N, __VA_ARGS__)
 #define FI_9(WHAT, N, X, ...) WHAT(N - 9, X) FI_8(WHAT, N, __VA_ARGS__)
-#define GET_MACRO(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
-#define FOR_EACH_IDX(action,...) \
-    GET_MACRO(__VA_ARGS__,FI_9,FI_8,FI_7,FI_6,FI_5,FI_4,FI_3,FI_2,FI_1,)(action, NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
+#define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
+#define FOR_EACH_IDX(action, ...) \
+    GET_MACRO(__VA_ARGS__, FI_9, FI_8, FI_7, FI_6, FI_5, FI_4, FI_3, FI_2, FI_1, )(action, NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
 
 // Make a QSTR, even if the name is generated from a macro
 #define MAKE_QSTR_(name) MP_QSTR_##name

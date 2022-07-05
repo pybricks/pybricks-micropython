@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <stdint.h>
 #include <stdio.h>
@@ -14,6 +14,7 @@
 
 #include <pybricks/util_mp/pb_obj_helper.h>
 
+#include "py/builtin.h"
 #include "py/compile.h"
 #include "py/runtime.h"
 #include "py/repl.h"
@@ -174,8 +175,10 @@ int main(int argc, char **argv) {
         // run user .mpy file
         mp_reader_t reader;
         mp_reader_new_mem(&reader, &_pb_user_mpy_data, _pb_user_mpy_size, 0);
-        mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
-        mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
+        mp_module_context_t *context = m_new_obj(mp_module_context_t);
+        context->module.globals = mp_globals_get();
+        mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+        mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, MP_OBJ_NULL, MP_OBJ_NULL);
         mp_hal_set_interrupt_char(3);
         mp_call_function_0(module_fun);
         mp_hal_set_interrupt_char(-1);

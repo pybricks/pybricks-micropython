@@ -32,4 +32,6 @@ const mp_obj_module_t pb_module_media_ev3dev = {
     .globals = (mp_obj_dict_t *)&pb_module_media_ev3dev_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_media_ev3dev_c, pb_module_media_ev3dev);
+
 #endif // PYBRICKS_PY_MEDIA_EV3DEV

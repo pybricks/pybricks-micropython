@@ -77,6 +77,8 @@ uint64_t pb_virtualhub_time_ns(void);
 #define mp_hal_time_ns pb_virtualhub_time_ns
 #define mp_hal_ticks_cpu() 0
 
+void mp_hal_get_random(size_t n, void *buf);
+
 // This macro is used to implement PEP 475 to retry specified syscalls on EINTR
 #define MP_HAL_RETRY_SYSCALL(ret, syscall, raise) { \
         for (;;) { \

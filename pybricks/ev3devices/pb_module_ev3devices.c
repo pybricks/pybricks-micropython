@@ -10,7 +10,6 @@
 
 STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_ev3devices)              },
-    { MP_ROM_QSTR(MP_QSTR__pybricks),        MP_ROM_QSTR(MP_QSTR__pybricks)               }, // hack: make sure MP_QSTR__pybricks exists on ev3dev
     #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&pb_type_Motor)                   },
     #endif

@@ -40,7 +40,6 @@ QSTR_GLOBAL_DEPENDENCIES =
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
 MPY_CROSS = ../../micropython/mpy-cross/mpy-cross
-MPY_CROSS_FLAGS += -mno-unicode
 
 # include py core make definitions
 include $(TOP)/py/py.mk

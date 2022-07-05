@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 // Pybricks brick specific definitions
 #include "brickconfig.h"
@@ -19,6 +19,8 @@ static const char pybricks_ev3dev_help_text[] =
 ;
 
 // options to control how MicroPython is built
+
+#define MICROPY_BANNER_NAME_AND_VERSION "Pybricks MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
 
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
 #define MICROPY_PERSISTENT_CODE_LOAD (1)
@@ -50,6 +52,7 @@ static const char pybricks_ev3dev_help_text[] =
 // check stdout a chance to pass, etc.
 #define MICROPY_DEBUG_PRINTER       (&mp_stderr_print)
 #define MICROPY_READER_POSIX        (1)
+#define MICROPY_READER_VFS          (1)
 #define MICROPY_USE_READLINE_HISTORY (1)
 #define MICROPY_HELPER_REPL         (1)
 #define MICROPY_REPL_EMACS_KEYS     (1)
@@ -62,12 +65,15 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_STREAMS_NON_BLOCK   (1)
 #define MICROPY_STREAMS_POSIX_API   (1)
 #define MICROPY_OPT_COMPUTED_GOTO   (1)
+#define MICROPY_MODULE_OVERRIDE_MAIN_IMPORT (1)
+#define MICROPY_VFS                 (1)
+#define MICROPY_VFS_POSIX           (1)
+#define MICROPY_PY_SYS_PATH_ARGV_DEFAULTS (0)
 #ifndef MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE
 #define MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE (1)
 #endif
 #define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_CAN_OVERRIDE_BUILTINS (1)
-#define MICROPY_VFS_POSIX_FILE      (1)
 #define MICROPY_PY_FUNCTION_ATTRS   (1)
 #define MICROPY_PY_DESCRIPTORS      (1)
 #define MICROPY_PY_BUILTINS_STR_UNICODE (1)
@@ -104,6 +110,9 @@ static const char pybricks_ev3dev_help_text[] =
     #define MICROPY_PY_SYS_PLATFORM  "linux"
 #endif
 #endif
+#ifndef MICROPY_PY_SYS_PATH_DEFAULT
+#define MICROPY_PY_SYS_PATH_DEFAULT ".frozen:~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython"
+#endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
 #define MICROPY_PY_SYS_EXC_INFO     (0)
@@ -129,7 +138,6 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_OPT_MATH_FACTORIAL              (0)
 #define MICROPY_FLOAT_HIGH_QUALITY_HASH         (1)
 #define MICROPY_ENABLE_SCHEDULER                (0)
-#define MICROPY_READER_VFS                      (0)
 #define MICROPY_WARNINGS_CATEGORY               (1)
 #define MICROPY_MODULE_GETATTR                  (1)
 #define MICROPY_PY_DELATTR_SETATTR              (1)
@@ -144,11 +152,17 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_URE_MATCH_GROUPS             (1)
 #define MICROPY_PY_URE_MATCH_SPAN_START_END     (1)
 #define MICROPY_PY_URE_SUB                      (1)
-#define MICROPY_VFS_POSIX                       (0)
 #define MICROPY_PY_COLLECTIONS_NAMEDTUPLE__ASDICT (1)
 
 #define MICROPY_PY_FRAMEBUF         (1)
-#define MICROPY_PY_OS_STATVFS       (1)
+#define MICROPY_PY_UOS              (1)
+#define MICROPY_PY_UOS_INCLUDEFILE  "ports/unix/moduos.c"
+#define MICROPY_PY_UOS_ERRNO        (1)
+#define MICROPY_PY_UOS_GETENV_PUTENV_UNSETENV (1)
+#define MICROPY_PY_UOS_SEP          (1)
+#define MICROPY_PY_UOS_STATVFS      (0)
+#define MICROPY_PY_UOS_SYSTEM       (1)
+#define MICROPY_PY_UOS_URANDOM      (1)
 #define MICROPY_PY_UTIME            (1)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_UERRNO           (1)
@@ -208,6 +222,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_URE              (1)
 #define MICROPY_PY_UHEAPQ           (1)
 #define MICROPY_PY_UTIMEQ           (1)
+#define MICROPY_PY_USOCKET_LISTEN_BACKLOG_DEFAULT (SOMAXCONN < 128 ? SOMAXCONN : 128)
 #define MICROPY_PY_UHASHLIB         (1)
 #if MICROPY_PY_USSL
 #define MICROPY_PY_UHASHLIB_MD5     (1)
@@ -219,7 +234,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_UFCNTL_POSIX     (1)
 #define MICROPY_PY_URANDOM          (1)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS      (1)
-#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   ({ extern mp_uint_t mp_hal_ticks_us(void); mp_hal_ticks_us(); })
+#define MICROPY_PY_URANDOM_SEED_INIT_FUNC (mp_urandom_seed_init())
 #ifndef MICROPY_PY_USELECT_POSIX
 #define MICROPY_PY_USELECT_POSIX    (1)
 #endif
@@ -233,7 +248,6 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_FATFS_RPATH            (2)
 #define MICROPY_FATFS_MAX_SS           (4096)
 #define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
-#define MICROPY_VFS_FAT                (0)
 
 // Define to MICROPY_ERROR_REPORTING_DETAILED to get function, etc.
 // names in exception messages (may require more RAM).
@@ -241,6 +255,9 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_WARNINGS            (1)
 #define MICROPY_ERROR_PRINTER       (&mp_stderr_print)
 #define MICROPY_PY_STR_BYTES_CMP_WARN (1)
+
+// VFS stat functions should return time values relative to 1970/1/1
+#define MICROPY_EPOCH_IS_1970       (1)
 
 extern const struct _mp_print_t mp_stderr_print;
 
@@ -256,67 +273,6 @@ extern const struct _mp_print_t mp_stderr_print;
 
 #define mp_type_fileio mp_type_vfs_posix_fileio
 #define mp_type_textio mp_type_vfs_posix_textio
-
-extern const struct _mp_obj_module_t mp_module_machine;
-extern const struct _mp_obj_module_t mp_module_os;
-extern const struct _mp_obj_module_t mp_module_uos_vfs;
-extern const struct _mp_obj_module_t mp_module_uselect;
-extern const struct _mp_obj_module_t mp_module_time;
-extern const struct _mp_obj_module_t mp_module_termios;
-extern const struct _mp_obj_module_t mp_module_socket;
-extern const struct _mp_obj_module_t mp_module_ffi;
-extern const struct _mp_obj_module_t mp_module_jni;
-extern const struct _mp_obj_module_t mp_module_ufcntl;
-extern const struct _mp_obj_module_t mp_module_ummap;
-
-#if MICROPY_PY_UOS_VFS
-#define MICROPY_PY_UOS_DEF { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos_vfs) },
-#else
-#define MICROPY_PY_UOS_DEF { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_os) },
-#endif
-#if MICROPY_PY_FFI
-#define MICROPY_PY_FFI_DEF { MP_ROM_QSTR(MP_QSTR_ffi), MP_ROM_PTR(&mp_module_ffi) },
-#else
-#define MICROPY_PY_FFI_DEF
-#endif
-#if MICROPY_PY_JNI
-#define MICROPY_PY_JNI_DEF { MP_ROM_QSTR(MP_QSTR_jni), MP_ROM_PTR(&mp_module_jni) },
-#else
-#define MICROPY_PY_JNI_DEF
-#endif
-#if MICROPY_PY_UTIME
-#define MICROPY_PY_UTIME_DEF { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_time) },
-#else
-#define MICROPY_PY_UTIME_DEF
-#endif
-#if MICROPY_PY_TERMIOS
-#define MICROPY_PY_TERMIOS_DEF { MP_ROM_QSTR(MP_QSTR_termios), MP_ROM_PTR(&mp_module_termios) },
-#else
-#define MICROPY_PY_TERMIOS_DEF
-#endif
-#if MICROPY_PY_SOCKET
-#define MICROPY_PY_SOCKET_DEF { MP_ROM_QSTR(MP_QSTR_usocket), MP_ROM_PTR(&mp_module_socket) },
-#else
-#define MICROPY_PY_SOCKET_DEF
-#endif
-#if MICROPY_PY_USELECT_POSIX
-#define MICROPY_PY_USELECT_DEF { MP_ROM_QSTR(MP_QSTR_uselect), MP_ROM_PTR(&mp_module_uselect) },
-#else
-#define MICROPY_PY_USELECT_DEF
-#endif
-
-#define MICROPY_PORT_BUILTIN_MODULES \
-    PYBRICKS_PORT_BUILTIN_MODULES \
-    MICROPY_PY_FFI_DEF \
-    MICROPY_PY_JNI_DEF \
-    MICROPY_PY_UTIME_DEF \
-    MICROPY_PY_SOCKET_DEF \
-    { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
-    MICROPY_PY_UOS_DEF \
-    MICROPY_PY_USELECT_DEF \
-    MICROPY_PY_TERMIOS_DEF \
-    { MP_ROM_QSTR(MP_QSTR_ufcntl), MP_ROM_PTR(&mp_module_ufcntl) }, \
-    { MP_ROM_QSTR(MP_QSTR_ummap), MP_ROM_PTR(&mp_module_ummap) }, \
 
 // type definitions for the specific machine
 
@@ -354,6 +310,17 @@ void mp_unix_mark_exec(void);
 #define MICROPY_FORCE_PLAT_ALLOC_EXEC (1)
 #endif
 
+#ifdef MICROPY_PY_URANDOM_SEED_INIT_FUNC
+// Support for seeding the random module on import.
+#include <stddef.h>
+void mp_hal_get_random(size_t n, void *buf);
+static inline unsigned long mp_urandom_seed_init(void) {
+    unsigned long r;
+    mp_hal_get_random(sizeof(r), &r);
+    return r;
+}
+#endif
+
 #ifdef __linux__
 // Can access physical memory using /dev/mem
 #define MICROPY_PLAT_DEV_MEM  (1)
@@ -372,14 +339,25 @@ void mp_unix_mark_exec(void);
 #endif
 #endif
 
+#define MICROPY_PORT_INIT_FUNC pybricks_init()
+#define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
+#define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
+
 #define MICROPY_PORT_BUILTINS \
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
 
 #define MP_STATE_PORT MP_STATE_VM
 
-#if MICROPY_PY_BLUETOOTH && MICROPY_BLUETOOTH_BTSTACK
+#if MICROPY_PY_BLUETOOTH
+#if MICROPY_BLUETOOTH_BTSTACK
 struct _mp_bluetooth_btstack_root_pointers_t;
 #define MICROPY_BLUETOOTH_ROOT_POINTERS struct _mp_bluetooth_btstack_root_pointers_t *bluetooth_btstack_root_pointers;
+#endif
+#if MICROPY_BLUETOOTH_NIMBLE
+struct _mp_bluetooth_nimble_root_pointers_t;
+struct _mp_bluetooth_nimble_malloc_t;
+#define MICROPY_BLUETOOTH_ROOT_POINTERS struct _mp_bluetooth_nimble_malloc_t *bluetooth_nimble_memory; struct _mp_bluetooth_nimble_root_pointers_t *bluetooth_nimble_root_pointers;
+#endif
 #else
 #define MICROPY_BLUETOOTH_ROOT_POINTERS
 #endif
@@ -420,7 +398,7 @@ struct _mp_bluetooth_btstack_root_pointers_t;
 #endif
 
 #if MICROPY_PY_THREAD
-#define MICROPY_BEGIN_ATOMIC_SECTION() (mp_thread_unix_begin_atomic_section(), 0)
+#define MICROPY_BEGIN_ATOMIC_SECTION() (mp_thread_unix_begin_atomic_section(), 0xffffffff)
 #define MICROPY_END_ATOMIC_SECTION(x) (void)x; mp_thread_unix_end_atomic_section()
 #endif
 

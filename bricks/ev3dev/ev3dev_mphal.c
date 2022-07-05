@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -156,4 +157,15 @@ void mp_hal_delay_ms(mp_uint_t ms) {
         assert(ret == 0);
         break;
     }
+}
+
+void mp_hal_get_random(size_t n, void *buf) {
+    #ifdef _HAVE_GETRANDOM
+    RAISE_ERRNO(getrandom(buf, n, 0), errno);
+    #else
+    int fd = open("/dev/urandom", O_RDONLY);
+    RAISE_ERRNO(fd, errno);
+    RAISE_ERRNO(read(fd, buf, n), errno);
+    close(fd);
+    #endif
 }

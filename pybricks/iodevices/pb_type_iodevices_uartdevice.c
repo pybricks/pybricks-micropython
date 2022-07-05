@@ -175,8 +175,8 @@ STATIC const mp_rom_map_elem_t iodevices_UARTDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),  MP_ROM_PTR(&iodevices_UARTDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_read_all),  MP_ROM_PTR(&iodevices_UARTDevice_read_all_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),  MP_ROM_PTR(&iodevices_UARTDevice_write_obj) },
-    { MP_ROM_QSTR(MP_QSTR_waiting),MP_ROM_PTR(&iodevices_UARTDevice_waiting_obj) },
-    { MP_ROM_QSTR(MP_QSTR_clear),MP_ROM_PTR(&iodevices_UARTDevice_clear_obj) },
+    { MP_ROM_QSTR(MP_QSTR_waiting), MP_ROM_PTR(&iodevices_UARTDevice_waiting_obj) },
+    { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&iodevices_UARTDevice_clear_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_UARTDevice_locals_dict, iodevices_UARTDevice_locals_dict_table);
 

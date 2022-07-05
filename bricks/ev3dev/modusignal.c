@@ -57,4 +57,6 @@ const mp_obj_module_t pb_module_usignal = {
     .globals = (mp_obj_dict_t *)&pb_module_usignal_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_usignal, pb_module_usignal);
+
 #endif // PYBRICKS_PY_USIGNAL

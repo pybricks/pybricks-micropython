@@ -161,9 +161,6 @@ CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 
 MPY_CROSS = ../../micropython/mpy-cross/mpy-cross
-# TODO: probably only need no-unicode on movehub
-MPY_CROSS_FLAGS += -mno-unicode
-
 
 LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 

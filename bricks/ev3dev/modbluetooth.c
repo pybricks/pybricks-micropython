@@ -77,3 +77,5 @@ const mp_obj_module_t pb_module_bluetooth = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&ev3dev_bluetooth_globals,
 };
+
+MP_REGISTER_MODULE(MP_QSTR_bluetooth_c, pb_module_bluetooth);

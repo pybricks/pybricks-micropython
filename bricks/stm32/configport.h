@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <stdint.h>
 #include <pbdrv/config.h>
 
 // options to control how MicroPython is built
+
+#define MICROPY_BANNER_NAME_AND_VERSION "Pybricks MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
 
 #define MICROPY_ENABLE_COMPILER     (PYBRICKS_STM32_OPT_COMPILER)
 
@@ -116,26 +119,6 @@ typedef int mp_int_t; // must be pointer size
 typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
-
-// Pybricks modules
-
-extern const struct _mp_obj_module_t pb_package_pybricks;
-#define _PYBRICKS_PACKAGE_PYBRICKS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
-
-// HACK: math is one of the few MicroPython modules that doesn't start with "u"
-// so we add an alias for it until it is fixed upstream
-#if MICROPY_PY_MATH
-#define _UMATH_MODULE \
-    { MP_ROM_QSTR(MP_QSTR_umath), MP_ROM_PTR(&mp_module_math) },
-#else
-#define _UMATH_MODULE
-#endif
-
-#define MICROPY_PORT_BUILTIN_MODULES \
-    _UMATH_MODULE                   \
-    _PYBRICKS_PACKAGE_PYBRICKS      \
-
 
 // We have inlined IRQ functions for efficiency (they are generally
 // 1 machine instruction).

@@ -205,11 +205,9 @@ SRC_C += $(addprefix ports/unix/,\
 	input.c \
 	main.c \
 	modmachine.c \
-	modos.c \
 	modtime.c \
 	modufcntl.c \
 	modummap.c \
-	moduos_vfs.c \
 	moduselect.c \
 	mpthreadport.c \
 	)

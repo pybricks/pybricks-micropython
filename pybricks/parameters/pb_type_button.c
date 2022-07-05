@@ -120,7 +120,7 @@ STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RIGHT_UP),   MP_ROM_PTR(&pb_Button_RIGHT_UP_obj)  },
     { MP_ROM_QSTR(MP_QSTR_RIGHT_PLUS), MP_ROM_PTR(&pb_Button_RIGHT_PLUS_obj)},
     { MP_ROM_QSTR(MP_QSTR_RIGHT_DOWN), MP_ROM_PTR(&pb_Button_RIGHT_DOWN_obj)},
-    { MP_ROM_QSTR(MP_QSTR_RIGHT_MINUS),MP_ROM_PTR(&pb_Button_RIGHT_MINUS_obj)},
+    { MP_ROM_QSTR(MP_QSTR_RIGHT_MINUS), MP_ROM_PTR(&pb_Button_RIGHT_MINUS_obj)},
     { MP_ROM_QSTR(MP_QSTR_BEACON),     MP_ROM_PTR(&pb_Button_BEACON_obj)    },
     { MP_ROM_QSTR(MP_QSTR_BLUETOOTH),  MP_ROM_PTR(&pb_Button_BLUETOOTH_obj) },
 };

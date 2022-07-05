@@ -3,4 +3,4 @@
 
 """Pybricks robotics module."""
 
-from _pybricks.robotics import DriveBase
+from pybricks_c.robotics import DriveBase

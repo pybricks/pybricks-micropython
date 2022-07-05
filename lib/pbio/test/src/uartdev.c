@@ -23,8 +23,8 @@
 
 // TODO: submit this upstream
 #ifndef tt_want_float_op
-#define tt_want_float_op(a,op,b) \
-    tt_assert_test_type(a,b,#a " "#op " "#b,float,(val1_ op val2_),"%f",(void)0)
+#define tt_want_float_op(a, op, b) \
+    tt_assert_test_type(a, b,#a " "#op " "#b, float, (val1_ op val2_), "%f", (void)0)
 #endif
 
 static struct {

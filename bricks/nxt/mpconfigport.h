@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-
+#define MICROPY_BANNER_NAME_AND_VERSION "Pybricks MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
 #define MICROPY_HW_BOARD_NAME           "LEGO MINDSTORMS NXT Brick"
 #define MICROPY_HW_MCU_NAME             "AT91SAM7S256"
 
@@ -119,13 +119,6 @@ typedef int mp_int_t; // must be pointer size
 typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
-
-extern const struct _mp_obj_module_t pb_package_pybricks;
-#define _PYBRICKS_PACKAGE_PYBRICKS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
-
-#define MICROPY_PORT_BUILTIN_MODULES \
-    _PYBRICKS_PACKAGE_PYBRICKS      \
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>

@@ -138,8 +138,8 @@ static void Get_SerialNum(void) {
     deviceserial0 += deviceserial2;
 
     if (deviceserial0 != 0) {
-        IntToUnicode(deviceserial0, &USBD_StringSerial[2],8);
-        IntToUnicode(deviceserial1, &USBD_StringSerial[18],4);
+        IntToUnicode(deviceserial0, &USBD_StringSerial[2], 8);
+        IntToUnicode(deviceserial1, &USBD_StringSerial[18], 4);
     }
 }
 

@@ -38,22 +38,3 @@
 #define PYBRICKS_PY_ROBOTICS            (1)
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_USIGNAL             (1)
-
-#define MICROPY_PORT_INIT_FUNC pybricks_init()
-#define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
-#define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
-#define MICROPY_PY_SYS_PATH_DEFAULT (".frozen:~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
-
-extern const struct _mp_obj_module_t pb_package_pybricks;
-#define _PYBRICKS_PACKAGE_PYBRICKS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR__pybricks), (mp_obj_t)&pb_package_pybricks },
-
-extern const struct _mp_obj_module_t pb_module_bluetooth;
-extern const struct _mp_obj_module_t pb_module_media_ev3dev;
-extern const struct _mp_obj_module_t pb_module_usignal;
-
-#define PYBRICKS_PORT_BUILTIN_MODULES \
-    _PYBRICKS_PACKAGE_PYBRICKS        \
-    { MP_ROM_QSTR(MP_QSTR_bluetooth_c),     MP_ROM_PTR(&pb_module_bluetooth)        }, \
-    { MP_ROM_QSTR(MP_QSTR_media_ev3dev_c),  MP_ROM_PTR(&pb_module_media_ev3dev)     }, \
-    { MP_ROM_QSTR(MP_QSTR_usignal),         MP_ROM_PTR(&pb_module_usignal)          },

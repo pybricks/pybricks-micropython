@@ -26,8 +26,7 @@
 
 // options to control how MicroPython is built
 
-// NXT:
-// #define PATH_MAX        4096
+#define MICROPY_BANNER_NAME_AND_VERSION "Pybricks MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
 
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
 #define MICROPY_ENABLE_GC           (1)

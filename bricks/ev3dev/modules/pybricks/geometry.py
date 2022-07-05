@@ -1,1 +1,1 @@
-from _pybricks.geometry import Matrix, vector
+from pybricks_c.geometry import Matrix, vector

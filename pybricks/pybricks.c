@@ -92,6 +92,13 @@ const mp_obj_module_t pb_package_pybricks = {
     .globals = (mp_obj_dict_t *)&pb_package_pybricks_globals,
 };
 
+#if PYBRICKS_HUB_EV3BRICK
+// ev3dev extends the C module in Python
+MP_REGISTER_MODULE(MP_QSTR_pybricks_c, pb_package_pybricks);
+#else
+MP_REGISTER_MODULE(MP_QSTR_pybricks, pb_package_pybricks);
+#endif
+
 /**
  * Import all pybricks.* modules.
  *

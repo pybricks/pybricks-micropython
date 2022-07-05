@@ -69,11 +69,6 @@
         pb_virtualhub_port_deinit(); \
 } while (0)
 
-extern const struct _mp_obj_module_t pb_package_pybricks;
-
-#define MICROPY_VARIANT_BUILTIN_MODULES \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
-
 #define MICROPY_VARIANT_ROOT_POINTERS \
     mp_obj_dict_t *pb_type_Color_dict;
 
