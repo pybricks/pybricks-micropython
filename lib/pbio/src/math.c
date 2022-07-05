@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <pbio/util.h>
+
 /**
  * Gets the absolute value.
  *
@@ -86,4 +88,67 @@ int32_t pbio_math_sqrt(int32_t n) {
         }
         x0 = x1;
     }
+}
+
+// Ratios a/b, upscaled by 1024.
+static int32_t px[] = {0, 768, 1638, 3072, 7168, 15360};
+
+// Matching atan(a/b) outputs in eighth's of degrees.
+static int32_t py[] = {0, 307, 472, 586, 660, 710};
+
+// Gets the angle in the first quadrant in eighth's of degrees.
+static int32_t pbio_math_atan2_positive(int32_t y, int32_t x) {
+
+    // Get absolute ratio, upscaled to preserve resolution.
+    int32_t ratio = 1024 * y / x;
+    if (ratio < 0) {
+        ratio = -ratio;
+    }
+
+    // Find nearest match and interpolate.
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(px) - 1; i++) {
+        if (ratio < px[i + 1]) {
+            return py[i] + (ratio - px[i]) * (py[i + 1] - py[i]) / (px[i + 1] - px[i]);
+        }
+    }
+
+    // Not found, so return maximum.
+    return py[PBIO_ARRAY_SIZE(py) - 1];
+}
+
+/**
+ * Gets atan2 in degrees from integer inputs.
+ *
+ * @param [in]  y  Opposite side of the triangle.
+ * @param [in]  x  Adjacent side of the triangle.
+ * @return         atan2(y, x) in degrees.
+ */
+int32_t pbio_math_atan2(int32_t y, int32_t x) {
+
+    // On y zero, the triangle is flat. Use X to find sign.
+    if (y == 0) {
+        return x > 0 ? 0 : -180;
+    }
+
+    // On x zero, the triangle height tends to inifinity. Use y for sign.
+    if (x == 0) {
+        return 90 * pbio_math_sign(y);
+    }
+
+    // Get result for absolute ratio and scale to whole degrees.
+    int32_t atan = pbio_math_atan2_positive(y, x) / 8;
+
+    // We took the absolute ratio, but must now account for sign.
+    // So, negate if x and y had opposite sign.
+    if ((x > 0) != (y > 0)) {
+        atan = -atan;
+    }
+
+    // For small angles, we're done.
+    if (x > 0) {
+        return atan;
+    }
+
+    // Get atan2 result for larger angles.
+    return atan > 0 ? atan - 180 : atan + 180;
 }
