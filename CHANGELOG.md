@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0b2]
+
 ### Added
 - Added `Motor.stalled()`. It can detect stall during speed and position
   control (`run`, `run_angle`, ...) just like `Motor.control.stalled()`, but
@@ -271,7 +273,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...HEAD
+[3.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...v3.2.0b2
 [3.2.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0...v3.2.0b1
 [3.1.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.1.0
 [3.1.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0c1
