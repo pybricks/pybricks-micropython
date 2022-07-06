@@ -1,6 +1,6 @@
 {
     "name": "@pybricks/mpy-cross-v6",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "MicroPython mpy-cross tool (ABI v6) compiled to WebAssembly",
     "main": "./build/index.js",
     "types": "./build/index.d.ts",

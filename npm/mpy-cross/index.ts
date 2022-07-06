@@ -1,5 +1,5 @@
 // @ts-ignore: no typing
-import UntypedMpyCross from './mpy-cross';
+import UntypedMpyCross from './mpy-cross-v6';
 
 interface MpyCrossModule extends EmscriptenModule {
     (moduleOverrides?: {
@@ -9,7 +9,7 @@ interface MpyCrossModule extends EmscriptenModule {
             status: number,
             mpy: Uint8Array | undefined,
             out: string[],
-            err: string[],
+            err: string[]
         ) => void;
         locateFile(path: string, scriptDirectory: string): string;
     }): this;
@@ -42,7 +42,7 @@ export interface CompileResult {
  * @param fileContents The contents of the .py file to be compile.
  * @param fileName The name of the .py file (including file extension).
  * @param options Command line arguments for mpy-cross.
- * @param wasmPath Path to location of `mpy-cross.wasm`.
+ * @param wasmPath Path to location of `mpy-cross-v6.wasm`.
  */
 export function compile(
     fileName: string,
@@ -62,7 +62,10 @@ export function compile(
                 callback: (status, mpy, out, err) =>
                     resolve({ status, mpy, out, err }),
                 locateFile: (path, scriptDirectory) => {
-                    if (path === 'mpy-cross.wasm' && wasmPath !== undefined) {
+                    if (
+                        path === 'mpy-cross-v6.wasm' &&
+                        wasmPath !== undefined
+                    ) {
                         return wasmPath;
                     }
                     return scriptDirectory + path;

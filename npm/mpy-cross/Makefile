@@ -137,10 +137,10 @@ endif
 COPT += -s MODULARIZE=1 -s EXPORT_NAME=MpyCross -s EXIT_RUNTIME=1
 
 
-all: $(BUILD)/mpy-cross.js
+all: $(BUILD)/mpy-cross-v6.js
 
 # Compile mpy-cross to web assembly using Emscripten
-$(BUILD)/mpy-cross.js: $(SRC) mpy-cross.pre.js $(MPY_CROSS_BUILD)
+$(BUILD)/mpy-cross-v6.js: $(SRC) mpy-cross.pre.js $(MPY_CROSS_BUILD)
 	mkdir -p $(dir $@)
 	emcc $(COPT) $(INC) --pre-js mpy-cross.pre.js $(SRC) -o $@
 
