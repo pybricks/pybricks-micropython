@@ -326,7 +326,7 @@ restart:
             mp_module_context_t *context = m_new_obj(mp_module_context_t);
             context->module.globals = mp_globals_get();
             mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
-            mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, MP_OBJ_NULL, MP_OBJ_NULL);
+            mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, MP_OBJ_NULL);
             mp_hal_set_interrupt_char(CHAR_CTRL_C); // allow ctrl-C to interrupt us
             mp_call_function_0(module_fun);
             mp_hal_set_interrupt_char(-1); // disable interrupt
