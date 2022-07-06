@@ -4,7 +4,7 @@
 
 ## [Unreleased]
 
-## [3.2.0b2]
+## [3.2.0b2] - 2022-07-06
 
 ### Added
 - Added `Motor.stalled()`. It can detect stall during speed and position
@@ -36,7 +36,7 @@
 [support#665]: https://github.com/pybricks/support/issues/665
 [support#674]: https://github.com/pybricks/support/issues/674
 
-## [3.2.0b1]
+## [3.2.0b1] - 2022-06-03
 
 ### Added
 - Added `Stop.NONE` as `then` option for motors. This allows subsequent
