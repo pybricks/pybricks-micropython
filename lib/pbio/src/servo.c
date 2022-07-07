@@ -105,12 +105,12 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     // Log servo state.
     int32_t log_data[] = {
         time_now,
-        pbio_control_position_ctl_to_app_long(&srv->control.settings, &state.position),
+        pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position),
         0,
         applied_actuation,
         voltage,
-        pbio_control_position_ctl_to_app_long(&srv->control.settings, &state.position_estimate),
-        pbio_control_position_ctl_to_app(&srv->control.settings, state.speed_estimate),
+        pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position_estimate),
+        pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate),
         feedback_torque,
         feedforward_torque
     };
@@ -273,7 +273,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
     // Get new angle in state units.
     pbio_angle_t new_angle;
-    pbio_control_position_app_to_ctl_long(&srv->control.settings, reset_angle, &new_angle);
+    pbio_control_settings_app_to_ctl_long(&srv->control.settings, reset_angle, &new_angle);
 
     // Reset the tacho to the new angle.
     err = pbio_tacho_reset_angle(srv->tacho, &new_angle, reset_to_abs);
@@ -345,8 +345,8 @@ pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_
     }
 
     // Scale by gear ratio to whole degrees.
-    *angle = pbio_control_position_ctl_to_app_long(&srv->control.settings, &state.position);
-    *speed = pbio_control_position_ctl_to_app(&srv->control.settings, state.speed_estimate);
+    *angle = pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position);
+    *speed = pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate);
     return PBIO_SUCCESS;
 }
 

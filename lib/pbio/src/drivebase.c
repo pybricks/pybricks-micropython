@@ -446,10 +446,10 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance = pbio_control_position_ctl_to_app_long(&db->control_distance.settings, &state_distance.position);
-    *drive_speed = pbio_control_position_ctl_to_app(&db->control_distance.settings, state_distance.speed_estimate);
-    *angle = pbio_control_position_ctl_to_app_long(&db->control_heading.settings, &state_heading.position);
-    *turn_rate = pbio_control_position_ctl_to_app(&db->control_heading.settings, state_heading.speed_estimate);
+    *distance = pbio_control_settings_ctl_to_app_long(&db->control_distance.settings, &state_distance.position);
+    *drive_speed = pbio_control_settings_ctl_to_app(&db->control_distance.settings, state_distance.speed_estimate);
+    *angle = pbio_control_settings_ctl_to_app_long(&db->control_heading.settings, &state_heading.position);
+    *turn_rate = pbio_control_settings_ctl_to_app(&db->control_heading.settings, state_heading.speed_estimate);
     return PBIO_SUCCESS;
 }
 
@@ -458,12 +458,12 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    *drive_speed = pbio_control_position_ctl_to_app(sd, sd->speed_default);
-    *drive_acceleration = pbio_control_position_ctl_to_app(sd, sd->acceleration);
-    *drive_deceleration = pbio_control_position_ctl_to_app(sd, sd->deceleration);
-    *turn_rate = pbio_control_position_ctl_to_app(sh, sh->speed_default);
-    *turn_acceleration = pbio_control_position_ctl_to_app(sh, sh->acceleration);
-    *turn_deceleration = pbio_control_position_ctl_to_app(sh, sh->deceleration);
+    *drive_speed = pbio_control_settings_ctl_to_app(sd, sd->speed_default);
+    *drive_acceleration = pbio_control_settings_ctl_to_app(sd, sd->acceleration);
+    *drive_deceleration = pbio_control_settings_ctl_to_app(sd, sd->deceleration);
+    *turn_rate = pbio_control_settings_ctl_to_app(sh, sh->speed_default);
+    *turn_acceleration = pbio_control_settings_ctl_to_app(sh, sh->acceleration);
+    *turn_deceleration = pbio_control_settings_ctl_to_app(sh, sh->deceleration);
 
     return PBIO_SUCCESS;
 }
@@ -473,12 +473,12 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    sd->speed_default = pbio_math_clamp(pbio_control_position_app_to_ctl(sd, drive_speed), sd->speed_max);
-    sd->acceleration = pbio_control_position_app_to_ctl(sd, drive_acceleration);
-    sd->deceleration = pbio_control_position_app_to_ctl(sd, drive_deceleration);
-    sh->speed_default = pbio_math_clamp(pbio_control_position_app_to_ctl(sh, turn_rate), sh->speed_max);
-    sh->acceleration = pbio_control_position_app_to_ctl(sh, turn_acceleration);
-    sh->deceleration = pbio_control_position_app_to_ctl(sh, turn_deceleration);
+    sd->speed_default = pbio_math_clamp(pbio_control_settings_app_to_ctl(sd, drive_speed), sd->speed_max);
+    sd->acceleration = pbio_control_settings_app_to_ctl(sd, drive_acceleration);
+    sd->deceleration = pbio_control_settings_app_to_ctl(sd, drive_deceleration);
+    sh->speed_default = pbio_math_clamp(pbio_control_settings_app_to_ctl(sh, turn_rate), sh->speed_max);
+    sh->acceleration = pbio_control_settings_app_to_ctl(sh, turn_acceleration);
+    sh->deceleration = pbio_control_settings_app_to_ctl(sh, turn_deceleration);
 
     return PBIO_SUCCESS;
 }

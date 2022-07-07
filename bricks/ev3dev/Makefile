@@ -320,6 +320,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/src/battery.c \
 	pbio/src/color/conversion.c \
 	pbio/src/control.c \
+	pbio/src/control_settings.c \
 	pbio/src/dcmotor.c \
 	pbio/src/drivebase.c \
 	pbio/src/error.c \
