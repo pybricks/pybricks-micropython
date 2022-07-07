@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * @addtogroup LightMatrix Light matrix functions
+ * @addtogroup LightMatrix pbio: Light matrix functions
  * @{
  */
 

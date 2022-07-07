@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+/**
+ * @addtogroup Control pbio: PID-like control
+ *
+ * Provides application-agnostic controllers for fully-actuated mechanical systems.
+ * @{
+ */
+
 #ifndef _PBIO_CONTROL_H_
 #define _PBIO_CONTROL_H_
 
@@ -155,3 +162,5 @@ pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint3
 pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t speed, pbio_control_on_completion_t on_completion);
 
 #endif // _PBIO_CONTROL_H_
+
+/** @} */

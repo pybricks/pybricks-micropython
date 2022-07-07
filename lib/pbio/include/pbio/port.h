@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2021 The Pybricks Authors
 
+/**
+ * @addtogroup Port pbio: I/O port identifiers
+ * @{
+ */
+
 #ifndef _PBIO_PORT_H_
 #define _PBIO_PORT_H_
 
@@ -10,10 +15,6 @@
 #include <pbdrv/config.h>
 #include <pbio/error.h>
 
-/**
- * @addtogroup Port I/O ports
- * @{
- */
 
 /**
  * I/O port identifier. The meaning and availability of a port is device-specific.
@@ -51,6 +52,6 @@ typedef enum {
     #endif
 } pbio_port_id_t;
 
-/** @} */
-
 #endif // _PBIO_PORT_H_
+
+/** @} */

@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Iodev pbio: Input and output devices
+ *
+ * Type and mode information for LEGO Powered Up devices.
+ * @{
+ */
 
 #ifndef _PBIO_IODEV_H_
 #define _PBIO_IODEV_H_
@@ -595,3 +602,5 @@ pbio_error_t pbio_iodev_write_end(pbio_iodev_t *iodev);
 void pbio_iodev_write_cancel(pbio_iodev_t *iodev);
 
 #endif // _PBIO_IODEV_H_
+
+/** @} */

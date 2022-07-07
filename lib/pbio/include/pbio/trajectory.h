@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Trajectory pbio: Compute and poll motor trajectories
+ *
+ * Generate and read trajectories with given speed, acceleration, and endpoint.
+ * @{
+ */
 
 #ifndef _PBIO_TRAJECTORY_H_
 #define _PBIO_TRAJECTORY_H_
@@ -107,3 +114,5 @@ void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_refere
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 
 #endif // _PBIO_TRAJECTORY_H_
+
+/** @} */

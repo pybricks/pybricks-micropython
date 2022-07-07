@@ -10,6 +10,13 @@
 #include <pbio/error.h>
 
 /**
+ * @addtogroup ControlSettings pbio: Control settings
+ *
+ * Provides getters, setters, and scalers for control settings.
+ * @{
+ */
+
+/**
  * Control settings.
  */
 typedef struct _pbio_control_settings_t {
@@ -128,3 +135,5 @@ void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s,  int
 pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t *s, int32_t speed, uint32_t time);
 
 #endif // _PBIO_CONTROL_SETTINGS_H_
+
+/** @} */

@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Logger pbio: Logging control loop data
+ *
+ * Log servo and control data to analyze and debug motor performance.
+ * @{
+ */
 
 #ifndef _PBIO_LOGGER_H_
 #define _PBIO_LOGGER_H_
@@ -59,3 +66,5 @@ static inline void pbio_logger_stop(pbio_log_t *log) {
 #endif // PBIO_CONFIG_LOGGER
 
 #endif // _PBIO_LOGGER_H_
+
+/** @} */

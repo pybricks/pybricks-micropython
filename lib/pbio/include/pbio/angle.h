@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2022 The Pybricks Authors
 
+/**
+ * @addtogroup Angle pbio: Long high resolution position type
+ *
+ * Type definition and math operations for long position type.
+ * @{
+ */
+
 #ifndef _PBIO_ANGLE_H_
 #define _PBIO_ANGLE_H_
 
@@ -39,3 +46,5 @@ int32_t pbio_angle_diff_mdeg(pbio_angle_t *a, pbio_angle_t *b);
 bool pbio_angle_diff_is_small(pbio_angle_t *a, pbio_angle_t *b);
 
 #endif // _PBIO_ANGLE_H_
+
+/** @} */

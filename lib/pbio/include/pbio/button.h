@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2021 The Pybricks Authors
 
 /**
- * @addtogroup Button Brick and Remote Control Buttons
+ * @addtogroup Button pbio: Brick and Remote Control Buttons
  *
  * Provides functions to test when a button is pressed.
  * @{

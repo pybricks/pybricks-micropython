@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+/**
+ * @addtogroup Parent pbio: Hierarchical motor resource management
+ *
+ * Safely manages motor resources used by multiple higher-level objects.
+ * @{
+ */
+
 #ifndef _PBIO_PARENT_H_
 #define _PBIO_PARENT_H_
 
@@ -25,3 +32,5 @@ bool pbio_parent_equals(pbio_parent_t *parent, void *candidate_object);
 pbio_error_t pbio_parent_stop(pbio_parent_t *self, bool clear_parent);
 
 #endif // _PBIO_PARENT_H_
+
+/** @} */

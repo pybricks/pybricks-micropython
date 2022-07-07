@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Tacho pbio: Rotation sensor interface
+ *
+ * Extends a rotation sensor with a configurable positive direction and zero point.
+ * @{
+ */
 
 #ifndef _PBIO_TACHO_H_
 #define _PBIO_TACHO_H_
@@ -42,3 +49,5 @@ static inline pbio_tacho_reset_angle(pbio_tacho_t * tacho, pbio_angle_t * reset_
 #endif // PBIO_CONFIG_TACHO
 
 #endif // _PBIO_TACHO_H_
+
+/** @} */

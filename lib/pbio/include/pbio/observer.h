@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Observer pbio: Servo state observer
+ *
+ * Luenberger state observer implementation to estimate motor speed.
+ * @{
+ */
 
 #ifndef _PBIO_OBSERVER_H_
 #define _PBIO_OBSERVER_H_
@@ -86,3 +93,5 @@ int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int3
 int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage);
 
 #endif // _PBIO_OBSERVER_H_
+
+/** @} */

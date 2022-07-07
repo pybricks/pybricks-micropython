@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+/**
+ * @addtogroup DCMotor pbio: DC Motor
+ *
+ * Interface for basic interaction with an encoderless brushed DC Motor.
+ * @{
+ */
+
 #ifndef _PBIO_DCMOTOR_H_
 #define _PBIO_DCMOTOR_H_
 
@@ -102,3 +109,5 @@ static inline pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bo
 #endif // PBIO_CONFIG_DCMOTOR
 
 #endif // _PBIO_DCMOTOR_H_
+
+/** @} */

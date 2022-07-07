@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+/**
+ * @addtogroup Integrator pbio: Integration of speed and angle signals
+ *
+ * Numeric and exact integration tools used by PID controllers.
+ * @{
+ */
+
 #ifndef _PBIO_INTEGRATOR_H_
 #define _PBIO_INTEGRATOR_H_
 
@@ -50,3 +57,5 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
 bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref);
 
 #endif // _PBIO_INTEGRATOR_H_
+
+/** @} */

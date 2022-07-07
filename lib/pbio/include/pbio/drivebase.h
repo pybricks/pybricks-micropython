@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Drivebase pbio: Drivebase motion control
+ *
+ * Precision driving and steering using odometry.
+ * @{
+ */
 
 #ifndef _PBIO_DRIVEBASE_H_
 #define _PBIO_DRIVEBASE_H_
@@ -61,3 +68,5 @@ pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steeri
 #endif // PBIO_CONFIG_NUM_DRIVEBASES > 0
 
 #endif // _PBIO_DRIVEBASE_H_
+
+/** @} */

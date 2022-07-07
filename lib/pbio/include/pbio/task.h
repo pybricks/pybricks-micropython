@@ -2,7 +2,7 @@
 // Copyright (c) 2021 The Pybricks Authors
 
 /**
- * @addtogroup Task Tasks
+ * @addtogroup Task pbio: Tasks
  *
  * Framework for scheduling asynchronous tasks.
  *

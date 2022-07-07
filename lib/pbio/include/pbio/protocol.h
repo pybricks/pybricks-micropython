@@ -2,7 +2,7 @@
 // Copyright (c) 2021 The Pybricks Authors
 
 /**
- * @addtogroup ProtocolPybricks Protocol: Pybricks Communication Protocol
+ * @addtogroup ProtocolPybricks pbio: Pybricks Communication Protocol
  * @{
  */
 

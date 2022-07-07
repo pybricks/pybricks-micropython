@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
+
+/**
+ * @addtogroup Math pbio: Integer math utilities
+ *
+ * Integer math utilities used by the pbio library.
+ * @{
+ */
 
 #ifndef _PBIO_MATH_H_
 #define _PBIO_MATH_H_
@@ -12,3 +19,5 @@ int32_t pbio_math_sign(int32_t a);
 int32_t pbio_math_sqrt(int32_t n);
 
 #endif // _PBIO_MATH_H_
+
+/** @} */

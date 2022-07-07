@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2022 The Pybricks Authors
 
 /**
- * @addtogroup Utility Utility Functions
+ * @addtogroup Utility pbio: Utility Functions
  *
  * Miscellaneous helper functions.
  *
