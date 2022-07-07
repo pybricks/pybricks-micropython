@@ -199,7 +199,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
 
     // Reset both motors to a passive state
     pbio_drivebase_stop_servo_control(db);
-    pbio_error_t err = pbio_drivebase_stop(db, PBIO_DCMOTOR_ACTUATION_COAST);
+    pbio_error_t err = pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -221,28 +221,32 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_dcmotor_actuation_t actuation) {
+pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Only coast and brake are allowed.
-    if (actuation != PBIO_DCMOTOR_ACTUATION_COAST &&
-        actuation != PBIO_DCMOTOR_ACTUATION_BRAKE) {
+    // We're asked to stop, so continuing makes no sense.
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
         return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Holding is the same as traveling by 0 degrees.
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
+        return pbio_drivebase_drive_straight(db, 0, on_completion);
     }
 
     // Stop control.
     pbio_drivebase_stop_drivebase_control(db);
 
-    // Apply the actuation to both motors.
-    pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
+    // Stop the servos and pass on requested stop type.
+    pbio_error_t err = pbio_servo_stop(db->left, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    return pbio_servo_actuate(db->right, actuation, 0);
+    return pbio_servo_stop(db->right, on_completion);
 }
 
 bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {
@@ -278,12 +282,12 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // If either controller coasts, coast both, thereby also stopping control.
     if (sum_actuation == PBIO_DCMOTOR_ACTUATION_COAST ||
         dif_actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
-        return pbio_drivebase_stop(db, PBIO_DCMOTOR_ACTUATION_COAST);
+        return pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
     }
     // If either controller brakes, brake both, thereby also stopping control.
     if (sum_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE ||
         dif_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE) {
-        return pbio_drivebase_stop(db, PBIO_DCMOTOR_ACTUATION_BRAKE);
+        return pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_BRAKE);
     }
 
     // Both controllers are able to stop the other when it stalls. This ensures

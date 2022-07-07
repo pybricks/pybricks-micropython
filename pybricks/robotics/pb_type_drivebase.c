@@ -177,7 +177,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 1, robotics_Driv
 // pybricks.robotics.DriveBase.stop
 STATIC mp_obj_t robotics_DriveBase_stop(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_drivebase_stop(self->db, PBIO_DCMOTOR_ACTUATION_COAST));
+    pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_stop_obj, robotics_DriveBase_stop);
