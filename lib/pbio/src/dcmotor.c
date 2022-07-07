@@ -108,7 +108,7 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
     if ((*dcmotor)->motor_driver == NULL) {
         // since there is no dcmotor module init, we init the port here
         (*dcmotor)->port = port;
-        // REVISIT: this assumes that the motor driver id cooresponds to the port
+        // REVISIT: this assumes that the motor driver id corresponds to the port
         pbio_error_t err = pbdrv_motor_driver_get_dev(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &(*dcmotor)->motor_driver);
 
         if (err != PBIO_SUCCESS) {

@@ -717,7 +717,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     // FIXME: The pin1/pin2 power control should be implemented via a callback
     // to the port that the I/O device is attached to instead of poking the
     // motor driver directly. The current implementation is only valid on
-    // Powered Up platforms and it assumes that motor driver id cooresponds to
+    // Powered Up platforms and it assumes that motor driver id corresponds to
     // the port.
 
     #ifdef PBDRV_CONFIG_FIRST_MOTOR_PORT

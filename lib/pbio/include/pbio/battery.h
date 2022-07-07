@@ -17,7 +17,7 @@
 #include <pbio/error.h>
 
 /**
- * The value that cooresponds to 100% duty cycle.
+ * The value that corresponds to 100% duty cycle.
  */
 #define PBIO_BATTERY_MAX_DUTY 1000
 

@@ -196,7 +196,7 @@ void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty) {
     // FIXME: this should be a callback function on a port instance rather
     // than poking the motor driver directly. The current implementation
     // is only valid on Powered Up platforms and it assumes that motor driver
-    // id cooresponds to the port.
+    // id corresponds to the port.
 
     #ifdef PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT
     pbdrv_motor_driver_dev_t *motor_driver;

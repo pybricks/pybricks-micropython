@@ -522,7 +522,7 @@ typedef struct {
     uint8_t num_modes;
     /**
      * Bit flags indicating which combination of modes can be used at the same
-     * time. Each bit cooresponds to the mode of the same number (0 to 15).
+     * time. Each bit corresponds to the mode of the same number (0 to 15).
      */
     uint16_t mode_combos;
     /**

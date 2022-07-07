@@ -15,7 +15,7 @@
 #include <pbio/error.h>
 
 /**
- * The duty cycle value cooresponding to 100% duty cycle.
+ * The duty cycle value corresponding to 100% duty cycle.
  */
 #define PBDRV_MOTOR_DRIVER_MAX_DUTY 1000
 
