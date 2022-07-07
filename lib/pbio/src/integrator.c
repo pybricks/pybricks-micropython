@@ -28,7 +28,7 @@ void pbio_speed_integrator_pause(pbio_speed_integrator_t *itg, uint32_t time_now
     itg->time_pause_begin = time_now;
 }
 
-void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error) {
+void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, int32_t position_error) {
 
     // Resume only if paused
     if (itg->running) {
@@ -43,7 +43,10 @@ void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, uint32_t time_no
     itg->position_error_resumed = position_error;
 }
 
-void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error) {
+void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, pbio_control_settings_t *settings) {
+
+    // Save reference to settings.
+    itg->settings = settings;
 
     // Set integral to 0
     itg->speed_err_integral_paused = 0;
@@ -52,7 +55,7 @@ void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, uint32_t time_now
     itg->running = false;
 
     // Resume integration
-    pbio_speed_integrator_resume(itg, time_now, position_error);
+    pbio_speed_integrator_resume(itg, 0);
 }
 
 // Get reference errors and integrals
@@ -68,7 +71,7 @@ int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t po
     return speed_err_integral;
 }
 
-bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref, uint32_t time_stall, int32_t speed_stall) {
+bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
     // If were running, we're not stalled
     if (itg->running) {
         return false;
@@ -81,12 +84,12 @@ bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_n
     }
 
     // If we're still running faster than the stall limit, we're certainly not stalled.
-    if (speed_ref != 0 && speed_now > speed_stall) {
+    if (speed_ref != 0 && speed_now > itg->settings->stall_speed_limit) {
         return false;
     }
 
     // If the integrator is paused for less than the stall time, we're still not stalled for now.
-    if (time_now - itg->time_pause_begin < time_stall) {
+    if (time_now - itg->time_pause_begin < itg->settings->stall_time) {
         return false;
     }
 
@@ -130,7 +133,10 @@ void pbio_position_integrator_resume(pbio_position_integrator_t *itg, uint32_t t
     itg->time_paused_total += time_now - itg->time_pause_begin;
 }
 
-void pbio_position_integrator_reset(pbio_position_integrator_t *itg, uint32_t time_now) {
+void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_control_settings_t *settings, uint32_t time_now) {
+
+    // Save reference to settings.
+    itg->settings = settings;
 
     // Reset integrator state variables
     itg->count_err_integral = 0;
@@ -144,7 +150,15 @@ void pbio_position_integrator_reset(pbio_position_integrator_t *itg, uint32_t ti
 
 }
 
-int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, uint32_t time_now, int32_t position_error, int32_t position_remaining, int32_t integral_range, int32_t integral_max, int32_t integral_change_max) {
+int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t position_remaining) {
+
+    // Specify in which region integral control should be active. This is
+    // at least the error that would still lead to maximum  proportional
+    // control, with a factor of 2 so we begin integrating a bit sooner.
+    int32_t integral_range = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_kp) * 2;
+
+    // Get integral value that would lead to maximum actuation.
+    int32_t integral_max = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki);
 
     // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
     int32_t cerr = itg->count_err_prev;
@@ -157,8 +171,8 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, uint32_
 
         // If not deceasing, so growing, limit error growth by maximum integral rate
         if (!decrease) {
-            cerr = cerr > integral_change_max ?  integral_change_max : cerr;
-            cerr = cerr < -integral_change_max ? -integral_change_max : cerr;
+            cerr = cerr > itg->settings->integral_change_max ? itg->settings->integral_change_max : cerr;
+            cerr = cerr < -itg->settings->integral_change_max ? -itg->settings->integral_change_max : cerr;
 
             // It might be decreasing now after all (due to integral sign change), so re-evaluate
             decrease = abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < abs(itg->count_err_integral);
@@ -184,7 +198,11 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, uint32_
     return itg->count_err_integral;
 }
 
-bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref, uint32_t time_stall, int32_t speed_stall, int32_t integral_max) {
+bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
+
+    // Get integral value that would lead to maximum actuation.
+    int32_t integral_max = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki);
+
     // If we're running and the integrator is not saturated, we're not stalled
     if (itg->trajectory_running && abs(itg->count_err_integral) < integral_max) {
         return false;
@@ -197,12 +215,12 @@ bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t 
     }
 
     // If we're still running faster than the stall limit, we're certainly not stalled.
-    if (speed_ref != 0 && speed_now > speed_stall) {
+    if (speed_ref != 0 && speed_now > itg->settings->stall_speed_limit) {
         return false;
     }
 
     // If the integrator is paused for less than the stall time, we're still not stalled for now.
-    if (time_now - itg->time_pause_begin < time_stall) {
+    if (time_now - itg->time_pause_begin < itg->settings->stall_time) {
         return false;
     }
 

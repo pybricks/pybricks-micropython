@@ -96,14 +96,6 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     int32_t position_error = pbio_angle_diff_mdeg(&ref->position, &state->position);
     int32_t speed_error = ref->speed - state->speed_estimate;
 
-    // Specify in which region integral control should be active. This is
-    // at least the error that would still lead to maximum  proportional
-    // control, with a factor of 2 so we begin integrating a bit sooner.
-    int32_t integral_range = pbio_control_settings_div_by_gain(ctl->settings.actuation_max, ctl->settings.pid_kp) * 2;
-
-    // Get integral value that would lead to maximum actuation.
-    int32_t integral_max = pbio_control_settings_div_by_gain(ctl->settings.actuation_max, ctl->settings.pid_ki);
-
     // Calculate integral control errors, depending on control type.
     int32_t integral_error;
     int32_t position_error_used;
@@ -111,7 +103,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
 
         // Update count integral error and get current error state
         int32_t position_remaining = pbio_angle_diff_mdeg(&ref_end.position, &ref->position);
-        integral_error = pbio_position_integrator_update(&ctl->position_integrator, time_now, position_error, position_remaining, integral_range, integral_max, ctl->settings.integral_change_max);
+        integral_error = pbio_position_integrator_update(&ctl->position_integrator, position_error, position_remaining);
 
         // For position control, the proportional term is the real position error.
         position_error_used = position_error;
@@ -165,14 +157,14 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
             pbio_speed_integrator_pause(&ctl->speed_integrator, time_now, position_error);
         } else {
             // Not at the limit so continue integrating errors
-            pbio_speed_integrator_resume(&ctl->speed_integrator, time_now, position_error);
+            pbio_speed_integrator_resume(&ctl->speed_integrator, position_error);
         }
     }
 
     // Check if controller is stalled
     ctl->stalled = pbio_control_type_is_position(ctl) ?
-        pbio_position_integrator_stalled(&ctl->position_integrator, time_now, state->speed_estimate, ref->speed, ctl->settings.stall_time, ctl->settings.stall_speed_limit, integral_max) :
-        pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed_estimate, ref->speed, ctl->settings.stall_time, ctl->settings.stall_speed_limit);
+        pbio_position_integrator_stalled(&ctl->position_integrator, time_now, state->speed_estimate, ref->speed) :
+        pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed_estimate, ref->speed);
 
     // Check if we are on target
     ctl->on_target = pbio_control_check_completion(ctl, ref->time, state, &ref_end);
@@ -365,7 +357,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         pbio_trajectory_get_reference(&ctl->trajectory, time_now, &ref_new);
 
         // New angle maneuver, so reset the rate integrator
-        pbio_position_integrator_reset(&ctl->position_integrator, ref_new.time);
+        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, ref_new.time);
 
         // Reset load filter
         ctl->load = 0;
@@ -485,7 +477,7 @@ pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint3
     // If called for the first time, set state and reset PID
     if (!pbio_control_type_is_position(ctl)) {
         // Initialize or reset the PID control status for the given maneuver
-        pbio_position_integrator_reset(&ctl->position_integrator, time_now);
+        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
 
         // Reset load filter
         ctl->load = 0;
@@ -593,7 +585,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
     // Reset PD control if needed
     if (!pbio_control_type_is_time(ctl)) {
         // New maneuver, so reset the rate integrator
-        pbio_speed_integrator_reset(&ctl->speed_integrator, time_now, 0);
+        pbio_speed_integrator_reset(&ctl->speed_integrator, &ctl->settings);
 
         // Set the new control state
         ctl->type = PBIO_CONTROL_TIMED;
