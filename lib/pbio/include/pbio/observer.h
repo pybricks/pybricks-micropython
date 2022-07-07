@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include <pbio/control_settings.h>
 #include <pbio/dcmotor.h>
 #include <pbio/angle.h>
 
@@ -64,15 +65,19 @@ typedef struct _pbio_observer_t {
      * Model parameters used by this model.
      */
     const pbio_observer_model_t *model;
+    /**
+     * Control settings, which includes stall settings.
+     */
+    pbio_control_settings_t *settings;
 } pbio_observer_t;
 
-void pbio_observer_reset(pbio_observer_t *obs, pbio_angle_t *angle);
+void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, pbio_angle_t *angle);
 
 void pbio_observer_get_estimated_state(pbio_observer_t *obs, pbio_angle_t *angle, int32_t *speed);
 
 void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
 
-bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t stall_threshold, uint32_t *stall_duration);
+bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration);
 
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref);
 

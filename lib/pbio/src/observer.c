@@ -24,21 +24,17 @@
 #define PRESCALE_VOLTAGE (178956)
 #define PRESCALE_TORQUE (2147)
 
-// FIXME: Use millidegrees consistently throughout the code.
-// In the long run, we can improve control performance by
-// using units like millidegrees everywhere in order to avoid
-// unwanted roundoff. For now, we'll do it only in this module
-// and scale appropriately in the setter and getter functions.
-#define MDEG_PER_DEG (1000)
-#define MDEG_MAX (1000000 * (MDEG_PER_DEG))
-
 /**
  * Resets the observer to a new angle. Speed and current are reset to zero.
  *
  * @param [in]  obs            The observer instance.
+ * @param [in]  settings       Control settings, which includes stall settings.
  * @param [in]  angle          Angle to which the observer should be reset.
  */
-void pbio_observer_reset(pbio_observer_t *obs, pbio_angle_t *angle) {
+void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, pbio_angle_t *angle) {
+
+    // Save reference to settings.
+    obs->settings = settings;
 
     // Reset angle to input and other states to zero.
     obs->angle = *angle;
@@ -76,7 +72,7 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, int32_t volt
 
     // Check stall conditions.
     if (// Motor is going slow or even backward.
-        speed < 50 * MDEG_PER_DEG &&
+        speed < obs->settings->stall_speed_limit &&
         // Model is ahead of reality (and therefore pushing back negative),
         // indicating an unmodelled load.
         feedback_voltage < 0 &&
@@ -115,7 +111,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *ang
     int32_t error = pbio_angle_diff_mdeg(angle, &obs->angle);
 
     // Apply observer error feedback as voltage.
-    int32_t feedback_voltage = pbio_observer_torque_to_voltage(m, m->gain * error / MDEG_PER_DEG);
+    int32_t feedback_voltage = pbio_observer_torque_to_voltage(m, pbio_control_settings_mul_by_gain(error, m->gain));
 
     // Check stall condition.
     update_stall_state(obs, time, voltage, feedback_voltage);
@@ -160,13 +156,12 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *ang
  *
  * @param [in]  obs             The observer instance.
  * @param [in]  time            Wall time.
- * @param [out] stall_threshold Minimum time for it to be considered stalled.
  * @param [out] stall_duration  For how long it has been stalled.
  * @return                      True if stalled, false if not.
  */
-bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t stall_threshold, uint32_t *stall_duration) {
+bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration) {
     // Return stall flag, if stalled for some time.
-    if (obs->stalled && time - obs->stall_start > stall_threshold) {
+    if (obs->stalled && time - obs->stall_start > obs->settings->stall_time) {
         *stall_duration = time - obs->stall_start;
         return true;
     }

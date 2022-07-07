@@ -236,7 +236,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     }
 
     // Reset observer to current angle.
-    pbio_observer_reset(&srv->observer, &angle);
+    pbio_observer_reset(&srv->observer, &srv->control.settings, &angle);
 
     // Now that all checks have succeeded, we know that this motor is ready.
     // So we register this servo from control loop updates.
@@ -282,7 +282,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     }
 
     // Reset observer to new angle.
-    pbio_observer_reset(&srv->observer, &new_angle);
+    pbio_observer_reset(&srv->observer, &srv->control.settings, &new_angle);
 
     // Restore hold if control was active during reset.
     if (hold_after_reset) {
@@ -632,7 +632,7 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, uint32_t *s
 
     // If we're here, the user has set their own voltage or duty cycle value.
     // In this case, the best we can do is ask the observer if we're stuck.
-    *stalled = pbio_observer_is_stalled(&srv->observer, pbio_control_get_time_ticks(), srv->control.settings.stall_time, stall_duration);
+    *stalled = pbio_observer_is_stalled(&srv->observer, pbio_control_get_time_ticks(), stall_duration);
     *stall_duration = pbio_control_time_ticks_to_ms(*stall_duration);
 
     return PBIO_SUCCESS;
