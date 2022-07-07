@@ -9,7 +9,7 @@
 #include <pbio/math.h>
 #include <pbio/servo.h>
 
-#if PBIO_CONFIG_NUM_DRIVEBASES != 0
+#if PBIO_CONFIG_NUM_DRIVEBASES > 0
 
 // Drivebase objects
 
@@ -483,14 +483,14 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     return PBIO_SUCCESS;
 }
 
-#if !PBIO_CONFIG_CONTROL_MINIMAL
+#if PBIO_CONFIG_DRIVEBASE_SPIKE
 
 // The following functions provide spike-like "tank-drive" controls. These will
 // not use the pbio functionality for gearing or reversed orientation. Any
 // scaling and flipping happens within the functions below.
 
 // Set up a drive base without drivebase geometry.
-pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
+pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
     pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1, 1);
 
     // The application input for spike bases is degrees per second average
@@ -501,7 +501,7 @@ pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_se
 }
 
 // Drive for a given duration, given two motor speeds.
-pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion) {
     // Flip left tank motor orientation.
     speed_left = -speed_left;
 
@@ -512,13 +512,13 @@ pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left,
 }
 
 // Drive forever given two motor speeds.
-pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
+pbio_error_t pbio_drivebase_spike_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
     // Same as driving for time, just without an endpoint.
-    return pbio_spikebase_drive_time(db, speed_left, speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_drivebase_spike_drive_time(db, speed_left, speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 // Drive given two speeds and one angle.
-pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion) {
 
     // In the classic tank drive, we flip the left motor here instead of at the low level.
     speed_left *= -1;
@@ -544,7 +544,7 @@ pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left
     return pbio_drivebase_drive_relative(db, distance, speed, turn_angle, speed, on_completion);
 }
 
-pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
+pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
 
     // Steering must be bounded.
     if (steering < -100 || steering > 100) {
@@ -560,6 +560,6 @@ pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, in
     return PBIO_SUCCESS;
 }
 
-#endif // !PBIO_CONFIG_CONTROL_MINIMAL
+#endif // PBIO_CONFIG_DRIVEBASE_SPIKE
 
-#endif // PBIO_CONFIG_NUM_DRIVEBASES
+#endif // PBIO_CONFIG_NUM_DRIVEBASES > 0

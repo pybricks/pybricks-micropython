@@ -6,7 +6,7 @@
 
 #include <pbio/servo.h>
 
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+#if PBIO_CONFIG_NUM_DRIVEBASES > 0
 
 typedef struct _pbio_drivebase_t {
     pbio_servo_t *left;
@@ -42,22 +42,22 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
 
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t drive_deceleration, int32_t turn_rate, int32_t turn_acceleration, int32_t turn_deceleration);
 
-#if !PBIO_CONFIG_CONTROL_MINIMAL
+#if PBIO_CONFIG_DRIVEBASE_SPIKE
 
 // SPIKE drive base wrappers
 
-pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right);
+pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right);
 
-pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right);
+pbio_error_t pbio_drivebase_spike_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right);
 
-pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion);
 
-pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion);
 
-pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right);
+pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right);
 
-#endif // !PBIO_CONFIG_CONTROL_MINIMAL
+#endif // PBIO_CONFIG_DRIVEBASE_SPIKE
 
-#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
+#endif // PBIO_CONFIG_NUM_DRIVEBASES > 0
 
 #endif // _PBIO_DRIVEBASE_H_

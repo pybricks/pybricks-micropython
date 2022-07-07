@@ -36,5 +36,6 @@
 #define PYBRICKS_PY_PARAMETERS_ICON     (0)
 #define PYBRICKS_PY_PUPDEVICES          (0)
 #define PYBRICKS_PY_ROBOTICS            (1)
+#define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE (0)
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_USIGNAL             (1)

@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS && (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
+#if PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE
 
 #include <math.h>
 #include <stdlib.h>
@@ -47,7 +47,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor.type))->srv;
 
     // Create drivebase
-    pb_assert(pbio_drivebase_get_spikebase(&self->db, srv_left, srv_right));
+    pb_assert(pbio_drivebase_get_drivebase_spike(&self->db, srv_left, srv_right));
 
     // Create instances of the Control class
     self->heading_control = common_Control_obj_make_new(&self->db->control_heading);
@@ -80,7 +80,7 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_degrees(size_t n_args, const mp
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    pb_assert(pbio_spikebase_drive_angle(self->db, speed_left, speed_right, angle, then));
+    pb_assert(pbio_drivebase_spike_drive_angle(self->db, speed_left, speed_right, angle, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -108,9 +108,9 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_degrees(size_t n_args, cons
     // Convert steering to tank drive
     int32_t speed_left;
     int32_t speed_right;
-    pb_assert(pbio_spikebase_steering_to_tank(speed, steering, &speed_left, &speed_right));
+    pb_assert(pbio_drivebase_spike_steering_to_tank(speed, steering, &speed_left, &speed_right));
 
-    pb_assert(pbio_spikebase_drive_angle(self->db, speed_left, speed_right, angle, then));
+    pb_assert(pbio_drivebase_spike_drive_angle(self->db, speed_left, speed_right, angle, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -135,7 +135,7 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_time(size_t n_args, const mp_ob
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    pb_assert(pbio_spikebase_drive_time(self->db, speed_left, speed_right, time, then));
+    pb_assert(pbio_drivebase_spike_drive_time(self->db, speed_left, speed_right, time, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -163,9 +163,9 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_time(size_t n_args, const m
     // Convert steering to tank drive
     int32_t speed_left;
     int32_t speed_right;
-    pb_assert(pbio_spikebase_steering_to_tank(speed, steering, &speed_left, &speed_right));
+    pb_assert(pbio_drivebase_spike_steering_to_tank(speed, steering, &speed_left, &speed_right));
 
-    pb_assert(pbio_spikebase_drive_time(self->db, speed_left, speed_right, time, then));
+    pb_assert(pbio_drivebase_spike_drive_time(self->db, speed_left, speed_right, time, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -186,7 +186,7 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_forever(size_t n_args, const mp_obj
     mp_int_t speed_left = pb_obj_get_int(speed_left_in);
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
 
-    pb_assert(pbio_spikebase_drive_forever(self->db, speed_left, speed_right));
+    pb_assert(pbio_drivebase_spike_drive_forever(self->db, speed_left, speed_right));
 
     return mp_const_none;
 }
@@ -205,9 +205,9 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_forever(size_t n_args, const mp
     // Convert steering to tank drive
     int32_t speed_left;
     int32_t speed_right;
-    pb_assert(pbio_spikebase_steering_to_tank(speed, steering, &speed_left, &speed_right));
+    pb_assert(pbio_drivebase_spike_steering_to_tank(speed, steering, &speed_left, &speed_right));
 
-    pb_assert(pbio_spikebase_drive_forever(self->db, speed_left, speed_right));
+    pb_assert(pbio_drivebase_spike_drive_forever(self->db, speed_left, speed_right));
 
     return mp_const_none;
 }
@@ -255,4 +255,4 @@ const pb_obj_with_attr_type_t pb_type_spikebase = {
     .attr_dict_size = MP_ARRAY_SIZE(robotics_SpikeBase_attr_dict),
 };
 
-#endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS && (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
+#endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE
