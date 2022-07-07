@@ -83,6 +83,46 @@ int32_t pbio_control_settings_actuation_app_to_ctl(int32_t input) {
 }
 
 /**
+ * Multiplies an angle (mdeg), speed (mdeg/s) or angle integral (mdeg s)
+ * by a control gain and scales to uNm.
+ *
+ * @param [in] value         Input value (mdeg, mdeg/s, or mdeg s).
+ * @param [in] gain          Gain in uNm/deg, uNm/(deg/s), or uNm/(deg s).
+ * @return                   Torque in uNm.
+ */
+int32_t pbio_control_settings_mul_by_gain(int32_t value, int32_t gain) {
+    return gain * value / 1000;
+}
+
+/**
+ * Divides a torque (uNm) by a control gain to get an angle (mdeg),
+ * speed (mdeg/s) or angle integral (mdeg s), and accounts for scaling.
+ *
+ * Only positive gains are allowed. If the gain is zero or less, this returns
+ * zero.
+ *
+ * @param [in] value         Input value (uNm).
+ * @param [in] gain          Positive gain in uNm/deg, uNm/(deg/s), or uNm/(deg s).
+ * @return                   Result in mdeg, mdeg/s, or mdeg s.
+ */
+int32_t pbio_control_settings_div_by_gain(int32_t value, int32_t gain) {
+    if (gain < 1) {
+        return 0;
+    }
+    return value * 1000 / gain;
+}
+
+/**
+ * Multiplies a value by the loop time in seconds.
+ *
+ * @param [in] input          Input value.
+ * @return                    Input scaled by loop time in seconds.
+ */
+int32_t pbio_control_settings_mul_by_loop_time(int32_t input) {
+    return input / (1000 / PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
+}
+
+/**
  * Gets the control limits for movement and actuation, in application units.
  *
  * @param [in]  s             Control settings structure from which to read.

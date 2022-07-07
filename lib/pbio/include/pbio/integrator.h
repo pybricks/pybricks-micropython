@@ -8,16 +8,6 @@
 
 #include <pbio/config.h>
 
-/**
- * Multiplies a value by the loop time in seconds.
- *
- * @param [in] input          Input value.
- * @return                    Input scaled by loop time.
- */
-static inline bool pbio_integrator_times_loop_time(int32_t input) {
-    return input / (1000 / PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
-}
-
 typedef struct _pbio_speed_integrator_t {
     bool running; // Whether the integrator is running (1) or paused (0)
     uint32_t time_pause_begin; // Time at which we began pausing, stopping integration

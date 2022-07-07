@@ -6,8 +6,7 @@
 #include <stdlib.h>
 
 #include <pbio/config.h>
-#include <pbio/math.h>
-#include <pbio/trajectory.h>
+#include <pbio/control_settings.h>
 #include <pbio/integrator.h>
 
 /* Speed integrator used for speed-based control */
@@ -151,7 +150,7 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, uint32_
     int32_t cerr = itg->count_err_prev;
 
     // Check if integrator magnitude would decrease due to this error
-    bool decrease = abs(itg->count_err_integral + pbio_integrator_times_loop_time(cerr)) < abs(itg->count_err_integral);
+    bool decrease = abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < abs(itg->count_err_integral);
 
     // Integrate and update position error
     if (itg->trajectory_running || decrease) {
@@ -162,12 +161,12 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, uint32_
             cerr = cerr < -integral_change_max ? -integral_change_max : cerr;
 
             // It might be decreasing now after all (due to integral sign change), so re-evaluate
-            decrease = abs(itg->count_err_integral + pbio_integrator_times_loop_time(cerr)) < abs(itg->count_err_integral);
+            decrease = abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < abs(itg->count_err_integral);
         }
 
         // Add change if we are near target, or always if it decreases the integral magnitude
         if (abs(position_remaining) <= integral_range || decrease) {
-            itg->count_err_integral += pbio_integrator_times_loop_time(cerr);
+            itg->count_err_integral += pbio_control_settings_mul_by_loop_time(cerr);
         }
 
         // Limit integral to predefined bound

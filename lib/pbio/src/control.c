@@ -73,36 +73,6 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pb
 }
 
 /**
- * Multiplies an angle (mdeg), speed (mdeg/s) or angle integral (mdeg s)
- * by a control gain and scales to uNm.
- *
- * @param [in] value         Input value (mdeg, mdeg/s, or mdeg s).
- * @param [in] gain          Gain in uNm/deg, uNm/(deg/s), or uNm/(deg s).
- * @return                   Torque in uNm.
- */
-static int32_t pbio_control_mul_by_gain(int32_t value, int32_t gain) {
-    return gain * value / 1000;
-}
-
-/**
- * Divides a torque (uNm) by a control gain to get an angle (mdeg),
- * speed (mdeg/s) or angle integral (mdeg s), and accounts for scaling.
- *
- * Only positive gains are allowed. If the gain is zero or less, this returns
- * zero.
- *
- * @param [in] value         Input value (uNm).
- * @param [in] gain          Positive gain in uNm/deg, uNm/(deg/s), or uNm/(deg s).
- * @return                   Result in mdeg, mdeg/s, or mdeg s.
- */
-static int32_t pbio_control_div_by_gain(int32_t value, int32_t gain) {
-    if (gain < 1) {
-        return 0;
-    }
-    return value * 1000 / gain;
-}
-
-/**
  * Updates the PID controller state to calculate the next actuation step.
  *
  * @param [in]  ctl             The control instance.
@@ -129,10 +99,10 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // Specify in which region integral control should be active. This is
     // at least the error that would still lead to maximum  proportional
     // control, with a factor of 2 so we begin integrating a bit sooner.
-    int32_t integral_range = pbio_control_div_by_gain(ctl->settings.actuation_max, ctl->settings.pid_kp) * 2;
+    int32_t integral_range = pbio_control_settings_div_by_gain(ctl->settings.actuation_max, ctl->settings.pid_kp) * 2;
 
     // Get integral value that would lead to maximum actuation.
-    int32_t integral_max = pbio_control_div_by_gain(ctl->settings.actuation_max, ctl->settings.pid_ki);
+    int32_t integral_max = pbio_control_settings_div_by_gain(ctl->settings.actuation_max, ctl->settings.pid_ki);
 
     // Calculate integral control errors, depending on control type.
     int32_t integral_error;
@@ -153,9 +123,9 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     }
 
     // Corresponding PID control signal
-    int32_t torque_proportional = pbio_control_mul_by_gain(position_error_used, ctl->settings.pid_kp);
-    int32_t torque_derivative = pbio_control_mul_by_gain(speed_error, ctl->settings.pid_kd);
-    int32_t torque_integral = pbio_control_mul_by_gain(integral_error, ctl->settings.pid_ki);
+    int32_t torque_proportional = pbio_control_settings_mul_by_gain(position_error_used, ctl->settings.pid_kp);
+    int32_t torque_derivative = pbio_control_settings_mul_by_gain(speed_error, ctl->settings.pid_kd);
+    int32_t torque_integral = pbio_control_settings_mul_by_gain(integral_error, ctl->settings.pid_ki);
 
     // Total torque signal, capped by the actuation limit
     int32_t torque = pbio_math_clamp(torque_proportional + torque_integral + torque_derivative, ctl->settings.actuation_max);
@@ -166,8 +136,8 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // We want to stop building up further errors if we are at the proportional torque limit. So, we pause the trajectory
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
-    int32_t windup_margin = pbio_integrator_times_loop_time(abs(state->speed_estimate)) * 2;
-    int32_t max_windup_torque = ctl->settings.actuation_max + pbio_control_mul_by_gain(windup_margin, ctl->settings.pid_kp);
+    int32_t windup_margin = pbio_control_settings_mul_by_loop_time(abs(state->speed_estimate)) * 2;
+    int32_t max_windup_torque = ctl->settings.actuation_max + pbio_control_settings_mul_by_gain(windup_margin, ctl->settings.pid_kp);
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
     bool pause_integration =

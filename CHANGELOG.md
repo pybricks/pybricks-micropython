@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fix integral control not working properly due to mistakes introduced while
+  converting the controllers to use millidegrees.
+
 ## [3.2.0b2] - 2022-07-06
 
 ### Added
