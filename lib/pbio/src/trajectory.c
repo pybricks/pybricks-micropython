@@ -74,7 +74,7 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
 // Divides speed^2 (ddeg/s)^2 by acceleration (deg/s^2)*2, giving angle (mdeg).
 static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
     int32_t product = w_end * w_end - w_start * w_start;
-    if (abs(product) > INT32_MAX / (10 / 2)) {
+    if (pbio_math_abs(product) > INT32_MAX / (10 / 2)) {
         // Divide first if we have to.
         return product / a * (10 / 2);
     }
@@ -89,7 +89,7 @@ static int32_t div_w_by_a(int32_t w, int32_t a) {
 
 // Divides angle (mdeg) by time (s e-4), giving speed (ddeg/s).
 static int32_t div_th_by_t(int32_t th, int32_t t) {
-    if (abs(th) < INT32_MAX / 100) {
+    if (pbio_math_abs(th) < INT32_MAX / 100) {
         return th * 100 / t;
     }
     return th / t * 100;
@@ -102,7 +102,7 @@ static int32_t div_w_by_t(int32_t w, int32_t t) {
 
 // Divides angle (mdeg) by speed (deg/s), giving time (s e-4).
 static int32_t div_th_by_w(int32_t th, int32_t w) {
-    if (abs(th) < INT32_MAX / 100) {
+    if (pbio_math_abs(th) < INT32_MAX / 100) {
         return th * 100 / w;
     }
     return th / w * 100;
@@ -112,7 +112,7 @@ static int32_t div_th_by_w(int32_t th, int32_t w) {
 static int32_t mul_w_by_t(int32_t w, int32_t t) {
     // Get safe result first in case a long time is used.
     int32_t result = w * (t / 100);
-    if (abs(result) > (INT32_MAX / 100)) {
+    if (pbio_math_abs(result) > (INT32_MAX / 100)) {
         return result;
     }
     // Get more accurate result if we know the product does not overflow.
@@ -123,7 +123,7 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
 static int32_t mul_a_by_t(int32_t a, int32_t t) {
     // Get safe result first in case a long time is used.
     int32_t result = a * (t / 1000);
-    if (abs(result) > INT32_MAX / 1000) {
+    if (pbio_math_abs(result) > INT32_MAX / 1000) {
         return result;
     }
     // Get more accurate result if we know the product does not overflow.
@@ -146,7 +146,7 @@ static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 // intersection of the speed curves if we accelerate (deg/s^2) up and down
 // without a stationary speed phase.
 static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) {
-    if (abs(th3 - th0) > INT32_MAX / abs(a2)) {
+    if (pbio_math_abs(th3 - th0) > INT32_MAX / pbio_math_abs(a2)) {
         // Divide first if numerator too large.
         return th0 + (th3 - th0) / (a2 - a0) * a2;
     }
@@ -442,7 +442,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     // allow specifying phyically impossible scenarios like negative speed
     // with a positive relative position. Those cases are not handled here and
     // should be appropriately handled at higher levels.
-    c.speed_target = abs(c.speed_target);
+    c.speed_target = pbio_math_abs(c.speed_target);
 
     // Bind target speed by maximum speed.
     c.speed_target = min(c.speed_target, c.speed_max);

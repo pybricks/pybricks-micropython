@@ -13,6 +13,7 @@
 
 #include <stdint.h>
 
+int32_t pbio_math_abs(int32_t value);
 int32_t pbio_math_bind(int32_t value, int32_t min, int32_t max);
 int32_t pbio_math_clamp(int32_t value, int32_t abs_max);
 int32_t pbio_math_sign(int32_t a);

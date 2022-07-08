@@ -392,7 +392,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     int32_t arc_angle = radius < 0 ? -angle : angle;
 
     // Arc length is computed accordingly.
-    int32_t arc_length = (10 * abs(angle) * radius) / 573;
+    int32_t arc_length = (10 * pbio_math_abs(angle) * radius) / 573;
 
     // Execute the common drive command at default speed.
     return pbio_drivebase_drive_relative(db, arc_length, 0, arc_angle, 0, on_completion);
@@ -531,14 +531,14 @@ pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t spee
     }
 
     // Work out angles for each motor.
-    int32_t max_speed = max(abs(speed_left), abs(speed_right));
+    int32_t max_speed = max(pbio_math_abs(speed_left), pbio_math_abs(speed_right));
     int32_t angle_left = max_speed == 0 ? 0 : angle * speed_left / max_speed;
     int32_t angle_right = max_speed == 0 ? 0 : angle * speed_right / max_speed;
 
     // Work out the required total and difference angles to achieve this.
     int32_t distance = (angle_left + angle_right) / 2;
     int32_t turn_angle = (angle_left - angle_right) / 2;
-    int32_t speed = (abs(speed_left) + abs(speed_right)) / 2;
+    int32_t speed = (pbio_math_abs(speed_left) + pbio_math_abs(speed_right)) / 2;
 
     // Execute the maneuver.
     return pbio_drivebase_drive_relative(db, distance, speed, turn_angle, speed, on_completion);
@@ -556,7 +556,7 @@ pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steeri
     *speed_right = speed;
 
     // Depending on steering direction, one wheel moves slower.
-    *(steering > 0 ? speed_right : speed_left) = speed * (100 - 2 * abs(steering)) / 100;
+    *(steering > 0 ? speed_right : speed_left) = speed * (100 - 2 * pbio_math_abs(steering)) / 100;
     return PBIO_SUCCESS;
 }
 

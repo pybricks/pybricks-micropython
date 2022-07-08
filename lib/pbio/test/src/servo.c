@@ -19,6 +19,7 @@
 #include <pbio/control.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
+#include <pbio/math.h>
 #include <pbio/servo.h>
 #include <test-pbio.h>
 
@@ -70,7 +71,7 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
         driver->output = H_BRIDGE_OUTPUT_HH;
     }
 
-    driver->duty_cycle = abs(duty_cycle);
+    driver->duty_cycle = pbio_math_abs(duty_cycle);
 
     return PBIO_SUCCESS;
 }

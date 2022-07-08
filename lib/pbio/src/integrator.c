@@ -8,6 +8,7 @@
 #include <pbio/config.h>
 #include <pbio/control_settings.h>
 #include <pbio/integrator.h>
+#include <pbio/math.h>
 
 /* Speed integrator used for speed-based control */
 
@@ -164,7 +165,7 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
     int32_t cerr = itg->count_err_prev;
 
     // Check if integrator magnitude would decrease due to this error
-    bool decrease = abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < abs(itg->count_err_integral);
+    bool decrease = pbio_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < pbio_math_abs(itg->count_err_integral);
 
     // Integrate and update position error
     if (itg->trajectory_running || decrease) {
@@ -175,11 +176,11 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
             cerr = cerr < -itg->settings->integral_change_max ? -itg->settings->integral_change_max : cerr;
 
             // It might be decreasing now after all (due to integral sign change), so re-evaluate
-            decrease = abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < abs(itg->count_err_integral);
+            decrease = pbio_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < pbio_math_abs(itg->count_err_integral);
         }
 
         // Add change if we are near target, or always if it decreases the integral magnitude
-        if (abs(position_remaining) <= integral_range || decrease) {
+        if (pbio_math_abs(position_remaining) <= integral_range || decrease) {
             itg->count_err_integral += pbio_control_settings_mul_by_loop_time(cerr);
         }
 
@@ -204,7 +205,7 @@ bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t 
     int32_t integral_max = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki);
 
     // If we're running and the integrator is not saturated, we're not stalled
-    if (itg->trajectory_running && abs(itg->count_err_integral) < integral_max) {
+    if (itg->trajectory_running && pbio_math_abs(itg->count_err_integral) < integral_max) {
         return false;
     }
 

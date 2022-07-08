@@ -63,13 +63,13 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pb
 
     // For zero final speed, we need to at least stand still, so return false
     // when we're still moving faster than the tolerance.
-    if (abs(state->speed_estimate) > ctl->settings.speed_tolerance) {
+    if (pbio_math_abs(state->speed_estimate) > ctl->settings.speed_tolerance) {
         return false;
     }
 
     // Once we stand still, we're complete if the distance to the
     // target is equal to or less than the allowed tolerance.
-    return abs(position_remaining) <= ctl->settings.position_tolerance;
+    return pbio_math_abs(position_remaining) <= ctl->settings.position_tolerance;
 }
 
 /**
@@ -128,13 +128,13 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // We want to stop building up further errors if we are at the proportional torque limit. So, we pause the trajectory
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
-    int32_t windup_margin = pbio_control_settings_mul_by_loop_time(abs(state->speed_estimate)) * 2;
+    int32_t windup_margin = pbio_control_settings_mul_by_loop_time(pbio_math_abs(state->speed_estimate)) * 2;
     int32_t max_windup_torque = ctl->settings.actuation_max + pbio_control_settings_mul_by_gain(windup_margin, ctl->settings.pid_kp);
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
     bool pause_integration =
         // Pause if proportional torque is beyond maximum windup torque:
-        abs(torque_proportional) >= max_windup_torque &&
+        pbio_math_abs(torque_proportional) >= max_windup_torque &&
         // But not if we're trying to run in the other direction (else we can get unstuck by just reversing).
         pbio_math_sign(torque_proportional) != -pbio_math_sign(speed_error) &&
         // But not if we should be accelerating in the other direction (else we can get unstuck by just reversing).
@@ -433,7 +433,7 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
         pbio_trajectory_get_endpoint(&ctl->trajectory, &prev_end);
         if (ctl->on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART &&
             pbio_angle_diff_is_small(&prev_end.position, &state->position) &&
-            abs(pbio_angle_diff_mdeg(&prev_end.position, &state->position)) < ctl->settings.position_tolerance * 2) {
+            pbio_math_abs(pbio_angle_diff_mdeg(&prev_end.position, &state->position)) < ctl->settings.position_tolerance * 2) {
             // We're close enough, so make the new target relative to the
             // endpoint of the last one.
             pbio_angle_sum(&prev_end.position, &increment, &target);

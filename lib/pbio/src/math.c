@@ -6,6 +6,19 @@
 #include <stdbool.h>
 
 /**
+ * Gets the absolute value.
+ *
+ * @param [in]  value   The value.
+ * @return              The absolute (positive) value.
+ */
+int32_t pbio_math_abs(int32_t value) {
+    if (value < 0) {
+        return -value;
+    }
+    return value;
+}
+
+/**
  * Binds a value between a lower and upper limit.
  *
  * If @p value is greater than @p max, then @p max is
