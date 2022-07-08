@@ -22,45 +22,41 @@ class PbioErrorCode(IntEnum):
     """
     INVALID_ARG = 2
     """
-    Invalid argument (other than port)
+    Invalid argument
     """
-    INVALID_PORT = 3
-    """
-    Invalid port identifier (special case of ::PBIO_INVALID_ARG)
-    """
-    IO = 4
+    IO = 3
     """
     General I/O error
     """
-    BUSY = 5
+    BUSY = 4
     """
     Device or resource is busy
     """
-    NO_DEV = 6
+    NO_DEV = 5
     """
     Device is not connected
     """
-    NOT_IMPLEMENTED = 7
+    NOT_IMPLEMENTED = 6
     """
     Feature is not yet implemented
     """
-    NOT_SUPPORTED = 8
+    NOT_SUPPORTED = 7
     """
     Feature is not supported on this device
     """
-    AGAIN = 9
+    AGAIN = 8
     """
     Function should be called again later
     """
-    INVALID_OP = 10
+    INVALID_OP = 9
     """
     Operation is not permitted in the current state
     """
-    TIMEDOUT = 11
+    TIMEDOUT = 10
     """
     The operation has timed out
     """
-    CANCELED = 12
+    CANCELED = 11
     """
     The operation was canceled
     """
