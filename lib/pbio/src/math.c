@@ -96,14 +96,16 @@ static const point_t atan_points[] = {
 };
 
 /**
- * Interpolates a constant set of (X, Y) sample points to find y for given x.
+ * Interpolates a constant set of (X, Y) sample points on a curve y = f(x)
+ * to estimate y for given input value x.
  *
  * If x < x[first] then it returns y[first].
  * If x >= x[last] then it returns y[last].
  *
- * @param [out]  a       Angle a.
- * @param [in]   input   Value to convert.
- * @param [in]   scale   Ratio between high resolution angle and input.
+ * @param [in]   points  Data points between which to interpolate.
+ * @param [in]   len     Number of data points.
+ * @param [in]   x       Value for which to estimate y = f(x)
+ * @return               Estimated value for y = f(x)
  */
 static int32_t pbio_math_interpolate(const point_t *points, size_t len, int32_t x) {
 
