@@ -66,7 +66,7 @@ void pbio_control_settings_app_to_ctl_long(pbio_control_settings_t *s, int32_t i
  */
 int32_t pbio_control_settings_actuation_ctl_to_app(int32_t input) {
     // All applications currently use this scale, but it could be generalized
-    // to a appplication specific conversion constant.
+    // to a application specific conversion constant.
     return input / 1000;
 }
 
@@ -78,7 +78,7 @@ int32_t pbio_control_settings_actuation_ctl_to_app(int32_t input) {
  */
 int32_t pbio_control_settings_actuation_app_to_ctl(int32_t input) {
     // All applications currently use this scale, but it could be generalized
-    // to a appplication specific conversion constant.
+    // to a application specific conversion constant.
     return input * 1000;
 }
 
@@ -238,7 +238,7 @@ pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t
  *
  * @param [in]  s           Control settings structure from which to read.
  * @param [out] speed       If this speed can't be reached with maximum actuation, it is stalled.
- * @param [out] time        Minimum consequtive stall time (ticks) before stall flag getter returns true.
+ * @param [out] time        Minimum consecutive stall time (ticks) before stall flag getter returns true.
  */
 void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s, int32_t *speed, uint32_t *time) {
     *speed = pbio_control_settings_ctl_to_app(s, s->stall_speed_limit);
@@ -250,7 +250,7 @@ void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s, int3
  *
  * @param [in] s            Control settings structure to write to.
  * @param [in] speed        If this speed can't be reached with maximum actuation, it is stalled.
- * @param [in] time         Minimum consequtive stall time (ticks) before stall flag getter returns true.
+ * @param [in] time         Minimum consecutive stall time (ticks) before stall flag getter returns true.
  * @return                  ::PBIO_SUCCESS on success
  *                          ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */

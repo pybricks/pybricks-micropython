@@ -37,7 +37,7 @@ static PT_THREAD(test_status(struct pt *pt)) {
     // use the last valid flag for edge case
     static const pbio_pybricks_status_t test_flag = NUM_PBIO_PYBRICKS_STATUS - 1;
 
-    // ensure flags are initalized as unset
+    // ensure flags are initialized as unset
     tt_want(!pbsys_status_test(test_flag));
 
     // ensure that setting a flag works as expected

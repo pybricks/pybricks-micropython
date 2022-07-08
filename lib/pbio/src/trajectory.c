@@ -275,7 +275,7 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
 
     // Initial acceleration sign depends on initial speed. It accelerates if
     // the initial speed is less than the target speed. Otherwise it
-    // decelerates. The equality case is intrinsicaly dealt with in the
+    // decelerates. The equality case is intrinsically dealt with in the
     // nominal acceleration case down below.
     trj->a0 = trj->w0 < wt ? accel : -accel;
 
@@ -369,7 +369,7 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
 
     // Initial acceleration sign depends on initial speed. It accelerates if
     // the initial speed is less than the target speed. Otherwise it
-    // decelerates. The equality case is intrinsicaly dealt with in the
+    // decelerates. The equality case is intrinsically dealt with in the
     // nominal acceleration case down below.
     trj->a0 = trj->w0 < wt ? accel : -accel;
 
@@ -529,7 +529,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 
     // Direction is solely defined in terms of th3 position relative to th0.
     // For speed, only the *magnitude* is relevant. Certain end-user APIs
-    // allow specifying phyically impossible scenarios like negative speed
+    // allow specifying physically impossible scenarios like negative speed
     // with a positive relative position. Those cases are not handled here and
     // should be appropriately handled at higher levels.
     c.speed_target = pbio_math_abs(c.speed_target);
@@ -562,7 +562,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     return PBIO_SUCCESS;
 }
 
-// Pupulates reference point with the right units and offset
+// Populates reference point with the right units and offset
 static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, pbio_trajectory_reference_t *start, int32_t t, int32_t th, int32_t w, int32_t a) {
 
     // Convert local trajectory units to global pbio units.

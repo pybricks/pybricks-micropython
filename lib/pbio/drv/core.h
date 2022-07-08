@@ -28,7 +28,7 @@
  * Tests if driver initialization is still busy.
  *
  * After calling pbdrv_init(), the Contiki event loop should run until this
- * returns true to wait for all drivers to be initalized.
+ * returns true to wait for all drivers to be initialized.
  */
 #define pbdrv_init_busy()           (pbdrv_init_busy_count)
 

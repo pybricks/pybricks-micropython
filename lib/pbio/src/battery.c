@@ -57,7 +57,7 @@ int32_t pbio_battery_get_average_voltage(void) {
 
 /**
  * Gets the duty cycle required to output the desired voltage given the
- * current battry voltage.
+ * current battery voltage.
  *
  * @param [in]  voltage     The desired voltage in mV.
  * @return                  A duty cycle in the range negative ::PBIO_BATTERY_MAX_DUTY

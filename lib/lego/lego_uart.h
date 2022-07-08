@@ -3,7 +3,7 @@
 
 // LEGO UART Message Protocol (LUMP) for EV3 and Powered Up I/O devices
 //
-// This file contains bytecode definitions for interperting messages send to
+// This file contains bytecode definitions for interpreting messages sent to
 // and from LEGO MINDSTORMS EV3 and Powered Up UART devices.
 //
 // References:
@@ -163,7 +163,7 @@ typedef enum {
      * Acknowledgement message.
      *
      * This is sent by both the controller and the LEGO UART I/O device to
-     * acknowledge successful completion of certian messages.
+     * acknowledge successful completion of certain messages.
      */
     LUMP_SYS_ACK = 0x4,
 
@@ -548,7 +548,7 @@ typedef enum {
     /** This mode is a motor mode. */
     LUMP_MODE_FLAGS0_MOTOR = 1 << 5,
 
-    /** 
+    /**
      * This mode requires power supply across pin 1 (+) and pin 2 (-),
      * which is the same as turning a motor counterclockwise.
      */

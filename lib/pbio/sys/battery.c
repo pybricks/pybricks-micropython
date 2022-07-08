@@ -41,7 +41,7 @@ static uint16_t battery_ok_mv;
 #endif
 
 /**
- * Initializes the system battery moitor.
+ * Initializes the system battery monitor.
  */
 void pbsys_battery_init(void) {
     #if PBDRV_CONFIG_BATTERY_ADC_TYPE != 1

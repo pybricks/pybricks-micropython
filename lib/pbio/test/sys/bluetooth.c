@@ -19,7 +19,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     pbsys_bluetooth_init();
 
-    // power should be initalized to off
+    // power should be initialized to off
     tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_OFF);
 
     // wait for the power on delay

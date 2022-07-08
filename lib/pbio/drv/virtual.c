@@ -30,7 +30,7 @@ static pbdrv_virtual_cpython_exception_handler_t cpython_exception_handler;
  *
  * NOTE: This must be called before `pbdrv_init()`!
  *
- * When this function returns, the CPython runtime is intialized and the CPython
+ * When this function returns, the CPython runtime is initialized and the CPython
  * GIL is released.
  *
  * @param [in]  handler A callback to be called on an unhandled CPython exception or NULL.

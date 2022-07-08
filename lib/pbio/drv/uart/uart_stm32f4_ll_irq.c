@@ -62,7 +62,7 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     }
 
     if (!pbdrv_uart[id].pdata) {
-        // has not been initalized yet
+        // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
 

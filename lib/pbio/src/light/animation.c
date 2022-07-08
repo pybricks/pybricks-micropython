@@ -36,7 +36,7 @@ void pbio_light_animation_init(pbio_light_animation_t *animation, pbio_light_ani
 /**
  * Starts an animation in the background.
  *
- * The animation instance must have been initalized with pbio_light_animation_init().
+ * The animation instance must have been initialized with pbio_light_animation_init().
  *
  * The animation must be stopped with pbio_light_animation_stop() before calling
  * pbio_light_animation_start() again.

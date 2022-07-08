@@ -52,9 +52,9 @@ void pb_stm32_poll(void) {
 
     mp_handle_pending(true);
 
-    // There is a possible race condition where an interupt occurs and sets the
-    // Coniki poll_requested flag after all events have been processed. So we
-    // have a critical section where we disable interupts and check see if there
+    // There is a possible race condition where an interrupt occurs and sets the
+    // Contiki poll_requested flag after all events have been processed. So we
+    // have a critical section where we disable interrupts and check see if there
     // are any last second events. If not, we can call __WFI(), which still wakes
     // up the CPU on interrupt even though interrupts are otherwise disabled.
     mp_uint_t state = disable_irq();

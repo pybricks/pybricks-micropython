@@ -19,7 +19,7 @@ typedef struct _object PyObject;
  * @param [in]  value Borrowed ref to the exception value.
  * @param [in]  traceback Borrowed ref to the exception stack trace.
  * @returns     true if the exception was "handled" and the unhanded exception
- *              message should be supressed or false to print an unhandled
+ *              message should be suppressed or false to print an unhandled
  *              exception message.
  */
 typedef bool (*pbdrv_virtual_cpython_exception_handler_t)(PyObject *type, PyObject *value, PyObject *traceback);

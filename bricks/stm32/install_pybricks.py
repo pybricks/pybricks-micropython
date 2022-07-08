@@ -6,7 +6,7 @@
 # - SPIKE Essential Hub
 # - MINDSTORMS Robot Inventor Hub
 #
-# This script is used to flash Pybricks frimware on hubs that are currently
+# This script is used to flash Pybricks firmware on hubs that are currently
 # running official LEGO firmware (it calls LEGO-specific APIs). Before running
 # this script, `firmware.bin`` and `firmware.metadata.json`` to be installed
 # to `/_firmware/` on the external flash on the hub. Tools like `pybricksdev`

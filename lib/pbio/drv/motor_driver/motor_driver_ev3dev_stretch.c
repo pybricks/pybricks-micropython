@@ -25,7 +25,7 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
 
     *driver = &motor_ports[id];
 
-    // if port has not been set, then driver has not been intialized
+    // if port has not been set, then driver has not been initialized
     if ((*driver)->port == 0) {
         return PBIO_ERROR_AGAIN;
     }

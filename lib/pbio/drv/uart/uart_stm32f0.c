@@ -45,7 +45,7 @@ typedef struct {
     volatile pbio_error_t rx_result;
     volatile pbio_error_t tx_result;
     uint8_t irq;
-    bool initalized;
+    bool initialized;
 } pbdrv_uart_t;
 
 static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32F0_NUM_UART];
@@ -57,7 +57,7 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    if (!pbdrv_uart[id].initalized) {
+    if (!pbdrv_uart[id].initialized) {
         return PBIO_ERROR_AGAIN;
     }
 
@@ -268,7 +268,7 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
         NVIC_SetPriority(uart->irq, 0);
         NVIC_EnableIRQ(uart->irq);
 
-        uart->initalized = true;
+        uart->initialized = true;
     }
 
     while (true) {

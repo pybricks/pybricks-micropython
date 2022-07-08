@@ -28,7 +28,7 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
 
     *driver = &motor_drivers[id];
 
-    // if pdata is not set, then driver hasn't been intialized
+    // if pdata is not set, then driver hasn't been initialized
     if (!(*driver)->pdata) {
         return PBIO_ERROR_AGAIN;
     }

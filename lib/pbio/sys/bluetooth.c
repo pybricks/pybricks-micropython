@@ -122,7 +122,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     // only allow one UART Tx message in the queue at a time
     if (!uart_msg.is_queued) {
         // Setting data and size are deferred until we actually send the message.
-        // This way, if the caller is only writting one byte at a time, we can
+        // This way, if the caller is only writing one byte at a time, we can
         // still buffer data to send it more efficiently.
         uart_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_UART;
 

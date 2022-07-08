@@ -35,6 +35,6 @@ pbio_error_t pbio_parent_stop(pbio_parent_t *self, bool clear_parent) {
         self->parent_object = NULL;
     }
 
-    // Return error from stop funciton.
+    // Return error from stop function.
     return err;
 }

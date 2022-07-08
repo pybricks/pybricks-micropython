@@ -31,7 +31,7 @@ void pbdrv_led_array_init(void) {
  * @param [out] dev     Pointer to the device instance
  * @return              ::PBIO_SUCCESS if the call was successful,
  *                      ::PBIO_ERROR_NO_DEV if the ID was invalid,
- *                      ::PBIO_ERROR_AGAIN if the device is not yet initalized
+ *                      ::PBIO_ERROR_AGAIN if the device is not yet initialized
  */
 pbio_error_t pbdrv_led_array_get_dev(uint8_t id, pbdrv_led_array_dev_t **dev) {
     if (id >= PBDRV_CONFIG_LED_ARRAY_NUM_DEV) {

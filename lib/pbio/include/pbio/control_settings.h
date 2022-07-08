@@ -42,7 +42,7 @@ typedef struct _pbio_control_settings_t {
      */
     int32_t stall_speed_limit;
     /**
-     * Minimum consequtive stall time before stall flag getter returns true.
+     * Minimum consecutive stall time before stall flag getter returns true.
      */
     uint32_t stall_time;
     /**

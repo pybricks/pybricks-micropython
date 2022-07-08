@@ -21,7 +21,7 @@ void pbsys_supervisor_poll(void) {
     pbdrv_watchdog_update();
 
     // Shut down on low voltage so we don't damage rechargeable batteries
-    // or if there is no BLE connection made whithin 3 minutes
+    // or if there is no BLE connection made within 3 minutes
     if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)
         || pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING, true, 3 * 60000)) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);

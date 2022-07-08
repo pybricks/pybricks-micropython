@@ -256,7 +256,7 @@ enum {
  * Modes for MINDSTORMS NXT Temperature Sensor
  */
 enum {
-    PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS = 0,
+    PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELSIUS = 0,
 };
 
 /**

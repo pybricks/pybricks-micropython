@@ -38,7 +38,7 @@ STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
 STATIC mp_obj_t nxtdevices_TemperatureSensor_temperature(mp_obj_t self_in) {
     nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t temperature_scaled;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS, &temperature_scaled);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELSIUS, &temperature_scaled);
     return mp_obj_new_float((temperature_scaled >> 4) / 16.0);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_temperature_obj, nxtdevices_TemperatureSensor_temperature);

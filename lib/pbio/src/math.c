@@ -74,10 +74,10 @@ typedef struct {
 } point_t;
 
 /**
- * Sample points along the cuve y = atan(x / 1024) * 8.
+ * Sample points along the curve y = atan(x / 1024) * 8.
  *
  * This is used to get the atan2(b, a) curve in the first quadrant. The
- * intermediate scaling is used to avoid excessive roundoff errors.
+ * intermediate scaling is used to avoid excessive rounding errors.
  *
  * x = Ratios b / a, upscaled by 1024.
  * y = Matching atan(b / b) output, upscaled by 8 * 180 / pi (eighth of a degree).
@@ -142,7 +142,7 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
         return x > 0 ? 0 : -180;
     }
 
-    // On x zero, the triangle height tends to inifinity. Use y for sign.
+    // On x zero, the triangle height tends to infinity. Use y for sign.
     if (x == 0) {
         return 90 * pbio_math_sign(y);
     }

@@ -37,7 +37,7 @@ typedef struct _pbdrv_motor_driver_dev_t pbdrv_motor_driver_dev_t;
  * @param [out] driver  The motor driver instance handle.
  * @return              ::PBIO_SUCCESS if the call was successful,
  *                      ::PBIO_ERROR_NO_DEV if @p id is out of range
- *                      ::PBIO_ERROR_AGAIN if the driver is not intialized yet.
+ *                      ::PBIO_ERROR_AGAIN if the driver is not initialized yet.
  */
 pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver);
 

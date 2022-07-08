@@ -217,7 +217,7 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
     *iodev = &dev_data[id].iodev;
 
     if (!(*iodev)->info) {
-        // device has not been initalized yet
+        // device has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
 
