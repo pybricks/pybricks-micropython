@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES
 
+#include <pbio/math.h>
+
 #include <pybricks/common.h>
 #include <pybricks/nxtdevices.h>
 #include <pybricks/parameters.h>
@@ -19,7 +21,7 @@ int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, boo
     if (invert) {
         scaled = 100 - scaled;
     }
-    return max(0, min(scaled, 100));
+    return pbio_math_bind(scaled, 0, 100);
 }
 
 // pybricks.nxtdevices.LightSensor class object

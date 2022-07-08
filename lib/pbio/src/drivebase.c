@@ -36,23 +36,23 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
 
     // For all settings, take the value of the least powerful motor to ensure
     // that the drivebase can meet the given specs.
-    s_distance->speed_max = min(s_left->speed_max, s_right->speed_max);
-    s_distance->speed_tolerance = min(s_left->speed_tolerance, s_right->speed_tolerance);
-    s_distance->stall_speed_limit = min(s_left->stall_speed_limit, s_right->stall_speed_limit);
-    s_distance->integral_change_max = min(s_left->integral_change_max, s_right->integral_change_max);
-    s_distance->actuation_max = min(s_left->actuation_max, s_right->actuation_max);
-    s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
+    s_distance->speed_max = pbio_math_min(s_left->speed_max, s_right->speed_max);
+    s_distance->speed_tolerance = pbio_math_min(s_left->speed_tolerance, s_right->speed_tolerance);
+    s_distance->stall_speed_limit = pbio_math_min(s_left->stall_speed_limit, s_right->stall_speed_limit);
+    s_distance->integral_change_max = pbio_math_min(s_left->integral_change_max, s_right->integral_change_max);
+    s_distance->actuation_max = pbio_math_min(s_left->actuation_max, s_right->actuation_max);
+    s_distance->stall_time = pbio_math_min(s_left->stall_time, s_right->stall_time);
 
     // Make acceleration a bit slower for smoother driving.
-    s_distance->acceleration = min(s_left->acceleration, s_right->acceleration) * 3 / 4;
-    s_distance->deceleration = min(s_left->deceleration, s_right->deceleration) * 3 / 4;
+    s_distance->acceleration = pbio_math_min(s_left->acceleration, s_right->acceleration) * 3 / 4;
+    s_distance->deceleration = pbio_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4;
 
     // Use minimum PID of both motors, to avoid overly aggressive control if
     // one of the two motors has much higher PID values. For proportional
     // control, take a much lower gain. Drivebases don't need it, and it makes
     // for a smoother ride.
-    s_distance->pid_kp = min(s_left->pid_kp, s_right->pid_kp) / 4;
-    s_distance->pid_kd = min(s_left->pid_kd, s_right->pid_kd);
+    s_distance->pid_kp = pbio_math_min(s_left->pid_kp, s_right->pid_kp) / 4;
+    s_distance->pid_kd = pbio_math_min(s_left->pid_kd, s_right->pid_kd);
 
     // Integral control is not necessary since there is constant external
     // force to overcome that wouldn't be done by proportional control.
@@ -531,7 +531,7 @@ pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t spee
     }
 
     // Work out angles for each motor.
-    int32_t max_speed = max(pbio_math_abs(speed_left), pbio_math_abs(speed_right));
+    int32_t max_speed = pbio_math_max(pbio_math_abs(speed_left), pbio_math_abs(speed_right));
     int32_t angle_left = max_speed == 0 ? 0 : angle * speed_left / max_speed;
     int32_t angle_right = max_speed == 0 ? 0 : angle * speed_right / max_speed;
 

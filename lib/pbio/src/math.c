@@ -21,6 +21,34 @@ int32_t pbio_math_abs(int32_t value) {
 }
 
 /**
+ * Gets the maximum of two values.
+ *
+ * @param [in]  a       Value.
+ * @param [in]  b       Value.
+ * @return              a if it is greater than b, else b.
+ */
+int32_t pbio_math_max(int32_t a, int32_t b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+/**
+ * Gets the minimum of two values.
+ *
+ * @param [in]  a       Value.
+ * @param [in]  b       Value.
+ * @return              a if it is less than b, else b.
+ */
+int32_t pbio_math_min(int32_t a, int32_t b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
+/**
  * Binds a value between a lower and upper limit.
  *
  * If @p value is greater than @p max, then @p max is

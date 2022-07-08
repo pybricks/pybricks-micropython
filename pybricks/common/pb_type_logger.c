@@ -12,6 +12,7 @@
 
 #include <pbio/config.h>
 #include <pbio/logger.h>
+#include <pbio/math.h>
 #include <pbio/servo.h>
 
 #include "py/obj.h"
@@ -37,7 +38,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_INT(divisor, 1));
 
     mp_int_t divisor = pb_obj_get_int(divisor_in);
-    divisor = max(divisor, 1);
+    divisor = pbio_math_max(divisor, 1);
     mp_int_t rows = pb_obj_get_int(duration_in) / PBIO_CONFIG_CONTROL_LOOP_TIME_MS / divisor;
     mp_int_t size = rows * pbio_logger_cols(self->log);
     self->buf = m_renew(int32_t, self->buf, self->size, size);

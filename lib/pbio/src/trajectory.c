@@ -174,8 +174,8 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     if (div_w_by_a(trj->w0, accel) < -trj->t3) {
         trj->w0 = -mul_a_by_t(accel, trj->t3);
     }
-    if (div_w_by_a(trj->w0 - trj->w3, max(accel, decel)) > trj->t3) {
-        trj->w0 = trj->w3 + mul_a_by_t(max(accel, decel), trj->t3);
+    if (div_w_by_a(trj->w0 - trj->w3, pbio_math_max(accel, decel)) > trj->t3) {
+        trj->w0 = trj->w3 + mul_a_by_t(pbio_math_max(accel, decel), trj->t3);
     }
 
     // Bind target speed to make solution feasible.
@@ -265,7 +265,7 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     // using quadratic terms to avoid square root evaluations in most cases.
     // This is only needed for positive initial speed, because negative initial
     // speeds are always feasible in angle-based maneuvers.
-    int32_t a_max = max(accel, decel);
+    int32_t a_max = pbio_math_max(accel, decel);
     if (trj->w0 > 0 && div_w2_by_a(trj->w0, trj->w3, a_max) > trj->th3) {
         trj->w0 = bind_w0(trj->w3, a_max, trj->th3);
     }
@@ -399,7 +399,7 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     }
 
     // Bind target speed by maximum speed.
-    c.speed_target = min(c.speed_target, c.speed_max);
+    c.speed_target = pbio_math_min(c.speed_target, c.speed_max);
 
     // Calculate the trajectory, assumed to be forward.
     pbio_trajectory_new_forward_time_command(trj, &c);
@@ -445,7 +445,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     c.speed_target = pbio_math_abs(c.speed_target);
 
     // Bind target speed by maximum speed.
-    c.speed_target = min(c.speed_target, c.speed_max);
+    c.speed_target = pbio_math_min(c.speed_target, c.speed_max);
 
     // Check if the original user-specified maneuver is backward.
     bool backward = distance < 0;
