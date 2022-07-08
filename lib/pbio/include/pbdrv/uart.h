@@ -28,8 +28,6 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev);
  * @param [in]  uart    The UART device
  * @param [in]  baud    The baud rate
  * @return              ::PBIO_SUCCESS if the baud rate was set or
- *                      ::PBIO_ERROR_INVALID_PORT if the *port* does not have a
- *                      UART associated with it.
  */
 pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud);
 pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout);

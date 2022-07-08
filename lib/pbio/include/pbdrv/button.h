@@ -34,7 +34,6 @@ void _pbdrv_button_init(void);
  * Get bitmask indicating currently pressed buttons.
  * @param [out] pressed     Bitmask indicating which buttons are pressed
  * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                          ::PBIO_ERROR_NO_DEV if port is valid but a device with buttons is not connected
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */

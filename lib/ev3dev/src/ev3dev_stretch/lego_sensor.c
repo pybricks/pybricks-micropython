@@ -163,7 +163,7 @@ struct _lego_sensor_t sensors[4];
 // Get an ev3dev sensor
 pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
     if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     *sensor = &sensors[port - PBIO_PORT_ID_1];

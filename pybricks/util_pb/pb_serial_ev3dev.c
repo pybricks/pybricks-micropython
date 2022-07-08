@@ -141,7 +141,7 @@ static pbio_error_t pb_serial_config(pb_serial_t *ser, int baudrate) {
 pbio_error_t pb_serial_get(pb_serial_t **_ser, pbio_port_id_t port, int baudrate) {
 
     if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Get device pointer

@@ -98,7 +98,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];

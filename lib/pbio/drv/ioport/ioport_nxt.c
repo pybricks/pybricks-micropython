@@ -15,7 +15,7 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
 
 pbio_error_t pbdrv_ioport_get_motor_device_type_id(pbio_port_id_t port, pbio_iodev_type_id_t *type_id) {
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // no detection capabilites, so assume NXT motor (which is almost the same

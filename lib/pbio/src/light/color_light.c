@@ -90,7 +90,6 @@ pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color) 
  *
  * @param [in]  light       The light instance
  * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  */
 pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {

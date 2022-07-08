@@ -44,7 +44,7 @@ static pbio_error_t pb_smbus_set_address(smbus_t *bus, int address) {
 pbio_error_t pb_smbus_get(smbus_t **_bus, int bus_num) {
 
     if (bus_num < BUS_NUM_MIN || bus_num > BUS_NUM_MAX) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     smbus_t *bus = &buses[bus_num - BUS_NUM_MIN];

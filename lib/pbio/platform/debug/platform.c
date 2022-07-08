@@ -272,7 +272,7 @@ void USART2_IRQHandler(void) {
 // in platform.c
 pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
     if (port != PBIO_PORT_ID_1) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     return pbio_uartdev_get(0, iodev);

@@ -18,8 +18,6 @@ const char *pbio_error_str(pbio_error_t err) {
             return "Unknown error";
         case PBIO_ERROR_INVALID_ARG:
             return "Invalid argument";
-        case PBIO_ERROR_INVALID_PORT:
-            return "Invalid port";
         case PBIO_ERROR_IO:
             return "I/O error";
         case PBIO_ERROR_BUSY:

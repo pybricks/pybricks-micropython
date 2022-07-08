@@ -447,7 +447,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_id_t port, uint8_t mode, int3
     pbio_error_t err;
 
     if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     nxtcolor_t *nxtcolor = &nxtcolorsensors[port-PBIO_PORT_ID_1];

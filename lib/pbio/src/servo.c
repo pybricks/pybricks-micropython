@@ -30,7 +30,7 @@ static pbio_servo_t servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
 
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Get address of static servo object.

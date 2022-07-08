@@ -45,7 +45,6 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
  * Instructs the motor to coast freely.
  * @param [in]  driver  The motor driver instance.
  * @return              ::PBIO_SUCCESS if the call was successful,
- *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */

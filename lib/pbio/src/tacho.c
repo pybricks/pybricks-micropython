@@ -35,7 +35,7 @@ static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Get pointer to tacho.

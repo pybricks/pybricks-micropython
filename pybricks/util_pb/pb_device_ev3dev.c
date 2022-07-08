@@ -52,7 +52,7 @@ pb_device_t iodevices[4];
 // Get an ev3dev sensor
 static pbio_error_t get_device(pb_device_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_id_t port) {
     if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     pb_device_t *_pbdev = &iodevices[port - PBIO_PORT_ID_1];

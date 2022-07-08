@@ -146,7 +146,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
 
     // Can't build a drive base with just one motor.
     if (left == right) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Assert that both motors have the same gearing

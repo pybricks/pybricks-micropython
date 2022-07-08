@@ -194,7 +194,7 @@ static void init_one(uint8_t ioport) {
 // TODO: This should be moved to a common ioport_core.c file or removed entirely
 pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
     if (port < PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT || port > PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     ioport_dev_t *ioport = &ioport_devs[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
