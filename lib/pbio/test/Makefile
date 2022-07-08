@@ -178,7 +178,7 @@ $(BUILD_PREFIX)/%.o: %.c $(BUILD_PREFIX)/%.d Makefile
 	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
 
 $(PROG): $(OBJ)
-	$(Q)$(CC) $(CFLAGS) -o $@ $^
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ -lm
 
 build-coverage/lcov.info: Makefile $(SRC)
 	$(Q)$(MAKE) COVERAGE=1

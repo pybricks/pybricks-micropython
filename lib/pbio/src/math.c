@@ -90,30 +90,65 @@ int32_t pbio_math_sqrt(int32_t n) {
     }
 }
 
-// Ratios a/b, upscaled by 1024.
-static int32_t px[] = {0, 768, 1638, 3072, 7168, 15360};
+/**
+ * Points on a curve for linear interpolation.
+ */
+typedef struct {
+    int16_t x;
+    int16_t y;
+} point_t;
 
-// Matching atan(a/b) outputs in eighth's of degrees.
-static int32_t py[] = {0, 307, 472, 586, 660, 710};
+/**
+ * Sample points along the cuve y = atan(x / 1024) * 8.
+ *
+ * This is used to get the atan2(b, a) curve in the first quadrant. The
+ * intermediate scaling is used to avoid excessive roundoff errors.
+ *
+ * x = Ratios b / a, upscaled by 1024.
+ * y = Matching atan(b / b) output, upscaled by 8 * 180 / pi (eighth of a degree).
+ */
+static const point_t atan_points[] = {
+    { .x = 0, .y = 0 },
+    { .x = 409, .y = 178 },
+    { .x = 972, .y = 348 },
+    { .x = 1638, .y = 472 },
+    { .x = 2560, .y = 545 },
+    { .x = 3891, .y = 605 },
+    { .x = 5120, .y = 632 },
+    { .x = 7168, .y = 660 },
+    { .x = 15360, .y = 692 },
+    { .x = 25600, .y = 705 },
+};
 
-// Gets the angle in the first quadrant in eighth's of degrees.
-static int32_t pbio_math_atan2_positive(int32_t y, int32_t x) {
+/**
+ * Interpolates a constant set of (X, Y) sample points to find y for given x.
+ *
+ * If x < x[first] then it returns y[first].
+ * If x >= x[last] then it returns y[last].
+ *
+ * @param [out]  a       Angle a.
+ * @param [in]   input   Value to convert.
+ * @param [in]   scale   Ratio between high resolution angle and input.
+ */
+static int32_t pbio_math_interpolate(const point_t *points, size_t len, int32_t x) {
 
-    // Get absolute ratio, upscaled to preserve resolution.
-    int32_t ratio = 1024 * y / x;
-    if (ratio < 0) {
-        ratio = -ratio;
+    // If x is below the minimum x, return the minimum y.
+    if (x < points[0].x) {
+        return points[0].y;
     }
 
     // Find nearest match and interpolate.
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(px) - 1; i++) {
-        if (ratio < px[i + 1]) {
-            return py[i] + (ratio - px[i]) * (py[i + 1] - py[i]) / (px[i + 1] - px[i]);
+    for (size_t i = 0; i < len - 1; i++) {
+        const point_t *p0 = &points[i];
+        const point_t *p1 = &points[i + 1];
+
+        if (x < p1->x) {
+            return p0->y + (x - p0->x) * (p1->y - p0->y) / (p1->x - p0->x);
         }
     }
 
-    // Not found, so return maximum.
-    return py[PBIO_ARRAY_SIZE(py) - 1];
+    // If x is below the maximum x, return the maximum y.
+    return points[len - 1].y;
 }
 
 /**
@@ -135,8 +170,14 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
         return 90 * pbio_math_sign(y);
     }
 
-    // Get result for absolute ratio and scale to whole degrees.
-    int32_t atan = pbio_math_atan2_positive(y, x) / 8;
+    // Get absolute ratio of y / x, upscaled to preserve resolution.
+    int32_t ratio = 1024 * y / x;
+    if (ratio < 0) {
+        ratio = -ratio;
+    }
+
+    // Interpolate and scale to get corresponding atan value.
+    int32_t atan = pbio_math_interpolate(atan_points, PBIO_ARRAY_SIZE(atan_points), ratio) / 8;
 
     // We took the absolute ratio, but must now account for sign.
     // So, negate if x and y had opposite sign.

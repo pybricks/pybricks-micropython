@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include <math.h>
+
 #include <pbio/math.h>
 #include <test-pbio.h>
 
@@ -25,8 +27,57 @@ static void test_sqrt(void *env) {
     tt_want(pbio_math_sqrt(400000000) == 20000);
 }
 
+static void test_atan2(void *env) {
+
+    // Test the atan2 function directly.
+    for (int32_t x = -1000; x < 1000; x++) {
+        for (int32_t y = -1000; y < 1000; y++) {
+
+            // Get real result and our approximation.
+            int32_t real = atan2(y, x) / M_PI * 180;
+            int32_t ours = pbio_math_atan2(y, x);
+
+            // Get resulting error.
+            int32_t error = pbio_math_abs(real - ours);
+            if (error >= 180) {
+                error -= 360;
+            }
+
+            // Assert that error remains small.
+            tt_want_int_op(error, <=, 3);
+        }
+    }
+
+    // Test atan2 to simulate getting the roll angle around a circle.
+    // This pushes the boundary less, so we can ask for a closer match.
+    for (int32_t angle_in = -180; angle_in < 180; angle_in++) {
+
+        // Repeat tests for different scales.
+        for (int32_t scale = 100; scale < 100000; scale += 100) {
+
+            // Acceleration for current angle.
+            double rad = (double)angle_in * M_PI / 180;
+            double x = cos(rad) * scale;
+            double y = sin(rad) * scale;
+
+            // Test atan2 output.
+            int32_t angle_out = pbio_math_atan2(y, x);
+
+            // Get resulting error.
+            int32_t error = pbio_math_abs(angle_in - angle_out);
+            if (error >= 180) {
+                error -= 360;
+            }
+
+            // Assert that error remains small.
+            tt_want_int_op(error, <=, 2);
+        }
+    }
+}
+
 struct testcase_t pbio_math_tests[] = {
     PBIO_TEST(test_clamp),
     PBIO_TEST(test_sqrt),
+    PBIO_TEST(test_atan2),
     END_OF_TESTCASES
 };
