@@ -224,6 +224,28 @@ jobs:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/build/upload/*
 
+  virtualhub:
+    name: virtual hub
+    needs: [mpy_cross]
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/mpy-cross
+    - name: Build
+      run: |
+        make $MAKEOPTS -C bricks/virtualhub submodules
+        make $MAKEOPTS -C bricks/virtualhub
+
   debug:
     name: debug firmware
     needs: [cross_compiler, mpy_cross]
