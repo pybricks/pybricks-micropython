@@ -5,48 +5,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <pbio/math.h>
 #include <pbio/util.h>
-
-/**
- * Gets the absolute value.
- *
- * @param [in]  value   The value.
- * @return              The absolute (positive) value.
- */
-int32_t pbio_math_abs(int32_t value) {
-    if (value < 0) {
-        return -value;
-    }
-    return value;
-}
-
-/**
- * Gets the maximum of two values.
- *
- * @param [in]  a       Value.
- * @param [in]  b       Value.
- * @return              a if it is greater than b, else b.
- */
-int32_t pbio_math_max(int32_t a, int32_t b) {
-    if (a > b) {
-        return a;
-    }
-    return b;
-}
-
-/**
- * Gets the minimum of two values.
- *
- * @param [in]  a       Value.
- * @param [in]  b       Value.
- * @return              a if it is less than b, else b.
- */
-int32_t pbio_math_min(int32_t a, int32_t b) {
-    if (a < b) {
-        return a;
-    }
-    return b;
-}
 
 /**
  * Binds a value between a lower and upper limit.
@@ -86,20 +46,7 @@ int32_t pbio_math_bind(int32_t value, int32_t min, int32_t max) {
 int32_t pbio_math_clamp(int32_t value, int32_t abs_max) {
     assert(abs_max > 0);
 
-    if (value > abs_max) {
-        return abs_max;
-    }
-    if (value < -abs_max) {
-        return -abs_max;
-    }
-    return value;
-}
-
-int32_t pbio_math_sign(int32_t a) {
-    if (a == 0) {
-        return 0;
-    }
-    return a > 0 ? 1 : -1;
+    return pbio_math_bind(value, -abs_max, abs_max);
 }
 
 int32_t pbio_math_sqrt(int32_t n) {
