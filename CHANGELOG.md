@@ -8,6 +8,11 @@
 - Fix integral control not working properly due to mistakes introduced while
   converting the controllers to use millidegrees.
 
+### Changed
+- `Motor.run_time` no longer raises an exception for negative time values.
+  Negative times are now treated as zero, thus producing a stationary
+  trajectory.
+
 ## [3.2.0b2] - 2022-07-06
 
 ### Added

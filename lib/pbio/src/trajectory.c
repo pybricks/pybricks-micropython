@@ -376,8 +376,10 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
 
-    // Return error for negative or too long user-specified duration
-    if (c.duration / 10 > DURATION_MAX_MS) {
+    // Return error for a long user-specified duration. Too long is defined as
+    // taking as long as the maximum allowed millidegrees distance.
+    int32_t approx_deg = (c.duration / 10000) * (pbio_math_abs(c.speed_target) / 1000);
+    if (approx_deg > INT32_MAX / 1000) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
