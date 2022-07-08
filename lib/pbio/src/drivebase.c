@@ -434,7 +434,7 @@ static pbio_error_t pbio_drivebase_drive_timed(pbio_drivebase_t *db, int32_t dri
 }
 
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
-    return pbio_drivebase_drive_timed(db, speed, turn_rate, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_drivebase_drive_timed(db, speed, turn_rate, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -508,13 +508,13 @@ pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed
     // Start driving forever with the given sum and dif rates.
     int32_t drive_speed = (speed_left + speed_right) / 2;
     int32_t turn_speed = (speed_left - speed_right) / 2;
-    return pbio_drivebase_drive_timed(db, drive_speed, turn_speed, duration, on_completion);
+    return pbio_drivebase_drive_timed(db, drive_speed, turn_speed, pbio_control_time_ms_to_ticks(duration), on_completion);
 }
 
 // Drive forever given two motor speeds.
 pbio_error_t pbio_drivebase_spike_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
     // Same as driving for time, just without an endpoint.
-    return pbio_drivebase_spike_drive_time(db, speed_left, speed_right, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_drivebase_spike_drive_time(db, speed_left, speed_right, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 // Drive given two speeds and one angle.

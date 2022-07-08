@@ -11,25 +11,73 @@
 #include <pbio/trajectory.h>
 
 /**
+ * For a single maneuver, the relative angle in millidegrees is capped at
+ * half the numerical limit.
+ */
+#define ANGLE_MAX (INT32_MAX / 2)
+#define assert_angle(th) (assert(pbio_math_abs((th)) < ANGLE_MAX))
+
+/**
+ * Speed is capped at 2000 deg/s (20000 ddeg/s), which is about twice the
+ * rated speed for a typical motor.
+ */
+#define SPEED_MAX (20000)
+#define assert_speed(w) (assert(pbio_math_abs((w)) <= SPEED_MAX))
+
+/**
+ * Acceleration is capped at 20000 deg/s^2, which for a typical motor
+ * means reaching the maximum speed in just one control sample. The
+ * minimum sets an upper bound on the acceleration time.
+ */
+#define ACCELERATION_MAX (20000)
+#define ACCELERATION_MIN (50)
+#define assert_accel(a) (assert(pbio_math_abs((a)) <= ACCELERATION_MAX && pbio_math_abs((a)) >= ACCELERATION_MIN))
+
+/**
+ * Time segment length is capped at the maximum angle divided by maximum speed,
+ * and scaled to time ticks. This is about 1.1e7 ticks, or roughly 1000 seconds.
+ * Acceleration time segments take at most as long as reaching the maximum
+ * speed with the lowest possible acceleration
+ *
+ */
+#define TIME_MAX (ANGLE_MAX / (SPEED_MAX * 100) * 10000)
+#define TIME_ACCEL_MAX (SPEED_MAX / ACCELERATION_MIN * 1000)
+#define assert_time(t) (assert(pbio_math_abs((t)) < TIME_MAX))
+#define assert_accel_time(t) (assert(pbio_math_abs((t)) < TIME_ACCEL_MAX))
+
+/**
  * Position (mdeg) and time (1e-4 s) are the same as in control module.
  * But speed is in millidegrees/second in control units, but this module uses
  * decidegrees per second to keep the math numerically bounded.
  */
-#define TO_TRAJECTORY_SPEED(speed) ((speed) / 100)
-#define TO_CONTROL_SPEED(speed) ((speed) * 100)
+
+static int32_t to_control_speed(int32_t trajectory_speed) {
+    return trajectory_speed * 100;
+}
+
+static int32_t to_trajectory_speed(int32_t control_speed) {
+    return pbio_math_clamp(control_speed / 100, SPEED_MAX);
+}
 
 /**
  * Acceleration is in millidegrees/second^2 in control units, but this module
  * uses deg/s^2 per second to keep the math numerically bounded.
  */
-#define TO_TRAJECTORY_ACCEL(acc) ((acc) / 1000)
-#define TO_CONTROL_ACCEL(acc) ((acc) * 1000)
+
+static int32_t to_control_accel(int32_t trajectory_accel) {
+    return trajectory_accel * 1000;
+}
+
+static int32_t to_trajectory_accel(int32_t control_accel) {
+    return pbio_math_bind(control_accel / 1000, ACCELERATION_MIN, ACCELERATION_MAX);
+}
 
 /**
  * Time is unsigned everywhere except in the trajectory module.
  */
 #define TO_TRAJECTORY_TIME(time) ((int32_t)(time))
 #define TO_CONTROL_TIME(time) ((uint32_t)(time))
+
 
 static void reverse_trajectory(pbio_trajectory_t *trj) {
     // Negate positions, essentially flipping around starting point.
@@ -66,13 +114,18 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
     pbio_trajectory_set_start(&trj->start, c);
 
     // Set speeds, scaled to ddeg/s.
-    trj->w0 = TO_TRAJECTORY_SPEED(c->speed_target);
-    trj->w1 = TO_TRAJECTORY_SPEED(c->speed_target);
-    trj->w3 = c->continue_running ? TO_TRAJECTORY_SPEED(c->speed_target): 0;
+    trj->w0 = to_trajectory_speed(c->speed_target);
+    trj->w1 = to_trajectory_speed(c->speed_target);
+    trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target): 0;
 }
 
 // Divides speed^2 (ddeg/s)^2 by acceleration (deg/s^2)*2, giving angle (mdeg).
 static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
+
+    assert_accel(a);
+    assert_speed(w_end);
+    assert_speed(w_start);
+
     int32_t product = w_end * w_end - w_start * w_start;
     if (pbio_math_abs(product) > INT32_MAX / (10 / 2)) {
         // Divide first if we have to.
@@ -84,11 +137,19 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
 
 // Divides speed (ddeg/s) by acceleration (deg/s^2), giving time (s e-4).
 static int32_t div_w_by_a(int32_t w, int32_t a) {
+
+    assert_accel(a);
+    assert_speed(w);
+
     return w * 1000 / a;
 }
 
 // Divides angle (mdeg) by time (s e-4), giving speed (ddeg/s).
 static int32_t div_th_by_t(int32_t th, int32_t t) {
+
+    assert_time(t);
+    assert_angle(th);
+
     if (pbio_math_abs(th) < INT32_MAX / 100) {
         return th * 100 / t;
     }
@@ -97,11 +158,19 @@ static int32_t div_th_by_t(int32_t th, int32_t t) {
 
 // Divides speed (ddeg/s) by time (s e-4), giving acceleration (deg/s^2).
 static int32_t div_w_by_t(int32_t w, int32_t t) {
+
+    assert_time(t);
+    assert_speed(w);
+
     return w * 1000 / t;
 }
 
 // Divides angle (mdeg) by speed (deg/s), giving time (s e-4).
 static int32_t div_th_by_w(int32_t th, int32_t w) {
+
+    assert_angle(th);
+    assert_speed(w);
+
     if (pbio_math_abs(th) < INT32_MAX / 100) {
         return th * 100 / w;
     }
@@ -110,6 +179,10 @@ static int32_t div_th_by_w(int32_t th, int32_t w) {
 
 // Multiplies speed (ddeg/s) by time (s e-4), giving angle (mdeg).
 static int32_t mul_w_by_t(int32_t w, int32_t t) {
+
+    assert_time(t);
+    assert_speed(w);
+
     // Get safe result first in case a long time is used.
     int32_t result = w * (t / 100);
     if (pbio_math_abs(result) > (INT32_MAX / 100)) {
@@ -121,6 +194,11 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
 
 // Multiplies acceleration (deg/s^2) by time (s e-4), giving speed (ddeg/s).
 static int32_t mul_a_by_t(int32_t a, int32_t t) {
+
+    assert_time(t);
+    assert_accel(a);
+    assert_accel_time(t);
+
     // Get safe result first in case a long time is used.
     int32_t result = a * (t / 1000);
     if (pbio_math_abs(result) > INT32_MAX / 1000) {
@@ -132,13 +210,25 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
 
 // Multiplies acceleration (deg/s^2) by time (s e-4)^2/2, giving angle (mdeg).
 static int32_t mul_a_by_t2(int32_t a, int32_t t) {
+
+    assert_time(a);
+    assert_speed(t);
+    assert_accel_time(t);
+
     return mul_w_by_t(mul_a_by_t(a, t), t) / 2;
 }
 
 // Gets starting speed (ddeg/s) to reach end speed (ddeg/s) within given
 // angle (mdeg) and acceleration (deg/s^2). Inverse of div_w2_by_a.
 static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
-    // Evaluates sqrt(w_end^2 + 2 * a * th), with scaling for units.
+
+    assert_accel_time(a);
+    assert_speed(w_end);
+    assert((int64_t)pbio_math_abs(a) * (int64_t)pbio_math_abs(th) < INT32_MAX);
+
+    // This is only called if the acceleration is not high enough to reach
+    // the end speed within a certain angle. So only if the angle is smaller
+    // than w2 / a / 2, which is safe.
     return pbio_math_sqrt(w_end * w_end + a * th / (10 / 2));
 }
 
@@ -164,11 +254,11 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     trj->t3 = TO_TRAJECTORY_TIME(c->duration);
 
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
-    trj->w3 = c->continue_running ? TO_TRAJECTORY_SPEED(c->speed_target) : 0;
-    trj->w0 = TO_TRAJECTORY_SPEED(c->speed_start);
-    int32_t wt = TO_TRAJECTORY_SPEED(c->speed_target);
-    int32_t accel = TO_TRAJECTORY_ACCEL(c->acceleration);
-    int32_t decel = TO_TRAJECTORY_ACCEL(c->deceleration);
+    trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target) : 0;
+    trj->w0 = to_trajectory_speed(c->speed_start);
+    int32_t wt = to_trajectory_speed(c->speed_target);
+    int32_t accel = to_trajectory_accel(c->acceleration);
+    int32_t decel = to_trajectory_accel(c->deceleration);
 
     // Bind initial speed to make solution feasible.
     if (div_w_by_a(trj->w0, accel) < -trj->t3) {
@@ -255,11 +345,11 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     trj->th3 = pbio_angle_diff_mdeg((pbio_angle_t *)&c->position_end, (pbio_angle_t *)&c->position_start);
 
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
-    trj->w3 = c->continue_running ? TO_TRAJECTORY_SPEED(c->speed_target) : 0;
-    trj->w0 = TO_TRAJECTORY_SPEED(c->speed_start);
-    int32_t wt = TO_TRAJECTORY_SPEED(c->speed_target);
-    int32_t accel = TO_TRAJECTORY_ACCEL(c->acceleration);
-    int32_t decel = TO_TRAJECTORY_ACCEL(c->deceleration);
+    trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target) : 0;
+    trj->w0 = to_trajectory_speed(c->speed_start);
+    int32_t wt = to_trajectory_speed(c->speed_target);
+    int32_t accel = to_trajectory_accel(c->acceleration);
+    int32_t decel = to_trajectory_accel(c->deceleration);
 
     // Bind initial speed to make solution feasible. Do the larger-than check
     // using quadratic terms to avoid square root evaluations in most cases.
@@ -376,10 +466,8 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
 
-    // Return error for a long user-specified duration. Too long is defined as
-    // taking as long as the maximum allowed millidegrees distance.
-    int32_t approx_deg = (c.duration / 10000) * (pbio_math_abs(c.speed_target) / 1000);
-    if (approx_deg > INT32_MAX / 1000) {
+    // Return error for a long user-specified duration.
+    if (c.duration > TIME_MAX) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -479,8 +567,8 @@ static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, pbio_
 
     // Convert local trajectory units to global pbio units.
     ref->time = TO_CONTROL_TIME(t) + start->time;
-    ref->speed = TO_CONTROL_SPEED(w);
-    ref->acceleration = TO_CONTROL_ACCEL(a);
+    ref->speed = to_control_speed(w);
+    ref->acceleration = to_control_accel(a);
 
     // Reference position is starting point plus progress in this maneuver.
     ref->position = start->position;
@@ -552,10 +640,10 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
 
         // To avoid any overflows of the aforementioned time comparisons,
         // rebase the trajectory if it has been running a long time.
-        if (time > DURATION_FOREVER_MS * 10) {
+        if (time > DURATION_FOREVER_TICKS) {
             pbio_trajectory_command_t command = {
                 .time_start = time_ref,
-                .speed_target = TO_CONTROL_SPEED(trj->w3),
+                .speed_target = to_control_speed(trj->w3),
                 .continue_running = true,
             };
             pbio_trajectory_make_constant(trj, &command);

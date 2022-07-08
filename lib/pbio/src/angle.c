@@ -9,7 +9,7 @@
 #define MDEG_PER_ROT (360000)
 
 // Maximum number of rotations that still fit in a 31 bit millidegree value.
-#define SMALL_ROT_MAX (INT32_MAX / MDEG_PER_ROT / 2)
+#define SMALL_ROT_MAX (INT32_MAX / MDEG_PER_ROT - 1)
 
 void pbio_angle_flush(pbio_angle_t *a) {
     while (a->millidegrees > MDEG_PER_ROT) {

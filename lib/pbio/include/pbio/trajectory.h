@@ -25,7 +25,7 @@
 // motion keeps going due to the absence of a deceleration phase. Still, we
 // need a nonzero number within which we can find a valid solution for the
 // acceleration part of the maneuver.
-#define DURATION_FOREVER_MS (5 * 60 * MS_PER_SECOND)
+#define DURATION_FOREVER_TICKS (5 * 60 * MS_PER_SECOND * 10)
 
 /**
  * Minimal set of trajectory parameters from which a full trajectory is

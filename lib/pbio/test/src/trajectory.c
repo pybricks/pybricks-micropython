@@ -63,7 +63,7 @@ static void test_simple_trajectory(void *env) {
 static void test_infinite_trajectory(void *env) {
 
     int32_t accelerations[] = {
-        10, 50, 100, 500, 1000, 2000, 5000, 10000, 20000
+        10, 50, 100, 500, 1000, 2000, 5000, 10000, 20000, 40000
     };
 
     int32_t speeds[] = {
@@ -85,7 +85,7 @@ static void test_infinite_trajectory(void *env) {
                     // Define the command for this permutation of parameters.
                     pbio_trajectory_command_t command = {
                         .time_start = times[t],
-                        .duration = DURATION_FOREVER_MS * TICKS_PER_MS,
+                        .duration = DURATION_FOREVER_TICKS,
                         .position_start = origin,
                         .position_end = origin,
                         .speed_start = speeds[w0] * DDEGS_PER_DEGS,

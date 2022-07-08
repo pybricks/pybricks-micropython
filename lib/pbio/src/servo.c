@@ -454,7 +454,7 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, uint3
  */
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
     // Start a timed maneuver and restart it when it is done, thus running forever.
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 /**
@@ -468,7 +468,7 @@ pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
  */
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
     // Start a timed maneuver, duration specified by user.
-    return pbio_servo_run_timed(srv, speed, duration, on_completion);
+    return pbio_servo_run_timed(srv, speed, pbio_control_time_ms_to_ticks(duration), on_completion);
 }
 
 /**
