@@ -148,7 +148,7 @@ CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
-CFLAGS += -O0 -ggdb
+CFLAGS += -Og -ggdb
 else
 CFLAGS += -Os -DNDEBUG -flto
 CFLAGS += -fdata-sections -ffunction-sections
