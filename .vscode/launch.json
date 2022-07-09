@@ -95,7 +95,7 @@
             "name": "virtualhub",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/virtualhub/build/virtualhub-micropython",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
                 "./tests/motors/single_motor.py"
             ],
