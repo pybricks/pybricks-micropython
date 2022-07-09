@@ -139,7 +139,11 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
 static int32_t div_w_by_a(int32_t w, int32_t a) {
 
     assert_accel(a);
-    assert_speed(w);
+
+    // This function is often used for speed differences, so the argument w
+    // may be up to twice the maximum speed. For this function, that is still
+    // always safe. So assert at just half the input.
+    assert_speed(w / 2);
 
     return w * 1000 / a;
 }

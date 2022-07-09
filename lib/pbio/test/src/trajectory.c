@@ -14,8 +14,6 @@
 #include <tinytest_macros.h>
 
 #define MDEG_PER_DEG (1000)
-#define TICKS_PER_MS (10)
-#define DDEGS_PER_DEGS (10)
 
 /**
  * This tests one trajectory with simple numbers. If there is a regression,
@@ -53,15 +51,15 @@ static void test_simple_trajectory(void *env) {
     pbio_error_t err = pbio_trajectory_new_angle_command(&trj, &command);
     tt_want_int_op(err, ==, PBIO_SUCCESS);
 
-    tt_want_int_op(trj.t1, ==, 500 * TICKS_PER_MS);
-    tt_want_int_op(trj.t2, ==, 10000 * TICKS_PER_MS);
-    tt_want_int_op(trj.t3, ==, 10500 * TICKS_PER_MS);
+    tt_want_int_op(trj.t1, ==, 500 * 10);
+    tt_want_int_op(trj.t2, ==, 10000 * 10);
+    tt_want_int_op(trj.t3, ==, 10500 * 10);
     tt_want_int_op(trj.th1, ==, 250 * MDEG_PER_DEG);
     tt_want_int_op(trj.th2, ==, 9750 * MDEG_PER_DEG);
     tt_want_int_op(trj.th3, ==, 10000 * MDEG_PER_DEG);
     tt_want_int_op(trj.w0, ==, 0);
-    tt_want_int_op(trj.w1 / DDEGS_PER_DEGS, ==, command.speed_target / MDEG_PER_DEG);
-    tt_want_int_op(trj.w3 / DDEGS_PER_DEGS, ==, 0);
+    tt_want_int_op(trj.w1, ==, command.speed_target / 100);
+    tt_want_int_op(trj.w3, ==, 0);
     tt_want_int_op(trj.a0, ==, command.acceleration / MDEG_PER_DEG);
     tt_want_int_op(trj.a2, ==, -command.deceleration / MDEG_PER_DEG);
 }
@@ -81,7 +79,7 @@ static const int32_t accelerations[] = {
 
 // Start and target speed range deg/s.
 static const int32_t speeds[] = {
-    -2000, -500, 0, /*1, 10,*/ 500, 1000, 2000,
+    -2000, -500, 0, 1, 10, 500, 1000, 2000,
 };
 
 // Start time in clock ticks.
@@ -103,7 +101,7 @@ static const uint32_t num_infinite_trajectories =
 static void get_infinite_command(uint32_t index, pbio_trajectory_command_t *c) {
 
     c->duration = DURATION_FOREVER_TICKS;
-    c->speed_max = 1000 * DDEGS_PER_DEGS;
+    c->speed_max = 1000 * MDEG_PER_DEG;
     c->continue_running = true;
 
     c->position_start = angles[index % PBIO_ARRAY_SIZE(angles)];
@@ -116,10 +114,10 @@ static void get_infinite_command(uint32_t index, pbio_trajectory_command_t *c) {
     c->deceleration = c->acceleration;
     index /= PBIO_ARRAY_SIZE(accelerations);
 
-    c->speed_start = speeds[index % PBIO_ARRAY_SIZE(speeds)] * DDEGS_PER_DEGS;
+    c->speed_start = speeds[index % PBIO_ARRAY_SIZE(speeds)] * MDEG_PER_DEG;
     index /= PBIO_ARRAY_SIZE(speeds);
 
-    c->speed_target = speeds[index % PBIO_ARRAY_SIZE(speeds)] * DDEGS_PER_DEGS;
+    c->speed_target = speeds[index % PBIO_ARRAY_SIZE(speeds)] * MDEG_PER_DEG;
     index /= PBIO_ARRAY_SIZE(speeds);
 }
 
@@ -141,11 +139,17 @@ static void test_infinite_trajectory(void *env) {
         // Evaluate reference at several point to verify result.
         pbio_trajectory_reference_t ref;
 
-        // Initial speed may now be bounded. Verify that the sign
-        // is the same and that it did not grow in size.
+        // Initial speed may now be bounded. Verify that the sign is the same.
         pbio_trajectory_get_reference(&trj, command.time_start, &ref);
         tt_want_int_op(ref.speed < 0, ==, command.speed_start < 0);
-        tt_want_int_op(pbio_math_abs(ref.speed), <=, pbio_math_abs(command.speed_start));
+
+        // In the normal circumstance, the very first reference speed is not
+        // bigger than the start speed of the command. But this only applies if
+        // there is an acceleration phase at all. If the acceleration was very
+        // high then the speed jumps to the target right away.
+        if (trj.t1 != 0) {
+            tt_want_int_op(pbio_math_abs(ref.speed), <=, pbio_math_abs(command.speed_start));
+        }
 
         // Verify that the target speed is reached, which should
         // always be the case in an infinite maneuver, unless capped.
