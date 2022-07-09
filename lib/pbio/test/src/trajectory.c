@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <pbio/math.h>
 #include <pbio/trajectory.h>
 #include <pbio/util.h>
 
@@ -80,7 +81,7 @@ static const int32_t accelerations[] = {
 
 // Start and target speed range deg/s.
 static const int32_t speeds[] = {
-    -2000, -500, 0, 1, 10, 500, 1000, 2000,
+    -2000, -500, 0, /*1, 10,*/ 500, 1000, 2000,
 };
 
 // Start time in clock ticks.
@@ -137,24 +138,25 @@ static void test_infinite_trajectory(void *env) {
         // Verify that we maintain a constant speed when done.
         tt_want_int_op(trj.w1, ==, trj.w3);
 
+        // Evaluate reference at several point to verify result.
+        pbio_trajectory_reference_t ref;
+
         // Initial speed may now be bounded. Verify that the sign
         // is the same and that it did not grow in size.
-        if (command.speed_start > 0) {
-            tt_want_int_op(trj.w0 / DDEGS_PER_DEGS, <=, command.speed_start / MDEG_PER_DEG);
-        } else if (command.speed_start < 0) {
-            tt_want_int_op(trj.w0 / DDEGS_PER_DEGS, >=, command.speed_start / MDEG_PER_DEG);
-        } else {
-            tt_want_int_op(trj.w0 / DDEGS_PER_DEGS, ==, command.speed_start / MDEG_PER_DEG);
-        }
+        pbio_trajectory_get_reference(&trj, command.time_start, &ref);
+        tt_want_int_op(ref.speed < 0, ==, command.speed_start < 0);
+        tt_want_int_op(pbio_math_abs(ref.speed), <=, pbio_math_abs(command.speed_start));
 
         // Verify that the target speed is reached, which should
-        // always be the case in an infinite maneuver.
-        if (command.speed_target > command.speed_max) {
-            tt_want_int_op(trj.w1 / DDEGS_PER_DEGS, ==, command.speed_max / MDEG_PER_DEG);
-        } else if (command.speed_target < -command.speed_max) {
-            tt_want_int_op(trj.w1 / DDEGS_PER_DEGS, ==, -command.speed_max / MDEG_PER_DEG);
-        } else {
-            tt_want_int_op(trj.w1 / DDEGS_PER_DEGS, ==, command.speed_target / MDEG_PER_DEG);
+        // always be the case in an infinite maneuver, unless capped.
+        int32_t expected_speed = pbio_math_abs(command.speed_target) < command.speed_max ?
+            command.speed_target :
+            pbio_math_sign(command.speed_target) * command.speed_max;
+
+        // Verify that we keep hitting the expected speed.
+        for (uint32_t i = 0; i < 10; i++) {
+            pbio_trajectory_get_reference(&trj, command.time_start + trj.t1 + i * DURATION_FOREVER_TICKS / 4, &ref);
+            tt_want_int_op(ref.speed, ==, expected_speed);
         }
     }
 }

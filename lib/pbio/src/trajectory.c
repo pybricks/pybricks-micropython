@@ -622,12 +622,12 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
         w = trj->w0 + mul_a_by_t(trj->a0, time);
         th = mul_w_by_t(trj->w0, time) + mul_a_by_t2(trj->a0, time);
         a = trj->a0;
-    } else if (time - trj->t2 <= 0) {
+    } else if (time - trj->t2 < 0) {
         // If we are here, then we are in the constant speed phase
         w = trj->w1;
         th = trj->th1 + mul_w_by_t(trj->w1, time - trj->t1);
         a = 0;
-    } else if (time - trj->t3 <= 0) {
+    } else if (time - trj->t3 < 0) {
         // If we are here, then we are in the deceleration phase
         w = trj->w1 + mul_a_by_t(trj->a2, time - trj->t2);
         th = trj->th2 + mul_w_by_t(trj->w1, time - trj->t2) + mul_a_by_t2(trj->a2, time - trj->t2);
