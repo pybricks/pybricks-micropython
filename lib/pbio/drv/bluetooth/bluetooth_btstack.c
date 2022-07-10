@@ -520,13 +520,12 @@ void pbdrv_bluetooth_stop_advertising(void) {
     advertising_now = false;
 }
 
-void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
+void pbdrv_bluetooth_stop_data_advertising() {
     gap_advertisements_enable(false);
     advertising_now = false;
-    task->status = PBIO_SUCCESS;
 }
 
-void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0x0030, 0x0030, ADV_SCAN_IND, 0x00, null_addr, 0x07, 0x00);
     gap_advertisements_set_data(value->size, value->data);
@@ -534,18 +533,20 @@ void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_v
         gap_advertisements_enable(true);
         advertising_now = true;
     }
-    task->status = PBIO_SUCCESS;
 }
 
-void pbdrv_bluetooth_start_scan(pbio_task_t *task, bool start) {
+void pbdrv_bluetooth_start_broadcast_process(bool on) {
+    // Not necessary for btstack
+    return;
+}
+
+void pbdrv_bluetooth_broadcast_start_scan(bool start) {
     if (start) {
         gap_set_scan_params(1, 0x30, 0x30, 0);
         gap_start_scan();
     } else {
         gap_stop_scan();
     }
-    // Does not need to run as a task in btstack, so set success right away.
-    task->status = PBIO_SUCCESS;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {

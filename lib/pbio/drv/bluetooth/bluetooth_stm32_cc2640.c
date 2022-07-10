@@ -131,6 +131,15 @@ static uint16_t remote_handle = NO_CONNECTION;
 static uint16_t remote_lwp3_char_handle = NO_CONNECTION;
 // advertising status of BT-chip
 static bool advertising_now = false;
+// scanning status of BT-chip
+static bool scanning_now = false;
+// advertising status of broadcast process
+static bool broadcast_advertising = false;
+// new data available for broadcast to advertise
+static bool broadcast_update_advertising_data = false;
+// scanning status of broadcast
+static bool broadcast_scanning = false;
+
 
 // The Identity Resolving Key read from the Bluetooth chip.
 static uint8_t device_irk[16];
@@ -150,7 +159,11 @@ static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handl
 // Nordic UART tx notifications enabled
 static bool uart_tx_notify_en;
 
+// Broadcast advertising data
+pbdrv_bluetooth_value_t *broadcast_data;
+
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
+PROCESS(pbdrv_bluetooth_broadcast_process, "Bluetooth Broadcast");
 
 LIST(task_queue);
 static bool bluetooth_ready;
@@ -267,6 +280,16 @@ const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
 }
 
+void pbdrv_bluetooth_start_broadcast_process(bool on) {
+    if (on) {
+        process_start(&pbdrv_bluetooth_broadcast_process);
+    } else {
+        // REVISIT: should probably gracefully shutdown in case we are in the
+        // middle of something
+        process_exit(&pbdrv_bluetooth_broadcast_process);
+    }
+}
+
 /**
  * Sets advertising data and enables advertisements.
  */
@@ -321,13 +344,11 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
 
     // make discoverable
     if (!advertising_now) {
-
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PUBLIC, NULL,
             GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
         PT_WAIT_UNTIL(pt, hci_command_complete);
         // ignoring response data
-
 
         advertising_now = true;
     }
@@ -352,17 +373,19 @@ void pbdrv_bluetooth_start_advertising(void) {
 static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_endDiscoverable();
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    // ignoring response data
+    if (advertising_now) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_endDiscoverable();
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        // ignoring response data
 
-    // REVISIT: technically, this isn't complete until GAP_EndDiscoverableDone
-    // event is received
-
-    advertising_now = false;
+        advertising_now = false;
+    }
 
     task->status = PBIO_SUCCESS;
+
+    // TODO: only necessary when called from broadcast process
+    process_poll(&pbdrv_bluetooth_broadcast_process);
 
     PT_END(pt);
 }
@@ -373,23 +396,22 @@ void pbdrv_bluetooth_stop_advertising(void) {
     pbio_task_queue_add(task_queue, &task);
 }
 
-void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
-    pbio_task_init(task, set_non_discoverable, NULL);
-    pbio_task_queue_add(task_queue, task);
+void pbdrv_bluetooth_stop_data_advertising() {
+    broadcast_advertising = false;
 }
 
 /**
  * Sets advertising data and enables advertising.
  */
 static PT_THREAD(start_data_advertising(struct pt *pt, pbio_task_t *task)) {
-    pbdrv_bluetooth_value_t *value = task->context;
 
     PT_BEGIN(pt);
-
-    // Set advertising data
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_updateAdvertistigData(GAP_AD_TYPE_ADVERTISEMNT_DATA, value->size, value->data);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
+    if (broadcast_update_advertising_data) {
+        // Set advertising data
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_updateAdvertistigData(GAP_AD_TYPE_ADVERTISEMNT_DATA, broadcast_data->size, broadcast_data->data);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+    }
 
     if (!advertising_now) {
         // start advertising
@@ -406,38 +428,47 @@ static PT_THREAD(start_data_advertising(struct pt *pt, pbio_task_t *task)) {
 
         advertising_now = true;
     }
-
     task->status = PBIO_SUCCESS;
+
+    process_poll(&pbdrv_bluetooth_broadcast_process);
 
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
-    pbio_task_init(task, start_data_advertising, value);
-    pbio_task_queue_add(task_queue, task);
+void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
+    broadcast_data = value;
+    broadcast_advertising = true;
+    broadcast_update_advertising_data = true;
 }
 
 static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
-    PT_WAIT_UNTIL(pt, hci_command_status);
+    if (!scanning_now) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        scanning_now = true;
+    }
     task->status = PBIO_SUCCESS;
+    process_poll(&pbdrv_bluetooth_broadcast_process);
     PT_END(pt);
 }
 
 static PT_THREAD(set_stop_scan(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_DeviceDiscoveryCancel();
-    PT_WAIT_UNTIL(pt, hci_command_status);
+    if (scanning_now) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryCancel();
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        scanning_now = false;
+    }
     task->status = PBIO_SUCCESS;
+    process_poll(&pbdrv_bluetooth_broadcast_process);
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_start_scan(pbio_task_t *task, bool start) {
-    pbio_task_init(task, start ? set_start_scan : set_stop_scan, NULL);
-    pbio_task_queue_add(task_queue, task);
+void pbdrv_bluetooth_broadcast_start_scan(bool start) {
+    broadcast_scanning = start;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -1270,6 +1301,7 @@ static void handle_event(uint8_t *packet) {
                 break;
 
                 case GAP_DEVICE_DISCOVERY_DONE:
+                    hci_command_complete = true;
                     // TODO: do something with this - occurs when scanning is complete
                     break;
 
@@ -1792,6 +1824,65 @@ static PT_THREAD(init_task(struct pt *pt, pbio_task_t *task)) {
     task->status = PBIO_SUCCESS;
 
     PT_END(pt);
+}
+
+PROCESS_THREAD(pbdrv_bluetooth_broadcast_process, ev, data) {
+    static struct etimer timer;
+
+    PROCESS_EXITHANDLER({
+        advertising_now = scanning_now = false;
+        PROCESS_EXIT();
+    });
+
+    PROCESS_BEGIN();
+
+    static pbio_task_t task;
+
+    DBG("adv_now %d", advertising_now);
+    DBG("scn_now %d", scanning_now);
+
+    while (true) {
+        DBG("stp adv (%d)", advertising_now);
+
+        // stop advertising
+        pbio_task_init(&task, set_non_discoverable, NULL);
+        pbio_task_queue_add(task_queue, &task);
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
+
+        DBG("strt scan(%d)", scanning_now);
+
+        if (broadcast_scanning) {
+            // start scanning
+            pbio_task_init(&task, set_start_scan, NULL);
+            pbio_task_queue_add(task_queue, &task);
+            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
+        }
+
+        etimer_set(&timer, 30);
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+
+
+        DBG("stp scan (%d)", scanning_now);
+
+        // stop scanning
+        pbio_task_init(&task, set_stop_scan, NULL);
+        pbio_task_queue_add(task_queue, &task);
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
+
+        DBG("strt adv(%d)", advertising_now);
+
+        if (broadcast_advertising) {
+            // start advertising
+            pbio_task_init(&task, start_data_advertising, NULL);
+            pbio_task_queue_add(task_queue, &task);
+            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
+        }
+
+        etimer_set(&timer, 20);
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+    }
+
+    PROCESS_END();
 }
 
 PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {

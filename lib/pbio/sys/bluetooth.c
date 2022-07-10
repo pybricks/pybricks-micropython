@@ -326,6 +326,9 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         // reset Bluetooth chip
         pbdrv_bluetooth_power_on(false);
+        #if PBIO_CONFIG_BROADCAST_NUM_SIGNALS
+        pbdrv_bluetooth_start_broadcast_process(false);
+        #endif
         PROCESS_WAIT_WHILE(pbdrv_bluetooth_is_ready());
     }
 

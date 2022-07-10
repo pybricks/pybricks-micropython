@@ -123,28 +123,29 @@ void pbdrv_bluetooth_start_advertising(void);
 void pbdrv_bluetooth_stop_advertising(void);
 
 /**
- * Stops the data advertising process.
- *
- * @param [in]  task         The pbio task
+ * Starts broadcast process for simultaneous advertising scanning on technic/city hub.
+ * @param [in]  on      If true, starts broadcast process, otherwise stops broadcast process.
  */
-void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task);
+void pbdrv_bluetooth_start_broadcast_process(bool on);
+
+/**
+ * Stops the data advertising process.
+ */
+void pbdrv_bluetooth_stop_data_advertising(void);
 
 /**
  * Configuring advertisement data for broadcast and start advertising process
- *
- * @param [in]  task         The pbio task
  * @param [in]  value        The advertising data
  */
-void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
+void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value);
 
 /**
  * Starts or stops scanning for advertisement data
  *
- * @param [in]  task         The pbio task
  * @param [in]  start        Start scanning (true) or stop (false)
  *
  */
-void pbdrv_bluetooth_start_scan(pbio_task_t *task, bool start);
+void pbdrv_bluetooth_broadcast_start_scan(bool start);
 
 /**
  * Tests if a central is connected to the Bluetooth chip.

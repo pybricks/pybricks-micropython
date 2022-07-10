@@ -36,7 +36,7 @@ static struct {
 #define PBIO_BROADCAST_META_SIZE (9)
 #define PBIO_BROADCAST_DELAY_REPEAT_MS (100)
 
-PROCESS(pbio_broadcast_process, "broadcast");
+PROCESS(pbio_broadcast_process, "pbio_broadcast");
 
 // Received signals.
 typedef struct _pbio_broadcast_received_t {
@@ -71,8 +71,6 @@ void pbio_broadcast_start(void) {
 
 void pbio_broadcast_stop(void) {
 
-    static pbio_task_t task;
-
     if (transmit_signal.process_running) {
         // stop broadcast process
         process_exit(&pbio_broadcast_process);
@@ -80,10 +78,10 @@ void pbio_broadcast_stop(void) {
     }
 
     // stop scanning
-    pbdrv_bluetooth_start_scan(&task, false);
+    pbdrv_bluetooth_broadcast_start_scan(false);
 
     // stop advertising
-    pbdrv_bluetooth_stop_data_advertising(&task);
+    pbdrv_bluetooth_stop_data_advertising();
 }
 
 pbio_error_t pbio_broadcast_register_signal(uint32_t hash) {
@@ -127,7 +125,7 @@ void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size) {
     *size = 0;
 }
 
-void pbio_broadcast_transmit(pbio_task_t *task, uint32_t hash, const uint8_t *payload, uint8_t size) {
+void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size) {
 
     // Cut off payloads that are too long.
     if (size > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
@@ -164,7 +162,7 @@ void pbio_broadcast_transmit(pbio_task_t *task, uint32_t hash, const uint8_t *pa
     pbio_broadcast_parse_advertising_data(transmit_signal.value.data, transmit_signal.value.size);
 
     // start broadcasting it
-    pbdrv_bluetooth_start_data_advertising(task, &transmit_signal.value);
+    pbdrv_bluetooth_start_data_advertising(&transmit_signal.value);
 
     // poll process to start timer in the background
     process_poll(&pbio_broadcast_process);
@@ -213,8 +211,6 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
 PROCESS_THREAD(pbio_broadcast_process, ev, data) {
     static struct etimer timer;
 
-    static pbio_task_t task;
-
     PROCESS_BEGIN();
 
     etimer_set(&timer, 1000);
@@ -229,7 +225,7 @@ PROCESS_THREAD(pbio_broadcast_process, ev, data) {
             etimer_restart(&timer);
         } else {
             // Otherwise, the timer has expired, so stop transmitting.
-            pbdrv_bluetooth_stop_data_advertising(&task);
+            pbdrv_bluetooth_stop_data_advertising();
         }
 
     }
