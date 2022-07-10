@@ -19,10 +19,10 @@ hub.light.on(Color.WHITE)
 # Initialize broadcast with two topics.
 radio = Broadcast(["counter", "hue"])
 
-for i in range(100):
+for i in range(1000):
 
     # Send one byte on the number signal.
-    radio.send_bytes("counter", bytes([i]))
+    radio.send_bytes("counter", bytes([i % 100]))
     wait(100)
 
     # Receive two bytes on the hue signal.

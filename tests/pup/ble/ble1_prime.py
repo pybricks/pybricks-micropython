@@ -25,7 +25,7 @@ while True:
 
     # If we received it, display it, and send a response.
     if counter_data:
-        count = counter_data[0]
+        count = counter_data[0] % 100
         hub.display.number(count)
 
         # Send back a hue value.
@@ -33,7 +33,7 @@ while True:
         radio.send_bytes("hue", hue_data)
 
         # Stop if we reach the end.
-        if count >= 99:
+        if count > 99:
             break
 
     # Don't need to update all the time.
