@@ -12,7 +12,12 @@
 
 #if PYBRICKS_PY_BLE
 
+void pb_type_Broadcast_cleanup(void);
 extern const mp_obj_type_t pb_type_Broadcast;
+
+#else
+static inline void pb_type_Broadcast_cleanup(void) {
+}
 
 #endif // PYBRICKS_PY_BLE
 

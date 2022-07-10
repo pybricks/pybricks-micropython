@@ -11,6 +11,7 @@
 #include <pbio/version.h>
 
 #include <pybricks/common.h>
+#include <pybricks/experimental.h>
 #include <pybricks/hubs.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
@@ -125,4 +126,7 @@ void pb_package_pybricks_deinit(void) {
     #if PYBRICKS_PY_PUPDEVICES
     pb_type_Remote_cleanup();
     #endif // PYBRICKS_PY_PUPDEVICES
+    #if PYBRICKS_PY_EXPERIMENTAL
+    pb_type_Broadcast_cleanup();
+    #endif
 }

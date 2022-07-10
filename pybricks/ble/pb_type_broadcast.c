@@ -276,6 +276,10 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(broadcast_obj);
 }
 
+void pb_type_Broadcast_cleanup(void) {
+    pbdrv_bluetooth_start_broadcast_process(false);
+}
+
 STATIC uint32_t broadcast_get_hash(mp_obj_t topic_in) {
 
     qstr topic = mp_obj_str_get_qstr(topic_in);
