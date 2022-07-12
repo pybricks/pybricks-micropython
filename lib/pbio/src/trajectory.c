@@ -187,7 +187,7 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
 
     // Get safe result first in case a long time is used.
     int32_t result = w * (t / 100);
-    if (pbio_math_abs(result) > (INT32_MAX / 100)) {
+    if (pbio_math_abs(result) > (INT32_MAX / 100 - 100 * SPEED_MAX - 1)) {
         return result;
     }
     // Get more accurate result if we know the product does not overflow.
@@ -203,7 +203,7 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
 
     // Get safe result first in case a long time is used.
     int32_t result = a * (t / 1000);
-    if (pbio_math_abs(result) > INT32_MAX / 1000) {
+    if (pbio_math_abs(result) > (INT32_MAX / 1000 - 1000 * ACCELERATION_MAX - 1)) {
         return result;
     }
     // Get more accurate result if we know the product does not overflow.
