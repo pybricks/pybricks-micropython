@@ -64,6 +64,30 @@ static void test_simple_trajectory(void *env) {
     tt_want_int_op(trj.a2, ==, -command.deceleration / MDEG_PER_DEG);
 }
 
+static void walk_trajectory(pbio_trajectory_t *trj) {
+
+    // Get the starting reference.
+    pbio_trajectory_reference_t ref_prev, ref_now;
+    pbio_trajectory_get_reference(trj, trj->start.time, &ref_prev);
+
+    uint32_t time_start = ref_prev.time;
+
+    // Loop over all trajectory points and assert results.
+    for (uint32_t t = 1; t < pbio_trajectory_get_duration(trj) * 2; t += 50) {
+
+        // Get current reference.
+        uint32_t now = t + time_start;
+        pbio_trajectory_get_reference(trj, now, &ref_now);
+
+        // Current time should match
+        tt_want_int_op(ref_now.time, ==, now);
+
+        // Set reference for next comparison.
+        ref_prev = ref_now;
+        ref_prev.position = ref_now.position;
+    }
+}
+
 // Start and end angles in millidegrees.
 static const pbio_angle_t angles[] = {
     {.rotations = 0,             .millidegrees = 0 },
@@ -157,11 +181,27 @@ static void test_infinite_trajectory(void *env) {
             command.speed_target :
             pbio_math_sign(command.speed_target) * command.speed_max;
 
+        // Walk the whole trajectory.
+        walk_trajectory(&trj);
+
+        // Walking the trajectory past "infinity" will rebase it automatically,
+        // so compute it again so we can do additional checks for big time
+        // values.
+        err = pbio_trajectory_new_time_command(&trj, &command);
+        tt_want_int_op(err, ==, PBIO_SUCCESS);
+
         // Verify that we keep hitting the expected speed.
         for (uint32_t i = 0; i < 10; i++) {
             pbio_trajectory_get_reference(&trj, command.time_start + trj.t1 + i * DURATION_FOREVER_TICKS / 4, &ref);
             tt_want_int_op(ref.speed, ==, expected_speed);
         }
+
+        // Polling the inifinite trajectory for so long should by now have
+        // rebased the trajectory to a new, constant command.
+        tt_want(trj.t1 == 0 && trj.t2 == 0 && trj.t3 == 0);
+        tt_want(trj.th1 == 0 && trj.th2 == 0 && trj.th3 == 0);
+        tt_want(trj.a0 == 0 && trj.a2 == 0);
+        tt_want(trj.w0 == trj.w1 && trj.w1 == trj.w3);
     }
 }
 

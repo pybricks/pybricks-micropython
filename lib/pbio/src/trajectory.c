@@ -19,10 +19,12 @@
 
 /**
  * Speed is capped at 2000 deg/s (20000 ddeg/s), which is about twice the
- * rated speed for a typical motor.
+ * rated speed for a typical motor. Some commands deal with speeds relative
+ * to another, so allow up to double that amount.
  */
 #define SPEED_MAX (20000)
-#define assert_speed(w) (assert(pbio_math_abs((w)) <= SPEED_MAX))
+#define assert_speed(w) (assert(pbio_math_abs((w)) <= SPEED_MAX + 1))
+#define assert_speed_rel(w) (assert_speed(w / 2))
 
 /**
  * Acceleration is capped at 20000 deg/s^2, which for a typical motor
@@ -41,9 +43,9 @@
  *
  */
 #define TIME_MAX (ANGLE_MAX / (SPEED_MAX * 100) * 10000)
-#define TIME_ACCEL_MAX (SPEED_MAX / ACCELERATION_MIN * 1000)
-#define assert_time(t) (assert(pbio_math_abs((t)) < TIME_MAX))
-#define assert_accel_time(t) (assert(pbio_math_abs((t)) < TIME_ACCEL_MAX))
+#define TIME_ACCEL_MAX (SPEED_MAX * 2 / ACCELERATION_MIN * 1000)
+#define assert_time(t) (assert((t) >= 0 && (t) < TIME_MAX))
+#define assert_accel_time(t) (assert((t) >= 0 && (t) < TIME_ACCEL_MAX))
 
 /**
  * Position (mdeg) and time (1e-4 s) are the same as in control module.
@@ -139,11 +141,7 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
 static int32_t div_w_by_a(int32_t w, int32_t a) {
 
     assert_accel(a);
-
-    // This function is often used for speed differences, so the argument w
-    // may be up to twice the maximum speed. For this function, that is still
-    // always safe. So assert at just half the input.
-    assert_speed(w / 2);
+    assert_speed_rel(w);
 
     return w * 1000 / a;
 }
@@ -164,7 +162,7 @@ static int32_t div_th_by_t(int32_t th, int32_t t) {
 static int32_t div_w_by_t(int32_t w, int32_t t) {
 
     assert_time(t);
-    assert_speed(w);
+    assert_speed_rel(w);
 
     return w * 1000 / t;
 }
@@ -173,7 +171,7 @@ static int32_t div_w_by_t(int32_t w, int32_t t) {
 static int32_t div_th_by_w(int32_t th, int32_t w) {
 
     assert_angle(th);
-    assert_speed(w);
+    assert_speed_rel(w);
 
     if (pbio_math_abs(th) < INT32_MAX / 100) {
         return th * 100 / w;
@@ -185,7 +183,7 @@ static int32_t div_th_by_w(int32_t th, int32_t w) {
 static int32_t mul_w_by_t(int32_t w, int32_t t) {
 
     assert_time(t);
-    assert_speed(w);
+    assert_speed_rel(w);
 
     // Get safe result first in case a long time is used.
     int32_t result = w * (t / 100);
@@ -215,8 +213,8 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
 // Multiplies acceleration (deg/s^2) by time (s e-4)^2/2, giving angle (mdeg).
 static int32_t mul_a_by_t2(int32_t a, int32_t t) {
 
-    assert_time(a);
-    assert_speed(t);
+    assert_time(t);
+    assert_accel(a);
     assert_accel_time(t);
 
     return mul_w_by_t(mul_a_by_t(a, t), t) / 2;
@@ -226,7 +224,7 @@ static int32_t mul_a_by_t2(int32_t a, int32_t t) {
 // angle (mdeg) and acceleration (deg/s^2). Inverse of div_w2_by_a.
 static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 
-    assert_accel_time(a);
+    assert_accel(a);
     assert_speed(w_end);
     assert((int64_t)pbio_math_abs(a) * (int64_t)pbio_math_abs(th) < INT32_MAX);
 
@@ -645,14 +643,28 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
         // To avoid any overflows of the aforementioned time comparisons,
         // rebase the trajectory if it has been running a long time.
         if (time > DURATION_FOREVER_TICKS) {
+            pbio_angle_t start = trj->start.position;
+            pbio_angle_add_mdeg(&start, th);
+
             pbio_trajectory_command_t command = {
                 .time_start = time_ref,
                 .speed_target = to_control_speed(trj->w3),
                 .continue_running = true,
+                .position_start = start,
             };
             pbio_trajectory_make_constant(trj, &command);
+
+            // w, and a are already set above. Time and angle are 0, since this
+            // is the start of the new maneuver with its new starting point.
+            time = 0;
+            th = 0;
         }
     }
+
+    // Assert that results are bounded
+    assert_time(time);
+    assert_angle(th);
+    assert_speed(w);
 
     // Convert back to absolute points by adding starting point.
     pbio_trajectory_offset_start(ref, &trj->start, time, th, w, a);
