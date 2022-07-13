@@ -400,9 +400,18 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
             // The final speed is not reached either, so reaching
             // w1 is the best we can do in the given time.
             trj->w3 = trj->w1;
+        } else if (c->continue_running && trj->a0 < 0) {
+            // If we have a nonzero final speed and initial negative
+            // acceleration, we are going too fast and we would overshoot
+            // the target before having slowed down. So we need to reduce the
+            // initial speed to be able to reach it.
+            trj->w0 = bind_w0(trj->w3, trj->a0, trj->th3);
+            trj->th1 = trj->th3;
+            trj->th2 = trj->th3;
         } else {
-            // Otherwise, we can just take the intersection of the accelerating
-            // and decelerating ramps to find the speed at t1 = t2.
+            // Otherwise we have a zero final speed. We can just take the
+            // intersection of the accelerating and decelerating ramps to find
+            // the speed at t1 = t2.
             trj->th1 = intersect_ramp(trj->th3, thf, trj->a0, trj->a2);
             trj->th2 = trj->th1;
             trj->w1 = bind_w0(0, trj->a0, trj->th1 - thf);
