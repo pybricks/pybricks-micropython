@@ -33,7 +33,9 @@
  */
 #define ACCELERATION_MAX (20000)
 #define ACCELERATION_MIN (50)
+#define ANGLE_ACCEL_MAX (SPEED_MAX * SPEED_MAX / ACCELERATION_MIN * (10 / 2))
 #define assert_accel(a) (assert(pbio_math_abs((a)) <= ACCELERATION_MAX && pbio_math_abs((a)) >= ACCELERATION_MIN))
+#define assert_accel_angle(th) (assert(pbio_math_abs((th)) <= ANGLE_ACCEL_MAX))
 
 /**
  * Time segment length is capped at the maximum angle divided by maximum speed,
@@ -226,9 +228,16 @@ static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 // intersection of the speed curves if we accelerate (deg/s^2) up and down
 // without a stationary speed phase.
 static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) {
+
+    assert_accel_angle(th3 - th0);
+    assert_accel(a0);
+    assert_accel(a2);
+    assert(th3 != th0);
+    assert(a0 != a2);
+
     if (pbio_math_abs(th3 - th0) > INT32_MAX / pbio_math_abs(a2)) {
-        // Divide first if numerator too large.
-        return th0 + (th3 - th0) / (a2 - a0) * a2;
+        // Downscale first if numerator too large.
+        return th0 + (th3 - th0) / 512 * a2 / (a2 - a0) * 512;
     }
     // Higher resolution result for small angles.
     return th0 + (th3 - th0) * a2 / (a2 - a0);
