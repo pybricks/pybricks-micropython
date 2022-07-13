@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2022 The Pybricks Authors
 
 #include <stdio.h>
 
@@ -75,9 +75,30 @@ static void test_atan2(void *env) {
     }
 }
 
+static void test_mult_and_scale(void *env) {
+
+    // We use this function primarily to multiply speed and acceleration by
+    // time and divide by 100 or 1000, so test the ranges accordingly. The test
+    // increments are arbitrary so the test doesn't take too long.
+    for (int32_t w = -40000; w < 40000; w += 40) {
+        for (int32_t t = 0; t < 5360000; t += 134) {
+
+            // Get full long product for comparison.
+            int64_t product = (int64_t)w * (int64_t)t;
+
+            int32_t div100 = pbio_math_mult_and_scale(w, t, 100);
+            int32_t div1000 = pbio_math_mult_and_scale(w, t, 1000);
+
+            tt_want_int_op(div100, ==, product / 100);
+            tt_want_int_op(div1000, ==, product / 1000);
+        }
+    }
+}
+
 struct testcase_t pbio_math_tests[] = {
-    PBIO_TEST(test_clamp),
-    PBIO_TEST(test_sqrt),
     PBIO_TEST(test_atan2),
+    PBIO_TEST(test_clamp),
+    PBIO_TEST(test_mult_and_scale),
+    PBIO_TEST(test_sqrt),
     END_OF_TESTCASES
 };

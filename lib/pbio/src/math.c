@@ -170,3 +170,40 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
     // Get atan2 result for larger angles.
     return atan > 0 ? atan - 180 : atan + 180;
 }
+
+/**
+ * Multiplies two numbers and scales down the result.
+ *
+ * The result is @p a * @p b / @p div .
+ *
+ * The product of @p a and @p b must not exceed 2**47, and the result after
+ * division must not exceed 2**31.
+ *
+ * Adapted from https://stackoverflow.com/a/57727180, CC BY-SA 4.0
+ *
+ * @param [in]  a    Positive or negative number.
+ * @param [in]  b    Positive number.
+ * @param [in]  div  Divisor.
+ * @return           The result of a * b / div.
+ */
+int32_t pbio_math_mult_and_scale(int32_t a, int32_t b, uint32_t div) {
+
+    // Get long product.
+    assert(b >= 0);
+    uint64_t x = (uint64_t)(a < 0 ? -a : a) * (uint64_t)b;
+
+    // Set d1 to the high two base-65536 digits (bits 17 to 31) and d0 to
+    // the low digit (bits 0 to 15).
+    uint32_t d1 = x >> 16;
+    uint32_t d0 = x & 0xffffu;
+
+    //  Get the quotient and remainder of dividing d1 by div.
+    uint32_t y1 = d1 / div;
+    uint32_t r1 = d1 % div;
+
+    // Combine previous remainder with the low digit of dividend and divide.
+    uint32_t y0 = (r1 << 16 | d0) / div;
+
+    // Return a quotient formed from the two quotient digits, signed by a.
+    return ((int32_t)(y1 << 16 | y0)) * (a < 0 ? -1 : 1);
+}

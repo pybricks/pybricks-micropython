@@ -185,13 +185,7 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
     assert_time(t);
     assert_speed_rel(w);
 
-    // Get safe result first in case a long time is used.
-    int32_t result = w * (t / 100);
-    if (pbio_math_abs(result) > (INT32_MAX / 100 - 100 * SPEED_MAX - 1)) {
-        return result;
-    }
-    // Get more accurate result if we know the product does not overflow.
-    return w * t / 100;
+    return pbio_math_mult_and_scale(w, t, 100);
 }
 
 // Multiplies acceleration (deg/s^2) by time (s e-4), giving speed (ddeg/s).
@@ -201,13 +195,7 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
     assert_accel(a);
     assert_accel_time(t);
 
-    // Get safe result first in case a long time is used.
-    int32_t result = a * (t / 1000);
-    if (pbio_math_abs(result) > (INT32_MAX / 1000 - 1000 * ACCELERATION_MAX - 1)) {
-        return result;
-    }
-    // Get more accurate result if we know the product does not overflow.
-    return a * t / 1000;
+    return pbio_math_mult_and_scale(a, t, 1000);
 }
 
 // Multiplies acceleration (deg/s^2) by time (s e-4)^2/2, giving angle (mdeg).
