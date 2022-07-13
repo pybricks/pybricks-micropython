@@ -555,6 +555,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     if (backward) {
         c.position_end = c.position_start;
         pbio_angle_add_mdeg(&c.position_end, -distance);
+        c.speed_start *= -1;
     }
 
     // Calculate the trajectory, assumed to be forward.
