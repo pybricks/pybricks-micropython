@@ -283,6 +283,19 @@ static void test_position_trajectory(void *env) {
 
         // Otherwise we want success.
         tt_want_int_op(err, ==, PBIO_SUCCESS);
+
+        // Verify that we maintain a constant speed when done.
+        if (command.continue_running) {
+            tt_want_int_op(trj.w3, ==, trj.w1);
+        } else {
+            tt_want_int_op(trj.w3, ==, 0);
+        }
+
+        // Initial speed may now be bounded. Verify that the sign is the same.
+        pbio_trajectory_reference_t ref;
+        pbio_trajectory_get_reference(&trj, command.time_start, &ref);
+        get_position_command(i, &command);
+        tt_want(pbio_math_sign_not_opposite(ref.speed, command.speed_start));
     }
 }
 
