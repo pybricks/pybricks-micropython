@@ -106,6 +106,7 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
 // Start and end angles in millidegrees.
 static const pbio_angle_t angles[] = {
     {.rotations = 0,             .millidegrees = 0 },
+    {.rotations = 0,             .millidegrees = 30 * 1000 },
     {.rotations = -123,          .millidegrees = 456 },
     {.rotations = INT32_MAX / 4, .millidegrees = INT32_MAX / 4 },
 };
@@ -219,8 +220,75 @@ static void test_infinite_trajectory(void *env) {
     }
 }
 
+// Number of permutations for position trajectories.
+static const uint32_t num_position_trajectories =
+    PBIO_ARRAY_SIZE(angles) * // For starting angle.
+    PBIO_ARRAY_SIZE(angles) * // For final angle.
+    PBIO_ARRAY_SIZE(accelerations) * // For acceleration.
+    PBIO_ARRAY_SIZE(accelerations) * // For decceleration.
+    PBIO_ARRAY_SIZE(speeds) * // For start speed.
+    PBIO_ARRAY_SIZE(speeds) * // For target speed.
+    PBIO_ARRAY_SIZE(start_times) * // For start time.
+    2; // For do or don't continue running.
+
+
+/**
+ * Get one command for testing a position trajectory.
+ */
+static void get_position_command(uint32_t index, pbio_trajectory_command_t *c) {
+
+    c->speed_max = 1000 * MDEG_PER_DEG;
+
+    c->continue_running = index % 2;
+    index /= 2;
+
+    c->position_start = angles[index % PBIO_ARRAY_SIZE(angles)];
+    index /= PBIO_ARRAY_SIZE(angles);
+
+    c->position_end = angles[index % PBIO_ARRAY_SIZE(angles)];
+    index /= PBIO_ARRAY_SIZE(angles);
+
+    c->time_start = start_times[index % PBIO_ARRAY_SIZE(start_times)];
+    index /= PBIO_ARRAY_SIZE(start_times);
+
+    c->acceleration = accelerations[index % PBIO_ARRAY_SIZE(accelerations)] * MDEG_PER_DEG;
+    index /= PBIO_ARRAY_SIZE(accelerations);
+
+    c->deceleration = accelerations[index % PBIO_ARRAY_SIZE(accelerations)] * MDEG_PER_DEG;
+    index /= PBIO_ARRAY_SIZE(accelerations);
+
+    c->speed_start = speeds[index % PBIO_ARRAY_SIZE(speeds)] * MDEG_PER_DEG;
+    index /= PBIO_ARRAY_SIZE(speeds);
+
+    c->speed_target = speeds[index % PBIO_ARRAY_SIZE(speeds)] * MDEG_PER_DEG;
+    index /= PBIO_ARRAY_SIZE(speeds);
+}
+
+static void test_position_trajectory(void *env) {
+
+    pbio_trajectory_command_t command;
+
+    for (uint32_t i = 0; i < num_position_trajectories; i++) {
+        get_position_command(i, &command);
+
+        // Calculate the trajectory.
+        pbio_trajectory_t trj;
+        pbio_error_t err = pbio_trajectory_new_angle_command(&trj, &command);
+
+        // If the maneuver was too long, we want invalid arg.
+        if (!pbio_angle_diff_is_small(&command.position_end, &command.position_start)) {
+            tt_want_int_op(err, ==, PBIO_ERROR_INVALID_ARG);
+            continue;
+        }
+
+        // Otherwise we want success.
+        tt_want_int_op(err, ==, PBIO_SUCCESS);
+    }
+}
+
 struct testcase_t pbio_trajectory_tests[] = {
     PBIO_TEST(test_simple_trajectory),
+    PBIO_TEST(test_position_trajectory),
     PBIO_TEST(test_infinite_trajectory),
     END_OF_TESTCASES
 };
