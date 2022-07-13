@@ -73,7 +73,7 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
     uint32_t time_start = ref_prev.time;
 
     // Loop over all trajectory points and assert results.
-    for (uint32_t t = 1; t < pbio_trajectory_get_duration(trj) * 2; t += 50) {
+    for (uint32_t t = 1; t < pbio_trajectory_get_duration(trj) * 2; t += 500) {
 
         // Get current reference.
         uint32_t now = t + time_start;
@@ -81,6 +81,21 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
 
         // Current time should match
         tt_want_int_op(ref_now.time, ==, now);
+
+        bool same_speed_dir = pbio_math_sign(ref_now.speed) == pbio_math_sign(ref_prev.speed);
+        bool same_accel_dir = pbio_math_sign(ref_now.acceleration) == pbio_math_sign(ref_prev.acceleration);
+
+        // If the speed and acceleration direction was the same between two
+        // samples, we can test that the position increment is correct.
+        if (same_speed_dir && same_accel_dir) {
+
+            // Position increment should match speed direction.
+            int32_t movement = pbio_angle_diff_mdeg(&ref_now.position, &ref_prev.position);
+            tt_want(pbio_math_sign_not_opposite(ref_prev.speed, movement / 1000));
+
+            // Speed increment should match acceleration direction.
+            tt_want(pbio_math_sign_not_opposite(ref_now.speed - ref_prev.speed, ref_prev.acceleration));
+        }
 
         // Set reference for next comparison.
         ref_prev = ref_now;
@@ -92,23 +107,22 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
 static const pbio_angle_t angles[] = {
     {.rotations = 0,             .millidegrees = 0 },
     {.rotations = -123,          .millidegrees = 456 },
-    {.rotations = 0,             .millidegrees = INT32_MAX / 4 },
-    {.rotations = INT32_MAX / 4, .millidegrees = 0 },
+    {.rotations = INT32_MAX / 4, .millidegrees = INT32_MAX / 4 },
 };
 
 // Acceleration and deceleration test range in deg/s^2.
 static const int32_t accelerations[] = {
-    10, 50, 100, 500, 1000, 2000, 5000, 10000, 20000, 40000,
+    50, 500, 1000, 5000, 20000,
 };
 
 // Start and target speed range deg/s.
 static const int32_t speeds[] = {
-    -2000, -500, 0, 1, 10, 500, 1000, 2000,
+    -2000, -500, 0, 1, 10, 2000,
 };
 
 // Start time in clock ticks.
-static const int32_t start_times[] = {
-    INT32_MIN, INT32_MIN / 2, -1, 0, 1, INT32_MAX / 2, INT32_MAX
+static const uint32_t start_times[] = {
+    0, UINT32_MAX - 10000, UINT32_MAX,
 };
 
 // Number of permutations for infinite trajectories.

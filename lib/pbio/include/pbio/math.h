@@ -12,6 +12,7 @@
 #define _PBIO_MATH_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * Gets the absolute value.
@@ -66,6 +67,22 @@ static inline int32_t pbio_math_sign(int32_t a) {
     }
 
     return a > 0 ? 1 : -1;
+}
+
+/**
+ * Checks that the signs of @p a and @p b are not opposite.
+ *
+ * @param [in]  a   A signed integer value.
+ * @param [in]  b   A signed integer value.
+ * @return          True if either value is zero or if the signs are the same,
+ *                  else false.
+ */
+static inline bool pbio_math_sign_not_opposite(int32_t a, int32_t b) {
+    if (a == 0 || b == 0) {
+        return true;
+    }
+
+    return (a > 0) == (b > 0);
 }
 
 int32_t pbio_math_atan2(int32_t y, int32_t x);
