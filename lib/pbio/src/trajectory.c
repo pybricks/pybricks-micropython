@@ -409,10 +409,13 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
         }
     }
 
+    // Constant speed phase duration, if any.
+    int32_t t2mt1 = trj->th2 == trj->th1 ? 0 : div_th_by_w(trj->th2 - trj->th1, trj->w1);
+
     // With the intermediate angles and speeds now known, we can calculate the
     // corresponding durations to match.
     trj->t1 = div_w_by_a(trj->w1 - trj->w0, trj->a0);
-    trj->t2 = trj->t1 + div_th_by_w(trj->th2 - trj->th1, trj->w1);
+    trj->t2 = trj->t1 + t2mt1;
     trj->t3 = trj->t2 + div_w_by_a(trj->w3 - trj->w1, trj->a2);
 }
 
@@ -540,7 +543,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     pbio_trajectory_new_forward_angle_command(trj, &c);
 
     // Ensure computed motion points are ordered.
-    if (trj->th1 < 0 || trj->th2 < trj->th1 || trj->th3 < trj->th2) {
+    if (trj->th2 < trj->th1 || trj->th3 < trj->th2) {
         return PBIO_ERROR_FAILED;
     }
 
