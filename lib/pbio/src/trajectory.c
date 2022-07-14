@@ -39,7 +39,7 @@
 
 /**
  * Time segment length is capped at the maximum angle divided by maximum speed,
- * and scaled to time ticks. This is about 1.1e7 ticks, or roughly 1000 seconds.
+ * and scaled to time ticks. This is about 536 seconds.
  * Acceleration time segments take at most as long as reaching the maximum
  * speed with the lowest possible acceleration
  *
@@ -244,7 +244,7 @@ static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) 
 }
 
 // Computes a trajectory for a timed command assuming *positive* speed
-static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
+static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // Fill out starting point based on user command.
     pbio_trajectory_set_start(&trj->start, c);
@@ -332,10 +332,16 @@ static void pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, con
     trj->th1 = div_w2_by_a(trj->w1, trj->w0, trj->a0);
     trj->th2 = trj->th1 + mul_w_by_t(trj->w1, t2mt1);
     trj->th3 = trj->th2 + div_w2_by_a(trj->w3, trj->w1, trj->a2);
+
+    // Assert that all resulting time intervals are positive.
+    if (trj->t1 < 0 || trj->t2 - trj->t1 < 0 || trj->t3 - trj->t2 < 0) {
+        return PBIO_ERROR_FAILED;
+    }
+    return PBIO_SUCCESS;
 }
 
 // Computes a trajectory for an angle command assuming *positive* speed
-static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
+static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // Fill out starting point based on user command.
     pbio_trajectory_set_start(&trj->start, c);
@@ -435,6 +441,12 @@ static void pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, co
     trj->t1 = div_w_by_a(trj->w1 - trj->w0, trj->a0);
     trj->t2 = trj->t1 + t2mt1;
     trj->t3 = trj->t2 + div_w_by_a(trj->w3 - trj->w1, trj->a2);
+
+    // Ensure computed motion points are ordered.
+    if (trj->th2 < trj->th1 || trj->th3 < trj->th2) {
+        return PBIO_ERROR_FAILED;
+    }
+    return PBIO_SUCCESS;
 }
 
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader) {
@@ -503,11 +515,9 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     c.speed_target = pbio_math_min(c.speed_target, c.speed_max);
 
     // Calculate the trajectory, assumed to be forward.
-    pbio_trajectory_new_forward_time_command(trj, &c);
-
-    // Assert that all resulting time intervals are positive.
-    if (trj->t1 < 0 || trj->t2 - trj->t1 < 0 || trj->t3 - trj->t2 < 0) {
-        return PBIO_ERROR_FAILED;
+    pbio_error_t err = pbio_trajectory_new_forward_time_command(trj, &c);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Reverse the maneuver if the original arguments imposed backward motion.
@@ -522,7 +532,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
 
-    // Return error for maneuver that is too long
+    // Return error for maneuver that is too long by angle.
     if (!pbio_angle_diff_is_small(&c.position_end, &c.position_start)) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -559,11 +569,9 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     }
 
     // Calculate the trajectory, assumed to be forward.
-    pbio_trajectory_new_forward_angle_command(trj, &c);
-
-    // Ensure computed motion points are ordered.
-    if (trj->th2 < trj->th1 || trj->th3 < trj->th2) {
-        return PBIO_ERROR_FAILED;
+    pbio_error_t err = pbio_trajectory_new_forward_angle_command(trj, &c);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Reverse the maneuver if the original arguments imposed backward motion.
