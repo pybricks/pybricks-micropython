@@ -174,23 +174,27 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
 /**
  * Multiplies two numbers and scales down the result.
  *
- * The result is @p a * @p b / @p div .
+ * The result is @p a * @p b / @p c .
  *
  * The product of @p a and @p b must not exceed 2**47, and the result after
- * division must not exceed 2**31.
+ * division must not exceed 2**31. @p c must not exceed 2**16.
  *
  * Adapted from https://stackoverflow.com/a/57727180, CC BY-SA 4.0
  *
  * @param [in]  a    Positive or negative number.
- * @param [in]  b    Positive number.
- * @param [in]  div  Divisor.
- * @return           The result of a * b / div.
+ * @param [in]  b    Positive or negative number.
+ * @param [in]  c    Small positive or negative number.
+ * @return           The result of a * b / c.
  */
-int32_t pbio_math_mult_and_scale(int32_t a, int32_t b, uint32_t div) {
+int32_t pbio_math_mult_then_div(int32_t a, int32_t b, int32_t c) {
 
     // Get long product.
-    assert(b >= 0);
-    uint64_t x = (uint64_t)(a < 0 ? -a : a) * (uint64_t)b;
+    uint64_t x = (uint64_t)(a < 0 ? -a : a) * (uint64_t)(b < 0 ? -b : b);
+
+    assert(x < ((int64_t)1) << 48);
+    assert(c != 0);
+
+    uint32_t div = (c < 0 ? -c : c);
 
     // Set d1 to the high two base-65536 digits (bits 17 to 31) and d0 to
     // the low digit (bits 0 to 15).
@@ -204,6 +208,11 @@ int32_t pbio_math_mult_and_scale(int32_t a, int32_t b, uint32_t div) {
     // Combine previous remainder with the low digit of dividend and divide.
     uint32_t y0 = (r1 << 16 | d0) / div;
 
-    // Return a quotient formed from the two quotient digits, signed by a.
-    return ((int32_t)(y1 << 16 | y0)) * (a < 0 ? -1 : 1);
+    // Return a quotient formed from the two quotient digits, signed by inputs.
+    int32_t sign = (a < 0 ? -1 : 1) * (b < 0 ? -1 : 1) * (c < 0 ? -1 : 1);
+    int32_t result = ((int32_t)(y1 << 16 | y0)) * sign;
+
+    // Assert result is correct and return.
+    assert(result == (int64_t)a * (int64_t)b / (int64_t)c);
+    return result;
 }

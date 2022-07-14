@@ -77,20 +77,38 @@ static void test_atan2(void *env) {
 
 static void test_mult_and_scale(void *env) {
 
-    // We use this function primarily to multiply speed and acceleration by
-    // time and divide by 100 or 1000, so test the ranges accordingly. The test
-    // increments are arbitrary so the test doesn't take too long.
-    for (int32_t w = -40000; w < 40000; w += 40) {
-        for (int32_t t = 0; t < 5360000; t += 134) {
+    // Number of values to test for each input. Higher means more testing,
+    // but takes longer.
+    const int32_t steps = 256;
 
-            // Get full long product for comparison.
-            int64_t product = (int64_t)w * (int64_t)t;
+    const int64_t input_max = INT32_MAX;
+    const int64_t result_max = INT32_MAX;
+    const int64_t scale_max = UINT16_MAX;
+    const int64_t product_max = (((int64_t)1) << 48) - 1;
 
-            int32_t div100 = pbio_math_mult_and_scale(w, t, 100);
-            int32_t div1000 = pbio_math_mult_and_scale(w, t, 1000);
+    // Let input (a) vary from minimum to maximum.
+    for (int64_t a = -input_max; a < input_max; a += input_max / steps) {
+        // Let input (b) vary from minimum to maximum.
+        for (int64_t b = -input_max; b < input_max; b += input_max / steps) {
+            // Let input (c) vary from minimum to maximum.
+            for (int64_t c = -scale_max; c < scale_max; c += scale_max / steps) {
 
-            tt_want_int_op(div100, ==, product / 100);
-            tt_want_int_op(div1000, ==, product / 1000);
+                // Skip zero division.
+                if (c == 0) {
+                    continue;
+                }
+
+                // Get the long result.
+                int64_t result = a * b / c;
+
+                // Skip pairs too big for testing.
+                if (a * b > product_max || a * b < -product_max ||
+                    result > result_max || result < -result_max) {
+                    continue;
+                }
+
+                tt_want_int_op(result, ==, pbio_math_mult_then_div(a, b, c));
+            }
         }
     }
 }

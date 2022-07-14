@@ -130,13 +130,7 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
     assert_speed(w_end);
     assert_speed(w_start);
 
-    int32_t product = w_end * w_end - w_start * w_start;
-    if (pbio_math_abs(product) > INT32_MAX / (10 / 2)) {
-        // Divide first if we have to.
-        return product / a * (10 / 2);
-    }
-    // Higher resolution result if possible.
-    return product * (10 / 2) / a;
+    return pbio_math_mult_then_div(w_end * w_end - w_start * w_start, (10 / 2), a);
 }
 
 // Divides speed (ddeg/s) by acceleration (deg/s^2), giving time (s e-4).
@@ -175,10 +169,7 @@ static int32_t div_th_by_w(int32_t th, int32_t w) {
     assert_angle(th);
     assert_speed_rel(w);
 
-    if (pbio_math_abs(th) < INT32_MAX / 100) {
-        return th * 100 / w;
-    }
-    return th / w * 100;
+    return pbio_math_mult_then_div(th, 100, w);
 }
 
 // Multiplies speed (ddeg/s) by time (s e-4), giving angle (mdeg).
@@ -187,7 +178,7 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
     assert_time(t);
     assert_speed_rel(w);
 
-    return pbio_math_mult_and_scale(w, t, 100);
+    return pbio_math_mult_then_div(w, t, 100);
 }
 
 // Multiplies acceleration (deg/s^2) by time (s e-4), giving speed (ddeg/s).
@@ -197,7 +188,7 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
     assert_accel(a);
     assert_accel_time(t);
 
-    return pbio_math_mult_and_scale(a, t, 1000);
+    return pbio_math_mult_then_div(a, t, 1000);
 }
 
 // Multiplies acceleration (deg/s^2) by time (s e-4)^2/2, giving angle (mdeg).
@@ -244,12 +235,7 @@ static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) 
     assert_accel(a2);
     assert(a0 != a2);
 
-    if (pbio_math_abs(th3 - th0) > INT32_MAX / pbio_math_abs(a2)) {
-        // Downscale first if numerator too large.
-        return th0 + (th3 - th0) / 512 * a2 / (a2 - a0) * 512;
-    }
-    // Higher resolution result for small angles.
-    return th0 + (th3 - th0) * a2 / (a2 - a0);
+    return th0 + pbio_math_mult_then_div(th3 - th0, a2, a2 - a0);
 }
 
 // Computes a trajectory for a timed command assuming *positive* speed
