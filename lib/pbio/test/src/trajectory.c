@@ -72,8 +72,23 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
 
     uint32_t time_start = ref_prev.time;
 
+    // Get duration of trajectory.
+    uint32_t duration = pbio_trajectory_get_duration(trj);
+
+    if (duration == DURATION_FOREVER_TICKS) {
+        // To save time on testing, check only twice the on-ramp for "forever"
+        // maneuvers. The lengthy constant speed phase is checked separately
+        // later on anyway.
+        duration = trj->t1 * 2;
+    } else {
+        // For standard maneuvers, check slightly more than the length, to
+        // include testing the behavior after completion. Either add a second,
+        // or do twice the duration, whichever is less.
+        duration = pbio_math_min(duration + 10000, duration * 2);
+    }
+
     // Loop over all trajectory points and assert results.
-    for (uint32_t t = 1; t < pbio_trajectory_get_duration(trj) * 2; t += 500) {
+    for (uint32_t t = 1; t < duration; t += 500) {
 
         // Get current reference.
         uint32_t now = t + time_start;
