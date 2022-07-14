@@ -324,6 +324,21 @@ static void test_position_trajectory(void *env) {
         // Otherwise we want success.
         tt_want_int_op(err, ==, PBIO_SUCCESS);
 
+        // Get command again in case it was changed.
+        get_position_command(i, &command);
+
+        // Check reference endpoint.
+        pbio_trajectory_reference_t end;
+        pbio_trajectory_get_endpoint(&trj, &end);
+        if (command.speed_target == 0) {
+            // With zero movement, we expect stationary, so start equals end.
+            tt_want_int_op(pbio_angle_diff_mdeg(&trj.start.position, &end.position), ==, 0);
+        } else {
+            // When there is movement, assert that start and endpoint match command.
+            tt_want_int_op(pbio_angle_diff_mdeg(&trj.start.position, &command.position_start), ==, 0);
+            tt_want_int_op(pbio_angle_diff_mdeg(&end.position, &command.position_end), ==, 0);
+        }
+
         // Verify that we maintain a constant speed when done.
         if (command.continue_running) {
             tt_want_int_op(trj.w3, ==, trj.w1);
