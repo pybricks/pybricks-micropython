@@ -366,18 +366,6 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
 
-    // Get initial approximation of duration.
-    int32_t t3_approx = div_th_by_w(trj->th3, wt);
-    if (trj->w0 < 0) {
-        // Add time to dissipate initial speed. The case of forward
-        // excess speed gets handled below by cutting down speed.
-        t3_approx += div_w_by_a(-trj->w0, accel);
-    }
-    // Return error if maneuver would take too long.
-    if (t3_approx > TIME_MAX) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
     // Bind initial speed to make solution feasible. Do the larger-than check
     // using quadratic terms to avoid square root evaluations in most cases.
     // This is only needed for positive initial speed, because negative initial
@@ -389,9 +377,23 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
 
     // Do the same check for the target speed, but now use the deceleration
     // magnitude as the only constraint. The target speed is always positive,
-    // so we can omit that additional check here.
-    if (div_w2_by_a(wt, trj->w3, decel) > trj->th3) {
-        wt = bind_w0(trj->w3, decel, trj->th3);
+    // so we can omit that additional check here. We have the full angle (th3)
+    // to slow down, plus any angle run backwards due to initial speed, if any.
+    int32_t fwd_angle = trj->th3 - (trj->w0 > 0 ? 0 : div_w2_by_a(0, trj->w0, accel));
+    if (div_w2_by_a(wt, trj->w3, decel) > fwd_angle) {
+        wt = bind_w0(trj->w3, decel, fwd_angle);
+    }
+
+    // Get initial approximation of duration.
+    int32_t t3_approx = div_th_by_w(fwd_angle, wt);
+    if (trj->w0 < 0) {
+        // Add time to dissipate initial speed. The case of forward
+        // excess speed gets handled below by cutting down speed.
+        t3_approx += div_w_by_a(-trj->w0, accel);
+    }
+    // Return error if maneuver would take too long.
+    if (t3_approx > TIME_MAX) {
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Initial acceleration sign depends on initial speed. It accelerates if
@@ -407,7 +409,7 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     // a fictitious zero-speed angle for computational convenience. This is the
     // angle on the speed-angle phase plot where the in-phase square root
     // function intersects the zero speed axis if we kept (de)accelerating.
-    int32_t thf = div_w2_by_a(0, -trj->w0, trj->a0);
+    int32_t thf = div_w2_by_a(0, trj->w0, trj->a0);
 
     // The in-phase completes at the point where it reaches the target speed.
     trj->th1 = thf + div_w2_by_a(wt, 0, trj->a0);
@@ -655,7 +657,9 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
     int32_t th, w, a;
 
     if (time - trj->t1 < 0) {
-        // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
+        // If we are here, then we are still in the acceleration phase.
+        // Includes conversion from microseconds to seconds, in two steps to
+        // avoid overflows and round off errors
         w = trj->w0 + mul_a_by_t(trj->a0, time);
         th = mul_w_by_t(trj->w0, time) + mul_a_by_t2(trj->a0, time);
         a = trj->a0;
@@ -670,7 +674,8 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
         th = trj->th2 + mul_w_by_t(trj->w1, time - trj->t2) + mul_a_by_t2(trj->a2, time - trj->t2);
         a = trj->a2;
     } else {
-        // If we are here, we are in the constant speed phase after the maneuver completes
+        // If we are here, we are in the constant speed phase after the
+        // maneuver completes
         w = trj->w3;
         th = trj->th3 + mul_w_by_t(trj->w3, time - trj->t3);
         a = 0;
