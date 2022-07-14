@@ -88,7 +88,8 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
     }
 
     // Loop over all trajectory points and assert results.
-    for (uint32_t t = 1; t < duration; t += 500) {
+    const uint32_t increment = 50;
+    for (uint32_t t = increment; t < duration; t += increment) {
 
         // Get current reference.
         uint32_t now = t + time_start;
@@ -97,11 +98,33 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
         // Current time should match
         tt_want_int_op(ref_now.time, ==, now);
 
+        // Check movement between samples.
+        int32_t movement = pbio_angle_diff_mdeg(&ref_now.position, &ref_prev.position);
+        int32_t movement_expected = (ref_now.speed + ref_prev.speed) / 2 * (increment / 10000.0f);
+        int32_t movement_threshold = ref_now.speed == ref_prev.speed ? 1000 : 5000;
+        tt_want(pbio_math_abs(movement - movement_expected) < movement_threshold);
+
+        // Check speed change between samples, but only within time segments.
+        // To find out, compare starting point of segments of both samples.
+        pbio_trajectory_reference_t last_vertex_now;
+        pbio_trajectory_get_last_vertex(trj, now, &last_vertex_now);
+
+        pbio_trajectory_reference_t last_vertex_prev;
+        pbio_trajectory_get_last_vertex(trj, now - increment, &last_vertex_prev);
+
+        // Now we can compare the speeds.
+        if (ref_now.acceleration == ref_prev.acceleration &&
+            last_vertex_now.time == last_vertex_prev.time) {
+            int32_t delta = ref_now.speed - ref_prev.speed;
+            int32_t delta_expected = ref_now.acceleration * (increment / 10000.0f);
+            tt_want(pbio_math_abs(delta - delta_expected) < 3000);
+        }
+
         bool same_speed_dir = pbio_math_sign(ref_now.speed) == pbio_math_sign(ref_prev.speed);
         bool same_accel_dir = pbio_math_sign(ref_now.acceleration) == pbio_math_sign(ref_prev.acceleration);
 
         // If the speed and acceleration direction was the same between two
-        // samples, we can test that the position increment is correct.
+        // samples, we can test that the position increment direction is correct.
         if (same_speed_dir && same_accel_dir) {
 
             // Position increment should match speed direction.
