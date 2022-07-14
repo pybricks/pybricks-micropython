@@ -453,7 +453,8 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
             // acceleration, we are going too fast and we would overshoot
             // the target before having slowed down. So we need to reduce the
             // initial speed to be able to reach it.
-            trj->w0 = bind_w0(trj->w3, trj->a0, trj->th3);
+            trj->w0 = bind_w0(trj->w3, -trj->a0, trj->th3);
+            trj->w1 = trj->w3;
             trj->th1 = trj->th3;
             trj->th2 = trj->th3;
         } else {
@@ -477,6 +478,9 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
 
     // Ensure computed motion points are ordered.
     if (trj->th2 < trj->th1 || trj->th3 < trj->th2) {
+        return PBIO_ERROR_FAILED;
+    }
+    if (trj->t1 < 0 || trj->t2 - trj->t1 < 0 || trj->t3 - trj->t2 < 0) {
         return PBIO_ERROR_FAILED;
     }
     return PBIO_SUCCESS;
@@ -653,6 +657,7 @@ void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_refere
 
 // Get trajectory endpoint.
 uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj) {
+    assert_time(trj->t3);
     return TO_CONTROL_TIME(trj->t3);
 }
 
