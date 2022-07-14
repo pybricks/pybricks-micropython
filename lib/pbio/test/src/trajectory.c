@@ -275,9 +275,8 @@ static void test_position_trajectory(void *env) {
         pbio_trajectory_t trj;
         pbio_error_t err = pbio_trajectory_new_angle_command(&trj, &command);
 
-        // If the maneuver was too long, we want invalid arg.
-        if (!pbio_angle_diff_is_small(&command.position_end, &command.position_start)) {
-            tt_want_int_op(err, ==, PBIO_ERROR_INVALID_ARG);
+        // Very low speeds or accelerations with long angles are not valid.
+        if (err == PBIO_ERROR_INVALID_ARG) {
             continue;
         }
 

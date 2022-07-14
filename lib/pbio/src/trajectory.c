@@ -246,6 +246,11 @@ static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) 
 // Computes a trajectory for a timed command assuming *positive* speed
 static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
+    // Return error for a long user-specified duration.
+    if (c->duration > TIME_MAX) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     // Fill out starting point based on user command.
     pbio_trajectory_set_start(&trj->start, c);
 
@@ -258,6 +263,11 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
     int32_t wt = to_trajectory_speed(c->speed_target);
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
+
+    // Return error if approximate angle too long.
+    if (mul_w_by_t(wt, trj->t3) > ANGLE_MAX) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
     // Bind initial speed to make solution feasible.
     if (div_w_by_a(trj->w0, accel) < -trj->t3) {
@@ -355,6 +365,18 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     int32_t wt = to_trajectory_speed(c->speed_target);
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
+
+    // Get initial approximation of duration.
+    int32_t t3_approx = div_th_by_w(trj->th3, wt);
+    if (trj->w0 < 0) {
+        // Add time to dissipate initial speed. The case of forward
+        // excess speed gets handled below by cutting down speed.
+        t3_approx += div_w_by_a(-trj->w0, accel);
+    }
+    // Return error if maneuver would take too long.
+    if (t3_approx > TIME_MAX) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
     // Bind initial speed to make solution feasible. Do the larger-than check
     // using quadratic terms to avoid square root evaluations in most cases.
@@ -488,11 +510,6 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
 
     // Copy the command so we can modify it.
     pbio_trajectory_command_t c = *command;
-
-    // Return error for a long user-specified duration.
-    if (c.duration > TIME_MAX) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
 
     // Return empty maneuver for zero time
     if (c.duration == 0) {
