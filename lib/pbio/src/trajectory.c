@@ -230,9 +230,18 @@ static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) {
 
     assert_accel_angle(th3 - th0);
+
+    // If angles are equal, that's where they intersect.
+    // This avoids the acceleration ratio division, which
+    // is needed when a2 == a0, which is allowed in this
+    // scenario. This happens when the movement consists
+    // of just deceleration the whole way.
+    if (th3 == th0) {
+        return th0;
+    }
+
     assert_accel(a0);
     assert_accel(a2);
-    assert(th3 != th0);
     assert(a0 != a2);
 
     if (pbio_math_abs(th3 - th0) > INT32_MAX / pbio_math_abs(a2)) {
