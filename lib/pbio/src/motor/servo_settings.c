@@ -212,6 +212,19 @@ static const pbio_observer_model_t model_ev3_m = {
 
 #endif // PBIO_CONFIG_SERVO_EV3_NXT
 
+/**
+ * Gets the maximum allowed voltage for a dc motor.
+ *
+ * @param [in]  id          Device type id.
+ * @return                  Maximum voltage (mV) for the given motor type.
+ */
+int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
+    if (id == PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR) {
+        return 6000;
+    }
+    return 9000;
+}
+
 #define DEG_TO_MDEG(deg) ((deg) * 1000)
 
 /**

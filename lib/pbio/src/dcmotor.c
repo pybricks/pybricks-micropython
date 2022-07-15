@@ -141,19 +141,6 @@ void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *a
 }
 
 /**
- * Gets the maximum allowed voltage for a motor.
- *
- * @param [in]  id          Device type id.
- * @return                  Maximum voltage (mV) for the given motor type.
- */
-int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
-    if (id == PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR) {
-        return 6000;
-    }
-    return 9000;
-}
-
-/**
  * Coasts the dc motor.
  *
  * This just sets the physical state and does not stop parent objects. It
