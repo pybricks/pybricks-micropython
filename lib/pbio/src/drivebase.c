@@ -88,7 +88,14 @@ static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_c
     s_heading->speed_default = s_heading->speed_max / 3;
 }
 
-// Get the physical and estimated state of a drivebase
+/**
+ * Get the physical and estimated state of a drivebase in units of control.
+ *
+ * @param [in]  db              The drivebase instance
+ * @param [out] state_distance  Physical and estimated state of the distance.
+ * @param [out] state_heading   Physical and estimated state of the heading.
+ * @return                      Error code.
+ */
 static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
 
     // Get left servo state
@@ -119,20 +126,43 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     return PBIO_SUCCESS;
 }
 
+/**
+ * Stop the drivebase from updating its controllers.
+ *
+ * This does not physically stop the motors if they are already moving.
+ *
+ * @param [in]  db              The drivebase instance
+ */
 static void pbio_drivebase_stop_drivebase_control(pbio_drivebase_t *db) {
     // Stop drivebase control so polling will stop
     pbio_control_stop(&db->control_distance);
     pbio_control_stop(&db->control_heading);
 }
 
+/**
+ * Stop the motors used by the drivebase from updating its controllers.
+ *
+ * This does not physically stop the motors if they are already moving.
+ *
+ * @param [in]  db              The drivebase instance
+ */
 static void pbio_drivebase_stop_servo_control(pbio_drivebase_t *db) {
     // Stop servo control so polling will stop
     pbio_control_stop(&db->left->control);
     pbio_control_stop(&db->right->control);
 }
 
-// This function is attached to a servo object, so it is able to
-// stop the drivebase if the servo needs to execute a new command.
+/**
+ * Drivebase stop function that can be called from a servo.
+ *
+ * When a new command is issued to a servo, the servo calls this to stop the
+ * drivebase controller and to stop the other motor physically.
+ *
+ * @param [in]  drivebase       Void pointer to this drivebase instance.
+ * @param [in]  clear_parent    Unused. There is currently no higher
+ *                              abstraction than a drivebase.
+ * @return                      Error code.
+ */
 static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_parent) {
 
     // Specify pointer type.
@@ -156,6 +186,16 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     return pbio_dcmotor_coast(db->right->dcmotor);
 }
 
+/**
+ * Gets drivebase instance from two servo instances.
+ *
+ * @param [out] db_address       Drivebase instance if available.
+ * @param [in]  left             Left servo instance.
+ * @param [in]  right            Right servo instance.
+ * @param [in]  wheel_diameter   Wheel diameter in mm.
+ * @param [in]  axle_track       Distance between wheel-ground contact points.
+ * @return                       Error code.
+ */
 pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track) {
 
     // Can't build a drive base with just one motor.
@@ -232,6 +272,13 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     return PBIO_SUCCESS;
 }
 
+/**
+ * Stops a drivebase.
+ *
+ * @param [in]  db               Drivebase instance.
+ * @param [in]  on_completion    Which stop type to use.
+ * @return                       Error code.
+ */
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
@@ -260,10 +307,27 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completio
     return pbio_servo_stop(db->right, on_completion);
 }
 
+/**
+ * Checks if a drivebase is not yet at the position or time target.
+ *
+ * If the drivebase is holding position, it is not busy.
+ *
+ * @param [in]  db          The drivebase instance
+ * @return                  True if still moving to target, false if not.
+ */
 bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {
     return !pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading);
 }
 
+/**
+ * Updates one drivebase in the control loop.
+ *
+ * This reads the physical and estimated state, and updates the controller if
+ * it is active.
+ *
+ * @param [in]  db          The drivebase instance
+ * @return                  Error code.
+ */
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // If passive, then exit
@@ -322,6 +386,9 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque - dif_torque + feed_forward_right);
 }
 
+/**
+ * Updates all currently active (previously set up) drivebases.
+ */
 void pbio_drivebase_update_all(void) {
     // Go through all drive base candidates
     for (uint8_t i = 0; i < PBIO_CONFIG_NUM_DRIVEBASES; i++) {
@@ -335,6 +402,17 @@ void pbio_drivebase_update_all(void) {
     }
 }
 
+/**
+ * Starts the drivebase controllers to run by a given distance and angle.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  distance        The distance to run by in mm.
+ * @param [in]  drive_speed     The drive speed in mm/s.
+ * @param [in]  angle           The angle to turn in deg.
+ * @param [in]  turn_speed      The turn speed in deg/s.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
 static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t angle, int32_t turn_speed, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
@@ -393,10 +471,32 @@ static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t 
     return PBIO_SUCCESS;
 }
 
+/**
+ * Starts the drivebase controllers to run by a given distance.
+ *
+ * This will use the default speed.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  distance        The distance to run by in mm.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
 pbio_error_t pbio_drivebase_drive_straight(pbio_drivebase_t *db, int32_t distance, pbio_control_on_completion_t on_completion) {
     // Execute the common drive command at default speed.
     return pbio_drivebase_drive_relative(db, distance, 0, 0, 0, on_completion);
 }
+
+/**
+ * Starts the drivebase controllers to run by an arc of given radius and angle.
+ *
+ * This will use the default speed.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  radius          Radius of the arc in mm.
+ * @param [in]  angle           Angle in degrees.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
 pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle, pbio_control_on_completion_t on_completion) {
 
     // The angle is signed by the radius so we can go both ways.
@@ -409,6 +509,16 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     return pbio_drivebase_drive_relative(db, arc_length, 0, arc_angle, 0, on_completion);
 }
 
+/**
+ * Starts the drivebase controllers to run for a given duration.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  drive_speed     The drive speed in mm/s.
+ * @param [in]  turn_speed      The turn speed in deg/s.
+ * @param [in]  duration        The duration in control ticks.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
 static pbio_error_t pbio_drivebase_drive_timed(pbio_drivebase_t *db, int32_t drive_speed, int32_t turn_speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
@@ -444,10 +554,28 @@ static pbio_error_t pbio_drivebase_drive_timed(pbio_drivebase_t *db, int32_t dri
     return PBIO_SUCCESS;
 }
 
+/**
+ * Starts the drivebase controllers to run forever.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  speed           The drive speed in mm/s.
+ * @param [in]  turn_rate       The turn rate in deg/s.
+ * @return                      Error code.
+ */
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
     return pbio_drivebase_drive_timed(db, speed, turn_rate, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
+/**
+ * Gets the drivebase state in user units.
+ *
+ * @param [in]  db          The drivebase instance.
+ * @param [out] distance    Distance traveled in mm.
+ * @param [out] drive_speed Current speed in mm/s.
+ * @param [out] angle       Angle turned in degrees.
+ * @param [out] turn_rate   Current turn rate in deg/s.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
 
     // Get drive base state
@@ -464,6 +592,18 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
     return PBIO_SUCCESS;
 }
 
+
+/**
+ * Gets the drivebase settings in user units.
+ *
+ * @param [in]  db                  Drivebase instance.
+ * @param [out] drive_speed         Default linear speed in mm/s.
+ * @param [out] drive_acceleration  Linear acceleration in mm/s^2.
+ * @param [out] drive_deceleration  Linear deceleration in mm/s^2.
+ * @param [out] turn_rate           Default turn rate in deg/s.
+ * @param [out] turn_acceleration   Angular acceleration in deg/s^2.
+ * @param [out] turn_deceleration   Angular deceleration in deg/s^2.
+ */
 pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *drive_deceleration, int32_t *turn_rate, int32_t *turn_acceleration, int32_t *turn_deceleration) {
 
     pbio_control_settings_t *sd = &db->control_distance.settings;
@@ -479,6 +619,17 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
     return PBIO_SUCCESS;
 }
 
+/**
+ * Sets the drivebase settings in user units.
+ *
+ * @param [in]  db                  Drivebase instance.
+ * @param [in] drive_speed          Default linear speed in mm/s.
+ * @param [in] drive_acceleration   Linear acceleration in mm/s^2.
+ * @param [in] drive_deceleration   Linear deceleration in mm/s^2.
+ * @param [in] turn_rate            Default turn rate in deg/s.
+ * @param [in] turn_acceleration    Angular acceleration in deg/s^2.
+ * @param [in] turn_deceleration    Angular deceleration in deg/s^2.
+ */
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t drive_deceleration, int32_t turn_rate, int32_t turn_acceleration, int32_t turn_deceleration) {
 
     pbio_control_settings_t *sd = &db->control_distance.settings;
@@ -496,11 +647,25 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 
 #if PBIO_CONFIG_DRIVEBASE_SPIKE
 
-// The following functions provide spike-like "tank-drive" controls. These will
-// not use the pbio functionality for gearing or reversed orientation. Any
-// scaling and flipping happens within the functions below.
 
-// Set up a drive base without drivebase geometry.
+
+/**
+ * Gets spike drivebase instance from two servo instances.
+ *
+ * This and the following functions provide spike-like "tank-drive" controls.
+ * These will not use the pbio functionality for gearing or reversed
+ * orientation. Any scaling and flipping happens within the functions below.
+ *
+ * It is a drivebase, but without wheel size and axle track parameters.
+ * Instead, the internal conversions are such that the "distance" is expressed
+ * in motor degrees. Likewise, turning in place by N degrees means that both
+ * motors turn by that amount.
+ *
+ * @param [out] db_address       Drivebase instance if available.
+ * @param [in]  left             Left servo instance.
+ * @param [in]  right            Right servo instance.
+ * @return                       Error code.
+ */
 pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
     pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1, 1);
 
@@ -511,7 +676,16 @@ pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, p
     return err;
 }
 
-// Drive for a given duration, given two motor speeds.
+/**
+ * Starts driving for a given duration, at the provided motor speeds.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  speed_left      Left motor speed in deg/s.
+ * @param [in]  speed_right     Right motor speed in deg/s.
+ * @param [in]  duration        The duration in ms.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
 pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion) {
     // Flip left tank motor orientation.
     speed_left = -speed_left;
@@ -522,13 +696,32 @@ pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed
     return pbio_drivebase_drive_timed(db, drive_speed, turn_speed, pbio_control_time_ms_to_ticks(duration), on_completion);
 }
 
-// Drive forever given two motor speeds.
+/**
+ * Starts driving indefinitely, at the provided motor speeds.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  speed_left      Left motor speed in deg/s.
+ * @param [in]  speed_right     Right motor speed in deg/s.
+ * @return                      Error code.
+ */
 pbio_error_t pbio_drivebase_spike_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
     // Same as driving for time, just without an endpoint.
     return pbio_drivebase_spike_drive_time(db, speed_left, speed_right, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
-// Drive given two speeds and one angle.
+/**
+ * Drive the motors by a given angle, at the provided motor speeds.
+ *
+ * Only the faster motor will travel by the given angle. The slower motor
+ * travels less, such that they still stop at the same time.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  speed_left      Left motor speed in deg/s.
+ * @param [in]  speed_right     Right motor speed in deg/s.
+ * @param [in]  angle           Angle (deg) that the fast motor should travel.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
 pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_control_on_completion_t on_completion) {
 
     // In the classic tank drive, we flip the left motor here instead of at the low level.
@@ -555,6 +748,17 @@ pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t spee
     return pbio_drivebase_drive_relative(db, distance, speed, turn_angle, speed, on_completion);
 }
 
+/**
+ * Converts a speed and a steering ratio into a separate left and right speed.
+ *
+ * The steering value must be in the range [-100, 100].
+ *
+ * @param [in]  speed         Overal speed (deg/s).
+ * @param [in]  steering      Steering ratio.
+ * @param [out] speed_left    Speed of the left motor (deg/s).
+ * @param [out] speed_right   Speed of the right motor (deg/s).
+ * @return                    Error code.
+ */
 pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
 
     // Steering must be bounded.
