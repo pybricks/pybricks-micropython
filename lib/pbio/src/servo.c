@@ -275,7 +275,9 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_angle_t new_angle;
     pbio_control_settings_app_to_ctl_long(&srv->control.settings, reset_angle, &new_angle);
 
-    // Reset the tacho to the new angle.
+    // Reset the tacho to the new angle. If reset_to_abs is true, the
+    // new_angle will be an output, representing the angle it was set to.
+    // This lets us use it again to reset the observer below.
     err = pbio_tacho_reset_angle(srv->tacho, &new_angle, reset_to_abs);
     if (err != PBIO_SUCCESS) {
         return err;

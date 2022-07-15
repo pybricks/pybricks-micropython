@@ -32,6 +32,13 @@ struct _pbio_tacho_t {
 
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
+/**
+ * Gets pointer to static tacho instance using port id.
+ *
+ * @param [in]  port        Port identifier.
+ * @param [out] tacho       Pointer to tacho object.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
@@ -45,6 +52,13 @@ pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho) {
     return pbdrv_counter_get_dev(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &((*tacho)->counter));
 }
 
+/**
+ * Gets the tacho angle.
+ *
+ * @param [in]  tacho       The tacho instance.
+ * @param [out] angle       Angle in millidegrees.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, pbio_angle_t *angle) {
 
     // First, get the raw angle from the driver.
@@ -64,6 +78,19 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, pbio_angle_t *angle) {
     return PBIO_SUCCESS;
 }
 
+/**
+ * Resets the tacho angle to a given value.
+ *
+ * If @p reset_to_abs is true, the value will be reset to the absolute angle
+ * marked on the shaft if supported. In this case, @p reset_angle serves as an
+ * output so the caller knows which value it was reset to.
+ *
+ * @param [in]  tacho        The tacho instance.
+ * @param [in]  angle        Angle that tacho should now report in millidegrees.
+ * @param [in]  reset_to_abs If true, ignores @p angle and instead resets to
+ *                           absolute angle marked on shaft instead.
+ * @return                   Error code.
+ */
 pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *angle, bool reset_to_abs) {
 
     // If we reset to the absolute angle, we override the input angle. This
@@ -103,6 +130,16 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *angle, bo
     return PBIO_SUCCESS;
 }
 
+/**
+ * Sets up the tacho instance to be used in an application.
+ *
+ * @param [in]  tacho       The tacho instance.
+ * @param [in]  direction   The direction of positive rotation.
+ * @param [in]  reset_angle If true, reset the current angle to the current
+ *                          absolute position if supported or 0. Otherwise it
+ *                          maintains its current value.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, pbio_direction_t direction, bool reset_angle) {
 
     pbio_angle_t zero = {0};

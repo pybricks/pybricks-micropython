@@ -4,7 +4,8 @@
 /**
  * @addtogroup Tacho pbio/tacho: Rotation sensor interface
  *
- * Extends a rotation sensor with a configurable positive direction and zero point.
+ * Extends a rotation sensor with a configurable positive direction and zero
+ * point without resetting hardware.
  * @{
  */
 
