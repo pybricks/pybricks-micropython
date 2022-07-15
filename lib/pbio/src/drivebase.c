@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <stdlib.h>
 
@@ -12,10 +12,17 @@
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0
 
 // Drivebase objects
-
 static pbio_drivebase_t drivebases[PBIO_CONFIG_NUM_DRIVEBASES];
 
-// The drivebase update can run if both servos are successfully updating
+/**
+ * Gets the state of the drivebase update loop.
+ *
+ * This becomes true after a successful call to pbio_drivebase_setup and
+ * becomes false when there is an error. Such as when the cable is unplugged.
+ *
+ * @param [in]  db          The drivebase instance
+ * @return                  True if up and running, false if not.
+ */
 bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 
     // Drivebase must have servos.
@@ -32,7 +39,15 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
     return pbio_servo_update_loop_is_running(db->left) && pbio_servo_update_loop_is_running(db->right);
 }
 
-static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
+/**
+ * Sets the drivebase settings based on the left and right motor settings.
+ *
+ * @param [out] s_distance  Settings of the distance controller.
+ * @param [out] s_heading   Settings of the heading controller.
+ * @param [in]  s_left      Settings of the left motor controller.
+ * @param [in]  s_right     Settings of the right motor controller.
+ */
+static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
     // For all settings, take the value of the least powerful motor to ensure
     // that the drivebase can meet the given specs.
@@ -71,7 +86,6 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     // We make the default turn speed a bit slower. Given the typical wheel
     // diameter, the wheels are often quite close together, so this compensates.
     s_heading->speed_default = s_heading->speed_max / 3;
-    return PBIO_SUCCESS;
 }
 
 // Get the physical and estimated state of a drivebase
@@ -205,10 +219,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     }
 
     // Adopt settings as the average or sum of both servos, except scaling
-    err = drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &left->control.settings, &right->control.settings);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &left->control.settings, &right->control.settings);
 
     // Average rotation of the motors for every 1 degree drivebase rotation.
     db->control_heading.settings.ctl_steps_per_app_step =
@@ -345,13 +356,13 @@ static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t 
         return err;
     }
 
-    // Start controller that controls the sum of both motor counts
+    // Start controller that controls the average angle of both motors.
     err = pbio_control_start_position_control_relative(&db->control_distance, time_now, &state_distance, distance, drive_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Start controller that controls the difference between both motor counts
+    // Start controller that controls half the difference between both angles.
     err = pbio_control_start_position_control_relative(&db->control_heading, time_now, &state_heading, angle, turn_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
