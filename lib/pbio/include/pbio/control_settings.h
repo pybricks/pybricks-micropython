@@ -111,7 +111,8 @@ typedef struct _pbio_control_settings_t {
  */
 #define pbio_control_time_ticks_to_ms(ticks) ((ticks) / 10)
 
-// Unit conversion functions.
+// Unit conversion functions:
+
 int32_t pbio_control_settings_ctl_to_app(pbio_control_settings_t *s, int32_t input);
 int32_t pbio_control_settings_ctl_to_app_long(pbio_control_settings_t *s, pbio_angle_t *input);
 int32_t pbio_control_settings_app_to_ctl(pbio_control_settings_t *s, int32_t input);
@@ -119,12 +120,14 @@ void pbio_control_settings_app_to_ctl_long(pbio_control_settings_t *s, int32_t i
 int32_t pbio_control_settings_actuation_ctl_to_app(int32_t input);
 int32_t pbio_control_settings_actuation_app_to_ctl(int32_t input);
 
-// Scale values by given constants.
+// Scale values by given constants:
+
 int32_t pbio_control_settings_mul_by_loop_time(int32_t input);
 int32_t pbio_control_settings_mul_by_gain(int32_t value, int32_t gain);
 int32_t pbio_control_settings_div_by_gain(int32_t value, int32_t gain);
 
-// Control settings getters and setters.
+// Control settings getters and setters:
+
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation);
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration, int32_t actuation);
 void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_change_max);

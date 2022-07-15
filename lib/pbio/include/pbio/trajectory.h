@@ -75,24 +75,18 @@ typedef struct _pbio_trajectory_t {
     int32_t a2;                          /**<  Encoder acceleration during out-phase */
 } pbio_trajectory_t;
 
-// Make a new full trajectory from user command, with angle target as endpoint.
+// Make or modify trajectories:
+
 pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
-
-// Make a new full trajectory from user command, with time based endpoint.
 pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
-
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
-
-// Make a stationary trajectory for holding position.
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
-
-// Stretches out a given trajectory time-wise to make it match time frames of leading trajectory
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader);
 
+// Reference getter functions:
+
 uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj);
-
 void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
-
+void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 
 #endif // _PBIO_TRAJECTORY_H_

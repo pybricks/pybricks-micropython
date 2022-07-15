@@ -78,20 +78,23 @@ typedef struct _pbio_servo_t {
     bool run_update_loop;
 } pbio_servo_t;
 
-// Servo initialization and updates.
+// Servo initialization and updates:
+
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle);
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id);
 void pbio_servo_update_all(void);
 
-// Servo status.
+// Servo status:
+
 pbio_error_t pbio_servo_get_state_control(pbio_servo_t *srv, pbio_control_state_t *state);
 pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_t *speed);
 bool pbio_servo_update_loop_is_running(pbio_servo_t *srv);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, uint32_t *stall_duration);
 
-// Servo end user commands.
+// Servo end user commands:
+
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed);

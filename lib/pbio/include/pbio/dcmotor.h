@@ -43,24 +43,29 @@ typedef struct _pbio_dcmotor_t {
 
 #if PBIO_CONFIG_DCMOTOR
 
-// Global reset
+// Global reset:
+
 void pbio_dcmotor_stop_all(bool clear_parents);
 
-// Setup and status
+// Setup and status:
+
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
 pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
 void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now);
 
-// Settings
+// Settings:
+
 int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
 void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
 
-// Actuation for system purposes
+// Actuation for system purposes:
+
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
 
-// Actuation for end users
+// Actuation for end users:
+
 pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int32_t voltage);
 
 #else

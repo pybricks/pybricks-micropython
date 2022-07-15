@@ -28,20 +28,24 @@ typedef struct _pbio_angle_t {
     int32_t millidegrees; /**< Millidegrees.*/
 } pbio_angle_t;
 
-// Conversion to and from basic types.
+// Conversion to and from basic types:
+
 int32_t pbio_angle_to_low_res(pbio_angle_t *a, int32_t scale);
 void pbio_angle_from_low_res(pbio_angle_t *a, int32_t input, int32_t scale);
 
-// Inplace operations on an angle.
+// Inplace operations on an angle:
+
 void pbio_angle_neg(pbio_angle_t *a);
 void pbio_angle_add_mdeg(pbio_angle_t *a, int32_t increment);
 
-// Binary operations on two angles to produce new angle.
+// Binary operations on two angles to produce new angle:
+
 void pbio_angle_diff(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
 void pbio_angle_sum(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
 void pbio_angle_avg(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
 
-// Compares two angles.
+// Compare two angles:
+
 int32_t pbio_angle_diff_mdeg(pbio_angle_t *a, pbio_angle_t *b);
 bool pbio_angle_diff_is_small(pbio_angle_t *a, pbio_angle_t *b);
 

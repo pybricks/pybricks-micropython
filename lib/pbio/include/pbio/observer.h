@@ -78,18 +78,17 @@ typedef struct _pbio_observer_t {
     pbio_control_settings_t *settings;
 } pbio_observer_t;
 
+// Observer state functions:
+
 void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, pbio_angle_t *angle);
-
 void pbio_observer_get_estimated_state(pbio_observer_t *obs, pbio_angle_t *angle, int32_t *speed);
-
 void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
-
 bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration);
 
+// Model conversion functions:
+
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref);
-
 int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque);
-
 int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage);
 
 #endif // _PBIO_OBSERVER_H_

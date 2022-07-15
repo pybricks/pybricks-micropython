@@ -137,17 +137,20 @@ typedef struct _pbio_control_t {
     bool on_target;
 } pbio_control_t;
 
-// Time functions.
+// Time functions:
+
 uint32_t pbio_control_get_time_ticks(void);
 uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now);
 bool pbio_control_time_is_later(uint32_t sample, uint32_t base);
 
-// Control loop functions.
+// Control loop functions:
+
 void pbio_control_reset(pbio_control_t *ctl);
 void pbio_control_stop(pbio_control_t *ctl);
 void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control);
 
-// Control status checks.
+// Control status checks:
+
 bool pbio_control_is_active(pbio_control_t *ctl);
 bool pbio_control_type_is_position(pbio_control_t *ctl);
 bool pbio_control_type_is_time(pbio_control_t *ctl);
@@ -155,7 +158,8 @@ bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration);
 bool pbio_control_is_done(pbio_control_t *ctl);
 int32_t pbio_control_get_load(pbio_control_t *ctl);
 
-// Start new control command.
+// Start new control command:
+
 pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint32_t time_now, int32_t position);
