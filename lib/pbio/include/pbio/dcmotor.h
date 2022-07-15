@@ -19,26 +19,42 @@
 #include <pbio/parent.h>
 #include <pbio/port.h>
 
+/**
+ * Direction a motor turns in when a positive voltage is applied.
+ */
 typedef enum {
-    PBIO_DIRECTION_CLOCKWISE,         /**< Positive means clockwise */
-    PBIO_DIRECTION_COUNTERCLOCKWISE,  /**< Positive means counterclockwise */
+    PBIO_DIRECTION_CLOCKWISE,         /**< Positive means clockwise. */
+    PBIO_DIRECTION_COUNTERCLOCKWISE,  /**< Positive means counterclockwise. */
 } pbio_direction_t;
 
+/**
+ * Actuation types that can be applied by a dc motor.
+ */
 typedef enum {
-    PBIO_DCMOTOR_ACTUATION_COAST,   /**< Coast the motor */
-    PBIO_DCMOTOR_ACTUATION_BRAKE,   /**< Brake the motor */
-    PBIO_DCMOTOR_ACTUATION_VOLTAGE, /**< Apply a voltage */
-    PBIO_DCMOTOR_ACTUATION_TORQUE,  /**< Apply a torque */
+    PBIO_DCMOTOR_ACTUATION_COAST,   /**< Coast the motor. */
+    PBIO_DCMOTOR_ACTUATION_BRAKE,   /**< Brake the motor. */
+    PBIO_DCMOTOR_ACTUATION_VOLTAGE, /**< Apply a voltage. */
+    PBIO_DCMOTOR_ACTUATION_TORQUE,  /**< Apply a torque. */
 } pbio_dcmotor_actuation_t;
 
+/**
+ * DC Motor instance.
+ */
 typedef struct _pbio_dcmotor_t {
-    pbio_port_id_t port;                    /**< Port to which this motor is attached */
-    pbio_direction_t direction;             /**< Direction for positive speeds. */
-    pbio_dcmotor_actuation_t actuation_now; /**< Currently active actuation type. */
-    int32_t voltage_now;                    /**< Currently applied voltage. */
-    int32_t max_voltage;                    /**< Maximum allowed voltage. */
-    pbio_parent_t parent;                   /**< Parent object (like a servo) that uses this motor. */
-    pbdrv_motor_driver_dev_t *motor_driver; /**< Low level motor driver */
+    /** Port to which this motor is attached. */
+    pbio_port_id_t port;
+    /** Direction for positive speeds. */
+    pbio_direction_t direction;
+    /** Currently active actuation type. */
+    pbio_dcmotor_actuation_t actuation_now;
+    /** Currently applied voltage. */
+    int32_t voltage_now;
+    /** Maximum allowed voltage. */
+    int32_t max_voltage;
+    /** Parent object (like a servo) that uses this motor. */
+    pbio_parent_t parent;
+    /** Low level motor driver. */
+    pbdrv_motor_driver_dev_t *motor_driver;
 } pbio_dcmotor_t;
 
 #if PBIO_CONFIG_DCMOTOR

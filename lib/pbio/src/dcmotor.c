@@ -22,7 +22,15 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-// Stop all motors and their parent objects.
+/**
+ * Stops all motors and all higher level parent objects that use them.
+ *
+ * @param [in]  clear_parents Whether to not only stop the parent object
+ *                            physically, but also clear the dcmotor's
+ *                            knowledge about that object. Choosing true frees
+ *                            up all motors to be used again by new parent
+ *                            objects.
+ */
 void pbio_dcmotor_stop_all(bool clear_parents) {
 
     // Go through all ports.
@@ -119,11 +127,25 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
     return PBIO_SUCCESS;
 }
 
+/**
+ * Gets the actuation type that is currently being applied to the motor.
+ *
+ * @param [in]  dcmotor     The dcmotor instance.
+ * @param [out] actuation   Actuation type, ::PBIO_DCMOTOR_ACTUATION_COAST
+ *                          or ::PBIO_DCMOTOR_ACTUATION_VOLTAGE.
+ * @param [out] voltage_now Voltage in mV if @ actuation is voltage. Else 0.
+ */
 void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now) {
     *actuation = dcmotor->actuation_now;
     *voltage_now = dcmotor->voltage_now;
 }
 
+/**
+ * Gets the maximum allowed voltage for a motor.
+ *
+ * @param [in]  id          Device type id.
+ * @return                  Maximum voltage (mV) for the given motor type.
+ */
 int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
     if (id == PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR) {
         return 6000;
@@ -131,6 +153,16 @@ int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
     return 9000;
 }
 
+/**
+ * Coasts the dc motor.
+ *
+ * This just sets the physical state and does not stop parent objects. It
+ * should only be used by higher level objects. Users should use
+ * ::pbio_dcmotor_user_command instead.
+ *
+ * @param [in] dcmotor      The motor instance.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     // Stop the motor and set the passivity state value for data logging.
     dcmotor->actuation_now = PBIO_DCMOTOR_ACTUATION_COAST;
@@ -138,6 +170,20 @@ pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     return pbdrv_motor_driver_coast(dcmotor->motor_driver);
 }
 
+/**
+ * Sets the dc motor voltage.
+ *
+ * A positive voltage will cause a rotation in the direction configured in
+ * ::pbio_dcmotor_setup. A negative voltage makes it turn in the other way.
+ *
+ * This just sets the physical state and does not stop parent objects. It
+ * should only be used by higher level objects. Users should use
+ * ::pbio_dcmotor_user_command instead.
+ *
+ * @param [in] dcmotor      The motor instance.
+ * @param [in] voltage      The voltage in mV.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
     // Cap voltage at the configured limit.
     if (voltage > dcmotor->max_voltage) {
@@ -167,6 +213,18 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     return PBIO_SUCCESS;
 }
 
+/**
+ * Sets a voltage or coasts the motor, and stops higher level objects.
+ *
+ * A positive voltage will cause a rotation in the direction configured in
+ * ::pbio_dcmotor_setup. A negative voltage makes it turn in the other way.
+ *
+ * @param [in] dcmotor      The motor instance.
+ * @param [in] coast        If true, the motor coasts. If false, applies the
+ *                          given voltage.
+ * @param [in] voltage      The voltage in mV.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int32_t voltage) {
     // Stop parent object that uses this motor, if any.
     pbio_error_t err = pbio_parent_stop(&dcmotor->parent, false);
@@ -181,11 +239,23 @@ pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int3
     return pbio_dcmotor_set_voltage(dcmotor, voltage);
 }
 
-
+/**
+ * Gets the settings for this motor.
+ *
+ * @param [in]  dcmotor       The motor instance.
+ * @param [out] max_voltage   The configured maximum voltage for this motor.
+ */
 void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
     *max_voltage = dcmotor->max_voltage;
 }
 
+/**
+ * Sets the settings for this motor.
+ *
+ * @param [in] dcmotor      The motor instance.
+ * @param [in] max_voltage  Maximum voltage (mV) for this motor.
+ * @return                  Error code.
+ */
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage) {
 
     // Get the device type.
