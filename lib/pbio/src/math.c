@@ -116,6 +116,14 @@ int32_t pbio_math_clamp(int32_t value, int32_t abs_max) {
     return pbio_math_bind(value, -abs_max, abs_max);
 }
 
+/**
+ * Gets the square root.
+ *
+ * If @p n <= 0, it returns 0.
+ *
+ * @param [in]  n       The input value
+ * @return              The square root.
+ */
 int32_t pbio_math_sqrt(int32_t n) {
     if (n <= 0) {
         return 0;

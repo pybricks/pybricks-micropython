@@ -19,12 +19,19 @@ static void test_clamp(void *env) {
 }
 
 static void test_sqrt(void *env) {
-    tt_want(pbio_math_sqrt(0) == 0);
-    tt_want(pbio_math_sqrt(1) == 1);
-    tt_want(pbio_math_sqrt(4) == 2);
-    tt_want(pbio_math_sqrt(400) == 20);
-    tt_want(pbio_math_sqrt(40000) == 200);
-    tt_want(pbio_math_sqrt(400000000) == 20000);
+    tt_want_int_op(pbio_math_sqrt(0), ==, 0);
+    tt_want_int_op(pbio_math_sqrt(1), ==, 1);
+    tt_want_int_op(pbio_math_sqrt(4), ==, 2);
+    tt_want_int_op(pbio_math_sqrt(400), ==, 20);
+    tt_want_int_op(pbio_math_sqrt(40000), ==, 200);
+    tt_want_int_op(pbio_math_sqrt(400000000), ==, 20000);
+
+    // Negative square roots do not exist but are expected to return 0.
+    tt_want_int_op(pbio_math_sqrt(-36), ==, 0);
+
+    for (int32_t s = 0; s < INT32_MAX - 255; s += 256) {
+        tt_want_int_op(pbio_math_sqrt(s), ==, sqrt(s));
+    }
 }
 
 static void test_atan2(void *env) {
