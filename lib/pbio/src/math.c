@@ -9,6 +9,73 @@
 #include <pbio/util.h>
 
 /**
+ * Gets the absolute value.
+ *
+ * @param [in]  value   The value.
+ * @return              The absolute (positive) value.
+ */
+int32_t pbio_math_abs(int32_t value) {
+    return __builtin_abs(value);
+}
+
+/**
+ * Gets the maximum of two values.
+ *
+ * @param [in]  a       Value.
+ * @param [in]  b       Value.
+ * @return              a if it is greater than b, else b.
+ */
+int32_t pbio_math_max(int32_t a, int32_t b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+/**
+ * Gets the minimum of two values.
+ *
+ * @param [in]  a       Value.
+ * @param [in]  b       Value.
+ * @return              a if it is less than b, else b.
+ */
+int32_t pbio_math_min(int32_t a, int32_t b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
+/**
+ * Get the sign of @p a.
+ *
+ * @param [in]  a   A signed integer value.
+ * @return          1 if @p a is positive, -1 if @p a is negative or 0 if @p a
+ *                  is 0.
+ */
+int32_t pbio_math_sign(int32_t a) {
+    if (a == 0) {
+        return 0;
+    }
+    return a > 0 ? 1 : -1;
+}
+
+/**
+ * Checks that the signs of @p a and @p b are not opposite.
+ *
+ * @param [in]  a   A signed integer value.
+ * @param [in]  b   A signed integer value.
+ * @return          True if either value is zero or if the signs are the same,
+ *                  else false.
+ */
+bool pbio_math_sign_not_opposite(int32_t a, int32_t b) {
+    if (a == 0 || b == 0) {
+        return true;
+    }
+    return (a > 0) == (b > 0);
+}
+
+/**
  * Binds a value between a lower and upper limit.
  *
  * If @p value is greater than @p max, then @p max is
