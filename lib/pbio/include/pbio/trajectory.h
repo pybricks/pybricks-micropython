@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Trajectory pbio: Compute and poll motor trajectories
+ * @addtogroup Trajectory pbio/trajectory: Compute and poll motor trajectories
  *
  * Generate and read trajectories with given speed, acceleration, and endpoint.
  * @{

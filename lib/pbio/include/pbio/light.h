@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Light pbio: Light control functions
+ * @addtogroup Light pbio/light: Light control functions
  * @{
  */
 

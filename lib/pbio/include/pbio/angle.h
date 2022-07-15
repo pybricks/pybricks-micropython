@@ -2,7 +2,7 @@
 // Copyright (c) 2022 The Pybricks Authors
 
 /**
- * @addtogroup Angle pbio: Long high resolution position type
+ * @addtogroup Angle pbio/angle: Long high resolution position type
  *
  * Type definition and math operations for long position type.
  * @{

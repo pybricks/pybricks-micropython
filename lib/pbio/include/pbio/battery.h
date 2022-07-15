@@ -2,7 +2,7 @@
 // Copyright (c) 2021-2022 The Pybricks Authors
 
 /**
- * @addtogroup Battery pbio: Battery functions
+ * @addtogroup Battery pbio/battery: Battery functions
  *
  * Provides functions for accessing battery state.
  * @{

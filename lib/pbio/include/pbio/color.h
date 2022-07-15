@@ -2,7 +2,7 @@
 // Copyright (c) 2020,2022 The Pybricks Authors
 
 /**
- * @addtogroup Color pbio: Color Conversion Functions
+ * @addtogroup Color pbio/color: Color Conversion Functions
  *
  * Provides generic functions to manipulate colors.
  * @{

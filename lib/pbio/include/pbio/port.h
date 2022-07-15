@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2021 The Pybricks Authors
 
 /**
- * @addtogroup Port pbio: I/O port identifiers
+ * @addtogroup Port pbio/port: I/O port identifiers
  * @{
  */
 

@@ -10,7 +10,7 @@
 #include <pbio/error.h>
 
 /**
- * @addtogroup ControlSettings pbio: Control settings
+ * @addtogroup ControlSettings pbio/control_settings: Control settings
  *
  * Provides getters, setters, and scalers for control settings.
  * @{

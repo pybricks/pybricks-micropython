@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Tacho pbio: Rotation sensor interface
+ * @addtogroup Tacho pbio/tacho: Rotation sensor interface
  *
  * Extends a rotation sensor with a configurable positive direction and zero point.
  * @{

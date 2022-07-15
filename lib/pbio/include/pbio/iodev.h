@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Iodev pbio: Input and output devices
+ * @addtogroup Iodev pbio/iodev: Input and output devices
  *
  * Type and mode information for LEGO Powered Up devices.
  * @{

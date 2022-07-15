@@ -2,7 +2,7 @@
 // Copyright (c) 2019-2022 The Pybricks Authors
 
 /**
- * @addtogroup Version pbio: Version Information
+ * @addtogroup Version pbio/version: Version Information
  *
  * Library version info macros.
  *

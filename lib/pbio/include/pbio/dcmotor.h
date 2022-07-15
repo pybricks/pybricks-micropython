@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup DCMotor pbio: DC Motor
+ * @addtogroup DCMotor pbio/dcmotor: DC Motor
  *
  * Interface for basic interaction with an encoderless brushed DC Motor.
  * @{

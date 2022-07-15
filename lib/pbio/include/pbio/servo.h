@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Servo pbio: Servo control functions
+ * @addtogroup Servo pbio/servo: Servo control functions
  *
  * API for motors with position feedback.
  * @{

@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Observer pbio: Servo state observer
+ * @addtogroup Observer pbio/observer: Servo state observer
  *
  * Luenberger state observer implementation to estimate motor speed.
  * @{

@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Drivebase pbio: Drivebase motion control
+ * @addtogroup Drivebase pbio/drivebase: Drivebase motion control
  *
  * Precision driving and steering using odometry.
  * @{

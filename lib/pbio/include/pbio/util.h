@@ -2,7 +2,7 @@
 // Copyright (c) 2019-2022 The Pybricks Authors
 
 /**
- * @addtogroup Utility pbio: Utility Functions
+ * @addtogroup Utility pbio/util: Utility Functions
  *
  * Miscellaneous helper functions.
  *

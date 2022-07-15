@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Logger pbio: Logging control loop data
+ * @addtogroup Logger pbio/logger: Logging control loop data
  *
  * Log servo and control data to analyze and debug motor performance.
  * @{

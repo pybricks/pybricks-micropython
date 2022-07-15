@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Math pbio: Integer math utilities
+ * @addtogroup Math pbio/math: Integer math utilities
  *
  * Integer math utilities used by the pbio library.
  * @{

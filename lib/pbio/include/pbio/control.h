@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Control pbio: PID-like control
+ * @addtogroup Control pbio/control: PID-like control
  *
  * Provides application-agnostic controllers for fully-actuated mechanical systems.
  * @{

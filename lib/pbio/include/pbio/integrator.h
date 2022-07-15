@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 /**
- * @addtogroup Integrator pbio: Integration of speed and angle signals
+ * @addtogroup Integrator pbio/integrator: Integration of speed and angle signals
  *
  * Numeric and exact integration tools used by PID controllers.
  * @{

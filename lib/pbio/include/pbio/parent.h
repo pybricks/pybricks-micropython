@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * @addtogroup Parent pbio: Hierarchical motor resource management
+ * @addtogroup Parent pbio/parent: Hierarchical motor resource management
  *
  * Safely manages motor resources used by multiple higher-level objects.
  * @{
