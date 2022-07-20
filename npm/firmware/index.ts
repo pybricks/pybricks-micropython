@@ -31,6 +31,16 @@ export enum HubType {
      * The LEGO Technic 4-port hub firmware file.
      */
     TechnicHub = 0x80,
+
+    /**
+     * The LEGO Technic Large hub (SPIKE Prime and MINDSTORMS Robot Inventor) firmware file.
+     */
+    PrimeHub = 0x81,
+
+    /**
+     * The LEGO Technic Small hub (SPIKE Essential) firmware file.
+     */
+    EssentialHub = 0x83,
 }
 
 /**
@@ -40,6 +50,8 @@ export const zipFileNameMap: ReadonlyMap<HubType, string> = new Map([
     [HubType.MoveHub, 'movehub.zip'],
     [HubType.CityHub, 'cityhub.zip'],
     [HubType.TechnicHub, 'technichub.zip'],
+    [HubType.PrimeHub, 'primehub.zip'],
+    [HubType.EssentialHub, 'essentialhub.zip'],
 ]);
 
 /**

@@ -1,3 +1,7 @@
+## 4.17.0 - 2022-07-20
+### Added
+- Added SPIKE Prime and Essential hubs.
+
 ## 4.16.1 - 2022-07-03
 ### Changed
 - Rebuild with correct firmware.
