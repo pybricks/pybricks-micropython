@@ -37,6 +37,8 @@ jobs:
           make $MAKEOPTS -C bricks/movehub
           make $MAKEOPTS -C bricks/cityhub
           make $MAKEOPTS -C bricks/technichub
+          make $MAKEOPTS -C bricks/primehub
+          make $MAKEOPTS -C bricks/essentialhub
       - name: Get tag
         run: echo "GITHUB_TAG=${GITHUB_REF#*refs/tags/}" >> $GITHUB_ENV
       - name: Create Release
@@ -78,4 +80,24 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bricks/technichub/build/firmware.zip
           asset_name: pybricks-technichub-${{ env.GITHUB_TAG }}.zip
+          asset_content_type: application/zip
+      - name: Upload primehub firmware
+        id: upload-primehub
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bricks/primehub/build/firmware.zip
+          asset_name: pybricks-primehub-${{ env.GITHUB_TAG }}.zip
+          asset_content_type: application/zip
+      - name: Upload essentialhub firmware
+        id: upload-essentialhub
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bricks/essentialhub/build/firmware.zip
+          asset_name: pybricks-essentialhub-${{ env.GITHUB_TAG }}.zip
           asset_content_type: application/zip
