@@ -58,13 +58,11 @@ test('missing main.py', async () => {
     var file = await readFile(
         path.resolve(__dirname, '__tests__', 'movehub-no-main-py.zip')
     );
-    try {
-        await FirmwareReader.load(file);
-        fail('FirmwareReader.load() should have failed');
-    } catch (err: any) {
-        expect(err.name).toMatch('FirmwareReaderError');
-        expect(err.code).toBe(FirmwareReaderErrorCode.MissingMainPy);
-    }
+    const reader = await FirmwareReader.load(file);
+    expect(await reader.readFirmwareBase()).toMatchSnapshot();
+    expect(await reader.readMetadata()).toMatchSnapshot();
+    expect(await reader.readMainPy()).toMatchSnapshot();
+    expect(await reader.readReadMeOss()).toMatchSnapshot();
 });
 
 test('missing ReadMe_OSS.txt', async () => {

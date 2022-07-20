@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2022 The Pybricks Authors
 
 import JSZip, { JSZipObject } from 'jszip';
 import { PACKAGE_VERSION } from './version';
@@ -90,8 +90,6 @@ export enum FirmwareReaderErrorCode {
     MissingFirmwareBaseBin,
     /** The zip file is missing the firmware.metadata.json file. */
     MissingMetadataJson,
-    /** The zip file is missing the main.py file. */
-    MissingMainPy,
     /** The zip file is missing the ReadMe_OSS.txt file. */
     MissingReadmeOssTxt,
 }
@@ -108,7 +106,6 @@ const firmwareReaderErrorMessage: ReadonlyMap<FirmwareReaderErrorCode, string> =
             FirmwareReaderErrorCode.MissingMetadataJson,
             'missing firmware.metadata.json',
         ],
-        [FirmwareReaderErrorCode.MissingMainPy, 'missing main.py'],
         [FirmwareReaderErrorCode.MissingReadmeOssTxt, 'ReadMe_OSS.txt'],
     ]);
 
@@ -202,12 +199,8 @@ export class FirmwareReader {
             );
         }
 
+        // main.py is optional
         reader.mainPy = zip.file('main.py');
-        if (!reader.mainPy) {
-            throw new FirmwareReaderError(
-                FirmwareReaderErrorCode.MissingMainPy
-            );
-        }
 
         reader.readMeOss = zip.file('ReadMe_OSS.txt');
         if (!reader.readMeOss) {
@@ -229,9 +222,13 @@ export class FirmwareReader {
         return JSON.parse(await this.metadata!.async('text'));
     }
 
-    /** Reads the main.py file from the zip file. */
-    public readMainPy(): Promise<string> {
-        return this.mainPy!.async('text');
+    /**
+     * Reads the main.py file from the zip file.
+     *
+     * Returns `undefined` if the file does not exist.
+     */
+    public readMainPy(): Promise<string | undefined> {
+        return this.mainPy?.async('text') ?? Promise.resolve(undefined);
     }
 
     /** Reads the ReadMe_OSS.txt file from the zip file. */

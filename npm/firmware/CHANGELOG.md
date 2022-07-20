@@ -1,3 +1,7 @@
+## 5.0.0 - 2022-07-20
+### Changed
+- Made `main.py` optional.
+
 ## 4.17.0 - 2022-07-20
 ### Added
 - Added SPIKE Prime and Essential hubs.
