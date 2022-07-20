@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0b3] - 2022-07-20
+
 ### Fixed
 - Fix integral control not working properly due to mistakes introduced while
   converting the controllers to use millidegrees.
@@ -282,7 +284,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...HEAD
+[3.2.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...v3.2.0b3
 [3.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...v3.2.0b2
 [3.2.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0...v3.2.0b1
 [3.1.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.1.0
