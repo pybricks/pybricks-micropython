@@ -14,7 +14,7 @@ typedef struct _pbio_light_animation_t pbio_light_animation_t;
 /**
  * Implementation-specific callback to apply the animation.
  *
- * Implmetations should update the animation and return the time to wait
+ * Implementations should update the animation and return the time to wait
  * before moving to the next cell.
  *
  * @param [in]  animation       The animation instance

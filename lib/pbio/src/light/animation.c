@@ -117,7 +117,10 @@ PROCESS_THREAD(pbio_light_animation_process, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
         struct etimer *timer = data;
         pbio_light_animation_t *animation = PBIO_CONTAINER_OF(timer, pbio_light_animation_t, timer);
-        etimer_reset_with_new_interval(&animation->timer, animation->next(animation));
+        clock_time_t interval = animation->next(animation);
+        if (pbio_light_animation_is_started(animation)) {
+            etimer_reset_with_new_interval(&animation->timer, interval);
+        }
     }
 
     PROCESS_END();
