@@ -37,12 +37,21 @@ typedef enum {
 typedef struct {
     /** Color to display or ::PBIO_COLOR_NONE for system/user color. */
     pbio_color_t color;
-    /** Duration to display color in milliseconds divided by poll interval (50 ms) */
+    /**
+     * Duration to display the color, expressed as the number of poll
+     * intervals (50 ms each). Use 0 to ignore that element and restart the
+     * pattern. Use 255 to indicate that the element should last forever.
+     */
     uint8_t duration;
 } pbsys_status_light_indication_pattern_element_t;
 
 /** Sentinel value for status light indication patterns. */
-#define PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END { .duration = 0 }
+#define PBSYS_STATUS_LIGHT_DURATION_REPEAT (0)
+#define PBSYS_STATUS_LIGHT_DURATION_FOREVER (255)
+#define PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT \
+    { .duration = PBSYS_STATUS_LIGHT_DURATION_REPEAT }
+#define PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(color_num) \
+    { .color = color_num, .duration = PBSYS_STATUS_LIGHT_DURATION_FOREVER, }
 
 // Most indications patterns are selected to match the official LEGO firmware
 // with the exception that the BLE advertising color is blue in Pybricks instead
@@ -61,7 +70,7 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
         { .color = PBIO_COLOR_NONE, .duration = 22 },
         { .color = PBIO_COLOR_BLACK, .duration = 1 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
@@ -71,7 +80,7 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_NONE, .duration = 16 },
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
@@ -79,7 +88,7 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = PBIO_COLOR_BLUE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
@@ -87,13 +96,13 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_NONE, .duration = 8 },
         { .color = PBIO_COLOR_WHITE, .duration = 1 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
@@ -105,14 +114,17 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_NONE, .duration = 8 },
         { .color = PBIO_COLOR_WHITE, .duration = 1 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLACK, .duration = 255 },
-        // REVISIT: we could make a new END type that prevents the pattern from
-        // repeating, this would allow us to make a shutdown animation
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+        { .color = PBIO_COLOR_BLACK, .duration = 1 },
+        { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        { .color = PBIO_COLOR_BLACK, .duration = 1 },
+        { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        { .color = PBIO_COLOR_BLACK, .duration = 1 },
+        { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
     },
 };
 
@@ -229,8 +241,8 @@ void pbsys_status_light_poll(void) {
     pbio_color_t new_color = PBIO_COLOR_NONE;
 
     if (pattern != NULL) {
-        // if we are at the end of a pattern (indicated by duration == 0), wrap around to the beginning
-        if (pattern[instance->pattern_index].duration == 0) {
+        // if we are at the end of a pattern, wrap around to the beginning
+        if (pattern[instance->pattern_index].duration == PBSYS_STATUS_LIGHT_DURATION_REPEAT) {
             instance->pattern_index = 0;
             // count should already be set to 0 because of previous index increment
             assert(instance->pattern_count == 0);
@@ -238,8 +250,10 @@ void pbsys_status_light_poll(void) {
 
         new_color = pattern[instance->pattern_index].color;
 
-        // if we have exceeded the pattern duration for the current index, move to the next index
-        if (++instance->pattern_count >= pattern[instance->pattern_index].duration) {
+        // If the current index does not run forever and we have exceeded the
+        // pattern duration for the current index, move to the next index.
+        if (pattern[instance->pattern_index].duration != PBSYS_STATUS_LIGHT_DURATION_FOREVER &&
+            ++instance->pattern_count >= pattern[instance->pattern_index].duration) {
             instance->pattern_index++;
             instance->pattern_count = 0;
         }

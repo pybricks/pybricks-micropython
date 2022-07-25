@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+- Indicate that the hub is shutting down by quickly flashing the hub light
+  three times. This makes it easier to see when you can stop pressing the
+  button.
+
 ## [3.2.0b3] - 2022-07-20
 
 ### Fixed
