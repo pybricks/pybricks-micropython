@@ -8,8 +8,8 @@
 - Indicate that the hub is shutting down by quickly flashing the hub light
   three times. This makes it easier to see when you can stop pressing the
   button.
-- Indicate that the SPIKE Prime hub is shutting down by fading out the stop
-  sign.
+- Indicate that the SPIKE Prime hub is booting and shutting down by fading
+  the stop sign in and out.
 
 ## [3.2.0b3] - 2022-07-20
 

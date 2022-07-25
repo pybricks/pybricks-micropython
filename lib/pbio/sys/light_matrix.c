@@ -65,19 +65,29 @@ static void pbsys_hub_light_matrix_show_stop_sign(uint8_t brightness) {
     }
 }
 
-static uint32_t pbsys_hub_light_matrix_user_shutdown_animation_next(pbio_light_animation_t *animation) {
-    // Fade out in about 300 ms, to match status light animation.
-    static uint8_t brightness = 98;
+static uint32_t pbsys_hub_light_matrix_user_power_animation_next(pbio_light_animation_t *animation) {
+
+    // Start at 2% and increment up to 100% in 7 steps.
+    static uint8_t brightness = 2;
+    static uint8_t increment = 14;
+
+    // Show the stop sign fading in/out.
+    brightness += increment;
     pbsys_hub_light_matrix_show_stop_sign(brightness);
-    if (brightness > 0) {
-        brightness -= 14;
+
+    // Stop at 100% and re-initialize so we can use this again for shutdown.
+    if (brightness == 100 || brightness == 0) {
+        pbio_light_animation_stop(&pbsys_hub_light_matrix->animation);
+        brightness = 98;
+        increment = -14;
     }
     return 40;
 }
 
 void pbsys_hub_light_matrix_init(void) {
     pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
-    pbsys_hub_light_matrix_show_stop_sign(100);
+    pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_power_animation_next);
+    pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
 }
 
 static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
@@ -110,12 +120,13 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
         pbio_pybricks_status_t status = (intptr_t)data;
 
         if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
+            // The user animation updates only a subset of pixels to save time,
+            // so the rest must be cleared before it starts.
             pbsys_hub_light_matrix_clear();
             pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
             pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
         } else if (status == PBIO_PYBRICKS_STATUS_SHUTDOWN) {
-            pbsys_hub_light_matrix_clear();
-            pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_shutdown_animation_next);
+            pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_power_animation_next);
             pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
         }
     } else if (event == PBIO_EVENT_STATUS_CLEARED) {
