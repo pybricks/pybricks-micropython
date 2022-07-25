@@ -55,19 +55,29 @@ static void pbsys_hub_light_matrix_clear(void) {
     }
 }
 
-static void pbsys_hub_light_matrix_show_stop_sign(void) {
+static void pbsys_hub_light_matrix_show_stop_sign(uint8_t brightness) {
     // 3x3 "stop sign" at top center of light matrix
     for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
         for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
-            uint8_t brightness = r < 3 && c > 0 && c < 4 ? 100: 0;
-            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, brightness);
+            uint8_t b = r < 3 && c > 0 && c < 4 ? brightness: 0;
+            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, b);
         }
     }
 }
 
+static uint32_t pbsys_hub_light_matrix_user_shutdown_animation_next(pbio_light_animation_t *animation) {
+    // Fade out in about 300 ms, to match status light animation.
+    static uint8_t brightness = 98;
+    pbsys_hub_light_matrix_show_stop_sign(brightness);
+    if (brightness > 0) {
+        brightness -= 14;
+    }
+    return 40;
+}
+
 void pbsys_hub_light_matrix_init(void) {
     pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
-    pbsys_hub_light_matrix_show_stop_sign();
+    pbsys_hub_light_matrix_show_stop_sign(100);
 }
 
 static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
@@ -104,14 +114,15 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
             pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
             pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
         } else if (status == PBIO_PYBRICKS_STATUS_SHUTDOWN) {
-            // REVISIT: could do a shutdown animation
             pbsys_hub_light_matrix_clear();
+            pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_shutdown_animation_next);
+            pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
         }
     } else if (event == PBIO_EVENT_STATUS_CLEARED) {
         pbio_pybricks_status_t status = (intptr_t)data;
 
         if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-            pbsys_hub_light_matrix_show_stop_sign();
+            pbsys_hub_light_matrix_show_stop_sign(100);
         }
     }
 }
