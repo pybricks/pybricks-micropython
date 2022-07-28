@@ -178,7 +178,9 @@ start:
     };
 
     // "sleep" with "interrupts" enabled
+    MP_THREAD_GIL_EXIT();
     pselect(0, NULL, NULL, NULL, &timeout, &origmask);
+    MP_THREAD_GIL_ENTER();
 
     // restore "interrupts"
     pthread_sigmask(SIG_SETMASK, &origmask, NULL);
