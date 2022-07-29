@@ -41,7 +41,10 @@
 
 #include "./bluetooth_stm32_cc2640.h"
 
-#define DEBUG 0
+#include STM32_HAL_H
+#if defined(STM32L4)
+#define DEBUG 2
+#endif
 #if DEBUG == 1
 #include <stdio.h>
 #include <stm32f0xx.h>
@@ -55,7 +58,6 @@
 }
 #elif DEBUG == 2
 #include <stdio.h>
-#include <stm32l431xx.h>
 #define DBG(fmt, ...) { \
         char dbg[64]; \
         snprintf(dbg, 64, fmt "\r\n",##__VA_ARGS__); \
@@ -280,16 +282,6 @@ const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
 }
 
-void pbdrv_bluetooth_start_broadcast_process(bool on) {
-    if (on) {
-        process_start(&pbdrv_bluetooth_broadcast_process);
-    } else {
-        // REVISIT: should probably gracefully shutdown in case we are in the
-        // middle of something
-        process_exit(&pbdrv_bluetooth_broadcast_process);
-    }
-}
-
 /**
  * Sets advertising data and enables advertisements.
  */
@@ -385,6 +377,8 @@ static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
     task->status = PBIO_SUCCESS;
 
     // TODO: only necessary when called from broadcast process
+
+    DBG("stop adv complete");
     process_poll(&pbdrv_bluetooth_broadcast_process);
 
     PT_END(pt);
@@ -430,6 +424,7 @@ static PT_THREAD(start_data_advertising(struct pt *pt, pbio_task_t *task)) {
     }
     task->status = PBIO_SUCCESS;
 
+    DBG("start adv complete");
     process_poll(&pbdrv_bluetooth_broadcast_process);
 
     PT_END(pt);
@@ -450,6 +445,7 @@ static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
         scanning_now = true;
     }
     task->status = PBIO_SUCCESS;
+    DBG("start scan complete");
     process_poll(&pbdrv_bluetooth_broadcast_process);
     PT_END(pt);
 }
@@ -463,12 +459,34 @@ static PT_THREAD(set_stop_scan(struct pt *pt, pbio_task_t *task)) {
         scanning_now = false;
     }
     task->status = PBIO_SUCCESS;
+    DBG("stop scan complete");
     process_poll(&pbdrv_bluetooth_broadcast_process);
     PT_END(pt);
 }
 
 void pbdrv_bluetooth_broadcast_start_scan(bool start) {
     broadcast_scanning = start;
+}
+
+void pbdrv_bluetooth_start_broadcast_process(bool on) {
+    if (on) {
+        process_start(&pbdrv_bluetooth_broadcast_process);
+    } else {
+        process_exit(&pbdrv_bluetooth_broadcast_process);
+
+        static pbio_task_t task;
+
+        if (advertising_now) {
+            // stop advertising
+            pbio_task_init(&task, set_non_discoverable, NULL);
+            pbio_task_queue_add(task_queue, &task);
+        }
+        if (scanning_now) {
+            // stop scanning
+            pbio_task_init(&task, set_stop_scan, NULL);
+            pbio_task_queue_add(task_queue, &task);
+        }
+    }
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -505,6 +523,7 @@ static PT_THREAD(send_value_notification(struct pt *pt, pbio_task_t *task))
     PT_BEGIN(pt);
 
 retry:
+    DBG("retry");
     PT_WAIT_WHILE(pt, write_xfer_size);
 
     uint16_t attr_handle;
@@ -555,10 +574,13 @@ retry:
 done:
     send->done();
 
+    DBG("bt send done");
+
     PT_END(pt);
 }
 
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
+    DBG("bt send");
     static pbio_task_t task;
     pbio_task_init(&task, send_value_notification, context);
     pbio_task_queue_add(task_queue, &task);
@@ -1829,14 +1851,16 @@ static PT_THREAD(init_task(struct pt *pt, pbio_task_t *task)) {
 PROCESS_THREAD(pbdrv_bluetooth_broadcast_process, ev, data) {
     static struct etimer timer;
 
+    static pbio_task_t task;
+
     PROCESS_EXITHANDLER({
-        advertising_now = scanning_now = false;
+        broadcast_advertising = broadcast_scanning = false;
+
         PROCESS_EXIT();
     });
 
     PROCESS_BEGIN();
 
-    static pbio_task_t task;
 
     DBG("adv_now %d", advertising_now);
     DBG("scn_now %d", scanning_now);

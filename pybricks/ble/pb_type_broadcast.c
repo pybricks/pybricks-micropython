@@ -278,6 +278,8 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
 
 void pb_type_Broadcast_cleanup(void) {
     pbdrv_bluetooth_start_broadcast_process(false);
+
+    // TODO: clean up correctly not only stop the process....
 }
 
 STATIC uint32_t broadcast_get_hash(mp_obj_t topic_in) {
