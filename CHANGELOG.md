@@ -11,6 +11,11 @@
 - Indicate that the SPIKE Prime hub is booting and shutting down by fading
   the stop sign in and out.
 
+### Fixed
+- Fixed city hub turning back on after shutdown ([support#692]).
+
+[support#692]: https://github.com/pybricks/support/issues/692
+
 ## [3.2.0b3] - 2022-07-20
 
 ### Fixed
