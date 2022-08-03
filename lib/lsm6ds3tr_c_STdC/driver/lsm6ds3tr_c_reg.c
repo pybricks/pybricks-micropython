@@ -20,7 +20,6 @@
 // Additional modifications
 // Copyright (c) 2020 The Pybricks Authors
 
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -31,7 +30,7 @@
 /**
   * @defgroup    LSM6DS3TR_C
   * @brief       This file provides a set of functions needed to drive the
-  *              lsm6ds3tr_c enanced inertial module.
+  *              lsm6ds3tr_c enhanced inertial module.
   * @{
   *
   */
@@ -84,54 +83,54 @@ void lsm6ds3tr_c_write_reg(stmdev_ctx_t *ctx, uint8_t reg, uint8_t *data, uint16
   *
   */
 
-float_t lsm6ds3tr_c_from_fs2g_to_mg(int16_t lsb)
+float lsm6ds3tr_c_from_fs2g_to_mg(int16_t lsb)
 {
-  return ((float_t)lsb * 0.061f);
+  return ((float)lsb * 0.061f);
 }
 
-float_t lsm6ds3tr_c_from_fs4g_to_mg(int16_t lsb)
+float lsm6ds3tr_c_from_fs4g_to_mg(int16_t lsb)
 {
-  return ((float_t)lsb * 0.122f);
+  return ((float)lsb * 0.122f);
 }
 
-float_t lsm6ds3tr_c_from_fs8g_to_mg(int16_t lsb)
+float lsm6ds3tr_c_from_fs8g_to_mg(int16_t lsb)
 {
-  return ((float_t)lsb * 0.244f);
+  return ((float)lsb * 0.244f);
 }
 
-float_t lsm6ds3tr_c_from_fs16g_to_mg(int16_t lsb)
+float lsm6ds3tr_c_from_fs16g_to_mg(int16_t lsb)
 {
-  return ((float_t)lsb * 0.488f);
+  return ((float)lsb * 0.488f);
 }
 
-float_t lsm6ds3tr_c_from_fs125dps_to_mdps(int16_t lsb)
+float lsm6ds3tr_c_from_fs125dps_to_mdps(int16_t lsb)
 {
-  return ((float_t)lsb * 4.375f);
+  return ((float)lsb * 4.375f);
 }
 
-float_t lsm6ds3tr_c_from_fs250dps_to_mdps(int16_t lsb)
+float lsm6ds3tr_c_from_fs250dps_to_mdps(int16_t lsb)
 {
-  return ((float_t)lsb * 8.750f);
+  return ((float)lsb * 8.750f);
 }
 
-float_t lsm6ds3tr_c_from_fs500dps_to_mdps(int16_t lsb)
+float lsm6ds3tr_c_from_fs500dps_to_mdps(int16_t lsb)
 {
-  return ((float_t)lsb * 17.50f);
+  return ((float)lsb * 17.50f);
 }
 
-float_t lsm6ds3tr_c_from_fs1000dps_to_mdps(int16_t lsb)
+float lsm6ds3tr_c_from_fs1000dps_to_mdps(int16_t lsb)
 {
-  return ((float_t)lsb * 35.0f);
+  return ((float)lsb * 35.0f);
 }
 
-float_t lsm6ds3tr_c_from_fs2000dps_to_mdps(int16_t lsb)
+float lsm6ds3tr_c_from_fs2000dps_to_mdps(int16_t lsb)
 {
-  return ((float_t)lsb * 70.0f);
+  return ((float)lsb * 70.0f);
 }
 
-float_t lsm6ds3tr_c_from_lsb_to_celsius(int16_t lsb)
+float lsm6ds3tr_c_from_lsb_to_celsius(int16_t lsb)
 {
-  return (((float_t)lsb / 256.0f) + 25.0f);
+  return (((float)lsb / 256.0f) + 25.0f);
 }
 
 /**

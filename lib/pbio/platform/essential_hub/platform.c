@@ -18,6 +18,7 @@
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/charger/charger_mp2639a.h"
 #include "../../drv/counter/counter_lpf2.h"
+#include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
@@ -565,6 +566,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
 
 // IMU
 
+const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data = {
+    .i2c = I2C3,
+};
+
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     GPIO_InitTypeDef gpio_init;
 
@@ -593,13 +598,11 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
 }
 
 void I2C3_ER_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_er_irq(void);
-    mod_experimental_IMU_handle_i2c_er_irq();
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq();
 }
 
 void I2C3_EV_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_ev_irq(void);
-    mod_experimental_IMU_handle_i2c_ev_irq();
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
 }
 
 // Early initialization

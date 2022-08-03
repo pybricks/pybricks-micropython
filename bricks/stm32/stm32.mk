@@ -264,7 +264,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_device_stm32.c \
 	util_pb/pb_error.c \
 	util_pb/pb_flash.c \
-	util_pb/pb_imu.c \
 	util_pb/pb_task.c \
 	)
 
@@ -439,6 +438,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
+	drv/imu/imu_lsm6ds3tr_c_stm32.c \
 	drv/ioport/ioport_lpf2.c \
 	drv/led/led_array_pwm.c \
 	drv/led/led_array.c \

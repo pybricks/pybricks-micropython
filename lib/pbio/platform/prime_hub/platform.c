@@ -16,6 +16,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/charger/charger_mp2639a.h"
 #include "../../drv/counter/counter_lpf2.h"
+#include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -173,6 +174,46 @@ const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_
         .port_id = PBIO_PORT_ID_F,
     },
 };
+
+// IMU
+
+const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data = {
+    .i2c = I2C2,
+};
+
+void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
+    GPIO_InitTypeDef gpio_init;
+
+    // IMU
+    if (hi2c->Instance == I2C2) {
+        gpio_init.Mode = GPIO_MODE_AF_OD;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+        // SCL
+        gpio_init.Pin = GPIO_PIN_10;
+        gpio_init.Alternate = GPIO_AF4_I2C2;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
+
+        // SDA
+        gpio_init.Pin = GPIO_PIN_3;
+        gpio_init.Alternate = GPIO_AF9_I2C2;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
+
+        HAL_NVIC_SetPriority(I2C2_ER_IRQn, 3, 1);
+        HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
+        HAL_NVIC_SetPriority(I2C2_EV_IRQn, 3, 2);
+        HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
+    }
+}
+
+void I2C2_ER_IRQHandler(void) {
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq();
+}
+
+void I2C2_EV_IRQHandler(void) {
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
+}
 
 // I/O ports
 
@@ -867,42 +908,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
     if (pin == GPIO_PIN_9) {
         pbdrv_usb_stm32_handle_vbus_irq(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9));
     }
-}
-
-void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
-    GPIO_InitTypeDef gpio_init;
-
-    // IMU
-    if (hi2c->Instance == I2C2) {
-        gpio_init.Mode = GPIO_MODE_AF_OD;
-        gpio_init.Pull = GPIO_NOPULL;
-        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-
-        // SCL
-        gpio_init.Pin = GPIO_PIN_10;
-        gpio_init.Alternate = GPIO_AF4_I2C2;
-        HAL_GPIO_Init(GPIOB, &gpio_init);
-
-        // SDA
-        gpio_init.Pin = GPIO_PIN_3;
-        gpio_init.Alternate = GPIO_AF9_I2C2;
-        HAL_GPIO_Init(GPIOB, &gpio_init);
-
-        HAL_NVIC_SetPriority(I2C2_ER_IRQn, 3, 1);
-        HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
-        HAL_NVIC_SetPriority(I2C2_EV_IRQn, 3, 2);
-        HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
-    }
-}
-
-void I2C2_ER_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_er_irq(void);
-    mod_experimental_IMU_handle_i2c_er_irq();
-}
-
-void I2C2_EV_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_ev_irq(void);
-    mod_experimental_IMU_handle_i2c_ev_irq();
 }
 
 // Early initialization

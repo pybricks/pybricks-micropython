@@ -10,6 +10,7 @@
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/counter/counter_lpf2.h"
+#include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
@@ -204,6 +205,37 @@ const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_
         .port_id = PBIO_PORT_ID_D,
     },
 };
+
+// IMU
+
+const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data = {
+    .i2c = I2C1,
+};
+
+void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
+    GPIO_InitTypeDef gpio_init = { };
+
+    gpio_init.Mode = GPIO_MODE_AF_OD;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio_init.Alternate = GPIO_AF4_I2C1;
+
+    gpio_init.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    HAL_NVIC_SetPriority(I2C1_ER_IRQn, 3, 1);
+    HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
+    HAL_NVIC_SetPriority(I2C1_EV_IRQn, 3, 2);
+    HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+}
+
+void I2C1_ER_IRQHandler(void) {
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq();
+}
+
+void I2C1_EV_IRQHandler(void) {
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
+}
 
 // I/O ports
 
@@ -647,33 +679,6 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
 
 void DMA1_Channel1_IRQHandler(void) {
     pbdrv_adc_stm32_hal_handle_irq();
-}
-
-void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
-    GPIO_InitTypeDef gpio_init = { };
-
-    gpio_init.Mode = GPIO_MODE_AF_OD;
-    gpio_init.Pull = GPIO_NOPULL;
-    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    gpio_init.Alternate = GPIO_AF4_I2C1;
-
-    gpio_init.Pin = GPIO_PIN_8 | GPIO_PIN_9;
-    HAL_GPIO_Init(GPIOB, &gpio_init);
-
-    HAL_NVIC_SetPriority(I2C1_ER_IRQn, 3, 1);
-    HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
-    HAL_NVIC_SetPriority(I2C1_EV_IRQn, 3, 2);
-    HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
-}
-
-void I2C1_ER_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_er_irq(void);
-    mod_experimental_IMU_handle_i2c_er_irq();
-}
-
-void I2C1_EV_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_ev_irq(void);
-    mod_experimental_IMU_handle_i2c_ev_irq();
 }
 
 // Early initialization
