@@ -44,7 +44,7 @@ struct _pbdrv_imu_dev_t {
     /** Scale factor to convert raw data to m/s^2. */
     float accel_scale;
     /** Raw data. */
-    int16_t data[6];
+    int16_t data[7];
     /** Initialization state. */
     imu_init_state_t init_state;
 };
@@ -201,9 +201,11 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
 
     for (;;) {
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_acceleration_raw_get(&child, &imu_dev->ctx, buf));
-        memcpy(&imu_dev->data[0], buf, sizeof(buf));
+        memcpy(&imu_dev->data[0], buf, 6);
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_angular_rate_raw_get(&child, &imu_dev->ctx, buf));
-        memcpy(&imu_dev->data[3], buf, sizeof(buf));
+        memcpy(&imu_dev->data[3], buf, 6);
+        PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_temperature_raw_get(&child, &imu_dev->ctx, buf));
+        memcpy(&imu_dev->data[6], buf, 2);
     }
 
     PROCESS_END();
@@ -256,6 +258,10 @@ void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
     values[1] = imu_dev->data[4] * imu_dev->gyro_scale;
     values[2] = imu_dev->data[5] * imu_dev->gyro_scale;
     #endif
+}
+
+float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
+    return lsm6ds3tr_c_from_lsb_to_celsius(imu_dev->data[6]);
 }
 
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32

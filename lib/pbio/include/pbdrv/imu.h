@@ -43,6 +43,13 @@ void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values);
  */
 void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values);
 
+/**
+ * Reads the current IMU temperature in deg C.
+ * @param [in]  imu_dev     The IMU device instance.
+ * @returns                 The temperature value.
+ */
+float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev);
+
 #else // PBDRV_CONFIG_IMU
 
 static inline pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev) {
@@ -53,6 +60,10 @@ static inline void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values)
 }
 
 static inline void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
+}
+
+static inline float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
+    return 0;
 }
 
 #endif // PBDRV_CONFIG_IMU

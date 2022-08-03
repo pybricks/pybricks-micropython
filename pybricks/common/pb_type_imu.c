@@ -176,12 +176,21 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 
+// HACK: this is for testing and will be removed
+STATIC mp_obj_t common_IMU_temp(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_float_from_f(pbdrv_imu_temperature_read(self->imu_dev));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_temp_obj, common_IMU_temp);
+
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
     { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
+    // HACK: this is for testing and will be removed
+    { MP_ROM_QSTR(MP_QSTR_temp), MP_ROM_PTR(&common_IMU_temp_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 
