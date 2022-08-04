@@ -10,6 +10,7 @@
   button.
 - Indicate that the SPIKE Prime hub is booting and shutting down by fading
   the stop sign in and out.
+- Implemented iterator protocol on `geometry.Matrix` class.
 
 ### Fixed
 - Fixed city hub turning back on after shutdown ([support#692]).

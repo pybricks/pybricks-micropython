@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2020-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -468,6 +468,56 @@ STATIC mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_ob
     return MP_OBJ_NULL;
 }
 
+typedef struct {
+    mp_obj_base_t base;
+    mp_fun_1_t iternext;
+    mp_obj_t matrix;
+    size_t cur;
+} pb_type_Matrix_it_t;
+
+_Static_assert(sizeof(pb_type_Matrix_it_t) <= sizeof(mp_obj_iter_buf_t),
+    "pb_type_Matrix_it_t uses memory allocated for mp_obj_iter_buf_t");
+
+STATIC mp_obj_t pb_type_Matrix_it_iternext(mp_obj_t self_in) {
+    pb_type_Matrix_it_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(self->matrix);
+
+    if (self->cur < matrix->m * matrix->n) {
+        return mp_obj_new_float_from_f(matrix->data[self->cur++]);
+    }
+
+    return MP_OBJ_STOP_ITERATION;
+}
+
+STATIC mp_obj_t pb_type_Matrix_it_iterprev(mp_obj_t self_in) {
+    pb_type_Matrix_it_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(self->matrix);
+
+    if (self->cur > 0) {
+        return mp_obj_new_float_from_f(matrix->data[--self->cur]);
+    }
+
+    return MP_OBJ_STOP_ITERATION;
+}
+
+STATIC mp_obj_t pb_type_Matrix_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_buf) {
+    pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(o_in);
+    pb_type_Matrix_it_t *matrix_it = (pb_type_Matrix_it_t *)iter_buf;
+
+    matrix_it->base.type = &mp_type_polymorph_iter;
+    matrix_it->matrix = MP_OBJ_FROM_PTR(matrix);
+
+    if (matrix->transposed) {
+        matrix_it->iternext = pb_type_Matrix_it_iterprev;
+        matrix_it->cur = matrix->m * matrix->n;
+    } else {
+        matrix_it->iternext = pb_type_Matrix_it_iternext;
+        matrix_it->cur = 0;
+    }
+
+    return MP_OBJ_FROM_PTR(matrix_it);
+}
+
 // type(pybricks.geometry.Matrix)
 const mp_obj_type_t pb_type_Matrix = {
     { &mp_type_type },
@@ -478,6 +528,7 @@ const mp_obj_type_t pb_type_Matrix = {
     .unary_op = pb_type_Matrix_unary_op,
     .binary_op = pb_type_Matrix_binary_op,
     .subscr = pb_type_Matrix_subscr,
+    .getiter = pb_type_Matrix_getiter,
 };
 
 // pybricks.geometry._make_vector

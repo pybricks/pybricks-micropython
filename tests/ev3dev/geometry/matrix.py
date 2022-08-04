@@ -67,3 +67,7 @@ except ValueError:
 # B points to A, test that data stays alive
 del A
 print("B = -A =", B)
+
+# iterator
+print(*B)
+print(*B.T)
