@@ -23,17 +23,17 @@
  */
 typedef enum {
     /**
-     * There is no valid program to run.
+     * Run the currently stored program.
      */
-    PSYS_PROGRAM_LOAD_TYPE_NONE = 0,
-    /**
-     * This is is a valid user program.
-     */
-    PSYS_PROGRAM_LOAD_TYPE_NORMAL = 1,
+    PSYS_PROGRAM_LOAD_TYPE_STORED = 0,
     /**
      * Indicator to run appplication-specific special program.
      */
     PSYS_PROGRAM_LOAD_TYPE_BUILTIN_0 = 0x20202020,
+    /**
+     * There is no valid program to run.
+     */
+    PSYS_PROGRAM_LOAD_TYPE_NONE = UINT32_MAX,
 } pbsys_program_load_type_t;
 
 /**
@@ -45,35 +45,31 @@ typedef struct {
      */
     pbsys_program_load_type_t program_type;
     /**
-     * Start of the heap available to the program.
+     * Start of the heap available to the application.
      */
-    uint8_t *heap_start;
+    uint8_t *appl_heap_start;
     /**
-     * End of the heap available to the program.
+     * End of the heap available to the system and application.
      */
-    uint8_t *heap_end;
+    uint8_t *const sys_heap_end;
     /**
      * Start of the system stack.
      */
-    uint8_t *stack_start;
+    uint8_t *const sys_stack_start;
     /**
      * End of the system stack.
      */
-    uint8_t *stack_end;
+    uint8_t *const sys_stack_end;
     /**
      * Application-specific program data. Used only when type
-     * is ::PSYS_PROGRAM_LOAD_TYPE_NORMAL.
+     * is ::PSYS_PROGRAM_LOAD_TYPE_STORED.
      */
     uint8_t *program_data;
     /**
      * Application data size. Used only when type
-     * is ::PSYS_PROGRAM_LOAD_TYPE_NORMAL.
+     * is ::PSYS_PROGRAM_LOAD_TYPE_STORED.
      */
     uint32_t program_size;
-    /**
-     * Maximum application data size.
-     */
-    uint32_t program_size_max;
 } pbsys_program_load_info_t;
 
 void pbsys_program_load_application_main(pbsys_program_load_info_t *info);

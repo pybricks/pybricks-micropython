@@ -7,7 +7,23 @@
 #include <pbsys/config.h>
 #include <pbsys/program_load.h>
 
-void pbsys_program_load_process_start(pbsys_program_load_info_t **program_info);
-bool pbsys_program_load_process_complete(void);
+#if PBSYS_CONFIG_PROGRAM_LOAD
+
+void pbsys_program_load_receive_start(void);
+bool pbsys_program_load_receive_complete(void);
+pbsys_program_load_info_t *pbsys_program_load_get_info(void);
+
+#else
+
+static inline void pbsys_program_load_receive_start(void) {
+}
+static inline bool pbsys_program_load_receive_complete(void) {
+    return false;
+}
+static inline pbsys_program_load_info_t *pbsys_program_load_get_info(void) {
+    return NULL;
+}
+
+#endif // PBSYS_CONFIG_PROGRAM_LOAD
 
 #endif // _PBSYS_SYS_PROGRAM_LOAD_H_

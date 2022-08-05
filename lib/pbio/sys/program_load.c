@@ -16,91 +16,68 @@
 #include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
 #include <pbsys/program_load.h>
+
+#include "main.h"
 #include "program_load.h"
 
-PROCESS(pbsys_program_load_process, "program_load");
-
-pbsys_program_load_info_t info;
-
-/**
- * Certain size values indicate that no program will be sent.
- *
- * Instead, handle the special case directly so we can exit the process.
- */
-static void pbsys_program_load_set_no_program(uint32_t size) {
-
-    // Check if it is a special size.
-    if (size == PSYS_PROGRAM_LOAD_TYPE_BUILTIN_0) {
-        info.program_type = size;
-    }
-    // Otherwise we are dealing with an invalid program.
-    else {
-        info.program_type = PSYS_PROGRAM_LOAD_TYPE_NONE;
-    }
-
-    // We don't want to override any stored potentially stored programs, so the
-    // heap starts after user data.
-    info.heap_start = info.program_data + info.program_size;
-}
+extern uint32_t _app_data_ram_start;
+extern uint32_t _heap_end;
+extern uint32_t _estack;
+extern uint32_t _sstack;
 
 /**
- * Sets program size after successful reception.
+ * Map of stored data. Loaded into RAM on boot, and written back on shutdown
+ * if write_size is nonzero.
  */
-static void pbsys_program_load_set_size(uint32_t size) {
-    if (size > info.program_size_max) {
-        pbsys_program_load_set_no_program(size);
-        return;
-    }
+typedef struct {
+    /**
+     * Total data size of this structure, including variable-sized data at the
+     * end. Should only be set if we should write on shutdown, i.e. if any
+     * data was updated.
+     */
+    uint32_t write_size;
+    /**
+     * Checksum of everything after the checksum. REVISIT: Actually implement it.
+     */
+    uint32_t checksum;
+    /**
+     * Persistent storage for end-user variables or settings.
+     */
+    uint8_t user_data[PBSYS_CONFIG_PROGRAM_USER_DATA_SIZE];
+    /**
+     * Size of the application program.
+     */
+    uint32_t program_size;
+    /**
+     * Data of the application program.
+     */
+    uint8_t program_data[];
+} __attribute__((packed, scalar_storage_order("little-endian"))) data_map_t;
 
-    // Set system resources based on received program size.
-    info.program_size = size;
-    info.heap_start = info.program_data + size;
-    info.program_type = PSYS_PROGRAM_LOAD_TYPE_NORMAL;
+static data_map_t *map = (data_map_t *)&_app_data_ram_start;
+
+/**
+ * Updates stored size of a program.
+ */
+static void set_stored_program_size(uint32_t size) {
+    // Update program size.
+    map->program_size = size;
+
+    // Update total size, which is also used as an indicator that data
+    // will be saved on shutdown.
+    map->write_size = size + sizeof(data_map_t);
 }
 
-void pbsys_program_load_process_start(pbsys_program_load_info_t **program_info) {
+#define PROGRAM_SIZE_MAX ((uint8_t *)&_heap_end - (uint8_t *)&_app_data_ram_start - sizeof(data_map_t))
 
-    // Set application heap information.
-    extern uint32_t _heap_start;
-    extern uint32_t _heap_end;
-    info.heap_end = (uint8_t *)&_heap_end;
-    info.program_data = (uint8_t *)&_heap_start;
-    info.program_size_max = info.heap_end - info.program_data;
+PROCESS(pbsys_program_receive_process, "program_receive");
 
-    // Set application stack information.
-    extern uint32_t _estack;
-    extern uint32_t _sstack;
-    info.stack_start = (uint8_t *)&_sstack;
-    info.stack_end = (uint8_t *)&_estack;
+/**
+ * Holds the received size result of pbsys_program_receive_process.
+ */
+static uint32_t last_received_size;
 
-    // Start the process.
-    process_start(&pbsys_program_load_process);
-
-    // Return reference to program info.
-    *program_info = &info;
-}
-
-bool pbsys_program_load_process_complete(void) {
-
-    // Stop receiving the program on shutdown.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-        process_exit(&pbsys_program_load_process);
-        pbsys_program_load_set_no_program(PSYS_PROGRAM_LOAD_TYPE_NONE);
-        return true;
-    }
-
-    // Check if the process is complete.
-    if (!process_is_running(&pbsys_program_load_process)) {
-        return true;
-    }
-
-    // REVISIT: Explicit polling should not be needed if we
-    // use the bluetooth callbacks to get events posted.
-    process_poll(&pbsys_program_load_process);
-    return false;
-}
-
-PROCESS_THREAD(pbsys_program_load_process, ev, data) {
+PROCESS_THREAD(pbsys_program_receive_process, ev, data) {
 
     static pbio_error_t err;
     static pbio_button_flags_t btn;
@@ -115,7 +92,7 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     static uint8_t *chunk_buf;
 
     // Total expected program size, progress size, and current chunk size
-    static uint32_t expected_size;
+    static uint32_t incoming_size;
     static uint32_t remaining_size;
     static uint32_t chunk_size;
     static uint32_t remaining_chunk_size;
@@ -124,8 +101,12 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    // Reset program type in case reception fails halfway.
-    pbsys_program_load_set_no_program(PSYS_PROGRAM_LOAD_TYPE_NONE);
+    // Reset received size in case reception fails halfway.
+    last_received_size = PSYS_PROGRAM_LOAD_TYPE_NONE;
+
+    // The first time after boot, the buttons are not ready.
+    // REVISIT: We should be waiting on this in pbio init, not here.
+    PROCESS_WAIT_UNTIL(pbio_button_is_pressed(&btn) == PBIO_SUCCESS);
 
     // Make sure button is released. Otherwise wait.
     PROCESS_WAIT_WHILE(pbio_button_is_pressed(&btn) == PBIO_SUCCESS && (btn & PBIO_BUTTON_CENTER));
@@ -157,15 +138,20 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
         // Wait for button release.
         PROCESS_WAIT_WHILE(pbio_button_is_pressed(&btn) == PBIO_SUCCESS && (btn & PBIO_BUTTON_CENTER));
 
-        // Use existing program, so set type to run without changing data.
-        pbsys_program_load_set_size(info.program_size);
+        // Did not receive a size.
+        last_received_size = 0;
+
+        // Exit the process without any size update.
         PROCESS_EXIT();
     }
 
-    // Handle invalid programs.
-    expected_size = pbio_get_uint32_le(size_buf);
-    if (err != PBIO_SUCCESS || expected_size > info.program_size_max) {
-        pbsys_program_load_set_no_program(expected_size);
+    // Handle sizes too big to receive.
+    incoming_size = pbio_get_uint32_le(size_buf);
+    if (err != PBIO_SUCCESS || incoming_size > PROGRAM_SIZE_MAX) {
+        // Store size in case it means we have to do something special.
+        last_received_size = incoming_size;
+
+        // Exit since we can't receive it.
         PROCESS_EXIT();
     }
 
@@ -176,8 +162,11 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
         pbsys_bluetooth_tx(&checksum, &rtx_size) == PBIO_SUCCESS;
     }));
 
+    // Reset stored size since data is garbage if reception fails.
+    set_stored_program_size(0);
+
     // Receive program chunk by chunk.
-    remaining_size = expected_size;
+    remaining_size = incoming_size;
     while (remaining_size) {
 
         etimer_set(&timer, 500);
@@ -185,7 +174,7 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
         // Size of chunk to receive now, and location of that chunk.
         chunk_size = remaining_size < PBSYS_CONFIG_DOWNLOAD_CHUNK_SIZE ?
             remaining_size : PBSYS_CONFIG_DOWNLOAD_CHUNK_SIZE;
-        chunk_buf = info.program_data + expected_size - remaining_size;
+        chunk_buf = map->program_data + incoming_size - remaining_size;
 
         // Receive a chunk of data or stop on timeout. The chunk may be further
         // broken down by the sender, so receive it piece by piece.
@@ -227,9 +216,68 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     }
 
     // On success, prepare program state for running.
-    pbsys_program_load_set_size(expected_size);
+    set_stored_program_size(incoming_size);
+    last_received_size = incoming_size;
 
     PROCESS_END();
+}
+
+void pbsys_program_load_receive_start(void) {
+    // Start the process.
+    process_start(&pbsys_program_receive_process);
+}
+
+bool pbsys_program_load_receive_complete(void) {
+
+    // Stop receiving the program on shutdown.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+        process_exit(&pbsys_program_receive_process);
+        last_received_size = PSYS_PROGRAM_LOAD_TYPE_NONE;
+        return true;
+    }
+
+    // Check if the process is complete.
+    if (!process_is_running(&pbsys_program_receive_process)) {
+        return true;
+    }
+
+    // REVISIT: Explicit polling should not be needed if we
+    // use the bluetooth callbacks to get events posted.
+    process_poll(&pbsys_program_receive_process);
+    return false;
+}
+
+// This part of the program info is always the same, so set it here.
+static pbsys_program_load_info_t info = {
+    .sys_stack_start = (uint8_t *)&_sstack,
+    .sys_stack_end = (uint8_t *)&_estack,
+    .sys_heap_end = (uint8_t *)&_heap_end,
+};
+
+pbsys_program_load_info_t *pbsys_program_load_get_info(void) {
+
+    // Handle valid programs.
+    if (last_received_size < PROGRAM_SIZE_MAX && map->program_size < PROGRAM_SIZE_MAX) {
+        // Load info from data map.
+        info.program_type = PSYS_PROGRAM_LOAD_TYPE_STORED;
+        info.program_size = map->program_size;
+        info.program_data = map->program_data;
+        info.appl_heap_start = info.program_data + info.program_size;
+        return &info;
+    }
+
+    // Handle special programs.
+    if (last_received_size == PSYS_PROGRAM_LOAD_TYPE_BUILTIN_0) {
+        info.program_type = PSYS_PROGRAM_LOAD_TYPE_BUILTIN_0;
+        // Even though the special program has no data, we don't want to
+        // let it override any other existing data.
+        info.appl_heap_start = map->program_data + map->program_size;
+        return &info;
+    }
+
+    // All other sizes are invalid.
+    info.program_type = PSYS_PROGRAM_LOAD_TYPE_NONE;
+    return &info;
 }
 
 #endif // PBSYS_CONFIG_PROGRAM_LOAD

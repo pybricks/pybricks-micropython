@@ -18,6 +18,7 @@
 
 #include "hmi.h"
 #include "io_ports.h"
+#include "main.h"
 #include "program_load.h"
 #include "supervisor.h"
 #include "user_program.h"
@@ -54,7 +55,6 @@ void pbsys_init() {
     process_start(&pbsys_system_process);
 }
 
-
 #if PBSYS_CONFIG_PROGRAM_LOAD
 
 /**
@@ -67,15 +67,15 @@ int main(int argc, char **argv) {
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
         // Load program info and start process to wait for program.
-        pbsys_program_load_info_t *info;
-        pbsys_program_load_process_start(&info);
+        pbsys_program_load_receive_start();
 
         // Wait for program receive process to complete.
-        while (!pbsys_program_load_process_complete()) {
+        while (!pbsys_program_load_receive_complete()) {
             pbio_do_one_event();
         }
 
         // Run the main application.
+        pbsys_program_load_info_t *info = pbsys_program_load_get_info();
         pbsys_program_load_application_main(info);
     }
 

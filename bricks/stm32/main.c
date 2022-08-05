@@ -14,7 +14,6 @@
 
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_flash.h>
 
 #include "shared/readline/readline.h"
 #include "shared/runtime/gchelper.h"
@@ -30,12 +29,6 @@
 #include "py/runtime.h"
 #include "py/stackctrl.h"
 #include "py/stream.h"
-
-// defined in linker script
-extern uint32_t _estack;
-extern uint32_t _sstack;
-extern uint32_t _heap_start;
-extern uint32_t _heap_end;
 
 #ifndef MICROPY_ENABLE_GC
 #warning GC Should be enabled for embedded builds.
@@ -212,11 +205,11 @@ void pbsys_program_load_application_main(pbsys_program_load_info_t *info) {
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
-    mp_stack_set_top(info->stack_end);
-    mp_stack_set_limit(info->stack_end - info->stack_start - 1024);
+    mp_stack_set_top(info->sys_stack_end);
+    mp_stack_set_limit(info->sys_stack_end - info->sys_stack_start - 1024);
 
     // Initialize heap to start directly after received program.
-    gc_init(info->heap_start, info->heap_end);
+    gc_init(info->appl_heap_start, info->sys_heap_end);
     mp_init();
 
     // Execute the user script.

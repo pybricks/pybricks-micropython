@@ -66,12 +66,20 @@ SECTIONS
         *(.bss*)
         *(COMMON)
 
-        . = ALIGN(4);
+        . = ALIGN(2048);
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
 
-    _heap_start = _ebss;   /* heap starts just after statically allocated memory */
-    _heap_end = _sstack;
+    /* Start of user data and application heap */
+    _app_data_ram_start = _ebss;
+
+    /* The user program is loaded from flash into RAM, so ensure that this fits. */
+    .heap :
+    {
+        . = . + (_app_data_flash_end - _app_data_flash_start); 
+    } >RAM
+
+    _heap_end = _sstack; /* Everything not used for app data up to stack can be used as heap  */
 
     .stack :
     {

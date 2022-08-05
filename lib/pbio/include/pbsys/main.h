@@ -7,5 +7,6 @@
 #include "pbsys/config.h"
 
 void pbsys_init(void);
+void pbsys_deinit(void);
 
 #endif // _PBSYS_MAIN_H_

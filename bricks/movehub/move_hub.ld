@@ -9,7 +9,7 @@
 /* Specify the memory areas */
 MEMORY
 {
-    /* Flash size is 128K, bootloader resides in first 20K, last 2K seems to be reserved */
+    /* Flash size is 128K, bootloader resides in first 20K. */
     FLASH (rx)      : ORIGIN = 0x08005000, LENGTH = 106K
     USER_FLASH (rx) : ORIGIN = 0x0801F800, LENGTH = 2K
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 16K
@@ -17,3 +17,8 @@ MEMORY
 
 "MAGIC_OFFSET" = 0x100;
 _stack_size = 4K;
+
+/* User data is saved on shutdown at the end of the internal flash. */
+_app_data_flash_start = ORIGIN(USER_FLASH);
+_app_data_flash_end = ORIGIN(USER_FLASH) + LENGTH(USER_FLASH);
+

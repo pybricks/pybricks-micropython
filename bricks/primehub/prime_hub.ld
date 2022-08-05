@@ -16,3 +16,10 @@ MEMORY
 }
 
 _stack_size = 16K;
+
+/* On this hub, user data is stored on the external flash, so it does not
+ * directly affect the internal flash layout. We still define these symbols
+ * here so we can ensure there is enough available RAM to load the program.
+ */
+_app_data_flash_start = 512K;
+_app_data_flash_end = _app_data_flash_start + 256K;
