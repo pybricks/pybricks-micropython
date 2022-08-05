@@ -5,6 +5,7 @@
 
 #include <pbdrv/reset.h>
 #include <pbio/main.h>
+#include <pbsys/core.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/user_program.h>
@@ -27,6 +28,7 @@ static void pb_sys_main_check_for_shutdown(void) {
  */
 void pbsys_main(pbsys_main_t main) {
     pbio_init();
+    pbsys_init();
 
     // REVISIT: __builtin_setjmp() only saves a couple registers, so using it
     // could cause problems if we add more to this function. However, since we

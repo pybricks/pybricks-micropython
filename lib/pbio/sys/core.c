@@ -1,34 +1,28 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2022 The Pybricks Authors
+// Copyright (c) 2022 The Pybricks Authors
+
+#include <stdint.h>
 
 #include <contiki.h>
 
-#include "pbio/event.h"
-#include "pbio/main.h"
-
 #include <pbsys/battery.h>
 #include <pbsys/bluetooth.h>
-#include <pbsys/status.h>
 
-#include "../sys/hmi.h"
-#include "../sys/io_ports.h"
-#include "../sys/supervisor.h"
-#include "../sys/user_program.h"
+#include "hmi.h"
+#include "io_ports.h"
+#include "supervisor.h"
+#include "user_program.h"
 
-PROCESS(pbsys_process, "System");
+PROCESS(pbsys_system_process, "System");
 
-
-PROCESS_THREAD(pbsys_process, ev, data) {
+PROCESS_THREAD(pbsys_system_process, ev, data) {
     static struct etimer timer;
 
     PROCESS_BEGIN();
 
-    pbsys_battery_init();
-    pbsys_bluetooth_init();
-    pbsys_hmi_init();
     etimer_set(&timer, 50);
 
-    while (true) {
+    for (;;) {
         PROCESS_WAIT_EVENT();
         pbsys_hmi_handle_event(ev, data);
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
@@ -42,4 +36,11 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     }
 
     PROCESS_END();
+}
+
+void pbsys_init() {
+    pbsys_battery_init();
+    pbsys_bluetooth_init();
+    pbsys_hmi_init();
+    process_start(&pbsys_system_process);
 }

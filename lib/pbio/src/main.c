@@ -37,9 +37,6 @@ AUTOSTART_PROCESSES(
 #if PBIO_CONFIG_UARTDEV
     &pbio_uartdev_process,
 #endif
-#if PBIO_CONFIG_ENABLE_SYS
-    &pbsys_process,
-#endif
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
     &pbio_motor_process,
 #endif
