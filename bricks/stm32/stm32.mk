@@ -459,7 +459,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/usb/usb_stm32.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
-	platform/$(PBIO_PLATFORM)/sys.c \
 	src/angle.c \
 	src/battery.c \
 	src/color/conversion.c \
@@ -499,6 +498,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/main.c \
 	sys/status.c \
 	sys/supervisor.c \
+	sys/system.c \
 	sys/user_program.c \
 	)
 

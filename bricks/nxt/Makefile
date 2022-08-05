@@ -205,7 +205,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/motor_driver/motor_driver_nxt.c \
 	drv/reset/reset_nxt.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
-	platform/$(PBIO_PLATFORM)/sys.c \
 	src/angle.c \
 	src/battery.c \
 	src/color/conversion.c \
@@ -231,6 +230,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/hmi.c \
 	sys/status.c \
 	sys/supervisor.c \
+	sys/system.c \
 	sys/user_program.c \
 	)
 

@@ -15,6 +15,7 @@
 
 #include <pbio/main.h>
 #include <pbsys/user_program.h>
+#include <pbsys/system.h>
 #include "../../lib/pbio/drv/virtual.h"
 
 #include "py/mpconfig.h"
@@ -115,6 +116,9 @@ void pb_virtualhub_port_init(void) {
     }
 
     pbio_init();
+
+    pbsys_init();
+
     pb_package_pybricks_init();
 
     pbsys_user_program_prepare(&user_program_callbacks);

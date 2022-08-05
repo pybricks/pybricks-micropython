@@ -24,10 +24,6 @@ PROCESS_NAME(pbdrv_uart_process);
 PROCESS_NAME(pbio_uartdev_process);
 #endif
 
-#if PBIO_CONFIG_ENABLE_SYS
-PROCESS_NAME(pbsys_process);
-#endif
-
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 PROCESS_NAME(pbio_motor_process);
 #endif

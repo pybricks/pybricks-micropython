@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbdrv/clock.h>
 #include <pbdrv/reset.h>
 
@@ -10,7 +12,9 @@
 
 #include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
+#include <pbsys/system.h>
 #include <pbsys/user_program.h>
+
 #include "user_program.h"
 
 /**
@@ -19,6 +23,7 @@
  */
 int main(int argc, char **argv) {
     pbio_init();
+    pbsys_init();
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
         // Load program info and start process to wait for program.
