@@ -15,7 +15,7 @@
 
 #include <pbio/main.h>
 #include <pbsys/user_program.h>
-#include <pbsys/system.h>
+#include <pbsys/main.h>
 #include "../../lib/pbio/drv/virtual.h"
 
 #include "py/mpconfig.h"

@@ -125,7 +125,7 @@ PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
 PBIO_SRC = \
 	$(shell find $(PBIO_DIR)/drv ! -wholename "*/ev3dev_stretch/*" -and ! -wholename "*/stm32_usbd/*" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
-	$(shell find $(PBIO_DIR)/sys -name "*.c") \
+	$(shell find $(PBIO_DIR)/sys ! -wholename "*/sys/main.c" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src/motor -name "*.c") \
 
 # tests

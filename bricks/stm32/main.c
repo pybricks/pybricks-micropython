@@ -9,6 +9,7 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
+#include <pbsys/program_load.h>
 #include <pbsys/user_program.h>
 
 #include <pybricks/common.h>
@@ -198,15 +199,15 @@ restart:
     pbsys_user_program_unprepare();
 }
 
-void pbsys_user_program_application_main(pbsys_user_program_info_t *info) {
+void pbsys_program_load_application_main(pbsys_program_load_info_t *info) {
 
     // Invalid program.
-    if (info->program_type == PSYS_USER_PROGRAM_TYPE_NONE) {
+    if (info->program_type == PSYS_PROGRAM_LOAD_TYPE_NONE) {
         return;
     }
 
     // REPL program.
-    bool run_repl = info->program_type == PSYS_USER_PROGRAM_TYPE_BUILTIN_0;
+    bool run_repl = info->program_type == PSYS_PROGRAM_LOAD_TYPE_BUILTIN_0;
 
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
