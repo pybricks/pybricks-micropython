@@ -54,6 +54,13 @@ void pbio_init(void) {
 }
 
 /**
+ * Deinitialize the Pybricks I/O Library.
+ */
+void pbio_deinit(void) {
+    pbdrv_deinit();
+}
+
+/**
  * Stops all user-level background processes. Drivers and OS-level processes
  * continue running.
  */

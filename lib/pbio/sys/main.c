@@ -79,6 +79,8 @@ int main(int argc, char **argv) {
         pbsys_program_load_application_main(info);
     }
 
+    pbio_deinit();
+
     // The power could be held on due to someone pressing the center button
     // or USB being plugged in, so we have this loop to keep pumping events
     // to turn off most of the peripherals and keep the battery charger running.

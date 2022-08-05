@@ -85,6 +85,13 @@
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (2)
 
+#define PBDRV_CONFIG_SPI                            (1)
+#define PBDRV_CONFIG_SPI_STM32F4_IRQ                (1)
+#define PBDRV_CONFIG_SPI_STM32F4_IRQ_NUM_SPI        (1)
+
+#define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_W25Q32            (1)
+
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 

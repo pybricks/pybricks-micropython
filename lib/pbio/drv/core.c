@@ -6,6 +6,7 @@
 #include "core.h"
 #include "battery/battery.h"
 #include "bluetooth/bluetooth.h"
+#include "block_device/block_device.h"
 #include "charger/charger.h"
 #include "clock/clock.h"
 #include "counter/counter.h"
@@ -18,6 +19,7 @@
 #include "reset/reset.h"
 #include "sound/sound.h"
 #include "usb/usb.h"
+#include "spi/spi.h"
 #include "watchdog/watchdog.h"
 
 uint32_t pbdrv_init_busy_count;
@@ -32,6 +34,7 @@ void pbdrv_init(void) {
     // the rest of the drivers should be implemented so that init order doesn't matter
     pbdrv_battery_init();
     pbdrv_bluetooth_init();
+    pbdrv_block_device_init();
     pbdrv_charger_init();
     pbdrv_counter_init();
     pbdrv_imu_init();
@@ -43,7 +46,16 @@ void pbdrv_init(void) {
     pbdrv_reset_init();
     pbdrv_sound_init();
     pbdrv_usb_init();
+    pbdrv_spi_init();
     pbdrv_watchdog_init();
+
+    while (pbdrv_init_busy()) {
+        process_run();
+    }
+}
+
+void pbdrv_deinit(void) {
+    pbdrv_block_device_deinit();
 
     while (pbdrv_init_busy()) {
         process_run();

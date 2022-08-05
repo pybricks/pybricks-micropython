@@ -307,7 +307,7 @@ void pbdrv_pwm_tlc5955_stm32_spi_irq(uint8_t index) {
     HAL_SPI_IRQHandler(&priv->hspi);
 }
 
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+void pbdrv_pwm_tlc5955_stm32_spi_tx_complete(void) {
     process_poll(&pwm_tlc5955_stm32);
 }
 

@@ -15,6 +15,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
+#include "../../drv/block_device/block_device_w25qxx.h"
 #include "../../drv/charger/charger_mp2639a.h"
 #include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
@@ -29,6 +30,7 @@
 #include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 #include "../../drv/usb/usb_stm32.h"
+#include "../../drv/spi/spi_stm32f4_irq.h"
 
 enum {
     COUNTER_PORT_A,
@@ -835,6 +837,26 @@ void DMA2_Stream3_IRQHandler(void) {
     pbdrv_pwm_tlc5955_stm32_tx_dma_irq(0);
 }
 
+// SPI
+SPI_HandleTypeDef hspi2;
+
+enum {
+    SPI2_ID = 0,
+};
+
+const pbdrv_spi_stm32f4_irq_platform_data_t
+    pbdrv_spi_stm32f4_irq_platform_data[PBDRV_CONFIG_SPI_STM32F4_IRQ_NUM_SPI] = {
+    [SPI2_ID] = {
+        .hspi = &hspi2,
+        .spi = SPI2,
+        .irq = SPI2_IRQn,
+        .pin_ncs = {
+            .bank = GPIOB,
+            .pin = 12,
+        }
+    },
+};
+
 void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     if (hspi->Instance == SPI1) {
         // TLC5955 LED driver
@@ -876,6 +898,39 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
 void SPI1_IRQHandler(void) {
     pbdrv_pwm_tlc5955_stm32_spi_irq(0);
 }
+
+void SPI2_IRQHandler(void) {
+    HAL_SPI_IRQHandler(&hspi2);
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi == &hspi2) {
+        pbdrv_spi_stm32f4_irq_handle_txrx_complete(SPI2_ID);
+    }
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi == &hspi2) {
+        pbdrv_spi_stm32f4_irq_handle_txrx_complete(SPI2_ID);
+    } else {
+        pbdrv_pwm_tlc5955_stm32_spi_tx_complete();
+    }
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi == &hspi2) {
+        pbdrv_spi_stm32f4_irq_handle_error(SPI2_ID);
+    }
+}
+
+// Storage
+
+extern uint32_t _app_data_ram_start;
+extern uint32_t _app_data_size_max;
+
+const pbdrv_block_device_w25qxx_platform_data_t pbdrv_block_device_w25qxx_platform_data = {
+    .spi_id = SPI2_ID,
+};
 
 // USB
 

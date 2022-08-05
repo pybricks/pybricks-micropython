@@ -51,6 +51,7 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *dev);
 void pbdrv_pwm_tlc5955_stm32_rx_dma_irq(uint8_t index);
 void pbdrv_pwm_tlc5955_stm32_tx_dma_irq(uint8_t index);
 void pbdrv_pwm_tlc5955_stm32_spi_irq(uint8_t index);
+void pbdrv_pwm_tlc5955_stm32_spi_tx_complete(void);
 
 #else // PBDRV_CONFIG_PWM_TLC5955_STM32
 

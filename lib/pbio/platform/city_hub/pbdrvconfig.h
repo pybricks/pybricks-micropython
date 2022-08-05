@@ -26,6 +26,9 @@
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID  "\x41"
 
+#define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_STM32F0           (1)
+
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
 

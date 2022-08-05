@@ -129,7 +129,7 @@ TEXT0_ADDR ?= 0x08000000
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
+CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized -Wno-stringop-overflow
 CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
 $(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
 $(BUILD)/lib/stm32lib/%.o: CFLAGS += -Wno-sign-compare
@@ -263,7 +263,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_conversions.c \
 	util_pb/pb_device_stm32.c \
 	util_pb/pb_error.c \
-	util_pb/pb_flash.c \
 	util_pb/pb_task.c \
 	)
 
@@ -362,6 +361,8 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_fmpi2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
@@ -427,6 +428,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
 	drv/bluetooth/pybricks_service_server.c \
+	drv/block_device/block_device_stm32.c \
+	drv/block_device/block_device_w25qxx.c \
 	drv/button/button_gpio.c \
 	drv/button/button_resistor_ladder.c \
 	drv/charger/charger_mp2639a.c \
@@ -457,6 +460,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/usb_stm32.c \
+	drv/spi/spi_stm32f4_irq.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	src/angle.c \
