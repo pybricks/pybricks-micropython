@@ -49,13 +49,8 @@ struct _pbdrv_imu_dev_t {
     imu_init_state_t init_state;
 };
 
-static volatile uint32_t imu_error_count;
 static pbdrv_imu_dev_t global_imu_dev;
 PROCESS(pbdrv_imu_lsm6ds3tr_c_stm32_process, "LSM6DS3TR-C");
-
-uint32_t imu_get_error_count(void) {
-    return imu_error_count;
-}
 
 // REVISIT: For now, this driver takes complete ownership of the STM32 I2C
 // subsystem. A shared I2C driver would be needed
@@ -78,43 +73,15 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
     process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
 }
 
-void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c) {
-    imu_error_count++;
-    global_imu_dev.ctx.read_write_done = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
-}
-
-// private function copied from HAL
-
-/**
-  * @brief  This function handles Acknowledge failed detection during an I2C Communication.
-  * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
-  *                the configuration information for the specified I2C.
-  * @retval HAL status
-  */
-static void I2C_IsAcknowledgeFailed(I2C_HandleTypeDef *hi2c) {
-    if (__HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_AF) == SET) {
-        /* Clear NACKF Flag */
-        __HAL_I2C_CLEAR_FLAG(hi2c, I2C_FLAG_AF);
-
-        hi2c->State = HAL_I2C_STATE_READY;
-    }
-}
+// REVISIT: if there is ever an error the PT threads will stall since we aren't
+// handling the error callbacks.
 
 static void pbdrv_imu_lsm6ds3tr_c_stm32_write_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
-    HAL_StatusTypeDef ret = HAL_I2C_Mem_Write_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
-
-    if (ret != HAL_OK) {
-        HAL_I2C_ErrorCallback(&global_imu_dev.hi2c);
-    }
+    HAL_I2C_Mem_Write_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
 
 static void pbdrv_imu_lsm6ds3tr_c_stm32_read_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
-    HAL_StatusTypeDef ret = HAL_I2C_Mem_Read_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
-
-    if (ret != HAL_OK) {
-        HAL_I2C_ErrorCallback(&global_imu_dev.hi2c);
-    }
+    HAL_I2C_Mem_Read_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
 
 static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
@@ -210,11 +177,6 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     /* Gyroscope - filtering chain */
     // PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_band_pass_set(&child, ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT));
 
-    if (HAL_I2C_GetError(hi2c) != HAL_OK) {
-        imu_dev->init_state = IMU_INIT_STATE_FAILED;
-        PT_EXIT(pt);
-    }
-
     imu_dev->init_state = IMU_INIT_STATE_COMPLETE;
 
     PT_END(pt);
@@ -222,7 +184,6 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
 
 PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     pbdrv_imu_dev_t *imu_dev = &global_imu_dev;
-    I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
 
     static struct pt child;
     static uint8_t buf[6];
@@ -240,28 +201,11 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
 
     for (;;) {
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_acceleration_raw_get(&child, &imu_dev->ctx, buf));
-
-        if (HAL_I2C_GetError(hi2c) == HAL_OK) {
-            memcpy(&imu_dev->data[0], buf, 6);
-        } else {
-            I2C_IsAcknowledgeFailed(hi2c);
-        }
-
+        memcpy(&imu_dev->data[0], buf, 6);
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_angular_rate_raw_get(&child, &imu_dev->ctx, buf));
-
-        if (HAL_I2C_GetError(&imu_dev->hi2c) == HAL_OK) {
-            memcpy(&imu_dev->data[3], buf, 6);
-        } else {
-            I2C_IsAcknowledgeFailed(hi2c);
-        }
-
+        memcpy(&imu_dev->data[3], buf, 6);
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_temperature_raw_get(&child, &imu_dev->ctx, buf));
-
-        if (HAL_I2C_GetError(&imu_dev->hi2c) == HAL_OK) {
-            memcpy(&imu_dev->data[6], buf, 2);
-        } else {
-            I2C_IsAcknowledgeFailed(hi2c);
-        }
+        memcpy(&imu_dev->data[6], buf, 2);
     }
 
     PROCESS_END();

@@ -183,13 +183,6 @@ STATIC mp_obj_t common_IMU_temp(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_temp_obj, common_IMU_temp);
 
-uint32_t imu_get_error_count(void);
-
-STATIC mp_obj_t common_IMU_err(mp_obj_t self_in) {
-    return mp_obj_new_int(imu_get_error_count());
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_err_obj, common_IMU_err);
-
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
@@ -198,7 +191,6 @@ STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
     // HACK: this is for testing and will be removed
     { MP_ROM_QSTR(MP_QSTR_temp), MP_ROM_PTR(&common_IMU_temp_obj)},
-    { MP_ROM_QSTR(MP_QSTR_err), MP_ROM_PTR(&common_IMU_err_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 
