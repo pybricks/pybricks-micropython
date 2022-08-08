@@ -13,4 +13,7 @@
 #error "Must define PBSYS_CONFIG_STATUS_LIGHT in pbsysconfig.h"
 #endif
 
+// Downloaded programs are received in chunks up to this size.
+#define PBSYS_CONFIG_DOWNLOAD_CHUNK_SIZE (100)
+
 #endif // _PBSYS_CONFIG_H_

@@ -47,7 +47,7 @@ PROCESS(pbsys_bluetooth_process, "Bluetooth");
 /** Initializes Bluetooth. */
 void pbsys_bluetooth_init(void) {
     static uint8_t uart_tx_buf[NUS_CHAR_SIZE * 2 + 1];
-    static uint8_t uart_rx_buf[100 + 1]; // download chunk size
+    static uint8_t uart_rx_buf[PBSYS_CONFIG_DOWNLOAD_CHUNK_SIZE + 1];
 
     lwrb_init(&uart_tx_ring, uart_tx_buf, PBIO_ARRAY_SIZE(uart_tx_buf));
     lwrb_init(&uart_rx_ring, uart_rx_buf, PBIO_ARRAY_SIZE(uart_rx_buf));

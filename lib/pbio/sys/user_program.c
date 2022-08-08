@@ -176,9 +176,6 @@ bool pbsys_user_program_process_complete(void) {
     return false;
 }
 
-// REVISIT: Align with pbsys ring buffer size
-#define CHUNK_SIZE (100)
-
 PROCESS_THREAD(pbsys_user_program_process, ev, data) {
 
     static pbio_error_t err;
@@ -262,7 +259,8 @@ PROCESS_THREAD(pbsys_user_program_process, ev, data) {
         etimer_set(&timer, 500);
 
         // Size of chunk to receive now, and location of that chunk.
-        chunk_size = remaining_size < CHUNK_SIZE ? remaining_size : CHUNK_SIZE;
+        chunk_size = remaining_size < PBSYS_CONFIG_DOWNLOAD_CHUNK_SIZE ?
+            remaining_size : PBSYS_CONFIG_DOWNLOAD_CHUNK_SIZE;
         chunk_buf = info.program_data + expected_size - remaining_size;
 
         // Receive a chunk of data or stop on timeout. The chunk may be further
