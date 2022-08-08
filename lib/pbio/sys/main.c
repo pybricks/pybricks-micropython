@@ -25,13 +25,13 @@ static void pb_sys_main_check_for_shutdown(void) {
 }
 
 /**
- * Initializes the PBIO library and runs custom main program.
+ * Initializes the PBIO library and runs main application.
  *
- * The main program may be abruptly ended when shutting down the hub.
+ * The main application may be abruptly ended when shutting down the hub.
  *
  * @param [in]  main    The main program.
  */
-void pbsys_main(pbsys_main_t main) {
+int main(int argc, char **argv) {
     pbio_init();
     pbsys_init();
 
@@ -43,7 +43,7 @@ void pbsys_main(pbsys_main_t main) {
         // REVISIT: we could save a few CPU cycles on each call to pbio_do_one_event()
         // if we don't set this until shutdown is actually requested
         pbio_set_event_hook(pb_sys_main_check_for_shutdown);
-        main();
+        pbsys_main_application();
     } else {
         // in case we jumped out of the middle of a user program
         pbsys_user_program_unprepare();

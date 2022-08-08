@@ -354,7 +354,7 @@ restart:
     pbsys_user_program_unprepare();
 }
 
-static void stm32_main(void) {
+void pbsys_main_application(void) {
 
     #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     mp_hal_delay_ms(500);
@@ -390,11 +390,6 @@ soft_reset:
     goto soft_reset;
 
     MP_UNREACHABLE;
-}
-
-int main(int argc, char **argv) {
-    pbsys_main(stm32_main);
-    return 0;
 }
 
 void gc_collect(void) {

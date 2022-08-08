@@ -13,10 +13,7 @@
 
 #if PBSYS_CONFIG_MAIN
 
-/** A main function. */
-typedef void (*pbsys_main_t)(void);
-
-__attribute__((noreturn)) void pbsys_main(pbsys_main_t main);
+void pbsys_main_application(void);
 
 #endif // PBSYS_CONFIG_MAIN
 
