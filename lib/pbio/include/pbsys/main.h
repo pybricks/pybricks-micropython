@@ -10,7 +10,7 @@
 #define _PBSYS_MAIN_H_
 
 /** A main function. */
-typedef void (*pbsys_main_t)(void);
+typedef void (*pbsys_main_t)(uint8_t *program_data, uint32_t program_size);
 
 __attribute__((noreturn)) void pbsys_main(pbsys_main_t main);
 
