@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <pbio/util.h>
+
 /**
  * Compares two 128-bit UUIDs with opposite byte ordering for equality.
  *
@@ -50,4 +52,28 @@ bool pbio_oneshot(bool value, bool *state) {
     *state = value;
 
     return ret;
+}
+
+/**
+ * Gets checksum for the data in the buffer.
+ *
+ * @param [in]  buf     The buffer.
+ * @return              The value.
+ */
+uint32_t pbio_util_get_checksum(pbio_util_checksum_type_t type, const uint8_t *buf, uint32_t len) {
+
+    uint32_t checksum = 0;
+    switch (type) {
+        case PBIO_UTIL_CHECKSUM_TYPE_XOR8_START_FF:
+            // Set start value, and then ...
+            checksum = 0xFF;
+        // ... fallthrough
+        case PBIO_UTIL_CHECKSUM_TYPE_XOR8_START_00:
+            for (uint32_t i = 0; i < len; i++) {
+                checksum ^= buf[i];
+            }
+            return checksum;
+        default:
+            return 0;
+    }
 }

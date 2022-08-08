@@ -57,6 +57,65 @@ void pbsys_user_program_unprepare(void);
 void pbsys_user_program_stop(void);
 void pbsys_user_program_set_stop_buttons(pbio_button_flags_t buttons);
 
+/**
+ * Active user program type.
+ */
+typedef enum {
+    /**
+     * There is no valid program to run.
+     */
+    PSYS_USER_PROGRAM_TYPE_NONE = 0,
+    /**
+     * This is is a valid user program.
+     */
+    PSYS_USER_PROGRAM_TYPE_NORMAL = 1,
+    /**
+     * Indicator to run appplication-specific special program.
+     */
+    PSYS_USER_PROGRAM_TYPE_BUILTIN_0 = 0x20202020,
+} pbsys_user_program_type_t;
+
+/**
+ * Struct to hold system resource information for use by application program.
+ */
+typedef struct {
+    /**
+     * Type of program to run next.
+     */
+    pbsys_user_program_type_t program_type;
+    /**
+     * Start of the heap available to the program.
+     */
+    uint8_t *heap_start;
+    /**
+     * End of the heap available to the program.
+     */
+    uint8_t *heap_end;
+    /**
+     * Start of the system stack.
+     */
+    uint8_t *stack_start;
+    /**
+     * End of the system stack.
+     */
+    uint8_t *stack_end;
+    /**
+     * Application-specific program data. Used only when type
+     * is ::PSYS_USER_PROGRAM_TYPE_NORMAL.
+     */
+    uint8_t *program_data;
+    /**
+     * Application data size. Used only when type
+     * is ::PSYS_USER_PROGRAM_TYPE_NORMAL.
+     */
+    uint32_t program_size;
+    /**
+     * Maximum application data size.
+     */
+    uint32_t program_size_max;
+} pbsys_user_program_info_t;
+
+
 #endif // _PBSYS_USER_PROGRAM_H_
 
 /** @} */

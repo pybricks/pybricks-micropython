@@ -81,8 +81,9 @@ uint32_t pbsys_bluetooth_rx_get_available(void) {
  * @param size  [in, out]   The number of bytes to read (@p data must be at least
  *                          this big). After return @p size contains the number
  *                          of bytes actually read.
- * @return                  ::PBIO_SUCCESS if @p data was read, ::PBIO_ERROR_AGAIN
- *                          if @p data could not be read at this time (i.e. buffer
+ * @return                  ::PBIO_SUCCESS if any amount of @p data was read,
+ *                          ::PBIO_ERROR_AGAIN not a single byte of @p data
+ *                          could not be read at this time (i.e. buffer
  *                          is empty), ::PBIO_ERROR_INVALID_OP if there is not an
  *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
  *                          if this platform does not support Bluetooth.

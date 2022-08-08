@@ -9,8 +9,10 @@
 #ifndef _PBSYS_MAIN_H_
 #define _PBSYS_MAIN_H_
 
+#include <pbsys/user_program.h>
+
 /** A main function. */
-typedef void (*pbsys_main_t)(uint8_t *program_data, uint32_t program_size);
+typedef void (*pbsys_main_t)(pbsys_user_program_info_t *info);
 
 __attribute__((noreturn)) void pbsys_main(pbsys_main_t main);
 

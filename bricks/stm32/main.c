@@ -199,34 +199,30 @@ restart:
     pbsys_user_program_unprepare();
 }
 
-static void stm32_main(uint8_t *program_data, uint32_t program_size) {
+static void stm32_main(pbsys_user_program_info_t *info) {
 
     // Invalid program.
-    if (program_size == 0) {
+    if (info->program_type == PSYS_USER_PROGRAM_TYPE_NONE) {
         return;
     }
 
     // REPL program.
-    bool run_repl = program_size == 0x20202020;
-    if (run_repl) {
-        program_size = 0;
-    }
+    bool run_repl = info->program_type == PSYS_USER_PROGRAM_TYPE_BUILTIN_0;
 
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
-    mp_stack_set_top(&_estack);
-    mp_stack_set_limit((char *)&_estack - (char *)&_sstack - 1024);
+    mp_stack_set_top(info->stack_end);
+    mp_stack_set_limit(info->stack_end - info->stack_start - 1024);
 
     // Initialize heap to start directly after received program.
-    gc_init((char *)&_heap_start + program_size, &_heap_end);
-
+    gc_init(info->heap_start, info->heap_end);
     mp_init();
 
     // Execute the user script.
-    run_user_program(run_repl, program_data, program_size);
+    run_user_program(run_repl, info->program_data, info->program_size);
 
-    // Uninitialize MicroPython and the system hardware
+    // Uninitialize MicroPython.
     mp_deinit();
 }
 

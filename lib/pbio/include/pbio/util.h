@@ -129,6 +129,22 @@ void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 
 bool pbio_oneshot(bool value, bool *state);
 
+/**
+ * Checkum types.
+ */
+typedef enum {
+    /**
+     * All buffer values xored together.
+     */
+    PBIO_UTIL_CHECKSUM_TYPE_XOR8_START_00,
+    /**
+     * All buffer values xored together along with 0xff.
+     */
+    PBIO_UTIL_CHECKSUM_TYPE_XOR8_START_FF,
+} pbio_util_checksum_type_t;
+
+uint32_t pbio_util_get_checksum(pbio_util_checksum_type_t type, const uint8_t *buf, uint32_t len);
+
 #endif // _PBIO_UTIL_H_
 
 /** @} */
