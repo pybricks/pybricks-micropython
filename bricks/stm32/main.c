@@ -31,19 +31,11 @@
 #include "py/stackctrl.h"
 #include "py/stream.h"
 
-// REVISIT: We could modify the linker script like upstream MicroPython so that
-// we can specify the stack size per hub in the linker scripts. Currently, since
-// the heap is statically allocated here, the stack size is whatever is left in
-// RAM after .data and .bss sections. But it would probably be better to specify
-// the stack size and let the heap be whatever is leftover.
-
 // defined in linker script
 extern uint32_t _estack;
-extern uint32_t _ebss;
-
-#if MICROPY_ENABLE_GC
-static char heap[PYBRICKS_HEAP_KB * 1024];
-#endif
+extern uint32_t _sstack;
+extern uint32_t _heap_start;
+extern uint32_t _heap_end;
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_stm32_poll(void) {
@@ -176,6 +168,9 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     *buf = NULL;
     *free_len = 0;
 
+    // Set max program size as half of heap for now.
+    const uint32_t max_mpy_size = ((char *)&_heap_end - (char *)&_heap_start) / 2;
+
     // flush any buffered bytes from stdin
     while (mp_hal_stdio_poll(MP_STREAM_POLL_RD)) {
         mp_hal_stdin_rx_chr();
@@ -194,7 +189,8 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
             return 0;
         }
         // Check size and allocate buffer
-        if (size > MPY_MAX_BYTES) {
+
+        if (size > max_mpy_size) {
             return 0;
         }
         *buf = m_malloc(size);
@@ -226,7 +222,7 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     }
 
     // Assert that the length is allowed
-    if (len > MPY_MAX_BYTES) {
+    if (len > max_mpy_size) {
         return 0;
     }
 
@@ -370,10 +366,10 @@ soft_reset:
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
     mp_stack_set_top(&_estack);
-    mp_stack_set_limit((char *)&_estack - (char *)&_ebss - 1024);
+    mp_stack_set_limit((char *)&_estack - (char *)&_sstack - 1024);
 
     #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + sizeof(heap));
+    gc_init(&_heap_start, &_heap_end);
     #endif
 
     wait_for_button_release();

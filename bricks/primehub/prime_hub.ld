@@ -15,4 +15,4 @@ MEMORY
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 320K
 }
 
-_minimum_stack_size = 8K;
+_stack_size = 16K;

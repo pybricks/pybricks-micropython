@@ -9,8 +9,6 @@
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_PrimeHub)
 #define PYBRICKS_HUB_CLASS_NAME_ALIAS   (MP_QSTR_InventorHub)
 
-#define PYBRICKS_HEAP_KB                256
-
 #define PYBRICKS_HUB_PRIMEHUB           (1)
 
 // Pybricks modules
