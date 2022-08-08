@@ -4,6 +4,7 @@
 
 /* top end of the stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);
+_sstack = _estack - _stack_size;
 
 /* define output sections */
 SECTIONS
@@ -69,10 +70,13 @@ SECTIONS
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
 
+    _heap_start = _ebss;   /* heap starts just after statically allocated memory */
+    _heap_end = _sstack;
+
     .stack :
     {
         . = ALIGN(4);
-        . = . + _minimum_stack_size; /* will cause linker error if there is not enough space for stack. */
+        . = . + _stack_size; /* will cause linker error if there is not enough space for stack. */
         . = ALIGN(4);
     } >RAM
 

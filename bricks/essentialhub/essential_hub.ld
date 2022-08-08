@@ -16,4 +16,4 @@ MEMORY
 }
 
 "FW_INFO_OFFSET" = 0x200;
-_minimum_stack_size = 8K;
+_stack_size = 16K;

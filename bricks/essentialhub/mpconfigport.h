@@ -9,8 +9,6 @@
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_EssentialHub)
 #undef PYBRICKS_HUB_CLASS_NAME_ALIAS
 
-#define PYBRICKS_HEAP_KB                256
-
 #define PYBRICKS_HUB_ESSENTIALHUB       (1)
 
 // Pybricks modules

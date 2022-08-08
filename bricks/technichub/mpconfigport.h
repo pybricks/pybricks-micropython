@@ -8,8 +8,6 @@
 
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_TechnicHub)
 
-#define PYBRICKS_HEAP_KB                48
-
 #define PYBRICKS_HUB_TECHNICHUB         (1)
 
 // Pybricks modules

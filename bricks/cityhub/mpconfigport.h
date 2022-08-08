@@ -8,8 +8,6 @@
 
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_CityHub)
 
-#define PYBRICKS_HEAP_KB                16 // half of RAM
-
 #define PYBRICKS_HUB_CITYHUB            (1)
 
 // Pybricks modules

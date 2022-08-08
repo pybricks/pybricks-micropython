@@ -16,4 +16,4 @@ MEMORY
 }
 
 "MAGIC_OFFSET" = 0x200;
-_minimum_stack_size = 4K;
+_stack_size = 8K;

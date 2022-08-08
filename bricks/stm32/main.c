@@ -31,15 +31,11 @@
 #include "py/stackctrl.h"
 #include "py/stream.h"
 
-// REVISIT: We could modify the linker script like upstream MicroPython so that
-// we can specify the stack size per hub in the linker scripts. Currently, since
-// the heap is statically allocated here, the stack size is whatever is left in
-// RAM after .data and .bss sections. But it would probably be better to specify
-// the stack size and let the heap be whatever is leftover.
-
 // defined in linker script
 extern uint32_t _estack;
-extern uint32_t _ebss;
+extern uint32_t _sstack;
+extern uint32_t _heap_start;
+extern uint32_t _heap_end;
 
 #ifndef MICROPY_ENABLE_GC
 #warning GC Should be enabled for embedded builds.
@@ -164,14 +160,6 @@ extern uint8_t _pb_user_mpy_data;
 // assume they want REPL. This lets users get REPL by pressing
 // spacebar four times, so that no special tools are required.
 static const uint32_t REPL_LEN = 0x20202020;
-
-// MicroPython heap starts after the (down)loaded user program .mpy blob
-uint8_t program_and_heap[PYBRICKS_HEAP_KB * 1024];
-uint32_t program_size;
-
-// The program can't take up the entire heap, since we still need
-// a bit of heap to parse the file and run it.
-const uint32_t program_size_max = sizeof(program_and_heap) * 2 / 3;
 
 static uint32_t program_get_new_size(void) {
     // flush any buffered bytes from stdin
@@ -333,7 +321,14 @@ restart:
     pbsys_user_program_unprepare();
 }
 
+uint32_t program_size;
+uint8_t *program_data = (uint8_t *)&_heap_start;
+
 static void stm32_main(void) {
+
+    // The program can't take up the entire heap, since we still need
+    // a bit of heap to parse the file and run it.
+    const uint32_t program_size_max = ((char *)&_heap_end - (char *)&_heap_start) * 2 / 3;
 
     // Load initial program from storage.
     // REVISIT: Use platform agnostic block device.
@@ -342,13 +337,13 @@ static void stm32_main(void) {
     pb_flash_init();
     uint32_t size = 0;
     if (pb_flash_file_open_get_size("/_pybricks/main.mpy", &size) == PBIO_SUCCESS) {
-        if (size < program_size_max && pb_flash_file_read(program_and_heap, size) == PBIO_SUCCESS) {
+        if (size < program_size_max && pb_flash_file_read(program_data, size) == PBIO_SUCCESS) {
             program_size = size;
         }
     }
     #else
     program_size = _pb_user_mpy_size;
-    memcpy(program_and_heap, &_pb_user_mpy_data, program_size);
+    memcpy(program_data, &_pb_user_mpy_data, program_size);
     #endif
 
 soft_reset:
@@ -356,7 +351,7 @@ soft_reset:
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
     mp_stack_set_top(&_estack);
-    mp_stack_set_limit((char *)&_estack - (char *)&_ebss - 1024);
+    mp_stack_set_limit((char *)&_estack - (char *)&_sstack - 1024);
 
     wait_for_button_release();
 
@@ -373,7 +368,7 @@ soft_reset:
         // On zero, run the stored program again.
         mpy_size = program_size;
     } else if (mpy_size < program_size_max
-               && get_message(program_and_heap, mpy_size, 500) == PBIO_SUCCESS) {
+               && get_message(program_data, mpy_size, 500) == PBIO_SUCCESS) {
         // If the size is valid, receive and update the stored program.
         program_size = mpy_size;
     } else {
@@ -384,12 +379,12 @@ soft_reset:
     }
 
     // Initialize heap to start directly after received program.
-    gc_init(program_and_heap + mpy_size, program_and_heap + sizeof(program_and_heap));
+    gc_init((char *)&_heap_start + mpy_size, &_heap_end);
 
     mp_init();
 
     // Execute the user script
-    run_user_program(run_repl, program_and_heap, mpy_size);
+    run_user_program(run_repl, program_data, mpy_size);
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
