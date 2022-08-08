@@ -308,6 +308,10 @@ restart:
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
+
+        // Get all builtin modules ready for use.
+        pb_package_pybricks_init();
+
         if (run_repl) {
             #if MICROPY_ENABLE_COMPILER
             // If the user requested the REPL without a user program, import all
@@ -349,11 +353,8 @@ restart:
         }
     }
 
-    // TODO: need a generic way to register cleanups like this
-    #if PYBRICKS_PY_PUPDEVICES
-    extern void pb_type_Remote_cleanup(void);
-    pb_type_Remote_cleanup();
-    #endif
+    // Clean up resources that may have been used by pybricks package.
+    pb_package_pybricks_deinit();
     pbsys_user_program_unprepare();
 }
 

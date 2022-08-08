@@ -24,6 +24,8 @@
 #include <pbio/main.h>
 #include <pbio/light.h>
 
+#include <pybricks/common.h>
+
 #include "py/mpconfig.h"
 #include "py/mpthread.h"
 
@@ -101,6 +103,7 @@ void pybricks_init(void) {
     pbio_init();
     extern void ev3dev_status_light_init(void);
     ev3dev_status_light_init();
+    pb_package_pybricks_init();
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
 

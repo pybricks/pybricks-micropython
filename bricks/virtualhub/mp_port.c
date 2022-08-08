@@ -25,6 +25,7 @@
 #include "py/runtime.h"
 
 #include "pybricks/util_pb/pb_error.h"
+#include <pybricks/common.h>
 
 // from micropython/ports/unix/main.c
 #define FORCED_EXIT (0x100)
@@ -114,6 +115,7 @@ void pb_virtualhub_port_init(void) {
     }
 
     pbio_init();
+    pb_package_pybricks_init();
 
     pbsys_user_program_prepare(&user_program_callbacks);
 }

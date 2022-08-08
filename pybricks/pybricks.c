@@ -38,18 +38,8 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
     }
 };
 
-STATIC mp_obj_t pb_package_pybricks_init(void) {
-
-    // Reset additions to Color parameters
-    pb_type_Color_reset();
-
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_0(pb_package_pybricks_init_obj, pb_package_pybricks_init);
-
 STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
-    { MP_ROM_QSTR(MP_QSTR___init__),            MP_ROM_PTR(&pb_package_pybricks_init_obj)},
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(pb_package_pybricks_globals, pybricks_globals_table);
@@ -88,4 +78,16 @@ void pb_package_import_all(void) {
     const mp_obj_t args;
     mp_store_name(MP_QSTR_hub, pb_type_ThisHub.type.make_new(&pb_type_ThisHub.type, 0, 0, &args));
     #endif
+}
+
+void pb_package_pybricks_init(void) {
+    // Reset additions to Color parameters
+    pb_type_Color_reset();
+}
+
+void pb_package_pybricks_deinit(void) {
+    // Disconnect from remote.
+    #if PYBRICKS_PY_PUPDEVICES
+    pb_type_Remote_cleanup();
+    #endif // PYBRICKS_PY_PUPDEVICES
 }

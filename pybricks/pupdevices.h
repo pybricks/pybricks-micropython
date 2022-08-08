@@ -27,6 +27,7 @@ extern const mp_obj_type_t pb_type_pupdevices_TiltSensor;
 extern const pb_obj_with_attr_type_t pb_type_pupdevices_UltrasonicSensor;
 
 pb_device_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t obj);
+void pb_type_Remote_cleanup(void);
 
 #endif // PYBRICKS_PY_PUPDEVICES
 
