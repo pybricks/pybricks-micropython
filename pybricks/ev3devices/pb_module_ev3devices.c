@@ -26,4 +26,6 @@ const mp_obj_module_t pb_module_ev3devices = {
     .globals = (mp_obj_dict_t *)&pb_module_ev3devices_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_ev3devices, pb_module_ev3devices);
+
 #endif // PYBRICKS_PY_EV3DEVICES

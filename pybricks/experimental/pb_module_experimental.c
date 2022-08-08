@@ -161,10 +161,9 @@ STATIC mp_obj_t experimental_hello_world(size_t n_args, const mp_obj_t *pos_args
 // See also experimental_globals_table below. This function object is added there to make it importable.
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(experimental_hello_world_obj, 0, experimental_hello_world);
 
-
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #if PYBRICKS_HUB_EV3BRICK
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&mod_experimental___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_pthread_raise), MP_ROM_PTR(&mod_experimental_pthread_raise_obj) },
     #else
@@ -181,5 +180,12 @@ const mp_obj_module_t pb_module_experimental = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&pb_module_experimental_globals,
 };
+
+#if PYBRICKS_HUB_EV3BRICK
+// ev3dev extends the C module in Python
+MP_REGISTER_MODULE(MP_QSTR__experimental, pb_module_experimental);
+#else
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_experimental, pb_module_experimental);
+#endif
 
 #endif // PYBRICKS_PY_EXPERIMENTAL

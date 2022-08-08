@@ -22,4 +22,6 @@ const mp_obj_module_t pb_module_media = {
     .globals = (mp_obj_dict_t *)&pb_module_media_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_media, pb_module_media);
+
 #endif // PYBRICKS_PY_MEDIA

@@ -26,4 +26,6 @@ const mp_obj_module_t pb_module_hubs = {
     .globals = (mp_obj_dict_t *)&pb_module_hubs_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_hubs, pb_module_hubs);
+
 #endif // PYBRICKS_PY_HUBS

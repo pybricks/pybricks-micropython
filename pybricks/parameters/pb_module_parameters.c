@@ -28,4 +28,6 @@ const mp_obj_module_t pb_module_parameters = {
     .globals = (mp_obj_dict_t *)&pb_module_parameters_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_parameters, pb_module_parameters);
+
 #endif // PYBRICKS_PY_PARAMETERS

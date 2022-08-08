@@ -23,4 +23,6 @@ const mp_obj_module_t pb_module_robotics = {
     .globals = (mp_obj_dict_t *)&pb_module_robotics_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_robotics, pb_module_robotics);
+
 #endif // PYBRICKS_PY_ROBOTICS

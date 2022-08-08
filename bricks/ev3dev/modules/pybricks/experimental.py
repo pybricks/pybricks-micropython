@@ -1,14 +1,9 @@
 """The experimental module contains unstable APIs for development and testing.
 """
 
-from pybricks_c.experimental import pthread_raise
+from _experimental import pthread_raise
 from _thread import start_new_thread, get_ident, allocate_lock
 from usignal import pthread_kill, SIGUSR2
-
-# FIXME: Make generic fix for running init of module from builtin package
-from pybricks_c.experimental import __init__ as experimental_init
-
-experimental_init()
 
 
 def run_parallel(*args):

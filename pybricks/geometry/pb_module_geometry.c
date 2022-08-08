@@ -98,4 +98,6 @@ const mp_obj_module_t pb_module_geometry = {
     .globals = (mp_obj_dict_t *)&pb_module_geometry_globals,
 };
 
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_geometry, pb_module_geometry);
+
 #endif // PYBRICKS_PY_GEOMETRY
