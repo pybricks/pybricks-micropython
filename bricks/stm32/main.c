@@ -41,8 +41,8 @@
 extern uint32_t _estack;
 extern uint32_t _ebss;
 
-#if MICROPY_ENABLE_GC
-static char heap[PYBRICKS_HEAP_KB * 1024];
+#ifndef MICROPY_ENABLE_GC
+#warning GC Should be enabled for embedded builds.
 #endif
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
@@ -63,11 +63,6 @@ void pb_stm32_poll(void) {
     }
     enable_irq(state);
 }
-
-// User .mpy file can be up to 1/2 of heap size. The code loader makes a new
-// (slightly modified) copy, so we need at least this much free.
-// TODO: need to verify that loaded code can never be bigger that .mpy file.
-#define MPY_MAX_BYTES (PYBRICKS_HEAP_KB * 1024 / 2)
 
 static pbio_error_t wait_for_button_release(void) {
     pbio_error_t err;
@@ -170,88 +165,32 @@ extern uint8_t _pb_user_mpy_data;
 // spacebar four times, so that no special tools are required.
 static const uint32_t REPL_LEN = 0x20202020;
 
-// Get user program via serial/bluetooth
-static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
-    pbio_error_t err;
-    *buf = NULL;
-    *free_len = 0;
+// MicroPython heap starts after the (down)loaded user program .mpy blob
+uint8_t program_and_heap[PYBRICKS_HEAP_KB * 1024];
+uint32_t program_size;
 
+// The program can't take up the entire heap, since we still need
+// a bit of heap to parse the file and run it.
+const uint32_t program_size_max = sizeof(program_and_heap) * 2 / 3;
+
+static uint32_t program_get_new_size(void) {
     // flush any buffered bytes from stdin
     while (mp_hal_stdio_poll(MP_STREAM_POLL_RD)) {
         mp_hal_stdin_rx_chr();
     }
 
-    // Get the program length
+    // Wait for program size message.
     uint32_t len;
+    pbio_error_t err;
     err = get_message((uint8_t *)&len, sizeof(len), -1);
 
-    // If button was pressed, return code to run script in flash
-    if (err == PBIO_ERROR_CANCELED) {
-        #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
-        // Open existing main.mpy file from flash
-        uint32_t size = 0;
-        if (pb_flash_file_open_get_size("/_pybricks/main.mpy", &size) != PBIO_SUCCESS) {
-            return 0;
-        }
-        // Check size and allocate buffer
-        if (size > MPY_MAX_BYTES) {
-            return 0;
-        }
-        *buf = m_malloc(size);
-        if (*buf == NULL) {
-            return 0;
-        }
-        // Read the file contents
-        if (pb_flash_file_read(*buf, size) != PBIO_SUCCESS) {
-            m_free(*buf);
-            return 0;
-        }
-        *free_len = size;
-        return size;
-        #else
-        // Load main program embedded in firmware
-        *buf = &_pb_user_mpy_data;
-        return _pb_user_mpy_size;
-        #endif
-    }
-
-    // Handle other errors
+    // Did not get valid message or the button was pressed.
+    // Return 0 to indicate we won't be getting a new program.
     if (err != PBIO_SUCCESS) {
         return 0;
     }
 
-    // Four spaces triggers REPL
-    if (len == REPL_LEN) {
-        return REPL_LEN;
-    }
-
-    // Assert that the length is allowed
-    if (len > MPY_MAX_BYTES) {
-        return 0;
-    }
-
-    // Allocate buffer for MPY file with known length
-    *buf = m_malloc(len);
-    if (*buf == NULL) {
-        return 0;
-    }
-
-    // Get the program
-    err = get_message(*buf, len, 500);
-
-    // Did not receive a whole program, so discard it
-    if (err != PBIO_SUCCESS) {
-        m_free(*buf);
-        return 0;
-    }
-
-    *free_len = len;
-
-    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
-    // Save program as file
-    pb_flash_file_write("/_pybricks/main.mpy", *buf, len);
-    #endif // (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
-
+    // Return expected program length.
     return len;
 }
 
@@ -295,8 +234,43 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event = user_program_stdin_event_func,
 };
 
-static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
-    bool run_repl = len == REPL_LEN;
+typedef struct _mp_reader_blob_t {
+    const byte *beg;
+    const byte *cur;
+    const byte *end;
+} mp_reader_blob_t;
+
+STATIC mp_uint_t mp_reader_blob_readbyte(void *data) {
+    mp_reader_blob_t *blob = (mp_reader_blob_t *)data;
+    if (blob->cur < blob->end) {
+        return *blob->cur++;
+    } else {
+        return MP_READER_EOF;
+    }
+}
+
+STATIC void mp_reader_blob_close(void *data) {
+    (void)data;
+}
+
+const uint8_t *mp_reader_blob_readchunk(void *data, size_t len) {
+    mp_reader_blob_t *blob = (mp_reader_blob_t *)data;
+    const uint8_t *ptr = blob->cur;
+    blob->cur += len;
+    return ptr;
+}
+
+STATIC void mp_reader_new_blob(mp_reader_t *reader, mp_reader_blob_t *blob, const byte *buf, size_t len) {
+    blob->beg = buf;
+    blob->cur = buf;
+    blob->end = buf + len;
+    reader->data = blob;
+    reader->readbyte = mp_reader_blob_readbyte;
+    reader->readchunk = mp_reader_blob_readchunk;
+    reader->close = mp_reader_blob_close;
+}
+
+static void run_user_program(bool run_repl, uint8_t *mpy, uint32_t mpy_size) {
 
     #if MICROPY_ENABLE_COMPILER
     bool import_all = run_repl;
@@ -326,7 +300,8 @@ restart:
         } else {
             // run user .mpy file
             mp_reader_t reader;
-            mp_reader_new_mem(&reader, buf, len, free_len);
+            mp_reader_blob_t blob;
+            mp_reader_new_blob(&reader, &blob, mpy, mpy_size);
             mp_module_context_t *context = m_new_obj(mp_module_context_t);
             context->module.globals = mp_globals_get();
             mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
@@ -360,9 +335,20 @@ restart:
 
 static void stm32_main(void) {
 
+    // Load initial program from storage.
+    // REVISIT: Use platform agnostic block device.
     #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
     mp_hal_delay_ms(500);
     pb_flash_init();
+    uint32_t size = 0;
+    if (pb_flash_file_open_get_size("/_pybricks/main.mpy", &size) == PBIO_SUCCESS) {
+        if (size < program_size_max && pb_flash_file_read(program_and_heap, size) == PBIO_SUCCESS) {
+            program_size = size;
+        }
+    }
+    #else
+    program_size = _pb_user_mpy_size;
+    memcpy(program_and_heap, &_pb_user_mpy_data, program_size);
     #endif
 
 soft_reset:
@@ -372,26 +358,45 @@ soft_reset:
     mp_stack_set_top(&_estack);
     mp_stack_set_limit((char *)&_estack - (char *)&_ebss - 1024);
 
-    #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + sizeof(heap));
-    #endif
-
     wait_for_button_release();
 
-    // Receive an mpy-cross compiled Python script
-    uint8_t *program;
-    uint32_t free_len;
-    uint32_t len = get_user_program(&program, &free_len);
+    // Get expected size of program.
+    bool run_repl = false;
+    uint32_t mpy_size = program_get_new_size();
+
+    // Decide what to do based on expected size.
+    if (mpy_size == REPL_LEN) {
+        // REPL is indicated by a special size.
+        run_repl = true;
+        mpy_size = 0;
+    } else if (mpy_size == 0) {
+        // On zero, run the stored program again.
+        mpy_size = program_size;
+    } else if (mpy_size < program_size_max
+               && get_message(program_and_heap, mpy_size, 500) == PBIO_SUCCESS) {
+        // If the size is valid, receive and update the stored program.
+        program_size = mpy_size;
+    } else {
+        // On failure, program space may be garbage, so set size to
+        // match and try again.
+        program_size = 0;
+        mpy_size = 0;
+    }
+
+    // Initialize heap to start directly after received program.
+    gc_init(program_and_heap + mpy_size, program_and_heap + sizeof(program_and_heap));
 
     mp_init();
 
     // Execute the user script
-    run_user_program(len, program, free_len);
+    run_user_program(run_repl, program_and_heap, mpy_size);
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
 
     goto soft_reset;
+
+    // TODO: On power off, save program data.
 
     MP_UNREACHABLE;
 }
