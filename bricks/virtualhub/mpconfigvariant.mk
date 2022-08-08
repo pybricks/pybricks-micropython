@@ -174,6 +174,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/src/servo.c \
 	pbio/src/tacho.c \
 	pbio/src/task.c \
+	pbio/src/util.c \
 	pbio/src/trajectory.c \
 	pbio/src/uartdev.c \
 	pbio/sys/battery.c \
@@ -183,7 +184,6 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/sys/io_ports.c \
 	pbio/sys/light_matrix.c \
 	pbio/sys/light.c \
-	pbio/sys/main.c \
 	pbio/sys/status.c \
 	pbio/sys/supervisor.c \
 	pbio/sys/user_program.c \

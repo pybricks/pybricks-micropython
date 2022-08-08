@@ -16,7 +16,6 @@
 /**
  * Initializes the PBIO library, runs custom main program, and handles shutdown.
  *
- * @param [in]  main    The main program.
  */
 int main(int argc, char **argv) {
     pbio_init();

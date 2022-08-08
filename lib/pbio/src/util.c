@@ -57,7 +57,9 @@ bool pbio_oneshot(bool value, bool *state) {
 /**
  * Gets checksum for the data in the buffer.
  *
+ * @param [in]  type    The checksum type.
  * @param [in]  buf     The buffer.
+ * @param [in]  len     The Length of the buffer.
  * @return              The value.
  */
 uint32_t pbio_util_get_checksum(pbio_util_checksum_type_t type, const uint8_t *buf, uint32_t len) {

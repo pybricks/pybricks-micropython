@@ -14,8 +14,6 @@
 #include <pbsys/user_program.h>
 #include "user_program.h"
 
-PROCESS(pbsys_user_program_process, "user_program");
-
 // user program stop function
 static pbsys_user_program_stop_t user_stop_func;
 
@@ -95,6 +93,9 @@ void pbsys_user_program_poll(void) {
     }
 }
 
+#if PBSYS_CONFIG_USER_PROGRAM_LOAD
+
+PROCESS(pbsys_user_program_process, "user_program");
 
 pbsys_user_program_info_t info;
 
@@ -307,3 +308,5 @@ PROCESS_THREAD(pbsys_user_program_process, ev, data) {
 
     PROCESS_END();
 }
+
+#endif // PBSYS_CONFIG_USER_PROGRAM_LOAD
