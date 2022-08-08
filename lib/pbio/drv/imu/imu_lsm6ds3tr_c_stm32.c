@@ -73,15 +73,43 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
     process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
 }
 
-// REVISIT: if there is ever an error the PT threads will stall since we aren't
-// handling the error callbacks.
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c) {
+    global_imu_dev.ctx.read_write_done = true;
+    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+}
+
+/**
+ * Reset the I2C peripheral.
+ *
+ * Occasionally, I2C transactions will fail. The BUSY flag is stuck on and
+ * HAL error flag is set to HAL_I2C_ERROR_AF. To recover, we just reset and
+ * reinitialize the I2C peripheral.
+ */
+static void pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(I2C_HandleTypeDef *hi2c) {
+    I2C_TypeDef *I2C = hi2c->Instance;
+
+    I2C->CR1 |= I2C_CR1_SWRST;
+    I2C->CR1 &= ~I2C_CR1_SWRST;
+
+    HAL_I2C_Init(hi2c);
+}
 
 static void pbdrv_imu_lsm6ds3tr_c_stm32_write_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
-    HAL_I2C_Mem_Write_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+    HAL_StatusTypeDef ret = HAL_I2C_Mem_Write_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+
+    if (ret != HAL_OK) {
+        // If there was an error, the interrupt will never come so we have to set the flag here.
+        global_imu_dev.ctx.read_write_done = true;
+    }
 }
 
 static void pbdrv_imu_lsm6ds3tr_c_stm32_read_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
-    HAL_I2C_Mem_Read_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+    HAL_StatusTypeDef ret = HAL_I2C_Mem_Read_IT(&global_imu_dev.hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+
+    if (ret != HAL_OK) {
+        // If there was an error, the interrupt will never come so we have to set the flag here.
+        global_imu_dev.ctx.read_write_done = true;
+    }
 }
 
 static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
@@ -177,6 +205,11 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     /* Gyroscope - filtering chain */
     // PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_band_pass_set(&child, ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT));
 
+    if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
+        imu_dev->init_state = IMU_INIT_STATE_FAILED;
+        PT_EXIT(pt);
+    }
+
     imu_dev->init_state = IMU_INIT_STATE_COMPLETE;
 
     PT_END(pt);
@@ -184,6 +217,7 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
 
 PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     pbdrv_imu_dev_t *imu_dev = &global_imu_dev;
+    I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
 
     static struct pt child;
     static uint8_t buf[6];
@@ -201,11 +235,28 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
 
     for (;;) {
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_acceleration_raw_get(&child, &imu_dev->ctx, buf));
-        memcpy(&imu_dev->data[0], buf, 6);
+
+        if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
+            memcpy(&imu_dev->data[0], buf, 6);
+        } else {
+            pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+        }
+
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_angular_rate_raw_get(&child, &imu_dev->ctx, buf));
-        memcpy(&imu_dev->data[3], buf, 6);
+
+        if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
+            memcpy(&imu_dev->data[3], buf, 6);
+        } else {
+            pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+        }
+
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_temperature_raw_get(&child, &imu_dev->ctx, buf));
-        memcpy(&imu_dev->data[6], buf, 2);
+
+        if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
+            memcpy(&imu_dev->data[6], buf, 2);
+        } else {
+            pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+        }
     }
 
     PROCESS_END();

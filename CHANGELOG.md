@@ -14,7 +14,9 @@
 
 ### Fixed
 - Fixed city hub turning back on after shutdown ([support#692]).
+- Fixed IMU I2C bus lockup on SPIKE hubs ([support#232]).
 
+[support#232]: https://github.com/pybricks/support/issues/232
 [support#692]: https://github.com/pybricks/support/issues/692
 
 ## [3.2.0b3] - 2022-07-20
