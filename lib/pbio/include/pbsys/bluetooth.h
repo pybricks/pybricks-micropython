@@ -28,9 +28,14 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size);
 
 #define pbsys_bluetooth_init()
 #define pbsys_bluetooth_rx_set_callback(callback)
-#define pbsys_bluetooth_rx_get_available 0
-#define pbsys_bluetooth_rx(data, size) PBIO_ERROR_NOT_SUPPORTED
-#define pbsys_bluetooth_tx(data, size) PBIO_ERROR_NOT_SUPPORTED
+#define pbsys_bluetooth_rx_get_available() 0
+
+static inline pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #endif // PBSYS_CONFIG_BLUETOOTH
 
