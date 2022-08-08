@@ -9,7 +9,6 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
-#include <pbsys/main.h>
 #include <pbsys/user_program.h>
 
 #include <pybricks/common.h>
@@ -199,7 +198,7 @@ restart:
     pbsys_user_program_unprepare();
 }
 
-static void stm32_main(pbsys_user_program_info_t *info) {
+void pbsys_user_program_application_main(pbsys_user_program_info_t *info) {
 
     // Invalid program.
     if (info->program_type == PSYS_USER_PROGRAM_TYPE_NONE) {
@@ -224,11 +223,6 @@ static void stm32_main(pbsys_user_program_info_t *info) {
 
     // Uninitialize MicroPython.
     mp_deinit();
-}
-
-int main(int argc, char **argv) {
-    pbsys_main(stm32_main);
-    return 0;
 }
 
 void gc_collect(void) {

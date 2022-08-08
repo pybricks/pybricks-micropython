@@ -9,7 +9,6 @@
 #include <pbio/main.h>
 
 #include <pbsys/bluetooth.h>
-#include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/user_program.h>
 #include "user_program.h"
@@ -30,7 +29,7 @@ static void pb_sys_main_check_for_shutdown(void) {
  *
  * @param [in]  main    The main program.
  */
-void pbsys_main(pbsys_main_t main) {
+int main(int argc, char **argv) {
     pbio_init();
 
     // REVISIT: __builtin_setjmp() only saves a couple registers, so using it
@@ -52,7 +51,7 @@ void pbsys_main(pbsys_main_t main) {
             }
 
             // Run the main application.
-            main(info);
+            pbsys_user_program_application_main(info);
         }
     } else {
         // in case we jumped out of the middle of a user program

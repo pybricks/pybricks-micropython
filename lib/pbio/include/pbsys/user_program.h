@@ -52,11 +52,6 @@ typedef struct {
     pbsys_user_program_stdin_event_callback_t stdin_event;
 } pbsys_user_program_callbacks_t;
 
-void pbsys_user_program_prepare(const pbsys_user_program_callbacks_t *callbacks);
-void pbsys_user_program_unprepare(void);
-void pbsys_user_program_stop(void);
-void pbsys_user_program_set_stop_buttons(pbio_button_flags_t buttons);
-
 /**
  * Active user program type.
  */
@@ -115,6 +110,11 @@ typedef struct {
     uint32_t program_size_max;
 } pbsys_user_program_info_t;
 
+void pbsys_user_program_application_main(pbsys_user_program_info_t *info);
+void pbsys_user_program_prepare(const pbsys_user_program_callbacks_t *callbacks);
+void pbsys_user_program_unprepare(void);
+void pbsys_user_program_stop(void);
+void pbsys_user_program_set_stop_buttons(pbio_button_flags_t buttons);
 
 #endif // _PBSYS_USER_PROGRAM_H_
 
