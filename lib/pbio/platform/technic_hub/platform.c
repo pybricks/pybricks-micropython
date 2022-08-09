@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include <pbdrv/clock.h>
 #include "pbio/uartdev.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
@@ -213,14 +214,27 @@ const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_plat
 };
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
-    GPIO_InitTypeDef gpio_init = { };
+    GPIO_InitTypeDef gpio_init;
 
-    gpio_init.Mode = GPIO_MODE_AF_OD;
     gpio_init.Pull = GPIO_NOPULL;
     gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    gpio_init.Alternate = GPIO_AF4_I2C1;
 
-    gpio_init.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+    // do a quick bus reset in case IMU chip is in bad state
+    gpio_init.Pin = GPIO_PIN_8; // SCL
+    gpio_init.Mode = GPIO_MODE_OUTPUT_OD;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    for (int i = 0; i < 10; i++) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET);
+        pbdrv_clock_delay_us(1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
+        pbdrv_clock_delay_us(1);
+    }
+
+    // then configure for normal use
+    gpio_init.Pin = GPIO_PIN_8 | GPIO_PIN_9; // SCL | SDA
+    gpio_init.Mode = GPIO_MODE_AF_OD;
+    gpio_init.Alternate = GPIO_AF4_I2C1;
     HAL_GPIO_Init(GPIOB, &gpio_init);
 
     HAL_NVIC_SetPriority(I2C1_ER_IRQn, 3, 1);

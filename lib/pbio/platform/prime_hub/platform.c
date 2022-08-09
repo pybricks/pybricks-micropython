@@ -7,6 +7,7 @@
 #undef UNUSED
 #include <stm32f4xx_hal.h>
 
+#include <pbdrv/clock.h>
 #include "pbio/uartdev.h"
 #include "pbio/light_matrix.h"
 
@@ -186,12 +187,25 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
 
     // IMU
     if (hi2c->Instance == I2C2) {
-        gpio_init.Mode = GPIO_MODE_AF_OD;
         gpio_init.Pull = GPIO_NOPULL;
         gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
         // SCL
         gpio_init.Pin = GPIO_PIN_10;
+
+        // do a quick bus reset in case IMU chip is in bad state
+        gpio_init.Mode = GPIO_MODE_OUTPUT_OD;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
+
+        for (int i = 0; i < 10; i++) {
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
+            pbdrv_clock_delay_us(1);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
+            pbdrv_clock_delay_us(1);
+        }
+
+        // then configure for normal use
+        gpio_init.Mode = GPIO_MODE_AF_OD;
         gpio_init.Alternate = GPIO_AF4_I2C2;
         HAL_GPIO_Init(GPIOB, &gpio_init);
 

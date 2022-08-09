@@ -7,6 +7,7 @@
 #undef UNUSED
 #include <stm32f4xx_hal.h>
 
+#include <pbdrv/clock.h>
 #include "pbio/uartdev.h"
 #include "pbio/light_matrix.h"
 #include "pbio/version.h"
@@ -175,13 +176,26 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     GPIO_InitTypeDef gpio_init;
 
     if (hi2c->Instance == I2C3) {
-        gpio_init.Mode = GPIO_MODE_AF_OD;
         gpio_init.Pull = GPIO_NOPULL;
         gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-        gpio_init.Alternate = GPIO_AF4_I2C3;
 
         // SCL
         gpio_init.Pin = GPIO_PIN_8;
+
+        // do a quick bus reset in case IMU chip is in bad state
+        gpio_init.Mode = GPIO_MODE_OUTPUT_OD;
+        HAL_GPIO_Init(GPIOA, &gpio_init);
+
+        for (int i = 0; i < 10; i++) {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+            pbdrv_clock_delay_us(1);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
+            pbdrv_clock_delay_us(1);
+        }
+
+        // then configure for normal use
+        gpio_init.Mode = GPIO_MODE_AF_OD;
+        gpio_init.Alternate = GPIO_AF4_I2C3;
         HAL_GPIO_Init(GPIOA, &gpio_init);
 
         // SDA
@@ -396,10 +410,24 @@ void FMPI2C1_ER_IRQHandler(void) {
 void HAL_FMPI2C_MspInit(FMPI2C_HandleTypeDef *hfmpi2c) {
     GPIO_InitTypeDef gpio_init;
 
-    gpio_init.Pin = GPIO_PIN_14 | GPIO_PIN_15;
-    gpio_init.Mode = GPIO_MODE_AF_OD;
     gpio_init.Pull = GPIO_NOPULL;
     gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+    // do a quick bus reset in case IMU chip is in bad state
+    gpio_init.Pin = GPIO_PIN_15; // SCL
+    gpio_init.Mode = GPIO_MODE_OUTPUT_OD;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    for (int i = 0; i < 10; i++) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
+        pbdrv_clock_delay_us(1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
+        pbdrv_clock_delay_us(1);
+    }
+
+    // then configure for normal use
+    gpio_init.Pin = GPIO_PIN_14 | GPIO_PIN_15; // SDA | SCL
+    gpio_init.Mode = GPIO_MODE_AF_OD;
     gpio_init.Alternate = GPIO_AF4_FMPI2C1;
     HAL_GPIO_Init(GPIOB, &gpio_init);
 }
