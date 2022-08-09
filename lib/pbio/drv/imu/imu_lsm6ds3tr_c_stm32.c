@@ -142,12 +142,7 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     hi2c->Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
     hi2c->Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 
-    HAL_StatusTypeDef ret = HAL_I2C_Init(hi2c);
-
-    if (ret != HAL_OK) {
-        imu_dev->init_state = IMU_INIT_STATE_FAILED;
-        PT_EXIT(pt);
-    }
+    HAL_I2C_Init(hi2c);
 
     PT_SPAWN(pt, &child, lsm6ds3tr_c_device_id_get(&child, ctx, &id));
 
