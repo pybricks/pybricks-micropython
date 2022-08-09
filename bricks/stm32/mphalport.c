@@ -39,22 +39,6 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     }
 }
 
-// delay for given number of microseconds
-void mp_hal_delay_us(mp_uint_t usec) {
-    if (__get_PRIMASK() == 1) {
-        // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = pbdrv_clock_get_us();
-        while (pbdrv_clock_get_us() - start < usec) {
-        }
-    } else {
-        // IRQs disabled, so need to use a busy loop for the delay
-        // sys freq is always a multiple of 2MHz, so division here won't lose precision
-        const uint32_t ucount = PBDRV_CONFIG_SYS_CLOCK_RATE / 2000000 * usec / 2;
-        for (uint32_t count = 0; ++count <= ucount;) {
-        }
-    }
-}
-
 #if PYBRICKS_HUB_DEBUG
 
 #include "stm32f4xx.h"

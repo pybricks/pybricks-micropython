@@ -65,6 +65,12 @@ uint32_t pbdrv_clock_get_us(void) {
     return pbdrv_clock_get_time(1000);
 }
 
+void pbdrv_clock_delay_us(uint32_t us) {
+    uint32_t start = pbdrv_clock_get_us();
+    while (pbdrv_clock_get_us() - start < us) {
+    }
+}
+
 void SysTick_Handler(void) {
     pbdrv_clock_ticks++;
 
