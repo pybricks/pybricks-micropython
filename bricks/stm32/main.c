@@ -192,12 +192,125 @@ restart:
     pbsys_user_program_unprepare();
 }
 
+STATIC void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_t *rc, const mp_module_context_t *mc) {
+
+    // execute the module in its context
+    mp_obj_dict_t *mod_globals = context->module.globals;
+
+    // save context
+    mp_obj_dict_t *volatile old_globals = mp_globals_get();
+    mp_obj_dict_t *volatile old_locals = mp_locals_get();
+
+    // set new context
+    mp_globals_set(mod_globals);
+    mp_locals_set(mod_globals);
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        mp_obj_t module_fun = mp_make_function_from_raw_code(rc, mc, NULL);
+        mp_call_function_0(module_fun);
+
+        // finish nlr block, restore context
+        nlr_pop();
+        mp_globals_set(old_globals);
+        mp_locals_set(old_locals);
+    } else {
+        // exception; restore context and re-raise same exception
+        mp_globals_set(old_globals);
+        mp_locals_set(old_locals);
+        nlr_jump(nlr.ret_val);
+    }
+}
+
+/**
+ * Struct to hold mpy info.
+ */
+typedef struct {
+    /**
+     * Size of the mpy program.
+     */
+    uint32_t mpy_size;
+    /**
+     * Null-terminated name of the script, padded with additional zeros to
+     * make the size an integer multiple of 4.
+     */
+    char mpy_name[];
+    /**
+     * Data follows thereafter.
+     */
+}  __attribute__((scalar_storage_order("little-endian"))) mpy_info_t;
+
+STATIC uint32_t padded(uint32_t len) {
+    if (len % 4 == 0) {
+        return len;
+    }
+    return len + 4 - (len % 4);
+}
+
+STATIC uint8_t *mpy_data_get_buf(mpy_info_t *info) {
+    // Data comes after the size and name.
+    uint32_t offset = sizeof(info->mpy_size) + strlen(info->mpy_name) + 1;
+    return (uint8_t *)info + padded(offset);
+}
+
+// REVISIT: Clean up where this comes from.
+static pbsys_program_load_info_t *program_info;
+
+STATIC mpy_info_t *mpy_data_find(const char *name) {
+    // Start at the beginning.
+    mpy_info_t *next = (mpy_info_t *)program_info->program_data;
+
+    // Iterate through the programs while not found.
+    while (strcmp(next->mpy_name, name)) {
+        // Exit if we're passed the end.
+        if ((uint8_t *)next >= program_info->program_data + program_info->program_size) {
+            return NULL;
+        }
+        // Get reference to next script.
+        next = (mpy_info_t *)(mpy_data_get_buf(next) + padded(next->mpy_size));
+    }
+    return next;
+}
+
+mp_obj_t mp_builtin_import_extra(size_t n_args, const mp_obj_t *args) {
+
+    // For backwards compatibility, detect old-format single-script data.
+    static const uint8_t header[] = {'M', MPY_VERSION};
+    if (!memcmp(program_info->program_data, header, sizeof(header))) {
+        // Can't import anything, so give up.
+        return MP_OBJ_NULL;
+    }
+
+    // Try to find the requested module.
+    mpy_info_t *info = mpy_data_find(mp_obj_str_get_str(args[0]));
+    if (!info) {
+        // Not found, so give up.
+        return MP_OBJ_NULL;
+    }
+    // Parse the static script data.
+    mp_reader_t reader;
+    mp_reader_blob_t blob;
+    mp_reader_new_blob(&reader, &blob, mpy_data_get_buf(info), info->mpy_size);
+
+    // Create new module and execute in its own context.
+    mp_obj_t module_obj = mp_obj_new_module(mp_obj_str_get_qstr(args[0]));
+    mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
+    mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+    do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
+
+    // Return the module we found.
+    return module_obj;
+}
+
 void pbsys_program_load_application_main(pbsys_program_load_info_t *info) {
 
     // Invalid program.
     if (info->program_type == PSYS_PROGRAM_LOAD_TYPE_NONE) {
         return;
     }
+
+    // REVISIT: Clean up access to this.
+    program_info = info;
 
     // REPL program.
     bool run_repl = info->program_type == PSYS_PROGRAM_LOAD_TYPE_BUILTIN_0;
@@ -212,8 +325,16 @@ void pbsys_program_load_application_main(pbsys_program_load_info_t *info) {
     gc_init(info->appl_heap_start, info->sys_heap_end);
     mp_init();
 
-    // Execute the user script.
-    run_user_program(run_repl, info->program_data, info->program_size);
+    // For backwards compatibility, detect old-format single-script data.
+    static const uint8_t header[] = {'M', MPY_VERSION};
+    if (!memcmp(program_info->program_data, header, sizeof(header))) {
+        // Single script.
+        run_user_program(run_repl, info->program_data, info->program_size);
+    } else {
+        // Multi-script, so run main.
+        mpy_info_t *mpy_info = (mpy_info_t *)info->program_data;
+        run_user_program(run_repl, mpy_data_get_buf(mpy_info), mpy_info->mpy_size);
+    }
 
     // Uninitialize MicroPython.
     mp_deinit();
@@ -225,26 +346,11 @@ void gc_collect(void) {
     gc_collect_end();
 }
 
-mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
-    mp_raise_OSError(MP_ENOENT);
-}
-
-void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
-    mp_raise_OSError(MP_ENOENT);
-}
-
-mp_import_stat_t mp_import_stat(const char *path) {
-    if (strcmp(path, "main.mpy") == 0) {
-        return MP_IMPORT_STAT_FILE;
-    }
-
-    return MP_IMPORT_STAT_NO_EXIST;
-}
-
 mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) {
     mp_raise_OSError(MP_ENOENT);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
+
 
 void nlr_jump_fail(void *val) {
     while (1) {
