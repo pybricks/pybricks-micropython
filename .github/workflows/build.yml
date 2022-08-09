@@ -290,7 +290,6 @@ jobs:
     - name: Build
       run: |
         make $MAKEOPTS -C lib/pbio/test
-        ./lib/pbio/test/build/test-pbio
     - name: Build docs
       run: |
         make $MAKEOPTS -C lib/pbio/doc
