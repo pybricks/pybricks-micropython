@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#ifndef _INTERNAL_PVDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_
-#define _INTERNAL_PVDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_
+#ifndef _INTERNAL_PBDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_
+#define _INTERNAL_PBDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_
 
 #include <pbdrv/config.h>
 
@@ -38,4 +38,4 @@ void pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_dev_t *devs);
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
-#endif // _INTERNAL_PVDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_
+#endif // _INTERNAL_PBDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_

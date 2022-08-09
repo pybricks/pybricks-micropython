@@ -40,7 +40,7 @@ struct _pbio_task_t {
      * task was canceled, other errors indicate that the task failed.
      */
     pbio_error_t status;
-    /** Flag for requesting cancelation. */
+    /** Flag for requesting cancellation. */
     bool cancel;
 };
 

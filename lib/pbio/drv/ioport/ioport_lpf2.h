@@ -28,7 +28,7 @@ typedef struct {
     pbdrv_ioport_lpf2_port_platform_data_t ports[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
 } pbdrv_ioport_lpf2_platform_data_t;
 
-// platforom configuration checks
+// platform configuration checks
 #ifndef PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS
 #error Platform must define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS
 #endif

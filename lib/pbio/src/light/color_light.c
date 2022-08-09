@@ -168,7 +168,7 @@ static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation)
  * replaced with this one.
  *
  * @param [in]  light       The light instance
- * @param [in]  interval    The the time intervale between animaction cells in milliseconds
+ * @param [in]  interval    The the time intervale between animation cells in milliseconds
  * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
  */
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_compressed_hsv_t *cells) {

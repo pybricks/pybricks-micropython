@@ -127,7 +127,7 @@ void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb) {
     uint8_t rampdown = 63 - offset; // 63..0
 
     // We now scale rampup and rampdown to a 0-255 range -- at least
-    // in theory, but here's where architecture-specific decsions
+    // in theory, but here's where architecture-specific decisions
     // come in to play:
     // To scale them up to 0-255, we'd want to multiply by 4.
     // But in the very next step, we multiply the ramps by other

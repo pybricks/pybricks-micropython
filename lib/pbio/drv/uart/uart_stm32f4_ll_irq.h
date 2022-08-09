@@ -16,7 +16,7 @@
 typedef struct {
     /** The UART registers. */
     USART_TypeDef *uart;
-    /** The UART interupt number. */
+    /** The UART interrupt number. */
     IRQn_Type irq;
 } pbdrv_uart_stm32f4_ll_irq_platform_data_t;
 

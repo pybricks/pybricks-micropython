@@ -20,7 +20,7 @@ typedef struct {
     uint8_t tx_dma_ch;
     /** The UART Tx DMA request (LL_DMA_REQUEST_x) */
     uint8_t tx_dma_req;
-    /** The UART Tx DMA interupt number. */
+    /** The UART Tx DMA interrupt number. */
     IRQn_Type tx_dma_irq;
     /** The UART Rx DMA channel registers. */
     DMA_TypeDef *rx_dma;
@@ -28,11 +28,11 @@ typedef struct {
     uint8_t rx_dma_ch;
     /** The UART Rx DMA request (LL_DMA_REQUEST_x) */
     uint8_t rx_dma_req;
-    /** The UART Rx DMA interupt number. */
+    /** The UART Rx DMA interrupt number. */
     IRQn_Type rx_dma_irq;
     /** The UART registers. */
     USART_TypeDef *uart;
-    /** The UART interupt number. */
+    /** The UART interrupt number. */
     IRQn_Type uart_irq;
 } pbdrv_uart_stm32l4_ll_dma_platform_data_t;
 

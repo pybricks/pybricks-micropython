@@ -51,7 +51,7 @@ mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, 
 // pybricks._common.LightMatrix()
 extern const uint8_t pb_digits_5x2[10][5];
 extern const uint8_t pb_font_5x5[95][5];
-mp_obj_t pb_type_Lightmatrix_obj_new(pbio_light_matrix_t *light_matrix);
+mp_obj_t pb_type_LightMatrix_obj_new(pbio_light_matrix_t *light_matrix);
 #endif
 
 #if PYBRICKS_PY_COMMON_KEYPAD

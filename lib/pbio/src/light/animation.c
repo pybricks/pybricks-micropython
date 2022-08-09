@@ -91,7 +91,7 @@ void pbio_light_animation_stop(pbio_light_animation_t *animation) {
 /**
  * Stops all animations.
  *
- * This is intended to stop all animations when a user program is interupted
+ * This is intended to stop all animations when a user program is interrupted
  * and pbio_light_animation_stop() will no longer be called.
  */
 void pbio_light_animation_stop_all(void) {

@@ -59,7 +59,7 @@ static void pbdrv_adc_init(void) {
     // some kind of ID resistor?
 }
 
-// does a single coversion for the specified channel
+// does a single conversion for the specified channel
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch > ADC_CHSELR_CHSEL18_Pos) {
         return PBIO_ERROR_INVALID_ARG;

@@ -19,10 +19,10 @@ typedef struct {
      * @param [in]  light_matrix  The light matrix instance.
      * @param [in]  row         The row index (0 to size-1).
      * @param [in]  col         The column index (0 to size-1).
-     * @param [in]  brightess   The apparent brightness (0 to 100).
+     * @param [in]  brightness  The apparent brightness (0 to 100).
      * @return                  Success/failure of the operation.
      */
-    pbio_error_t (*set_pixel)(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightess);
+    pbio_error_t (*set_pixel)(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness);
 } pbio_light_matrix_funcs_t;
 
 struct _pbio_light_matrix_t {

@@ -753,7 +753,7 @@ pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t spee
  *
  * The steering value must be in the range [-100, 100].
  *
- * @param [in]  speed         Overal speed (deg/s).
+ * @param [in]  speed         Overall speed (deg/s).
  * @param [in]  steering      Steering ratio.
  * @param [out] speed_left    Speed of the left motor (deg/s).
  * @param [out] speed_right   Speed of the right motor (deg/s).

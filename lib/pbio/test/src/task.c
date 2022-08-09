@@ -76,8 +76,8 @@ static PT_THREAD(cancel_task_thread(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-// This demonstrates how to implement task cancelation.
-static void test_task_cancelation(void *env) {
+// This demonstrates how to implement task cancellation.
+static void test_task_cancellation(void *env) {
     LIST(queue);
     pbio_task_t task;
     uint32_t call_count = 0;
@@ -99,7 +99,7 @@ static void test_task_cancelation(void *env) {
     pbio_task_cancel(&task);
     pbio_task_queue_run_once(queue);
 
-    // since there is no yield after cancelation, call count is only 3 even
+    // since there is no yield after cancellation, call count is only 3 even
     // though both functions above could potentially iterate the task
     tt_want_uint_op(call_count, ==, 3);
     tt_want_uint_op(list_length(queue), ==, 0);
@@ -151,7 +151,7 @@ static void test_task_removal(void *env) {
 struct testcase_t pbio_task_tests[] = {
     PBIO_TEST(test_no_yield_task),
     PBIO_TEST(test_task_removed_when_complete),
-    PBIO_TEST(test_task_cancelation),
+    PBIO_TEST(test_task_cancellation),
     PBIO_TEST(test_task_removal),
     END_OF_TESTCASES
 };

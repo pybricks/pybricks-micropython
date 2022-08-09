@@ -32,7 +32,7 @@
  * Color names.
  */
 typedef enum {
-    // NONE uses different hue to differintiate if from black
+    // NONE uses different hue to differentiate if from black
     PBIO_COLOR_NONE = PBIO_COLOR_ENCODE(180, 0, 0), /**< no color */
     PBIO_COLOR_BLACK = PBIO_COLOR_ENCODE(0, 0, 0), /**< black */
     PBIO_COLOR_GRAY = PBIO_COLOR_ENCODE(0, 0, 50), /**< gray */

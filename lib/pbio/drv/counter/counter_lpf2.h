@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2022 The Pybricks Authors
 
-#ifndef _INTERNAL_PVDRV_COUNTER_LPF2_H_
-#define _INTERNAL_PVDRV_COUNTER_LPF2_H_
+#ifndef _INTERNAL_PBDRV_COUNTER_LPF2_H_
+#define _INTERNAL_PBDRV_COUNTER_LPF2_H_
 
 #include <pbdrv/config.h>
 
@@ -36,4 +36,4 @@ void pbdrv_counter_lpf2_init(pbdrv_counter_dev_t *devs);
 
 #endif // PBDRV_CONFIG_COUNTER_LPF2
 
-#endif // _INTERNAL_PVDRV_COUNTER_LPF2_H_
+#endif // _INTERNAL_PBDRV_COUNTER_LPF2_H_

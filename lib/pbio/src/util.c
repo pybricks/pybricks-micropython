@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /**
- * Copmpares two 128-bit UUIDs with opposite byte ordering for equality.
+ * Compares two 128-bit UUIDs with opposite byte ordering for equality.
  *
  * @param [in]  uuid1   A 128-bit UUID in little endian order.
  * @param [in]  uuid2   A 128-bit UUID in little big order.

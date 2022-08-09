@@ -615,7 +615,7 @@ static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, pbio_
 
 void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex) {
 
-    // Relative time within ongoing manauver.
+    // Relative time within ongoing maneuver.
     int32_t time = TO_TRAJECTORY_TIME(time_ref - trj->start.time);
 
     // Find which section of the ongoing maneuver we were in, and take

@@ -309,7 +309,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // HACK: this is making major assumptions about how the advertising data
                 // is laid out. So far LEGO devices seem consistent in this.
-                // It is expected that the avertising data contains 3 values in
+                // It is expected that the advertising data contains 3 values in
                 // this order:
                 // - Flags (0x01)
                 // - Complete List of 128-bit Service Class UUIDs (0x07)

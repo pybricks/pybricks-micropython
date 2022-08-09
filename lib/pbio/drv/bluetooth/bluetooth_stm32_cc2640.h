@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021 The Pybricks Authors
 
-#ifndef _INTERNAL_PVDRV_BLUETOOTH_STM32_CC2640_H_
-#define _INTERNAL_PVDRV_BLUETOOTH_STM32_CC2640_H_
+#ifndef _INTERNAL_PBDRV_BLUETOOTH_STM32_CC2640_H_
+#define _INTERNAL_PBDRV_BLUETOOTH_STM32_CC2640_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -28,7 +28,7 @@ typedef struct {
 /** SRDY signal change interrupt handler. */
 void pbdrv_bluetooth_stm32_cc2640_srdy_irq(bool srdy);
 
-/** SPI transver complete interrupt handler. */
+/** SPI transfer complete interrupt handler. */
 void pbdrv_bluetooth_stm32_cc2640_spi_xfer_irq(void);
 
 /** Platform data (defined in platform.c) */
@@ -36,4 +36,4 @@ extern const pbdrv_bluetooth_stm32_cc2640_platform_data_t pbdrv_bluetooth_stm32_
 
 #endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640
 
-#endif // _INTERNAL_PVDRV_BLUETOOTH_STM32_CC2640_H_
+#endif // _INTERNAL_PBDRV_BLUETOOTH_STM32_CC2640_H_

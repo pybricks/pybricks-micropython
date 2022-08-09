@@ -255,7 +255,7 @@ class BluetoothMailboxServer(MailboxHandlerMixIn, ThreadingRFCOMMServer):
         EV3.
 
         The remote EV3 can either be running MicroPython or the standard EV3
-        firmare.
+        firmware.
         """
         super().__init__()
         super(ThreadingRFCOMMServer, self).__init__(
@@ -295,7 +295,7 @@ class BluetoothMailboxClient(MailboxHandlerMixIn):
     remote EV3s.
 
     The remote EV3s can either be running MicroPython or the standard EV3
-    firmare.
+    firmware.
     """
 
     def __enter__(self):

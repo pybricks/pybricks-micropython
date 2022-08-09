@@ -53,7 +53,7 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
  *     rotations * 360 000 + millidegrees.
  *
  * @param [in]  dev           Pointer to the counter device
- * @param [out] rotations     Returns whole rotaions on success
+ * @param [out] rotations     Returns whole rotations on success
  * @param [out] millidegrees  Returns the count on success
  * @return                    ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if
  *                            the counter has not been initialized,

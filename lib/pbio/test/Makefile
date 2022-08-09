@@ -39,7 +39,7 @@ TINY_TEST_DIR = ../../../micropython/lib/tinytest
 TINY_TEST_INC = -I$(TINY_TEST_DIR)
 TINY_TEST_SRC = $(TINY_TEST_DIR)/tinytest.c
 
-# pbio depedency
+# pbio dependency
 CONTIKI_DIR = ../../contiki-core
 CONTIKI_INC = -I$(CONTIKI_DIR)
 CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
@@ -51,22 +51,22 @@ CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
 	sys/timer.c \
 	)
 
-# pbio depedency
+# pbio dependency
 LEGO_DIR = ../../lego
 LEGO_INC = -I$(LEGO_DIR)
 LEGO_SRC =
 
-# pbio depedency
+# pbio dependency
 FIXMATH_DIR = ../../libfixmath
 FIXMATH_INC = -I$(FIXMATH_DIR)/libfixmath
 FIXMATH_SRC = $(shell find $(FIXMATH_DIR)/libfixmath -name "*.c")
 
-# pbio depedency
+# pbio dependency
 LWRB_DIR = ../../lwrb/src
 LWRB_INC = -I$(LWRB_DIR)/include
 LWRB_SRC = $(shell find $(LWRB_DIR)/lwrb -name "*.c")
 
-# pbio depedency
+# pbio dependency
 BTSTACK_DIR = ../../btstack
 BTSTACK_INC = -I$(BTSTACK_DIR)/src -I$(BTSTACK_DIR)/chipset/cc256x -I$(BTSTACK_DIR)/platform/posix
 BTSTACK_SRC = $(addprefix $(BTSTACK_DIR)/src/,\

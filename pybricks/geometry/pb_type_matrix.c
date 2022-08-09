@@ -142,7 +142,7 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
         // Start row with "    ["
         strcpy(buf + row_start, "    [");
 
-        // Loop through the colums, so the scalars in each row
+        // Loop through the columns, so the scalars in each row
         for (size_t c = 0; c < self->n; c++) {
 
             // Starting character index for this column
@@ -173,7 +173,7 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     // Terminate string
     buf[len - 1 ] = '\0';
 
-    // Send the bufer to MicroPython
+    // Send the buffer to MicroPython
     mp_print_str(print, buf);
     mp_print_str(print, "])");
 }

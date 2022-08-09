@@ -22,7 +22,7 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
 
     // REVISIT: For now, this is hard-coded for SPIKE Prime. If more platforms
     // that use this are added, a resistor ladder flags to buttons map will
-    // need to be added to platforma data.
+    // need to be added to platform data.
 
     err = pbdrv_resistor_ladder_get(0, &flags);
     if (err != PBIO_SUCCESS) {

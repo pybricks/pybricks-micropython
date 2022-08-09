@@ -23,7 +23,7 @@ static void test_simple_trajectory(void *env) {
 
     // Command: Run for 10000 degrees at 1000 deg/s with a = 2000 deg/s/s.
     // Ramping up and down takes 500 ms this way, during which we travel 250
-    // degrees, so overal expected duration is 10500 ms.
+    // degrees, so overall expected duration is 10500 ms.
 
     static pbio_angle_t start = {
         .rotations = 0,
@@ -252,7 +252,7 @@ static void test_infinite_trajectory(void *env) {
             tt_want_int_op(ref.speed, ==, expected_speed);
         }
 
-        // Polling the inifinite trajectory for so long should by now have
+        // Polling the infinite trajectory for so long should by now have
         // rebased the trajectory to a new, constant command.
         tt_want(trj.t1 == 0 && trj.t2 == 0 && trj.t3 == 0);
         tt_want(trj.th1 == 0 && trj.th2 == 0 && trj.th3 == 0);
@@ -266,7 +266,7 @@ static const uint32_t num_position_trajectories =
     PBIO_ARRAY_SIZE(angles) * // For starting angle.
     PBIO_ARRAY_SIZE(angles) * // For final angle.
     PBIO_ARRAY_SIZE(accelerations) * // For acceleration.
-    PBIO_ARRAY_SIZE(accelerations) * // For decceleration.
+    PBIO_ARRAY_SIZE(accelerations) * // For decelerations.
     PBIO_ARRAY_SIZE(speeds) * // For start speed.
     PBIO_ARRAY_SIZE(speeds) * // For target speed.
     PBIO_ARRAY_SIZE(start_times) * // For start time.
