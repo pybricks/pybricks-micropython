@@ -239,8 +239,10 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
 
     // Initialized if not done so already
     if (!self->imu_dev) {
-        pb_assert(pbdrv_imu_get_imu(&self->imu_dev));
+        pbdrv_imu_dev_t *imu_dev;
+        pb_assert(pbdrv_imu_get_imu(&imu_dev));
         self->base.type = &pb_type_IMU;
+        self->imu_dev = imu_dev;
     }
 
     // Check if we use the default orientation.
