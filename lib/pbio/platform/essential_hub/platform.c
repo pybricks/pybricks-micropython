@@ -165,6 +165,47 @@ const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_
     },
 };
 
+// IMU
+
+const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data = {
+    .i2c = I2C3,
+};
+
+void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
+    GPIO_InitTypeDef gpio_init;
+
+    if (hi2c->Instance == I2C3) {
+        gpio_init.Mode = GPIO_MODE_AF_OD;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        gpio_init.Alternate = GPIO_AF4_I2C3;
+
+        // SCL
+        gpio_init.Pin = GPIO_PIN_8;
+        HAL_GPIO_Init(GPIOA, &gpio_init);
+
+        // SDA
+        gpio_init.Pin = GPIO_PIN_9;
+        HAL_GPIO_Init(GPIOC, &gpio_init);
+
+        // REVISIT: PC13 is also used in the official LEGO firmware - probably
+        // an interrupt back from the IMU chip
+
+        HAL_NVIC_SetPriority(I2C3_ER_IRQn, 3, 1);
+        HAL_NVIC_EnableIRQ(I2C3_ER_IRQn);
+        HAL_NVIC_SetPriority(I2C3_EV_IRQn, 3, 2);
+        HAL_NVIC_EnableIRQ(I2C3_EV_IRQn);
+    }
+}
+
+void I2C3_ER_IRQHandler(void) {
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq();
+}
+
+void I2C3_EV_IRQHandler(void) {
+    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
+}
+
 // I/O ports
 
 const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
@@ -562,47 +603,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
     if (pin == GPIO_PIN_9) {
         pbdrv_usb_stm32_handle_vbus_irq(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9));
     }
-}
-
-// IMU
-
-const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data = {
-    .i2c = I2C3,
-};
-
-void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
-    GPIO_InitTypeDef gpio_init;
-
-    if (hi2c->Instance == I2C3) {
-        gpio_init.Mode = GPIO_MODE_AF_OD;
-        gpio_init.Pull = GPIO_NOPULL;
-        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-        gpio_init.Alternate = GPIO_AF4_I2C3;
-
-        // SCL
-        gpio_init.Pin = GPIO_PIN_8;
-        HAL_GPIO_Init(GPIOA, &gpio_init);
-
-        // SDA
-        gpio_init.Pin = GPIO_PIN_9;
-        HAL_GPIO_Init(GPIOC, &gpio_init);
-
-        // REVISIT: PC13 is also used in the official LEGO firmware - probably
-        // an interrupt back from the IMU chip
-
-        HAL_NVIC_SetPriority(I2C3_ER_IRQn, 3, 1);
-        HAL_NVIC_EnableIRQ(I2C3_ER_IRQn);
-        HAL_NVIC_SetPriority(I2C3_EV_IRQn, 3, 2);
-        HAL_NVIC_EnableIRQ(I2C3_EV_IRQn);
-    }
-}
-
-void I2C3_ER_IRQHandler(void) {
-    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq();
-}
-
-void I2C3_EV_IRQHandler(void) {
-    pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
 }
 
 // Early initialization
