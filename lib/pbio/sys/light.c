@@ -234,10 +234,18 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     }
 }
 
-void pbsys_status_light_poll(void) {
-    pbsys_status_light_t *instance = &pbsys_status_light_instance;
+/**
+ * Advances the light to the next state in the pattern.
+ *
+ * @param [in]  instance    The light instance.
+ * @param [in]  pattern     The array of pattern arrays.
+ * @return                  The new color for the light.
+ */
+static pbio_color_t pbsys_status_light_pattern_next(pbsys_status_light_t *instance,
+    const pbsys_status_light_indication_pattern_element_t * const *patterns) {
+
     const pbsys_status_light_indication_pattern_element_t *pattern =
-        pbsys_status_light_indication_pattern[instance->indication];
+        patterns[instance->indication];
     pbio_color_t new_color = PBIO_COLOR_NONE;
 
     if (pattern != NULL) {
@@ -258,6 +266,15 @@ void pbsys_status_light_poll(void) {
             instance->pattern_count = 0;
         }
     }
+
+    return new_color;
+}
+
+void pbsys_status_light_poll(void) {
+    pbsys_status_light_t *instance = &pbsys_status_light_instance;
+
+    pbio_color_t new_color = pbsys_status_light_pattern_next(
+        &pbsys_status_light_instance, pbsys_status_light_indication_pattern);
 
     // If the new system indication is not overriding the status light and a user
     // program is running, then we can allow the user program to directly change
