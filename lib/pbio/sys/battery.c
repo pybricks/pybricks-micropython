@@ -22,6 +22,7 @@
 #define BATTERY_CRITICAL_MV     4800    // 0.8V per cell
 
 // These values are for LEGO rechargeable battery packs
+#define LIION_FULL_MV           8300    // 4.15V per cell
 #define LIION_OK_MV             7200    // 3.6V per cell
 #define LIION_LOW_MV            6800    // 3.4V per cell
 #define LIION_CRITICAL_MV       6000    // 3.0V per cell
@@ -124,4 +125,13 @@ void pbsys_battery_poll(void) {
     pbdrv_charger_enable(enable, limit);
 
     #endif // PBDRV_CONFIG_CHARGER
+}
+
+/**
+ * Tests if the battery is "full".
+ *
+ * This is only valid on hubs with a built-in battery charger.
+ */
+bool pbsys_battery_is_full(void) {
+    return avg_battery_voltage >= LIION_FULL_MV;
 }

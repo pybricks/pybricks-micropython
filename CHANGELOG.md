@@ -12,11 +12,16 @@
   the stop sign in and out.
 - Implemented iterator protocol on `geometry.Matrix` class.
 
+### Changed
+- Battery full indication (green light) comes on earlier ([support#647]).
+- New indication for over-charging battery (blinking green light).
+
 ### Fixed
 - Fixed city hub turning back on after shutdown ([support#692]).
 - Fixed IMU I2C bus lockup on SPIKE hubs ([support#232]).
 
 [support#232]: https://github.com/pybricks/support/issues/232
+[support#647]: https://github.com/pybricks/support/issues/647
 [support#692]: https://github.com/pybricks/support/issues/692
 
 ## [3.2.0b3] - 2022-07-20
