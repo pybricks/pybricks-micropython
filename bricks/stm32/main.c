@@ -24,6 +24,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/objmodule.h"
 #include "py/persistentcode.h"
 #include "py/repl.h"
 #include "py/runtime.h"
@@ -272,7 +273,7 @@ STATIC mpy_info_t *mpy_data_find(const char *name) {
     return next;
 }
 
-mp_obj_t mp_builtin_import_extra(size_t n_args, const mp_obj_t *args) {
+static mp_obj_t mp_builtin_import_extra(size_t n_args, const mp_obj_t *args) {
 
     // For backwards compatibility, detect old-format single-script data.
     static const uint8_t header[] = {'M', MPY_VERSION};
@@ -300,6 +301,33 @@ mp_obj_t mp_builtin_import_extra(size_t n_args, const mp_obj_t *args) {
 
     // Return the module we found.
     return module_obj;
+}
+
+mp_obj_t mp_builtin___import__(size_t n_args, const mp_obj_t *args) {
+    // Check that it's not a relative import
+    if (n_args >= 5 && MP_OBJ_SMALL_INT_VALUE(args[4]) != 0) {
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("relative import"));
+    }
+
+    // Check if module already exists, and return it if it does
+    qstr module_name_qstr = mp_obj_str_get_qstr(args[0]);
+    mp_obj_t module_obj = mp_module_get_loaded_or_builtin(module_name_qstr);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    // Call port-specific import extension.
+    module_obj = mp_builtin_import_extra(n_args, args);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    // Couldn't find the module, so fail
+    #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
+    mp_raise_msg(&mp_type_ImportError, MP_ERROR_TEXT("module not found"));
+    #else
+    mp_raise_msg_varg(&mp_type_ImportError, MP_ERROR_TEXT("no module named '%q'"), module_name_qstr);
+    #endif
 }
 
 void pbsys_program_load_application_main(pbsys_program_load_info_t *info) {
