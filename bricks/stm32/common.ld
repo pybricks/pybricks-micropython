@@ -70,7 +70,24 @@ SECTIONS
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
 
-    _heap_start = _ebss;   /* heap starts just after statically allocated memory */
+    /* The user_ram section between ebss and sstack is used for two purposes:
+       - The system uses the first portion to store user program data.
+       - The system can then run an application, which has read-only access to
+         the user data. The remaining space is used by the application as heap.
+    */
+    _pbsys_program_load_user_ram_start = _ebss;
+    .user_ram :
+    {
+        . = ALIGN(4);
+        /**
+         * The full storage may be loaded to RAM on boot, so we need to have
+         * at least as much RAM available. We also want to ensure there is
+         * at least 4K of additional RAM for the application heap.
+         */
+        . = . + _pbdrv_block_device_storage_size + 4096;
+        . = ALIGN(4);
+    } >RAM
+
     _heap_end = _sstack;
 
     .stack :

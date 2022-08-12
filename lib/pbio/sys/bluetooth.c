@@ -101,6 +101,14 @@ pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
 }
 
 /**
+ * Flushes data from the UART Rx characteristic so that ::pbsys_bluetooth_rx
+ * can be used to wait for new data.
+ */
+void pbsys_bluetooth_rx_flush(void) {
+    lwrb_reset(&uart_rx_ring);
+}
+
+/**
  * Queues data to be transmitted via Bluetooth serial port.
  * @param data  [in]        The data to be sent.
  * @param size  [in, out]   The size of @p data in bytes. After return, @p size

@@ -10,6 +10,7 @@
 
 #include "hmi.h"
 #include "io_ports.h"
+#include "program_load.h"
 #include "supervisor.h"
 #include "user_program.h"
 
@@ -42,5 +43,6 @@ void pbsys_init() {
     pbsys_battery_init();
     pbsys_bluetooth_init();
     pbsys_hmi_init();
+    pbsys_program_load_init();
     process_start(&pbsys_system_process);
 }

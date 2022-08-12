@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2022 The Pybricks Authors
 
-
 #include <pbsys/config.h>
 
 #if PBSYS_CONFIG_MAIN
@@ -16,38 +15,31 @@
 #include <pbsys/status.h>
 #include <pbsys/user_program.h>
 
-static void *pbsys_main_jmp_buf[5];
-
-static void pb_sys_main_check_for_shutdown(void) {
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-        pbio_set_event_hook(NULL);
-        __builtin_longjmp(pbsys_main_jmp_buf, 1);
-    }
-}
+#include "program_load.h"
 
 /**
- * Initializes the PBIO library and runs main application.
- *
- * The main application may be abruptly ended when shutting down the hub.
+ * Initializes the PBIO library, runs custom main program, and handles shutdown.
  *
  * @param [in]  main    The main program.
  */
 int main(int argc, char **argv) {
+
     pbio_init();
     pbsys_init();
 
-    // REVISIT: __builtin_setjmp() only saves a couple registers, so using it
-    // could cause problems if we add more to this function. However, since we
-    // use -nostdlib compile flag, we don't have setjmp(). We should be safe
-    // for now though since we don't use any local variables after the longjmp.
-    if (__builtin_setjmp(pbsys_main_jmp_buf) == 0) {
-        // REVISIT: we could save a few CPU cycles on each call to pbio_do_one_event()
-        // if we don't set this until shutdown is actually requested
-        pbio_set_event_hook(pb_sys_main_check_for_shutdown);
-        pbsys_main_application();
-    } else {
-        // in case we jumped out of the middle of a user program
-        pbsys_user_program_unprepare();
+    // Keep loading and running user programs until shutdown flag is set.
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+
+        // Receive a program. This cancels itself on shutdown.
+        static pbsys_main_program_t program;
+        pbio_error_t err = pbsys_program_load_receive(&program);
+        if (err != PBIO_SUCCESS) {
+            continue;
+        }
+
+        // Run the main application. The application must register appropriate
+        // callbacks in sys/user_program so it can be canceled on shutdown.
+        pbsys_main_application(&program);
     }
 
     // The power could be held on due to someone pressing the center button
