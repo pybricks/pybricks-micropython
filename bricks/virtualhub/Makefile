@@ -19,4 +19,5 @@ endif
 		VARIANT_DIR=../../../bricks/virtualhub \
 		BUILD=../../../bricks/virtualhub/$(BUILD_DIR) \
 		PROG=../../../bricks/virtualhub/$(BUILD_DIR)/virtualhub-micropython \
+		QSTR_DEFS=../../../bricks/pybricks_qstrdefs.h \
 		$@

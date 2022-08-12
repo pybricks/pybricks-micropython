@@ -125,6 +125,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_IO_IOBASE        (1)
 #define MICROPY_PY_IO_FILEIO        (1)
 #define MICROPY_PY_GC_COLLECT_RETVAL (1)
+#define MICROPY_MODULE_ATTR_DELEGATION (1)
 #define MICROPY_MODULE_BUILTIN_INIT (1)
 
 #define MICROPY_PY_THREAD           (1)

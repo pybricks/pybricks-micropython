@@ -3,6 +3,7 @@
 
 #include "py/mpconfig.h"
 #include "py/obj.h"
+#include "py/objmodule.h"
 #include "py/objstr.h"
 #include "py/objtuple.h"
 #include "py/runtime.h"
@@ -38,9 +39,21 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
     }
 };
 
+#if MICROPY_MODULE_ATTR_DELEGATION
+STATIC void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    // This will get called when external imports tries to store the module
+    // as an attribute to this package. This is not currently supported, but
+    // it should not cause an exception, so indicate success.
+    dest[0] = MP_OBJ_NULL;
+}
+#endif
+
 STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
+    #if MICROPY_MODULE_ATTR_DELEGATION
+    MP_MODULE_ATTR_DELEGATION_ENTRY(&pb_package_pybricks_attr),
+    #endif
 };
 STATIC MP_DEFINE_CONST_DICT(pb_package_pybricks_globals, pybricks_globals_table);
 
