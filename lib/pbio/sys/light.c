@@ -117,6 +117,7 @@ pbsys_status_light_indication_pattern[] = {
     },
     [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
+        { .color = PBIO_COLOR_NONE, .duration = 12 },
         { .color = PBIO_COLOR_BLACK, .duration = 1 },
         { .color = PBIO_COLOR_BLUE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 1 },
