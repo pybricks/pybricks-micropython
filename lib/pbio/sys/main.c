@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2022 The Pybricks Authors
+
+
+#include <pbsys/config.h>
+
+#if PBSYS_CONFIG_MAIN
 
 #include <stdint.h>
 
@@ -55,3 +60,5 @@ void pbsys_main(pbsys_main_t main) {
         pbdrv_reset_power_off();
     }
 }
+
+#endif // PBSYS_CONFIG_MAIN
