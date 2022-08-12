@@ -149,6 +149,9 @@ extern const uint8_t pbio_nus_service_uuid[];
 extern const uint8_t pbio_nus_rx_char_uuid[];
 extern const uint8_t pbio_nus_tx_char_uuid[];
 
+// Downloaded programs are received in chunks up to this size.
+#define PBIO_PYBRICKS_PROTOCOL_DOWNLOAD_CHUNK_SIZE (100)
+
 #endif // _PBIO_PROTOCOL_H_
 
 /** @} */
