@@ -19,10 +19,12 @@
 ### Fixed
 - Fixed city hub turning back on after shutdown ([support#692]).
 - Fixed IMU I2C bus lockup on SPIKE hubs ([support#232]).
+- Fixed REPL history corrupt after soft reset ([support#699]).
 
 [support#232]: https://github.com/pybricks/support/issues/232
 [support#647]: https://github.com/pybricks/support/issues/647
 [support#692]: https://github.com/pybricks/support/issues/692
+[support#699]: https://github.com/pybricks/support/issues/699
 
 ## [3.2.0b3] - 2022-07-20
 

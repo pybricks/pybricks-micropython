@@ -380,6 +380,7 @@ soft_reset:
     uint32_t len = get_user_program(&program, &free_len);
 
     mp_init();
+    readline_init0();
 
     // Execute the user script
     run_user_program(len, program, free_len);
