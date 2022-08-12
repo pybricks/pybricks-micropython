@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <pbdrv/reset.h>
+#include <pbdrv/usb.h>
 #include <pbio/main.h>
 #include <pbsys/core.h>
 #include <pbsys/main.h>
@@ -57,6 +58,16 @@ int main(int argc, char **argv) {
         // first time, otherwise the city hub turns itself back on sometimes.
         while (pbio_do_one_event()) {
         }
+
+        #if PBSYS_CONFIG_BATTERY_CHARGER
+        // On hubs with USB battery chargers, we can't turn off power while
+        // USB is connected, otherwise it disables the op-amp that provides
+        // the battery voltage to the ADC.
+        if (pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
+            continue;
+        }
+        #endif
+
         pbdrv_reset_power_off();
     }
 }
