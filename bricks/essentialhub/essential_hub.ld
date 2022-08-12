@@ -17,3 +17,4 @@ MEMORY
 
 "FW_INFO_OFFSET" = 0x200;
 _stack_size = 16K;
+_pbdrv_block_device_storage_size = 256K;

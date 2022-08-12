@@ -42,8 +42,6 @@ AUTOSTART_PROCESSES(
 #endif
     NULL);
 
-static pbio_event_hook_t pbio_event_hook;
-
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,
  * usually at the beginning of a program, before using any other functions in
@@ -79,19 +77,7 @@ void pbio_stop_all(void) {
  * @return      The number of still-pending events.
  */
 int pbio_do_one_event(void) {
-    if (pbio_event_hook) {
-        pbio_event_hook();
-    }
     return process_run();
-}
-
-/**
- * Sets a callback that is called each time pbio_do_one_event() is called.
- *
- * @param [in]  hook        A callback function or NULL.
- */
-void pbio_set_event_hook(pbio_event_hook_t hook) {
-    pbio_event_hook = hook;
 }
 
 /** @} */

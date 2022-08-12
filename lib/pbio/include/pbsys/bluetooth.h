@@ -20,6 +20,7 @@
 
 void pbsys_bluetooth_init(void);
 void pbsys_bluetooth_rx_set_callback(pbsys_user_program_stdin_event_callback_t callback);
+void pbsys_bluetooth_rx_flush(void);
 uint32_t pbsys_bluetooth_rx_get_available(void);
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size);
@@ -28,6 +29,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size);
 
 #define pbsys_bluetooth_init()
 #define pbsys_bluetooth_rx_set_callback(callback)
+#define pbsys_bluetooth_rx_flush()
 #define pbsys_bluetooth_rx_get_available() 0
 
 static inline pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
