@@ -16,4 +16,10 @@ MEMORY
 }
 
 _stack_size = 16K;
+
+/**
+ * External flash storage size for 1 application program. The full user program
+ * is loaded into RAM to run it, so the storage must not be bigger than RAM.
+ * We also need to allow some RAM for bss and heap, so set storage a bit lower.
+ */
 _pbdrv_block_device_storage_size = 256K;

@@ -13,6 +13,7 @@
 #include "pbio/version.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
+#include "../../drv/block_device/block_device_w25qxx_stm32.h"
 #include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
@@ -585,6 +586,52 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
         HAL_GPIO_Init(GPIOC, &gpio_init);
     }
 }
+
+void SPI2_IRQHandler(void) {
+    pbdrv_block_device_w25qxx_stm32_spi_irq();
+}
+
+void DMA1_Stream4_IRQHandler(void) {
+    pbdrv_block_device_w25qxx_stm32_spi_handle_tx_dma_irq();
+}
+
+void DMA1_Stream3_IRQHandler(void) {
+    pbdrv_block_device_w25qxx_stm32_spi_handle_rx_dma_irq();
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi->Instance == SPI2) {
+        pbdrv_block_device_w25qxx_stm32_spi_rx_complete();
+    }
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi->Instance == SPI2) {
+        pbdrv_block_device_w25qxx_stm32_spi_tx_complete();
+    }
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi->Instance == SPI2) {
+        pbdrv_block_device_w25qxx_stm32_spi_error();
+    }
+}
+
+const pbdrv_block_device_w25qxx_stm32_platform_data_t pbdrv_block_device_w25qxx_stm32_platform_data = {
+    .tx_dma = DMA1_Stream4,
+    .tx_dma_ch = DMA_CHANNEL_0,
+    .tx_dma_irq = DMA1_Stream4_IRQn,
+    .rx_dma = DMA1_Stream3,
+    .rx_dma_ch = DMA_CHANNEL_0,
+    .rx_dma_irq = DMA1_Stream3_IRQn,
+    .spi = SPI2,
+    .irq = SPI2_IRQn,
+    .pin_ncs = {
+        .bank = GPIOB,
+        .pin = 12,
+    },
+    .first_safe_write_address = 512 * 1024,
+};
 
 // USB
 

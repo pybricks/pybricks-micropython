@@ -419,6 +419,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
+	drv/block_device/block_device_flash_stm32.c \
+	drv/block_device/block_device_w25qxx_stm32.c \
 	drv/bluetooth/bluetooth_btstack_control_gpio.c \
 	drv/bluetooth/bluetooth_btstack_run_loop_contiki.c \
 	drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.c \

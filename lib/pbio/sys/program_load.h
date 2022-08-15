@@ -14,10 +14,13 @@
 #if PBSYS_CONFIG_PROGRAM_LOAD
 
 void pbsys_program_load_init(void);
+void pbsys_program_load_deinit(void);
 pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program);
 
 #else
 static inline void pbsys_program_load_init(void) {
+}
+static inline void pbsys_program_load_deinit(void) {
 }
 static inline pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program) {
     return PBIO_ERROR_NOT_SUPPORTED;

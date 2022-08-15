@@ -5,5 +5,6 @@
 #define _PBSYS_SYS_CORE_H_
 
 void pbsys_init(void);
+void pbsys_deinit(void);
 
 #endif // _PBSYS_SYS_CORE_H_

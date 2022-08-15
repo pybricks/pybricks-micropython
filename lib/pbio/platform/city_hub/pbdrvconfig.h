@@ -22,6 +22,9 @@
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
 
+#define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32       (1)
+
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID  "\x41"

@@ -42,6 +42,9 @@ int main(int argc, char **argv) {
         pbsys_main_application(&program);
     }
 
+    // Stop system processes and save user data before we shutdown.
+    pbsys_deinit();
+
     // The power could be held on due to someone pressing the center button
     // or USB being plugged in, so we have this loop to keep pumping events
     // to turn off most of the peripherals and keep the battery charger running.

@@ -16,14 +16,24 @@
 #include <pbio/math.h>
 #include <pbio/protocol.h>
 
+#include "core.h"
+
 #include <pbsys/bluetooth.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
+#include <pbdrv/block_device.h>
+
 /**
- * Map of stored data. All data types are little-endian.
+ * Map of loaded data. All data types are little-endian.
  */
 typedef struct {
+    /**
+     * How much to write on shutdown. This is reset to 0 on load, and should be
+     * set whenever any data is updated. This must always remain the first
+     * element of this structure.
+     */
+    uint32_t write_size;
     /**
      * Size of the application program.
      */
@@ -34,14 +44,90 @@ typedef struct {
     uint8_t program_data[];
 } data_map_t;
 
+// The data map sits at the start of user RAM.
 extern uint32_t _pbsys_program_load_user_ram_start;
 static data_map_t *map = (data_map_t *)&_pbsys_program_load_user_ram_start;
 
-extern uint32_t _pbdrv_block_device_storage_size;
-#define PROGRAM_SIZE_MAX (((uint32_t)(&_pbdrv_block_device_storage_size)) - sizeof(data_map_t))
+// Gets the (constant) maximum program size.
+static inline uint32_t pbsys_program_load_get_max_program_size() {
+    return pbdrv_block_device_get_size() - sizeof(data_map_t);
+}
 
+// Updates the current program size.
+static inline void pbsys_program_load_set_program_size(uint32_t size) {
+    map->program_size = size;
+    // Data was updated, so set the write size.
+    map->write_size = size + sizeof(data_map_t);
+}
+
+PROCESS(pbsys_program_load_process, "program_load");
+
+/**
+ * Starts loading the user data from storage to RAM.
+ */
 void pbsys_program_load_init(void) {
-    map->program_size = 0;
+    pbsys_init_busy_up();
+    process_start(&pbsys_program_load_process);
+}
+
+/**
+ * Starts saving the user data from RAM to storage.
+ */
+void pbsys_program_load_deinit(void) {
+    pbsys_init_busy_up();
+    process_post(&pbsys_program_load_process, PROCESS_EVENT_CONTINUE, NULL);
+}
+
+/**
+ * Polls the program load process, used by async block device functions.
+ */
+static void pbsys_program_load_process_callback(void) {
+    process_poll(&pbsys_program_load_process);
+}
+
+/**
+ * This process loads data from storage on boot, and saves it on shutdown.
+ */
+PROCESS_THREAD(pbsys_program_load_process, ev, data) {
+
+    static pbio_error_t err;
+    static struct pt pt;
+
+    PROCESS_BEGIN();
+
+    // Make the block device async functions poll this process when there
+    // is an event to process.
+    pbdrv_block_device_set_callback(pbsys_program_load_process_callback);
+
+    // Read size of stored data.
+    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, sizeof(map->write_size), &err));
+
+    // Read the available data into RAM.
+    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, map->write_size, &err));
+    if (err != PBIO_SUCCESS) {
+        map->program_size = 0;
+    }
+
+    // Reset write size, so we don't write data if nothing changed.
+    map->write_size = 0;
+
+    // Initialization done.
+    pbsys_init_busy_down();
+
+    // Wait for signal on signal.
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
+
+    // Write data to storage if it was updated.
+    if (map->write_size) {
+        PROCESS_PT_SPAWN(&pt, pbdrv_block_device_store(&pt, (uint8_t *)map, map->write_size, &err));
+    }
+
+    pbdrv_block_device_set_callback(NULL);
+
+    // Deinitialization done.
+    pbsys_init_busy_down();
+
+    PROCESS_END();
 }
 
 static PT_THREAD(pbsys_program_receive_chunk(struct pt *pt, uint8_t *data, uint32_t size, pbio_error_t *err)) {
@@ -53,7 +139,7 @@ static PT_THREAD(pbsys_program_receive_chunk(struct pt *pt, uint8_t *data, uint3
 
     PT_BEGIN(pt);
 
-    // Sender may send smaller chunks, so so receive it piece by piece.
+    // Sender may send smaller chunks, so receive it piece by piece.
     remaining = size;
     while (remaining) {
 
@@ -152,7 +238,7 @@ static PT_THREAD(pbsys_program_receive_thread(struct pt *pt, pbio_error_t *err, 
 
     // Handle sizes too big to receive.
     incoming_size = pbio_get_uint32_le(size_buf);
-    if (incoming_size > PROGRAM_SIZE_MAX) {
+    if (incoming_size > pbsys_program_load_get_max_program_size()) {
         // We won't be receiving a program this big but we may still want to
         // respond to this size command, so exit successfully.
         *received_size = incoming_size;
@@ -161,7 +247,7 @@ static PT_THREAD(pbsys_program_receive_thread(struct pt *pt, pbio_error_t *err, 
     }
 
     // Reset stored size since data is garbage if reception fails.
-    map->program_size = 0;
+    pbsys_program_load_set_program_size(0);
 
     // Receive program chunk by chunk.
     remaining_size = incoming_size;
@@ -180,7 +266,7 @@ static PT_THREAD(pbsys_program_receive_thread(struct pt *pt, pbio_error_t *err, 
     }
 
     // On success, prepare program state for running.
-    map->program_size = incoming_size;
+    pbsys_program_load_set_program_size(incoming_size);
     *received_size = incoming_size;
 
     PT_END(pt);
@@ -203,6 +289,9 @@ pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program) {
 
     static struct pt pt;
     static pbio_error_t err;
+
+    // Keep track of received size in case it isn't actually a size but a
+    // command encoded as a size to trigger a builtin program.
     static uint32_t received_size;
 
     // Run the receive protothread until completion or shutdown.
@@ -231,7 +320,7 @@ pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program) {
     }
 
     // Don't run invalid programs.
-    if (received_size > PROGRAM_SIZE_MAX) {
+    if (map->program_size == 0 || received_size > pbsys_program_load_get_max_program_size()) {
         // TODO: Validate the data beyond just size.
         return PBIO_ERROR_INVALID_ARG;
     }

@@ -18,6 +18,9 @@
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_SCALED_MAX 2448
 #define PBDRV_CONFIG_BATTERY_ADC_TYPE               (1)
 
+#define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32       (1)
+
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG        (1)
 
