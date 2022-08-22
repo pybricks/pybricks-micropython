@@ -25,6 +25,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/objmodule.h"
 #include "py/persistentcode.h"
 #include "py/repl.h"
 #include "py/runtime.h"
@@ -110,7 +111,7 @@ mp_uint_t pb_reader_user_data_readbyte(void *data) {
     }
 }
 
-STATIC void pb_reader_user_data_close(void *data) {
+static void pb_reader_user_data_close(void *data) {
     (void)data;
 }
 
@@ -121,7 +122,7 @@ const uint8_t *pb_reader_user_data_readchunk(void *data, size_t len) {
     return ptr;
 }
 
-STATIC void pb_reader_user_data_new(mp_reader_t *reader, pb_reader_user_data_t *data, const byte *buf, size_t len) {
+static void pb_reader_user_data_new(mp_reader_t *reader, pb_reader_user_data_t *data, const byte *buf, size_t len) {
     data->beg = buf;
     data->cur = buf;
     data->end = buf + len;
@@ -129,6 +130,36 @@ STATIC void pb_reader_user_data_new(mp_reader_t *reader, pb_reader_user_data_t *
     reader->readbyte = pb_reader_user_data_readbyte;
     reader->readchunk = pb_reader_user_data_readchunk;
     reader->close = pb_reader_user_data_close;
+}
+
+static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_t *rc, const mp_module_context_t *mc) {
+
+    // execute the module in its context
+    mp_obj_dict_t *mod_globals = context->module.globals;
+
+    // save context
+    mp_obj_dict_t *volatile old_globals = mp_globals_get();
+    mp_obj_dict_t *volatile old_locals = mp_locals_get();
+
+    // set new context
+    mp_globals_set(mod_globals);
+    mp_locals_set(mod_globals);
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        mp_obj_t module_fun = mp_make_function_from_raw_code(rc, mc, NULL);
+        mp_call_function_0(module_fun);
+
+        // finish nlr block, restore context
+        nlr_pop();
+        mp_globals_set(old_globals);
+        mp_locals_set(old_locals);
+    } else {
+        // exception; restore context and re-raise same exception
+        mp_globals_set(old_globals);
+        mp_locals_set(old_locals);
+        nlr_jump(nlr.ret_val);
+    }
 }
 
 static void run_user_program(uint32_t len, uint8_t *buf, bool run_repl) {
@@ -194,6 +225,66 @@ restart:
     pbsys_user_program_unprepare();
 }
 
+// MPY info and data for one script or module.
+typedef struct {
+    /**
+     * Size of the mpy program.
+     */
+    uint32_t mpy_size;
+    /**
+     * Null-terminated name of the script, padded with additional zeros to
+     * make the size an integer multiple of 4.
+     */
+    char mpy_name[];
+    /**
+     * Data follows thereafter.
+     */
+}  __attribute__((scalar_storage_order("little-endian"))) mpy_info_t;
+
+// Rounds up a given size to an integer multiple of 4.
+static uint32_t padded(uint32_t len) {
+    if (len % 4 == 0) {
+        return len;
+    }
+    return len + 4 - (len % 4);
+}
+
+// Gets a reference to the mpy data of a script.
+static uint8_t *mpy_data_get_buf(mpy_info_t *info) {
+    // Data comes after the size and name.
+    uint32_t offset = sizeof(info->mpy_size) + strlen(info->mpy_name) + 1;
+    return (uint8_t *)info + padded(offset);
+}
+
+// Program data is a concatenation of multiple mpy files. This sets a reference
+// to the first script and the total size so we can search for modules.
+static mpy_info_t *mpy_first;
+static uint32_t mpy_size_total;
+
+static inline void mpy_data_init(pbsys_main_program_t *program) {
+    mpy_first = (mpy_info_t *)program->data;
+    mpy_size_total = program->size;
+}
+
+// Finds a MicroPython module in the program data.
+static mpy_info_t *mpy_data_find(const char *name) {
+
+    // Start at first script.
+    mpy_info_t *next = mpy_first;
+
+    // Iterate through the programs while not found.
+    while (strcmp(next->mpy_name, name)) {
+        // Exit if we're passed the end.
+        if ((uint8_t *)next >= (uint8_t *)mpy_first + mpy_size_total) {
+            return NULL;
+        }
+        // Get reference to next script.
+        next = (mpy_info_t *)(mpy_data_get_buf(next) + padded(next->mpy_size));
+    }
+    return next;
+}
+
+// Runs MicroPython with the given program data.
 void pbsys_main_application(pbsys_main_program_t *program) {
 
     // Stack limit should be less than real stack size, so we have a chance
@@ -208,8 +299,23 @@ void pbsys_main_application(pbsys_main_program_t *program) {
     mp_init();
     readline_init0();
 
+    // Set program data reference to first script. This is used to run main,
+    // and to set the starting point for finding downloaded modules.
+    mpy_data_init(program);
+
+    // Get first script from the user data.
+    uint8_t *mpy_data = mpy_data_get_buf(mpy_first);
+    uint32_t mpy_size = mpy_first->mpy_size;
+
+    // For backwards compatibility, detect old-format single-script data.
+    // TODO: This can be removed once all IDE tools are updated.
+    if (program->data[0] == 'M') {
+        mpy_data = program->data;
+        mpy_size = program->size;
+    }
+
     // Execute the user script or the REPL.
-    run_user_program(program->size, program->data, program->run_builtin);
+    run_user_program(mpy_size, mpy_data, program->run_builtin);
 
     // Uninitialize MicroPython.
     mp_deinit();
@@ -225,6 +331,64 @@ mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) 
     mp_raise_OSError(MP_ENOENT);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
+
+static mp_obj_t pb_import_loaded_module(size_t n_args, const mp_obj_t *args) {
+
+    // For backwards compatibility, skip imports for legacy single-script data.
+    // TODO: This can be removed once all IDE tools are updated.
+    if (((uint8_t *)mpy_first)[0] == 'M') {
+        return MP_OBJ_NULL;
+    }
+
+    // Try to find the requested module.
+    mpy_info_t *info = mpy_data_find(mp_obj_str_get_str(args[0]));
+    if (!info) {
+        // Not found, so give up.
+        return MP_OBJ_NULL;
+    }
+
+    // Parse the static script data.
+    mp_reader_t reader;
+    pb_reader_user_data_t data;
+    pb_reader_user_data_new(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
+
+    // Create new module and execute in its own context.
+    mp_obj_t module_obj = mp_obj_new_module(mp_obj_str_get_qstr(args[0]));
+    mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
+    mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+    do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
+
+    // Return the module we found.
+    return module_obj;
+}
+
+// Overrides MicroPython's mp_builtin___import__
+mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
+    // Check that it's not a relative import
+    if (n_args >= 5 && MP_OBJ_SMALL_INT_VALUE(args[4]) != 0) {
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("relative import"));
+    }
+
+    // Check if module already exists, and return it if it does
+    qstr module_name_qstr = mp_obj_str_get_qstr(args[0]);
+    mp_obj_t module_obj = mp_module_get_loaded_or_builtin(module_name_qstr);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    // Pybricks extension: Search for modules in downloaded user data.
+    module_obj = pb_import_loaded_module(n_args, args);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    // Couldn't find the module, so fail
+    #if MICROPY_ERROR_REPORTING <= MICROPY_ERROR_REPORTING_TERSE
+    mp_raise_msg(&mp_type_ImportError, MP_ERROR_TEXT("module not found"));
+    #else
+    mp_raise_msg_varg(&mp_type_ImportError, MP_ERROR_TEXT("no module named '%q'"), module_name_qstr);
+    #endif
+}
 
 void nlr_jump_fail(void *val) {
     while (1) {

@@ -94,6 +94,7 @@
 #define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
 #define MICROPY_HAS_FILE_READER         (0)
 #define MICROPY_VFS_BLOB                (1)
+#define mp_builtin___import__ pb_builtin_import
 
 #define MICROPY_PY_UERRNO_LIST \
     X(EPERM) \
