@@ -26,7 +26,13 @@
 uint32_t pbdrv_block_device_get_size(void);
 
 /**
- * Asynchronously read data from a storage device.
+ * Read data from a storage device.
+ *
+ * On systems with data storage on an external chip, this is implemented with
+ * non-blocking I/O operations.
+ *
+ * On systems where data is memory accessible, this may be implemented with
+ * a single (blocking) memcpy operation.
  *
  * @param [in] pt       Protothread to run this function in.
  * @param [in] offset   Offset from the base address for this block device.
@@ -41,9 +47,16 @@ uint32_t pbdrv_block_device_get_size(void);
 PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err));
 
 /**
- * Asynchronously store data on storage device, starting from the base address.
+ * Store data on storage device, starting from the base address.
  *
  * This erases as many sectors as needed for the given size prior to writing.
+ *
+ * On systems with data storage on an external chip, this is implemented with
+ * non-blocking I/O operations.
+ *
+ * On systems where data is saved on internal flash, this may be partially
+ * implemented with blocking operations, so this function should only be used
+ * when this is permissible.
  *
  * @param [in] pt       Protothread to run this function in.
  * @param [in] buffer   Data buffer to write.
