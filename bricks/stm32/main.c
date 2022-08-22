@@ -94,6 +94,35 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event = user_program_stdin_event_func,
 };
 
+// The following defines a reader for use by micropython/py/persistentcode.c.
+typedef struct _mp_vfs_map_minimal_t {
+    const byte *cur;
+    const byte *end;
+} mp_vfs_map_minimal_t;
+
+mp_uint_t mp_vfs_map_minimal_readbyte(void *data) {
+    mp_vfs_map_minimal_t *blob = (mp_vfs_map_minimal_t *)data;
+    return (blob->cur < blob->end) ? *blob->cur++ : MP_READER_EOF;
+}
+
+const uint8_t *mp_vfs_map_minimal_read_bytes(mp_reader_t *reader, size_t len) {
+    mp_vfs_map_minimal_t *blob = (mp_vfs_map_minimal_t *)reader->data;
+    const uint8_t *ptr = blob->cur;
+    blob->cur += len;
+    return ptr;
+}
+
+static void mp_vfs_map_minimal_close(void *data) {
+}
+
+static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minimal_t *data, const byte *buf, size_t len) {
+    data->cur = buf;
+    data->end = buf + len;
+    reader->data = data;
+    reader->readbyte = mp_vfs_map_minimal_readbyte;
+    reader->close = mp_vfs_map_minimal_close;
+}
+
 static void run_user_program(uint32_t len, uint8_t *buf, bool run_repl) {
 
     #if MICROPY_ENABLE_COMPILER
@@ -124,7 +153,8 @@ restart:
         } else {
             // run user .mpy file without erasing it
             mp_reader_t reader;
-            mp_reader_new_mem(&reader, buf, len, 0);
+            mp_vfs_map_minimal_t data;
+            mp_vfs_map_minimal_new_reader(&reader, &data, buf, len);
             mp_module_context_t *context = m_new_obj(mp_module_context_t);
             context->module.globals = mp_globals_get();
             mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
