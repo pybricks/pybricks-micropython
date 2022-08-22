@@ -95,6 +95,42 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event = user_program_stdin_event_func,
 };
 
+typedef struct _pb_reader_user_data_t {
+    const byte *beg;
+    const byte *cur;
+    const byte *end;
+} pb_reader_user_data_t;
+
+mp_uint_t pb_reader_user_data_readbyte(void *data) {
+    pb_reader_user_data_t *blob = (pb_reader_user_data_t *)data;
+    if (blob->cur < blob->end) {
+        return *blob->cur++;
+    } else {
+        return MP_READER_EOF;
+    }
+}
+
+STATIC void pb_reader_user_data_close(void *data) {
+    (void)data;
+}
+
+const uint8_t *pb_reader_user_data_readchunk(void *data, size_t len) {
+    pb_reader_user_data_t *blob = (pb_reader_user_data_t *)data;
+    const uint8_t *ptr = blob->cur;
+    blob->cur += len;
+    return ptr;
+}
+
+STATIC void pb_reader_user_data_new(mp_reader_t *reader, pb_reader_user_data_t *data, const byte *buf, size_t len) {
+    data->beg = buf;
+    data->cur = buf;
+    data->end = buf + len;
+    reader->data = data;
+    reader->readbyte = pb_reader_user_data_readbyte;
+    reader->readchunk = pb_reader_user_data_readchunk;
+    reader->close = pb_reader_user_data_close;
+}
+
 static void run_user_program(uint32_t len, uint8_t *buf, bool run_repl) {
 
     #if MICROPY_ENABLE_COMPILER
@@ -125,7 +161,8 @@ restart:
         } else {
             // run user .mpy file without erasing it
             mp_reader_t reader;
-            mp_reader_new_mem(&reader, buf, len, 0);
+            pb_reader_user_data_t data;
+            pb_reader_user_data_new(&reader, &data, buf, len);
             mp_module_context_t *context = m_new_obj(mp_module_context_t);
             context->module.globals = mp_globals_get();
             mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);

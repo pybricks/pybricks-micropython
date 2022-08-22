@@ -93,6 +93,7 @@
 #define MICROPY_PERSISTENT_CODE_LOAD    (1)
 #define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
 #define MICROPY_HAS_FILE_READER         (0)
+#define MICROPY_VFS_BLOB                (1)
 
 #define MICROPY_PY_UERRNO_LIST \
     X(EPERM) \
