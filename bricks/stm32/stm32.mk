@@ -342,6 +342,8 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_fmpi2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \

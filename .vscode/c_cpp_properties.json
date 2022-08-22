@@ -62,6 +62,7 @@
             "includePath": [
                 "${workspaceFolder}/micropython/lib/cmsis/inc",
                 "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F0xx/Include",
+                "${workspaceFolder}/micropython/lib/stm32lib/STM32F0xx_HAL_Driver/Inc",
                 "${workspaceFolder}/lib/contiki-core",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/libfixmath/libfixmath",

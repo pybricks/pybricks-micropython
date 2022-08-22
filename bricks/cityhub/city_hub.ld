@@ -17,4 +17,5 @@ MEMORY
 
 "MAGIC_OFFSET" = 0x100;
 _stack_size = 4K;
+_pbdrv_block_device_storage_start = ORIGIN(USER_FLASH);
 _pbdrv_block_device_storage_size = LENGTH(USER_FLASH);
