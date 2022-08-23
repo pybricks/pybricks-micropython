@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -49,7 +49,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System
 #if PBIO_CONFIG_ENABLE_SYS
 
 #include <pbsys/status.h>
-#include <pbsys/user_program.h>
+#include <pbsys/program_stop.h>
 
 #include <pybricks/parameters.h>
 
@@ -81,7 +81,7 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
         #endif // PYBRICKS_PY_PARAMETERS_BUTTON
     }
 
-    pbsys_user_program_set_stop_buttons(buttons);
+    pbsys_program_stop_set_buttons(buttons);
 
     return mp_const_none;
 }

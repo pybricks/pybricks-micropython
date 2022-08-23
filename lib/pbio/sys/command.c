@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2022 The Pybricks Authors
 
 #include <assert.h>
 #include <stdint.h>
 
 #include <pbio/protocol.h>
-#include <pbsys/user_program.h>
+#include "program_stop.h"
 
 /**
  * Parses binary data for command and dispatches handler for command.
@@ -20,7 +20,7 @@ void pbsys_command(const uint8_t *data, uint32_t size) {
 
     switch (cmd) {
         case PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM:
-            pbsys_user_program_stop();
+            pbsys_program_stop();
             break;
         default:
             // TODO: return error

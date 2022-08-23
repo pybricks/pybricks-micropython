@@ -57,11 +57,13 @@ void pbio_init(void) {
  * Stops all user-level background processes. Drivers and OS-level processes
  * continue running.
  */
-void pbio_stop_all(void) {
+void pbio_stop_all(bool reset) {
     #if PBIO_CONFIG_LIGHT
-    pbio_light_animation_stop_all();
+    if (reset) {
+        pbio_light_animation_stop_all();
+    }
     #endif
-    pbio_dcmotor_stop_all(true);
+    pbio_dcmotor_stop_all(reset);
     pbdrv_sound_stop();
 }
 

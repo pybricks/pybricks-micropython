@@ -12,7 +12,7 @@
 #include "io_ports.h"
 #include "program_load.h"
 #include "supervisor.h"
-#include "user_program.h"
+#include "program_stop.h"
 
 PROCESS(pbsys_system_process, "System");
 
@@ -32,7 +32,7 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
             pbsys_hmi_poll();
             pbsys_io_ports_poll();
             pbsys_supervisor_poll();
-            pbsys_user_program_poll();
+            pbsys_program_stop_poll();
         }
     }
 

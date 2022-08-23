@@ -13,9 +13,11 @@
 #include <pbsys/core.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
-#include <pbsys/user_program.h>
 
 #include "program_load.h"
+#include "program_stop.h"
+#include <pbsys/program_stop.h>
+#include <pbsys/bluetooth.h>
 
 /**
  * Initializes the PBIO library, runs custom main program, and handles shutdown.
@@ -37,9 +39,23 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        // Run the main application. The application must register appropriate
-        // callbacks in sys/user_program so it can be canceled on shutdown.
-        pbsys_main_application(&program);
+        // Prepare pbsys for running the program.
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+        pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event);
+
+        // Handle pending events triggered by the status change, such as
+        // starting status light animation.
+        while (pbio_do_one_event()) {
+        }
+
+        // Run the main application.
+        pbsys_main_run_program(&program);
+
+        // Get system back in idle state.
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+        pbsys_bluetooth_rx_set_callback(NULL);
+        pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
+        pbio_stop_all(true);
     }
 
     // The power could be held on due to someone pressing the center button

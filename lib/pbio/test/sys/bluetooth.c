@@ -11,6 +11,7 @@
 
 #include <pbio/util.h>
 #include <pbsys/bluetooth.h>
+#include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <test-pbio.h>
 

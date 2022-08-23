@@ -10,7 +10,7 @@
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbsys/main.h>
-#include <pbsys/user_program.h>
+#include <pbsys/program_stop.h>
 
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -57,7 +57,8 @@ void pb_stm32_poll(void) {
 }
 
 // callback for when stop button is pressed in IDE or on hub
-static void user_program_stop_func(void) {
+void pbsys_main_stop_program(void) {
+
     static const mp_obj_tuple_t args = {
         .base = { .type = &mp_type_tuple },
         .len = 1,
@@ -82,7 +83,7 @@ static void user_program_stop_func(void) {
     #endif
 }
 
-static bool user_program_stdin_event_func(uint8_t c) {
+bool pbsys_main_stdin_event(uint8_t c) {
     if (c == mp_interrupt_char) {
         mp_sched_keyboard_interrupt();
         return true;
@@ -90,11 +91,6 @@ static bool user_program_stdin_event_func(uint8_t c) {
 
     return false;
 }
-
-static const pbsys_user_program_callbacks_t user_program_callbacks = {
-    .stop = user_program_stop_func,
-    .stdin_event = user_program_stdin_event_func,
-};
 
 typedef struct _pb_reader_user_data_t {
     const byte *beg;
@@ -162,67 +158,67 @@ static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_
     }
 }
 
-static void run_user_program(uint32_t len, uint8_t *buf, bool run_repl) {
-
+static void run_repl() {
     #if MICROPY_ENABLE_COMPILER
-    bool import_all = run_repl;
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        // Run the REPL.
+        pyexec_friendly_repl();
+        nlr_pop();
+    } else {
+        // clear any pending exceptions (and run any callbacks).
+        mp_handle_pending(false);
+        // Print which exception triggered this.
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+    }
+    #else
+    mp_hal_stdout_tx_str("REPL not supported!\r\n");
     #endif
+}
 
-restart:
-    // Hook into pbsys
-    pbsys_user_program_prepare(&user_program_callbacks);
+static void run_user_program(uint32_t len, uint8_t *buf) {
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
 
-        // Get all builtin modules ready for use.
-        pb_package_pybricks_init();
+        // Load user .mpy file without erasing it.
+        mp_reader_t reader;
+        pb_reader_user_data_t data;
+        pb_reader_user_data_new(&reader, &data, buf, len);
+        mp_module_context_t *context = m_new_obj(mp_module_context_t);
+        context->module.globals = mp_globals_get();
+        mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+        mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, MP_OBJ_NULL);
 
-        if (run_repl) {
-            #if MICROPY_ENABLE_COMPILER
-            // If the user requested the REPL without a user program, import all
-            // pybricks packages for convience.
-            if (import_all) {
-                pb_package_import_all();
-            }
-            pyexec_friendly_repl();
-            #else
-            mp_hal_stdout_tx_str("REPL not supported!\r\n");
-            #endif // MICROPY_ENABLE_COMPILER
-        } else {
-            // run user .mpy file without erasing it
-            mp_reader_t reader;
-            pb_reader_user_data_t data;
-            pb_reader_user_data_new(&reader, &data, buf, len);
-            mp_module_context_t *context = m_new_obj(mp_module_context_t);
-            context->module.globals = mp_globals_get();
-            mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
-            mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, MP_OBJ_NULL);
-            mp_hal_set_interrupt_char(CHAR_CTRL_C); // allow ctrl-C to interrupt us
-            mp_call_function_0(module_fun);
-            mp_hal_set_interrupt_char(-1); // disable interrupt
-            mp_handle_pending(true); // handle any pending exceptions (and any callbacks)
-        }
+        // Run the script while letting CTRL-C interrupt it.
+        mp_hal_set_interrupt_char(CHAR_CTRL_C);
+        mp_call_function_0(module_fun);
+        mp_hal_set_interrupt_char(-1);
+
+        // Handle any pending exceptions (and any callbacks)
+        mp_handle_pending(true);
+
         nlr_pop();
     } else {
-        // uncaught exception
-        mp_hal_set_interrupt_char(-1); // disable interrupt
-        mp_handle_pending(false); // clear any pending exceptions (and run any callbacks)
+        // Clear any pending exceptions (and run any callbacks).
+        mp_hal_set_interrupt_char(-1);
+        mp_handle_pending(false);
 
-        // Need to unprepare, otherwise SystemExit could be raised during print.
-        pbsys_user_program_unprepare();
+        // Print which exception triggered this.
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-        // If there was KeyboardInterrupt in the user program, drop to REPL
-        // for debugging. If the REPL was already running, exit.
-        if (!run_repl && mp_obj_exception_match((mp_obj_t)nlr.ret_val, &mp_type_KeyboardInterrupt)) {
-            run_repl = true;
-            goto restart;
+
+        // On KeyboardInterrupt, drop to REPL for debugging.
+        if (mp_obj_exception_match((mp_obj_t)nlr.ret_val, &mp_type_KeyboardInterrupt)) {
+
+            // The global scope is preserved to facilitate debugging, but we
+            // stop active resources like motors and sounds. They are stopped
+            // but not reset so the user can restart them in the REPL.
+            pbio_stop_all(false);
+
+            // Enter REPL.
+            run_repl();
         }
     }
-
-    // Clean up resources that may have been used by pybricks package.
-    pb_package_pybricks_deinit();
-    pbsys_user_program_unprepare();
 }
 
 // MPY info and data for one script or module.
@@ -285,7 +281,7 @@ static mpy_info_t *mpy_data_find(const char *name) {
 }
 
 // Runs MicroPython with the given program data.
-void pbsys_main_application(pbsys_main_program_t *program) {
+void pbsys_main_run_program(pbsys_main_program_t *program) {
 
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
@@ -314,8 +310,23 @@ void pbsys_main_application(pbsys_main_program_t *program) {
         mpy_size = program->size;
     }
 
-    // Execute the user script or the REPL.
-    run_user_program(mpy_size, mpy_data, program->run_builtin);
+    // For MicroPython, the builtin program is the REPL.
+    if (program->run_builtin) {
+        // Init Pybricks package and auto-import everything.
+        pb_package_pybricks_init(true);
+
+        // Start the REPL.
+        run_repl();
+    } else {
+        // Init Pybricks package without auto-import.
+        pb_package_pybricks_init(false);
+
+        // Execute the user script.
+        run_user_program(mpy_size, mpy_data);
+    }
+
+    // Clean up non-MicroPython resources used by the pybricks package.
+    pb_package_pybricks_deinit();
 
     // Uninitialize MicroPython.
     mp_deinit();
