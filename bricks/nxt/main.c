@@ -10,7 +10,8 @@
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
-#include <pbsys/user_program.h>
+#include <pbsys/main.h>
+#include <pbsys/program_stop.h>
 
 #include <pybricks/util_mp/pb_obj_helper.h>
 
@@ -125,29 +126,6 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     display_update();
 }
 
-// callback for when stop button is pressed
-static void user_program_stop_func(void) {
-    // we can only raise an exception if the VM is running
-    // mp_interrupt_char will be either -1 or 0 when VM is not running
-    if (mp_interrupt_char > 0) {
-        mp_sched_keyboard_interrupt();
-    }
-}
-
-static bool user_program_stdin_event_func(uint8_t c) {
-    if (c == mp_interrupt_char) {
-        mp_sched_keyboard_interrupt();
-        return true;
-    }
-
-    return false;
-}
-
-static const pbsys_user_program_callbacks_t user_program_callbacks = {
-    .stop = user_program_stop_func,
-    .stdin_event = user_program_stdin_event_func,
-};
-
 // Defined in linker script
 extern uint32_t _pb_user_mpy_size;
 extern uint8_t _pb_user_mpy_data;
@@ -163,8 +141,6 @@ int main(int argc, char **argv) {
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
-    // Get system hardware ready
-    pbsys_user_program_prepare(&user_program_callbacks);
 
     // Initialize MicroPython and run default imports
     mp_init();
@@ -189,7 +165,6 @@ int main(int argc, char **argv) {
         mp_hal_set_interrupt_char(-1); // disable interrupt
         mp_handle_pending(false); // clear any pending exceptions (and run any callbacks)
 
-        pbsys_user_program_unprepare();
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
 

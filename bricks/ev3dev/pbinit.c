@@ -103,7 +103,7 @@ void pybricks_init(void) {
     pbio_init();
     extern void ev3dev_status_light_init(void);
     ev3dev_status_light_init();
-    pb_package_pybricks_init();
+    pb_package_pybricks_init(true);
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
 
@@ -115,7 +115,7 @@ void pybricks_deinit(void) {
 }
 
 void pybricks_unhandled_exception(void) {
-    pbio_dcmotor_stop_all(false);
+    pbio_stop_all(false);
     extern void _pb_ev3dev_speaker_beep_off(void);
     _pb_ev3dev_speaker_beep_off();
 }

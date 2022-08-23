@@ -71,12 +71,8 @@ MP_REGISTER_MODULE(MP_QSTR_pybricks, pb_package_pybricks);
 
 /**
  * Import all pybricks.* modules.
- *
- * This can raise an exception, so callers need to catch exceptions.
  */
-void pb_package_import_all(void) {
-    // Initialize package
-    pb_package_pybricks_init();
+static void pb_package_import_all(void) {
 
     // Go through each module in the package.
     for (size_t i = 0; i < MP_ARRAY_SIZE(pybricks_globals_table); i++) {
@@ -93,9 +89,27 @@ void pb_package_import_all(void) {
     #endif
 }
 
-void pb_package_pybricks_init(void) {
-    // Reset additions to Color parameters
-    pb_type_Color_reset();
+/**
+ * Prepares Pybricks MicroPython environment.
+ *
+ * @param [in]  import_all      Whether to import * from all pybricks.* modules.
+ */
+
+void pb_package_pybricks_init(bool import_all) {
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        // Initialize the package.
+        pb_type_Color_reset();
+        // Import all if requested.
+        if (import_all) {
+            pb_package_import_all();
+        }
+        nlr_pop();
+    } else {
+        // Print initialization or import exception.
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+    }
 }
 
 void pb_package_pybricks_deinit(void) {

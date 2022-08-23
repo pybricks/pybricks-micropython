@@ -482,9 +482,9 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/light.c \
 	sys/main.c \
 	sys/program_load.c \
+	sys/program_stop.c \
 	sys/status.c \
 	sys/supervisor.c \
-	sys/user_program.c \
 	)
 
 # STM32 IMU Library

@@ -56,12 +56,20 @@ void pbio_init(void) {
 /**
  * Stops all user-level background processes. Drivers and OS-level processes
  * continue running.
+ *
+ * @param [in]  reset  Whether to reset all user-level processes to a clean
+ *                     state (true), or whether to only stop active outputs
+ *                     like sound or motors (false). The latter is useful
+ *                     to preserve the state for debugging, without sound
+ *                     or movement getting in the way or out of control.
  */
-void pbio_stop_all(void) {
+void pbio_stop_all(bool reset) {
     #if PBIO_CONFIG_LIGHT
-    pbio_light_animation_stop_all();
+    if (reset) {
+        pbio_light_animation_stop_all();
+    }
     #endif
-    pbio_dcmotor_stop_all(true);
+    pbio_dcmotor_stop_all(reset);
     pbdrv_sound_stop();
 }
 

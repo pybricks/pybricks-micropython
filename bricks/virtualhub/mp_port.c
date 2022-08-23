@@ -15,7 +15,8 @@
 
 #include <pbio/main.h>
 #include <pbsys/core.h>
-#include <pbsys/user_program.h>
+#include <pbsys/program_stop.h>
+#include <pbsys/status.h>
 
 #include "../../lib/pbio/drv/virtual.h"
 
@@ -33,7 +34,7 @@
 #define FORCED_EXIT (0x100)
 
 // callback for when stop button is pressed in IDE or on hub
-static void user_program_stop_func(void) {
+void pbsys_main_stop_program(void) {
     static const mp_rom_obj_tuple_t args = {
         .base = { .type = &mp_type_tuple },
         .len = 2,
@@ -58,10 +59,9 @@ static void user_program_stop_func(void) {
     mp_sched_exception(MP_OBJ_FROM_PTR(&system_exit));
 }
 
-static const pbsys_user_program_callbacks_t user_program_callbacks = {
-    .stop = user_program_stop_func,
-    .stdin_event = NULL,
-};
+bool pbsys_main_stdin_event(uint8_t c) {
+    return false;
+}
 
 static MP_DEFINE_EXCEPTION(CPythonException, Exception)
 
@@ -120,15 +120,15 @@ void pb_virtualhub_port_init(void) {
 
     pbsys_init();
 
-    pb_package_pybricks_init();
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+    while (pbio_do_one_event()) {
+    }
 
-    pbsys_user_program_prepare(&user_program_callbacks);
+    pb_package_pybricks_init(false);
 }
 
 // MICROPY_PORT_DEINIT_FUNC
 void pb_virtualhub_port_deinit(void) {
-    pbsys_user_program_unprepare();
-
     pbio_error_t err = pbdrv_virtual_platform_stop();
 
     if (err != PBIO_SUCCESS) {

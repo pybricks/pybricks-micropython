@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 /**
  * @addtogroup SystemBluetooth System: Bluetooth
@@ -16,10 +16,10 @@
 
 #include <stdint.h>
 
-#include <pbsys/user_program.h>
+#include <pbsys/main.h>
 
 void pbsys_bluetooth_init(void);
-void pbsys_bluetooth_rx_set_callback(pbsys_user_program_stdin_event_callback_t callback);
+void pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event_callback_t callback);
 void pbsys_bluetooth_rx_flush(void);
 uint32_t pbsys_bluetooth_rx_get_available(void);
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size);

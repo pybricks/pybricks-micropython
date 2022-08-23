@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2022 The Pybricks Authors
 
 #include <pbsys/config.h>
 
@@ -20,14 +20,14 @@
 #include <pbio/util.h>
 #include <pbsys/command.h>
 #include <pbsys/status.h>
-#include <pbsys/user_program.h>
+#include <pbsys/main.h>
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
 // max data size for Nordic UART characteristics
 #define NUS_CHAR_SIZE 20
 
 // Nordic UART Rx hook
-static pbsys_user_program_stdin_event_callback_t uart_rx_callback;
+static pbsys_main_stdin_event_callback_t uart_rx_callback;
 // ring buffers for UART service
 static lwrb_t uart_tx_ring;
 static lwrb_t uart_rx_ring;
@@ -62,7 +62,7 @@ static void on_event(void) {
  * Sets the UART Rx callback function.
  * @param callback  [in]    The callback or NULL.
  */
-void pbsys_bluetooth_rx_set_callback(pbsys_user_program_stdin_event_callback_t callback) {
+void pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event_callback_t callback) {
     uart_rx_callback = callback;
 }
 

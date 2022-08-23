@@ -21,8 +21,7 @@
 
 #include <pybricks/parameters.h>
 
-void pb_package_import_all(void);
-void pb_package_pybricks_init(void);
+void pb_package_pybricks_init(bool import_all);
 void pb_package_pybricks_deinit(void);
 
 #if PYBRICKS_PY_COMMON_CHARGER

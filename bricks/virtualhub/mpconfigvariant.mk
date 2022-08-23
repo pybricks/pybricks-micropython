@@ -184,9 +184,9 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/sys/light.c \
 	pbio/sys/main.c \
 	pbio/sys/program_load.c \
+	pbio/sys/program_stop.c \
 	pbio/sys/status.c \
 	pbio/sys/supervisor.c \
-	pbio/sys/user_program.c \
 	)
 
 # realtime library for timer signals
