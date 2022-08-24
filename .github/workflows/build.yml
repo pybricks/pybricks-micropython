@@ -100,7 +100,7 @@ jobs:
       if: ${{ success() }}
       uses: actions/upload-artifact@v2
       with:
-        name: pybricks-micropython
+        name: pybricks-micropython-build-${{ github.run_number }}
         path: bricks/ev3dev/pybricks-micropython
 
   ev3dev_ubuntu_lts:
@@ -221,7 +221,7 @@ jobs:
       if: ${{ success() && matrix.hub != 'nxt' }}
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.hub }}-firmware
+        name: ${{ matrix.hub }}-firmware-build-${{ github.run_number }}
         path: bricks/${{ matrix.hub }}/build/upload/*
 
   virtualhub:
