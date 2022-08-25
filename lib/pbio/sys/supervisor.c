@@ -24,6 +24,6 @@ void pbsys_supervisor_poll(void) {
     // or if there is no BLE connection made within 3 minutes
     if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)
         || pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING, true, 3 * 60000)) {
-        pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
     }
 }

@@ -29,6 +29,7 @@ typedef enum {
     PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE,
     PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL,
     PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE,
+    PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED,
     PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN,
 } pbsys_status_light_indication_t;
 
@@ -115,15 +116,14 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_WHITE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
+    [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        { .color = PBIO_COLOR_BLACK, .duration = 1 },
+        { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+    },
     [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_NONE, .duration = 12 },
-        { .color = PBIO_COLOR_BLACK, .duration = 1 },
-        { .color = PBIO_COLOR_BLUE, .duration = 1 },
-        { .color = PBIO_COLOR_BLACK, .duration = 1 },
-        { .color = PBIO_COLOR_BLUE, .duration = 1 },
-        { .color = PBIO_COLOR_BLACK, .duration = 1 },
-        { .color = PBIO_COLOR_BLUE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
     },
 };
@@ -183,11 +183,14 @@ static void pbsys_status_light_handle_status_change(void) {
     bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
     bool low_voltage = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     bool high_current = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT);
+    bool shutdown_requested = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
     bool shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // This determines which indication has the highest precedence.
     if (shutdown) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN;
+    } else if (shutdown_requested) {
+        new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED;
     } else if (ble_advertising && low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE;
     } else if (ble_advertising) {

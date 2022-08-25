@@ -115,11 +115,17 @@ typedef enum {
      */
     PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING = 6,
     /**
-     * Hub shutdown has been requested.
+     * Hub will shut down.
      *
      * @since Protocol v1.1.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN = 7,
+    /**
+     * Hub shutdown has been requested. System processes may now stop.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST = 8,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;

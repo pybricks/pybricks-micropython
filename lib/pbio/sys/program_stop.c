@@ -16,6 +16,8 @@
 static pbio_button_flags_t stop_buttons = PBIO_BUTTON_CENTER;
 // State for button press one-shot
 static bool stop_button_pressed;
+// State for shutdown request one-shot
+static bool program_stop_on_shutdown_requested;
 
 /**
  * Request the user program to stop. For example, in MicroPython, this may raise
@@ -41,10 +43,13 @@ void pbsys_program_stop_set_buttons(pbio_button_flags_t buttons) {
  */
 void pbsys_program_stop_poll(void) {
 
-    // If shutdown was triggered, we need to stop even if the
-    // stop button was disabled.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+    // Cancel user application program if shutdown was requested.
+    if (program_stop_on_shutdown_requested) {
+        // Should not request stop more than once.
+        return;
+    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
         pbsys_program_stop();
+        program_stop_on_shutdown_requested = true;
         return;
     }
 

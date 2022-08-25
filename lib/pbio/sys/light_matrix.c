@@ -65,11 +65,12 @@ static void pbsys_hub_light_matrix_show_stop_sign(uint8_t brightness) {
     }
 }
 
+// Animation frame for on/off animation.
 static uint32_t pbsys_hub_light_matrix_user_power_animation_next(pbio_light_animation_t *animation) {
 
     // Start at 2% and increment up to 100% in 7 steps.
     static uint8_t brightness = 2;
-    static uint8_t increment = 14;
+    static int8_t increment = 14;
 
     // Show the stop sign fading in/out.
     brightness += increment;
@@ -78,18 +79,27 @@ static uint32_t pbsys_hub_light_matrix_user_power_animation_next(pbio_light_anim
     // Stop at 100% and re-initialize so we can use this again for shutdown.
     if (brightness == 100 || brightness == 0) {
         pbio_light_animation_stop(&pbsys_hub_light_matrix->animation);
-        brightness = 98;
-        increment = -14;
+        brightness = 96;
+        increment = -8;
     }
     return 40;
 }
 
-void pbsys_hub_light_matrix_init(void) {
-    pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
+/**
+ * Starts the power up and down animation. The first call makes it fade in the
+ * stop sign. All subsequent calls are fade out.
+ */
+static void pbsys_hub_light_matrix_start_power_animation(void) {
     pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_power_animation_next);
     pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
 }
 
+void pbsys_hub_light_matrix_init(void) {
+    pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
+    pbsys_hub_light_matrix_start_power_animation();
+}
+
+// Animation frame for program running animation.
 static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
     // The indexes of pixels to light up
     static const uint8_t indexes[] = { 1, 2, 3, 8, 13, 12, 11, 6 };
@@ -125,15 +135,25 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
             pbsys_hub_light_matrix_clear();
             pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
             pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
-        } else if (status == PBIO_PYBRICKS_STATUS_SHUTDOWN) {
-            pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_power_animation_next);
-            pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
+        } else if (status == PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST && !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+            // If shutdown was requested and no program is running, start power
+            // down animation. This makes it run while the system processes are
+            // deinitializing. If it was running, we should wait for it to end
+            // first, which is handled below to avoid a race condition.
+            pbsys_hub_light_matrix_start_power_animation();
         }
     } else if (event == PBIO_EVENT_STATUS_CLEARED) {
         pbio_pybricks_status_t status = (intptr_t)data;
 
-        if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-            pbsys_hub_light_matrix_show_stop_sign(100);
+        // The user program has ended.
+        if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
+            if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
+                // If it ended due to forced shutdown, show power-off animation.
+                pbsys_hub_light_matrix_start_power_animation();
+            } else {
+                // If it simply completed, show stop sign.
+                pbsys_hub_light_matrix_show_stop_sign(100);
+            }
         }
     }
 }

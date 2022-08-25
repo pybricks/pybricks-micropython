@@ -90,11 +90,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_set_stop_button_obj, pb_type_Sys
 STATIC mp_obj_t pb_type_System_shutdown(void) {
 
     // Start shutdown.
-    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
 
-    // Keep running until shutdown completes.
+    // Keep running MicroPython until we are stopped.
     for (;;) {
-        MICROPY_VM_HOOK_LOOP
+        MICROPY_EVENT_POLL_HOOK;
     }
 
     return mp_const_none;

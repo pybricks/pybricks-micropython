@@ -281,7 +281,7 @@ static PT_THREAD(pbsys_program_receive_thread(struct pt *pt, pbio_error_t *err, 
  *
  * @param [in]  program         Program info structure to be populated.
  * @return                      ::PBIO_SUCCESS on success.
- *                              ::PBIO_ERROR_CANCELED when canceled due to shutdown.
+ *                              ::PBIO_ERROR_CANCELED when canceled due to shutdown request.
  *                              ::PBIO_ERROR_TIMEDOUT if receiving data chunk timed out.
  *                              ::PBIO_ERROR_INVALID_ARG if the received size was too big.
  */
@@ -298,7 +298,7 @@ pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program) {
     PT_INIT(&pt);
     while (PT_SCHEDULE(pbsys_program_receive_thread(&pt, &err, &received_size))) {
         pbio_do_one_event();
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
             return PBIO_ERROR_CANCELED;
         }
     }

@@ -61,7 +61,7 @@ void pbsys_hmi_poll(void) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
         // power off when button is held down for 3 seconds
         if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
         }
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);

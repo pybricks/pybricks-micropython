@@ -29,8 +29,8 @@ int main(int argc, char **argv) {
     pbio_init();
     pbsys_init();
 
-    // Keep loading and running user programs until shutdown flag is set.
-    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+    // Keep loading and running user programs until shutdown is requested.
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
         // Receive a program. This cancels itself on shutdown.
         static pbsys_main_program_t program;
@@ -60,6 +60,9 @@ int main(int argc, char **argv) {
 
     // Stop system processes and save user data before we shutdown.
     pbsys_deinit();
+
+    // Now lower-level processes may shutdown and/or power off.
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button
     // or USB being plugged in, so we have this loop to keep pumping events
