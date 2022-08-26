@@ -17,6 +17,3 @@
 	path = lib/btstack
 	url = https://github.com/bluekitchen/btstack
 	update = none
-[submodule "lib/littlefs"]
-	path = lib/littlefs
-	url = https://github.com/littlefs-project/littlefs.git
