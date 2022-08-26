@@ -193,8 +193,10 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     mp_stack_set_top(&_estack);
     mp_stack_set_limit((char *)&_estack - (char *)&_sstack - 1024);
 
-    // MicroPython heap starts after program data.
-    gc_init(program->data + program->size, &_heap_end);
+    // MicroPython heap starts after program data, aligned by GC block size.
+    uint32_t align = MICROPY_BYTES_PER_GC_BLOCK -
+        ((uint32_t)(program->data) + program->size) % MICROPY_BYTES_PER_GC_BLOCK;
+    gc_init(program->data + program->size + align, &_heap_end);
 
     // Initialize MicroPython.
     mp_init();
