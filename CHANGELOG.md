@@ -5,19 +5,20 @@
 ## [Unreleased]
 
 ### Added
-- Indicate that the hub is shutting down by quickly flashing the hub light
-  three times. This makes it easier to see when you can stop pressing the
+- Indicate that the hub is shutting down by quickly flashing the hub light for
+  half a second. This makes it easier to see when you can stop pressing the
   button.
 - Indicate that the SPIKE Prime hub is booting and shutting down by fading
   the stop sign in and out.
 - Implemented iterator protocol on `geometry.Matrix` class.
+- Added experimental support for multi-file
+  projects ([pybricks-micropython#115]).
 
 ### Changed
 - Battery full indication (green light) comes on earlier ([support#647]).
 - New indication for over-charging battery (blinking green light).
 - On Move Hub, City Hub, and Technic Hub, programs can now be restarted with
-  the button after downloading them. After reboot, it still falls back to the
-  program stored in the firmware.
+  the button after downloading them. They are saved on shutdown.
 - Improved program download process. Reduces the likelihood of getting errors
   about incompatible .mpy files when accidentally entering characters in the
   terminal window when no program is active.
@@ -28,17 +29,18 @@
   firmwares, in order to avoid compatibility issues when changing firmware.
 
 ### Fixed
-- Fixed motors going out of synch when starting program ([support#679]).
+- Fixed motors going out of sync when starting program ([support#679]).
 - Fixed city hub turning back on after shutdown ([support#692]).
 - Fixed IMU I2C bus lockup on SPIKE hubs ([support#232]).
 - Fixed REPL history corrupt after soft reset ([support#699]).
 - Fixed "ValueError: incompatible .mpy file" when pressing the button when
   there is no program yet ([support#599]).
 
+[pybricks-micropython#115]: https://github.com/pybricks/pybricks-micropython/pull/115
 [support#232]: https://github.com/pybricks/support/issues/232
 [support#232]: https://github.com/pybricks/support/issues/599
 [support#647]: https://github.com/pybricks/support/issues/647
-[support#699]: https://github.com/pybricks/support/issues/679
+[support#679]: https://github.com/pybricks/support/issues/679
 [support#692]: https://github.com/pybricks/support/issues/692
 [support#699]: https://github.com/pybricks/support/issues/699
 

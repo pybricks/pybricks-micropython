@@ -24,6 +24,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/objmodule.h"
 #include "py/persistentcode.h"
 #include "py/repl.h"
 #include "py/runtime.h"
@@ -139,6 +140,37 @@ static void run_repl() {
     #endif
 }
 
+// From micropython/py/builtinimport.c, but copied because it is static.
+static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_t *rc, const mp_module_context_t *mc) {
+
+    // execute the module in its context
+    mp_obj_dict_t *mod_globals = context->module.globals;
+
+    // save context
+    mp_obj_dict_t *volatile old_globals = mp_globals_get();
+    mp_obj_dict_t *volatile old_locals = mp_locals_get();
+
+    // set new context
+    mp_globals_set(mod_globals);
+    mp_locals_set(mod_globals);
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        mp_obj_t module_fun = mp_make_function_from_raw_code(rc, mc, NULL);
+        mp_call_function_0(module_fun);
+
+        // finish nlr block, restore context
+        nlr_pop();
+        mp_globals_set(old_globals);
+        mp_locals_set(old_locals);
+    } else {
+        // exception; restore context and re-raise same exception
+        mp_globals_set(old_globals);
+        mp_locals_set(old_locals);
+        nlr_jump(nlr.ret_val);
+    }
+}
+
 static void run_user_program(uint32_t len, uint8_t *buf) {
 
     nlr_buf_t nlr;
@@ -184,6 +216,47 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
     }
 }
 
+/** mpy info and data for one script or module. */
+typedef struct {
+    /** Size of the mpy program. */
+    uint32_t mpy_size;
+    /** Null-terminated name of the script, without file extension. */
+    char mpy_name[];
+    /** mpy data follows thereafter. */
+} mpy_info_t;
+
+// Gets a reference to the mpy data of a script.
+static uint8_t *mpy_data_get_buf(mpy_info_t *info) {
+    return (uint8_t *)info + sizeof(info->mpy_size) + strlen(info->mpy_name) + 1;
+}
+
+// Program data is a concatenation of multiple mpy files. This sets a reference
+// to the first script and the total size so we can search for modules.
+static mpy_info_t *mpy_first;
+static uint32_t mpy_size_total;
+static inline void mpy_data_init(pbsys_main_program_t *program) {
+    mpy_first = (mpy_info_t *)program->data;
+    mpy_size_total = program->size;
+}
+
+// Finds a MicroPython module in the program data.
+static mpy_info_t *mpy_data_find(const char *name) {
+
+    // Start at first script.
+    mpy_info_t *next = mpy_first;
+
+    // Iterate through the programs while not found.
+    while (strcmp(next->mpy_name, name)) {
+        // Exit if we're passed the end.
+        if ((uint8_t *)next >= (uint8_t *)mpy_first + mpy_size_total) {
+            return NULL;
+        }
+        // Get reference to next script.
+        next = (mpy_info_t *)(mpy_data_get_buf(next) + next->mpy_size);
+    }
+    return next;
+}
+
 // Runs MicroPython with the given program data.
 void pbsys_main_run_program(pbsys_main_program_t *program) {
 
@@ -197,6 +270,10 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     uint32_t align = MICROPY_BYTES_PER_GC_BLOCK -
         ((uint32_t)(program->data) + program->size) % MICROPY_BYTES_PER_GC_BLOCK;
     gc_init(program->data + program->size + align, &_heap_end);
+
+    // Set program data reference to first script. This is used to run main,
+    // and to set the starting point for finding downloaded modules.
+    mpy_data_init(program);
 
     // Initialize MicroPython.
     mp_init();
@@ -212,8 +289,14 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         // Init Pybricks package without auto-import.
         pb_package_pybricks_init(false);
 
-        // Execute the user script.
-        run_user_program(program->size, program->data);
+        // For backwards compatibility, detect old-format single-script data.
+        if (program->data[0] == 'M') {
+            // TODO: This case be removed once relevant IDE tools are updated.
+            run_user_program(program->size, program->data);
+        } else {
+            // Execute the first script, which is the main script.
+            run_user_program(mpy_first->mpy_size, mpy_data_get_buf(mpy_first));
+        }
     }
 
     // Clean up non-MicroPython resources used by the pybricks package.
@@ -233,6 +316,59 @@ mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) 
     mp_raise_OSError(MP_ENOENT);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
+
+static mp_obj_t pb_import_loaded_module(size_t n_args, const mp_obj_t *args) {
+
+    // For backwards compatibility, skip imports for legacy single-script data.
+    // TODO: This check can be removed once relevant IDE tools are updated.
+    if (((uint8_t *)mpy_first)[0] == 'M') {
+        return MP_OBJ_NULL;
+    }
+
+    // Try to find the requested module.
+    mpy_info_t *info = mpy_data_find(mp_obj_str_get_str(args[0]));
+    if (!info) {
+        // Not found, so give up.
+        return MP_OBJ_NULL;
+    }
+
+    // Parse the static script data.
+    mp_reader_t reader;
+    mp_vfs_map_minimal_t data;
+    mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
+
+    // Create new module and execute in its own context.
+    mp_obj_t module_obj = mp_obj_new_module(mp_obj_str_get_qstr(args[0]));
+    mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
+    mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+    do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
+
+    // Return the module we found.
+    return module_obj;
+}
+
+// Overrides MicroPython's mp_builtin___import__
+mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
+    // Check that it's not a relative import
+    if (n_args >= 5 && MP_OBJ_SMALL_INT_VALUE(args[4]) != 0) {
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("relative import"));
+    }
+
+    // Check if module already exists, and return it if it does
+    qstr module_name_qstr = mp_obj_str_get_qstr(args[0]);
+    mp_obj_t module_obj = mp_module_get_loaded_or_builtin(module_name_qstr);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    // Pybricks extension: Search for modules in downloaded user data.
+    module_obj = pb_import_loaded_module(n_args, args);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    mp_raise_msg_varg(&mp_type_ImportError, MP_ERROR_TEXT("no module named '%q'"), module_name_qstr);
+}
 
 void nlr_jump_fail(void *val) {
     while (1) {
