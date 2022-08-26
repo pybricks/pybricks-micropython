@@ -14,7 +14,6 @@
 
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_flash.h>
 
 #include "shared/readline/readline.h"
 #include "shared/runtime/gchelper.h"

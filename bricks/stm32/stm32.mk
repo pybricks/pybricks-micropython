@@ -263,7 +263,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_conversions.c \
 	util_pb/pb_device_stm32.c \
 	util_pb/pb_error.c \
-	util_pb/pb_flash.c \
 	util_pb/pb_task.c \
 	)
 
