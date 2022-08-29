@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2013, 2014 Damien P. George */
-/* Copyright (c) 2019-2021 The Pybricks Authors */
+/* Copyright (c) 2019-2022 The Pybricks Authors */
 
 /*
     GNU linker script for LEGO Technic Hub
@@ -9,13 +9,16 @@
 /* Specify the memory areas */
 MEMORY
 {
-    /* Flash size is 256K, bootloader resides in first 32K, last 4K is for user data */
-    FLASH (rx)      : ORIGIN = 0x08008000, LENGTH = 220K
-    USER_FLASH (rx) : ORIGIN = 0x0803F000, LENGTH = 4K
-    RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 64K
+    /* Non-erasable BLE bootloader (LEGO LWP3). */
+    FLASH_BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+    /* The firmware. Installed via BLE bootloader. */
+    FLASH_FIRMWARE (rx)   : ORIGIN = 0x08008000, LENGTH = 220K
+    /* User data written by the firmware during shutdown. */
+    FLASH_USER (rx)       : ORIGIN = 0x0803F000, LENGTH = 4K
+    RAM (xrw)             : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
 "MAGIC_OFFSET" = 0x200;
 _stack_size = 8K;
-_pbdrv_block_device_storage_start = ORIGIN(USER_FLASH);
-_pbdrv_block_device_storage_size = LENGTH(USER_FLASH);
+_pbdrv_block_device_storage_start = ORIGIN(FLASH_USER);
+_pbdrv_block_device_storage_size = LENGTH(FLASH_USER);

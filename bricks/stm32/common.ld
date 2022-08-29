@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2013, 2014 Damien P. George */
-/* Copyright (c) 2018-2021 The Pybricks Authors */
+/* Copyright (c) 2018-2022 The Pybricks Authors */
 
 /* top end of the stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -9,7 +9,7 @@ _sstack = _estack - _stack_size;
 /* define output sections */
 SECTIONS
 {
-    /* The program code and other data goes into FLASH */
+    /* The program code and other data goes into FLASH_FIRMWARE */
     .text :
     {
         . = ALIGN(4);
@@ -27,7 +27,7 @@ SECTIONS
         . = ALIGN(4);
         _etext = .;        /* define a global symbol at end of code */
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
-    } >FLASH
+    } >FLASH_FIRMWARE
 
     /* This section is for special needs of the Move Hub firmware - must be first section in SRAM! */
     .magic :
@@ -45,8 +45,8 @@ SECTIONS
 
     /* This is the initialized data section
     The program executes knowing that the data is in the RAM
-    but the loader puts the initial values in the FLASH (inidata).
-    It is one task of the startup to copy the initial values from FLASH to RAM. */
+    but the loader puts the initial values in the FLASH_FIRMWARE (inidata).
+    It is one task of the startup to copy the initial values from FLASH_FIRMWARE to RAM. */
     .data :
     {
         . = ALIGN(4);
@@ -55,7 +55,7 @@ SECTIONS
 
         . = ALIGN(4);
         _edata = .;        /* define a global symbol at data end; used by startup code in order to initialise the .data section in RAM */
-    } >RAM AT> FLASH
+    } >RAM AT> FLASH_FIRMWARE
 
     /* Uninitialized data section */
     .bss :
@@ -100,7 +100,7 @@ SECTIONS
     .name :
     {
         *(.name) /* customizable hub name */
-    } >FLASH
+    } >FLASH_FIRMWARE
 
     .user :
     {
@@ -109,14 +109,14 @@ SECTIONS
         LONG(SIZEOF(.user) - (. + 4 - LOADADDR(.user))); /* Size of compiled main.mpy file in bytes */
         _pb_user_mpy_data = .;
         KEEP(*(.mpy));       /* Compiled main.mpy file */
-    } >FLASH
+    } >FLASH_FIRMWARE
 
     .checksum :
     {
         . = ALIGN(4);
         _checksum = .;
         LONG(0) /* This gets replaced later with proper checksum by other tools. */
-    } >FLASH
+    } >FLASH_FIRMWARE
 
     .ARM.attributes 0 : { *(.ARM.attributes) }
 }

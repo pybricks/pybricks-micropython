@@ -77,7 +77,7 @@ def generate(
     user_start = None  # Starting address of user .mpy file
 
     for line in map_file.readlines():
-        match = re.match(r"^FLASH\s+(0x[0-9A-Fa-f]{8,16})\s+(0x[0-9A-Fa-f]{8,16})", line)
+        match = re.match(r"^FLASH_FIRMWARE\s+(0x[0-9A-Fa-f]{8,16})\s+(0x[0-9A-Fa-f]{8,16})", line)
         if match:
             flash_origin = int(match[1], base=0)
             flash_length = int(match[2], base=0)
@@ -95,11 +95,11 @@ def generate(
             continue
 
     if flash_origin is None:
-        print("Failed to find 'FLASH' start address", file=sys.stderr)
+        print("Failed to find 'FLASH_FIRMWARE' start address", file=sys.stderr)
         exit(1)
 
     if flash_length is None:
-        print("Failed to find 'FLASH' length", file=sys.stderr)
+        print("Failed to find 'FLASH_FIRMWARE' length", file=sys.stderr)
         exit(1)
 
     if name_start is None:
