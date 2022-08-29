@@ -80,21 +80,6 @@ subdirectories.
 - Restrictions: Liability, warranty
 
 
-### libfixmath
-
-**path**: `lib/libfixmath/`
-
-**origin**: Git commit 47a5aa74ff33b224b3f9150b0fff8b4a01d177fc
-
-**url**: https://github.com/PetteriAimonen/libfixmath
-
-**terms**:
-- License: MIT
-- Permissions: Commercial use, distribution, modification, private use
-- Conditions: License and copyright notice
-- Restrictions: Liability, warranty
-
-
 ### STMems_Standard_C_drivers
 
 **path**: `lib/lsm6ds3tr_c_STdC/`

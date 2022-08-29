@@ -2,9 +2,6 @@
 	path = bricks/ev3rt/ev3rt-hrp2
 	url = https://github.com/pybricks/ev3rt-hrp2.git
 	update = none
-[submodule "lib/libfixmath"]
-	path = lib/libfixmath
-	url = https://github.com/PetteriAimonen/libfixmath.git
 [submodule "bricks/nxt/nxt-firmware-drivers"]
 	path = bricks/nxt/nxt-firmware-drivers
 	url = https://github.com/pybricks/nxt-firmware-drivers.git

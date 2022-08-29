@@ -24,13 +24,6 @@ ifeq ("$(wildcard ../../micropython/lib/berkeley-db-1.xx/README)","")
 $(error failed)
 endif
 endif
-ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
-$(info GIT cloning libfixmath submodule)
-$(info $(shell cd ../.. && git submodule update --init lib/libfixmath))
-ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
-$(error failed)
-endif
-endif
 
 # lets micropython make files work with external files
 USER_C_MODULES = ../..
@@ -62,7 +55,6 @@ INC += -I../../lib/contiki-core
 INC += -I../../lib/ev3dev
 INC += -I../../lib/ev3dev/include
 INC += -I../../lib/lego
-INC += -I../../lib/libfixmath/libfixmath
 INC += -I../../lib/pbio
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/ev3dev_stretch
@@ -303,10 +295,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	ev3dev/src/ev3dev_stretch/lego_sensor.c \
 	ev3dev/src/ev3dev_stretch/nxtcolor.c \
 	ev3dev/src/ev3dev_stretch/sysfs.c \
-	libfixmath/libfixmath/fix16_sqrt.c \
-	libfixmath/libfixmath/fix16_str.c \
-	libfixmath/libfixmath/fix16.c \
-	libfixmath/libfixmath/uint32.c \
 	pbio/drv/battery/battery_linux_ev3.c \
 	pbio/drv/button/button_linux_ev3.c \
 	pbio/drv/clock/clock_linux.c \

@@ -23,13 +23,6 @@ ifeq ("$(wildcard $(PBTOP)/micropython/lib/stm32lib/README.md)","")
 $(error failed)
 endif
 endif
-ifeq ("$(wildcard $(PBTOP)/lib/libfixmath/README.md)","")
-$(info GIT cloning libfixmath submodule)
-$(info $(shell cd $(PBTOP) && git submodule update --init lib/libfixmath))
-ifeq ("$(wildcard $(PBTOP)/lib/libfixmath/README.md)","")
-$(error failed)
-endif
-endif
 ifeq ($(PB_LIB_BTSTACK),1)
 ifeq ("$(wildcard ../../lib/btstack/README.md)","")
 $(info GIT cloning btstack submodule)
@@ -79,7 +72,6 @@ INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
 INC += -I$(PBTOP)/lib/contiki-core
 INC += -I$(PBTOP)/lib/lego
-INC += -I$(PBTOP)/lib/libfixmath/libfixmath
 INC += -I$(PBTOP)/lib/lwrb/src/include
 INC += -I$(PBTOP)/lib/pbio/include
 INC += -I$(PBTOP)/lib/pbio/platform/$(PBIO_PLATFORM)
@@ -384,17 +376,6 @@ endif
 
 LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
-# libfixmath
-
-COPT += -DFIXMATH_NO_CTYPE
-
-LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
-	fix16_sqrt.c \
-	fix16_str.c \
-	fix16.c \
-	uint32.c \
-	)
-
 # Pybricks I/O library
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
@@ -558,7 +539,6 @@ ifeq ($(PB_USE_LSM6DS3TR_C),1)
 OBJ += $(addprefix $(BUILD)/, $(LSM6DS3TR_C_SRC_C:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LWRB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))

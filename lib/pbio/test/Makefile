@@ -57,11 +57,6 @@ LEGO_INC = -I$(LEGO_DIR)
 LEGO_SRC =
 
 # pbio dependency
-FIXMATH_DIR = ../../libfixmath
-FIXMATH_INC = -I$(FIXMATH_DIR)/libfixmath
-FIXMATH_SRC = $(shell find $(FIXMATH_DIR)/libfixmath -name "*.c")
-
-# pbio dependency
 LWRB_DIR = ../../lwrb/src
 LWRB_INC = -I$(LWRB_DIR)/include
 LWRB_SRC = $(shell find $(LWRB_DIR)/lwrb -name "*.c")
@@ -148,7 +143,7 @@ $(BUILD_DIR)/genhdr/%.h: $(PBIO_DIR)/drv/bluetooth/%.gatt
 
 
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
-CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(FIXMATH_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
+CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
 CFLAGS += -DPBIO_TEST_BUILD=1
 
@@ -156,7 +151,7 @@ ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
-SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(FIXMATH_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
+SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
 
@@ -189,7 +184,6 @@ build-coverage/lcov.info: Makefile $(SRC)
 		--directory build-coverage/lib/pbio/sys \
 		--exclude **/btstack/** \
 		--exclude **/contiki-core/** \
-		--exclude **/libfixmath/**
 
 coverage-html: build-coverage/lcov.info
 	$(Q)genhtml $^ --output-directory build-coverage/html

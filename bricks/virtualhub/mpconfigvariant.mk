@@ -55,7 +55,6 @@ USER_C_MODULES = ../../..
 
 INC += -I../../..
 INC += -I../../../lib/contiki-core
-INC += -I../../../lib/libfixmath/libfixmath
 INC += -I../../../lib/lego
 INC += -I../../../lib/pbio/include
 INC += -I../../../lib/pbio/platform/virtual_hub
@@ -134,10 +133,6 @@ LIB_SRC_C += $(addprefix lib/,\
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
 	contiki-core/sys/timer.c \
-	libfixmath/libfixmath/fix16_sqrt.c \
-	libfixmath/libfixmath/fix16_str.c \
-	libfixmath/libfixmath/fix16.c \
-	libfixmath/libfixmath/uint32.c \
 	pbio/drv/battery/battery_virtual.c \
 	pbio/drv/button/button_virtual.c \
 	pbio/drv/clock/clock_linux.c \

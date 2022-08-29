@@ -12,13 +12,6 @@ ifeq ("$(wildcard ../../micropython/README.md)","")
 $(error failed)
 endif
 endif
-ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
-$(info GIT cloning libfixmath submodule)
-$(info $(shell cd ../.. && git submodule update --init lib/libfixmath))
-ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
-$(error failed)
-endif
-endif
 ifeq ("$(wildcard nxt-firmware-drivers/README.md)","")
 $(info GIT cloning nxt-firmware-drivers submodule)
 $(info $(shell cd ../.. && git submodule update --checkout --init bricks/nxt/nxt-firmware-drivers))
@@ -55,7 +48,6 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I../../lib/contiki-core
 INC += -I../../lib/lego
-INC += -I../../lib/libfixmath/libfixmath
 INC += -Inxt-firmware-drivers
 INC += -Inxt-firmware-drivers/nxt
 INC += -I../../lib/pbio/include
@@ -63,8 +55,6 @@ INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I../../lib/pbio
 INC += -I../..
 INC += -I$(BUILD)
-
-COPT += -DFIXMATH_NO_CTYPE
 
 CFLAGS_MCU = -mthumb -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
@@ -187,13 +177,6 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 	sys/timer.c \
 	)
 
-LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
-	fix16_sqrt.c \
-	fix16_str.c \
-	fix16.c \
-	uint32.c \
-	)
-
 PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/battery/battery_nxt.c \
 	drv/button/button_nxt.c \
@@ -242,7 +225,6 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(BUILD)/main.mpy.o
 
 $(BUILD)/main.mpy: main.py

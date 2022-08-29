@@ -68,7 +68,6 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
     # update required submodules
     print("Checking out submodules")
     pybricks.git.submodule("update", "--init", "micropython")
-    pybricks.git.submodule("update", "--init", "lib/libfixmath")
     pybricks.submodule("micropython").module().git.submodule(
         "update", "--init", "lib/stm32lib"
     )

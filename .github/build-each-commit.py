@@ -42,7 +42,6 @@ for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}
 
     # update only required submodules
     pybricks.git.submodule("update", "--init", "micropython")
-    pybricks.git.submodule("update", "--init", "lib/libfixmath")
     if args.hub in ["cityhub", "movehub", "technichub", "primehub", "essentialhub"]:
         pybricks.submodule("micropython").module().git.submodule(
             "update", "--init", "lib/stm32lib"
