@@ -63,8 +63,8 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
 
     static const uint32_t base_address = (uint32_t)(&_pbdrv_block_device_storage_start[0]);
 
-    // Exit on invalid size.
-    if (size == 0 || size > pbdrv_block_device_get_size()) {
+    // Exit if size is 0, too big, or not a multiple of double-word size.
+    if (size == 0 || size > pbdrv_block_device_get_size() || size % sizeof(uint64_t)) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -74,7 +74,7 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
         return PBIO_ERROR_IO;
     }
 
-    // Erase only as much as we need.
+    // Erase the whole user storage area.
     FLASH_EraseInitTypeDef erase_init = {
         #if defined(STM32F0)
         .PageAddress = base_address,
@@ -84,7 +84,7 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
         #else
         #error "Unsupported target."
         #endif
-        .NbPages = (size + (FLASH_PAGE_SIZE - 1)) / FLASH_PAGE_SIZE,
+        .NbPages = pbdrv_block_device_get_size() / FLASH_PAGE_SIZE,
         .TypeErase = FLASH_TYPEERASE_PAGES
     };
 

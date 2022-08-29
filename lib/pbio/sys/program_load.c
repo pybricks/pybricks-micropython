@@ -34,6 +34,14 @@ typedef struct {
      * element of this structure.
      */
     uint32_t write_size;
+    #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
+    /**
+     * Checksum complement to satisfy bootloader requirements. This ensures
+     * that words in the scanned area still add up to precisely 0 after user
+     * data was written.
+     */
+    uint32_t checksum_complement;
+    #endif
     /**
      * Size of the application program.
      */
@@ -47,6 +55,38 @@ typedef struct {
 // The data map sits at the start of user RAM.
 extern uint32_t _pbsys_program_load_user_ram_start;
 static data_map_t *map = (data_map_t *)&_pbsys_program_load_user_ram_start;
+
+#if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
+// Updates checksum in data map to satisfy bootloader requirements.
+static void pbsys_program_load_update_checksum(void) {
+
+    // Align writable data by a double word, to simplify checksum
+    // computation and storage drivers that write double words.
+    while (map->write_size % 8) {
+        *((uint8_t *)map + map->write_size++) = 0;
+    }
+
+    // The area scanned by the bootloader adds up to 0 when all user data
+    // is 0xFFFFFFFF. So the bootloader value up until just before the user
+    // data is always 0 + the number of words in the scanned user data.
+    extern uint32_t _pbsys_program_load_checked_size;
+    uint32_t checksize = (uint32_t)&_pbsys_program_load_checked_size;
+    uint32_t checksum = checksize / sizeof(uint32_t);
+
+    // Don't count existing value.
+    map->checksum_complement = 0;
+
+    // Add checksum for each word in the written data and empty checked size.
+    for (uint32_t offset = 0; offset < checksize; offset += sizeof(uint32_t)) {
+        uint32_t *word = (uint32_t *)((uint8_t *)map + offset);
+        // Assume that everything after written data is erased.
+        checksum += offset < map->write_size ? *word : 0xFFFFFFFF;
+    }
+
+    // Set the checksum complement to cancel out user data checksum.
+    map->checksum_complement = 0xFFFFFFFF - checksum + 1;
+}
+#endif // PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
 
 // Gets the (constant) maximum program size.
 static inline uint32_t pbsys_program_load_get_max_program_size() {
@@ -119,6 +159,12 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
 
     // Write data to storage if it was updated.
     if (map->write_size) {
+
+        #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
+        pbsys_program_load_update_checksum();
+        #endif
+
+        // Write the data.
         PROCESS_PT_SPAWN(&pt, pbdrv_block_device_store(&pt, (uint8_t *)map, map->write_size, &err));
     }
 

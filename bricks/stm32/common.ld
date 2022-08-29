@@ -82,9 +82,9 @@ SECTIONS
         /**
          * The full storage may be loaded to RAM on boot, so we need to have
          * at least as much RAM available. We also want to ensure there is
-         * at least 4K of additional RAM for the application heap.
+         * at least 3K of additional RAM for the application heap.
          */
-        . = . + _pbdrv_block_device_storage_size + 4096;
+        . = . + _pbdrv_block_device_storage_size + 3072;
         . = ALIGN(4);
     } >RAM
 

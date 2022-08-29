@@ -9,16 +9,20 @@
 /* Specify the memory areas */
 MEMORY
 {
-    /* Non-erasable BLE bootloader (LEGO LWP3). */
+    /* Non-erasable BLE bootloader (LEGO LWP3). Device boots only if all words
+       in FLASH_FIRMWARE and FLASH_USER_0 add up to 0*/
     FLASH_BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 32K
     /* The firmware. Installed via BLE bootloader. */
-    FLASH_FIRMWARE (rx)   : ORIGIN = 0x08008000, LENGTH = 220K
+    FLASH_FIRMWARE (rx)   : ORIGIN = 0x08008000, LENGTH = 208K
     /* User data written by the firmware during shutdown. */
-    FLASH_USER (rx)       : ORIGIN = 0x0803F000, LENGTH = 4K
+    FLASH_USER_0 (rx)     : ORIGIN = 0x0803C000, LENGTH = 12K
+    /* As above, but this part is not counted by bootloader checksum. */
+    FLASH_USER_1 (rx)     : ORIGIN = 0x0803F000, LENGTH = 4K
     RAM (xrw)             : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
 "MAGIC_OFFSET" = 0x200;
 _stack_size = 8K;
-_pbdrv_block_device_storage_start = ORIGIN(FLASH_USER);
-_pbdrv_block_device_storage_size = LENGTH(FLASH_USER);
+_pbdrv_block_device_storage_start = ORIGIN(FLASH_USER_0);
+_pbdrv_block_device_storage_size = LENGTH(FLASH_USER_0) + LENGTH(FLASH_USER_1);
+_pbsys_program_load_checked_size = LENGTH(FLASH_USER_0);
