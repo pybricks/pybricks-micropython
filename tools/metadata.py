@@ -7,18 +7,19 @@ Pybricks firmware metadata file generation tool.
 
 Generates a .json file with information about a Pybricks firmware binary blob.
 
-v1.1.0:
+v1.2.0:
 
-    metadata-version    "1.1.0"
+    metadata-version    "1.2.0"
     firmware-version    output of `git describe --tags --dirty`
     device-id           one of 0x40, 0x41, 0x80, 0x81
     checksum-type       one of "sum", "crc32"
-    mpy-abi-version     number (MPY_VERSION)
-    mpy-cross-options   array of string
-    user-mpy-offset     number
+    mpy-abi-version     number (MPY_VERSION) TODO: deprecate in 1.2.0
+    mpy-cross-options   array of string TODO: deprecate in 1.2.0
+    user-mpy-offset     number TODO: deprecate in 1.2.0
     max-firmware-size   number
     hub-name-offset     number [v1.1.0]
     max-hub-name-size   number [v1.1.0]
+    checksum-scan-size  number [v1.2.0]
 """
 
 import argparse
@@ -38,13 +39,13 @@ mpy_tool = importlib.import_module("mpy-tool")
 
 
 # metadata file format version
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 # hub-specific info
 HUB_INFO = {
-    "move_hub": {"device-id": 0x40, "checksum-type": "sum"},
-    "city_hub": {"device-id": 0x41, "checksum-type": "sum"},
-    "technic_hub": {"device-id": 0x80, "checksum-type": "sum"},
+    "move_hub": {"device-id": 0x40, "checksum-type": "sum", "checksum-scan-size": 106 * 1024},
+    "city_hub": {"device-id": 0x41, "checksum-type": "sum", "checksum-scan-size": 232 * 1024},
+    "technic_hub": {"device-id": 0x80, "checksum-type": "sum", "checksum-scan-size": 220 * 1024},
     "prime_hub": {"device-id": 0x81, "checksum-type": "crc32"},
     "essential_hub": {"device-id": 0x83, "checksum-type": "crc32"},
 }
@@ -114,6 +115,13 @@ def generate(
     metadata["max-firmware-size"] = flash_length
     metadata["hub-name-offset"] = name_start - flash_origin
     metadata["max-hub-name-size"] = name_size
+
+    # If scan size was not explicitly set, scan the whole base firmware.
+    if "checksum-scan-size" not in metadata:
+        metadata["checksum-scan-size"] = 992 * 1024  # TODO: Should be firmware-base.bin size
+
+    # FIXME: Delete this when IDE tools are updated to use checksum-scan-size instead.
+    metadata["max-firmware-size"] = metadata["checksum-scan-size"]
 
     json.dump(metadata, out_file, indent=4, sort_keys=True)
 
