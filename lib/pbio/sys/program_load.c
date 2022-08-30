@@ -40,7 +40,7 @@ typedef struct {
      * that words in the scanned area still add up to precisely 0 after user
      * data was written.
      */
-    uint32_t checksum_complement;
+    volatile uint32_t checksum_complement;
     #endif
     /**
      * Size of the application program.
