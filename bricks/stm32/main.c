@@ -240,13 +240,13 @@ static inline void mpy_data_init(pbsys_main_program_t *program) {
 }
 
 // Finds a MicroPython module in the program data.
-static mpy_info_t *mpy_data_find(const char *name) {
+static mpy_info_t *mpy_data_find(const char *name, uint32_t leading_dots) {
 
     // Start at first script.
     mpy_info_t *next = mpy_first;
 
     // Iterate through the programs while not found.
-    while (strcmp(next->mpy_name, name)) {
+    while (strcmp(next->mpy_name + leading_dots, name)) {
         // Exit if we're passed the end.
         if ((uint8_t *)next >= (uint8_t *)mpy_first + mpy_size_total) {
             return NULL;
@@ -317,56 +317,57 @@ mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) 
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
 
-static mp_obj_t pb_import_loaded_module(size_t n_args, const mp_obj_t *args) {
-
-    // For backwards compatibility, skip imports for legacy single-script data.
-    // TODO: This check can be removed once relevant IDE tools are updated.
-    if (((uint8_t *)mpy_first)[0] == 'M') {
-        return MP_OBJ_NULL;
-    }
-
-    // Try to find the requested module.
-    mpy_info_t *info = mpy_data_find(mp_obj_str_get_str(args[0]));
-    if (!info) {
-        // Not found, so give up.
-        return MP_OBJ_NULL;
-    }
-
-    // Parse the static script data.
-    mp_reader_t reader;
-    mp_vfs_map_minimal_t data;
-    mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
-
-    // Create new module and execute in its own context.
-    mp_obj_t module_obj = mp_obj_new_module(mp_obj_str_get_qstr(args[0]));
-    mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
-    mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
-    do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
-
-    // Return the module we found.
-    return module_obj;
-}
-
 // Overrides MicroPython's mp_builtin___import__
 mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
-    // Check that it's not a relative import
-    if (n_args >= 5 && MP_OBJ_SMALL_INT_VALUE(args[4]) != 0) {
-        mp_raise_NotImplementedError(MP_ERROR_TEXT("relative import"));
+
+    // For backwards compatibility, use default import for legacy scripts.
+    // TODO: This case can be removed once relevant IDE tools are updated.
+    if (((uint8_t *)mpy_first)[0] == 'M') {
+        return mp_builtin___import___default(n_args, args);
+    }
+
+    // Check for relative imports
+    uint32_t leading_dots = n_args < 5 ? 0 : MP_OBJ_SMALL_INT_VALUE(args[4]);
+
+    // Check for presence in downloaded modules. It is normally faster to scan
+    // for imported modules first, but if we find it, we can grab the ready-
+    // made static qstring instead of assembling strings with leading dots.
+    mpy_info_t *info = mpy_data_find(mp_obj_str_get_str(args[0]), leading_dots);
+
+    qstr module_name_qstr;
+    if (info) {
+        // If found, get qstr from downloaded module, including leading dots.
+        module_name_qstr = qstr_from_strn_static(info->mpy_name, strlen(info->mpy_name));
+    } else {
+        // Otherwise get it directly from the argument. This has no leading
+        // dots, but builtin relative modules don't exist anyway.
+        module_name_qstr = mp_obj_str_get_qstr(args[0]);
     }
 
     // Check if module already exists, and return it if it does
-    qstr module_name_qstr = mp_obj_str_get_qstr(args[0]);
     mp_obj_t module_obj = mp_module_get_loaded_or_builtin(module_name_qstr);
     if (module_obj != MP_OBJ_NULL) {
         return module_obj;
     }
 
-    // Pybricks extension: Search for modules in downloaded user data.
-    module_obj = pb_import_loaded_module(n_args, args);
-    if (module_obj != MP_OBJ_NULL) {
+    // If a downloaded module was found but not yet loaded, load it.
+    if (info) {
+        // Parse the static script data.
+        mp_reader_t reader;
+        mp_vfs_map_minimal_t data;
+        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
+
+        // Create new module and execute in its own context.
+        mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);
+        mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
+        mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+        do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
+
+        // Return the newly imported module.
         return module_obj;
     }
 
+    // Nothing found, raise ImportError.
     mp_raise_msg_varg(&mp_type_ImportError, MP_ERROR_TEXT("no module named '%q'"), module_name_qstr);
 }
 
