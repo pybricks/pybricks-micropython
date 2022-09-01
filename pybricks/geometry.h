@@ -12,8 +12,6 @@
 
 #include "py/obj.h"
 
-extern const mp_obj_module_t pb_module_geometry;
-
 extern const mp_obj_type_t pb_type_Matrix;
 
 typedef struct _pb_type_Matrix_obj_t {

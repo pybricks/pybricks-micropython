@@ -88,8 +88,6 @@ extern const pb_obj_enum_member_t pb_Side_LEFT_obj;
 extern const pb_obj_enum_member_t pb_Side_RIGHT_obj;
 extern const pb_obj_enum_member_t pb_Side_TOP_obj;
 
-extern const mp_obj_module_t pb_module_parameters;
-
 #endif // PYBRICKS_PY_PARAMETERS
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_PARAMETERS_H

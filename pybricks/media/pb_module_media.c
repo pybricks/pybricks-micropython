@@ -8,8 +8,6 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include <pybricks/media.h>
-
 #include <pybricks/util_pb/pb_error.h>
 
 STATIC const mp_rom_map_elem_t media_globals_table[] = {

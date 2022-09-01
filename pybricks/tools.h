@@ -12,8 +12,6 @@
 
 extern const mp_obj_type_t pb_type_StopWatch;
 
-extern const mp_obj_module_t pb_module_tools;
-
 #endif // PYBRICKS_PY_TOOLS
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_TOOLS_H

@@ -13,8 +13,6 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_device.h>
 
-extern const mp_obj_module_t pb_module_pupdevices;
-
 extern const pb_obj_with_attr_type_t pb_type_pupdevices_ColorDistanceSensor;
 extern const mp_obj_type_t pb_type_pupdevices_ColorLightMatrix;
 extern const pb_obj_with_attr_type_t pb_type_pupdevices_ColorSensor;

@@ -18,7 +18,6 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
-#include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 
 #if PYBRICKS_HUB_EV3BRICK

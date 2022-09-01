@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 #include "py/mpconfig.h"
 #include "py/obj.h"
@@ -11,17 +11,8 @@
 #include <pbio/version.h>
 
 #include <pybricks/common.h>
-#include <pybricks/ev3devices.h>
-#include <pybricks/experimental.h>
-#include <pybricks/geometry.h>
 #include <pybricks/hubs.h>
-#include <pybricks/iodevices.h>
-#include <pybricks/media.h>
-#include <pybricks/nxtdevices.h>
-#include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
-#include <pybricks/robotics.h>
-#include <pybricks/tools.h>
 
 #include "genhdr/mpversion.h"
 

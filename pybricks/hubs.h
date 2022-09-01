@@ -13,8 +13,6 @@
 
 extern const pb_obj_with_attr_type_t pb_type_ThisHub;
 
-extern const mp_obj_module_t pb_module_hubs;
-
 #endif // PYBRICKS_PY_HUBS
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_HUBS_H

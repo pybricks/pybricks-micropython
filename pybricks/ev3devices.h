@@ -10,8 +10,6 @@
 
 #include "py/obj.h"
 
-extern const mp_obj_module_t pb_module_ev3devices;
-
 extern const mp_obj_type_t pb_type_ev3devices_ColorSensor;
 extern const mp_obj_type_t pb_type_ev3devices_InfraredSensor;
 extern const mp_obj_type_t pb_type_ev3devices_GyroSensor;
