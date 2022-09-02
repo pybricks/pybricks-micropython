@@ -34,7 +34,7 @@
 #define FORCED_EXIT (0x100)
 
 // callback for when stop button is pressed in IDE or on hub
-void pbsys_main_stop_program(void) {
+void pbsys_main_stop_program(bool force_stop) {
     static const mp_rom_obj_tuple_t args = {
         .base = { .type = &mp_type_tuple },
         .len = 2,

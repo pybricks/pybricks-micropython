@@ -5,6 +5,6 @@
 #define _PBSYS_SYS_USER_PROGRAM_H_
 
 void pbsys_program_stop_poll(void);
-void pbsys_program_stop(void);
+void pbsys_program_stop(bool force_stop);
 
 #endif // _PBSYS_SYS_USER_PROGRAM_H_
