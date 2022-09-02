@@ -22,10 +22,14 @@ static bool program_stop_on_shutdown_requested;
 /**
  * Request the user program to stop. For example, in MicroPython, this may raise
  * a SystemExit exception.
+ *
+ * @param [in]  force_stop  Whether to force stop the program instead of asking
+ *                          nicely. This is true when the application must stop
+ *                          on shutdown.
  */
-void pbsys_program_stop(void) {
+void pbsys_program_stop(bool force_stop) {
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        pbsys_main_stop_program();
+        pbsys_main_stop_program(force_stop);
     }
 }
 
@@ -48,7 +52,7 @@ void pbsys_program_stop_poll(void) {
         // Should not request stop more than once.
         return;
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-        pbsys_program_stop();
+        pbsys_program_stop(true);
         program_stop_on_shutdown_requested = true;
         return;
     }
@@ -63,7 +67,7 @@ void pbsys_program_stop_poll(void) {
     if ((btn & stop_buttons) == stop_buttons) {
         if (!stop_button_pressed) {
             stop_button_pressed = true;
-            pbsys_program_stop();
+            pbsys_program_stop(false);
         }
     } else {
         stop_button_pressed = false;

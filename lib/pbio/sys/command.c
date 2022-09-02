@@ -23,7 +23,7 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
 
     switch (cmd) {
         case PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM:
-            pbsys_program_stop();
+            pbsys_program_stop(false);
             return PBIO_PYBRICKS_ERROR_OK;
         case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM:
             return pbio_pybricks_error_from_pbio_error(pbsys_program_load_start_user_program());

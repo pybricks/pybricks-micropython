@@ -52,8 +52,12 @@ void pbsys_main_run_program(pbsys_main_program_t *program);
  * Stops (cancels) the main application program.
  *
  * This should be provided by the application running on top of pbio.
+ *
+ * @param [in]  force_stop  Whether to force stop the program instead of asking
+ *                          nicely. This is true when the application must stop
+ *                          on shutdown.
  */
-void pbsys_main_stop_program(void);
+void pbsys_main_stop_program(bool force_stop);
 
 /**
  * Handles standard input.
@@ -68,7 +72,7 @@ bool pbsys_main_stdin_event(uint8_t c);
 
 #else
 
-static inline void pbsys_main_stop_program(void) {
+static inline void pbsys_main_stop_program(bool force_stop) {
 }
 
 static inline bool pbsys_main_stdin_event(uint8_t c) {
