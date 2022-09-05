@@ -8,11 +8,14 @@
 - The `use_gyro` method is added to the normal `DriveBase` class instead of
   having a separate `GyroDriveBase` class. Since the latter was only released
   in beta versions, this is not a breaking change ([support#1054]).
+- New color distance function used by the color sensors that is more
+  consistent when distinguishing user-provided colors ([pybricks-micropython#104]).
 
 ### Fixed
 - Improved external device detection speed ([support#1140]).
 - Fixed Powered Up Tilt Sensor not working  ([support#1189]).
 
+[pybricks-micropython#104]: https://github.com/pybricks/pybricks-micropython/pull/104
 [support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1140]: https://github.com/pybricks/support/issues/1140
 [support#1189]: https://github.com/pybricks/support/issues/1189

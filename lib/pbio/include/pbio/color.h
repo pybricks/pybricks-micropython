@@ -118,6 +118,7 @@ void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed);
 void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv);
+int32_t pbio_color_get_bicone_squared_distance(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
 
 #endif // _PBIO_COLOR_H_
 
