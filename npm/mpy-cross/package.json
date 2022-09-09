@@ -26,5 +26,10 @@
     "devDependencies": {
         "@types/emscripten": "^1.39.3",
         "typescript": "^3.8.3"
+    },
+    "browser": {
+        "crypto": false,
+        "fs": false,
+        "path": false
     }
 }

@@ -130,7 +130,7 @@ MPY_CROSS_BUILD := $(MICROPYTHON_DIR)/mpy-cross/build
 INC = -I$(MPY_CROSS_BUILD) -I$(MICROPYTHON_DIR)/mpy-cross -I$(MICROPYTHON_DIR)
 COPT = -std=gnu99 -m32
 ifeq ($(DEBUG),1)
-COPT += -g4 -O0 --js-opts 0 --source-map-base http://localhost:8000/mpy-cross/
+COPT += -O0 -gsource-map --source-map-base http://localhost:8000/mpy-cross/
 else
 COPT += -Oz
 endif

@@ -1,4 +1,9 @@
 
+## Unreleased
+
+### Added
+- Add browser polyfills for node packages.
+
 ## 2.0.0 - 2022-07-05
 ### Changed
 - Renamed wasm file `mpy-cross-v6.wasm`.
