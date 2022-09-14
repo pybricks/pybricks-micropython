@@ -1,3 +1,7 @@
+## 6.0.1 - 2022-09-14
+### Removed
+- Removed invalid property on `FirmwareMetadataV110` type.
+
 ## 6.0.0 - 2022-09-14
 ### Added
 - Added support for firmware.metadata.json v2.0.0.

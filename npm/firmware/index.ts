@@ -89,8 +89,6 @@ export type FirmwareMetadataV110 = Omit<
     'hub-name-offset': number;
     /** The maximum size of the firmware name in bytes, including the zero-termination. */
     'max-hub-name-size': number;
-    /** The SHA256 hash of the firmware. */
-    'firmware-sha256': string;
 };
 
 /**
