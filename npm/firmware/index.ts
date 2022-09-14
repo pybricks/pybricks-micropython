@@ -55,11 +55,11 @@ export const zipFileNameMap: ReadonlyMap<HubType, string> = new Map([
 ]);
 
 /**
- * Firmware metadata properties.
+ * Firmware metadata v1.0.0 properties.
  */
-export interface FirmwareMetadata {
+export type FirmwareMetadataV100 = {
     /** The version of the metadata itself. */
-    'metadata-version': string;
+    'metadata-version': '1.0.0';
     /** The version of the firmware binary. */
     'firmware-version': string;
     /** The type of hub the firmware runs on. */
@@ -74,13 +74,50 @@ export interface FirmwareMetadata {
     'user-mpy-offset': number;
     /** The maximum firmware size allowed on the hub. */
     'max-firmware-size': number;
-    /** The offset to where the hub name is stored in the firmware. (since  v1.1.0) */
-    'hub-name-offset'?: number;
-    /** The maximum size of the firmware name in bytes, including the zero-termination. (since  v1.1.0) */
-    'max-hub-name-size'?: number;
-    /** The SHA256 hash of the firmware. (since  v1.1.0) */
-    'firmware-sha256'?: string;
-}
+};
+
+/**
+ * Firmware metadata v1.1.0 properties.
+ */
+export type FirmwareMetadataV110 = Omit<
+    FirmwareMetadataV100,
+    'metadata-version'
+> & {
+    /** The version of the metadata itself. */
+    'metadata-version': '1.1.0';
+    /** The offset to where the hub name is stored in the firmware. */
+    'hub-name-offset': number;
+    /** The maximum size of the firmware name in bytes, including the zero-termination. */
+    'max-hub-name-size': number;
+    /** The SHA256 hash of the firmware. */
+    'firmware-sha256': string;
+};
+
+/**
+ * Firmware metadata v2.0.0 properties.
+ */
+export type FirmwareMetadataV200 = {
+    /** The version of the metadata itself. */
+    'metadata-version': '2.0.0';
+    /** The version of the firmware binary. */
+    'firmware-version': string;
+    /** The type of hub the firmware runs on. */
+    'device-id': HubType;
+    /** The type of checksum used by the device bootloader to verify the firmware. */
+    'checksum-type': 'sum' | 'crc32';
+    /** The data size for the checksum calculation. */
+    'checksum-size': number;
+    /** The offset to where the hub name is stored in the firmware. */
+    'hub-name-offset': number;
+    /** The maximum size of the firmware name in bytes, including the zero-termination. */
+    'hub-name-size': number;
+};
+
+/** Firmware metadata of any version. */
+export type FirmwareMetadata =
+    | FirmwareMetadataV100
+    | FirmwareMetadataV110
+    | FirmwareMetadataV200;
 
 /** Types of errors that can be raised by FirmwareReader. */
 export enum FirmwareReaderErrorCode {
@@ -238,6 +275,39 @@ export class FirmwareReader {
 }
 
 /**
+ * Type discriminator for metadata v1.0.0.
+ * @param metadata The metadata to test.
+ * @returns True if the metadata is v1.0.0.
+ */
+export function metadataIsV100(
+    metadata: FirmwareMetadata
+): metadata is FirmwareMetadataV100 {
+    return metadata['metadata-version'] === '1.0.0';
+}
+
+/**
+ * Type discriminator for metadata v1.1.0.
+ * @param metadata The metadata to test.
+ * @returns True if the metadata is v1.1.0.
+ */
+export function metadataIsV110(
+    metadata: FirmwareMetadata
+): metadata is FirmwareMetadataV110 {
+    return metadata['metadata-version'] === '1.1.0';
+}
+
+/**
+ * Type discriminator for metadata v2.0.0.
+ * @param metadata The metadata to test.
+ * @returns True if the metadata is v2.0.0.
+ */
+export function metadataIsV200(
+    metadata: FirmwareMetadata
+): metadata is FirmwareMetadataV200 {
+    return metadata['metadata-version'] === '2.0.0';
+}
+
+/**
  * Encodes a firmware name as UTF-8 bytes with zero-termination.
  *
  * If the name is too long to fit in the size specified by the metadata, the
@@ -251,11 +321,17 @@ export function encodeHubName(
     name: string,
     metadata: FirmwareMetadata
 ): Uint8Array {
-    if (metadata['max-hub-name-size'] === undefined) {
+    const nameSize = metadataIsV100(metadata)
+        ? undefined
+        : metadataIsV110(metadata)
+        ? metadata['max-hub-name-size']
+        : metadata['hub-name-size'];
+
+    if (nameSize === undefined) {
         throw new Error('firmware image does not support firmware name');
     }
 
-    const bytes = new Uint8Array(metadata['max-hub-name-size']);
+    const bytes = new Uint8Array(nameSize);
 
     // subarray ensures zero termination if encoded length is >= 'max-hub-name-size'.
     encoder.encodeInto(name, bytes.subarray(0, bytes.length - 1));

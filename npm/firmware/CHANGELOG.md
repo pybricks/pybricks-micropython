@@ -1,3 +1,10 @@
+## 6.0.0 - 2022-09-14
+### Added
+- Added support for firmware.metadata.json v2.0.0.
+- Added metadata version type discrimination functions.
+### Changed
+- Changed definition of `FirmwareMetadata` type (potentially breaking).
+
 ## 5.0.0 - 2022-07-20
 ### Changed
 - Made `main.py` optional.
