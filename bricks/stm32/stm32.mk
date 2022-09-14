@@ -588,7 +588,7 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
-	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $<.map $@
 
 # firmware.zip file
 ZIP_FILES := \

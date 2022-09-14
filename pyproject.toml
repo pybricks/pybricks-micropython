@@ -20,7 +20,7 @@ nbstripout = "^0.5.0"
 notebook = "^6.4.12"
 plotly = "^4.14.1"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
-pybricksdev = "1.0.0a30"
+pybricksdev = "1.0.0a31"
 pycryptodomex = "^3.9.9"
 PyGithub = "^1.51"
 python-dotenv = "^0.15.0"
