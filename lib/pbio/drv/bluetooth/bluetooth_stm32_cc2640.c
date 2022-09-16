@@ -270,6 +270,18 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
+    static int8_t tx_power;
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    HCI_LE_readAdvertisingChannelTxPower();
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+
+    {
+        HCI_StatusCodes_t status = read_buf[9];
+        if (status == bleSUCCESS) {
+            tx_power = read_buf[10];
+        }
+    }
+
     // Set advertising data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -281,7 +293,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     pbio_uuid128_reverse_copy(&data[5], pbio_pybricks_service_uuid);
     data[21] = 2; // length
     data[22] = GAP_ADTYPE_POWER_LEVEL;
-    data[23] = 0;
+    data[23] = tx_power;
     GAP_updateAdvertistigData(GAP_AD_TYPE_ADVERTISEMNT_DATA, 24, data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data

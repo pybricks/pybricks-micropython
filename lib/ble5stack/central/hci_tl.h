@@ -96,6 +96,9 @@
 // Status Parameters
 #define HCI_READ_RSSI                                     0x1405	//!< opcode of @ref HCI_ReadRssiCmd
 
+// Low energy commands
+#define HCI_LE_READ_ADVERTISING_CHANNEL_TX_POWER          0x2007	//!< opcode of @ref HCI_LE_readAdvertisingChannelTxPower
+
 /* HCI Status return types  */
 typedef enum
 {
