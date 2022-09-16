@@ -1116,7 +1116,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     // init GAP layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, 16); // 16 comes from LEGO bootloader
+    aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name));
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gap_init_end(&gap_service_handle, &gap_dev_name_char_handle, &gap_appearance_char_handle);
 
