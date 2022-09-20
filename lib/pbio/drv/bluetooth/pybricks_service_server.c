@@ -49,6 +49,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <pbio/protocol.h>
+
 #include "btstack_defines.h"
 #include "ble/att_db.h"
 #include "ble/att_server.h"
@@ -101,8 +103,6 @@ static int pybricks_service_write_callback(hci_con_handle_t con_handle, uint16_t
 void pybricks_service_server_init(
     pybricks_characteristic_write_callback_t write_callback,
     pybricks_characteristic_configuration_callback_t configuration_callback) {
-    static const uint8_t pybricks_service_uuid128[] = { 0xC5, 0xF5, 0x00, 0x01, 0x82, 0x80, 0x46, 0xDA, 0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF };
-    static const uint8_t pybricks_characteristic_uuid128[] = { 0xC5, 0xF5, 0x00, 0x02, 0x82, 0x80, 0x46, 0xDA, 0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF };
 
     btstack_assert(write_callback);
     btstack_assert(configuration_callback);
@@ -113,13 +113,13 @@ void pybricks_service_server_init(
     // get service handle range
     uint16_t start_handle = 0;
     uint16_t end_handle = 0xffff;
-    int service_found = gatt_server_get_get_handle_range_for_service_with_uuid128(pybricks_service_uuid128, &start_handle, &end_handle);
+    int service_found = gatt_server_get_get_handle_range_for_service_with_uuid128(pbio_pybricks_service_uuid, &start_handle, &end_handle);
     btstack_assert(service_found != 0);
     UNUSED(service_found);
 
     // get characteristic value handle and client configuration handle
-    pybricks_value_handle = gatt_server_get_value_handle_for_characteristic_with_uuid128(start_handle, end_handle, pybricks_characteristic_uuid128);
-    pybricks_client_configuration_handle = gatt_server_get_client_configuration_handle_for_characteristic_with_uuid128(start_handle, end_handle, pybricks_characteristic_uuid128);
+    pybricks_value_handle = gatt_server_get_value_handle_for_characteristic_with_uuid128(start_handle, end_handle, pbio_pybricks_control_char_uuid);
+    pybricks_client_configuration_handle = gatt_server_get_client_configuration_handle_for_characteristic_with_uuid128(start_handle, end_handle, pbio_pybricks_control_char_uuid);
 
     log_info("pybricks_value_handle 0x%02x", pybricks_value_handle);
     log_info("pybricks_client_configuration_handle 0x%02x", pybricks_client_configuration_handle);
