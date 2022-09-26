@@ -871,7 +871,7 @@ static void handle_event(uint8_t *packet) {
                                     GATT_PROP_READ, PNP_ID_UUID);
                             } else if (start_handle <= pybricks_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 1,
-                                    GATT_PROP_WRITE_NO_RSP | GATT_PROP_WRITE | GATT_PROP_NOTIFY,
+                                    GATT_PROP_WRITE | GATT_PROP_NOTIFY,
                                     pbio_pybricks_command_event_char_uuid);
                             } else if (start_handle <= pybricks_service_handle + 4) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 4,

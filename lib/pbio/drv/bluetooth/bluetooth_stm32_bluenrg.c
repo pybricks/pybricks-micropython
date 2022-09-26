@@ -830,7 +830,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_command_event_char_uuid,
-        NUS_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
+        NUS_CHAR_SIZE, CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_char_end(&pybricks_command_event_char_handle);
