@@ -22,6 +22,7 @@
 #include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
+#include <pbsys/app.h>
 
 #include <contiki.h>
 #include <lego_lwp3.h>
@@ -94,7 +95,9 @@ static uint16_t remote_handle;
 static uint16_t remote_lwp3_char_handle;
 
 // Pybricks GATT service handles
-static uint16_t pybricks_service_handle, pybricks_char_handle;
+static uint16_t pybricks_service_handle;
+static uint16_t pybricks_command_event_char_handle;
+static uint16_t pybricks_hub_capabilities_char_handle;
 
 // Nordic UART GATT service handles
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
@@ -339,7 +342,7 @@ retry:
             goto done;
         }
         service_handle = pybricks_service_handle;
-        attr_handle = pybricks_char_handle;
+        attr_handle = pybricks_command_event_char_handle;
     } else if (send->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         if (!uart_tx_notify_en) {
             goto done;
@@ -807,24 +810,47 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     };
 
     // c5f50002-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_char_uuid[] = {
+    static const uint8_t pybricks_command_event_char_uuid[] = {
         0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
         0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
+    };
+
+    // c5f50003-8280-46da-89f4-6d8051e4aeef
+    static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
     };
 
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 4);
+    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 6);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_serv_end(&pybricks_service_handle);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_char_uuid,
+    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_command_event_char_uuid,
         NUS_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_add_char_end(&pybricks_char_handle);
+    aci_gatt_add_char_end(&pybricks_command_event_char_handle);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_hub_capabilities_char_uuid,
+        PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
+        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_char_end(&pybricks_hub_capabilities_char_handle);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
+        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_APP_USER_PROGRAM_SIZE);
+        aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_hub_capabilities_char_handle,
+            0, PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, buf);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_update_char_value_end();
 
     PT_END(pt);
 }
@@ -886,11 +912,11 @@ static void handle_event(hci_event_pckt *event) {
 
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
-                    if (subevt->attr_handle == pybricks_char_handle + 1) {
+                    if (subevt->attr_handle == pybricks_command_event_char_handle + 1) {
                         if (receive_handler) {
                             receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, subevt->att_data, subevt->data_length);
                         }
-                    } else if (subevt->attr_handle == pybricks_char_handle + 2) {
+                    } else if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         if (receive_handler) {

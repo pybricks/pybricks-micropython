@@ -140,8 +140,35 @@ typedef enum {
 
 uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags);
 
+/**
+ * Application-specific feature flag supported by a hub.
+ */
+typedef enum {
+    // NB: the values are part of the protocol, so don't change the values!
+
+    /**
+     * Hub support interactive REPL.
+     */
+    PBIO_PYBRICKS_FEATURE_REPL = 1 << 0,
+    /**
+     * Hub supports user program with multiple MicroPython .mpy files ABI v6.
+     */
+    PBIO_PYBRICKS_FEATURE_USER_PROG_FORMAT_MULTI_MPY_V6 = 1 << 1,
+} pbio_pybricks_feature_flags_t;
+
+void pbio_pybricks_hub_capabilities(uint8_t *buf,
+    uint16_t max_char_size,
+    pbio_pybricks_feature_flags_t feature_flags,
+    uint32_t max_user_prog_size);
+
+/**
+ * Number of bytes in the Pybricks hub capabilities characteristic value.
+ */
+#define PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE 10
+
 extern const uint8_t pbio_pybricks_service_uuid[];
-extern const uint8_t pbio_pybricks_control_char_uuid[];
+extern const uint8_t pbio_pybricks_command_event_char_uuid[];
+extern const uint8_t pbio_pybricks_hub_capabilities_char_uuid[];
 
 extern const uint16_t pbio_gatt_device_info_service_uuid;
 extern const uint16_t pbio_gatt_firmware_version_char_uuid;

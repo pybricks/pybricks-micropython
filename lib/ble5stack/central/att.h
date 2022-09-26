@@ -151,7 +151,8 @@ extern "C"
  * Refer to ble_user_config.h for the device-specific maximum MTU value.
  */
 #define ATT_MTU_SIZE                     23 //L2CAP_MTU_SIZE //!< Minimum ATT MTU size
-//#define ATT_MAX_MTU_SIZE                 (255-L2CAP_HDR_SIZE) //!< Maximum ATT MTU size
+#define ATT_MAX_MTU_SIZE                 158 //(255-L2CAP_HDR_SIZE) //!< Maximum ATT MTU size
+// Pybricks: official LEGO firmware uses 158
 /** @} End ATT_MTU_Sizes */
 
 /**

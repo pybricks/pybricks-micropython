@@ -23,6 +23,7 @@
 #include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
+#include <pbsys/app.h>
 
 #include <contiki.h>
 #include <lego_lwp3.h>
@@ -131,7 +132,8 @@ static uint16_t gap_service_handle, gap_service_end_handle;
 // Device information service handles
 static uint16_t dev_info_service_handle, dev_info_service_end_handle;
 // Pybricks service handles
-static uint16_t pybricks_service_handle, pybricks_service_end_handle, pybricks_char_handle;
+static uint16_t pybricks_service_handle, pybricks_service_end_handle;
+static uint16_t pybricks_command_event_char_handle, pybricks_capabilities_char_handle;
 // Pybricks tx notifications enabled
 static bool pybricks_notify_en;
 // Nordic UART service handles
@@ -379,7 +381,7 @@ retry:
             task->status = PBIO_ERROR_INVALID_OP;
             goto done;
         }
-        attr_handle = pybricks_char_handle;
+        attr_handle = pybricks_command_event_char_handle;
     } else if (send->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         if (!uart_tx_notify_en) {
             task->status = PBIO_ERROR_INVALID_OP;
@@ -808,9 +810,12 @@ static void handle_event(uint8_t *packet) {
 
             switch (event_code) {
                 case ATT_EVENT_EXCHANGE_MTU_REQ: {
+                    // uint16_t client_mtu = (data[7] << 8) | data[6];
                     attExchangeMTURsp_t rsp;
 
-                    rsp.serverRxMTU = 158;
+                    rsp.serverRxMTU = ATT_MAX_MTU_SIZE;
+                    // REVISIT: may need to keep a table of min(client_mtu, MAX_ATT_MTU_SIZE)
+                    // for each connection if any known clients have smaller MTU
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
                 }
                 break;
@@ -867,7 +872,11 @@ static void handle_event(uint8_t *packet) {
                             } else if (start_handle <= pybricks_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 1,
                                     GATT_PROP_WRITE_NO_RSP | GATT_PROP_WRITE | GATT_PROP_NOTIFY,
-                                    pbio_pybricks_control_char_uuid);
+                                    pbio_pybricks_command_event_char_uuid);
+                            } else if (start_handle <= pybricks_service_handle + 4) {
+                                read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 4,
+                                    GATT_PROP_READ,
+                                    pbio_pybricks_hub_capabilities_char_uuid);
                             } else if (start_handle <= uart_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, uart_service_handle + 1,
                                     GATT_PROP_WRITE_NO_RSP, pbio_nus_rx_char_uuid);
@@ -971,13 +980,22 @@ static void handle_event(uint8_t *packet) {
                         rsp.len = 7;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    } else if (handle == pybricks_char_handle + 1) {
+                    } else if (handle == pybricks_command_event_char_handle + 1) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
                         buf[0] = pybricks_notify_en;
                         buf[1] = 0;
                         rsp.len = 2;
+                        rsp.pValue = buf;
+                        ATT_ReadRsp(connection_handle, &rsp);
+                    } else if (handle == pybricks_capabilities_char_handle + 1) {
+                        attReadRsp_t rsp;
+                        uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
+
+                        // REVISIT: client MTU may be smaller, in which case we can't used fixed value for MTU
+                        pbio_pybricks_hub_capabilities(buf, ATT_MAX_MTU_SIZE - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_APP_USER_PROGRAM_SIZE);
+                        rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
                     } else if (handle == uart_tx_char_handle + 1) {
@@ -1089,11 +1107,11 @@ static void handle_event(uint8_t *packet) {
                     uint16_t char_handle = (data[9] << 8) | data[8];
 
                     DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
-                    if (char_handle == pybricks_char_handle) {
+                    if (char_handle == pybricks_command_event_char_handle) {
                         if (receive_handler) {
                             receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, &data[10], pdu_len - 4);
                         }
-                    } else if (char_handle == pybricks_char_handle + 1) {
+                    } else if (char_handle == pybricks_command_event_char_handle + 1) {
                         pybricks_notify_en = data[10];
                         DBG("noti: %d", pybricks_notify_en);
                     } else if (char_handle == uart_rx_char_handle) {
@@ -1529,7 +1547,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 4, GATT_MIN_ENCRYPT_KEY_SIZE);
+    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 6, GATT_MIN_ENCRYPT_KEY_SIZE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1539,7 +1557,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(pbio_pybricks_control_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    GATT_AddAttribute2(pbio_pybricks_command_event_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1547,11 +1565,22 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     GATT_AddAttribute(GATT_CLIENT_CHAR_CFG_UUID, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GATT_AddAttribute2(pbio_pybricks_hub_capabilities_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
     // the response to the last GATT_AddAttribute contains the first and last handles
     // that were allocated.
     pybricks_service_handle = (read_buf[13] << 8) | read_buf[12];
     pybricks_service_end_handle = (read_buf[15] << 8) | read_buf[14];
-    pybricks_char_handle = pybricks_service_handle + 2;
+    pybricks_command_event_char_handle = pybricks_service_handle + 2;
+    pybricks_capabilities_char_handle = pybricks_service_handle + 4;
     DBG("pybricks: %04X", pybricks_service_handle);
 
     PT_END(pt);

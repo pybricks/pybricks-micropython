@@ -25,9 +25,30 @@ uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags) {
 }
 
 /**
+ * Encodes the value of the Pybricks hub capabilities characteristic.
+ *
+ * @param [in]  buf                 A buffer where the result will be written.
+ *                                  Must be at least ::PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE bytes.
+ * @param [in]  max_char_size       The maximum characteristic value size (negotiated MTU - 3).
+ * @param [in]  feature_flags       The feature flags.
+ * @param [in]  max_user_prog_size  The maximum allowable size for the user program.
+ */
+void pbio_pybricks_hub_capabilities(uint8_t *buf,
+    uint16_t max_char_size,
+    pbio_pybricks_feature_flags_t feature_flags,
+    uint32_t max_user_prog_size) {
+
+    pbio_set_uint16_le(&buf[0], max_char_size);
+    pbio_set_uint32_le(&buf[2], feature_flags);
+    pbio_set_uint32_le(&buf[6], max_user_prog_size);
+}
+
+/**
  * Pybricks Service UUID.
  *
  * C5F50001-8280-46DA-89F4-6D8051E4AEEF
+ *
+ * @since Protocol v1.0.0
  */
 const uint8_t pbio_pybricks_service_uuid[] = {
     0xC5, 0xF5, 0x00, 0x01, 0x82, 0x80, 0x46, 0xDA,
@@ -35,12 +56,26 @@ const uint8_t pbio_pybricks_service_uuid[] = {
 };
 
 /**
- * Pybricks Characteristic UUID.
+ * Pybricks Command/Event Characteristic UUID.
  *
  * C5F50002-8280-46DA-89F4-6D8051E4AEEF
+ *
+ * @since Protocol v1.0.0
  */
-const uint8_t pbio_pybricks_control_char_uuid[] = {
+const uint8_t pbio_pybricks_command_event_char_uuid[] = {
     0xC5, 0xF5, 0x00, 0x02, 0x82, 0x80, 0x46, 0xDA,
+    0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
+};
+
+/**
+ * Pybricks Hub Capabilities Characteristic UUID.
+ *
+ * C5F50003-8280-46DA-89F4-6D8051E4AEEF
+ *
+ * @since Protocol v1.2.0
+ */
+const uint8_t pbio_pybricks_hub_capabilities_char_uuid[] = {
+    0xC5, 0xF5, 0x00, 0x03, 0x82, 0x80, 0x46, 0xDA,
     0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
 };
 
