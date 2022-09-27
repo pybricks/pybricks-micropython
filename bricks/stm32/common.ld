@@ -57,7 +57,7 @@ SECTIONS
         _edata = .;        /* define a global symbol at data end; used by startup code in order to initialize the .data section in RAM */
     } >RAM AT> FLASH_FIRMWARE
 
-    /* Uninitialized data section */
+    /* Uninitialized (zeroed at startup) data section */
     .bss :
     {
         . = ALIGN(4);
@@ -70,25 +70,13 @@ SECTIONS
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
 
-    /* The user_ram section between ebss and sstack is used for two purposes:
-       - The system uses the first portion to store user program data.
-       - The system can then run an application, which has read-only access to
-         the user data. The remaining space is used by the application as heap.
-    */
-    _pbsys_program_load_user_ram_start = _ebss;
-    .user_ram :
+    /* Uninitialized (not zeroed at startup) data section */
+
+    .noinit (NOLOAD) :
     {
         . = ALIGN(4);
-        /**
-         * The full storage may be loaded to RAM on boot, so we need to have
-         * at least as much RAM available. We also want to ensure there is
-         * at least 3K of additional RAM for the application heap.
-         */
-        . = . + _pbdrv_block_device_storage_size + 3072;
-        . = ALIGN(4);
+        *(.noinit)
     } >RAM
-
-    _heap_end = _sstack;
 
     .stack :
     {

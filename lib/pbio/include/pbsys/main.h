@@ -19,13 +19,17 @@
  */
 typedef struct _pbsys_main_program_t {
     /**
-     * User program data.
+     * Starting address of the user code.
      */
-    uint8_t *data;
+    void *code_start;
     /**
-     * User program data size.
+     * Ending address of the user code.
      */
-    uint32_t size;
+    void *code_end;
+    /**
+     * Ending address of user RAM.
+     */
+    void *data_end;
     /**
      * Whether to run an application-specific builtin program instead of the
      * program given by the data. The builtin program may still use the data.

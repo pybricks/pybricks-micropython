@@ -34,7 +34,6 @@
 // defined in linker script
 extern uint32_t _estack;
 extern uint32_t _sstack;
-extern uint32_t _heap_end;
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_stm32_poll(void) {
@@ -235,8 +234,8 @@ static uint8_t *mpy_data_get_buf(mpy_info_t *info) {
 static mpy_info_t *mpy_first;
 static uint32_t mpy_size_total;
 static inline void mpy_data_init(pbsys_main_program_t *program) {
-    mpy_first = (mpy_info_t *)program->data;
-    mpy_size_total = program->size;
+    mpy_first = (mpy_info_t *)program->code_start;
+    mpy_size_total = program->code_end - program->code_start;
 }
 
 // Finds a MicroPython module in the program data.
@@ -268,8 +267,8 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
 
     // MicroPython heap starts after program data, aligned by GC block size.
     uint32_t align = MICROPY_BYTES_PER_GC_BLOCK -
-        ((uint32_t)(program->data) + program->size) % MICROPY_BYTES_PER_GC_BLOCK;
-    gc_init(program->data + program->size + align, &_heap_end);
+        (uint32_t)program->code_end % MICROPY_BYTES_PER_GC_BLOCK;
+    gc_init(program->code_end + align, program->data_end);
 
     // Set program data reference to first script. This is used to run main,
     // and to set the starting point for finding downloaded modules.
@@ -290,9 +289,9 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         pb_package_pybricks_init(false);
 
         // For backwards compatibility, detect old-format single-script data.
-        if (program->data[0] == 'M') {
+        if (((uint8_t *)program->code_start)[0] == 'M') {
             // TODO: This case be removed once relevant IDE tools are updated.
-            run_user_program(program->size, program->data);
+            run_user_program(program->code_end - program->code_start, program->code_start);
         } else {
             // Execute the first script, which is the main script.
             run_user_program(mpy_first->mpy_size, mpy_data_get_buf(mpy_first));

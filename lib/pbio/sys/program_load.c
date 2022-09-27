@@ -43,18 +43,20 @@ typedef struct {
     volatile uint32_t checksum_complement;
     #endif
     /**
-     * Size of the application program.
+     * Size of the application program (size of code only).
      */
     uint32_t program_size;
     /**
-     * Data of the application program.
+     * Data of the application program (code + heap).
      */
-    uint8_t program_data[];
+    uint8_t program_data[PBSYS_CONFIG_PROGRAM_LOAD_PROGRAM_DATA_SIZE] __attribute__((aligned(sizeof(void *))));
 } data_map_t;
 
 // The data map sits at the start of user RAM.
-extern uint32_t _pbsys_program_load_user_ram_start;
-static data_map_t *map = (data_map_t *)&_pbsys_program_load_user_ram_start;
+data_map_t pbsys_user_ram_data_map __attribute__((section(".noinit"), used));
+static data_map_t *map = &pbsys_user_ram_data_map;
+
+#define MAP_HEADER_SIZE (sizeof(*map) - sizeof(map->program_data))
 
 #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
 // Updates checksum in data map to satisfy bootloader requirements.
@@ -90,14 +92,14 @@ static void pbsys_program_load_update_checksum(void) {
 
 // Gets the (constant) maximum program size.
 static inline uint32_t pbsys_program_load_get_max_program_size() {
-    return pbdrv_block_device_get_size() - sizeof(data_map_t);
+    return pbdrv_block_device_get_size() - MAP_HEADER_SIZE;
 }
 
 // Updates the current program size.
 static inline void pbsys_program_load_set_program_size(uint32_t size) {
     map->program_size = size;
     // Data was updated, so set the write size.
-    map->write_size = size + sizeof(data_map_t);
+    map->write_size = size + MAP_HEADER_SIZE;
 }
 
 PROCESS(pbsys_program_load_process, "program_load");
@@ -342,8 +344,9 @@ pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program) {
     }
 
     // Get application data.
-    program->size = map->program_size;
-    program->data = map->program_data;
+    program->code_start = map->program_data;
+    program->code_end = map->program_data + map->program_size;
+    program->data_end = map->program_data + sizeof(map->program_data);
     program->run_builtin = false;
 
     // This special size is used to indicate running a builtin program.
