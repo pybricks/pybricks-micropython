@@ -69,8 +69,8 @@ typedef struct {
     SPI_HandleTypeDef hspi;
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
-    /** Callback to run on SPI event*/
-    void (*callback)(void);
+    /** The calling contiki process for polling. Also serves as "busy" flag. */
+    struct process *process;
     /** DMA for sending SPI commands and data */
     DMA_HandleTypeDef tx_dma;
     /** DMA for receiving SPI data */
@@ -82,10 +82,6 @@ static pbdrv_block_device_drv_t bdev = {
     .pdata = &pbdrv_block_device_w25qxx_stm32_platform_data,
     .spi_status = SPI_STATUS_COMPLETE,
 };
-
-void pbdrv_block_device_set_callback(void (*callback)(void)) {
-    bdev.callback = callback;
-}
 
 /**
  * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
@@ -113,8 +109,9 @@ void pbdrv_block_device_w25qxx_stm32_spi_irq(void) {
  */
 void pbdrv_block_device_w25qxx_stm32_spi_tx_complete(void) {
     bdev.spi_status = SPI_STATUS_COMPLETE;
-    if (bdev.callback) {
-        bdev.callback();
+
+    if (bdev.process) {
+        process_poll(bdev.process);
     }
 }
 
@@ -123,8 +120,9 @@ void pbdrv_block_device_w25qxx_stm32_spi_tx_complete(void) {
  */
 void pbdrv_block_device_w25qxx_stm32_spi_rx_complete(void) {
     bdev.spi_status = SPI_STATUS_COMPLETE;
-    if (bdev.callback) {
-        bdev.callback();
+
+    if (bdev.process) {
+        process_poll(bdev.process);
     }
 }
 
@@ -133,8 +131,9 @@ void pbdrv_block_device_w25qxx_stm32_spi_rx_complete(void) {
  */
 void pbdrv_block_device_w25qxx_stm32_spi_error(void) {
     bdev.spi_status = SPI_STATUS_ERROR;
-    if (bdev.callback) {
-        bdev.callback();
+
+    if (bdev.process) {
+        process_poll(bdev.process);
     }
 }
 
@@ -366,6 +365,13 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
         PT_EXIT(pt);
     }
 
+    if (bdev.process) {
+        *err = PBIO_ERROR_BUSY;
+        PT_EXIT(pt);
+    }
+
+    bdev.process = PROCESS_CURRENT();
+
     // Split up reads to maximum chunk size.
     size_done = 0;
     while (size_done < size) {
@@ -375,7 +381,7 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
         set_address_be(&cmd_request_read.buffer[1], bdev.pdata->first_safe_write_address + offset + size_done);
         PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_request_read, err));
         if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+            goto out;
         }
 
         // Receive the data.
@@ -383,14 +389,15 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
         cmd_data_read.size = size_now;
         PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_data_read, err));
         if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+            goto out;
         }
 
         size_done += size_now;
     }
 
-    // Errors other than success would have returned by now, so exit without
-    // setting it again.
+out:
+    bdev.process = NULL;
+
     PT_END(pt);
 }
 
@@ -468,13 +475,20 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
         PT_EXIT(pt);
     }
 
+    if (bdev.process) {
+        *err = PBIO_ERROR_BUSY;
+        PT_EXIT(pt);
+    }
+
+    bdev.process = PROCESS_CURRENT();
+
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
         // Writing size 0 means erase.
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
             bdev.pdata->first_safe_write_address + offset, NULL, 0, err));
         if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+            goto out;
         }
     }
 
@@ -485,10 +499,14 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
             bdev.pdata->first_safe_write_address + size_done, buffer + size_done, size_now, err));
         if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+            goto out;
         }
         size_done += size_now;
     }
+
+out:
+    bdev.process = NULL;
+
     PT_END(pt);
 }
 
@@ -554,10 +572,6 @@ void pbdrv_block_device_init(void) {
     process_start(&pbdrv_block_device_w25qxx_stm32_init_process);
 }
 
-static void pbdrv_block_device_init_callback(void) {
-    process_poll(&pbdrv_block_device_w25qxx_stm32_init_process);
-}
-
 PROCESS_THREAD(pbdrv_block_device_w25qxx_stm32_init_process, ev, data) {
 
     static pbio_error_t err;
@@ -565,8 +579,7 @@ PROCESS_THREAD(pbdrv_block_device_w25qxx_stm32_init_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    // This process will be polled on SPI events during init.
-    pbdrv_block_device_set_callback(pbdrv_block_device_init_callback);
+    bdev.process = &pbdrv_block_device_w25qxx_stm32_init_process;
 
     // Write the ID getter command
     PROCESS_PT_SPAWN(&child, spi_command_thread(&child, &cmd_id_tx, &err));
@@ -585,8 +598,7 @@ PROCESS_THREAD(pbdrv_block_device_w25qxx_stm32_init_process, ev, data) {
         PROCESS_EXIT();
     }
 
-    // Clear callback since this process will end.
-    pbdrv_block_device_set_callback(NULL);
+    bdev.process = NULL;
 
     // Deinitialization done.
     pbdrv_init_busy_down();

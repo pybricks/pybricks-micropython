@@ -119,13 +119,6 @@ void pbsys_program_load_deinit(void) {
 }
 
 /**
- * Polls the program load process, used by async block device functions.
- */
-static void pbsys_program_load_process_callback(void) {
-    process_poll(&pbsys_program_load_process);
-}
-
-/**
  * This process loads data from storage on boot, and saves it on shutdown.
  */
 PROCESS_THREAD(pbsys_program_load_process, ev, data) {
@@ -134,10 +127,6 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     static struct pt pt;
 
     PROCESS_BEGIN();
-
-    // Make the block device async functions poll this process when there
-    // is an event to process.
-    pbdrv_block_device_set_callback(pbsys_program_load_process_callback);
 
     // Read size of stored data.
     PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, sizeof(map->write_size), &err));
@@ -167,8 +156,6 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
         // Write the data.
         PROCESS_PT_SPAWN(&pt, pbdrv_block_device_store(&pt, (uint8_t *)map, map->write_size, &err));
     }
-
-    pbdrv_block_device_set_callback(NULL);
 
     // Deinitialization done.
     pbsys_init_busy_down();

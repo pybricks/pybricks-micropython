@@ -69,16 +69,6 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
  */
 PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size, pbio_error_t *err));
 
-/**
- * Sets the callback function to inform caller of block device events.
- *
- * This is normally used to poll the process that spawns the above asynchronous
- * functions, so that it can continue.
- *
- * @param [in] callback  Callback function.
- */
-void pbdrv_block_device_set_callback(void (*callback)(void));
-
 #else
 
 static inline uint32_t pbdrv_block_device_get_size(void) {
@@ -93,8 +83,6 @@ static inline PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer,
     PT_BEGIN(pt);
     *err = PBIO_ERROR_NOT_SUPPORTED;
     PT_END(pt);
-}
-static inline void pbdrv_block_device_set_callback(void (*callback)(void)) {
 }
 
 #endif

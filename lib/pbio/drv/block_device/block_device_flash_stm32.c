@@ -30,11 +30,6 @@ uint32_t pbdrv_block_device_get_size(void) {
 void pbdrv_block_device_init(void) {
 }
 
-static void (*_callback)(void);
-void pbdrv_block_device_set_callback(void (*callback)(void)) {
-    _callback = callback;
-}
-
 extern uint8_t _pbdrv_block_device_storage_start[];
 
 PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
