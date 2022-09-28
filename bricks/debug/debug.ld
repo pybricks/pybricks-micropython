@@ -10,4 +10,3 @@ MEMORY
 }
 
 _stack_size = 8K;
-_pbdrv_block_device_storage_size = 64K;

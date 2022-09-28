@@ -373,12 +373,11 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
     bdev.process = PROCESS_CURRENT();
 
     // Split up reads to maximum chunk size.
-    size_done = 0;
-    while (size_done < size) {
+    for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_math_min(size - size_done, FLASH_SIZE_READ);
 
         // Set address for this read request and send it.
-        set_address_be(&cmd_request_read.buffer[1], bdev.pdata->first_safe_write_address + offset + size_done);
+        set_address_be(&cmd_request_read.buffer[1], bdev.pdata->start_address + offset + size_done);
         PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_request_read, err));
         if (*err != PBIO_SUCCESS) {
             goto out;
@@ -391,8 +390,6 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
         if (*err != PBIO_SUCCESS) {
             goto out;
         }
-
-        size_done += size_now;
     }
 
 out:
@@ -486,22 +483,20 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
         // Writing size 0 means erase.
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
-            bdev.pdata->first_safe_write_address + offset, NULL, 0, err));
+            bdev.pdata->start_address + offset, NULL, 0, err));
         if (*err != PBIO_SUCCESS) {
             goto out;
         }
     }
 
     // Write page by page.
-    size_done = 0;
-    while (size_done < size) {
+    for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_math_min(size - size_done, FLASH_SIZE_WRITE);
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
-            bdev.pdata->first_safe_write_address + size_done, buffer + size_done, size_now, err));
+            bdev.pdata->start_address + size_done, buffer + size_done, size_now, err));
         if (*err != PBIO_SUCCESS) {
             goto out;
         }
-        size_done += size_now;
     }
 
 out:
@@ -511,10 +506,7 @@ out:
 }
 
 uint32_t pbdrv_block_device_get_size(void) {
-    // Defined in linker script. To get the numeric value assigned there, we
-    // need to read the address and cast to uint32_t.
-    extern uint32_t _pbdrv_block_device_storage_size;
-    return (uint32_t)(&_pbdrv_block_device_storage_size);
+    return bdev.pdata->end_address - bdev.pdata->start_address;
 }
 
 PROCESS(pbdrv_block_device_w25qxx_stm32_init_process, "w25qxx");

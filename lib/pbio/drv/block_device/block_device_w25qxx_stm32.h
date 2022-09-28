@@ -46,7 +46,9 @@ typedef struct {
      * this chip address. This can be used to protect the first region of flash
      * if it is used to store things like bootloader information.
      */
-    uint32_t first_safe_write_address;
+    uint32_t start_address;
+    /** Ending address (exclusive) complementary to the start_address. */
+    uint32_t end_address;
 } pbdrv_block_device_w25qxx_stm32_platform_data_t;
 
 /**
