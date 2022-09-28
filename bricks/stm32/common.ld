@@ -50,11 +50,11 @@ SECTIONS
     .data :
     {
         . = ALIGN(4);
-        _sdata = .;        /* create a global symbol at data start; used by startup code in order to initialise the .data section in RAM */
+        _sdata = .;        /* create a global symbol at data start; used by startup code in order to initialize the .data section in RAM */
         *(.data*)          /* .data* sections */
 
         . = ALIGN(4);
-        _edata = .;        /* define a global symbol at data end; used by startup code in order to initialise the .data section in RAM */
+        _edata = .;        /* define a global symbol at data end; used by startup code in order to initialize the .data section in RAM */
     } >RAM AT> FLASH_FIRMWARE
 
     /* Uninitialized data section */

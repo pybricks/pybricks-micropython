@@ -36,7 +36,7 @@ typedef struct {
     IRQn_Type rx_dma_irq;
     /** The SPI registers. */
     SPI_TypeDef *spi;
-    /** The SPI interupt number. */
+    /** The SPI interrupt number. */
     IRQn_Type irq;
     /** The /CS pin. */
     const pbdrv_gpio_t pin_ncs;

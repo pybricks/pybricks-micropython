@@ -174,7 +174,7 @@ start:
     pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
 
     if (process_nevents()) {
-        // somthing was scheduled since the event loop above
+        // something was scheduled since the event loop above
         pthread_sigmask(SIG_SETMASK, &origmask, NULL);
         goto start;
     }

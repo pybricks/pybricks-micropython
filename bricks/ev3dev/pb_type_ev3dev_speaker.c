@@ -448,7 +448,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     const char *text = mp_obj_str_get_str(text_in);
 
-    // FIXME: This function needs to be protected agains re-entrancy to make it
+    // FIXME: This function needs to be protected against re-entrancy to make it
     // thread-safe.
 
     GError *error = NULL;

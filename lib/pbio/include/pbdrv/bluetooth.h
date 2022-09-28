@@ -57,7 +57,7 @@ typedef void (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t c
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
     pbdrv_bluetooth_send_done_t done;
-    /** The data to be sent. This data must remain valied until @p done is called. */
+    /** The data to be sent. This data must remain valid until @p done is called. */
     const uint8_t *data;
     /** The size of @p data. */
     uint8_t size;
@@ -174,7 +174,7 @@ void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_an
 
 // TODO: make this a generic write without response function
 void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
-// TODO: make this a geneic disconnect
+// TODO: make this a generic disconnect
 void pbdrv_bluetooth_disconnect_remote(void);
 
 #else // PBDRV_CONFIG_BLUETOOTH

@@ -335,7 +335,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 //          is a sufficient check to check that scan response is from LWP3 device
                 // PREVIOUSLY: extra check: data_length == 30 for HANDSET
                 //                          data_length == 27 for MARIO
-                //                          data_lenght == 20 for SYSTEM_2IO ... etc
+                //                          data_length == 20 for SYSTEM_2IO ... etc
                 if (event_type == SCAN_RSP && bd_addr_cmp(address, handset.address) == 0) {
                     if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
                         // if the name was passed in from the caller, then filter on name
@@ -464,7 +464,7 @@ static void init_advertising_data(void) {
         2, BLUETOOTH_DATA_TYPE_TX_POWER_LEVEL, 0,
     };
 
-    _Static_assert(sizeof(adv_data) <= 31, "31 octect max");
+    _Static_assert(sizeof(adv_data) <= 31, "31 octet max");
 
     gap_advertisements_set_data(sizeof(adv_data), (uint8_t *)adv_data);
 

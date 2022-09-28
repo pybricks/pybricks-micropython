@@ -112,7 +112,7 @@ class CountingClock(VirtualClock):
 
     def tick(self, *args):
         """
-        Increases the clock time by *step* +/- *fuzz* and triggers the clock interupt.
+        Increases the clock time by *step* +/- *fuzz* and triggers the clock interrupt.
 
         This method has unused *args so that it can be passed directly to the
         :class:`VirtualPlatform` poll subscribe method.

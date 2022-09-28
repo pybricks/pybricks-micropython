@@ -105,7 +105,7 @@ class SimulationModel(ABC):
     def state_change(self, t, x, u):
         """Evaluates the equations of motion at the current state.
 
-        This method is intended to be overridden with system-specic equations.
+        This method is intended to be overridden with system-specific equations.
 
         Arguments:
             t (float): Current time.

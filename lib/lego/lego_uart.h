@@ -255,7 +255,7 @@ typedef enum {
     /**
      * Write command.
      *
-     * This message is sent in either directino after syncronization to select
+     * This message is sent in either direction after syncronization to select
      * the mode.
      *
      * The payload size and data depend on the ::lump_type_id_t of the I/O
@@ -412,7 +412,7 @@ typedef enum {
      * data. The second byte is one of ::lump_data_type_t. The 3rd byte gives
      * the number of digits needed to display the value. The 4th byte gives
      * the number of decimal points to use (e.g. if decimals is 1, the data
-     * values need to be divied by 10 to get the actual value).
+     * values need to be divided by 10 to get the actual value).
      */
     LUMP_INFO_FORMAT        = 0x80,
 } lump_info_t;
@@ -510,7 +510,7 @@ typedef enum {
 /**
  * Data type.
  *
- * Sent in ::LUMP_INFO_FORMAT messges.
+ * Sent in ::LUMP_INFO_FORMAT messages.
  */
 typedef enum {
     /** 8-bit signed integer. */

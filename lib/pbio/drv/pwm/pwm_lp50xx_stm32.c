@@ -251,7 +251,7 @@ static PT_THREAD(pbdrv_pwm_lp50xx_stm32_handle_event(pbdrv_pwm_lp50xx_stm32_priv
 }
 
 /**
- * Interupt handler for Rx DMA IRQ. Needs to be called from IRQ handler in platform.c.
+ * Interrupt handler for Rx DMA IRQ. Needs to be called from IRQ handler in platform.c.
  */
 void pbdrv_pwm_lp50xx_stm32_rx_dma_irq(uint8_t index) {
     pbdrv_pwm_lp50xx_stm32_priv_t *priv = &dev_priv[index];
@@ -260,7 +260,7 @@ void pbdrv_pwm_lp50xx_stm32_rx_dma_irq(uint8_t index) {
 }
 
 /**
- * Interupt handler for Tx DMA IRQ. Needs to be called from IRQ handler in platform.c.
+ * Interrupt handler for Tx DMA IRQ. Needs to be called from IRQ handler in platform.c.
  */
 void pbdrv_pwm_lp50xx_stm32_tx_dma_irq(uint8_t index) {
     pbdrv_pwm_lp50xx_stm32_priv_t *priv = &dev_priv[index];
@@ -269,7 +269,7 @@ void pbdrv_pwm_lp50xx_stm32_tx_dma_irq(uint8_t index) {
 }
 
 /**
- * Interupt handler for I2C EV IRQ. Needs to be called from IRQ handler in platform.c.
+ * Interrupt handler for I2C EV IRQ. Needs to be called from IRQ handler in platform.c.
  */
 void pbdrv_pwm_lp50xx_stm32_i2c_ev_irq(uint8_t index) {
     pbdrv_pwm_lp50xx_stm32_priv_t *priv = &dev_priv[index];
@@ -278,7 +278,7 @@ void pbdrv_pwm_lp50xx_stm32_i2c_ev_irq(uint8_t index) {
 }
 
 /**
- * Interupt handler for I2C ER IRQ. Needs to be called from IRQ handler in platform.c.
+ * Interrupt handler for I2C ER IRQ. Needs to be called from IRQ handler in platform.c.
  */
 void pbdrv_pwm_lp50xx_stm32_i2c_er_irq(uint8_t index) {
     pbdrv_pwm_lp50xx_stm32_priv_t *priv = &dev_priv[index];

@@ -9,7 +9,7 @@
 #include <pbdrv/config.h>
 
 typedef struct {
-    /** The AD/C raw values to delinite the cutoff levels for each digital input. */
+    /** The AD/C raw values to delineate the cutoff levels for each digital input. */
     uint16_t level[8];
     /** The AD/C channel connected to this resistor ladder. */
     uint8_t adc_ch;

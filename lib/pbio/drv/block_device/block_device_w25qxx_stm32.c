@@ -88,21 +88,21 @@ void pbdrv_block_device_set_callback(void (*callback)(void)) {
 }
 
 /**
- * Interupt handler for SPI IRQ. Called from IRQ handler in platform.c.
+ * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
  */
 void pbdrv_block_device_w25qxx_stm32_spi_handle_tx_dma_irq(void) {
     HAL_DMA_IRQHandler(&bdev.tx_dma);
 }
 
 /**
- * Interupt handler for SPI IRQ. Called from IRQ handler in platform.c.
+ * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
  */
 void pbdrv_block_device_w25qxx_stm32_spi_handle_rx_dma_irq(void) {
     HAL_DMA_IRQHandler(&bdev.rx_dma);
 }
 
 /**
- * Interupt handler for SPI IRQ. Called from IRQ handler in platform.c.
+ * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
  */
 void pbdrv_block_device_w25qxx_stm32_spi_irq(void) {
     HAL_SPI_IRQHandler(&bdev.hspi);

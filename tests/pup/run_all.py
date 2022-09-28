@@ -52,7 +52,7 @@ async def main():
                         valid_output = False
                         break
         except FileNotFoundError:
-            # If there is no expected ouput, make sure is none.
+            # If there is no expected output, make sure is none.
             if len(hub.output) > 0:
                 valid_output = False
 

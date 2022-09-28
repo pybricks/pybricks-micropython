@@ -302,7 +302,6 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     // Clean up non-MicroPython resources used by the pybricks package.
     pb_package_pybricks_deinit();
 
-    // Uninitialize MicroPython.
     mp_deinit();
 }
 

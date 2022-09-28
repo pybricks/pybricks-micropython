@@ -213,7 +213,7 @@ class IODeviceCapabilityFlags(IntEnum):
 
     PBIO_IODEV_CAPABILITY_FLAG_NONE = 0
     """
-    Convience value for no flags set.
+    Convenience value for no flags set.
     """
 
     PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT = 1 << 0

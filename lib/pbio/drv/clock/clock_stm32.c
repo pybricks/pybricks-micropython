@@ -74,7 +74,7 @@ void pbdrv_clock_delay_us(uint32_t us) {
 void SysTick_Handler(void) {
     pbdrv_clock_ticks++;
 
-    // Read the systick control regster. This has the side effect of clearing
+    // Read the systick control register. This has the side effect of clearing
     // the COUNTFLAG bit, which makes the logic in pbdrv_clock_get_time
     // work properly.
     SysTick->CTRL;

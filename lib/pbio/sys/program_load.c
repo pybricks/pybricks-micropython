@@ -206,7 +206,7 @@ static PT_THREAD(pbsys_program_receive_chunk(struct pt *pt, uint8_t *data, uint3
             PT_EXIT(pt);
         }
 
-        // On sucess, decrement remaining chunk size.
+        // On success, decrement remaining chunk size.
         remaining -= xfer_size;
     }
 
