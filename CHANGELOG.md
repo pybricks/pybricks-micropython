@@ -30,6 +30,7 @@
 
 ### Fixed
 - Fixed motors going out of sync when starting program ([support#679]).
+- Fixed motor torque signal overflowing under load ([support#729]).
 - Fixed city hub turning back on after shutdown ([support#692]).
 - Fixed IMU I2C bus lockup on SPIKE hubs ([support#232]).
 - Fixed REPL history corrupt after soft reset ([support#699]).
@@ -43,6 +44,7 @@
 [support#679]: https://github.com/pybricks/support/issues/679
 [support#692]: https://github.com/pybricks/support/issues/692
 [support#699]: https://github.com/pybricks/support/issues/699
+[support#729]: https://github.com/pybricks/support/issues/729
 
 ## [3.2.0b3] - 2022-07-20
 

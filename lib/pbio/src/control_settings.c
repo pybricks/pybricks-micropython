@@ -5,6 +5,7 @@
 
 #include <pbio/config.h>
 #include <pbio/control_settings.h>
+#include <pbio/math.h>
 
 /**
  * Converts position-like control units to application-specific units.
@@ -91,7 +92,7 @@ int32_t pbio_control_settings_actuation_app_to_ctl(int32_t input) {
  * @return                   Torque in uNm.
  */
 int32_t pbio_control_settings_mul_by_gain(int32_t value, int32_t gain) {
-    return gain * value / 1000;
+    return pbio_math_mult_then_div(gain, value, 1000);
 }
 
 /**
