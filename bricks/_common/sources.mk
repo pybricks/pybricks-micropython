@@ -185,6 +185,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/control.c \
 	src/control_settings.c \
 	src/dcmotor.c \
+	src/differentiator.c \
 	src/drivebase.c \
 	src/error.c \
 	src/integrator.c \

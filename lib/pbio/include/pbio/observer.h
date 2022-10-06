@@ -15,6 +15,7 @@
 
 #include <pbio/control_settings.h>
 #include <pbio/dcmotor.h>
+#include <pbio/differentiator.h>
 #include <pbio/angle.h>
 
 /**
@@ -61,6 +62,14 @@ typedef struct _pbio_observer_t {
      */
     int32_t current;
     /**
+     * Numeric angle differentiator used to verify estimated speed.
+     */
+    pbio_differentiator_t differentiator;
+    /**
+     * Latest speed value from angle differentiator.
+     */
+    int32_t speed_numeric;
+    /**
      * Whether the motor is stalled according to the model.
      */
     bool stalled;
@@ -81,7 +90,7 @@ typedef struct _pbio_observer_t {
 // Observer state functions:
 
 void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, pbio_angle_t *angle);
-void pbio_observer_get_estimated_state(pbio_observer_t *obs, pbio_angle_t *angle, int32_t *speed);
+void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est);
 void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
 bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration);
 

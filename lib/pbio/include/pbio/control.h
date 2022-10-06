@@ -56,6 +56,10 @@ typedef struct _pbio_control_state_t {
      */
     pbio_angle_t position;
     /**
+     * Speed determined as numerical derivative of position.
+     */
+    int32_t speed;
+    /**
      * Estimated position from application-specific state observer.
      */
     pbio_angle_t position_estimate;

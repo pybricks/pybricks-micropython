@@ -18,3 +18,7 @@
 #define PBIO_CONFIG_UARTDEV_FIRST_PORT      PBIO_PORT_ID_C
 
 #define PBIO_CONFIG_ENABLE_SYS              (1)
+
+// Use shorter window size than default to reduce
+// size of static motor position buffer.
+#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS (50)

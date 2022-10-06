@@ -43,21 +43,26 @@ void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings
 
     // Reset stall state.
     obs->stalled = false;
+
+    // Reset position differentiator.
+    pbio_differentiator_reset(&obs->differentiator, angle);
 }
 
 /**
  * Gets the observer state, which is the estimated state of the real system.
  *
  * @param [in]  obs            The observer instance.
- * @param [out] angle          Estimated angle in millidegrees.
- * @param [out] speed          Estimated speed in millidegrees/second.
+ * @param [out] speed_num      Speed in millidegrees/second as numeric derivative of angle.
+ * @param [out] angle_est      Model estimate of angle in millidegrees.
+ * @param [out] speed_est      Model estimate of speed in millidegrees/second.
  */
-void pbio_observer_get_estimated_state(pbio_observer_t *obs, pbio_angle_t *angle, int32_t *speed) {
+void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est) {
     // Return angle in millidegrees.
-    *angle = obs->angle;
+    *angle_est = obs->angle;
 
     // Return speed in millidegrees per second.
-    *speed = obs->speed;
+    *speed_est = obs->speed;
+    *speed_num = obs->speed_numeric;
 }
 
 static void update_stall_state(pbio_observer_t *obs, uint32_t time, int32_t voltage, int32_t feedback_voltage) {
@@ -107,6 +112,9 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *ang
     if (actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
         // TODO
     }
+
+    // Update numerical derivative as speed sanity check.
+    obs->speed_numeric = pbio_differentiator_get_speed(&obs->differentiator, angle);
 
     int32_t error = pbio_angle_diff_mdeg(angle, &obs->angle);
 

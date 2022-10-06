@@ -106,7 +106,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     int32_t log_data[] = {
         time_now,
         pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position),
-        0,
+        pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed),
         applied_actuation,
         voltage,
         pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position_estimate),
@@ -319,7 +319,7 @@ pbio_error_t pbio_servo_get_state_control(pbio_servo_t *srv, pbio_control_state_
     }
 
     // Get estimated state
-    pbio_observer_get_estimated_state(&srv->observer, &state->position_estimate, &state->speed_estimate);
+    pbio_observer_get_estimated_state(&srv->observer, &state->speed, &state->position_estimate, &state->speed_estimate);
 
     return PBIO_SUCCESS;
 }

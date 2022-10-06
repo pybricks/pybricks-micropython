@@ -16,6 +16,12 @@
 #define PBIO_CONFIG_CONTROL_LOOP_TIME_MS (5)
 #endif
 
+// Angle differentiation time window, must be integer multiple of loop time
+// and integer divisor of 1000.
+#ifndef PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS
+#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS (125)
+#endif
+
 #define PBIO_CONFIG_NUM_DRIVEBASES (PBDRV_CONFIG_NUM_MOTOR_CONTROLLER / 2)
 
 #endif // _PBIO_CONFIG_H_
