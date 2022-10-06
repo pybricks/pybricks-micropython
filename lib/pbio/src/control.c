@@ -256,6 +256,53 @@ void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
     ctl->on_target = true;
     ctl->stalled = false;
+    ctl->load = 0;
+}
+
+/**
+ * Sets the control type for the new maneuver and initializes the corresponding
+ * control status.
+ *
+ * @param [in]  ctl            The control instance.
+ * @param [in]  time_now       The wall time (ticks).
+ * @param [in]  type           Control type for the next maneuver.
+ * @param [in]  on_completion  What to do when reaching the target position.
+ */
+static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now, pbio_control_type_t type, pbio_control_on_completion_t on_completion) {
+
+    // Setting none control type is the same as stopping.
+    if (type == PBIO_CONTROL_NONE) {
+        pbio_control_stop(ctl);
+        return;
+    }
+
+    // Set on completion action for this maneuver.
+    ctl->on_completion = on_completion;
+
+    // Reset done state. It will get the correct value during the next control
+    // update. REVISIT: Evaluate it here.
+    ctl->on_target = false;
+
+    // Exit if control type already set.
+    if (ctl->type == type) {
+        return;
+    }
+
+    // Reset stall state. It will get the correct value during the next control
+    // update. REVISIT: Evaluate it here.
+    ctl->stalled = false;
+
+    // Reset integrator for new control type.
+    if (type == PBIO_CONTROL_POSITION) {
+        // If the new type is position, reset position integrator.
+        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
+    } else {
+        // If the new type is timed, reset speed integrator.
+        pbio_speed_integrator_reset(&ctl->speed_integrator, &ctl->settings);
+    }
+
+    // Set the given type.
+    ctl->type = type;
 }
 
 /**
@@ -279,10 +326,6 @@ void pbio_control_reset(pbio_control_t *ctl) {
 static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_angle_t *target, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
-
-    // Set new maneuver action and stop type, and state
-    ctl->on_completion = on_completion;
-    ctl->on_target = false;
 
     // Common trajectory parameters for all cases covered here.
     pbio_trajectory_command_t command = {
@@ -349,18 +392,8 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         }
     }
 
-    // Reset PID control if needed
-    if (!pbio_control_type_is_position(ctl)) {
-
-        // New angle maneuver, so reset the rate integrator
-        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
-
-        // Reset load filter
-        ctl->load = 0;
-    }
-
-    // Set the new control state
-    ctl->type = PBIO_CONTROL_POSITION;
+    // Activate control type and reset integrators if needed.
+    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_POSITION, on_completion);
 
     return PBIO_SUCCESS;
 }
@@ -456,10 +489,6 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
  */
 pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint32_t time_now, int32_t position) {
 
-    // Set new maneuver action and stop type, and state
-    ctl->on_completion = PBIO_CONTROL_ON_COMPLETION_HOLD;
-    ctl->on_target = false;
-
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_command_t command = {
         .time_start = pbio_control_get_ref_time(ctl, time_now),
@@ -469,18 +498,11 @@ pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint3
     pbio_control_settings_app_to_ctl_long(&ctl->settings, position, &command.position_start);
     pbio_control_settings_app_to_ctl_long(&ctl->settings, position, &command.position_end);
 
+    // Holding means staying at a constant trajectory.
     pbio_trajectory_make_constant(&ctl->trajectory, &command);
-    // If called for the first time, set state and reset PID
-    if (!pbio_control_type_is_position(ctl)) {
-        // Initialize or reset the PID control status for the given maneuver
-        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
 
-        // Reset load filter
-        ctl->load = 0;
-    }
-
-    // This is an angular control maneuver
-    ctl->type = PBIO_CONTROL_POSITION;
+    // Activate control type and reset integrators if needed.
+    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_POSITION, PBIO_CONTROL_ON_COMPLETION_HOLD);
 
     return PBIO_SUCCESS;
 }
@@ -504,10 +526,6 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
         // For timed maneuvers, the end point has no meaning, so just coast.
         on_completion = PBIO_CONTROL_ON_COMPLETION_COAST;
     }
-
-    // Set new maneuver action and stop type, and state
-    ctl->on_completion = on_completion;
-    ctl->on_target = false;
 
     // Common trajectory parameters for the cases covered here.
     pbio_trajectory_command_t command = {
@@ -578,17 +596,8 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
         }
     }
 
-    // Reset PD control if needed
-    if (!pbio_control_type_is_time(ctl)) {
-        // New maneuver, so reset the rate integrator
-        pbio_speed_integrator_reset(&ctl->speed_integrator, &ctl->settings);
-
-        // Set the new control state
-        ctl->type = PBIO_CONTROL_TIMED;
-
-        // Reset load filter
-        ctl->load = 0;
-    }
+    // Activate control type and reset integrators if needed.
+    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_TIMED, on_completion);
 
     return PBIO_SUCCESS;
 }
