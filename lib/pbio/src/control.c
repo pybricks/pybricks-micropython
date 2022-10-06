@@ -63,7 +63,7 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pb
 
     // For zero final speed, we need to at least stand still, so return false
     // when we're still moving faster than the tolerance.
-    if (pbio_math_abs(state->speed_estimate) > ctl->settings.speed_tolerance) {
+    if (pbio_math_abs(state->speed) > ctl->settings.speed_tolerance) {
         return false;
     }
 
@@ -128,7 +128,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // We want to stop building up further errors if we are at the proportional torque limit. So, we pause the trajectory
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
-    int32_t windup_margin = pbio_control_settings_mul_by_loop_time(pbio_math_abs(state->speed_estimate)) * 2;
+    int32_t windup_margin = pbio_control_settings_mul_by_loop_time(pbio_math_abs(state->speed)) * 2;
     int32_t max_windup_torque = ctl->settings.actuation_max + pbio_control_settings_mul_by_gain(windup_margin, ctl->settings.pid_kp);
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
@@ -163,8 +163,8 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
 
     // Check if controller is stalled
     ctl->stalled = pbio_control_type_is_position(ctl) ?
-        pbio_position_integrator_stalled(&ctl->position_integrator, time_now, state->speed_estimate, ref->speed) :
-        pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed_estimate, ref->speed);
+        pbio_position_integrator_stalled(&ctl->position_integrator, time_now, state->speed, ref->speed) :
+        pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed, ref->speed);
 
     // Check if we are on target
     ctl->on_target = pbio_control_check_completion(ctl, ref->time, state, &ref_end);
@@ -232,7 +232,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     int32_t log_data[] = {
         ref->time - ctl->trajectory.start.time,
         pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position),
-        0,
+        pbio_control_settings_ctl_to_app(&ctl->settings, state->speed),
         *actuation,
         *control,
         pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref->position),
@@ -343,7 +343,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         // If no control is ongoing, we just start from the measured state.
         command.time_start = time_now;
         command.position_start = state->position;
-        command.speed_start = state->speed_estimate;
+        command.speed_start = state->speed;
 
         // With the command fully populated, we can calculate the trajectory.
         err = pbio_trajectory_new_angle_command(&ctl->trajectory, &command);
@@ -543,7 +543,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
         // If no control is ongoing, we just start from the measured state.
         command.time_start = time_now;
         command.position_start = state->position;
-        command.speed_start = state->speed_estimate;
+        command.speed_start = state->speed;
 
         // With the command fully populated, we can calculate the trajectory.
         err = pbio_trajectory_new_time_command(&ctl->trajectory, &command);
