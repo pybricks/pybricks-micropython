@@ -351,13 +351,9 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
 
     // Reset PID control if needed
     if (!pbio_control_type_is_position(ctl)) {
-        // Get (again) the reference at current time, so we get the correct
-        // value regardless of the command path followed above.
-        pbio_trajectory_reference_t ref_new;
-        pbio_trajectory_get_reference(&ctl->trajectory, time_now, &ref_new);
 
         // New angle maneuver, so reset the rate integrator
-        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, ref_new.time);
+        pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
 
         // Reset load filter
         ctl->load = 0;
