@@ -412,8 +412,21 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
             pbio_control_stop(&srv->control);
             return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_BRAKE, 0);
         case PBIO_CONTROL_ON_COMPLETION_HOLD: {
-            // To hold we can just run 0 degrees from here.
-            return pbio_servo_run_angle(srv, 0, 0, on_completion);
+            // To hold, we first have to figure out which angle to hold.
+            int32_t hold_target;
+            if (pbio_control_is_active(&srv->control)) {
+                // If control is active, hold at current target.
+                uint32_t time = pbio_control_get_ref_time(&srv->control, pbio_control_get_time_ticks());
+                pbio_trajectory_reference_t ref;
+                pbio_trajectory_get_reference(&srv->control.trajectory, time, &ref);
+                hold_target = pbio_control_settings_ctl_to_app_long(&srv->control.settings, &ref.position);
+            } else {
+                // If no control is ongoing, just hold measured state.
+                int32_t speed;
+                pbio_servo_get_state_user(srv, &hold_target, &speed);
+            }
+            // Track the hold angle.
+            return pbio_servo_track_target(srv, hold_target);
         }
         default:
             return PBIO_ERROR_INVALID_ARG;
