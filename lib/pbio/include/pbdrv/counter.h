@@ -34,11 +34,9 @@ static inline pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
-    *count = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
-    *count = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
