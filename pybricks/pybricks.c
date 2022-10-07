@@ -12,6 +12,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
+#include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
 
 #include "genhdr/mpversion.h"
