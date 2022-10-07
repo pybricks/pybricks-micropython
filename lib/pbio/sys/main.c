@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
         // Receive a program. This cancels itself on shutdown.
         static pbsys_main_program_t program;
-        pbio_error_t err = pbsys_program_load_receive(&program);
+        pbio_error_t err = pbsys_program_load_wait_command(&program);
         if (err != PBIO_SUCCESS) {
             continue;
         }
