@@ -14,6 +14,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
+#include <pbio/protocol.h>
 #include <pbio/task.h>
 
 #include <lego_lwp3.h>
@@ -52,7 +53,7 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
-typedef void (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size);
+typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size);
 
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */

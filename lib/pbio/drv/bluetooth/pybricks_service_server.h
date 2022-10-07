@@ -47,7 +47,7 @@
 #include "bluetooth.h"
 #include "btstack_defines.h"
 
-typedef void (*pybricks_characteristic_write_callback_t)(hci_con_handle_t con_handle, const uint8_t *data, uint16_t size);
+typedef pbio_pybricks_error_t (*pybricks_characteristic_write_callback_t)(hci_con_handle_t con_handle, const uint8_t *data, uint16_t size);
 typedef void (*pybricks_characteristic_configuration_callback_t)(hci_con_handle_t con_handle, uint16_t value);
 
 /**

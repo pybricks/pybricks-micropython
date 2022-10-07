@@ -135,10 +135,12 @@ static void pybricks_can_send(void *context) {
     send->done();
 }
 
-static void pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
+static pbio_pybricks_error_t pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
     if (receive_handler) {
-        receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, data, size);
+        return receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, data, size);
     }
+
+    return ATT_ERROR_UNLIKELY_ERROR;
 }
 
 static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) {

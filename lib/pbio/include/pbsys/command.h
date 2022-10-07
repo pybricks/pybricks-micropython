@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 /**
  * @addtogroup SysCommand System: Command Parser
@@ -15,7 +15,9 @@
 
 #include <stdint.h>
 
-void pbsys_command(const uint8_t *data, uint32_t size);
+#include <pbio/protocol.h>
+
+pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size);
 
 #endif // _PBSYS_COMMAND_H_
 

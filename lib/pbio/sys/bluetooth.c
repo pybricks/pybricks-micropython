@@ -149,15 +149,17 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_SUCCESS;
 }
 
-static void handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size) {
+static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
-        pbsys_command(data, size);
-    } else if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
+        return pbsys_command(data, size);
+    }
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         // This will drop data if buffer is full
         if (uart_rx_callback) {
             // If there is a callback hook, we have to process things one byte at
             // a time.
-            for (int i = 0; i < size; i++) {
+            for (uint32_t i = 0; i < size; i++) {
                 if (!uart_rx_callback(data[i])) {
                     lwrb_write(&uart_rx_ring, &data[i], 1);
                 }
@@ -165,7 +167,11 @@ static void handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_
         } else {
             lwrb_write(&uart_rx_ring, data, size);
         }
+
+        return PBIO_PYBRICKS_ERROR_OK;
     }
+
+    return PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
 }
 
 static void send_done(void) {

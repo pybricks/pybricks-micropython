@@ -56,6 +56,9 @@ typedef struct {
 data_map_t pbsys_user_ram_data_map __attribute__((section(".noinit"), used));
 static data_map_t *map = &pbsys_user_ram_data_map;
 
+static bool pbsys_program_load_start_user_program_requested;
+static bool pbsys_program_load_start_repl_requested;
+
 #define MAP_HEADER_SIZE (sizeof(*map) - sizeof(map->program_data))
 
 #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
@@ -95,11 +98,95 @@ static inline uint32_t pbsys_program_load_get_max_program_size() {
     return pbdrv_block_device_get_size() - MAP_HEADER_SIZE;
 }
 
-// Updates the current program size.
-static inline void pbsys_program_load_set_program_size(uint32_t size) {
+/**
+ * Writes the user program metadata.
+ *
+ * @param [in]  size    The size of the user program in bytes.
+ *
+ * @returns             ::PBIO_ERROR_BUSY if the user program is running.
+ *                      Otherwise, ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_program_load_set_program_size(uint32_t size) {
+    // we can't allow this to be changed while a user program is running
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        return PBIO_ERROR_BUSY;
+    }
+
     map->program_size = size;
     // Data was updated, so set the write size.
     map->write_size = size + MAP_HEADER_SIZE;
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Writes data to user RAM.
+ *
+ * @param [in]  offset      The offset in bytes from the base user RAM address.
+ * @param [in]  data        The data to write.
+ * @param [in]  size        The size of @p data.
+ *
+ * @returns                 ::PBIO_ERROR_INVALID_ARG if requested @p offset and
+ *                          @p size are outside of the allocated user RAM.
+ *                          ::PBIO_ERROR_BUSY if the user program is running.
+ *                          Otherwise ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_program_load_set_program_data(uint32_t offset, const void *data, uint32_t size) {
+    if (offset + size > sizeof(map->program_data)) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // we can't allow this to be changed while a user program is running
+    // REVISIT: we could allocate a section of user RAM that can be changed
+    // while the program is running as a way of passing data to the user program
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    memcpy(map->program_data + offset, data, size);
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Requests to start the user program.
+ *
+ * @returns     ::PBIO_ERROR_BUSY if a user program is already running.
+ *              ::PBIO_ERROR_INVALID_ARG if the user program has an invalid size.
+ *              ::PBIO_ERROR_NOT_SUPPORTED if the program load module is disabled.
+ *              Otherwise ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_program_load_start_user_program(void) {
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Don't run invalid programs.
+    if (map->program_size == 0 || map->program_size > pbsys_program_load_get_max_program_size()) {
+        // TODO: Validate the data beyond just size.
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    pbsys_program_load_start_user_program_requested = true;
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Requests to start the REPL.
+ *
+ * @returns     ::PBIO_ERROR_BUSY if a user program is already running.
+ *              ::PBIO_ERROR_NOT_SUPPORTED if the program load module is disabled.
+ *              Otherwise ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_program_load_start_repl(void) {
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    pbsys_program_load_start_repl_requested = true;
+
+    return PBIO_SUCCESS;
 }
 
 PROCESS(pbsys_program_load_process, "program_load");
@@ -335,6 +422,18 @@ pbio_error_t pbsys_program_load_receive(pbsys_main_program_t *program) {
         pbio_do_one_event();
         if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
             return PBIO_ERROR_CANCELED;
+        }
+        if (pbsys_program_load_start_user_program_requested) {
+            pbsys_program_load_start_user_program_requested = false;
+            err = PBIO_SUCCESS;
+            break;
+        }
+        if (pbsys_program_load_start_repl_requested) {
+            pbsys_program_load_start_repl_requested = false;
+            program->code_start = program->code_end = map->program_data;
+            program->data_end = map->program_data + sizeof(map->program_data);
+            program->run_builtin = true;
+            return PBIO_SUCCESS;
         }
     }
 

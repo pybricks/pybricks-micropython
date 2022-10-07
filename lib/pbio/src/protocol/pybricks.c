@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 // Pybricks communication protocol
 
 #include <stdint.h>
 
+#include <pbio/error.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 
@@ -92,3 +93,26 @@ const uint16_t pbio_gatt_software_version_char_uuid = 0x2A28;
 
 /** Bluetooth PnP ID Characteristic UUID. */
 const uint16_t pbio_gatt_pnp_id_char_uuid = 0x2A50;
+
+/**
+ * Converts a ::pbio_error_t to a ::pbio_pybricks_error_t for commands.
+ *
+ * @param [in]  error   The ::pbio_error_t.
+ * @returns             The equivelent ::pbio_pybricks_error_t.
+ */
+pbio_pybricks_error_t pbio_pybricks_error_from_pbio_error(pbio_error_t error) {
+    switch (error) {
+        case PBIO_SUCCESS:
+            return PBIO_PYBRICKS_ERROR_OK;
+        case PBIO_ERROR_INVALID_ARG:
+            return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+        case PBIO_ERROR_BUSY:
+            return PBIO_PYBRICKS_ERROR_BUSY;
+        case PBIO_ERROR_NOT_SUPPORTED:
+            return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
+        default:
+            // to keep code size down, only know used values are included
+            // in the map and this is a fallback in case we missed something
+            return PBIO_PYBRICKS_ERROR_UNLIKELY_ERROR;
+    }
+}

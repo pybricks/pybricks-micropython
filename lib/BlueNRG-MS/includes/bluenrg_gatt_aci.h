@@ -681,7 +681,7 @@ tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle);
  * @param att_val Value as passed in the event @ref EVT_BLUE_GATT_WRITE_PERMIT_REQ.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_write_response(uint16_t conn_handle,
+void aci_gatt_write_response_begin(uint16_t conn_handle,
                                    uint16_t attr_handle,
                                    uint8_t write_status,
                                    uint8_t err_code,

@@ -62,7 +62,7 @@ typedef struct {
 STATIC pb_remote_t pb_remote_singleton;
 
 // Handles LEGO Wireless protocol messages from the handset
-STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint8_t size) {
+STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_remote_t *remote = &pb_remote_singleton;
 
     if (value[0] == 5 && value[2] == LWP3_MSG_TYPE_HW_NET_CMDS && value[3] == LWP3_HW_NET_CMD_CONNECTION_REQ) {
@@ -76,6 +76,8 @@ STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const u
             memcpy(remote->right, &value[4], 3);
         }
     }
+
+    return PBIO_PYBRICKS_ERROR_OK;
 }
 
 STATIC void remote_assert_connected(void) {

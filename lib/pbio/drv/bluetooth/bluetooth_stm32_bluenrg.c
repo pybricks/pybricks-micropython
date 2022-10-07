@@ -830,8 +830,8 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_command_event_char_uuid,
-        NUS_CHAR_SIZE, CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
-        GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
+        ATT_MTU - 3, CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
+        GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_char_end(&pybricks_command_event_char_handle);
 
@@ -912,11 +912,7 @@ static void handle_event(hci_event_pckt *event) {
 
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
-                    if (subevt->attr_handle == pybricks_command_event_char_handle + 1) {
-                        if (receive_handler) {
-                            receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, subevt->att_data, subevt->data_length);
-                        }
-                    } else if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
+                    if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         if (receive_handler) {
@@ -935,6 +931,20 @@ static void handle_event(hci_event_pckt *event) {
                     if (notification_handler) {
                         notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, subevt->attr_value, subevt->event_data_length - 2);
                     }
+                }
+                break;
+
+                case EVT_BLUE_GATT_WRITE_PERMIT_REQ: {
+                    evt_gatt_write_permit_req *subevt = (evt_gatt_write_permit_req *)evt->data;
+                    pbio_pybricks_error_t err = PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
+
+                    if (subevt->attr_handle == pybricks_command_event_char_handle + 1) {
+                        if (receive_handler) {
+                            err = receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, subevt->data, subevt->data_length);
+                        }
+                    }
+
+                    aci_gatt_write_response_begin(subevt->conn_handle, subevt->attr_handle, !!err, err, subevt->data_length, subevt->data);
                 }
                 break;
             }

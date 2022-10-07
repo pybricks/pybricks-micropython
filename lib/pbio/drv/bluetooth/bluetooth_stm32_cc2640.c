@@ -1105,27 +1105,40 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_WRITE_REQ: {
                     uint8_t command = data[7]; // command = write without response
                     uint16_t char_handle = (data[9] << 8) | data[8];
+                    pbio_pybricks_error_t err = PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
 
                     DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
                     if (char_handle == pybricks_command_event_char_handle) {
                         if (receive_handler) {
-                            receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, &data[10], pdu_len - 4);
+                            err = receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, &data[10], pdu_len - 4);
                         }
                     } else if (char_handle == pybricks_command_event_char_handle + 1) {
                         pybricks_notify_en = data[10];
+                        err = PBIO_PYBRICKS_ERROR_OK;
                         DBG("noti: %d", pybricks_notify_en);
                     } else if (char_handle == uart_rx_char_handle) {
                         if (receive_handler) {
-                            receive_handler(PBDRV_BLUETOOTH_CONNECTION_UART, &data[10], pdu_len - 4);
+                            err = receive_handler(PBDRV_BLUETOOTH_CONNECTION_UART, &data[10], pdu_len - 4);
                         }
                     } else if (char_handle == uart_tx_char_handle + 1) {
                         uart_tx_notify_en = data[10];
+                        err = PBIO_PYBRICKS_ERROR_OK;
                         DBG("noti: %d", uart_tx_notify_en);
                     } else {
                         DBG("unhandled write req: %04X", char_handle);
                     }
+
                     if (!command) {
-                        ATT_WriteRsp(connection_handle);
+                        if (err) {
+                            attErrorRsp_t rsp;
+
+                            rsp.reqOpcode = ATT_WRITE_REQ;
+                            rsp.handle = char_handle;
+                            rsp.errCode = err;
+                            ATT_ErrorRsp(connection_handle, &rsp);
+                        } else {
+                            ATT_WriteRsp(connection_handle);
+                        }
                     }
                 }
                 break;

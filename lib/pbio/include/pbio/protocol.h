@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2022 The Pybricks Authors
 
 /**
  * @addtogroup ProtocolPybricks pbio/protocol: Pybricks Communication Protocol
+ *
+ * Additional details about the Pybricks Profile can be found at
+ * <https://github.com/pybricks/technical-info/blob/master/pybricks-ble-profile.md>.
  * @{
  */
 
@@ -11,6 +14,7 @@
 
 #include <stdint.h>
 
+#include <pbio/error.h>
 #include <pbio/util.h>
 
 // DEVELOPERS: bump the version as appropriate when adding/changing the protocol
@@ -20,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 1
+#define PBIO_PROTOCOL_VERSION_MINOR 2
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -47,7 +51,86 @@ typedef enum {
      * @since Protocol v1.0.0
      */
     PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM = 0,
+
+    /**
+     * Requests that the user program should be started.
+     *
+     * Errors:
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM = 1,
+
+    /**
+     * Requests that the REPL should be started.
+     *
+     * Errors:
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_COMMAND_START_REPL = 2,
+
+    /**
+     * Requests to write user program metadata.
+     *
+     * Parameters:
+     * - size: The size of the user program in bytes (32-bit little-endian unsigned integer).
+     *
+     * Errors:
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if the user program is running.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META = 3,
+
+    /**
+     * Requests to write data to user RAM.
+     *
+     * Parameters:
+     * - offset: The offset from the user RAM base address (32-bit little-endian unsigned integer).
+     * - payload: The data to write (0 to 507 bytes).
+     *
+     * Errors:
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if the user program is running and the
+     *   data would write over the user program area of the user RAM.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_COMMAND_WRITE_USER_RAM = 4,
 } pbio_pybricks_command_t;
+
+/**
+ * Application-specific error codes that are used in ATT_ERROR_RSP.
+ */
+typedef enum {
+    PBIO_PYBRICKS_ERROR_OK = 0,
+
+    // NB: these values are standard BLE protocol values (i.e. Table 3.4 in v5.3 core specification)
+
+    PBIO_PYBRICKS_ERROR_INVALID_HANDLE = 0x01,
+    PBIO_PYBRICKS_ERROR_UNLIKELY_ERROR = 0x0e,
+    PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED = 0x13,
+
+    // NB: these values are limited to 0x80 – 0x9F as required by the Bluetooth
+    // spec (i.e. Table 3.4 in v5.3 core specification)
+
+    /**
+     * An invalid command was requested.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_ERROR_INVALID_COMMAND = 0x80,
+    /**
+     * The command cannot be completed now because the required resources are busy.
+     *
+     * @since Protocol v1.2.0
+     */
+    PBIO_PYBRICKS_ERROR_BUSY = 0x81,
+} pbio_pybricks_error_t;
+
+pbio_pybricks_error_t pbio_pybricks_error_from_pbio_error(pbio_error_t error);
 
 /**
  * Pybricks event types.

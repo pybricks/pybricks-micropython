@@ -1153,20 +1153,18 @@ tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle)
   return status;
 }
 
-tBleStatus aci_gatt_write_response(uint16_t conn_handle,
+void aci_gatt_write_response_begin(uint16_t conn_handle,
                                    uint16_t attr_handle,
                                    uint8_t write_status,
                                    uint8_t err_code,
                                    uint8_t att_val_len,
                                    uint8_t *att_val)
 {
-  struct hci_request_and_response rq;
-  uint8_t status;
+  struct hci_request rq;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
-  if ((att_val_len+7) > HCI_MAX_PAYLOAD_SIZE)
-    return BLE_STATUS_INVALID_PARAMS;
+  assert((att_val_len+7) <= HCI_MAX_PAYLOAD_SIZE);
 
   conn_handle = htobs(conn_handle);
   memcpy(buffer + indx, &conn_handle, 2);
@@ -1188,20 +1186,11 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
   memcpy(buffer + indx, att_val, att_val_len);
   indx += att_val_len;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_RESPONSE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
-  rq.rparam = &status;
-  rq.rlen = 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  if (status) {
-    return status;
-  }
-
-  return 0;
+  hci_send_req(&rq);
 }
 
 tBleStatus aci_gatt_allow_read(uint16_t conn_handle)

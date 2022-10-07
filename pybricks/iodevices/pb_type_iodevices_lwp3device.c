@@ -45,7 +45,7 @@ typedef struct {
 STATIC pb_lwp3device_t pb_lwp3device_singleton;
 
 // Handles LEGO Wireless protocol messages from the LWP3 Device
-STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint8_t size) {
+STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // Each message overwrites the previous received messages
@@ -53,6 +53,8 @@ STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const u
     memcpy(lwp3device->buffer, &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
 
     lwp3device->notification_received = true;
+
+    return PBIO_PYBRICKS_ERROR_OK;
 }
 
 STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_t timeout) {

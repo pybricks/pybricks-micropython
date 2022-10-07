@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 #include <pbio/protocol.h>
+
+#include "program_load.h"
 #include "program_stop.h"
 
 /**
@@ -12,7 +14,7 @@
  * @param [in]  data    The raw command data.
  * @param [in]  size    The size of @p data in bytes.
  */
-void pbsys_command(const uint8_t *data, uint32_t size) {
+pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
     assert(data);
     assert(size);
 
@@ -21,9 +23,18 @@ void pbsys_command(const uint8_t *data, uint32_t size) {
     switch (cmd) {
         case PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM:
             pbsys_program_stop();
-            break;
+            return PBIO_PYBRICKS_ERROR_OK;
+        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM:
+            return pbio_pybricks_error_from_pbio_error(pbsys_program_load_start_user_program());
+        case PBIO_PYBRICKS_COMMAND_START_REPL:
+            return pbio_pybricks_error_from_pbio_error(pbsys_program_load_start_repl());
+        case PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META:
+            return pbio_pybricks_error_from_pbio_error(pbsys_program_load_set_program_size(
+                pbio_get_uint32_le(&data[1])));
+        case PBIO_PYBRICKS_COMMAND_WRITE_USER_RAM:
+            return pbio_pybricks_error_from_pbio_error(pbsys_program_load_set_program_data(
+                pbio_get_uint32_le(&data[1]), &data[5], size - 5));
         default:
-            // TODO: return error
-            break;
+            return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
     }
 }

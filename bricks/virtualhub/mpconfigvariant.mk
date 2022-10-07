@@ -158,6 +158,7 @@ LIB_SRC_C += $(addprefix lib/,\
 	pbio/src/light/animation.c \
 	pbio/src/light/color_light.c \
 	pbio/src/logger.c \
+	pbio/src/protocol/pybricks.c \
 	pbio/src/main.c \
 	pbio/src/math.c \
 	pbio/src/motor_process.c \
