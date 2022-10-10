@@ -37,14 +37,6 @@ typedef struct _pbsys_main_program_t {
     bool run_builtin;
 } pbsys_main_program_t;
 
-/**
- * Callback function to handle stdin events.
- * @param [in]  c   the character received
- * @return          *true* if the character was handled and should not be placed
- *                  in the stdin buffer, otherwise *false*.
- */
-typedef bool (*pbsys_main_stdin_event_callback_t)(uint8_t c);
-
 #if PBSYS_CONFIG_MAIN
 
 /**

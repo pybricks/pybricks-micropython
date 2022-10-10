@@ -9,17 +9,24 @@
 #ifndef _PBSYS_BLUETOOTH_H_
 #define _PBSYS_BLUETOOTH_H_
 
-#include <pbsys/config.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include <pbio/error.h>
+#include <pbsys/config.h>
+
+/**
+ * Callback function to handle stdin events.
+ * @param [in]  c   the character received
+ * @return          *true* if the character was handled and should not be placed
+ *                  in the stdin buffer, otherwise *false*.
+ */
+typedef bool (*pbsys_bluetooth_stdin_event_callback_t)(uint8_t c);
 
 #if PBSYS_CONFIG_BLUETOOTH
 
-#include <stdint.h>
-
-#include <pbsys/main.h>
-
 void pbsys_bluetooth_init(void);
-void pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event_callback_t callback);
+void pbsys_bluetooth_rx_set_callback(pbsys_bluetooth_stdin_event_callback_t callback);
 void pbsys_bluetooth_rx_flush(void);
 uint32_t pbsys_bluetooth_rx_get_available(void);
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size);
