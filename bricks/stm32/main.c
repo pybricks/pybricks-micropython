@@ -170,15 +170,70 @@ static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_
     }
 }
 
-static void run_user_program(uint32_t len, uint8_t *buf) {
+/** mpy info and data for one script or module. */
+typedef struct {
+    /** Size of the mpy program. */
+    uint32_t mpy_size;
+    /** Null-terminated name of the script, without file extension. */
+    char mpy_name[];
+    /** mpy data follows thereafter. */
+} mpy_info_t;
+
+// Program data is a concatenation of multiple mpy files. This sets a reference
+// to the first script and the total size so we can search for modules.
+static mpy_info_t *mpy_first;
+static mpy_info_t *mpy_end;
+static inline void mpy_data_init(pbsys_main_program_t *program) {
+    mpy_first = (mpy_info_t *)program->code_start;
+    mpy_end = (mpy_info_t *)program->code_end;
+}
+
+/**
+ * Gets a reference to the mpy data of a script.
+ * @param [in]  info    A pointer to an mpy info header.
+ * @return              A pointer to the .mpy file.
+ */
+static uint8_t *mpy_data_get_buf(mpy_info_t *info) {
+    // The header consists of the size and a zero-terminated module name string.
+    return (uint8_t *)info + sizeof(info->mpy_size) + strlen(info->mpy_name) + 1;
+}
+
+/**
+ * Finds a MicroPython module in the program data.
+ * @param [in]  name    The fully qualified name of the module.
+ * @return              A pointer to the .mpy file in user RAM or NULL if the
+ *                      module was not found.
+ */
+static mpy_info_t *mpy_data_find(qstr name) {
+    const char *name_str = qstr_str(name);
+
+    for (mpy_info_t *info = mpy_first; info < mpy_end;
+         info = (mpy_info_t *)(mpy_data_get_buf(info) + info->mpy_size)) {
+        if (strcmp(info->mpy_name, name_str) == 0) {
+            return info;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * Runs the __main__ module from user RAM.
+ */
+static void run_user_program(void) {
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
+        mpy_info_t *info = mpy_data_find(MP_QSTR___main__);
 
-        // Load user .mpy file without erasing it.
+        if (!info) {
+            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("no __main__ module"));
+        }
+
+        // This is similar to __import__ except we don't push/pop globals
         mp_reader_t reader;
         mp_vfs_map_minimal_t data;
-        mp_vfs_map_minimal_new_reader(&reader, &data, buf, len);
+        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
         mp_module_context_t *context = m_new_obj(mp_module_context_t);
         context->module.globals = mp_globals_get();
         mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
@@ -215,47 +270,6 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
     }
 }
 
-/** mpy info and data for one script or module. */
-typedef struct {
-    /** Size of the mpy program. */
-    uint32_t mpy_size;
-    /** Null-terminated name of the script, without file extension. */
-    char mpy_name[];
-    /** mpy data follows thereafter. */
-} mpy_info_t;
-
-// Gets a reference to the mpy data of a script.
-static uint8_t *mpy_data_get_buf(mpy_info_t *info) {
-    return (uint8_t *)info + sizeof(info->mpy_size) + strlen(info->mpy_name) + 1;
-}
-
-// Program data is a concatenation of multiple mpy files. This sets a reference
-// to the first script and the total size so we can search for modules.
-static mpy_info_t *mpy_first;
-static uint32_t mpy_size_total;
-static inline void mpy_data_init(pbsys_main_program_t *program) {
-    mpy_first = (mpy_info_t *)program->code_start;
-    mpy_size_total = program->code_end - program->code_start;
-}
-
-// Finds a MicroPython module in the program data.
-static mpy_info_t *mpy_data_find(const char *name, uint32_t leading_dots) {
-
-    // Start at first script.
-    mpy_info_t *next = mpy_first;
-
-    // Iterate through the programs while not found.
-    while (strcmp(next->mpy_name + leading_dots, name)) {
-        // Exit if we're passed the end.
-        if ((uint8_t *)next >= (uint8_t *)mpy_first + mpy_size_total) {
-            return NULL;
-        }
-        // Get reference to next script.
-        next = (mpy_info_t *)(mpy_data_get_buf(next) + next->mpy_size);
-    }
-    return next;
-}
-
 // Runs MicroPython with the given program data.
 void pbsys_main_run_program(pbsys_main_program_t *program) {
 
@@ -287,15 +301,7 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     } else {
         // Init Pybricks package without auto-import.
         pb_package_pybricks_init(false);
-
-        // For backwards compatibility, detect old-format single-script data.
-        if (((uint8_t *)program->code_start)[0] == 'M') {
-            // TODO: This case be removed once relevant IDE tools are updated.
-            run_user_program(program->code_end - program->code_start, program->code_start);
-        } else {
-            // Execute the first script, which is the main script.
-            run_user_program(mpy_first->mpy_size, mpy_data_get_buf(mpy_first));
-        }
+        run_user_program();
     }
 
     // Clean up non-MicroPython resources used by the pybricks package.
@@ -316,37 +322,22 @@ mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) 
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
 
 // Overrides MicroPython's mp_builtin___import__
+// IMPORTANT: this needs to be kept in sync with mp_builtin___import___default().
 mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
-
-    // For backwards compatibility, use default import for legacy scripts.
-    // TODO: This case can be removed once relevant IDE tools are updated.
-    if (((uint8_t *)mpy_first)[0] == 'M') {
-        return mp_builtin___import___default(n_args, args);
-    }
-
-    // Check for relative imports
-    uint32_t leading_dots = n_args < 5 ? 0 : MP_OBJ_SMALL_INT_VALUE(args[4]);
-
-    // Check for presence in downloaded modules. It is normally faster to scan
-    // for imported modules first, but if we find it, we can grab the ready-
-    // made static qstring instead of assembling strings with leading dots.
-    mpy_info_t *info = mpy_data_find(mp_obj_str_get_str(args[0]), leading_dots);
-
-    qstr module_name_qstr;
-    if (info) {
-        // If found, get qstr from downloaded module, including leading dots.
-        module_name_qstr = qstr_from_strn_static(info->mpy_name, strlen(info->mpy_name));
-    } else {
-        // Otherwise get it directly from the argument. This has no leading
-        // dots, but builtin relative modules don't exist anyway.
-        module_name_qstr = mp_obj_str_get_qstr(args[0]);
+    // Check that it's not a relative import
+    if (n_args >= 5 && MP_OBJ_SMALL_INT_VALUE(args[4]) != 0) {
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("relative import"));
     }
 
     // Check if module already exists, and return it if it does
+    qstr module_name_qstr = mp_obj_str_get_qstr(args[0]);
     mp_obj_t module_obj = mp_module_get_loaded_or_builtin(module_name_qstr);
     if (module_obj != MP_OBJ_NULL) {
         return module_obj;
     }
+
+    // Check for presence of user program in user RAM.
+    mpy_info_t *info = mpy_data_find(module_name_qstr);
 
     // If a downloaded module was found but not yet loaded, load it.
     if (info) {
