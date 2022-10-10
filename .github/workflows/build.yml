@@ -14,7 +14,7 @@ env:
 jobs:
   mpy_cross:
     name: mpy-cross
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repo
       uses: actions/checkout@v2
@@ -32,7 +32,7 @@ jobs:
   unix_coverage:
     name: unix coverage
     needs: mpy_cross
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PYBRICKS_NO_REDIRECT_STDOUT: 1
     steps:
@@ -65,7 +65,7 @@ jobs:
 
   ev3dev_stretch:
     name: ev3dev-stretch
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Docker login
       uses: azure/docker-login@v1
@@ -106,7 +106,7 @@ jobs:
   ev3dev_ubuntu_lts:
     name: ev3dev-ubuntu-lts
     needs: mpy_cross
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CROSS_COMPILE: ""
     steps:
@@ -149,39 +149,17 @@ jobs:
       if: failure()
       run: micropython/tests/run-tests.py --print-failures
 
-  cross_compiler:
-    name: download cross-compiler
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Check cache
-      id: check-cache
-      uses: actions/cache@v2
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-        key: gcc-arm-10-2020-q4
-    - name: Download
-      if: steps.check-cache.outputs.cache-hit != 'true'
-      uses: dlech/arm-none-eabi-gcc@master
-      with:
-        release: '10-2020-q4'
-        directory: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-
   firmware:
     name: firmware
     strategy:
       fail-fast: false
       matrix:
         hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub]
-    needs: [cross_compiler, mpy_cross]
-    runs-on: ubuntu-20.04
+    needs: [mpy_cross]
+    runs-on: ubuntu-22.04
     steps:
     - name: Install cross-compiler
-      uses: actions/cache@v2
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-        key: gcc-arm-10-2020-q4
-    - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -248,16 +226,11 @@ jobs:
 
   debug:
     name: debug firmware
-    needs: [cross_compiler, mpy_cross]
-    runs-on: ubuntu-20.04
+    needs: [mpy_cross]
+    runs-on: ubuntu-22.04
     steps:
     - name: Install cross-compiler
-      uses: actions/cache@v2
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-        key: gcc-arm-10-2020-q4
-    - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -275,7 +248,7 @@ jobs:
 
   pbio:
     name: pbio tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       PBIO_TEST_RESULTS_DIR: lib/pbio/test/results
     steps:
