@@ -6,6 +6,7 @@
 #define MICROPY_HW_BOARD_NAME           "NUCLEO-F446ZE"
 #define MICROPY_HW_MCU_NAME             "STM32F446ZE"
 
+#define PYBRICKS_HUB_NAME               "debug"
 #define PYBRICKS_HUB_DEBUG              (1)
 
 // Pybricks modules

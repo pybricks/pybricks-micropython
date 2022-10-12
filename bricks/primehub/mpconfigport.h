@@ -6,6 +6,7 @@
 #define MICROPY_HW_BOARD_NAME           "SPIKE Prime Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F413VG"
 
+#define PYBRICKS_HUB_NAME               "primehub"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_PrimeHub)
 #define PYBRICKS_HUB_CLASS_NAME_ALIAS   (MP_QSTR_InventorHub)
 

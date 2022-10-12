@@ -6,8 +6,8 @@
 #define MICROPY_HW_BOARD_NAME           "Powered Up City Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F030RC"
 
+#define PYBRICKS_HUB_NAME               "cityhub"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_CityHub)
-
 #define PYBRICKS_HUB_CITYHUB            (1)
 
 // Pybricks modules

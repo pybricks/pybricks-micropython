@@ -7,8 +7,8 @@
 #define MICROPY_HW_BOARD_NAME             "LEGO MINDSTORMS EV3 Intelligent Brick"
 #define MICROPY_HW_MCU_NAME               "Texas Instruments AM1808"
 
+#define PYBRICKS_HUB_NAME               "ev3"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_EV3Brick)
-
 #define PYBRICKS_HUB_EV3BRICK           (1)
 
 // Pybricks modules

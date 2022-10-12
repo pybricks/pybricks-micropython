@@ -6,8 +6,8 @@
 #define MICROPY_HW_BOARD_NAME           "BOOST Move Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F070RB"
 
+#define PYBRICKS_HUB_NAME               "movehub"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_MoveHub)
-
 #define PYBRICKS_HUB_MOVEHUB            (1)
 
 // Pybricks modules

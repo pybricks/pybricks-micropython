@@ -6,6 +6,7 @@
 #define MICROPY_HW_BOARD_NAME           "SPIKE Essential Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F413RG"
 
+#define PYBRICKS_HUB_NAME               "essentialhub"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_EssentialHub)
 #undef PYBRICKS_HUB_CLASS_NAME_ALIAS
 

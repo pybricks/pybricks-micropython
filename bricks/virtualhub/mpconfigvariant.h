@@ -3,6 +3,7 @@
 
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_VirtualHub)
 
+#define PYBRICKS_HUB_NAME               "virtualhub"
 #define PYBRICKS_HUB_VIRTUALHUB         (1)
 
 // Pybricks modules

@@ -7,6 +7,7 @@
 #define MICROPY_HW_BOARD_NAME           "LEGO MINDSTORMS NXT Brick"
 #define MICROPY_HW_MCU_NAME             "AT91SAM7S256"
 
+#define PYBRICKS_HUB_NAME               "nxt"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_NXTBrick)
 
 #define PYBRICKS_HEAP_KB                32 // half of RAM
