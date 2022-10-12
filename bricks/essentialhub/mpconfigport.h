@@ -43,5 +43,6 @@
 #define PYBRICKS_OPT_FLOAT                      (1)
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
 #define PYBRICKS_OPT_EXTRA_MOD                  (1)
+#define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 
 #include "../common_stm32/mpconfigport.h"
