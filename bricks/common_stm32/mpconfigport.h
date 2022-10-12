@@ -166,4 +166,4 @@ static inline mp_uint_t disable_irq(void) {
     mp_obj_dict_t *pb_type_Color_dict; \
     const char *readline_hist[8];
 
-#include "../pybricks_config.h"
+#include "../common/mpconfigport.h"

@@ -10,4 +10,4 @@ PB_LIB_BLE5STACK = 1
 PB_USE_LSM6DS3TR_C = 1
 PB_FW_ZIP_INCLUDE_MAIN_MPY = 1
 
-include ../stm32/stm32.mk
+include ../common_stm32/make.mk

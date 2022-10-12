@@ -43,4 +43,4 @@
 #define PYBRICKS_STM32_OPT_TERSE_ERR    (0)
 #define PYBRICKS_STM32_OPT_EXTRA_MOD    (1)
 
-#include "../stm32/configport.h"
+#include "../common_stm32/mpconfigport.h"

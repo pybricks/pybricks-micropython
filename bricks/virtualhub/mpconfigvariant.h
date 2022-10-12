@@ -33,7 +33,7 @@
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE (0)
 #define PYBRICKS_PY_TOOLS               (1)
 
-#include "../pybricks_config.h"
+#include "../common/mpconfigport.h"
 
 // Upstream MicroPython options
 #define MICROPY_MODULE_ATTR_DELEGATION          (1)
@@ -59,7 +59,7 @@
     X(ECANCELED) \
 
 #define MICROPY_MPHALPORT_H "mpvarianthal.h"
-#define MICROPY_VARIANT_QSTR_DEFS_H "../pybricks_qstrdefs.h"
+#define MICROPY_VARIANT_QSTR_DEFS_H "../common/qstrdefs.h"
 
 #define MICROPY_PORT_INIT_FUNC do { \
         extern void pb_virtualhub_port_init(void); \

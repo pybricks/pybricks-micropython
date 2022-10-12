@@ -15,4 +15,4 @@ DFU_VID = 0x0694
 DFU_PID = 0x000C
 PB_FW_ZIP_INCLUDE_MAIN_MPY = 0
 
-include ../stm32/stm32.mk
+include ../common_stm32/make.mk

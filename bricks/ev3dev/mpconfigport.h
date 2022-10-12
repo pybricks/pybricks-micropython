@@ -424,4 +424,4 @@ struct _mp_bluetooth_nimble_malloc_t;
 #include <sched.h>
 #define MICROPY_UNIX_MACHINE_IDLE sched_yield();
 
-#include "../pybricks_config.h"
+#include "../common/mpconfigport.h"

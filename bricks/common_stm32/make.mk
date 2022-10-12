@@ -6,7 +6,7 @@
 # Other ports should not use this file
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-PBTOP := ../$(patsubst %/stm32/stm32.mk,%,$(THIS_MAKEFILE))
+PBTOP := ../$(patsubst %/common_stm32/make.mk,%,$(THIS_MAKEFILE))
 
 # ensure required git submodules checked out
 ifeq ("$(wildcard $(PBTOP)/micropython/README.md)","")
@@ -39,8 +39,8 @@ USER_C_MODULES = $(PBTOP)
 include ../../micropython/py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = ../pybricks_qstrdefs.h
-QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/stm32/configport.h
+QSTR_DEFS = ../common/qstrdefs.h
+QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/common_stm32/mpconfigport.h
 
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
@@ -119,7 +119,7 @@ $(BUILD)/lib/STM32_USB_Device_Library/%.o: CFLAGS += -Wno-sign-compare
 CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
 
 # linker scripts
-LD_FILES = $(PBIO_PLATFORM).ld $(PBTOP)/bricks/stm32/common.ld
+LD_FILES = $(PBIO_PLATFORM).ld $(PBTOP)/bricks/common_stm32/link.ld
 
 LDFLAGS = $(addprefix -T,$(LD_FILES)) -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
 
@@ -144,9 +144,9 @@ MPY_CROSS = ../../micropython/mpy-cross/mpy-cross
 
 LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
-SRC_C = $(addprefix bricks/stm32/,\
-	main.c \
-	mphalport.c \
+SRC_C = $(addprefix bricks/,\
+	common/micropython.c \
+	common_stm32/mphalport.c \
 	)
 
 # Extra core MicroPython files

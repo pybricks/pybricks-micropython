@@ -11,4 +11,4 @@ PB_USE_HAL = 1
 PB_FIRMWARE_MAX_SIZE = 524288
 TEXT0_ADDR = 0x8000000
 
-include ../stm32/stm32.mk
+include ../common_stm32/make.mk
