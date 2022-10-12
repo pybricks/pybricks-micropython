@@ -4,13 +4,35 @@
 
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbdrv/config.h>
+#include <pbio/main.h>
 #include <pbsys/bluetooth.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "py/mpconfig.h"
 #include "py/stream.h"
+
+// Implementation for MICROPY_EVENT_POLL_HOOK
+void pb_poll(void) {
+    while (pbio_do_one_event()) {
+    }
+
+    mp_handle_pending(true);
+
+    // There is a possible race condition where an interrupt occurs and sets the
+    // Contiki poll_requested flag after all events have been processed. So we
+    // have a critical section where we disable interrupts and check see if there
+    // are any last second events. If not, we can call __WFI(), which still wakes
+    // up the CPU on interrupt even though interrupts are otherwise disabled.
+    mp_uint_t state = disable_irq();
+    if (!process_nevents()) {
+        __WFI();
+    }
+    enable_irq(state);
+}
 
 // using "internal" pbdrv variable
 extern volatile uint32_t pbdrv_clock_ticks;

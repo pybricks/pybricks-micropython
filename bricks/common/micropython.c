@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <contiki.h>
-
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbsys/main.h>
@@ -34,25 +32,6 @@
 // defined in linker script
 extern uint32_t _estack;
 extern uint32_t _sstack;
-
-// Implementation for MICROPY_EVENT_POLL_HOOK
-void pb_stm32_poll(void) {
-    while (pbio_do_one_event()) {
-    }
-
-    mp_handle_pending(true);
-
-    // There is a possible race condition where an interrupt occurs and sets the
-    // Contiki poll_requested flag after all events have been processed. So we
-    // have a critical section where we disable interrupts and check see if there
-    // are any last second events. If not, we can call __WFI(), which still wakes
-    // up the CPU on interrupt even though interrupts are otherwise disabled.
-    mp_uint_t state = disable_irq();
-    if (!process_nevents()) {
-        __WFI();
-    }
-    enable_irq(state);
-}
 
 // callback for when stop button is pressed in IDE or on hub
 void pbsys_main_stop_program(void) {

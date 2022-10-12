@@ -50,8 +50,8 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void pb_stm32_poll(void); \
-        pb_stm32_poll(); \
+        extern void pb_poll(void); \
+        pb_poll(); \
     } while (0);
 
 // We need to provide a declaration/definition of alloca()
