@@ -599,9 +599,6 @@ ZIP_FILES := \
 ifeq ($(PB_FW_ZIP_INCLUDE_MAIN_MPY),1)
 ZIP_FILES += main.py
 endif
-ifeq ($(PB_FW_ZIP_INCLUDE_INSTALL_SCRIPT),1)
-ZIP_FILES += $(PBTOP)/bricks/stm32/install_pybricks.py
-endif
 
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
