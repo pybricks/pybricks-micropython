@@ -150,5 +150,3 @@ typedef long mp_off_t;
 #define MICROPY_PORT_ROOT_POINTERS \
     mp_obj_dict_t *pb_type_Color_dict; \
     const char *readline_hist[8];
-
-#include "../common/mpconfigport.h"

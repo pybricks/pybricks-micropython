@@ -136,5 +136,3 @@ typedef long mp_off_t;
 #else
 #include <alloca.h>
 #endif
-
-#include "../common/mpconfigport.h"
