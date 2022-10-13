@@ -39,7 +39,7 @@ FROZEN_MANIFEST ?= manifest.py
 PROG = pybricks-micropython
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = ../common/qstrdefs.h
+QSTR_DEFS = ../_common/qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES =
 
 # OS name, for simple autoconfig

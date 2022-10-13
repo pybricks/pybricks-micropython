@@ -58,7 +58,7 @@
     X(ECANCELED) \
 
 #define MICROPY_MPHALPORT_H "mpvarianthal.h"
-#define MICROPY_VARIANT_QSTR_DEFS_H "../common/qstrdefs.h"
+#define MICROPY_VARIANT_QSTR_DEFS_H "../_common/qstrdefs.h"
 
 #define MICROPY_PORT_INIT_FUNC do { \
         extern void pb_virtualhub_port_init(void); \

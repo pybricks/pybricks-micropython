@@ -2,7 +2,7 @@
 // Copyright (c) 2013, 2014 Damien P. George
 // Copyright (c) 2018-2022 The Pybricks Authors
 
-#include "../common/mpconfigport.h"
+#include "../_common/mpconfigport.h"
 
 // type definitions for the specific machine
 

@@ -26,7 +26,7 @@ USER_C_MODULES = ../..
 include ../../micropython/py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = ../common/qstrdefs.h
+QSTR_DEFS = ../_common/qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES =
 
 # MicroPython feature configurations

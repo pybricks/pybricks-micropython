@@ -9,4 +9,4 @@ PB_USE_HAL = 1
 PB_LIB_BLUENRG = 1
 PB_FW_ZIP_INCLUDE_MAIN_MPY = 1
 
-include ../common_stm32/make.mk
+include ../_common_stm32/make.mk
