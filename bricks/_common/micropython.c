@@ -31,10 +31,6 @@
 #include "py/stackctrl.h"
 #include "py/stream.h"
 
-// defined in linker script
-extern uint32_t _estack;
-extern uint32_t _sstack;
-
 // callback for when stop button is pressed in IDE or on hub
 void pbsys_main_stop_program(void) {
 
@@ -257,8 +253,11 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
-    mp_stack_set_top(&_estack);
-    mp_stack_set_limit((char *)&_estack - (char *)&_sstack - 1024);
+    char *sstack;
+    char *estack;
+    pb_stack_get_info(&sstack, &estack);
+    mp_stack_set_top(estack);
+    mp_stack_set_limit(estack - sstack - 1024);
 
     // MicroPython heap starts after program data, aligned by GC block size.
     uint32_t align = MICROPY_BYTES_PER_GC_BLOCK -

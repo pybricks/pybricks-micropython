@@ -65,3 +65,10 @@ static inline mp_uint_t disable_irq(void) {
 #define MICROPY_PORT_ROOT_POINTERS \
     mp_obj_dict_t *pb_type_Color_dict; \
     const char *readline_hist[8];
+
+static inline void pb_stack_get_info(char **sstack, char **estack) {
+    extern uint32_t _estack;
+    extern uint32_t _sstack;
+    *sstack = (char *)&_sstack;
+    *estack = (char *)&_estack;
+}
