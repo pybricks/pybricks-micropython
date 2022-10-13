@@ -11,6 +11,9 @@
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_EV3Brick)
 #define PYBRICKS_HUB_EV3BRICK           (1)
 
+// In this port, Pybricks runs on top of ev3dev.
+#define PYBRICKS_RUNS_ON_EV3DEV         (1)
+
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
 #define PYBRICKS_PY_COMMON_CHARGER      (0)
