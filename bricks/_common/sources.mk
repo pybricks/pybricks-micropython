@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-2022 The Pybricks Authors
+
+# This file contains the sources common to all Pybricks MicroPython ports.
+
 # Ring buffer
 
 LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c

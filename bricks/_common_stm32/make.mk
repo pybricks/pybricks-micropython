@@ -2,8 +2,7 @@
 # Copyright (c) 2013, 2014 Damien P. George
 # Copyright (c) 2019-2022 The Pybricks Authors
 
-# This file is shared by all STM32-based Pybricks ports
-# Other ports should not use this file
+# This file is shared by all STM32-based Pybricks ports.
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
 PBTOP := ../$(patsubst %/_common_stm32/make.mk,%,$(THIS_MAKEFILE))

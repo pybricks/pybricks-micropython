@@ -1,4 +1,4 @@
-// qstrs specific to this port
+// qstrs specific to all Pybricks MicroPython ports.
 // *FORMAT-OFF*
 
 #include "py/mpconfig.h"

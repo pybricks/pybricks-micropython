@@ -2,6 +2,8 @@
 // Copyright (c) 2018-2021 The Pybricks Authors
 // Copyright (c) 2013, 2014 Damien P. George
 
+// Contains the MicroPython HAL for STM32-based Pybricks ports.
+
 #include <stdint.h>
 
 #include <contiki.h>

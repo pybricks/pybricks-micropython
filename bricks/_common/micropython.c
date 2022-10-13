@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+// This file provides a MicroPython runtime to run code in MULTI_MPY_V6 format.
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

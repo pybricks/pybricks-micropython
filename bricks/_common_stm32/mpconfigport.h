@@ -2,6 +2,9 @@
 // Copyright (c) 2013, 2014 Damien P. George
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+// Contains the MicroPython configuration for all STM32-based Pybricks ports.
+
+// Start with config shared by all Pybricks ports.
 #include "../_common/mpconfigport.h"
 
 // type definitions for the specific machine

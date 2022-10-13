@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2022 The Pybricks Authors
 
+// Common configuration of Pybricks MicroPython ports.
+
+// REVISIT: This file is still largely focused on embedded MicroPython ports.
+// Further generalization and possibly a higher option set are needed to use
+// this with unix-based ports like the virtual hub or ev3dev.
+
 #include <stdint.h>
 #include <pbdrv/config.h>
 
