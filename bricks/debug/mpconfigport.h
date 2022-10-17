@@ -15,6 +15,7 @@
 #define PYBRICKS_PY_COMMON_CONTROL              (0)
 #define PYBRICKS_PY_COMMON_IMU                  (0)
 #define PYBRICKS_PY_COMMON_KEYPAD               (1)
+#define PYBRICKS_PY_COMMON_LIGHT_ARRAY          (1)
 #define PYBRICKS_PY_COMMON_LIGHT_MATRIX         (0)
 #define PYBRICKS_PY_COMMON_MOTORS               (0)
 #define PYBRICKS_PY_COMMON_SPEAKER              (0)

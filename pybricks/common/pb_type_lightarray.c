@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON
+#if PYBRICKS_PY_COMMON_LIGHT_ARRAY
 
 #include "py/obj.h"
 
@@ -94,4 +94,4 @@ mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, 
     return light;
 }
 
-#endif // PYBRICKS_PY_COMMON
+#endif // PYBRICKS_PY_COMMON_LIGHT_ARRAY
