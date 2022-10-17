@@ -12,7 +12,7 @@ endif
 endif
 ifeq ("$(wildcard ../../lib/nxos/README.md)","")
 $(info GIT cloning nxos submodule)
-$(info $(shell cd ../.. && git submodule update --init lib/nxos))
+$(info $(shell cd ../.. && git submodule update --checkout --init lib/nxos))
 ifeq ("$(wildcard ../../lib/nxos/README.md)","")
 $(error failed)
 endif

@@ -73,7 +73,7 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
     )
     pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
     pybricks.git.submodule(
-        "update", "--init", "--checkout", "bricks/nxt/nxos"
+        "update", "--init", "--checkout", "lib/nxos"
     )
 
     # Make mpy-cross once
