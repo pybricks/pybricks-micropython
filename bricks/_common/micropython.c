@@ -340,6 +340,14 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
     mp_raise_msg_varg(&mp_type_ImportError, MP_ERROR_TEXT("no module named '%q'"), module_name_qstr);
 }
 
+mp_import_stat_t mp_import_stat(const char *path) {
+    return MP_IMPORT_STAT_NO_EXIST;
+}
+
+mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
+    mp_raise_OSError(MP_ENOENT);
+}
+
 void nlr_jump_fail(void *val) {
     while (1) {
         ;
