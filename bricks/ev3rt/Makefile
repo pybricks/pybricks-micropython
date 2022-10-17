@@ -15,7 +15,7 @@ endif
 endif
 ifeq ("$(wildcard $(PBTOP)/lib/ev3rt-lib/modules/mbed-on-toppers/README.md)","")
 $(info GIT cloning ev3rt-lib submodule)
-$(info $(shell cd $(PBTOP) && git submodule update --init --recursive lib/ev3rt-lib))
+$(info $(shell cd $(PBTOP) && git submodule update --checkout --init --recursive lib/ev3rt-lib))
 ifeq ("$(wildcard $(PBTOP)/lib/ev3rt-lib/README.md)","")
 $(error failed)
 endif
@@ -64,7 +64,7 @@ INC += -I$(BUILD)
 
 GIT = git
 
-CFLAGS_MCU = 
+CFLAGS_MCU =
 CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
 CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
 $(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
