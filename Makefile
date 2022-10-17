@@ -28,9 +28,9 @@ doc:
 clean-doc:
 	@$(MAKE) -C lib/pbio/doc clean
 
-all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3dev-armel ev3rt doc
+all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3rt doc
 
-clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3dev-armel clean-doc
+clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-doc
 
 ifeq ($(HOST_OS),Linux)
 
