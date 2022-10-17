@@ -27,7 +27,7 @@ jobs:
       - name: Add cross-compiler to path
         run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
       - name: Install python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
       - name: Install Python packages
@@ -35,7 +35,7 @@ jobs:
           python -m pip install azure-cosmosdb-table GitPython plotly
           python -m pip install gql[requests] --pre
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 0

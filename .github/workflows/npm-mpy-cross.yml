@@ -12,7 +12,7 @@ jobs:
       run:
         working-directory: npm/mpy-cross
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
     - uses: actions/setup-node@v3
