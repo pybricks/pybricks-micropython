@@ -84,6 +84,8 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_mp/pb_type_enum.c \
 	util_pb/pb_color_map.c \
 	util_pb/pb_conversions.c \
+	util_pb/pb_device_ev3dev.c \
+	util_pb/pb_device_nxt.c \
 	util_pb/pb_device_stm32.c \
 	util_pb/pb_error.c \
 	util_pb/pb_task.c \

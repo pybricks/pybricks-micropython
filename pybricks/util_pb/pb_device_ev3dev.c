@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020,2022 The Pybricks Authors
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_RUNS_ON_EV3DEV
+
 #include <dirent.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -250,3 +254,5 @@ void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
 
     pb_assert(err);
 }
+
+#endif // PYBRICKS_RUNS_ON_EV3DEV

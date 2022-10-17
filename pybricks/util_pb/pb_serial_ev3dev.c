@@ -4,6 +4,10 @@
 // Portions of this file (termios settings) adapted from MicroPython, modtermios.c
 // Copyright (c) 2014-2015 Paul Sokolovsky
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_RUNS_ON_EV3DEV
+
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
@@ -200,3 +204,5 @@ pbio_error_t pb_serial_clear(pb_serial_t *ser) {
     }
     return PBIO_SUCCESS;
 }
+
+#endif // PYBRICKS_RUNS_ON_EV3DEV

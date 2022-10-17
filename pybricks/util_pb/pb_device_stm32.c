@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_PUPDEVICES
+
 #include <string.h>
 
 #include <pbdrv/config.h>
@@ -9,7 +13,6 @@
 #include <pbio/color.h>
 #include <pbio/iodev.h>
 
-#include "py/mpconfig.h"
 #include "py/mphal.h"
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -261,3 +264,5 @@ void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
     // Activate mode.
     set_mode(iodev, mode_id);
 }
+
+#endif // PYBRICKS_PY_PUPDEVICES
