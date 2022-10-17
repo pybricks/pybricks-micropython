@@ -91,7 +91,6 @@ jobs:
     - name: Test
       if: ${{ success() }}
       run: |
-        docker exec --tty pybricks-ev3dev_armel make test
         docker exec --tty pybricks-ev3dev_armel make test-ev3dev
     - name: List failed tests
       if: failure()
