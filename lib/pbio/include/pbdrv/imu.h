@@ -10,6 +10,7 @@
 #define PBDRV_IMU_H
 
 #include <pbdrv/config.h>
+#include <pbio/error.h>
 
 /**
  * Opaque handle to an IMU device instance.
@@ -17,8 +18,6 @@
 typedef struct _pbdrv_imu_dev_t pbdrv_imu_dev_t;
 
 #if PBDRV_CONFIG_IMU
-
-#include <pbio/error.h>
 
 /**
  * Gets the one and only IMU device instance.
