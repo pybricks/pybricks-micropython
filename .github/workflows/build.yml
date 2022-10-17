@@ -192,11 +192,11 @@ jobs:
       if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
       run: make -C bricks/${{ matrix.hub }}
     - name: Extract firmware.zip for upload
-      if: ${{ success() && matrix.hub != 'nxt' }}
+      if: ${{ success()}}
       working-directory: bricks/${{ matrix.hub }}/build
       run: unzip firmware.zip -d upload
     - name: Upload firmware
-      if: ${{ success() && matrix.hub != 'nxt' }}
+      if: ${{ success()}}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware-build-${{ github.run_number }}
