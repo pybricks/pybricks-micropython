@@ -175,7 +175,7 @@ sure that the cross-compiler can be found. This can be done by adding it to the
 `PATH` environment variable as described in the ARM Embedded Toolchain
 `readme.txt` file:
 
-    export PATH=$PATH:$install_dir/gcc-arm-none-eabi-*/bin/*
+    export PATH=$PATH:$install_dir/gcc-arm-none-eabi-*/bin
 
 Or by setting the `CROSS_COMPILE` environment variable:
 
