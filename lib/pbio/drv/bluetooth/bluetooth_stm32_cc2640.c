@@ -375,6 +375,11 @@ static PT_THREAD(send_value_notification(struct pt *pt, pbio_task_t *task))
 retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
 
+    if (task->cancel) {
+        task->status = PBIO_ERROR_CANCELED;
+        goto done;
+    }
+
     uint16_t attr_handle;
     if (send->connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         if (!pybricks_notify_en) {
@@ -405,14 +410,17 @@ retry:
     }
     PT_WAIT_UNTIL(pt, hci_command_status);
 
+    // HACK: we seem to drop a packet when performing other actions at the
+    // same time, e.g. connecting to the remote, in which case we never receive
+    // the command status event for the notification we just tried to send and
+    // it doesn't get sent over the air, so we need to send it again.
+    if (pbio_get_uint16_le(&read_buf[9]) != ATT_CMD_HANDLE_VALUE_NOTI) {
+        goto retry;
+    }
+
     HCI_StatusCodes_t status = read_buf[8];
 
     if (status == blePending) {
-        if (task->cancel) {
-            task->status = PBIO_ERROR_CANCELED;
-            goto done;
-        }
-
         goto retry;
     }
 
