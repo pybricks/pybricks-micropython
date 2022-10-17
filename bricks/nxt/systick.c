@@ -37,7 +37,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
 #define SPIN_TIME 2 /* us */
 #define SPIN_COUNT (((CLOCK_FREQUENCY * SPIN_TIME / 1000000) - 5) / 4)
 
-void mp_hal_delay_us(mp_uint_t t) {
+void mp_hal_delay_us(uint32_t t) {
     #ifdef __THUMBEL__
     __asm volatile ("1: mov r1,%2\n2:\tsub r1,#1\n\tbne 2b\n\tsub %0,#1\n\tbne 1b\n"
         : "=l" (t) : "0" (t), "l" (SPIN_COUNT));

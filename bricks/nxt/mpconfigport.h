@@ -107,6 +107,8 @@
 #define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
 #define MICROPY_MODULE_BUILTIN_INIT     (1)
 
+#define MICROPY_MPHALPORT_H "../_common/mphalport.h"
+
 // type definitions for the specific machine
 
 #define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((mp_uint_t)(p) | 1))

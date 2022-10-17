@@ -17,6 +17,13 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
+void pb_stack_get_info(char **sstack, char **estack) {
+    extern uint32_t _estack;
+    extern uint32_t _sstack;
+    *sstack = (char *)&_sstack;
+    *estack = (char *)&_estack;
+}
+
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_poll(void) {
     while (pbio_do_one_event()) {

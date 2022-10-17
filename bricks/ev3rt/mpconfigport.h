@@ -12,7 +12,7 @@
 
 #define PYBRICKS_HUB_NAME               "ev3"
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_EV3Brick)
-#define PYBRICKS_HUB_EV3BRICK       (1)
+#define PYBRICKS_HUB_EV3BRICK           (1)
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
@@ -50,6 +50,8 @@
 
 // Start with config shared by all Pybricks ports.
 #include "../_common/mpconfigport.h"
+
+#define MICROPY_MPHALPORT_H "../_common/mphalport.h"
 
 // type definitions for the specific machine
 
