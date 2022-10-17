@@ -42,10 +42,12 @@ typedef void (*pb_type_ColorLight_on_t)(void *context, const pbio_color_hsv_t *h
 mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on);
 mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);
 
+#if PYBRICKS_PY_COMMON_LIGHT_ARRAY
 // pybricks._common.LightArray()
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
+#endif
 
-#ifdef PYBRICKS_PY_COMMON_LIGHT_MATRIX
+#if PYBRICKS_PY_COMMON_LIGHT_MATRIX
 #include <pbio/light_matrix.h>
 // pybricks._common.LightMatrix()
 extern const uint8_t pb_digits_5x2[10][5];
