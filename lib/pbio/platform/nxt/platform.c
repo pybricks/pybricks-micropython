@@ -106,8 +106,7 @@ static void bluetooth_connect(void) {
 
 extern int main(int argc, char **argv);
 
-U8 rx_char = 0x20;
-
+static U8 flush_buf[1];
 
 void nx__kernel_main(void) {
     // Start the system.
@@ -115,10 +114,20 @@ void nx__kernel_main(void) {
 
     // Accept incoming serial connection and get ready to read first byte.
     bluetooth_connect();
-    nx_bt_stream_read(&rx_char, 1);
+
+    // Receive one character to get going...
+    nx_display_string("Press a key.\n");
+    nx_bt_stream_read(flush_buf, sizeof(flush_buf));
+    while (nx_bt_stream_data_read() != sizeof(flush_buf)) {
+        nx_systick_wait_ms(100);
+    }
 
     // Start Pybricks.
-    main(0, NULL);
+    // main(0, NULL);
+    nx_display_string("Connected. REPL.\n");
+
+    extern void main_task(void);
+    main_task();
 
     nx_core_halt();
 }

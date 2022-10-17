@@ -51,6 +51,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	hubs/pb_type_essentialhub.c \
 	hubs/pb_type_ev3brick.c \
 	hubs/pb_type_movehub.c \
+	hubs/pb_type_nxtbrick.c \
 	hubs/pb_type_primehub.c \
 	hubs/pb_type_technichub.c \
 	hubs/pb_type_virtualhub.c \
@@ -115,6 +116,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
 	drv/battery/battery_linux_ev3.c \
+	drv/battery/battery_nxt.c \
 	drv/battery/battery_virtual.c \
 	drv/block_device/block_device_flash_stm32.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
@@ -128,17 +130,20 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_gpio.c \
 	drv/button/button_linux_ev3.c \
+	drv/button/button_nxt.c \
 	drv/button/button_resistor_ladder.c \
 	drv/button/button_virtual.c \
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_ev3rt.c \
 	drv/clock/clock_linux.c \
+	drv/clock/clock_nxt.c \
 	drv/clock/clock_stm32.c \
 	drv/clock/clock_virtual.c \
 	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_ev3dev_stretch_iio.c \
 	drv/counter/counter_lpf2.c \
+	drv/counter/counter_nxt.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/counter/counter_virtual.c \
 	drv/gpio/gpio_stm32f0.c \
@@ -147,6 +152,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
 	drv/ioport/ioport_ev3dev_stretch.c \
 	drv/ioport/ioport_lpf2.c \
+	drv/ioport/ioport_nxt.c \
 	drv/ioport/ioport_virtual.c \
 	drv/led/led_array_pwm.c \
 	drv/led/led_array.c \
@@ -156,11 +162,13 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_virtual.c \
 	drv/motor_driver/motor_driver_ev3dev_stretch.c \
 	drv/motor_driver/motor_driver_hbridge_pwm.c \
+	drv/motor_driver/motor_driver_nxt.c \
 	drv/motor_driver/motor_driver_virtual.c \
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
+	drv/reset/reset_nxt.c \
 	drv/reset/reset_stm32.c \
 	drv/resistor_ladder/resistor_ladder.c \
 	drv/sound/sound_stm32_hal_dac.c \

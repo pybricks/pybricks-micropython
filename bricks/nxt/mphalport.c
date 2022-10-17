@@ -5,7 +5,8 @@
 #include <stdint.h>
 
 #include <pbdrv/config.h>
-#include <pbsys/bluetooth.h>
+#include <pbio/error.h>
+#include <pbsys/main.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -17,6 +18,13 @@
 #include <base/drivers/systick.h>
 #include <base/drivers/bt.h>
 #include "base/display.h"
+
+void pb_stack_get_info(char **sstack, char **estack) {
+    extern uint32_t __stack_start__;
+    extern uint32_t __stack_end__;
+    *sstack = (char *)&__stack_start__;
+    *estack = (char *)&__stack_end__;
+}
 
 // TODO
 bool interrupts_get() {
@@ -57,25 +65,21 @@ uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     return ret;
 }
 
-extern U8 rx_char;
-
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
 
-    // wait for rx interrupt
-    while (!nx_bt_stream_data_read()) {
+    U8 rx_char;
+
+    // Start reading again for next char
+    nx_bt_stream_read(&rx_char, sizeof(rx_char));
+
+    // wait for data to be read
+    while (nx_bt_stream_data_read() != sizeof(rx_char)) {
         MICROPY_EVENT_POLL_HOOK
     }
 
-    int ret = rx_char;
-
-    // Start reading again for next char
-    nx_bt_stream_read(&rx_char, 1);
-
-    return ret;
+    return rx_char;
 }
-
-extern U32 global_data_len;
 
 // Send string of given length
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {

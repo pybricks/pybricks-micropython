@@ -128,15 +128,6 @@ SECTIONS {
       *(.name) /* customizable hub name */
   } >rom
 
-  .user :
-  {
-      . = ALIGN(4);
-      _pb_user_mpy_size = .;
-      LONG(SIZEOF(.user) - (. + 4 - LOADADDR(.user))); /* Size of compiled main.mpy file in bytes */
-      _pb_user_mpy_data = .;
-      KEEP(*(.mpy));       /* Compiled main.mpy file */
-  } >rom
-
   /*
    * The magic metadata struct is tacked onto the start of the kernel binary.
    */

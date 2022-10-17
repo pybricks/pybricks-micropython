@@ -2,8 +2,6 @@
 # Copyright (c) 2013, 2014 Damien P. George
 # Copyright (c) 2019-2022 The Pybricks Authors
 
-PBIO_PLATFORM = nxt
-
 # ensure required git submodules checked out
 ifeq ("$(wildcard ../../micropython/README.md)","")
 $(info GIT cloning micropython submodule)
@@ -39,10 +37,7 @@ include $(TOP)/py/py.mk
 
 CROSS_COMPILE ?= arm-none-eabi-
 
-# Bricks must specify the following variables in their Makefile
-ifeq ($(PBIO_PLATFORM),)
-$(error "PBIO_PLATFORM is not specified - add it in <hub>/Makefile)
-endif
+PBIO_PLATFORM = nxt
 
 INC += -I.
 INC += -I$(TOP)
@@ -55,13 +50,17 @@ INC += -I../../lib/pbio
 INC += -I../..
 INC += -I$(BUILD)
 
+GIT = git
+ZIP = zip
+PYBRICKSDEV = pybricksdev
+METADATA = ../../tools/metadata.py
+
 COPT += -DFIXMATH_NO_CTYPE
 
 CFLAGS_MCU = -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT) $(CFLAGS_EXTRA)
 LDSCRIPT = $(PBIO_PLATFORM).ld
 LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
-$(BUILD)/nxt-firmware-drivers/%.o: CFLAGS += -Wno-sign-compare
 
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion -DHAVE_STDBOOL_H
@@ -76,9 +75,17 @@ endif
 
 LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
-SRC_C = \
-	main.c \
-	mphalport.c \
+# Sources and libraries common to all pybricks bricks
+
+include ../_common/sources.mk
+
+# Embedded MicroPython sources
+
+PY_EMBEDDED_SRC_C = $(addprefix bricks/,\
+	_common/micropython.c \
+	nxt/app.c \
+	nxt/mphalport.c \
+	)
 
 # Extra core MicroPython files
 
@@ -88,7 +95,7 @@ SRC_C = \
 # if we don't do it this way. So we need to be very careful about name clashes
 # between the top level directory and the micropython/ subdirectory.
 
-SRC_C += $(addprefix shared/,\
+PY_EXTRA_SRC_C += $(addprefix shared/,\
 	libc/string0.c \
 	readline/readline.c \
 	runtime/gchelper_native.c \
@@ -98,10 +105,7 @@ SRC_C += $(addprefix shared/,\
 	runtime/sys_stdio_mphal.c \
 	)
 
-SRC_S = \
-	shared/runtime/gchelper_arm7tdmi.s \
-
-SRC_C_NXOS = $(addprefix lib/nxos/nxos/,\
+NXOS_SRC_C = $(addprefix lib/nxos/nxos/,\
 	base/_abort.c \
 	base/assert.c \
 	base/display.c \
@@ -129,9 +133,12 @@ SRC_C_NXOS = $(addprefix lib/nxos/nxos/,\
 	)
 
 # Override nxos/base/util to use string.h to avoid conflict with MicroPython.
-SRC_C_NXOS_EXT = $(addprefix bricks/nxt/,\
+NXOS_EXT_SRC_C = $(addprefix bricks/nxt/,\
 	base/util.c \
 	)
+
+SRC_S = \
+	shared/runtime/gchelper_arm7tdmi.s \
 
 SRC_S_NXOS = $(addprefix lib/nxos/nxos/,\
 	base/init.s \
@@ -141,126 +148,29 @@ SRC_S_NXOS = $(addprefix lib/nxos/nxos/,\
 	base/vectors.s \
 	)
 
-# Pybricks modules
-PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
-	pybricks.c \
-	common/pb_type_battery.c \
-	common/pb_type_control.c \
-	common/pb_type_dcmotor.c \
-	common/pb_type_keypad.c \
-	common/pb_type_logger.c \
-	common/pb_type_motor.c \
-	common/pb_type_system.c \
-	experimental/pb_module_experimental.c \
-	geometry/pb_module_geometry.c \
-	geometry/pb_type_matrix.c \
-	hubs/pb_module_hubs.c \
-	hubs/pb_type_nxtbrick.c \
-	media/pb_module_media.c \
-	parameters/pb_type_icon.c \
-	nxtdevices/pb_module_nxtdevices.c \
-	nxtdevices/pb_type_nxtdevices_colorsensor.c \
-	nxtdevices/pb_type_nxtdevices_energymeter.c \
-	nxtdevices/pb_type_nxtdevices_lightsensor.c \
-	nxtdevices/pb_type_nxtdevices_soundsensor.c \
-	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
-	nxtdevices/pb_type_nxtdevices_touchsensor.c \
-	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
-	parameters/pb_module_parameters.c \
-	parameters/pb_type_button.c \
-	parameters/pb_type_color.c \
-	parameters/pb_type_direction.c \
-	parameters/pb_type_port.c \
-	parameters/pb_type_side.c \
-	parameters/pb_type_stop.c \
-	robotics/pb_module_robotics.c \
-	robotics/pb_type_drivebase.c \
-	tools/pb_module_tools.c \
-	tools/pb_type_stopwatch.c \
-	util_mp/pb_obj_helper.c \
-	util_mp/pb_type_enum.c \
-	util_pb/pb_device_nxt.c \
-	util_pb/pb_device_stm32.c \
-	util_pb/pb_error.c \
-	)
-
-CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
-	)
-
-PBIO_SRC_C = $(addprefix lib/pbio/,\
-	drv/battery/battery_nxt.c \
-	drv/button/button_nxt.c \
-	drv/clock/clock_nxt.c \
-	drv/core.c \
-	drv/counter/counter_core.c \
-	drv/counter/counter_nxt.c \
-	drv/ioport/ioport_nxt.c \
-	drv/motor_driver/motor_driver_nxt.c \
-	drv/reset/reset_nxt.c \
-	platform/$(PBIO_PLATFORM)/platform.c \
-	src/angle.c \
-	src/battery.c \
-	src/color/conversion.c \
-	src/control.c \
-	src/control_settings.c \
-	src/dcmotor.c \
-	src/drivebase.c \
-	src/error.c \
-	src/iodev.c \
-	src/integrator.c \
-	src/logger.c \
-	src/main.c \
-	src/math.c \
-	src/motor_process.c \
-	src/motor/servo_settings.c \
-	src/observer.c \
-	src/parent.c \
-	src/servo.c \
-	src/tacho.c \
-	src/trajectory.c \
-	sys/battery.c \
-	sys/bluetooth.c \
-	sys/command.c \
-	sys/core.c \
-	sys/hmi.c \
-	sys/main.c \
-	sys/program_load.c \
-	sys/program_stop.c \
-	sys/io_ports.c \
-	sys/light_matrix.c \
-	sys/light.c \
-	sys/status.c \
-	sys/supervisor.c \
-	)
-
-OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXOS:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXOS_EXT:.c=.o))
+OBJ = $(PY_O)
+OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PY_EMBEDDED_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(NXOS_EXT_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXOS:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
-OBJ += $(BUILD)/main.mpy.o
-
-$(BUILD)/main.mpy: main.py
-	$(ECHO) "MPY $<"
-	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $<
-	$(ECHO) "`wc -c < $@` bytes"
-
-$(BUILD)/main.mpy.o: $(BUILD)/main.mpy
-	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
-		--rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(PY_EXTRA_SRC_C) $(PY_EMBEDDED_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
-all: $(BUILD)/firmware-base.bin
+# Main firmware build targets
+TARGETS := $(BUILD)/firmware.zip
+
+all: $(TARGETS)
+
+FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
 
 $(BUILD)/firmware.elf: $(LDSCRIPT) $(OBJ)
 	$(ECHO) "LINK $@"
@@ -271,5 +181,22 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
 	$(Q)$(OBJCOPY) -O binary $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
+
+# TODO: Add support for metadata
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
+	$(ECHO) "META creating firmware metadata"
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $<.map $@
+
+# firmware.zip file
+ZIP_FILES := \
+	$(BUILD)/firmware-base.bin \
+
+$(BUILD)/firmware.zip: $(ZIP_FILES)
+	$(ECHO) "ZIP creating firmware package"
+	$(Q)$(ZIP) -j $@ $^
+
+# TODO: Add support for pybricksdev
+deploy: $(BUILD)/firmware.zip
+	$(Q)$(PYBRICKSDEV) flash $< --name $(PBIO_PLATFORM)
 
 include $(TOP)/py/mkrules.mk
