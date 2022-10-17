@@ -179,7 +179,7 @@ sure that the cross-compiler can be found. This can be done by adding it to the
 
 Or by setting the `CROSS_COMPILE` environment variable:
 
-    export CROSS_COMPILE=$install_dir/gcc-arm-none-eabi-*/bin
+    export CROSS_COMPILE=$install_dir/gcc-arm-none-eabi-*/bin/arm-none-eabi-
 
 `$install_dir` needs to be replaced with the actual directory where you
 actually installed the toolchain.
