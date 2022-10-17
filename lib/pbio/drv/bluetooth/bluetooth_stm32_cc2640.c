@@ -407,7 +407,7 @@ retry:
 
     HCI_StatusCodes_t status = read_buf[8];
 
-    if (status == blePending || status == bleMemAllocError) {
+    if (status == blePending) {
         if (task->cancel) {
             task->status = PBIO_ERROR_CANCELED;
             goto done;
@@ -610,7 +610,7 @@ retry:
 
     HCI_StatusCodes_t status = read_buf[8];
 
-    if (status == blePending || status == bleMemAllocError) {
+    if (status == blePending) {
         if (task->cancel) {
             task->status = PBIO_ERROR_CANCELED;
             goto disconnect;
@@ -678,7 +678,7 @@ retry:
     HCI_StatusCodes_t status = read_buf[8];
 
     if (status != bleSUCCESS) {
-        if (status == blePending || status == bleMemAllocError) {
+        if (status == blePending) {
             if (task->cancel) {
                 goto cancel;
             }
