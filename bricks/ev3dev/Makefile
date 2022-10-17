@@ -182,6 +182,11 @@ CFLAGS_MOD += -DPB_HAVE_LIBI2C=1
 LDFLAGS_MOD += -li2c
 endif
 
+# Sources and libraries common to all pybricks bricks
+PBIO_PLATFORM = ev3dev_stretch
+
+include ../_common/sources.mk
+
 # Extra core MicroPython files
 
 # NB: Since we are using MicroPython's build system, files in the micropython/
@@ -190,7 +195,7 @@ endif
 # if we don't do it this way. So we need to be very careful about name clashes
 # between the top level directory and the micropython/ subdirectory.
 
-SRC_C += $(addprefix ports/unix/,\
+PY_EXTRA_SRC_C += $(addprefix ports/unix/,\
 	alloc.c \
 	coverage.c \
 	gccollect.c \
@@ -225,118 +230,29 @@ PYBRICKS_SRC_C += \
 	pbinit.c \
 	pbsmbus.c \
 
-# Pybricks drivers and modules
-PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
-    pybricks.c \
-	common/pb_type_battery.c \
-	common/pb_type_colorlight_external.c \
-	common/pb_type_colorlight_internal.c \
-	common/pb_type_control.c \
-	common/pb_type_dcmotor.c \
-	common/pb_type_keypad.c \
-	common/pb_type_lightarray.c \
-	common/pb_type_logger.c \
-	common/pb_type_motor.c \
-	common/pb_type_system.c \
-	experimental/pb_module_experimental.c \
-	ev3devices/pb_module_ev3devices.c \
-	ev3devices/pb_type_ev3devices_colorsensor.c \
-	ev3devices/pb_type_ev3devices_gyrosensor.c \
-	ev3devices/pb_type_ev3devices_infraredsensor.c \
-	ev3devices/pb_type_ev3devices_touchsensor.c \
-	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
-	geometry/pb_module_geometry.c \
-	geometry/pb_type_matrix.c \
-	hubs/pb_module_hubs.c \
-	hubs/pb_type_ev3brick.c \
-	iodevices/pb_module_iodevices.c \
-	iodevices/pb_type_iodevices_analogsensor.c \
-	iodevices/pb_type_iodevices_ev3devsensor.c \
-	iodevices/pb_type_iodevices_i2cdevice.c \
-	iodevices/pb_type_iodevices_lumpdevice.c \
-	iodevices/pb_type_iodevices_pupdevice.c \
-	iodevices/pb_type_iodevices_uartdevice.c \
-	media/pb_module_media.c \
-	parameters/pb_type_icon.c \
-	nxtdevices/pb_module_nxtdevices.c \
-	nxtdevices/pb_type_nxtdevices_colorsensor.c \
-	nxtdevices/pb_type_nxtdevices_energymeter.c \
-	nxtdevices/pb_type_nxtdevices_lightsensor.c \
-	nxtdevices/pb_type_nxtdevices_soundsensor.c \
-	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
-	nxtdevices/pb_type_nxtdevices_touchsensor.c \
-	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
-	parameters/pb_module_parameters.c \
-	parameters/pb_type_button.c \
-	parameters/pb_type_color.c \
-	parameters/pb_type_direction.c \
-	parameters/pb_type_port.c \
-	parameters/pb_type_side.c \
-	parameters/pb_type_stop.c \
-	robotics/pb_module_robotics.c \
-	robotics/pb_type_drivebase.c \
-	tools/pb_module_tools.c \
-	tools/pb_type_stopwatch.c \
-	util_mp/pb_obj_helper.c \
-	util_mp/pb_type_enum.c \
-	util_pb/pb_color_map.c \
-	util_pb/pb_device_ev3dev.c \
-	util_pb/pb_error.c \
-	util_pb/pb_serial_ev3dev.c \
-	)
 
-PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
-	contiki-core/sys/autostart.c \
-	contiki-core/sys/etimer.c \
-	contiki-core/sys/process.c \
-	contiki-core/sys/timer.c \
+EV3DEV_LIB_SRC_C = $(addprefix lib/,\
 	ev3dev/src/ev3dev_stretch/lego_motor.c \
 	ev3dev/src/ev3dev_stretch/lego_port.c \
 	ev3dev/src/ev3dev_stretch/lego_sensor.c \
 	ev3dev/src/ev3dev_stretch/nxtcolor.c \
 	ev3dev/src/ev3dev_stretch/sysfs.c \
-	pbio/drv/battery/battery_linux_ev3.c \
-	pbio/drv/button/button_linux_ev3.c \
-	pbio/drv/clock/clock_linux.c \
-	pbio/drv/core.c \
-	pbio/drv/counter/counter_core.c \
-	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
-	pbio/drv/ioport/ioport_ev3dev_stretch.c \
-	pbio/drv/motor_driver/motor_driver_ev3dev_stretch.c \
 	pbio/platform/ev3dev_stretch/status_light.c \
-	pbio/src/angle.c \
-	pbio/src/battery.c \
-	pbio/src/color/conversion.c \
-	pbio/src/control.c \
-	pbio/src/control_settings.c \
-	pbio/src/dcmotor.c \
-	pbio/src/drivebase.c \
-	pbio/src/error.c \
-	pbio/src/integrator.c \
-	pbio/src/light/animation.c \
-	pbio/src/light/color_light.c \
-	pbio/src/logger.c \
-	pbio/src/main.c \
-	pbio/src/math.c \
-	pbio/src/motor_process.c \
-	pbio/src/motor/servo_settings.c \
-	pbio/src/observer.c \
-	pbio/src/parent.c \
-	pbio/src/servo.c \
-	pbio/src/tacho.c \
-	pbio/src/trajectory.c \
 	)
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(EV3DEV_LIB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SHARED_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(SRC_C) $(SHARED_SRC_C) $(PY_EXTRA_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=

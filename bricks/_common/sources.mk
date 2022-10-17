@@ -37,15 +37,22 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_motor.c \
 	common/pb_type_speaker.c \
 	common/pb_type_system.c \
+	ev3devices/pb_module_ev3devices.c \
+	ev3devices/pb_type_ev3devices_colorsensor.c \
+	ev3devices/pb_type_ev3devices_gyrosensor.c \
+	ev3devices/pb_type_ev3devices_infraredsensor.c \
+	ev3devices/pb_type_ev3devices_touchsensor.c \
+	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
 	experimental/pb_module_experimental.c \
 	geometry/pb_module_geometry.c \
 	geometry/pb_type_matrix.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_cityhub.c \
 	hubs/pb_type_essentialhub.c \
-	hubs/pb_type_technichub.c \
+	hubs/pb_type_ev3brick.c \
 	hubs/pb_type_movehub.c \
 	hubs/pb_type_primehub.c \
+	hubs/pb_type_technichub.c \
 	iodevices/pb_module_iodevices.c \
 	iodevices/pb_type_iodevices_analogsensor.c \
 	iodevices/pb_type_iodevices_ev3devsensor.c \
@@ -55,11 +62,19 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_type_iodevices_pupdevice.c \
 	iodevices/pb_type_iodevices_uartdevice.c \
 	media/pb_module_media.c \
-	parameters/pb_type_icon.c \
+	nxtdevices/pb_module_nxtdevices.c \
+	nxtdevices/pb_type_nxtdevices_colorsensor.c \
+	nxtdevices/pb_type_nxtdevices_energymeter.c \
+	nxtdevices/pb_type_nxtdevices_lightsensor.c \
+	nxtdevices/pb_type_nxtdevices_soundsensor.c \
+	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
+	nxtdevices/pb_type_nxtdevices_touchsensor.c \
+	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
 	parameters/pb_type_direction.c \
+	parameters/pb_type_icon.c \
 	parameters/pb_type_port.c \
 	parameters/pb_type_side.c \
 	parameters/pb_type_stop.c \
@@ -88,6 +103,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_device_nxt.c \
 	util_pb/pb_device_stm32.c \
 	util_pb/pb_error.c \
+	util_pb/pb_serial_ev3dev.c \
 	util_pb/pb_task.c \
 	)
 
@@ -97,6 +113,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
+	drv/battery/battery_linux_ev3.c \
 	drv/block_device/block_device_flash_stm32.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
 	drv/bluetooth/bluetooth_btstack_control_gpio.c \
@@ -108,24 +125,29 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
 	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_gpio.c \
+	drv/button/button_linux_ev3.c \
 	drv/button/button_resistor_ladder.c \
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_ev3rt.c \
+	drv/clock/clock_linux.c \
 	drv/clock/clock_stm32.c \
 	drv/core.c \
 	drv/counter/counter_core.c \
+	drv/counter/counter_ev3dev_stretch_iio.c \
 	drv/counter/counter_lpf2.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
+	drv/ioport/ioport_ev3dev_stretch.c \
 	drv/ioport/ioport_lpf2.c \
 	drv/led/led_array_pwm.c \
 	drv/led/led_array.c \
 	drv/led/led_core.c \
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
+	drv/motor_driver/motor_driver_ev3dev_stretch.c \
 	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_lp50xx_stm32.c \
