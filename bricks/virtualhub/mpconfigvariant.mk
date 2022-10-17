@@ -46,7 +46,6 @@ MICROPY_PY_JNI = 0
 # as submodules (currently affects only libffi).
 MICROPY_STANDALONE = 0
 
-
 ######################
 # Pybricks additions #
 ######################
@@ -59,131 +58,13 @@ INC += -I../../../lib/lego
 INC += -I../../../lib/pbio/include
 INC += -I../../../lib/pbio/platform/virtual_hub
 
-# Pybricks drivers and modules
+# Sources and libraries common to all pybricks bricks
+PBIO_PLATFORM = virtual_hub
+include ../../../bricks/_common/sources.mk
 
-EXTMOD_SRC_C += $(addprefix pybricks/,\
-	common/pb_type_battery.c \
-	common/pb_type_colorlight_external.c \
-	common/pb_type_colorlight_internal.c \
-	common/pb_type_control.c \
-	common/pb_type_dcmotor.c \
-	common/pb_type_keypad.c \
-	common/pb_type_lightarray.c \
-	common/pb_type_logger.c \
-	common/pb_type_motor.c \
-	common/pb_type_system.c \
-	ev3devices/pb_module_ev3devices.c \
-	experimental/pb_module_experimental.c \
-	geometry/pb_module_geometry.c \
-	geometry/pb_type_matrix.c \
-	hubs/pb_module_hubs.c \
-	hubs/pb_type_virtualhub.c \
-	iodevices/pb_module_iodevices.c \
-	iodevices/pb_type_iodevices_analogsensor.c \
-	iodevices/pb_type_iodevices_i2cdevice.c \
-	iodevices/pb_type_iodevices_lumpdevice.c \
-	iodevices/pb_type_iodevices_lwp3device.c \
-	iodevices/pb_type_iodevices_pupdevice.c \
-	iodevices/pb_type_iodevices_uartdevice.c \
-	media/pb_module_media.c \
-	nxtdevices/pb_module_nxtdevices.c \
-	nxtdevices/pb_type_nxtdevices_colorsensor.c \
-	nxtdevices/pb_type_nxtdevices_energymeter.c \
-	nxtdevices/pb_type_nxtdevices_lightsensor.c \
-	nxtdevices/pb_type_nxtdevices_soundsensor.c \
-	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
-	nxtdevices/pb_type_nxtdevices_touchsensor.c \
-	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
-	parameters/pb_module_parameters.c \
-	parameters/pb_type_button.c \
-	parameters/pb_type_color.c \
-	parameters/pb_type_direction.c \
-	parameters/pb_type_icon.c \
-	parameters/pb_type_port.c \
-	parameters/pb_type_side.c \
-	parameters/pb_type_stop.c \
-	pupdevices/pb_module_pupdevices.c \
-	pupdevices/pb_type_pupdevices_colordistancesensor.c \
-	pupdevices/pb_type_pupdevices_colorlightmatrix.c \
-	pupdevices/pb_type_pupdevices_colorsensor.c \
-	pupdevices/pb_type_pupdevices_forcesensor.c \
-	pupdevices/pb_type_pupdevices_infraredsensor.c \
-	pupdevices/pb_type_pupdevices_light.c \
-	pupdevices/pb_type_pupdevices_pfmotor.c \
-	pupdevices/pb_type_pupdevices_remote.c \
-	pupdevices/pb_type_pupdevices_tiltsensor.c \
-	pupdevices/pb_type_pupdevices_ultrasonicsensor.c \
-	pybricks.c \
-	robotics/pb_module_robotics.c \
-	robotics/pb_type_drivebase.c \
-	tools/pb_module_tools.c \
-	tools/pb_type_stopwatch.c \
-	util_mp/pb_obj_helper.c \
-	util_mp/pb_type_enum.c \
-	util_pb/pb_color_map.c \
-	util_pb/pb_conversions.c \
-	util_pb/pb_device_stm32.c \
-	util_pb/pb_error.c \
-	util_pb/pb_task.c \
-	)
-
-LIB_SRC_C += $(addprefix lib/,\
-	contiki-core/lib/list.c \
-	contiki-core/sys/autostart.c \
-	contiki-core/sys/etimer.c \
-	contiki-core/sys/process.c \
-	contiki-core/sys/timer.c \
-	pbio/drv/battery/battery_virtual.c \
-	pbio/drv/button/button_virtual.c \
-	pbio/drv/clock/clock_linux.c \
-	pbio/drv/clock/clock_virtual.c \
-	pbio/drv/core.c \
-	pbio/drv/counter/counter_core.c \
-	pbio/drv/counter/counter_virtual.c \
-	pbio/drv/ioport/ioport_virtual.c \
-	pbio/drv/led/led_core.c \
-	pbio/drv/led/led_virtual.c \
-	pbio/drv/motor_driver/motor_driver_virtual.c \
-	pbio/drv/virtual.c \
-	pbio/src/angle.c \
-	pbio/src/battery.c \
-	pbio/src/color/conversion.c \
-	pbio/src/control.c \
-	pbio/src/control_settings.c \
-	pbio/src/dcmotor.c \
-	pbio/src/drivebase.c \
-	pbio/src/error.c \
-	pbio/src/integrator.c \
-	pbio/src/iodev.c \
-	pbio/src/light/animation.c \
-	pbio/src/light/color_light.c \
-	pbio/src/logger.c \
-	pbio/src/protocol/pybricks.c \
-	pbio/src/main.c \
-	pbio/src/math.c \
-	pbio/src/motor_process.c \
-	pbio/src/motor/servo_settings.c \
-	pbio/src/observer.c \
-	pbio/src/parent.c \
-	pbio/src/servo.c \
-	pbio/src/tacho.c \
-	pbio/src/task.c \
-	pbio/src/trajectory.c \
-	pbio/src/uartdev.c \
-	pbio/sys/battery.c \
-	pbio/sys/bluetooth.c \
-	pbio/sys/command.c \
-	pbio/sys/core.c \
-	pbio/sys/hmi.c \
-	pbio/sys/io_ports.c \
-	pbio/sys/light_matrix.c \
-	pbio/sys/light.c \
-	pbio/sys/main.c \
-	pbio/sys/program_load.c \
-	pbio/sys/program_stop.c \
-	pbio/sys/status.c \
-	pbio/sys/supervisor.c \
-	)
+EXTMOD_SRC_C += $(PYBRICKS_PYBRICKS_SRC_C)
+LIB_SRC_C += $(CONTIKI_SRC_C)
+LIB_SRC_C += $(PBIO_SRC_C)
 
 # realtime library for timer signals
 LIB += -lrt
