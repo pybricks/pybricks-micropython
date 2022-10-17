@@ -224,6 +224,28 @@ jobs:
         make $MAKEOPTS -C bricks/virtualhub submodules
         make $MAKEOPTS -C bricks/virtualhub
 
+  ev3rt:
+    name: ev3rt uImage
+    needs: [mpy_cross]
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install cross-compiler
+      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi ruby u-boot-tools
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/mpy-cross
+    - name: Build
+      run: make $MAKEOPTS -C bricks/ev3rt
+
   debug:
     name: debug firmware
     needs: [mpy_cross]
