@@ -43,8 +43,7 @@ static void *task_caller(void *arg) {
 
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
-        while (pbio_do_one_event()) {
-        }
+        pbio_process_events();
         MP_THREAD_GIL_EXIT();
 
         clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);

@@ -93,8 +93,8 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \
-        extern int pbio_do_one_event(void); \
-        pbio_do_one_event(); \
+        extern int pbio_process_events(void); \
+        pbio_process_events(); \
     } while (0);
 
 #define MICROPY_GC_HOOK_LOOP MICROPY_VM_HOOK_LOOP

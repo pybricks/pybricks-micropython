@@ -26,10 +26,15 @@ void pb_stack_get_info(char **sstack, char **estack) {
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_poll(void) {
-    while (pbio_do_one_event()) {
-    }
+    int events_handled = pbio_process_events();
 
     mp_handle_pending(true);
+
+    // Don't wait if events were handled since MicroPython might be waiting
+    // on one of the events that was just handled.
+    if (events_handled) {
+        return;
+    }
 
     // There is a possible race condition where an interrupt occurs and sets the
     // Contiki poll_requested flag after all events have been processed. So we

@@ -50,7 +50,7 @@ void pbio_test_run_thread(void *env) {
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while (PT_SCHEDULE(test_thread(&pt))) {
-        pbio_do_one_event();
+        pbio_process_events();
         if (timeout > 0) {
             clock_gettime(CLOCK_MONOTONIC, &now_time);
             if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {

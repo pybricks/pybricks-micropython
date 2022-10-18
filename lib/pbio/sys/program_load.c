@@ -262,7 +262,7 @@ pbio_error_t pbsys_program_load_wait_command(pbsys_main_program_t *program) {
     for (;;) {
         // REVISIT: this can be long waiting, so we could do a more efficient
         // wait (i.e. __WFI() on embedded system)
-        pbio_do_one_event();
+        pbio_process_events();
 
         if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
             return PBIO_ERROR_CANCELED;

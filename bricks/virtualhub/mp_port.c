@@ -121,8 +121,7 @@ void pb_virtualhub_port_init(void) {
     pbsys_init();
 
     pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
-    while (pbio_do_one_event()) {
-    }
+    pbio_process_events();
 
     pb_package_pybricks_init(false);
 }
@@ -138,8 +137,7 @@ void pb_virtualhub_port_deinit(void) {
 
 // MICROPY_VM_HOOK_LOOP
 void pb_virtualhub_poll(void) {
-    while (pbio_do_one_event()) {
-    }
+    pbio_process_events();
 
     // it is probably a bit inefficient, but we need to keep calling into the
     // CPython runtime here in case MicroPython is running in a tight loop,
@@ -152,11 +150,7 @@ void pb_virtualhub_event_poll(void) {
 start:
     mp_handle_pending(true);
 
-    int events_handled = 0;
-
-    while (pbio_do_one_event()) {
-        events_handled++;
-    }
+    int events_handled = pbio_process_events();
 
     pb_assert(pbdrv_virtual_platform_poll());
 
