@@ -348,7 +348,7 @@ pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_
 
     // Scale by gear ratio to whole degrees.
     *angle = pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position);
-    *speed = pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate);
+    *speed = pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed);
     return PBIO_SUCCESS;
 }
 

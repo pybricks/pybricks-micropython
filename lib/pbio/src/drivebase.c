@@ -588,9 +588,9 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
         return err;
     }
     *distance = pbio_control_settings_ctl_to_app_long(&db->control_distance.settings, &state_distance.position);
-    *drive_speed = pbio_control_settings_ctl_to_app(&db->control_distance.settings, state_distance.speed_estimate);
+    *drive_speed = pbio_control_settings_ctl_to_app(&db->control_distance.settings, state_distance.speed);
     *angle = pbio_control_settings_ctl_to_app_long(&db->control_heading.settings, &state_heading.position);
-    *turn_rate = pbio_control_settings_ctl_to_app(&db->control_heading.settings, state_heading.speed_estimate);
+    *turn_rate = pbio_control_settings_ctl_to_app(&db->control_heading.settings, state_heading.speed);
     return PBIO_SUCCESS;
 }
 

@@ -27,6 +27,10 @@
 - On Prime Hub and Essential Hub, the user program is now stored in a section
   of the external flash that is not used by any file system of other known
   firmwares, in order to avoid compatibility issues when changing firmware.
+- Restored the `Motor.speed()` method and `DriveBase` equivalent to provide
+  speed as a numerical derivative of the motor position, instead of a
+  model-based estimate. For most use cases, this is a more intuitive result
+  because this speed value is not affected by mechanical load.
 
 ### Fixed
 - Fixed motors going out of sync when starting program ([support#679]).
