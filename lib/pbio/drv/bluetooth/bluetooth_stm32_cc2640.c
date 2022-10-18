@@ -103,6 +103,9 @@ static uint8_t read_buf[RX_BUFFER_SIZE];
 // value is set to 0 when Tx is complete
 static uint8_t write_xfer_size;
 
+// set to true when ATT_HandleValueNoti is pending
+static bool notification_in_progress;
+
 // reflects state of SRDY signal
 volatile bool spi_srdy;
 // count of SRDY signal falling edges
@@ -403,7 +406,9 @@ retry:
         req.pValue = send->data;
         ATT_HandleValueNoti(conn_handle, &req);
     }
+    notification_in_progress = true;
     PT_WAIT_UNTIL(pt, hci_command_status);
+    notification_in_progress = false;
 
     HCI_StatusCodes_t status = read_buf[8];
 
@@ -444,7 +449,10 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
     // start scanning
-    PT_WAIT_WHILE(pt, write_xfer_size);
+
+    // calling GAP_DeviceDiscoveryRequest can cause notifications to be dropped,
+    // so we need to ensure than none are pending before we proceeded
+    PT_WAIT_WHILE(pt, write_xfer_size || notification_in_progress);
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
