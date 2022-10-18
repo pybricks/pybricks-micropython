@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
 
         // Handle pending events triggered by the status change, such as
         // starting status light animation.
-        pbio_process_events();
+        while (pbio_do_one_event()) {
+        }
 
         // Run the main application.
         pbsys_main_run_program(&program);
@@ -69,7 +70,8 @@ int main(int argc, char **argv) {
     for (;;) {
         // We must handle all pending events before turning the power off the
         // first time, otherwise the city hub turns itself back on sometimes.
-        pbio_process_events();
+        while (pbio_do_one_event()) {
+        }
 
         #if PBSYS_CONFIG_BATTERY_CHARGER
         // On hubs with USB battery chargers, we can't turn off power while

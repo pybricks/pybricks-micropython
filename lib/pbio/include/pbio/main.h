@@ -10,6 +10,6 @@
 
 void pbio_init(void);
 void pbio_stop_all(bool reset);
-int pbio_process_events(void);
+int pbio_do_one_event(void);
 
 #endif // _PBIO_MAIN_H_

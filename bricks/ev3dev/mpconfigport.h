@@ -404,8 +404,8 @@ struct _mp_bluetooth_nimble_malloc_t;
 #endif
 
 #define MICROPY_VM_HOOK_LOOP do { \
-        extern int pbio_process_events(void); \
-        pbio_process_events(); \
+        extern int pbio_do_one_event(void); \
+        pbio_do_one_event(); \
 } while (0);
 
 #include <glib.h>
@@ -413,8 +413,8 @@ struct _mp_bluetooth_nimble_malloc_t;
 #define MICROPY_EVENT_POLL_HOOK do { \
         extern void mp_handle_pending(bool); \
         mp_handle_pending(true); \
-        extern int pbio_process_events(void); \
-        pbio_process_events(); \
+        extern int pbio_do_one_event(void); \
+        while (pbio_do_one_event()) { } \
         MP_THREAD_GIL_EXIT(); \
         g_main_context_iteration(g_main_context_get_thread_default(), TRUE); \
         MP_THREAD_GIL_ENTER(); \

@@ -21,7 +21,9 @@
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_poll(void) {
-    pbio_process_events();
+    while (pbio_do_one_event()) {
+    }
+
     mp_handle_pending(true);
 }
 
