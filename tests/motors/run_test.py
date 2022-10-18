@@ -30,7 +30,7 @@ async def run_pybricks_script(script_name):
     print("Connected!")
 
     # Run the script and disconnect.
-    await hub.run(script_name)
+    await hub.run(str(script_name))
     await hub.disconnect()
 
     return hub.output
