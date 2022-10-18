@@ -116,12 +116,14 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     pbio_angle_avg(&state_left.position, &state_right.position, &state_distance->position);
     pbio_angle_avg(&state_left.position_estimate, &state_right.position_estimate, &state_distance->position_estimate);
     state_distance->speed_estimate = (state_left.speed_estimate + state_right.speed_estimate) / 2;
+    state_distance->speed = (state_left.speed + state_right.speed) / 2;
 
     // Take difference to get heading state, which is implemented as
     // (left - right) / 2 = (left + right) / 2 - right = avg - right.
     pbio_angle_diff(&state_distance->position, &state_right.position, &state_heading->position);
     pbio_angle_diff(&state_distance->position_estimate, &state_right.position_estimate, &state_heading->position_estimate);
     state_heading->speed_estimate = state_distance->speed_estimate - state_right.speed_estimate;
+    state_heading->speed = state_distance->speed - state_right.speed;
 
     return PBIO_SUCCESS;
 }
