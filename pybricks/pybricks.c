@@ -62,18 +62,17 @@ MP_REGISTER_MODULE(MP_QSTR_pybricks, pb_package_pybricks);
 #endif
 
 /**
- * Import all pybricks.* modules.
+ * import * from all builtin Pybricks and MicroPython modules.
  */
 static void pb_package_import_all(void) {
 
-    // Go through each module in the package.
-    for (size_t i = 0; i < MP_ARRAY_SIZE(pybricks_globals_table); i++) {
-        mp_rom_obj_t module = pybricks_globals_table[i].value;
-        if (mp_obj_is_type(module, &mp_type_module)) {
-            // Import everything from the module.
-            mp_import_all((mp_obj_t)module);
-        }
+    // Go through all modules in mp_builtin_module_map.
+    for (size_t i = 0; i < mp_builtin_module_map.used; i++) {
+        // This is a constant map of modules, so we can skip checks for
+        // filled slots and module types.
+        mp_import_all(mp_builtin_module_map.table[i].value);
     }
+
     #if PYBRICKS_PY_HUBS
     // Initialize hub instance
     const mp_obj_t args;

@@ -31,6 +31,9 @@
   speed as a numerical derivative of the motor position, instead of a
   model-based estimate. For most use cases, this is a more intuitive result
   because this speed value is not affected by mechanical load.
+- When using the REPL, everything from all Pybricks modules was automatically
+  imported for convenience. Now, everything from all available MicroPython
+  modules is also automatically imported ([support#741]).
 
 ### Fixed
 - Fixed motors going out of sync when starting program ([support#679]).
@@ -40,6 +43,7 @@
 - Fixed REPL history corrupt after soft reset ([support#699]).
 - Fixed "ValueError: incompatible .mpy file" when pressing the button when
   there is no program yet ([support#599]).
+- Fixed automatic imports when using the REPL ([support#741]).
 
 [pybricks-micropython#115]: https://github.com/pybricks/pybricks-micropython/pull/115
 [support#232]: https://github.com/pybricks/support/issues/232
@@ -49,6 +53,7 @@
 [support#692]: https://github.com/pybricks/support/issues/692
 [support#699]: https://github.com/pybricks/support/issues/699
 [support#729]: https://github.com/pybricks/support/issues/729
+[support#741]: https://github.com/pybricks/support/issues/741
 
 ## [3.2.0b3] - 2022-07-20
 
