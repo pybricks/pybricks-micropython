@@ -425,6 +425,8 @@ void pbdrv_bluetooth_init(void) {
     sm_set_er((uint8_t *)pdata->er_key);
     sm_set_ir((uint8_t *)pdata->ir_key);
 
+    gap_random_address_set_mode(GAP_RANDOM_ADDRESS_NON_RESOLVABLE);
+
     // GATT Client setup
     gatt_client_init();
 

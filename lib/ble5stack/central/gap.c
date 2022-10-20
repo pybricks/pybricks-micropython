@@ -172,6 +172,21 @@ HCI_StatusCodes_t GapInit_cancelConnect(void)
     return status;
 }
 
+HCI_StatusCodes_t GAP_ConfigDeviceAddr(Gap_initiatorAddrType_t addrType, const uint8_t *Addr)
+{
+    uint8_t pData[7];
+
+    pData[0] = addrType;
+
+    if (Addr) {
+        memcpy(&pData[1], Addr, 6);
+    } else {
+        memset(&pData[1], 0, 6);
+    }
+
+    return HCI_sendHCICommand(GAP_CONFIG_DEVICE_ADDR, pData, 7);
+}
+
 HCI_StatusCodes_t GAP_DeviceDiscoveryRequest(Gap_deviceDiscoveryMode_t mode, uint8_t activeScan, Gap_filterPolicy_t filterPolicy)
 {
     uint8_t pData[3];

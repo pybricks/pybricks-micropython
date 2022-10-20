@@ -134,13 +134,15 @@ void hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data);
 void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data);
 #define hci_le_set_scan_response_data_end hci_le_command_end
 
-int hci_le_rand(uint8_t random_number[8]);
+void hci_le_rand_begin(void);
+tBleStatus hci_le_rand_end(uint8_t *random_number);
 
 int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level);
 
 int hci_acl_data(const uint8_t * data, uint16_t len);
 
-int hci_le_set_random_address(tBDAddr bdaddr);
+void hci_le_set_random_address_begin(tBDAddr bdaddr);
+#define hci_le_set_random_address_end hci_le_command_end
 
 int hci_read_bd_addr(tBDAddr bdaddr);
 

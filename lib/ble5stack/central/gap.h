@@ -57,6 +57,7 @@
 #define GAP_AUTHENTICATE                0xFE0B
 #define GAP_TERMINATEAUTH               0xFE10
 #define GAP_UPDATELINKPARAMREQ          0xFE11
+#define GAP_CONFIG_DEVICE_ADDR          0xFE03
 #define GAP_DEVICE_DISCOVERY_REQUEST    0xFE04
 #define GAP_DEVICE_DISCOVERY_CANCEL     0xFE05
 #define GAP_MAKE_DISCOVERABLE           0xFE06
@@ -1701,6 +1702,7 @@ extern HCI_StatusCodes_t GAP_SetParamValue(uint8_t paramID, uint16_t paramValue)
  */
 extern HCI_StatusCodes_t GAP_GetParamValue(uint8_t paramID);
 
+HCI_StatusCodes_t GAP_ConfigDeviceAddr(Gap_initiatorAddrType_t addrType, const uint8_t *Addr);
 
 /*-------------------------------------------------------------------
  * FUNCTIONS - Device Discovery

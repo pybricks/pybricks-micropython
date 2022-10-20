@@ -129,6 +129,8 @@ static uint16_t remote_handle = NO_CONNECTION;
 // handle to LWP3 characteristic on remote
 static uint16_t remote_lwp3_char_handle = NO_CONNECTION;
 
+// The Identity Resolving Key read from the Bluetooth chip.
+static uint8_t device_irk[16];
 // GATT service handles
 static uint16_t gatt_service_handle, gatt_service_end_handle;
 // GAP service handles
@@ -317,7 +319,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     // make discoverable
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PUBLIC, NULL,
+    GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
         GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
@@ -1240,10 +1242,12 @@ static void handle_event(uint8_t *packet) {
                     advertising_data_received = true;
                     break;
 
+                case GAP_DEVICE_INIT_DONE:
+                    memcpy(device_irk, &data[12], sizeof(device_irk));
+                    __attribute__((fallthrough));
                 case HCI_EXT_SET_TX_POWER_EVENT:
                 case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT:
                 case HCI_EXT_SET_BDADDR_EVENT:
-                case GAP_DEVICE_INIT_DONE:
                 case GAP_ADVERT_DATA_UPDATE_DONE:
                 case GAP_MAKE_DISCOVERABLE_DONE:
                 case GAP_END_DISCOVERABLE_DONE:
@@ -1470,6 +1474,16 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_deviceInit(GAP_PROFILE_PERIPHERAL | GAP_PROFILE_CENTRAL, 8, NULL, NULL, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
+    // ignoring response data
+
+    // This sets the device address to a new random value each time we reset
+    // the Bluetooth chip. Since we don't support bonding, we use the IRK as
+    // our random value. The Bluetooth stack on the chip handles setting the
+    // correct bits for the address type.
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, device_irk);
+    PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
     PT_END(pt);

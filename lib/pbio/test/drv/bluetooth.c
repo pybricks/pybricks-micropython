@@ -287,9 +287,8 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
                 case 0x2001: // LE Set Event Mask
                     queue_command_complete(opcode, 0x00);
                     break;
-                case 0x2017: // LE Encrypt - key 16, data 16
-                    queue_command_complete(opcode, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+                case 0x2005: // LE Set Random Address
+                    queue_command_complete(opcode, 0x00);
                     break;
                 case 0x2006: // LE Set Advertising Parameters
                     log_debug("advertising parameters, min %d, max %d, type 0x%02x, own addr type 0x%02x, peer addr type 0x%02x, peer addr %02x:%02x:%02x:%02x:%02x:%02x, chan map 0x%02x",
@@ -314,6 +313,14 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
                     break;
                 case 0x200f: // LE Read White List Size
                     queue_command_complete(opcode, 0x00, 0x01);
+                    break;
+                case 0x2017: // LE Encrypt - key 16, data 16
+                    queue_command_complete(opcode, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+                    break;
+                case 0x2018: // LE Rand
+                    // not actual random for deterministic tests
+                    queue_command_complete(opcode, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
                     break;
                 case 0xff36: // HCI_VS_Update_UART_HCI_Baudrate
                     queue_command_complete(opcode, 0x00);

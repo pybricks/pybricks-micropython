@@ -269,7 +269,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     hci_le_set_scan_response_data_end();
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, PUBLIC_ADDR, NO_WHITE_LIST_USE,
+    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, RANDOM_ADDR, NO_WHITE_LIST_USE,
         0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gap_set_discoverable_end();
@@ -1127,6 +1127,25 @@ static PT_THREAD(hci_init(struct pt *pt)) {
         0, strlen(pbdrv_bluetooth_hub_name), pbdrv_bluetooth_hub_name);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_update_char_value_end();
+
+    // The chip always uses the same random address, so we have to generate
+    // an actually random one to get a new address each time. This must be
+    // called after aci_gap_init to take effect.
+
+    // STM32F0 doesn't have a random number generator, so we use the bluetooth
+    // chip to get some random bytes.
+    hci_le_rand_begin();
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    {
+        uint8_t rand_buf[8];
+        hci_le_rand_end(rand_buf);
+
+        // clear two msb to meet requirements of nonresolvable private address
+        rand_buf[5] &= 0x3F;
+        hci_le_set_random_address_begin(rand_buf);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    hci_le_set_random_address_end();
 
     PT_END(pt);
 }

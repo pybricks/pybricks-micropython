@@ -250,29 +250,30 @@ int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup)
   return status;
 }
 
-int hci_le_rand(uint8_t random_number[8])
+void hci_le_rand_begin(void)
 {
-  struct hci_request_and_response rq;
-  le_rand_rp resp;
+  struct hci_request rq;
 
-  memset(&resp, 0, sizeof(resp));
-
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_RAND);
   rq.cparam = NULL;
   rq.clen = 0;
+
+  hci_send_req(&rq);
+}
+
+tBleStatus hci_le_rand_end(uint8_t *random_number)
+{
+  struct hci_response rq;
+  le_rand_rp resp;
+
   rq.rparam = &resp;
-  rq.rlen = LE_RAND_RP_SIZE;
+  rq.rlen = sizeof(resp);
 
-  hci_send_req_recv_rsp(&rq);
+  hci_recv_resp(&rq);
 
-  if (resp.status) {
-    return resp.status;
-  }
+  memcpy(random_number, resp.random, sizeof(resp.random));
 
-  memcpy(random_number, resp.random, 8);
-
-  return 0;
+  return resp.status;
 }
 
 void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
@@ -317,25 +318,15 @@ int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level)
   return 0;
 }
 
-int hci_le_set_random_address(tBDAddr bdaddr)
+void hci_le_set_random_address_begin(tBDAddr bdaddr)
 {
-  struct hci_request_and_response rq;
-  le_set_random_address_cp set_rand_addr_cp;
-  uint8_t status;
+  struct hci_request rq;
 
-  memset(&set_rand_addr_cp, 0, sizeof(set_rand_addr_cp));
-  memcpy(set_rand_addr_cp.bdaddr, bdaddr, sizeof(tBDAddr));
-
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_RANDOM_ADDRESS);
-  rq.cparam = &set_rand_addr_cp;
+  rq.cparam = bdaddr;
   rq.clen = LE_SET_RANDOM_ADDRESS_CP_SIZE;
-  rq.rparam = &status;
-  rq.rlen = 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  return status;
+  hci_send_req(&rq);
 }
 
 int hci_read_bd_addr(tBDAddr bdaddr)
