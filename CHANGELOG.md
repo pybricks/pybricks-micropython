@@ -32,8 +32,8 @@
   model-based estimate. For most use cases, this is a more intuitive result
   because this speed value is not affected by mechanical load.
 - When using the REPL, everything from all Pybricks modules was automatically
-  imported for convenience. Now, everything from all available MicroPython
-  modules is also automatically imported ([support#741]).
+  imported for convenience. Now, MicroPython modules are also automatically
+  imported ([support#741]).
 
 ### Fixed
 - Fixed motors going out of sync when starting program ([support#679]).
