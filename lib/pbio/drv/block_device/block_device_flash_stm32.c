@@ -21,12 +21,6 @@
 
 #include STM32_HAL_H
 
-uint32_t pbdrv_block_device_get_size(void) {
-    // Defined in linker script.
-    extern uint32_t _pbdrv_block_device_storage_size;
-    return (uint32_t)(&_pbdrv_block_device_storage_size);
-}
-
 void pbdrv_block_device_init(void) {
 }
 
@@ -37,7 +31,7 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
     PT_BEGIN(pt);
 
     // Exit on invalid size.
-    if (size == 0 || offset + size > pbdrv_block_device_get_size()) {
+    if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE) {
         *err = PBIO_ERROR_INVALID_ARG;
         PT_EXIT(pt);
     }
@@ -59,7 +53,7 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
     static const uint32_t base_address = (uint32_t)(&_pbdrv_block_device_storage_start[0]);
 
     // Exit if size is 0, too big, or not a multiple of double-word size.
-    if (size == 0 || size > pbdrv_block_device_get_size() || size % sizeof(uint64_t)) {
+    if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE || size % sizeof(uint64_t)) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -75,11 +69,11 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
         .PageAddress = base_address,
         #elif defined(STM32L4)
         .Banks = FLASH_BANK_1, // Hard coded for STM32L431RC.
-        .Page = (FLASH_SIZE - (pbdrv_block_device_get_size())) / FLASH_PAGE_SIZE,
+        .Page = (FLASH_SIZE - (PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE)) / FLASH_PAGE_SIZE,
         #else
         #error "Unsupported target."
         #endif
-        .NbPages = pbdrv_block_device_get_size() / FLASH_PAGE_SIZE,
+        .NbPages = PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE / FLASH_PAGE_SIZE,
         .TypeErase = FLASH_TYPEERASE_PAGES
     };
 

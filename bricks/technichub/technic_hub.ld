@@ -6,7 +6,8 @@
     GNU linker script for LEGO Technic Hub
 */
 
-/* Specify the memory areas */
+/* Memory areas. NB: Total storage size (FLASH_USER_0 + FLASH_USER_1)
+   MUST match PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE */
 MEMORY
 {
     /* Non-erasable BLE bootloader (LEGO LWP3). Device boots only if all words
@@ -23,6 +24,9 @@ MEMORY
 
 "MAGIC_OFFSET" = 0x200;
 _stack_size = 8K;
+
+/* Start of data storage. */
 _pbdrv_block_device_storage_start = ORIGIN(FLASH_USER_0);
-_pbdrv_block_device_storage_size = LENGTH(FLASH_USER_0) + LENGTH(FLASH_USER_1);
+
+/* Portion of the data parsed for the checksum on boot. */
 _pbsys_program_load_checked_size = LENGTH(FLASH_USER_0);

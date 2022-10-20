@@ -19,6 +19,11 @@
 
 #include "core.h"
 
+// Sanity check that application RAM is enough to load ROM and still do something useful
+#if PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE < PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE + 2048
+#error "Application RAM must be at least ROM size + 2K."
+#endif
+
 /**
  * Map of loaded data. All data types are little-endian.
  */
@@ -44,7 +49,7 @@ typedef struct {
     /**
      * Data of the application program (code + heap).
      */
-    uint8_t program_data[PBSYS_CONFIG_PROGRAM_LOAD_PROGRAM_DATA_SIZE] __attribute__((aligned(sizeof(void *))));
+    uint8_t program_data[PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE] __attribute__((aligned(sizeof(void *))));
 } data_map_t;
 
 // The data map sits at the start of user RAM.
@@ -90,7 +95,7 @@ static void pbsys_program_load_update_checksum(void) {
 
 // Gets the (constant) maximum program size.
 static inline uint32_t pbsys_program_load_get_max_program_size() {
-    return pbdrv_block_device_get_size() - MAP_HEADER_SIZE;
+    return PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE - MAP_HEADER_SIZE;
 }
 
 /**

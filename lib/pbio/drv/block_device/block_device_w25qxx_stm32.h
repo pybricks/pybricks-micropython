@@ -40,15 +40,6 @@ typedef struct {
     IRQn_Type irq;
     /** The /CS pin. */
     const pbdrv_gpio_t pin_ncs;
-    /**
-     * Platform-specific starting address on the chip from where we can safely
-     * write data. All reads and writes to the block device are relative to
-     * this chip address. This can be used to protect the first region of flash
-     * if it is used to store things like bootloader information.
-     */
-    uint32_t start_address;
-    /** Ending address (exclusive) complementary to the start_address. */
-    uint32_t end_address;
 } pbdrv_block_device_w25qxx_stm32_platform_data_t;
 
 /**

@@ -19,13 +19,6 @@
 #if PBDRV_CONFIG_BLOCK_DEVICE
 
 /**
- * Gets the size of the block device.
- *
- * @return              The maximum size that can be read or written.
- */
-uint32_t pbdrv_block_device_get_size(void);
-
-/**
  * Read data from a storage device.
  *
  * On systems with data storage on an external chip, this is implemented with
@@ -71,9 +64,6 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
 
 #else
 
-static inline uint32_t pbdrv_block_device_get_size(void) {
-    return 0;
-}
 static inline PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
     PT_BEGIN(pt);
     *err = PBIO_ERROR_NOT_SUPPORTED;

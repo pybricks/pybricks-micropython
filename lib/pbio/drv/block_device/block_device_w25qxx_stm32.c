@@ -360,7 +360,7 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
     PT_BEGIN(pt);
 
     // Exit on invalid size.
-    if (size == 0 || offset + size > pbdrv_block_device_get_size()) {
+    if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE) {
         *err = PBIO_ERROR_INVALID_ARG;
         PT_EXIT(pt);
     }
@@ -377,7 +377,7 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
         size_now = pbio_math_min(size - size_done, FLASH_SIZE_READ);
 
         // Set address for this read request and send it.
-        set_address_be(&cmd_request_read.buffer[1], bdev.pdata->start_address + offset + size_done);
+        set_address_be(&cmd_request_read.buffer[1], PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset + size_done);
         PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_request_read, err));
         if (*err != PBIO_SUCCESS) {
             goto out;
@@ -467,7 +467,7 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
     PT_BEGIN(pt);
 
     // Exit on invalid size.
-    if (size == 0 || size > pbdrv_block_device_get_size()) {
+    if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE) {
         *err = PBIO_ERROR_INVALID_ARG;
         PT_EXIT(pt);
     }
@@ -483,7 +483,7 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
         // Writing size 0 means erase.
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
-            bdev.pdata->start_address + offset, NULL, 0, err));
+            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset, NULL, 0, err));
         if (*err != PBIO_SUCCESS) {
             goto out;
         }
@@ -493,7 +493,7 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
     for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_math_min(size - size_done, FLASH_SIZE_WRITE);
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
-            bdev.pdata->start_address + size_done, buffer + size_done, size_now, err));
+            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + size_done, buffer + size_done, size_now, err));
         if (*err != PBIO_SUCCESS) {
             goto out;
         }
@@ -503,10 +503,6 @@ out:
     bdev.process = NULL;
 
     PT_END(pt);
-}
-
-uint32_t pbdrv_block_device_get_size(void) {
-    return bdev.pdata->end_address - bdev.pdata->start_address;
 }
 
 PROCESS(pbdrv_block_device_w25qxx_stm32_init_process, "w25qxx");

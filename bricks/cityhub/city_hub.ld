@@ -6,7 +6,8 @@
     GNU linker script for LEGO Powered Up City Hub
 */
 
-/* Specify the memory areas */
+/* Memory areas. NB: Total storage size (FLASH_USER_0 + FLASH_USER_1)
+   MUST match PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE */
 MEMORY
 {
     /* Non-erasable BLE bootloader (LEGO LWP3). Device boots only if all words
@@ -15,7 +16,7 @@ MEMORY
     /* The firmware. Installed via BLE bootloader. */
     FLASH_FIRMWARE (rx)   : ORIGIN = 0x08005000, LENGTH = 220K
     /* User data written by the firmware during shutdown. */
-    FLASH_USER_0 (rx)       : ORIGIN = 0x0803C000, LENGTH = 12K
+    FLASH_USER_0 (rx)     : ORIGIN = 0x0803C000, LENGTH = 12K
     /* As above, but this part is not counted by bootloader checksum. */
     FLASH_USER_1 (rx)     : ORIGIN = 0x0803F000, LENGTH = 4K
     RAM (xrw)             : ORIGIN = 0x20000000, LENGTH = 32K
@@ -23,6 +24,9 @@ MEMORY
 
 "MAGIC_OFFSET" = 0x100;
 _stack_size = 4K;
+
+/* Start of data storage. */
 _pbdrv_block_device_storage_start = ORIGIN(FLASH_USER_0);
-_pbdrv_block_device_storage_size = LENGTH(FLASH_USER_0) + LENGTH(FLASH_USER_1);
+
+/* Portion of the data parsed for the checksum on boot. */
 _pbsys_program_load_checked_size = LENGTH(FLASH_USER_0);

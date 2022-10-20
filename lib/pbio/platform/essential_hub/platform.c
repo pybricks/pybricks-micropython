@@ -630,12 +630,6 @@ const pbdrv_block_device_w25qxx_stm32_platform_data_t pbdrv_block_device_w25qxx_
         .bank = GPIOB,
         .pin = 12,
     },
-    // Carve out 256K from the reserved 1M area at the start of the flash.
-    // This avoids touching the file system, the area read by the LEGO
-    // bootloader and the area used by upstream MicroPython. Currently, this
-    // just needs to be big enough to back up the user program on shutdown.
-    .start_address = 512 * 1024,
-    .end_address = 768 * 1024,
 };
 
 // USB

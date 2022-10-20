@@ -35,6 +35,12 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32      (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q32 (1)
+// Carve out 256K from the reserved 1M area at the start of the flash.
+// This avoids touching the file system, the area read by the LEGO
+// bootloader and the area used by upstream MicroPython. Currently, this
+// just needs to be big enough to back up the user program on shutdown.
+#define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS (512 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE (256 * 1024)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
