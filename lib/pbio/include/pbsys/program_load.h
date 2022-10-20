@@ -42,6 +42,10 @@ typedef struct _pbsys_program_load_data_header_t {
     volatile uint32_t checksum_complement;
     #endif
     /**
+     * End-user read-write accessible data.
+     */
+    uint8_t user_data[PBSYS_CONFIG_PROGRAM_LOAD_USER_DATA_SIZE];
+    /**
      * Size of the application program (size of code only).
      */
     uint32_t program_size;
