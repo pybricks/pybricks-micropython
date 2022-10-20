@@ -15,41 +15,23 @@
 #include <pbio/main.h>
 #include <pbio/protocol.h>
 #include <pbsys/main.h>
+#include <pbsys/program_load.h>
 #include <pbsys/status.h>
 
 #include "core.h"
 
-// Sanity check that application RAM is enough to load ROM and still do something useful
-#if PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE < PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE + 2048
-#error "Application RAM must be at least ROM size + 2K."
-#endif
-
 /**
- * Map of loaded data. All data types are little-endian.
+ * Map of loaded data.
  */
 typedef struct {
     /**
-     * How much to write on shutdown. This is reset to 0 on load, and should be
-     * set whenever any data is updated. This must always remain the first
-     * element of this structure.
+     * User data header.
      */
-    uint32_t write_size;
-    #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
-    /**
-     * Checksum complement to satisfy bootloader requirements. This ensures
-     * that words in the scanned area still add up to precisely 0 after user
-     * data was written.
-     */
-    volatile uint32_t checksum_complement;
-    #endif
-    /**
-     * Size of the application program (size of code only).
-     */
-    uint32_t program_size;
+    pbsys_program_load_data_header_t header;
     /**
      * Data of the application program (code + heap).
      */
-    uint8_t program_data[PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE] __attribute__((aligned(sizeof(void *))));
+    uint8_t program_data[PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE - sizeof(pbsys_program_load_data_header_t)] __attribute__((aligned(sizeof(void *))));
 } data_map_t;
 
 // The data map sits at the start of user RAM.
@@ -59,16 +41,14 @@ static data_map_t *map = &pbsys_user_ram_data_map;
 static bool pbsys_program_load_start_user_program_requested;
 static bool pbsys_program_load_start_repl_requested;
 
-#define MAP_HEADER_SIZE (sizeof(*map) - sizeof(map->program_data))
-
 #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
 // Updates checksum in data map to satisfy bootloader requirements.
 static void pbsys_program_load_update_checksum(void) {
 
     // Align writable data by a double word, to simplify checksum
     // computation and storage drivers that write double words.
-    while (map->write_size % 8) {
-        *((uint8_t *)map + map->write_size++) = 0;
+    while (map->header.write_size % 8) {
+        *((uint8_t *)map + map->header.write_size++) = 0;
     }
 
     // The area scanned by the bootloader adds up to 0 when all user data
@@ -79,24 +59,19 @@ static void pbsys_program_load_update_checksum(void) {
     uint32_t checksum = checksize / sizeof(uint32_t);
 
     // Don't count existing value.
-    map->checksum_complement = 0;
+    map->header.checksum_complement = 0;
 
     // Add checksum for each word in the written data and empty checked size.
     for (uint32_t offset = 0; offset < checksize; offset += sizeof(uint32_t)) {
         uint32_t *word = (uint32_t *)((uint8_t *)map + offset);
         // Assume that everything after written data is erased.
-        checksum += offset < map->write_size ? *word : 0xFFFFFFFF;
+        checksum += offset < map->header.write_size ? *word : 0xFFFFFFFF;
     }
 
     // Set the checksum complement to cancel out user data checksum.
-    map->checksum_complement = 0xFFFFFFFF - checksum + 1;
+    map->header.checksum_complement = 0xFFFFFFFF - checksum + 1;
 }
 #endif // PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
-
-// Gets the (constant) maximum program size.
-static inline uint32_t pbsys_program_load_get_max_program_size() {
-    return PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE - MAP_HEADER_SIZE;
-}
 
 /**
  * Writes the user program metadata.
@@ -112,9 +87,9 @@ pbio_error_t pbsys_program_load_set_program_size(uint32_t size) {
         return PBIO_ERROR_BUSY;
     }
 
-    map->program_size = size;
+    map->header.program_size = size;
     // Data was updated, so set the write size.
-    map->write_size = size + MAP_HEADER_SIZE;
+    map->header.write_size = size + sizeof(pbsys_program_load_data_header_t);
 
     return PBIO_SUCCESS;
 }
@@ -162,7 +137,7 @@ pbio_error_t pbsys_program_load_start_user_program(void) {
     }
 
     // Don't run invalid programs.
-    if (map->program_size == 0 || map->program_size > pbsys_program_load_get_max_program_size()) {
+    if (map->header.program_size == 0 || map->header.program_size > PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE) {
         // TODO: Validate the data beyond just size.
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -218,16 +193,16 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     PROCESS_BEGIN();
 
     // Read size of stored data.
-    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, sizeof(map->write_size), &err));
+    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, sizeof(map->header.write_size), &err));
 
     // Read the available data into RAM.
-    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, map->write_size, &err));
+    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, map->header.write_size, &err));
     if (err != PBIO_SUCCESS) {
-        map->program_size = 0;
+        map->header.program_size = 0;
     }
 
     // Reset write size, so we don't write data if nothing changed.
-    map->write_size = 0;
+    map->header.write_size = 0;
 
     // Initialization done.
     pbsys_init_busy_down();
@@ -236,14 +211,14 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
 
     // Write data to storage if it was updated.
-    if (map->write_size) {
+    if (map->header.write_size) {
 
         #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
         pbsys_program_load_update_checksum();
         #endif
 
         // Write the data.
-        PROCESS_PT_SPAWN(&pt, pbdrv_block_device_store(&pt, (uint8_t *)map, map->write_size, &err));
+        PROCESS_PT_SPAWN(&pt, pbdrv_block_device_store(&pt, (uint8_t *)map, map->header.write_size, &err));
     }
 
     // Deinitialization done.
@@ -288,7 +263,7 @@ pbio_error_t pbsys_program_load_wait_command(pbsys_main_program_t *program) {
 
     // REPL can also use user program (e.g. in MicroPython, import user modules)
     program->code_start = map->program_data;
-    program->code_end = map->program_data + map->program_size;
+    program->code_end = map->program_data + map->header.program_size;
     program->data_end = map->program_data + sizeof(map->program_data);
 
     return PBIO_SUCCESS;
