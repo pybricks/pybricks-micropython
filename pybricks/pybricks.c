@@ -61,6 +61,7 @@ MP_REGISTER_MODULE(MP_QSTR_pybricks_c, pb_package_pybricks);
 MP_REGISTER_MODULE(MP_QSTR_pybricks, pb_package_pybricks);
 #endif
 
+#if PYBRICKS_OPT_COMPILER
 /**
  * import * from all builtin Pybricks and MicroPython modules.
  */
@@ -102,6 +103,14 @@ void pb_package_pybricks_init(bool import_all) {
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
 }
+#else
+// Cheaper implementation of the above. This is sufficient on builds without
+// the compiler, since the following deterministic action should not raise
+// exceptions as it is only called before executing anything else.
+void pb_package_pybricks_init(bool import_all) {
+    pb_type_Color_reset();
+}
+#endif // PYBRICKS_OPT_COMPILER
 
 void pb_package_pybricks_deinit(void) {
     // Disconnect from remote.
