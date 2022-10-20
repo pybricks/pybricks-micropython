@@ -18,4 +18,7 @@ MEMORY
 }
 
 "FW_INFO_OFFSET" = 0x200;
-_stack_size = 16K;
+
+/* Minimal stack size to allow the build to proceed. The actual stack size is whatever is left after
+   statically allocated memory. It can be tuned by setting PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE. */
+_minimal_stack_size = 12K;

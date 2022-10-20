@@ -4,7 +4,6 @@
 
 /* top end of the stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);
-_sstack = _estack - _stack_size;
 
 /* define output sections */
 SECTIONS
@@ -81,7 +80,8 @@ SECTIONS
     .stack :
     {
         . = ALIGN(4);
-        . = . + _stack_size; /* will cause linker error if there is not enough space for stack. */
+        _sstack = .;
+        . = . + _minimal_stack_size; /* will cause linker error if there is not enough space for stack. */
         . = ALIGN(4);
     } >RAM
 
