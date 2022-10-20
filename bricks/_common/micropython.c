@@ -96,8 +96,8 @@ static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minima
     reader->close = mp_vfs_map_minimal_close;
 }
 
+#if PYBRICKS_OPT_COMPILER
 static void run_repl() {
-    #if MICROPY_ENABLE_COMPILER
     // Reset REPL history.
     readline_init0();
     nlr_buf_t nlr;
@@ -111,10 +111,8 @@ static void run_repl() {
         // Print which exception triggered this.
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
-    #else
-    mp_hal_stdout_tx_str("REPL not supported!\r\n");
-    #endif
 }
+#endif
 
 // From micropython/py/builtinimport.c, but copied because it is static.
 static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_t *rc, const mp_module_context_t *mc) {
@@ -233,6 +231,7 @@ static void run_user_program(void) {
         // Print which exception triggered this.
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
 
+        #if PYBRICKS_OPT_COMPILER
         // On KeyboardInterrupt, drop to REPL for debugging.
         if (mp_obj_exception_match((mp_obj_t)nlr.ret_val, &mp_type_KeyboardInterrupt)) {
 
@@ -244,6 +243,7 @@ static void run_user_program(void) {
             // Enter REPL.
             run_repl();
         }
+        #endif
     }
 }
 
@@ -271,18 +271,21 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     // Initialize MicroPython.
     mp_init();
 
-    // For MicroPython, the builtin program is the REPL.
-    if (program->run_builtin) {
-        // Init Pybricks package and auto-import everything.
-        pb_package_pybricks_init(true);
-
-        // Start the REPL.
-        run_repl();
-    } else {
+    // Check for run type.
+    if (!program->run_builtin) {
         // Init Pybricks package without auto-import.
         pb_package_pybricks_init(false);
+        // Run loaded program.
         run_user_program();
     }
+    #if PYBRICKS_OPT_COMPILER
+    else {
+        // For MicroPython, the builtin program is the REPL.
+        // Run it with everything auto-imported.
+        pb_package_pybricks_init(true);
+        run_repl();
+    }
+    #endif // PYBRICKS_OPT_COMPILER
 
     // Clean up non-MicroPython resources used by the pybricks package.
     pb_package_pybricks_deinit();
