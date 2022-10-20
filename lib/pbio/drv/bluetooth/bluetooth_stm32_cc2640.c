@@ -24,6 +24,7 @@
 #include <pbio/util.h>
 #include <pbio/version.h>
 #include <pbsys/app.h>
+#include <pbsys/program_load.h>
 
 #include <contiki.h>
 #include <lego_lwp3.h>
@@ -1013,7 +1014,7 @@ static void handle_event(uint8_t *packet) {
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
                         // REVISIT: client MTU may be smaller, in which case we can't used fixed value for MTU
-                        pbio_pybricks_hub_capabilities(buf, ATT_MAX_MTU_SIZE - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_APP_USER_PROGRAM_SIZE);
+                        pbio_pybricks_hub_capabilities(buf, ATT_MAX_MTU_SIZE - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);

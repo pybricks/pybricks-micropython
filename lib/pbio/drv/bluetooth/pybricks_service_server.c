@@ -49,9 +49,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbsys/app.h>
 #include <pbio/math.h>
 #include <pbio/protocol.h>
+
+#include <pbsys/app.h>
+#include <pbsys/program_load.h>
 
 #include "btstack_defines.h"
 #include "ble/att_db.h"
@@ -87,7 +89,7 @@ static uint16_t pybricks_service_read_callback(hci_con_handle_t con_handle, uint
     if (attribute_handle == pybricks_hub_capabilities_value_handle) {
         if (buffer && buffer_size >= PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE) {
             pbio_pybricks_hub_capabilities(buffer, pbio_math_min(att_server_get_mtu(con_handle) - 3, 512),
-                PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_APP_USER_PROGRAM_SIZE);
+                PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
         }
         return PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
     }

@@ -26,16 +26,6 @@
 #error "Application must define PBSYS_APP_HUB_FEATURE_FLAGS"
 #endif
 
-#if DOXYGEN
-/**
- * Specifies the maximum allowable user program size for the application.
- */
-#define PBSYS_APP_USER_PROGRAM_SIZE
-#endif
-#ifndef PBSYS_APP_USER_PROGRAM_SIZE
-#error "Application must define PBSYS_APP_USER_PROGRAM_SIZE"
-#endif
-
 #endif // _PBSYS_APP_H_
 
 /** @} */
