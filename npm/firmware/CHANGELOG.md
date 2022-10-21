@@ -1,3 +1,8 @@
+## 6.1.0 - 2022-10-21
+
+### Changed
+- Updated firmware to v3.2.0b4.
+
 ## 6.0.1 - 2022-09-14
 ### Removed
 - Removed invalid property on `FirmwareMetadataV110` type.
