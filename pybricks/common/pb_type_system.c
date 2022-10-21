@@ -115,7 +115,7 @@ STATIC mp_obj_t pb_type_System_storage(size_t n_args, const mp_obj_t *pos_args, 
     mp_int_t offset = mp_obj_get_int(offset_in);
 
     // Handle read.
-    if (read_in != mp_const_none) {
+    if (read_in != mp_const_none && write_in == mp_const_none) {
         byte *data;
         mp_uint_t size = mp_obj_get_int(read_in);
         pb_assert(pbsys_program_load_get_user_data(offset, &data, size));
@@ -123,7 +123,7 @@ STATIC mp_obj_t pb_type_System_storage(size_t n_args, const mp_obj_t *pos_args, 
     }
 
     // Handle write.
-    if (write_in != mp_const_none) {
+    if (write_in != mp_const_none && read_in == mp_const_none) {
         mp_buffer_info_t bufinfo;
         mp_get_buffer_raise(write_in, &bufinfo, MP_BUFFER_READ);
 
