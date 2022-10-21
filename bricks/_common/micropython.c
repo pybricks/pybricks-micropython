@@ -9,6 +9,7 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
+#include <pbio/util.h>
 #include <pbsys/main.h>
 #include <pbsys/program_stop.h>
 
@@ -147,8 +148,8 @@ static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_
 
 /** mpy info and data for one script or module. */
 typedef struct {
-    /** Size of the mpy program. */
-    uint32_t mpy_size;
+    /** Size of the mpy program. Not aligned, use pbio_get_uint32_le() to read. */
+    uint8_t mpy_size[4];
     /** Null-terminated name of the script, without file extension. */
     char mpy_name[];
     /** mpy data follows thereafter. */
@@ -183,7 +184,7 @@ static mpy_info_t *mpy_data_find(qstr name) {
     const char *name_str = qstr_str(name);
 
     for (mpy_info_t *info = mpy_first; info < mpy_end;
-         info = (mpy_info_t *)(mpy_data_get_buf(info) + info->mpy_size)) {
+         info = (mpy_info_t *)(mpy_data_get_buf(info) + pbio_get_uint32_le(info->mpy_size))) {
         if (strcmp(info->mpy_name, name_str) == 0) {
             return info;
         }
@@ -208,7 +209,7 @@ static void run_user_program(void) {
         // This is similar to __import__ except we don't push/pop globals
         mp_reader_t reader;
         mp_vfs_map_minimal_t data;
-        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
+        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size));
         mp_module_context_t *context = m_new_obj(mp_module_context_t);
         context->module.globals = mp_globals_get();
         mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
@@ -327,7 +328,7 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
         // Parse the static script data.
         mp_reader_t reader;
         mp_vfs_map_minimal_t data;
-        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), info->mpy_size);
+        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size));
 
         // Create new module and execute in its own context.
         mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);
