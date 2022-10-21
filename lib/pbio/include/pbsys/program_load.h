@@ -28,9 +28,9 @@
  */
 typedef struct _pbsys_program_load_data_header_t {
     /**
-     * How much to write on shutdown. This is reset to 0 on load, and should be
-     * set whenever any data is updated. This must always remain the first
-     * element of this structure.
+     * How much to write on shutdown (and how much to load on boot). This is
+     * reset to 0 in RAM on load, and should be set whenever any data is
+     * updated. This must always remain the first element of this structure.
      */
     uint32_t write_size;
     #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM

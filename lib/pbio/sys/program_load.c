@@ -38,6 +38,14 @@ typedef struct {
 data_map_t pbsys_user_ram_data_map __attribute__((section(".noinit"), used));
 static data_map_t *map = &pbsys_user_ram_data_map;
 
+/**
+ * Sets write size to how much data must be written on shutdown. This is not
+ * simply a boolean flag because it is also used as the load size on boot.
+ */
+static void update_write_size(void) {
+    map->header.write_size = sizeof(pbsys_program_load_data_header_t) + map->header.program_size;
+}
+
 static bool pbsys_program_load_start_user_program_requested;
 static bool pbsys_program_load_start_repl_requested;
 
@@ -87,9 +95,11 @@ pbio_error_t pbsys_program_load_set_program_size(uint32_t size) {
         return PBIO_ERROR_BUSY;
     }
 
+    // Update program size.
     map->header.program_size = size;
-    // Data was updated, so set the write size.
-    map->header.write_size = size + sizeof(pbsys_program_load_data_header_t);
+
+    // Program size was updated, so set the write size.
+    update_write_size();
 
     return PBIO_SUCCESS;
 }
