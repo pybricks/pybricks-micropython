@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0b4] - 2022-10-21
+
 ### Added
 - Indicate that the hub is shutting down by quickly flashing the hub light for
   half a second. This makes it easier to see when you can stop pressing the
@@ -11,8 +13,8 @@
 - Indicate that the SPIKE Prime hub is booting and shutting down by fading
   the stop sign in and out.
 - Implemented iterator protocol on `geometry.Matrix` class.
-- Added experimental support for multi-file
-  projects ([pybricks-micropython#115]).
+- Added support for multi-file projects ([pybricks-micropython#115]).
+- Added new `System.storage()` API ([support#85]).
 
 ### Changed
 - Battery full indication (green light) comes on earlier ([support#647]).
@@ -34,6 +36,9 @@
 - When using the REPL, everything from all Pybricks modules was automatically
   imported for convenience. Now, MicroPython modules are also automatically
   imported ([support#741]).
+- Updated Bluetooth to [Pybricks Profile v1.2.0][pp1.2.0].
+- Bluetooth now uses random private address instead of static public address
+  ([support#600]).
 
 ### Fixed
 - Fixed motors going out of sync when starting program ([support#679]).
@@ -43,11 +48,13 @@
 - Fixed REPL history corrupt after soft reset ([support#699]).
 - Fixed "ValueError: incompatible .mpy file" when pressing the button when
   there is no program yet ([support#599]).
-- Fixed automatic imports when using the REPL ([support#741]).
 
+[pp1.2.0]: https://github.com/pybricks/technical-info/blob/master/pybricks-ble-profile.md#profile-v120
 [pybricks-micropython#115]: https://github.com/pybricks/pybricks-micropython/pull/115
+[support#85]: https://github.com/pybricks/support/issues/85
 [support#232]: https://github.com/pybricks/support/issues/232
-[support#232]: https://github.com/pybricks/support/issues/599
+[support#599]: https://github.com/pybricks/support/issues/599
+[support#600]: https://github.com/pybricks/support/issues/600
 [support#647]: https://github.com/pybricks/support/issues/647
 [support#679]: https://github.com/pybricks/support/issues/679
 [support#692]: https://github.com/pybricks/support/issues/692
@@ -335,7 +342,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...HEAD
+[3.2.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...v3.2.0b4
 [3.2.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...v3.2.0b3
 [3.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...v3.2.0b2
 [3.2.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0...v3.2.0b1
