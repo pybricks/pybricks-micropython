@@ -46,6 +46,42 @@ static void update_write_size(void) {
     map->header.write_size = sizeof(pbsys_program_load_data_header_t) + map->header.program_size;
 }
 
+/**
+ * Saves user data. This will be saved during power off, like program data.
+ *
+ * @param [in]  offset  Offset from the base address.
+ * @param [in]  data    The data to be stored (copied).
+ * @param [in]  size    Data size.
+ * @returns             ::PBIO_ERROR_INVALID_ARG if the data won't fit.
+ *                      Otherwise, ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size) {
+    if (offset + size > sizeof(map->header.user_data)) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    // Update data and write size to request write on poweroff.
+    memcpy(map->header.user_data + offset, data, size);
+    update_write_size();
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Gets pointer to user data.
+ *
+ * @param [in]  offset  Offset from the base address.
+ * @param [in]  data    The data reference.
+ * @param [in]  size    Data size.
+ * @returns             ::PBIO_ERROR_INVALID_ARG if reading out of range.
+ *                      Otherwise, ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
+    if (offset + size > sizeof(map->header.user_data)) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    *data = map->header.user_data + offset;
+    return PBIO_SUCCESS;
+}
+
 static bool pbsys_program_load_start_user_program_requested;
 static bool pbsys_program_load_start_repl_requested;
 

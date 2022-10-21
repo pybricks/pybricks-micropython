@@ -53,9 +53,23 @@ typedef struct _pbsys_program_load_data_header_t {
 
 #define PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE (PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE - sizeof(pbsys_program_load_data_header_t))
 
+pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size);
+
+pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, uint32_t size);
+
 #else
 
 #define PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE (0)
+
+static inline pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
+    *data = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 
 #endif // PBSYS_CONFIG_PROGRAM_LOAD
 

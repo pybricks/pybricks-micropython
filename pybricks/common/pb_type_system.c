@@ -8,12 +8,16 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbsys/program_load.h>
 
 #include "py/obj.h"
+#include "py/objstr.h"
 #include "py/runtime.h"
 
 #include <pybricks/common.h>
 #include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
 
 STATIC mp_obj_t pb_type_System_name(void) {
     const char *hub_name = pbdrv_bluetooth_get_hub_name();
@@ -101,6 +105,34 @@ STATIC mp_obj_t pb_type_System_shutdown(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_shutdown_obj, pb_type_System_shutdown);
 
+STATIC mp_obj_t pb_type_System_storage(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(offset),
+        PB_ARG_DEFAULT_NONE(read),
+        PB_ARG_DEFAULT_NONE(write));
+
+    // Get offset and confirm integer type.
+    mp_int_t offset = mp_obj_get_int(offset_in);
+
+    // Handle read.
+    if (write_in == mp_const_none) {
+        byte *data;
+        mp_uint_t size = mp_obj_get_int(read_in);
+        pb_assert(pbsys_program_load_get_user_data(offset, &data, size));
+        return mp_obj_new_bytes(data, size);
+    }
+
+    // Handle write.
+    if (read_in == mp_const_none && !mp_obj_is_str(write_in) && mp_obj_is_str_or_bytes(write_in)) {
+        mp_obj_str_t *obj = ((mp_obj_str_t *)MP_OBJ_TO_PTR(write_in));
+        pbsys_program_load_set_user_data(offset, obj->data, obj->len);
+        return mp_const_none;
+    }
+
+    mp_raise_ValueError(MP_ERROR_TEXT("Must set either read (int) or write (bytes)."));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_System_storage_obj, 0, pb_type_System_storage);
+
 #endif // PBIO_CONFIG_ENABLE_SYS
 
 // dir(pybricks.common.System)
@@ -113,6 +145,7 @@ STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     #if PBIO_CONFIG_ENABLE_SYS
     { MP_ROM_QSTR(MP_QSTR_set_stop_button), MP_ROM_PTR(&pb_type_System_set_stop_button_obj) },
     { MP_ROM_QSTR(MP_QSTR_shutdown), MP_ROM_PTR(&pb_type_System_shutdown_obj) },
+    { MP_ROM_QSTR(MP_QSTR_storage), MP_ROM_PTR(&pb_type_System_storage_obj) },
     #endif
 };
 STATIC MP_DEFINE_CONST_DICT(common_System_locals_dict, common_System_locals_dict_table);
