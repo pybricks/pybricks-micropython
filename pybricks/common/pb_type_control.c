@@ -35,7 +35,7 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 
     #if PYBRICKS_PY_COMMON_LOGGER
     // Create an instance of the Logger class
-    self->logger = common_Logger_obj_make_new(&self->control->log, PBIO_CONTROL_LOG_COLS);
+    self->logger = common_Logger_obj_make_new(&self->control->log, PBIO_CONTROL_LOGGER_NUM_COLS);
     #endif
 
     self->scale = mp_obj_new_int(control->settings.ctl_steps_per_app_step);

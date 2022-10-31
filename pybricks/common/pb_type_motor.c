@@ -122,7 +122,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     #if PYBRICKS_PY_COMMON_LOGGER
     // Create an instance of the Logger class
-    self->logger = common_Logger_obj_make_new(&self->srv->log, PBIO_SERVO_LOG_COLS);
+    self->logger = common_Logger_obj_make_new(&self->srv->log, PBIO_SERVO_LOGGER_NUM_COLS);
     #endif
 
     return MP_OBJ_FROM_PTR(self);

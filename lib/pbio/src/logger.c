@@ -16,95 +16,93 @@
 
 /**
  * Starts logging in the background.
- * @param [in]  log     pointer to log
- * @param [in]  buf     array large enough to hold @p len rows of data
- * @param [in]  len     maximum number of rows that can be logged
- * @param [in]  div     clock divider to slow down sampling period
+ *
+ * @param [in]  log         Pointer to log.
+ * @param [in]  buf         Array large enough to hold @p num_rows rows of data.
+ * @param [in]  num_rows    Maximum number of rows that can be logged.
+ * @param [in]  num_cols    Number of entries in one row.
+ * @param [in]  down_sample For every @p down_sample of update calls, only one row is logged.
  */
-void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t len, int32_t div) {
-    // (re-)initialize logger status for this servo
-    log->sampled = 0;
-    log->skipped = 0;
+void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint32_t num_cols, int32_t down_sample) {
+    // (re-)initialize logger status.
+    log->num_rows_used = 0;
+    log->skipped_samples = 0;
     log->data = buf;
-    log->len = len;
-    log->sample_div = div;
-    log->start = pbdrv_clock_get_ms();
+    log->num_rows = num_rows;
+    log->num_cols = num_cols;
+    log->down_sample = down_sample;
+    log->start_time = pbdrv_clock_get_ms();
+
+    // Data may now be logged.
     log->active = true;
 }
 
-int32_t pbio_logger_rows(pbio_log_t *log) {
-    return log->sampled;
-}
-
-int32_t pbio_logger_cols(pbio_log_t *log) {
-    return log->num_values;
-}
-
+/**
+ * Stops accepting new data from background loops.
+ *
+ * @param [in]  log         Pointer to log.
+ */
 void pbio_logger_stop(pbio_log_t *log) {
-    // Release the logger for re-use
     log->active = false;
 }
 
-void pbio_logger_update(pbio_log_t *log, int32_t *buf) {
+/**
+ * Add new data from a background loop.
+ *
+ * @param [in]  log         Pointer to log.
+ * @param [in]  row_data    Data to be added.
+ */
+void pbio_logger_update(pbio_log_t *log, int32_t *row_data) {
 
-    // Log nothing if logger is inactive
+    // Log nothing if logger is inactive.
     if (!log->active) {
         return;
     }
 
-    // Skip logging if we are not yet at a multiple of sample_div
-    if (++log->skipped != log->sample_div) {
+    // Skip logging if we are not yet at a multiple of down_sample.
+    if (++log->skipped_samples != log->down_sample) {
         return;
     }
-    log->skipped = 0;
+    log->skipped_samples = 0;
 
-    // Stop if log is full.
-    if (log->sampled > log->len) {
+    // Exit if log is full.
+    if (log->num_rows_used >= log->num_rows) {
         log->active = false;
         return;
     }
 
-    // Stop successfully when done
-    if (log->sampled == log->len) {
-        log->active = false;
-        return;
+    // Write time of logging.
+    log->data[log->num_rows_used * log->num_cols] = pbdrv_clock_get_ms() - log->start_time;
+
+    // Write the data.
+    for (uint8_t i = PBIO_LOGGER_NUM_DEFAULT_COLS; i < log->num_cols; i++) {
+        log->data[log->num_rows_used * log->num_cols + i] = row_data[i - PBIO_LOGGER_NUM_DEFAULT_COLS];
     }
 
-    // Write time of logging
-    log->data[log->sampled * log->num_values] = pbdrv_clock_get_ms() - log->start;
-
-    // Write the data
-    for (uint8_t i = NUM_DEFAULT_LOG_VALUES; i < log->num_values; i++) {
-        log->data[log->sampled * log->num_values + i] = buf[i - NUM_DEFAULT_LOG_VALUES];
-    }
-
-    // Increment sample counter
-    log->sampled++;
+    // Increment used row counter.
+    log->num_rows_used++;
 
     return;
 }
 
-pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
+/**
+ * Gets number of used (filled) rows in the log.
+ *
+ * @param [in]  log         Pointer to log.
+ * @return                  Number of used rows.
+ */
+uint32_t pbio_logger_get_num_rows_used(pbio_log_t *log) {
+    return log->num_rows_used;
+}
 
-    // Validate index value
-    if (sindex < -1) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Get index or latest sample if requested index is -1
-    uint32_t index = sindex < 0 ? log->sampled - 1 : (uint32_t)sindex;
-
-    // Ensure index is within bounds
-    if (index >= log->sampled) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Read the data
-    for (uint8_t i = 0; i < log->num_values; i++) {
-        buf[i] = log->data[index * log->num_values + i];
-    }
-
-    return PBIO_SUCCESS;
+/**
+ * Gets row from the log. Caller must ensure that valid index is used.
+ *
+ * @param [in]  log         Pointer to log.
+ * @return                  Pointer to row data.
+ */
+int32_t *pbio_logger_get_row_data(pbio_log_t *log, uint32_t index) {
+    return log->data + index * log->num_cols;
 }
 
 #endif // PBIO_CONFIG_LOGGER

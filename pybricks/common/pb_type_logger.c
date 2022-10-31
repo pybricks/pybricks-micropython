@@ -23,145 +23,109 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
-// pybricks.tools.Logger class object
+/**
+ * pybricks.tools.Logger class object
+ */
 typedef struct _tools_Logger_obj_t {
     mp_obj_base_t base;
+    /**
+     * Reference to pbio log object, which does not have its own data buffer.
+     */
     pbio_log_t *log;
+    /**
+     * Data buffer that will be allocated on MicroPython heap.
+     */
     int32_t *buf;
-    uint32_t size;
+    /**
+     * Number of columns, needed when starting log which happens after object creation.
+     */
+    uint32_t num_cols;
+    /**
+     * Buffer size. Used to free (renew) old data when resetting logger.
+     */
+    uint32_t last_size;
 } tools_Logger_obj_t;
 
 STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_REQUIRED(duration),
-        PB_ARG_DEFAULT_INT(divisor, 1));
+        PB_ARG_DEFAULT_INT(down_sample, 1));
 
-    mp_int_t divisor = pb_obj_get_int(divisor_in);
-    divisor = pbio_math_max(divisor, 1);
-    mp_int_t rows = pb_obj_get_int(duration_in) / PBIO_CONFIG_CONTROL_LOOP_TIME_MS / divisor;
-    mp_int_t size = rows * pbio_logger_cols(self->log);
-    self->buf = m_renew(int32_t, self->buf, self->size, size);
-    self->size = size;
+    // Log only one row per divisor samples.
+    mp_uint_t down_sample = pbio_math_max(pb_obj_get_int(down_sample_in), 1);
+    mp_uint_t num_rows = pb_obj_get_int(duration_in) / PBIO_CONFIG_CONTROL_LOOP_TIME_MS / down_sample;
 
-    pbio_logger_start(self->log, self->buf, rows, divisor);
+    // Size is number of rows times column width. All data are int32.
+    mp_int_t size = num_rows * self->num_cols;
+    self->buf = m_renew(int32_t, self->buf, self->last_size, size);
+    self->last_size = size;
+
+    // Indicates that background control loops may enter data in log.
+    pbio_logger_start(self->log, self->buf, num_rows, self->num_cols, down_sample);
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 1, tools_Logger_start);
 
-STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        tools_Logger_obj_t, self,
-        PB_ARG_DEFAULT_NONE(index));
-
-    // Get index, or set to -1 if not given.
-    mp_int_t index = index_in == mp_const_none ? -1 : pb_obj_get_int(index_in);
-
-    // Data buffer for this sample
-    mp_obj_t ret[MAX_LOG_VALUES];
-    int32_t data[MAX_LOG_VALUES];
-
-    // Get data for this sample
-    pb_assert(pbio_logger_read(self->log, index, data));
-    uint8_t num_values = pbio_logger_cols(self->log);
-
-    // Convert data to user objects
-    for (uint8_t i = 0; i < num_values; i++) {
-        ret[i] = mp_obj_new_int(data[i]);
-    }
-    return mp_obj_new_tuple(num_values, ret);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_get_obj, 1, tools_Logger_get);
-
 STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
+    // Indicates that background control loops log write more data.
     pbio_logger_stop(self->log);
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
 
-static const size_t max_val_strln = sizeof("−2147483648,");
-
-// Make a comma separated list of values
-static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
-
-    // Reset string index
-    size_t idx = 0;
-
-    for (uint8_t v = 0; v < n; v++) {
-        // Concatenate value, to the row
-        size_t s = snprintf(&row[idx], max_val_strln, "%" PRId32 ",", data[v]);
-        if (s < 2) {
-            pb_assert(PBIO_ERROR_FAILED);
-        }
-        idx += s;
-
-        // For the last value, replace , by \n
-        if (v == n - 1) {
-            row[idx - 1] = '\n';
-        }
-    }
-}
-
 STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(path));
+
+    // Don't allow any more data to be added to logs.
+    pbio_logger_stop(self->log);
+
+    // Get log file path.
     const char *path = path_in == mp_const_none ? "log.txt" : mp_obj_str_get_str(path_in);
 
     #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
-    // Create an empty log file
-    FILE *log_file;
-
-    // Open file to erase it
-    log_file = fopen(path, "w");
+    // Create an empty log file locally.
+    FILE *log_file = fopen(path, "w");
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
     #else
+
+    // Tell IDE to open remote file.
     mp_printf(&mp_plat_print, "PB_OF:%s\n", path);
     #endif // PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
 
-    // Read log size information
-    int32_t data[MAX_LOG_VALUES];
-
-    pbio_logger_stop(self->log);
-
-    uint8_t num_values = pbio_logger_cols(self->log);
-    int32_t sampled = pbio_logger_rows(self->log);
     pbio_error_t err = PBIO_SUCCESS;
 
-    // Allocate space for one null-terminated row of data
-    char row_str[max_val_strln * MAX_LOG_VALUES + 1];
-
     // Write data to file line by line
-    for (int32_t i = 0; i < sampled; i++) {
+    for (uint32_t row = 0; row < pbio_logger_get_num_rows_used(self->log); row++) {
 
-        // Read one line inside lock
-        err = pbio_logger_read(self->log, i, data);
-        if (err != PBIO_SUCCESS) {
-            break;
+        int32_t *row_data = pbio_logger_get_row_data(self->log, row);
+
+        for (uint32_t col = 0; col < self->log->num_cols; col++) {
+
+            // Write "-12345, " or "-12345\n" for last value on row.
+            const char *format = col + 1 < self->log->num_cols ? "%d, " : "%d\n";
+
+            // Write one value.
+            #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
+            if (fprintf(log_file, format, row_data[col]) < 0) {
+                break;
+            }
+            #else
+            mp_printf(&mp_plat_print, format, row_data[col]);
+            #endif // PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
         }
 
-        // Make one string of values
-        make_data_row_str(row_str, data, num_values);
-
-        #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
-        // Append the row to file
-        if (fprintf(log_file, "%s", row_str) < 0) {
-            err = PBIO_ERROR_IO;
-            break;
-        }
-        #else
-        // Print the row
-        mp_print_str(&mp_plat_print, row_str);
-        #endif // PYBRICKS_PY_COMMON_LOGGER_REAL_FILE
-
-        // Writing data can take a while, so give MicroPython some time too
+        // Writing data can take a while, so give system some time too.
+        MICROPY_VM_HOOK_LOOP
         mp_handle_pending(true);
     }
 
@@ -179,20 +143,9 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 1, tools_Logger_save);
 
-STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
-    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    switch (op) {
-        case MP_UNARY_OP_LEN:
-            return MP_OBJ_NEW_SMALL_INT(pbio_logger_rows(self->log));
-        default:
-            return MP_OBJ_NULL;
-    }
-}
-
 // dir(pybricks.tools.Logger)
 STATIC const mp_rom_map_elem_t tools_Logger_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tools_Logger_start_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&tools_Logger_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tools_Logger_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_save), MP_ROM_PTR(&tools_Logger_save_obj) },
 };
@@ -202,14 +155,13 @@ STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_t
 STATIC const mp_obj_type_t tools_Logger_type = {
     { &mp_type_type },
     .locals_dict = (mp_obj_dict_t *)&tools_Logger_locals_dict,
-    .unary_op = tools_Logger_unary_op,
 };
 
 mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values) {
     tools_Logger_obj_t *logger = m_new_obj(tools_Logger_obj_t);
     logger->base.type = (mp_obj_type_t *)&tools_Logger_type;
     logger->log = log;
-    logger->log->num_values = num_values + NUM_DEFAULT_LOG_VALUES;
+    logger->num_cols = num_values + PBIO_LOGGER_NUM_DEFAULT_COLS;
     return logger;
 }
 
