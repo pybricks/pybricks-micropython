@@ -647,9 +647,46 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     return PBIO_SUCCESS;
 }
 
+/**
+ * Checks whether drivebase is stalled. If the drivebase is actively
+ * controlled, it is stalled when the controller(s) cannot maintain the
+ * target speed or position while using maximum allowed torque. If control
+ * is not active, it uses the individual servos to check for stall.
+ *
+ * @param [in]  db              The servo instance.
+ * @param [out] stalled         True if stalled, false if not.
+ * @return                      Error code. ::PBIO_ERROR_INVALID_OP if update
+ *                              loop not running, else ::PBIO_SUCCESS
+ */
+pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled) {
+
+    // Don't allow access if update loop not registered.
+    if (!pbio_drivebase_update_loop_is_running(db)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    uint32_t stall_duration;
+
+    // We are stalled if at least one controller is stalled.
+    if (pbio_control_is_stalled(&db->control_distance, &stall_duration) ||
+        pbio_control_is_stalled(&db->control_heading, &stall_duration)) {
+        *stalled = true;
+        return PBIO_SUCCESS;
+    }
+
+
+    // Otherwise we are stalled if at least one motor is stalled. We can skip
+    // handling errors here because the only errors in these calls are already
+    // checked in the pbio_drivebase_update_loop_is_running() call above.
+    bool stalled_left;
+    bool stalled_right;
+    pbio_servo_is_stalled(db->left, &stalled_left, &stall_duration);
+    pbio_servo_is_stalled(db->left, &stalled_right, &stall_duration);
+    *stalled = stalled_left || stalled_right;
+    return PBIO_SUCCESS;
+}
+
 #if PBIO_CONFIG_DRIVEBASE_SPIKE
-
-
 
 /**
  * Gets spike drivebase instance from two servo instances.
