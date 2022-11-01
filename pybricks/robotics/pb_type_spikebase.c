@@ -57,7 +57,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
 }
 
 STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
-    while (pbio_drivebase_is_busy(db)) {
+    while (!pbio_drivebase_is_done(db)) {
         mp_hal_delay_ms(5);
     }
     if (!pbio_drivebase_update_loop_is_running(db)) {

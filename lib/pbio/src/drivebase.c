@@ -310,15 +310,13 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completio
 }
 
 /**
- * Checks if a drivebase is not yet at the position or time target.
- *
- * If the drivebase is holding position, it is not busy.
+ * Checks if a drivebase has completed its maneuver.
  *
  * @param [in]  db          The drivebase instance
  * @return                  True if still moving to target, false if not.
  */
-bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {
-    return !pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading);
+bool pbio_drivebase_is_done(pbio_drivebase_t *db) {
+    return pbio_control_is_done(&db->control_distance) && pbio_control_is_done(&db->control_heading);
 }
 
 /**

@@ -6,6 +6,8 @@
 
 ### Added
 - Added `DriveBase.stalled()` for convenient stall detection.
+- Added `DriveBase.done()` for convenient completion detection, which is
+  practical when combined with `wait=False`.
 
 ### Fixed
 - Fixed drive base stall flags being set while not stalled ([support#767]).
