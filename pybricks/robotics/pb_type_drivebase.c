@@ -228,6 +228,15 @@ STATIC mp_obj_t robotics_DriveBase_busy(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_busy_obj, robotics_DriveBase_busy);
 
+// pybricks.robotics.DriveBase.stalled
+STATIC mp_obj_t robotics_DriveBase_stalled(mp_obj_t self_in) {
+    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    bool stalled;
+    pb_assert(pbio_drivebase_is_stalled(self->db, &stalled));
+    return mp_obj_new_bool(stalled);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_stalled_obj, robotics_DriveBase_stalled);
+
 // pybricks.robotics.DriveBase.settings
 STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
@@ -286,6 +295,7 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_state),            MP_ROM_PTR(&robotics_DriveBase_state_obj)    },
     { MP_ROM_QSTR(MP_QSTR_reset),            MP_ROM_PTR(&robotics_DriveBase_reset_obj)    },
     { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stalled),          MP_ROM_PTR(&robotics_DriveBase_stalled_obj)  },
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
