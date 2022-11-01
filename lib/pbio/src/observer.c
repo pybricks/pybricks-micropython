@@ -65,7 +65,14 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *speed_num,
     *speed_num = obs->speed_numeric;
 }
 
-static void update_stall_state(pbio_observer_t *obs, uint32_t time, int32_t voltage, int32_t feedback_voltage) {
+static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor_actuation_t actuation, int32_t voltage, int32_t feedback_voltage) {
+
+    // Anything other than voltage actuation is not included in the observer
+    // model, so it should not cause any stall flags to be raised.
+    if (actuation != PBIO_DCMOTOR_ACTUATION_VOLTAGE) {
+        obs->stalled = false;
+        return;
+    }
 
     // Convert to forward motion to simplify checks.
     int32_t speed = obs->speed;
@@ -122,7 +129,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *ang
     int32_t feedback_voltage = pbio_observer_torque_to_voltage(m, pbio_control_settings_mul_by_gain(error, m->gain));
 
     // Check stall condition.
-    update_stall_state(obs, time, voltage, feedback_voltage);
+    update_stall_state(obs, time, actuation, voltage, feedback_voltage);
 
     // The observer will get the applied voltage plus the feedback voltage to
     // keep it in sync with the real system.
