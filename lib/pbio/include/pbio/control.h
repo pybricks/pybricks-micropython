@@ -25,7 +25,7 @@
 #include <pbio/iodev.h>
 
 // Number of values per row when control data logger is active.
-#define PBIO_CONTROL_LOGGER_NUM_COLS (13)
+#define PBIO_CONTROL_LOGGER_NUM_COLS (12)
 
 /**
  * Actions to be taken when a control command completes.

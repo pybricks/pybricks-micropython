@@ -231,17 +231,30 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // Optionally log control data.
     if (pbio_logger_is_active(&ctl->log)) {
         int32_t log_data[] = {
+            // Column 0: Log time (added by logger).
+            // Column 1: Time since start of trajectory.
             ref->time - ctl->trajectory.start.time,
+            // Column 2: Position in application units.
             pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position),
+            // Column 3: Speed in application units.
             pbio_control_settings_ctl_to_app(&ctl->settings, state->speed),
+            // Column 4: Actuation type.
             *actuation,
+            // Column 5: Actuation payload, e.g. torque.
             *control,
+            // Column 6: Reference position in application units.
             pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref->position),
+            // Column 7: Reference speed in application units.
             pbio_control_settings_ctl_to_app(&ctl->settings, ref->speed),
+            // Column 8: Estimated position in application units.
             pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position_estimate),
+            // Column 9: Estimated speed in application units.
             pbio_control_settings_ctl_to_app(&ctl->settings, state->speed_estimate),
+            // Column 10: P term of PID control in (uNm).
             torque_proportional,
+            // Column 12: I term of PID control in (uNm).
             torque_integral,
+            // Column 13: D term of PID control in (uNm).
             torque_derivative,
         };
         pbio_logger_add_row(&ctl->log, log_data);

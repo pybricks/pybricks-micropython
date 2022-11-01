@@ -105,14 +105,24 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     // Optionally log servo state.
     if (pbio_logger_is_active(&srv->log)) {
         int32_t log_data[] = {
+            // Column 0: Log time (added by logger).
+            // Column 1: Current time.
             time_now,
+            // Column 2: Motor angle in degrees.
             pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position),
+            // Column 3: Motor speed in degrees/second.
             pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed),
+            // Column 4: Actuation type.
             applied_actuation,
+            // Column 5: Actuation voltage.
             voltage,
+            // Column 6: Estimated position in degrees.
             pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position_estimate),
+            // Column 7: Estimated speed in degrees/second.
             pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate),
+            // Column 8: Feedback torque (uNm).
             feedback_torque,
+            // Column 9: Feedback torque (uNm).
             feedforward_torque
         };
         pbio_logger_add_row(&srv->log, log_data);
