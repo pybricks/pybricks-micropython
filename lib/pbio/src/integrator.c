@@ -204,8 +204,11 @@ bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t 
     // Get integral value that would lead to maximum actuation.
     int32_t integral_max = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki);
 
-    // If we're running and the integrator is not saturated, we're not stalled
-    if (itg->trajectory_running && pbio_math_abs(itg->count_err_integral) < integral_max) {
+    // Whether the integrator is saturated.
+    bool saturated = integral_max != 0 && pbio_math_abs(itg->count_err_integral) >= integral_max;
+
+    // If we're running and the integrator is not saturated, we're not stalled.
+    if (itg->trajectory_running && !saturated) {
         return false;
     }
 

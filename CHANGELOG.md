@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed drive base stall flags being set while not stalled ([support#767]).
+
+[support#767]: https://github.com/pybricks/support/issues/767
+
 ## [3.2.0b4] - 2022-10-21
 
 ### Added
