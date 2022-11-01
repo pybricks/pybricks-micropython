@@ -8,6 +8,9 @@
 - Added `DriveBase.stalled()` for convenient stall detection.
 - Added `DriveBase.done()` for convenient completion detection, which is
   practical when combined with `wait=False`.
+- Added `Motor.done()` for convenient completion detection, which is
+  practical when combined with `wait=False`. Especially on Move Hub, which
+  does not have the control attribute enabled.
 
 ### Fixed
 - Fixed drive base stall flags being set while not stalled ([support#767]).
