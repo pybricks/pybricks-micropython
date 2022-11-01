@@ -110,7 +110,7 @@ int32_t pbio_control_settings_div_by_gain(int32_t value, int32_t gain) {
     if (gain < 1) {
         return 0;
     }
-    return value * 1000 / gain;
+    return pbio_math_mult_then_div(value, 1000, gain);
 }
 
 /**
