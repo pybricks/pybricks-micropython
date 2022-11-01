@@ -6,6 +6,7 @@ import csv
 import datetime
 import matplotlib
 import matplotlib.pyplot
+import matplotlib.patches
 import numpy
 import os
 import pathlib
@@ -71,6 +72,37 @@ def gradient(data, time, smooth=8):
     return numpy.array(speed)
 
 
+def plot_status(axis, data, values, label):
+    """Draws a status value in an existing axis as a horizontal color bar."""
+
+    # Reshape to add finite height dimension
+    data = data.reshape((1, len(data)))
+
+    # Draw as an image.
+    im = axis.imshow(
+        data,
+        vmin=min(values.keys()),
+        vmax=10,
+        cmap="tab10",
+        aspect="auto",
+        label="actuation",
+        interpolation="nearest",
+    )
+
+    # Show status color legend
+    colors = [im.cmap(im.norm(value)) for value in values.keys()]
+    patches = [
+        matplotlib.patches.Patch(color=colors[i], label="{l}".format(l=values[i]))
+        for i in range(len(values.keys()))
+    ]
+    axis.legend(handles=patches, ncol=len(values), loc=1, bbox_to_anchor=(1, 0.8))
+
+    # Drop tick values and add y label.
+    axis.set_xticklabels(labels="")
+    axis.set_yticklabels(labels="")
+    axis.set_ylabel(label)
+
+
 def plot_servo_data(time, data, build_dir, subtitle=None):
     """Plots data for a servo motor."""
     # Get loop time.
@@ -81,7 +113,9 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     # Read state columns.
     count = data[:, 2]
     rate = data[:, 3]
-    applied_actuation_type = data[:, 4]
+    status_flags = data[:, 4]
+    actuation_type = numpy.array([s & 0b0011 for s in status_flags])
+    stalled = numpy.array([(1 if s & 0b0100 else 0) for s in status_flags])
     voltage = data[:, 5]
     count_est = data[:, 6]
     rate_est = data[:, 7]
@@ -90,38 +124,45 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
 
     title = "servo" if subtitle is None else "servo_" + subtitle
 
-    figure, axes = matplotlib.pyplot.subplots(nrows=5, ncols=1, figsize=(15, 15))
+    figure, axes = matplotlib.pyplot.subplots(
+        nrows=7, ncols=1, figsize=(15, 15), height_ratios=[1, 1, 1, 1, 0.05, 0.05, 0.5]
+    )
     figure.suptitle(title, fontsize=20)
 
-    position_axis, speed_axis, torque_axis, duty_axis, time_axis = axes
+    position_ax, speed_ax, torque_ax, duty_ax, actuate_ax, stall_ax, time_ax = axes
+    status_axes = (actuate_ax, stall_ax)
 
-    position_axis.plot(time, count, drawstyle="steps-post", label="Reported count")
-    position_axis.plot(time, count_est, drawstyle="steps-post", label="Observer")
-    position_axis.set_ylabel("angle (deg)")
+    position_ax.plot(time, count, drawstyle="steps-post", label="Reported count")
+    position_ax.plot(time, count_est, drawstyle="steps-post", label="Observer")
+    position_ax.set_ylabel("angle (deg)")
 
-    speed_axis.plot(time, rate, drawstyle="steps-post", label="Reported rate")
-    speed_axis.plot(time, rate_est, drawstyle="steps-post", label="Observer")
-    speed_axis.plot(
+    speed_ax.plot(time, rate, drawstyle="steps-post", label="Reported rate")
+    speed_ax.plot(time, rate_est, drawstyle="steps-post", label="Observer")
+    speed_ax.plot(
         time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
     )
-    speed_axis.set_ylabel("speed (deg/s)")
+    speed_ax.set_ylabel("speed (deg/s)")
 
-    torque_axis.plot(time, torque_feedback, label="Feedback", drawstyle="steps-post")
-    torque_axis.plot(time, torque_feedforward, label="Feedforward", drawstyle="steps-post")
-    torque_axis.set_ylabel("Torque")
+    torque_ax.plot(time, torque_feedback, label="Feedback", drawstyle="steps-post")
+    torque_ax.plot(time, torque_feedforward, label="Feedforward", drawstyle="steps-post")
+    torque_ax.set_ylabel("Torque")
 
-    duty_axis.plot(time, voltage, label="Voltage", drawstyle="steps-post")
-    duty_axis.set_ylabel("Motor voltage (mV)")
-    duty_axis.set_ylim([-10000, 10000])
+    duty_ax.plot(time, voltage, label="Voltage", drawstyle="steps-post")
+    duty_ax.set_ylabel("Motor voltage (mV)")
+    duty_ax.set_ylim([-10000, 10000])
 
-    time_axis.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
-    time_axis.set_ylabel("Time (us)")
-    time_axis.set_xlabel("time (ms)")
+    time_ax.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
+    time_ax.set_ylabel("Time (us)")
+    time_ax.set_xlabel("time (ms)")
+
+    plot_status(actuate_ax, actuation_type, {0: "Coast", 1: "N/A", 2: "Voltage"}, "Act.")
+    plot_status(stall_ax, stalled, {0: "No", 1: "Yes"}, "Stall.")
 
     for axis in axes:
-        axis.grid(True)
-        axis.set_xlim([time[0], time[-1]])
-        axis.legend()
+        if axis not in status_axes:
+            axis.grid(True)
+            axis.set_xlim([time[0], time[-1]])
+            axis.legend()
 
     figure.savefig(build_dir / (title + ".png"))
 
@@ -131,7 +172,10 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     maneuver_time = data[:, 1]
     count = data[:, 2]
     rate = data[:, 3]
-    requested_actuation_type = data[:, 4]
+    status_flags = data[:, 4]
+    actuation_type = numpy.array([s & 0b0011 for s in status_flags])
+    stalled = numpy.array([(1 if s & 0b0100 else 0) for s in status_flags])
+    on_target = numpy.array([(1 if s & 0b1000 else 0) for s in status_flags])
     torque_total = data[:, 5]
     count_ref = data[:, 6]
     rate_ref = data[:, 7]
@@ -143,43 +187,57 @@ def plot_control_data(time, data, build_dir, subtitle=None):
 
     title = "control" if subtitle is None else "control_" + subtitle
 
-    figure, axes = matplotlib.pyplot.subplots(nrows=5, ncols=1, figsize=(15, 15))
+    figure, axes = matplotlib.pyplot.subplots(
+        nrows=8, ncols=1, figsize=(15, 15), height_ratios=[1, 1, 1, 1, 0.05, 0.05, 0.05, 0.5]
+    )
     figure.suptitle(title, fontsize=20)
 
-    position_axis, error_axis, speed_axis, torque_axis, time_axis = axes
+    (position_ax, error_ax, speed_ax, torque_ax, actuate_ax, stall_ax, done_ax, time_ax) = axes
+    status_axes = (actuate_ax, stall_ax, done_ax)
 
-    position_axis.plot(time, count, drawstyle="steps-post", label="Reported count")
-    position_axis.plot(time, count_est, drawstyle="steps-post", label="Observer")
-    position_axis.plot(time, count_ref, drawstyle="steps-post", label="Reference")
-    position_axis.set_ylabel("angle (deg)")
+    position_ax.plot(time, count, drawstyle="steps-post", label="Reported count")
+    position_ax.plot(time, count_est, drawstyle="steps-post", label="Observer")
+    position_ax.plot(time, count_ref, drawstyle="steps-post", label="Reference")
+    position_ax.set_ylabel("angle (deg)")
 
-    error_axis.plot(time, count_ref - count, drawstyle="steps-post", label="Reported error")
-    error_axis.plot(time, count_ref - count_est, drawstyle="steps-post", label="Estimated error")
-    error_axis.plot(time, count_est - count, drawstyle="steps-post", label="Estimation error")
-    error_axis.set_ylabel("angle error (deg)")
+    error_ax.plot(time, count_ref - count, drawstyle="steps-post", label="Reported error")
+    error_ax.plot(time, count_ref - count_est, drawstyle="steps-post", label="Estimated error")
+    error_ax.plot(time, count_est - count, drawstyle="steps-post", label="Estimation error")
+    error_ax.set_ylabel("angle error (deg)")
 
-    speed_axis.plot(time, rate, drawstyle="steps-post", label="Reported rate")
-    speed_axis.plot(time, rate_est, drawstyle="steps-post", label="Observer")
-    speed_axis.plot(
+    speed_ax.plot(time, rate, drawstyle="steps-post", label="Reported rate")
+    speed_ax.plot(time, rate_est, drawstyle="steps-post", label="Observer")
+    speed_ax.plot(
         time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
     )
-    speed_axis.plot(time, rate_ref, drawstyle="steps-post", label="Reference")
-    speed_axis.set_ylabel("speed (deg/s)")
+    speed_ax.plot(time, rate_ref, drawstyle="steps-post", label="Reference")
+    speed_ax.set_ylabel("speed (deg/s)")
 
-    torque_axis.plot(time, torque_p, label="P", drawstyle="steps-post")
-    torque_axis.plot(time, torque_i, label="I", drawstyle="steps-post")
-    torque_axis.plot(time, torque_d, label="D", drawstyle="steps-post")
-    torque_axis.plot(time, torque_total, label="Total", drawstyle="steps-post")
-    torque_axis.set_ylabel("torque")
+    torque_ax.plot(time, torque_p, label="P", drawstyle="steps-post")
+    torque_ax.plot(time, torque_i, label="I", drawstyle="steps-post")
+    torque_ax.plot(time, torque_d, label="D", drawstyle="steps-post")
+    torque_ax.plot(time, torque_total, label="Total", drawstyle="steps-post")
+    torque_ax.set_ylabel("torque")
 
-    time_axis.plot(time, maneuver_time / 1000, label="t - t_0", drawstyle="steps-post")
-    time_axis.set_ylabel("Maneuver time (ms)")
-    time_axis.set_xlabel("time (ms)")
+    time_ax.plot(time, maneuver_time / 1000, label="t - t_0", drawstyle="steps-post")
+    time_ax.set_ylabel("Maneuver time (ms)")
+    time_ax.set_xlabel("time (ms)")
+
+    ACTUATION_TYPES = {
+        0: "Coast",
+        1: "Brake",
+        2: "Voltage",
+        3: "Torque",
+    }
+    plot_status(actuate_ax, actuation_type, ACTUATION_TYPES, "Act")
+    plot_status(stall_ax, stalled, {0: "No", 1: "Yes"}, "Stall")
+    plot_status(done_ax, on_target, {0: "No", 1: "Yes"}, "Done")
 
     for axis in axes:
-        axis.grid(True)
-        axis.set_xlim([time[0], time[-1]])
-        axis.legend()
+        if axis not in status_axes:
+            axis.grid(True)
+            axis.set_xlim([time[0], time[-1]])
+            axis.legend()
 
     figure.savefig(build_dir / (title + ".png"))
 
