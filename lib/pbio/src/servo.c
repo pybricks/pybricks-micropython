@@ -104,6 +104,12 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
     // Optionally log servo state.
     if (pbio_logger_is_active(&srv->log)) {
+
+        // Get stall state
+        bool stalled;
+        uint32_t stall_duration;
+        pbio_servo_is_stalled(srv, &stalled, &stall_duration);
+
         int32_t log_data[] = {
             // Column 0: Log time (added by logger).
             // Column 1: Current time.
@@ -112,8 +118,8 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
             pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position),
             // Column 3: Motor speed in degrees/second.
             pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed),
-            // Column 4: Actuation type.
-            applied_actuation,
+            // Column 4: Actuation type (LSB 0--1), stall state (LSB 2).
+            applied_actuation | (stalled << 2),
             // Column 5: Actuation voltage.
             voltage,
             // Column 6: Estimated position in degrees.

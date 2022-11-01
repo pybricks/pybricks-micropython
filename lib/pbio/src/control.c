@@ -238,8 +238,8 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
             pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position),
             // Column 3: Speed in application units.
             pbio_control_settings_ctl_to_app(&ctl->settings, state->speed),
-            // Column 4: Actuation type.
-            *actuation,
+            // Column 4: Actuation type (LSB 0--1), stall state (LSB 2), on target (LSB 3).
+            *actuation | (ctl->stalled << 2) | (ctl->on_target << 3),
             // Column 5: Actuation payload, e.g. torque.
             *control,
             // Column 6: Reference position in application units.
