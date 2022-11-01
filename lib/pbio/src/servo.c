@@ -102,19 +102,21 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     int32_t voltage;
     pbio_dcmotor_get_state(srv->dcmotor, &applied_actuation, &voltage);
 
-    // Log servo state.
-    int32_t log_data[] = {
-        time_now,
-        pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position),
-        pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed),
-        applied_actuation,
-        voltage,
-        pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position_estimate),
-        pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate),
-        feedback_torque,
-        feedforward_torque
-    };
-    pbio_logger_update(&srv->log, log_data);
+    // Optionally log servo state.
+    if (pbio_logger_is_active(&srv->log)) {
+        int32_t log_data[] = {
+            time_now,
+            pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position),
+            pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed),
+            applied_actuation,
+            voltage,
+            pbio_control_settings_ctl_to_app_long(&srv->control.settings, &state.position_estimate),
+            pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate),
+            feedback_torque,
+            feedforward_torque
+        };
+        pbio_logger_add_row(&srv->log, log_data);
+    }
 
     // Update the state observer
     pbio_observer_update(&srv->observer, time_now, &state.position, applied_actuation, voltage);

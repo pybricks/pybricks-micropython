@@ -47,17 +47,22 @@ void pbio_logger_stop(pbio_log_t *log) {
 }
 
 /**
+ * Checks if log is active (data can be added).
+ *
+ * @param [in]  log         Pointer to log.
+ * @return                  True if pbio_logger_add_row may be called, else false.
+ */
+bool pbio_logger_is_active(pbio_log_t *log) {
+    return log->active;
+}
+
+/**
  * Add new data from a background loop.
  *
  * @param [in]  log         Pointer to log.
  * @param [in]  row_data    Data to be added.
  */
-void pbio_logger_update(pbio_log_t *log, int32_t *row_data) {
-
-    // Log nothing if logger is inactive.
-    if (!log->active) {
-        return;
-    }
+void pbio_logger_add_row(pbio_log_t *log, int32_t *row_data) {
 
     // Skip logging if we are not yet at a multiple of down_sample.
     if (++log->skipped_samples != log->down_sample) {

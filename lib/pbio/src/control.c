@@ -228,22 +228,24 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
         }
     }
 
-    // Log control data.
-    int32_t log_data[] = {
-        ref->time - ctl->trajectory.start.time,
-        pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position),
-        pbio_control_settings_ctl_to_app(&ctl->settings, state->speed),
-        *actuation,
-        *control,
-        pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref->position),
-        pbio_control_settings_ctl_to_app(&ctl->settings, ref->speed),
-        pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position_estimate),
-        pbio_control_settings_ctl_to_app(&ctl->settings, state->speed_estimate),
-        torque_proportional,
-        torque_integral,
-        torque_derivative,
-    };
-    pbio_logger_update(&ctl->log, log_data);
+    // Optionally log control data.
+    if (pbio_logger_is_active(&ctl->log)) {
+        int32_t log_data[] = {
+            ref->time - ctl->trajectory.start.time,
+            pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position),
+            pbio_control_settings_ctl_to_app(&ctl->settings, state->speed),
+            *actuation,
+            *control,
+            pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref->position),
+            pbio_control_settings_ctl_to_app(&ctl->settings, ref->speed),
+            pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position_estimate),
+            pbio_control_settings_ctl_to_app(&ctl->settings, state->speed_estimate),
+            torque_proportional,
+            torque_integral,
+            torque_derivative,
+        };
+        pbio_logger_add_row(&ctl->log, log_data);
+    }
 }
 
 /**
