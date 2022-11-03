@@ -10,7 +10,7 @@
 #include <pbdrv/counter.h>
 
 #include <pbio/angle.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/port.h>
 #include <pbio/tacho.h>
 

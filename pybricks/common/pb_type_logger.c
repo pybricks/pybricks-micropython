@@ -12,7 +12,7 @@
 
 #include <pbio/config.h>
 #include <pbio/logger.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/servo.h>
 
 #include "py/obj.h"
@@ -53,7 +53,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_INT(down_sample, 1));
 
     // Log only one row per divisor samples.
-    mp_uint_t down_sample = pbio_math_max(pb_obj_get_int(down_sample_in), 1);
+    mp_uint_t down_sample = pbio_int_math_max(pb_obj_get_int(down_sample_in), 1);
     mp_uint_t num_rows = pb_obj_get_int(duration_in) / PBIO_CONFIG_CONTROL_LOOP_TIME_MS / down_sample;
 
     // Size is number of rows times column width. All data are int32.

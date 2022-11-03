@@ -9,7 +9,7 @@
 
 #include <pbdrv/battery.h>
 #include <pbio/battery.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 
 // Slow moving average battery voltage.
 static int32_t battery_voltage_avg_scaled;
@@ -67,7 +67,7 @@ int32_t pbio_battery_get_duty_from_voltage(int32_t voltage) {
     // Calculate unbounded duty cycle value.
     int32_t duty_cycle = voltage * PBIO_BATTERY_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
 
-    return pbio_math_clamp(duty_cycle, PBIO_BATTERY_MAX_DUTY);
+    return pbio_int_math_clamp(duty_cycle, PBIO_BATTERY_MAX_DUTY);
 }
 
 /**
@@ -80,7 +80,7 @@ int32_t pbio_battery_get_duty_from_voltage(int32_t voltage) {
  * @return              The battery voltage in mV.
  */
 int32_t pbio_battery_get_voltage_from_duty(int32_t duty) {
-    duty = pbio_math_clamp(duty, PBIO_BATTERY_MAX_DUTY);
+    duty = pbio_int_math_clamp(duty, PBIO_BATTERY_MAX_DUTY);
     return duty * (battery_voltage_avg_scaled / SCALE) / PBIO_BATTERY_MAX_DUTY;
 }
 
@@ -93,7 +93,7 @@ int32_t pbio_battery_get_voltage_from_duty(int32_t duty) {
  * @return              The battery voltage in mV.
  */
 int32_t pbio_battery_get_voltage_from_duty_pct(int32_t duty) {
-    duty = pbio_math_clamp(duty, 100);
+    duty = pbio_int_math_clamp(duty, 100);
     return duty * (battery_voltage_avg_scaled / SCALE) / 100;
 }
 

@@ -8,7 +8,7 @@
 
 #include <pbio/angle.h>
 #include <pbio/dcmotor.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/observer.h>
 #include <pbio/trajectory.h>
 
@@ -144,12 +144,12 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *ang
         PRESCALE_CURRENT * obs->current / m->d_angle_d_current +
         PRESCALE_VOLTAGE * voltage / m->d_angle_d_voltage +
         PRESCALE_TORQUE * torque / m->d_angle_d_torque);
-    int32_t speed_next = pbio_math_clamp(0 +
+    int32_t speed_next = pbio_int_math_clamp(0 +
         PRESCALE_SPEED * obs->speed / m->d_speed_d_speed +
         PRESCALE_CURRENT * obs->current / m->d_speed_d_current +
         PRESCALE_VOLTAGE * voltage / m->d_speed_d_voltage +
         PRESCALE_TORQUE * torque / m->d_speed_d_torque, MAX_NUM_SPEED);
-    int32_t current_next = pbio_math_clamp(0 +
+    int32_t current_next = pbio_int_math_clamp(0 +
         PRESCALE_SPEED * obs->speed / m->d_current_d_speed +
         PRESCALE_CURRENT * obs->current / m->d_current_d_current +
         PRESCALE_VOLTAGE * voltage / m->d_current_d_voltage +
@@ -186,18 +186,18 @@ bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *sta
 
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref) {
 
-    int32_t friction_compensation_torque = model->torque_friction * pbio_math_sign(rate_ref);
-    int32_t back_emf_compensation_torque = PRESCALE_SPEED * pbio_math_clamp(rate_ref, MAX_NUM_SPEED) / model->d_torque_d_speed;
-    int32_t acceleration_torque = PRESCALE_ACCELERATION * pbio_math_clamp(acceleration_ref, MAX_NUM_ACCELERATION) / model->d_torque_d_acceleration;
+    int32_t friction_compensation_torque = model->torque_friction * pbio_int_math_sign(rate_ref);
+    int32_t back_emf_compensation_torque = PRESCALE_SPEED * pbio_int_math_clamp(rate_ref, MAX_NUM_SPEED) / model->d_torque_d_speed;
+    int32_t acceleration_torque = PRESCALE_ACCELERATION * pbio_int_math_clamp(acceleration_ref, MAX_NUM_ACCELERATION) / model->d_torque_d_acceleration;
 
     // Total feedforward torque
-    return pbio_math_clamp(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque, MAX_NUM_TORQUE);
+    return pbio_int_math_clamp(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque, MAX_NUM_TORQUE);
 }
 
 int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque) {
-    return PRESCALE_TORQUE * pbio_math_clamp(desired_torque, MAX_NUM_TORQUE) / model->d_voltage_d_torque;
+    return PRESCALE_TORQUE * pbio_int_math_clamp(desired_torque, MAX_NUM_TORQUE) / model->d_voltage_d_torque;
 }
 
 int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage) {
-    return PRESCALE_VOLTAGE * pbio_math_clamp(voltage, MAX_NUM_VOLTAGE) / model->d_torque_d_voltage;
+    return PRESCALE_VOLTAGE * pbio_int_math_clamp(voltage, MAX_NUM_VOLTAGE) / model->d_torque_d_voltage;
 }

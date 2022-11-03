@@ -188,6 +188,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/differentiator.c \
 	src/drivebase.c \
 	src/error.c \
+	src/int_math.c \
 	src/integrator.c \
 	src/iodev.c \
 	src/light/animation.c \
@@ -195,7 +196,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/light/light_matrix.c \
 	src/logger.c \
 	src/main.c \
-	src/math.c \
 	src/motor_process.c \
 	src/motor/servo_settings.c \
 	src/observer.c \

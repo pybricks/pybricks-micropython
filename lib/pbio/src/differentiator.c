@@ -8,7 +8,7 @@
 #include <pbio/config.h>
 #include <pbio/control_settings.h>
 #include <pbio/differentiator.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/util.h>
 
 /**

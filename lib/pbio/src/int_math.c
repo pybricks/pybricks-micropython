@@ -5,7 +5,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/util.h>
 
 /**
@@ -14,7 +14,7 @@
  * @param [in]  value   The value.
  * @return              The absolute (positive) value.
  */
-int32_t pbio_math_abs(int32_t value) {
+int32_t pbio_int_math_abs(int32_t value) {
     return __builtin_abs(value);
 }
 
@@ -25,7 +25,7 @@ int32_t pbio_math_abs(int32_t value) {
  * @param [in]  b       Value.
  * @return              a if it is greater than b, else b.
  */
-int32_t pbio_math_max(int32_t a, int32_t b) {
+int32_t pbio_int_math_max(int32_t a, int32_t b) {
     if (a > b) {
         return a;
     }
@@ -39,7 +39,7 @@ int32_t pbio_math_max(int32_t a, int32_t b) {
  * @param [in]  b       Value.
  * @return              a if it is less than b, else b.
  */
-int32_t pbio_math_min(int32_t a, int32_t b) {
+int32_t pbio_int_math_min(int32_t a, int32_t b) {
     if (a < b) {
         return a;
     }
@@ -53,7 +53,7 @@ int32_t pbio_math_min(int32_t a, int32_t b) {
  * @return          1 if @p a is positive, -1 if @p a is negative or 0 if @p a
  *                  is 0.
  */
-int32_t pbio_math_sign(int32_t a) {
+int32_t pbio_int_math_sign(int32_t a) {
     if (a == 0) {
         return 0;
     }
@@ -68,7 +68,7 @@ int32_t pbio_math_sign(int32_t a) {
  * @return          True if either value is zero or if the signs are the same,
  *                  else false.
  */
-bool pbio_math_sign_not_opposite(int32_t a, int32_t b) {
+bool pbio_int_math_sign_not_opposite(int32_t a, int32_t b) {
     if (a == 0 || b == 0) {
         return true;
     }
@@ -87,7 +87,7 @@ bool pbio_math_sign_not_opposite(int32_t a, int32_t b) {
  * @param [in]  max     The upper boundary value.
  * @return              The bounded value.
  */
-int32_t pbio_math_bind(int32_t value, int32_t min, int32_t max) {
+int32_t pbio_int_math_bind(int32_t value, int32_t min, int32_t max) {
     assert(max >= min);
 
     if (value > max) {
@@ -110,10 +110,10 @@ int32_t pbio_math_bind(int32_t value, int32_t min, int32_t max) {
  * @param [in]  abs_max The clamp limit. This must be a positive value.
  * @return              The clamped value.
  */
-int32_t pbio_math_clamp(int32_t value, int32_t abs_max) {
+int32_t pbio_int_math_clamp(int32_t value, int32_t abs_max) {
     assert(abs_max > 0);
 
-    return pbio_math_bind(value, -abs_max, abs_max);
+    return pbio_int_math_bind(value, -abs_max, abs_max);
 }
 
 /**
@@ -124,7 +124,7 @@ int32_t pbio_math_clamp(int32_t value, int32_t abs_max) {
  * @param [in]  n       The input value
  * @return              The square root.
  */
-int32_t pbio_math_sqrt(int32_t n) {
+int32_t pbio_int_math_sqrt(int32_t n) {
     if (n <= 0) {
         return 0;
     }
@@ -182,7 +182,7 @@ static const point_t atan_points[] = {
  * @param [in]   x       Value for which to estimate y = f(x)
  * @return               Estimated value for y = f(x)
  */
-static int32_t pbio_math_interpolate(const point_t *points, size_t len, int32_t x) {
+static int32_t pbio_int_math_interpolate(const point_t *points, size_t len, int32_t x) {
 
     // If x is below the minimum x, return the minimum y.
     if (x < points[0].x) {
@@ -210,7 +210,7 @@ static int32_t pbio_math_interpolate(const point_t *points, size_t len, int32_t 
  * @param [in]  x  Adjacent side of the triangle.
  * @return         atan2(y, x) in degrees.
  */
-int32_t pbio_math_atan2(int32_t y, int32_t x) {
+int32_t pbio_int_math_atan2(int32_t y, int32_t x) {
 
     // On y zero, the triangle is flat. Use X to find sign.
     if (y == 0) {
@@ -219,7 +219,7 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
 
     // On x zero, the triangle height tends to infinity. Use y for sign.
     if (x == 0) {
-        return 90 * pbio_math_sign(y);
+        return 90 * pbio_int_math_sign(y);
     }
 
     // Get absolute ratio of y / x, upscaled to preserve resolution.
@@ -229,7 +229,7 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
     }
 
     // Interpolate and scale to get corresponding atan value.
-    int32_t atan = pbio_math_interpolate(atan_points, PBIO_ARRAY_SIZE(atan_points), ratio) / 8;
+    int32_t atan = pbio_int_math_interpolate(atan_points, PBIO_ARRAY_SIZE(atan_points), ratio) / 8;
 
     // We took the absolute ratio, but must now account for sign.
     // So, negate if x and y had opposite sign.
@@ -261,7 +261,7 @@ int32_t pbio_math_atan2(int32_t y, int32_t x) {
  * @param [in]  c    Small positive or negative number.
  * @return           The result of a * b / c.
  */
-int32_t pbio_math_mult_then_div(int32_t a, int32_t b, int32_t c) {
+int32_t pbio_int_math_mult_then_div(int32_t a, int32_t b, int32_t c) {
 
     // Get long product.
     uint64_t x = (uint64_t)(a < 0 ? -a : a) * (uint64_t)(b < 0 ? -b : b);

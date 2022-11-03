@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>

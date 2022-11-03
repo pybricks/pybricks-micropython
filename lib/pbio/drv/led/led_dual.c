@@ -14,7 +14,7 @@
 
 #include <pbio/color.h>
 #include <pbio/error.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 
 #include "led_dual.h"
 #include "led.h"

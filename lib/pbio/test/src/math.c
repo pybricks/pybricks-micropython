@@ -5,32 +5,32 @@
 
 #include <math.h>
 
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <test-pbio.h>
 
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
 static void test_clamp(void *env) {
-    tt_want_int_op(pbio_math_clamp(200, 100), ==, 100);
-    tt_want_int_op(pbio_math_clamp(50, 100), ==, 50);
-    tt_want_int_op(pbio_math_clamp(-50, 100), ==, -50);
-    tt_want_int_op(pbio_math_clamp(-200, 100), ==, -100);
+    tt_want_int_op(pbio_int_math_clamp(200, 100), ==, 100);
+    tt_want_int_op(pbio_int_math_clamp(50, 100), ==, 50);
+    tt_want_int_op(pbio_int_math_clamp(-50, 100), ==, -50);
+    tt_want_int_op(pbio_int_math_clamp(-200, 100), ==, -100);
 }
 
 static void test_sqrt(void *env) {
-    tt_want_int_op(pbio_math_sqrt(0), ==, 0);
-    tt_want_int_op(pbio_math_sqrt(1), ==, 1);
-    tt_want_int_op(pbio_math_sqrt(4), ==, 2);
-    tt_want_int_op(pbio_math_sqrt(400), ==, 20);
-    tt_want_int_op(pbio_math_sqrt(40000), ==, 200);
-    tt_want_int_op(pbio_math_sqrt(400000000), ==, 20000);
+    tt_want_int_op(pbio_int_math_sqrt(0), ==, 0);
+    tt_want_int_op(pbio_int_math_sqrt(1), ==, 1);
+    tt_want_int_op(pbio_int_math_sqrt(4), ==, 2);
+    tt_want_int_op(pbio_int_math_sqrt(400), ==, 20);
+    tt_want_int_op(pbio_int_math_sqrt(40000), ==, 200);
+    tt_want_int_op(pbio_int_math_sqrt(400000000), ==, 20000);
 
     // Negative square roots do not exist but are expected to return 0.
-    tt_want_int_op(pbio_math_sqrt(-36), ==, 0);
+    tt_want_int_op(pbio_int_math_sqrt(-36), ==, 0);
 
     for (int32_t s = 0; s < INT32_MAX - 255; s += 256) {
-        tt_want_int_op(pbio_math_sqrt(s), ==, sqrt(s));
+        tt_want_int_op(pbio_int_math_sqrt(s), ==, sqrt(s));
     }
 }
 
@@ -42,10 +42,10 @@ static void test_atan2(void *env) {
 
             // Get real result and our approximation.
             int32_t real = atan2(y, x) / M_PI * 180;
-            int32_t ours = pbio_math_atan2(y, x);
+            int32_t ours = pbio_int_math_atan2(y, x);
 
             // Get resulting error.
-            int32_t error = pbio_math_abs(real - ours);
+            int32_t error = pbio_int_math_abs(real - ours);
             if (error >= 180) {
                 error -= 360;
             }
@@ -68,10 +68,10 @@ static void test_atan2(void *env) {
             double y = sin(rad) * scale;
 
             // Test atan2 output.
-            int32_t angle_out = pbio_math_atan2(y, x);
+            int32_t angle_out = pbio_int_math_atan2(y, x);
 
             // Get resulting error.
-            int32_t error = pbio_math_abs(angle_in - angle_out);
+            int32_t error = pbio_int_math_abs(angle_in - angle_out);
             if (error >= 180) {
                 error -= 360;
             }
@@ -114,13 +114,13 @@ static void test_mult_and_scale(void *env) {
                     continue;
                 }
 
-                tt_want_int_op(result, ==, pbio_math_mult_then_div(a, b, c));
+                tt_want_int_op(result, ==, pbio_int_math_mult_then_div(a, b, c));
             }
         }
     }
 }
 
-struct testcase_t pbio_math_tests[] = {
+struct testcase_t pbio_int_math_tests[] = {
     PBIO_TEST(test_atan2),
     PBIO_TEST(test_clamp),
     PBIO_TEST(test_mult_and_scale),

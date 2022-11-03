@@ -11,7 +11,7 @@
 #include <pbdrv/motor_driver.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <test-pbio.h>
 
 #include "../src/processes.h"
@@ -59,7 +59,7 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
         driver->output = H_BRIDGE_OUTPUT_HH;
     }
 
-    driver->duty_cycle = pbio_math_abs(duty_cycle);
+    driver->duty_cycle = pbio_int_math_abs(duty_cycle);
 
     return PBIO_SUCCESS;
 }

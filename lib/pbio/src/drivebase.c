@@ -6,7 +6,7 @@
 #include <pbdrv/clock.h>
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/servo.h>
 
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0
@@ -51,23 +51,23 @@ static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_c
 
     // For all settings, take the value of the least powerful motor to ensure
     // that the drivebase can meet the given specs.
-    s_distance->speed_max = pbio_math_min(s_left->speed_max, s_right->speed_max);
-    s_distance->speed_tolerance = pbio_math_min(s_left->speed_tolerance, s_right->speed_tolerance);
-    s_distance->stall_speed_limit = pbio_math_min(s_left->stall_speed_limit, s_right->stall_speed_limit);
-    s_distance->integral_change_max = pbio_math_min(s_left->integral_change_max, s_right->integral_change_max);
-    s_distance->actuation_max = pbio_math_min(s_left->actuation_max, s_right->actuation_max);
-    s_distance->stall_time = pbio_math_min(s_left->stall_time, s_right->stall_time);
+    s_distance->speed_max = pbio_int_math_min(s_left->speed_max, s_right->speed_max);
+    s_distance->speed_tolerance = pbio_int_math_min(s_left->speed_tolerance, s_right->speed_tolerance);
+    s_distance->stall_speed_limit = pbio_int_math_min(s_left->stall_speed_limit, s_right->stall_speed_limit);
+    s_distance->integral_change_max = pbio_int_math_min(s_left->integral_change_max, s_right->integral_change_max);
+    s_distance->actuation_max = pbio_int_math_min(s_left->actuation_max, s_right->actuation_max);
+    s_distance->stall_time = pbio_int_math_min(s_left->stall_time, s_right->stall_time);
 
     // Make acceleration a bit slower for smoother driving.
-    s_distance->acceleration = pbio_math_min(s_left->acceleration, s_right->acceleration) * 3 / 4;
-    s_distance->deceleration = pbio_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4;
+    s_distance->acceleration = pbio_int_math_min(s_left->acceleration, s_right->acceleration) * 3 / 4;
+    s_distance->deceleration = pbio_int_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4;
 
     // Use minimum PID of both motors, to avoid overly aggressive control if
     // one of the two motors has much higher PID values. For proportional
     // control, take a much lower gain. Drivebases don't need it, and it makes
     // for a smoother ride.
-    s_distance->pid_kp = pbio_math_min(s_left->pid_kp, s_right->pid_kp) / 4;
-    s_distance->pid_kd = pbio_math_min(s_left->pid_kd, s_right->pid_kd);
+    s_distance->pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp) / 4;
+    s_distance->pid_kd = pbio_int_math_min(s_left->pid_kd, s_right->pid_kd);
 
     // Integral control is not necessary since there is constant external
     // force to overcome that wouldn't be done by proportional control.
@@ -503,7 +503,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     int32_t arc_angle = radius < 0 ? -angle : angle;
 
     // Arc length is computed accordingly.
-    int32_t arc_length = (10 * pbio_math_abs(angle) * radius) / 573;
+    int32_t arc_length = (10 * pbio_int_math_abs(angle) * radius) / 573;
 
     // Execute the common drive command at default speed.
     return pbio_drivebase_drive_relative(db, arc_length, 0, arc_angle, 0, on_completion);
@@ -635,10 +635,10 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
-    sd->speed_default = pbio_math_clamp(pbio_control_settings_app_to_ctl(sd, drive_speed), sd->speed_max);
+    sd->speed_default = pbio_int_math_clamp(pbio_control_settings_app_to_ctl(sd, drive_speed), sd->speed_max);
     sd->acceleration = pbio_control_settings_app_to_ctl(sd, drive_acceleration);
     sd->deceleration = pbio_control_settings_app_to_ctl(sd, drive_deceleration);
-    sh->speed_default = pbio_math_clamp(pbio_control_settings_app_to_ctl(sh, turn_rate), sh->speed_max);
+    sh->speed_default = pbio_int_math_clamp(pbio_control_settings_app_to_ctl(sh, turn_rate), sh->speed_max);
     sh->acceleration = pbio_control_settings_app_to_ctl(sh, turn_acceleration);
     sh->deceleration = pbio_control_settings_app_to_ctl(sh, turn_deceleration);
 
@@ -772,14 +772,14 @@ pbio_error_t pbio_drivebase_spike_drive_angle(pbio_drivebase_t *db, int32_t spee
     }
 
     // Work out angles for each motor.
-    int32_t max_speed = pbio_math_max(pbio_math_abs(speed_left), pbio_math_abs(speed_right));
+    int32_t max_speed = pbio_int_math_max(pbio_int_math_abs(speed_left), pbio_int_math_abs(speed_right));
     int32_t angle_left = max_speed == 0 ? 0 : angle * speed_left / max_speed;
     int32_t angle_right = max_speed == 0 ? 0 : angle * speed_right / max_speed;
 
     // Work out the required total and difference angles to achieve this.
     int32_t distance = (angle_left + angle_right) / 2;
     int32_t turn_angle = (angle_left - angle_right) / 2;
-    int32_t speed = (pbio_math_abs(speed_left) + pbio_math_abs(speed_right)) / 2;
+    int32_t speed = (pbio_int_math_abs(speed_left) + pbio_int_math_abs(speed_right)) / 2;
 
     // Execute the maneuver.
     return pbio_drivebase_drive_relative(db, distance, speed, turn_angle, speed, on_completion);
@@ -808,7 +808,7 @@ pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steeri
     *speed_right = speed;
 
     // Depending on steering direction, one wheel moves slower.
-    *(steering > 0 ? speed_right : speed_left) = speed * (100 - 2 * pbio_math_abs(steering)) / 100;
+    *(steering > 0 ? speed_right : speed_left) = speed * (100 - 2 * pbio_int_math_abs(steering)) / 100;
     return PBIO_SUCCESS;
 }
 

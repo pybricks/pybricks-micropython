@@ -8,7 +8,7 @@
 #include <pbio/battery.h>
 
 #include <pbio/dcmotor.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/servo.h>
 
 #include "py/mphal.h"
@@ -197,7 +197,7 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_DEFAULT_TRUE(wait));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
-    mp_int_t time = pbio_math_max(pb_obj_get_int(time_in), 0);
+    mp_int_t time = pbio_int_math_max(pb_obj_get_int(time_in), 0);
 
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 

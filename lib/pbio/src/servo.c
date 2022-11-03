@@ -10,7 +10,7 @@
 #include <pbdrv/ioport.h>
 
 #include <pbio/angle.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/observer.h>
 #include <pbio/parent.h>
 #include <pbio/servo.h>

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include <pbio/angle.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/trajectory.h>
 
 /**
@@ -15,7 +15,7 @@
  * half the numerical limit.
  */
 #define ANGLE_MAX (INT32_MAX / 2)
-#define assert_angle(th) (assert(pbio_math_abs((th)) < ANGLE_MAX))
+#define assert_angle(th) (assert(pbio_int_math_abs((th)) < ANGLE_MAX))
 
 /**
  * Speed is capped at 2000 deg/s (20000 ddeg/s), which is about twice the
@@ -23,7 +23,7 @@
  * to another, so allow up to double that amount.
  */
 #define SPEED_MAX (20000)
-#define assert_speed(w) (assert(pbio_math_abs((w)) <= SPEED_MAX + 1))
+#define assert_speed(w) (assert(pbio_int_math_abs((w)) <= SPEED_MAX + 1))
 #define assert_speed_rel(w) (assert_speed(w / 2))
 
 /**
@@ -34,8 +34,8 @@
 #define ACCELERATION_MAX (20000)
 #define ACCELERATION_MIN (50)
 #define ANGLE_ACCEL_MAX (SPEED_MAX * SPEED_MAX / ACCELERATION_MIN * (10 / 2))
-#define assert_accel(a) (assert(pbio_math_abs((a)) <= ACCELERATION_MAX && pbio_math_abs((a)) >= ACCELERATION_MIN))
-#define assert_accel_angle(th) (assert(pbio_math_abs((th)) <= ANGLE_ACCEL_MAX))
+#define assert_accel(a) (assert(pbio_int_math_abs((a)) <= ACCELERATION_MAX && pbio_int_math_abs((a)) >= ACCELERATION_MIN))
+#define assert_accel_angle(th) (assert(pbio_int_math_abs((th)) <= ANGLE_ACCEL_MAX))
 
 /**
  * Time segment length is capped at the maximum angle divided by maximum speed,
@@ -60,7 +60,7 @@ static int32_t to_control_speed(int32_t trajectory_speed) {
 }
 
 static int32_t to_trajectory_speed(int32_t control_speed) {
-    return pbio_math_clamp(control_speed / 100, SPEED_MAX);
+    return pbio_int_math_clamp(control_speed / 100, SPEED_MAX);
 }
 
 /**
@@ -73,7 +73,7 @@ static int32_t to_control_accel(int32_t trajectory_accel) {
 }
 
 static int32_t to_trajectory_accel(int32_t control_accel) {
-    return pbio_math_bind(control_accel / 1000, ACCELERATION_MIN, ACCELERATION_MAX);
+    return pbio_int_math_bind(control_accel / 1000, ACCELERATION_MIN, ACCELERATION_MAX);
 }
 
 /**
@@ -130,7 +130,7 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
     assert_speed(w_end);
     assert_speed(w_start);
 
-    return pbio_math_mult_then_div(w_end * w_end - w_start * w_start, (10 / 2), a);
+    return pbio_int_math_mult_then_div(w_end * w_end - w_start * w_start, (10 / 2), a);
 }
 
 // Divides speed (ddeg/s) by acceleration (deg/s^2), giving time (s e-4).
@@ -148,7 +148,7 @@ static int32_t div_th_by_t(int32_t th, int32_t t) {
     assert_time(t);
     assert_angle(th);
 
-    if (pbio_math_abs(th) < INT32_MAX / 100) {
+    if (pbio_int_math_abs(th) < INT32_MAX / 100) {
         return th * 100 / t;
     }
     return th / t * 100;
@@ -169,7 +169,7 @@ static int32_t div_th_by_w(int32_t th, int32_t w) {
     assert_angle(th);
     assert_speed_rel(w);
 
-    return pbio_math_mult_then_div(th, 100, w);
+    return pbio_int_math_mult_then_div(th, 100, w);
 }
 
 // Multiplies speed (ddeg/s) by time (s e-4), giving angle (mdeg).
@@ -178,7 +178,7 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
     assert_time(t);
     assert_speed_rel(w);
 
-    return pbio_math_mult_then_div(w, t, 100);
+    return pbio_int_math_mult_then_div(w, t, 100);
 }
 
 // Multiplies acceleration (deg/s^2) by time (s e-4), giving speed (ddeg/s).
@@ -188,7 +188,7 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
     assert_accel(a);
     assert_accel_time(t);
 
-    return pbio_math_mult_then_div(a, t, 1000);
+    return pbio_int_math_mult_then_div(a, t, 1000);
 }
 
 // Multiplies acceleration (deg/s^2) by time (s e-4)^2/2, giving angle (mdeg).
@@ -207,12 +207,12 @@ static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 
     assert_accel(a);
     assert_speed(w_end);
-    assert((int64_t)pbio_math_abs(a) * (int64_t)pbio_math_abs(th) < INT32_MAX);
+    assert((int64_t)pbio_int_math_abs(a) * (int64_t)pbio_int_math_abs(th) < INT32_MAX);
 
     // This is only called if the acceleration is not high enough to reach
     // the end speed within a certain angle. So only if the angle is smaller
     // than w2 / a / 2, which is safe.
-    return pbio_math_sqrt(w_end * w_end + a * th / (10 / 2));
+    return pbio_int_math_sqrt(w_end * w_end + a * th / (10 / 2));
 }
 
 // Given a stationary starting and final angle (mdeg), computes the
@@ -235,7 +235,7 @@ static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) 
     assert_accel(a2);
     assert(a0 != a2);
 
-    return th0 + pbio_math_mult_then_div(th3 - th0, a2, a2 - a0);
+    return th0 + pbio_int_math_mult_then_div(th3 - th0, a2, a2 - a0);
 }
 
 // Computes a trajectory for a timed command assuming *positive* speed
@@ -268,8 +268,8 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
     if (div_w_by_a(trj->w0, accel) < -trj->t3) {
         trj->w0 = -mul_a_by_t(accel, trj->t3);
     }
-    if (div_w_by_a(trj->w0 - trj->w3, pbio_math_max(accel, decel)) > trj->t3) {
-        trj->w0 = trj->w3 + mul_a_by_t(pbio_math_max(accel, decel), trj->t3);
+    if (div_w_by_a(trj->w0 - trj->w3, pbio_int_math_max(accel, decel)) > trj->t3) {
+        trj->w0 = trj->w3 + mul_a_by_t(pbio_int_math_max(accel, decel), trj->t3);
     }
 
     // Bind target speed to make solution feasible.
@@ -365,7 +365,7 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     // using quadratic terms to avoid square root evaluations in most cases.
     // This is only needed for positive initial speed, because negative initial
     // speeds are always feasible in angle-based maneuvers.
-    int32_t a_max = pbio_math_max(accel, decel);
+    int32_t a_max = pbio_int_math_max(accel, decel);
     if (trj->w0 > 0 && div_w2_by_a(trj->w0, trj->w3, a_max) > trj->th3) {
         trj->w0 = bind_w0(trj->w3, a_max, trj->th3);
     }
@@ -530,7 +530,7 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     }
 
     // Bind target speed by maximum speed.
-    c.speed_target = pbio_math_min(c.speed_target, c.speed_max);
+    c.speed_target = pbio_int_math_min(c.speed_target, c.speed_max);
 
     // Calculate the trajectory, assumed to be forward.
     pbio_error_t err = pbio_trajectory_new_forward_time_command(trj, &c);
@@ -571,10 +571,10 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     // allow specifying physically impossible scenarios like negative speed
     // with a positive relative position. Those cases are not handled here and
     // should be appropriately handled at higher levels.
-    c.speed_target = pbio_math_abs(c.speed_target);
+    c.speed_target = pbio_int_math_abs(c.speed_target);
 
     // Bind target speed by maximum speed.
-    c.speed_target = pbio_math_min(c.speed_target, c.speed_max);
+    c.speed_target = pbio_int_math_min(c.speed_target, c.speed_max);
 
     // Check if the original user-specified maneuver is backward.
     bool backward = distance < 0;

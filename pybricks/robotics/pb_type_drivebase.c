@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #include <pbio/drivebase.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 
 #include "py/mphal.h"
 

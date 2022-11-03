@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 #include <pbio/trajectory.h>
 #include <pbio/util.h>
 
@@ -84,7 +84,7 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
         // For standard maneuvers, check slightly more than the length, to
         // include testing the behavior after completion. Either add a second,
         // or do twice the duration, whichever is less.
-        duration = pbio_math_min(duration + 10000, duration * 2);
+        duration = pbio_int_math_min(duration + 10000, duration * 2);
     }
 
     // Loop over all trajectory points and assert results.
@@ -102,7 +102,7 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
         int32_t movement = pbio_angle_diff_mdeg(&ref_now.position, &ref_prev.position);
         int32_t movement_expected = (ref_now.speed + ref_prev.speed) / 2 * (increment / 10000.0f);
         int32_t movement_threshold = ref_now.speed == ref_prev.speed ? 1000 : 5000;
-        tt_want(pbio_math_abs(movement - movement_expected) < movement_threshold);
+        tt_want(pbio_int_math_abs(movement - movement_expected) < movement_threshold);
 
         // Check speed change between samples, but only within time segments.
         // To find out, compare starting point of segments of both samples.
@@ -117,11 +117,11 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
             last_vertex_now.time == last_vertex_prev.time) {
             int32_t delta = ref_now.speed - ref_prev.speed;
             int32_t delta_expected = ref_now.acceleration * (increment / 10000.0f);
-            tt_want(pbio_math_abs(delta - delta_expected) < 3000);
+            tt_want(pbio_int_math_abs(delta - delta_expected) < 3000);
         }
 
-        bool same_speed_dir = pbio_math_sign(ref_now.speed) == pbio_math_sign(ref_prev.speed);
-        bool same_accel_dir = pbio_math_sign(ref_now.acceleration) == pbio_math_sign(ref_prev.acceleration);
+        bool same_speed_dir = pbio_int_math_sign(ref_now.speed) == pbio_int_math_sign(ref_prev.speed);
+        bool same_accel_dir = pbio_int_math_sign(ref_now.acceleration) == pbio_int_math_sign(ref_prev.acceleration);
 
         // If the speed and acceleration direction was the same between two
         // samples, we can test that the position increment direction is correct.
@@ -129,10 +129,10 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
 
             // Position increment should match speed direction.
             int32_t movement = pbio_angle_diff_mdeg(&ref_now.position, &ref_prev.position);
-            tt_want(pbio_math_sign_not_opposite(ref_prev.speed, movement / 1000));
+            tt_want(pbio_int_math_sign_not_opposite(ref_prev.speed, movement / 1000));
 
             // Speed increment should match acceleration direction.
-            tt_want(pbio_math_sign_not_opposite(ref_now.speed - ref_prev.speed, ref_prev.acceleration));
+            tt_want(pbio_int_math_sign_not_opposite(ref_now.speed - ref_prev.speed, ref_prev.acceleration));
         }
 
         // Set reference for next comparison.
@@ -228,14 +228,14 @@ static void test_infinite_trajectory(void *env) {
         // there is an acceleration phase at all. If the acceleration was very
         // high then the speed jumps to the target right away.
         if (trj.t1 != 0) {
-            tt_want_int_op(pbio_math_abs(ref.speed), <=, pbio_math_abs(command.speed_start));
+            tt_want_int_op(pbio_int_math_abs(ref.speed), <=, pbio_int_math_abs(command.speed_start));
         }
 
         // Verify that the target speed is reached, which should
         // always be the case in an infinite maneuver, unless capped.
-        int32_t expected_speed = pbio_math_abs(command.speed_target) < command.speed_max ?
+        int32_t expected_speed = pbio_int_math_abs(command.speed_target) < command.speed_max ?
             command.speed_target :
-            pbio_math_sign(command.speed_target) * command.speed_max;
+            pbio_int_math_sign(command.speed_target) * command.speed_max;
 
         // Walk the whole trajectory.
         walk_trajectory(&trj);
@@ -350,7 +350,7 @@ static void test_position_trajectory(void *env) {
         pbio_trajectory_reference_t ref;
         pbio_trajectory_get_reference(&trj, command.time_start, &ref);
         get_position_command(i, &command);
-        tt_want(pbio_math_sign_not_opposite(ref.speed, command.speed_start));
+        tt_want(pbio_int_math_sign_not_opposite(ref.speed, command.speed_start));
 
         // Walk the whole trajectory.
         walk_trajectory(&trj);

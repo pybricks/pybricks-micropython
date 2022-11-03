@@ -54,7 +54,7 @@ pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver);
  * Sets the PWM duty cycle for the motor. Setting a duty cycle of 0 will "brake" the motor.
  *
  * Passing a @p duty_cycle value outside of the allowed range will result in
- * undefined behavior. Use `pbio_math_clamp(duty, PBDRV_MOTOR_DRIVER_MAX_DUTY)`
+ * undefined behavior. Use `pbio_int_math_clamp(duty, PBDRV_MOTOR_DRIVER_MAX_DUTY)`
  * if the value may be out of range.
  *
  * @param [in]  driver      The motor driver instance.

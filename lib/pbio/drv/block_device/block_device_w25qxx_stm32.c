@@ -21,7 +21,7 @@
 #include <pbdrv/block_device.h>
 
 #include <pbio/error.h>
-#include <pbio/math.h>
+#include <pbio/int_math.h>
 
 /**
  * SPI bus state.
@@ -374,7 +374,7 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
 
     // Split up reads to maximum chunk size.
     for (size_done = 0; size_done < size; size_done += size_now) {
-        size_now = pbio_math_min(size - size_done, FLASH_SIZE_READ);
+        size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_READ);
 
         // Set address for this read request and send it.
         set_address_be(&cmd_request_read.buffer[1], PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset + size_done);
@@ -491,7 +491,7 @@ PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size
 
     // Write page by page.
     for (size_done = 0; size_done < size; size_done += size_now) {
-        size_now = pbio_math_min(size - size_done, FLASH_SIZE_WRITE);
+        size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_WRITE);
         PT_SPAWN(pt, &child, flash_erase_or_write(&child,
             PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + size_done, buffer + size_done, size_now, err));
         if (*err != PBIO_SUCCESS) {
