@@ -515,11 +515,11 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
  * @param [in]  db              The drivebase instance.
  * @param [in]  drive_speed     The drive speed in mm/s.
  * @param [in]  turn_speed      The turn speed in deg/s.
- * @param [in]  duration        The duration in control ticks.
+ * @param [in]  duration        The duration in ms.
  * @param [in]  on_completion   What to do when reaching the target.
  * @return                      Error code.
  */
-static pbio_error_t pbio_drivebase_drive_timed(pbio_drivebase_t *db, int32_t drive_speed, int32_t turn_speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
+static pbio_error_t pbio_drivebase_drive_time_common(pbio_drivebase_t *db, int32_t drive_speed, int32_t turn_speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
@@ -563,7 +563,7 @@ static pbio_error_t pbio_drivebase_drive_timed(pbio_drivebase_t *db, int32_t dri
  * @return                      Error code.
  */
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
-    return pbio_drivebase_drive_timed(db, speed, turn_rate, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_drivebase_drive_time_common(db, speed, turn_rate, PBIO_TRAJECTORY_DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 /**
@@ -730,7 +730,7 @@ pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed
     // Start driving forever with the given sum and dif rates.
     int32_t drive_speed = (speed_left + speed_right) / 2;
     int32_t turn_speed = (speed_left - speed_right) / 2;
-    return pbio_drivebase_drive_timed(db, drive_speed, turn_speed, pbio_control_time_ms_to_ticks(duration), on_completion);
+    return pbio_drivebase_drive_time_common(db, drive_speed, turn_speed, duration, on_completion);
 }
 
 /**
@@ -743,7 +743,7 @@ pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed
  */
 pbio_error_t pbio_drivebase_spike_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
     // Same as driving for time, just without an endpoint.
-    return pbio_drivebase_spike_drive_time(db, speed_left, speed_right, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_drivebase_spike_drive_time(db, speed_left, speed_right, PBIO_TRAJECTORY_DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 /**

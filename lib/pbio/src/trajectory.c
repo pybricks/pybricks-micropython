@@ -682,7 +682,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
 
         // To avoid any overflows of the aforementioned time comparisons,
         // rebase the trajectory if it has been running a long time.
-        if (time > DURATION_FOREVER_TICKS) {
+        if (time > PBIO_TRAJECTORY_DURATION_FOREVER_MS * PBIO_TRAJECTORY_TICKS_PER_MS) {
             pbio_angle_t start = trj->start.position;
             pbio_angle_add_mdeg(&start, th);
 

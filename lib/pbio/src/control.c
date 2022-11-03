@@ -547,7 +547,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
     // Common trajectory parameters for the cases covered here.
     pbio_trajectory_command_t command = {
         .time_start = time_now,
-        .duration = duration,
+        .duration = pbio_control_time_ms_to_ticks(duration),
         .speed_target = pbio_control_settings_app_to_ctl(&ctl->settings, speed),
         .speed_max = ctl->settings.speed_max,
         .acceleration = ctl->settings.acceleration,

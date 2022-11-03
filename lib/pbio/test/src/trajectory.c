@@ -14,6 +14,7 @@
 #include <tinytest_macros.h>
 
 #define MDEG_PER_DEG (1000)
+#define DURATION_FOREVER_TICKS (PBIO_TRAJECTORY_DURATION_FOREVER_MS * PBIO_TRAJECTORY_TICKS_PER_MS)
 
 /**
  * This tests one trajectory with simple numbers. If there is a regression,

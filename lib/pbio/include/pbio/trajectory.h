@@ -19,20 +19,15 @@
 // Trajectories use sub-millisecond steps for increased resolution.
 #define PBIO_TRAJECTORY_TICKS_PER_MS (10)
 
-#define MS_PER_SECOND (1000)
-#define US_PER_MS (1000)
-#define US_PER_SECOND (1000000)
-
-
 // The duration argument of infinite maneuvers is essentially irrelevant since
 // motion keeps going due to the absence of a deceleration phase. Still, we
 // need a nonzero number within which we can find a valid solution for the
 // acceleration part of the maneuver.
-#define DURATION_FOREVER_TICKS (5 * 60 * MS_PER_SECOND * PBIO_TRAJECTORY_TICKS_PER_MS)
+#define PBIO_TRAJECTORY_DURATION_FOREVER_MS (5 * 60 * 1000)
 
 /**
  * Minimal set of trajectory parameters from which a full trajectory is
- * calculated. All values in control units.
+ * calculated. All values in control units and time in ticks.
  */
 typedef struct _pbio_trajectory_command_t {
     uint32_t time_start;           /**<  Time at start of maneuver */

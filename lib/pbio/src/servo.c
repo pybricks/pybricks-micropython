@@ -451,7 +451,16 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
     }
 }
 
-static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
+/**
+ * Runs the servo at a given speed and stops after a given duration or runs forever.
+ *
+ * @param [in]  srv            The servo instance.
+ * @param [in]  speed          Angular velocity in degrees per second.
+ * @param [in]  duration       Duration (ms) from start to becoming stationary again.
+ * @param [in]  on_completion  What to do when the duration completes.
+ * @return                     Error code.
+ */
+static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
 
     // Don't allow new user command if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
@@ -474,7 +483,7 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, uint3
         return err;
     }
 
-    // Start a timed maneuver with duration converted to microseconds.
+    // Start a timed maneuver.
     return pbio_control_start_timed_control(&srv->control, time_now, &state, duration, speed, on_completion);
 }
 
@@ -487,13 +496,13 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, uint3
  */
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
     // Start a timed maneuver and restart it when it is done, thus running forever.
-    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER_TICKS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
+    return pbio_servo_run_time_common(srv, speed, PBIO_TRAJECTORY_DURATION_FOREVER_MS, PBIO_CONTROL_ON_COMPLETION_CONTINUE);
 }
 
 /**
  * Runs the servo at a given speed and stops after a given duration.
  *
- * @param [in]  srv            The control instance.
+ * @param [in]  srv            The servo instance.
  * @param [in]  speed          Angular velocity in degrees per second.
  * @param [in]  duration       Duration (ms) from start to becoming stationary again.
  * @param [in]  on_completion  What to do when the duration completes.
@@ -501,7 +510,7 @@ pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
  */
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, uint32_t duration, pbio_control_on_completion_t on_completion) {
     // Start a timed maneuver, duration specified by user.
-    return pbio_servo_run_timed(srv, speed, pbio_control_time_ms_to_ticks(duration), on_completion);
+    return pbio_servo_run_time_common(srv, speed, duration, on_completion);
 }
 
 /**
