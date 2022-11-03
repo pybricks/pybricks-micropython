@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2022 The Pybricks Authors
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include <pbdrv/clock.h>
 
@@ -17,6 +18,7 @@
  * @return                    Wall time in control ticks.
  */
 uint32_t pbio_control_get_time_ticks(void) {
+    assert(PBIO_TRAJECTORY_TICKS_PER_MS == 10);
     return pbdrv_clock_get_100us();
 }
 

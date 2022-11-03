@@ -8,6 +8,7 @@
 
 #include <pbio/angle.h>
 #include <pbio/error.h>
+#include <pbio/trajectory.h>
 
 /**
  * @addtogroup ControlSettings pbio/control_settings: Control settings
@@ -101,7 +102,7 @@ typedef struct _pbio_control_settings_t {
  * @param [in] ms             Time in milliseconds.
  * @return                    Time converted to control ticks.
  */
-#define pbio_control_time_ms_to_ticks(ms) ((ms) * 10)
+#define pbio_control_time_ms_to_ticks(ms) ((ms) * PBIO_TRAJECTORY_TICKS_PER_MS)
 
 /**
  * Converts time ticks used by controller to milliseconds.
@@ -109,7 +110,7 @@ typedef struct _pbio_control_settings_t {
  * @param [in] ticks          Control timer ticks.
  * @return                    Time converted to milliseconds.
  */
-#define pbio_control_time_ticks_to_ms(ticks) ((ticks) / 10)
+#define pbio_control_time_ticks_to_ms(ticks) ((ticks) / PBIO_TRAJECTORY_TICKS_PER_MS)
 
 // Unit conversion functions:
 
