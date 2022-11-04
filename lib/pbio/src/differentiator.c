@@ -18,7 +18,7 @@
  * @param [in]  angle          New angle sample to add to the buffer.
  * @return                     Average speed across position buffer.
  */
-int32_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, pbio_angle_t *angle) {
+int32_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, const pbio_angle_t *angle) {
 
     // Difference between current angle and oldest in buffer.
     int32_t delta = pbio_angle_diff_mdeg(angle, &dif->history[dif->index]);
@@ -37,7 +37,7 @@ int32_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, pbio_angle_t *
  * @param [in]  dif            The differentiator instance.
  * @param [in]  angle          New angle sample to add to the buffer.
  */
-void pbio_differentiator_reset(pbio_differentiator_t *dif, pbio_angle_t *angle) {
+void pbio_differentiator_reset(pbio_differentiator_t *dif, const pbio_angle_t *angle) {
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(dif->history); i++) {
         dif->history[i] = *angle;
     }

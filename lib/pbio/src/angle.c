@@ -30,7 +30,7 @@ void pbio_angle_flush(pbio_angle_t *a) {
  * @param [in]  b       Angle b.
  * @param [out] result  Result.
  */
-void pbio_angle_diff(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
+void pbio_angle_diff(const pbio_angle_t *a, const pbio_angle_t *b, pbio_angle_t *result) {
     result->rotations = a->rotations - b->rotations;
     result->millidegrees = a->millidegrees - b->millidegrees;
     pbio_angle_flush(result);
@@ -46,7 +46,7 @@ void pbio_angle_diff(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
  * @param [in]  b       Angle b.
  * @return int32_t      Difference in millidegrees.
  */
-int32_t pbio_angle_diff_mdeg(pbio_angle_t *a, pbio_angle_t *b) {
+int32_t pbio_angle_diff_mdeg(const pbio_angle_t *a, const pbio_angle_t *b) {
     return (a->rotations - b->rotations) * MDEG_PER_ROT + a->millidegrees - b->millidegrees;
 }
 
@@ -57,7 +57,7 @@ int32_t pbio_angle_diff_mdeg(pbio_angle_t *a, pbio_angle_t *b) {
  * @param [in]  b       Angle b.
  * @return              True if (a-b) in millidegrees is valid.
  */
-bool pbio_angle_diff_is_small(pbio_angle_t *a, pbio_angle_t *b) {
+bool pbio_angle_diff_is_small(const pbio_angle_t *a, const pbio_angle_t *b) {
     // Compute the full difference, and flush to whole rotations if possible.
     pbio_angle_t diff;
     pbio_angle_diff(a, b, &diff);
@@ -73,7 +73,7 @@ bool pbio_angle_diff_is_small(pbio_angle_t *a, pbio_angle_t *b) {
  * @param [in]  b       Angle b.
  * @param [out] result  Result.
  */
-void pbio_angle_sum(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
+void pbio_angle_sum(const pbio_angle_t *a, const pbio_angle_t *b, pbio_angle_t *result) {
     result->rotations = a->rotations + b->rotations;
     result->millidegrees = a->millidegrees + b->millidegrees;
     pbio_angle_flush(result);
@@ -86,7 +86,7 @@ void pbio_angle_sum(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
  * @param [in]  b       Angle b.
  * @param [out] result  Result.
  */
-void pbio_angle_avg(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result) {
+void pbio_angle_avg(const pbio_angle_t *a, const pbio_angle_t *b, pbio_angle_t *result) {
     pbio_angle_sum(a, b, result);
     result->millidegrees = result->millidegrees / 2 + (result->rotations % 2) * MDEG_PER_ROT / 2;
     result->rotations /= 2;
@@ -122,7 +122,7 @@ void pbio_angle_neg(pbio_angle_t *a) {
  * @param [out]  a       Angle a.
  * @param [in]   scale   Ratio between high resolution angle and input.
  */
-int32_t pbio_angle_to_low_res(pbio_angle_t *a, int32_t scale) {
+int32_t pbio_angle_to_low_res(const pbio_angle_t *a, int32_t scale) {
 
     // Fail safely on zero division.
     if (scale < 1) {

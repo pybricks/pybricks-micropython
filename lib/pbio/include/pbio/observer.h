@@ -89,10 +89,10 @@ typedef struct _pbio_observer_t {
 
 // Observer state functions:
 
-void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, pbio_angle_t *angle);
-void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est);
-void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
-bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration);
+void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, const pbio_angle_t *angle);
+void pbio_observer_get_estimated_state(const pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est);
+void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
+bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration);
 
 // Model conversion functions:
 

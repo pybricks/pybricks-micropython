@@ -30,7 +30,7 @@ typedef struct _pbio_angle_t {
 
 // Conversion to and from basic types:
 
-int32_t pbio_angle_to_low_res(pbio_angle_t *a, int32_t scale);
+int32_t pbio_angle_to_low_res(const pbio_angle_t *a, int32_t scale);
 void pbio_angle_from_low_res(pbio_angle_t *a, int32_t input, int32_t scale);
 
 // Inplace operations on an angle:
@@ -40,14 +40,14 @@ void pbio_angle_add_mdeg(pbio_angle_t *a, int32_t increment);
 
 // Binary operations on two angles to produce new angle:
 
-void pbio_angle_diff(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
-void pbio_angle_sum(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
-void pbio_angle_avg(pbio_angle_t *a, pbio_angle_t *b, pbio_angle_t *result);
+void pbio_angle_diff(const pbio_angle_t *a, const pbio_angle_t *b, pbio_angle_t *result);
+void pbio_angle_sum(const pbio_angle_t *a, const pbio_angle_t *b, pbio_angle_t *result);
+void pbio_angle_avg(const pbio_angle_t *a, const pbio_angle_t *b, pbio_angle_t *result);
 
 // Compare two angles:
 
-int32_t pbio_angle_diff_mdeg(pbio_angle_t *a, pbio_angle_t *b);
-bool pbio_angle_diff_is_small(pbio_angle_t *a, pbio_angle_t *b);
+int32_t pbio_angle_diff_mdeg(const pbio_angle_t *a, const pbio_angle_t *b);
+bool pbio_angle_diff_is_small(const pbio_angle_t *a, const pbio_angle_t *b);
 
 #endif // _PBIO_ANGLE_H_
 

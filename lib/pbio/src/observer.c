@@ -31,7 +31,7 @@
  * @param [in]  settings       Control settings, which includes stall settings.
  * @param [in]  angle          Angle to which the observer should be reset.
  */
-void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, pbio_angle_t *angle) {
+void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, const pbio_angle_t *angle) {
 
     // Save reference to settings.
     obs->settings = settings;
@@ -56,7 +56,7 @@ void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings
  * @param [out] angle_est      Model estimate of angle in millidegrees.
  * @param [out] speed_est      Model estimate of speed in millidegrees/second.
  */
-void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est) {
+void pbio_observer_get_estimated_state(const pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est) {
     // Return angle in millidegrees.
     *angle_est = obs->angle;
 
@@ -112,7 +112,7 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
  * @param [in]  actuation      Actuation type currently applied to the motor.
  * @param [in]  voltage        If actuation type is voltage, this is the payload in mV.
  */
-void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage) {
+void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage) {
 
     const pbio_observer_model_t *m = obs->model;
 
@@ -174,7 +174,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, pbio_angle_t *ang
  * @param [out] stall_duration  For how long it has been stalled.
  * @return                      True if stalled, false if not.
  */
-bool pbio_observer_is_stalled(pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration) {
+bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration) {
     // Return stall flag, if stalled for some time.
     if (obs->stalled && time - obs->stall_start > obs->settings->stall_time) {
         *stall_duration = time - obs->stall_start;
