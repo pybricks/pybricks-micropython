@@ -232,7 +232,8 @@ MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_done_obj, robotics_DriveBase_done);
 STATIC mp_obj_t robotics_DriveBase_stalled(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     bool stalled;
-    pb_assert(pbio_drivebase_is_stalled(self->db, &stalled));
+    uint32_t stall_duration;
+    pb_assert(pbio_drivebase_is_stalled(self->db, &stalled, &stall_duration));
     return mp_obj_new_bool(stalled);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_stalled_obj, robotics_DriveBase_stalled);

@@ -653,34 +653,43 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
  *
  * @param [in]  db              The servo instance.
  * @param [out] stalled         True if stalled, false if not.
+ * @param [out] stall_duration  For how long it has been stalled (ms).
  * @return                      Error code. ::PBIO_ERROR_INVALID_OP if update
  *                              loop not running, else ::PBIO_SUCCESS
  */
-pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled) {
+pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint32_t *stall_duration) {
 
     // Don't allow access if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    uint32_t stall_duration;
+    // Stall duration in ticks.
+    uint32_t stall_duration_distance;
+    uint32_t stall_duration_heading;
+    bool stalled_heading = pbio_control_is_stalled(&db->control_heading, &stall_duration_heading);
+    bool stalled_distance = pbio_control_is_stalled(&db->control_distance, &stall_duration_distance);
 
     // We are stalled if at least one controller is stalled.
-    if (pbio_control_is_stalled(&db->control_distance, &stall_duration) ||
-        pbio_control_is_stalled(&db->control_heading, &stall_duration)) {
+    if (stalled_heading || stalled_distance) {
         *stalled = true;
+        *stall_duration = pbio_control_time_ticks_to_ms(pbio_int_math_max(stall_duration_distance, stall_duration_heading));
         return PBIO_SUCCESS;
     }
-
 
     // Otherwise we are stalled if at least one motor is stalled. We can skip
     // handling errors here because the only errors in these calls are already
     // checked in the pbio_drivebase_update_loop_is_running() call above.
     bool stalled_left;
     bool stalled_right;
-    pbio_servo_is_stalled(db->left, &stalled_left, &stall_duration);
-    pbio_servo_is_stalled(db->left, &stalled_right, &stall_duration);
+
+    // Stall duration in ms.
+    uint32_t stall_duration_left;
+    uint32_t stall_duration_right;
+    pbio_servo_is_stalled(db->left, &stalled_left, &stall_duration_left);
+    pbio_servo_is_stalled(db->left, &stalled_right, &stall_duration_right);
     *stalled = stalled_left || stalled_right;
+    *stall_duration = pbio_int_math_max(stall_duration_left, stall_duration_right);
     return PBIO_SUCCESS;
 }
 
