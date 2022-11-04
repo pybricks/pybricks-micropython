@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <pbio/angle.h>
+#include <pbio/int_math.h>
 
 // Millidegrees per rotation
 #define MDEG_PER_ROT (360000)
@@ -129,13 +130,12 @@ int32_t pbio_angle_to_low_res(pbio_angle_t *a, int32_t scale) {
     }
 
     // Scale down rotations component.
-    int32_t rotations_scaled = a->rotations * (MDEG_PER_ROT / scale);
+    int32_t rotations_component = pbio_int_math_mult_then_div(a->rotations, MDEG_PER_ROT, scale);
 
-    // The aforementioned output has this round off error in millidegrees.
-    int32_t roundoff_mdeg = a->rotations * (MDEG_PER_ROT % scale);
+    // Scale down millidegree component, rounded to nearest ouput unit.
+    int32_t millidegree_component = (a->millidegrees + pbio_int_math_sign(a->millidegrees) * scale / 2) / scale;
 
-    // Add scaled millidegree and roundoff component.
-    return rotations_scaled + (a->millidegrees + roundoff_mdeg) / scale;
+    return rotations_component + millidegree_component;
 }
 
 /**
