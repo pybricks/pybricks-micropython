@@ -266,7 +266,7 @@ int32_t pbio_int_math_mult_then_div(int32_t a, int32_t b, int32_t c) {
     // Get long product.
     uint64_t x = (uint64_t)(a < 0 ? -a : a) * (uint64_t)(b < 0 ? -b : b);
 
-    assert(x < ((int64_t)1) << 48);
+    assert(x < ((int64_t)1) << 47);
     assert(c != 0);
 
     uint32_t div = (c < 0 ? -c : c);
