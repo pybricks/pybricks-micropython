@@ -74,16 +74,14 @@ static void test_scale(int32_t scale) {
 
         // Test average.
         pbio_angle_avg(&a, &b, &result);
-        int64_t err = get_mdeg(&a) + get_mdeg(&b) - get_mdeg(&result) * 2;
-        tt_want_int_op(err, >=, -1);
-        tt_want_int_op(err, <=, 1);
+        int32_t err = get_mdeg(&a) + get_mdeg(&b) - get_mdeg(&result) * 2;
+        tt_want_int_op(pbio_int_math_abs(err), <=, 1);
 
         // Test scaling down.
-        int32_t scaled_down = pbio_angle_to_low_res(&c, scale);
-        int32_t error = roundf(get_mdeg(&c) / (float)scale) - scaled_down;
-
-        // FIXME: This should be 0!
-        tt_want_int_op(pbio_int_math_abs(error), <=, 32);
+        int64_t c_mdeg = get_mdeg(&c);
+        int64_t c_scaled = (c_mdeg + pbio_int_math_sign(c_mdeg) * scale / 2) / scale;
+        err = c_scaled - pbio_angle_to_low_res(&c, scale);
+        tt_want_int_op(pbio_int_math_abs(err), <=, 1);
     }
 }
 
