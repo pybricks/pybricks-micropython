@@ -661,6 +661,8 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
 
     // Don't allow access if update loop not registered.
     if (!pbio_drivebase_update_loop_is_running(db)) {
+        *stalled = false;
+        *stall_duration = 0;
         return PBIO_ERROR_INVALID_OP;
     }
 

@@ -652,6 +652,8 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, uint32_t *s
 
     // Don't allow access if update loop not registered.
     if (!pbio_servo_update_loop_is_running(srv)) {
+        *stalled = false;
+        *stall_duration = 0;
         return PBIO_ERROR_INVALID_OP;
     }
 
