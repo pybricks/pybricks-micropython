@@ -88,9 +88,11 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
         // Model is ahead of reality (and therefore pushing back negative),
         // indicating an unmodelled load.
         feedback_voltage < 0 &&
-        // Feedback voltage is more than half of what it would be on getting
+        // Feedback voltage is more 75% of what it would be on getting
         // fully stuck (where applied voltage equals feedback).
-        -feedback_voltage > voltage / 2
+        -feedback_voltage > (voltage * 3) / 4 &&
+        // Feedback voltage is nonnegligible, i.e. larger than friction torque.
+        voltage > 5 * pbio_observer_torque_to_voltage(obs->model, obs->model->torque_friction)
         ) {
         // If this is the rising edge of the stall flag, reset start time.
         if (!obs->stalled) {
