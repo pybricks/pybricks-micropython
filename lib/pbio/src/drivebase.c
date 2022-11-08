@@ -155,6 +155,16 @@ static void pbio_drivebase_stop_servo_control(pbio_drivebase_t *db) {
 }
 
 /**
+ * Checks if both drive base controllers are active.
+ *
+ * @param [in]  drivebase       Pointer to this drivebase instance.
+ * @return                      True if heading and distance control are active, else false.
+ */
+static bool pbio_drivebase_control_is_active(pbio_drivebase_t *db) {
+    return pbio_control_is_active(&db->control_distance) && pbio_control_is_active(&db->control_heading);
+}
+
+/**
  * Drivebase stop function that can be called from a servo.
  *
  * When a new command is issued to a servo, the servo calls this to stop the
@@ -171,7 +181,7 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     pbio_drivebase_t *db = drivebase;
 
     // If drive base control is not active, there is nothing we need to do.
-    if (!pbio_control_is_active(&db->control_distance) && !pbio_control_is_active(&db->control_heading)) {
+    if (!pbio_drivebase_control_is_active(db)) {
         return PBIO_SUCCESS;
     }
 
@@ -669,7 +679,7 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
     pbio_error_t err;
 
     // If drive base control is active, look at controller state.
-    if (pbio_control_is_active(&db->control_distance) && pbio_control_is_active(&db->control_heading)) {
+    if (pbio_drivebase_control_is_active(db)) {
         uint32_t stall_duration_distance; // ticks, 0 on false
         uint32_t stall_duration_heading; // ticks, 0 on false
         bool stalled_heading = pbio_control_is_stalled(&db->control_heading, &stall_duration_heading);
