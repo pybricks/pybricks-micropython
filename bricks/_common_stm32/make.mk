@@ -121,6 +121,11 @@ CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
 LD_FILES = $(PBIO_PLATFORM).ld $(PBTOP)/bricks/_common_stm32/link.ld
 LDFLAGS = $(addprefix -T,$(LD_FILES)) -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
 
+SUPPORTS_HARDWARE_FP_SINGLE = 0
+ifeq ($(PB_MCU_SERIES),$(filter $(PB_MCU_SERIES),F4 L4))
+SUPPORTS_HARDWARE_FP_SINGLE = 1
+endif
+
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 

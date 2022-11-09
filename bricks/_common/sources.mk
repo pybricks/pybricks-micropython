@@ -234,7 +234,6 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	atanf.c \
 	atanhf.c \
 	ef_rem_pio2.c \
-	ef_sqrt.c \
 	erf_lgamma.c \
 	fmodf.c \
 	kf_cos.c \
@@ -254,3 +253,9 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	wf_lgamma.c \
 	wf_tgamma.c \
 	)
+
+ifeq ($(SUPPORTS_HARDWARE_FP_SINGLE),1)
+SRC_LIBM += lib/libm/thumb_vfp_sqrtf.c
+else
+SRC_LIBM += lib/libm/ef_sqrt.c
+endif
