@@ -138,7 +138,7 @@ NXOS_EXT_SRC_C = $(addprefix bricks/nxt/,\
 	)
 
 SRC_S = \
-	shared/runtime/gchelper_arm7tdmi.s \
+	shared/runtime/gchelper_m0.s \
 
 SRC_S_NXOS = $(addprefix lib/nxos/nxos/,\
 	base/init.s \
