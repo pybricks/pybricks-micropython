@@ -113,6 +113,3 @@ static inline mp_uint_t disable_irq(void) {
 #define MICROPY_PORT_ROOT_POINTERS \
     mp_obj_dict_t *pb_type_Color_dict; \
     const char *readline_hist[8];
-
-// FIXME do this properly
-#define asm __asm__

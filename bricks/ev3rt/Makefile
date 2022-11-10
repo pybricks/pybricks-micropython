@@ -110,14 +110,14 @@ PY_EMBEDDED_SRC_C = $(addprefix bricks/,\
 PY_EXTRA_SRC_C += $(addprefix shared/,\
 	libc/string0.c \
 	readline/readline.c \
-	runtime/gchelper_generic.c \
+	runtime/gchelper_native.c \
 	runtime/interrupt_char.c \
 	runtime/pyexec.c \
 	runtime/stdout_helpers.c \
 	runtime/sys_stdio_mphal.c \
 	)
 
-SRC_S =
+SRC_S = shared/runtime/gchelper_m0.s
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
