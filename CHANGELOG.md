@@ -13,9 +13,12 @@
   does not have the control attribute enabled.
 
 ### Fixed
+- Fixed brief hub freeze on `pybricks.common.Logger.save()` when not connected
+  to the computer ([support#738]).
 - Fixed drive base stall flags being set while not stalled ([support#767]).
 - Fixed `Motor.run_target` raising exception for short moves ([support#786]).
 
+[support#738]: https://github.com/pybricks/support/issues/738
 [support#767]: https://github.com/pybricks/support/issues/767
 [support#786]: https://github.com/pybricks/support/issues/786
 
