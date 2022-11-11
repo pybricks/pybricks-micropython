@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Added support for `PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE` Pybricks Profile BLE command.
+
 ### Fixed
 - Fixed connecting `Remote` on BOOST move hub ([support#793]).
 

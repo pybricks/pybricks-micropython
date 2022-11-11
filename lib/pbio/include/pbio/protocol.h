@@ -99,6 +99,15 @@ typedef enum {
      * @since Protocol v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_USER_RAM = 4,
+
+    /**
+     * Requests for the hub to reboot in firmware update mode.
+     *
+     * If this command was successful, the hub will reboot immediately, which
+     * means the GATT write request will fail because Bluetooth became
+     * disconnected.
+     */
+    PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE = 5,
 } pbio_pybricks_command_t;
 
 /**
