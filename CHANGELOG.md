@@ -14,8 +14,10 @@
 
 ### Fixed
 - Fixed drive base stall flags being set while not stalled ([support#767]).
+- Fixed `Motor.run_target` raising exception for short moves ([support#786]).
 
 [support#767]: https://github.com/pybricks/support/issues/767
+[support#786]: https://github.com/pybricks/support/issues/786
 
 ## [3.2.0b4] - 2022-10-21
 
