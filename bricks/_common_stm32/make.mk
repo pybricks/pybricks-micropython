@@ -398,10 +398,6 @@ ZIP_FILES := \
 	$(BUILD)/firmware.metadata.json \
 	ReadMe_OSS.txt \
 
-ifeq ($(PB_FW_ZIP_INCLUDE_MAIN_MPY),1)
-ZIP_FILES += main.py
-endif
-
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
