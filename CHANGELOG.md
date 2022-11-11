@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0b5] - 2022-11-11
+
 ### Added
 - Added `DriveBase.stalled()` for convenient stall detection.
 - Added `DriveBase.done()` for convenient completion detection, which is
@@ -360,7 +362,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...HEAD
+[3.2.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...v3.2.0b5
 [3.2.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...v3.2.0b4
 [3.2.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...v3.2.0b3
 [3.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...v3.2.0b2
