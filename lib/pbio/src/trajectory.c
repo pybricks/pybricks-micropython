@@ -629,6 +629,7 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, 
 
     // Relative time within ongoing maneuver.
     int32_t time = TO_TRAJECTORY_TIME(time_ref - trj->start.time);
+    assert_time(time);
 
     // Find which section of the ongoing maneuver we were in, and take
     // corresponding segment starting point. Acceleration is undefined but not

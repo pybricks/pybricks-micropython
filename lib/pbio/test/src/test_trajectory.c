@@ -90,11 +90,17 @@ static void walk_trajectory(pbio_trajectory_t *trj) {
 
     // Loop over all trajectory points and assert results.
     const uint32_t increment = 50;
-    for (uint32_t t = increment; t < duration; t += increment) {
+    for (uint32_t t = 0; t < duration; t += increment) {
 
         // Get current reference.
         uint32_t now = t + time_start;
         pbio_trajectory_get_reference(trj, now, &ref_now);
+
+        // Skip if current time equals start time. Then there is no previous
+        // sample to compare to.
+        if (now == trj->start.time) {
+            continue;
+        }
 
         // Current time should match
         tt_want_int_op(ref_now.time, ==, now);
