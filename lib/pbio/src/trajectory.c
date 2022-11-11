@@ -450,6 +450,10 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
             trj->th1 = intersect_ramp(trj->th3, thf, trj->a0, trj->a2);
             trj->th2 = trj->th1;
             trj->w1 = bind_w0(0, trj->a0, trj->th1 - thf);
+
+            // If w0 and w1 are very close, the previously determined
+            // acceleration sign may be wrong after rounding errors, so update.
+            trj->a0 = trj->w0 < trj->w1 ? accel : -accel;
         }
     }
 
@@ -466,6 +470,13 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     if (trj->th2 < trj->th1 || trj->th3 < trj->th2) {
         return PBIO_ERROR_FAILED;
     }
+
+    // Assert times are valid.
+    assert_time(trj->t1);
+    assert_time(trj->t2);
+    assert_time(trj->t3);
+    assert_time(trj->t2 - trj->t1);
+    assert_time(trj->t3 - trj->t2);
     if (trj->t1 < 0 || trj->t2 - trj->t1 < 0 || trj->t3 - trj->t2 < 0) {
         return PBIO_ERROR_FAILED;
     }
@@ -652,6 +663,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
 
     // Time within maneuver since start.
     int32_t time = TO_TRAJECTORY_TIME(time_ref - trj->start.time);
+    assert_time(time);
 
     // Get angle, speed, and acceleration along reference
     int32_t th, w, a;
