@@ -34,7 +34,8 @@
 #define ACCELERATION_MAX (20000)
 #define ACCELERATION_MIN (50)
 #define ANGLE_ACCEL_MAX (SPEED_MAX * SPEED_MAX / ACCELERATION_MIN * (10 / 2))
-#define assert_accel(a) (assert(pbio_int_math_abs((a)) <= ACCELERATION_MAX && pbio_int_math_abs((a)) >= ACCELERATION_MIN))
+#define assert_accel_small(a) (assert(pbio_int_math_abs((a)) <= ACCELERATION_MAX))
+#define assert_accel_numerator(a) (assert(pbio_int_math_abs((a)) <= ACCELERATION_MAX && pbio_int_math_abs((a)) >= ACCELERATION_MIN))
 #define assert_accel_angle(th) (assert(pbio_int_math_abs((th)) <= ANGLE_ACCEL_MAX))
 
 /**
@@ -126,7 +127,7 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
 // Divides speed^2 (ddeg/s)^2 by acceleration (deg/s^2)*2, giving angle (mdeg).
 static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
 
-    assert_accel(a);
+    assert_accel_numerator(a);
     assert_speed(w_end);
     assert_speed(w_start);
 
@@ -136,7 +137,7 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
 // Divides speed (ddeg/s) by acceleration (deg/s^2), giving time (s e-4).
 static int32_t div_w_by_a(int32_t w, int32_t a) {
 
-    assert_accel(a);
+    assert_accel_numerator(a);
     assert_speed_rel(w);
 
     return w * 1000 / a;
@@ -185,7 +186,7 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
 static int32_t mul_a_by_t(int32_t a, int32_t t) {
 
     assert_time(t);
-    assert_accel(a);
+    assert_accel_small(a);
     assert_accel_time(t);
 
     return pbio_int_math_mult_then_div(a, t, 1000);
@@ -195,7 +196,7 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
 static int32_t mul_a_by_t2(int32_t a, int32_t t) {
 
     assert_time(t);
-    assert_accel(a);
+    assert_accel_small(a);
     assert_accel_time(t);
 
     return mul_w_by_t(mul_a_by_t(a, t), t) / 2;
@@ -205,7 +206,7 @@ static int32_t mul_a_by_t2(int32_t a, int32_t t) {
 // angle (mdeg) and acceleration (deg/s^2). Inverse of div_w2_by_a.
 static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 
-    assert_accel(a);
+    assert_accel_small(a);
     assert_speed(w_end);
     assert((int64_t)pbio_int_math_abs(a) * (int64_t)pbio_int_math_abs(th) < INT32_MAX);
 
@@ -231,8 +232,8 @@ static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) 
         return th0;
     }
 
-    assert_accel(a0);
-    assert_accel(a2);
+    assert_accel_numerator(a0);
+    assert_accel_numerator(a2);
     assert(a0 != a2);
 
     return th0 + pbio_int_math_mult_then_div(th3 - th0, a2, a2 - a0);
@@ -632,7 +633,7 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, 
     // Find which section of the ongoing maneuver we were in, and take
     // corresponding segment starting point. Acceleration is undefined but not
     // used when synchronizing trajectories, so set to zero.
-    if (time - trj->t1 < 0) {
+    if (time - trj->t1 < 0 || (trj->t1 == 0 && time == 0)) {
         // Acceleration segment.
         pbio_trajectory_offset_start(vertex, &trj->start, 0, 0, trj->w0, 0);
     } else if (time - trj->t2 < 0) {
@@ -668,7 +669,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
     // Get angle, speed, and acceleration along reference
     int32_t th, w, a;
 
-    if (time - trj->t1 < 0) {
+    if (time - trj->t1 < 0 || (trj->t1 == 0 && time == 0)) {
         // If we are here, then we are still in the acceleration phase.
         // Includes conversion from microseconds to seconds, in two steps to
         // avoid overflows and round off errors
