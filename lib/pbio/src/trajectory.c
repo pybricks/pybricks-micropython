@@ -331,6 +331,13 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
         }
     }
 
+    // For numerically negligible speed differences (achieved in zero time),
+    // set the initial speed equal to speed at t1. This ensures correct
+    // behavior when evaluating the reference when time is 0.
+    if (trj->t1 == 0) {
+        trj->w0 = trj->w1;
+    }
+
     // With the difference between t1 and t2 known, we know t2.
     trj->t2 = trj->t1 + t2mt1;
 
@@ -464,6 +471,14 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     // With the intermediate angles and speeds now known, we can calculate the
     // corresponding durations to match.
     trj->t1 = div_w_by_a(trj->w1 - trj->w0, trj->a0);
+
+    // For numerically negligible speed differences (achieved in zero time),
+    // set the initial speed equal to speed at t1. This ensures correct
+    // behavior when evaluating the reference when time is 0.
+    if (trj->t1 == 0) {
+        trj->w0 = trj->w1;
+    }
+
     trj->t2 = trj->t1 + t2mt1;
     trj->t3 = trj->t2 + div_w_by_a(trj->w3 - trj->w1, trj->a2);
 
