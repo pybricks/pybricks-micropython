@@ -10,6 +10,9 @@
 ### Fixed
 - Fixed connecting `Remote` on BOOST move hub ([support#793]).
 
+### Removed
+- Removed `hub.system.reset()` method.
+
 [support#793]: https://github.com/pybricks/support/issues/793
 
 ## [3.2.0b5] - 2022-11-11

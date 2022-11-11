@@ -29,19 +29,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_name_obj, pb_type_System_name);
 
 #include <pbdrv/reset.h>
 
-STATIC mp_obj_t pb_type_System_reset(mp_obj_t action_in) {
-    pbdrv_reset_action_t action = mp_obj_get_int(action_in);
-
-    if (action != PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE) {
-        mp_raise_ValueError(NULL);
-    }
-
-    pbdrv_reset(action);
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_reset_obj, pb_type_System_reset);
-
 STATIC mp_obj_t pb_type_System_reset_reason(void) {
     pbdrv_reset_reason_t reason = pbdrv_reset_get_reason();
     return MP_OBJ_NEW_SMALL_INT(reason);
@@ -142,7 +129,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_System_storage_obj, 0, pb_type_System_
 STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_System_name_obj) },
     #if PBDRV_CONFIG_RESET
-    { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&pb_type_System_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_reason), MP_ROM_PTR(&pb_type_System_reset_reason_obj) },
     #endif // PBDRV_CONFIG_RESET
     #if PBIO_CONFIG_ENABLE_SYS
