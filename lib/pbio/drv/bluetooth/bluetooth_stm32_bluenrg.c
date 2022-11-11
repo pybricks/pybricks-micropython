@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2022 The Pybricks Authors
 
 // Bluetooth for STM32 MCU with STMicro BlueNRG-MS
 
@@ -269,7 +269,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     hci_le_set_scan_response_data_end();
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, RANDOM_ADDR, NO_WHITE_LIST_USE,
+    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
         0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gap_set_discoverable_end();
@@ -396,7 +396,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     // start scanning
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gap_start_general_conn_establish_proc_begin(ACTIVE_SCAN, 0x0030, 0x0030, PUBLIC_ADDR, 0);
+    aci_gap_start_general_conn_establish_proc_begin(ACTIVE_SCAN, 0x0030, 0x0030, STATIC_RANDOM_ADDR, 0);
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gap_start_general_conn_establish_proc_end();
 
@@ -487,7 +487,7 @@ try_again:
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_create_connection_begin(0x0060, 0x0030, context->bdaddr_type, context->bdaddr,
-        PUBLIC_ADDR, 0x0010 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0010, 0x0030);
+        STATIC_RANDOM_ADDR, 0x0010 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0010, 0x0030);
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gap_create_connection_end();
 
