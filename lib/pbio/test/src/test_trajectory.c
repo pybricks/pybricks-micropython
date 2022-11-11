@@ -354,13 +354,14 @@ static void test_position_trajectory(void *env) {
             tt_want_int_op(trj.w3, ==, 0);
         }
 
-        // Initial speed may now be bounded. Verify that the sign is the same.
+        // Initial speed may now be bounded. Verify that the sign is the same,
+        // or more precisely, not opposite. First we get reference to compare.
         pbio_trajectory_reference_t ref;
         pbio_trajectory_get_reference(&trj, command.time_start, &ref);
         get_position_command(i, &command);
-
-        // FIXME: This should pass even for t1 == 0.
-        if (trj.t1 > 0) {
+        int32_t speed_difference = pbio_int_math_abs(ref.speed - command.speed_start);
+        // We avoid doing this check for nonzero but negligible speed differences.
+        if (!speed_difference || speed_difference > 2 * MDEG_PER_DEG) {
             tt_want(pbio_int_math_sign_not_opposite(ref.speed, command.speed_start));
         }
 
