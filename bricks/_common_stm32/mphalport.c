@@ -24,13 +24,7 @@ void pb_stack_get_info(char **sstack, char **estack) {
     *estack = (char *)&_estack;
 }
 
-// Implementation for MICROPY_EVENT_POLL_HOOK
-void pb_poll(void) {
-    while (pbio_do_one_event()) {
-    }
-
-    mp_handle_pending(true);
-
+void pb_event_poll_hook_leave(void) {
     // There is a possible race condition where an interrupt occurs and sets the
     // Contiki poll_requested flag after all events have been processed. So we
     // have a critical section where we disable interrupts and check see if there

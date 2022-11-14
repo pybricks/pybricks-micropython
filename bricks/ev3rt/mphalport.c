@@ -18,13 +18,7 @@
 #include "kernel_cfg.h"
 #include "kernel/task.h"
 
-
-// Implementation for MICROPY_EVENT_POLL_HOOK
-void pb_poll(void) {
-    while (pbio_do_one_event()) {
-    }
-
-    mp_handle_pending(true);
+void pb_event_poll_hook_leave(void) {
 }
 
 // Runs MicroPython with the given program data.

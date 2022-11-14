@@ -19,6 +19,9 @@
 #include <base/drivers/bt.h>
 #include "base/display.h"
 
+void pb_event_poll_hook_leave(void) {
+}
+
 void pb_stack_get_info(char **sstack, char **estack) {
     extern uint32_t __stack_start__;
     extern uint32_t __stack_end__;

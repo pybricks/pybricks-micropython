@@ -84,10 +84,8 @@ typedef long mp_off_t;
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(bool); \
-        mp_handle_pending(true); \
-        extern int pbio_do_one_event(void); \
-        while (pbio_do_one_event()) { } \
+        extern void pb_event_poll_hook(void); \
+        pb_event_poll_hook(); \
     } while (0);
 
 #define MP_STATE_PORT MP_STATE_VM
