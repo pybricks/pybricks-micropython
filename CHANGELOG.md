@@ -6,8 +6,10 @@
 
 ### Fixed
 - Fixed `motor.control.limits()` not working if acceleration was `None`.
+- Fixed crash on calling methods on uninitialized objects ([support#805]).
 
 [support#826]: https://github.com/pybricks/support/issues/826
+[support#805]: https://github.com/pybricks/support/issues/805
 
 ## [3.2.0b6] - 2022-12-02
 
@@ -37,7 +39,7 @@
 [pybricks-micropython#117]: https://github.com/pybricks/pybricks-micropython/pull/117
 [support#409]: https://github.com/pybricks/support/issues/409
 [support#793]: https://github.com/pybricks/support/issues/793
-[support#793]: https://github.com/pybricks/support/issues/822
+[support#822]: https://github.com/pybricks/support/issues/822
 
 ## [3.2.0b5] - 2022-11-11
 
