@@ -47,26 +47,7 @@ void pb_event_poll_hook(void) {
 
 // callback for when stop button is pressed in IDE or on hub
 void pbsys_main_stop_program(bool force_stop) {
-
-    static const mp_obj_tuple_t args = {
-        .base = { .type = &mp_type_tuple },
-        .len = 1,
-        .items = { MP_ROM_QSTR(MP_QSTR_stop_space_button_space_pressed) },
-    };
-    static mp_obj_exception_t system_exit;
-
-    // Schedule SystemExit exception.
-    system_exit.base.type = force_stop ? &mp_type_SystemAbort : &mp_type_SystemExit;
-    system_exit.traceback_alloc = 0;
-    system_exit.traceback_len = 0;
-    system_exit.traceback_data = NULL;
-    system_exit.args = (mp_obj_tuple_t *)&args;
-    MP_STATE_MAIN_THREAD(mp_pending_exception) = MP_OBJ_FROM_PTR(&system_exit);
-    #if MICROPY_ENABLE_SCHEDULER
-    if (MP_STATE_VM(sched_state) == MP_SCHED_IDLE) {
-        MP_STATE_VM(sched_state) = MP_SCHED_PENDING;
-    }
-    #endif
+    mp_sched_system_exit_or_abort(force_stop);
 }
 
 bool pbsys_main_stdin_event(uint8_t c) {
@@ -107,6 +88,19 @@ static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minima
     reader->close = mp_vfs_map_minimal_close;
 }
 
+// Prints the exception that ended the program.
+static void print_final_exception(mp_obj_t exc) {
+    // Handle graceful stop with button or shutdown.
+    if (mp_obj_exception_match(exc, &mp_type_SystemAbort) ||
+        mp_obj_exception_match(exc, &mp_type_SystemExit)) {
+        mp_printf(&mp_plat_print, "Stop button pressed.\n");
+        return;
+    }
+
+    // Print unhandled exception with traceback.
+    mp_obj_print_exception(&mp_plat_print, exc);
+}
+
 #if PYBRICKS_OPT_COMPILER
 static void run_repl() {
     // Reset REPL history.
@@ -120,7 +114,7 @@ static void run_repl() {
         // clear any pending exceptions (and run any callbacks).
         mp_handle_pending(false);
         // Print which exception triggered this.
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+        print_final_exception(nlr.ret_val);
     }
 }
 #endif
@@ -239,8 +233,7 @@ static void run_user_program(void) {
         mp_hal_set_interrupt_char(-1);
         mp_handle_pending(false);
 
-        // Print which exception triggered this.
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+        print_final_exception(nlr.ret_val);
 
         #if PYBRICKS_OPT_COMPILER
         // On KeyboardInterrupt, drop to REPL for debugging.
