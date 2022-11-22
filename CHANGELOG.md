@@ -10,6 +10,8 @@
 ### Changed
 - The Pybricks Code stop button will force the program to exit even if the user
   catches the `SystemExit` exception ([pybricks-micropython#117]).
+- Changed `PrimeHub.display.image()` to `PrimeHub.display.icon()` and renamed
+  its kwarg from `image` to `icon` ([support#409]).
 
 ### Fixed
 - Fixed connecting `Remote` on BOOST move hub ([support#793]).
@@ -18,6 +20,7 @@
 - Removed `hub.system.reset()` method.
 
 [pybricks-micropython#117]: https://github.com/pybricks/pybricks-micropython/pull/117
+[support#409]: https://github.com/pybricks/support/issues/409
 [support#793]: https://github.com/pybricks/support/issues/793
 
 ## [3.2.0b5] - 2022-11-11
