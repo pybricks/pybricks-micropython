@@ -14,6 +14,16 @@
 
 #define MICROPY_ENABLE_COMPILER                 (PYBRICKS_OPT_COMPILER)
 
+// Enabled modules
+#define MICROPY_PY_IO                           (PYBRICKS_OPT_EXTRA_MOD)
+#define MICROPY_PY_MATH                         (PYBRICKS_OPT_FLOAT)
+#define MICROPY_PY_STRUCT                       (PYBRICKS_OPT_EXTRA_MOD)
+#define MICROPY_PY_SYS                          (PYBRICKS_OPT_EXTRA_MOD)
+#define MICROPY_PY_UERRNO                       (1)
+#define MICROPY_PY_UJSON                        (PYBRICKS_OPT_EXTRA_MOD)
+#define MICROPY_PY_URANDOM                      (PYBRICKS_OPT_EXTRA_MOD)
+#define MICROPY_PY_USELECT                      (PYBRICKS_OPT_EXTRA_MOD)
+
 #define MICROPY_PY_UERRNO_LIST \
     X(EPERM) \
     X(EIO) \
@@ -74,22 +84,15 @@
 #define MICROPY_PY_ARRAY                        (0)
 #define MICROPY_PY_ATTRTUPLE                    (0)
 #define MICROPY_PY_COLLECTIONS                  (0)
-#define MICROPY_PY_MATH                         (PYBRICKS_OPT_FLOAT)
 #define MICROPY_PY_CMATH                        (0)
 #define MICROPY_PY_ALL_SPECIAL_METHODS          (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_REVERSE_SPECIAL_METHODS      (PYBRICKS_OPT_EXTRA_MOD)
-#define MICROPY_PY_IO                           (PYBRICKS_OPT_EXTRA_MOD)
-#define MICROPY_PY_UJSON                        (PYBRICKS_OPT_EXTRA_MOD)
-#define MICROPY_PY_STRUCT                       (PYBRICKS_OPT_EXTRA_MOD)
-#define MICROPY_PY_SYS                          (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_SYS_EXIT                     (0)
 #define MICROPY_PY_SYS_MODULES                  (0)
 #define MICROPY_PY_SYS_STDFILES                 (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_SYS_STDIO_BUFFER             (PYBRICKS_OPT_EXTRA_MOD)
-#define MICROPY_PY_URANDOM                      (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS          (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_URANDOM_SEED_INIT_FUNC       ({ extern uint32_t pbdrv_clock_get_us(void); pbdrv_clock_get_us(); })
-#define MICROPY_PY_USELECT                      (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_UTIME_MP_HAL                 (0)
 #define MICROPY_MODULE_BUILTIN_INIT             (1)
 #define MICROPY_MODULE_WEAK_LINKS               (0)
@@ -102,7 +105,6 @@
 #endif
 #define MICROPY_KBD_EXCEPTION                   (1)
 #define MICROPY_ENABLE_SCHEDULER                (0)
-#define MICROPY_PY_UERRNO                       (1)
 #define MICROPY_PY_INSTANCE_ATTRS               (1)
 
 #define MICROPY_PERSISTENT_CODE_LOAD            (1)
