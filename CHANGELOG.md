@@ -18,6 +18,7 @@
 
 ### Removed
 - Removed `hub.system.reset()` method.
+- Disabled `micropython` module on Move Hub.
 
 [pybricks-micropython#117]: https://github.com/pybricks/pybricks-micropython/pull/117
 [support#409]: https://github.com/pybricks/support/issues/409
