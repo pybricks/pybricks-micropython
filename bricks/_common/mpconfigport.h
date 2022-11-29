@@ -17,6 +17,7 @@
 // Enabled modules
 #define MICROPY_PY_IO                           (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_MATH                         (PYBRICKS_OPT_FLOAT)
+#define MICROPY_PY_MICROPYTHON                  (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_STRUCT                       (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_SYS                          (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_UERRNO                       (1)
