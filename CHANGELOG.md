@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0b6] - 2022-12-02
+
 ### Added
 - Added support for `PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE` Pybricks
   Profile BLE command.
@@ -390,7 +392,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...HEAD
+[3.2.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...v3.2.0b6
 [3.2.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...v3.2.0b5
 [3.2.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...v3.2.0b4
 [3.2.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...v3.2.0b3
