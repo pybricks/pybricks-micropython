@@ -5,7 +5,10 @@
 ## [Unreleased]
 
 ### Added
-- Added support for `PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE` Pybricks Profile BLE command.
+- Added support for `PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE` Pybricks
+  Profile BLE command.
+- Implemented `Motor.load()` which now measures load both during active
+  conditions (`run`) and passive conditions (`dc`).
 
 ### Changed
 - The Pybricks Code stop button will force the program to exit even if the user

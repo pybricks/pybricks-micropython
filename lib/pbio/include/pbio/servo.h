@@ -93,6 +93,7 @@ pbio_error_t pbio_servo_get_state_control(pbio_servo_t *srv, pbio_control_state_
 pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_t *speed);
 bool pbio_servo_update_loop_is_running(pbio_servo_t *srv);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, uint32_t *stall_duration);
+pbio_error_t pbio_servo_get_load(pbio_servo_t *srv, int32_t *load);
 
 // Servo end user commands:
 

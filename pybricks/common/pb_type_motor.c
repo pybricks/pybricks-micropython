@@ -362,6 +362,15 @@ STATIC mp_obj_t common_Motor_done(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_done_obj, common_Motor_done);
 
+// pybricks._common.Motor.load
+STATIC mp_obj_t common_Motor_load(mp_obj_t self_in) {
+    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t load;
+    pb_assert(pbio_servo_get_load(self->srv, &load));
+    return mp_obj_new_int(load);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_load_obj, common_Motor_load);
+
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     //
@@ -386,6 +395,7 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Motor_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Motor_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&common_Motor_track_target_obj) },
+    { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Motor_load_obj) },
 };
 MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);
 

@@ -682,4 +682,49 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, uint32_t *s
     return PBIO_SUCCESS;
 }
 
+/**
+ * Gets estimated external load experienced by the servo.
+ *
+ * @param [in]  srv     The servo instance.
+ * @param [out] load    Estimated load (mNm).
+ * @return              Error code.
+ */
+pbio_error_t pbio_servo_get_load(pbio_servo_t *srv, int32_t *load) {
+
+    // Don't allow access if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
+        *load = 0;
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Get passive actuation type.
+    pbio_dcmotor_actuation_t applied_actuation;
+    int32_t voltage;
+    pbio_dcmotor_get_state(srv->dcmotor, &applied_actuation, &voltage);
+
+    // Get best estimate based on control and physyical state.
+    if (applied_actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
+        // Can't estimate load on coast.
+        *load = 0;
+    } else if (pbio_control_is_active(&srv->control)) {
+        // The experienced load is the opposite sign of what the PID is
+        // trying to overcome.
+        *load = -srv->control.pid_average;
+    } else {
+        // Read the angle.
+        pbio_angle_t angle;
+        pbio_error_t err = pbio_tacho_get_angle(srv->tacho, &angle);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        // Use observer error as a measure of torque.
+        *load = pbio_observer_get_feedback_torque(&srv->observer, &angle);
+    }
+
+    // Convert to user torque units (mNm).
+    *load = pbio_control_settings_actuation_ctl_to_app(*load);
+
+    return PBIO_SUCCESS;
+}
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
