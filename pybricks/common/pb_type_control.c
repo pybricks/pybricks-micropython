@@ -231,6 +231,8 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_trajectory_obj, common_Control_trajectory);
 
+// DELETEME: This method should not be used in V3.2 or later. It may be removed
+// in a future version
 // pybricks._common.Control.done
 STATIC mp_obj_t common_Control_done(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -238,14 +240,23 @@ STATIC mp_obj_t common_Control_done(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_done_obj, common_Control_done);
 
+// DELETEME: This method should not be used in V3.2 or later. It may be removed
+// in a future version
 // pybricks._common.Control.load
 STATIC mp_obj_t common_Control_load(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (!pbio_control_is_active(self->control)) {
+        return mp_obj_new_int(0);
+    }
+
     // Read currently applied PID feedback torque and return as mNm.
-    return mp_obj_new_int(pbio_control_get_load(self->control) / 1000);
+    return mp_obj_new_int(self->control->pid_average / 1000);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_load_obj, common_Control_load);
 
+// DELETEME: This method should not be used in V3.2 or later. It may be removed
+// in a future version
 // pybricks._common.Control.stalled
 STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);

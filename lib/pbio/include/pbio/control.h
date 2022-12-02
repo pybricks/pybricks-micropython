@@ -130,7 +130,7 @@ typedef struct _pbio_control_t {
     /**
      * Slow moving average of the PID output, which is a measure for load.
      */
-    int32_t load;
+    int32_t pid_average;
     /**
      * Flag that says whether the controller is currently stalled.
      */
@@ -161,7 +161,6 @@ bool pbio_control_type_is_position(pbio_control_t *ctl);
 bool pbio_control_type_is_time(pbio_control_t *ctl);
 bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration);
 bool pbio_control_is_done(pbio_control_t *ctl);
-int32_t pbio_control_get_load(pbio_control_t *ctl);
 
 // Start new control command:
 

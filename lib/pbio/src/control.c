@@ -172,7 +172,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     ctl->on_target = pbio_control_check_completion(ctl, ref->time, state, &ref_end);
 
     // Save (low-pass filtered) load for diagnostics
-    ctl->load = (ctl->load * (100 - PBIO_CONFIG_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONFIG_CONTROL_LOOP_TIME_MS) / 100;
+    ctl->pid_average = (ctl->pid_average * (100 - PBIO_CONFIG_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONFIG_CONTROL_LOOP_TIME_MS) / 100;
 
     // Decide actuation based on whether control is on target.
     if (!ctl->on_target) {
@@ -273,7 +273,7 @@ void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
     ctl->on_target = true;
     ctl->stalled = false;
-    ctl->load = 0;
+    ctl->pid_average = 0;
 }
 
 /**
@@ -702,17 +702,4 @@ bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration) {
  */
 bool pbio_control_is_done(pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_NONE || ctl->on_target;
-}
-
-/**
- * Gets the load experienced by the controller.
- *
- * It is determined as a slow moving average of the PID output, which is a
- * measure for how hard the controller must work to stay on target.
- *
- * @param [in]  ctl             The control instance.
- * @return                      The approximate load (control units).
- */
-int32_t pbio_control_get_load(pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_NONE ? 0 : ctl->load;
 }
