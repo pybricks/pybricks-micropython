@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `motor.control.limits()` not working if acceleration was `None`.
+
+[support#826]: https://github.com/pybricks/support/issues/826
+
 ## [3.2.0b6] - 2022-12-02
 
 ### Added

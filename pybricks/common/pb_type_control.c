@@ -52,7 +52,7 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_DEFAULT_NONE(acceleration),
         PB_ARG_DEFAULT_NONE(torque));
 
-    // Read current values. Deceleration is read but cannot be updated.
+    // Read current values.
     int32_t speed, acceleration, deceleration, torque;
     pbio_control_settings_get_limits(&self->control->settings, &speed, &acceleration, &deceleration, &torque);
 
@@ -74,7 +74,7 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
         return mp_obj_new_tuple(3, ret);
     }
 
-    // Set user settings
+    // Set user settings if given, else keep using current value.
     speed = pb_obj_get_default_abs_int(speed_in, speed);
     torque = pb_obj_get_default_abs_int(torque_in, torque);
 
@@ -83,8 +83,8 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
         acceleration = pb_obj_get_int(acceleration_in);
         deceleration = acceleration;
     }
-    // Otherwise, unpack acceleration and deceleration from tuple.
-    else {
+    // If something else is given, unpack acceleration and deceleration from tuple.
+    else if (acceleration_in != mp_const_none) {
         mp_obj_t *values;
         size_t n;
         mp_obj_get_array(acceleration_in, &n, &values);
