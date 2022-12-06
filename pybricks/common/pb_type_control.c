@@ -29,7 +29,7 @@ typedef struct _common_Control_obj_t {
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 
     common_Control_obj_t *self = m_new_obj(common_Control_obj_t);
-    self->base.type = &pb_type_Control.type;
+    self->base.type = &pb_type_Control;
 
     self->control = control;
 
@@ -265,6 +265,13 @@ STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_stalled_obj, common_Control_stalled);
 
+STATIC const pb_attr_dict_entry_t common_Control_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_scale, common_Control_obj_t, scale),
+    #if PYBRICKS_PY_COMMON_LOGGER
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Control_obj_t, logger),
+    #endif // PYBRICKS_PY_COMMON_LOGGER
+};
+
 // dir(pybricks.common.Control)
 STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&common_Control_limits_obj) },
@@ -275,26 +282,16 @@ STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Control_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Control_load_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Control_stalled_obj) },
+    PB_ATTRIBUTE_TABLE(common_Control_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_dict_table);
 
-STATIC const pb_attr_dict_entry_t common_Control_attr_dict[] = {
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_scale, common_Control_obj_t, scale),
-    #if PYBRICKS_PY_COMMON_LOGGER
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Control_obj_t, logger),
-    #endif // PYBRICKS_PY_COMMON_LOGGER
-};
-
 // type(pybricks.common.Control)
-const pb_obj_with_attr_type_t pb_type_Control = {
-    .type = {
-        .base = { .type = &mp_type_type },
-        .name = MP_QSTR_Control,
-        .attr = pb_attribute_handler,
-        .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
-    },
-    .attr_dict = common_Control_attr_dict,
-    .attr_dict_size = MP_ARRAY_SIZE(common_Control_attr_dict),
+const mp_obj_type_t pb_type_Control = {
+    { &mp_type_type },
+    .name = MP_QSTR_Control,
+    .attr = pb_attribute_handler,
+    .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
 };
 
 #endif // PYBRICKS_PY_COMMON_CONTROL

@@ -9,9 +9,8 @@
 #if PYBRICKS_PY_HUBS
 
 #include "py/obj.h"
-#include <pybricks/util_mp/pb_obj_helper.h>
 
-extern const pb_obj_with_attr_type_t pb_type_ThisHub;
+extern const mp_obj_type_t pb_type_ThisHub;
 
 #endif // PYBRICKS_PY_HUBS
 

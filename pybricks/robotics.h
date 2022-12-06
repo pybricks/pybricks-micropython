@@ -14,8 +14,8 @@
 
 #include "pybricks/util_mp/pb_obj_helper.h"
 
-extern const pb_obj_with_attr_type_t pb_type_drivebase;
-extern const pb_obj_with_attr_type_t pb_type_spikebase;
+extern const mp_obj_type_t pb_type_drivebase;
+extern const mp_obj_type_t pb_type_spikebase;
 
 #endif // PYBRICKS_PY_ROBOTICS
 

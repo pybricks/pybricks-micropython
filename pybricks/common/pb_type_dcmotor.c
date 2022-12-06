@@ -18,14 +18,14 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 static pbio_port_id_t get_port_from_object(mp_obj_t self_in) {
-    if (mp_obj_is_type(self_in, &pb_type_Motor.type)) {
+    if (mp_obj_is_type(self_in, &pb_type_Motor)) {
         return ((common_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->port;
     }
     return ((common_DCMotor_obj_t *)MP_OBJ_TO_PTR(self_in))->port;
 }
 
 static pbio_dcmotor_t *get_dcmotor_from_object(mp_obj_t self_in) {
-    if (mp_obj_is_type(self_in, &pb_type_Motor.type)) {
+    if (mp_obj_is_type(self_in, &pb_type_Motor)) {
         return ((common_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->srv->dcmotor;
     }
     return ((common_DCMotor_obj_t *)MP_OBJ_TO_PTR(self_in))->dcmotor;
