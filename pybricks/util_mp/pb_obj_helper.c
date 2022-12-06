@@ -170,34 +170,11 @@ void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         return;
     }
 
-    // Object is located at the base address plus the offset.
-    mp_obj_t *obj_addr = (mp_obj_t *)((char *)MP_OBJ_TO_PTR(self_in) + entry->offset);
-
     // Check if this is a read operation.
     if (dest[0] == MP_OBJ_NULL) {
-        // It's read. But do it only if allowed and object was not deleted.
-        if (entry->readable && *obj_addr != MP_OBJ_NULL) {
-            dest[0] = *obj_addr;
-        }
-        return;
+        // Object is located at the base address plus the offset.
+        dest[0] = *(mp_obj_t *)((char *)MP_OBJ_TO_PTR(self_in) + entry->offset);
     }
-    // Check if this is a delete/write operation.
-    else if (dest[0] == MP_OBJ_SENTINEL) {
-        // It's delete/write. Now check which one.
-        if (dest[1] == MP_OBJ_NULL) {
-            // It's delete. But do it only if allowed and object exists.
-            if (entry->deletable && *obj_addr != MP_OBJ_NULL) {
-                *obj_addr = MP_OBJ_NULL;
-                dest[0] = MP_OBJ_NULL;
-            }
-            return;
-        } else {
-            // It's write. But do it only if if allowed.
-            if (entry->writeable) {
-                *obj_addr = dest[1];
-                dest[0] = MP_OBJ_NULL;
-            }
-            return;
-        }
-    }
+
+    // Write/delete not supported.
 }

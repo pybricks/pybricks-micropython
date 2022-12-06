@@ -44,26 +44,13 @@ typedef struct {
     uint16_t name;
     /** The offset of the attribute's mp_obj_t in the object instance structure. */
     uint8_t offset;
-    /** Indicates if the attribute can be read. */
-    bool readable : 1;
-    /** Indicates if the attribute can be written. */
-    bool writeable : 1;
-    /** Indicates if the attribute can be deleted. */
-    bool deletable : 1;
 } pb_attr_dict_entry_t;
 
 // Generic entry of the attributes dictionary.
-#define PB_DEFINE_CONST_ATTR(name_, type, field, r, w, d) {     \
+#define PB_DEFINE_CONST_ATTR_RO(name_, type, field) {           \
         .name = (name_),                                        \
         .offset = offsetof(type, field),                        \
-        .readable = (r),                                        \
-        .writeable = (w),                                       \
-        .deletable = (d),                                       \
 }
-
-// Read-only entry of the attributes dictionary. Dedicated macro because we use it so often.
-#define PB_DEFINE_CONST_ATTR_RO(name, type, field) \
-    PB_DEFINE_CONST_ATTR(name, type, field, true, false, false)
 
 // Points to attributes dictionary. Must be the last entry of locals_dict.
 #define PB_ATTRIBUTE_TABLE(table) { MP_ROM_QSTR(MP_QSTRnumber_of + MP_ARRAY_SIZE(table)), MP_ROM_PTR(table) }
