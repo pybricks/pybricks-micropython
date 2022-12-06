@@ -64,8 +64,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->right = right_motor_in;
 
     // Pointers to servos
-    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor.type))->srv;
-    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor.type))->srv;
+    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_drivebase(&self->db, srv_left, srv_right, pb_obj_get_int(wheel_diameter_in), pb_obj_get_int(axle_track_in)));
@@ -283,6 +283,15 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_settings_obj, 1, robotics_DriveBase_settings);
 
+STATIC const pb_attr_dict_entry_t robotics_DriveBase_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, robotics_DriveBase_obj_t, left),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, robotics_DriveBase_obj_t, right),
+    #if PYBRICKS_PY_COMMON_CONTROL
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, robotics_DriveBase_obj_t, heading_control),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, robotics_DriveBase_obj_t, distance_control),
+    #endif
+};
+
 // dir(pybricks.robotics.DriveBase)
 STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_curve),            MP_ROM_PTR(&robotics_DriveBase_curve_obj)    },
@@ -297,29 +306,17 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reset),            MP_ROM_PTR(&robotics_DriveBase_reset_obj)    },
     { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled),          MP_ROM_PTR(&robotics_DriveBase_stalled_obj)  },
+    PB_ATTRIBUTE_TABLE(robotics_DriveBase_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
-STATIC const pb_attr_dict_entry_t robotics_DriveBase_attr_dict[] = {
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, robotics_DriveBase_obj_t, left),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, robotics_DriveBase_obj_t, right),
-    #if PYBRICKS_PY_COMMON_CONTROL
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, robotics_DriveBase_obj_t, heading_control),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, robotics_DriveBase_obj_t, distance_control),
-    #endif
-};
-
 // type(pybricks.robotics.DriveBase)
-const pb_obj_with_attr_type_t pb_type_drivebase = {
-    .type = {
-        .base = { .type = &mp_type_type },
-        .name = MP_QSTR_DriveBase,
-        .make_new = robotics_DriveBase_make_new,
-        .attr = pb_attribute_handler,
-        .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
-    },
-    .attr_dict = robotics_DriveBase_attr_dict,
-    .attr_dict_size = MP_ARRAY_SIZE(robotics_DriveBase_attr_dict),
+const mp_obj_type_t pb_type_drivebase = {
+    { &mp_type_type },
+    .name = MP_QSTR_DriveBase,
+    .make_new = robotics_DriveBase_make_new,
+    .attr = pb_attribute_handler,
+    .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
 };
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS

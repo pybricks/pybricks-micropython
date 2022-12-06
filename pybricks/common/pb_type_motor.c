@@ -371,6 +371,15 @@ STATIC mp_obj_t common_Motor_load(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_load_obj, common_Motor_load);
 
+STATIC const pb_attr_dict_entry_t common_Motor_attr_dict[] = {
+    #if PYBRICKS_PY_COMMON_CONTROL
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_control, common_Motor_obj_t, control),
+    #endif
+    #if PYBRICKS_PY_COMMON_LOGGER
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Motor_obj_t, logger),
+    #endif
+};
+
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     //
@@ -397,30 +406,18 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Motor_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&common_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Motor_load_obj) },
+    PB_ATTRIBUTE_TABLE(common_Motor_attr_dict),
 };
 MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);
 
-STATIC const pb_attr_dict_entry_t common_Motor_attr_dict[] = {
-    #if PYBRICKS_PY_COMMON_CONTROL
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_control, common_Motor_obj_t, control),
-    #endif
-    #if PYBRICKS_PY_COMMON_LOGGER
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Motor_obj_t, logger),
-    #endif
-};
-
 // type(pybricks.builtins.Motor)
-const pb_obj_with_attr_type_t pb_type_Motor = {
-    .type = {
-        .base = { .type = &mp_type_type },
-        .name = MP_QSTR_Motor,
-        .print = common_DCMotor_print,
-        .make_new = common_Motor_make_new,
-        .attr = pb_attribute_handler,
-        .locals_dict = (mp_obj_dict_t *)&common_Motor_locals_dict,
-    },
-    .attr_dict = common_Motor_attr_dict,
-    .attr_dict_size = MP_ARRAY_SIZE(common_Motor_attr_dict),
+const mp_obj_type_t pb_type_Motor = {
+    { &mp_type_type },
+    .name = MP_QSTR_Motor,
+    .print = common_DCMotor_print,
+    .make_new = common_Motor_make_new,
+    .attr = pb_attribute_handler,
+    .locals_dict = (mp_obj_dict_t *)&common_Motor_locals_dict,
 };
 
 #endif // PYBRICKS_PY_COMMON_MOTORS

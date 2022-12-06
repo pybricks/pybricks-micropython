@@ -152,6 +152,10 @@ STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSensor_ambient);
 
+STATIC const pb_attr_dict_entry_t pupdevices_ColorSensor_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_ColorSensor_obj_t, lights),
+};
+
 // dir(pybricks.pupdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&pupdevices_ColorSensor_hsv_obj)                  },
@@ -159,24 +163,17 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorSensor_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_detectable_colors),   MP_ROM_PTR(&pb_ColorSensor_detectable_colors_obj)                    },
+    PB_ATTRIBUTE_TABLE(pupdevices_ColorSensor_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
-STATIC const pb_attr_dict_entry_t pupdevices_ColorSensor_attr_dict[] = {
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_ColorSensor_obj_t, lights),
-};
-
 // type(pybricks.pupdevices.ColorSensor)
-const pb_obj_with_attr_type_t pb_type_pupdevices_ColorSensor = {
-    .type = {
-        .base = { .type = &mp_type_type },
-        .name = MP_QSTR_ColorSensor,
-        .make_new = pupdevices_ColorSensor_make_new,
-        .attr = pb_attribute_handler,
-        .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_locals_dict,
-    },
-    .attr_dict = pupdevices_ColorSensor_attr_dict,
-    .attr_dict_size = MP_ARRAY_SIZE(pupdevices_ColorSensor_attr_dict),
+const mp_obj_type_t pb_type_pupdevices_ColorSensor = {
+    { &mp_type_type },
+    .name = MP_QSTR_ColorSensor,
+    .make_new = pupdevices_ColorSensor_make_new,
+    .attr = pb_attribute_handler,
+    .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_locals_dict,
 };
 
 #endif // PYBRICKS_PY_PUPDEVICES

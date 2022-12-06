@@ -30,7 +30,7 @@ typedef struct _ev3dev_Font_obj_t {
 ev3dev_Font_obj_t pb_const_ev3dev_Font_DEFAULT_obj;
 
 STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
-    self->base.type = &pb_type_ev3dev_Font.type;
+    self->base.type = &pb_type_ev3dev_Font;
     self->font = font;
 
     const char *family = grx_font_get_family(font);
@@ -135,14 +135,6 @@ STATIC mp_obj_t ev3dev_Font_text_height(mp_obj_t self_in, mp_obj_t text_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Font_text_height_obj, ev3dev_Font_text_height);
 
-STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_DEFAULT), MP_ROM_PTR(&pb_const_ev3dev_Font_DEFAULT_obj) },
-    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ev3dev_Font___del___obj) },
-    { MP_ROM_QSTR(MP_QSTR_text_width), MP_ROM_PTR(&ev3dev_Font_text_width_obj) },
-    { MP_ROM_QSTR(MP_QSTR_text_height), MP_ROM_PTR(&ev3dev_Font_text_height_obj) },
-};
-STATIC MP_DEFINE_CONST_DICT(ev3dev_Font_locals_dict, ev3dev_Font_locals_dict_table);
-
 STATIC const pb_attr_dict_entry_t ev3dev_Font_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_family, ev3dev_Font_obj_t, family),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_style, ev3dev_Font_obj_t, style),
@@ -150,20 +142,25 @@ STATIC const pb_attr_dict_entry_t ev3dev_Font_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_height, ev3dev_Font_obj_t, height),
 };
 
-const pb_obj_with_attr_type_t pb_type_ev3dev_Font = {
-    .type = {
-        .base = { .type = &mp_type_type },
-        .name = MP_QSTR_Font,
-        .make_new = ev3dev_Font_make_new,
-        .attr = pb_attribute_handler,
-        .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
-    },
-    .attr_dict = ev3dev_Font_attr_dict,
-    .attr_dict_size = MP_ARRAY_SIZE(ev3dev_Font_attr_dict),
+STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_DEFAULT), MP_ROM_PTR(&pb_const_ev3dev_Font_DEFAULT_obj) },
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ev3dev_Font___del___obj) },
+    { MP_ROM_QSTR(MP_QSTR_text_width), MP_ROM_PTR(&ev3dev_Font_text_width_obj) },
+    { MP_ROM_QSTR(MP_QSTR_text_height), MP_ROM_PTR(&ev3dev_Font_text_height_obj) },
+    PB_ATTRIBUTE_TABLE(ev3dev_Font_attr_dict),
+};
+STATIC MP_DEFINE_CONST_DICT(ev3dev_Font_locals_dict, ev3dev_Font_locals_dict_table);
+
+const mp_obj_type_t pb_type_ev3dev_Font = {
+    { &mp_type_type },
+    .name = MP_QSTR_Font,
+    .make_new = ev3dev_Font_make_new,
+    .attr = pb_attribute_handler,
+    .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
 };
 
 GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj) {
-    if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font.type)) {
+    if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font)) {
         mp_raise_TypeError(MP_ERROR_TEXT("Requires Font object"));
     }
     ev3dev_Font_obj_t *self = MP_OBJ_TO_PTR(obj);

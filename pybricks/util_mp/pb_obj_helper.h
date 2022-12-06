@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PBOBJ_H
 #define PYBRICKS_INCLUDED_PBOBJ_H
@@ -65,33 +65,10 @@ typedef struct {
 #define PB_DEFINE_CONST_ATTR_RO(name, type, field) \
     PB_DEFINE_CONST_ATTR(name, type, field, true, false, false)
 
-/**
- * Micropython type object struct that is extened to include an attribute map.
- *
- * This is used in conjunction with pb_attribute_handler() to provide simple
- * attributes similar to regular Python attributes and can optionally be
- * read-only.
- */
-typedef struct {
-    /** The base type structure. */
-    mp_obj_type_t type;
-    /**
-     * The attribute lookup table (similar to type.locals_dict). This maps
-     * attribute names (qstrs) to an offset in the object instance struct
-     * where the value of the attribute is stored.
-     */
-    const pb_attr_dict_entry_t *attr_dict;
-    /**
-     * The number of entries in attr_dict.
-     */
-    uint8_t attr_dict_size;
-} pb_obj_with_attr_type_t;
+// Points to attributes dictionary. Must be the last entry of locals_dict.
+#define PB_ATTRIBUTE_TABLE(table) { MP_ROM_QSTR(MP_QSTRnumber_of + MP_ARRAY_SIZE(table)), MP_ROM_PTR(table) }
 
-/**
- * Micropython attribute handler for pb_obj_with_attr_type_t.
- *
- * Assign this to .attr when defining the type.
- */
+// Attribute handler for any object that has an attribute dictionary.
 void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest);
 
 #endif // PYBRICKS_INCLUDED_PBOBJ_H

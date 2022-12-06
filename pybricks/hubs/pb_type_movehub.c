@@ -275,15 +275,17 @@ STATIC const pb_attr_dict_entry_t hubs_MoveHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_MoveHub_obj_t, system),
 };
 
-const pb_obj_with_attr_type_t pb_type_ThisHub = {
-    .type = {
-        .base = { .type = &mp_type_type },
-        .name = PYBRICKS_HUB_CLASS_NAME,
-        .make_new = hubs_MoveHub_make_new,
-        .attr = pb_attribute_handler,
-    },
-    .attr_dict = hubs_MoveHub_attr_dict,
-    .attr_dict_size = MP_ARRAY_SIZE(hubs_MoveHub_attr_dict),
+STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
+    PB_ATTRIBUTE_TABLE(hubs_MoveHub_attr_dict),
+};
+STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_locals_dict, hubs_MoveHub_locals_dict_table);
+
+const mp_obj_type_t pb_type_ThisHub = {
+    { &mp_type_type },
+    .name = PYBRICKS_HUB_CLASS_NAME,
+    .make_new = hubs_MoveHub_make_new,
+    .attr = pb_attribute_handler,
+    .locals_dict = (mp_obj_dict_t *)&hubs_MoveHub_locals_dict,
 };
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_MOVEHUB
