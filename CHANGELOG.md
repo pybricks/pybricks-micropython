@@ -12,9 +12,12 @@
 - Reverted Pybricks Code stop button raises `SystemAbort` instead of
   `SystemExit` ([support#834]).
 - Improved stop message raised on `SystemExit` and `SystemAbort` ([support#836]).
+- Fixed Technic Hub and City Hub sometimes not shutting down when a Bluetooth
+  operation is busy ([support#814]).
 
 [support#777]: https://github.com/pybricks/support/issues/777
 [support#805]: https://github.com/pybricks/support/issues/805
+[support#834]: https://github.com/pybricks/support/issues/814
 [support#826]: https://github.com/pybricks/support/issues/826
 [support#834]: https://github.com/pybricks/support/issues/834
 [support#834]: https://github.com/pybricks/support/issues/836
