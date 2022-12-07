@@ -93,7 +93,8 @@ static void print_final_exception(mp_obj_t exc) {
     // Handle graceful stop with button or shutdown.
     if (mp_obj_exception_match(exc, &mp_type_SystemAbort) ||
         mp_obj_exception_match(exc, &mp_type_SystemExit)) {
-        mp_printf(&mp_plat_print, "Stop button pressed.\n");
+        mp_printf(&mp_plat_print, "The program was stopped (%q).\n",
+            ((mp_obj_exception_t *)MP_OBJ_TO_PTR(exc))->base.type->name);
         return;
     }
 
