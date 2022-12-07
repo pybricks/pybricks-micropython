@@ -9,10 +9,13 @@
 - Fixed crash on calling methods on uninitialized objects ([support#805]).
 - Fixed crash on calling methods in `__init__(self, ...)` before
   calling `super().__init(...)` on uninitialized objects ([support#777]).
+- Reverted Pybricks Code stop button raises `SystemAbort` instead of
+  `SystemExit` ([support#834]).
 
 [support#777]: https://github.com/pybricks/support/issues/777
 [support#805]: https://github.com/pybricks/support/issues/805
 [support#826]: https://github.com/pybricks/support/issues/826
+[support#834]: https://github.com/pybricks/support/issues/834
 
 
 ## [3.2.0b6] - 2022-12-02
