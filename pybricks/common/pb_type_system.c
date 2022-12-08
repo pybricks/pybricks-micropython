@@ -139,11 +139,11 @@ STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(common_System_locals_dict, common_System_locals_dict_table);
 
-// type(pybricks.common.System)
-const mp_obj_type_t pb_type_System = {
-    { &mp_type_type },
-    .name = MP_QSTR_System,
-    .locals_dict = (mp_obj_dict_t *)&common_System_locals_dict,
+// type(pybricks.common.System) but implemented as module for reduced build size.
+// REVISIT: Make implementation consistent across modules/singletons: https://github.com/pybricks/support/issues/840
+const mp_obj_module_t pb_type_System = {
+    .base = { &mp_type_module },
+    .globals = (mp_obj_dict_t *)&common_System_locals_dict,
 };
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_SYSTEM

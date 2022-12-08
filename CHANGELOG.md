@@ -14,6 +14,8 @@
 - Improved stop message raised on `SystemExit` and `SystemAbort` ([support#836]).
 - Fixed Technic Hub and City Hub sometimes not shutting down when a Bluetooth
   operation is busy ([support#814]).
+- Fixed `hub.system` methods not working ([support#837]).
+
 
 [support#777]: https://github.com/pybricks/support/issues/777
 [support#805]: https://github.com/pybricks/support/issues/805
@@ -21,6 +23,7 @@
 [support#826]: https://github.com/pybricks/support/issues/826
 [support#834]: https://github.com/pybricks/support/issues/834
 [support#834]: https://github.com/pybricks/support/issues/836
+[support#834]: https://github.com/pybricks/support/issues/837
 
 
 ## [3.2.0b6] - 2022-12-02
