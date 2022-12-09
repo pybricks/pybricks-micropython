@@ -16,14 +16,18 @@
   operation is busy ([support#814]).
 - Fixed `hub.system` methods not working ([support#837]).
 
+### Changed
+- Changed default XYZ orientation of the Technic Hub and the Essential Hub to
+  match the SPIKE Prime Hub and Move Hub ([support#848]).
 
 [support#777]: https://github.com/pybricks/support/issues/777
 [support#805]: https://github.com/pybricks/support/issues/805
-[support#834]: https://github.com/pybricks/support/issues/814
+[support#814]: https://github.com/pybricks/support/issues/814
 [support#826]: https://github.com/pybricks/support/issues/826
 [support#834]: https://github.com/pybricks/support/issues/834
-[support#834]: https://github.com/pybricks/support/issues/836
-[support#834]: https://github.com/pybricks/support/issues/837
+[support#836]: https://github.com/pybricks/support/issues/836
+[support#837]: https://github.com/pybricks/support/issues/837
+[support#848]: https://github.com/pybricks/support/issues/848
 
 
 ## [3.2.0b6] - 2022-12-02

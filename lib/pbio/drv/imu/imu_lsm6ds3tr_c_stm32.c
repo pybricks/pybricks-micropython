@@ -281,29 +281,20 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev) {
 }
 
 void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values) {
-    #if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_INVERTED
-    // Sensor is upside down
-    values[0] = -imu_dev->data[0] * imu_dev->accel_scale;
-    values[1] = imu_dev->data[1] * imu_dev->accel_scale;
-    values[2] = -imu_dev->data[2] * imu_dev->accel_scale;
-    #else
-    values[0] = imu_dev->data[0] * imu_dev->accel_scale;
-    values[1] = imu_dev->data[1] * imu_dev->accel_scale;
-    values[2] = imu_dev->data[2] * imu_dev->accel_scale;
-    #endif
+    // Output is signed such that we have a right handed coordinate system where:
+    // Forward acceleration is +X, upward acceleration is +Z and acceleration to the left is +Y.
+    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->accel_scale;
+    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->accel_scale;
+    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->accel_scale;
 }
 
 void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
-    #if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_INVERTED
-    // Sensor is upside down
-    values[0] = -imu_dev->data[3] * imu_dev->gyro_scale;
-    values[1] = imu_dev->data[4] * imu_dev->gyro_scale;
-    values[2] = -imu_dev->data[5] * imu_dev->gyro_scale;
-    #else
-    values[0] = imu_dev->data[3] * imu_dev->gyro_scale;
-    values[1] = imu_dev->data[4] * imu_dev->gyro_scale;
-    values[2] = imu_dev->data[5] * imu_dev->gyro_scale;
-    #endif
+    // Output is signed such that we have a right handed coordinate system
+    // consistent with the coordinate system above. Positive rotations along
+    // those axes then follow the right hand rule.
+    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->accel_scale;
+    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->accel_scale;
+    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->accel_scale;
 }
 
 float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {

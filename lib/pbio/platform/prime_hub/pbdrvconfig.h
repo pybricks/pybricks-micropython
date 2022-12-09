@@ -64,7 +64,9 @@
 
 #define PBDRV_CONFIG_IMU                            (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32           (1)
-#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_INVERTED  (1)
+#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X    (-1)
+#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y    (1)
+#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z    (-1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_LPF2                    (1)
