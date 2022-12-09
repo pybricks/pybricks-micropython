@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0c1] - 2022-12-09
+
 ### Fixed
 - Fixed `motor.control.limits()` not working if acceleration was `None`.
 - Fixed crash on calling methods on uninitialized objects ([support#805]).
@@ -418,7 +420,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...HEAD
+[3.2.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...v3.2.0c1
 [3.2.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...v3.2.0b6
 [3.2.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...v3.2.0b5
 [3.2.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...v3.2.0b4
