@@ -4,11 +4,18 @@
 # Need a default target so that make can be called without specifying one.
 all:
 
-# place debug build in separate folder so we don't have to remember to clean and rebuild
+# place coverage/debug build in separate folder so we don't have to remember to clean and rebuild
+ifeq ($(COVERAGE),1)
+BUILD_DIR = build-coverage
+export CFLAGS = --coverage
+export LDFLAGS = --coverage
+else
 ifeq ($(DEBUG),1)
 BUILD_DIR = build-debug
+export COPT = -O0
 else
 BUILD_DIR = build
+endif
 endif
 
 # The virtual hub is a unix port variant, so pass everything to the upstream
