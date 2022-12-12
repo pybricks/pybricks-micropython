@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed SPIKE/MINDSTORMS hubs advertising after disconnect while user program
+  is still running ([support#849]).
+
+[support#849]: https://github.com/pybricks/support/issues/849
+
 ## [3.2.0c1] - 2022-12-09
 
 ### Fixed
