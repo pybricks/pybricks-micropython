@@ -234,6 +234,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: bricks/virtualhub/build-coverage/lcov.info
         flag-name: virtualhub
+        parallel: true
 
   ev3rt:
     name: ev3rt uImage
@@ -308,3 +309,15 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: lib/pbio/test/build-coverage/lcov.info
         flag-name: PBIO
+        parallel: true
+
+  finish:
+    needs: [virtualhub, pbio]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
+
