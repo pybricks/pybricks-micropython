@@ -9,7 +9,9 @@
   is still running ([support#849]).
 - Fixed Essential hub hanging on boot when bootloader entered but USB cable
   not connected ([support#821]).
+- Fixed button needs debouncing on City/Technic/Essential hubs ([support#716]).
 
+[support#716]: https://github.com/pybricks/support/issues/716
 [support#821]: https://github.com/pybricks/support/issues/821
 [support#849]: https://github.com/pybricks/support/issues/849
 
