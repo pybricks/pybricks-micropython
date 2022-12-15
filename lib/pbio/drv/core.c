@@ -47,6 +47,12 @@ void pbdrv_init(void) {
     pbdrv_usb_init();
     pbdrv_watchdog_init();
 
+    // Some hubs have a bootloader that disables interrupts. Has to be done
+    // here otherwise Essential hub can hang on boot if it is earlier.
+    #if PBDRV_CONFIG_INIT_ENABLE_INTERRUPTS_ARM
+    __asm volatile ("cpsie i" : : : "memory");
+    #endif
+
     while (pbdrv_init_busy()) {
         process_run();
     }

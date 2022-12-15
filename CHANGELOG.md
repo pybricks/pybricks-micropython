@@ -7,7 +7,10 @@
 ### Fixed
 - Fixed SPIKE/MINDSTORMS hubs advertising after disconnect while user program
   is still running ([support#849]).
+- Fixed Essential hub hanging on boot when bootloader entered but USB cable
+  not connected ([support#821]).
 
+[support#821]: https://github.com/pybricks/support/issues/821
 [support#849]: https://github.com/pybricks/support/issues/849
 
 ## [3.2.0c1] - 2022-12-09
