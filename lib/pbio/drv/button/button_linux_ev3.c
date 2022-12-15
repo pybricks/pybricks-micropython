@@ -17,7 +17,7 @@
 
 static int f_btn = -1; // Button file descriptor
 
-void _pbdrv_button_init(void) {
+void pbdrv_button_init(void) {
     f_btn = open("/dev/input/by-path/platform-gpio_keys-event", O_RDONLY);
     if (f_btn == -1) {
         perror("Failed to init buttons");

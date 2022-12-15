@@ -49,7 +49,6 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     pbdrv_init();
-    _pbdrv_button_init();
     autostart_start(autostart_processes);
 }
 

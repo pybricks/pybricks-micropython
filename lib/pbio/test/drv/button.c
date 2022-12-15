@@ -12,7 +12,7 @@ void pbio_test_button_set_pressed(pbio_button_flags_t flags) {
     pbio_test_button_flags = flags;
 }
 
-void _pbdrv_button_init(void) {
+void pbdrv_button_init(void) {
 }
 
 pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {

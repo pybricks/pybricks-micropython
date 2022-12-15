@@ -20,16 +20,6 @@
 
 #if PBDRV_CONFIG_BUTTON
 
-/** @cond INTERNAL */
-
-/**
- * Initializes the low level button driver. This should be called only
- * once and must be called before using any other button functions.
- */
-void _pbdrv_button_init(void);
-
-/** @endcond */
-
 /**
  * Get bitmask indicating currently pressed buttons.
  * @param [out] pressed     Bitmask indicating which buttons are pressed
@@ -40,9 +30,6 @@ void _pbdrv_button_init(void);
 pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed);
 
 #else
-
-static inline void _pbdrv_button_init(void) {
-}
 
 static inline pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
     *pressed = 0;

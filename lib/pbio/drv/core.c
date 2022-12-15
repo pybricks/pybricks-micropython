@@ -7,6 +7,7 @@
 #include "battery/battery.h"
 #include "block_device/block_device.h"
 #include "bluetooth/bluetooth.h"
+#include "button/button.h"
 #include "charger/charger.h"
 #include "clock/clock.h"
 #include "counter/counter.h"
@@ -34,6 +35,7 @@ void pbdrv_init(void) {
     pbdrv_battery_init();
     pbdrv_block_device_init();
     pbdrv_bluetooth_init();
+    pbdrv_button_init();
     pbdrv_charger_init();
     pbdrv_counter_init();
     pbdrv_imu_init();

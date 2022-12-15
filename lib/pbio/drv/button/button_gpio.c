@@ -12,9 +12,7 @@
 
 #include "button_gpio.h"
 
-// PC13 is the green button (active low)
-
-void _pbdrv_button_init(void) {
+void pbdrv_button_init(void) {
     for (int i = 0; i < PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON; i++) {
         const pbdrv_button_gpio_platform_t *platform = &pbdrv_button_gpio_platform[i];
         pbdrv_gpio_set_pull(&platform->gpio, platform->pull);
