@@ -81,3 +81,7 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
         serial_wri_dat(EV3_SERIAL_BT, str, len);
     }
 }
+
+void mp_hal_stdout_tx_flush(void) {
+    // currently not buffered
+}

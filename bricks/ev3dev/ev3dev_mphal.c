@@ -125,6 +125,10 @@ void mp_hal_stdout_tx_str(const char *str) {
     mp_hal_stdout_tx_strn(str, strlen(str));
 }
 
+void mp_hal_stdout_tx_flush(void) {
+    // currently not buffered
+}
+
 mp_uint_t mp_hal_ticks_ms(void) {
     return pbdrv_clock_get_ms();
 }

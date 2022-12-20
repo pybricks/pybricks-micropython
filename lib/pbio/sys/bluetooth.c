@@ -149,6 +149,21 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_SUCCESS;
 }
 
+/**
+ * Tests if the Tx queue is empty and all data has been sent over the air.
+ *
+ * If there is no connection, this will always return @c true.
+ *
+ * @returns @c true if the condition is met, otherwise @c false.
+ */
+bool pbsys_bluetooth_tx_is_idle(void) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
+        return true;
+    }
+
+    return !send_busy && lwrb_get_full(&uart_tx_ring) == 0;
+}
+
 static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         return pbsys_command(data, size);

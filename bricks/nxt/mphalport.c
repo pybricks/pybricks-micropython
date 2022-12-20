@@ -97,3 +97,7 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
         MICROPY_EVENT_POLL_HOOK;
     }
 }
+
+void mp_hal_stdout_tx_flush(void) {
+    // currently not buffered
+}

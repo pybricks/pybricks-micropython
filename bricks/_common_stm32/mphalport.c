@@ -97,6 +97,10 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     }
 }
 
+void mp_hal_stdout_tx_flush(void) {
+    // currently not buffered
+}
+
 #else // !PYBRICKS_HUB_DEBUG
 
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
@@ -140,6 +144,12 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
             return;
         }
 
+        MICROPY_EVENT_POLL_HOOK
+    }
+}
+
+void mp_hal_stdout_tx_flush(void) {
+    while (!pbsys_bluetooth_tx_is_idle()) {
         MICROPY_EVENT_POLL_HOOK
     }
 }

@@ -92,6 +92,7 @@
 #define MICROPY_PY_SYS_MODULES                  (0)
 #define MICROPY_PY_SYS_STDFILES                 (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_SYS_STDIO_BUFFER             (PYBRICKS_OPT_EXTRA_MOD)
+#define MICROPY_PY_SYS_STDIO_FLUSH              (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS          (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PY_URANDOM_SEED_INIT_FUNC       ({ extern uint32_t pbdrv_clock_get_us(void); pbdrv_clock_get_us(); })
 #define MICROPY_PY_UTIME_MP_HAL                 (0)

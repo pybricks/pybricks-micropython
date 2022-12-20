@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Buffered stdout is flushed before ending user program.
+
 ### Fixed
 - Fixed SPIKE/MINDSTORMS hubs advertising after disconnect while user program
   is still running ([support#849]).
