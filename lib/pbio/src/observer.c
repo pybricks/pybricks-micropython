@@ -138,9 +138,16 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     obs->speed_numeric = pbio_differentiator_get_speed(&obs->differentiator, angle);
 
     // Apply observer error feedback as voltage.
-    int32_t feedback_voltage = pbio_observer_torque_to_voltage(m,
-        pbio_observer_get_feedback_torque(obs, angle)
-        );
+    // int32_t feedback_voltage = pbio_observer_torque_to_voltage(m,
+    //     pbio_observer_get_feedback_torque(obs, angle)
+    //     );
+    //
+    // HACK: The following implements the commented code above, but reorders the
+    //       multiplication and division steps to avoid clamping of an
+    //       intermediate result. This should be generalized when we revisit
+    //       the way the observer gain is defined.
+    //       See https://github.com/pybricks/support/issues/863
+    int32_t feedback_voltage = PRESCALE_TORQUE * obs->model->gain / m->d_voltage_d_torque * pbio_angle_diff_mdeg(angle, &obs->angle) / 1000;
 
     // Check stall condition.
     update_stall_state(obs, time, actuation, voltage, feedback_voltage);
