@@ -12,7 +12,6 @@ from pybricks.parameters import Port, Direction
 from pybricks.tools import wait, StopWatch
 
 # Initialize devices.
-motor = Motor(Port.A)
 motor = Motor(port=Port.A, positive_direction=Direction.CLOCKWISE, gears=[])
 ultrasonic_sensor = UltrasonicSensor(Port.C)
 
@@ -43,8 +42,6 @@ assert -5 <= motor.angle() <= 5, "Unexpected absolute motor angle."
 # Test absolute angle for sign change by putting it at +90 degrees clockwise.
 motor.run_target(500, 90)
 assert 85 <= motor.angle() <= 95, "Unable to put motor in +90 position."
-motor = Motor(Port.A, Direction.COUNTERCLOCKWISE)
-assert -85 >= motor.angle() >= -95, "Unexpected angle after CCW init."
 
 # Test angle reset during hold.
 motor.reset_angle()
@@ -55,22 +52,6 @@ for reset_target in (0, 360, 90, None):
     for i in range(50):
         assert motor.speed() < 10, "Motor moved during reset"
         wait(10)
-
-# Test DC positive direction signs.
-for direction in (Direction.CLOCKWISE, Direction.COUNTERCLOCKWISE, "default"):
-
-    # Initialize the motor with given sign.
-    if direction == "default":
-        motor = Motor(Port.A)
-    else:
-        motor = Motor(Port.A, direction)
-
-    old_angle = motor.angle()
-    motor.dc(100)
-    wait(1000)
-    assert motor.angle() > old_angle + 90
-    motor.dc(0)
-    wait(500)
 
 # The motor is now in positive orientation. Test DC forward.
 old_angle = motor.angle()
@@ -111,4 +92,4 @@ for dc in (-100, 50, 0, 50, 100):
 
     # Compare with reported speed.
     for value in reported_speed:
-        assert abs(value - real_speed) <= 100
+        assert abs(value - real_speed) <= 150
