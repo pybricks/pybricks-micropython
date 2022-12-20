@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.0] - 2022-12-20
+
 ### Changed
 - Buffered stdout is flushed before ending user program.
 
@@ -436,7 +438,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...v3.2.0
 [3.2.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...v3.2.0c1
 [3.2.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...v3.2.0b6
 [3.2.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...v3.2.0b5
