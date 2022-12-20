@@ -199,7 +199,7 @@ static int32_t pbio_int_math_interpolate(const point_t *points, size_t len, int3
         }
     }
 
-    // If x is below the maximum x, return the maximum y.
+    // If x is above the maximum x, return the maximum y.
     return points[len - 1].y;
 }
 
