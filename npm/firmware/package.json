@@ -1,6 +1,6 @@
 {
     "name": "@pybricks/firmware",
-    "version": "6.4.0+firmware.v3.2.0c1",
+    "version": "6.5.0+firmware.v3.2.0",
     "description": "Pybricks firmware",
     "main": "./build/index.js",
     "types": "./build/index.d.ts",
