@@ -38,13 +38,26 @@ enum {
 
 #define BROADCAST_MAX_OBJECTS (8)
 
+// Union for 4-byte values.
+typedef union _broadcast_32_t {
+    int32_t i;
+    uint32_t u;
+    float f;
+} broadcast_32_t;
+
+// Union for 2-byte values.
+typedef union _broadcast_16_t {
+    int16_t i;
+    uint16_t u;
+} broadcast_16_t;
+
 // Broadcast data format: HEADER + ENCODING + DATA
 //
 // HEADER (8 bit)
 //    BIT 0--3 (LSB): Tuple size.
 //    BIT 4--8 (MSB): Reserved.
 //
-// ENCODING (16 bit little-endian)
+// ENCODING (sent as unsigned 16 bit little-endian)
 //    BIT 0--1   (LSB): Data type of first object in tuple, or type of the single object
 //    BIT 2--3        : Data type of second object in tuple
 //      ...
@@ -76,8 +89,7 @@ STATIC void broadcast_encode_data(mp_obj_t data_in, uint8_t *dest, uint8_t *len)
     *len = 3;
 
     // Reset encoding.
-    uint16_t *encoding = (uint16_t *)&dest[1];
-    *encoding = 0;
+    uint16_t encoding = 0;
 
     // Go through all values.
     uint8_t n;
@@ -94,37 +106,37 @@ STATIC void broadcast_encode_data(mp_obj_t data_in, uint8_t *dest, uint8_t *len)
             mp_int_t value = mp_obj_get_int(obj);
 
             // Check integer size.
-            if (value < INT16_MIN || value > INT16_MAX) {
-                // Result must be inside max data length.
-                if (*len + sizeof(int32_t) > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
-                    pb_assert(PBIO_ERROR_INVALID_ARG);
-                }
-                // Encode 32 bit integer.
-                *encoding |= BROADCAST_DATA_TYPE_INT32 << n * 2;
-                *(int32_t *)&dest[*len] = value;
-                *len += sizeof(int32_t);
-            } else {
-                // Result must be inside max data length.
-                if (*len + sizeof(int16_t) > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
+            if (value >= INT16_MIN && value <= INT16_MAX) {
+                // Check that result fits in payload
+                if (*len + sizeof(broadcast_16_t) > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
                     pb_assert(PBIO_ERROR_INVALID_ARG);
                 }
                 // Encode 16 bit integer.
-                *encoding |= BROADCAST_DATA_TYPE_INT16 << n * 2;
-                *(int16_t *)&dest[*len] = value;
-                *len += sizeof(int16_t);
+                encoding |= BROADCAST_DATA_TYPE_INT16 << n * 2;
+                broadcast_16_t data = {.i = value};
+                pbio_set_uint16_le(&dest[*len], data.u);
+                *len += sizeof(broadcast_16_t);
+            } else {
+                // Check that result fits in payload
+                if (*len + sizeof(broadcast_32_t) > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
+                    pb_assert(PBIO_ERROR_INVALID_ARG);
+                }
+                // Encode 32 bit integer.
+                encoding |= BROADCAST_DATA_TYPE_INT32 << n * 2;
+                broadcast_32_t data = {.i = value};
+                pbio_set_uint32_le(&dest[*len], data.u);
+                *len += sizeof(broadcast_32_t);
             }
         } else if (mp_obj_is_float(obj)) {
-            // Result must be inside max data length.
-            if (*len + sizeof(mp_float_t) > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
+            // Check that result fits in payload
+            if (*len + sizeof(broadcast_32_t) > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
                 pb_assert(PBIO_ERROR_INVALID_ARG);
             }
-            // Encode float
-            *encoding |= BROADCAST_DATA_TYPE_FLOAT << n * 2;
-            // Revisit: Make proper pack/unpack functions.
-            mp_float_t f = mp_obj_get_float(obj);
-            int32_t *encoded = (int32_t *)&f;
-            *(int32_t *)&dest[*len] = *encoded;
-            *len += sizeof(mp_float_t);
+            // Encode 32 bit float.
+            encoding |= BROADCAST_DATA_TYPE_FLOAT << n * 2;
+            broadcast_32_t data = {.f = mp_obj_get_float(obj)};
+            pbio_set_uint32_le(&dest[*len], data.u);
+            *len += sizeof(broadcast_32_t);
         } else {
             // get string info.
             GET_STR_DATA_LEN(obj, str_data, str_len);
@@ -135,7 +147,7 @@ STATIC void broadcast_encode_data(mp_obj_t data_in, uint8_t *dest, uint8_t *len)
             }
 
             // Copy string including null terminator.
-            *encoding |= BROADCAST_DATA_TYPE_STRING << n * 2;
+            encoding |= BROADCAST_DATA_TYPE_STRING << n * 2;
             memcpy(&dest[*len], str_data, str_len + 1);
             *len += str_len + 1;
         }
@@ -143,6 +155,9 @@ STATIC void broadcast_encode_data(mp_obj_t data_in, uint8_t *dest, uint8_t *len)
 
     // Set header to number of objects, or 0 if it is not a tuple.
     dest[0] = is_single_object ? 0 : n;
+
+    // Set encoding.
+    pbio_set_uint16_le(&dest[1], encoding);
 }
 
 STATIC mp_obj_t broadcast_decode_data(uint8_t *data, uint8_t len) {
@@ -153,7 +168,7 @@ STATIC mp_obj_t broadcast_decode_data(uint8_t *data, uint8_t len) {
     }
 
     // Get encoding data
-    uint16_t encoding = *(uint16_t *)&data[1];
+    uint16_t encoding = pbio_get_uint16_le(&data[1]);
 
     // If tuple size is 0 but there is nonzero data, it's a single value.
     // We'll remember this for the return value but but treat it as a tuple.
@@ -178,20 +193,22 @@ STATIC mp_obj_t broadcast_decode_data(uint8_t *data, uint8_t len) {
                 value += str_size + 1;
                 break;
             }
-            case BROADCAST_DATA_TYPE_INT16:
-                objs[i] = mp_obj_new_int(*(int16_t *)value);
-                value += sizeof(int16_t);
+            case BROADCAST_DATA_TYPE_INT16: {
+                broadcast_16_t data = {.u = pbio_get_uint16_le(value)};
+                objs[i] = mp_obj_new_int(data.i);
+                value += sizeof(broadcast_16_t);
                 break;
-            case BROADCAST_DATA_TYPE_INT32:
-                objs[i] = mp_obj_new_int(*(int32_t *)value);
-                value += sizeof(int32_t);
+            }
+            case BROADCAST_DATA_TYPE_INT32: {
+                broadcast_32_t data = {.u = pbio_get_uint32_le(value)};
+                objs[i] = mp_obj_new_int(data.i);
+                value += sizeof(broadcast_32_t);
                 break;
+            }
             case BROADCAST_DATA_TYPE_FLOAT: {
-                // Revisit: Make proper pack/unpack functions.
-                uint32_t encoded = *(uint32_t *)value;
-                mp_float_t *f = (mp_float_t *)&encoded;
-                objs[i] = mp_obj_new_float(*f);
-                value += sizeof(mp_float_t);
+                broadcast_32_t data = {.u = pbio_get_uint32_le(value)};
+                objs[i] = mp_obj_new_float_from_f(data.f);
+                value += sizeof(broadcast_32_t);
                 break;
             }
         }
