@@ -174,7 +174,7 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
     }
 
     // Copy the payload.
-    transmit_signal.length = size - 1;
+    transmit_signal.length = size + PBIO_BROADCAST_META_SIZE - 1;
     transmit_signal.timestamp = time_now;
     transmit_signal.value.size = size + PBIO_BROADCAST_META_SIZE;
     memcpy(transmit_signal.payload, payload, size);
