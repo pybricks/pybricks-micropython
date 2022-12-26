@@ -16,6 +16,7 @@
 
 STATIC const mp_rom_map_elem_t ble_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),     MP_ROM_QSTR(MP_QSTR_ble)       },
+    { MP_ROM_QSTR(MP_QSTR_Broadcast),    MP_ROM_PTR(&pb_type_Broadcast) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_ble_globals, ble_globals_table);
 

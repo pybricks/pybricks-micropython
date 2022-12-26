@@ -10,6 +10,8 @@
 
 #include "py/obj.h"
 
+extern const mp_obj_type_t pb_type_Broadcast;
+
 #endif // PYBRICKS_PY_BLE
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_BLE_H
