@@ -14,7 +14,7 @@
 
 #define PBIO_BROADCAST_MAX_PAYLOAD_SIZE (22)
 
-void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size);
+void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size, uint8_t rssi);
 
 void pbio_broadcast_clear_all(void);
 
@@ -26,11 +26,13 @@ pbio_error_t pbio_broadcast_register_signal(uint32_t hash);
 
 void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size);
 
+void pbio_broadcast_info(uint32_t hash, uint8_t *index, uint32_t *timestamp, int8_t *rssi);
+
 void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size);
 
 #else
 
-static inline void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
+static inline void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size, int8_t *rssi) {
 }
 
 static inline void pbio_broadcast_clear_all(void) {

@@ -41,6 +41,7 @@ PROCESS(pbio_broadcast_process, "pbio_broadcast");
 // Received signals.
 typedef struct _pbio_broadcast_received_t {
     uint32_t timestamp;
+    int8_t rssi;
     uint8_t size;
     uint8_t index;
     uint32_t hash;
@@ -125,6 +126,26 @@ void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size) {
     *size = 0;
 }
 
+void pbio_broadcast_info(uint32_t hash, uint8_t *index, uint32_t *timestamp, int8_t *rssi) {
+    for (uint8_t i = 0; i < num_scan_signals; i++) {
+
+        pbio_broadcast_received_t *s = &received_signals[i];
+
+        // Return if there is a match.
+        if (s->hash == hash) {
+            *index = s->index;
+            *timestamp = s->timestamp;
+            *rssi = s->rssi;
+            return;
+        }
+    }
+
+    // No signal registered for this hash, so everything is 0.
+    *index = 0;
+    *timestamp = 0;
+    *rssi = 0;
+}
+
 void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size) {
 
     // Cut off payloads that are too long.
@@ -159,7 +180,7 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
     memcpy(transmit_signal.payload, payload, size);
 
     // Also make transmitted signal readable by itself.
-    pbio_broadcast_parse_advertising_data(transmit_signal.value.data, transmit_signal.value.size);
+    pbio_broadcast_parse_advertising_data(transmit_signal.value.data, transmit_signal.value.size, 0);
 
     // start broadcasting it
     pbdrv_bluetooth_start_data_advertising(&transmit_signal.value);
@@ -168,7 +189,7 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
     process_poll(&pbio_broadcast_process);
 }
 
-void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
+void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size, uint8_t rssi) {
 
     // Return immediately for programs that don't use broadcast.
     if (!num_scan_signals || size < PBIO_BROADCAST_META_SIZE) {
@@ -201,6 +222,7 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
 
         // We have a match, so store the signal and return.
         signal->size = size - PBIO_BROADCAST_META_SIZE;
+        signal->rssi = rssi;
         signal->index = index_now;
         signal->timestamp = time_now;
         memcpy(signal->payload, &data[PBIO_BROADCAST_META_SIZE], signal->size);

@@ -330,6 +330,27 @@ STATIC mp_obj_t ble_Broadcast_receive(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_receive_obj, 1, ble_Broadcast_receive);
 
+// pybricks.ble.Broadcast.info
+STATIC mp_obj_t ble_Broadcast_info(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ble_Broadcast_obj_t, self,
+        PB_ARG_REQUIRED(topic));
+
+    (void)self;
+
+    uint8_t index;
+    uint32_t timestamp;
+    int8_t rssi;
+    pbio_broadcast_info(broadcast_get_hash(topic_in), &index, &timestamp, &rssi);
+
+    mp_obj_t info[3];
+    info[0] = mp_obj_new_int(index);
+    info[1] = mp_obj_new_int(timestamp);
+    info[2] = mp_obj_new_int(rssi);
+    return mp_obj_new_tuple(3, info);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_info_obj, 1, ble_Broadcast_info);
+
 // pybricks.ble.Broadcast.send_bytes
 STATIC mp_obj_t ble_Broadcast_send_bytes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -385,6 +406,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_scan_obj, 1, ble_Broadcast_scan)
 
 // dir(pybricks.ble.Broadcast)
 STATIC const mp_rom_map_elem_t ble_Broadcast_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_info),           MP_ROM_PTR(&ble_Broadcast_info_obj)          },
     { MP_ROM_QSTR(MP_QSTR_receive),        MP_ROM_PTR(&ble_Broadcast_receive_obj)       },
     { MP_ROM_QSTR(MP_QSTR_receive_bytes),  MP_ROM_PTR(&ble_Broadcast_receive_bytes_obj) },
     { MP_ROM_QSTR(MP_QSTR_send),           MP_ROM_PTR(&ble_Broadcast_send_obj)          },

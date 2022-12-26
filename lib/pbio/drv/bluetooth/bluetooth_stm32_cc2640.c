@@ -1380,7 +1380,8 @@ static void handle_event(uint8_t *packet) {
                 case GAP_DEVICE_INFORMATION:
                     advertising_data_received = true;
                     // REVISIT: Poll a process in pbio/broadcast?
-                    pbio_broadcast_parse_advertising_data(&read_buf[19], read_buf[18]);
+                    // TODO: check if rssi is in 10
+                    pbio_broadcast_parse_advertising_data(&read_buf[19], read_buf[18], read_buf[17]);
                     break;
 
                 case GAP_DEVICE_INIT_DONE:

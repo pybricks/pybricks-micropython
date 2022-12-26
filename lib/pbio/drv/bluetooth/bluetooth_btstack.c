@@ -309,12 +309,13 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(packet);
             uint8_t data_length = gap_event_advertising_report_get_data_length(packet);
             const uint8_t *data = gap_event_advertising_report_get_data(packet);
+            uint8_t rssi = gap_event_advertising_report_get_rssi(packet);
             bd_addr_t address;
 
             gap_event_advertising_report_get_address(packet, address);
 
             // REVISIT: Poll a process in pbio/broadcast?
-            pbio_broadcast_parse_advertising_data(data, data_length);
+            pbio_broadcast_parse_advertising_data(data, data_length, rssi);
 
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // HACK: this is making major assumptions about how the advertising data
