@@ -15,17 +15,17 @@ from pybricks.ble import Broadcast
 hub = TechnicHub()
 hub.light.on(Color.WHITE)
 
-# Initialize broadcast
-radio = Broadcast(signals=["number", "hue"])
+# Initialize broadcast with two topics.
+radio = Broadcast(["counter", "hue"])
 
 for i in range(100):
 
     # Send one byte on the number signal.
-    radio.transmit("number", bytes([i]))
+    radio.send_bytes("counter", bytes([i]))
     wait(100)
 
     # Receive two bytes on the hue signal.
-    hue_data = radio.received("hue")
+    hue_data = radio.receive_bytes("hue")
 
     # If we received something, set the light.
     if hue_data:

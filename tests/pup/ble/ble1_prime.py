@@ -15,25 +15,25 @@ from pybricks.ble import Broadcast
 hub = PrimeHub()
 hub.light.on(Color.WHITE)
 
-# Initialize broadcast
-radio = Broadcast(signals=["number", "hue"])
+# Initialize broadcast with two topics.
+radio = Broadcast(topics=["counter", "hue"])
 
 while True:
 
-    # Receive one number.
-    number_data = radio.received("number")
+    # Read the counter value.
+    counter_data = radio.receive_bytes("counter")
 
-    # If we received a number, display it, and send a response.
-    if number_data:
-        number = number_data[0]
-        hub.display.number(number)
+    # If we received it, display it, and send a response.
+    if counter_data:
+        count = counter_data[0]
+        hub.display.number(count)
 
         # Send back a hue value.
-        hue_data = int(number * 3.6).to_bytes(2, "little")
-        radio.transmit("hue", hue_data)
+        hue_data = int(count * 3.6).to_bytes(2, "little")
+        radio.send_bytes("hue", hue_data)
 
         # Stop if we reach the end.
-        if number >= 99:
+        if count >= 99:
             break
 
     # Don't need to update all the time.

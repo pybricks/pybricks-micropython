@@ -42,7 +42,7 @@ STATIC void start_scan(bool start) {
 // pybricks.ble.Broadcast.__init__
 STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(signals));
+        PB_ARG_REQUIRED(topics));
 
     // Clear old broadcast data.
     pbio_broadcast_clear_all();
@@ -53,7 +53,7 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
 
     // Unpack signal list.
     mp_obj_t *signal_args;
-    mp_obj_get_array(signals_in, &broadcast_obj->num_signals, &signal_args);
+    mp_obj_get_array(topics_in, &broadcast_obj->num_signals, &signal_args);
 
     // Allocate space for signal names. We can't use a simple dictionary
     // because long ints are not enabled.
@@ -90,28 +90,27 @@ STATIC uint32_t get_hash_by_name(mp_obj_t signal_name_obj) {
         }
     }
     // Signal not found.
-    pb_assert(PBIO_ERROR_INVALID_ARG);
-    return 0;
+    mp_raise_ValueError(MP_ERROR_TEXT("Unknown topic."));
 }
 
-// pybricks.ble.Broadcast.received
-STATIC mp_obj_t ble_Broadcast_received(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.ble.Broadcast.receive_bytes
+STATIC mp_obj_t ble_Broadcast_receive_bytes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ble_Broadcast_obj_t, self,
-        PB_ARG_REQUIRED(signal));
+        PB_ARG_REQUIRED(topic));
 
     (void)self;
     pbio_broadcast_received_t *signal;
-    pb_assert(pbio_broadcast_get_signal(&signal, get_hash_by_name(signal_in)));
+    pb_assert(pbio_broadcast_get_signal(&signal, get_hash_by_name(topic_in)));
     return mp_obj_new_bytes(signal->payload, signal->size);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_received_obj, 1, ble_Broadcast_received);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_receive_bytes_obj, 1, ble_Broadcast_receive_bytes);
 
-// pybricks.ble.Broadcast.transmit
-STATIC mp_obj_t ble_Broadcast_transmit(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.ble.Broadcast.send_bytes
+STATIC mp_obj_t ble_Broadcast_send_bytes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ble_Broadcast_obj_t, self,
-        PB_ARG_REQUIRED(signal),
+        PB_ARG_REQUIRED(topic),
         PB_ARG_REQUIRED(message));
 
     (void)self;
@@ -122,10 +121,10 @@ STATIC mp_obj_t ble_Broadcast_transmit(size_t n_args, const mp_obj_t *pos_args, 
 
     // Unpack user argument to update signal.
     mp_obj_str_t *byte_data = MP_OBJ_TO_PTR(message_in);
-    pbio_broadcast_transmit(get_hash_by_name(signal_in), byte_data->data, byte_data->len);
+    pbio_broadcast_transmit(get_hash_by_name(topic_in), byte_data->data, byte_data->len);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_transmit_obj, 1, ble_Broadcast_transmit);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_send_bytes_obj, 1, ble_Broadcast_send_bytes);
 
 // pybricks.ble.Broadcast.scan
 STATIC mp_obj_t ble_Broadcast_scan(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -140,9 +139,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_scan_obj, 1, ble_Broadcast_scan)
 
 // dir(pybricks.ble.Broadcast)
 STATIC const mp_rom_map_elem_t ble_Broadcast_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_received),       MP_ROM_PTR(&ble_Broadcast_received_obj) },
-    { MP_ROM_QSTR(MP_QSTR_transmit),       MP_ROM_PTR(&ble_Broadcast_transmit_obj) },
-    { MP_ROM_QSTR(MP_QSTR_scan),           MP_ROM_PTR(&ble_Broadcast_scan_obj) },
+    { MP_ROM_QSTR(MP_QSTR_receive_bytes),  MP_ROM_PTR(&ble_Broadcast_receive_bytes_obj) },
+    { MP_ROM_QSTR(MP_QSTR_send_bytes),     MP_ROM_PTR(&ble_Broadcast_send_bytes_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_scan),           MP_ROM_PTR(&ble_Broadcast_scan_obj)          },
 };
 STATIC MP_DEFINE_CONST_DICT(ble_Broadcast_locals_dict, ble_Broadcast_locals_dict_table);
 
