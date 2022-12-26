@@ -10,6 +10,7 @@
 #include "py/objstr.h"
 
 #include <pbdrv/bluetooth.h>
+#include <pbio/broadcast.h>
 
 #include <pybricks/ble.h>
 
@@ -19,49 +20,24 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_conversions.h>
 
-// Signal object
-typedef struct _broadcast_signal_t {
-    uint32_t hash;
-    qstr name;
-    uint8_t counter;
-    uint8_t size;
-    uint8_t message[23];
-} broadcast_signal_t;
-
 // Class structure for Broadcast
 typedef struct _ble_Broadcast_obj_t {
     mp_obj_base_t base;
-    size_t n_signals;
-    broadcast_signal_t *signals;
+    size_t num_signals;
+    qstr *signal_names;
+    uint32_t *signal_hashes;
 } ble_Broadcast_obj_t;
 
 // There is at most one Broadcast object
 ble_Broadcast_obj_t *broadcast_obj;
 
-// Broadcast header to comply with official LEGO MINDSTORMS App hub to hub word blocks
-// 0xFF for manufacturer data, followed by 0x0397 LEGO company ID
-// Note: advertising data does not start with length as commonly used
-static uint8_t BROADCAST_HEADER[3] = {255, 3, 151};
-
-// Handles received advertising data
-STATIC void handle_receive(const uint8_t *value, uint8_t size) {
-    if (memcmp(&value[0], &BROADCAST_HEADER, 3) == 0) {
-        for (size_t i = 0; i < broadcast_obj->n_signals; i++) {
-            if (memcmp(&broadcast_obj->signals[i].hash, &value[4], 4) == 0
-                && (broadcast_obj->signals[i].counter < value[3] ||
-                    (broadcast_obj->signals[i].counter > 192 && value[3] <= 64))) {
-                memcpy(&broadcast_obj->signals[i].message, &value[8], size - 8);
-                broadcast_obj->signals[i].size = size - 8;
-                broadcast_obj->signals[i].counter = value[3];
-            }
-        }
-    }
-}
-
 // pybricks.ble.Broadcast.__init__
 STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(signals));
+
+    // Clear old broadcast data.
+    pbio_broadcast_clear_all();
 
     // Create the object.
     broadcast_obj = m_new_obj(ble_Broadcast_obj_t);
@@ -69,47 +45,42 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
 
     // Unpack signal list.
     mp_obj_t *signal_args;
-    mp_obj_get_array(signals_in, &broadcast_obj->n_signals, &signal_args);
+    mp_obj_get_array(signals_in, &broadcast_obj->num_signals, &signal_args);
 
-    // Allocate space for signals.
-    broadcast_obj->signals = m_new(broadcast_signal_t, broadcast_obj->n_signals);
+    // Allocate space for signal names. We can't use a simple dictionary
+    // because long ints are not enabled.
+    broadcast_obj->signal_names = m_new(qstr, broadcast_obj->num_signals);
+    broadcast_obj->signal_hashes = m_new(uint32_t, broadcast_obj->num_signals);
 
     // Initialize objects.
-    for (size_t i = 0; i < broadcast_obj->n_signals; i++) {
+    for (size_t i = 0; i < broadcast_obj->num_signals; i++) {
 
-        broadcast_signal_t *signal = &broadcast_obj->signals[i];
+        // Store signal name as qstring
+        broadcast_obj->signal_names[i] = mp_obj_str_get_qstr(signal_args[i]);
 
         // Get signal name info
-        signal->name = mp_obj_str_get_qstr(signal_args[i]);
         GET_STR_DATA_LEN(signal_args[i], signal_name, signal_name_len);
-        signal->hash = (0xFFFFFFFF & -uzlib_crc32(signal_name, signal_name_len, 0xFFFFFFFF)) - 1;
+        broadcast_obj->signal_hashes[i] = (0xFFFFFFFF & -uzlib_crc32(signal_name, signal_name_len, 0xFFFFFFFF)) - 1;
 
-        // Reset message info.
-        signal->counter = 0;
-        signal->size = 0;
-
+        pb_assert(pbio_broadcast_register_signal(broadcast_obj->signal_hashes[i]));
     }
-
-    pbdrv_bluetooth_set_advertising_data_handler(handle_receive);
-
     pbdrv_bluetooth_start_scan();
-
     return MP_OBJ_FROM_PTR(broadcast_obj);
 }
 
-STATIC broadcast_signal_t *get_signal_by_name(mp_obj_t signal_name_obj) {
+STATIC uint32_t get_hash_by_name(mp_obj_t signal_name_obj) {
 
     qstr signal_name = mp_obj_str_get_qstr(signal_name_obj);
 
     // Return signal if known.
-    for (size_t i = 0; i < broadcast_obj->n_signals; i++) {
-        if (broadcast_obj->signals[i].name == signal_name) {
-            return &broadcast_obj->signals[i];
+    for (size_t i = 0; i < broadcast_obj->num_signals; i++) {
+        if (broadcast_obj->signal_names[i] == signal_name) {
+            return broadcast_obj->signal_hashes[i];
         }
     }
     // Signal not found.
     pb_assert(PBIO_ERROR_INVALID_ARG);
-    return NULL;
+    return 0;
 }
 
 // pybricks.ble.Broadcast.received
@@ -119,8 +90,9 @@ STATIC mp_obj_t ble_Broadcast_received(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(signal));
 
     (void)self;
-    broadcast_signal_t *signal = get_signal_by_name(signal_in);
-    return mp_obj_new_bytes(signal->message, signal->size);
+    pbio_broadcast_received_t *signal;
+    pb_assert(pbio_broadcast_get_signal(&signal, get_hash_by_name(signal_in)));
+    return mp_obj_new_bytes(signal->payload, signal->size);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_received_obj, 1, ble_Broadcast_received);
 
@@ -132,8 +104,6 @@ STATIC mp_obj_t ble_Broadcast_transmit(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(message));
 
     (void)self;
-    broadcast_signal_t *signal = get_signal_by_name(signal_in);
-
     // Assert that data argument are bytes.
     if (!(mp_obj_is_type(message_in, &mp_type_bytes) || mp_obj_is_type(message_in, &mp_type_bytearray))) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
@@ -141,32 +111,11 @@ STATIC mp_obj_t ble_Broadcast_transmit(size_t n_args, const mp_obj_t *pos_args, 
 
     // Unpack user argument to update signal.
     mp_obj_str_t *byte_data = MP_OBJ_TO_PTR(message_in);
-    if (byte_data->len > 23) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-    memcpy(signal->message, byte_data->data, byte_data->len);
-    signal->size = byte_data->len;
-    signal->counter++;
-
-    struct {
-        pbdrv_bluetooth_value_t value;
-        uint8_t header[3];
-        uint8_t index;
-        uint32_t hash;
-        char payload[23];
-    } __attribute__((packed)) msg;
-
-    msg.value.size = signal->size + 8;
-    memcpy(msg.header, BROADCAST_HEADER, 3);
-    msg.index = signal->counter;
-    msg.hash = signal->hash;
-    memcpy(msg.payload, signal->message, signal->size);
-
-    pbdrv_bluetooth_start_data_advertising(&msg.value);
-
+    pbio_broadcast_transmit(get_hash_by_name(signal_in), byte_data->data, byte_data->len);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_transmit_obj, 1, ble_Broadcast_transmit);
+
 // dir(pybricks.ble.Broadcast)
 STATIC const mp_rom_map_elem_t ble_Broadcast_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_received),       MP_ROM_PTR(&ble_Broadcast_received_obj) },

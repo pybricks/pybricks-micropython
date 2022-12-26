@@ -55,15 +55,6 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  */
 typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size);
 
-/**
- * Callback that is called when BLE broadcast data is received
- *
- * @param [in]  data        The data that was received.
- * @param [in]  size        The size of @p data in bytes.
- */
-typedef void (*pbdrv_bluetooth_advertisement_data_handler_t)(const uint8_t *data, uint8_t size);
-
-
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
     pbdrv_bluetooth_send_done_t done;
@@ -143,14 +134,6 @@ void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value);
  * Starts scanning for a advertisement data
  */
 void pbdrv_bluetooth_start_scan();
-
-/**
- * Registers a callback that will be called when broadcast data is received in
- * the advertisement data
- *
- * @param [in]  handler     The function that will be called.
- */
-void pbdrv_bluetooth_set_advertising_data_handler(pbdrv_bluetooth_advertisement_data_handler_t handler);
 
 /**
  * Tests if a central is connected to the Bluetooth chip.

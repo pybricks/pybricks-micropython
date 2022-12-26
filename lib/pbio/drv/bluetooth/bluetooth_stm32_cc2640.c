@@ -18,6 +18,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/gpio.h>
+#include <pbio/broadcast.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>
 #include <pbio/task.h>
@@ -154,7 +155,6 @@ static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
-static pbdrv_bluetooth_advertisement_data_handler_t advertisement_data_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 /**
@@ -422,7 +422,7 @@ static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
 
         // TODO: Properly parse advertising data. For now, we are assuming that
         // advertisement data always starts at read_buf[19] and its sizes is given at read_buf[18]
-        advertisement_data_handler(&read_buf[19], read_buf[18]);
+        pbio_broadcast_parse_advertising_data(&read_buf[19], read_buf[18]);
     }
 
     task->status = PBIO_SUCCESS;
@@ -434,10 +434,6 @@ void pbdrv_bluetooth_start_scan(void) {
     static pbio_task_t task;
     pbio_task_init(&task, set_start_scan, NULL);
     pbio_task_queue_add(task_queue, &task);
-}
-
-void pbdrv_bluetooth_set_advertising_data_handler(pbdrv_bluetooth_advertisement_data_handler_t handler) {
-    advertisement_data_handler = handler;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {

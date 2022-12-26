@@ -17,6 +17,7 @@
 #include <pbio/protocol.h>
 #include <pbio/task.h>
 #include <pbio/version.h>
+#include <pbio/broadcast.h>
 
 #include "bluetooth_btstack_run_loop_contiki.h"
 #include "bluetooth_btstack.h"
@@ -95,7 +96,6 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
 static pup_handset_t handset;
-static pbdrv_bluetooth_advertisement_data_handler_t advertisement_data_handler;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
@@ -362,8 +362,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                         handset.con_state = CON_STATE_CONNECT_FAILED;
                     }
                 }
-            } else if (advertisement_data_handler) {
-                advertisement_data_handler(data, data_length);
+            } else {
+                pbio_broadcast_parse_advertising_data(data, data_length);
             }
 
             break;
@@ -556,10 +556,6 @@ void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
 void pbdrv_bluetooth_start_scan(void) {
     gap_set_scan_params(1, 0x30, 0x30, 0);
     gap_start_scan();
-}
-
-void pbdrv_bluetooth_set_advertising_data_handler(pbdrv_bluetooth_advertisement_data_handler_t handler) {
-    advertisement_data_handler = handler;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
