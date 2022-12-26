@@ -15,6 +15,7 @@
 #include <pbdrv/core.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/sound.h>
+#include <pbio/broadcast.h>
 #include <pbio/config.h>
 #include <pbio/dcmotor.h>
 #include <pbio/light_matrix.h>
@@ -39,9 +40,6 @@ AUTOSTART_PROCESSES(
 #endif
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
     &pbio_motor_process,
-#endif
-#if PBIO_CONFIG_BROADCAST_NUM_SIGNALS != 0
-    &pbio_broadcast_process,
 #endif
     NULL);
 
@@ -73,6 +71,9 @@ void pbio_stop_all(bool reset) {
     #endif
     pbio_dcmotor_stop_all(reset);
     pbdrv_sound_stop();
+    #if PBIO_CONFIG_BROADCAST_NUM_SIGNALS != 0
+    pbio_broadcast_stop();
+    #endif
 }
 
 /**

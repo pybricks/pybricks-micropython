@@ -270,6 +270,9 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
         pb_assert(pbio_broadcast_register_signal(broadcast_obj->hashes[i]));
     }
 
+    // Start broadcast process
+    pbio_broadcast_start();
+
     // Start scanning.
     start_scan(true);
 

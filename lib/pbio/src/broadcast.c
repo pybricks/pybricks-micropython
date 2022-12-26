@@ -27,10 +27,12 @@ static struct {
     // Transmission info
     uint32_t timestamp;
     bool advertising_now;
+    bool process_running;
 } __attribute__((packed)) transmit_signal = {
     .AD_type = 0xff, // manufacturer data
     .company_id = LWP3_LEGO_COMPANY_ID, // for compatibility with official LEGO MINDSTORMS App
     .advertising_now = false,
+    .process_running = false,
 };
 
 #define PBIO_BROADCAST_META_SIZE (9)
@@ -59,9 +61,20 @@ void pbio_broadcast_clear_all(void) {
 
     // Clear number of signals we are scanning for.
     num_scan_signals = 0;
+}
 
-    // Poll to start broadcasting process
-    process_poll(&pbio_broadcast_process);
+void pbio_broadcast_start(void) {
+    process_start(&pbio_broadcast_process);
+    transmit_signal.process_running = true;
+}
+
+void pbio_broadcast_stop(void) {
+
+    if (transmit_signal.process_running) {
+        // stop broadcast process
+        process_exit(&pbio_broadcast_process);
+        transmit_signal.process_running = false;
+    }
 }
 
 pbio_error_t pbio_broadcast_register_signal(uint32_t hash) {
@@ -191,10 +204,6 @@ PROCESS_THREAD(pbio_broadcast_process, ev, data) {
     static pbio_task_t task;
 
     PROCESS_BEGIN();
-
-    // Revisit: Currently we require a poll to enter the broadcast loop and
-    // we also don't stop properly.
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
 
     etimer_set(&timer, 1000);
 

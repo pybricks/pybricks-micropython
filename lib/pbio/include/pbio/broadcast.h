@@ -17,6 +17,10 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size);
 
 void pbio_broadcast_clear_all(void);
 
+void pbio_broadcast_start(void);
+
+void pbio_broadcast_stop(void);
+
 pbio_error_t pbio_broadcast_register_signal(uint32_t hash);
 
 void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size);
