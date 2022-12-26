@@ -414,17 +414,6 @@ static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    for (;;) {
-        advertising_data_received = false;
-        PT_WAIT_UNTIL(pt, {
-            advertising_data_received;
-        });
-
-        // TODO: Properly parse advertising data. For now, we are assuming that
-        // advertisement data always starts at read_buf[19] and its sizes is given at read_buf[18]
-        pbio_broadcast_parse_advertising_data(&read_buf[19], read_buf[18]);
-    }
-
     task->status = PBIO_SUCCESS;
 
     PT_END(pt);
@@ -1319,6 +1308,8 @@ static void handle_event(uint8_t *packet) {
 
                 case GAP_DEVICE_INFORMATION:
                     advertising_data_received = true;
+                    // REVISIT: Poll a process in pbio/broadcast?
+                    pbio_broadcast_parse_advertising_data(&read_buf[19], read_buf[18]);
                     break;
 
                 case GAP_DEVICE_INIT_DONE:

@@ -312,6 +312,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
             gap_event_advertising_report_get_address(packet, address);
 
+            // REVISIT: Poll a process in pbio/broadcast?
+            pbio_broadcast_parse_advertising_data(data, data_length);
+
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // HACK: this is making major assumptions about how the advertising data
                 // is laid out. So far LEGO devices seem consistent in this.
@@ -362,8 +365,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                         handset.con_state = CON_STATE_CONNECT_FAILED;
                     }
                 }
-            } else {
-                pbio_broadcast_parse_advertising_data(data, data_length);
             }
 
             break;
