@@ -40,6 +40,9 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
     &pbio_motor_process,
 #endif
+#if PBIO_CONFIG_BROADCAST_NUM_SIGNALS != 0
+    &pbio_broadcast_process,
+#endif
     NULL);
 
 /**

@@ -123,12 +123,17 @@ void pbdrv_bluetooth_start_advertising(void);
 void pbdrv_bluetooth_stop_advertising(void);
 
 /**
- * Starts data advertising process, including configuring advertisement data
- * and telling the Bluetooth chip to start advertising.
+ * Tell the Bluetooth chip to start advertising with broadcast settings
+ *
+ */
+void pbdrv_bluetooth_start_data_advertising(void);
+
+/**
+ * Configuring advertisement data for broadcast
  *
  * @param [in]  value       The advertising data
  */
-void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value);
+void pbdrv_bluetooth_set_advertising_data(pbdrv_bluetooth_value_t *value);
 
 /**
  * Starts or stops scanning for advertisement data

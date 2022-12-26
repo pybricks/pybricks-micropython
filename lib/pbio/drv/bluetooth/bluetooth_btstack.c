@@ -518,8 +518,28 @@ void pbdrv_bluetooth_stop_advertising(void) {
 }
 
 static PT_THREAD(data_advertising_task(struct pt *pt, pbio_task_t *task)) {
+
+    PT_BEGIN(pt);
+
+    bd_addr_t null_addr = { };
+    gap_advertisements_set_params(0x0030, 0x0030, ADV_SCAN_IND, 0x00, null_addr, 0x07, 0x00);
+
+    // start advertising
+    gap_advertisements_enable(true);
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_data_advertising(void) {
+    static pbio_task_t task;
+    pbio_task_init(&task, data_advertising_task, NULL);
+    pbio_task_queue_add(task_queue, &task);
+}
+
+static PT_THREAD(set_advertising_data_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
-    static struct etimer timer;
 
     PT_BEGIN(pt);
 
@@ -533,24 +553,14 @@ static PT_THREAD(data_advertising_task(struct pt *pt, pbio_task_t *task)) {
 
     gap_advertisements_set_data(value->size, (uint8_t *)adv_data);
 
-    // start advertising
-    gap_advertisements_enable(true);
-
-    // wait for 1000ms
-    etimer_set(&timer, 1000);
-    PT_WAIT_UNTIL(pt, etimer_expired(&timer));
-
-    // stop advertising
-    gap_advertisements_enable(false);
-
     task->status = PBIO_SUCCESS;
 
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
+void pbdrv_bluetooth_set_advertising_data(pbdrv_bluetooth_value_t *value) {
     static pbio_task_t task;
-    pbio_task_init(&task, data_advertising_task, value);
+    pbio_task_init(&task, set_advertising_data_task, value);
     pbio_task_queue_add(task_queue, &task);
 }
 
