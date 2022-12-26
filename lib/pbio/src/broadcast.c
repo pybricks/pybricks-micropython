@@ -30,7 +30,7 @@ static struct {
 pbio_broadcast_received_t received_signals[PBIO_CONFIG_BROADCAST_NUM_SIGNALS];
 
 // Number of signals we are scanning for.
-static uint8_t num_signals;
+static uint8_t num_scan_signals;
 
 void pbio_broadcast_clear_all(void) {
 
@@ -38,31 +38,36 @@ void pbio_broadcast_clear_all(void) {
     transmit_signal.value.size = 0;
 
     // Clear number of signals we are scanning for.
-    num_signals = 0;
+    num_scan_signals = 0;
 }
 
 pbio_error_t pbio_broadcast_register_signal(uint32_t hash) {
     // Check if there are any slots left.
-    if (num_signals == PBIO_CONFIG_BROADCAST_NUM_SIGNALS) {
-        return PBIO_ERROR_BUSY;
+    if (num_scan_signals == PBIO_CONFIG_BROADCAST_NUM_SIGNALS) {
+        return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Get the next available signal.
-    pbio_broadcast_received_t *signal = &received_signals[num_signals];
+    // Go through all signals to see if this hash is already in use.
+    for (uint8_t i = 0; i < num_scan_signals; i++) {
+        if (received_signals[i].hash == hash) {
+            return PBIO_ERROR_INVALID_ARG;
+        }
+    }
 
-    // Initialize the signal for receiving.
+    // Get the next available signal and increment the number of used slots.
+    pbio_broadcast_received_t *signal = &received_signals[num_scan_signals++];
+
+    // Reset the signal.
     signal->hash = hash;
     signal->index = 0;
     signal->size = 0;
 
-    // There is now an extra signal registered.
-    num_signals++;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_broadcast_get_signal(pbio_broadcast_received_t **signal, uint32_t hash) {
     // Go through signal candidates to find a match.
-    for (uint8_t i = 0; i < num_signals; i++) {
+    for (uint8_t i = 0; i < num_scan_signals; i++) {
         pbio_broadcast_received_t *s = &received_signals[i];
 
         // Return the match.
@@ -117,7 +122,7 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
 void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
 
     // Return immediately for programs that don't use broadcast.
-    if (!num_signals || size < 9) {
+    if (!num_scan_signals || size < 9) {
         return;
     }
 
@@ -127,7 +132,7 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
     }
 
     // Go through signal candidates to find a match.
-    for (uint8_t i = 0; i < num_signals; i++) {
+    for (uint8_t i = 0; i < num_scan_signals; i++) {
         pbio_broadcast_received_t *signal = &received_signals[i];
 
         // If received does not match registered hash, skip it.
