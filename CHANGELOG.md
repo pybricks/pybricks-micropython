@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `imu.angular_velocity` returning the values of `imu.acceleration`.
+
+[support#885]: https://github.com/pybricks/support/issues/885
+
 ## [3.2.0] - 2022-12-20
 
 ### Changed
