@@ -25,13 +25,11 @@ static struct {
     // Transmission info
     uint32_t timestamp;
     bool advertising_now;
-    bool advertising_needs_update;
 } __attribute__((packed)) transmit_signal = {
     // Header for compatibility with official LEGO MINDSTORMS App:
     // 0xFF for manufacturer data and 0x0397 for company ID.
     .header = {255, 3, 151},
     .advertising_now = false,
-    .advertising_needs_update = false,
 };
 
 #define PBIO_BROADCAST_META_SIZE (8)
@@ -61,6 +59,9 @@ void pbio_broadcast_clear_all(void) {
 
     // Clear number of signals we are scanning for.
     num_scan_signals = 0;
+
+    // Poll to start broadcasting process
+    process_poll(&pbio_broadcast_process);
 }
 
 pbio_error_t pbio_broadcast_register_signal(uint32_t hash) {
@@ -140,7 +141,6 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
     pbio_broadcast_parse_advertising_data(transmit_signal.value.data, transmit_signal.value.size);
 
     // Prepare to start broadcasting it.
-    transmit_signal.advertising_needs_update = true;
     process_poll(&pbio_broadcast_process);
 }
 
@@ -186,23 +186,30 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
 PROCESS_THREAD(pbio_broadcast_process, ev, data) {
     static struct etimer timer;
 
+    static pbio_task_t task;
+
     PROCESS_BEGIN();
+
+    // Revisit: Currently we require a poll to enter the broadcast loop and
+    // we also don't stop properly.
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
 
     etimer_set(&timer, 1000);
 
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL((ev == PROCESS_EVENT_POLL && transmit_signal.advertising_needs_update) || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
 
         // Check which condition triggered the update.
-        if (transmit_signal.advertising_needs_update) {
-            // Reset update flag.
-            transmit_signal.advertising_needs_update = false;
-
-            pbdrv_bluetooth_set_advertising_data(&transmit_signal.value);
+        if (ev == PROCESS_EVENT_POLL) {
+            // Poll, so we must start sending new data
+            pbdrv_bluetooth_set_advertising_data(&task, &transmit_signal.value);
+            PROCESS_WAIT_UNTIL(task.status == PBIO_SUCCESS);
 
             // Start advertising if we are not already.
             if (!transmit_signal.advertising_now) {
-                pbdrv_bluetooth_start_data_advertising();
+                pbdrv_bluetooth_start_data_advertising(&task);
+                PROCESS_WAIT_UNTIL(task.status == PBIO_SUCCESS);
+
                 transmit_signal.advertising_now = true;
             }
 
@@ -210,7 +217,8 @@ PROCESS_THREAD(pbio_broadcast_process, ev, data) {
             etimer_restart(&timer);
         } else {
             // Otherwise, the timer has expired, so stop transmitting.
-            pbdrv_bluetooth_stop_advertising();
+            pbdrv_bluetooth_stop_data_advertising(&task);
+            PROCESS_WAIT_UNTIL(task.status == PBIO_SUCCESS);
 
             transmit_signal.advertising_now = false;
         }

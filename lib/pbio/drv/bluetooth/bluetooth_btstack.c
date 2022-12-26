@@ -517,16 +517,21 @@ void pbdrv_bluetooth_stop_advertising(void) {
     gap_advertisements_enable(false);
 }
 
-void pbdrv_bluetooth_start_data_advertising(void) {
-    bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0x0030, 0x0030, ADV_SCAN_IND, 0x00, null_addr, 0x07, 0x00);
+void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task) {
     gap_advertisements_enable(true);
+    task->status = PBIO_SUCCESS;
 }
 
-void pbdrv_bluetooth_set_advertising_data(pbdrv_bluetooth_value_t *value) {
+void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
+    gap_advertisements_enable(false);
+    task->status = PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_set_advertising_data(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0x0030, 0x0030, ADV_SCAN_IND, 0x00, null_addr, 0x07, 0x00);
     gap_advertisements_set_data(value->size, value->data);
+    task->status = PBIO_SUCCESS;
 }
 
 void pbdrv_bluetooth_start_scan(pbio_task_t *task, bool start) {

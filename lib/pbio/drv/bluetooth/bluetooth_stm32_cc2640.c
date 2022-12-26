@@ -358,6 +358,11 @@ void pbdrv_bluetooth_stop_advertising(void) {
     pbio_task_queue_add(task_queue, &task);
 }
 
+void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
+    pbio_task_init(task, set_non_discoverable, NULL);
+    pbio_task_queue_add(task_queue, task);
+}
+
 /**
  * Enables data advertising.
  */
@@ -382,10 +387,9 @@ static PT_THREAD(start_data_advertising(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_start_data_advertising(void) {
-    static pbio_task_t task;
-    pbio_task_init(&task, start_data_advertising, NULL);
-    pbio_task_queue_add(task_queue, &task);
+void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task) {
+    pbio_task_init(task, start_data_advertising, NULL);
+    pbio_task_queue_add(task_queue, task);
 }
 
 /**
@@ -407,10 +411,9 @@ static PT_THREAD(set_advertising_data(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_set_advertising_data(pbdrv_bluetooth_value_t *value) {
-    static pbio_task_t task;
-    pbio_task_init(&task, set_advertising_data, value);
-    pbio_task_queue_add(task_queue, &task);
+void pbdrv_bluetooth_set_advertising_data(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    pbio_task_init(task, set_advertising_data, value);
+    pbio_task_queue_add(task_queue, task);
 }
 
 static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
