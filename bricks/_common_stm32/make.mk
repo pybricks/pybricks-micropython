@@ -69,6 +69,7 @@ INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(PB_MCU_SERIES)xx/Include
 ifeq ($(PB_USE_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
+INC += -I$(TOP)/lib/uzlib
 INC += -I$(PBTOP)/lib/contiki-core
 INC += -I$(PBTOP)/lib/lego
 INC += -I$(PBTOP)/lib/lwrb/src/include
@@ -167,6 +168,7 @@ PY_STM32_SRC_C = $(addprefix bricks/,\
 # between the top level directory and the micropython/ subdirectory.
 
 PY_EXTRA_SRC_C = $(addprefix shared/,\
+	../lib/uzlib/crc32.c \
 	libc/string0.c \
 	readline/readline.c \
 	runtime/gchelper_native.c \
