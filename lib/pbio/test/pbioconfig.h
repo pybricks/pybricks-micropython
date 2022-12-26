@@ -1,5 +1,6 @@
 
 #define PBIO_CONFIG_BATTERY                 (1)
+#define PBIO_CONFIG_BROADCAST_NUM_SIGNALS   (0)
 #define PBIO_CONFIG_DCMOTOR                 (1)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (0)
 
