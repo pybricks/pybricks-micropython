@@ -9,6 +9,8 @@
 
 #include "py/objstr.h"
 
+#include <pbdrv/bluetooth.h>
+
 #include <pybricks/ble.h>
 
 #include <pybricks/util_pb/pb_error.h>
@@ -36,9 +38,25 @@ typedef struct _ble_Broadcast_obj_t {
 // There is at most one Broadcast object
 ble_Broadcast_obj_t *broadcast_obj;
 
-// TODO: Process scan results and populate any broadcast_signal_t whose
-// crc32 hash matches the scanned broadcast. This process is started from
-// function below.
+// Broadcast header to comply with official LEGO MINDSTORMS App hub to hub word blocks
+// 0xFF for manufacturer data, followed by 0x0397 LEGO company ID
+// Note: advertising data does not start with length as commonly used
+static uint8_t BROADCAST_HEADER[3] = {255, 3, 151};
+
+// Handles received advertising data
+STATIC void handle_receive(const uint8_t *value, uint8_t size) {
+    if (memcmp(&value[0], &BROADCAST_HEADER, 3) == 0) {
+        for (size_t i = 0; i < broadcast_obj->n_signals; i++) {
+            if (memcmp(&broadcast_obj->signals[i].hash, &value[4], 4) == 0
+                && (broadcast_obj->signals[i].counter < value[3] ||
+                    (broadcast_obj->signals[i].counter > 192 && value[3] <= 64))) {
+                memcpy(&broadcast_obj->signals[i].message, &value[8], size - 8);
+                broadcast_obj->signals[i].size = size - 8;
+                broadcast_obj->signals[i].counter = value[3];
+            }
+        }
+    }
+}
 
 // pybricks.ble.Broadcast.__init__
 STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -72,7 +90,9 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
 
     }
 
-    // TODO: Call function to start scanning.
+    pbdrv_bluetooth_set_advertising_data_handler(handle_receive);
+
+    pbdrv_bluetooth_start_scan();
 
     return MP_OBJ_FROM_PTR(broadcast_obj);
 }
@@ -128,13 +148,25 @@ STATIC mp_obj_t ble_Broadcast_transmit(size_t n_args, const mp_obj_t *pos_args, 
     signal->size = byte_data->len;
     signal->counter++;
 
-    (void)self;
-    // TODO: Broadcast the updated signal.
+    struct {
+        pbdrv_bluetooth_value_t value;
+        uint8_t header[3];
+        uint8_t index;
+        uint32_t hash;
+        char payload[23];
+    } __attribute__((packed)) msg;
+
+    msg.value.size = signal->size + 8;
+    memcpy(msg.header, BROADCAST_HEADER, 3);
+    msg.index = signal->counter;
+    msg.hash = signal->hash;
+    memcpy(msg.payload, signal->message, signal->size);
+
+    pbdrv_bluetooth_start_data_advertising(&msg.value);
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_transmit_obj, 1, ble_Broadcast_transmit);
-
 // dir(pybricks.ble.Broadcast)
 STATIC const mp_rom_map_elem_t ble_Broadcast_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_received),       MP_ROM_PTR(&ble_Broadcast_received_obj) },

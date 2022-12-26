@@ -95,6 +95,7 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
 static pup_handset_t handset;
+static pbdrv_bluetooth_advertisement_data_handler_t advertisement_data_handler;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
@@ -361,6 +362,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                         handset.con_state = CON_STATE_CONNECT_FAILED;
                     }
                 }
+            } else if (advertisement_data_handler) {
+                advertisement_data_handler(data, data_length);
             }
 
             break;
@@ -443,6 +446,13 @@ void pbdrv_bluetooth_init(void) {
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
+
+    // Set the max number of device the hub can be a peripheral to
+    // This value gets checked when starting to advertise
+    // max 2 peripheral connections is is necessary for:
+    //   -  peripheral connection to connect to code.pybricks.com
+    //   -  advertising as a peripheral for pybricks.ble.broadcast.transmit
+    gap_set_max_number_peripheral_connections(2);
 }
 
 void pbdrv_bluetooth_power_on(bool on) {
@@ -459,7 +469,7 @@ const char *pbdrv_bluetooth_get_hub_name(void) {
 
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0x0030, 0x0030, 0x00, 0x00, null_addr, 0x07, 0x00);
+    gap_advertisements_set_params(0x0030, 0x0030, ADV_IND, 0x00, null_addr, 0x07, 0x00);
 
     static const uint8_t adv_data[] = {
         // Flags general discoverable, BR/EDR not supported
@@ -504,6 +514,52 @@ void pbdrv_bluetooth_start_advertising(void) {
 
 void pbdrv_bluetooth_stop_advertising(void) {
     gap_advertisements_enable(false);
+}
+
+static PT_THREAD(data_advertising_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+    static struct etimer timer;
+
+    PT_BEGIN(pt);
+
+    bd_addr_t null_addr = { };
+    gap_advertisements_set_params(0x0030, 0x0030, ADV_SCAN_IND, 0x00, null_addr, 0x07, 0x00);
+
+    // TODO: remove need for adv_data variable
+    // use value->data instead (I tried but didn't find the correct syntax...)
+    static uint8_t adv_data[31];
+    memcpy(&adv_data[0], &value->data, value->size);
+
+    gap_advertisements_set_data(value->size, (uint8_t *)adv_data);
+
+    // start advertising
+    gap_advertisements_enable(true);
+
+    // wait for 1000ms
+    etimer_set(&timer, 1000);
+    PT_WAIT_UNTIL(pt, etimer_expired(&timer));
+
+    // stop advertising
+    gap_advertisements_enable(false);
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
+    static pbio_task_t task;
+    pbio_task_init(&task, data_advertising_task, value);
+    pbio_task_queue_add(task_queue, &task);
+}
+
+void pbdrv_bluetooth_start_scan(void) {
+    gap_set_scan_params(1, 0x30, 0x30, 0);
+    gap_start_scan();
+}
+
+void pbdrv_bluetooth_set_advertising_data_handler(pbdrv_bluetooth_advertisement_data_handler_t handler) {
+    advertisement_data_handler = handler;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {

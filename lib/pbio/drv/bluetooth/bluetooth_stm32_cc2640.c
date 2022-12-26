@@ -154,6 +154,7 @@ static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
+static pbdrv_bluetooth_advertisement_data_handler_t advertisement_data_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 /**
@@ -355,6 +356,88 @@ void pbdrv_bluetooth_stop_advertising(void) {
     static pbio_task_t task;
     pbio_task_init(&task, set_non_discoverable, NULL);
     pbio_task_queue_add(task_queue, &task);
+}
+
+/**
+ * Sets advertising data and enables advertisements.
+ */
+static PT_THREAD(set_data_advertising(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+    static struct etimer timer;
+
+    PT_BEGIN(pt);
+
+    // Set advertising data
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_updateAdvertistigData(GAP_AD_TYPE_ADVERTISEMNT_DATA, value->size, value->data);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+
+    // start advertising
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    // HACK: for compatability with official RI software adv_type should be ADV_SCAN_IND
+    //  - ADV_SCAN_IND does not seem to advertise data at all,
+    //  - ADV_NONCONN_IND only advertises if  program is run over bluetooth (not when program in main.py)
+    //  - ADV_IND works both when program is run over bluetooth and in main.py
+    // current hack: use ADV_IND. This means transmit on technic/city hub is not compatible with official RI hubs.
+    GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PUBLIC, NULL,
+        GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    // ignoring response data
+
+    // wait for 1000ms
+    etimer_set(&timer, 1000);
+    PT_WAIT_UNTIL(pt, etimer_expired(&timer));
+
+    // stop advertising
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_endDiscoverable();
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    // ignoring response data
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
+    static pbio_task_t task;
+    pbio_task_init(&task, set_data_advertising, value);
+    pbio_task_queue_add(task_queue, &task);
+}
+
+static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    // start scanning
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    for (;;) {
+        advertising_data_received = false;
+        PT_WAIT_UNTIL(pt, {
+            advertising_data_received;
+        });
+
+        // TODO: Properly parse advertising data. For now, we are assuming that
+        // advertisement data always starts at read_buf[19] and its sizes is given at read_buf[18]
+        advertisement_data_handler(&read_buf[19], read_buf[18]);
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_scan(void) {
+    static pbio_task_t task;
+    pbio_task_init(&task, set_start_scan, NULL);
+    pbio_task_queue_add(task_queue, &task);
+}
+
+void pbdrv_bluetooth_set_advertising_data_handler(pbdrv_bluetooth_advertisement_data_handler_t handler) {
+    advertisement_data_handler = handler;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
