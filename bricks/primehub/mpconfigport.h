@@ -13,6 +13,7 @@
 #define PYBRICKS_HUB_PRIMEHUB                   (1)
 
 // Pybricks modules
+#define PYBRICKS_PY_BLE                         (1)
 #define PYBRICKS_PY_COMMON                      (1)
 #define PYBRICKS_PY_COMMON_CHARGER              (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (1)

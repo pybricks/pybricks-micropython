@@ -15,6 +15,7 @@
 #define PYBRICKS_RUNS_ON_EV3DEV         (1)
 
 // Pybricks modules
+#define PYBRICKS_PY_BLE                 (0)
 #define PYBRICKS_PY_COMMON              (1)
 #define PYBRICKS_PY_COMMON_CHARGER      (0)
 #define PYBRICKS_PY_COMMON_CONTROL      (1)
