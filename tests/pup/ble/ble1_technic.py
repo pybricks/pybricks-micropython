@@ -1,18 +1,19 @@
 # Copyright (c) 2021 The Pybricks Authors
 
 """
-Hardware Module: Technic Hub (ble1_technic.py) and Prime Hub (ble1_prime.py)
+Hardware Module: Technic/City/Any Hub (ble1_technic.py)
+                 and Prime Hub (ble1_prime.py)
 
 Description: Tests broadcast receive and transmit.
 """
 
-from pybricks.hubs import TechnicHub
+from pybricks.hubs import ThisHub
 from pybricks.parameters import Color
 from pybricks.tools import wait
 from pybricks.ble import Broadcast
 
 
-hub = TechnicHub()
+hub = ThisHub()
 hub.light.on(Color.WHITE)
 
 # Initialize broadcast with two topics.

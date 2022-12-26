@@ -6,13 +6,9 @@ Hardware Module: Technic Hub (ble2_technic.py) and Prime Hub (ble2_prime.py)
 Description: Tests broadcast receive and transmit.
 """
 
-from pybricks.hubs import TechnicHub
-from pybricks.parameters import Color
 from pybricks.tools import wait
 from pybricks.ble import Broadcast
 
-hub = TechnicHub()
-hub.light.on(Color.WHITE)
 
 # Initialize broadcast with one topic.
 radio = Broadcast(["data"])
