@@ -24,9 +24,9 @@
 // Class structure for Broadcast
 typedef struct _ble_Broadcast_obj_t {
     mp_obj_base_t base;
-    size_t num_signals;
-    qstr *signal_names;
-    uint32_t *signal_hashes;
+    size_t num_topics;
+    qstr *topics;
+    uint32_t *hashes;
 } ble_Broadcast_obj_t;
 
 // There is at most one Broadcast object
@@ -53,24 +53,24 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
 
     // Unpack signal list.
     mp_obj_t *signal_args;
-    mp_obj_get_array(topics_in, &broadcast_obj->num_signals, &signal_args);
+    mp_obj_get_array(topics_in, &broadcast_obj->num_topics, &signal_args);
 
     // Allocate space for signal names. We can't use a simple dictionary
     // because long ints are not enabled.
-    broadcast_obj->signal_names = m_new(qstr, broadcast_obj->num_signals);
-    broadcast_obj->signal_hashes = m_new(uint32_t, broadcast_obj->num_signals);
+    broadcast_obj->topics = m_new(qstr, broadcast_obj->num_topics);
+    broadcast_obj->hashes = m_new(uint32_t, broadcast_obj->num_topics);
 
     // Initialize objects.
-    for (size_t i = 0; i < broadcast_obj->num_signals; i++) {
+    for (size_t i = 0; i < broadcast_obj->num_topics; i++) {
 
         // Store signal name as qstring
-        broadcast_obj->signal_names[i] = mp_obj_str_get_qstr(signal_args[i]);
+        broadcast_obj->topics[i] = mp_obj_str_get_qstr(signal_args[i]);
 
         // Get signal name info
         GET_STR_DATA_LEN(signal_args[i], signal_name, signal_name_len);
-        broadcast_obj->signal_hashes[i] = (0xFFFFFFFF & -uzlib_crc32(signal_name, signal_name_len, 0xFFFFFFFF)) - 1;
+        broadcast_obj->hashes[i] = (0xFFFFFFFF & -uzlib_crc32(signal_name, signal_name_len, 0xFFFFFFFF)) - 1;
 
-        pb_assert(pbio_broadcast_register_signal(broadcast_obj->signal_hashes[i]));
+        pb_assert(pbio_broadcast_register_signal(broadcast_obj->hashes[i]));
     }
 
     // Start scanning.
@@ -79,14 +79,14 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(broadcast_obj);
 }
 
-STATIC uint32_t get_hash_by_name(mp_obj_t signal_name_obj) {
+STATIC uint32_t broadcast_get_hash(mp_obj_t topic_in) {
 
-    qstr signal_name = mp_obj_str_get_qstr(signal_name_obj);
+    qstr topic = mp_obj_str_get_qstr(topic_in);
 
     // Return signal if known.
-    for (size_t i = 0; i < broadcast_obj->num_signals; i++) {
-        if (broadcast_obj->signal_names[i] == signal_name) {
-            return broadcast_obj->signal_hashes[i];
+    for (size_t i = 0; i < broadcast_obj->num_topics; i++) {
+        if (broadcast_obj->topics[i] == topic) {
+            return broadcast_obj->hashes[i];
         }
     }
     // Signal not found.
@@ -100,9 +100,11 @@ STATIC mp_obj_t ble_Broadcast_receive_bytes(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_REQUIRED(topic));
 
     (void)self;
-    pbio_broadcast_received_t *signal;
-    pb_assert(pbio_broadcast_get_signal(&signal, get_hash_by_name(topic_in)));
-    return mp_obj_new_bytes(signal->payload, signal->size);
+
+    uint8_t *data;
+    uint8_t size;
+    pbio_broadcast_receive(broadcast_get_hash(topic_in), &data, &size);
+    return mp_obj_new_bytes(data, size);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_receive_bytes_obj, 1, ble_Broadcast_receive_bytes);
 
@@ -121,7 +123,7 @@ STATIC mp_obj_t ble_Broadcast_send_bytes(size_t n_args, const mp_obj_t *pos_args
 
     // Unpack user argument to update signal.
     mp_obj_str_t *byte_data = MP_OBJ_TO_PTR(message_in);
-    pbio_broadcast_transmit(get_hash_by_name(topic_in), byte_data->data, byte_data->len);
+    pbio_broadcast_transmit(broadcast_get_hash(topic_in), byte_data->data, byte_data->len);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_send_bytes_obj, 1, ble_Broadcast_send_bytes);

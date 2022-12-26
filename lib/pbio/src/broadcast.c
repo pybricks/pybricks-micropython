@@ -26,7 +26,19 @@ static struct {
     .header = {255, 3, 151},
 };
 
+#define PBIO_BROADCAST_META_SIZE (8)
+#define PBIO_BROADCAST_MAX_PAYLOAD_SIZE (23)
+#define PBIO_BROADCAST_DELAY_REPEAT_MS (100)
+
 // Received signals.
+typedef struct _pbio_broadcast_received_t {
+    uint32_t timestamp;
+    uint8_t size;
+    uint8_t index;
+    uint32_t hash;
+    uint8_t payload[PBIO_BROADCAST_MAX_PAYLOAD_SIZE];
+} pbio_broadcast_received_t;
+
 pbio_broadcast_received_t received_signals[PBIO_CONFIG_BROADCAST_NUM_SIGNALS];
 
 // Number of signals we are scanning for.
@@ -65,19 +77,21 @@ pbio_error_t pbio_broadcast_register_signal(uint32_t hash) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_broadcast_get_signal(pbio_broadcast_received_t **signal, uint32_t hash) {
-    // Go through signal candidates to find a match.
+void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size) {
     for (uint8_t i = 0; i < num_scan_signals; i++) {
+
         pbio_broadcast_received_t *s = &received_signals[i];
 
-        // Return the match.
+        // Return if there is a match.
         if (s->hash == hash) {
-            *signal = s;
-            return PBIO_SUCCESS;
+            *payload = s->payload;
+            *size = s->size;
+            return;
         }
-
     }
-    return PBIO_ERROR_INVALID_ARG;
+
+    // No signal registered for this hash, so size is 0.
+    *size = 0;
 }
 
 void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size) {
