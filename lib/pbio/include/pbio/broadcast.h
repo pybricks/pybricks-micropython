@@ -11,7 +11,7 @@
 
 #if PBIO_CONFIG_BROADCAST_NUM_SIGNALS != 0
 
-#define PBIO_BROADCAST_MAX_PAYLOAD_SIZE (23)
+#define PBIO_BROADCAST_MAX_PAYLOAD_SIZE (22)
 
 void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size);
 

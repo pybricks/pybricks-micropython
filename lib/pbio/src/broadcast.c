@@ -18,7 +18,9 @@
 static struct {
     // Message data
     pbdrv_bluetooth_value_t value;
-    uint8_t header[3];
+    uint8_t length;
+    uint8_t AD_type;
+    uint16_t company_id;
     uint8_t index;
     uint32_t hash;
     char payload[PBIO_BROADCAST_MAX_PAYLOAD_SIZE];
@@ -26,14 +28,12 @@ static struct {
     uint32_t timestamp;
     bool advertising_now;
 } __attribute__((packed)) transmit_signal = {
-    // Header for compatibility with official LEGO MINDSTORMS App:
-    // 0xFF for manufacturer data and 0x0397 for company ID.
-    .header = {255, 3, 151},
+    .AD_type = 0xff, // manufacturer data
+    .company_id = LWP3_LEGO_COMPANY_ID, // for compatibility with official LEGO MINDSTORMS App
     .advertising_now = false,
 };
 
-#define PBIO_BROADCAST_META_SIZE (8)
-#define PBIO_BROADCAST_MAX_PAYLOAD_SIZE (23)
+#define PBIO_BROADCAST_META_SIZE (9)
 #define PBIO_BROADCAST_DELAY_REPEAT_MS (100)
 
 PROCESS(pbio_broadcast_process, "broadcast");
@@ -133,6 +133,7 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
     }
 
     // Copy the payload.
+    transmit_signal.length = size - 1;
     transmit_signal.timestamp = time_now;
     transmit_signal.value.size = size + PBIO_BROADCAST_META_SIZE;
     memcpy(transmit_signal.payload, payload, size);
@@ -152,7 +153,8 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
     }
 
     // We only process data with the right header
-    if (memcmp(data, &transmit_signal.header[0], 3)) {
+    if ((data[0] != size - 1) && data[1] != transmit_signal.AD_type &&
+        memcmp(&data[2], &transmit_signal.company_id, 2)) {
         return;
     }
 
@@ -161,13 +163,13 @@ void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
         pbio_broadcast_received_t *signal = &received_signals[i];
 
         // If received does not match registered hash, skip it.
-        if (pbio_get_uint32_le(&data[4]) != signal->hash) {
+        if (pbio_get_uint32_le(&data[5]) != signal->hash) {
             continue;
         }
 
         // Get time and idex for incoming signal.
         uint32_t time_now = pbdrv_clock_get_ms();
-        uint8_t index_now = data[3];
+        uint8_t index_now = data[4];
 
         // For very quick updates, we should skip updating if new index is older.
         if (time_now - signal->timestamp < PBIO_BROADCAST_DELAY_REPEAT_MS && index_now - signal->index > 128) {
