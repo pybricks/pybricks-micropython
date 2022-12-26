@@ -136,7 +136,7 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
 void pbio_broadcast_parse_advertising_data(const uint8_t *data, uint8_t size) {
 
     // Return immediately for programs that don't use broadcast.
-    if (!num_scan_signals || size < 9) {
+    if (!num_scan_signals || size < PBIO_BROADCAST_META_SIZE) {
         return;
     }
 
