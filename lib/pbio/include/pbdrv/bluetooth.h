@@ -133,7 +133,7 @@ void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value);
 /**
  * Starts scanning for a advertisement data
  */
-void pbdrv_bluetooth_start_scan();
+void pbdrv_bluetooth_start_scan(pbio_task_t *task);
 
 /**
  * Tests if a central is connected to the Bluetooth chip.

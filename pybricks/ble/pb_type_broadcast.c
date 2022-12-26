@@ -19,6 +19,7 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_conversions.h>
+#include <pybricks/util_pb/pb_task.h>
 
 // Class structure for Broadcast
 typedef struct _ble_Broadcast_obj_t {
@@ -64,7 +65,11 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
 
         pb_assert(pbio_broadcast_register_signal(broadcast_obj->signal_hashes[i]));
     }
-    pbdrv_bluetooth_start_scan();
+
+    // Start scanning and wait for completion.
+    pbio_task_t task;
+    pbdrv_bluetooth_start_scan(&task);
+    pb_wait_task(&task, -1);
     return MP_OBJ_FROM_PTR(broadcast_obj);
 }
 

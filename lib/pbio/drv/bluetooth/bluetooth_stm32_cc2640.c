@@ -408,21 +408,16 @@ void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
 
 static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
-
-    // start scanning
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
-
     task->status = PBIO_SUCCESS;
-
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_start_scan(void) {
-    static pbio_task_t task;
-    pbio_task_init(&task, set_start_scan, NULL);
-    pbio_task_queue_add(task_queue, &task);
+void pbdrv_bluetooth_start_scan(pbio_task_t *task) {
+    pbio_task_init(task, set_start_scan, NULL);
+    pbio_task_queue_add(task_queue, task);
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {

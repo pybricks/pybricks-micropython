@@ -554,9 +554,11 @@ void pbdrv_bluetooth_start_data_advertising(pbdrv_bluetooth_value_t *value) {
     pbio_task_queue_add(task_queue, &task);
 }
 
-void pbdrv_bluetooth_start_scan(void) {
+void pbdrv_bluetooth_start_scan(pbio_task_t *task) {
     gap_set_scan_params(1, 0x30, 0x30, 0);
     gap_start_scan();
+    // Does not need to run as a task in btstack, so set success right away.
+    task->status = PBIO_SUCCESS;
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
