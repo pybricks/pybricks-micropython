@@ -415,8 +415,17 @@ static PT_THREAD(set_start_scan(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_start_scan(pbio_task_t *task) {
-    pbio_task_init(task, set_start_scan, NULL);
+static PT_THREAD(set_stop_scan(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_DeviceDiscoveryCancel();
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    task->status = PBIO_SUCCESS;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_scan(pbio_task_t *task, bool start) {
+    pbio_task_init(task, start ? set_start_scan : set_stop_scan, NULL);
     pbio_task_queue_add(task_queue, task);
 }
 

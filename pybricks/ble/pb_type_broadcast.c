@@ -32,6 +32,13 @@ typedef struct _ble_Broadcast_obj_t {
 // There is at most one Broadcast object
 ble_Broadcast_obj_t *broadcast_obj;
 
+STATIC void start_scan(bool start) {
+    // Start scanning and wait for completion.
+    pbio_task_t task;
+    pbdrv_bluetooth_start_scan(&task, start);
+    pb_wait_task(&task, -1);
+}
+
 // pybricks.ble.Broadcast.__init__
 STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -66,10 +73,9 @@ STATIC mp_obj_t ble_Broadcast_make_new(const mp_obj_type_t *type, size_t n_args,
         pb_assert(pbio_broadcast_register_signal(broadcast_obj->signal_hashes[i]));
     }
 
-    // Start scanning and wait for completion.
-    pbio_task_t task;
-    pbdrv_bluetooth_start_scan(&task);
-    pb_wait_task(&task, -1);
+    // Start scanning.
+    start_scan(true);
+
     return MP_OBJ_FROM_PTR(broadcast_obj);
 }
 
@@ -121,10 +127,22 @@ STATIC mp_obj_t ble_Broadcast_transmit(size_t n_args, const mp_obj_t *pos_args, 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_transmit_obj, 1, ble_Broadcast_transmit);
 
+// pybricks.ble.Broadcast.scan
+STATIC mp_obj_t ble_Broadcast_scan(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ble_Broadcast_obj_t, self,
+        PB_ARG_REQUIRED(scan));
+    (void)self;
+    start_scan(mp_obj_is_true(scan_in));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_scan_obj, 1, ble_Broadcast_scan);
+
 // dir(pybricks.ble.Broadcast)
 STATIC const mp_rom_map_elem_t ble_Broadcast_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_received),       MP_ROM_PTR(&ble_Broadcast_received_obj) },
     { MP_ROM_QSTR(MP_QSTR_transmit),       MP_ROM_PTR(&ble_Broadcast_transmit_obj) },
+    { MP_ROM_QSTR(MP_QSTR_scan),           MP_ROM_PTR(&ble_Broadcast_scan_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(ble_Broadcast_locals_dict, ble_Broadcast_locals_dict_table);
 
