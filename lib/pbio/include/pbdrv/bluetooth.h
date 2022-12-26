@@ -123,13 +123,6 @@ void pbdrv_bluetooth_start_advertising(void);
 void pbdrv_bluetooth_stop_advertising(void);
 
 /**
- * Tell the Bluetooth chip to start advertising with broadcast settings
- *
- * @param [in]  task         The pbio task
- */
-void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task);
-
-/**
  * Stops the data advertising process.
  *
  * @param [in]  task         The pbio task
@@ -137,12 +130,12 @@ void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task);
 void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task);
 
 /**
- * Configuring advertisement data for broadcast
+ * Configuring advertisement data for broadcast and start advertising process
  *
  * @param [in]  task         The pbio task
  * @param [in]  value        The advertising data
  */
-void pbdrv_bluetooth_set_advertising_data(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
+void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
 
 /**
  * Starts or stops scanning for advertisement data

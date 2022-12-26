@@ -26,12 +26,10 @@ static struct {
     char payload[PBIO_BROADCAST_MAX_PAYLOAD_SIZE];
     // Transmission info
     uint32_t timestamp;
-    bool advertising_now;
     bool process_running;
 } __attribute__((packed)) transmit_signal = {
     .AD_type = 0xff, // manufacturer data
     .company_id = LWP3_LEGO_COMPANY_ID, // for compatibility with official LEGO MINDSTORMS App
-    .advertising_now = false,
     .process_running = false,
 };
 
@@ -118,7 +116,7 @@ void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size) {
     *size = 0;
 }
 
-void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size) {
+void pbio_broadcast_transmit(pbio_task_t *task, uint32_t hash, const uint8_t *payload, uint8_t size) {
 
     // Cut off payloads that are too long.
     if (size > PBIO_BROADCAST_MAX_PAYLOAD_SIZE) {
@@ -154,7 +152,10 @@ void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size
     // Also make transmitted signal readable by itself.
     pbio_broadcast_parse_advertising_data(transmit_signal.value.data, transmit_signal.value.size);
 
-    // Prepare to start broadcasting it.
+    // start broadcasting it
+    pbdrv_bluetooth_start_data_advertising(task, &transmit_signal.value);
+
+    // poll process to start timer in the background
     process_poll(&pbio_broadcast_process);
 }
 
@@ -206,32 +207,18 @@ PROCESS_THREAD(pbio_broadcast_process, ev, data) {
     PROCESS_BEGIN();
 
     etimer_set(&timer, 1000);
+    etimer_stop(&timer);
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
 
         // Check which condition triggered the update.
         if (ev == PROCESS_EVENT_POLL) {
-            // Poll, so we must start sending new data
-            pbdrv_bluetooth_set_advertising_data(&task, &transmit_signal.value);
-            PROCESS_WAIT_UNTIL(task.status == PBIO_SUCCESS);
-
-            // Start advertising if we are not already.
-            if (!transmit_signal.advertising_now) {
-                pbdrv_bluetooth_start_data_advertising(&task);
-                PROCESS_WAIT_UNTIL(task.status == PBIO_SUCCESS);
-
-                transmit_signal.advertising_now = true;
-            }
-
-            // Reset timer
+            // Restart timer
             etimer_restart(&timer);
         } else {
             // Otherwise, the timer has expired, so stop transmitting.
             pbdrv_bluetooth_stop_data_advertising(&task);
-            PROCESS_WAIT_UNTIL(task.status == PBIO_SUCCESS);
-
-            transmit_signal.advertising_now = false;
         }
 
     }

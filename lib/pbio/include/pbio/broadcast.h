@@ -8,6 +8,7 @@
 
 #include <pbio/config.h>
 #include <pbio/error.h>
+#include <pbio/task.h>
 
 #if PBIO_CONFIG_BROADCAST_NUM_SIGNALS != 0
 
@@ -25,7 +26,7 @@ pbio_error_t pbio_broadcast_register_signal(uint32_t hash);
 
 void pbio_broadcast_receive(uint32_t hash, uint8_t **payload, uint8_t *size);
 
-void pbio_broadcast_transmit(uint32_t hash, const uint8_t *payload, uint8_t size);
+void pbio_broadcast_transmit(pbio_task_t *task, uint32_t hash, const uint8_t *payload, uint8_t size);
 
 #else
 

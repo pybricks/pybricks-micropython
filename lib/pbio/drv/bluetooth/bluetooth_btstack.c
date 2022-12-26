@@ -98,6 +98,7 @@ static pbdrv_bluetooth_receive_handler_t notification_handler;
 static pup_handset_t handset;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
+static bool advertising_now = false;
 
 // note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
 // go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could go
@@ -517,20 +518,20 @@ void pbdrv_bluetooth_stop_advertising(void) {
     gap_advertisements_enable(false);
 }
 
-void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task) {
-    gap_advertisements_enable(true);
-    task->status = PBIO_SUCCESS;
-}
-
 void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
     gap_advertisements_enable(false);
+    advertising_now = false;
     task->status = PBIO_SUCCESS;
 }
 
-void pbdrv_bluetooth_set_advertising_data(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0x0030, 0x0030, ADV_SCAN_IND, 0x00, null_addr, 0x07, 0x00);
     gap_advertisements_set_data(value->size, value->data);
+    if (!advertising_now) {
+        gap_advertisements_enable(true);
+        advertising_now = true;
+    }
     task->status = PBIO_SUCCESS;
 }
 

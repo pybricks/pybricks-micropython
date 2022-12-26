@@ -335,6 +335,9 @@ STATIC mp_obj_t ble_Broadcast_send_bytes(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_REQUIRED(data));
 
     (void)self;
+
+    pbio_task_t task;
+
     // Assert that data argument are bytes.
     if (!(mp_obj_is_type(data_in, &mp_type_bytes) || mp_obj_is_type(data_in, &mp_type_bytearray))) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
@@ -342,7 +345,8 @@ STATIC mp_obj_t ble_Broadcast_send_bytes(size_t n_args, const mp_obj_t *pos_args
 
     // Transmit bytes as-is.
     mp_obj_str_t *byte_data = MP_OBJ_TO_PTR(data_in);
-    pbio_broadcast_transmit(broadcast_get_hash(topic_in), byte_data->data, byte_data->len);
+    pbio_broadcast_transmit(&task, broadcast_get_hash(topic_in), byte_data->data, byte_data->len);
+    pb_wait_task(&task, -1);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ble_Broadcast_send_bytes_obj, 1, ble_Broadcast_send_bytes);
@@ -356,13 +360,16 @@ STATIC mp_obj_t ble_Broadcast_send(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     (void)self;
 
+    pbio_task_t task;
+
     // Encode the data
     uint8_t buf[PBIO_BROADCAST_MAX_PAYLOAD_SIZE];
     uint8_t size;
     broadcast_encode_data(data_in, buf, &size);
 
     // Transmit it.
-    pbio_broadcast_transmit(broadcast_get_hash(topic_in), buf, size);
+    pbio_broadcast_transmit(&task, broadcast_get_hash(topic_in), buf, size);
+    pb_wait_task(&task, -1);
 
     return mp_const_none;
 }

@@ -129,6 +129,8 @@ static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t remote_handle = NO_CONNECTION;
 // handle to LWP3 characteristic on remote
 static uint16_t remote_lwp3_char_handle = NO_CONNECTION;
+// advertising status of BT-chip
+static bool advertising_now = false;
 
 // The Identity Resolving Key read from the Bluetooth chip.
 static uint8_t device_irk[16];
@@ -347,6 +349,8 @@ static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
     // REVISIT: technically, this isn't complete until GAP_EndDiscoverableDone
     // event is received
 
+    advertising_now = false;
+
     task->status = PBIO_SUCCESS;
 
     PT_END(pt);
@@ -364,55 +368,41 @@ void pbdrv_bluetooth_stop_data_advertising(pbio_task_t *task) {
 }
 
 /**
- * Enables data advertising.
+ * Sets advertising data and enables advertising.
  */
 static PT_THREAD(start_data_advertising(struct pt *pt, pbio_task_t *task)) {
-
-    PT_BEGIN(pt);
-
-    // start advertising
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    // HACK: for compatability with official RI software adv_type should be ADV_SCAN_IND
-    //  - ADV_SCAN_IND does not seem to advertise data at all,
-    //  - ADV_NONCONN_IND only advertises if  program is run over bluetooth (not when program in main.py)
-    //  - ADV_IND works both when program is run over bluetooth and in main.py
-    // current hack: use ADV_IND. This means transmit on technic/city hub is not compatible with official RI hubs.
-    GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PUBLIC, NULL,
-        GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    // ignoring response data
-
-    task->status = PBIO_SUCCESS;
-
-    PT_END(pt);
-}
-
-void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task) {
-    pbio_task_init(task, start_data_advertising, NULL);
-    pbio_task_queue_add(task_queue, task);
-}
-
-/**
- * Sets advertising data.
- */
-static PT_THREAD(set_advertising_data(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
 
     PT_BEGIN(pt);
 
     // Set advertising data
-
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_updateAdvertistigData(GAP_AD_TYPE_ADVERTISEMNT_DATA, value->size, value->data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
+
+    if (!advertising_now) {
+        // start advertising
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        // HACK: for compatability with official RI software adv_type should be ADV_SCAN_IND
+        //  - ADV_SCAN_IND does not seem to advertise data at all,
+        //  - ADV_NONCONN_IND only advertises if  program is run over bluetooth (not when program in main.py)
+        //  - ADV_IND works both when program is run over bluetooth and in main.py
+        // current hack: use ADV_IND. This means transmit on technic/city hub is not compatible with official RI hubs.
+        GAP_makeDiscoverable(ADV_IND, GAP_INITIATOR_ADDR_TYPE_PUBLIC, NULL,
+            GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        // ignoring response data
+
+        advertising_now = true;
+    }
 
     task->status = PBIO_SUCCESS;
 
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_set_advertising_data(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
-    pbio_task_init(task, set_advertising_data, value);
+void pbdrv_bluetooth_start_data_advertising(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    pbio_task_init(task, start_data_advertising, value);
     pbio_task_queue_add(task_queue, task);
 }
 
