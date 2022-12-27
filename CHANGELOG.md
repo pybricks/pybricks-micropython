@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed some objects do not implement `__hash__` ([support#876]).
+
+[support#876]: https://github.com/pybricks/support/issues/876
+
 ## [3.2.1] - 2022-12-26
 
 ### Fixed
