@@ -28,7 +28,7 @@ include ../../micropython/py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = ../_common/qstrdefs.h
-QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/ev3rt/mpconfigport.h
+QSTR_GLOBAL_DEPENDENCIES = ../_common/mpconfigport.h
 
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1

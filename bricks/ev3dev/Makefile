@@ -40,7 +40,7 @@ PROG = pybricks-micropython
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = ../_common/qstrdefs.h
-QSTR_GLOBAL_DEPENDENCIES =
+QSTR_GLOBAL_DEPENDENCIES = brickconfig.h
 
 # OS name, for simple autoconfig
 UNAME_S := $(shell uname -s)

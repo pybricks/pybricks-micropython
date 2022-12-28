@@ -415,6 +415,7 @@ void pbdrv_imu_gyro_read(pbdrv_imu_dev_t* imu_dev, float* values) {
     values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->gyro_scale;
     values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->gyro_scale;
     values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->gyro_scale;
+
 }
 
 void pbdrv_imu_quaternion_read(pbdrv_imu_dev_t* imu_dev, float* values) {
@@ -430,7 +431,7 @@ void pbdrv_imu_reset_heading(pbdrv_imu_dev_t* imu_dev) {
     imu_dev->q[2] = 0;
     imu_dev->q[3] = 0;
 }
-// Gathers calibration data for CalibrationTime seconds assuming the gyro is stationary, returns the bias and sets bias offsets.
+// Starts gathering calibration data to correct for gyro bias
 void pbdrv_imu_start_gyro_calibration(pbdrv_imu_dev_t* imu_dev) {
     imu_dev->gyroBias[0] = 0;
     imu_dev->gyroBias[1] = 0;
@@ -439,7 +440,7 @@ void pbdrv_imu_start_gyro_calibration(pbdrv_imu_dev_t* imu_dev) {
     imu_dev->Calibrating = true;
 }
 
-// Gathers calibration data for CalibrationTime seconds assuming the gyro is stationary, returns the bias and sets bias offsets.
+// Stops the gyro calibration data collection, returns the bias values to the user and updates the gyro bias offsets.
 void pbdrv_imu_stop_gyro_calibration(pbdrv_imu_dev_t* imu_dev,float* values) {
     imu_dev->Calibrating = false;
     imu_dev->gyroBias[0] /= imu_dev->sampleCount;
@@ -451,7 +452,7 @@ void pbdrv_imu_stop_gyro_calibration(pbdrv_imu_dev_t* imu_dev,float* values) {
     values[2] = imu_dev->gyroBias[2];
 }
 
-// Gathers calibration data for CalibrationTime seconds, when the data has been collected it stores the offsets in the O
+// Sets the gyro bias values from user input.
 void pbdrv_imu_set_gyro_bias(pbdrv_imu_dev_t* imu_dev,float X,float Y,float Z) {
     imu_dev->gyroBias[0] = X;
     imu_dev->gyroBias[1] = Y;
@@ -462,6 +463,7 @@ void pbdrv_imu_set_gyro_bias(pbdrv_imu_dev_t* imu_dev,float X,float Y,float Z) {
 void pbdrv_imu_setMahonyGains(pbdrv_imu_dev_t* imu_dev,float Kp, float Ki) {
     imu_dev->Kp=Kp;
     imu_dev->Ki=Ki;
+
 }
 
 float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
