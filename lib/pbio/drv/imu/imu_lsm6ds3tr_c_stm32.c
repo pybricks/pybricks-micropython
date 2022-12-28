@@ -6,7 +6,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
+//#if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
@@ -459,7 +459,7 @@ void pbdrv_imu_set_gyro_bias(pbdrv_imu_dev_t* imu_dev,float X,float Y,float Z) {
 }
 
 
-void pbdrv_imu_setMahonyGains(pbdrv_imu_dev_t* imu_dev,float Kp, float Ki) {
+void pbdrv_imu_set_mahony_gains(pbdrv_imu_dev_t* imu_dev,float Kp, float Ki) {
     imu_dev->Kp=Kp;
     imu_dev->Ki=Ki;
 }

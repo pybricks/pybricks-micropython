@@ -61,7 +61,7 @@ void pbdrv_imu_reset_heading(pbdrv_imu_dev_t *imu_dev);
  * @param [in]  Kp          Proportional Gain
  * @param [in]  Ki          Integral Gain
  */
-void pbdrv_imu_setMahonyGains(pbdrv_imu_dev_t *imu_dev,float Kp,float Ki);
+void pbdrv_imu_set_mahony_gains(pbdrv_imu_dev_t *imu_dev,float Kp,float Ki);
 
 /**
  * Starts gyro calibration.
@@ -117,7 +117,7 @@ static inline void pbdrv_imu_start_gyro_calibration(pbdrv_imu_dev_t *imu_dev) {
 static inline void pbdrv_imu_set_gyro_bias(pbdrv_imu_dev_t* imu_dev,float X,float Y,float Z) {
 }
 
-static inline void pbdrv_imu_setMahonyGains(pbdrv_imu_dev_t *imu_dev,float Kp,float Ki){
+static inline void pbdrv_imu_set_mahony_gains(pbdrv_imu_dev_t *imu_dev,float Kp,float Ki){
 }
 
 static inline float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
