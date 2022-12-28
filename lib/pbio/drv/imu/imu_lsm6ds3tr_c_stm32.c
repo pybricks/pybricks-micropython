@@ -45,11 +45,14 @@ struct _pbdrv_imu_dev_t {
     float accel_scale;
     /** Raw data. */
     int16_t data[7];
-    float G_off[3]; //Gyroscope rate offset
+    float gyroBias[3]; //Gyroscope rate offset
     //quaternion estimation
     float q[4];
     uint32_t LastTime;
-    float beta;
+    float Ki;
+    float Kp;
+    uint32_t sampleCount;
+    bool Calibrating;
     /** Initialization state. */
     imu_init_state_t init_state;
 };
@@ -116,6 +119,74 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_read_reg(void *handle, uint8_t reg, uint
         // If there was an error, the interrupt will never come so we have to set the flag here.
         global_imu_dev.ctx.read_write_done = true;
     }
+}
+
+void Mahony_update(pbdrv_imu_dev_t *imu_dev,float ax, float ay, float az, float gx, float gy, float gz, float deltat) {
+  float recipNorm;
+  float vx, vy, vz;
+  float ex, ey, ez;  //error terms
+  float qa, qb, qc;
+  float q[4] = {imu_dev->q[0],imu_dev->q[1],imu_dev->q[2],imu_dev->q[3]};
+  static float ix = 0.0, iy = 0.0, iz = 0.0;  //integral feedback terms
+  float tmp;
+
+  // Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
+  tmp = ax * ax + ay * ay + az * az;
+  if (tmp > 0.0)
+  {
+
+    // Normalise accelerometer (assumed to measure the direction of gravity in body frame)
+    recipNorm = 1.0f / sqrtf(tmp);
+    ax *= recipNorm;
+    ay *= recipNorm;
+    az *= recipNorm;
+
+    // Estimated direction of gravity in the body frame (factor of two divided out)
+    vx = q[1] * q[3] - q[0] * q[2];
+    vy = q[0] * q[1] + q[2] * q[3];
+    vz = q[0] * q[0] - 0.5f + q[3] * q[3];
+
+    // Error is cross product between estimated and measured direction of gravity in body frame
+    // (half the actual magnitude)
+    ex = (ay * vz - az * vy);
+    ey = (az * vx - ax * vz);
+    ez = (ax * vy - ay * vx);
+
+    // Compute and apply to gyro term the integral feedback, if enabled
+    if (imu_dev->Ki > 0.0f) {
+      ix += imu_dev->Ki * ex * deltat;  // integral error scaled by Ki
+      iy += imu_dev->Ki * ey * deltat;
+      iz += imu_dev->Ki * ez * deltat;
+      gx += ix;  // apply integral feedback
+      gy += iy;
+      gz += iz;
+    }
+
+    // Apply proportional feedback to gyro term
+    gx += imu_dev->Kp * ex;
+    gy += imu_dev->Kp * ey;
+    gz += imu_dev->Kp * ez;
+  }
+
+  // Integrate rate of change of quaternion, q cross gyro term
+  deltat = 0.5 * deltat;
+  gx *= deltat;   // pre-multiply common factors
+  gy *= deltat;
+  gz *= deltat;
+  qa = imu_dev->q[0];
+  qb = imu_dev->q[1];
+  qc = imu_dev->q[2];
+  q[0] += (-qb * gx - qc * gy - q[3] * gz);
+  q[1] += (qa * gx + qc * gz - q[3] * gy);
+  q[2] += (qa * gy - qb * gz + q[3] * gx);
+  q[3] += (qa * gz + qb * gy - qc * gx);
+
+  // renormalise quaternion
+  recipNorm = 1.0 / sqrtf(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+  imu_dev->q[0] = q[0] * recipNorm;
+  imu_dev->q[1] = q[1] * recipNorm;
+  imu_dev->q[2] = q[2] * recipNorm;
+  imu_dev->q[3] = q[3] * recipNorm;
 }
 
 static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
@@ -188,14 +259,17 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     imu_dev->gyro_scale = lsm6ds3tr_c_from_fs1000dps_to_mdps(1) / 1000.0f;
 
     //Sets initial values for Orientation estimation 
-    imu_dev->G_off[0] = 0;
-    imu_dev->G_off[1] = 0;
-    imu_dev->G_off[2] = 0;
+    imu_dev->gyroBias[0] = 0;
+    imu_dev->gyroBias[1] = 0;
+    imu_dev->gyroBias[2] = 0;
     imu_dev->q[0] = 1;
     imu_dev->q[1] = 0;
     imu_dev->q[2] = 0;
     imu_dev->q[3] = 0;
-    imu_dev->beta = sqrtf(3.0 / 4.0)*0.698132;
+    imu_dev->Kp = 10;
+    imu_dev->Ki = 1;
+    imu_dev->Calibrating = false;
+
     imu_dev->LastTime = pbdrv_clock_get_us();
     /*
      * Configure filtering chain(No aux interface)
@@ -276,81 +350,27 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
         imu_dev->LastTime = Current;
 
         float a[3]; //Scaled Accelerometer value array
-        
         float g[3]; //Scaled Gyro value array
-        
-
-        //User friendly Active Gyro Bias Calibration
-        //sqrtf(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
-
+    
         //Gets scaled IMU values
         pbdrv_imu_accel_read(imu_dev,a);
         pbdrv_imu_gyro_read(imu_dev,g);
 
-        // Converts gyro values from deg/s to radians/s and applies Gyrometer offset
-        for(int i = 0; i<3; i++)
+        if (imu_dev->Calibrating)
         {
-            g[i]=g[i]*0.0174532925f - imu_dev->G_off[i];
-        }
+            imu_dev->gyroBias[0]+=g[0];
+            imu_dev->gyroBias[1]+=g[1];
+            imu_dev->gyroBias[2]+=g[2];
+            imu_dev->sampleCount +=1;
 
-        //Local copy of quaternion estimate
-        float q1=imu_dev->q[0];
-        float q2=imu_dev->q[1];
-        float q3=imu_dev->q[2];
-        float q4=imu_dev->q[3];
-        
-        // Auxiliary variables to avoid repeated arithmetic
-        float _2q1 = 2.0f * q1;
-        float _2q2 = 2.0f * q2;
-        float _2q3 = 2.0f * q3;
-        float _2q4 = 2.0f * q4;
-        float _4q1 = 4.0f * q1;
-        float _4q2 = 4.0f * q2;
-        float _4q3 = 4.0f * q3;
-        float _8q2 = 8.0f * q2;
-        float _8q3 = 8.0f * q3;
-        float q1q1 = q1 * q1;
-        float q2q2 = q2 * q2;
-        float q3q3 = q3 * q3;
-        float q4q4 = q4 * q4;
-
-        // Normalise accelerometer measurement
-        float norm = sqrtf(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-        if (norm != 0){
-            norm = (float)1.0f / (float)norm;        // use reciprocal for division
-            a[0] *= norm;
-            a[1] *= norm;
-            a[2] *= norm;
-
-            // Gradient decent algorithm corrective step
-            float s1 = _4q1 * q3q3 + _2q3 * a[0] + _4q1 * q2q2 - _2q2 * a[1];
-            float s2 = _4q2 * q4q4 - _2q4 * a[0] + 4 * q1q1 * q2 - _2q1 * a[1] - _4q2 + _8q2 * q2q2 + _8q2 * q3q3 + _4q2 * a[2];
-            float s3 = 4 * q1q1 * q3 + _2q1 * a[0] + _4q3 * q4q4 - _2q4 * a[1] - _4q3 + _8q3 * q2q2 + _8q3 * q3q3 + _4q3 * a[2];
-            float s4 = 4 * q2q2 * q4 - _2q2 * a[0] + 4 * q3q3 * q4 - _2q3 * a[1];
-            norm = 1 / sqrtf(s1 * s1 + s2 * s2 + s3 * s3 + s4 * s4);    // normalise step magnitude
-            s1 *= norm;
-            s2 *= norm;
-            s3 *= norm;
-            s4 *= norm;
-
-            // Compute rate of change of quaternion
-            float qDot1 = 0.5 * (-q2 * g[0] - q3 * g[1] - q4 * g[2]) - imu_dev->beta * s1;
-            float qDot2 = 0.5 * (q1 * g[0] + q3 * g[2] - q4 * g[1]) - imu_dev->beta * s2;
-            float qDot3 = 0.5 * (q1 * g[1] - q2 * g[2] + q4 * g[0]) - imu_dev->beta * s3;
-            float qDot4 = 0.5 * (q1 * g[2] + q2 * g[1] - q3 * g[0]) - imu_dev->beta * s4;
-
-            // Integrate to yield quaternion
-            q1 += qDot1 * dt;
-            q2 += qDot2 * dt;
-            q3 += qDot3 * dt;
-            q4 += qDot4 * dt;
-
-            norm = 1 / sqrtf(q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4);    // normalise quaternion result
-
-            imu_dev->q[0] = q1 * norm;
-            imu_dev->q[1] = q2 * norm;
-            imu_dev->q[2] = q3 * norm;
-            imu_dev->q[3] = q4 * norm;
+        }else
+        {
+            // Converts gyro values from deg/s to radians/s and applies Gyrometer offset
+            for(int i = 0; i<3; i++)
+            {
+                g[i]=(g[i]-imu_dev->gyroBias[i])*0.0174532925f;
+            }
+            Mahony_update(imu_dev,a[0],a[1],a[2],g[0],g[1],g[2],dt);
         }
     }
 
@@ -410,7 +430,39 @@ void pbdrv_imu_reset_heading(pbdrv_imu_dev_t* imu_dev) {
     imu_dev->q[2] = 0;
     imu_dev->q[3] = 0;
 }
+// Gathers calibration data for CalibrationTime seconds assuming the gyro is stationary, returns the bias and sets bias offsets.
+void pbdrv_imu_start_gyro_calibration(pbdrv_imu_dev_t* imu_dev) {
+    imu_dev->gyroBias[0] = 0;
+    imu_dev->gyroBias[1] = 0;
+    imu_dev->gyroBias[2] = 0;
+    imu_dev->sampleCount = 0;
+    imu_dev->Calibrating = true;
+}
 
+// Gathers calibration data for CalibrationTime seconds assuming the gyro is stationary, returns the bias and sets bias offsets.
+void pbdrv_imu_stop_gyro_calibration(pbdrv_imu_dev_t* imu_dev,float* values) {
+    imu_dev->Calibrating = false;
+    imu_dev->gyroBias[0] /= imu_dev->sampleCount;
+    imu_dev->gyroBias[1] /= imu_dev->sampleCount;
+    imu_dev->gyroBias[2] /= imu_dev->sampleCount;
+
+    values[0] = imu_dev->gyroBias[0];
+    values[1] = imu_dev->gyroBias[1];
+    values[2] = imu_dev->gyroBias[2];
+}
+
+// Gathers calibration data for CalibrationTime seconds, when the data has been collected it stores the offsets in the O
+void pbdrv_imu_set_gyro_bias(pbdrv_imu_dev_t* imu_dev,float X,float Y,float Z) {
+    imu_dev->gyroBias[0] = X;
+    imu_dev->gyroBias[1] = Y;
+    imu_dev->gyroBias[2] = Z;
+}
+
+
+void pbdrv_imu_setMohonyGains(pbdrv_imu_dev_t* imu_dev,float Kp, float Ki) {
+    imu_dev->Kp=Kp;
+    imu_dev->Ki=Ki;
+}
 
 float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
     return lsm6ds3tr_c_from_lsb_to_celsius(imu_dev->data[6]);
