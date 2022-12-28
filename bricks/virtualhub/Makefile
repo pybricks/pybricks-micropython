@@ -27,4 +27,5 @@ endif
 		BUILD=../../../bricks/virtualhub/$(BUILD_DIR) \
 		PROG=../../../bricks/virtualhub/$(BUILD_DIR)/virtualhub-micropython \
 		QSTR_DEFS=../../../bricks/_common/qstrdefs.h \
+		QSTR_GLOBAL_DEPENDENCIES=../../../bricks/virtualhub/mpconfigvariant.h \
 		$@

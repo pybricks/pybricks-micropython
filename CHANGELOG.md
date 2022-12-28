@@ -5,6 +5,15 @@
 ## [Unreleased]
 
 ### Fixed
+
+- Fixed some objects do not implement `__hash__` ([support#876]).
+
+[support#876]: https://github.com/pybricks/support/issues/876
+
+## [3.2.1] - 2022-12-26
+
+### Fixed
+
 - Fixed `imu.angular_velocity` returning the values of `imu.acceleration`.
 
 [support#885]: https://github.com/pybricks/support/issues/885
@@ -443,7 +452,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...HEAD
+[3.2.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...v3.2.0
 [3.2.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...v3.2.0c1
 [3.2.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...v3.2.0b6
