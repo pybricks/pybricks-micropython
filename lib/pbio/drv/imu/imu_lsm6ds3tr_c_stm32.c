@@ -7,7 +7,7 @@
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
-
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -45,6 +45,11 @@ struct _pbdrv_imu_dev_t {
     float accel_scale;
     /** Raw data. */
     int16_t data[7];
+    float G_off[3]; //Gyroscope rate offset
+    //quaternion estimation
+    float q[4];
+    uint32_t LastTime;
+    float beta;
     /** Initialization state. */
     imu_init_state_t init_state;
 };
@@ -77,6 +82,7 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
     process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
 }
+
 
 /**
  * Reset the I2C peripheral.
@@ -181,6 +187,16 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_1000dps));
     imu_dev->gyro_scale = lsm6ds3tr_c_from_fs1000dps_to_mdps(1) / 1000.0f;
 
+    //Sets initial values for Orientation estimation 
+    imu_dev->G_off[0] = 0;
+    imu_dev->G_off[1] = 0;
+    imu_dev->G_off[2] = 0;
+    imu_dev->q[0] = 1;
+    imu_dev->q[1] = 0;
+    imu_dev->q[2] = 0;
+    imu_dev->q[3] = 0;
+    imu_dev->beta = sqrtf(3.0 / 4.0)*0.698132;
+    imu_dev->LastTime = pbdrv_clock_get_us();
     /*
      * Configure filtering chain(No aux interface)
      */
@@ -213,7 +229,6 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
 PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     pbdrv_imu_dev_t *imu_dev = &global_imu_dev;
     I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
-
     static struct pt child;
     static uint8_t buf[6];
 
@@ -228,6 +243,7 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
         PROCESS_EXIT();
     }
 
+    
     for (;;) {
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_acceleration_raw_get(&child, &imu_dev->ctx, buf));
 
@@ -251,6 +267,90 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
             memcpy(&imu_dev->data[6], buf, 2);
         } else {
             pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+        }
+
+
+        // Gets the time between loops of the estimate code
+        uint32_t Current = pbdrv_clock_get_us();
+        float dt = (float)(Current -  imu_dev->LastTime)/(float)1000000.0f;
+        imu_dev->LastTime = Current;
+
+        float a[3]; //Scaled Accelerometer value array
+        
+        float g[3]; //Scaled Gyro value array
+        
+
+        //User friendly Active Gyro Bias Calibration
+        //sqrtf(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
+
+        //Gets scaled IMU values
+        pbdrv_imu_accel_read(imu_dev,a);
+        pbdrv_imu_gyro_read(imu_dev,g);
+
+        // Converts gyro values from deg/s to radians/s and applies Gyrometer offset
+        for(int i = 0; i<3; i++)
+        {
+            g[i]=g[i]*0.0174532925f - imu_dev->G_off[i];
+        }
+
+        //Local copy of quaternion estimate
+        float q1=imu_dev->q[0];
+        float q2=imu_dev->q[1];
+        float q3=imu_dev->q[2];
+        float q4=imu_dev->q[3];
+        
+        // Auxiliary variables to avoid repeated arithmetic
+        float _2q1 = 2.0f * q1;
+        float _2q2 = 2.0f * q2;
+        float _2q3 = 2.0f * q3;
+        float _2q4 = 2.0f * q4;
+        float _4q1 = 4.0f * q1;
+        float _4q2 = 4.0f * q2;
+        float _4q3 = 4.0f * q3;
+        float _8q2 = 8.0f * q2;
+        float _8q3 = 8.0f * q3;
+        float q1q1 = q1 * q1;
+        float q2q2 = q2 * q2;
+        float q3q3 = q3 * q3;
+        float q4q4 = q4 * q4;
+
+        // Normalise accelerometer measurement
+        float norm = sqrtf(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+        if (norm != 0){
+            norm = (float)1.0f / (float)norm;        // use reciprocal for division
+            a[0] *= norm;
+            a[1] *= norm;
+            a[2] *= norm;
+
+            // Gradient decent algorithm corrective step
+            float s1 = _4q1 * q3q3 + _2q3 * a[0] + _4q1 * q2q2 - _2q2 * a[1];
+            float s2 = _4q2 * q4q4 - _2q4 * a[0] + 4 * q1q1 * q2 - _2q1 * a[1] - _4q2 + _8q2 * q2q2 + _8q2 * q3q3 + _4q2 * a[2];
+            float s3 = 4 * q1q1 * q3 + _2q1 * a[0] + _4q3 * q4q4 - _2q4 * a[1] - _4q3 + _8q3 * q2q2 + _8q3 * q3q3 + _4q3 * a[2];
+            float s4 = 4 * q2q2 * q4 - _2q2 * a[0] + 4 * q3q3 * q4 - _2q3 * a[1];
+            norm = 1 / sqrtf(s1 * s1 + s2 * s2 + s3 * s3 + s4 * s4);    // normalise step magnitude
+            s1 *= norm;
+            s2 *= norm;
+            s3 *= norm;
+            s4 *= norm;
+
+            // Compute rate of change of quaternion
+            float qDot1 = 0.5 * (-q2 * g[0] - q3 * g[1] - q4 * g[2]) - imu_dev->beta * s1;
+            float qDot2 = 0.5 * (q1 * g[0] + q3 * g[2] - q4 * g[1]) - imu_dev->beta * s2;
+            float qDot3 = 0.5 * (q1 * g[1] - q2 * g[2] + q4 * g[0]) - imu_dev->beta * s3;
+            float qDot4 = 0.5 * (q1 * g[2] + q2 * g[1] - q3 * g[0]) - imu_dev->beta * s4;
+
+            // Integrate to yield quaternion
+            q1 += qDot1 * dt;
+            q2 += qDot2 * dt;
+            q3 += qDot3 * dt;
+            q4 += qDot4 * dt;
+
+            norm = 1 / sqrtf(q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4);    // normalise quaternion result
+
+            imu_dev->q[0] = q1 * norm;
+            imu_dev->q[1] = q2 * norm;
+            imu_dev->q[2] = q3 * norm;
+            imu_dev->q[3] = q4 * norm;
         }
     }
 
@@ -296,6 +396,21 @@ void pbdrv_imu_gyro_read(pbdrv_imu_dev_t* imu_dev, float* values) {
     values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->gyro_scale;
     values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->gyro_scale;
 }
+
+void pbdrv_imu_quaternion_read(pbdrv_imu_dev_t* imu_dev, float* values) {
+    values[0] = imu_dev->q[0];
+    values[1] = imu_dev->q[1];
+    values[2] = imu_dev->q[2];
+    values[3] = imu_dev->q[3];
+}
+
+void pbdrv_imu_reset_heading(pbdrv_imu_dev_t* imu_dev) {
+    imu_dev->q[0] = 1;
+    imu_dev->q[1] = 0;
+    imu_dev->q[2] = 0;
+    imu_dev->q[3] = 0;
+}
+
 
 float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
     return lsm6ds3tr_c_from_lsb_to_celsius(imu_dev->data[6]);

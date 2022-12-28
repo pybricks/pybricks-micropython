@@ -43,6 +43,20 @@ void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values);
 void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values);
 
 /**
+ * Reads the current IMU estimate quaternion in deg/s.
+ * @param [in]  imu_dev     The IMU device instance.
+ * @param [out] values      An array of 4 32-bit float values to hold the result.
+ */
+void pbdrv_imu_quaternion_read(pbdrv_imu_dev_t *imu_dev, float *values);
+
+/**
+ * resets the current IMU estimate.
+ * @param [in]  imu_dev     The IMU device instance.
+ * @param [out] values      An array of 4 32-bit float values to hold the result.
+ */
+void pbdrv_imu_reset_heading(pbdrv_imu_dev_t *imu_dev);
+
+/**
  * Reads the current IMU temperature in deg C.
  * @param [in]  imu_dev     The IMU device instance.
  * @returns                 The temperature value.
@@ -59,6 +73,12 @@ static inline void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values)
 }
 
 static inline void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
+}
+
+static inline void pbdrv_imu_quaternion_read(pbdrv_imu_dev_t *imu_dev, float *values) {
+}
+
+static inline void pbdrv_imu_reset_heading(pbdrv_imu_dev_t *imu_dev, float *values) {
 }
 
 static inline float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {

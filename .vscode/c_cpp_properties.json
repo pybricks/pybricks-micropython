@@ -86,7 +86,7 @@
                 "-Wextra",
                 "-Wno-unused-parameter",
                 "-Wdouble-promotion",
-                "-nostdlib",
+                "-nostdlib"
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"
@@ -362,7 +362,6 @@
                 "MICROPY_MODULE_FROZEN_MPY",
                 "MPZ_DIG_SIZE=16",
                 "MICROPY_MODULE_FROZEN_STR"
-
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
@@ -410,7 +409,8 @@
             "defines": [
                 "UNIX"
             ],
-            "cStandard": "c11"
+            "cStandard": "c11",
+            "configurationProvider": "ms-vscode.makefile-tools"
         }
     ],
     "version": 4

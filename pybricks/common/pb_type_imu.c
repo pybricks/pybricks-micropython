@@ -176,6 +176,25 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 
+// pybricks._common.IMU.gyro
+STATIC mp_obj_t common_IMU_quaternion(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    float values[4];
+    pbdrv_imu_quaternion_read(self->imu_dev, values);
+
+    return pb_type_Matrix_make_vector(4, values, false);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_quaternion_obj, common_IMU_quaternion);
+
+// pybricks._common.IMU.gyro
+STATIC mp_obj_t common_IMU_reset_heading(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbdrv_imu_reset_heading(self->imu_dev);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_reset_heading_obj, common_IMU_reset_heading);
+
 // HACK: this is for testing and will be removed
 STATIC mp_obj_t common_IMU_temp(mp_obj_t self_in) {
     common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -189,6 +208,8 @@ STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
+    { MP_ROM_QSTR(MP_QSTR_quaternion),       MP_ROM_PTR(&common_IMU_quaternion_obj)},
+    { MP_ROM_QSTR(MP_QSTR_reset_heading),    MP_ROM_PTR(&common_IMU_reset_heading_obj)},
     // HACK: this is for testing and will be removed
     { MP_ROM_QSTR(MP_QSTR_temp), MP_ROM_PTR(&common_IMU_temp_obj)},
 };
