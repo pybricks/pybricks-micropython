@@ -6,7 +6,7 @@
 
 #include <pbdrv/config.h>
 
-//#if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
+#if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
 #include <math.h>
 #include <stdint.h>
 #include <string.h>

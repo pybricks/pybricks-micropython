@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "stm32l4xx_ll_i2c.h": "c"
+    }
+}
