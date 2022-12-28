@@ -196,7 +196,7 @@ STATIC mp_obj_t common_IMU_quaternion(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_quaternion_obj, common_IMU_quaternion);
 
-// pybricks._common.IMU.setMohonyGains
+// pybricks._common.IMU.setMahonyGains
 STATIC mp_obj_t common_IMU_start_gyro_calibration(mp_obj_t self_in) {
     common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbdrv_imu_start_gyro_calibration(self->imu_dev);
@@ -216,7 +216,7 @@ STATIC mp_obj_t common_IMU_stop_gyro_calibration(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stop_gyro_calibration_obj, common_IMU_stop_gyro_calibration);
 
-// pybricks._common.IMU.setMohonyGains
+// pybricks._common.IMU.setMahonyGains
 STATIC mp_obj_t common_IMU_set_gyro_bias(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_IMU_obj_t, self,
@@ -238,16 +238,16 @@ STATIC mp_obj_t common_IMU_reset_heading(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_reset_heading_obj, common_IMU_reset_heading);
 
-// pybricks._common.IMU.setMohonyGains
-STATIC mp_obj_t common_IMU_setMohonyGains(mp_obj_t self_in,mp_obj_t MP_Kp,mp_obj_t MP_Ki) {
+// pybricks._common.IMU.setMahonyGains
+STATIC mp_obj_t common_IMU_setMahonyGains(mp_obj_t self_in,mp_obj_t MP_Kp,mp_obj_t MP_Ki) {
     common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_float_t Kp = mp_obj_get_float(MP_Kp);
     mp_float_t Ki = mp_obj_get_float(MP_Ki);
 
-    pbdrv_imu_setMohonyGains(self->imu_dev,Kp,Ki);
+    pbdrv_imu_setMahonyGains(self->imu_dev,Kp,Ki);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(common_IMU_setMohonyGains_obj, common_IMU_setMohonyGains);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(common_IMU_setMahonyGains_obj, common_IMU_setMahonyGains);
 
 
 
@@ -270,7 +270,7 @@ STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reset_heading),           MP_ROM_PTR(&common_IMU_reset_heading_obj)           },
     { MP_ROM_QSTR(MP_QSTR_set_gyro_bias),           MP_ROM_PTR(&common_IMU_set_gyro_bias_obj)           },
     { MP_ROM_QSTR(MP_QSTR_stop_gyro_calibration),   MP_ROM_PTR(&common_IMU_stop_gyro_calibration_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_setMohonyGains),          MP_ROM_PTR(&common_IMU_setMohonyGains_obj)          },
+    { MP_ROM_QSTR(MP_QSTR_setMahonyGains),          MP_ROM_PTR(&common_IMU_setMahonyGains_obj)          },
     { MP_ROM_QSTR(MP_QSTR_start_gyro_calibration),  MP_ROM_PTR(&common_IMU_start_gyro_calibration_obj)  },
     // HACK: this is for testing and will be removed
     { MP_ROM_QSTR(MP_QSTR_temp), MP_ROM_PTR(&common_IMU_temp_obj)},

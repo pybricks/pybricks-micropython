@@ -266,8 +266,8 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     imu_dev->q[1] = 0;
     imu_dev->q[2] = 0;
     imu_dev->q[3] = 0;
-    imu_dev->Kp = 10;
-    imu_dev->Ki = 1;
+    imu_dev->Kp = 50;
+    imu_dev->Ki = 0;
     imu_dev->Calibrating = false;
 
     imu_dev->LastTime = pbdrv_clock_get_us();
@@ -459,7 +459,7 @@ void pbdrv_imu_set_gyro_bias(pbdrv_imu_dev_t* imu_dev,float X,float Y,float Z) {
 }
 
 
-void pbdrv_imu_setMohonyGains(pbdrv_imu_dev_t* imu_dev,float Kp, float Ki) {
+void pbdrv_imu_setMahonyGains(pbdrv_imu_dev_t* imu_dev,float Kp, float Ki) {
     imu_dev->Kp=Kp;
     imu_dev->Ki=Ki;
 }
