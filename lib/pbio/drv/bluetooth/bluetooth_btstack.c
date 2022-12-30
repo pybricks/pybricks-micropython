@@ -309,7 +309,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(packet);
             uint8_t data_length = gap_event_advertising_report_get_data_length(packet);
             const uint8_t *data = gap_event_advertising_report_get_data(packet);
-            uint8_t rssi = gap_event_advertising_report_get_rssi(packet);
+            int8_t rssi = gap_event_advertising_report_get_rssi(packet);
             bd_addr_t address;
 
             gap_event_advertising_report_get_address(packet, address);
