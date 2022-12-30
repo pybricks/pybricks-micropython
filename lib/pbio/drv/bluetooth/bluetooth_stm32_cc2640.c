@@ -18,6 +18,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/gpio.h>
+#include <pbdrv/clock.h>
 #include <pbio/broadcast.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>
@@ -1883,7 +1884,10 @@ PROCESS_THREAD(pbdrv_bluetooth_broadcast_process, ev, data) {
             PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
         }
 
-        etimer_set(&timer, 30);
+        // Scan for an interval of 15-35ms
+        // An intended pseudorandom variation is implemented to prevent full
+        // synchronization with other hubs that periodically scan/advertise
+        etimer_set(&timer, 15 + pbdrv_clock_get_us() % 20);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
 
@@ -1903,7 +1907,11 @@ PROCESS_THREAD(pbdrv_bluetooth_broadcast_process, ev, data) {
             PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
         }
 
-        etimer_set(&timer, 20);
+
+        // Advertis for an interval of 15-35ms
+        // An intended pseudorandom variation is implemented to prevent full
+        // synchronization with other hubs that periodically scan/advertise
+        etimer_set(&timer, 15 + pbdrv_clock_get_us() % 20);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
     }
 
