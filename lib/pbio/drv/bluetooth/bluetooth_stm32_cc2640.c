@@ -44,7 +44,7 @@
 
 #include STM32_HAL_H
 #if defined(STM32L4)
-#define DEBUG 2
+#define DEBUG 0
 #endif
 #if DEBUG == 1
 #include <stdio.h>
