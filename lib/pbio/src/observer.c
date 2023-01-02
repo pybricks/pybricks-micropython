@@ -168,8 +168,16 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     // keep it in sync with the real system.
     voltage += feedback_voltage;
 
-    // The only modeled torque is a static friction torque.
-    int32_t torque = obs->speed > 0 ? m->torque_friction / 2: -m->torque_friction / 2;
+    // Modified coulomb friction with transition linear in speed through origin.
+    const int32_t cutoff = 500;
+    int32_t coulomb_friction = pbio_int_math_sign(obs->speed) * (
+        pbio_int_math_abs(obs->speed) > cutoff ?
+        m->torque_friction:
+        pbio_int_math_abs(obs->speed) * m->torque_friction / cutoff
+        );
+
+    // Total torque equals friction plus any known external torques (currently none).
+    int32_t torque = coulomb_friction;
 
     // Get next state based on current state and input: x(k+1) = Ax(k) + Bu(k)
     pbio_angle_add_mdeg(&obs->angle,
@@ -188,8 +196,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
         PRESCALE_VOLTAGE * voltage / m->d_current_d_voltage +
         PRESCALE_TORQUE * torque / m->d_current_d_torque, MAX_NUM_CURRENT);
 
-    // TODO: Better friction model.
-    if ((speed_next < 0) != (speed_next - PRESCALE_TORQUE * torque / m->d_speed_d_torque < 0)) {
+    if ((speed_next < 0) != (speed_next - PRESCALE_TORQUE * coulomb_friction / m->d_speed_d_torque < 0)) {
         speed_next = 0;
     }
 
