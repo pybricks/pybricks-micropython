@@ -92,7 +92,7 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
         // fully stuck (where applied voltage equals feedback).
         -feedback_voltage > (voltage * 3) / 4 &&
         // Feedback voltage is nonnegligible, i.e. larger than friction torque.
-        voltage > 5 * pbio_observer_torque_to_voltage(obs->model, obs->model->torque_friction)
+        voltage > 5 * pbio_observer_torque_to_voltage(obs->model, obs->model->torque_friction / 2)
         ) {
         // If this is the rising edge of the stall flag, reset start time.
         if (!obs->stalled) {
@@ -157,7 +157,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     voltage += feedback_voltage;
 
     // The only modeled torque is a static friction torque.
-    int32_t torque = obs->speed > 0 ? m->torque_friction: -m->torque_friction;
+    int32_t torque = obs->speed > 0 ? m->torque_friction / 2: -m->torque_friction / 2;
 
     // Get next state based on current state and input: x(k+1) = Ax(k) + Bu(k)
     pbio_angle_add_mdeg(&obs->angle,
@@ -207,7 +207,7 @@ bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_
 
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref) {
 
-    int32_t friction_compensation_torque = model->torque_friction * pbio_int_math_sign(rate_ref);
+    int32_t friction_compensation_torque = model->torque_friction / 2 * pbio_int_math_sign(rate_ref);
     int32_t back_emf_compensation_torque = PRESCALE_SPEED * pbio_int_math_clamp(rate_ref, MAX_NUM_SPEED) / model->d_torque_d_speed;
     int32_t acceleration_torque = PRESCALE_ACCELERATION * pbio_int_math_clamp(acceleration_ref, MAX_NUM_ACCELERATION) / model->d_torque_d_acceleration;
 

@@ -190,7 +190,7 @@ def make_model(name, *, V, tau_0, tau_x, w_0, w_x, i_0, i_x, a, Lm, h, gain):
             .d_torque_d_voltage = {round(PRESCALE_VOLTAGE / dtau_dv.subs(model).evalf())},
             .d_torque_d_speed = {round(PRESCALE_SPEED / dtau_dw.subs(model).evalf())},
             .d_torque_d_acceleration = {round(PRESCALE_ACCELERATION / dtau_da.subs(model).evalf())},
-            .torque_friction = {round(tau_s * c_tau / 2)},
+            .torque_friction = {round(tau_s * c_tau)},
             .gain = {gain},
         }};"""
     )

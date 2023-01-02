@@ -30,7 +30,7 @@ static const pbio_observer_model_t model_technic_s_angular = {
     .d_torque_d_voltage = 17203,
     .d_torque_d_speed = 12282,
     .d_torque_d_acceleration = 354592,
-    .torque_friction = 4591,
+    .torque_friction = 9182,
     .gain = 500,
 };
 
@@ -51,7 +51,7 @@ static const pbio_observer_model_t model_technic_m_angular = {
     .d_torque_d_voltage = 8071,
     .d_torque_d_speed = 5903,
     .d_torque_d_acceleration = 163151,
-    .torque_friction = 10707,
+    .torque_friction = 21413,
     .gain = 2000,
 };
 
@@ -72,7 +72,7 @@ static const pbio_observer_model_t model_technic_l_angular = {
     .d_torque_d_voltage = 2872,
     .d_torque_d_speed = 1919,
     .d_torque_d_acceleration = 40344,
-    .torque_friction = 11620,
+    .torque_friction = 23239,
     .gain = 4000,
 };
 
@@ -93,7 +93,7 @@ static const pbio_observer_model_t model_interactive = {
     .d_torque_d_voltage = 11923,
     .d_torque_d_speed = 10599,
     .d_torque_d_acceleration = 207820,
-    .torque_friction = 5613,
+    .torque_friction = 11227,
     .gain = 2000,
 };
 
@@ -114,7 +114,7 @@ static const pbio_observer_model_t model_technic_l = {
     .d_torque_d_voltage = 6110,
     .d_torque_d_speed = 6837,
     .d_torque_d_acceleration = 108520,
-    .torque_friction = 13215,
+    .torque_friction = 26430,
     .gain = 1500,
 };
 
@@ -135,7 +135,7 @@ static const pbio_observer_model_t model_technic_xl = {
     .d_torque_d_voltage = 6908,
     .d_torque_d_speed = 7713,
     .d_torque_d_acceleration = 116867,
-    .torque_friction = 6446,
+    .torque_friction = 12893,
     .gain = 2000,
 };
 
@@ -158,7 +158,7 @@ static const pbio_observer_model_t model_movehub = {
     .d_torque_d_voltage = 8438,
     .d_torque_d_speed = 10851,
     .d_torque_d_acceleration = 155017,
-    .torque_friction = 12417,
+    .torque_friction = 24835,
     .gain = 2000,
 };
 
@@ -185,7 +185,7 @@ static const pbio_observer_model_t model_ev3_l = {
     .d_torque_d_voltage = 3587,
     .d_torque_d_speed = 2083,
     .d_torque_d_acceleration = 19838,
-    .torque_friction = 8238,
+    .torque_friction = 16476,
     .gain = 4000,
 };
 
@@ -206,7 +206,7 @@ static const pbio_observer_model_t model_ev3_m = {
     .d_torque_d_voltage = 8051,
     .d_torque_d_speed = 7365,
     .d_torque_d_acceleration = 94428,
-    .torque_friction = 9159,
+    .torque_friction = 18317,
     .gain = 2000,
 };
 
