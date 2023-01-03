@@ -12,8 +12,8 @@
 
 #define PBDRV_CONFIG_COUNTER                                (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                        (6)
-#define PBDRV_CONFIG_COUNTER_VIRTUAL                        (1)
-#define PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV                (6)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_CPYTHON                (1)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_CPYTHON_NUM_DEV        (6)
 
 #define PBDRV_CONFIG_IOPORT                                 (1)
 #define PBDRV_CONFIG_IOPORT_VIRTUAL                         (1)

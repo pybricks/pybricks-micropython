@@ -96,21 +96,21 @@ class VirtualCounter:
     @property
     def rotations(self):
         """
-        Provides rotations for ``pbdrv_counter_virtual_get_angle()``.
+        Provides rotations for ``pbdrv_counter_virtual_cpython_get_angle()``.
         """
         return self.get_counter_data()[0]
 
     @property
     def millidegrees(self):
         """
-        Provides rotations for ``pbdrv_counter_virtual_get_angle()``.
+        Provides rotations for ``pbdrv_counter_virtual_cpython_get_angle()``.
         """
         return self.get_counter_data()[1]
 
     @property
     def millidegrees_abs(self):
         """
-        Provides the value for ``pbdrv_counter_virtual_get_abs_angle()``.
+        Provides the value for ``pbdrv_counter_virtual_cpython_get_abs_angle()``.
         """
         return self.get_counter_data()[2]
 

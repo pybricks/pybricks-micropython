@@ -5,7 +5,7 @@
 class VirtualCounter:
     rotations: int = 0
     """
-    Provides the rotations returned by ``pbdrv_counter_virtual_get_angle()``.
+    Provides the rotations returned by ``pbdrv_counter_virtual_cpython_get_angle()``.
 
     CPython code should write to this attribute to simulate the current value
     and the PBIO driver will read this attribute.
@@ -13,7 +13,7 @@ class VirtualCounter:
 
     millidegrees: int = 0
     """
-    Provides the millidegrees returned by ``pbdrv_counter_virtual_get_angle()``.
+    Provides the millidegrees returned by ``pbdrv_counter_virtual_cpython_get_angle()``.
 
     CPython code should write to this attribute to simulate the current value
     and the PBIO driver will read this attribute.
@@ -21,7 +21,7 @@ class VirtualCounter:
 
     millidegrees_abs: int = 0
     """
-    Provides the absolute angle returned by ``pbdrv_counter_virtual_get_abs_angle()``.
+    Provides the absolute angle returned by ``pbdrv_counter_virtual_cpython_get_abs_angle()``.
 
     CPython code should write to this attribute to simulate the current value
     and the PBIO driver will read this attribute.

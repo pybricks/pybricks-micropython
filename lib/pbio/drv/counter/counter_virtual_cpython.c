@@ -5,7 +5,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_COUNTER_VIRTUAL
+#if PBDRV_CONFIG_COUNTER_VIRTUAL_CPYTHON
 
 #include <errno.h>
 #include <stdint.h>
@@ -29,9 +29,9 @@ typedef struct {
     uint8_t index;
 } private_data_t;
 
-static private_data_t private_data[PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV];
+static private_data_t private_data[PBDRV_CONFIG_COUNTER_VIRTUAL_CPYTHON_NUM_DEV];
 
-static pbio_error_t pbdrv_counter_virtual_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+static pbio_error_t pbdrv_counter_virtual_cpython_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     private_data_t *priv = dev->priv;
 
     pbio_error_t err = pbdrv_virtual_get_i32("counter", priv->index, "rotations", rotations);
@@ -42,18 +42,18 @@ static pbio_error_t pbdrv_counter_virtual_get_angle(pbdrv_counter_dev_t *dev, in
     return pbdrv_virtual_get_i32("counter", priv->index, "millidegrees", millidegrees);
 }
 
-static pbio_error_t pbdrv_counter_virtual_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
+static pbio_error_t pbdrv_counter_virtual_cpython_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
     private_data_t *priv = dev->priv;
 
     return pbdrv_virtual_get_i32("counter", priv->index, "millidegrees_abs", millidegrees);
 }
 
-static const pbdrv_counter_funcs_t pbdrv_counter_virtual_funcs = {
-    .get_angle = pbdrv_counter_virtual_get_angle,
-    .get_abs_angle = pbdrv_counter_virtual_get_abs_angle,
+static const pbdrv_counter_funcs_t pbdrv_counter_virtual_cpython_funcs = {
+    .get_angle = pbdrv_counter_virtual_cpython_get_angle,
+    .get_abs_angle = pbdrv_counter_virtual_cpython_get_abs_angle,
 };
 
-void pbdrv_counter_virtual_init(pbdrv_counter_dev_t *devs) {
+void pbdrv_counter_virtual_cpython_init(pbdrv_counter_dev_t *devs) {
     for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
         private_data_t *priv = &private_data[i];
 
@@ -62,13 +62,13 @@ void pbdrv_counter_virtual_init(pbdrv_counter_dev_t *devs) {
         // FIXME: assuming that these are the only counter devices
         // counter_id should be passed from platform data instead
         // i.e. enumerate CPython `platform.counter.keys()`.
-        _Static_assert(PBDRV_CONFIG_COUNTER_VIRTUAL_NUM_DEV == PBDRV_CONFIG_COUNTER_NUM_DEV,
-            "need to fix counter_virtual implementation to allow other counter devices");
+        _Static_assert(PBDRV_CONFIG_COUNTER_VIRTUAL_CPYTHON_NUM_DEV == PBDRV_CONFIG_COUNTER_NUM_DEV,
+            "need to fix counter_virtual_cpython implementation to allow other counter devices");
 
         priv->dev = &devs[i];
-        priv->dev->funcs = &pbdrv_counter_virtual_funcs;
+        priv->dev->funcs = &pbdrv_counter_virtual_cpython_funcs;
         priv->dev->priv = priv;
     }
 }
 
-#endif // PBDRV_CONFIG_COUNTER_VIRTUAL
+#endif // PBDRV_CONFIG_COUNTER_VIRTUAL_CPYTHON
