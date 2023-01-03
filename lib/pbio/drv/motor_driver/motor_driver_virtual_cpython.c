@@ -3,7 +3,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL
+#if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_CPYTHON
 
 #include <stdint.h>
 
@@ -44,4 +44,4 @@ void pbdrv_motor_driver_init(void) {
     }
 }
 
-#endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL
+#endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_CPYTHON
