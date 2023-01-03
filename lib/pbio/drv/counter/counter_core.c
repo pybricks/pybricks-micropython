@@ -16,6 +16,7 @@
 #include "counter_stm32f0_gpio_quad_enc.h"
 #include "counter_test.h"
 #include "counter_virtual_cpython.h"
+#include "counter_virtual_simulation.h"
 #include "counter.h"
 
 static pbdrv_counter_dev_t pbdrv_counter_devs[PBDRV_CONFIG_COUNTER_NUM_DEV];
@@ -27,6 +28,7 @@ void pbdrv_counter_init(void) {
     pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_devs);
     pbdrv_counter_test_init(pbdrv_counter_devs);
     pbdrv_counter_virtual_cpython_init(pbdrv_counter_devs);
+    pbdrv_counter_virtual_simulation_init(pbdrv_counter_devs);
 }
 
 pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
