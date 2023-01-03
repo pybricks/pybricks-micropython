@@ -152,10 +152,5 @@ class SimulationModel(ABC):
             ratio = (time - self.times[i - 1]) / (self.times[i] - self.times[i - 1])
             return self.outputs[:, i - 1] + ratio * (self.outputs[:, i] - self.outputs[:, i - 1])
 
-        # If time is farther into the future than our tolerance, simulate up
-        # to the given time. Otherwise we avoid simulating negligible time.
-        if time > self.times[-1] + tolerance:
-            self.simulate(time)
-
         # Return latest available data.
         return self.outputs[:, -1]
