@@ -14,8 +14,6 @@
 #include <pbio/int_math.h>
 #include <test-pbio.h>
 
-#include "../src/processes.h"
-
 // Motor driver implementation
 
 typedef enum {
