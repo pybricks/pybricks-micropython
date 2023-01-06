@@ -223,7 +223,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
                 // a stationary endpoint, convert it to a stationary angle
                 // based command and hold it.
                 if (pbio_control_type_is_time(ctl) && ref_end.speed == 0) {
-                    int32_t target = pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref->position);
+                    int32_t target = pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position);
                     pbio_control_start_position_control_hold(ctl, time_now, target);
                 }
                 break;

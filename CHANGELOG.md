@@ -6,8 +6,10 @@
 
 ### Fixed
 - Fixed some objects do not implement `__hash__` ([support#876]).
+- Fixed `Motor.run_time` not completing under load ([support#903]).
 
 [support#876]: https://github.com/pybricks/support/issues/876
+[support#903]: https://github.com/pybricks/support/issues/903
 
 ## [3.2.1] - 2022-12-26
 
