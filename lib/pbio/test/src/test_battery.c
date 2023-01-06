@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-#include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
