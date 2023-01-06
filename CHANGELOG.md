@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.2.2] - 2023-01-06
+
 ### Fixed
 - Fixed some objects do not implement `__hash__` ([support#876]).
 - Fixed `Motor.run_time` not completing under load ([support#903]).
@@ -452,7 +454,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...HEAD
+[3.2.2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...v3.2.2
 [3.2.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...v3.2.0
 [3.2.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...v3.2.0c1
