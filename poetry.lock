@@ -490,8 +490,8 @@ python-versions = ">=3.6"
 smmap = ">=3.0.1,<6"
 
 [[package]]
-name = "GitPython"
-version = "3.1.29"
+name = "gitpython"
+version = "3.1.30"
 description = "GitPython is a python library used to interact with Git repositories"
 category = "dev"
 optional = false
@@ -1749,7 +1749,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.10,<3.11"
-content-hash = "69e26f0025be09f6830b6dddf20247593801225ae213eefac298f72fb455600e"
+content-hash = "3d680706804a2b22add6f49a1430695c645a105df7c04fffae40d76ac5d75b53"
 
 [metadata.files]
 aioserial = [
@@ -2154,9 +2154,9 @@ gitdb = [
     {file = "gitdb-4.0.9-py3-none-any.whl", hash = "sha256:8033ad4e853066ba6ca92050b9df2f89301b8fc8bf7e9324d412a63f8bf1a8fd"},
     {file = "gitdb-4.0.9.tar.gz", hash = "sha256:bac2fd45c0a1c9cf619e63a90d62bdc63892ef92387424b855792a6cabe789aa"},
 ]
-GitPython = [
-    {file = "GitPython-3.1.29-py3-none-any.whl", hash = "sha256:41eea0deec2deea139b459ac03656f0dd28fc4a3387240ec1d3c259a2c47850f"},
-    {file = "GitPython-3.1.29.tar.gz", hash = "sha256:cc36bfc4a3f913e66805a28e84703e419d9c264c1077e537b54f0e1af85dbefd"},
+gitpython = [
+    {file = "GitPython-3.1.30-py3-none-any.whl", hash = "sha256:cd455b0000615c60e286208ba540271af9fe531fa6a87cc590a7298785ab2882"},
+    {file = "GitPython-3.1.30.tar.gz", hash = "sha256:769c2d83e13f5d938b7688479da374c4e3d49f71549aaf462b646db9602ea6f8"},
 ]
 gql = [
     {file = "gql-3.0.0b0.tar.gz", hash = "sha256:5456fb32c36db4be98c3c9f7f2631104671b9cd249d739260ec61682130d6687"},
