@@ -28,7 +28,7 @@ print(
         a=math.radians(880 / 0.04),
         Lm=0.0008 * 30,
         h=0.005,
-        gain=500,
+        feedback_gain=48,
     )
 )
 
@@ -46,7 +46,7 @@ print(
         a=math.radians(920 / 0.035),
         Lm=0.0008 * 30,
         h=0.005,
-        gain=2000,
+        feedback_gain=90,
     )
 )
 
@@ -64,7 +64,7 @@ print(
         a=math.radians(800 / 0.04),
         Lm=0.0004 * 30,
         h=0.005,
-        gain=4000,
+        feedback_gain=64,
     )
 )
 
@@ -83,7 +83,7 @@ print(
         a=math.radians(3000 / 0.1),
         Lm=0.0002 * 30,
         h=0.005,
-        gain=2000,
+        feedback_gain=133,
     )
 )
 
@@ -101,7 +101,7 @@ print(
         a=math.radians(3000 / 0.1),
         Lm=0.0003 * 30,
         h=0.005,
-        gain=1500,
+        feedback_gain=51,
     )
 )
 
@@ -119,7 +119,7 @@ print(
         a=math.radians(3000 / 0.1),
         Lm=0.0002 * 30,
         h=0.005,
-        gain=2000,
+        feedback_gain=77,
     )
 )
 
@@ -139,7 +139,7 @@ print(
         a=math.radians(3000 / 0.1),
         Lm=0.0002 * 30,
         h=0.005,
-        gain=2000,
+        feedback_gain=94,
     )
 )
 
@@ -163,7 +163,7 @@ print(
         a=math.radians(1000 / 0.1),
         Lm=0.0005 * 30,
         h=0.005,
-        gain=4000,
+        feedback_gain=80,
     )
 )
 
@@ -181,7 +181,7 @@ print(
         a=math.radians(2000 / 0.1),
         Lm=0.0005 * 30,
         h=0.005,
-        gain=2000,
+        feedback_gain=90,
     )
 )
 print("\n#endif // PBIO_CONFIG_SERVO_EV3_NXT")

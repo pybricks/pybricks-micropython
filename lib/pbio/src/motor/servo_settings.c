@@ -31,7 +31,7 @@ static const pbio_observer_model_t model_technic_s_angular = {
     .d_torque_d_speed = 12282,
     .d_torque_d_acceleration = 354592,
     .torque_friction = 9182,
-    .gain = 500,
+    .feedback_gain = 48,
 };
 
 static const pbio_observer_model_t model_technic_m_angular = {
@@ -52,7 +52,7 @@ static const pbio_observer_model_t model_technic_m_angular = {
     .d_torque_d_speed = 5903,
     .d_torque_d_acceleration = 163151,
     .torque_friction = 21413,
-    .gain = 2000,
+    .feedback_gain = 90,
 };
 
 static const pbio_observer_model_t model_technic_l_angular = {
@@ -73,7 +73,7 @@ static const pbio_observer_model_t model_technic_l_angular = {
     .d_torque_d_speed = 1919,
     .d_torque_d_acceleration = 40344,
     .torque_friction = 23239,
-    .gain = 4000,
+    .feedback_gain = 64,
 };
 
 static const pbio_observer_model_t model_interactive = {
@@ -94,7 +94,7 @@ static const pbio_observer_model_t model_interactive = {
     .d_torque_d_speed = 10599,
     .d_torque_d_acceleration = 207820,
     .torque_friction = 11227,
-    .gain = 2000,
+    .feedback_gain = 133,
 };
 
 static const pbio_observer_model_t model_technic_l = {
@@ -115,7 +115,7 @@ static const pbio_observer_model_t model_technic_l = {
     .d_torque_d_speed = 6837,
     .d_torque_d_acceleration = 108520,
     .torque_friction = 26430,
-    .gain = 1500,
+    .feedback_gain = 51,
 };
 
 static const pbio_observer_model_t model_technic_xl = {
@@ -136,7 +136,7 @@ static const pbio_observer_model_t model_technic_xl = {
     .d_torque_d_speed = 7713,
     .d_torque_d_acceleration = 116867,
     .torque_friction = 12893,
-    .gain = 2000,
+    .feedback_gain = 77,
 };
 
 #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
@@ -159,7 +159,7 @@ static const pbio_observer_model_t model_movehub = {
     .d_torque_d_speed = 10851,
     .d_torque_d_acceleration = 155017,
     .torque_friction = 24835,
-    .gain = 2000,
+    .feedback_gain = 94,
 };
 
 #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
@@ -186,7 +186,7 @@ static const pbio_observer_model_t model_ev3_l = {
     .d_torque_d_speed = 2083,
     .d_torque_d_acceleration = 19838,
     .torque_friction = 16476,
-    .gain = 4000,
+    .feedback_gain = 80,
 };
 
 static const pbio_observer_model_t model_ev3_m = {
@@ -207,7 +207,7 @@ static const pbio_observer_model_t model_ev3_m = {
     .d_torque_d_speed = 7365,
     .d_torque_d_acceleration = 94428,
     .torque_friction = 18317,
-    .gain = 2000,
+    .feedback_gain = 90,
 };
 
 #endif // PBIO_CONFIG_SERVO_EV3_NXT

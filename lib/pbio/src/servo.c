@@ -724,7 +724,8 @@ pbio_error_t pbio_servo_get_load(pbio_servo_t *srv, int32_t *load) {
             return err;
         }
         // Use observer error as a measure of torque.
-        *load = pbio_observer_get_feedback_torque(&srv->observer, &angle);
+        int32_t feedback_voltage = pbio_observer_get_feedback_voltage(&srv->observer, &angle);
+        *load = pbio_observer_voltage_to_torque(srv->observer.model, feedback_voltage);
     }
 
     // Convert to user torque units (mNm).

@@ -40,9 +40,9 @@ typedef struct _pbio_observer_model_t {
     int32_t d_torque_d_acceleration;
     int32_t torque_friction;
     /**
-     * Control gain to correct the observer for a given estimation error.
+     * Feedback gain (mV/deg) to correct the observer for a given estimation error.
      */
-    int32_t gain;
+    int32_t feedback_gain;
 } pbio_observer_model_t;
 
 /**
@@ -93,7 +93,7 @@ void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings
 void pbio_observer_get_estimated_state(const pbio_observer_t *obs, int32_t *speed_num, pbio_angle_t *angle_est, int32_t *speed_est);
 void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_t *angle, pbio_dcmotor_actuation_t actuation, int32_t voltage);
 bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration);
-int32_t pbio_observer_get_feedback_torque(pbio_observer_t *obs, const pbio_angle_t *angle);
+int32_t pbio_observer_get_feedback_voltage(pbio_observer_t *obs, const pbio_angle_t *angle);
 
 // Model conversion functions:
 
