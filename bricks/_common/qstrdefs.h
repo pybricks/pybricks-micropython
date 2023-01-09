@@ -3,8 +3,6 @@
 
 #include "py/mpconfig.h"
 
-Q(stop button pressed)
-
 #if !PYBRICKS_HUB_MOVEHUB
 Q(Li-ion)
 #endif
