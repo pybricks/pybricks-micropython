@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+- Added `close()` method to `DCMotor` and `Motor` so they can be closed and
+  re-initialized later.
+
+[support#904]: https://github.com/pybricks/support/issues/904
+
 ## [3.2.2] - 2023-01-06
 
 ### Fixed

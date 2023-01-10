@@ -61,6 +61,30 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
 }
 
 /**
+ * Stops and closes DC motor instance so it can be used in another application.
+ *
+ * @param [in]  dcmotor     The DC motor instance.
+ * @return                  Error code.
+ */
+pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor) {
+
+    // Coast the motor and remember error.
+    pbio_error_t stop_err = pbio_dcmotor_coast(dcmotor);
+
+    // Stop its parents and reset parent objects to free up this motor
+    // for use in new objects, even if stopping has failed.
+    pbio_error_t parent_err = pbio_parent_stop(&dcmotor->parent, true);
+
+    // Return original error corresponding to stopping the motor.
+    if (stop_err != PBIO_SUCCESS) {
+        return stop_err;
+    }
+
+    // Return error of trying to stop parent structure.
+    return parent_err;
+}
+
+/**
  * Sets up the DC motor instance to be used in an application.
  *
  * @param [in]  dcmotor     The DC motor instance.
