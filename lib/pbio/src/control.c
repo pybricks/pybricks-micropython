@@ -74,6 +74,14 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pb
     return pbio_int_math_abs(position_remaining) <= ctl->settings.position_tolerance;
 }
 
+static void pbio_control_status_set(pbio_control_t *ctl, pbio_control_status_flag_t flag, bool set) {
+    ctl->status = set ? ctl->status | flag : ctl->status & ~flag;
+}
+
+static bool pbio_control_status_test(pbio_control_t *ctl, pbio_control_status_flag_t flag) {
+    return ctl->status & flag;
+}
+
 /**
  * Updates the PID controller state to calculate the next actuation step.
  *
@@ -163,19 +171,21 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
         }
     }
 
-    // Check if controller is stalled
-    ctl->stalled = pbio_control_type_is_position(ctl) ?
+    // Check if controller is stalled, and set the status.
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED,
+        pbio_control_type_is_position(ctl) ?
         pbio_position_integrator_stalled(&ctl->position_integrator, time_now, state->speed, ref->speed) :
-        pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed, ref->speed);
+        pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed, ref->speed));
 
-    // Check if we are on target
-    ctl->on_target = pbio_control_check_completion(ctl, ref->time, state, &ref_end);
+    // Check if we are on target, and set the status.
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET,
+        pbio_control_check_completion(ctl, ref->time, state, &ref_end));
 
     // Save (low-pass filtered) load for diagnostics
     ctl->pid_average = (ctl->pid_average * (100 - PBIO_CONFIG_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONFIG_CONTROL_LOOP_TIME_MS) / 100;
 
     // Decide actuation based on whether control is on target.
-    if (!ctl->on_target) {
+    if (!pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET)) {
         // If we're not on target yet, we keep actuating with
         // the PID torque value that has just been calculated.
         *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
@@ -241,7 +251,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
             // Column 3: Speed in application units.
             pbio_control_settings_ctl_to_app(&ctl->settings, state->speed),
             // Column 4: Actuation type (LSB 0--1), stall state (LSB 2), on target (LSB 3).
-            *actuation | (ctl->stalled << 2) | (ctl->on_target << 3),
+            (*actuation | ctl->status << 2),
             // Column 5: Actuation payload, e.g. torque.
             *control,
             // Column 6: Reference position in application units.
@@ -271,8 +281,8 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
  */
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
-    ctl->on_target = true;
-    ctl->stalled = false;
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET, true);
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED, false);
     ctl->pid_average = 0;
 }
 
@@ -298,7 +308,7 @@ static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now
 
     // Reset done state. It will get the correct value during the next control
     // update. REVISIT: Evaluate it here.
-    ctl->on_target = false;
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET, false);
 
     // Exit if control type already set.
     if (ctl->type == type) {
@@ -307,7 +317,7 @@ static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now
 
     // Reset stall state. It will get the correct value during the next control
     // update. REVISIT: Evaluate it here.
-    ctl->stalled = false;
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED, false);
 
     // Reset integrator for new control type.
     if (type == PBIO_CONTROL_POSITION) {
@@ -680,7 +690,7 @@ bool pbio_control_type_is_time(pbio_control_t *ctl) {
 bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration) {
 
     // Return false if no control is active or if we're not stalled.
-    if (!pbio_control_is_active(ctl) || !ctl->stalled) {
+    if (!pbio_control_is_active(ctl) || !pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_STALLED)) {
         *stall_duration = 0;
         return false;
     }
@@ -701,5 +711,5 @@ bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration) {
  * @return                      True if the controller is done, false if not.
  */
 bool pbio_control_is_done(pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_NONE || ctl->on_target;
+    return ctl->type == PBIO_CONTROL_NONE || pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET);
 }

@@ -22,8 +22,6 @@
 #include <pbio/integrator.h>
 #include <pbio/logger.h>
 
-#include <pbio/iodev.h>
-
 // Number of values per row when control data logger is active.
 #define PBIO_CONTROL_LOGGER_NUM_COLS (12)
 
@@ -94,6 +92,16 @@ typedef enum {
 } pbio_control_type_t;
 
 /**
+ * Flags to indicate control status.
+ */
+typedef enum {
+    /** The controller is stalled. */
+    PBIO_CONTROL_STATUS_STALLED  = 1 << 0,
+    /** The control command is complete. */
+    PBIO_CONTROL_STATUS_ON_TARGET = 1 << 1,
+} pbio_control_status_flag_t;
+
+/**
  * Controller status and state.
  */
 typedef struct _pbio_control_t {
@@ -132,14 +140,9 @@ typedef struct _pbio_control_t {
      */
     int32_t pid_average;
     /**
-     * Flag that says whether the controller is currently stalled.
+     * Control state flags such as being on target and/or being stalled.
      */
-    bool stalled;
-    /**
-     * Flag that says whether the controller is currently on target, as given
-     * by the endpoint of the trajectory that is being followed.
-     */
-    bool on_target;
+    pbio_control_status_flag_t status;
 } pbio_control_t;
 
 // Time functions:
