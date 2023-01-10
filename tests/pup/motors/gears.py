@@ -54,6 +54,7 @@ real_angle = motor.angle()
 # Test expected result.
 for gears in test_args:
     # Initialize motors with new settings.
+    motor.close()
     motor = Motor(Port.A, gears=gears)
 
     # Get expected and measured value.
