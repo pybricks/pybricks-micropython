@@ -28,8 +28,28 @@ STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_wait_obj, 0, tools_wait);
 
+STATIC bool _pb_module_tools_run_loop_is_active;
+
+bool pb_module_tools_run_loop_is_active() {
+    return _pb_module_tools_run_loop_is_active;
+}
+
+STATIC mp_obj_t pb_module_tools___init__(void) {
+    _pb_module_tools_run_loop_is_active = false;
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_0(pb_module_tools___init___obj, pb_module_tools___init__);
+
+STATIC mp_obj_t pb_module_tools_set_run_loop_active(mp_obj_t self_in) {
+    _pb_module_tools_run_loop_is_active = mp_obj_is_true(self_in);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_module_tools_set_run_loop_active_obj, pb_module_tools_set_run_loop_active);
+
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)      },
+    { MP_ROM_QSTR(MP_QSTR___init__),    MP_ROM_PTR(&pb_module_tools___init___obj)},
+    { MP_ROM_QSTR(MP_QSTR__set_run_loop_active), MP_ROM_PTR(&pb_module_tools_set_run_loop_active_obj)},
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&tools_wait_obj)     },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)  },
     #if MICROPY_PY_BUILTINS_FLOAT

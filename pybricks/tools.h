@@ -10,6 +10,8 @@
 
 #include "py/obj.h"
 
+bool pb_module_tools_run_loop_is_active();
+
 extern const mp_obj_type_t pb_type_StopWatch;
 
 #endif // PYBRICKS_PY_TOOLS
