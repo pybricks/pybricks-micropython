@@ -95,13 +95,13 @@ MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_write_obj, 1, iodevices_LUMPDevi
 
 STATIC const pb_attr_dict_entry_t iodevices_LUMPDevice_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ID, iodevices_LUMPDevice_obj_t, id),
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.iodevices.LUMPDevice)
 STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_LUMPDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_LUMPDevice_write_obj)},
-    PB_ATTRIBUTE_TABLE(iodevices_LUMPDevice_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevice_locals_dict_table);
 
@@ -110,6 +110,7 @@ const mp_obj_type_t pb_type_iodevices_LUMPDevice = {
     { &mp_type_type },
     .make_new = iodevices_LUMPDevice_make_new,
     .attr = pb_attribute_handler,
+    .protocol = iodevices_LUMPDevice_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&iodevices_LUMPDevice_locals_dict,
 };
 

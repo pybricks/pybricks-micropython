@@ -270,6 +270,7 @@ STATIC const pb_attr_dict_entry_t common_Control_attr_dict[] = {
     #if PYBRICKS_PY_COMMON_LOGGER
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Control_obj_t, logger),
     #endif // PYBRICKS_PY_COMMON_LOGGER
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.common.Control)
@@ -282,7 +283,6 @@ STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Control_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Control_load_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Control_stalled_obj) },
-    PB_ATTRIBUTE_TABLE(common_Control_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_dict_table);
 
@@ -291,6 +291,7 @@ const mp_obj_type_t pb_type_Control = {
     { &mp_type_type },
     .name = MP_QSTR_Control,
     .attr = pb_attribute_handler,
+    .protocol = common_Control_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
 };
 

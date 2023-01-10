@@ -140,6 +140,7 @@ STATIC const pb_attr_dict_entry_t ev3dev_Font_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_style, ev3dev_Font_obj_t, style),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_width, ev3dev_Font_obj_t, width),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_height, ev3dev_Font_obj_t, height),
+    PB_ATTR_DICT_SENTINEL
 };
 
 STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
@@ -147,7 +148,6 @@ STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ev3dev_Font___del___obj) },
     { MP_ROM_QSTR(MP_QSTR_text_width), MP_ROM_PTR(&ev3dev_Font_text_width_obj) },
     { MP_ROM_QSTR(MP_QSTR_text_height), MP_ROM_PTR(&ev3dev_Font_text_height_obj) },
-    PB_ATTRIBUTE_TABLE(ev3dev_Font_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Font_locals_dict, ev3dev_Font_locals_dict_table);
 
@@ -156,6 +156,7 @@ const mp_obj_type_t pb_type_ev3dev_Font = {
     .name = MP_QSTR_Font,
     .make_new = ev3dev_Font_make_new,
     .attr = pb_attribute_handler,
+    .protocol = ev3dev_Font_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
 };
 

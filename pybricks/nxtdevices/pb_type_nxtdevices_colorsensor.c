@@ -143,6 +143,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_color_obj, nxtdevices_Co
 
 STATIC const pb_attr_dict_entry_t nxtdevices_ColorSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, nxtdevices_ColorSensor_obj_t, light),
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.nxtdevices.ColorSensor)
@@ -153,7 +154,6 @@ STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&nxtdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_color),      MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj)                },
     { MP_ROM_QSTR(MP_QSTR_detectable_colors),  MP_ROM_PTR(&pb_ColorSensor_detectable_colors_obj)                    },
-    PB_ATTRIBUTE_TABLE(nxtdevices_ColorSensor_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
 
@@ -163,6 +163,7 @@ const mp_obj_type_t pb_type_nxtdevices_ColorSensor = {
     .name = MP_QSTR_ColorSensor,
     .make_new = nxtdevices_ColorSensor_make_new,
     .attr = pb_attribute_handler,
+    .protocol = nxtdevices_ColorSensor_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&nxtdevices_ColorSensor_locals_dict,
 };
 

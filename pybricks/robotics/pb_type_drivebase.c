@@ -290,6 +290,7 @@ STATIC const pb_attr_dict_entry_t robotics_DriveBase_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, robotics_DriveBase_obj_t, heading_control),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, robotics_DriveBase_obj_t, distance_control),
     #endif
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.robotics.DriveBase)
@@ -306,7 +307,6 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reset),            MP_ROM_PTR(&robotics_DriveBase_reset_obj)    },
     { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled),          MP_ROM_PTR(&robotics_DriveBase_stalled_obj)  },
-    PB_ATTRIBUTE_TABLE(robotics_DriveBase_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
@@ -316,6 +316,7 @@ const mp_obj_type_t pb_type_drivebase = {
     .name = MP_QSTR_DriveBase,
     .make_new = robotics_DriveBase_make_new,
     .attr = pb_attribute_handler,
+    .protocol = robotics_DriveBase_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
 };
 
