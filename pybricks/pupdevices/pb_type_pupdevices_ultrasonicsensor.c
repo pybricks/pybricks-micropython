@@ -59,13 +59,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_presence_obj, pupde
 
 STATIC const pb_attr_dict_entry_t pupdevices_UltrasonicSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_UltrasonicSensor_obj_t, lights),
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.pupdevices.UltrasonicSensor)
 STATIC const mp_rom_map_elem_t pupdevices_UltrasonicSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_distance),     MP_ROM_PTR(&pupdevices_UltrasonicSensor_distance_obj)              },
     { MP_ROM_QSTR(MP_QSTR_presence),     MP_ROM_PTR(&pupdevices_UltrasonicSensor_presence_obj)              },
-    PB_ATTRIBUTE_TABLE(pupdevices_UltrasonicSensor_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_UltrasonicSensor_locals_dict, pupdevices_UltrasonicSensor_locals_dict_table);
 
@@ -75,6 +75,7 @@ const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor = {
     .name = MP_QSTR_UltrasonicSensor,
     .make_new = pupdevices_UltrasonicSensor_make_new,
     .attr = pb_attribute_handler,
+    .protocol = pupdevices_UltrasonicSensor_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_locals_dict,
 };
 

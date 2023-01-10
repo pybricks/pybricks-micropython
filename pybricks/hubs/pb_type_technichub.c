@@ -49,19 +49,15 @@ STATIC const pb_attr_dict_entry_t hubs_TechnicHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_imu, hubs_TechnicHub_obj_t, imu),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_TechnicHub_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_TechnicHub_obj_t, system),
+    PB_ATTR_DICT_SENTINEL
 };
-
-STATIC const mp_rom_map_elem_t hubs_TechnicHub_locals_dict_table[] = {
-    PB_ATTRIBUTE_TABLE(hubs_TechnicHub_attr_dict),
-};
-STATIC MP_DEFINE_CONST_DICT(hubs_TechnicHub_locals_dict, hubs_TechnicHub_locals_dict_table);
 
 const mp_obj_type_t pb_type_ThisHub = {
     { &mp_type_type },
     .name = PYBRICKS_HUB_CLASS_NAME,
     .make_new = hubs_TechnicHub_make_new,
     .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&hubs_TechnicHub_locals_dict,
+    .protocol = hubs_TechnicHub_attr_dict,
 };
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_TECHNICHUB

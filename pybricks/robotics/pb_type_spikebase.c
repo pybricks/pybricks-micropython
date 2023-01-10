@@ -228,6 +228,7 @@ STATIC const pb_attr_dict_entry_t robotics_SpikeBase_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, robotics_SpikeBase_obj_t, heading_control),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, robotics_SpikeBase_obj_t, distance_control),
     #endif
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.robotics.SpikeBase)
@@ -239,7 +240,6 @@ STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_steering_move_for_time),    MP_ROM_PTR(&robotics_SpikeBase_steering_move_for_time_obj)    },
     { MP_ROM_QSTR(MP_QSTR_steering_move_forever),     MP_ROM_PTR(&robotics_SpikeBase_steering_move_forever_obj)     },
     { MP_ROM_QSTR(MP_QSTR_stop),                      MP_ROM_PTR(&robotics_SpikeBase_stop_obj)                      },
-    PB_ATTRIBUTE_TABLE(robotics_SpikeBase_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
 
@@ -249,6 +249,7 @@ const mp_obj_type_t pb_type_spikebase = {
     .name = MP_QSTR_SpikeBase,
     .make_new = robotics_SpikeBase_make_new,
     .attr = pb_attribute_handler,
+    .protocol = robotics_SpikeBase_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&robotics_SpikeBase_locals_dict,
 };
 

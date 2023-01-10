@@ -146,18 +146,12 @@ void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         }
     }
 
-    // Get locals map and the last row containing the attr table.
-    const mp_map_t *map = &((mp_obj_base_t *)MP_OBJ_TO_PTR(self_in))->type->locals_dict->map;
-    const mp_map_elem_t *row = &(map->table[map->alloc - 1]);
-
     // Get number of attributes and reference to attributes array.
-    assert(MP_OBJ_QSTR_VALUE(row->key) > MP_QSTRnumber_of);
-    uint8_t attr_dict_size = MP_OBJ_QSTR_VALUE(row->key) - MP_QSTRnumber_of;
-    pb_attr_dict_entry_t *attr_dict = row->value;
+    const pb_attr_dict_entry_t *attr_dict = type->protocol;
     const pb_attr_dict_entry_t *entry = NULL;
 
-    // Look up the attribute offset.
-    for (int i = 0; i < attr_dict_size; i++) {
+    // Look up the attribute offset. attr_dict is zero-terminated.
+    for (int i = 0; attr_dict[i].name; i++) {
         if (attr_dict[i].name == attr) {
             entry = &attr_dict[i];
             break;

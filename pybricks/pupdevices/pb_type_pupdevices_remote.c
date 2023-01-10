@@ -317,11 +317,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(remote_name_obj, 1, 2, remote_name);
 STATIC const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, pb_type_pupdevices_Remote_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, pb_type_pupdevices_Remote_obj_t, light),
+    PB_ATTR_DICT_SENTINEL
 };
 
 STATIC const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&remote_name_obj) },
-    PB_ATTRIBUTE_TABLE(pb_type_pupdevices_Remote_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);
 
@@ -330,6 +330,7 @@ const mp_obj_type_t pb_type_pupdevices_Remote = {
     .name = MP_QSTR_Remote,
     .make_new = pb_type_pupdevices_Remote_make_new,
     .attr = pb_attribute_handler,
+    .protocol = pb_type_pupdevices_Remote_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&pb_type_pupdevices_Remote_locals_dict,
 };
 

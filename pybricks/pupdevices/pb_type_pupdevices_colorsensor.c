@@ -154,6 +154,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSe
 
 STATIC const pb_attr_dict_entry_t pupdevices_ColorSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_ColorSensor_obj_t, lights),
+    PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.pupdevices.ColorSensor)
@@ -163,7 +164,6 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorSensor_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_detectable_colors),   MP_ROM_PTR(&pb_ColorSensor_detectable_colors_obj)                    },
-    PB_ATTRIBUTE_TABLE(pupdevices_ColorSensor_attr_dict),
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
@@ -173,6 +173,7 @@ const mp_obj_type_t pb_type_pupdevices_ColorSensor = {
     .name = MP_QSTR_ColorSensor,
     .make_new = pupdevices_ColorSensor_make_new,
     .attr = pb_attribute_handler,
+    .protocol = pupdevices_ColorSensor_attr_dict,
     .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_locals_dict,
 };
 

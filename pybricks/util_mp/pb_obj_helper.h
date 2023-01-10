@@ -46,16 +46,17 @@ typedef struct {
     uint8_t offset;
 } pb_attr_dict_entry_t;
 
+// pb_attr_dict_entry_t arrays must be zero-terminated
+#define PB_ATTR_DICT_SENTINEL {}
+
 // Generic entry of the attributes dictionary.
 #define PB_DEFINE_CONST_ATTR_RO(name_, type, field) {           \
         .name = (name_),                                        \
         .offset = offsetof(type, field),                        \
 }
 
-// Points to attributes dictionary. Must be the last entry of locals_dict.
-#define PB_ATTRIBUTE_TABLE(table) { MP_ROM_QSTR(MP_QSTRnumber_of + MP_ARRAY_SIZE(table)), MP_ROM_PTR(table) }
-
-// Attribute handler for any object that has an attribute dictionary.
+// Attribute handler for any object that has an attribute dictionary assigned
+// to the mp_obj_type_t protocol slot.
 void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest);
 
 #endif // PYBRICKS_INCLUDED_PBOBJ_H
