@@ -59,6 +59,12 @@ static void pbio_servo_update_loop_set_state(pbio_servo_t *srv, bool update) {
  * @return                  True if up and running, false if not.
  */
 bool pbio_servo_update_loop_is_running(pbio_servo_t *srv) {
+
+    // Servo must be the parent of its dc motor.
+    if (!pbio_parent_equals(&srv->dcmotor->parent, srv)) {
+        pbio_servo_update_loop_set_state(srv, false);
+    }
+
     return srv->run_update_loop;
 }
 

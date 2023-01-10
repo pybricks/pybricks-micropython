@@ -125,8 +125,17 @@ STATIC mp_obj_t common_DCMotor_dc_settings(size_t n_args, const mp_obj_t *pos_ar
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(common_DCMotor_dc_settings_obj, 1, common_DCMotor_dc_settings);
 
+// pybricks._common.DCMotor.close
+// pybricks._common.Motor.close
+STATIC mp_obj_t common_DCMotor_close(mp_obj_t self_in) {
+    pb_assert(pbio_dcmotor_close(get_dcmotor_from_object(self_in)));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_close_obj, common_DCMotor_close);
+
 // dir(pybricks.builtins.DCMotor)
 STATIC const mp_rom_map_elem_t common_DCMotor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&common_DCMotor_close_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&common_DCMotor_duty_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&common_DCMotor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&common_DCMotor_brake_obj) },
