@@ -6,9 +6,13 @@
 
 ### Added
 - Added `close()` method to `DCMotor` and `Motor` so they can be closed and
-  re-initialized later.
+  re-initialized later ([support#904]).
+
+### Fixed
+- Fixed `Light` controlling wrong ports on Move hub ([support#913]).
 
 [support#904]: https://github.com/pybricks/support/issues/904
+[support#913]: https://github.com/pybricks/support/issues/913
 
 ## [3.2.2] - 2023-01-06
 
