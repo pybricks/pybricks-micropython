@@ -201,9 +201,9 @@ void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty) {
     // is only valid on Powered Up platforms and it assumes that motor driver
     // id corresponds to the port.
 
-    #ifdef PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT
+    #ifdef PBDRV_CONFIG_FIRST_MOTOR_PORT
     pbdrv_motor_driver_dev_t *motor_driver;
-    pb_assert(pbdrv_motor_driver_get_dev(pbdev->iodev.port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT, &motor_driver));
+    pb_assert(pbdrv_motor_driver_get_dev(pbdev->iodev.port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &motor_driver));
 
     // Apply duty cycle in reverse to activate power
     pb_assert(pbdrv_motor_driver_set_duty_cycle(motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY * duty / 100));
