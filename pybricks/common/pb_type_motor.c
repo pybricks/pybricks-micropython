@@ -31,6 +31,7 @@ STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
 
     if (0 /*cancelled*/) {
         // TODO: Handle cancelled.
+        self->has_ended = true;
         return MP_OBJ_STOP_ITERATION;
     }
 
@@ -41,8 +42,12 @@ STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
 
     // First, handle normal case without stalling.
     if (self->stall_voltage_restore_value == -1) {
-        return pbio_control_is_done(&self->motor_obj->srv->control) ?
-               MP_OBJ_STOP_ITERATION : mp_const_none;
+        if (pbio_control_is_done(&self->motor_obj->srv->control)) {
+            self->has_ended = true;
+            return MP_OBJ_STOP_ITERATION;
+        }
+        // Not done, so keep going.
+        return mp_const_none;
     }
 
     // The remainder handles run_until_stalled. First, check stall state.
@@ -66,6 +71,7 @@ STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
     pb_assert(pbio_dcmotor_set_settings(self->motor_obj->srv->dcmotor, self->stall_voltage_restore_value));
 
     // Raise stop iteration with angle to return the final position.
+    self->has_ended = true;
     return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
 }
 
@@ -97,9 +103,19 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorWait,
     locals_dict, &pb_type_MotorWait_locals_dict);
 
 STATIC mp_obj_t pb_type_MotorWait_new_stalled(common_Motor_obj_t *motor_obj, int32_t stall_voltage_restore_value, int32_t stall_stop_type) {
-    pb_type_MotorWait_obj_t *self = m_new_obj(pb_type_MotorWait_obj_t);
+    // Find next available previously allocated awaitable.
+    pb_type_MotorWait_obj_t *self = &motor_obj->awaitable;
+    while (!self->has_ended && self->next_awaitable != MP_OBJ_NULL) {
+        self = self->next_awaitable;
+    }
+    // No free awaitable available, so allocate one.
+    if (!self->has_ended) {
+        self = m_new_obj(pb_type_MotorWait_obj_t);
+    }
     self->base.type = &pb_type_MotorWait;
     self->motor_obj = motor_obj;
+    self->next_awaitable = MP_OBJ_NULL;
+    self->has_ended = false;
     self->stall_stop_type = stall_stop_type;
     self->stall_voltage_restore_value = stall_voltage_restore_value;
     return MP_OBJ_FROM_PTR(self);
@@ -203,6 +219,9 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     common_Motor_obj_t *self = mp_obj_malloc(common_Motor_obj_t, type);
     self->srv = srv;
     self->port = port;
+
+    // Indicate that awaitable singleton is ready for re-use.
+    self->awaitable.has_ended = true;
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
