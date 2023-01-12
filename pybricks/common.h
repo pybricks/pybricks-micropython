@@ -119,7 +119,12 @@ struct _pb_type_MotorWait_obj_t {
      */
     pbio_control_on_completion_t stall_stop_type;
     /**
-     * Whether this generator object is done (and thus can be recycled.)
+     * Whether this generator object was cancelled.
+     */
+    bool was_cancelled;
+    /**
+     * Whether this generator object is done and thus can be recycled. This is
+     * when motion is complete or cancellation has been handled.
      */
     bool has_ended;
     /**
