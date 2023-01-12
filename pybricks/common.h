@@ -118,6 +118,14 @@ struct _pb_type_MotorWait_obj_t {
      * What to do once stalled. Only applicable for run_until_stalled.
      */
     pbio_control_on_completion_t stall_stop_type;
+    /**
+     * Whether this generator object is done (and thus can be recycled.)
+     */
+    bool has_ended;
+    /**
+     * Linked list of awaitables.
+     */
+    pb_type_MotorWait_obj_t *next_awaitable;
 };
 
 // pybricks._common.Motor()
@@ -134,6 +142,7 @@ struct _common_Motor_obj_t {
     mp_obj_t logger;
     #endif
     pbio_port_id_t port;
+    pb_type_MotorWait_obj_t awaitable;
 };
 
 extern const mp_obj_type_t pb_type_Motor;
