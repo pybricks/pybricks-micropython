@@ -351,14 +351,12 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     mp_int_t speed = pb_obj_get_int(speed_in);
     pbio_control_on_completion_t on_completion = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // If duty_limit argument given, limit duty during this maneuver.
-    bool override_max_voltage = duty_limit_in != mp_const_none;
+    // Read original voltage limit so we can restore it when we're done.
     int32_t max_voltage_old;
+    pbio_dcmotor_get_settings(self->srv->dcmotor, &max_voltage_old);
 
-    if (override_max_voltage) {
-        // Read original value so we can restore it when we're done
-        pbio_dcmotor_get_settings(self->srv->dcmotor, &max_voltage_old);
-
+    // If duty_limit argument given, limit duty during this maneuver.
+    if (duty_limit_in != mp_const_none) {
         // Internally, the use of a duty cycle limit has been deprecated and
         // replaced by a voltage limit. Since we can't break the user API, we
         // convert the user duty limit (0--100) to a voltage by scaling it with
@@ -369,53 +367,37 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, max_voltage));
     }
 
-    // Handle async await.
+    // Start moving.
+    pb_assert(pbio_servo_run_forever(self->srv, speed));
+
+    // Make generator for checking completion.
+    mp_obj_t gen = pb_type_MotorWait_new_stalled(self->srv, max_voltage_old, on_completion);
+
+    // Within run loop, just return the generator.
     if (pb_module_tools_run_loop_is_active()) {
-        pb_assert(pbio_servo_run_forever(self->srv, speed));
-        return pb_type_MotorWait_new_stalled(self->srv, max_voltage_old, on_completion);
+        return gen;
     }
 
-    // The remainder handles blocking case.
-    mp_obj_t ex = MP_OBJ_NULL;
+    // The remainder handles blocking case. It is wrapped in an nlr so
+    // we can restore the voltage limit if an exception occurs.
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        // Start moving forever.
-        pb_assert(pbio_servo_run_forever(self->srv, speed));
-
-        // Wait until the motor stalls or stops on failure.
-        uint32_t stall_duration;
-        while (!pbio_control_is_stalled(&self->srv->control, &stall_duration)) {
+        // Await the generator.
+        while (true) {
+            mp_obj_t next = pb_type_MotorWait_iternext(gen);
+            if (next != mp_const_none) {
+                mp_obj_t ret_val = MP_STATE_THREAD(stop_iteration_arg);
+                nlr_pop();
+                return ret_val;
+            }
+            // Not complete, keep waiting.
             mp_hal_delay_ms(5);
         }
-
-        // Assert that no errors happened in the update loop.
-        if (!pbio_servo_update_loop_is_running(self->srv)) {
-            pb_assert(PBIO_ERROR_NO_DEV);
-        }
-
-        nlr_pop();
     } else {
-        ex = MP_OBJ_FROM_PTR(nlr.ret_val);
+        pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor,
+            ((pb_type_MotorWait_obj_t *)MP_OBJ_TO_PTR(gen))->stall_voltage_restore_value));
+        nlr_raise(MP_OBJ_FROM_PTR(nlr.ret_val));
     }
-
-    // Restore original settings
-    if (override_max_voltage) {
-        pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, max_voltage_old));
-    }
-
-    if (ex != MP_OBJ_NULL) {
-        nlr_raise(ex);
-    }
-
-    // Read the angle upon completion of the stall maneuver
-    int32_t stall_angle, stall_speed;
-    pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
-
-    // Stop moving.
-    pb_assert(pbio_servo_stop(self->srv, on_completion));
-
-    // Return angle at which the motor stalled
-    return mp_obj_new_int(stall_angle);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_until_stalled_obj, 1, common_Motor_run_until_stalled);
 
