@@ -29,8 +29,9 @@
 STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
     pb_type_MotorWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    if (0 /*cancelled*/) {
-        // TODO: Handle cancelled.
+    if (self->was_cancelled) {
+        // Gracefully handle cancellation: Allow generator to complete
+        // and clean up but don't raise any exceptions.
         self->has_ended = true;
         return MP_OBJ_STOP_ITERATION;
     }
@@ -103,8 +104,16 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorWait,
     locals_dict, &pb_type_MotorWait_locals_dict);
 
 STATIC mp_obj_t pb_type_MotorWait_new_stalled(common_Motor_obj_t *motor_obj, int32_t stall_voltage_restore_value, int32_t stall_stop_type) {
-    // Find next available previously allocated awaitable.
+
+    // Cancel all generators belonging to this motor.
     pb_type_MotorWait_obj_t *self = &motor_obj->awaitable;
+    do {
+        self->was_cancelled = true;
+        self = self->next_awaitable;
+    } while (self != MP_OBJ_NULL);
+
+    // Find next available previously allocated awaitable.
+    self = &motor_obj->awaitable;
     while (!self->has_ended && self->next_awaitable != MP_OBJ_NULL) {
         self = self->next_awaitable;
     }
@@ -116,6 +125,7 @@ STATIC mp_obj_t pb_type_MotorWait_new_stalled(common_Motor_obj_t *motor_obj, int
     self->motor_obj = motor_obj;
     self->next_awaitable = MP_OBJ_NULL;
     self->has_ended = false;
+    self->was_cancelled = false;
     self->stall_stop_type = stall_stop_type;
     self->stall_voltage_restore_value = stall_voltage_restore_value;
     return MP_OBJ_FROM_PTR(self);
