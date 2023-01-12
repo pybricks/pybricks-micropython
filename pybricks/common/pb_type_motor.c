@@ -76,16 +76,22 @@ STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
     return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
 }
 
+// Cancel all generators belonging to this motor.
+STATIC void pb_type_MotorWait_cancel_all(common_Motor_obj_t *motor_obj) {
+    pb_type_MotorWait_obj_t *self = &motor_obj->first_awaitable;
+    do {
+        self->was_cancelled = true;
+        self = self->next_awaitable;
+    } while (self != MP_OBJ_NULL);
+}
+
 // The close() method is used to cancel an operation before it completes. If
 // the operation is already complete, it should do nothing. It can be called
 // more than once.
 STATIC mp_obj_t pb_type_MotorWait_close(mp_obj_t self_in) {
     pb_type_MotorWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    // REVISIT: We only need to call an explicit stop if a task is cancelled
-    // by something other than a motor.
+    pb_type_MotorWait_cancel_all(self->motor_obj);
     pb_assert(pbio_dcmotor_user_command(self->motor_obj->srv->dcmotor, true, 0));
-
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_MotorWait_close_obj, pb_type_MotorWait_close);
@@ -105,29 +111,33 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorWait,
 
 STATIC mp_obj_t pb_type_MotorWait_new_stalled(common_Motor_obj_t *motor_obj, int32_t stall_voltage_restore_value, int32_t stall_stop_type) {
 
-    // Cancel all generators belonging to this motor.
-    pb_type_MotorWait_obj_t *self = &motor_obj->awaitable;
-    do {
-        self->was_cancelled = true;
-        self = self->next_awaitable;
-    } while (self != MP_OBJ_NULL);
+    // Cancel everything for this motor.
+    pb_type_MotorWait_cancel_all(motor_obj);
 
     // Find next available previously allocated awaitable.
-    self = &motor_obj->awaitable;
+    pb_type_MotorWait_obj_t *self = &motor_obj->first_awaitable;
     while (!self->has_ended && self->next_awaitable != MP_OBJ_NULL) {
         self = self->next_awaitable;
     }
     // No free awaitable available, so allocate one.
     if (!self->has_ended) {
-        self = m_new_obj(pb_type_MotorWait_obj_t);
+        // Attach to the previous one.
+        self->next_awaitable = m_new_obj(pb_type_MotorWait_obj_t);
+
+        // Initialize the new awaitable.
+        self = self->next_awaitable;
+        self->next_awaitable = MP_OBJ_NULL;
+        self->base.type = &pb_type_MotorWait;
     }
-    self->base.type = &pb_type_MotorWait;
+
+    // Initialize what to await on.
     self->motor_obj = motor_obj;
-    self->next_awaitable = MP_OBJ_NULL;
     self->has_ended = false;
     self->was_cancelled = false;
     self->stall_stop_type = stall_stop_type;
     self->stall_voltage_restore_value = stall_voltage_restore_value;
+
+    // Return the awaitable where the user can await it.
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -230,8 +240,10 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->srv = srv;
     self->port = port;
 
-    // Indicate that awaitable singleton is ready for re-use.
-    self->awaitable.has_ended = true;
+    // Initialize first awaitable singleton.
+    self->first_awaitable.base.type = &pb_type_MotorWait;
+    self->first_awaitable.has_ended = true;
+    self->first_awaitable.next_awaitable = MP_OBJ_NULL;
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
@@ -276,6 +288,9 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
 
+    // Cancel user-level motor wait operations.
+    pb_type_MotorWait_cancel_all(self);
+
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_reset_angle);
@@ -301,6 +316,9 @@ STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map
     mp_int_t speed = pb_obj_get_int(speed_in);
     pb_assert(pbio_servo_run_forever(self->srv, speed));
 
+    // Cancel user-level motor wait operations in parallel tasks.
+    pb_type_MotorWait_cancel_all(self);
+
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
@@ -309,6 +327,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
 STATIC mp_obj_t common_Motor_hold(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
+
+    // Cancel user-level motor wait operations in parallel tasks.
+    pb_type_MotorWait_cancel_all(self);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_hold_obj, common_Motor_hold);
@@ -473,6 +494,9 @@ STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_arg
 
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
     pb_assert(pbio_servo_track_target(self->srv, target_angle));
+
+    // Cancel user-level motor wait operations in parallel tasks.
+    pb_type_MotorWait_cancel_all(self);
 
     return mp_const_none;
 }

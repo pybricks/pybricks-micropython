@@ -147,7 +147,7 @@ struct _common_Motor_obj_t {
     mp_obj_t logger;
     #endif
     pbio_port_id_t port;
-    pb_type_MotorWait_obj_t awaitable;
+    pb_type_MotorWait_obj_t first_awaitable;
 };
 
 extern const mp_obj_type_t pb_type_Motor;
