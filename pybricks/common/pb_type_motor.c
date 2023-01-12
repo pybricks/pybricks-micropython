@@ -24,27 +24,6 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
-/**
- * A generator-like type for waiting on a motor operation to complete.
- */
-typedef struct {
-    mp_obj_base_t base;
-    /**
-     * Servo object that this object is awaiting on.
-     */
-    pbio_servo_t *srv;
-    /**
-     * Voltage cap prior to starting. Only applicable for run_until_stalled.
-     *
-     * Set to -1 to indicate that this is not used.
-     */
-    int32_t stall_voltage_restore_value;
-    /**
-     * What to do once stalled. Only applicable for run_until_stalled.
-     */
-    pbio_control_on_completion_t stall_stop_type;
-} pb_type_MotorWait_obj_t;
-
 // The __next__() method should raise a StopIteration if the operation is
 // complete.
 STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
@@ -56,20 +35,20 @@ STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
     }
 
     // Handle I/O exceptions.
-    if (!pbio_servo_update_loop_is_running(self->srv)) {
+    if (!pbio_servo_update_loop_is_running(self->motor_obj->srv)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
     // First, handle normal case without stalling.
     if (self->stall_voltage_restore_value == -1) {
-        return pbio_control_is_done(&self->srv->control) ?
+        return pbio_control_is_done(&self->motor_obj->srv->control) ?
                MP_OBJ_STOP_ITERATION : mp_const_none;
     }
 
     // The remainder handles run_until_stalled. First, check stall state.
     bool stalled;
     uint32_t stall_duration;
-    pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
+    pb_assert(pbio_servo_is_stalled(self->motor_obj->srv, &stalled, &stall_duration));
 
     // Keep going if not stalled.
     if (!stalled) {
@@ -78,13 +57,13 @@ STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
 
     // Read the angle upon completion of the stall maneuver.
     int32_t stall_angle, stall_speed;
-    pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
+    pb_assert(pbio_servo_get_state_user(self->motor_obj->srv, &stall_angle, &stall_speed));
 
     // Stop moving.
-    pb_assert(pbio_servo_stop(self->srv, self->stall_stop_type));
+    pb_assert(pbio_servo_stop(self->motor_obj->srv, self->stall_stop_type));
 
     // Restore original voltage limit.
-    pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, self->stall_voltage_restore_value));
+    pb_assert(pbio_dcmotor_set_settings(self->motor_obj->srv->dcmotor, self->stall_voltage_restore_value));
 
     // Raise stop iteration with angle to return the final position.
     return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
@@ -98,7 +77,7 @@ STATIC mp_obj_t pb_type_MotorWait_close(mp_obj_t self_in) {
 
     // REVISIT: We only need to call an explicit stop if a task is cancelled
     // by something other than a motor.
-    pb_assert(pbio_dcmotor_user_command(self->srv->dcmotor, true, 0));
+    pb_assert(pbio_dcmotor_user_command(self->motor_obj->srv->dcmotor, true, 0));
 
     return mp_const_none;
 }
@@ -117,21 +96,17 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorWait,
     iter, pb_type_MotorWait_iternext,
     locals_dict, &pb_type_MotorWait_locals_dict);
 
-STATIC mp_obj_t pb_type_MotorWait_new(pbio_servo_t *srv) {
+STATIC mp_obj_t pb_type_MotorWait_new_stalled(common_Motor_obj_t *motor_obj, int32_t stall_voltage_restore_value, int32_t stall_stop_type) {
     pb_type_MotorWait_obj_t *self = m_new_obj(pb_type_MotorWait_obj_t);
     self->base.type = &pb_type_MotorWait;
-    self->srv = srv;
-    self->stall_voltage_restore_value = -1;
-    return MP_OBJ_FROM_PTR(self);
-}
-
-STATIC mp_obj_t pb_type_MotorWait_new_stalled(pbio_servo_t *srv, int32_t stall_voltage_restore_value, int32_t stall_stop_type) {
-    pb_type_MotorWait_obj_t *self = m_new_obj(pb_type_MotorWait_obj_t);
-    self->base.type = &pb_type_MotorWait;
-    self->srv = srv;
+    self->motor_obj = motor_obj;
     self->stall_stop_type = stall_stop_type;
     self->stall_voltage_restore_value = stall_voltage_restore_value;
     return MP_OBJ_FROM_PTR(self);
+}
+
+STATIC mp_obj_t pb_type_MotorWait_new(common_Motor_obj_t *motor_obj) {
+    return pb_type_MotorWait_new_stalled(motor_obj, -1, PBIO_CONTROL_ON_COMPLETION_COAST);
 }
 
 /* Wait for servo maneuver to complete */
@@ -328,7 +303,7 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
 
     // Handle async case, return a generator.
     if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_MotorWait_new(self->srv);
+        return pb_type_MotorWait_new(self);
     }
 
     // Otherwise, handle default blocking wait.
@@ -371,7 +346,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     pb_assert(pbio_servo_run_forever(self->srv, speed));
 
     // Make generator for checking completion.
-    mp_obj_t gen = pb_type_MotorWait_new_stalled(self->srv, max_voltage_old, on_completion);
+    mp_obj_t gen = pb_type_MotorWait_new_stalled(self, max_voltage_old, on_completion);
 
     // Within run loop, just return the generator.
     if (pb_module_tools_run_loop_is_active()) {
@@ -419,7 +394,7 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
 
     // Handle async case, return a generator.
     if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_MotorWait_new(self->srv);
+        return pb_type_MotorWait_new(self);
     }
 
     // Otherwise, handle default blocking wait.
@@ -449,7 +424,7 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
 
     // Handle async case, return a generator.
     if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_MotorWait_new(self->srv);
+        return pb_type_MotorWait_new(self);
     }
 
     // Otherwise, handle default blocking wait.
