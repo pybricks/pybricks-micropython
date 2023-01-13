@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
+
+#include <pbsys/config.h>
+
+#if PBSYS_CONFIG_PROGRAM_STOP
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,17 +20,6 @@
 static pbio_button_flags_t stop_buttons = PBIO_BUTTON_CENTER;
 // State for button press one-shot
 static bool stop_button_pressed;
-
-// Consumers of this library must provide a real implementation of these functions.
-__attribute__((weak)) void pbsys_main_run_program(pbsys_main_program_t *program) {
-}
-
-__attribute__((weak)) void pbsys_main_stop_program(bool force_stop) {
-}
-
-__attribute__((weak)) bool pbsys_main_stdin_event(uint8_t c) {
-    return false;
-}
 
 /**
  * Request the user program to stop. For example, in MicroPython, this may raise
@@ -78,3 +71,5 @@ void pbsys_program_stop_poll(void) {
         stop_button_pressed = false;
     }
 }
+
+#endif // PBSYS_CONFIG_PROGRAM_STOP
