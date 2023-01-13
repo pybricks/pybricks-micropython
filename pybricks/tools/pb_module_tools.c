@@ -23,9 +23,9 @@ STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
 
     mp_int_t time = pb_obj_get_int(time_in);
 
-    // In async mode, return awaitable.
+    // Within run loop, return awaitable.
     if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_tools_wait_new(time);
+        return pb_type_tools_wait_new(time, NULL);
     }
 
     // In blocking mode, wait until done.

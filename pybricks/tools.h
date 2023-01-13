@@ -14,7 +14,7 @@ bool pb_module_tools_run_loop_is_active();
 
 void pb_type_tools_wait_reset(void);
 
-mp_obj_t pb_type_tools_wait_new(mp_int_t duration);
+mp_obj_t pb_type_tools_wait_new(mp_int_t duration, void (*callback)(void));
 
 extern const mp_obj_type_t pb_type_StopWatch;
 
