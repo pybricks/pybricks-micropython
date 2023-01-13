@@ -37,8 +37,6 @@ typedef struct _pbsys_main_program_t {
     bool run_builtin;
 } pbsys_main_program_t;
 
-#if PBSYS_CONFIG_MAIN
-
 /**
  * Runs the main application program.
  *
@@ -69,17 +67,6 @@ void pbsys_main_stop_program(bool force_stop);
  *                  placed in the stdin buffer, otherwise *false*.
  */
 bool pbsys_main_stdin_event(uint8_t c);
-
-#else
-
-static inline void pbsys_main_stop_program(bool force_stop) {
-}
-
-static inline bool pbsys_main_stdin_event(uint8_t c) {
-    return false;
-}
-
-#endif // PBSYS_CONFIG_MAIN
 
 #endif // _PBSYS_MAIN_H_
 

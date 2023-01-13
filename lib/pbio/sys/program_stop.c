@@ -17,6 +17,17 @@ static pbio_button_flags_t stop_buttons = PBIO_BUTTON_CENTER;
 // State for button press one-shot
 static bool stop_button_pressed;
 
+// Consumers of this library must provide a real implementation of these functions.
+__attribute__((weak)) void pbsys_main_run_program(pbsys_main_program_t *program) {
+}
+
+__attribute__((weak)) void pbsys_main_stop_program(bool force_stop) {
+}
+
+__attribute__((weak)) bool pbsys_main_stdin_event(uint8_t c) {
+    return false;
+}
+
 /**
  * Request the user program to stop. For example, in MicroPython, this may raise
  * a SystemExit exception.

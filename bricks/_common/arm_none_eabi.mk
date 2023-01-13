@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2022 The Pybricks Authors
+# Copyright (c) 2019-2023 The Pybricks Authors
 
-# This file is shared by all STM32-based Pybricks ports.
+# This file is shared by all bare-metal Arm Pybricks ports.
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-PBTOP := ../$(patsubst %/_common_stm32/make.mk,%,$(THIS_MAKEFILE))
+PBTOP := ../$(patsubst %/_common/arm_none_eabi.mk,%,$(THIS_MAKEFILE))
 
 # Bricks must specify the following variables in their Makefile
+
+ifeq ($(PB_MCU_FAMILY),)
+$(error "PB_MCU_FAMILY is not specified - add it in <hub>/Makefile)
+endif
+
+ifeq ($(PB_MCU_FAMILY),STM32)
 ifeq ($(PB_MCU_SERIES),)
 $(error "PB_MCU_SERIES is not specified - add it in <hub>/Makefile)
 else
@@ -16,6 +22,8 @@ endif
 ifeq ($(PB_CMSIS_MCU),)
 $(error "PB_CMSIS_MCU is not specified - add it in <hub>/Makefile")
 endif
+endif
+
 ifeq ($(PBIO_PLATFORM),)
 $(error "PBIO_PLATFORM is not specified - add it in <hub>/Makefile)
 endif
@@ -28,6 +36,7 @@ ifeq ("$(wildcard $(PBTOP)/micropython/README.md)","")
 $(error failed)
 endif
 endif
+ifeq ($(PB_LIB_STM32_HAL),1)
 ifeq ("$(wildcard $(PBTOP)/micropython/lib/stm32lib/README.md)","")
 $(info GIT cloning stm32lib submodule)
 $(info $(shell cd $(PBTOP)/micropython && git submodule update --init lib/stm32lib))
@@ -35,11 +44,21 @@ ifeq ("$(wildcard $(PBTOP)/micropython/lib/stm32lib/README.md)","")
 $(error failed)
 endif
 endif
+endif
 ifeq ($(PB_LIB_BTSTACK),1)
-ifeq ("$(wildcard ../../lib/btstack/README.md)","")
+ifeq ("$(wildcard $(PBTOP)/lib/btstack/README.md)","")
 $(info GIT cloning btstack submodule)
-$(info $(shell cd ../.. && git submodule update --checkout --init lib/btstack))
-ifeq ("$(wildcard ../../lib/btstack/README.md)","")
+$(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/btstack))
+ifeq ("$(wildcard $(PBTOP)/lib/btstack/README.md)","")
+$(error failed)
+endif
+endif
+endif
+ifeq ($(PB_LIB_NXOS),1)
+ifeq ("$(wildcard $(PBTOP)/lib/nxos/README.md)","")
+$(info GIT cloning nxos submodule)
+$(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/nxos))
+ifeq ("$(wildcard $(PBTOP)/lib/nxos/README.md)","")
 $(error failed)
 endif
 endif
@@ -48,11 +67,14 @@ endif
 # lets micropython make files work with external files
 USER_C_MODULES = $(PBTOP)
 
-include ../../micropython/py/mkenv.mk
+include $(PBTOP)/micropython/py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = ../_common/qstrdefs.h
-QSTR_GLOBAL_DEPENDENCIES = ../_common/mpconfigport.h ../_common_stm32/mpconfigport.h
+QSTR_DEFS = $(PBTOP)/bricks/_common/qstrdefs.h
+QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/_common/mpconfigport.h
+ifeq ($(PB_MCU_FAMILY),STM32)
+QSTR_GLOBAL_DEPENDENCIES += ../_common_stm32/mpconfigport.h
+endif
 
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
@@ -64,9 +86,11 @@ CROSS_COMPILE ?= arm-none-eabi-
 
 INC += -I.
 INC += -I$(TOP)
+ifeq ($(PB_MCU_FAMILY),STM32)
 INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(PB_MCU_SERIES)xx/Include
-ifeq ($(PB_USE_HAL),1)
+endif
+ifeq ($(PB_LIB_STM32_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
 INC += -I$(PBTOP)/lib/contiki-core
@@ -85,12 +109,15 @@ ifeq ($(PB_LIB_BTSTACK),1)
 INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
 INC += -I$(PBTOP)/lib/btstack/src
 endif
-ifeq ($(PB_USE_LSM6DS3TR_C),1)
+ifeq ($(PB_LIB_LSM6DS3TR_C),1)
 INC += -I$(PBTOP)/lib/lsm6ds3tr_c_STdC/driver
 endif
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Class/CDC/Inc/
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
+endif
+ifeq ($(PB_LIB_NXOS),1)
+INC += -I$(PBTOP)/lib/nxos/nxos
 endif
 INC += -I$(PBTOP)
 INC += -I$(BUILD)
@@ -105,25 +132,37 @@ OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
 
-CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
+ifeq ($(PB_MCU_FAMILY),STM32)
+CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0 -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
-CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
-$(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
-$(BUILD)/lib/stm32lib/%.o: CFLAGS += -Wno-sign-compare
-$(BUILD)/lib/STM32_USB_Device_Library/%.o: CFLAGS += -Wno-sign-compare
+CFLAGS_MCU = $(CFLAGS_MCU_$(PB_MCU_SERIES))
+else
+ifeq ($(PB_MCU_FAMILY),AT91SAM7)
+# TODO: enable -mthumb - currently won't boot with it
+CFLAGS_MCU = -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
+else
+$(error unsupported PB_MCU_FAMILY)
+endif
+endif
 
-# define external oscillator frequency
-CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
+CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
+CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
+$(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
 
 # linker scripts
-LD_FILES = $(PBIO_PLATFORM).ld $(PBTOP)/bricks/_common_stm32/link.ld
+LD_FILES = $(PBIO_PLATFORM).ld
+ifeq ($(PB_MCU_FAMILY),STM32)
+LD_FILES += $(PBTOP)/bricks/_common_stm32/link.ld
+endif
+
 LDFLAGS = $(addprefix -T,$(LD_FILES)) -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
 
 SUPPORTS_HARDWARE_FP_SINGLE = 0
+ifeq ($(PB_MCU_FAMILY),STM32)
 ifeq ($(PB_MCU_SERIES),$(filter $(PB_MCU_SERIES),F4 L4))
 SUPPORTS_HARDWARE_FP_SINGLE = 1
+endif
 endif
 
 # avoid doubles
@@ -137,26 +176,21 @@ CFLAGS += -Os -DNDEBUG -flto
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
+ifeq ($(PB_MCU_FAMILY),STM32)
 # Required for STM32 library
 CFLAGS += -D$(PB_CMSIS_MCU)
-
+# Required by pbio drivers
 CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
+endif
 
-MPY_CROSS = ../../micropython/mpy-cross/mpy-cross
+MPY_CROSS = $(PBTOP)/micropython/mpy-cross/mpy-cross
 
 LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 # Sources and libraries common to all pybricks bricks
 
-include ../_common/sources.mk
-
-# Embedded MicroPython sources
-
-PY_STM32_SRC_C = $(addprefix bricks/,\
-	_common/micropython.c \
-	_common_stm32/mphalport.c \
-	)
+include $(PBTOP)/bricks/_common/sources.mk
 
 # Extra core MicroPython files
 
@@ -176,13 +210,28 @@ PY_EXTRA_SRC_C = $(addprefix shared/,\
 	runtime/sys_stdio_mphal.c \
 	)
 
-SRC_S = \
-	lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
+PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
+	micropython.c \
+	)
+
+ifeq ($(PB_MCU_FAMILY),STM32)
+PY_EXTRA_SRC_C += $(addprefix bricks/_common_stm32/,\
+	mphalport.c \
+	)
 
 ifeq ($(PB_MCU_SERIES),F0)
-	SRC_S += shared/runtime/gchelper_m0.s
+SRC_S += shared/runtime/gchelper_m0.s
 else
-	SRC_S += shared/runtime/gchelper_m3.s
+SRC_S += shared/runtime/gchelper_m3.s
+endif
+endif
+
+ifeq ($(PB_MCU_FAMILY),AT91SAM7)
+PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
+	mphalport.c \
+	)
+
+SRC_S += shared/runtime/gchelper_m0.s
 endif
 
 # STM32 Bluetooth stack
@@ -253,7 +302,7 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 
 COPT += -DUSE_FULL_LL_DRIVER
 
-HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
+STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
@@ -284,18 +333,18 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 
 # some HAL drivers are not available on all MCUs
 ifeq ($(PB_MCU_SERIES),F4)
-HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(STM32_HAL_SRC_C))
 endif
 ifneq ($(PB_MCU_SERIES),F4)
-HAL_SRC_C := $(filter-out %xx_hal_fmpi2c.c, $(HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_hal_fmpi2c.c, $(STM32_HAL_SRC_C))
 endif
 ifneq ($(PB_MCU_SERIES),L4)
-HAL_SRC_C := $(filter-out %xx_ll_lpuart.c, $(HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_ll_lpuart.c, $(STM32_HAL_SRC_C))
 endif
 ifneq ($(PB_LIB_STM32_USB_DEVICE),1)
-HAL_SRC_C := $(filter-out %xx_hal_pcd_ex.c, $(HAL_SRC_C))
-HAL_SRC_C := $(filter-out %xx_hal_pcd.c, $(HAL_SRC_C))
-HAL_SRC_C := $(filter-out %xx_ll_usb.c, $(HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_hal_pcd_ex.c, $(STM32_HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_hal_pcd.c, $(STM32_HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_ll_usb.c, $(STM32_HAL_SRC_C))
 endif
 
 # STM32 IMU Library
@@ -320,36 +369,96 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 	usbd_desc.c \
 	)
 
+NXOS_SRC_C = $(addprefix lib/nxos/nxos/base/,\
+	_abort.c \
+	assert.c \
+	display.c \
+	drivers/_efc.c \
+	drivers/_lcd.c \
+	drivers/_twi.c \
+	drivers/_uart.c \
+	drivers/aic.c \
+	drivers/avr.c \
+	drivers/bt.c \
+	drivers/i2c_memory.c \
+	drivers/i2c.c \
+	drivers/motors.c \
+	drivers/radar.c \
+	drivers/rs485.c \
+	drivers/sensors.c \
+	drivers/sound.c \
+	drivers/systick.c \
+	drivers/usb.c \
+	lib/fs/fs.c \
+	lib/gui/gui.c \
+	lib/memalloc/memalloc.c \
+	lib/rcmd/rcmd.c \
+	lib/tracing/tracing.c \
+	)
+
+# Override nxos/base/util to use string.h to avoid conflict with MicroPython.
+NXOS_SRC_C += $(addprefix bricks/nxt/,\
+	base/util.c \
+	)
+
+NXOS_SRC_S = $(addprefix lib/nxos/nxos/,\
+	base/interrupts.s \
+	base/lock.s \
+	base/samba_init.s \
+	base/vectors.s \
+	)
+
+SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
+
 OBJ = $(PY_O)
-OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(PY_STM32_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
-ifeq ($(PB_LIB_BLUENRG),1)
-OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
-endif
-ifeq ($(PB_LIB_BLE5STACK),1)
-OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
-endif
-ifeq ($(PB_LIB_BTSTACK),1)
-OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
-endif
-ifeq ($(PB_USE_HAL),1)
-OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
-endif
-ifeq ($(PB_USE_LSM6DS3TR_C),1)
-OBJ += $(addprefix $(BUILD)/, $(LSM6DS3TR_C_SRC_C:.c=.o))
-endif
+
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LWRB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+
+ifeq ($(PB_LIB_BLUENRG),1)
+OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
+endif
+
+ifeq ($(PB_LIB_BLE5STACK),1)
+OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
+endif
+
+ifeq ($(PB_LIB_BTSTACK),1)
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+endif
+
+ifeq ($(PB_LIB_STM32_HAL),1)
+OBJ += $(addprefix $(BUILD)/, $(STM32_HAL_SRC_C:.c=.o))
+$(BUILD)/lib/stm32lib/%.o: CFLAGS += -Wno-sign-compare
+# define external oscillator frequency
+ifeq ($(PB_MCU_EXT_OSC_HZ),)
+$(error "PB_MCU_EXT_OSC_HZ is not specified - add it in <hub>/Makefile)
+else
+CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
+endif
+endif
+
+ifeq ($(PB_LIB_LSM6DS3TR_C),1)
+OBJ += $(addprefix $(BUILD)/, $(LSM6DS3TR_C_SRC_C:.c=.o))
+endif
+
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
+$(BUILD)/lib/STM32_USB_Device_Library/%.o: CFLAGS += -Wno-sign-compare
+endif
+
+ifeq ($(PB_LIB_NXOS),1)
+OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_S:.s=.o))
 endif
 
 # List of sources for qstr extraction
-SRC_QSTR += $(PY_EXTRA_SRC_C) $(PY_STM32_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(PY_EXTRA_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
@@ -377,6 +486,12 @@ endif
 
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
 
+ifeq ($(PB_MCU_FAMILY),STM32)
+FW_SECTIONS := -j .isr_vector -j .text -j .data -j .name
+else
+FW_SECTIONS :=
+endif
+
 $(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
@@ -385,7 +500,7 @@ $(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware base file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
+	$(Q)$(OBJCOPY) -O binary $(FW_SECTIONS) $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
@@ -413,5 +528,8 @@ deploy: $(BUILD)/firmware.zip
 deploy-openocd: $(BUILD)/firmware-base.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
 	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
+
+deploy-nxt: $(BUILD)/firmware-base.bin
+	$(Q)env PYTHONPATH=../../lib/nxos $(PYTHON) -m pynxt.cli fwflash $<
 
 include $(TOP)/py/mkrules.mk

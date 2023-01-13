@@ -2,11 +2,12 @@
 # Copyright (c) 2019-2021 The Pybricks Authors
 
 PBIO_PLATFORM = essential_hub
+PB_MCU_FAMILY = STM32
 PB_MCU_SERIES = F4
 PB_CMSIS_MCU = STM32F413xx
 PB_MCU_EXT_OSC_HZ = 16000000
-PB_USE_HAL = 1
-PB_USE_LSM6DS3TR_C = 1
+PB_LIB_STM32_HAL = 1
+PB_LIB_LSM6DS3TR_C = 1
 PB_LIB_BLUENRG = 0
 PB_LIB_BTSTACK = 1
 PB_LIB_STM32_USB_DEVICE = 1
@@ -14,4 +15,4 @@ TEXT0_ADDR = 0x8008000
 DFU_VID = 0x0694
 DFU_PID = 0x000C
 
-include ../_common_stm32/make.mk
+include ../_common/arm_none_eabi.mk

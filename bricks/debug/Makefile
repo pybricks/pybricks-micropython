@@ -4,11 +4,12 @@
 DEBUG ?= 1
 
 PBIO_PLATFORM = debug
+PB_MCU_FAMILY = STM32
 PB_MCU_SERIES = F4
 PB_CMSIS_MCU = STM32F446xx
 PB_MCU_EXT_OSC_HZ = 8000000
-PB_USE_HAL = 1
+PB_LIB_STM32_HAL = 1
 PB_FIRMWARE_MAX_SIZE = 524288
 TEXT0_ADDR = 0x8000000
 
-include ../_common_stm32/make.mk
+include ../_common/arm_none_eabi.mk

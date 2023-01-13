@@ -1,10 +1,9 @@
-/* Copyright (c) 2007,2008 the NxOS developers
- *
- * See AUTHORS for a full list of the developers.
- *
- * Redistribution of this file is permitted under
- * the terms of the GNU Public License (GPL) version 2.
- */
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (c) 2023 The Pybricks Authors
+// Copyright (c) 2007,2008 the NxOS developers
+// See AUTHORS for a full list of the developers.
+
+#include <pbsys/main.h>
 
 #include "base/at91sam7s256.h"
 
@@ -22,8 +21,6 @@
 #include "base/drivers/_usb.h"
 #include "base/drivers/i2c.h"
 #include "base/drivers/bt.h"
-
-#include "base/_core.h"
 
 static void core_init(void) {
     nx__aic_init();
@@ -104,11 +101,15 @@ static void bluetooth_connect(void) {
     nx_display_cursor_set_pos(0, 0);
 }
 
-extern int main(int argc, char **argv);
+// For now, this file is the main entry point for NXT. Eventually, this
+// can be dropped and we can use main() in pbsys/main.
+// For now it enters the MicroPython REPL directly for convenient debugging.
+
+static char heap[32 * 1024];
 
 static U8 flush_buf[1];
 
-void nx__kernel_main(void) {
+int main(int argc, char **argv) {
     // Start the system.
     core_init();
 
@@ -122,12 +123,15 @@ void nx__kernel_main(void) {
         nx_systick_wait_ms(100);
     }
 
-    // Start Pybricks.
-    // main(0, NULL);
     nx_display_string("Connected. REPL.\n");
 
-    extern void main_task(void);
-    main_task();
-
-    nx_core_halt();
+    // Start Pybricks.
+    for (;;) {
+        pbsys_main_program_t program = {
+            .run_builtin = true,
+            .code_end = heap,
+            .data_end = heap + sizeof(heap),
+        };
+        pbsys_main_run_program(&program);
+    }
 }
