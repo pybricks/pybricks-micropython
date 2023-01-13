@@ -29,6 +29,10 @@ struct _pb_type_tools_wait_obj_t {
      */
     bool has_ended;
     /**
+     * Callback to call on completion or cancellation.
+     */
+    void (*callback)(void);
+    /**
      * Linked list of awaitables.
      */
     pb_type_tools_wait_obj_t *next_awaitable;
@@ -40,6 +44,9 @@ STATIC mp_obj_t pb_type_tools_wait_iternext(mp_obj_t self_in) {
     // Stop on reaching target time or if externally cancelled.
     if (mp_hal_ticks_ms() - self->end_time < (uint32_t)INT32_MAX || self->has_ended) {
         self->has_ended = true;
+        if (self->callback) {
+            self->callback();
+        }
         return MP_OBJ_STOP_ITERATION;
     }
     // Not done, so keep going.
@@ -50,6 +57,9 @@ STATIC mp_obj_t pb_type_tools_wait_iternext(mp_obj_t self_in) {
 STATIC mp_obj_t pb_type_tools_wait_close(mp_obj_t self_in) {
     pb_type_tools_wait_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->has_ended = true;
+    if (self->callback) {
+        self->callback();
+    }
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_tools_wait_close_obj, pb_type_tools_wait_close);
@@ -77,7 +87,7 @@ void pb_type_tools_wait_reset(void) {
     first_awaitable.next_awaitable = MP_OBJ_NULL;
 }
 
-mp_obj_t pb_type_tools_wait_new(mp_int_t duration) {
+mp_obj_t pb_type_tools_wait_new(mp_int_t duration, void (*callback)(void)) {
 
     // When to stop waiting.
     uint32_t end_time = mp_hal_ticks_ms() + (uint32_t)duration;
@@ -98,7 +108,8 @@ mp_obj_t pb_type_tools_wait_new(mp_int_t duration) {
         awaitable->base.type = &pb_type_tools_wait;
     }
 
-    // Initialize awaitable with the end time.
+    // Initialize awaitable with the end time and callback.
+    awaitable->callback = callback;
     awaitable->has_ended = duration < 0 ? true: false;
     awaitable->end_time = end_time;
 
