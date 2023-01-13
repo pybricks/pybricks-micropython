@@ -16,13 +16,42 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/robotics.h>
+#include <pybricks/tools.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
+typedef struct _pb_type_DriveBase_obj_t pb_type_DriveBase_obj_t;
+
+typedef struct _pb_type_DriveBaseWait_obj_t pb_type_DriveBaseWait_obj_t;
+
+/**
+ * A generator-like type for waiting on a motor operation to complete.
+ */
+struct _pb_type_DriveBaseWait_obj_t {
+    mp_obj_base_t base;
+    /**
+     * Motor object whose move this generator is awaiting on.
+     */
+    pb_type_DriveBase_obj_t *drivebase_obj;
+    /**
+     * Whether this generator object was cancelled.
+     */
+    bool was_cancelled;
+    /**
+     * Whether this generator object is done and thus can be recycled. This is
+     * when motion is complete or cancellation has been handled.
+     */
+    bool has_ended;
+    /**
+     * Linked list of awaitables.
+     */
+    pb_type_DriveBaseWait_obj_t *next_awaitable;
+};
+
 // pybricks.robotics.DriveBase class object
-typedef struct _pb_type_DriveBase_obj_t {
+struct _pb_type_DriveBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *db;
     int32_t initial_distance;
@@ -31,7 +60,95 @@ typedef struct _pb_type_DriveBase_obj_t {
     mp_obj_t heading_control;
     mp_obj_t distance_control;
     #endif
-} pb_type_DriveBase_obj_t;
+    pb_type_DriveBaseWait_obj_t first_awaitable;
+};
+
+STATIC mp_obj_t pb_type_DriveBaseWait_iternext(mp_obj_t self_in) {
+    pb_type_DriveBaseWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (self->was_cancelled) {
+        // Gracefully handle cancellation: Allow generator to complete
+        // and clean up but don't raise any exceptions.
+        self->has_ended = true;
+        return MP_OBJ_STOP_ITERATION;
+    }
+
+    // Handle I/O exceptions.
+    if (!pbio_drivebase_update_loop_is_running(self->drivebase_obj->db)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // Check for completion
+    if (pbio_drivebase_is_done(self->drivebase_obj->db)) {
+        self->has_ended = true;
+        return MP_OBJ_STOP_ITERATION;
+    }
+    // Not done, so keep going.
+    return mp_const_none;
+}
+
+// Cancel all generators belonging to this motor.
+STATIC void pb_type_DriveBaseWait_cancel_all(pb_type_DriveBase_obj_t *drivebase_obj) {
+    pb_type_DriveBaseWait_obj_t *self = &drivebase_obj->first_awaitable;
+    do {
+        self->was_cancelled = true;
+        self = self->next_awaitable;
+    } while (self != MP_OBJ_NULL);
+}
+
+// The close() method is used to cancel an operation before it completes. If
+// the operation is already complete, it should do nothing. It can be called
+// more than once.
+STATIC mp_obj_t pb_type_DriveBaseWait_close(mp_obj_t self_in) {
+    pb_type_DriveBaseWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_DriveBaseWait_cancel_all(self->drivebase_obj);
+    pb_assert(pbio_drivebase_stop(self->drivebase_obj->db, PBIO_CONTROL_ON_COMPLETION_COAST));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBaseWait_close_obj, pb_type_DriveBaseWait_close);
+
+STATIC const mp_rom_map_elem_t pb_type_DriveBaseWait_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&pb_type_DriveBaseWait_close_obj) },
+};
+MP_DEFINE_CONST_DICT(pb_type_DriveBaseWait_locals_dict, pb_type_DriveBaseWait_locals_dict_table);
+
+// This is a partial implementation of the Python generator type. It is missing
+// send(value) and throw(type[, value[, traceback]])
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_DriveBaseWait,
+    MP_QSTR_DriveBaseWait,
+    MP_TYPE_FLAG_ITER_IS_ITERNEXT,
+    iter, pb_type_DriveBaseWait_iternext,
+    locals_dict, &pb_type_DriveBaseWait_locals_dict);
+
+STATIC mp_obj_t pb_type_DriveBaseWait_new(pb_type_DriveBase_obj_t *drivebase_obj) {
+
+    // Cancel everything for this motor.
+    pb_type_DriveBaseWait_cancel_all(drivebase_obj);
+
+    // Find next available previously allocated awaitable.
+    pb_type_DriveBaseWait_obj_t *self = &drivebase_obj->first_awaitable;
+    while (!self->has_ended && self->next_awaitable != MP_OBJ_NULL) {
+        self = self->next_awaitable;
+    }
+    // No free awaitable available, so allocate one.
+    if (!self->has_ended) {
+        // Attach to the previous one.
+        self->next_awaitable = m_new_obj(pb_type_DriveBaseWait_obj_t);
+
+        // Initialize the new awaitable.
+        self = self->next_awaitable;
+        self->next_awaitable = MP_OBJ_NULL;
+        self->base.type = &pb_type_DriveBaseWait;
+    }
+
+    // Initialize what to await on.
+    self->drivebase_obj = drivebase_obj;
+    self->has_ended = false;
+    self->was_cancelled = false;
+
+    // Return the awaitable where the user can await it.
+    return MP_OBJ_FROM_PTR(self);
+}
 
 // pybricks.robotics.DriveBase.reset
 STATIC mp_obj_t pb_type_DriveBase_reset(mp_obj_t self_in) {
@@ -80,6 +197,11 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     // Reset drivebase state
     pb_type_DriveBase_reset(MP_OBJ_FROM_PTR(self));
 
+    // Initialize first awaitable singleton.
+    self->first_awaitable.base.type = &pb_type_DriveBaseWait;
+    self->first_awaitable.has_ended = true;
+    self->first_awaitable.next_awaitable = MP_OBJ_NULL;
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -105,6 +227,12 @@ STATIC mp_obj_t pb_type_DriveBase_straight(size_t n_args, const mp_obj_t *pos_ar
 
     pb_assert(pbio_drivebase_drive_straight(self->db, distance, then));
 
+    // Handle async case, return a generator.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_DriveBaseWait_new(self);
+    }
+
+    // Otherwise, handle default blocking wait.
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
     }
@@ -127,6 +255,12 @@ STATIC mp_obj_t pb_type_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, 
     // Turning in place is done as a curve with zero radius and a given angle.
     pb_assert(pbio_drivebase_drive_curve(self->db, 0, angle, then));
 
+    // Handle async case, return a generator.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_DriveBaseWait_new(self);
+    }
+
+    // Otherwise, handle default blocking wait.
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
     }
@@ -150,6 +284,12 @@ STATIC mp_obj_t pb_type_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args,
 
     pb_assert(pbio_drivebase_drive_curve(self->db, radius, angle, then));
 
+    // Handle async case, return a generator.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_DriveBaseWait_new(self);
+    }
+
+    // Otherwise, handle default blocking wait.
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
     }
@@ -171,6 +311,9 @@ STATIC mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args,
 
     pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
 
+    // Cancel user-level motor wait operations in parallel tasks.
+    pb_type_DriveBaseWait_cancel_all(self);
+
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_drive_obj, 1, pb_type_DriveBase_drive);
@@ -179,6 +322,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_drive_obj, 1, pb_type_DriveB
 STATIC mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
+
+    // Cancel user-level motor wait operations in parallel tasks.
+    pb_type_DriveBaseWait_cancel_all(self);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_stop_obj, pb_type_DriveBase_stop);
