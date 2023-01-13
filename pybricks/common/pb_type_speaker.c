@@ -19,6 +19,7 @@
 #include "py/obj.h"
 
 #include <pybricks/common.h>
+#include <pybricks/tools.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -127,6 +128,12 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
 
     pb_type_Speaker_start_beep(frequency, self->sample_attenuator);
 
+    // Within run loop, return awaitable.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_tools_wait_new(duration, pb_type_Speaker_stop_beep);
+    }
+
+    // In blocking mode, wait until done.
     if (duration < 0) {
         return mp_const_none;
     }
