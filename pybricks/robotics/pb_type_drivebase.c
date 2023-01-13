@@ -21,7 +21,7 @@
 #include <pybricks/util_pb/pb_error.h>
 
 // pybricks.robotics.DriveBase class object
-typedef struct _robotics_DriveBase_obj_t {
+typedef struct _pb_type_DriveBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *db;
     mp_obj_t left;
@@ -32,11 +32,11 @@ typedef struct _robotics_DriveBase_obj_t {
     mp_obj_t heading_control;
     mp_obj_t distance_control;
     #endif
-} robotics_DriveBase_obj_t;
+} pb_type_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.reset
-STATIC mp_obj_t robotics_DriveBase_reset(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_reset(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t distance, drive_speed, angle, turn_rate;
     pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &angle, &turn_rate));
@@ -46,10 +46,10 @@ STATIC mp_obj_t robotics_DriveBase_reset(mp_obj_t self_in) {
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_reset_obj, robotics_DriveBase_reset);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_reset_obj, pb_type_DriveBase_reset);
 
 // pybricks.robotics.DriveBase.__init__
-STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(left_motor),
@@ -57,7 +57,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
         PB_ARG_REQUIRED(wheel_diameter),
         PB_ARG_REQUIRED(axle_track));
 
-    robotics_DriveBase_obj_t *self = m_new_obj(robotics_DriveBase_obj_t);
+    pb_type_DriveBase_obj_t *self = m_new_obj(pb_type_DriveBase_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
     self->left = left_motor_in;
@@ -77,7 +77,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     #endif
 
     // Reset drivebase state
-    robotics_DriveBase_reset(MP_OBJ_FROM_PTR(self));
+    pb_type_DriveBase_reset(MP_OBJ_FROM_PTR(self));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -92,9 +92,9 @@ STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
 }
 
 // pybricks.robotics.DriveBase.straight
-STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_DriveBase_straight(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        robotics_DriveBase_obj_t, self,
+        pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(distance),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait));
@@ -110,12 +110,12 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_straight_obj, 1, robotics_DriveBase_straight);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_straight_obj, 1, pb_type_DriveBase_straight);
 
 // pybricks.robotics.DriveBase.turn
-STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        robotics_DriveBase_obj_t, self,
+        pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait));
@@ -132,12 +132,12 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_turn_obj, 1, robotics_DriveBase_turn);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_turn_obj, 1, pb_type_DriveBase_turn);
 
 // pybricks.robotics.DriveBase.curve
-STATIC mp_obj_t robotics_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        robotics_DriveBase_obj_t, self,
+        pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(radius),
         PB_ARG_REQUIRED(angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
@@ -155,12 +155,12 @@ STATIC mp_obj_t robotics_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_curve_obj, 1, robotics_DriveBase_curve);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_curve_obj, 1, pb_type_DriveBase_curve);
 
 // pybricks.robotics.DriveBase.drive
-STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        robotics_DriveBase_obj_t, self,
+        pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(turn_rate));
 
@@ -172,41 +172,41 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 1, robotics_DriveBase_drive);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_drive_obj, 1, pb_type_DriveBase_drive);
 
 // pybricks.robotics.DriveBase.stop
-STATIC mp_obj_t robotics_DriveBase_stop(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_stop_obj, robotics_DriveBase_stop);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_stop_obj, pb_type_DriveBase_stop);
 
 // pybricks.robotics.DriveBase.distance
-STATIC mp_obj_t robotics_DriveBase_distance(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_distance(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t distance, _;
     pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &_, &_, &_));
 
     return mp_obj_new_int(distance - self->initial_distance);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_distance_obj, robotics_DriveBase_distance);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_distance_obj, pb_type_DriveBase_distance);
 
 // pybricks.robotics.DriveBase.angle
-STATIC mp_obj_t robotics_DriveBase_angle(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_angle(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t heading, _;
     pb_assert(pbio_drivebase_get_state_user(self->db, &_, &_, &heading, &_));
 
     return mp_obj_new_int(heading - self->initial_heading);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_angle_obj, robotics_DriveBase_angle);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_angle_obj, pb_type_DriveBase_angle);
 
 // pybricks.robotics.DriveBase.state
-STATIC mp_obj_t robotics_DriveBase_state(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_state(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t distance, drive_speed, heading, turn_rate;
     pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &heading, &turn_rate));
@@ -219,30 +219,30 @@ STATIC mp_obj_t robotics_DriveBase_state(mp_obj_t self_in) {
 
     return mp_obj_new_tuple(4, ret);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_state_obj, robotics_DriveBase_state);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_state_obj, pb_type_DriveBase_state);
 
 // pybricks.robotics.DriveBase.done
-STATIC mp_obj_t robotics_DriveBase_done(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_done(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(pbio_drivebase_is_done(self->db));
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_done_obj, robotics_DriveBase_done);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_done_obj, pb_type_DriveBase_done);
 
 // pybricks.robotics.DriveBase.stalled
-STATIC mp_obj_t robotics_DriveBase_stalled(mp_obj_t self_in) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_DriveBase_stalled(mp_obj_t self_in) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     bool stalled;
     uint32_t stall_duration;
     pb_assert(pbio_drivebase_is_stalled(self->db, &stalled, &stall_duration));
     return mp_obj_new_bool(stalled);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_stalled_obj, robotics_DriveBase_stalled);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_stalled_obj, pb_type_DriveBase_stalled);
 
 // pybricks.robotics.DriveBase.settings
-STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_DriveBase_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        robotics_DriveBase_obj_t, self,
+        pb_type_DriveBase_obj_t, self,
         PB_ARG_DEFAULT_NONE(straight_speed),
         PB_ARG_DEFAULT_NONE(straight_acceleration),
         PB_ARG_DEFAULT_NONE(turn_rate),
@@ -281,43 +281,43 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_settings_obj, 1, robotics_DriveBase_settings);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_settings_obj, 1, pb_type_DriveBase_settings);
 
-STATIC const pb_attr_dict_entry_t robotics_DriveBase_attr_dict[] = {
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, robotics_DriveBase_obj_t, left),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, robotics_DriveBase_obj_t, right),
+STATIC const pb_attr_dict_entry_t pb_type_DriveBase_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, pb_type_DriveBase_obj_t, left),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, pb_type_DriveBase_obj_t, right),
     #if PYBRICKS_PY_COMMON_CONTROL
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, robotics_DriveBase_obj_t, heading_control),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, robotics_DriveBase_obj_t, distance_control),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, pb_type_DriveBase_obj_t, heading_control),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, pb_type_DriveBase_obj_t, distance_control),
     #endif
     PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.robotics.DriveBase)
-STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_curve),            MP_ROM_PTR(&robotics_DriveBase_curve_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_straight),         MP_ROM_PTR(&robotics_DriveBase_straight_obj) },
-    { MP_ROM_QSTR(MP_QSTR_turn),             MP_ROM_PTR(&robotics_DriveBase_turn_obj)     },
-    { MP_ROM_QSTR(MP_QSTR_drive),            MP_ROM_PTR(&robotics_DriveBase_drive_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_stop),             MP_ROM_PTR(&robotics_DriveBase_stop_obj)     },
-    { MP_ROM_QSTR(MP_QSTR_distance),         MP_ROM_PTR(&robotics_DriveBase_distance_obj) },
-    { MP_ROM_QSTR(MP_QSTR_angle),            MP_ROM_PTR(&robotics_DriveBase_angle_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_done),             MP_ROM_PTR(&robotics_DriveBase_done_obj)     },
-    { MP_ROM_QSTR(MP_QSTR_state),            MP_ROM_PTR(&robotics_DriveBase_state_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_reset),            MP_ROM_PTR(&robotics_DriveBase_reset_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stalled),          MP_ROM_PTR(&robotics_DriveBase_stalled_obj)  },
+STATIC const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_curve),            MP_ROM_PTR(&pb_type_DriveBase_curve_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_straight),         MP_ROM_PTR(&pb_type_DriveBase_straight_obj) },
+    { MP_ROM_QSTR(MP_QSTR_turn),             MP_ROM_PTR(&pb_type_DriveBase_turn_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_drive),            MP_ROM_PTR(&pb_type_DriveBase_drive_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_stop),             MP_ROM_PTR(&pb_type_DriveBase_stop_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_distance),         MP_ROM_PTR(&pb_type_DriveBase_distance_obj) },
+    { MP_ROM_QSTR(MP_QSTR_angle),            MP_ROM_PTR(&pb_type_DriveBase_angle_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_done),             MP_ROM_PTR(&pb_type_DriveBase_done_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_state),            MP_ROM_PTR(&pb_type_DriveBase_state_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_reset),            MP_ROM_PTR(&pb_type_DriveBase_reset_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&pb_type_DriveBase_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stalled),          MP_ROM_PTR(&pb_type_DriveBase_stalled_obj)  },
 };
-STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(pb_type_DriveBase_locals_dict, pb_type_DriveBase_locals_dict_table);
 
 // type(pybricks.robotics.DriveBase)
 const mp_obj_type_t pb_type_drivebase = {
     { &mp_type_type },
     .name = MP_QSTR_DriveBase,
-    .make_new = robotics_DriveBase_make_new,
+    .make_new = pb_type_DriveBase_make_new,
     .attr = pb_attribute_handler,
-    .protocol = robotics_DriveBase_attr_dict,
-    .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
+    .protocol = pb_type_DriveBase_attr_dict,
+    .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
 };
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS
