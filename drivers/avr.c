@@ -137,6 +137,7 @@ static void avr_pack_to_avr(void) {
     /* Tell the AVR to boot SAM-BA. */
     raw_to_avr[0] = 0x5A;
     raw_to_avr[1] = 0xA5;
+    break;
   }
 
   /* Marshal the motor speed settings. */
@@ -308,7 +309,7 @@ void nx__avr_fast_update(void) {
       nx__twi_read_async(AVR_ADDRESS, raw_from_avr,
                      sizeof(raw_from_avr));
     }
-    __attribute__((fallthrough));
+    break;
 
   case AVR_RECV:
     /* If the transmission is complete, unpack the read data into the
