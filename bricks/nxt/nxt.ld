@@ -42,7 +42,7 @@ SECTIONS {
    * boot time.
    */
   .vectors : {
-    KEEP(build/lib/nxos/nxos/base/vectors.o (*.text *.text.*))
+    KEEP(*(.isr_vector))
   } > vector_ram
    AT> rom
 

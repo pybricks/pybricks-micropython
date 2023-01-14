@@ -405,7 +405,6 @@ NXOS_SRC_S = $(addprefix lib/nxos/nxos/,\
 	base/interrupts.s \
 	base/lock.s \
 	base/samba_init.s \
-	base/vectors.s \
 	)
 
 SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
