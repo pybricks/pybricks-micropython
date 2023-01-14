@@ -5,12 +5,14 @@
 ## [Unreleased]
 
 ### Added
+- Added support for frozen modules when building from source ([support#829]).
 - Added `close()` method to `DCMotor` and `Motor` so they can be closed and
   re-initialized later ([support#904]).
 
 ### Fixed
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).
 
+[support#829]: https://github.com/pybricks/support/issues/829
 [support#904]: https://github.com/pybricks/support/issues/904
 [support#913]: https://github.com/pybricks/support/issues/913
 

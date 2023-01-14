@@ -22,6 +22,7 @@
 #include "shared/runtime/pyexec.h"
 #include "py/builtin.h"
 #include "py/compile.h"
+#include "py/frozenmod.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
@@ -346,6 +347,25 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
         // Return the newly imported module.
         return module_obj;
     }
+
+    // Allow importing of frozen modules if any were included in the firmware.
+    #if MICROPY_MODULE_FROZEN_MPY
+    void *modref;
+    int frozen_type;
+    const char *ext = ".py";
+    char module_path[(1 << (8 * MICROPY_QSTR_BYTES_IN_LEN)) + sizeof(ext)] = { 0 };
+    strcpy(module_path, mp_obj_str_get_str(args[0]));
+    strcpy(module_path + qstr_len(module_name_qstr), ext);
+    if (mp_find_frozen_module(module_path, &frozen_type, &modref) == MP_IMPORT_STAT_FILE) {
+        // Create new module and execute in its own context, then return it.
+        mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);
+        mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
+        const mp_frozen_module_t *frozen = modref;
+        context->constants = frozen->constants;
+        do_execute_raw_code(context, frozen->rc, context);
+        return module_obj;
+    }
+    #endif
 
     // Nothing found, raise ImportError.
     mp_raise_msg_varg(&mp_type_ImportError, MP_ERROR_TEXT("no module named '%q'"), module_name_qstr);

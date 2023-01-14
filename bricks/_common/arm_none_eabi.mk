@@ -69,6 +69,10 @@ USER_C_MODULES = $(PBTOP)
 
 include $(PBTOP)/micropython/py/mkenv.mk
 
+ifneq ("$(wildcard $(PBTOP)/bricks/_common/modules/*.py)","")
+FROZEN_MANIFEST ?= ../_common/manifest.py
+endif
+
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = $(PBTOP)/bricks/_common/qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/_common/mpconfigport.h
@@ -460,6 +464,12 @@ endif
 SRC_QSTR += $(PY_EXTRA_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
+
+ifneq ($(FROZEN_MANIFEST),)
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+MPY_TOOL_FLAGS += -mlongint-impl none
+endif
 
 # Main firmware build targets
 TARGETS := $(BUILD)/firmware.zip
