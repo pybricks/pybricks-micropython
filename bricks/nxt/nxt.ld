@@ -1,17 +1,10 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2007,2008 the NxOS developers
- *
  * See AUTHORS for a full list of the developers.
- *
- * Redistribution of this file is permitted under
- * the terms of the GNU Public License (GPL) version 2.
+ * Copyright (c) 2023 The Pybricks Authors
  */
 
 /* NXT linker script source.
- *
- *  This file must be run through a sed script to generate an ldscript
- *  suitable for either a SAM-BA or rom image.
- *
- *  The sed script achieves this by selectively copying the lines with
  *
  *  Notes on alignment:
  *  1) Sections should be 4-byte aligned otherwise ARM fetches will be
@@ -25,7 +18,7 @@
  */
 
 MEMORY {
- rom : ORIGIN = 1M, LENGTH =256k
+rom : ORIGIN = 1M, LENGTH =256k
 vector_ram : ORIGIN = 2M, LENGTH = 64
 ram : ORIGIN = 2M + 64, LENGTH = 64K - 64 + 21
 }
@@ -44,7 +37,7 @@ SECTIONS {
   .vectors : {
     KEEP(*(.isr_vector))
   } > vector_ram
-   AT> rom
+  AT> rom
 
 
   /*
@@ -60,7 +53,7 @@ SECTIONS {
     . = ALIGN(4);
     *.oram (*.rodata *.rodata.*)
   } > ram
-   AT> rom
+  AT> rom
 
 
   /*
@@ -71,7 +64,7 @@ SECTIONS {
     . = ALIGN(4);
     * (*.data *.data.*)
   } > ram
-   AT> rom
+  AT> rom
 
 
   /*
@@ -83,8 +76,7 @@ SECTIONS {
     * (*.text *.text.* *.glue*)
     . = ALIGN(4);
     * (*.rodata *.rodata.*)
-  }
-   > rom
+  } > rom
 
 
   /*
@@ -126,7 +118,7 @@ SECTIONS {
   .name :
   {
       *(.name) /* customizable hub name */
-  } >rom
+  } > rom
 
   /*
    * The magic metadata struct is tacked onto the start of the kernel binary.
@@ -147,8 +139,7 @@ SECTIONS {
      LONG(ROM_BASE);
     /* SAM-BA kernel? */
      BYTE(0);
-  }
-   > rom
+  } > rom
 
   /* Discard anything not mapped at this point. */
   /DISCARD/ : {
@@ -189,5 +180,4 @@ SECTIONS {
 
   __ram_userspace_start__ = __stack_end__;
   __ram_userspace_end__ = (RAM_BASE + RAM_SIZE);
-
 }
