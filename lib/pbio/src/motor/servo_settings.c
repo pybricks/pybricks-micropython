@@ -248,7 +248,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(8000);
             ctl->pid_kp = 3000;
             ctl->pid_kd = 30;
-            obs->feedback_gain = 90;
+            obs->feedback_gain_low = 90;
             break;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
             *model = &model_ev3_l;
@@ -256,7 +256,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(3200);
             ctl->pid_kp = 15000;
             ctl->pid_kd = 250;
-            obs->feedback_gain = 80;
+            obs->feedback_gain_low = 80;
             break;
         #endif // PBIO_CONFIG_SERVO_EV3_NXT
         #if PBIO_CONFIG_SERVO_PUP
@@ -266,7 +266,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(2000);
             ctl->pid_kp = 13500;
             ctl->pid_kd = 1350;
-            obs->feedback_gain = 133;
+            obs->feedback_gain_low = 133;
             break;
         #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
@@ -275,7 +275,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(5000);
             ctl->pid_kp = 15000;
             ctl->pid_kd = 500;
-            obs->feedback_gain = 94;
+            obs->feedback_gain_low = 94;
             break;
         #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
@@ -284,7 +284,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(2000);
             ctl->pid_kp = 17500;
             ctl->pid_kd = 2500;
-            obs->feedback_gain = 51;
+            obs->feedback_gain_low = 51;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
             *model = &model_technic_xl;
@@ -292,7 +292,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(2500);
             ctl->pid_kp = 17500;
             ctl->pid_kd = 2500;
-            obs->feedback_gain = 77;
+            obs->feedback_gain_low = 77;
             break;
         case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
             *model = &model_technic_s_angular;
@@ -300,7 +300,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(2000);
             ctl->pid_kp = 7500;
             ctl->pid_kd = 1000;
-            obs->feedback_gain = 48;
+            obs->feedback_gain_low = 48;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
@@ -309,7 +309,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(1500);
             ctl->pid_kp = 35000;
             ctl->pid_kd = 6000;
-            obs->feedback_gain = 64;
+            obs->feedback_gain_low = 64;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
@@ -318,7 +318,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             ctl->acceleration = DEG_TO_MDEG(2000);
             ctl->pid_kp = 15000;
             ctl->pid_kd = 1800;
-            obs->feedback_gain = 90;
+            obs->feedback_gain_low = 90;
             break;
         #endif // PBIO_CONFIG_SERVO_PUP
         default:
@@ -330,6 +330,8 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     obs->stall_time = ctl->stall_time;
     obs->feedback_voltage_stall_ratio = 75;
     obs->feedback_voltage_negligible = 5 * pbio_observer_torque_to_voltage(*model, (*model)->torque_friction / 2);
+    obs->feedback_gain_high = obs->feedback_gain_low * 3;
+    obs->feedback_gain_threshold = DEG_TO_MDEG(10);
 
     // The default speed is not used for servos currently (an explicit speed
     // is given for all run commands), so we initialize it to the maximum.

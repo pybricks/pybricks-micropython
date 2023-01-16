@@ -102,15 +102,40 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
 }
 
 /**
- * Gets observer feedback voltage that keep it close to measured value.
+ * Gets absolute observer feedback voltage.
+ *
+ * @param [in]  error          Absolute estimation error (mdeg).
+ * @param [in]  s              Observer settings.
+ * @return                     Feedback voltage in mV.
+ */
+static int32_t pbio_observer_get_feedback_voltage_abs(int32_t error, pbio_observer_settings_t *s) {
+
+    // Feedback voltage in first region is just linear in the low gain.
+    if (error <= s->feedback_gain_threshold) {
+        return error * s->feedback_gain_low / 1000;
+    }
+
+    // High region adds the increased gain for anything above the higher threshold.
+    return (s->feedback_gain_threshold * s->feedback_gain_low + (error - s->feedback_gain_threshold) * s->feedback_gain_high) / 1000;
+}
+
+/**
+ * Gets observer feedback voltage that keeps it close to measured value.
  *
  * @param [in]  obs            The observer instance.
  * @param [in]  angle          Measured angle used to correct the model.
  * @return                     Feedback voltage in mV.
  */
 int32_t pbio_observer_get_feedback_voltage(pbio_observer_t *obs, const pbio_angle_t *angle) {
+
+    // Estimation error in millidegrees.
     int32_t error = pbio_angle_diff_mdeg(angle, &obs->angle);
-    return pbio_int_math_clamp(pbio_control_settings_mul_by_gain(error, obs->settings.feedback_gain), MAX_NUM_VOLTAGE);
+
+    // Get matching absolute value of feedback voltage.
+    int32_t feedback_voltage_abs = pbio_observer_get_feedback_voltage_abs(pbio_int_math_abs(error), &obs->settings);
+
+    // Sign and clamp the feedback voltage.
+    return pbio_int_math_clamp(feedback_voltage_abs * pbio_int_math_sign(error), MAX_NUM_VOLTAGE);
 }
 
 /**

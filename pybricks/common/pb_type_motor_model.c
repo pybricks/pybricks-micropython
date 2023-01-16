@@ -41,9 +41,11 @@ STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_a
         mp_obj_t get_values[] = {
             mp_obj_new_int(self->observer->settings.stall_speed_limit),
             mp_obj_new_int(self->observer->settings.stall_time),
-            mp_obj_new_int(self->observer->settings.feedback_gain),
             mp_obj_new_int(self->observer->settings.feedback_voltage_negligible),
             mp_obj_new_int(self->observer->settings.feedback_voltage_stall_ratio),
+            mp_obj_new_int(self->observer->settings.feedback_gain_low),
+            mp_obj_new_int(self->observer->settings.feedback_gain_high),
+            mp_obj_new_int(self->observer->settings.feedback_gain_threshold),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(get_values), get_values);
     }
@@ -52,14 +54,16 @@ STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_a
     size_t size;
     mp_obj_t *set_values;
     mp_obj_get_array(values_in, &size, &set_values);
-    if (size != 5) {
+    if (size != 7) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     self->observer->settings.stall_speed_limit = mp_obj_get_int(set_values[0]);
     self->observer->settings.stall_time = mp_obj_get_int(set_values[1]);
-    self->observer->settings.feedback_gain = mp_obj_get_int(set_values[2]);
-    self->observer->settings.feedback_voltage_negligible = mp_obj_get_int(set_values[3]);
-    self->observer->settings.feedback_voltage_stall_ratio = mp_obj_get_int(set_values[4]);
+    self->observer->settings.feedback_voltage_negligible = mp_obj_get_int(set_values[2]);
+    self->observer->settings.feedback_voltage_stall_ratio = mp_obj_get_int(set_values[3]);
+    self->observer->settings.feedback_gain_low = mp_obj_get_int(set_values[4]);
+    self->observer->settings.feedback_gain_high = mp_obj_get_int(set_values[5]);
+    self->observer->settings.feedback_gain_threshold = mp_obj_get_int(set_values[6]);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_MotorModel_settings_obj, 1, pb_type_MotorModel_settings);

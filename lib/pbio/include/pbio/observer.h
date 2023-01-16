@@ -55,10 +55,6 @@ typedef struct _pbio_observer_settings_t {
      */
     uint32_t stall_time;
     /**
-     * Feedback gain (mV/deg) to correct the observer for a given estimation error.
-     */
-    int32_t feedback_gain;
-    /**
      * Lower limit of the feedback voltage where we cannot get useful stall
      * information because it is less than needed to overcome static friction.
      */
@@ -69,6 +65,18 @@ typedef struct _pbio_observer_settings_t {
      * This ratio (0--100) sets the threshold above which we say it is stalled.
      */
     int32_t feedback_voltage_stall_ratio;
+    /**
+     * Feedback gain (mV/deg) to correct the observer for low estimation errors.
+     */
+    int32_t feedback_gain_low;
+    /**
+     * Feedback gain (mV/deg) to correct the observer for high estimation error.
+     */
+    int32_t feedback_gain_high;
+    /**
+     * Threshold angle (mdeg) from which the higher observer feedback is used.
+     */
+    int32_t feedback_gain_threshold;
 } pbio_observer_settings_t;
 
 /**
