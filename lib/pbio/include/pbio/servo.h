@@ -32,7 +32,7 @@
 #include <pbio/iodev.h>
 
 // Number of values per row when servo data logger is active.
-#define PBIO_SERVO_LOGGER_NUM_COLS (9)
+#define PBIO_SERVO_LOGGER_NUM_COLS (10)
 
 /**
  * The servo system combines a dcmotor and rotation sensor with a controller

@@ -134,8 +134,10 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
             pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed_estimate),
             // Column 8: Feedback torque (uNm).
             feedback_torque,
-            // Column 9: Feedback torque (uNm).
-            feedforward_torque
+            // Column 9: Feedforward torque (uNm).
+            feedforward_torque,
+            // Column 10: Observer error feedback voltage torque (mV).
+            pbio_observer_get_feedback_voltage(&srv->observer, &state.position),
         };
         pbio_logger_add_row(&srv->log, log_data);
     }

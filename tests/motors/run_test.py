@@ -121,6 +121,7 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     rate_est = data[:, 7]
     torque_feedback = data[:, 8]
     torque_feedforward = data[:, 9]
+    observer_feedback_voltage = data[:, 10]
 
     title = "servo" if subtitle is None else "servo_" + subtitle
 
@@ -147,8 +148,14 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     torque_ax.plot(time, torque_feedforward, label="Feedforward", drawstyle="steps-post")
     torque_ax.set_ylabel("Torque")
 
-    duty_ax.plot(time, voltage, label="Voltage", drawstyle="steps-post")
-    duty_ax.set_ylabel("Motor voltage (mV)")
+    duty_ax.plot(time, voltage, label="Motor", drawstyle="steps-post")
+    duty_ax.plot(
+        time, observer_feedback_voltage, label="Observer Feedback", drawstyle="steps-post"
+    )
+    duty_ax.plot(
+        time, voltage + observer_feedback_voltage, label="Model voltage", drawstyle="steps-post"
+    )
+    duty_ax.set_ylabel("Voltage (mV)")
     duty_ax.set_ylim([-10000, 10000])
 
     time_ax.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
