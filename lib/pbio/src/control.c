@@ -242,6 +242,12 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
 
     // Optionally log control data.
     if (pbio_logger_is_active(&ctl->log)) {
+
+        // For speed control, we use a reference adjusted for pausing. This is
+        // accounted for above, but here we need it in angle units for logging.
+        pbio_angle_t ref_position_log = ref->position;
+        pbio_angle_add_mdeg(&ref_position_log, position_error_used - position_error);
+
         int32_t log_data[] = {
             // Column 0: Log time (added by logger).
             // Column 1: Time since start of trajectory.
@@ -255,7 +261,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
             // Column 5: Actuation payload, e.g. torque.
             *control,
             // Column 6: Reference position in application units.
-            pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref->position),
+            pbio_control_settings_ctl_to_app_long(&ctl->settings, &ref_position_log),
             // Column 7: Reference speed in application units.
             pbio_control_settings_ctl_to_app(&ctl->settings, ref->speed),
             // Column 8: Estimated position in application units.
