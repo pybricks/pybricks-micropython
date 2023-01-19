@@ -449,7 +449,10 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
             } else {
                 // If no control is ongoing, just hold measured state.
                 int32_t speed;
-                pbio_servo_get_state_user(srv, &hold_target, &speed);
+                err = pbio_servo_get_state_user(srv, &hold_target, &speed);
+                if (err != PBIO_SUCCESS) {
+                    return err;
+                }
             }
             // Track the hold angle.
             return pbio_servo_track_target(srv, hold_target);
