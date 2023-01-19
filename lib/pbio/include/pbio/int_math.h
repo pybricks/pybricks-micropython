@@ -8,8 +8,8 @@
  * @{
  */
 
-#ifndef _pbio_int_math_H_
-#define _pbio_int_math_H_
+#ifndef _PBIO_INT_MATH_H_
+#define _PBIO_INT_MATH_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -33,6 +33,6 @@ int32_t pbio_int_math_atan2(int32_t y, int32_t x);
 int32_t pbio_int_math_mult_then_div(int32_t a, int32_t b, int32_t c);
 int32_t pbio_int_math_sqrt(int32_t n);
 
-#endif // _pbio_int_math_H_
+#endif // _PBIO_INT_MATH_H_
 
 /** @} */
