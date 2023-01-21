@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2022 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 import JSZip, { JSZipObject } from 'jszip';
 import { PACKAGE_VERSION } from './version';
@@ -41,7 +41,26 @@ export enum HubType {
      * The LEGO Technic Small hub (SPIKE Essential) firmware file.
      */
     EssentialHub = 0x83,
+
+    /**
+     * The LEGO MINDSTORMS RCX brick firmware file.
+     */
+    RCX = 0xe0,
+
+    /**
+     * The LEGO MINDSTORMS NXT brick firmware file.
+     */
+    NXT = 0xe1,
+
+    /**
+     * The LEGO MINDSTORMS EV3 brick firmware file.
+     */
+    EV3 = 0xe2,
 }
+
+type V100HubTypes = HubType.MoveHub | HubType.CityHub | HubType.TechnicHub;
+type V200HubTypes = V100HubTypes | HubType.PrimeHub | HubType.EssentialHub;
+type V210HubTypes = V200HubTypes | HubType.RCX | HubType.NXT | HubType.EV3;
 
 /**
  * Map of hub type to firmware file name.
@@ -63,7 +82,7 @@ export type FirmwareMetadataV100 = {
     /** The version of the firmware binary. */
     'firmware-version': string;
     /** The type of hub the firmware runs on. */
-    'device-id': HubType;
+    'device-id': V100HubTypes;
     /** The type of checksum used by the device bootloader to verify the firmware. */
     'checksum-type': 'sum' | 'crc32';
     /** The .mpy file ABI version compatible with the firmware binary. */
@@ -100,7 +119,7 @@ export type FirmwareMetadataV200 = {
     /** The version of the firmware binary. */
     'firmware-version': string;
     /** The type of hub the firmware runs on. */
-    'device-id': HubType;
+    'device-id': V200HubTypes;
     /** The type of checksum used by the device bootloader to verify the firmware. */
     'checksum-type': 'sum' | 'crc32';
     /** The data size for the checksum calculation. */
@@ -111,11 +130,27 @@ export type FirmwareMetadataV200 = {
     'hub-name-size': number;
 };
 
+/**
+ * Firmware metadata v2.1.0 properties.
+ */
+export type FirmwareMetadataV210 = Omit<
+    FirmwareMetadataV200,
+    'metadata-version' | 'device-id' | 'checksum-type'
+> & {
+    /** The version of the metadata itself. */
+    'metadata-version': '2.1.0';
+    /** The type of hub the firmware runs on. */
+    'device-id': V210HubTypes;
+    /** The type of checksum used by the device bootloader to verify the firmware. */
+    'checksum-type': 'sum' | 'crc32' | 'none';
+};
+
 /** Firmware metadata of any version. */
 export type FirmwareMetadata =
     | FirmwareMetadataV100
     | FirmwareMetadataV110
-    | FirmwareMetadataV200;
+    | FirmwareMetadataV200
+    | FirmwareMetadataV210;
 
 /** Types of errors that can be raised by FirmwareReader. */
 export enum FirmwareReaderErrorCode {
@@ -303,6 +338,17 @@ export function metadataIsV200(
     metadata: FirmwareMetadata
 ): metadata is FirmwareMetadataV200 {
     return metadata['metadata-version'] === '2.0.0';
+}
+
+/**
+ * Type discriminator for metadata v2.1.0.
+ * @param metadata The metadata to test.
+ * @returns True if the metadata is v2.1.0.
+ */
+export function metadataIsV210(
+    metadata: FirmwareMetadata
+): metadata is FirmwareMetadataV210 {
+    return metadata['metadata-version'] === '2.1.0';
 }
 
 /**

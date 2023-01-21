@@ -1,3 +1,8 @@
+## Unreleased
+
+### Added
+- Added support for v2.1.0 metadata.
+
 ## 6.7.0 - 2023-01-06
 
 ### Changed
