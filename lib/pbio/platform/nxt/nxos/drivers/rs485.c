@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nxos/at91sam7s256.h"
+#include <at91sam7s256.h>
 
 #include "nxos/nxt.h"
 #include "nxos/assert.h"

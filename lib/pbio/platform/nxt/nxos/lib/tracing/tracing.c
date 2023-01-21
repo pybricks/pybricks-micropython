@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "nxos/at91sam7s256.h"
+#include <at91sam7s256.h>
 
 #include "nxos/assert.h"
 #include "nxos/nxt.h"

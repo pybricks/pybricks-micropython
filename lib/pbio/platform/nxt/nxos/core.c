@@ -6,7 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "at91sam7s256.h"
+#include <at91sam7s256.h>
 
 #include "nxos/types.h"
 #include "nxos/interrupts.h"

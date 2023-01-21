@@ -7,10 +7,10 @@
 
 #if PBDRV_CONFIG_RESET_NXT
 
-#include <pbdrv/reset.h>
-
-#include <nxos/at91sam7s256.h>
+#include <at91sam7s256.h>
 #include <nxos/drivers/_avr.h>
+
+#include <pbdrv/reset.h>
 
 void pbdrv_reset_init(void) {
 }

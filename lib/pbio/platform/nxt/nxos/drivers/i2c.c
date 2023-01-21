@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "nxos/at91sam7s256.h"
+#include <at91sam7s256.h>
 
 #define I2C_LOG false
 

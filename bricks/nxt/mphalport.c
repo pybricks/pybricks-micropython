@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 // Copyright (c) 2013, 2014 Damien P. George
 
 #include <stdint.h>
+
+#include <nxos/interrupts.h>
+#include <nxos/drivers/systick.h>
+#include <nxos/drivers/bt.h>
+#include <nxos/display.h>
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
@@ -12,12 +17,6 @@
 #include "py/mphal.h"
 #include "py/mpconfig.h"
 #include "py/stream.h"
-
-#include <nxos/at91sam7s256.h>
-#include <nxos/interrupts.h>
-#include <nxos/drivers/systick.h>
-#include <nxos/drivers/bt.h>
-#include <nxos/display.h>
 
 void pb_event_poll_hook_leave(void) {
 }
