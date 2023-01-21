@@ -41,7 +41,7 @@ sys.path.append(os.path.join(TOP, "tools"))
 
 
 # metadata file format version
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 # hub-specific info
 HUB_INFO = {
