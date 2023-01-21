@@ -6,17 +6,19 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/assert.h"
-#include "base/util.h"
-#include "base/display.h"
-#include "base/drivers/_efc.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/lib/fs/fs.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/assert.h"
+#include "nxos/util.h"
+#include "nxos/display.h"
+#include "nxos/drivers/_efc.h"
+
+#include "nxos/lib/fs/fs.h"
 
 /* Magic marker. */
 #define FS_FILE_ORIGIN_MARKER 0x42

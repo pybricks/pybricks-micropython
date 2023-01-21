@@ -15,7 +15,7 @@
 #ifndef __NXOS_RADAR_H__
 #define __NXOS_RADAR_H__
 
-#include "base/types.h"
+#include "nxos/types.h"
 
 /** @addtogroup driver */
 /*@{*/

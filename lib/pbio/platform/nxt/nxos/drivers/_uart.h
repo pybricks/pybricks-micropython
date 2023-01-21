@@ -16,7 +16,7 @@
 #ifndef __NXOS_BASE_DRIVERS_UART_H__
 #define __NXOS_BASE_DRIVERS_UART_H__
 
-#include "base/types.h"
+#include "nxos/types.h"
 
 /** @addtogroup driverinternal */
 /*@{*/

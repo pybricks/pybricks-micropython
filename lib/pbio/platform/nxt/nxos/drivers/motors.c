@@ -6,17 +6,17 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/assert.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/_avr.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/_avr.h"
 
-#include "base/drivers/_motors.h"
+#include "nxos/drivers/_motors.h"
 
 /* The following are easier mnemonics for the pins used by the
  * tachymeter. Each motor has a tach-pulse pin whose value flips at

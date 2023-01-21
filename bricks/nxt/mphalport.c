@@ -13,11 +13,11 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
-#include <base/at91sam7s256.h>
-#include <base/interrupts.h>
-#include <base/drivers/systick.h>
-#include <base/drivers/bt.h>
-#include "base/display.h"
+#include <nxos/at91sam7s256.h>
+#include <nxos/interrupts.h>
+#include <nxos/drivers/systick.h>
+#include <nxos/drivers/bt.h>
+#include <nxos/display.h>
 
 void pb_event_poll_hook_leave(void) {
 }

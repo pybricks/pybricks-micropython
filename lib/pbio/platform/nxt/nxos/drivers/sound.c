@@ -6,15 +6,15 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/interrupts.h"
-#include "base/assert.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/systick.h"
+#include "nxos/types.h"
+#include "nxos/interrupts.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/systick.h"
 
-#include "base/drivers/_sound.h"
+#include "nxos/drivers/_sound.h"
 
 /* Statically defined digitized sine wave, used for tone
  * generation.

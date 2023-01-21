@@ -36,7 +36,7 @@ subdirectories.
 
 ### nxos
 
-**path**: `lib/nxos`
+**path**: `lib/pbio/platform/nxt/nxos`
 
 **origin**: Git commit bbed11a3740c576e95a8c6fe1dabb02c6cc9110c
 

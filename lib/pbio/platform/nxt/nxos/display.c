@@ -6,15 +6,17 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/types.h"
-#include "base/interrupts.h"
-#include "base/util.h"
-#include "base/assert.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/_lcd.h"
+#include <string.h>
 
-#include "base/_display.h"
+#include "nxos/types.h"
+#include "nxos/interrupts.h"
+#include "nxos/util.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/_lcd.h"
+
+#include "nxos/_display.h"
 
 /* A simple 8x5 font. This is in a separate file because the embedded
  * font is converted from a .png at compile time.

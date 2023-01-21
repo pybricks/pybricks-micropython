@@ -42,7 +42,9 @@ if start_hash == pybricks.commit(PYBRICKS_BRANCH).hexsha:
 
 
 # Process the commits in the tree and log the data
-for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
+for commit in pybricks.iter_commits(
+    f"{start_hash}..{PYBRICKS_BRANCH}", ancestry_path=start_hash
+):
     print(f"trying {commit.hexsha}...")
 
     sizes = {}
@@ -72,9 +74,6 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
         "update", "--init", "lib/stm32lib"
     )
     pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
-    pybricks.git.submodule(
-        "update", "--init", "--checkout", "lib/nxos"
-    )
 
     # Make mpy-cross once
     print("Building mpy-cross")

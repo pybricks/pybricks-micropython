@@ -6,14 +6,16 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/nxt.h"
-#include "base/types.h"
-#include "base/util.h"
-#include "base/assert.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/_twi.h"
+#include <string.h>
 
-#include "base/drivers/_avr.h"
+#include "nxos/nxt.h"
+#include "nxos/types.h"
+#include "nxos/util.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/_twi.h"
+
+#include "nxos/drivers/_avr.h"
 
 #define AVR_ADDRESS 1
 #define AVR_MAX_FAILED_CHECKSUMS 3

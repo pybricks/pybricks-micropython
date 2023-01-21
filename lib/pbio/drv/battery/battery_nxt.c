@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #include <contiki.h>
-#include <base/drivers/avr.h>
+#include <nxos/drivers/avr.h>
 
 #include <pbdrv/battery.h>
 #include <pbio/error.h>

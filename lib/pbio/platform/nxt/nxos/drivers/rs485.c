@@ -7,14 +7,14 @@
  *
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/nxt.h"
-#include "base/assert.h"
-#include "base/interrupts.h"
-#include "base/drivers/aic.h"
+#include "nxos/nxt.h"
+#include "nxos/assert.h"
+#include "nxos/interrupts.h"
+#include "nxos/drivers/aic.h"
 
-#include "base/drivers/rs485.h"
+#include "nxos/drivers/rs485.h"
 
 static inline U16 build_baud_rate(nx_rs485_baudrate_t br) {
   return NXT_CLOCK_FREQ / 16 / br;

@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_DRIVERS__SYSTICK_H__
 #define __NXOS_BASE_DRIVERS__SYSTICK_H__
 
-#include "base/drivers/systick.h"
+#include "nxos/drivers/systick.h"
 
 /** @addtogroup driverinternal */
 /*@{*/

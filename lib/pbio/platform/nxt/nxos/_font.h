@@ -13,8 +13,8 @@
 #ifndef __NXOS_BASE__FONT_H__
 #define __NXOS_BASE__FONT_H__
 
-#include "base/types.h"
-#include "base/drivers/_lcd.h"
+#include "nxos/types.h"
+#include "nxos/drivers/_lcd.h"
 
 /** @addtogroup kernelinternal */
 /*@{*/

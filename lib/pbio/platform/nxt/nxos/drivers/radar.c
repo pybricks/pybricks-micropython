@@ -8,15 +8,17 @@
  *  - Warm reset to factory defaults
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/display.h"
-#include "base/util.h"
-#include "base/drivers/i2c_memory.h"
-#include "base/drivers/radar.h"
+#include "nxos/at91sam7s256.h"
+
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/display.h"
+#include "nxos/util.h"
+#include "nxos/drivers/i2c_memory.h"
+#include "nxos/drivers/radar.h"
 
 /* LEGO's Radar factory sensor type. */
 #define RADAR_LEGO_SENSOR_TYPE "Sonar"

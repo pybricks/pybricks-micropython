@@ -60,12 +60,6 @@ def archive(hub: str) -> None:
             git_archive("lib/btstack", btstack_tar)
             archives.append(btstack_tar)
 
-        # extra library for NXT
-        if hub == "nxt":
-            nxt_tar = pathlib.Path(d, "nxt.tar")
-            git_archive("lib/nxos", nxt_tar)
-            archives.append(nxt_tar)
-
         # merge all of the individual tar files
         final_tar = pathlib.Path(f"pybricks-micropython-{hub}.tar.gz")
         final_tar.unlink(missing_ok=True)

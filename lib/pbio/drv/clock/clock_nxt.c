@@ -7,8 +7,7 @@
 
 #include <contiki.h>
 
-#include <base/at91sam7s256.h>
-#include <base/drivers/systick.h>
+#include <nxos/drivers/systick.h>
 
 static void clock_systick_hook(void) {
     etimer_request_poll();

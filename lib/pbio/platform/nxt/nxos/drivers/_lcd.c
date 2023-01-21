@@ -6,15 +6,17 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include <stdbool.h>
 
-#include "base/types.h"
-#include "base/lock.h"
-#include "base/interrupts.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/aic.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/drivers/_lcd.h"
+#include "nxos/types.h"
+#include "nxos/lock.h"
+#include "nxos/interrupts.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/aic.h"
+
+#include "nxos/drivers/_lcd.h"
 
 /* Internal command bytes implementing part of the basic commandset of
  * the UC1601.

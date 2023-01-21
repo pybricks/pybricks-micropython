@@ -36,7 +36,13 @@ start_commit = (
 )
 end_commit = args.commit
 
-for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}"))):
+for commit in reversed(
+    list(
+        pybricks.iter_commits(
+            f"{start_commit}..{end_commit}", ancestry_path=start_commit
+        )
+    )
+):
     print("Checking out", commit.hexsha[:8], f'"{commit.summary}"', flush=True)
     pybricks.git.checkout(commit.hexsha)
 
@@ -48,10 +54,6 @@ for commit in reversed(list(pybricks.iter_commits(f"{start_commit}..{end_commit}
         )
     if args.hub == "primehub" or args.hub == "essentialhub":
         pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
-    if args.hub == "nxt":
-        pybricks.git.submodule(
-            "update", "--init", "--checkout", "lib/nxos"
-        )
 
     # build the firmware
     subprocess.check_call(

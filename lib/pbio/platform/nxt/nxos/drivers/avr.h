@@ -13,7 +13,9 @@
 #ifndef __NXOS_BASE_DRIVERS_AVR_H__
 #define __NXOS_BASE_DRIVERS_AVR_H__
 
-#include "base/types.h"
+#include <stdbool.h>
+
+#include "nxos/types.h"
 
 /** @addtogroup driver */
 /*@{*/

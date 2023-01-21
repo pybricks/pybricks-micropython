@@ -5,13 +5,14 @@
 
 #if PBDRV_CONFIG_MOTOR_DRIVER_NXT
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbdrv/motor_driver.h>
 #include <pbio/error.h>
 
-#include <base/nxt.h>
-#include <base/drivers/motors.h>
+#include <nxos/nxt.h>
+#include <nxos/drivers/motors.h>
 
 #if PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV != (NXT_N_MOTORS)
 #error "PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV must be set to the same value as NXT_N_MOTORS"

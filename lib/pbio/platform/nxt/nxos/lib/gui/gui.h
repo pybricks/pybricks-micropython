@@ -15,7 +15,7 @@
 #ifndef __NXOS_BASE_LIB_GUI_H__
 #define __NXOS_BASE_LIB_GUI_H__
 
-#include "base/types.h"
+#include "nxos/types.h"
 
 /** @addtogroup lib */
 /*@{*/

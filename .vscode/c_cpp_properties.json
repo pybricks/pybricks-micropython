@@ -276,7 +276,6 @@
                 "${workspaceFolder}/lib/contiki-core",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/lwrb/src/include",
-                "${workspaceFolder}/lib/nxos/nxos",
                 "${workspaceFolder}/lib/pbio/include",
                 "${workspaceFolder}/lib/pbio/platform/nxt",
                 "${workspaceFolder}/lib/pbio",

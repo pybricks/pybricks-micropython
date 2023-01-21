@@ -6,45 +6,14 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/types.h"
-#include "base/util.h"
-#include "base/assert.h"
+#include <assert.h>
 
-void memcpy(void *dest, const void *source, U32 len) {
-  U8 *dst = (U8*)dest;
-  U8 *src = (U8*)source;
-
-  NX_ASSERT(dst != NULL);
-  NX_ASSERT(src != NULL);
-
-  while (len--) {
-    *dst++ = *src++;
-  }
-}
-
-void memset(void *dest, const U8 val, U32 len) {
-  U8 *dst = (U8*)dest;
-
-  NX_ASSERT(dst != NULL);
-
-  while (len--) {
-    *dst++ = val;
-  }
-}
-
-U32 strlen(const char *str) {
-  U32 i = 0;
-
-  NX_ASSERT(str != NULL);
-
-  while (*str++)
-    i++;
-
-  return i;
-}
+#include "nxos/types.h"
+#include "nxos/util.h"
 
 bool streqn(const char *a, const char *b, U32 n) {
-  NX_ASSERT(a != NULL && b != NULL);
+  assert(a != NULL);
+  assert(b != NULL);
 
   while (n--) {
     if (*a != *b++)
@@ -57,7 +26,8 @@ bool streqn(const char *a, const char *b, U32 n) {
 }
 
 bool streq(const char *a, const char *b) {
-  NX_ASSERT(a != NULL && b != NULL);
+  assert(a != NULL);
+  assert(b != NULL);
 
   while (*a != '\0' && *b != '\0') {
     if (*a++ != *b++)
@@ -67,22 +37,10 @@ bool streq(const char *a, const char *b) {
   return *a == *b ? TRUE : FALSE;
 }
 
-char *strchr(const char *s, const char c) {
-  NX_ASSERT(s != NULL);
-
-  while (*s) {
-    if (*s == c)
-      return (char*)s;
-    s++;
-  }
-
-  return NULL;
-}
-
-char *strrchr(const char *s, const char c) {
+char *strrchr (const char *s, int c) {
   const char *ptr = NULL;
 
-  NX_ASSERT(s != NULL);
+  assert(s != NULL);
 
   while (*s) {
     if (*s == c)
@@ -96,7 +54,7 @@ char *strrchr(const char *s, const char c) {
 bool atou32(const char *s, U32* result) {
   U32 prev = 0;
 
-  NX_ASSERT(s != NULL && result != NULL);
+  assert(s != NULL && result != NULL);
 
   *result = 0;
 
@@ -125,7 +83,7 @@ bool atos32(const char *s, S32 *result) {
   S32 prev = 0;
   bool negative = FALSE;
 
-  NX_ASSERT(s != NULL && result != NULL);
+  assert(s != NULL && result != NULL);
 
   *result = 0;
 

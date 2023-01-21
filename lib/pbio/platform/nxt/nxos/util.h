@@ -13,7 +13,9 @@
 #ifndef __NXOS_BASE_UTIL_H__
 #define __NXOS_BASE_UTIL_H__
 
-#include "base/types.h"
+#include <stdbool.h>
+
+#include "nxos/types.h"
 
 /** @addtogroup typesAndUtils */
 /*@{*/
@@ -31,31 +33,6 @@
  *          times! Use only with pure arguments.
  */
 #define MAX(x, y) ((x) > (y) ? (x): (y))
-
-/** Copy @a len bytes from @a src to @a dest.
- *
- * @param dest Destination of the copy.
- * @param src Source of the copy.
- * @param len Number of bytes to copy.
- *
- * @warning The source and destination memory regions must not overlap.
- */
-void memcpy(void *dest, const void *src, U32 len);
-
-/** Initialize @a len bytes of @a dest with the constant @a val.
- *
- * @param dest Start of the region to initialize.
- * @param val Constant initializer to use.
- * @param len Length of the region.
- */
-void memset(void *dest, const U8 val, U32 len);
-
-/** Return the length of the given null-terminated string.
- *
- * @param str The string to evaluate.
- * @return The length in bytes of the string.
- */
-U32 strlen(const char *str);
 
 /** Compare two string prefixes for equality.
  *
@@ -78,24 +55,6 @@ bool streqn(const char *a, const char *b, U32 n);
  * @see strneq
  */
 bool streq(const char *a, const char *b);
-
-/** Locate leftmost instance of character @a c in string @a s.
- *
- * @param s The string to search.
- * @param c The character to find.
- * @return A pointer to the first occurence of @a c in @a s, or NULL if
- * there is none.
- */
-char *strchr(const char *s, const char c);
-
-/** Locate rightmost instance of character @a c in string @a s.
- *
- * @param s The string to search.
- * @param c The character to find.
- * @return A pointer to the last occurence of @a c in @a s, or NULL if
- * there is none.
- */
-char *strrchr(const char *s, const char c);
 
 /** Convert a string to the unsigned integer it represents, if possible.
  *

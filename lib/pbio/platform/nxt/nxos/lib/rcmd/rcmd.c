@@ -6,16 +6,18 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/types.h"
-#include "base/util.h"
-#include "base/assert.h"
-#include "base/display.h"
-#include "base/nxt.h"
-#include "base/drivers/motors.h"
-#include "base/drivers/sound.h"
-#include "base/drivers/systick.h"
-#include "base/lib/fs/fs.h"
-#include "base/lib/rcmd/rcmd.h"
+#include <string.h>
+
+#include "nxos/types.h"
+#include "nxos/util.h"
+#include "nxos/assert.h"
+#include "nxos/display.h"
+#include "nxos/nxt.h"
+#include "nxos/drivers/motors.h"
+#include "nxos/drivers/sound.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/lib/fs/fs.h"
+#include "nxos/lib/rcmd/rcmd.h"
 
 static rcmd_err_t nx_rcmd_move(char *line);
 static rcmd_err_t nx_rcmd_print(char *line);
@@ -172,7 +174,7 @@ static rcmd_err_t nx_rcmd_print(char *line) {
 static rcmd_err_t nx_rcmd_clear(char *line) {
   /* No-op. */
   (void)line;
-  
+
   nx_display_clear();
   return RCMD_ERR_NO_ERROR;
 }

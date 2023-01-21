@@ -14,7 +14,7 @@
 #ifndef __NXOS_BASE_DRIVERS_RS485_H__
 #define __NXOS_BASE_DRIVERS_RS485_H__
 
-#include "base/types.h"
+#include "nxos/types.h"
 
 /** @addtogroup driver */
 /*@{*/

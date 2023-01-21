@@ -54,15 +54,6 @@ $(error failed)
 endif
 endif
 endif
-ifeq ($(PB_LIB_NXOS),1)
-ifeq ("$(wildcard $(PBTOP)/lib/nxos/README.md)","")
-$(info GIT cloning nxos submodule)
-$(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/nxos))
-ifeq ("$(wildcard $(PBTOP)/lib/nxos/README.md)","")
-$(error failed)
-endif
-endif
-endif
 
 # lets micropython make files work with external files
 USER_C_MODULES = $(PBTOP)
@@ -119,9 +110,6 @@ endif
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Class/CDC/Inc/
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
-endif
-ifeq ($(PB_LIB_NXOS),1)
-INC += -I$(PBTOP)/lib/nxos/nxos
 endif
 INC += -I$(PBTOP)
 INC += -I$(BUILD)
@@ -373,9 +361,10 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 	usbd_desc.c \
 	)
 
-NXOS_SRC_C = $(addprefix lib/nxos/nxos/base/,\
+NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	_abort.c \
 	assert.c \
+	util.c \
 	display.c \
 	drivers/_efc.c \
 	drivers/_lcd.c \
@@ -400,15 +389,10 @@ NXOS_SRC_C = $(addprefix lib/nxos/nxos/base/,\
 	lib/tracing/tracing.c \
 	)
 
-# Override nxos/base/util to use string.h to avoid conflict with MicroPython.
-NXOS_SRC_C += $(addprefix bricks/nxt/,\
-	base/util.c \
-	)
-
-NXOS_SRC_S = $(addprefix lib/nxos/nxos/,\
-	base/interrupts.s \
-	base/lock.s \
-	base/samba_init.s \
+NXOS_SRC_S = $(addprefix lib/pbio/platform/nxt/nxos/,\
+	interrupts.s \
+	lock.s \
+	samba_init.s \
 	)
 
 SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
@@ -455,7 +439,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
 $(BUILD)/lib/STM32_USB_Device_Library/%.o: CFLAGS += -Wno-sign-compare
 endif
 
-ifeq ($(PB_LIB_NXOS),1)
+ifeq ($(PBIO_PLATFORM),nxt)
 OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_S:.s=.o))
 endif
@@ -532,13 +516,10 @@ $(BUILD)/%.dfu: $(BUILD)/%-base.bin
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
 deploy: $(BUILD)/firmware.zip
-	$(Q)$(PYBRICKSDEV) flash $< --name $(PBIO_PLATFORM)
+	$(Q)$(PYBRICKSDEV) flash $< $(if $(filter $(PBIO_PLATFORM),nxt),,--name $(PBIO_PLATFORM))
 
 deploy-openocd: $(BUILD)/firmware-base.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
 	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
-
-deploy-nxt: $(BUILD)/firmware-base.bin
-	$(Q)env PYTHONPATH=../../lib/nxos $(PYTHON) -m pynxt.cli fwflash $<
 
 include $(TOP)/py/mkrules.mk

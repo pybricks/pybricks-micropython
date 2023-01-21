@@ -27,6 +27,7 @@ codeformat.PATHS = [
 
 codeformat.EXCLUSIONS = [
     "bricks/**/build*/**",
+    "lib/pbio/platform/nxt/nxos/**",
     "micropython/**",
     "tests/**/build/**",
 ]

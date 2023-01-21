@@ -18,7 +18,7 @@
 #ifndef __NXOS_BASE__CORE_H__
 #define __NXOS_BASE__CORE_H__
 
-#include "base/core.h"
+#include "nxos/core.h"
 
 /** @addtogroup kernelinternal */
 /*@{*/

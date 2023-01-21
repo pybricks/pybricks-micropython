@@ -15,8 +15,8 @@
 #ifndef __NXOS_BASE_LIB_FS_H__
 #define __NXOS_BASE_LIB_FS_H__
 
-#include "base/types.h"
-#include "base/drivers/_efc.h"
+#include "nxos/types.h"
+#include "nxos/drivers/_efc.h"
 
 /** @addtogroup lib */
 /*@{*/

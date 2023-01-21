@@ -13,8 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS__SENSORS_H__
 #define __NXOS_BASE_DRIVERS__SENSORS_H__
 
-#include "base/types.h"
-#include "base/drivers/sensors.h"
+#include "nxos/types.h"
+#include "nxos/drivers/sensors.h"
 
 /** @addtogroup driverinternal */
 /*@{*/

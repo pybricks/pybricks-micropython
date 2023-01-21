@@ -6,17 +6,19 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
 
-#include "base/types.h"
-#include "base/assert.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/memmap.h"
-#include "base/util.h"
-#include "base/drivers/usb.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/lib/tracing/tracing.h"
+#include "nxos/types.h"
+#include "nxos/assert.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/memmap.h"
+#include "nxos/util.h"
+#include "nxos/drivers/usb.h"
+
+#include "nxos/lib/tracing/tracing.h"
 
 static struct {
   U8 *start;

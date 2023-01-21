@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_CORE_H__
 #define __NXOS_BASE_CORE_H__
 
-#include "base/types.h"
+#include "nxos/types.h"
 
 /** @addtogroup kernel */
 /*@{*/

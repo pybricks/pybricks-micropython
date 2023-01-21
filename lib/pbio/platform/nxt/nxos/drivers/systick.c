@@ -6,16 +6,16 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/nxt.h"
-#include "base/types.h"
-#include "base/interrupts.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/_avr.h"
-#include "base/drivers/_lcd.h"
+#include "nxos/nxt.h"
+#include "nxos/types.h"
+#include "nxos/interrupts.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/_avr.h"
+#include "nxos/drivers/_lcd.h"
 
-#include "base/drivers/_systick.h"
+#include "nxos/drivers/_systick.h"
 
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get
  * its base timer frequency.

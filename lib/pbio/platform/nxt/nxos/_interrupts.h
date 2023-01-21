@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE__INTERRUPTS_H__
 #define __NXOS_BASE__INTERRUPTS_H__
 
-#include "base/interrupts.h"
+#include "nxos/interrupts.h"
 
 /** @addtogroup kernelinternal */
 /*@{*/

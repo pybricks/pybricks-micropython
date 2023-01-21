@@ -6,17 +6,19 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/util.h"
-#include "base/display.h"
-#include "base/drivers/sensors.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/i2c.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/drivers/i2c_memory.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/util.h"
+#include "nxos/display.h"
+#include "nxos/drivers/sensors.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/i2c.h"
+
+#include "nxos/drivers/i2c_memory.h"
 
 /** Active waiting time before I2C transactions, in milliseconds. */
 #define NX_I2C_TXN_WAIT 10

@@ -9,14 +9,14 @@
 /* Driver for the NXT Embedded Flash Controller.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/assert.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/_efc.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/_efc.h"
 
 #define EFC_WRITE ((EFC_WRITE_KEY << 24) + EFC_CMD_WP)
 #define EFC_THROTTLE_TIMER 2

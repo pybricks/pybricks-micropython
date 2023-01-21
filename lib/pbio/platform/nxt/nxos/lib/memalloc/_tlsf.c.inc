@@ -51,8 +51,9 @@
 
 /* Excluded for NxOS
 #include <stdio.h>
-#include <string.h>
 */
+
+#include <string.h>
 
 #ifndef TLSF_USE_LOCKS
 #define	TLSF_USE_LOCKS 	(0)
@@ -62,7 +63,7 @@
 #include "target.h"
 #endif
 
-#include "base/lib/memalloc/_tlsf.h"
+#include "nxos/lib/memalloc/_tlsf.h"
 
 #if !defined(__GNUC__)
 #ifndef __inline__

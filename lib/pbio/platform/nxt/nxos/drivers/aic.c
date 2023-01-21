@@ -6,12 +6,12 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/_interrupts.h"
+#include "nxos/types.h"
+#include "nxos/_interrupts.h"
 
-#include "base/drivers/_aic.h"
+#include "nxos/drivers/_aic.h"
 
 void nx__aic_init(void) {
   int i;

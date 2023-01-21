@@ -6,15 +6,17 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
 
-#include "base/types.h"
-#include "base/util.h"
-#include "base/display.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/_uart.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/drivers/bt.h"
+#include "nxos/types.h"
+#include "nxos/util.h"
+#include "nxos/display.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/_uart.h"
+
+#include "nxos/drivers/bt.h"
 
 #define BT_ACK_TIMEOUT 3000
 #define BT_ARGS_BUFSIZE (BT_NAME_MAX_LNG+1)
@@ -22,9 +24,9 @@
 /* to remove : */
 /*#define UART_DEBUG*/
 #ifdef UART_DEBUG
-#include "base/display.h"
-#include "base/drivers/usb.h"
-#include "base/util.h"
+#include "nxos/display.h"
+#include "nxos/drivers/usb.h"
+#include "nxos/util.h"
 #define CMDS_BUFSIZE 128
 #define USB_SEND(txt) nx_usb_write((U8*)txt, strlen(txt))
 #else

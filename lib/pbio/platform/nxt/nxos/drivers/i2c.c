@@ -3,18 +3,20 @@
  * SoftMAC I2C driver.
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
+
+#include "nxos/at91sam7s256.h"
 
 #define I2C_LOG FALSE
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/util.h"
-#include "base/display.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/_sensors.h"
-#include "base/drivers/i2c.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/util.h"
+#include "nxos/display.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/_sensors.h"
+#include "nxos/drivers/i2c.h"
 
 /** The base clock frequency of the sensor I2C bus in Hz. */
 #define I2C_BUS_SPEED 9600

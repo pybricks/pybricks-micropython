@@ -6,16 +6,18 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include <string.h>
 
-#include "base/types.h"
-#include "base/interrupts.h"
-#include "base/assert.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/aic.h"
-#include "base/util.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/drivers/_usb.h"
+#include "nxos/types.h"
+#include "nxos/interrupts.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/util.h"
+
+#include "nxos/drivers/_usb.h"
 
 /* The USB controller supports up to 4 endpoints. */
 #define N_ENDPOINTS 4

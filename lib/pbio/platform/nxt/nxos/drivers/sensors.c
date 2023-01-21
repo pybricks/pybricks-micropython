@@ -6,17 +6,17 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/interrupts.h"
-#include "base/assert.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/_avr.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/interrupts.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/_avr.h"
 
-#include "base/drivers/_sensors.h"
+#include "nxos/drivers/_sensors.h"
 
 static const nx__sensors_pins sensors_pinmap[NXT_N_SENSORS] = {
   { AT91C_PIO_PA23, AT91C_PIO_PA18 },

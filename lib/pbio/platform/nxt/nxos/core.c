@@ -8,10 +8,10 @@
 
 #include "at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/interrupts.h"
-#include "base/_display.h"
-#include "base/assert.h"
+#include "nxos/types.h"
+#include "nxos/interrupts.h"
+#include "nxos/_display.h"
+#include "nxos/assert.h"
 #include "drivers/_aic.h"
 #include "drivers/_systick.h"
 #include "drivers/_sound.h"
@@ -22,7 +22,7 @@
 #include "drivers/_usb.h"
 #include "drivers/i2c.h"
 
-#include "base/_core.h"
+#include "nxos/_core.h"
 
 /* main() is the entry point into the custom payload, not included in
  * the NxOS core.

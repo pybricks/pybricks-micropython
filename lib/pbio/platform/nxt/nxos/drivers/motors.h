@@ -13,7 +13,9 @@
 #ifndef __NXOS_BASE_DRIVERS_MOTORS_H__
 #define __NXOS_BASE_DRIVERS_MOTORS_H__
 
-#include "base/types.h"
+#include <stdbool.h>
+
+#include "nxos/types.h"
 
 /** @addtogroup driver */
 /*@{*/

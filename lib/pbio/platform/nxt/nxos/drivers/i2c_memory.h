@@ -17,8 +17,8 @@
 #ifndef __NXOS_I2C_MEMORY_H__
 #define __NXOS_I2C_MEMORY_H__
 
-#include "base/types.h"
-#include "base/drivers/i2c.h"
+#include "nxos/types.h"
+#include "nxos/drivers/i2c.h"
 
 /** @addtogroup driver */
 /*@{*/

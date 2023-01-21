@@ -6,12 +6,12 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/types.h"
-#include "base/display.h"
-#include "base/interrupts.h"
-#include "base/drivers/_lcd.h"
+#include "nxos/types.h"
+#include "nxos/display.h"
+#include "nxos/interrupts.h"
+#include "nxos/drivers/_lcd.h"
 
-#include "base/_abort.h"
+#include "nxos/_abort.h"
 
 void nx__abort(bool data, U32 pc, U32 cpsr) {
   nx_interrupts_disable();

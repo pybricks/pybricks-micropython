@@ -9,8 +9,8 @@
 
 #include <pbdrv/reset.h>
 
-#include <base/at91sam7s256.h>
-#include <base/drivers/_avr.h>
+#include <nxos/at91sam7s256.h>
+#include <nxos/drivers/_avr.h>
 
 void pbdrv_reset_init(void) {
 }

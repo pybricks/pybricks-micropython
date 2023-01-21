@@ -13,7 +13,7 @@
 #include <pbio/port.h>
 #include "counter.h"
 
-#include <base/drivers/motors.h>
+#include <nxos/drivers/motors.h>
 
 typedef struct {
     pbdrv_counter_dev_t *dev;

@@ -5,22 +5,20 @@
 
 #include <pbsys/main.h>
 
-#include "base/at91sam7s256.h"
-
-#include "base/types.h"
-#include "base/interrupts.h"
-#include "base/_display.h"
-#include "base/assert.h"
-#include "base/drivers/_aic.h"
-#include "base/drivers/_systick.h"
-#include "base/drivers/_sound.h"
-#include "base/drivers/_avr.h"
-#include "base/drivers/_motors.h"
-#include "base/drivers/_lcd.h"
-#include "base/drivers/_sensors.h"
-#include "base/drivers/_usb.h"
-#include "base/drivers/i2c.h"
-#include "base/drivers/bt.h"
+#include "nxos/types.h"
+#include "nxos/interrupts.h"
+#include "nxos/_display.h"
+#include "nxos/assert.h"
+#include "nxos/drivers/_aic.h"
+#include "nxos/drivers/_systick.h"
+#include "nxos/drivers/_sound.h"
+#include "nxos/drivers/_avr.h"
+#include "nxos/drivers/_motors.h"
+#include "nxos/drivers/_lcd.h"
+#include "nxos/drivers/_sensors.h"
+#include "nxos/drivers/_usb.h"
+#include "nxos/drivers/i2c.h"
+#include "nxos/drivers/bt.h"
 
 static void core_init(void) {
     nx__aic_init();

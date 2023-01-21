@@ -6,16 +6,16 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/at91sam7s256.h"
+#include "nxos/at91sam7s256.h"
 
-#include "base/types.h"
-#include "base/nxt.h"
-#include "base/assert.h"
-#include "base/interrupts.h"
-#include "base/drivers/aic.h"
-#include "base/drivers/systick.h"
+#include "nxos/types.h"
+#include "nxos/nxt.h"
+#include "nxos/assert.h"
+#include "nxos/interrupts.h"
+#include "nxos/drivers/aic.h"
+#include "nxos/drivers/systick.h"
 
-#include "base/drivers/_uart.h"
+#include "nxos/drivers/_uart.h"
 
 /* Pinmask for all the UART pins. */
 #define UART_PIOA_PINS \

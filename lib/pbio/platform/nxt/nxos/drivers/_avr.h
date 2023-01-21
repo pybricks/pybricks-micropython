@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_DRIVERS__AVR_H__
 #define __NXOS_BASE_DRIVERS__AVR_H__
 
-#include "base/drivers/avr.h"
+#include "nxos/drivers/avr.h"
 
 /** @addtogroup driverinternal */
 /*@{*/

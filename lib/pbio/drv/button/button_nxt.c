@@ -9,7 +9,7 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 
-#include <base/drivers/avr.h>
+#include <nxos/drivers/avr.h>
 
 void pbdrv_button_init(void) {
 }

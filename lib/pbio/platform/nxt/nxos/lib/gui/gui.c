@@ -1,13 +1,15 @@
 /* GUI library for NxOS.
  */
 
-#include "base/types.h"
-#include "base/util.h"
-#include "base/assert.h"
-#include "base/display.h"
-#include "base/drivers/avr.h"
-#include "base/drivers/systick.h"
-#include "base/lib/gui/gui.h"
+#include <string.h>
+
+#include "nxos/types.h"
+#include "nxos/util.h"
+#include "nxos/assert.h"
+#include "nxos/display.h"
+#include "nxos/drivers/avr.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/lib/gui/gui.h"
 
 #define LCD_LINES 8
 #define MENU_MAX_HEIGHT (LCD_LINES - 3)

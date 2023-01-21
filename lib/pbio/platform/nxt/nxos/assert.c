@@ -6,15 +6,17 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "base/types.h"
-#include "base/display.h"
-#include "base/core.h"
-#include "base/util.h"
-#include "base/drivers/systick.h"
-#include "base/drivers/sound.h"
-#include "base/drivers/_avr.h"
+#include <string.h>
 
-#include "base/assert.h"
+#include "nxos/types.h"
+#include "nxos/display.h"
+#include "nxos/core.h"
+#include "nxos/util.h"
+#include "nxos/drivers/systick.h"
+#include "nxos/drivers/sound.h"
+#include "nxos/drivers/_avr.h"
+
+#include "nxos/assert.h"
 
 void nx_assert_error(const char *file, const int line,
 		     const char *expr, const char *msg) {

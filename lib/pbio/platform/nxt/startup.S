@@ -6,7 +6,7 @@
 .text
 .align 0
 
-#include "base/asm_decls.h"
+#include "nxos/asm_decls.h"
 
 /*
  * Definition of a few constants, for readability.
