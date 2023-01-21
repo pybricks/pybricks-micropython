@@ -6,9 +6,10 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdint.h>
+
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
 #include "nxos/drivers/aic.h"
@@ -19,7 +20,7 @@
 /* Statically defined digitized sine wave, used for tone
  * generation.
  */
-static const U32 tone_pattern[16] = {
+static const uint32_t tone_pattern[16] = {
   0xF0F0F0F0,0xF0F0F0F0,
   0xFCFCFCFC,0xFCFCFCFC,
   0xFFFFFFFF,0xFFFFFFFF,
@@ -33,14 +34,14 @@ static const U32 tone_pattern[16] = {
 /* When a tone is playing, this value contains the number of times the
  * previous digitized sine wave is to be played.
  */
-static volatile U32 tone_cycles;
+static volatile uint32_t tone_cycles;
 
 static void sound_isr(void) {
   if (tone_cycles--) {
     /* Tell the DMA controller to stream the static sine wave, 16
      * words of data.
      */
-    *AT91C_SSC_TNPR = (U32) tone_pattern;
+    *AT91C_SSC_TNPR = (uint32_t) tone_pattern;
     *AT91C_SSC_TNCR = 16;
   } else {
     /* Transmit complete, disable sound again. */
@@ -93,7 +94,7 @@ void nx__sound_init(void) {
   nx_interrupts_enable();
 }
 
-void nx_sound_freq_async(U32 freq, U32 ms) {
+void nx_sound_freq_async(uint32_t freq, uint32_t ms) {
   /* Due to a bug in the sound driver, too short a beep will crash
    * it. So, we check.
    */
@@ -117,7 +118,7 @@ void nx_sound_freq_async(U32 freq, U32 ms) {
   *AT91C_SSC_PTCR = AT91C_PDC_TXTEN;
 }
 
-void nx_sound_freq(U32 freq, U32 ms) {
+void nx_sound_freq(uint32_t freq, uint32_t ms) {
   nx_sound_freq_async(freq, ms);
   nx_systick_wait_ms(ms);
 }

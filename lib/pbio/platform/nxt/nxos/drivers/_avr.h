@@ -14,6 +14,7 @@
 #define __NXOS_BASE_DRIVERS__AVR_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/drivers/avr.h"
 
@@ -51,7 +52,7 @@ void nx__avr_fast_update(void);
  *
  * @note This will only function correctly if @a sensor is configured in analog mode.
  */
-U32 nx__avr_get_sensor_value(U32 sensor);
+uint32_t nx__avr_get_sensor_value(uint32_t sensor);
 
 /** Set @a motor in motion at @a power_percent speed and @a brake braking.
  *
@@ -64,7 +65,7 @@ U32 nx__avr_get_sensor_value(U32 sensor);
  * @note You probably want to use the very similar public APIs in the
  * motor driver.
  */
-void nx__avr_set_motor(U32 motor, int power_percent, bool brake);
+void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake);
 
 /** Order the AVR to power down the NXT.
  *

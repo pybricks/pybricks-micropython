@@ -7,15 +7,15 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
-#include "nxos/types.h"
 #include "nxos/display.h"
 #include "nxos/interrupts.h"
 #include "nxos/drivers/_lcd.h"
 
 #include "nxos/_abort.h"
 
-void nx__abort(bool data, U32 pc, U32 cpsr) {
+void nx__abort(bool data, uint32_t pc, uint32_t cpsr) {
   nx_interrupts_disable();
   nx_display_auto_refresh(false);
   nx_display_clear();

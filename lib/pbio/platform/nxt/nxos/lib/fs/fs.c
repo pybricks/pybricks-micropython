@@ -7,11 +7,11 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
@@ -31,24 +31,24 @@
 #define FS_FILENAME_OFFSET 2
 
 /** File metadata size, in bytes. */
-#define FS_FILE_METADATA_BYTES (FS_FILE_METADATA_SIZE * sizeof(U32))
+#define FS_FILE_METADATA_BYTES (FS_FILE_METADATA_SIZE * sizeof(uint32_t))
 
-/** Mask to use on the first metadata U32 to get the file origin marker value. */
+/** Mask to use on the first metadata uint32_t to get the file origin marker value. */
 #define FS_FILE_ORIGIN_MASK 0xFF000000
 
-/** Mask to use on the first metadata U32 to get the file permissions. */
+/** Mask to use on the first metadata uint32_t to get the file permissions. */
 #define FS_FILE_PERMS_MASK 0x00F00000
 
-/** Mask to use on the first metadata U32 to get the file size. */
+/** Mask to use on the first metadata uint32_t to get the file size. */
 #define FS_FILE_SIZE_MASK 0x000FFFFF
 
 #define FS_FILE_PERM_MASK_READWRITE (1 << 0)
 #define FS_FILE_PERM_MASK_EXECUTABLE (1 << 1)
 
-/** U32 <-> char conversion union for filenames. */
+/** uint32_t <-> char conversion union for filenames. */
 union U32tochar {
   char chars[FS_FILENAME_LENGTH];
-  U32 integers[FS_FILENAME_SIZE];
+  uint32_t integers[FS_FILENAME_SIZE];
 };
 
 /* FD-set. */
@@ -69,15 +69,15 @@ static fs_file_t *nx_fs_get_file(fs_fd_t fd) {
 
 /* Determines if the given page contains a file origin marker.
  */
-inline static bool nx_fs_page_has_magic(U32 page) {
+inline static bool nx_fs_page_has_magic(uint32_t page) {
   return ((FLASH_BASE_PTR[page*EFC_PAGE_WORDS] & FS_FILE_ORIGIN_MASK) >> 24)
     == FS_FILE_ORIGIN_MARKER;
 }
 
 /* Returns the number of pages used by a file, given its size.
  */
-static U32 nx_fs_get_file_page_count(size_t size) {
-  U32 pages;
+static uint32_t nx_fs_get_file_page_count(size_t size) {
+  uint32_t pages;
 
   /* Compute page occupation. */
   size += FS_FILE_METADATA_BYTES;
@@ -89,12 +89,12 @@ static U32 nx_fs_get_file_page_count(size_t size) {
   return pages;
 }
 
-inline static size_t nx_fs_get_file_size_from_metadata(volatile U32 *metadata) {
+inline static size_t nx_fs_get_file_size_from_metadata(volatile uint32_t *metadata) {
   return *metadata & FS_FILE_SIZE_MASK;
 }
 
-static fs_perm_t nx_fs_get_file_perms_from_metadata(volatile U32 *metadata) {
-  U8 perms = (*metadata & FS_FILE_PERMS_MASK) >> 20;
+static fs_perm_t nx_fs_get_file_perms_from_metadata(volatile uint32_t *metadata) {
+  uint8_t perms = (*metadata & FS_FILE_PERMS_MASK) >> 20;
 
   if (perms & FS_FILE_PERM_MASK_READWRITE) {
     return FS_PERM_READWRITE;
@@ -108,12 +108,12 @@ static fs_perm_t nx_fs_get_file_perms_from_metadata(volatile U32 *metadata) {
 
 /* Find a file's origin on the file system by its name.
  */
-static fs_err_t nx_fs_find_file_origin(char *name, U32 *origin) {
-  U32 i;
+static fs_err_t nx_fs_find_file_origin(char *name, uint32_t *origin) {
+  uint32_t i;
 
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
     if (nx_fs_page_has_magic(i)) {
-      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      volatile uint32_t *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
       union U32tochar nameconv;
 
       memcpy(nameconv.integers,
@@ -138,12 +138,12 @@ static fs_err_t nx_fs_find_file_origin(char *name, U32 *origin) {
 
 /* Finds the last file origin on the flash.
  */
-static fs_err_t nx_fs_find_last_origin(U32 *origin) {
-  U32 candidate = 0, i;
+static fs_err_t nx_fs_find_last_origin(uint32_t *origin) {
+  uint32_t candidate = 0, i;
 
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
     if (nx_fs_page_has_magic(i)) {
-      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      volatile uint32_t *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
 
       candidate = i;
       i += nx_fs_get_file_page_count(
@@ -159,8 +159,8 @@ static fs_err_t nx_fs_find_last_origin(U32 *origin) {
   return FS_ERR_FILE_NOT_FOUND;
 }
 
-static fs_err_t nx_fs_find_next_origin(U32 start, U32 *origin) {
-  U32 i;
+static fs_err_t nx_fs_find_next_origin(uint32_t start, uint32_t *origin) {
+  uint32_t i;
 
   for (i=start; i<FS_PAGE_END; i++) {
     if (nx_fs_page_has_magic(i)) {
@@ -176,7 +176,7 @@ static fs_err_t nx_fs_find_next_origin(U32 start, U32 *origin) {
  * the resulting U32s, ready to be stored on flash.
  */
 static void nx_fs_create_metadata(fs_perm_t perms, char *name, size_t size,
-                                  U32 *metadata) {
+                                  uint32_t *metadata) {
   union U32tochar nameconv;
 
   memset(metadata, 0, FS_FILE_METADATA_BYTES);
@@ -208,8 +208,8 @@ static void nx_fs_create_metadata(fs_perm_t perms, char *name, size_t size,
   memcpy(metadata + FS_FILENAME_OFFSET, nameconv.integers, FS_FILENAME_LENGTH);
 }
 
-static fs_err_t nx_fs_move_region_backwards(U32 source, U32 dest, U32 len) {
-  U32 data[EFC_PAGE_WORDS];
+static fs_err_t nx_fs_move_region_backwards(uint32_t source, uint32_t dest, uint32_t len) {
+  uint32_t data[EFC_PAGE_WORDS];
 
   while (len--) {
     nx__efc_read_page(source, data);
@@ -229,8 +229,8 @@ static fs_err_t nx_fs_move_region_backwards(U32 source, U32 dest, U32 len) {
   return FS_ERR_NO_ERROR;
 }
 
-static fs_err_t nx_fs_move_region_forwards(U32 source, U32 dest, U32 len) {
-  U32 data[EFC_PAGE_WORDS];
+static fs_err_t nx_fs_move_region_forwards(uint32_t source, uint32_t dest, uint32_t len) {
+  uint32_t data[EFC_PAGE_WORDS];
 
   while (len--) {
     nx__efc_read_page(source + len, data);
@@ -259,7 +259,7 @@ static fs_err_t nx_fs_move_region_forwards(U32 source, U32 dest, U32 len) {
  * @param dest The destination page number.
  * @param len The region length.
  */
-static fs_err_t nx_fs_move_region(U32 source, U32 dest, U32 len) {
+static fs_err_t nx_fs_move_region(uint32_t source, uint32_t dest, uint32_t len) {
   NX_ASSERT(source < EFC_PAGES);
   NX_ASSERT(dest < EFC_PAGES);
   NX_ASSERT(len < EFC_PAGES);
@@ -275,10 +275,10 @@ static fs_err_t nx_fs_move_region(U32 source, U32 dest, U32 len) {
 
 /* Relocate the given file to @a origin.
  */
-static fs_err_t nx_fs_relocate_to_page(fs_file_t *file, U32 origin) {
+static fs_err_t nx_fs_relocate_to_page(fs_file_t *file, uint32_t origin) {
   fs_err_t err;
   size_t n_pages;
-  U32 diff;
+  uint32_t diff;
 
   diff = origin - file->origin;
 
@@ -298,7 +298,7 @@ static fs_err_t nx_fs_relocate_to_page(fs_file_t *file, U32 origin) {
 }
 
 static fs_err_t nx_fs_relocate(fs_file_t *file) {
-  U32 origin, start;
+  uint32_t origin, start;
   size_t size;
 
   size = nx_fs_get_file_page_count(file->size);
@@ -336,8 +336,8 @@ fs_err_t nx_fs_init(void) {
 
 /* Initializes the @a fd fdset slot with the file's metadata.
  */
-static fs_err_t nx_fs_init_fd(U32 origin, fs_fd_t fd) {
-  volatile U32 *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
+static fs_err_t nx_fs_init_fd(uint32_t origin, fs_fd_t fd) {
+  volatile uint32_t *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
   union U32tochar nameconv;
   fs_file_t *file;
 
@@ -363,7 +363,7 @@ static fs_err_t nx_fs_init_fd(U32 origin, fs_fd_t fd) {
 
 /* Open an existing file by its name. */
 static fs_err_t nx_fs_open_by_name(char *name, fs_fd_t fd) {
-  U32 origin;
+  uint32_t origin;
   fs_err_t err;
 
   err = nx_fs_find_file_origin(name, &origin);
@@ -376,8 +376,8 @@ static fs_err_t nx_fs_open_by_name(char *name, fs_fd_t fd) {
 
 /* Create a new file using the given name. */
 static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
-  U32 metadata[EFC_PAGE_WORDS] = {0};
-  U32 origin;
+  uint32_t metadata[EFC_PAGE_WORDS] = {0};
+  uint32_t origin;
   fs_err_t err;
 
   /* Check that a file by that name does not already exists. */
@@ -418,7 +418,7 @@ static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
 fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
   fs_file_t *file;
   fs_err_t err;
-  U8 slot = 0;
+  uint8_t slot = 0;
 
   NX_ASSERT(strlen(name) > 0);
   NX_ASSERT(strlen(name) < FS_FILENAME_LENGTH);
@@ -506,7 +506,7 @@ size_t nx_fs_get_filesize(fs_fd_t fd) {
 }
 
 /* Read one byte from the given file. */
-fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
+fs_err_t nx_fs_read(fs_fd_t fd, uint8_t *byte) {
   fs_file_t *file;
 
   file = nx_fs_get_file(fd);
@@ -534,10 +534,10 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
 }
 
 /* Write one byte to the given file. */
-fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
+fs_err_t nx_fs_write(fs_fd_t fd, uint8_t byte) {
   fs_file_t *file;
   fs_err_t err;
-  U32 pages;
+  uint32_t pages;
 
   file = nx_fs_get_file(fd);
   if (!file) {
@@ -612,7 +612,7 @@ fs_err_t nx_fs_flush(fs_fd_t fd) {
 
 /* Close a file. */
 fs_err_t nx_fs_close(fs_fd_t fd) {
-  U32 firstpage[EFC_PAGE_WORDS];
+  uint32_t firstpage[EFC_PAGE_WORDS];
   fs_file_t *file;
   fs_err_t err;
 
@@ -664,7 +664,7 @@ fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms) {
 /* Delete and close the given file. */
 fs_err_t nx_fs_unlink(fs_fd_t fd) {
   fs_file_t *file;
-  U32 page, end;
+  uint32_t page, end;
 
   file = nx_fs_get_file(fd);
   if (!file) {
@@ -686,12 +686,12 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
 }
 
 fs_err_t nx_fs_soft_format(void) {
-  U32 nulldata[EFC_PAGE_WORDS] = {0};
-  U32 i, j;
+  uint32_t nulldata[EFC_PAGE_WORDS] = {0};
+  uint32_t i, j;
 
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
     if (nx_fs_page_has_magic(i)) {
-      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      volatile uint32_t *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
       size_t size, npages;
 
       size = nx_fs_get_file_size_from_metadata(metadata);
@@ -719,8 +719,8 @@ fs_err_t nx_fs_soft_format(void) {
  */
 fs_err_t nx_fs_seek(fs_fd_t fd, size_t position) {
   fs_file_t *file;
-  U32 page;
-  U32 pos;
+  uint32_t page;
+  uint32_t pos;
 
   file = nx_fs_get_file(fd);
   if (!file) {
@@ -747,16 +747,16 @@ fs_err_t nx_fs_seek(fs_fd_t fd, size_t position) {
   return FS_ERR_NO_ERROR;
 }
 
-void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
-    U32 *wasted) {
-  U32 _files = 0, _used = 0, _free_pages = 0, _wasted = 0;
-  U32 i;
+void nx_fs_get_occupation(uint32_t *files, uint32_t *used, uint32_t *free_pages,
+    uint32_t *wasted) {
+  uint32_t _files = 0, _used = 0, _free_pages = 0, _wasted = 0;
+  uint32_t i;
 
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
     if (nx_fs_page_has_magic(i)) {
-      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      volatile uint32_t *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
       size_t size;
-      U32 pages;
+      uint32_t pages;
 
       size = nx_fs_get_file_size_from_metadata(metadata);
       pages = nx_fs_get_file_page_count(size);
@@ -788,13 +788,13 @@ void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
   }
 }
 
-static fs_err_t nx_fs_find_next_hole(U32 start, U32 *origin) {
-  U32 i;
+static fs_err_t nx_fs_find_next_hole(uint32_t start, uint32_t *origin) {
+  uint32_t i;
 
   i = start;
   while (i < FS_PAGE_END) {
     if (nx_fs_page_has_magic(i)) {
-      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      volatile uint32_t *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
       i += nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
     } else {
       *origin = i;
@@ -806,11 +806,11 @@ static fs_err_t nx_fs_find_next_hole(U32 start, U32 *origin) {
 }
 
 void nx_fs_dump(void) {
-  U32 i = FS_PAGE_START, origin = 0;
+  uint32_t i = FS_PAGE_START, origin = 0;
   union U32tochar nameconv;
 
   while (nx_fs_find_next_origin(i, &origin) == FS_ERR_NO_ERROR) {
-    volatile U32 *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
+    volatile uint32_t *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
     size_t npages = nx_fs_get_file_page_count(
       nx_fs_get_file_size_from_metadata(metadata));
 
@@ -844,10 +844,10 @@ void nx_fs_dump(void) {
  * found, pull backwards the next block to fill the hole, if block there
  * is.
  */
-fs_err_t nx_fs_defrag_simple_zone(U32 zone_start, U32 zone_end) {
-  U32 next_hole, next_file, first_next_file, hole_length = 0, end_of_block;
-  U32 best_block_origin =0, best_block_size=0, block_size = 0;
-  U32 i;
+fs_err_t nx_fs_defrag_simple_zone(uint32_t zone_start, uint32_t zone_end) {
+  uint32_t next_hole, next_file, first_next_file, hole_length = 0, end_of_block;
+  uint32_t best_block_origin =0, best_block_size=0, block_size = 0;
+  uint32_t i;
   fs_err_t err = FS_ERR_NO_ERROR;
 
   NX_ASSERT(zone_start >= FS_PAGE_START);
@@ -963,7 +963,7 @@ fs_err_t nx_fs_defrag_simple(void) {
 }
 
 fs_err_t nx_fs_defrag_for_file_by_name(char *name) {
-  U32 origin;
+  uint32_t origin;
   fs_err_t err;
 
   err = nx_fs_find_file_origin(name, &origin);
@@ -974,11 +974,11 @@ fs_err_t nx_fs_defrag_for_file_by_name(char *name) {
   return FS_ERR_FILE_NOT_FOUND;
 }
 
-static fs_err_t nx_fs_swap_regions(U32 start1, U32 dest1, U32 len1,
-                                   U32 start2, U32 len2) {
-  U32 data[EFC_PAGE_WORDS] = {0};
+static fs_err_t nx_fs_swap_regions(uint32_t start1, uint32_t dest1, uint32_t len1,
+                                   uint32_t start2, uint32_t len2) {
+  uint32_t data[EFC_PAGE_WORDS] = {0};
   fs_err_t err;
-  U32 i, j;
+  uint32_t i, j;
 
   NX_ASSERT(len2 <= len1);
 
@@ -1014,9 +1014,9 @@ static fs_err_t nx_fs_swap_regions(U32 start1, U32 dest1, U32 len1,
   return FS_ERR_NO_ERROR;
 }
 
-fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
-  U32 next_origin=0, next_hole, last_origin, last_npages, npages;
-  volatile U32 *metadata;
+fs_err_t nx_fs_defrag_for_file_by_origin(uint32_t origin) {
+  uint32_t next_origin=0, next_hole, last_origin, last_npages, npages;
+  volatile uint32_t *metadata;
   fs_err_t err;
 
   /* First, trivial case: the file is already at the end of the flash.
@@ -1086,8 +1086,8 @@ fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
   return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
 }
 
-static fs_err_t nx_fs_defrag_pull_file_to(U32 origin, U32 dest) {
-  volatile U32 *metadata;
+static fs_err_t nx_fs_defrag_pull_file_to(uint32_t origin, uint32_t dest) {
+  volatile uint32_t *metadata;
   size_t size;
 
   metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
@@ -1097,8 +1097,8 @@ static fs_err_t nx_fs_defrag_pull_file_to(U32 origin, U32 dest) {
     nx_fs_get_file_page_count(size));
 }
 
-static U32 nx_fs_defrag_get_mean_space(void) {
-  U32 files, used, free_pages, wasted;
+static uint32_t nx_fs_defrag_get_mean_space(void) {
+  uint32_t files, used, free_pages, wasted;
 
   /* Get the number of files and freepages. */
   nx_fs_get_occupation(&files, &used, &free_pages, &wasted);
@@ -1110,7 +1110,7 @@ static U32 nx_fs_defrag_get_mean_space(void) {
 }
 
 fs_err_t nx_fs_defrag_best_overall(void) {
-  U32 next_origin = 0, mean_space_per_file = 0, i;
+  uint32_t next_origin = 0, mean_space_per_file = 0, i;
   fs_err_t err;
 
   mean_space_per_file = nx_fs_defrag_get_mean_space();
@@ -1139,7 +1139,7 @@ fs_err_t nx_fs_defrag_best_overall(void) {
   /* Then, iterate on all files to set a proper space after them. */
   while (i < FS_PAGE_END) {
     if (nx_fs_page_has_magic(i)) {
-      volatile U32 *metadata;
+      volatile uint32_t *metadata;
       size_t size, npages, hole_size;
 
       metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
@@ -1176,7 +1176,7 @@ fs_err_t nx_fs_defrag_best_overall(void) {
        * mean_space_per_file pages.
        */
       else {
-        U32 next_hole = 0, hole_end = 0;
+        uint32_t next_hole = 0, hole_end = 0;
         size_t next_hole_size;
 
         if (nx_fs_find_next_hole(next_origin, &next_hole) !=
@@ -1215,7 +1215,7 @@ fs_err_t nx_fs_defrag_best_overall(void) {
           /* First, we'll try to move the first file of the obstructing
            * block somewhere else on the right end side of the flash.
            */
-          U32 file_origin = next_origin;
+          uint32_t file_origin = next_origin;
           size_t file_size = next_hole - next_origin;
           fs_err_t search_err;
 

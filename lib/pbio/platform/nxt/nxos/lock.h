@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_LOCK_H__
 #define __NXOS_BASE_LOCK_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup kernel */
 /*@{*/
@@ -41,7 +41,7 @@
  * @param val The new value to write.
  * @return The previous value at @a dest.
  */
-U32 nx_atomic_cas32(U32 *dest, U32 val);
+uint32_t nx_atomic_cas32(uint32_t *dest, uint32_t val);
 
 /** Atomically write @a val at @a dest, and return the previous value.
  *
@@ -53,7 +53,7 @@ U32 nx_atomic_cas32(U32 *dest, U32 val);
  *
  * @sa nx_atomic_cas32
  */
-U8 nx_atomic_cas8(U8 *dest, U8 val);
+uint8_t nx_atomic_cas8(uint8_t *dest, uint8_t val);
 
 /*@}*/
 
@@ -72,7 +72,7 @@ U8 nx_atomic_cas8(U8 *dest, U8 val);
 /*@{*/
 
 /** The basic spinlock type. */
-typedef volatile U8 spinlock;
+typedef volatile uint8_t spinlock;
 
 /** Initial value for an unlocked spinlock. */
 #define SPINLOCK_INIT_UNLOCKED 0

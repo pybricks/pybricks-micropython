@@ -15,7 +15,7 @@
 #ifndef __NXOS_BASE_DRIVERS__EFC_H__
 #define __NXOS_BASE_DRIVERS__EFC_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -37,7 +37,7 @@
 #define EFC_PAGE_WORDS 64
 
 /** Size of one flash page, in bytes. */
-#define EFC_PAGE_BYTES (EFC_PAGE_WORDS * sizeof(U32))
+#define EFC_PAGE_BYTES (EFC_PAGE_WORDS * sizeof(uint32_t))
 
 /** Number of lock regions. */
 #define EFC_LOCK_REGIONS 16
@@ -58,7 +58,7 @@ typedef enum {
 } efc_cmd;
 
 /** A usable pointer to the base address of the flash. */
-#define FLASH_BASE_PTR ((volatile U32 *)AT91C_IFLASH)
+#define FLASH_BASE_PTR ((volatile uint32_t *)AT91C_IFLASH)
 
 /** Initialize the flash subsystem. */
 void nx__efc_init(void);
@@ -68,7 +68,7 @@ void nx__efc_init(void);
  * @param data A pointer to the 64 U32s of the page.
  * @param page The page number in the flash memory.
  */
-bool nx__efc_write_page(U32 *data, U32 page);
+bool nx__efc_write_page(uint32_t *data, uint32_t page);
 
 /** Read a page from the flash.
  *
@@ -77,7 +77,7 @@ bool nx__efc_write_page(U32 *data, U32 page);
  * @param page The page number in the flash memory.
  * @param data A pointer to a 64 U32s long array for the page data.
  */
-void nx__efc_read_page(U32 page, U32 *data);
+void nx__efc_read_page(uint32_t page, uint32_t *data);
 
 /** Erase a page to the given value.
  *
@@ -85,7 +85,7 @@ void nx__efc_read_page(U32 page, U32 *data);
  * @param value The value to set on the page (repeated EFC_PAGE_WORDS
  * times).
  */
-bool nx__efc_erase_page(U32 page, U32 value);
+bool nx__efc_erase_page(uint32_t page, uint32_t value);
 
 /*@}*/
 /*@}*/

@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_DRIVERS__LCD_H__
 #define __NXOS_BASE_DRIVERS__LCD_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driverinternal */
 /*@{*/
@@ -56,7 +56,7 @@ void nx__lcd_fast_update(void);
  *
  * @param display_buffer The screen buffer to mirror.
  */
-void nx__lcd_set_display(U8 *display_buffer);
+void nx__lcd_set_display(uint8_t *display_buffer);
 
 /** Mark the display as requiring a refresh cycle. */
 void nx__lcd_dirty_display(void);

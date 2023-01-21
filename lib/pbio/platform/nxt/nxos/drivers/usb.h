@@ -14,8 +14,7 @@
 #define __NXOS_BASE_DRIVERS_USB_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -61,7 +60,7 @@ bool nx_usb_can_write(void);
  * @param data The data to send.
  * @param length The amount of data to send.
  */
-void nx_usb_write(U8 *data, U32 length);
+void nx_usb_write(uint8_t *data, uint32_t length);
 
 /**
  * Return true when all the data has been sent to
@@ -74,14 +73,14 @@ bool nx_usb_data_written(void);
  * Specify where the next read data must be put
  * @note if a packet has a size smaller than the provided one, then all the area won't be used
  */
-void nx_usb_read(U8 *data, U32 length);
+void nx_usb_read(uint8_t *data, uint32_t length);
 
 /**
  * Indicates when the data have been read.
  * @note initial value = 0 ;  reset to 0 after each call to nx_usb_read()
  * @return the packet size read
  */
-U32 nx_usb_data_read(void);
+uint32_t nx_usb_data_read(void);
 
 
 /*@}*/

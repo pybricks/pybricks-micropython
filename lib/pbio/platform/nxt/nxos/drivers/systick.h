@@ -13,6 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS_SYSTICK_H__
 #define __NXOS_BASE_DRIVERS_SYSTICK_H__
 
+#include <stdint.h>
+
 #include "nxos/types.h"
 
 /** @addtogroup driver */
@@ -28,7 +30,7 @@
 /*@{*/
 
 /** Return the number of milliseconds elapsed since bootup. */
-U32 nx_systick_get_ms(void);
+uint32_t nx_systick_get_ms(void);
 
 /** Sleep for @a ms milliseconds.
  *
@@ -37,7 +39,7 @@ U32 nx_systick_get_ms(void);
  * @note As the Baseplate provides no scheduler, this sleeping is a busy
  * wait loop.
  */
-void nx_systick_wait_ms(U32 ms);
+void nx_systick_wait_ms(uint32_t ms);
 
 /** Sleep for approximately @a ns nanoseconds.
  *
@@ -47,7 +49,7 @@ void nx_systick_wait_ms(U32 ms);
  * entirely on the instruction timings and pipeline delays in the ARM7
  * cpu. It may not be exact.
  */
-void nx_systick_wait_ns(U32 ns);
+void nx_systick_wait_ns(uint32_t ns);
 
 /** Install @a scheduler_cb as the scheduler callback.
  *

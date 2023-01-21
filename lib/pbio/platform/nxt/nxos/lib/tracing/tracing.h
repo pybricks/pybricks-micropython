@@ -15,7 +15,7 @@
 #ifndef __NXOS_BASE_LIB_TRACING_TRACING_H__
 #define __NXOS_BASE_LIB_TRACING_TRACING_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup lib */
 /*@{*/
@@ -38,7 +38,7 @@
  * @param start Pointer to the start of the dump area.
  * @param size The amount of memory available for tracing.
  */
-void nx_tracing_init(U8 *start, U32 size);
+void nx_tracing_init(uint8_t *start, uint32_t size);
 
 /** Add data to the trace.
  *
@@ -48,7 +48,7 @@ void nx_tracing_init(U8 *start, U32 size);
  * @note This function will cause an assertion failure if insufficient
  * space remains in the tracing buffer.
  */
-void nx_tracing_add_data(const U8 *data, U32 size);
+void nx_tracing_add_data(const uint8_t *data, uint32_t size);
 
 /** Add a string to the trace.
  *
@@ -70,13 +70,13 @@ void nx_tracing_add_char(const char val);
  *
  * @return The address of the start of the trace buffer.
  */
-U8 *nx_tracing_get_start(void);
+uint8_t *nx_tracing_get_start(void);
 
 /** Get the size of the trace.
  *
  * @return The size of the recorded trace.
  */
-U32 nx_tracing_get_size(void);
+uint32_t nx_tracing_get_size(void);
 
 /*@}*/
 /*@}*/

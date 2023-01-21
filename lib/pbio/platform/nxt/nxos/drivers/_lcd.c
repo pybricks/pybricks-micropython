@@ -7,10 +7,10 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/lock.h"
 #include "nxos/interrupts.h"
 #include "nxos/drivers/systick.h"
@@ -59,13 +59,13 @@ static volatile struct {
    * screen, and a flag stating whether the in-memory buffer is dirty
    * (new content needs mirroring to the LCD device.
    */
-  U8 *screen;
+  uint8_t *screen;
   bool screen_dirty;
 
   /* State used by the display update code to manage the DMA
    * transfer. */
-  U8 *data;
-  U8 page;
+  uint8_t *data;
+  uint8_t page;
   bool send_padding;
 } spi_state = {
   COMMAND, /* We're initialized in command tx mode */
@@ -102,7 +102,7 @@ static void spi_set_tx_mode(spi_mode mode) {
 /*
  * Send a command byte to the LCD controller.
  */
-static void spi_write_command_byte(U8 command) {
+static void spi_write_command_byte(uint8_t command) {
   spi_set_tx_mode(COMMAND);
 
   /* Wait for the transmit register to empty. */
@@ -122,7 +122,7 @@ static void spi_isr(void) {
      * to avoid race conditions where a set of the dirty flag could
      * get squashed by the interrupt handler resetting it.
      */
-    bool dirty = nx_atomic_cas8((U8*)&(spi_state.screen_dirty), false);
+    bool dirty = nx_atomic_cas8((uint8_t*)&(spi_state.screen_dirty), false);
     spi_state.data = dirty ? spi_state.screen: NULL;
 
     /* If the screen is not dirty, or if there is no screen pointer to
@@ -149,7 +149,7 @@ static void spi_isr(void) {
      * interrupt, which is to send end-of-page padding.
      */
     spi_state.send_padding = true;
-    *AT91C_SPI_TNPR = (U32)spi_state.data;
+    *AT91C_SPI_TNPR = (uint32_t)spi_state.data;
     *AT91C_SPI_TNCR = 100;
   } else {
     /* 100 bytes of displayable data have been transferred. We now
@@ -163,7 +163,7 @@ static void spi_isr(void) {
     spi_state.page = (spi_state.page + 1) % 8;
     spi_state.data += 100;
     spi_state.send_padding = false;
-    *AT91C_SPI_TNPR = (U32)(spi_state.data - 32);
+    *AT91C_SPI_TNPR = (uint32_t)(spi_state.data - 32);
     *AT91C_SPI_TNCR = 32;
   }
 }
@@ -220,11 +220,11 @@ static void spi_init(void) {
 
 /* Initialize the LCD controller. */
 void nx__lcd_init(void) {
-  U32 i;
+  uint32_t i;
   /* This is the command byte sequence that should be sent to the LCD
    * after a reset.
    */
-  const U8 lcd_init_sequence[] = {
+  const uint8_t lcd_init_sequence[] = {
     /* LCD power configuration.
      *
      * The LEGO Hardware Developer Kit documentation specifies that the
@@ -295,7 +295,7 @@ void nx__lcd_fast_update(void) {
   }
 }
 
-void nx__lcd_set_display(U8 *display) {
+void nx__lcd_set_display(uint8_t *display) {
   spi_state.screen = display;
   *AT91C_SPI_IER = AT91C_SPI_ENDTX;
 }

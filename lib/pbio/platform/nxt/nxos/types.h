@@ -18,13 +18,6 @@
 /** @addtogroup typesAndUtils */
 /*@{*/
 
-typedef unsigned char U8; /**< Unsigned 8-bit integer. */
-typedef signed char S8; /**< Signed 8-bit integer. */
-typedef unsigned short U16; /**< Unsigned 16-bit integer. */
-typedef signed short S16; /**< Signed 16-bit integer. */
-typedef unsigned long U32; /**< Unsigned 32-bit integer. */
-typedef signed long S32; /**< Signed 32-bit integer. */
-
 #ifndef NULL
 /** Definition of the NULL pointer. */
 #define NULL ((void*)0)

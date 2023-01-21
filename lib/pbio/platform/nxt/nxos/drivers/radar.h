@@ -15,7 +15,7 @@
 #ifndef __NXOS_RADAR_H__
 #define __NXOS_RADAR_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -88,13 +88,13 @@ typedef enum {
  *
  * @param sensor The sensor port number.
  */
-void nx_radar_init(U32 sensor);
+void nx_radar_init(uint32_t sensor);
 
 /** Close the link with the radar and disable the sensor.
  *
  * @param sensor The sensor port number.
  */
-void nx_radar_close(U32 sensor);
+void nx_radar_close(uint32_t sensor);
 
 /** Check the presence of a compatible radar on port @a sensor.
  *
@@ -105,7 +105,7 @@ void nx_radar_close(U32 sensor);
  *
  * @return True if a compatible radar was found, false otherwise.
  */
-bool nx_radar_detect(U32 sensor);
+bool nx_radar_detect(uint32_t sensor);
 
 /** Reset the radar connected on port @a sensor.
  *
@@ -114,7 +114,7 @@ bool nx_radar_detect(U32 sensor);
  *
  * @param sensor The sensor port number.
  */
-void nx_radar_reset(U32 sensor);
+void nx_radar_reset(uint32_t sensor);
 
 /** Display the radar's information.
  *
@@ -124,7 +124,7 @@ void nx_radar_reset(U32 sensor);
  *
  * @param sensor The sensor port number.
  */
-void nx_radar_info(U32 sensor);
+void nx_radar_info(uint32_t sensor);
 
 /** Read from the radar's memory.
  *
@@ -137,7 +137,7 @@ void nx_radar_info(U32 sensor);
  *
  * @return Returns true if the read succeeded.
  */
-bool nx_radar_read(U32 sensor, radar_memory_slot slot, U8 *buf);
+bool nx_radar_read(uint32_t sensor, radar_memory_slot slot, uint8_t *buf);
 
 /** Write to the radar's memory.
  *
@@ -151,7 +151,7 @@ bool nx_radar_read(U32 sensor, radar_memory_slot slot, U8 *buf);
  *
  * @return Returns true if the write succeeded.
  */
-bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val);
+bool nx_radar_write(uint32_t sensor, radar_memory_slot slot, uint8_t *val);
 
 /** Read a single-byte value from the radar's memory.
  *
@@ -162,7 +162,7 @@ bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val);
  *
  * @return The value of the requested @a slot.
  */
-U8 nx_radar_read_value(U32 sensor, radar_memory_slot slot);
+uint8_t nx_radar_read_value(uint32_t sensor, radar_memory_slot slot);
 
 /** Read a radar's measurement.
  *
@@ -171,7 +171,7 @@ U8 nx_radar_read_value(U32 sensor, radar_memory_slot slot);
  *
  * @return The distance to the objects, in the measurement units of the radar.
  */
-U8 nx_radar_read_distance(U32 sensor, U32 object);
+uint8_t nx_radar_read_distance(uint32_t sensor, uint32_t object);
 
 /** Read all radar measurement at once (not working).
  *
@@ -183,7 +183,7 @@ U8 nx_radar_read_distance(U32 sensor, U32 object);
  *
  * @return Return true if the read succeeded.
  */
-bool nx_radar_read_all(U32 sensor, U8 *buf);
+bool nx_radar_read_all(uint32_t sensor, uint8_t *buf);
 
 /** Set the radar measurement interval to @a interval.
  *
@@ -192,7 +192,7 @@ bool nx_radar_read_all(U32 sensor, U8 *buf);
  *
  * @return Returns true if the operation succeeded.
  */
-bool nx_radar_set_interval(U32 sensor, U8 interval);
+bool nx_radar_set_interval(uint32_t sensor, uint8_t interval);
 
 /** Set the radar operation mode to @a mode.
  *
@@ -201,7 +201,7 @@ bool nx_radar_set_interval(U32 sensor, U8 interval);
  *
  * @return Returns true if the operation succeeded.
  */
-bool nx_radar_set_op_mode(U32 sensor, radar_op_mode mode);
+bool nx_radar_set_op_mode(uint32_t sensor, radar_op_mode mode);
 
 /*@}*/
 /*@}*/

@@ -7,11 +7,11 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/at91sam7s256.h"
 
 #include "nxos/nxt.h"
-#include "nxos/types.h"
 #include "nxos/interrupts.h"
 #include "nxos/drivers/aic.h"
 #include "nxos/drivers/_avr.h"
@@ -46,7 +46,7 @@
 /* The system timer. Counts the number of milliseconds elapsed since
  * the system's initialization.
  */
-static volatile U32 systick_time;
+static volatile uint32_t systick_time;
 
 /* The scheduler callback. Application kernels can set this to their own
  * callback function, to do scheduling in the high priority systick
@@ -73,7 +73,7 @@ static void systick_sched(void) {
 
 /* High priority handler, called 1000 times a second */
 static void systick_isr(void) {
-  U32 status;
+  uint32_t status;
   /* The PIT's value register must be read to acknowledge the
    * interrupt.
    */
@@ -122,18 +122,18 @@ void nx__systick_init(void) {
   nx_interrupts_enable();
 }
 
-U32 nx_systick_get_ms(void) {
+uint32_t nx_systick_get_ms(void) {
   return systick_time;
 }
 
-void nx_systick_wait_ms(U32 ms) {
-  U32 final = systick_time + ms;
+void nx_systick_wait_ms(uint32_t ms) {
+  uint32_t final = systick_time + ms;
 
   while (systick_time < final);
 }
 
-void nx_systick_wait_ns(U32 ns) {
-  volatile U32 x = (ns >> 7) + 1;
+void nx_systick_wait_ns(uint32_t ns) {
+  volatile uint32_t x = (ns >> 7) + 1;
 
   while (x--);
 }

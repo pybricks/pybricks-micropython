@@ -6,7 +6,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#include "nxos/types.h"
+#include <stdint.h>
+
 #include "nxos/memmap.h"
 #include "nxos/assert.h"
 #include "nxos/util.h"
@@ -22,7 +23,7 @@
 #define printf(fmt, ...) /* Nothing, we don't printf. */
 #include "nxos/lib/memalloc/_tlsf.c.inc"
 
-inline void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size) {
+inline void nx_memalloc_init_full(void *mem_pool, uint32_t mem_pool_size) {
   size_t size = init_memory_pool(mem_pool_size, mem_pool);
   NX_ASSERT_MSG(size > 0, "Failed to init\nmemory allocator");
 }
@@ -31,7 +32,7 @@ void nx_memalloc_init(void) {
   nx_memalloc_init_full(NX_USERSPACE_START, NX_USERSPACE_SIZE);
 }
 
-U32 nx_memalloc_used(void) {
+uint32_t nx_memalloc_used(void) {
   return get_used_size(mp);
 }
 
@@ -39,19 +40,19 @@ void nx_memalloc_destroy(void) {
   destroy_memory_pool(mp);
 }
 
-void *nx_malloc(U32 size) {
+void *nx_malloc(uint32_t size) {
   void *ret = malloc_ex(size, mp);
   NX_ASSERT_MSG(ret != NULL, "Out of memory");
   return ret;
 }
 
-void *nx_calloc(U32 nelem, U32 elem_size) {
+void *nx_calloc(uint32_t nelem, uint32_t elem_size) {
   void *ret = calloc_ex(nelem, elem_size, mp);
   NX_ASSERT_MSG(ret != NULL, "Out of memory");
   return ret;
 }
 
-void *nx_realloc(void *ptr, U32 size) {
+void *nx_realloc(void *ptr, uint32_t size) {
   void *ret = realloc_ex(ptr, size, mp);
   NX_ASSERT_MSG(ret != NULL, "Out of memory");
   return ret;

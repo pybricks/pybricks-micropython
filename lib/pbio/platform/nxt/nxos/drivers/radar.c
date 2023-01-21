@@ -9,11 +9,11 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/display.h"
@@ -31,8 +31,8 @@
  * value to its returned data length.
  */
 static struct radar_cmd_info {
-  U8 addr;
-  U8 len;
+  uint8_t addr;
+  uint8_t len;
 } radar_cmds[RADAR_N_COMMANDS] = {
   { 0x00, 8 }, // RADAR_VERSION: V1.0
   { 0x08, 8 }, // RADAR_PRODUCT_ID: LEGO
@@ -55,17 +55,17 @@ static struct radar_cmd_info {
 };
 
 /** Initializes the radar sensor in LEGO compatibility mode. */
-void nx_radar_init(U32 sensor) {
+void nx_radar_init(uint32_t sensor) {
   nx_i2c_memory_init(sensor, RADAR_I2C_ADDRESS, true);
 }
 
 /** Close the radar and disable the sensor port. */
-void nx_radar_close(U32 sensor) {
+void nx_radar_close(uint32_t sensor) {
   nx_i2c_memory_close(sensor);
 }
 
 /** Reads a value from the radar's memory slot into the provided buffer. */
-bool nx_radar_read(U32 sensor, radar_memory_slot slot, U8 *val) {
+bool nx_radar_read(uint32_t sensor, radar_memory_slot slot, uint8_t *val) {
   struct radar_cmd_info *cmd = &radar_cmds[slot];
   return nx_i2c_memory_read(sensor, cmd->addr, val, cmd->len) == I2C_ERR_OK;
 }
@@ -74,13 +74,13 @@ bool nx_radar_read(U32 sensor, radar_memory_slot slot, U8 *val) {
  *
  * Defaults to 0xFF if the read failed.
  */
-U8 nx_radar_read_value(U32 sensor, radar_memory_slot slot) {
-  U8 value;
+uint8_t nx_radar_read_value(uint32_t sensor, radar_memory_slot slot) {
+  uint8_t value;
   return nx_radar_read(sensor, slot, &value) ? value : 0xFF;
 }
 
 /** Writes the given buffer into the radar's memory slot. */
-bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val) {
+bool nx_radar_write(uint32_t sensor, radar_memory_slot slot, uint8_t *val) {
   struct radar_cmd_info *cmd = &radar_cmds[slot];
   return nx_i2c_memory_write(sensor, cmd->addr, val, cmd->len) == I2C_ERR_OK;
 }
@@ -93,8 +93,8 @@ bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val) {
  *
  * Returns true if a compatible radar was found.
  */
-bool nx_radar_detect(U32 sensor) {
-  U8 type[8] = { 0x0 };
+bool nx_radar_detect(uint32_t sensor) {
+  uint8_t type[8] = { 0x0 };
 
   return nx_radar_read(sensor, RADAR_SENSOR_TYPE, type)
     && streq((char *)type, RADAR_LEGO_SENSOR_TYPE);
@@ -107,9 +107,9 @@ bool nx_radar_detect(U32 sensor) {
  * Requests a warm radar reset, and reset all parameters to factory
  * defaults.
  */
-void nx_radar_reset(U32 sensor) {
-  U8 reset = RADAR_MODE_RESET;
-  U8 val = 0x0;
+void nx_radar_reset(uint32_t sensor) {
+  uint8_t reset = RADAR_MODE_RESET;
+  uint8_t val = 0x0;
 
   /* Do a warm reset. */
   nx_radar_write(sensor, RADAR_OP_MODE, &reset);
@@ -140,7 +140,7 @@ void nx_radar_reset(U32 sensor) {
  * Note: a return value of 0x00 means that no object was detected. A value
  * of 0xFF means that the read failed.
  */
-U8 nx_radar_read_distance(U32 sensor, U32 object) {
+uint8_t nx_radar_read_distance(uint32_t sensor, uint32_t object) {
   if (object > RADAR_MAX_OBJECT_NUMBER-1)
     return 0xFF;
 
@@ -154,7 +154,7 @@ U8 nx_radar_read_distance(U32 sensor, U32 object) {
  *
  * Note: DOES NOT WORK (is it even possible to read as many bytes we want?)
  */
-bool nx_radar_read_all(U32 sensor, U8 *buf) {
+bool nx_radar_read_all(uint32_t sensor, uint8_t *buf) {
   /* We use the low-level i2c_memory_read function here to try to read
    * all measurements at once.
    */
@@ -163,19 +163,19 @@ bool nx_radar_read_all(U32 sensor, U8 *buf) {
 }
 
 /** Sets the radar continuous measurement interval. */
-bool nx_radar_set_interval(U32 sensor, U8 interval) {
+bool nx_radar_set_interval(uint32_t sensor, uint8_t interval) {
   return nx_radar_write(sensor, RADAR_INTERVAL, &interval);
 }
 
 /** Sets the radar operation mode. See radar.h for available modes. */
-bool nx_radar_set_op_mode(U32 sensor, radar_op_mode mode) {
-  U8 val = mode;
+bool nx_radar_set_op_mode(uint32_t sensor, radar_op_mode mode) {
+  uint8_t val = mode;
   return nx_radar_write(sensor, RADAR_OP_MODE, &val);
 }
 
 /** Display connected radar's information. */
-void nx_radar_info(U32 sensor) {
-  U8 buf[8];
+void nx_radar_info(uint32_t sensor) {
+  uint8_t buf[8];
 
   // Product ID (LEGO)
   memset(buf, 0, 8);

@@ -15,7 +15,7 @@
 #ifndef __NXOS_BASE_LIB_GUI_H__
 #define __NXOS_BASE_LIB_GUI_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup lib */
 /*@{*/
@@ -42,7 +42,7 @@
 typedef struct gui_text_menu {
   char *title;       /**< Menu title. */
   char **entries;    /**< Menu entries, NULL terminated array. */
-  U8 default_entry;  /** Number of the default entry. */
+  uint8_t default_entry;  /** Number of the default entry. */
   char *active_mark; /**< A string replacing '. ' for the
                       * currently active entry. */
 } gui_text_menu_t;
@@ -52,7 +52,7 @@ typedef struct gui_text_menu {
  * @param menu A @a gui_text_menu_t structure describing the menu.
  * @return The choosen entry number.
  */
-U8 nx_gui_text_menu(gui_text_menu_t menu);
+uint8_t nx_gui_text_menu(gui_text_menu_t menu);
 
 /** Display a yes/no text menu.
  *

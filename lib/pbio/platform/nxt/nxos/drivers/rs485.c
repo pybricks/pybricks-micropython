@@ -8,6 +8,7 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/at91sam7s256.h"
 
@@ -18,7 +19,7 @@
 
 #include "nxos/drivers/rs485.h"
 
-static inline U16 build_baud_rate(nx_rs485_baudrate_t br) {
+static inline uint16_t build_baud_rate(nx_rs485_baudrate_t br) {
   return NXT_CLOCK_FREQ / 16 / br;
 }
 
@@ -32,7 +33,7 @@ static volatile struct {
   void (*callback)(nx_rs485_error_t); /* End of operation callback */
 } rs485_state;
 
-static inline U32 build_usart_modreg (U32 x) {
+static inline uint32_t build_usart_modreg (uint32_t x) {
   return AT91C_US_USMODE_RS485 | x;
 }
 
@@ -42,7 +43,7 @@ static inline U32 build_usart_modreg (U32 x) {
  * - PA6 Line of Transmit data
  * - PA7 Line of Ready to send
  */
-static const U32 usart_to_rs485_lines = AT91C_PIO_PA5 |
+static const uint32_t usart_to_rs485_lines = AT91C_PIO_PA5 |
                                         AT91C_PIO_PA6 |
                                         AT91C_PIO_PA7;
 
@@ -56,7 +57,7 @@ static inline void fire_callback(nx_rs485_error_t status, bool reset) {
 }
 
 static void nx_rs485_isr(void) {
-  const U32 csr = *AT91C_US0_CSR;
+  const uint32_t csr = *AT91C_US0_CSR;
 
   /* Successful transfer completion first, then error cases. */
   if ((rs485_state.status == RS485_RECEIVING && (csr & AT91C_US_ENDRX)) ||
@@ -78,8 +79,8 @@ static void nx_rs485_isr(void) {
 }
 
 void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
-                   U32 uart_mr,
-                   U16 timeout,
+                   uint32_t uart_mr,
+                   uint16_t timeout,
                    bool timeguard) {
   NX_ASSERT(rs485_state.status == RS485_UNINITIALIZED);
 
@@ -124,7 +125,7 @@ void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
   rs485_state.status = RS485_IDLE;
 }
 
-bool nx_rs485_set_fixed_baudrate(U16 baud_rate) {
+bool nx_rs485_set_fixed_baudrate(uint16_t baud_rate) {
   if (rs485_state.status == RS485_IDLE) {
     *AT91C_US0_BRGR = baud_rate;
     return true;
@@ -145,7 +146,7 @@ void nx_rs485_shutdown(void) {
   rs485_state.status = RS485_UNINITIALIZED;
 }
 
-bool nx_rs485_send(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
+bool nx_rs485_send(uint8_t *buffer, uint32_t buflen, void (*callback)(nx_rs485_error_t)) {
   NX_ASSERT(buflen > 0);
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
@@ -155,7 +156,7 @@ bool nx_rs485_send(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   rs485_state.callback = callback;
 
   /* Set up a DMA write and start transferring asynchronously. */
-  *AT91C_US0_TPR = (U32)buffer;
+  *AT91C_US0_TPR = (uint32_t)buffer;
   *AT91C_US0_TCR = buflen;
   *AT91C_US0_IER = AT91C_US_ENDTX;
   *AT91C_US0_PTCR = AT91C_PDC_TXTEN;
@@ -164,7 +165,7 @@ bool nx_rs485_send(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   return true;
 }
 
-bool nx_rs485_recv(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
+bool nx_rs485_recv(uint8_t *buffer, uint32_t buflen, void (*callback)(nx_rs485_error_t)) {
   NX_ASSERT(buflen > 0);
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
@@ -174,7 +175,7 @@ bool nx_rs485_recv(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   rs485_state.callback = callback;
 
   /* Set up a DMA read and start transferring asynchronously. */
-  *AT91C_US0_RPR = (U32)buffer;
+  *AT91C_US0_RPR = (uint32_t)buffer;
   *AT91C_US0_RCR = buflen;
   *AT91C_US0_IER = AT91C_US_ENDRX;
   *AT91C_US0_PTCR = AT91C_PDC_RXTEN;

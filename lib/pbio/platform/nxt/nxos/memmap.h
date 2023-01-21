@@ -18,7 +18,7 @@
 #ifndef __NXOS_BASE_MEMMAP_H__
 #define __NXOS_BASE_MEMMAP_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup kernel */
 /*@{*/
@@ -41,27 +41,27 @@
  * phase. They describe the memory map of the NXT in terms of
  * symbols.
  */
-extern U8 __ram_userspace_start__;
-extern U8 __ram_userspace_end__;
+extern uint8_t __ram_userspace_start__;
+extern uint8_t __ram_userspace_end__;
 
-extern U8 __ramtext_ram_start__;
-extern U8 __ramtext_ram_end__;
+extern uint8_t __ramtext_ram_start__;
+extern uint8_t __ramtext_ram_end__;
 
-extern U8 __text_start__;
-extern U8 __text_end__;
+extern uint8_t __text_start__;
+extern uint8_t __text_end__;
 
-extern U8 __data_ram_start__;
-extern U8 __data_ram_end__;
+extern uint8_t __data_ram_start__;
+extern uint8_t __data_ram_end__;
 
-extern U8 __bss_start__;
-extern U8 __bss_end__;
+extern uint8_t __bss_start__;
+extern uint8_t __bss_end__;
 
-extern U8 __stack_start__;
-extern U8 __stack_end__;
+extern uint8_t __stack_start__;
+extern uint8_t __stack_end__;
 
-extern U8 __rom_end__;
+extern uint8_t __rom_end__;
 
-extern U8 __boot_from_samba__;
+extern uint8_t __boot_from_samba__;
 
 /* Helper macro that converts a symbol value into a regular
  * integer. If we just addressed eg. __free_ram_start__ directly, the
@@ -69,15 +69,15 @@ extern U8 __boot_from_samba__;
  * data abort).
  *
  * So, we need to grab the symbol's address, and then cast it to a
- * pointer to U8. That way, we have pointers pointing to the correct
+ * pointer to uint8_t. That way, we have pointers pointing to the correct
  * place.
  */
-#define SYMADDR(sym) ((U8*)&(sym))
+#define SYMADDR(sym) ((uint8_t*)&(sym))
 
 /* Section sizes requires a little ugly casting, so we define it once
  * here as well.
  */
-#define SECSIZE(start, end) ((U32)(end - start))
+#define SECSIZE(start, end) ((uint32_t)(end - start))
 
 /** @endcond */
 
@@ -168,7 +168,7 @@ extern U8 __boot_from_samba__;
  */
 /*@{*/
 #define NX_ROM_USERSPACE_START SYMADDR(__rom_userspace_start__)
-#define NX_ROM_USERSPACE_END ((U8*)0x140000)
+#define NX_ROM_USERSPACE_END ((uint8_t*)0x140000)
 #define NX_ROM_USERSPACE_SIZE SECSIZE(NX_ROM_USERSPACE_START, NX_ROM_USERSPACE_END)
 /*@}*/
 
@@ -179,7 +179,7 @@ extern U8 __boot_from_samba__;
  * ROM.
  */
 /*@{*/
-#define NX_BOOT_FROM_SAMBA ((U32)SYMADDR(__boot_from_samba__) != 0)
+#define NX_BOOT_FROM_SAMBA ((uint32_t)SYMADDR(__boot_from_samba__) != 0)
 #define NX_BOOT_FROM_ROM (!BOOT_FROM_SAMBA)
 /*@}*/
 

@@ -7,11 +7,11 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/util.h"
 #include "nxos/display.h"
 #include "nxos/drivers/systick.h"
@@ -29,7 +29,7 @@
 #include "nxos/drivers/usb.h"
 #include "nxos/util.h"
 #define CMDS_BUFSIZE 128
-#define USB_SEND(txt) nx_usb_write((U8*)txt, strlen(txt))
+#define USB_SEND(txt) nx_usb_write((uint8_t*)txt, strlen(txt))
 #else
 #define CMDS_BUFSIZE 0
 #define USB_SEND(txt)
@@ -114,7 +114,7 @@ typedef enum {
 /*** Predefined messages ***/
 
 
-const U8 bt_msg_start_heart[] = {
+const uint8_t bt_msg_start_heart[] = {
   0x03, /* length */
   BT_MSG_START_HEART,
   0xFF, /* checksum (high) */
@@ -122,7 +122,7 @@ const U8 bt_msg_start_heart[] = {
 };
 
 
-static const U8 bt_msg_get_version[] = {
+static const uint8_t bt_msg_get_version[] = {
   0x03, /* length */
   BT_MSG_GET_VERSION,
   0xFF, /* checksum (hi) */
@@ -130,7 +130,7 @@ static const U8 bt_msg_get_version[] = {
 };
 
 
-static const U8 bt_msg_set_discoverable_true[] = {
+static const uint8_t bt_msg_set_discoverable_true[] = {
   0x04, /* length */
   BT_MSG_SET_DISCOVERABLE,
   0x01, /* => true */
@@ -138,7 +138,7 @@ static const U8 bt_msg_set_discoverable_true[] = {
   0xE3
 };
 
-static const U8 bt_msg_set_discoverable_false[] = {
+static const uint8_t bt_msg_set_discoverable_false[] = {
   0x04, /* length */
   BT_MSG_SET_DISCOVERABLE, /* set discoverable */
   0x00, /* => true */
@@ -146,7 +146,7 @@ static const U8 bt_msg_set_discoverable_false[] = {
   0xE4
 };
 
-static const U8 bt_msg_cancel_inquiry[] = {
+static const uint8_t bt_msg_cancel_inquiry[] = {
   0x03, /* length */
   BT_MSG_CANCEL_INQUIRY,
   0xFF,
@@ -155,7 +155,7 @@ static const U8 bt_msg_cancel_inquiry[] = {
 
 
 /* dump list of known devices */
-static const U8 bt_msg_dump_list[] = {
+static const uint8_t bt_msg_dump_list[] = {
   0x03,
   BT_MSG_DUMP_LIST,
   0xFF,
@@ -163,21 +163,21 @@ static const U8 bt_msg_dump_list[] = {
 };
 
 
-static const U8 bt_msg_get_friendly_name[] = {
+static const uint8_t bt_msg_get_friendly_name[] = {
   0x03,
   BT_MSG_GET_FRIENDLY_NAME,
   0xFF,
   0xD7
 };
 
-static const U8 bt_msg_get_local_addr[] = {
+static const uint8_t bt_msg_get_local_addr[] = {
   0x03,
   BT_MSG_GET_LOCAL_ADDR,
   0xFF,
   0xD9
 };
 
-static const U8 bt_msg_open_port[] = {
+static const uint8_t bt_msg_open_port[] = {
   0x03,
   BT_MSG_OPEN_PORT,
   0xFF,
@@ -185,7 +185,7 @@ static const U8 bt_msg_open_port[] = {
 };
 
 
-static const U8 bt_msg_accept_connection[] = {
+static const uint8_t bt_msg_accept_connection[] = {
   0x04,
   BT_MSG_ACCEPT_CONNECTION,
   0x01,
@@ -193,7 +193,7 @@ static const U8 bt_msg_accept_connection[] = {
   0xF6
 };
 
-static const U8 bt_msg_refuse_connection[] = {
+static const uint8_t bt_msg_refuse_connection[] = {
   0x04,
   BT_MSG_ACCEPT_CONNECTION,
   0x00,
@@ -207,30 +207,30 @@ static volatile struct {
   bt_state_t state;
 
   /* see nx_systick_get_ms() */
-  U32 last_heartbeat;
+  uint32_t last_heartbeat;
 
   /* used for inquiring */
-  U32 last_checked_id, remote_id; /* used to know when a new device is found */
+  uint32_t last_checked_id, remote_id; /* used to know when a new device is found */
   bt_device_t remote_device;
 
   /* all bytes to 0 if no device is waiting a pin code */
-  U8 dev_waiting_for_pin[BT_ADDR_SIZE];
+  uint8_t dev_waiting_for_pin[BT_ADDR_SIZE];
   /* all bytes to 0 if no device is waiting to connect */
-  U8 dev_waiting_for_connection[BT_ADDR_SIZE];
+  uint8_t dev_waiting_for_connection[BT_ADDR_SIZE];
   /* set when a new connection has been established. */
   int new_handle;
 
-  U8 last_msg;
+  uint8_t last_msg;
 
   /* use to return various return value (version, etc) */
-  U8 args[BT_ARGS_BUFSIZE];
+  uint8_t args[BT_ARGS_BUFSIZE];
 
   int nmb_checksum_errors;
 
 #ifdef UART_DEBUG
   /* to remove: */
-  U8 cmds[CMDS_BUFSIZE];
-  U32 cmds_pos;
+  uint8_t cmds[CMDS_BUFSIZE];
+  uint32_t cmds_pos;
 #endif
 
 } bt_state;
@@ -240,10 +240,10 @@ static volatile struct {
 
 /* len => checksum included
  */
-static U32 bt_get_checksum(U8 *msg, U32 len, bool count_len)
+static uint32_t bt_get_checksum(uint8_t *msg, uint32_t len, bool count_len)
 {
-  U32 i;
-  U32 checksum;
+  uint32_t i;
+  uint32_t checksum;
 
   checksum = 0;
 
@@ -265,8 +265,8 @@ static U32 bt_get_checksum(U8 *msg, U32 len, bool count_len)
 /* len => length excepted, but checksum included
  * two last bytes will be set
  */
-static void bt_set_checksum(U8 *msg, U32 len) {
-  U32 checksum = bt_get_checksum(msg, len, false);
+static void bt_set_checksum(uint8_t *msg, uint32_t len) {
+  uint32_t checksum = bt_get_checksum(msg, len, false);
 
   msg[len-2] = ((checksum >> 8) & 0xFF);
   msg[len-1] = checksum & 0xFF;
@@ -274,11 +274,11 @@ static void bt_set_checksum(U8 *msg, U32 len) {
 
 
 /* len => length excepted, but checksum included */
-static bool bt_check_checksum(U8 *msg, U32 len) {
+static bool bt_check_checksum(uint8_t *msg, uint32_t len) {
 
   /* Strangeness: Must include the packet length in the checksum ?! */
-  U32 checksum = bt_get_checksum(msg, len, true);
-  U32 hi, lo;
+  uint32_t checksum = bt_get_checksum(msg, len, true);
+  uint32_t hi, lo;
 
   hi = ((checksum >> 8) & 0xFF);
   lo = checksum & 0xFF;
@@ -287,9 +287,9 @@ static bool bt_check_checksum(U8 *msg, U32 len) {
 }
 
 
-static bool bt_wait_msg(U8 msg)
+static bool bt_wait_msg(uint8_t msg)
 {
-  U32 start = nx_systick_get_ms();
+  uint32_t start = nx_systick_get_ms();
 
   while(bt_state.last_msg != msg && start+BT_ACK_TIMEOUT > nx_systick_get_ms());
 
@@ -306,9 +306,9 @@ static void bt_reseted(void)
 
 
 
-static void bt_uart_command_callback(U8 *msg, U32 len)
+static void bt_uart_command_callback(uint8_t *msg, uint32_t len)
 {
-  U32 i;
+  uint32_t i;
 
   /* if it's a break from the nxt */
   if (msg == NULL || len == 0) {
@@ -471,7 +471,7 @@ void nx_bt_init(void)
 void nx_bt_set_friendly_name(char *name)
 {
   int i;
-  U8 packet[20] = { 0 };
+  uint8_t packet[20] = { 0 };
 
   USB_SEND("set_friendly_name()");
 
@@ -511,12 +511,12 @@ bt_state_t nx_bt_get_state(void) {
 
 
 
-void nx_bt_begin_inquiry(U8 max_devices,
-			 U8 timeout,
-			 U8 bt_remote_class[4])
+void nx_bt_begin_inquiry(uint8_t max_devices,
+			 uint8_t timeout,
+			 uint8_t bt_remote_class[4])
 {
   int i;
-  U8 packet[11];
+  uint8_t packet[11];
 
   packet[0] = 10;      /* length */
   packet[1] = BT_MSG_BEGIN_INQUIRY; /* begin inquiry */
@@ -596,7 +596,7 @@ bool nx_bt_get_known_device(bt_device_t *dev)
 bt_return_value_t nx_bt_add_known_device(bt_device_t *dev)
 {
   int i;
-  U8 packet[31];
+  uint8_t packet[31];
 
   packet[0] = 30; /* length */
   packet[1] = BT_MSG_ADD_DEVICE;
@@ -626,10 +626,10 @@ bt_return_value_t nx_bt_add_known_device(bt_device_t *dev)
 }
 
 
-bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE])
+bt_return_value_t nx_bt_remove_known_device(uint8_t dev_addr[BT_ADDR_SIZE])
 {
   int i;
-  U8 packet[11];
+  uint8_t packet[11];
 
   packet[0] = 10; /* length */
   packet[1] = BT_MSG_REMOVE_DEVICE;
@@ -692,7 +692,7 @@ int nx_bt_get_friendly_name(char *name)
 }
 
 
-int nx_bt_get_local_addr(U8 *addr)
+int nx_bt_get_local_addr(uint8_t *addr)
 {
   int i;
 
@@ -736,13 +736,13 @@ int nx_bt_open_port(void)
 
 bool nx_bt_close_port(int handle)
 {
-  U8 packet[5];
+  uint8_t packet[5];
 
   USB_SEND("close_port()");
 
   packet[0] = 4; /* length */
   packet[1] = BT_MSG_CLOSE_PORT;
-  packet[2] = (U8)handle;
+  packet[2] = (uint8_t)handle;
 
   bt_set_checksum(packet+1, 4);
 
@@ -775,7 +775,7 @@ bool nx_bt_has_dev_waiting_for_pin(void)
 void nx_bt_send_pin(char *code)
 {
   int i;
-  U8 packet[27];
+  uint8_t packet[27];
 
   if (!nx_bt_has_dev_waiting_for_pin())
     return;
@@ -855,14 +855,14 @@ int nx_bt_connection_established(void)
 }
 
 
-U8 nx_bt_get_link_quality(int handle)
+uint8_t nx_bt_get_link_quality(int handle)
 {
-  U8 packet[5];
+  uint8_t packet[5];
 
   USB_SEND("get_link_quality()");
   packet[0] = 4;
   packet[1] = BT_MSG_GET_LINK_QUALITY;
-  packet[2] = (U8)handle;
+  packet[2] = (uint8_t)handle;
   bt_set_checksum(packet+1, 4);
 
   nx__uart_write(packet+1, 5);
@@ -876,14 +876,14 @@ U8 nx_bt_get_link_quality(int handle)
 
 bt_disconnection_status_t nx_bt_close_connection(int handle)
 {
-  U8 packet[5];
+  uint8_t packet[5];
   int ret_handle = 0;
 
   USB_SEND("close_connection()");
 
   packet[0] = 4;
   packet[1] = BT_MSG_CLOSE_CONNECTION;
-  packet[2] = (U8)handle;
+  packet[2] = (uint8_t)handle;
 
   bt_set_checksum(packet+1, 4);
 
@@ -901,7 +901,7 @@ bt_disconnection_status_t nx_bt_close_connection(int handle)
 
 void nx_bt_stream_open(int handle)
 {
-  U8 packet[5];
+  uint8_t packet[5];
 
   USB_SEND("stream_open()");
 
@@ -911,7 +911,7 @@ void nx_bt_stream_open(int handle)
 
   packet[0] = 4; /* length */
   packet[1] = BT_MSG_OPEN_STREAM;
-  packet[2] = (U8)handle;
+  packet[2] = (uint8_t)handle;
 
   bt_set_checksum(packet+1, 4);
 
@@ -927,7 +927,7 @@ void nx_bt_stream_open(int handle)
   bt_state.state = BT_STATE_STREAMING;
 }
 
-void nx_bt_stream_write(U8 *data, U32 length)
+void nx_bt_stream_write(uint8_t *data, uint32_t length)
 {
   USB_SEND("stream_write()");
   nx__uart_write(data, length);
@@ -944,13 +944,13 @@ bool nx_bt_stream_data_written(void)
   return !(nx__uart_is_writing());
 }
 
-void nx_bt_stream_read(U8 *buf, U32 length)
+void nx_bt_stream_read(uint8_t *buf, uint32_t length)
 {
   USB_SEND("stream_read()");
   nx__uart_read(buf, length);
 }
 
-U32 nx_bt_stream_data_read(void)
+uint32_t nx_bt_stream_data_read(void)
 {
   return nx__uart_data_read();
 }

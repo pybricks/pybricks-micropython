@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_INTERRUPTS_H__
 #define __NXOS_BASE_INTERRUPTS_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup kernel */
 /*@{*/
@@ -69,22 +69,22 @@ void nx_interrupts_enable(void);
  * mode task running.
  */
 typedef struct {
-  U32 cpsr; /**< CPU status register. */
-  U32 pc; /**< Program Counter register. */
-  U32 r0; /**< General Purpose Register 0. */
-  U32 r1; /**< General Purpose Register 1. */
-  U32 r2; /**< General Purpose Register 2. */
-  U32 r3; /**< General Purpose Register 3. */
-  U32 r4; /**< General Purpose Register 4. */
-  U32 r5; /**< General Purpose Register 5. */
-  U32 r6; /**< General Purpose Register 6. */
-  U32 r7; /**< General Purpose Register 7. */
-  U32 r8; /**< General Purpose Register 8. */
-  U32 r9; /**< General Purpose Register 9. */
-  U32 r10; /**< General Purpose Register 10. */
-  U32 r11; /**< General Purpose Register 11. */
-  U32 r12; /**< General Purpose Register 12. */
-  U32 lr; /**< Link Register. */
+  uint32_t cpsr; /**< CPU status register. */
+  uint32_t pc; /**< Program Counter register. */
+  uint32_t r0; /**< General Purpose Register 0. */
+  uint32_t r1; /**< General Purpose Register 1. */
+  uint32_t r2; /**< General Purpose Register 2. */
+  uint32_t r3; /**< General Purpose Register 3. */
+  uint32_t r4; /**< General Purpose Register 4. */
+  uint32_t r5; /**< General Purpose Register 5. */
+  uint32_t r6; /**< General Purpose Register 6. */
+  uint32_t r7; /**< General Purpose Register 7. */
+  uint32_t r8; /**< General Purpose Register 8. */
+  uint32_t r9; /**< General Purpose Register 9. */
+  uint32_t r10; /**< General Purpose Register 10. */
+  uint32_t r11; /**< General Purpose Register 11. */
+  uint32_t r12; /**< General Purpose Register 12. */
+  uint32_t lr; /**< Link Register. */
 } nx_task_stack_t;
 
 /*@}*/

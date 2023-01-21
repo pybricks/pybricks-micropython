@@ -10,10 +10,10 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
@@ -26,8 +26,8 @@
 void nx__efc_init(void) {
 }
 
-static bool nx__efc_do_write(U32 page) {
-  U32 ret;
+static bool nx__efc_do_write(uint32_t page) {
+  uint32_t ret;
 
   NX_ASSERT(page < EFC_PAGES);
 
@@ -55,8 +55,8 @@ static inline void nx__efc_wait_for_flash(void) {
 /* Write one page at the given page number in the flash.
  * Use interrupt-driven flash programming ?
  */
-bool nx__efc_write_page(U32 *data, U32 page) {
-  U8 i;
+bool nx__efc_write_page(uint32_t *data, uint32_t page) {
+  uint8_t i;
 
   NX_ASSERT(page < EFC_PAGES);
 
@@ -76,8 +76,8 @@ bool nx__efc_write_page(U32 *data, U32 page) {
  * data or just a pointer, relative to the data retrieval
  * mechanism from the flash.
  */
-void nx__efc_read_page(U32 page, U32 *data) {
-  U8 i;
+void nx__efc_read_page(uint32_t page, uint32_t *data) {
+  uint8_t i;
 
   NX_ASSERT(page < EFC_PAGES);
 
@@ -88,8 +88,8 @@ void nx__efc_read_page(U32 page, U32 *data) {
   }
 }
 
-bool nx__efc_erase_page(U32 page, U32 value) {
-  U8 i;
+bool nx__efc_erase_page(uint32_t page, uint32_t value) {
+  uint8_t i;
 
   NX_ASSERT(page < EFC_PAGES);
 

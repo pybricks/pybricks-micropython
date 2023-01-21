@@ -8,11 +8,12 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "nxos/types.h"
 #include "nxos/util.h"
 
-bool streqn(const char *a, const char *b, U32 n) {
+bool streqn(const char *a, const char *b, uint32_t n) {
   assert(a != NULL);
   assert(b != NULL);
 
@@ -52,8 +53,8 @@ char *strrchr (const char *s, int c) {
   return (char*)ptr;
 }
 
-bool atou32(const char *s, U32* result) {
-  U32 prev = 0;
+bool atou32(const char *s, uint32_t* result) {
+  uint32_t prev = 0;
 
   assert(s != NULL && result != NULL);
 
@@ -80,8 +81,8 @@ bool atou32(const char *s, U32* result) {
   return true;
 }
 
-bool atos32(const char *s, S32 *result) {
-  S32 prev = 0;
+bool atos32(const char *s, int32_t *result) {
+  int32_t prev = 0;
   bool negative = false;
 
   assert(s != NULL && result != NULL);

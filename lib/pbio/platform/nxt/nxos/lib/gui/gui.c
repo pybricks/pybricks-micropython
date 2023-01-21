@@ -2,9 +2,9 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "nxos/types.h"
 #include "nxos/util.h"
 #include "nxos/assert.h"
 #include "nxos/display.h"
@@ -16,8 +16,8 @@
 #define MENU_MAX_HEIGHT (LCD_LINES - 3)
 #define SCROLL_MARKER "    ..."
 
-U8 nx_gui_text_menu(gui_text_menu_t menu) {
-  U8 current = 0, count = 0, i;
+uint8_t nx_gui_text_menu(gui_text_menu_t menu) {
+  uint8_t current = 0, count = 0, i;
   bool done = false;
 
   NX_ASSERT(strlen(menu.title) > 0);
@@ -30,7 +30,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
 
   do {
     nx_avr_button_t button;
-    U8 start = 0, end = count;
+    uint8_t start = 0, end = count;
 
     nx_display_clear();
     nx_display_string(menu.title);
@@ -97,7 +97,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
 bool nx_gui_text_menu_yesno(char *title) {
   gui_text_menu_t menu;
   char *entries[] = {"Yes", "No", NULL};
-  U8 res;
+  uint8_t res;
 
   menu.entries = entries;
   menu.title = title;

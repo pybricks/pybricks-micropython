@@ -15,7 +15,8 @@
 #ifndef __NXOS_BASE_LIB_FS_H__
 #define __NXOS_BASE_LIB_FS_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
+
 #include "nxos/drivers/_efc.h"
 
 /** @addtogroup lib */
@@ -52,7 +53,7 @@
 #define FS_FILENAME_SIZE 8
 
 /** Maximum allowed filename length (in bytes). */
-#define FS_FILENAME_LENGTH (FS_FILENAME_SIZE * sizeof(U32))
+#define FS_FILENAME_LENGTH (FS_FILENAME_SIZE * sizeof(uint32_t))
 
 /** File system errors. */
 typedef enum {
@@ -87,13 +88,13 @@ typedef enum {
 /** File I/O buffer. */
 typedef struct {
   union {
-    U32 raw[EFC_PAGE_WORDS];
-    U8 bytes[EFC_PAGE_BYTES];
-  } data;    /**< The buffer data, accessible in its raw (U32) form or byte
+    uint32_t raw[EFC_PAGE_WORDS];
+    uint8_t bytes[EFC_PAGE_BYTES];
+  } data;    /**< The buffer data, accessible in its raw (uint32_t) form or byte
               * per byte.
               */
-  U32 page;  /**< The flash page this buffer is related to. */
-  U32 pos;   /**< In-data cursor. */
+  uint32_t page;  /**< The flash page this buffer is related to. */
+  uint32_t pos;   /**< In-data cursor. */
 } fs_buffer_t;
 
 /** File description structure, read from the file's metadata
@@ -102,7 +103,7 @@ typedef struct {
   bool used;                     /**< Denotes fd usage. */
   char name[FS_FILENAME_LENGTH]; /**< The file name. */
 
-  U32 origin;                    /**< File origin page on the flash */
+  uint32_t origin;                    /**< File origin page on the flash */
   size_t size;                   /**< The file size. */
 
   fs_perm_t perms;               /**< File permissions. */
@@ -112,7 +113,7 @@ typedef struct {
 } fs_file_t;
 
 /** File descriptor type. */
-typedef U8 fs_fd_t;
+typedef uint8_t fs_fd_t;
 
 /** Initializes the file system.
  *
@@ -138,9 +139,9 @@ size_t nx_fs_get_filesize(fs_fd_t fd);
 /** Read one byte from a file.
  *
  * @param fd The descriptor for the file to read from.
- * @param byte A pointer to a U32 to write the read byte from.
+ * @param byte A pointer to a uint32_t to write the read byte from.
  */
-fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte);
+fs_err_t nx_fs_read(fs_fd_t fd, uint8_t *byte);
 
 /** Write one byte to a file.
  *
@@ -148,7 +149,7 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte);
  * @param byte The byte to write to the file.
  * @return An @a fs_err_t describing the outcome of the operation.
  */
-fs_err_t nx_fs_write(fs_fd_t fd, U8 byte);
+fs_err_t nx_fs_write(fs_fd_t fd, uint8_t byte);
 
 /** Flush a file's write buffer. */
 fs_err_t nx_fs_flush(fs_fd_t fd);
@@ -202,8 +203,8 @@ fs_err_t nx_fs_seek(fs_fd_t fd, size_t position);
  * @param free_pages The number of available pages.
  * @param wasted The bytes lost by files page aligment.
  */
-void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
-                          U32 *wasted);
+void nx_fs_get_occupation(uint32_t *files, uint32_t *used, uint32_t *free_pages,
+                          uint32_t *wasted);
 
 /** Dumps the index of the filesystem as <page>:<filename>.
  */
@@ -216,7 +217,7 @@ void nx_fs_dump(void);
  * @param zone_end End of the zone.
  * @return A @a fs_err_t describing the outcome of the operation.
  */
-fs_err_t nx_fs_defrag_simple_zone(U32 zone_start, U32 zone_end);
+fs_err_t nx_fs_defrag_simple_zone(uint32_t zone_start, uint32_t zone_end);
 
 /** Perform a simple defragmentation of the flash filesystem.
  *
@@ -244,7 +245,7 @@ fs_err_t nx_fs_defrag_for_file_by_name(char *name);
  *
  * @return A @a fs_err_t describing the outcome of the operation.
  */
-fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin);
+fs_err_t nx_fs_defrag_for_file_by_origin(uint32_t origin);
 
 /** Tries to optimize the placement of the files on the filesystem
  * to make write operations faster for all files by putting as much

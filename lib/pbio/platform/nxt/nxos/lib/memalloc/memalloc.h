@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_MEMALLOC_H__
 #define __NXOS_BASE_MEMALLOC_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup lib */
 /*@{*/
@@ -63,7 +63,7 @@ void nx_memalloc_init(void);
  *
  * @sa nx_memalloc_init()
  */
-void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size);
+void nx_memalloc_init_full(void *mem_pool, uint32_t mem_pool_size);
 
 /** Return the amount of memory used by the allocator.
  *
@@ -72,7 +72,7 @@ void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size);
  * @note The amount return includes both user-usable allocated memory
  * and TLSF overhead.
  */
-U32 nx_memalloc_used(void);
+uint32_t nx_memalloc_used(void);
 
 /** Release control over the memory pool.
  *
@@ -98,7 +98,7 @@ void nx_memalloc_destroy(void);
  * @param size The number of bytes to allocate.
  * @return A pointer to the allocated block on success, or NULL on failure.
  */
-void *nx_malloc(U32 size);
+void *nx_malloc(uint32_t size);
 
 /** Allocate and return a pointer to a zeroed set of @a nelem blocks of
  *  @a elem_size each.
@@ -107,7 +107,7 @@ void *nx_malloc(U32 size);
  * @param elem_size Length in bytes of one element.
  * @return A pointer to the allocated block on success, or NULL on failure.
  */
-void *nx_calloc(U32 nelem, U32 elem_size);
+void *nx_calloc(uint32_t nelem, uint32_t elem_size);
 
 /** Resize the memory block pointed to by @a ptr to @a size bytes.
  *
@@ -122,7 +122,7 @@ void *nx_calloc(U32 nelem, U32 elem_size);
  * NULL @a ptr is equivalent to nx_malloc(size), and calling with a zero @a
  * size is equivalent to nx_free(ptr).
  */
-void *nx_realloc(void *ptr, U32 size);
+void *nx_realloc(void *ptr, uint32_t size);
 
 /** Return allocated memory to the memory pool.
  *

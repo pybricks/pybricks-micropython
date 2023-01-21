@@ -71,7 +71,7 @@ uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
 
-    U8 rx_char;
+    uint8_t rx_char;
 
     // Start reading again for next char
     nx_bt_stream_read(&rx_char, sizeof(rx_char));

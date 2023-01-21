@@ -7,11 +7,11 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
 #include "nxos/drivers/systick.h"
@@ -82,7 +82,7 @@
  * don't have a vendor ID to use. Therefore, we are currently
  * piggybacking on Lego's device space, using an unused product ID.
  */
-static const U8 usb_device_descriptor[] = {
+static const uint8_t usb_device_descriptor[] = {
   18, USB_DESC_TYPE_DEVICE, /* Packet size and type. */
   0x00, 0x20, /* This packet is USB 2.0. */
   2, /* Class code. */
@@ -98,7 +98,7 @@ static const U8 usb_device_descriptor[] = {
   1, /* The number of possible configurations. */
 };
 
-static const U8 usb_dev_qualifier_desc[] = {
+static const uint8_t usb_dev_qualifier_desc[] = {
   10, USB_DESC_TYPE_DEVICE_QUALIFIER, /* Packet size and type. */
   0x00, 0x20, /* This packet is USB 2.0. */
   2, /* Class code */
@@ -110,7 +110,7 @@ static const U8 usb_dev_qualifier_desc[] = {
 };
 
 
-static const U8 usb_nxos_full_config[] = {
+static const uint8_t usb_nxos_full_config[] = {
   0x09, USB_DESC_TYPE_CONFIG, /* Descriptor size and type. */
   0x20, 0x00, /* Total length of the configuration, interface
                * description included.
@@ -164,12 +164,12 @@ static const U8 usb_nxos_full_config[] = {
 };
 
 
-static const U8 usb_string_desc[] = {
+static const uint8_t usb_string_desc[] = {
   4, USB_DESC_TYPE_STR, /* Descriptor length and type. */
   0x09, 0x04, /* Supported language ID (US English). */
 };
 
-static const U8 usb_lego_str[] = {
+static const uint8_t usb_lego_str[] = {
   10, USB_DESC_TYPE_STR,
   'L', 0,
   'E', 0,
@@ -177,7 +177,7 @@ static const U8 usb_lego_str[] = {
   'O', 0
 };
 
-static const U8 usb_nxt_str[] = {
+static const uint8_t usb_nxt_str[] = {
   10, USB_DESC_TYPE_STR,
   'N', 0,
   'x', 0,
@@ -189,7 +189,7 @@ static const U8 usb_nxt_str[] = {
 /* Internal lookup table mapping string descriptors to their indices
  * in the USB string descriptor table.
  */
-static const U8 *usb_strings[] = {
+static const uint8_t *usb_strings[] = {
   usb_lego_str,
   usb_nxt_str,
 };
@@ -215,10 +215,10 @@ static volatile struct {
    * back before actually changing addresses. This field stores the
    * address that should be set once the ACK is sent.
    */
-  U32 new_device_address;
+  uint32_t new_device_address;
 
   /* The currently selected USB configuration. */
-  U8 current_config;
+  uint8_t current_config;
 
   /* Holds the state of the data transmissions on both EP0 and
    * EP2. This only gets used if the transmission needed to be split
@@ -226,24 +226,24 @@ static volatile struct {
    *  0 = EP0
    *  1 = EP2
    */
-  U8 *tx_data[2];
-  U32 tx_len[2];
+  uint8_t *tx_data[2];
+  uint32_t tx_len[2];
 
   /* Used to write the data from the EP1
    */
-  U8 *rx_data;
+  uint8_t *rx_data;
 
   /* size of the rx data buffer */
-  U32 rx_size;
+  uint32_t rx_size;
 
   /* length of the read packet (0 if none) */
-  U32 rx_len;
+  uint32_t rx_len;
 
 
   /* The USB controller has two hardware input buffers. This remembers
    * the one currently in use.
    */
-  U8 current_rx_bank;
+  uint8_t current_rx_bank;
 } usb_state;
 
 
@@ -256,12 +256,12 @@ static volatile struct {
  * These helpers set/clear CSR flags, and then loop waiting for the
  * controller to synchronize
  */
-static inline void usb_csr_clear_flag(U8 endpoint, U32 flags) {
+static inline void usb_csr_clear_flag(uint8_t endpoint, uint32_t flags) {
   AT91C_UDP_CSR[endpoint] &= ~(flags);
   while (AT91C_UDP_CSR[endpoint] & (flags));
 }
 
-static inline void usb_csr_set_flag(U8 endpoint, U32 flags) {
+static inline void usb_csr_set_flag(uint8_t endpoint, uint32_t flags) {
   AT91C_UDP_CSR[endpoint] |= (flags);
   while ( (AT91C_UDP_CSR[endpoint] & (flags)) != (flags));
 }
@@ -271,8 +271,8 @@ static inline void usb_csr_set_flag(U8 endpoint, U32 flags) {
  * single USB packet, the data is split and scheduled to be sent in
  * several packets.
  */
-static void usb_write_data(int endpoint, const U8 *ptr, U32 length) {
-  U32 packet_size;
+static void usb_write_data(int endpoint, const uint8_t *ptr, uint32_t length) {
+  uint32_t packet_size;
   int tx;
 
   if (endpoint != 0 && endpoint != 2)
@@ -293,7 +293,7 @@ static void usb_write_data(int endpoint, const U8 *ptr, U32 length) {
    */
   if (length > packet_size) {
     length -= packet_size;
-    usb_state.tx_data[tx] = (U8*)(ptr + packet_size);
+    usb_state.tx_data[tx] = (uint8_t*)(ptr + packet_size);
     usb_state.tx_len[tx] = length;
   } else {
     usb_state.tx_data[tx] = NULL;
@@ -314,8 +314,8 @@ static void usb_write_data(int endpoint, const U8 *ptr, U32 length) {
  * Assume that usb_state.rx_data and usb_state.rx_len are set.
  */
 static void usb_read_data(int endpoint) {
-  U16 i;
-  U16 total;
+  uint16_t i;
+  uint16_t total;
 
   /* Given our configuration, we should only be getting packets on
    * endpoint 1. Ignore data on any other endpoint.
@@ -376,19 +376,19 @@ static void usb_send_null(void) {
 
 
 /* Handle receiving and responding to setup packets on EP0. */
-static U32 usb_manage_setup_packet(void) {
+static uint32_t usb_manage_setup_packet(void) {
   /* The structure of a USB setup packet. */
   struct {
-    U8 request_attrs; /* Request characteristics. */
-    U8 request; /* Request type. */
-    U16 value; /* Request-specific value. */
-    U16 index; /* Request-specific index. */
-    U16 length; /* The number of bytes transferred in the (optional)
+    uint8_t request_attrs; /* Request characteristics. */
+    uint8_t request; /* Request type. */
+    uint16_t value; /* Request-specific value. */
+    uint16_t index; /* Request-specific index. */
+    uint16_t length; /* The number of bytes transferred in the (optional)
                  * second phase of the control transfer. */
   } packet;
-  U16 response;
-  U32 size;
-  U8 index;
+  uint16_t response;
+  uint32_t size;
+  uint8_t index;
 
   /* Read the packet from the FIFO into the above packet struct. */
   packet.request_attrs = AT91C_UDP_FDR[0];
@@ -424,7 +424,7 @@ static U32 usb_manage_setup_packet(void) {
     else
       response = 0;
 
-    usb_write_data(0, (U8*)&response, 2);
+    usb_write_data(0, (uint8_t*)&response, 2);
     break;
 
   case USB_BREQUEST_CLEAR_FEATURE:
@@ -502,7 +502,7 @@ static U32 usb_manage_setup_packet(void) {
 
   case USB_BREQUEST_GET_CONFIG:
     /* The host wants to know the ID of the current configuration. */
-    usb_write_data(0, (U8 *)&(usb_state.current_config), 1);
+    usb_write_data(0, (uint8_t *)&(usb_state.current_config), 1);
     break;
 
   case USB_BREQUEST_SET_CONFIG:
@@ -552,8 +552,8 @@ static U32 usb_manage_setup_packet(void) {
 
 /* The main USB interrupt handler. */
 static void usb_isr(void) {
-  U8 endpoint = 127;
-  U32 csr, isr;
+  uint8_t endpoint = 127;
+  uint32_t csr, isr;
 
   isr = *AT91C_UDP_ISR;
 
@@ -765,7 +765,7 @@ bool nx_usb_can_write(void) {
 }
 
 
-void nx_usb_write(U8 *data, U32 length) {
+void nx_usb_write(uint8_t *data, uint32_t length) {
   NX_ASSERT_MSG(usb_state.status != USB_UNINITIALIZED,
 		"USB not init");
   NX_ASSERT_MSG(usb_state.status != USB_SUSPENDED,
@@ -790,7 +790,7 @@ bool nx_usb_is_connected(void) {
 }
 
 
-void nx_usb_read(U8 *data, U32 length)
+void nx_usb_read(uint8_t *data, uint32_t length)
 {
   usb_state.rx_data = data;
   usb_state.rx_size = length;
@@ -803,7 +803,7 @@ void nx_usb_read(U8 *data, U32 length)
 }
 
 
-U32 nx_usb_data_read(void)
+uint32_t nx_usb_data_read(void)
 {
   return usb_state.rx_len;
 }

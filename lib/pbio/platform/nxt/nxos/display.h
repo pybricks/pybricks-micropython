@@ -14,8 +14,7 @@
 #define __NXOS_BASE_DISPLAY_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup kernel */
 /*@{*/
@@ -68,7 +67,7 @@ void nx_display_refresh(void);
  * @note Both @a x and @a y are zero-indexed: (0,0) is the top-left
  * corner of the display.
  */
-void nx_display_cursor_set_pos(U8 x, U8 y);
+void nx_display_cursor_set_pos(uint8_t x, uint8_t y);
 
 /** Print a single line feed. */
 void nx_display_end_line(void);
@@ -86,19 +85,19 @@ void nx_display_string(const char *str);
  *
  * @param val The number to display in hex.
  */
-void nx_display_hex(U32 val);
+void nx_display_hex(uint32_t val);
 
 /** Display @a val as a (unsigned) decimal number.
  *
  * @param val The number to display.
  */
-void nx_display_uint(U32 val);
+void nx_display_uint(uint32_t val);
 
 /** Display @a val as a (signed) decimal number.
  *
  * @param val The number to display.
  */
-void nx_display_int(S32 val);
+void nx_display_int(int32_t val);
 
 /*@}*/
 /*@}*/

@@ -12,7 +12,6 @@
 #ifndef __NXOS_BASE__DISPLAY_H__
 #define __NXOS_BASE__DISPLAY_H__
 
-#include "nxos/types.h"
 #include "nxos/display.h"
 
 /** @addtogroup kernelinternal */

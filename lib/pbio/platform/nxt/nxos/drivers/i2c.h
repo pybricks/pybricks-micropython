@@ -15,7 +15,7 @@
 #ifndef __NXOS_I2C_H__
 #define __NXOS_I2C_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -89,7 +89,7 @@ void nx_i2c_init(void);
  * @note If no I2C device was already registered, a call to nx_i2c_register()
  * will setup the I2C isr.
  */
-void nx_i2c_register(U32 sensor, U8 address, bool lego_compat);
+void nx_i2c_register(uint32_t sensor, uint8_t address, bool lego_compat);
 
 /** Unregister the I2C device connected on port @a sensor.
  *
@@ -98,7 +98,7 @@ void nx_i2c_register(U32 sensor, U8 address, bool lego_compat);
  * @note If you're unregistering the last I2C device, the I2C isr will be
  * disabled until another device is registered.
  */
-void nx_i2c_unregister(U32 sensor);
+void nx_i2c_unregister(uint32_t sensor);
 
 /** Perform a I2C transaction with the device on port @a sensor.
  *
@@ -121,9 +121,9 @@ void nx_i2c_unregister(U32 sensor);
  * if the transaction has been successfully setup. Otherwise, the appropriate
  * error codes are returned (see i2c_txn_err).
  */
-i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
-                                     const U8 *data, U32 data_size,
-                                     U8 *recv_buf, U32 recv_size);
+i2c_txn_err nx_i2c_start_transaction(uint32_t sensor, i2c_txn_mode mode,
+                                     const uint8_t *data, uint32_t data_size,
+                                     uint8_t *recv_buf, uint32_t recv_size);
 
 /** Get the current transaction status on port @a sensor.
  *
@@ -136,7 +136,7 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
  * @return Returns the state of the currently processed I2C transaction on the
  * given sensor port.
  */
-i2c_txn_status nx_i2c_get_txn_status(U32 sensor);
+i2c_txn_status nx_i2c_get_txn_status(uint32_t sensor);
 
 /** Get the state of the I2C bus on port @a sensor.
  *
@@ -151,7 +151,7 @@ i2c_txn_status nx_i2c_get_txn_status(U32 sensor);
  *
  * @return Returns the state of the I2C bus.
  */
-bool nx_i2c_busy(U32 sensor);
+bool nx_i2c_busy(uint32_t sensor);
 
 /*@}*/
 /*@}*/

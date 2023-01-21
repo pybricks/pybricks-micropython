@@ -7,10 +7,10 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
 #include "nxos/drivers/aic.h"
@@ -31,8 +31,8 @@ static volatile struct {
   enum twi_mode mode;
 
   /* Address and size of a send/receive buffer. */
-  U8 *ptr;
-  U32 len;
+  uint8_t *ptr;
+  uint32_t len;
 } twi_state = {
   TWI_UNINITIALIZED, /* Not initialized yet. */
   NULL,              /* No send/recv buffer. */
@@ -42,7 +42,7 @@ static volatile struct {
 static void twi_isr(void)
 {
   /* Read the status register once to acknowledge all TWI interrupts. */
-  U32 status = *AT91C_TWI_SR;
+  uint32_t status = *AT91C_TWI_SR;
 
   /* Read mode and the status indicates a byte was received. */
   if (twi_state.mode == TWI_RX_BUSY && (status & AT91C_TWI_RXRDY)) {
@@ -102,7 +102,7 @@ static void twi_isr(void)
 
 void nx__twi_init(void)
 {
-  U32 clocks = 9;
+  uint32_t clocks = 9;
 
   nx_interrupts_disable();
 
@@ -156,9 +156,9 @@ void nx__twi_init(void)
   nx_aic_install_isr(AT91C_ID_TWI, AIC_PRIO_RT, AIC_TRIG_LEVEL, twi_isr);
 }
 
-void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len)
+void nx__twi_read_async(uint32_t dev_addr, uint8_t *data, uint32_t len)
 {
-  U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO | AT91C_TWI_MREAD;
+  uint32_t mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO | AT91C_TWI_MREAD;
 
   NX_ASSERT(dev_addr == 1);
   NX_ASSERT(data != NULL);
@@ -176,9 +176,9 @@ void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len)
   *AT91C_TWI_IER = AT91C_TWI_RXRDY;
 }
 
-void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len)
+void nx__twi_write_async(uint32_t dev_addr, uint8_t *data, uint32_t len)
 {
-  U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO;
+  uint32_t mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO;
 
   NX_ASSERT(dev_addr == 1);
   NX_ASSERT(data != NULL);

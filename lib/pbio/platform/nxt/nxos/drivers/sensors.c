@@ -6,9 +6,10 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdint.h>
+
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
@@ -36,7 +37,7 @@ static enum {
 };
 
 void nx__sensors_init(void) {
-  U32 pinmask = 0;
+  uint32_t pinmask = 0;
   int i;
 
   for (i=0; i<NXT_N_SENSORS; i++) {
@@ -52,8 +53,8 @@ void nx__sensors_init(void) {
   *AT91C_PIOA_ODR = pinmask;
 }
 
-void nx__sensors_i2c_enable(U32 sensor) {
-  U32 pinmask;
+void nx__sensors_i2c_enable(uint32_t sensor) {
+  uint32_t pinmask;
 
   NX_ASSERT(sensor < NXT_N_SENSORS);
   NX_ASSERT(sensors_mode[sensor] == OFF);
@@ -71,13 +72,13 @@ void nx__sensors_i2c_enable(U32 sensor) {
   *AT91C_PIOA_MDER = pinmask;
 }
 
-const nx__sensors_pins *nx__sensors_get_pins(U32 sensor) {
+const nx__sensors_pins *nx__sensors_get_pins(uint32_t sensor) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
 
   return &sensors_pinmap[sensor];
 }
 
-void nx__sensors_disable(U32 sensor) {
+void nx__sensors_disable(uint32_t sensor) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
   if (sensor >= NXT_N_SENSORS)
     return;
@@ -99,7 +100,7 @@ void nx__sensors_disable(U32 sensor) {
   sensors_mode[sensor] = OFF;
 }
 
-void nx_sensors_analog_enable(U32 sensor) {
+void nx_sensors_analog_enable(uint32_t sensor) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
   NX_ASSERT(sensors_mode[sensor] == OFF);
 
@@ -112,14 +113,14 @@ void nx_sensors_analog_enable(U32 sensor) {
                       sensors_pinmap[sensor].scl);
 }
 
-U32 nx_sensors_analog_get(U32 sensor) {
+uint32_t nx_sensors_analog_get(uint32_t sensor) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
   NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
   return nx__avr_get_sensor_value(sensor);
 }
 
-void nx_sensors_analog_digi_set(U32 sensor, nx_sensors_data_pin pin) {
+void nx_sensors_analog_digi_set(uint32_t sensor, nx_sensors_data_pin pin) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
   NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
@@ -127,7 +128,7 @@ void nx_sensors_analog_digi_set(U32 sensor, nx_sensors_data_pin pin) {
                       sensors_pinmap[sensor].scl);
 }
 
-void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin) {
+void nx_sensors_analog_digi_clear(uint32_t sensor, nx_sensors_data_pin pin) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
   NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
@@ -135,7 +136,7 @@ void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin) {
                       sensors_pinmap[sensor].scl);
 }
 
-void nx_sensors_analog_disable(U32 sensor) {
+void nx_sensors_analog_disable(uint32_t sensor) {
   NX_ASSERT(sensor < NXT_N_SENSORS);
   NX_ASSERT(sensors_mode[sensor] == ANALOG);
 

@@ -17,8 +17,7 @@
 #define __NXOS_BASE_DRIVERS_UART_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driverinternal */
 /*@{*/
@@ -38,7 +37,7 @@
  * The UART driver fires the callback with a @a buffer of length @a
  * packet_size of data to process.
  */
-typedef void (*nx__uart_read_callback_t)(U8 *buffer, U32 packet_size);
+typedef void (*nx__uart_read_callback_t)(uint8_t *buffer, uint32_t packet_size);
 
 /** Initialize the UART driver.
  *
@@ -55,19 +54,19 @@ void nx__uart_set_callback(nx__uart_read_callback_t callback);
 /**
  * Set manually the PDC
  */
-void nx__uart_read(U8 *buf, U32 length);
+void nx__uart_read(uint8_t *buf, uint32_t length);
 
 /**
  * Indicates how many bytes the PDC has already read from the UART
  */
-U32 nx__uart_data_read(void);
+uint32_t nx__uart_data_read(void);
 
 /** Write @a lng bytes from @a data over the UART bus.
  *
  * @param data A pointer to the data to write.
  * @param lng The number of bytes to write.
  */
-void nx__uart_write(const U8 *data, U32 lng);
+void nx__uart_write(const uint8_t *data, uint32_t lng);
 
 /** Check if the UART can be written to.
  *

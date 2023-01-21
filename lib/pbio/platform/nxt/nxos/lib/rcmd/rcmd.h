@@ -13,8 +13,6 @@
 #ifndef __NXOS_BASE_LIB_RCMD_H__
 #define __NXOS_BASE_LIB_RCMD_H__
 
-#include "nxos/types.h"
-
 /** @addtogroup lib */
 /*@{*/
 

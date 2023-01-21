@@ -13,7 +13,7 @@
 #ifndef __NXOS_BASE_DRIVERS_SOUND_H__
 #define __NXOS_BASE_DRIVERS_SOUND_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -39,7 +39,7 @@
  * @note This function is asynchronous. It will start the beeping and
  * return immediately.
  */
-void nx_sound_freq_async(U32 freq, U32 ms);
+void nx_sound_freq_async(uint32_t freq, uint32_t ms);
 
 /** Synchronously emit a beep at @a freq Hz for @a ms milliseconds.
  *
@@ -48,7 +48,7 @@ void nx_sound_freq_async(U32 freq, U32 ms);
  * @param freq The frequency of the beep in Hz.
  * @param ms The duration of the beep.
  */
-void nx_sound_freq(U32 freq, U32 ms);
+void nx_sound_freq(uint32_t freq, uint32_t ms);
 
 /*@}*/
 /*@}*/

@@ -14,8 +14,7 @@
 #define __NXOS_BASE_DRIVERS__TWI_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driverinternal */
 /*@{*/
@@ -47,7 +46,7 @@ void nx__twi_init(void);
  * @note This function returns immediately after setting up the write
  * sequence. It does not wait until the write is effectively complete.
  */
-void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len);
+void nx__twi_write_async(uint32_t dev_addr, uint8_t *data, uint32_t len);
 
 /** Read @a len bytes from I2C slave @a dev_addr into @a data.
  *
@@ -58,7 +57,7 @@ void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len);
  * @note This function returns immediately after setting up the read
  * sequence. It does not wait until the read is effectively complete.
  */
-void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len);
+void nx__twi_read_async(uint32_t dev_addr, uint8_t *data, uint32_t len);
 
 /** Check the readiness of the TWI driver.
  *

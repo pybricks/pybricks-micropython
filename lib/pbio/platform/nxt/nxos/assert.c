@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "nxos/types.h"
 #include "nxos/display.h"
 #include "nxos/core.h"
 #include "nxos/util.h"

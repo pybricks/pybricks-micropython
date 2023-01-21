@@ -13,7 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS_SENSORS_H__
 #define __NXOS_BASE_DRIVERS_SENSORS_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
+
 #include "nxos/nxt.h"
 
 /** @addtogroup driver */
@@ -40,37 +41,37 @@ typedef enum {
  *
  * @param sensor The sensor port.
  */
-void nx_sensors_analog_enable(U32 sensor);
+void nx_sensors_analog_enable(uint32_t sensor);
 
 /** Get an analog reading from @a sensor.
  *
  * @param sensor The sensor port.
- * @return An U32. The meaning of the value depends on the kind of
+ * @return An uint32_t. The meaning of the value depends on the kind of
  * sensor connected.
  *
  * @note The sensor port must be enabled in analog mode.
  */
-U32 nx_sensors_analog_get(U32 sensor);
+uint32_t nx_sensors_analog_get(uint32_t sensor);
 
 /** Set the DIGI pin @a pin of @a sensor.
  *
  * @param sensor The sensor port.
  * @param pin The DIGI pin to set.
  */
-void nx_sensors_analog_digi_set(U32 sensor, nx_sensors_data_pin pin);
+void nx_sensors_analog_digi_set(uint32_t sensor, nx_sensors_data_pin pin);
 
 /** Clear the DIGI pin @a pin of @a sensor.
  *
  * @param sensor The sensor port.
  * @param pin The DIGI pin to clear.
  */
-void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin);
+void nx_sensors_analog_digi_clear(uint32_t sensor, nx_sensors_data_pin pin);
 
 /** Disable the analog sensor on port @a sensor.
  *
  * @param sensor The sensor port.
  */
-void nx_sensors_analog_disable(U32 sensor);
+void nx_sensors_analog_disable(uint32_t sensor);
 
 /*@}*/
 /*@}*/

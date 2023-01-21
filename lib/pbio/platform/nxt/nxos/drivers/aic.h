@@ -13,6 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS_AIC_H__
 #define __NXOS_BASE_DRIVERS_AIC_H__
 
+#include <stdint.h>
+
 #include "nxos/types.h"
 
 /** @addtogroup driver */
@@ -26,7 +28,7 @@
 /*@{*/
 
 /** The vector number type. */
-typedef U32 nx_aic_vector_t;
+typedef uint32_t nx_aic_vector_t;
 
 /** Priority levels for interrupt lines. */
 typedef enum {

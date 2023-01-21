@@ -6,9 +6,10 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdint.h>
+
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/assert.h"
 #include "nxos/interrupts.h"
@@ -37,18 +38,18 @@
 static volatile struct {
   nx__uart_read_callback_t callback;
 
-  U32 packet_size;
-  U8 buf[UART_BUFSIZE];
+  uint32_t packet_size;
+  uint8_t buf[UART_BUFSIZE];
 
   /* for manual reading from the bluetooth driver : */
-  U32 to_read;
+  uint32_t to_read;
 
 } uart_state = {
   NULL, 0, {0}, 0
 };
 
 static void uart_isr(void) {
-  U32 status = *AT91C_US1_CSR;
+  uint32_t status = *AT91C_US1_CSR;
 
   /* If we receive a break condition from the Bluecore, send up a NULL
    * packet and reset the controller status.
@@ -79,13 +80,13 @@ static void uart_isr(void) {
   if (status & AT91C_US_ENDRX) {
     *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
 
-    uart_state.callback((U8*)&(uart_state.buf), uart_state.packet_size);
+    uart_state.callback((uint8_t*)&(uart_state.buf), uart_state.packet_size);
 
     /* We must put a size != 0 in the RCR register (even if the PDC is disabled for the receiving) */
     /* else when we try to read manually a value on US1_RHR thanks to the RXRDY interruption
      * the RXRDY of the CSR seems to never be set to 1 (no value read on the UART ?) */
     /* TODO : figure this out */
-    *AT91C_US1_RPR = (U32)(&uart_state.buf);
+    *AT91C_US1_RPR = (uint32_t)(&uart_state.buf);
     *AT91C_US1_RCR = UART_BUFSIZE; /* default size */
 
     /* we've read a packet, so now we will do a manual reading
@@ -123,7 +124,7 @@ void nx__uart_init(nx__uart_read_callback_t callback) {
    *
    * TODO : figure this out
    */
-  *AT91C_US1_RPR = (U32)(&uart_state.buf);
+  *AT91C_US1_RPR = (uint32_t)(&uart_state.buf);
   *AT91C_US1_RCR = UART_BUFSIZE;
   *AT91C_US1_TPR = 0;
   *AT91C_US1_TCR = 0;
@@ -165,13 +166,13 @@ void nx__uart_init(nx__uart_read_callback_t callback) {
   nx_interrupts_enable();
 }
 
-void nx__uart_write(const U8 *data, U32 lng) {
+void nx__uart_write(const uint8_t *data, uint32_t lng) {
   NX_ASSERT(data != NULL);
   NX_ASSERT(lng > 0);
 
   while (*AT91C_US1_TNCR != 0);
 
-  *AT91C_US1_TNPR = (U32)data;
+  *AT91C_US1_TNPR = (uint32_t)data;
   *AT91C_US1_TNCR = lng;
 }
 
@@ -193,7 +194,7 @@ void nx__uart_set_callback(nx__uart_read_callback_t callback) {
     uart_state.callback = callback;
 
     *AT91C_US1_RCR = 0;
-    *AT91C_US1_RPR = (U32)NULL;
+    *AT91C_US1_RPR = (uint32_t)NULL;
 
   } else {
     *AT91C_US1_IDR = AT91C_US_RXRDY | AT91C_US_RXBRK | AT91C_US_ENDRX;
@@ -201,7 +202,7 @@ void nx__uart_set_callback(nx__uart_read_callback_t callback) {
     *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
 
     *AT91C_US1_RCR = UART_BUFSIZE;
-    *AT91C_US1_RPR = (U32)(&uart_state.buf);
+    *AT91C_US1_RPR = (uint32_t)(&uart_state.buf);
 
     uart_state.callback = callback;
 
@@ -211,10 +212,10 @@ void nx__uart_set_callback(nx__uart_read_callback_t callback) {
 
 }
 
-void nx__uart_read(U8 *buf, U32 length) {
+void nx__uart_read(uint8_t *buf, uint32_t length) {
   uart_state.to_read = length;
 
-  *AT91C_US1_RPR = (U32)buf;
+  *AT91C_US1_RPR = (uint32_t)buf;
   *AT91C_US1_RCR = length;
 
   if (buf != NULL && length > 0) {
@@ -224,6 +225,6 @@ void nx__uart_read(U8 *buf, U32 length) {
   }
 }
 
-U32 nx__uart_data_read(void) {
+uint32_t nx__uart_data_read(void) {
   return uart_state.to_read - (*AT91C_US1_RCR);
 }

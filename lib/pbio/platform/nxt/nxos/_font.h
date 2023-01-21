@@ -13,7 +13,8 @@
 #ifndef __NXOS_BASE__FONT_H__
 #define __NXOS_BASE__FONT_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
+
 #include "nxos/drivers/_lcd.h"
 
 /** @addtogroup kernelinternal */
@@ -57,7 +58,7 @@
  * FONT_WIDTH. Each element in that array gives the bitmask for one
  * vertical slice of the character in question.
  */
-static const U8 nx__font_data[][NX__FONT_WIDTH] = {
+static const uint8_t nx__font_data[][NX__FONT_WIDTH] = {
   { 0x00, 0x00, 0x00, 0x00, 0x00 },
   { 0x00, 0x00, 0x5F, 0x00, 0x00 },
   { 0x00, 0x07, 0x00, 0x07, 0x00 },

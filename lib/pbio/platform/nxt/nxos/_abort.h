@@ -14,6 +14,7 @@
 #define __NXOS_BASE__ABORT_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /** @addtogroup coreinternal */
 /*@{*/
@@ -28,7 +29,7 @@
  * @note This function never returns, and results in the brick locking
  * up completely.
  */
-void nx__abort(bool data, U32 pc, U32 cpsr);
+void nx__abort(bool data, uint32_t pc, uint32_t cpsr);
 
 /*@}*/
 

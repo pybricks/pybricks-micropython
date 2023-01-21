@@ -6,11 +6,11 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/assert.h"
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
@@ -21,12 +21,12 @@
 #include "nxos/lib/tracing/tracing.h"
 
 static struct {
-  U8 *start;
-  U8 *cur;
-  U8 *end;
+  uint8_t *start;
+  uint8_t *cur;
+  uint8_t *end;
 } trace = { NULL, NULL, NULL };
 
-void nx_tracing_init(U8 *start, U32 size) {
+void nx_tracing_init(uint8_t *start, uint32_t size) {
   NX_ASSERT(start != NULL);
   NX_ASSERT(size > 0);
 
@@ -34,7 +34,7 @@ void nx_tracing_init(U8 *start, U32 size) {
   trace.end = start + size;
 }
 
-void nx_tracing_add_data(const U8 *data, U32 size) {
+void nx_tracing_add_data(const uint8_t *data, uint32_t size) {
   NX_ASSERT(trace.end != NULL);
   NX_ASSERT_MSG(trace.cur + size <= trace.end,
                 "Trace buffer full");
@@ -61,10 +61,10 @@ void nx_tracing_add_char(const char val) {
   *trace.cur++ = val;
 }
 
-U8 *nx_tracing_get_start() {
+uint8_t *nx_tracing_get_start() {
   return trace.start;
 }
 
-U32 nx_tracing_get_size() {
+uint32_t nx_tracing_get_size() {
   return trace.cur - trace.start;
 }

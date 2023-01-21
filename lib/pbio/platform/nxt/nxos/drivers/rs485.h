@@ -14,7 +14,7 @@
 #ifndef __NXOS_BASE_DRIVERS_RS485_H__
 #define __NXOS_BASE_DRIVERS_RS485_H__
 
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -79,8 +79,8 @@ typedef enum {
  * already been configured as a normal sensor port.
  */
 void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
-                   U32 uart_mr,
-                   U16 timeout,
+                   uint32_t uart_mr,
+                   uint16_t timeout,
                    bool timeguard);
 
 /** Change the baud rate to a new value.
@@ -91,7 +91,7 @@ void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
  * @param baud_rate The numerical value of required baud rate.
  * @return false if the baud rate change cannot be achieved.
  */
-bool nx_rs485_set_fixed_baudrate(U16 baud_rate);
+bool nx_rs485_set_fixed_baudrate(uint16_t baud_rate);
 
 /** Shuts down the peripheral
  *
@@ -119,7 +119,7 @@ void nx_rs485_shutdown(void);
  *
  * @note The callback executes in an interrupt handler context.
  */
-bool nx_rs485_send(U8 *buffer, U32 buflen,
+bool nx_rs485_send(uint8_t *buffer, uint32_t buflen,
                    void (*callback)(nx_rs485_error_t));
 
 /** Asynchronously receives data from the RS485 bus.
@@ -138,7 +138,7 @@ bool nx_rs485_send(U8 *buffer, U32 buflen,
  *
  * @note The callback executes in an interrupt handler context.
  */
-bool nx_rs485_recv(U8 *buffer, U32 buflen,
+bool nx_rs485_recv(uint8_t *buffer, uint32_t buflen,
                    void (*callback)(nx_rs485_error_t));
 
 /** Aborts any underway transmission or pending reception

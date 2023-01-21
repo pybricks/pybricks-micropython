@@ -7,9 +7,9 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "nxos/types.h"
 #include "nxos/interrupts.h"
 #include "nxos/util.h"
 #include "nxos/assert.h"
@@ -26,7 +26,7 @@
 
 static struct {
   /* The display buffer, which is mirrored to the LCD controller's RAM. */
-  U8 buffer[LCD_HEIGHT][LCD_WIDTH];
+  uint8_t buffer[LCD_HEIGHT][LCD_WIDTH];
 
   /* Whether the display is automatically refreshed after every call
    * to display functions. */
@@ -36,8 +36,8 @@ static struct {
    * of text in a console-like manner.
    */
   struct {
-    U8 x;
-    U8 y;
+    uint8_t x;
+    uint8_t y;
     bool ignore_lf; /* If the display just wrapped from the right side
                        of the screen, ignore an LF immediately
                        after. */
@@ -77,7 +77,7 @@ inline void nx_display_refresh(void) {
 /*
  * Text display functions.
  */
-static inline bool is_on_screen(U8 x, U8 y) {
+static inline bool is_on_screen(uint8_t x, uint8_t y) {
   if (x < NX__DISPLAY_WIDTH_CELLS &&
       y < NX__DISPLAY_HEIGHT_CELLS)
     return true;
@@ -85,7 +85,7 @@ static inline bool is_on_screen(U8 x, U8 y) {
     return false;
 }
 
-static inline const U8 *char_to_font(const char c) {
+static inline const uint8_t *char_to_font(const char c) {
   if (c >= NX__FONT_START)
     return nx__font_data[c - NX__FONT_START];
   else
@@ -114,7 +114,7 @@ static inline void update_cursor(bool inc_y) {
     display.cursor.y = 0;
 }
 
-void nx_display_cursor_set_pos(U8 x, U8 y) {
+void nx_display_cursor_set_pos(uint8_t x, uint8_t y) {
   NX_ASSERT(is_on_screen(x, y));
   display.cursor.x = x;
   display.cursor.y = y;
@@ -139,7 +139,7 @@ void nx_display_string(const char *str) {
   dirty_display();
 }
 
-void nx_display_hex(U32 val) {
+void nx_display_hex(uint32_t val) {
   const char hex[16] = "0123456789ABCDEF";
   char buf[9];
   char *ptr = &buf[8];
@@ -161,7 +161,7 @@ void nx_display_hex(U32 val) {
   dirty_display();
 }
 
-void nx_display_uint(U32 val) {
+void nx_display_uint(uint32_t val) {
   char buf[11];
   char *ptr = &buf[10];
 
@@ -184,7 +184,7 @@ void nx_display_uint(U32 val) {
   dirty_display();
 }
 
-void nx_display_int(S32 val) {
+void nx_display_int(int32_t val) {
   if( val < 0 ) {
     nx_display_string("-");
     val = -val;

@@ -4,10 +4,10 @@
 // See AUTHORS for a full list of the developers.
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <pbsys/main.h>
 
-#include "nxos/types.h"
 #include "nxos/interrupts.h"
 #include "nxos/_display.h"
 #include "nxos/assert.h"
@@ -67,7 +67,7 @@ static void bluetooth_connect(void) {
     nx_display_string("Bluetooth name:\n");
     nx_display_string(name);
     nx_display_string("\n");
-    U8 local_addr[7];
+    uint8_t local_addr[7];
     if (nx_bt_get_local_addr(local_addr)) {
         for (int i = 0; i < 6; i++) {
             nx_display_hex(local_addr[i]);
@@ -107,7 +107,7 @@ static void bluetooth_connect(void) {
 
 static char heap[32 * 1024];
 
-static U8 flush_buf[1];
+static uint8_t flush_buf[1];
 
 int main(int argc, char **argv) {
     // Start the system.

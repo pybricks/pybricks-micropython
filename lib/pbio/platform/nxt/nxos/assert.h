@@ -15,8 +15,6 @@
 
 #include <stdbool.h>
 
-#include "nxos/types.h"
-
 /** @addtogroup kernel */
 /*@{*/
 

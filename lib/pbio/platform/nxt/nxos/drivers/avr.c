@@ -7,10 +7,10 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/nxt.h"
-#include "nxos/types.h"
 #include "nxos/util.h"
 #include "nxos/assert.h"
 #include "nxos/drivers/systick.h"
@@ -37,7 +37,7 @@ static volatile struct {
   } mode;
 
   /* Used to detect link failures and restart the AVR link. */
-  U8 failed_consecutive_checksums;
+  uint8_t failed_consecutive_checksums;
 } avr_state = {
   AVR_UNINITIALIZED, /* We start uninitialized. */
   0,                 /* No failed checksums yet. */
@@ -54,8 +54,8 @@ static volatile struct {
   } power_mode;
 
   /* The speed and braking configuration of the motor ports. */
-  S8 motor_speed[NXT_N_MOTORS];
-  U8 motor_brake;
+  int8_t motor_speed[NXT_N_MOTORS];
+  uint8_t motor_brake;
 
   /* TODO: enable controlling of input power. Currently the input
    * stuff is ignored.
@@ -70,28 +70,28 @@ static volatile struct {
 /* Contains all the status data periodically received from the AVR. */
 static volatile struct {
   /* The analog reading of the analog pin on all active sensors. */
-  U16 adc_value[NXT_N_SENSORS];
+  uint16_t adc_value[NXT_N_SENSORS];
 
   /* The state of the NXT's buttons. Given the way that the buttons
    * are handled in hardware, only one button is reported pressed at a
    * time. See the nx_avr_button_t enumeration for values to test for.
    */
-  U8 buttons;
+  uint8_t buttons;
 
   /* Battery information. */
   struct {
     bool is_aa; /* True if the power supply is AA batteries (as
                  * opposed to a battery pack).
                  */
-    U16 charge; /* The remaining battery charge in mV. */
+    uint16_t charge; /* The remaining battery charge in mV. */
   } battery;
 
   /* The version of the AVR firmware. The currently supported version
    * is 1.1.
    */
   struct {
-    U8 major;
-    U8 minor;
+    uint8_t major;
+    uint8_t minor;
   } version;
 } from_avr;
 
@@ -102,12 +102,12 @@ static volatile struct {
  * received into here before being deserialized into the status
  * struct.
  */
-static U8 raw_from_avr[(2 * NXT_N_SENSORS) + /* Sensor A/D value. */
+static uint8_t raw_from_avr[(2 * NXT_N_SENSORS) + /* Sensor A/D value. */
                        2 + /* Buttons reading.  */
                        2 + /* Battery type, charge and AVR firmware
                             * version. */
                        1]; /* Checksum. */
-static U8 raw_to_avr[1 + /* Power mode    */
+static uint8_t raw_to_avr[1 + /* Power mode    */
                      1 + /* PWM frequency */
                      4 + /* output % for the 4 (?!)  motors */
                      1 + /* Output modes (brakes) */
@@ -118,8 +118,8 @@ static U8 raw_to_avr[1 + /* Power mode    */
  * sending to the AVR.
  */
 static void avr_pack_to_avr(void) {
-  U32 i;
-  U8 checksum = 0;
+  uint32_t i;
+  uint8_t checksum = 0;
 
   memset(raw_to_avr, 0, sizeof(raw_to_avr));
 
@@ -162,20 +162,20 @@ static void avr_pack_to_avr(void) {
   raw_to_avr[sizeof(raw_to_avr)-1] = ~checksum;
 }
 
-/* Small helper to convert two bytes into an U16. */
-static inline U16 unpack_word(U8 *word) {
-  return *((U16*)word);
+/* Small helper to convert two bytes into an uint16_t. */
+static inline uint16_t unpack_word(uint8_t *word) {
+  return *((uint16_t*)word);
 }
 
 /* Deserialize the AVR data structure in raw_from_avr into the
  * from_avr status structure.
  */
 static void avr_unpack_from_avr(void) {
-  U8 checksum = 0;
-  U16 word;
-  U32 voltage;
-  U32 i;
-  U8 *p = raw_from_avr;
+  uint8_t checksum = 0;
+  uint16_t word;
+  uint32_t voltage;
+  uint32_t i;
+  uint8_t *p = raw_from_avr;
 
   /* Compute the checksum of the received data. This is done by doing
    * the unsigned sum of all the bytes in the received buffer. They
@@ -273,7 +273,7 @@ void nx__avr_fast_update(void) {
      * the brick powered down after a few minutes by an AVR that
      * doesn't see us coming up.
      */
-    nx__twi_write_async(AVR_ADDRESS, (U8*)avr_init_handshake,
+    nx__twi_write_async(AVR_ADDRESS, (uint8_t*)avr_init_handshake,
                     sizeof(avr_init_handshake)-1);
     avr_state.failed_consecutive_checksums = 0;
     avr_state.mode = AVR_INIT;
@@ -336,13 +336,13 @@ void nx__avr_fast_update(void) {
   }
 }
 
-U32 nx__avr_get_sensor_value(U32 n) {
+uint32_t nx__avr_get_sensor_value(uint32_t n) {
   NX_ASSERT(n < NXT_N_SENSORS);
 
   return from_avr.adc_value[n];
 }
 
-void nx__avr_set_motor(U32 motor, int power_percent, bool brake) {
+void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake) {
   NX_ASSERT(motor < NXT_N_MOTORS);
 
   to_avr.motor_speed[motor] = power_percent;
@@ -366,7 +366,7 @@ nx_avr_button_t nx_avr_get_button(void) {
   return from_avr.buttons;
 }
 
-U32 nx_avr_get_battery_voltage(void) {
+uint32_t nx_avr_get_battery_voltage(void) {
   return from_avr.battery.charge;
 }
 
@@ -374,7 +374,7 @@ bool nx_avr_battery_is_aa(void) {
   return from_avr.battery.is_aa;
 }
 
-void nx_avr_get_version(U8 *major, U8 *minor) {
+void nx_avr_get_version(uint8_t *major, uint8_t *minor) {
   if (major)
     *major = from_avr.version.major;
   if (minor)

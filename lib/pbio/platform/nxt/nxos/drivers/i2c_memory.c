@@ -7,11 +7,11 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/util.h"
 #include "nxos/display.h"
@@ -31,13 +31,13 @@
  * compliant device, set the 'lego_compat' flag to true to ensure
  * communication stability.
  */
-void nx_i2c_memory_init(U32 sensor, U8 address, bool lego_compat) {
+void nx_i2c_memory_init(uint32_t sensor, uint8_t address, bool lego_compat) {
   nx_i2c_register(sensor, address, lego_compat);
 }
 
 /** Disables the remote memory unit connected on the given sensor port.
  */
-void nx_i2c_memory_close(U32 sensor) {
+void nx_i2c_memory_close(uint32_t sensor) {
   nx_i2c_unregister(sensor);
 }
 
@@ -46,8 +46,8 @@ void nx_i2c_memory_close(U32 sensor) {
  * expected returned data size in bytes. The buffer 'buf' should be
  * pre-allocated by the caller.
  */
-i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
-			       U8 *buf, U32 size) {
+i2c_txn_err nx_i2c_memory_read(uint32_t sensor, uint8_t internal_address,
+			       uint8_t *buf, uint32_t size) {
   i2c_txn_err err;
 
   if (!buf || !size || size >= I2C_MAX_DATA_SIZE)
@@ -68,9 +68,9 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
 /** Writes the given data of the given size at 'internal_address' on the
  * remote memory unit.
  */
-i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
-				const U8 *data, U32 size) {
-  U8 buf[I2C_MAX_DATA_SIZE];
+i2c_txn_err nx_i2c_memory_write(uint32_t sensor, uint8_t internal_address,
+				const uint8_t *data, uint32_t size) {
+  uint8_t buf[I2C_MAX_DATA_SIZE];
   i2c_txn_err err;
 
   if (!data || !size || size >= I2C_MAX_DATA_SIZE)

@@ -14,8 +14,7 @@
 #define __NXOS_BASE_DRIVERS_MOTORS_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -39,14 +38,14 @@
  * @param motor The motor port.
  * @param brake Hard braking if true, coasting stop if false.
  */
-void nx_motors_stop(U8 motor, bool brake);
+void nx_motors_stop(uint8_t motor, bool brake);
 
 /** Set @a motor to rotate at the given @a speed.
  *
  * @param motor The motor port.
  * @param speed The rotation speed.
  */
-void nx_motors_rotate(U8 motor, S8 speed);
+void nx_motors_rotate(uint8_t motor, int8_t speed);
 
 /** Rotate @a motor @a angle degrees at @a speed.
  *
@@ -56,7 +55,7 @@ void nx_motors_rotate(U8 motor, S8 speed);
  * @a brake Hard braking at the end of rotation if true, coasting stop
  * if false.
  */
-void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake);
+void nx_motors_rotate_angle(uint8_t motor, int8_t speed, uint32_t angle, bool brake);
 
 /** Rotate @a motor at @a speed for @a ms milliseconds.
  *
@@ -66,7 +65,7 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake);
  * @a brake Hard braking at the end of rotation if true, coasting stop
  * if false.
  */
-void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake);
+void nx_motors_rotate_time(uint8_t motor, int8_t speed, uint32_t ms, bool brake);
 
 /** Return the internal tachometer counter value for @a motor.
  *
@@ -78,7 +77,7 @@ void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake);
  * @param motor The motor port.
  * @return The tachometer counter value for @a motor.
  */
-U32 nx_motors_get_tach_count(U8 motor);
+uint32_t nx_motors_get_tach_count(uint8_t motor);
 
 /*@}*/
 /*@}*/

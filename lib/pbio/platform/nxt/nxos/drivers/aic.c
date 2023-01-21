@@ -6,9 +6,10 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdint.h>
+
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/_interrupts.h"
 
 #include "nxos/drivers/_aic.h"
@@ -43,10 +44,10 @@ void nx__aic_init(void) {
   /* Set default handlers for all interrupt lines. */
   for (i = 0; i < 32; i++) {
     AT91C_AIC_SMR[i] = 0;
-    AT91C_AIC_SVR[i] = (U32) nx__default_irq;
+    AT91C_AIC_SVR[i] = (uint32_t) nx__default_irq;
   }
-  AT91C_AIC_SVR[AT91C_ID_FIQ] = (U32) nx__default_fiq;
-  *AT91C_AIC_SPU = (U32) nx__spurious_irq;
+  AT91C_AIC_SVR[AT91C_ID_FIQ] = (uint32_t) nx__default_fiq;
+  *AT91C_AIC_SPU = (uint32_t) nx__spurious_irq;
 
   nx_interrupts_enable();
 }
@@ -60,7 +61,7 @@ void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,
   nx_aic_clear(vector);
 
   AT91C_AIC_SMR[vector] = (trig_mode << 5) | prio;
-  AT91C_AIC_SVR[vector] = (U32)isr;
+  AT91C_AIC_SVR[vector] = (uint32_t)isr;
 
   nx_aic_enable(vector);
 }

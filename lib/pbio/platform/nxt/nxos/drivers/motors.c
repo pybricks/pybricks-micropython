@@ -7,10 +7,10 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nxos/at91sam7s256.h"
 
-#include "nxos/types.h"
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
@@ -41,8 +41,8 @@
 
 /* The pin mapping for the motor tacho inputs. */
 static const struct {
-  U32 tach;
-  U32 dir;
+  uint32_t tach;
+  uint32_t dir;
 } motors_pinmap[NXT_N_MOTORS] = {
   { MOTOR_A_TACH, MOTOR_A_DIR },
   { MOTOR_B_TACH, MOTOR_B_DIR },
@@ -67,7 +67,7 @@ static volatile struct {
   bool brake;
 
   /* The current tachymeter count. */
-  U32 current_count;
+  uint32_t current_count;
 
   /* The target is a mode-dependent value.
    *  - In stop and continuous mode, it is not used.
@@ -75,7 +75,7 @@ static volatile struct {
    *  - In time mode, holds the remaining number of milliseconds to
    *    run.
    */
-  U32 target;
+  uint32_t target;
 } motors_state[NXT_N_MOTORS] = {
   { MOTOR_STOP, true, 0, 0 },
   { MOTOR_STOP, true, 0, 0 },
@@ -87,9 +87,9 @@ static volatile struct {
  */
 static void motors_isr(void) {
   int i;
-  U32 changes;
-  U32 pins;
-  U32 time;
+  uint32_t changes;
+  uint32_t pins;
+  uint32_t time;
 
   /* Acknowledge the interrupt and grab the state of the pins. */
   changes = *AT91C_PIOA_ISR;
@@ -103,8 +103,8 @@ static void motors_isr(void) {
   /* Check each motor's tachymeter. */
   for (i=0; i<NXT_N_MOTORS; i++) {
     if (changes & motors_pinmap[i].tach) {
-      U32 tach = pins & motors_pinmap[i].tach;
-      U32 dir = pins & motors_pinmap[i].dir;
+      uint32_t tach = pins & motors_pinmap[i].tach;
+      uint32_t dir = pins & motors_pinmap[i].dir;
 
       /* If the tachymeter pin value is the opposite the direction pin
        * value, then the motor is rotating 'forwards' (positive speed
@@ -161,14 +161,14 @@ void nx__motors_init(void)
   nx_interrupts_enable();
 }
 
-void nx_motors_stop(U8 motor, bool brake) {
+void nx_motors_stop(uint8_t motor, bool brake) {
   NX_ASSERT(motor < NXT_N_MOTORS);
 
   motors_state[motor].mode = MOTOR_STOP;
   nx__avr_set_motor(motor, 0, brake);
 }
 
-void nx_motors_rotate(U8 motor, S8 speed) {
+void nx_motors_rotate(uint8_t motor, int8_t speed) {
   NX_ASSERT(motor < NXT_N_MOTORS);
 
   /* Cap the given motor speed. */
@@ -184,7 +184,7 @@ void nx_motors_rotate(U8 motor, S8 speed) {
   nx__avr_set_motor(motor, speed, false);
 }
 
-void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
+void nx_motors_rotate_angle(uint8_t motor, int8_t speed, uint32_t angle, bool brake) {
   NX_ASSERT(motor < NXT_N_MOTORS);
   NX_ASSERT(speed <= 100);
   NX_ASSERT(speed >= -100);
@@ -220,7 +220,7 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
   nx__avr_set_motor(motor, speed, false);
 }
 
-void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
+void nx_motors_rotate_time(uint8_t motor, int8_t speed, uint32_t ms, bool brake) {
   NX_ASSERT(motor < NXT_N_MOTORS);
   NX_ASSERT(speed <= 100);
   NX_ASSERT(speed >= -100);
@@ -250,7 +250,7 @@ void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
   nx__avr_set_motor(motor, speed, false);
 }
 
-U32 nx_motors_get_tach_count(U8 motor) {
+uint32_t nx_motors_get_tach_count(uint8_t motor) {
   NX_ASSERT(motor < NXT_N_MOTORS);
 
   return motors_state[motor].current_count;

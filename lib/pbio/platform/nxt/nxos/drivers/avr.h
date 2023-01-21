@@ -14,8 +14,7 @@
 #define __NXOS_BASE_DRIVERS_AVR_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup driver */
 /*@{*/
@@ -53,7 +52,7 @@ nx_avr_button_t nx_avr_get_button(void);
  *
  * @return The measured voltage, in millivolts.
  */
-U32 nx_avr_get_battery_voltage(void);
+uint32_t nx_avr_get_battery_voltage(void);
 
 /** Detect the kind of power supply connected to the NXT.
  *
@@ -67,7 +66,7 @@ bool nx_avr_battery_is_aa(void);
  * @param major The major version of the AVR firmware.
  * @param minor The minor version of the AVR firmware.
  */
-void nx_avr_get_version(U8 *major, U8 *minor);
+void nx_avr_get_version(uint8_t *major, uint8_t *minor);
 
 /*@}*/
 /*@}*/

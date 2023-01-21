@@ -14,8 +14,7 @@
 #define __NXOS_BASE_UTIL_H__
 
 #include <stdbool.h>
-
-#include "nxos/types.h"
+#include <stdint.h>
 
 /** @addtogroup typesAndUtils */
 /*@{*/
@@ -45,7 +44,7 @@
  * @note This function will halt on the first NULL byte it finds in
  * either string.
  */
-bool streqn(const char *a, const char *b, U32 n);
+bool streqn(const char *a, const char *b, uint32_t n);
 
 /** compare two strings for equality.
  *
@@ -67,7 +66,7 @@ bool streq(const char *a, const char *b);
  * @note If the conversion fails, the value of @a *result will still
  * be clobbered, but won't contain the true value.
  */
-bool atou32(const char *s, U32* result);
+bool atou32(const char *s, uint32_t* result);
 
 /** Convert a string to the signed integer it represents, if possible.
  *
@@ -80,7 +79,7 @@ bool atou32(const char *s, U32* result);
  * @note If the conversion fails, the value of @a *result will still
  * be clobbered, but won't contain the true value.
  */
-bool atos32(const char *s, S32* result);
+bool atos32(const char *s, int32_t* result);
 
 /*@}*/
 

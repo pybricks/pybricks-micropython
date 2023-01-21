@@ -7,9 +7,9 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "nxos/types.h"
 #include "nxos/util.h"
 #include "nxos/assert.h"
 #include "nxos/display.h"
@@ -60,7 +60,7 @@ static char *rcmd_err_str[RCMD_ERR_N_ERRS] = {
 
 static void nx_rcmd_tokenize(char *line, char sep, int *ntokens, int *indices) {
   size_t len;
-  U32 i;
+  uint32_t i;
 
   len = strlen(line);
   *ntokens = 0;
@@ -91,8 +91,8 @@ static rcmd_err_t nx_rcmd_move(char *line) {
   char *spec;
 
   bool active[NXT_N_MOTORS] = {};
-  S32 speeds[NXT_N_MOTORS];
-  U32 durations[NXT_N_MOTORS];
+  int32_t speeds[NXT_N_MOTORS];
+  uint32_t durations[NXT_N_MOTORS];
   bool success;
 
   nx_rcmd_tokenize(line, RCMD_TOKEN_SEPARATOR, &ntokens, indices);
@@ -105,7 +105,7 @@ static rcmd_err_t nx_rcmd_move(char *line) {
   spec = line + indices[1];
   nx_rcmd_tokenize(spec, ',', &ntokens, subind);
   for (i=0; i<ntokens; i++) {
-    U8 motor = spec[subind[i]] - 'A';
+    uint8_t motor = spec[subind[i]] - 'A';
     if (motor < NXT_N_MOTORS) {
       active[motor] = true;
     } else {
@@ -147,7 +147,7 @@ static rcmd_err_t nx_rcmd_move(char *line) {
   for (i=0; i<NXT_N_MOTORS; i++) {
     if (active[i]) {
       if (speeds[i] != 0) {
-        nx_motors_rotate_time(i, (S8) speeds[i], durations[i], false);
+        nx_motors_rotate_time(i, (int8_t) speeds[i], durations[i], false);
       } else {
         nx_motors_stop(i, true);
       }
@@ -182,7 +182,7 @@ static rcmd_err_t nx_rcmd_clear(char *line) {
 
 static rcmd_err_t nx_rcmd_play(char *line) {
   int ntokens, indices[RCMD_MAX_TOKENS];
-  U32 freq, duration;
+  uint32_t freq, duration;
 
   nx_rcmd_tokenize(line, RCMD_TOKEN_SEPARATOR, &ntokens, indices);
 
@@ -226,7 +226,7 @@ static rcmd_err_t nx_rcmd_exec(char *line) {
 
 static rcmd_err_t nx_rcmd_wait(char *line) {
   int ntokens, indices[RCMD_MAX_TOKENS];
-  U32 wait;
+  uint32_t wait;
 
   nx_rcmd_tokenize(line, RCMD_TOKEN_SEPARATOR, &ntokens, indices);
 
@@ -251,8 +251,8 @@ static rcmd_err_t nx_rcmd_nop(char *line) {
 
 static rcmd_err_t nx_rcmd_readline(fs_fd_t fd, char *line) {
   fs_err_t err;
-  U32 i = 0;
-  U8 *buf = (U8 *)line;
+  uint32_t i = 0;
+  uint8_t *buf = (uint8_t *)line;
 
   while (i < RCMD_BUF_LEN - 2) {
     err = nx_fs_read(fd, &(buf[i]));
@@ -292,7 +292,7 @@ static void nx_rcmd_error(rcmd_err_t err, char *filename, int line) {
 }
 
 static rcmd_err_t nx_rcmd_find_command(char *line, rcmd_command_def *command) {
-  U32 i = 0;
+  uint32_t i = 0;
   char *sep;
 
   sep = strchr(line, RCMD_TOKEN_SEPARATOR);
