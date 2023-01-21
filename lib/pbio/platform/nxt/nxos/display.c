@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/types.h"
@@ -79,9 +80,9 @@ inline void nx_display_refresh(void) {
 static inline bool is_on_screen(U8 x, U8 y) {
   if (x < NX__DISPLAY_WIDTH_CELLS &&
       y < NX__DISPLAY_HEIGHT_CELLS)
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 static inline const U8 *char_to_font(const char c) {
@@ -98,12 +99,12 @@ static inline void update_cursor(bool inc_y) {
     if (display.cursor.x >= LCD_WIDTH / NX__CELL_WIDTH) {
       display.cursor.x = 0;
       display.cursor.y++;
-      display.cursor.ignore_lf = TRUE;
+      display.cursor.ignore_lf = true;
     } else {
-      display.cursor.ignore_lf = FALSE;
+      display.cursor.ignore_lf = false;
     }
   } else if (display.cursor.ignore_lf) {
-    display.cursor.ignore_lf = FALSE;
+    display.cursor.ignore_lf = false;
   } else {
     display.cursor.x = 0;
     display.cursor.y++;
@@ -120,18 +121,18 @@ void nx_display_cursor_set_pos(U8 x, U8 y) {
 }
 
 inline void nx_display_end_line(void) {
-  update_cursor(TRUE);
+  update_cursor(true);
 }
 
 void nx_display_string(const char *str) {
   while (*str != '\0') {
     if (*str == '\n')
-      update_cursor(TRUE);
+      update_cursor(true);
     else {
       int x_offset = display.cursor.x * NX__CELL_WIDTH;
       memcpy(&display.buffer[display.cursor.y][x_offset],
              char_to_font(*str), NX__FONT_WIDTH);
-      update_cursor(FALSE);
+      update_cursor(false);
     }
     str++;
   }
@@ -195,12 +196,12 @@ void nx_display_int(S32 val) {
  * Display initialization.
  */
 void nx__display_init(void) {
-  display.auto_refresh = FALSE;
+  display.auto_refresh = false;
   nx_display_clear();
   display.cursor.x = 0;
   display.cursor.y = 0;
-  display.cursor.ignore_lf = FALSE;
+  display.cursor.ignore_lf = false;
   nx__lcd_set_display(&display.buffer[0][0]);
-  display.auto_refresh = TRUE;
+  display.auto_refresh = true;
   dirty_display();
 }

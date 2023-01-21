@@ -89,7 +89,7 @@ void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
  * hardware interfaces.
  *
  * @param baud_rate The numerical value of required baud rate.
- * @return FALSE if the baud rate change cannot be achieved.
+ * @return false if the baud rate change cannot be achieved.
  */
 bool nx_rs485_set_fixed_baudrate(U16 baud_rate);
 
@@ -111,8 +111,8 @@ void nx_rs485_shutdown(void);
  * @param buffer The buffer containing the data to be sent.
  * @param buflen Length of the buffer.
  * @param callback The callback to activate when transfer is completed.
- * @return FALSE if the device is busy (the request is simply ignored) and
- *         TRUE otherwise.
+ * @return false if the device is busy (the request is simply ignored) and
+ *         true otherwise.
  *
  * @warning The contents of the buffer passed to this function should
  * not be changed until transmission is complete.
@@ -130,8 +130,8 @@ bool nx_rs485_send(U8 *buffer, U32 buflen,
  * @param buffer The buffer containing the data to be sent.
  * @param buflen Length of the buffer.
  * @param callback The callback to activate when transfer is completed.
- * @return FALSE if the device is busy (the request is simply ignored) and
- *         TRUE otherwise.
+ * @return false if the device is busy (the request is simply ignored) and
+ *         true otherwise.
  *
  * @warning The contents of the buffer passed to this function should not
  * be changed until reception is complete.

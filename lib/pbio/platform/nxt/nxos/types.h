@@ -25,9 +25,6 @@ typedef signed short S16; /**< Signed 16-bit integer. */
 typedef unsigned long U32; /**< Unsigned 32-bit integer. */
 typedef signed long S32; /**< Signed 32-bit integer. */
 
-#define FALSE (0) /**< False boolean value. */
-#define TRUE (!FALSE) /**< True boolean value. */
-
 #ifndef NULL
 /** Definition of the NULL pointer. */
 #define NULL ((void*)0)

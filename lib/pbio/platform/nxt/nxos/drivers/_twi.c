@@ -6,6 +6,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
+
 #include "nxos/at91sam7s256.h"
 
 #include "nxos/types.h"
@@ -193,5 +195,5 @@ void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len)
 }
 
 bool nx__twi_ready(void) {
-  return (twi_state.mode == TWI_READY) ? TRUE : FALSE;
+  return twi_state.mode == TWI_READY;
 }

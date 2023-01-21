@@ -45,8 +45,8 @@ void nx_display_clear(void);
 
 /** Set the refreshing mode of the display.
  *
- * @param auto_refresh TRUE if the display should be refreshed
- * implicitely when written to, FALSE if you want to give explicit
+ * @param auto_refresh true if the display should be refreshed
+ * implicitely when written to, false if you want to give explicit
  * refresh commands.
  */
 void nx_display_auto_refresh(bool auto_refresh);

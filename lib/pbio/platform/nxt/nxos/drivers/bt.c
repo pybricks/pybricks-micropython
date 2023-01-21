@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
@@ -265,7 +266,7 @@ static U32 bt_get_checksum(U8 *msg, U32 len, bool count_len)
  * two last bytes will be set
  */
 static void bt_set_checksum(U8 *msg, U32 len) {
-  U32 checksum = bt_get_checksum(msg, len, FALSE);
+  U32 checksum = bt_get_checksum(msg, len, false);
 
   msg[len-2] = ((checksum >> 8) & 0xFF);
   msg[len-1] = checksum & 0xFF;
@@ -276,7 +277,7 @@ static void bt_set_checksum(U8 *msg, U32 len) {
 static bool bt_check_checksum(U8 *msg, U32 len) {
 
   /* Strangeness: Must include the packet length in the checksum ?! */
-  U32 checksum = bt_get_checksum(msg, len, TRUE);
+  U32 checksum = bt_get_checksum(msg, len, true);
   U32 hi, lo;
 
   hi = ((checksum >> 8) & 0xFF);
@@ -540,7 +541,7 @@ bool nx_bt_has_found_device(void)
 {
   if (bt_state.state == BT_STATE_INQUIRING)
     return (bt_state.last_checked_id != bt_state.remote_id);
-  return FALSE;
+  return false;
 }
 
 
@@ -551,10 +552,10 @@ bool nx_bt_get_discovered_device(bt_device_t *dev)
     memcpy(dev, (bt_device_t *)&(bt_state.remote_device), sizeof(bt_device_t));
     bt_state.last_checked_id = bt_state.remote_id;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -575,7 +576,7 @@ bool nx_bt_has_known_device(void)
 {
   if (bt_state.state == BT_STATE_KNOWN_DEVICES_DUMPING)
     return (bt_state.last_checked_id != bt_state.remote_id);
-  return FALSE;
+  return false;
 }
 
 bool nx_bt_get_known_device(bt_device_t *dev)
@@ -585,10 +586,10 @@ bool nx_bt_get_known_device(bt_device_t *dev)
     memcpy(dev, (bt_device_t *)&(bt_state.remote_device), sizeof(bt_device_t));
     bt_state.last_checked_id = bt_state.remote_id;
 
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -749,7 +750,7 @@ bool nx_bt_close_port(int handle)
 
   do {
     if (!bt_wait_msg(BT_MSG_CLOSE_PORT_RESULT))
-      return FALSE;
+      return false;
   } while (bt_state.args[1] != handle); /* second byte is the handle */
 
   return (bt_state.args[0] >= 1); /* status byte */
@@ -763,11 +764,11 @@ bool nx_bt_has_dev_waiting_for_pin(void)
 
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
     if (bt_state.dev_waiting_for_pin[i] != 0) {
-      USB_SEND("has_dev_waiting_for_pin() => TRUE");
-      return TRUE;
+      USB_SEND("has_dev_waiting_for_pin() => true");
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -810,11 +811,11 @@ bool nx_bt_connection_pending(void)
 
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
     if (bt_state.dev_waiting_for_connection[i] != 0) {
-      USB_SEND("connection_pending => TRUE");
-      return TRUE;
+      USB_SEND("connection_pending => true");
+      return true;
     }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -846,7 +847,7 @@ int nx_bt_connection_established(void)
   handle = bt_state.new_handle;
 
   if (handle >= 0) {
-    USB_SEND("connection_established() => TRUE");
+    USB_SEND("connection_established() => true");
     bt_state.new_handle = -1;
   }
 
@@ -867,7 +868,7 @@ U8 nx_bt_get_link_quality(int handle)
   nx__uart_write(packet+1, 5);
 
   if (!bt_wait_msg(BT_MSG_LINK_QUALITY_RESULT))
-    return FALSE;
+    return false;
 
   return bt_state.args[0];
 }
@@ -890,7 +891,7 @@ bt_disconnection_status_t nx_bt_close_connection(int handle)
 
   while (ret_handle != handle) {
     if (!bt_wait_msg(BT_MSG_CLOSE_CONNECTION_RESULT))
-      return FALSE;
+      return false;
     ret_handle = bt_state.args[1];
   }
 

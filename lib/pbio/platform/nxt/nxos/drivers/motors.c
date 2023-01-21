@@ -6,6 +6,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
+
 #include "nxos/at91sam7s256.h"
 
 #include "nxos/types.h"
@@ -59,7 +61,7 @@ static volatile struct {
   } mode;
 
   /* If in one of the automatic modes (angle/time rotation), defines
-   * whether the motor will brake (TRUE) or coast (FALSE) when
+   * whether the motor will brake (true) or coast (false) when
    * stopped.
    */
   bool brake;
@@ -75,9 +77,9 @@ static volatile struct {
    */
   U32 target;
 } motors_state[NXT_N_MOTORS] = {
-  { MOTOR_STOP, TRUE, 0, 0 },
-  { MOTOR_STOP, TRUE, 0, 0 },
-  { MOTOR_STOP, TRUE, 0, 0 },
+  { MOTOR_STOP, true, 0, 0 },
+  { MOTOR_STOP, true, 0, 0 },
+  { MOTOR_STOP, true, 0, 0 },
 };
 
 /* Tachymeter interrupt handler, triggered by a change of value of a
@@ -179,7 +181,7 @@ void nx_motors_rotate(U8 motor, S8 speed) {
    * mode and fire up the motor.
    */
   motors_state[motor].mode = MOTOR_ON_CONTINUOUS;
-  nx__avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, false);
 }
 
 void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
@@ -215,7 +217,7 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
    */
   motors_state[motor].brake = brake;
   motors_state[motor].mode = MOTOR_ON_ANGLE;
-  nx__avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, false);
 }
 
 void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
@@ -245,7 +247,7 @@ void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
    */
   motors_state[motor].brake = brake;
   motors_state[motor].mode = MOTOR_ON_TIME;
-  nx__avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, false);
 }
 
 U32 nx_motors_get_tach_count(U8 motor) {

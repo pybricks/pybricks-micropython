@@ -16,6 +16,8 @@
 #ifndef __NXOS_BASE_DRIVERS_UART_H__
 #define __NXOS_BASE_DRIVERS_UART_H__
 
+#include <stdbool.h>
+
 #include "nxos/types.h"
 
 /** @addtogroup driverinternal */
@@ -69,14 +71,14 @@ void nx__uart_write(const U8 *data, U32 lng);
 
 /** Check if the UART can be written to.
  *
- * @return TRUE if the UART is idle and can be written to, else
- * FALSE.
+ * @return true if the UART is idle and can be written to, else
+ * false.
  */
 bool nx__uart_can_write(void);
 
 /** Check if the UART is currently writing data.
  *
- * @return TRUE if the UART is busy writing, else FALSE.
+ * @return true if the UART is busy writing, else false.
  */
 bool nx__uart_is_writing(void);
 

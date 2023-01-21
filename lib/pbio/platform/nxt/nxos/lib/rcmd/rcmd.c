@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/types.h"
@@ -89,7 +90,7 @@ static rcmd_err_t nx_rcmd_move(char *line) {
   int ntokens, indices[RCMD_MAX_TOKENS], subind[NXT_N_MOTORS], i;
   char *spec;
 
-  bool active[NXT_N_MOTORS] = {FALSE};
+  bool active[NXT_N_MOTORS] = {};
   S32 speeds[NXT_N_MOTORS];
   U32 durations[NXT_N_MOTORS];
   bool success;
@@ -106,7 +107,7 @@ static rcmd_err_t nx_rcmd_move(char *line) {
   for (i=0; i<ntokens; i++) {
     U8 motor = spec[subind[i]] - 'A';
     if (motor < NXT_N_MOTORS) {
-      active[motor] = TRUE;
+      active[motor] = true;
     } else {
       return RCMD_ERR_INVALID_PARAMETER;
     }
@@ -146,9 +147,9 @@ static rcmd_err_t nx_rcmd_move(char *line) {
   for (i=0; i<NXT_N_MOTORS; i++) {
     if (active[i]) {
       if (speeds[i] != 0) {
-        nx_motors_rotate_time(i, (S8) speeds[i], durations[i], FALSE);
+        nx_motors_rotate_time(i, (S8) speeds[i], durations[i], false);
       } else {
-        nx_motors_stop(i, TRUE);
+        nx_motors_stop(i, true);
       }
     }
   }

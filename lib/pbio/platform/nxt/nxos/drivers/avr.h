@@ -57,7 +57,7 @@ U32 nx_avr_get_battery_voltage(void);
 
 /** Detect the kind of power supply connected to the NXT.
  *
- * @return TRUE if the power supply is AA batteries, FALSE if it is a
+ * @return true if the power supply is AA batteries, false if it is a
  * Lego power pack (possibly with AC supply).
  */
 bool nx_avr_battery_is_aa(void);

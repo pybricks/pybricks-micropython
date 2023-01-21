@@ -37,7 +37,7 @@
 /** Stop all rotation on @a motor, optionally applying a @a brake.
  *
  * @param motor The motor port.
- * @param brake Hard braking if TRUE, coasting stop if FALSE.
+ * @param brake Hard braking if true, coasting stop if false.
  */
 void nx_motors_stop(U8 motor, bool brake);
 
@@ -53,8 +53,8 @@ void nx_motors_rotate(U8 motor, S8 speed);
  * @a motor The motor port.
  * @a speed The rotation speed.
  * @a angle The angle of rotation.
- * @a brake Hard braking at the end of rotation if TRUE, coasting stop
- * if FALSE.
+ * @a brake Hard braking at the end of rotation if true, coasting stop
+ * if false.
  */
 void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake);
 
@@ -63,8 +63,8 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake);
  * @a motor The motor port.
  * @a speed The rotation speed.
  * @a ms The duration of the rotation in milliseconds.
- * @a brake Hard braking at the end of rotation if TRUE, coasting stop
- * if FALSE.
+ * @a brake Hard braking at the end of rotation if true, coasting stop
+ * if false.
  */
 void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake);
 

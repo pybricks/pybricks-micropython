@@ -39,8 +39,8 @@
  * @param a First string to compare.
  * @param b Second string to compare.
  * @param n Number of bytes to compare.
- * @return TRUE if the first @a n bytes of @a a are equal to @a b,
- * FALSE otherwise.
+ * @return true if the first @a n bytes of @a a are equal to @a b,
+ * false otherwise.
  *
  * @note This function will halt on the first NULL byte it finds in
  * either string.
@@ -61,8 +61,8 @@ bool streq(const char *a, const char *b);
  * @param s The string to convert.
  * @param result A pointer to the integer that will contain the parsed
  * result, if the conversion was successful.
- * @return TRUE with *result set correctly if the conversion was
- * successful, FALSE if the conversion failed.
+ * @return true with *result set correctly if the conversion was
+ * successful, false if the conversion failed.
  *
  * @note If the conversion fails, the value of @a *result will still
  * be clobbered, but won't contain the true value.
@@ -74,8 +74,8 @@ bool atou32(const char *s, U32* result);
  * @param s The string to convert.
  * @param result A pointer to the integer that will contain the parsed
  * result, if the conversion was successful.
- * @return TRUE with *result set correctly if the conversion was
- * successful, FALSE if the conversion failed.
+ * @return true with *result set correctly if the conversion was
+ * successful, false if the conversion failed.
  *
  * @note If the conversion fails, the value of @a *result will still
  * be clobbered, but won't contain the true value.

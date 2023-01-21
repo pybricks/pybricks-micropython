@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/nxt.h"
@@ -223,7 +224,7 @@ static void avr_unpack_from_avr(void) {
    */
   from_avr.version.major = (word >> 13) & 0x3;
   from_avr.version.minor = (word >> 10) & 0x7;
-  from_avr.battery.is_aa = (word & 0x8000) ? TRUE : FALSE;
+  from_avr.battery.is_aa = word & 0x8000;
 
   /* The rest of the word is the voltage value, in units of
    * 13.848mV. As the NXT does not have a floating point unit, the

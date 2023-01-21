@@ -7,6 +7,8 @@
  *
  */
 
+#include <stdbool.h>
+
 #include "nxos/at91sam7s256.h"
 
 #include "nxos/nxt.h"
@@ -62,16 +64,16 @@ static void nx_rs485_isr(void) {
     *AT91C_US0_IDR = AT91C_US_ENDRX | AT91C_US_ENDTX;
     *AT91C_US0_CR = AT91C_US_RXDIS | AT91C_US_TXDIS;
     rs485_state.status = RS485_IDLE;
-    fire_callback(RS485_SUCCESS, FALSE);
+    fire_callback(RS485_SUCCESS, false);
   } else if (csr & AT91C_US_TIMEOUT) {
     *AT91C_US0_CR = AT91C_US_STTTO;
-    fire_callback(RS485_TIMEOUT, FALSE);
+    fire_callback(RS485_TIMEOUT, false);
   } else if (csr & AT91C_US_OVRE) {
-    fire_callback(RS485_OVERRUN, TRUE);
+    fire_callback(RS485_OVERRUN, true);
   } else if (csr & AT91C_US_FRAME) {
-    fire_callback(RS485_FRAMING, TRUE);
+    fire_callback(RS485_FRAMING, true);
   } else if (csr & AT91C_US_PARE) {
-    fire_callback(RS485_PARITY, TRUE);
+    fire_callback(RS485_PARITY, true);
   }
 }
 
@@ -125,9 +127,9 @@ void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
 bool nx_rs485_set_fixed_baudrate(U16 baud_rate) {
   if (rs485_state.status == RS485_IDLE) {
     *AT91C_US0_BRGR = baud_rate;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 void nx_rs485_shutdown(void) {
@@ -147,7 +149,7 @@ bool nx_rs485_send(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   NX_ASSERT(buflen > 0);
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
-    return FALSE;
+    return false;
 
   rs485_state.status = RS485_TRANSMITTING;
   rs485_state.callback = callback;
@@ -159,14 +161,14 @@ bool nx_rs485_send(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   *AT91C_US0_PTCR = AT91C_PDC_TXTEN;
   *AT91C_US0_CR = AT91C_US_TXEN;
 
-  return TRUE;
+  return true;
 }
 
 bool nx_rs485_recv(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   NX_ASSERT(buflen > 0);
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
-    return FALSE;
+    return false;
 
   rs485_state.status = RS485_RECEIVING;
   rs485_state.callback = callback;
@@ -185,7 +187,7 @@ bool nx_rs485_recv(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
    */
   *AT91C_US0_CR = AT91C_US_RXEN | AT91C_US_TXEN;
 
-  return TRUE;
+  return true;
 }
 
 void nx_rs485_abort(void) {
@@ -196,6 +198,6 @@ void nx_rs485_abort(void) {
   /* Stop the communication and reset */
   *AT91C_US0_CR = AT91C_US_RSTRX | AT91C_US_RSTTX;
   rs485_state.status = RS485_IDLE;
-  fire_callback(RS485_ABORT, TRUE);
+  fire_callback(RS485_ABORT, true);
 }
 

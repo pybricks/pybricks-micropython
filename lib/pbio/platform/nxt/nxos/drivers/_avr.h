@@ -13,6 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS__AVR_H__
 #define __NXOS_BASE_DRIVERS__AVR_H__
 
+#include <stdbool.h>
+
 #include "nxos/drivers/avr.h"
 
 /** @addtogroup driverinternal */
@@ -56,8 +58,8 @@ U32 nx__avr_get_sensor_value(U32 sensor);
  * @param motor The motor port, 0 through 2.
  * @param power_percent The amount of power to apply to the motor,
  * -100 through 100.
- * @param brake Hard braking at the end of rotation if TRUE, coasting
- * stop if FALSE.
+ * @param brake Hard braking at the end of rotation if true, coasting
+ * stop if false.
  *
  * @note You probably want to use the very similar public APIs in the
  * motor driver.

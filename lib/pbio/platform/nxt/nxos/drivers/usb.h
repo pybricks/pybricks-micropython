@@ -13,6 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS_USB_H__
 #define __NXOS_BASE_DRIVERS_USB_H__
 
+#include <stdbool.h>
+
 #include "nxos/types.h"
 
 /** @addtogroup driver */
@@ -40,13 +42,13 @@
 
 /** Check if the NXT is connected and configured on a USB bus.
  *
- * @return TRUE if the NXT is connected and configured, else FALSE.
+ * @return true if the NXT is connected and configured, else false.
  */
 bool nx_usb_is_connected(void);
 
 /** Check if a call to nx_usb_send() will block.
  *
- * @return TRUE if data can be sent, FALSE if the driver buffers are
+ * @return true if data can be sent, false if the driver buffers are
  * saturated.
  */
 bool nx_usb_can_write(void);
@@ -62,7 +64,7 @@ bool nx_usb_can_write(void);
 void nx_usb_write(U8 *data, U32 length);
 
 /**
- * Return TRUE when all the data has been sent to
+ * Return true when all the data has been sent to
  * the USB controller and that these data can be
  * freed/erased from the memory.
  */

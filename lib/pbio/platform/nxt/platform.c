@@ -3,6 +3,8 @@
 // Copyright (c) 2007,2008 the NxOS developers
 // See AUTHORS for a full list of the developers.
 
+#include <stdbool.h>
+
 #include <pbsys/main.h>
 
 #include "nxos/types.h"
@@ -76,7 +78,7 @@ static void bluetooth_connect(void) {
     nx_display_string(pin);
     nx_display_string("\n\nConnect to me as BT serial port.\n");
 
-    nx_bt_set_discoverable(TRUE);
+    nx_bt_set_discoverable(true);
 
     port_handle = nx_bt_open_port();
     (void)port_handle;
@@ -87,7 +89,7 @@ static void bluetooth_connect(void) {
             nx_display_string("Please enter pin.\n");
         } else if (nx_bt_connection_pending()) {
             nx_display_string("Connecting ...\n");
-            nx_bt_accept_connection(TRUE);
+            nx_bt_accept_connection(true);
             while ((connection_handle = nx_bt_connection_established()) < 0) {
                 nx_systick_wait_ms(100);
             }

@@ -3,11 +3,12 @@
  * SoftMAC I2C driver.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
 
-#define I2C_LOG FALSE
+#define I2C_LOG false
 
 #include "nxos/types.h"
 #include "nxos/nxt.h"
@@ -369,7 +370,7 @@ i2c_txn_status nx_i2c_get_txn_status(U32 sensor)
 bool nx_i2c_busy(U32 sensor)
 {
   if (sensor >= NXT_N_SENSORS)
-    return FALSE;
+    return false;
 
   return i2c_state[sensor].bus_state > I2C_IDLE
     || i2c_state[sensor].current_txn < i2c_state[sensor].n_txns;

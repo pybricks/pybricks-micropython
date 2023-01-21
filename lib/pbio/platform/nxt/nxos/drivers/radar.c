@@ -8,6 +8,7 @@
  *  - Warm reset to factory defaults
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
@@ -55,7 +56,7 @@ static struct radar_cmd_info {
 
 /** Initializes the radar sensor in LEGO compatibility mode. */
 void nx_radar_init(U32 sensor) {
-  nx_i2c_memory_init(sensor, RADAR_I2C_ADDRESS, TRUE);
+  nx_i2c_memory_init(sensor, RADAR_I2C_ADDRESS, true);
 }
 
 /** Close the radar and disable the sensor port. */
@@ -90,7 +91,7 @@ bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val) {
  * reading the device's sensor type and comparing it to the default sensor
  * type of the LEGO-manufactured radar, "Sonar".
  *
- * Returns TRUE if a compatible radar was found.
+ * Returns true if a compatible radar was found.
  */
 bool nx_radar_detect(U32 sensor) {
   U8 type[8] = { 0x0 };

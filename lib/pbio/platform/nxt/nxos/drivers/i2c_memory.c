@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
@@ -27,7 +28,7 @@
  * sensor port.
  *
  * Note: if the memory unit is a LEGO radar or similar non-fully I2C
- * compliant device, set the 'lego_compat' flag to TRUE to ensure
+ * compliant device, set the 'lego_compat' flag to true to ensure
  * communication stability.
  */
 void nx_i2c_memory_init(U32 sensor, U8 address, bool lego_compat) {

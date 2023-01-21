@@ -174,12 +174,12 @@ extern U8 __boot_from_samba__;
 
 /** @name Boot method
  *
- * Only one of these symbols evaluates to TRUE, and defines how the
+ * Only one of these symbols evaluates to true, and defines how the
  * kernel was booted: by the SAM-BA bootloader, or a cold startup from
  * ROM.
  */
 /*@{*/
-#define NX_BOOT_FROM_SAMBA ((U32)SYMADDR(__boot_from_samba__) != 0 ? TRUE : FALSE)
+#define NX_BOOT_FROM_SAMBA ((U32)SYMADDR(__boot_from_samba__) != 0)
 #define NX_BOOT_FROM_ROM (!BOOT_FROM_SAMBA)
 /*@}*/
 

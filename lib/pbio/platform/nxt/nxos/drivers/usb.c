@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
@@ -523,7 +524,7 @@ static U32 usb_manage_setup_packet(void) {
      *
      * if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
      *
-     * The second part always evaluates to TRUE.
+     * The second part always evaluates to true.
      */
     if (usb_state.rx_len == 0) {
       AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;

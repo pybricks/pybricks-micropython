@@ -14,6 +14,8 @@
 #ifndef __NXOS_BASE_DRIVERS_BT_H__
 #define __NXOS_BASE_DRIVERS_BT_H__
 
+#include <stdbool.h>
+
 #include "nxos/types.h"
 
 #include "nxos/drivers/_uart.h"
@@ -198,7 +200,7 @@ void nx_bt_stream_open(int handle);
 
 /**
  * Only valid if a stream has been opened
- * @note : Don't free/erase the data pointed by data until nx_bt_stream_writing_finished() return TRUE
+ * @note : Don't free/erase the data pointed by data until nx_bt_stream_writing_finished() return true
  */
 void nx_bt_stream_write(U8 *data, U32 length);
 
@@ -210,7 +212,7 @@ bool nx_bt_stream_data_written(void);
 
 /**
  * Only valid if a stream is (or was) opened.
- * @return FALSE if the remote device or the bluecore
+ * @return false if the remote device or the bluecore
  *         has shuted down the stream (you don't need to
  *         close the stream in this case)
  */

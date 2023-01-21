@@ -7,6 +7,7 @@
  */
 
 #include <assert.h>
+#include <stdbool.h>
 
 #include "nxos/types.h"
 #include "nxos/util.h"
@@ -17,12 +18,12 @@ bool streqn(const char *a, const char *b, U32 n) {
 
   while (n--) {
     if (*a != *b++)
-      return FALSE;
+      return false;
     if (*a++ == '\0')
       break;
   }
 
-  return TRUE;
+  return true;
 }
 
 bool streq(const char *a, const char *b) {
@@ -31,10 +32,10 @@ bool streq(const char *a, const char *b) {
 
   while (*a != '\0' && *b != '\0') {
     if (*a++ != *b++)
-      return FALSE;
+      return false;
   }
 
-  return *a == *b ? TRUE : FALSE;
+  return *a == *b ? true : false;
 }
 
 char *strrchr (const char *s, int c) {
@@ -65,30 +66,30 @@ bool atou32(const char *s, U32* result) {
   for (; *s; s++) {
     // Return 0 on invalid characters.
     if (*s < '0' || *s > '9')
-      return FALSE;
+      return false;
 
     *result = (10 * *result) + (*s - '0');
     // Naive overflow check. We could do better in pure asm by
     // checking the ALU flags.
     if (*result < prev)
-      return FALSE;
+      return false;
 
     prev = *result;
   }
 
-  return TRUE;
+  return true;
 }
 
 bool atos32(const char *s, S32 *result) {
   S32 prev = 0;
-  bool negative = FALSE;
+  bool negative = false;
 
   assert(s != NULL && result != NULL);
 
   *result = 0;
 
   if (*s == '-') {
-    negative = TRUE;
+    negative = true;
     s++;
   }
 
@@ -99,14 +100,14 @@ bool atos32(const char *s, S32 *result) {
   for (; *s; s++) {
     // Return 0 on invalid characters.
     if (*s < '0' || *s > '9')
-      return FALSE;
+      return false;
 
     *result = (10 * *result) + (*s - '0');
 
     // Naive overflow check. We could do better in pure asm by
     // checking the ALU flags.
     if (*result < prev)
-      return FALSE;
+      return false;
 
     prev = *result;
   }
@@ -114,5 +115,5 @@ bool atos32(const char *s, S32 *result) {
   if (negative)
     *result = -(*result);
 
-  return TRUE;
+  return true;
 }

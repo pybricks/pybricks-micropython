@@ -6,6 +6,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
+
 #include "nxos/at91sam7s256.h"
 
 #include "nxos/nxt.h"
@@ -52,10 +54,10 @@ static volatile U32 systick_time;
  */
 static nx_closure_t scheduler_cb = NULL;
 
-/* The scheduler mask. If TRUE, the scheduler callback will not be
+/* The scheduler mask. If true, the scheduler callback will not be
  * invoked from the high priority interrupt handler.
  */
-static bool scheduler_inhibit = FALSE;
+static bool scheduler_inhibit = false;
 
 /* Low priority handler, called 1000 times a second by the high
  * priority handler if a scheduler callback is registered.
@@ -151,9 +153,9 @@ void nx_systick_call_scheduler(void) {
 }
 
 void nx_systick_mask_scheduler(void) {
-  scheduler_inhibit = TRUE;
+  scheduler_inhibit = true;
 }
 
 void nx_systick_unmask_scheduler(void) {
-  scheduler_inhibit = FALSE;
+  scheduler_inhibit = false;
 }

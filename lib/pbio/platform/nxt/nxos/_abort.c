@@ -6,6 +6,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
+
 #include "nxos/types.h"
 #include "nxos/display.h"
 #include "nxos/interrupts.h"
@@ -15,7 +17,7 @@
 
 void nx__abort(bool data, U32 pc, U32 cpsr) {
   nx_interrupts_disable();
-  nx_display_auto_refresh(FALSE);
+  nx_display_auto_refresh(false);
   nx_display_clear();
   if (data) {
     nx_display_string("Data");

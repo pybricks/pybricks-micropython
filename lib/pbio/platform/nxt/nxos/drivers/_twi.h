@@ -13,6 +13,8 @@
 #ifndef __NXOS_BASE_DRIVERS__TWI_H__
 #define __NXOS_BASE_DRIVERS__TWI_H__
 
+#include <stdbool.h>
+
 #include "nxos/types.h"
 
 /** @addtogroup driverinternal */
@@ -60,8 +62,8 @@ void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len);
 
 /** Check the readiness of the TWI driver.
  *
- * @return TRUE if the device is idle and ready to receive commands,
- * FALSE otherwise.
+ * @return true if the device is idle and ready to receive commands,
+ * false otherwise.
  */
 bool nx__twi_ready(void);
 

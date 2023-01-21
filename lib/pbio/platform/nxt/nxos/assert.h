@@ -61,7 +61,7 @@ void nx_assert_error(const char *file, const int line,
  */
 #define NX_ASSERT_MSG(expr, msg) do {      \
   bool _result = (expr);                   \
-  if (_result == FALSE) {                  \
+  if (!(_result)) {                  \
     nx_assert_error(__FILE__, __LINE__,    \
                     "(" #expr ")", msg);   \
   }                                        \

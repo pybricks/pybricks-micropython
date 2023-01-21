@@ -1,6 +1,7 @@
 /* GUI library for NxOS.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/types.h"
@@ -17,7 +18,7 @@
 
 U8 nx_gui_text_menu(gui_text_menu_t menu) {
   U8 current = 0, count = 0, i;
-  bool done = FALSE;
+  bool done = false;
 
   NX_ASSERT(strlen(menu.title) > 0);
 
@@ -81,7 +82,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
           current++;
         break;
       case BUTTON_OK:
-        done = TRUE;
+        done = true;
         break;
       default:
         break;

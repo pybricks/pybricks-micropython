@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/types.h"
@@ -25,9 +26,9 @@ void nx_assert_error(const char *file, const int line,
 
   /* Try to halt as many moving parts of the system as possible. */
   nx_systick_install_scheduler(NULL);
-  nx__avr_set_motor(0, 0, TRUE);
-  nx__avr_set_motor(1, 0, TRUE);
-  nx__avr_set_motor(2, 0, TRUE);
+  nx__avr_set_motor(0, 0, true);
+  nx__avr_set_motor(1, 0, true);
+  nx__avr_set_motor(2, 0, true);
 
   nx_display_clear();
   nx_sound_freq_async(440, 1000);

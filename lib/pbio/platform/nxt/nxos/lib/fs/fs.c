@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nxos/at91sam7s256.h"
@@ -433,7 +434,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
 
   /* Reserve it. */
   file = &(fdset[slot]);
-  file->used = TRUE;
+  file->used = true;
 
   switch (mode) {
     case FS_FILE_MODE_CREATE:
@@ -486,7 +487,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
     *fd = slot;
   } else {
     /* Otherwise release the slot that was reserved. */
-    file->used = FALSE;
+    file->used = false;
   }
 
   return err;
@@ -632,7 +633,7 @@ fs_err_t nx_fs_close(fs_fd_t fd) {
     return FS_ERR_FLASH_ERROR;
   }
 
-  file->used = FALSE;
+  file->used = false;
   return FS_ERR_NO_ERROR;
 }
 
@@ -680,7 +681,7 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
     }
   }
 
-  file->used = FALSE;
+  file->used = false;
   return FS_ERR_NO_ERROR;
 }
 

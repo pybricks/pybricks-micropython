@@ -9,6 +9,8 @@
 /* Driver for the NXT Embedded Flash Controller.
  */
 
+#include <stdbool.h>
+
 #include "nxos/at91sam7s256.h"
 
 #include "nxos/types.h"
@@ -41,9 +43,9 @@ static bool nx__efc_do_write(U32 page) {
    * only once to avoid the bits being cleared.
    */
   if (ret & AT91C_MC_LOCKE || ret & AT91C_MC_PROGE)
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 static inline void nx__efc_wait_for_flash(void) {

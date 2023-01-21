@@ -51,7 +51,7 @@ typedef enum spi_mode {
  * and transitory state for interrupt-driven DMA transfers.
  */
 static volatile struct {
-  /* TRUE if the SPI driver is configured for sending commands, FALSE
+  /* true if the SPI driver is configured for sending commands, false
    * if it's configured for sending video data. */
   spi_mode mode;
 
@@ -70,10 +70,10 @@ static volatile struct {
 } spi_state = {
   COMMAND, /* We're initialized in command tx mode */
   NULL,    /* No screen buffer */
-  FALSE,   /* ... So obviously not dirty */
+  false,   /* ... So obviously not dirty */
   NULL,    /* No current refresh data pointer */
   0,       /* Current state: 1st data page... */
-  FALSE    /* And about to send display data */
+  false    /* And about to send display data */
 };
 
 /*
@@ -118,11 +118,11 @@ static void spi_isr(void) {
    * refresh cycle.
    */
   if (spi_state.page == 0 && !spi_state.send_padding) {
-    /* Atomically retrieve the dirty flag and set it to FALSE. This is
+    /* Atomically retrieve the dirty flag and set it to false. This is
      * to avoid race conditions where a set of the dirty flag could
      * get squashed by the interrupt handler resetting it.
      */
-    bool dirty = nx_atomic_cas8((U8*)&(spi_state.screen_dirty), FALSE);
+    bool dirty = nx_atomic_cas8((U8*)&(spi_state.screen_dirty), false);
     spi_state.data = dirty ? spi_state.screen: NULL;
 
     /* If the screen is not dirty, or if there is no screen pointer to
@@ -148,7 +148,7 @@ static void spi_isr(void) {
      * pixel data to display. We also set the state for the next
      * interrupt, which is to send end-of-page padding.
      */
-    spi_state.send_padding = TRUE;
+    spi_state.send_padding = true;
     *AT91C_SPI_TNPR = (U32)spi_state.data;
     *AT91C_SPI_TNCR = 100;
   } else {
@@ -162,7 +162,7 @@ static void spi_isr(void) {
      */
     spi_state.page = (spi_state.page + 1) % 8;
     spi_state.data += 100;
-    spi_state.send_padding = FALSE;
+    spi_state.send_padding = false;
     *AT91C_SPI_TNPR = (U32)(spi_state.data - 32);
     *AT91C_SPI_TNCR = 32;
   }
@@ -301,7 +301,7 @@ void nx__lcd_set_display(U8 *display) {
 }
 
 void nx__lcd_dirty_display(void) {
-  spi_state.screen_dirty = TRUE;
+  spi_state.screen_dirty = true;
 }
 
 void nx__lcd_shutdown(void) {

@@ -13,12 +13,14 @@
 #ifndef __NXOS_BASE__ABORT_H__
 #define __NXOS_BASE__ABORT_H__
 
+#include <stdbool.h>
+
 /** @addtogroup coreinternal */
 /*@{*/
 
 /** Process a data or prefetch abort.
  *
- * @param data TRUE if the abort is a data abort, FALSE if it is a
+ * @param data true if the abort is a data abort, false if it is a
  * prefetch abort.
  * @param pc The address of the instruction that caused the abort.
  * @param cpsr The CPU state at the time of abort.
