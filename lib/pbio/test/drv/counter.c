@@ -69,7 +69,6 @@ static void test_counter_get(void *env) {
     // proper usage
     pbdrv_counter_init();
     tt_want(pbdrv_counter_get_dev(0, &dev) == PBIO_SUCCESS);
-    tt_want(dev->priv == &test_private_data);
 }
 
 struct testcase_t pbdrv_counter_tests[] = {

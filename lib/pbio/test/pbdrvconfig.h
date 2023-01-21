@@ -11,7 +11,8 @@
 
 #define PBDRV_CONFIG_COUNTER                        (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (1)
-#define PBDRV_CONFIG_COUNTER_TEST                   (1)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION     (1)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION_NUM_DEV (1)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (0)
@@ -24,7 +25,8 @@
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (1)
-#define PBDRV_CONFIG_MOTOR_DRIVER_TEST              (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START (0)
 
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (1)

@@ -86,6 +86,7 @@ extern struct testcase_t pbio_light_animation_tests[];
 extern struct testcase_t pbio_color_light_tests[];
 extern struct testcase_t pbio_light_matrix_tests[];
 extern struct testcase_t pbio_int_math_tests[];
+extern struct testcase_t pbio_servo_tests[];
 extern struct testcase_t pbio_task_tests[];
 extern struct testcase_t pbio_trajectory_tests[];
 extern struct testcase_t pbio_uartdev_tests[];
@@ -103,6 +104,7 @@ static struct testgroup_t test_groups[] = {
     { "src/light/", pbio_color_light_tests },
     { "src/light/", pbio_light_matrix_tests },
     { "src/math/", pbio_int_math_tests },
+    { "src/servo/", pbio_servo_tests },
     { "src/task/", pbio_task_tests, },
     { "src/trajectory/", pbio_trajectory_tests },
     { "src/uartdev/", pbio_uartdev_tests, },
