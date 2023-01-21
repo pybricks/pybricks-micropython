@@ -4,7 +4,10 @@
 import json
 import os
 import re
+import sys
 from pathlib import Path
+
+import git
 
 from plotly import graph_objects as go
 from plotly.offline import plot
@@ -13,11 +16,23 @@ from plotly.subplots import make_subplots
 BUILD_DIR = os.environ.get("BUILD_DIR", "build")
 
 # Number of digits of hash to display
-HASH_SIZE = 7
+HASH_SIZE = 8
 
 HUBS = ["cityhub", "technichub", "movehub", "primehub", "essentialhub", "nxt"]
 
 GITHUB_REPO_URL = "https://github.com/pybricks/pybricks-micropython"
+
+INITIAL_COMMIT = "281d6ffa6a182f502e81ae0c4ff9b71f6e674f71"
+PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
+
+try:
+    pybricks = git.Repo(PYBRICKS_PATH)
+except Exception as e:
+    print(f"Repository not found at '{PYBRICKS_PATH}':", e)
+    print("try setting the PYBRICKS_PATH environment variable")
+    sys.exit(1)
+
+assert not pybricks.bare, "Repository not found"
 
 
 def select(commits, hub):
@@ -33,12 +48,19 @@ def select(commits, hub):
             message, firmware size and change in size from previous commit
     """
     prev_size = 0
-    for i, commit in enumerate(reversed(commits)):
+    i = 0
+
+    for commit in reversed(commits):
         sha = commit["oid"][:HASH_SIZE]
         message = commit["messageHeadline"]
         date = commit["committedDate"]
         size = commit["firmwareSize"][hub]
         diff = 0
+
+        # REVISIT: this is a slow operation
+        if not pybricks.merge_base(commit["oid"], INITIAL_COMMIT):
+            continue
+
         if size is None:
             size = 0
         else:
@@ -49,16 +71,25 @@ def select(commits, hub):
 
         yield i, sha, message, size, diff
 
+        i += 1
+
+        if i % 256 == 0:
+            print(end='.', flush=True)
+
+    print()
+
 
 def create_plot(commits, hub):
+    print("creating plot for", hub)
+
     indexes, shas, messages, sizes, diffs = zip(*select(commits, hub))
 
     # Find sensible ranges to display by default
     x_end = len(indexes)
     x_start = x_end - 100
-    y_end = max([s for s in sizes[x_start - 1 : x_end]])
-    y_start = min([s for s in sizes[x_start - 1 : x_end]])
-    diff_peak = max([abs(d) for d in diffs[x_start - 1 : x_end]])
+    y_end = max(s + 64 for s in sizes[x_start - 1 : x_end])
+    y_start = min(s - 64 for s in sizes[x_start - 1 : x_end])
+    diff_peak = max([abs(d) + 64 for d in diffs[x_start - 1 : x_end]])
 
     # Create the figure with two subplots
     fig = make_subplots(rows=2, cols=1)
