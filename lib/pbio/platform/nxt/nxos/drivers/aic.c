@@ -20,7 +20,7 @@ void nx__aic_init(void) {
   /* Prevent the ARM core from being interrupted while we set up the
    * AIC.
    */
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* If we're coming from a warm boot, the AIC may be in a weird
    * state. Do some cleaning up to bring the AIC back into a known
@@ -49,7 +49,7 @@ void nx__aic_init(void) {
   AT91C_AIC_SVR[AT91C_ID_FIQ] = (uint32_t) nx__default_fiq;
   *AT91C_AIC_SPU = (uint32_t) nx__spurious_irq;
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,

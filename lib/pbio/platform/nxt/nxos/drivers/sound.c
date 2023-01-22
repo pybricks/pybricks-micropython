@@ -50,7 +50,7 @@ static void sound_isr(void) {
 }
 
 void nx__sound_init(void) {
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* Start by inhibiting all sound output. Then enable power to the
    * SSC peripheral and do a software reset. The combination of these
@@ -91,7 +91,7 @@ void nx__sound_init(void) {
   nx_aic_install_isr(AT91C_ID_SSC, AIC_PRIO_DRIVER,
 		     AIC_TRIG_LEVEL, sound_isr); // Level or edge?
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 void nx_sound_freq_async(uint32_t freq, uint32_t ms) {

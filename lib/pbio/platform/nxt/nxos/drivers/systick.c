@@ -102,7 +102,7 @@ static void systick_isr(void) {
 }
 
 void nx__systick_init(void) {
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* Install both the low and high priority interrupt handlers, ready
    * to handle periodic updates.
@@ -119,7 +119,7 @@ void nx__systick_init(void) {
   *AT91C_PITC_PIMR = (((PIT_BASE_FREQUENCY / SYSIRQ_FREQ) - 1) |
                       AT91C_PITC_PITEN | AT91C_PITC_PITIEN);
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 uint32_t nx_systick_get_ms(void) {
@@ -139,9 +139,9 @@ void nx_systick_wait_ns(uint32_t ns) {
 }
 
 void nx_systick_install_scheduler(nx_closure_t sched_cb) {
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
   scheduler_cb = sched_cb;
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 void nx_systick_call_scheduler(void) {

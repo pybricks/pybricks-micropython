@@ -98,7 +98,7 @@ static void uart_isr(void) {
 void nx__uart_init(nx__uart_read_callback_t callback) {
   uart_state.callback = callback;
 
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* Power up the USART. */
   *AT91C_PMC_PCER = (1 << AT91C_ID_US1);
@@ -163,7 +163,7 @@ void nx__uart_init(nx__uart_read_callback_t callback) {
   *AT91C_US1_CR = AT91C_US_TXEN | AT91C_US_RXEN;
   *AT91C_US1_PTCR = AT91C_PDC_TXTEN;
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 void nx__uart_write(const uint8_t *data, uint32_t lng) {

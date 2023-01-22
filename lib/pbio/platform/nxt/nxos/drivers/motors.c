@@ -132,7 +132,7 @@ static void motors_isr(void) {
 
 void nx__motors_init(void)
 {
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* Enable the PIO controller. */
   *AT91C_PMC_PCER = (1 << AT91C_ID_PIOA);
@@ -158,7 +158,7 @@ void nx__motors_init(void)
   /* Trigger interrupts on changes to the state of the tachy pins. */
   *AT91C_PIOA_IER = MOTORS_TACH;
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 void nx_motors_stop(uint8_t motor, bool brake) {

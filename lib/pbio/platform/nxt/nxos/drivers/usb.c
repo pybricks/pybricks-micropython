@@ -725,7 +725,7 @@ void nx__usb_init(void) {
   nx__usb_disable();
   memset((void*)&usb_state, 0, sizeof(usb_state));
 
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* usb pll was already set in init.S */
 
@@ -754,7 +754,7 @@ void nx__usb_init(void) {
 		     AIC_TRIG_LEVEL, usb_isr);
 
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 
   usb_enable();
 }

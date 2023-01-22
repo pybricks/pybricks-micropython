@@ -104,7 +104,7 @@ void nx__twi_init(void)
 {
   uint32_t clocks = 9;
 
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* Power up the TWI and PIO controllers. */
   *AT91C_PMC_PCER = (1 << AT91C_ID_TWI) | (1 << AT91C_ID_PIOA);
@@ -136,7 +136,7 @@ void nx__twi_init(void)
     clocks--;
   }
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 
   /* Now that the I2C lines are clean, hand them back to the TWI
    * controller.

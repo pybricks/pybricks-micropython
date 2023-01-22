@@ -366,6 +366,7 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	assert.c \
 	util.c \
 	display.c \
+	interrupts.c \
 	drivers/_efc.c \
 	drivers/_lcd.c \
 	drivers/_twi.c \
@@ -390,7 +391,7 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	)
 
 NXOS_SRC_S = $(addprefix lib/pbio/platform/nxt/nxos/,\
-	interrupts.s \
+	irq.s \
 	lock.s \
 	samba_init.s \
 	)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include <stdint.h>
 
@@ -70,11 +70,11 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#include <nxos/interrupts.h>
-#include <nxos/drivers/systick.h>
+uint32_t nx_interrupts_disable(void);
+void nx_interrupts_enable(uint32_t);
 
 #define MICROPY_BEGIN_ATOMIC_SECTION()     nx_interrupts_disable()
-#define MICROPY_END_ATOMIC_SECTION(state)  if (state) { nx_interrupts_enable(); }
+#define MICROPY_END_ATOMIC_SECTION(state)  nx_interrupts_enable(state)
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \

@@ -24,7 +24,7 @@
 
 static void core_init(void) {
     nx__aic_init();
-    nx_interrupts_enable();
+    nx_interrupts_enable(0);
     nx__systick_init();
     nx__sound_init();
     nx__avr_init();

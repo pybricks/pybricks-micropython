@@ -1,13 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
 /** @file interrupts.h
  *  @brief Interrupts and task information.
  */
 
 /* Copyright (C) 2007 the NxOS developers
+ * Copyright (c) 2023 The Pybricks Authors
  *
  * See AUTHORS for a full list of the developers.
- *
- * Redistribution of this file is permitted under
- * the terms of the GNU Public License (GPL) version 2.
  */
 
 #ifndef __NXOS_BASE_INTERRUPTS_H__
@@ -35,9 +35,7 @@
 
 /** Globally disable interrupt handling.
  *
- * This function call can be nested. Internally, a counter counts the
- * number of disables, and will require the same number of calls to
- * nx_interrupts_enable() to reenable interrupt handling.
+ * This function call can be nested. 
  *
  * @note Application kernels enter the main() function with interrupts
  * already enabled.
@@ -47,16 +45,18 @@
  * coprocessor link to fail, which will bring the whole system crashing
  * down. Use sparingly, for small critical sections.
  *
- * @sa nx_interrupts_enable
+ * @returns The current interrupt state to be passed to nx_interrupts_enable().
  */
-void nx_interrupts_disable(void);
+uint32_t nx_interrupts_disable(void);
 
 /** Enable interrupt handling.
  *
- * Interrupt handling will only be reenabled if this function has been
- * called the same number of times as nx_interrupts_disable().
+ * Interrupt handling will only be reenabled if @p state indicates that
+ * interrupts were previously enabled.
+ * 
+ * @param state The state returned by nx_interrupts_disable().
  */
-void nx_interrupts_enable(void);
+void nx_interrupts_enable(uint32_t state);
 
 /** @brief The mapping of a user task's registers in the User/System stack.
  *

@@ -169,7 +169,7 @@ static void spi_isr(void) {
 }
 
 static void spi_init(void) {
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* Enable power to the SPI and PIO controllers. */
   *AT91C_PMC_PCER = (1 << AT91C_ID_SPI) | (1 << AT91C_ID_PIOA);
@@ -215,7 +215,7 @@ static void spi_init(void) {
   nx_aic_install_isr(AT91C_ID_SPI, AIC_PRIO_DRIVER, AIC_TRIG_LEVEL, spi_isr);
   *AT91C_SPI_PTCR = AT91C_PDC_TXTEN;
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 /* Initialize the LCD controller. */

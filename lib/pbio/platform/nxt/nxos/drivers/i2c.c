@@ -128,7 +128,7 @@ static void i2c_log_uint(uint32_t val);
  */
 void nx_i2c_init(void) {
   memset((void*)i2c_state, 0, sizeof(i2c_state));
-  nx_interrupts_disable();
+  uint32_t state = nx_interrupts_disable();
 
   /* We need power for both the PIO controller and the first TC (Timer
    * Channel) controller.
@@ -165,7 +165,7 @@ void nx_i2c_init(void) {
   /* Softare trigger, to get the counter going. */
   *AT91C_TC0_CCR = AT91C_TC_SWTRG;
 
-  nx_interrupts_enable();
+  nx_interrupts_enable(state);
 }
 
 static void i2c_log(const char *s)
