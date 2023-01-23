@@ -131,8 +131,7 @@ CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mflo
 CFLAGS_MCU = $(CFLAGS_MCU_$(PB_MCU_SERIES))
 else
 ifeq ($(PB_MCU_FAMILY),AT91SAM7)
-# TODO: enable -mthumb - currently won't boot with it
-CFLAGS_MCU = -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
+CFLAGS_MCU = -mthumb -mthumb-interwork -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 else
 $(error unsupported PB_MCU_FAMILY)
 endif
