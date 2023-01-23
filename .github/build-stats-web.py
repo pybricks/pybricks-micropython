@@ -123,7 +123,7 @@ def create_plot(commit_map, commit_range, hub):
             x=indexes,
             y=diffs,
             hovertext=messages,
-            hoverinfo="text+y",
+            hoverinfo="text",
             name="Delta",
             customdata=shas,
         ),
