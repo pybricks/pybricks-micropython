@@ -14,7 +14,6 @@
 #include "counter_lpf2.h"
 #include "counter_nxt.h"
 #include "counter_stm32f0_gpio_quad_enc.h"
-#include "counter_test.h"
 #include "counter_virtual_cpython.h"
 #include "counter_virtual_simulation.h"
 #include "counter.h"
@@ -26,7 +25,6 @@ void pbdrv_counter_init(void) {
     pbdrv_counter_lpf2_init(pbdrv_counter_devs);
     pbdrv_counter_nxt_init(pbdrv_counter_devs);
     pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_devs);
-    pbdrv_counter_test_init(pbdrv_counter_devs);
     pbdrv_counter_virtual_cpython_init(pbdrv_counter_devs);
     pbdrv_counter_virtual_simulation_init(pbdrv_counter_devs);
 }
