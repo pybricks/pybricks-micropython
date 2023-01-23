@@ -212,9 +212,9 @@ PY_EXTRA_SRC_C += $(addprefix bricks/_common_stm32/,\
 	)
 
 ifeq ($(PB_MCU_SERIES),F0)
-SRC_S += shared/runtime/gchelper_m0.s
+SRC_S += shared/runtime/gchelper_thumb1.s
 else
-SRC_S += shared/runtime/gchelper_m3.s
+SRC_S += shared/runtime/gchelper_thumb2.s
 endif
 endif
 
@@ -223,7 +223,7 @@ PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
 	mphalport.c \
 	)
 
-SRC_S += shared/runtime/gchelper_m0.s
+SRC_S += shared/runtime/gchelper_thumb1.s
 endif
 
 # STM32 Bluetooth stack

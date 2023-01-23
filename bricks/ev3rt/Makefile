@@ -117,7 +117,7 @@ PY_EXTRA_SRC_C += $(addprefix shared/,\
 	runtime/sys_stdio_mphal.c \
 	)
 
-SRC_S = shared/runtime/gchelper_m0.s
+SRC_S = shared/runtime/gchelper_thumb1.s
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
