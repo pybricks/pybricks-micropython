@@ -3,6 +3,10 @@
 
 // Software button implementation for simulating buttons in tests
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BUTTON_TEST
+
 #include <pbio/button.h>
 #include <pbio/error.h>
 
@@ -19,3 +23,5 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
     *pressed = pbio_test_button_flags;
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_BUTTON_TEST

@@ -5,6 +5,7 @@
 #define PBDRV_CONFIG_BATTERY_TEST                   (1)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
+#define PBDRV_CONFIG_BUTTON_TEST                    (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
