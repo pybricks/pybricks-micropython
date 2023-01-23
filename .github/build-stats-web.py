@@ -23,6 +23,7 @@ HUBS = ["cityhub", "technichub", "movehub", "primehub", "essentialhub", "nxt"]
 GITHUB_REPO_URL = "https://github.com/pybricks/pybricks-micropython"
 
 INITIAL_COMMIT = "281d6ffa6a182f502e81ae0c4ff9b71f6e674f71"
+PYBRICKS_BRANCH = "origin/master"
 PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
 try:
@@ -35,12 +36,13 @@ except Exception as e:
 assert not pybricks.bare, "Repository not found"
 
 
-def select(commits, hub):
+def select(commit_map, commit_range, hub):
     """Selects the useful fields from sorted items. Skips the first diff as well
     as commits that did not change the firmware size.
 
     Args:
-        commits (list of dict): contents commits.json from download.py
+        commit_map (dict of dict): contents commits.json from download.py
+        commit_range (list of str): the list of commit hashes to include
         hub (str): The hub type.
 
     Yields:
@@ -48,18 +50,15 @@ def select(commits, hub):
             message, firmware size and change in size from previous commit
     """
     prev_size = 0
-    i = 0
 
-    for commit in reversed(commits):
+    for i, hexsha in enumerate(reversed(commit_range)):
+        commit = commit_map[hexsha]
+
         sha = commit["oid"][:HASH_SIZE]
         message = commit["messageHeadline"]
         date = commit["committedDate"]
         size = commit["firmwareSize"][hub]
         diff = 0
-
-        # REVISIT: this is a slow operation
-        if not pybricks.merge_base(commit["oid"], INITIAL_COMMIT):
-            continue
 
         if size is None:
             size = 0
@@ -71,18 +70,11 @@ def select(commits, hub):
 
         yield i, sha, message, size, diff
 
-        i += 1
 
-        if i % 256 == 0:
-            print(end='.', flush=True)
-
-    print()
-
-
-def create_plot(commits, hub):
+def create_plot(commit_map, commit_range, hub):
     print("creating plot for", hub)
 
-    indexes, shas, messages, sizes, diffs = zip(*select(commits, hub))
+    indexes, shas, messages, sizes, diffs = zip(*select(commit_map, commit_range, hub))
 
     # Find sensible ranges to display by default
     x_end = len(indexes)
@@ -189,8 +181,19 @@ def main():
     with open(Path(BUILD_DIR, "commits.json"), "r") as f:
         commits = json.load(f)
 
+    commit_map = {c["oid"]: c for c in commits}
+
+    # the tree has multiple independent histories that have been merged
+    # we only want commits that belong the the mainline
+    commit_range = [
+        c.hexsha
+        for c in pybricks.iter_commits(
+            f"{INITIAL_COMMIT}..{PYBRICKS_BRANCH}", ancestry_path=True
+        )
+    ]
+
     for h in HUBS:
-        create_plot(commits, h)
+        create_plot(commit_map, commit_range, h)
 
 
 if __name__ == "__main__":
