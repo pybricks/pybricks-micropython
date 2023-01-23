@@ -385,7 +385,6 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	drivers/usb.c \
 	lib/fs/fs.c \
 	lib/gui/gui.c \
-	lib/memalloc/memalloc.c \
 	lib/rcmd/rcmd.c \
 	lib/tracing/tracing.c \
 	)
