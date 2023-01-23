@@ -364,6 +364,7 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	_abort.c \
 	assert.c \
+	lock.c \
 	util.c \
 	display.c \
 	interrupts.c \
@@ -392,7 +393,6 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 
 NXOS_SRC_S = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	irq.s \
-	lock.s \
 	samba_init.s \
 	)
 

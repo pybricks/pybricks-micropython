@@ -56,62 +56,6 @@ uint32_t nx_atomic_cas32(uint32_t *dest, uint32_t val);
 uint8_t nx_atomic_cas8(uint8_t *dest, uint8_t val);
 
 /*@}*/
-
-/** @name Spinlocks
- *
- * A spinlock is a mutex that can be locked and unlocked. Unlike a
- * mutex, attempting to lock an already locked mutex doesn't cause
- * preemption (since there is no scheduler), but loops forever until the
- * spinlock can be acquired.
- *
- * @note These semantics mean that a spinlock is only useful when you
- * need to synchronize between the main execution context and an
- * interrupt handler, or some other form of preemption that can break
- * free of the spinlock's infinite loop.
- */
-/*@{*/
-
-/** The basic spinlock type. */
-typedef volatile uint8_t spinlock;
-
-/** Initial value for an unlocked spinlock. */
-#define SPINLOCK_INIT_UNLOCKED 0
-
-/** Initial value for a locked spinlock. */
-#define SPINLOCK_INIT_LOCKED 1
-
-/** Acquire @a lock and return.
- *
- * Will loop indefinitely until the spinlock can be acquired.
- *
- * @param lock Pointer to the spinlock to acquire.
- */
-void nx_spinlock_acquire(spinlock *lock);
-
-/** Attempt to acquire @a lock and return the result.
- *
- * Unlike nx_spinlock_acquire(), this function does not block, but may
- * fail to acquire the spinlock.
- *
- * @param lock Pointer to the spinlock to acquire.
- * @return 1 if the spinlock was acquired, 0 if it was already locked.
- */
-void nx_spinlock_try_acquire(spinlock *lock);
-
-/** Release @a lock.
- *
- * Does not block.
- *
- * @param lock Pointer to the spinlock to release.
- */
-static void nx_spinlock_release(spinlock *lock);
-
-static inline void nx_spinlock_release(spinlock *lock) {
-  *lock = 0;
-}
-
-/*@}*/
-/*@}*/
 /*@}*/
 
 #endif /* __NXOS_LOCK_H__ */
