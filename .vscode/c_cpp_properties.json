@@ -403,6 +403,7 @@
                 "${workspaceFolder}/lib/lwrb/src/include",
                 "${workspaceFolder}/lib/pbio",
                 "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/test",
                 "${workspaceFolder}/lib/pbio/test",
                 "${workspaceFolder}/lib/pbio/test/build"
             ],

@@ -124,7 +124,7 @@ PBIO_SRC = \
 	$(shell find $(PBIO_DIR)/src/motor -name "*.c") \
 
 # tests
-TEST_INC = -I.
+TEST_INC = -I. -I$(PBIO_DIR)/platform/test
 TEST_SRC = $(shell find . -name "*.c")
 
 # generated files
