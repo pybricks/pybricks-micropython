@@ -9,8 +9,9 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <pbdrv/reset.h>
+
 #include "nxos/display.h"
-#include "nxos/core.h"
 #include "nxos/util.h"
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/sound.h"
@@ -45,5 +46,8 @@ void nx_assert_error(const char *file, const int line,
   nx_display_end_line();
 
   while (nx_avr_get_button() != BUTTON_CANCEL);
-  nx_core_halt();
+
+  for (;;) {
+    pbdrv_reset_power_off();
+  };
 }

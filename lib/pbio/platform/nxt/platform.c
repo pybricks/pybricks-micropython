@@ -39,19 +39,6 @@ static void core_init(void) {
     nx_systick_wait_ms(100);
 }
 
-void nx_core_halt(void) {
-    if (nx_bt_stream_opened()) {
-        nx_bt_stream_close();
-    }
-    nx__lcd_shutdown();
-    nx__usb_disable();
-    nx__avr_power_down();
-}
-
-void pbdrv_reset_power_off(void) {
-    nx_core_halt();
-}
-
 // FIXME: Needs to use a process very similar to pbsys/bluetooth
 static void bluetooth_connect(void) {
 

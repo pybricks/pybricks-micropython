@@ -76,7 +76,7 @@ void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake);
  *
  * @warning Do not use this function directly. A hard power-down of
  * the NXT can damage or confuse certain hardware. Calling
- * nx_core_halt() will take care of safely shutting down sensitive
+ * pbdrv_reset_power_off() will take care of safely shutting down sensitive
  * drivers before powering down the brick.
  */
 void nx__avr_power_down(void);

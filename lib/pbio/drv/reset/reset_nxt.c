@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 // Manages power off and reset for LEGO MINDSTORMS NXT.
 
@@ -9,6 +9,9 @@
 
 #include <at91sam7s256.h>
 #include <nxos/drivers/_avr.h>
+#include <nxos/drivers/_lcd.h>
+#include <nxos/drivers/_usb.h>
+#include <nxos/drivers/bt.h>
 
 #include <pbdrv/reset.h>
 
@@ -60,8 +63,15 @@ pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
     }
 }
 
-// NB: Override pbdrv_reset_power_off() function in platform.c
-__attribute__((weak)) void pbdrv_reset_power_off(void) {
+// NOTE: This was nx_core_halt() in NxOS.
+void pbdrv_reset_power_off(void) {
+    if (nx_bt_stream_opened()) {
+        nx_bt_stream_close();
+    }
+
+    nx__lcd_shutdown();
+    nx__usb_disable();
+    nx__avr_power_down();
 }
 
 #endif // PBDRV_CONFIG_RESET_NXT
