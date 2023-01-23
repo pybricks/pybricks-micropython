@@ -2,6 +2,7 @@
 // Copyright (c) 2019-2022 The Pybricks Authors
 
 #define PBDRV_CONFIG_BATTERY                        (1)
+#define PBDRV_CONFIG_BATTERY_TEST                   (1)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 

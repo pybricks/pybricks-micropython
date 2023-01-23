@@ -3,6 +3,10 @@
 
 // Software battery implementation for simulating battery in tests
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BATTERY_TEST
+
 #include <pbdrv/battery.h>
 #include <pbio/error.h>
 
@@ -18,3 +22,5 @@ pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
     *value = PBDRV_BATTERY_TYPE_LIION;
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_BATTERY_TEST
