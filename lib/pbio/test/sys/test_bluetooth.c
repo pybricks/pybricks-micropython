@@ -15,6 +15,8 @@
 #include <pbsys/status.h>
 #include <test-pbio.h>
 
+#include "../drv/clock/clock_test.h"
+
 static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_BEGIN(pt);
 

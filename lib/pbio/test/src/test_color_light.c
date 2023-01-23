@@ -14,6 +14,7 @@
 #include <test-pbio.h>
 
 #include "../src/light/color_light.h"
+#include "../drv/clock/clock_test.h"
 
 #define TEST_ANIMATION_TIME 10
 

@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
+
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_CLOCK_TEST
 
 // Clock implementation for tests. This allows tests to exactly control the
 // clock ticks to get repeatable tests rather than relying on a system clock.
@@ -33,3 +37,6 @@ uint32_t pbdrv_clock_get_100us(void) {
 uint32_t pbdrv_clock_get_us(void) {
     return clock_ticks * 1000;
 }
+
+
+#endif // PBDRV_CONFIG_CLOCK_TEST

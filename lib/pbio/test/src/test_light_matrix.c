@@ -14,6 +14,7 @@
 #include <pbio/light_matrix.h>
 
 #include "../src/light/light_matrix.h"
+#include "../drv/clock/clock_test.h"
 
 #define MATRIX_SIZE 3
 #define INTERVAL 10

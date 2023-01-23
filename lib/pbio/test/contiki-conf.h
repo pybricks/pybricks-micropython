@@ -13,9 +13,6 @@
 typedef uint32_t clock_time_t;
 #define CLOCK_CONF_SECOND 1000
 
-// extra clock function just for tests
-void pbio_test_clock_tick(uint32_t ticks);
-
 #define clock_time pbdrv_clock_get_ms
 #define clock_usecs pbdrv_clock_get_us
 

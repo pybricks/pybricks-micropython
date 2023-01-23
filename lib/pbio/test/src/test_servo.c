@@ -24,6 +24,7 @@
 #include <test-pbio.h>
 
 #include "../src/processes.h"
+#include "../drv/clock/clock_test.h"
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
 
 pbio_error_t pbdrv_ioport_get_motor_device_type_id(pbio_port_id_t id, pbio_iodev_type_id_t *type_id) {

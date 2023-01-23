@@ -20,6 +20,7 @@
 #include <test-pbio.h>
 
 #include "../src/processes.h"
+#include "../drv/clock/clock_test.h"
 
 // TODO: submit this upstream
 #ifndef tt_want_float_op

@@ -12,6 +12,8 @@
 #include <pbsys/status.h>
 #include <test-pbio.h>
 
+#include "../../drv/clock/clock_test.h"
+
 PROCESS(status_test_process, "status test");
 
 static process_event_t last_event;
