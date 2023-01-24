@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <pbio/main.h>
 #include <pbsys/main.h>
 
 #include "nxos/interrupts.h"
@@ -78,11 +79,11 @@ static void bluetooth_connect(void) {
             nx_display_string("Connecting ...\n");
             nx_bt_accept_connection(true);
             while ((connection_handle = nx_bt_connection_established()) < 0) {
-                nx_systick_wait_ms(100);
+                pbio_do_one_event();
             }
             nx_bt_stream_open(connection_handle);
         }
-        nx_systick_wait_ms(100);
+        pbio_do_one_event();
     }
     nx_display_clear();
     nx_display_cursor_set_pos(0, 0);
@@ -99,6 +100,10 @@ static uint8_t flush_buf[1];
 int main(int argc, char **argv) {
     // Start the system.
     core_init();
+    // TODO: core_init() needs to be merged into pbio_init(), moving drivers
+    // from nxos to pbio/drv if appropriate
+    pbio_init();
+    // pbsys_init();
 
     // Accept incoming serial connection and get ready to read first byte.
     bluetooth_connect();
@@ -106,8 +111,9 @@ int main(int argc, char **argv) {
     // Receive one character to get going...
     nx_display_string("Press a key.\n");
     nx_bt_stream_read(flush_buf, sizeof(flush_buf));
+
     while (nx_bt_stream_data_read() != sizeof(flush_buf)) {
-        nx_systick_wait_ms(100);
+        pbio_do_one_event();
     }
 
     nx_display_string("Connected. REPL.\n");
