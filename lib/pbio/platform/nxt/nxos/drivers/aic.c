@@ -53,7 +53,7 @@ void nx__aic_init(void) {
 }
 
 void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,
-                     nx_aic_trigger_mode_t trig_mode, nx_closure_t isr) {
+                     nx_aic_trigger_mode_t trig_mode, nx_aic_isr_t isr) {
   /* Disable the interrupt we're installing. Getting interrupted while
    * we are tweaking it could be bad.
    */

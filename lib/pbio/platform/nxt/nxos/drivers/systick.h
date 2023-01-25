@@ -15,8 +15,6 @@
 
 #include <stdint.h>
 
-#include "nxos/types.h"
-
 /** @addtogroup driver */
 /*@{*/
 
@@ -28,6 +26,11 @@
  * a scheduling callback that will run periodically.
  */
 /*@{*/
+
+/**
+ * Function prototype for systick callback functions.
+ */
+typedef void (*nx_systick_callback_t)(void);
 
 /** Return the number of milliseconds elapsed since bootup. */
 uint32_t nx_systick_get_ms(void);
@@ -64,7 +67,7 @@ void nx_systick_wait_ns(uint32_t ns);
  * that implementing a scheduler is the most common reason to want such
  * a periodic callback.
  */
-void nx_systick_install_scheduler(nx_closure_t scheduler_cb);
+void nx_systick_install_scheduler(nx_systick_callback_t scheduler_cb);
 
 /** Trigger a call to the installed scheduler callback.
  *

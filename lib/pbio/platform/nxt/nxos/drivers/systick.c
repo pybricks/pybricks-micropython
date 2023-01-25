@@ -7,6 +7,7 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include <at91sam7s256.h>
@@ -52,7 +53,7 @@ static volatile uint32_t systick_time;
  * callback function, to do scheduling in the high priority systick
  * interrupt.
  */
-static nx_closure_t scheduler_cb = NULL;
+static nx_systick_callback_t scheduler_cb = NULL;
 
 /* The scheduler mask. If true, the scheduler callback will not be
  * invoked from the high priority interrupt handler.
@@ -138,7 +139,7 @@ void nx_systick_wait_ns(uint32_t ns) {
   while (x--);
 }
 
-void nx_systick_install_scheduler(nx_closure_t sched_cb) {
+void nx_systick_install_scheduler(nx_systick_callback_t sched_cb) {
   uint32_t state = nx_interrupts_disable();
   scheduler_cb = sched_cb;
   nx_interrupts_enable(state);

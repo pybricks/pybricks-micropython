@@ -6,6 +6,7 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <at91sam7s256.h>

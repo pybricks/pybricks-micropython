@@ -15,8 +15,6 @@
 
 #include <stdint.h>
 
-#include "nxos/types.h"
-
 /** @addtogroup driver */
 /*@{*/
 
@@ -58,6 +56,11 @@ typedef enum {
   AIC_TRIG_EDGE = 1,    /**< Edge-triggered interrupt. */
 } nx_aic_trigger_mode_t;
 
+/**
+ * Function prototype for interrupt service routines.
+ */
+typedef void (*nx_aic_isr_t)(void);
+
 /** Install @a isr as the handler for @a vector.
  *
  * @param vector The interrupt vector to configure.
@@ -73,7 +76,7 @@ typedef enum {
  * care!
  */
 void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,
-                        nx_aic_trigger_mode_t trig_mode, nx_closure_t isr);
+                        nx_aic_trigger_mode_t trig_mode, nx_aic_isr_t isr);
 
 /** Enable dispatching of @a vector.
  *
