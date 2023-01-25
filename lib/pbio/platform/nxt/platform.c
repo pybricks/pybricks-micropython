@@ -9,36 +9,8 @@
 #include <pbio/main.h>
 #include <pbsys/main.h>
 
-#include "nxos/interrupts.h"
 #include "nxos/_display.h"
-#include "nxos/assert.h"
-#include "nxos/drivers/_aic.h"
-#include "nxos/drivers/_systick.h"
-#include "nxos/drivers/_sound.h"
-#include "nxos/drivers/_avr.h"
-#include "nxos/drivers/_motors.h"
-#include "nxos/drivers/_lcd.h"
-#include "nxos/drivers/_sensors.h"
-#include "nxos/drivers/_usb.h"
-#include "nxos/drivers/i2c.h"
 #include "nxos/drivers/bt.h"
-
-static void core_init(void) {
-    nx__aic_init();
-    nx_interrupts_enable(0);
-    nx__systick_init();
-    nx__sound_init();
-    nx__avr_init();
-    nx__motors_init();
-    nx__lcd_init();
-    nx__display_init();
-    nx__sensors_init();
-    nx__usb_init();
-    nx_i2c_init(); // TODO: should be nx__i2c_init().
-
-    /* Delay a little post-init, to let all the drivers settle down. */
-    nx_systick_wait_ms(100);
-}
 
 // FIXME: Needs to use a process very similar to pbsys/bluetooth
 static void bluetooth_connect(void) {
@@ -99,9 +71,6 @@ static uint8_t flush_buf[1];
 
 int main(int argc, char **argv) {
     // Start the system.
-    core_init();
-    // TODO: core_init() needs to be merged into pbio_init(), moving drivers
-    // from nxos to pbio/drv if appropriate
     pbio_init();
     // pbsys_init();
 

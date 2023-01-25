@@ -38,3 +38,5 @@
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_NXT                      (1)
+
+#define PBDRV_CONFIG_INIT_NXOS                      (1)
