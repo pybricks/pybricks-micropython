@@ -10,11 +10,11 @@
 #include <stdint.h>
 
 #include <at91sam7s256.h>
+#include <pbdrv/clock.h>
 
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
-#include "nxos/drivers/systick.h"
 #include "nxos/drivers/aic.h"
 #include "nxos/drivers/_avr.h"
 
@@ -98,7 +98,7 @@ static void motors_isr(void) {
   /* Grab the time, as we're going to use it to check for timed
    * rotation end.
    */
-  time = nx_systick_get_ms();
+  time = pbdrv_clock_get_ms();
 
   /* Check each motor's tachymeter. */
   for (i=0; i<NXT_N_MOTORS; i++) {
@@ -240,7 +240,7 @@ void nx_motors_rotate_time(uint8_t motor, int8_t speed, uint32_t ms, bool brake)
   motors_state[motor].mode = MOTOR_CONFIGURING;
 
   /* Set the target system time. */
-  motors_state[motor].target = nx_systick_get_ms() + ms;
+  motors_state[motor].target = pbdrv_clock_get_ms() + ms;
 
   /* Remember the brake setting, change to angle target mode and fire
    * up the motor.

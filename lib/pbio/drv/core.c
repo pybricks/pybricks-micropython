@@ -10,7 +10,6 @@
 #include <nxos/interrupts.h>
 #include <nxos/assert.h>
 #include <nxos/drivers/_aic.h>
-#include <nxos/drivers/_systick.h>
 #include <nxos/drivers/_sound.h>
 #include <nxos/drivers/_avr.h>
 #include <nxos/drivers/_motors.h>
@@ -18,6 +17,7 @@
 #include <nxos/drivers/_sensors.h>
 #include <nxos/drivers/_usb.h>
 #include <nxos/drivers/i2c.h>
+#include <nxos/drivers/systick.h>
 #endif
 
 #include "core.h"
@@ -49,7 +49,6 @@ void pbdrv_init(void) {
     // PBDRV_CONFIG_INIT_ENABLE_INTERRUPTS_ARM after nx_systick_wait_ms()
     // is removed
     nx_interrupts_enable(0);
-    nx__systick_init();
     #endif
     // it is important that clocks go first since almost everything depends on clocks
     pbdrv_clock_init();

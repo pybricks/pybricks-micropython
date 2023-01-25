@@ -27,14 +27,6 @@
  */
 /*@{*/
 
-/**
- * Function prototype for systick callback functions.
- */
-typedef void (*nx_systick_callback_t)(void);
-
-/** Return the number of milliseconds elapsed since bootup. */
-uint32_t nx_systick_get_ms(void);
-
 /** Sleep for @a ms milliseconds.
  *
  * @param ms The number of milliseconds to sleep.
@@ -53,46 +45,6 @@ void nx_systick_wait_ms(uint32_t ms);
  * cpu. It may not be exact.
  */
 void nx_systick_wait_ns(uint32_t ns);
-
-/** Install @a scheduler_cb as the scheduler callback.
- *
- * The scheduler callback will be invoked every millisecond once it is
- * installed. The scheduler callback runs in a medium priority interrupt
- * handler (higher than all the device drivers expect for the AVR link
- * and system timer).
- *
- * @param scheduler_cb The scheduler callback to install.
- *
- * @note The callback does not have to implement a scheduler. It's just
- * that implementing a scheduler is the most common reason to want such
- * a periodic callback.
- */
-void nx_systick_install_scheduler(nx_systick_callback_t scheduler_cb);
-
-/** Trigger a call to the installed scheduler callback.
- *
- * The callback will be run in a low priority interrupt handler, as if
- * it had been called by the system timer.
- *
- * @note If no scheduler callback has been installed (by
- * ns_systick_install_scheduler()), the call has no effect.
- */
-void nx_systick_call_scheduler(void);
-
-/** Inhibit the scheduler callback temporarily.
- *
- * This will simply prevent the systick driver from calling the
- * scheduler. It may still be invoked manually with
- * nx_systick_call_scheduler().
- */
-void nx_systick_mask_scheduler(void);
-
-/** Uninhibit the scheduler callback.
- *
- * Use this to reenable calling the scheduler interrupt after
- * deactivating it with nx_systick_mask_scheduler().
- */
-void nx_systick_unmask_scheduler(void);
 
 /*@}*/
 /*@}*/

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <at91sam7s256.h>
+#include <pbdrv/clock.h>
 
 #include "nxos/util.h"
 #include "nxos/display.h"
@@ -206,7 +207,7 @@ static const uint8_t bt_msg_refuse_connection[] = {
 static volatile struct {
   bt_state_t state;
 
-  /* see nx_systick_get_ms() */
+  /* see pbdrv_clock_get_ms() */
   uint32_t last_heartbeat;
 
   /* used for inquiring */
@@ -289,9 +290,9 @@ static bool bt_check_checksum(uint8_t *msg, uint32_t len) {
 
 static bool bt_wait_msg(uint8_t msg)
 {
-  uint32_t start = nx_systick_get_ms();
+  uint32_t start = pbdrv_clock_get_ms();
 
-  while(bt_state.last_msg != msg && start+BT_ACK_TIMEOUT > nx_systick_get_ms());
+  while(bt_state.last_msg != msg && start+BT_ACK_TIMEOUT > pbdrv_clock_get_ms());
 
   return bt_state.last_msg == msg;
 }
@@ -342,7 +343,7 @@ static void bt_uart_command_callback(uint8_t *msg, uint32_t len)
 
 
   if (msg[0] == BT_MSG_HEARTBEAT) {
-    bt_state.last_heartbeat = nx_systick_get_ms();
+    bt_state.last_heartbeat = pbdrv_clock_get_ms();
     return;
   }
 

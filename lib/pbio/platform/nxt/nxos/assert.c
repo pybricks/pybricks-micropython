@@ -25,7 +25,6 @@ void nx_assert_error(const char *file, const int line,
   basename = basename ? basename+1 : file;
 
   /* Try to halt as many moving parts of the system as possible. */
-  nx_systick_install_scheduler(NULL);
   nx__avr_set_motor(0, 0, true);
   nx__avr_set_motor(1, 0, true);
   nx__avr_set_motor(2, 0, true);
