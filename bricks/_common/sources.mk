@@ -154,7 +154,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/ioport/ioport_ev3dev_stretch.c \
 	drv/ioport/ioport_lpf2.c \
 	drv/ioport/ioport_nxt.c \
-	drv/ioport/ioport_virtual.c \
+	drv/ioport/ioport_virtual_cpython.c \
 	drv/led/led_array_pwm.c \
 	drv/led/led_array.c \
 	drv/led/led_core.c \

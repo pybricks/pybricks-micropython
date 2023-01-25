@@ -3,7 +3,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_IOPORT_VIRTUAL
+#if PBDRV_CONFIG_IOPORT_VIRTUAL_CPYTHON
 
 #include <pbio/error.h>
 #include <pbio/iodev.h>
@@ -19,4 +19,4 @@ pbio_error_t pbdrv_ioport_get_motor_device_type_id(pbio_port_id_t port, pbio_iod
     return pbdrv_virtual_get_u32("ioport", port, "motor_type_id", type_id);
 }
 
-#endif // PBDRV_CONFIG_IOPORT_VIRTUAL
+#endif // PBDRV_CONFIG_IOPORT_VIRTUAL_CPYTHON
