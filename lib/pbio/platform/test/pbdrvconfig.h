@@ -27,6 +27,9 @@
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_TEST                    (1)
+#define PBDRV_CONFIG_IOPORT_TEST_NUM_PORTS          (6)
+#define PBDRV_CONFIG_IOPORT_TEST_FIRST_PORT         PBIO_PORT_ID_A
+#define PBDRV_CONFIG_IOPORT_TEST_LAST_PORT          PBIO_PORT_ID_F
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (1)
@@ -40,6 +43,12 @@
 #define PBDRV_CONFIG_UART                           (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
+#define PBDRV_CONFIG_HAS_PORT_B                     (1)
+#define PBDRV_CONFIG_HAS_PORT_C                     (1)
+#define PBDRV_CONFIG_HAS_PORT_D                     (1)
+#define PBDRV_CONFIG_HAS_PORT_E                     (1)
+#define PBDRV_CONFIG_HAS_PORT_F                     (1)
+
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT               PBIO_PORT_ID_A
-#define PBDRV_CONFIG_LAST_MOTOR_PORT                PBIO_PORT_ID_A
-#define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER           (2)
+#define PBDRV_CONFIG_LAST_MOTOR_PORT                PBIO_PORT_ID_F
+#define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER           (6)
