@@ -8,4 +8,4 @@
 #define PBSYS_CONFIG_PROGRAM_LOAD                   (0)
 #define PBSYS_CONFIG_STATUS_LIGHT                   (0)
 #define PBSYS_CONFIG_STATUS_LIGHT_BATTERY           (0)
-#define PBSYS_CONFIG_PROGRAM_STOP                   (0)
+#define PBSYS_CONFIG_PROGRAM_STOP                   (1)
