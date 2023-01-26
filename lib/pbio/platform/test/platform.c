@@ -16,15 +16,15 @@ const pbdrv_ioport_test_platform_data_t
     },
     // Port C
     {
-        .type_id = PBIO_IODEV_TYPE_ID_NONE,
+        .type_id = PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR,
     },
     // Port D
     {
-        .type_id = PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR,
+        .type_id = PBIO_IODEV_TYPE_ID_NONE,
     },
     // Port E
     {
-        .type_id = PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR,
+        .type_id = PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR,
     },
     // Port F
     {
@@ -73,7 +73,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_F,
-        .initial_angle = 0,
+        .initial_angle = 45000,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
         .endstop_angle_positive = INFINITY,

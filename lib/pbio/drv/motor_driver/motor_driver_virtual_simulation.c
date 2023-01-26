@@ -153,7 +153,7 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
             // Output motor angles on one line.
             for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
                 driver = &motor_driver_devs[dev_index];
-                fprintf(data_parser_in, "%d ", ((int32_t)(driver->angle / 1000)) % 360);
+                fprintf(data_parser_in, "%d ", ((int32_t)(driver->angle / 1000)));
             }
             fprintf(data_parser_in, "\r\n");
 
