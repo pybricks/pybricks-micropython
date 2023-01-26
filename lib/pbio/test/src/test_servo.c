@@ -24,6 +24,7 @@
 #include <test-pbio.h>
 
 #include "../src/processes.h"
+#include "../drv/core.h"
 #include "../drv/clock/clock_test.h"
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
 
@@ -41,6 +42,10 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     pbdrv_motor_driver_init_manual();
 
     PT_BEGIN(pt);
+
+    while (pbdrv_init_busy()) {
+        PT_YIELD(pt);
+    }
 
     timer_set(&timeout, 10 * 1000);
 
