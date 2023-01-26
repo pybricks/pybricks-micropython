@@ -146,10 +146,27 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
     PROCESS_END();
 }
 
-void pbdrv_motor_driver_init(void) {
+static void pbdrv_motor_driver_start_simulation(void) {
     pbdrv_init_busy_up();
     process_start(&pbdrv_motor_driver_virtual_simulation_process);
 }
+
+#if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
+void pbdrv_motor_driver_init(void) {
+    // Start as normal driver, useful for builds that use this as the motor
+    // backend, like a virtual hub.
+    pbdrv_motor_driver_start_simulation();
+}
+#else
+void pbdrv_motor_driver_init(void) {
+    // Don't start the simulation protothread automatically. Useful for unit
+    // tests that do not need motors.
+}
+void pbdrv_motor_driver_init_manual(void) {
+    // Motor tests can start the simulation as needed.
+    pbdrv_motor_driver_start_simulation();
+}
+#endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
 
 void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     *rotations = (int64_t)dev->angle / 360000;

@@ -16,6 +16,10 @@
 
 void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
 
+#if !PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
+void pbdrv_motor_driver_init_manual(void);
+#endif
+
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
 
 #endif // _INTERNAL_PBDRV_MOTOR_DRIVER_VIRTUAL_SIMULATION_H_
