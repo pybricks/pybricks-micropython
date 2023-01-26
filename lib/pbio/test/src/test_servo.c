@@ -27,12 +27,6 @@
 #include "../drv/clock/clock_test.h"
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
 
-pbio_error_t pbdrv_ioport_get_motor_device_type_id(pbio_port_id_t id, pbio_iodev_type_id_t *type_id) {
-    // default value if environment variable is not set
-    *type_id = PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR;
-    return PBIO_SUCCESS;
-}
-
 /**
  * Common test for pbio_servo_run_* functions.
  * @param [in]  pt      The Contiki proto-thread
