@@ -2,6 +2,8 @@
 /* Copyright (c) 2013, 2014 Damien P. George */
 /* Copyright (c) 2018-2022 The Pybricks Authors */
 
+/* Shared linker script for Arm-based bare-metal platforms. */
+
 /* top end of the stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 

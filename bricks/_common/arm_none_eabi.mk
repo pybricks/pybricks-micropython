@@ -142,9 +142,9 @@ CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(
 $(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
 
 # linker scripts
-LD_FILES = $(PBIO_PLATFORM).ld
+LD_FILES = $(PBTOP)/lib/pbio/platform/$(PBIO_PLATFORM)/platform.ld
 ifeq ($(PB_MCU_FAMILY),STM32)
-LD_FILES += $(PBTOP)/bricks/_common_stm32/link.ld
+LD_FILES += $(PBTOP)/lib/pbio/platform/arm_common.ld
 endif
 
 LDFLAGS = $(addprefix -T,$(LD_FILES)) -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
