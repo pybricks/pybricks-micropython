@@ -6,6 +6,9 @@
 #if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/wait.h>
 
 #include <contiki.h>
 
@@ -84,10 +87,14 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
     return PBIO_SUCCESS;
 }
 
+static pid_t data_parser_pid;
+static FILE *data_parser_in;
+
 PROCESS(pbdrv_motor_driver_virtual_simulation_process, "pbdrv_motor_driver_virtual_simulation");
 
 PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
-    static struct etimer timer;
+    static struct etimer tick_timer;
+    static struct timer frame_timer;
 
     static uint32_t dev_index;
     static pbdrv_motor_driver_dev_t *driver;
@@ -133,10 +140,36 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
 
     pbdrv_init_busy_down();
 
-    etimer_set(&timer, 1);
+    etimer_set(&tick_timer, 1);
+    timer_set(&frame_timer, 40);
 
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&tick_timer));
+
+        // If data parser pipe is connected, output the motor angles.
+        if (data_parser_in && timer_expired(&frame_timer)) {
+            timer_reset(&frame_timer);
+
+            // Output motor angles on one line.
+            for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
+                driver = &motor_driver_devs[dev_index];
+                fprintf(data_parser_in, "%d ", ((int32_t)(driver->angle / 1000)) % 360);
+            }
+            fprintf(data_parser_in, "\r\n");
+
+            // Check that process is still running.
+            pid_t p = waitpid(data_parser_pid, NULL, WNOHANG);
+            if (p == -1 || p == data_parser_pid) {
+                fclose(data_parser_in);
+                printf("Process failed or ended.");
+                exit(1);
+            }
+            if (fflush(data_parser_in) == -1) {
+                printf("Flush failed.");
+                fclose(data_parser_in);
+                exit(1);
+            }
+        }
 
         for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
             driver = &motor_driver_devs[dev_index];
@@ -186,10 +219,55 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
             driver->current = current_next;
         }
 
-        etimer_restart(&timer);
+        etimer_restart(&tick_timer);
     }
 
     PROCESS_END();
+}
+
+// Optionally starts script that receives motor angles through a pipe
+// for visualization and debugging purposes.
+static void pbdrv_motor_driver_virtual_simulation_prepare_parser(void) {
+
+    const char *data_parser_cmd = getenv("PBIO_TEST_DATA_PARSER");
+
+    // Skip if no data parser is given.
+    if (!data_parser_cmd) {
+        return;
+    }
+
+    // Create the pipe to parser script.
+    int data_parser_stdin[2];
+    if (pipe(data_parser_stdin) == -1) {
+        printf("pipe(data_parser_in) failed\n");
+        return;
+    }
+
+    // For the process to run the parser in parallel.
+    data_parser_pid = fork();
+    if (data_parser_pid == -1) {
+        printf("fork() failed");
+        return;
+    }
+
+    // The child process executes the data parser.
+    if (data_parser_pid == 0) {
+        dup2(data_parser_stdin[0], STDIN_FILENO);
+        close(data_parser_stdin[1]);
+        char *args[] = {NULL, NULL};
+        if (execvp(data_parser_cmd, args) == -1) {
+            printf("Failed to start data parser.");
+        }
+        exit(EXIT_FAILURE);
+    }
+
+    // Get file streams for pipes to data parser.
+    close(data_parser_stdin[0]);
+    data_parser_in = fdopen(data_parser_stdin[1], "w");
+    if (data_parser_in == NULL) {
+        printf("fdopen(data_parser_stdin[1], \"w\") failed");
+        exit(1);
+    }
 }
 
 static void pbdrv_motor_driver_start_simulation(void) {
@@ -197,22 +275,19 @@ static void pbdrv_motor_driver_start_simulation(void) {
     process_start(&pbdrv_motor_driver_virtual_simulation_process);
 }
 
-#if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
 void pbdrv_motor_driver_init(void) {
-    // Start as normal driver, useful for builds that use this as the motor
-    // backend, like a virtual hub.
+    pbdrv_motor_driver_virtual_simulation_prepare_parser();
+    #if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
     pbdrv_motor_driver_start_simulation();
+    #endif
 }
-#else
-void pbdrv_motor_driver_init(void) {
-    // Don't start the simulation protothread automatically. Useful for unit
-    // tests that do not need motors.
-}
+
+#if !PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
 void pbdrv_motor_driver_init_manual(void) {
     // Motor tests can start the simulation as needed.
     pbdrv_motor_driver_start_simulation();
 }
-#endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
+#endif // !PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
 
 void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     *rotations = (int64_t)dev->angle / 360000;
