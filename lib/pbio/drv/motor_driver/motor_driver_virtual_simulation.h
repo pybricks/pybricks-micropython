@@ -12,7 +12,28 @@
 
 #include <stdint.h>
 
+#include <pbio/dcmotor.h>
+
 #include <pbdrv/motor_driver.h>
+
+/**
+ * Description of virtual motor environment.
+ */
+typedef struct {
+    /** Port identifier. */
+    pbio_port_id_t port_id;
+    /** Initial angle of the motor (mdeg). */
+    double initial_angle;
+    /** Initial speed of the motor (mdeg/s). */
+    double initial_speed;
+    /** Location of physical endstop in negative direction (mdeg). */
+    double endstop_angle_negative;
+    /** Location of physical endstop in positive direction (mdeg). */
+    double endstop_angle_positive;
+} pbdrv_motor_driver_virtual_simulation_platform_data_t;
+
+extern const pbdrv_motor_driver_virtual_simulation_platform_data_t
+    pbdrv_motor_driver_virtual_simulation_platform_data[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
 
 void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
 

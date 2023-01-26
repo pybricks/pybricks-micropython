@@ -11,20 +11,14 @@
 
 #include "../core.h"
 #include <pbdrv/clock.h>
+#include <pbdrv/ioport.h>
 #include <pbdrv/motor_driver.h>
 
 #include <pbio/battery.h>
 #include <pbio/observer.h>
 
 #include "../virtual.h"
-
-struct _pbdrv_motor_driver_dev_t {
-    double angle;
-    double current;
-    double speed;
-    double voltage;
-    double torque;
-};
+#include "motor_driver_virtual_simulation.h"
 
 typedef struct _pbio_simulation_model_t {
     double d_angle_d_speed;
@@ -42,6 +36,16 @@ typedef struct _pbio_simulation_model_t {
     double torque_friction;
 } pbio_simulation_model_t;
 
+struct _pbdrv_motor_driver_dev_t {
+    double angle;
+    double current;
+    double speed;
+    double voltage;
+    double torque;
+    const pbio_simulation_model_t *model;
+    const pbdrv_motor_driver_virtual_simulation_platform_data_t *pdata;
+};
+
 static const pbio_simulation_model_t model_technic_m_angular = {
     .d_angle_d_speed = 0.0009981527613056019,
     .d_speed_d_speed = 0.994653578576391,
@@ -58,7 +62,7 @@ static const pbio_simulation_model_t model_technic_m_angular = {
     .torque_friction = 21413.268,
 };
 
-static pbdrv_motor_driver_dev_t motor_driver_devs[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV] = {};
+static pbdrv_motor_driver_dev_t motor_driver_devs[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
 
 pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
     if (id >= PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
@@ -85,10 +89,46 @@ PROCESS(pbdrv_motor_driver_virtual_simulation_process, "pbdrv_motor_driver_virtu
 PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
     static struct etimer timer;
 
+    static uint32_t dev_index;
+    static pbdrv_motor_driver_dev_t *driver;
+
     PROCESS_BEGIN();
 
-    for (int i = 0; i < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; i++) {
+    // Initialize driver from platform data.
+    for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
+        // Get driver and platform data.
+        driver = &motor_driver_devs[dev_index];
+        driver->pdata = &pbdrv_motor_driver_virtual_simulation_platform_data[dev_index];
+        driver->angle = driver->pdata->initial_angle;
+        driver->speed = driver->pdata->initial_speed;
+        driver->current = 0;
+        driver->torque = 0;
+        driver->voltage = 0;
 
+        // Get device ID.
+        static pbio_iodev_type_id_t type_id;
+        pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(driver->pdata->port_id, &type_id);
+        if (err != PBIO_SUCCESS && err != PBIO_ERROR_NO_DEV) {
+            PROCESS_EXIT();
+        }
+
+        // Select model corresponding to device ID.
+        switch (type_id) {
+            case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
+                driver->model = &model_technic_m_angular; // TODO
+                break;
+            case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
+                driver->model = &model_technic_m_angular;
+                break;
+            case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
+                driver->model = &model_technic_m_angular; // TODO
+                break;
+            case PBIO_IODEV_TYPE_ID_NONE:
+                driver->model = NULL;
+                break;
+            default:
+                PROCESS_EXIT();
+        }
     }
 
     pbdrv_init_busy_down();
@@ -98,10 +138,16 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
-        for (int i = 0; i < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; i++) {
-            pbdrv_motor_driver_dev_t *driver = &motor_driver_devs[i];
-            const pbio_simulation_model_t *m = &model_technic_m_angular;
+        for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
+            driver = &motor_driver_devs[dev_index];
 
+            // Skip simulating if there is no model.
+            if (!driver->model) {
+                continue;
+            }
+
+            // Shorthand notation for frequent local references to model.
+            const pbio_simulation_model_t *m = driver->model;
 
             // Modified coulomb friction with transition linear in speed through origin.
             const double limit = 2000;
