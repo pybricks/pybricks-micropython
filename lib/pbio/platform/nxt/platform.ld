@@ -20,7 +20,7 @@
 MEMORY {
 rom : ORIGIN = 1M, LENGTH =256k
 vector_ram : ORIGIN = 2M, LENGTH = 64
-ram : ORIGIN = 2M + 64, LENGTH = 64K - 64 + 21
+ram : ORIGIN = 2M + 64, LENGTH = 64K - 64
 }
 
 ROM_BASE = 1M;
@@ -34,7 +34,7 @@ SECTIONS {
    * Interrupt vectors. These are loaded to the bottom of memory at
    * boot time.
    */
-  .vectors : {
+  .vectors : ALIGN(4) {
     KEEP(*(.isr_vector))
   } > vector_ram
   AT> rom
@@ -47,8 +47,7 @@ SECTIONS {
    * This section is used for code that has to reside in ram to
    * function correctly (like flash writing code)
    */
-  .ram_text : {
-    . = ALIGN(4);
+  .ram_text : ALIGN(4) {
     *.oram (*.text *.text.* *.glue*)
     . = ALIGN(4);
     *.oram (*.rodata *.rodata.*)
@@ -60,8 +59,7 @@ SECTIONS {
    * Read/Write initialized data. Runs from RAM, gets copied there
    * from ROM if booting from flash.
    */
-  .data : {
-    . = ALIGN(4);
+  .data : ALIGN(4) {
     * (*.data *.data.*)
   } > ram
   AT> rom
@@ -71,8 +69,7 @@ SECTIONS {
    * The main kernel executable code, as well as all the read-only
    * data. If possible, this goes into flash, to free up more RAM.
    */
-  .text : {
-    . = ALIGN(4);
+  .text : ALIGN(4) {
     * (*.text *.text.* *.glue*)
     . = ALIGN(4);
     * (*.rodata *.rodata.*)
@@ -85,8 +82,7 @@ SECTIONS {
    * defines the symbols we need to be able to initialize the section
    * properly.
    */
-  .bss : {
-    . = ALIGN(4);
+  .bss : ALIGN(4) {
     * (*.bss *.bss.*)
   } > ram
 
@@ -97,9 +93,8 @@ SECTIONS {
    * Although not strictly required, this zone is zeroed out at boot
    * time to provide a clean environment for the kernel.
    */
-  .stack  : {
+  .stack : ALIGN(8) {
     /* irq stack */
-    . = ALIGN(8);
     . += 0x60; /* 96b, which is 3*8*4, the maximum irq stack size. */
     . = ALIGN(8);
     __irq_stack__ = .;
@@ -131,14 +126,13 @@ SECTIONS {
          SIZEOF(.data) + SIZEOF(.bss) + SIZEOF(.stack)
      );
     /* Kernel in-rom size */
-     LONG(SIZEOF(.vectors) + SIZEOF(.ram_text) +
-          SIZEOF(.data) + SIZEOF(.text));
+    LONG(SIZEOF(.vectors) + SIZEOF(.ram_text) + SIZEOF(.data) + SIZEOF(.text));
     /* Write address */
-     LONG(ROM_BASE);
+    LONG(ROM_BASE);
     /* Bootup address */
-     LONG(ROM_BASE);
+    LONG(ROM_BASE);
     /* SAM-BA kernel? */
-     BYTE(0);
+    BYTE(0);
   } > rom
 
   /* Discard anything not mapped at this point. */
@@ -173,9 +167,9 @@ SECTIONS {
   __stack_start__ = ADDR(.stack);
   __stack_end__ = (ADDR(.stack) + SIZEOF(.stack));
 
-   __boot_from_samba__ = 0;
+  __boot_from_samba__ = 0;
 
-   __rom_userspace_start__ = ADDR(.text) + SIZEOF(.text);
+  __rom_userspace_start__ = ADDR(.text) + SIZEOF(.text);
   __rom_userspace_end__ = (ROM_BASE + ROM_SIZE);
 
   __ram_userspace_start__ = __stack_end__;
