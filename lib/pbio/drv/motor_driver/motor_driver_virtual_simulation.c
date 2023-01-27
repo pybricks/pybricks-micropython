@@ -193,8 +193,16 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
                 friction = m->torque_friction * driver->speed / limit;
             }
 
+            // Stall obstacle torque
+            double external_torque = 0;
+            if (driver->angle > driver->pdata->endstop_angle_positive) {
+                external_torque = (driver->angle - driver->pdata->endstop_angle_positive) * 500 + driver->speed * 5;
+            } else if (driver->angle < driver->pdata->endstop_angle_negative) {
+                external_torque = (driver->angle - driver->pdata->endstop_angle_negative) * 500 + driver->speed * 5;
+            }
+
             double voltage = driver->voltage;
-            double torque = friction;
+            double torque = friction + external_torque;
 
             // Get next state based on current state and input: x(k+1) = Ax(k) + Bu(k)
             double angle_next = driver->angle +

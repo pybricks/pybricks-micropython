@@ -54,8 +54,8 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
         .port_id = PBIO_PORT_ID_C,
         .initial_angle = 0,
         .initial_speed = 0,
-        .endstop_angle_negative = -INFINITY,
-        .endstop_angle_positive = INFINITY,
+        .endstop_angle_negative = -142000,
+        .endstop_angle_positive = 142000,
     },
     {
         .port_id = PBIO_PORT_ID_D,

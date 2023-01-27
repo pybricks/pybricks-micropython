@@ -45,6 +45,11 @@ static PT_THREAD(test_servo(struct pt *pt)) {
     process_start(&pbio_motor_process);
     tt_want(process_is_running(&pbio_motor_process));
 
+    // Initialize a servo that will stall.
+    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_C, &srv), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, 1000, true), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_run_forever(srv, -500), ==, PBIO_SUCCESS);
+
     // Initialize the servo.
     tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_A, &srv), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, 1000, true), ==, PBIO_SUCCESS);
