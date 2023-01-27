@@ -21,7 +21,7 @@ void pbdrv_battery_init(void) {
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     // REVISIT: Voltage appears off by a factor 2
-    *value = nx_avr_get_battery_voltage() * 2;
+    *value = nx_avr_get_battery_voltage();
     return PBIO_SUCCESS;
 }
 

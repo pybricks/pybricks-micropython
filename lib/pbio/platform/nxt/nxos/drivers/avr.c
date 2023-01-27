@@ -172,7 +172,6 @@ static inline uint16_t unpack_word(uint8_t *word) {
 static void avr_unpack_from_avr(void) {
   uint8_t checksum = 0;
   uint16_t word;
-  uint32_t voltage;
   uint32_t i;
   uint8_t *p = raw_from_avr;
 
@@ -230,9 +229,7 @@ static void avr_unpack_from_avr(void) {
    * multiplication by 13.848 is approximated by a multiplication by
    * 3545 followed by a division by 256.
    */
-  voltage = word & 0x3ff;
-  voltage = (voltage * 3545) >> 9;
-  from_avr.battery.charge = voltage;
+  from_avr.battery.charge = (((uint32_t)word & 0x3ff) * 3545) >> 8;
 }
 
 /* Initialize the NXT-AVR communication. */
