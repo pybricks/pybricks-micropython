@@ -4,7 +4,7 @@
 from ..drv.button import VirtualButtons
 from ..drv.battery import VirtualBattery
 from ..drv.led import VirtualLed
-from ..drv.clock import CountingClock
+from ..drv.clock import WallClock
 from ..drv.ioport import (
     VirtualIOPort,
     PortId,
@@ -119,24 +119,23 @@ class Platform:
 
     # Ports and attached devices.
     PORTS = {
-        PortId.A: IODeviceTypeId.TECHNIC_L_ANGULAR_MOTOR,
+        PortId.A: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
         PortId.B: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
-        PortId.C: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
-        PortId.D: IODeviceTypeId.TECHNIC_M_ANGULAR_MOTOR,
-        PortId.E: IODeviceTypeId.NONE,
-        PortId.F: IODeviceTypeId.NONE,
+        PortId.C: IODeviceTypeId.TECHNIC_L_ANGULAR_MOTOR,
+        PortId.D: IODeviceTypeId.NONE,
+        PortId.E: IODeviceTypeId.SPIKE_S_MOTOR,
+        PortId.F: IODeviceTypeId.TECHNIC_L_ANGULAR_MOTOR,
     }
 
     def on_poll(self, *args):
-        # Push clock forward by one tick on each poll.
-        self.clock[-1].tick()
+        pass
 
     def __init__(self):
 
         # Initialize devices internal to the hub.
         self.battery = {-1: VirtualBattery()}
         self.button = {-1: VirtualButtons()}
-        self.clock = {-1: CountingClock(start=0, fuzz=0)}
+        self.clock = {-1: WallClock()}
         self.led = {0: VirtualLed()}
 
         # Initialize all ports

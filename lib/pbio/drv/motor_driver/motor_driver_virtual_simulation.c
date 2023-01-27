@@ -116,8 +116,9 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
         static pbio_iodev_type_id_t type_id;
         pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(driver->pdata->port_id, &type_id);
         if (err != PBIO_SUCCESS && err != PBIO_ERROR_NO_DEV) {
-            PROCESS_EXIT();
+            type_id = PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR; // FIXME fix ioport
         }
+        type_id = PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR; // FIXME fix ioport
 
         // Select model corresponding to device ID.
         switch (type_id) {
