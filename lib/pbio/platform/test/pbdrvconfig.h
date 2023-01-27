@@ -15,9 +15,9 @@
 #define PBDRV_CONFIG_CLOCK_TEST                     (1)
 
 #define PBDRV_CONFIG_COUNTER                        (1)
-#define PBDRV_CONFIG_COUNTER_NUM_DEV                (1)
-#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION     (1)
-#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION_NUM_DEV (1)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                (6)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION     (6)
+#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION_NUM_DEV (6)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (0)

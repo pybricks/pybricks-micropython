@@ -19,7 +19,7 @@ static void test_counter_get(void *env) {
     tt_want(pbdrv_counter_get_dev(0, &dev) == PBIO_ERROR_AGAIN);
 
     // bad id
-    tt_want(pbdrv_counter_get_dev(1, &dev) == PBIO_ERROR_NO_DEV);
+    tt_want(pbdrv_counter_get_dev(7, &dev) == PBIO_ERROR_NO_DEV);
 
     // proper usage
     pbdrv_counter_init();
