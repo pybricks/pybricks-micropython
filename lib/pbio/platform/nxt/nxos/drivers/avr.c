@@ -163,7 +163,7 @@ static void avr_pack_to_avr(void) {
 
 /* Small helper to convert two bytes into an uint16_t. */
 static inline uint16_t unpack_word(uint8_t *word) {
-  return *((uint16_t*)word);
+  return (word[1] << 8) | word[0];
 }
 
 /* Deserialize the AVR data structure in raw_from_avr into the
