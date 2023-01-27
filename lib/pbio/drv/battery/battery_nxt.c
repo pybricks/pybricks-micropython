@@ -31,7 +31,7 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
 }
 
 pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
-    *value = nx_avr_battery_is_aa() ? PBDRV_BATTERY_TYPE_ALKALINE : PBDRV_BATTERY_TYPE_LIION;
+    *value = nx_avr_battery_is_accu_pack() ? PBDRV_BATTERY_TYPE_LIION : PBDRV_BATTERY_TYPE_ALKALINE;
     return PBIO_SUCCESS;
 }
 

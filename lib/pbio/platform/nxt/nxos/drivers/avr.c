@@ -80,9 +80,8 @@ static volatile struct {
 
   /* Battery information. */
   struct {
-    bool is_aa; /* True if the power supply is AA batteries (as
-                 * opposed to a battery pack).
-                 */
+    /** True if the power supply is rechargeable battery pack or false if AA batteries. */
+    bool is_accu_pack;
     uint16_t charge; /* The remaining battery charge in mV. */
   } battery;
 
@@ -224,7 +223,7 @@ static void avr_unpack_from_avr(void) {
    */
   from_avr.version.major = (word >> 13) & 0x3;
   from_avr.version.minor = (word >> 10) & 0x7;
-  from_avr.battery.is_aa = word & 0x8000;
+  from_avr.battery.is_accu_pack = word & 0x8000;
 
   /* The rest of the word is the voltage value, in units of
    * 13.848mV. As the NXT does not have a floating point unit, the
@@ -370,8 +369,8 @@ uint32_t nx_avr_get_battery_voltage(void) {
   return from_avr.battery.charge;
 }
 
-bool nx_avr_battery_is_aa(void) {
-  return from_avr.battery.is_aa;
+bool nx_avr_battery_is_accu_pack(void) {
+  return from_avr.battery.is_accu_pack;
 }
 
 void nx_avr_get_version(uint8_t *major, uint8_t *minor) {

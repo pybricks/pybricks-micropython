@@ -56,10 +56,10 @@ uint32_t nx_avr_get_battery_voltage(void);
 
 /** Detect the kind of power supply connected to the NXT.
  *
- * @return true if the power supply is AA batteries, false if it is a
- * Lego power pack (possibly with AC supply).
+ * @return True if the power supply is the LEGO rechargeable battery pack or
+ * false if AA batteries are used.
  */
-bool nx_avr_battery_is_aa(void);
+bool nx_avr_battery_is_accu_pack(void);
 
 /** Populate @a major, @a minor with the version of the AVR firmware.
  *
