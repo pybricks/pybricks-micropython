@@ -13,7 +13,6 @@
 
 #include <pbio/util.h>
 #include <pbdrv/motor_driver.h>
-#include "../virtual.h"
 #include "../motor_driver/motor_driver_virtual_simulation.h"
 #include "counter.h"
 

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <contiki.h>
 
@@ -20,7 +21,6 @@
 #include <pbio/battery.h>
 #include <pbio/observer.h>
 
-#include "../virtual.h"
 #include "motor_driver_virtual_simulation.h"
 
 typedef struct _pbio_simulation_model_t {
