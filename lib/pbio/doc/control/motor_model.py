@@ -149,9 +149,7 @@ def make_model(name, *, V, tau_0, tau_x, w_0, w_x, i_0, i_x, a, Lm, h, feedback_
     model[L] = Lm
 
     # Substitute parameters into model to get numeric system matrices
-    exponent_numeric = numpy.array(exponent.subs(model).evalf().tolist()).astype(
-        numpy.float64
-    )
+    exponent_numeric = numpy.array(exponent.subs(model).evalf().tolist()).astype(numpy.float64)
 
     # Get matrix exponential and system matrices
     exponential = scipy.linalg.expm(exponent_numeric * h)

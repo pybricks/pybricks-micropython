@@ -42,8 +42,10 @@ with open("../results/frames.css", "w") as frame_file:
 
         # CSS rows for each frame.
         frames = "".join(
-            [f"{i * 100 // (len(angles) - 1)}% {{transform: translate({info.x}px, {info.y}px) rotate( {int(row[info.index])// info.gearing}deg );}}\n"
-                for i, row in enumerate(angles)]
+            [
+                f"{i * 100 // (len(angles) - 1)}% {{transform: translate({info.x}px, {info.y}px) rotate( {int(row[info.index])// info.gearing}deg );}}\n"
+                for i, row in enumerate(angles)
+            ]
         )
 
         # Main css for this class.
