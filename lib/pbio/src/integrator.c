@@ -153,44 +153,37 @@ void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_contro
 
 int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t position_remaining) {
 
-    // Specify in which region integral control should be active. This is
-    // at least the error that would still lead to maximum  proportional
-    // control, with a factor of 2 so we begin integrating a bit sooner.
-    int32_t integral_range = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_kp) * 2;
-
-    // Get integral value that would lead to maximum actuation.
-    int32_t integral_max = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki);
-
     // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
-    int32_t cerr = itg->count_err_prev;
+    int32_t error_now = itg->count_err_prev;
 
     // Check if integrator magnitude would decrease due to this error
-    bool decrease = pbio_int_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < pbio_int_math_abs(itg->count_err_integral);
+    bool decrease = pbio_int_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(error_now)) < pbio_int_math_abs(itg->count_err_integral);
 
     // Integrate and update position error
     if (itg->trajectory_running || decrease) {
 
         // If not deceasing, so growing, limit error growth by maximum integral rate
         if (!decrease) {
-            cerr = cerr > itg->settings->integral_change_max ? itg->settings->integral_change_max : cerr;
-            cerr = cerr < -itg->settings->integral_change_max ? -itg->settings->integral_change_max : cerr;
+            error_now = error_now > itg->settings->integral_change_max ? itg->settings->integral_change_max : error_now;
+            error_now = error_now < -itg->settings->integral_change_max ? -itg->settings->integral_change_max : error_now;
 
             // It might be decreasing now after all (due to integral sign change), so re-evaluate
-            decrease = pbio_int_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(cerr)) < pbio_int_math_abs(itg->count_err_integral);
+            decrease = pbio_int_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(error_now)) < pbio_int_math_abs(itg->count_err_integral);
         }
+
+        // Specify in which region integral control should be active. This is
+        // at least the error that would still lead to maximum  proportional
+        // control, with a factor of 2 so we begin integrating a bit sooner.
+        int32_t integral_range_upper = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_kp) * 2;
 
         // Add change if we are near target, or always if it decreases the integral magnitude
-        if (pbio_int_math_abs(position_remaining) <= integral_range || decrease) {
-            itg->count_err_integral += pbio_control_settings_mul_by_loop_time(cerr);
+        if (pbio_int_math_abs(position_remaining) <= integral_range_upper || decrease) {
+            itg->count_err_integral += pbio_control_settings_mul_by_loop_time(error_now);
         }
 
-        // Limit integral to predefined bound
-        if (itg->count_err_integral > integral_max) {
-            itg->count_err_integral = integral_max;
-        }
-        if (itg->count_err_integral < -integral_max) {
-            itg->count_err_integral = -integral_max;
-        }
+        // Limit integral to value that leads to maximum actuation, i.e. max actuation / ki.
+        itg->count_err_integral = pbio_int_math_clamp(itg->count_err_integral,
+            pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki));
     }
 
     // Keep the error for use in next update
