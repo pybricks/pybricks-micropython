@@ -170,12 +170,14 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
  * @param [out] pid_kp               Position error feedback constant.
  * @param [out] pid_ki               Accumulated error feedback constant.
  * @param [out] pid_kd               Speed error feedback constant.
+ * @param [out] integral_deadzone    Zone (angle) around the target within which the integrator should not accumulate errors.
  * @param [out] integral_change_max  Absolute bound on the rate at which the integrator accumulates errors, in application units.
  */
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_change_max) {
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_deadzone, int32_t *integral_change_max) {
     *pid_kp = s->pid_kp;
     *pid_ki = s->pid_ki;
     *pid_kd = s->pid_kd;
+    *integral_deadzone = pbio_control_settings_ctl_to_app(s, s->integral_deadzone);
     *integral_change_max = pbio_control_settings_ctl_to_app(s, s->integral_change_max);
 }
 
@@ -184,22 +186,24 @@ void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, 
  *
  * Kp, Ki, and Kd should be given in control units. Everything else in application units.
  *
- * @param [in] s                     Control settings structure to write to.
- * @param [out] pid_kp               Position error feedback constant.
- * @param [out] pid_ki               Accumulated error feedback constant.
- * @param [out] pid_kd               Speed error feedback constant.
- * @param [out] integral_change_max  Absolute bound on the rate at which the integrator accumulates errors, in application units.
+ * @param [in] s                    Control settings structure to write to.
+ * @param [in] pid_kp               Position error feedback constant.
+ * @param [in] pid_ki               Accumulated error feedback constant.
+ * @param [in] pid_kd               Speed error feedback constant.
+ * @param [in] integral_deadzone    Zone (angle) around the target within which the integrator should not accumulate errors.
+ * @param [in] integral_change_max  Absolute bound on the rate at which the integrator accumulates errors, in application units.
  * @return                           ::PBIO_SUCCESS on success
  *                                   ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_change_max) {
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_change_max < 0) {
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_deadzone, int32_t integral_change_max) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_change_max < 0 || integral_deadzone < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     s->pid_kp = pid_kp;
     s->pid_ki = pid_ki;
     s->pid_kd = pid_kd;
+    s->integral_deadzone = pbio_control_settings_app_to_ctl(s, integral_deadzone);
     s->integral_change_max = pbio_control_settings_app_to_ctl(s, integral_change_max);
     return PBIO_SUCCESS;
 }

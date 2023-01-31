@@ -110,23 +110,22 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_NONE(kp),
         PB_ARG_DEFAULT_NONE(ki),
         PB_ARG_DEFAULT_NONE(kd),
-        PB_ARG_DEFAULT_NONE(reserved),
+        PB_ARG_DEFAULT_NONE(integral_deadzone),
         PB_ARG_DEFAULT_NONE(integral_rate));
 
     // Read current values
     int32_t kp, ki, kd;
-    int32_t integral_change_max;
-    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_change_max);
+    int32_t integral_change_max, integral_deadzone;
+    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_deadzone, &integral_change_max);
 
     // If all given values are none, return current values
-    (void)reserved_in;
     if (kp_in == mp_const_none && ki_in == mp_const_none && kd_in == mp_const_none &&
         integral_rate_in == mp_const_none) {
         mp_obj_t ret[5];
         ret[0] = mp_obj_new_int(kp);
         ret[1] = mp_obj_new_int(ki);
         ret[2] = mp_obj_new_int(kd);
-        ret[3] = mp_const_none;
+        ret[3] = mp_obj_new_int(integral_deadzone);
         ret[4] = mp_obj_new_int(integral_change_max);
         return mp_obj_new_tuple(5, ret);
     }
@@ -136,8 +135,9 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
     ki = pb_obj_get_default_abs_int(ki_in, ki);
     kd = pb_obj_get_default_abs_int(kd_in, kd);
     integral_change_max = pb_obj_get_default_abs_int(integral_rate_in, integral_change_max);
+    integral_deadzone = pb_obj_get_default_abs_int(integral_deadzone_in, integral_deadzone);
 
-    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_change_max));
+    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_deadzone, integral_change_max));
 
     return mp_const_none;
 }
