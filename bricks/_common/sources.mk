@@ -173,6 +173,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/reset/reset_nxt.c \
 	drv/reset/reset_stm32.c \
 	drv/resistor_ladder/resistor_ladder.c \
+	drv/sound/sound_nxt.c \
 	drv/sound/sound_stm32_hal_dac.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \

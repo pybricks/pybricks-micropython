@@ -14,7 +14,6 @@
 #include "nxos/display.h"
 #include "nxos/util.h"
 #include "nxos/drivers/systick.h"
-#include "nxos/drivers/sound.h"
 #include "nxos/drivers/_avr.h"
 
 #include "nxos/assert.h"
@@ -30,7 +29,6 @@ void nx_assert_error(const char *file, const int line,
   nx__avr_set_motor(2, 0, true);
 
   nx_display_clear();
-  nx_sound_freq_async(440, 1000);
   nx_display_string("** Assertion **\n");
 
   nx_display_string(basename);

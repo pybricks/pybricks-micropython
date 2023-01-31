@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -12,10 +12,15 @@
 
 #include <pybricks/util_mp/pb_obj_helper.h>
 
+#include "py/misc.h"
+#include "py/obj.h"
+#include "py/runtime.h"
+
 typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
     mp_obj_t buttons;
+    mp_obj_t speaker;
     mp_obj_t system;
 } hubs_NXTBrick_obj_t;
 
@@ -30,6 +35,7 @@ STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t *)type;
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(nxtbrick_buttons), nxtbrick_buttons, pbio_button_is_pressed);
+    self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -37,6 +43,7 @@ STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args,
 STATIC const pb_attr_dict_entry_t hubs_NXTBrick_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_NXTBrick_obj_t, battery),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_NXTBrick_obj_t, buttons),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_speaker, hubs_NXTBrick_obj_t, speaker),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_NXTBrick_obj_t, system),
     PB_ATTR_DICT_SENTINEL
 };

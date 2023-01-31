@@ -10,7 +10,6 @@
 #include <nxos/interrupts.h>
 #include <nxos/assert.h>
 #include <nxos/drivers/_aic.h>
-#include <nxos/drivers/_sound.h>
 #include <nxos/drivers/_avr.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_lcd.h>
@@ -58,7 +57,6 @@ void pbdrv_init(void) {
     // TODO: we should be able to convert these to generic pbio drivers and use
     // pbdrv_init_busy instead of busy waiting for 100ms.
     #if PBDRV_CONFIG_INIT_NXOS
-    nx__sound_init();
     nx__avr_init();
     nx__motors_init();
     nx__lcd_init();
