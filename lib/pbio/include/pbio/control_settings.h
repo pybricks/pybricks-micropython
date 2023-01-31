@@ -91,6 +91,10 @@ typedef struct _pbio_control_settings_t {
      */
     int32_t pid_kd;
     /**
+     * Zone (angle) around the target within which the integral error should not grow.
+     */
+    int32_t integral_deadzone;
+    /**
      * Absolute bound on the rate at which the integrator accumulates errors.
      */
     int32_t integral_change_max;

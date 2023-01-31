@@ -13,6 +13,7 @@
 
 ### Fixed
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).
+- Reduced motor motion while holding position.
 
 [support#829]: https://github.com/pybricks/support/issues/829
 [support#863]: https://github.com/pybricks/support/issues/863

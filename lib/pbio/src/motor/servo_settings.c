@@ -243,6 +243,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
     settings->stall_speed_limit = DEG_TO_MDEG(20);
     settings->stall_time = pbio_control_time_ms_to_ticks(200);
     settings->integral_change_max = DEG_TO_MDEG(15);
+    settings->integral_deadzone = DEG_TO_MDEG(8);
 
     // Device type specific speed, acceleration, and PD settings.
     switch (id) {

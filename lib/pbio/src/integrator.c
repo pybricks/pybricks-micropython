@@ -176,8 +176,9 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
         // control, with a factor of 2 so we begin integrating a bit sooner.
         int32_t integral_range_upper = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_kp) * 2;
 
-        // Add change if we are near target, or always if it decreases the integral magnitude
-        if (pbio_int_math_abs(position_remaining) <= integral_range_upper || decrease) {
+        // Add change if we are near (but not too near) target, or always if it decreases the integral magnitude.
+        if ((pbio_int_math_abs(position_remaining) >= itg->settings->integral_deadzone &&
+             pbio_int_math_abs(position_remaining) <= integral_range_upper) || decrease) {
             itg->count_err_integral += pbio_control_settings_mul_by_loop_time(error_now);
         }
 
