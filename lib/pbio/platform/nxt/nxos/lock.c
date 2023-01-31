@@ -5,13 +5,13 @@
 
 static inline uint32_t swp(uint32_t *dest, uint32_t val) {
     uint32_t ret;
-    __asm__ ("swp %0, %2, [%1]" : "=&r" (ret) : "r" (dest), "r" (val));
+    __asm__ ("swp %0, %2, [%1]" : "=&r" (ret) : "r" (dest), "r" (val) : "memory");
     return ret;
 }
 
 static inline uint32_t swpb(uint8_t *dest, uint32_t val) {
     uint32_t ret;
-    __asm__ ("swpb %0, %2, [%1]" : "=&r" (ret) : "r" (dest), "r" (val));
+    __asm__ ("swpb %0, %2, [%1]" : "=&r" (ret) : "r" (dest), "r" (val) : "memory");
     return ret;
 }
 
