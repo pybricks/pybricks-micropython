@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
 
 #ifndef INTERNAL_IMU_LSM6S3TR_C_STM32_H
 #define INTERNAL_IMU_LSM6S3TR_C_STM32_H
@@ -19,5 +19,6 @@ extern const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm
 
 void pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq(void);
 void pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq(void);
+void pbdrv_imu_lsm6ds3tr_c_stm32_handle_int1_irq(void);
 
 #endif // INTERNAL_IMU_LSM6S3TR_C_STM32_H

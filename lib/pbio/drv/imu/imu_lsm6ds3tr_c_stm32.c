@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2022 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 // IMU driver for STMicroelectronics LSM6DS3TR-C accel/gyro connected to STM32 MCU.
 
@@ -8,6 +8,7 @@
 
 #if PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
 
+#include <stdatomic.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -47,6 +48,8 @@ struct _pbdrv_imu_dev_t {
     int16_t data[7];
     /** Initialization state. */
     imu_init_state_t init_state;
+    /** INT1 oneshot. */
+    volatile bool int1;
 };
 
 static pbdrv_imu_dev_t global_imu_dev;
@@ -75,6 +78,11 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
+    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+}
+
+void pbdrv_imu_lsm6ds3tr_c_stm32_handle_int1_irq(void) {
+    global_imu_dev.int1 = true;
     process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
 }
 
@@ -200,6 +208,11 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     /* Gyroscope - filtering chain */
     // PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_band_pass_set(&child, ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT));
 
+    // configure interrupts
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
+        .int1_drdy_g = 1,
+    }));
+
     if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
         imu_dev->init_state = IMU_INIT_STATE_FAILED;
         PT_EXIT(pt);
@@ -229,6 +242,8 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     }
 
     for (;;) {
+        PROCESS_WAIT_EVENT_UNTIL(atomic_exchange(&imu_dev->int1, false));
+
         PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_acceleration_raw_get(&child, &imu_dev->ctx, buf));
 
         if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
@@ -241,14 +256,6 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
 
         if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
             memcpy(&imu_dev->data[3], buf, 6);
-        } else {
-            pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
-        }
-
-        PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_temperature_raw_get(&child, &imu_dev->ctx, buf));
-
-        if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
-            memcpy(&imu_dev->data[6], buf, 2);
         } else {
             pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
         }
@@ -295,10 +302,6 @@ void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
     values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->gyro_scale;
     values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->gyro_scale;
     values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->gyro_scale;
-}
-
-float pbdrv_imu_temperature_read(pbdrv_imu_dev_t *imu_dev) {
-    return lsm6ds3tr_c_from_lsb_to_celsius(imu_dev->data[6]);
 }
 
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2022 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -219,6 +219,16 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
         HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
         HAL_NVIC_SetPriority(I2C2_EV_IRQn, 3, 2);
         HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
+
+        // INT1
+        gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+        gpio_init.Pin = GPIO_PIN_4;
+        gpio_init.Mode = GPIO_MODE_IT_RISING;
+        gpio_init.Alternate = 0;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
+
+        HAL_NVIC_SetPriority(EXTI4_IRQn, 3, 3);
+        HAL_NVIC_EnableIRQ(EXTI4_IRQn);
     }
 }
 
@@ -228,6 +238,10 @@ void I2C2_ER_IRQHandler(void) {
 
 void I2C2_EV_IRQHandler(void) {
     pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
+}
+
+void EXTI4_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
 }
 
 // I/O ports
@@ -967,7 +981,9 @@ void EXTI9_5_IRQHandler(void) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin) {
-    if (pin == GPIO_PIN_9) {
+    if (pin == GPIO_PIN_4) {
+        pbdrv_imu_lsm6ds3tr_c_stm32_handle_int1_irq();
+    } else if (pin == GPIO_PIN_9) {
         pbdrv_usb_stm32_handle_vbus_irq(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9));
     }
 }

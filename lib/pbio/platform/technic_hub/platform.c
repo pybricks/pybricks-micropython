@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2022 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -168,7 +168,11 @@ void EXTI15_10_IRQHandler(void) {
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t pin) {
-    pbdrv_bluetooth_stm32_cc2640_srdy_irq(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13));
+    if (pin == GPIO_PIN_9) {
+        pbdrv_imu_lsm6ds3tr_c_stm32_handle_int1_irq();
+    } else if (pin == GPIO_PIN_13) {
+        pbdrv_bluetooth_stm32_cc2640_srdy_irq(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13));
+    }
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
@@ -241,6 +245,16 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
     HAL_NVIC_SetPriority(I2C1_EV_IRQn, 3, 2);
     HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+
+    // INT1
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+    gpio_init.Pin = GPIO_PIN_9;
+    gpio_init.Mode = GPIO_MODE_IT_RISING;
+    gpio_init.Alternate = 0;
+    HAL_GPIO_Init(GPIOC, &gpio_init);
+
+    HAL_NVIC_SetPriority(EXTI9_5_IRQn, 3, 3);
+    HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
 
 void I2C1_ER_IRQHandler(void) {
@@ -249,6 +263,10 @@ void I2C1_ER_IRQHandler(void) {
 
 void I2C1_EV_IRQHandler(void) {
     pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq();
+}
+
+void EXTI9_5_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
 }
 
 // I/O ports
