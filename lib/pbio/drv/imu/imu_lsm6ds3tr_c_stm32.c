@@ -45,7 +45,7 @@ struct _pbdrv_imu_dev_t {
     /** Scale factor to convert raw data to m/s^2. */
     float accel_scale;
     /** Raw data. */
-    int16_t data[7];
+    int16_t data[6];
     /** Initialization state. */
     imu_init_state_t init_state;
     /** INT1 oneshot. */
