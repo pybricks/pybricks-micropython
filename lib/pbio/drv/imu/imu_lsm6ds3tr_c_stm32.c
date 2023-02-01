@@ -213,6 +213,9 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
         .int1_drdy_g = 1,
     }));
 
+    // Enable rounding mode so we can get gyro + accel in one read.
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_rounding_mode_set(&child, ctx, LSM6DS3TR_C_ROUND_GY_XL));
+
     if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
         imu_dev->init_state = IMU_INIT_STATE_FAILED;
         PT_EXIT(pt);
@@ -228,7 +231,7 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
 
     static struct pt child;
-    static uint8_t buf[6];
+    static uint8_t buf[12];
 
     PROCESS_BEGIN();
 
@@ -244,18 +247,11 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(atomic_exchange(&imu_dev->int1, false));
 
-        PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_acceleration_raw_get(&child, &imu_dev->ctx, buf));
+        lsm6ds3tr_c_read_reg(&imu_dev->ctx, LSM6DS3TR_C_OUTX_L_G, buf, 12);
+        PROCESS_WAIT_UNTIL(imu_dev->ctx.read_write_done);
 
         if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
-            memcpy(&imu_dev->data[0], buf, 6);
-        } else {
-            pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
-        }
-
-        PROCESS_PT_SPAWN(&child, lsm6ds3tr_c_angular_rate_raw_get(&child, &imu_dev->ctx, buf));
-
-        if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
-            memcpy(&imu_dev->data[3], buf, 6);
+            memcpy(&imu_dev->data[0], buf, 12);
         } else {
             pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
         }
@@ -290,18 +286,18 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev) {
 void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values) {
     // Output is signed such that we have a right handed coordinate system where:
     // Forward acceleration is +X, upward acceleration is +Z and acceleration to the left is +Y.
-    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->accel_scale;
-    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->accel_scale;
-    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->accel_scale;
+    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->accel_scale;
+    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->accel_scale;
+    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->accel_scale;
 }
 
 void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
     // Output is signed such that we have a right handed coordinate system
     // consistent with the coordinate system above. Positive rotations along
     // those axes then follow the right hand rule.
-    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->gyro_scale;
-    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->gyro_scale;
-    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->gyro_scale;
+    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->gyro_scale;
+    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->gyro_scale;
+    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->gyro_scale;
 }
 
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
