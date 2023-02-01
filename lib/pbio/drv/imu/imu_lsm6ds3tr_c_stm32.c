@@ -52,6 +52,9 @@ struct _pbdrv_imu_dev_t {
     volatile bool int1;
 };
 
+/** The size of the data field in pbdrv_imu_dev_t in bytes. */
+#define NUM_DATA_BYTES sizeof(((struct _pbdrv_imu_dev_t *)0)->data)
+
 static pbdrv_imu_dev_t global_imu_dev;
 PROCESS(pbdrv_imu_lsm6ds3tr_c_stm32_process, "LSM6DS3TR-C");
 
@@ -72,6 +75,16 @@ void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c) {
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
+    global_imu_dev.ctx.read_write_done = true;
+    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+}
+
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
+    global_imu_dev.ctx.read_write_done = true;
+    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+}
+
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
     process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
 }
@@ -192,7 +205,7 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     // If we leave the default latched mode, sometimes we don't get the INT1 interrupt.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_data_ready_mode_set(&child, ctx, LSM6DS3TR_C_DRDY_PULSED));
 
-    // Enable rounding mode so we can get gyro + accel in one read.
+    // Enable rounding mode so we can get gyro + accel in continuous reads.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_rounding_mode_set(&child, ctx, LSM6DS3TR_C_ROUND_GY_XL));
 
     if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
@@ -210,7 +223,7 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
 
     static struct pt child;
-    static uint8_t buf[12];
+    static uint8_t buf[NUM_DATA_BYTES];
 
     PROCESS_BEGIN();
 
@@ -223,17 +236,51 @@ PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
         PROCESS_EXIT();
     }
 
+retry:
+    // Write the register address of the start of the gyro and accel data.
+    buf[0] = LSM6DS3TR_C_OUTX_L_G;
+    imu_dev->ctx.read_write_done = false;
+    HAL_StatusTypeDef ret = HAL_I2C_Master_Sequential_Transmit_IT(
+        &imu_dev->hi2c, LSM6DS3TR_C_I2C_ADD_L, buf, 1, I2C_FIRST_FRAME);
+
+    if (ret != HAL_OK) {
+        pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+        goto retry;
+    }
+
+    PROCESS_WAIT_UNTIL(imu_dev->ctx.read_write_done);
+
+    if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
+        pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+        goto retry;
+    }
+
+    // Since we configured the IMU to enable "rounding" on the accel and gyro
+    // data registers, we can just keep reading forever and it automatically
+    // loops around. This way we don't have to keep writing the register
+    // value each time we want to read new data. This saves CPU usage since
+    // we have fewer interrupts per sample.
+
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(atomic_exchange(&imu_dev->int1, false));
 
-        lsm6ds3tr_c_read_reg(&imu_dev->ctx, LSM6DS3TR_C_OUTX_L_G, buf, 12);
+        imu_dev->ctx.read_write_done = false;
+        ret = HAL_I2C_Master_Sequential_Receive_IT(
+            &imu_dev->hi2c, LSM6DS3TR_C_I2C_ADD_L, buf, NUM_DATA_BYTES, I2C_NEXT_FRAME);
+
+        if (ret != HAL_OK) {
+            pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+            goto retry;
+        }
+
         PROCESS_WAIT_UNTIL(imu_dev->ctx.read_write_done);
 
-        if (HAL_I2C_GetError(hi2c) == HAL_I2C_ERROR_NONE) {
-            memcpy(&imu_dev->data[0], buf, 12);
-        } else {
+        if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
             pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+            goto retry;
         }
+
+        memcpy(&imu_dev->data[0], buf, NUM_DATA_BYTES);
     }
 
     PROCESS_END();
