@@ -28,14 +28,9 @@
  * Resets the observer to a new angle. Speed and current are reset to zero.
  *
  * @param [in]  obs            The observer instance.
- * @param [in]  settings       Control settings, which includes stall settings.
  * @param [in]  angle          Angle to which the observer should be reset.
  */
-void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, const pbio_angle_t *angle) {
-
-    // Adopt relevant model settings from control settings.
-    obs->settings.stall_speed_limit = settings->stall_speed_limit;
-    obs->settings.stall_speed_limit = settings->stall_speed_limit;
+void pbio_observer_reset(pbio_observer_t *obs, const pbio_angle_t *angle) {
 
     // Reset angle to input and other states to zero.
     obs->angle = *angle;

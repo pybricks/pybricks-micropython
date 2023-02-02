@@ -84,7 +84,7 @@ typedef struct _pbio_servo_t {
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle);
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
-pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id);
+pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observer_settings_t *obs, const pbio_observer_model_t **model, pbio_iodev_type_id_t id);
 void pbio_servo_update_all(void);
 
 // Servo status:

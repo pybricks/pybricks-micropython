@@ -230,20 +230,25 @@ int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
 /**
  * Loads device specific model parameters and control settings.
  *
- * @param [out]  settings      Control settings like PID constants.
+ * @param [out]  ctl           Control settings like PID constants.
+ * @param [out]  obs           Observer settings like gains and stall constants.
  * @param [out]  model         Model parameters for the state observer.
  * @param [in]   id            Type identifier for which to look up the settings.
  * @return                     Error code.
  */
-pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const pbio_observer_model_t **model, pbio_iodev_type_id_t id) {
+pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observer_settings_t *obs, const pbio_observer_model_t **model, pbio_iodev_type_id_t id) {
 
-    // Base settings for all motors.
-    settings->speed_tolerance = DEG_TO_MDEG(50);
-    settings->position_tolerance = DEG_TO_MDEG(10);
-    settings->stall_speed_limit = DEG_TO_MDEG(20);
-    settings->stall_time = pbio_control_time_ms_to_ticks(200);
-    settings->integral_change_max = DEG_TO_MDEG(15);
-    settings->integral_deadzone = DEG_TO_MDEG(8);
+    // Base control settings for all motors.
+    ctl->speed_tolerance = DEG_TO_MDEG(50);
+    ctl->position_tolerance = DEG_TO_MDEG(10);
+    ctl->stall_speed_limit = DEG_TO_MDEG(20);
+    ctl->stall_time = pbio_control_time_ms_to_ticks(200);
+    ctl->integral_change_max = DEG_TO_MDEG(15);
+    ctl->integral_deadzone = DEG_TO_MDEG(8);
+
+    // Base observer settings for all motors.
+    obs->stall_speed_limit = ctl->stall_speed_limit;
+    obs->stall_time = ctl->stall_time;
 
     // Device type specific speed, acceleration, and PD settings.
     switch (id) {
@@ -252,72 +257,72 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
         #if PBIO_CONFIG_SERVO_EV3_NXT
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
             *model = &model_ev3_m;
-            settings->speed_max = DEG_TO_MDEG(2000);
-            settings->acceleration = DEG_TO_MDEG(8000);
-            settings->pid_kp = 3000;
-            settings->pid_kd = 30;
+            ctl->speed_max = DEG_TO_MDEG(2000);
+            ctl->acceleration = DEG_TO_MDEG(8000);
+            ctl->pid_kp = 3000;
+            ctl->pid_kd = 30;
             break;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
             *model = &model_ev3_l;
-            settings->speed_max = DEG_TO_MDEG(1600);
-            settings->acceleration = DEG_TO_MDEG(3200);
-            settings->pid_kp = 15000;
-            settings->pid_kd = 250;
+            ctl->speed_max = DEG_TO_MDEG(1600);
+            ctl->acceleration = DEG_TO_MDEG(3200);
+            ctl->pid_kp = 15000;
+            ctl->pid_kd = 250;
             break;
         #endif // PBIO_CONFIG_SERVO_EV3_NXT
         #if PBIO_CONFIG_SERVO_PUP
         case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
             *model = &model_interactive;
-            settings->speed_max = DEG_TO_MDEG(1000);
-            settings->acceleration = DEG_TO_MDEG(2000);
-            settings->pid_kp = 13500;
-            settings->pid_kd = 1350;
+            ctl->speed_max = DEG_TO_MDEG(1000);
+            ctl->acceleration = DEG_TO_MDEG(2000);
+            ctl->pid_kp = 13500;
+            ctl->pid_kd = 1350;
             break;
         #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
             *model = &model_movehub;
-            settings->speed_max = DEG_TO_MDEG(1500);
-            settings->acceleration = DEG_TO_MDEG(5000);
-            settings->pid_kp = 15000;
-            settings->pid_kd = 500;
+            ctl->speed_max = DEG_TO_MDEG(1500);
+            ctl->acceleration = DEG_TO_MDEG(5000);
+            ctl->pid_kp = 15000;
+            ctl->pid_kd = 500;
             break;
         #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
             *model = &model_technic_l;
-            settings->speed_max = DEG_TO_MDEG(1470);
-            settings->acceleration = DEG_TO_MDEG(2000);
-            settings->pid_kp = 17500;
-            settings->pid_kd = 2500;
+            ctl->speed_max = DEG_TO_MDEG(1470);
+            ctl->acceleration = DEG_TO_MDEG(2000);
+            ctl->pid_kp = 17500;
+            ctl->pid_kd = 2500;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
             *model = &model_technic_xl;
-            settings->speed_max = DEG_TO_MDEG(1525);
-            settings->acceleration = DEG_TO_MDEG(2500);
-            settings->pid_kp = 17500;
-            settings->pid_kd = 2500;
+            ctl->speed_max = DEG_TO_MDEG(1525);
+            ctl->acceleration = DEG_TO_MDEG(2500);
+            ctl->pid_kp = 17500;
+            ctl->pid_kd = 2500;
             break;
         case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
             *model = &model_technic_s_angular;
-            settings->speed_max = DEG_TO_MDEG(620);
-            settings->acceleration = DEG_TO_MDEG(2000);
-            settings->pid_kp = 7500;
-            settings->pid_kd = 1000;
+            ctl->speed_max = DEG_TO_MDEG(620);
+            ctl->acceleration = DEG_TO_MDEG(2000);
+            ctl->pid_kp = 7500;
+            ctl->pid_kd = 1000;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
             *model = &model_technic_l_angular;
-            settings->speed_max = DEG_TO_MDEG(970);
-            settings->acceleration = DEG_TO_MDEG(1500);
-            settings->pid_kp = 35000;
-            settings->pid_kd = 6000;
+            ctl->speed_max = DEG_TO_MDEG(970);
+            ctl->acceleration = DEG_TO_MDEG(1500);
+            ctl->pid_kp = 35000;
+            ctl->pid_kd = 6000;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
             *model = &model_technic_m_angular;
-            settings->speed_max = DEG_TO_MDEG(1080);
-            settings->acceleration = DEG_TO_MDEG(2000);
-            settings->pid_kp = 15000;
-            settings->pid_kd = 1800;
+            ctl->speed_max = DEG_TO_MDEG(1080);
+            ctl->acceleration = DEG_TO_MDEG(2000);
+            ctl->pid_kp = 15000;
+            ctl->pid_kd = 1800;
             break;
         #endif // PBIO_CONFIG_SERVO_PUP
         default:
@@ -326,17 +331,17 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *settings, const p
 
     // The default speed is not used for servos currently (an explicit speed
     // is given for all run commands), so we initialize it to the maximum.
-    settings->speed_default = settings->speed_max;
+    ctl->speed_default = ctl->speed_max;
 
     // Deceleration defaults to same value as acceleration
-    settings->deceleration = settings->acceleration;
+    ctl->deceleration = ctl->acceleration;
 
     // Initialize maximum torque as the stall torque for maximum voltage.
-    settings->actuation_max = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
+    ctl->actuation_max = pbio_observer_voltage_to_torque(*model, pbio_dcmotor_get_max_voltage(id));
 
     // Initialize ki such that integral control saturates in about twos second
     // if the motor were stuck at the position tolerance.
-    settings->pid_ki = settings->actuation_max / (settings->position_tolerance / 1000) / 2;
+    ctl->pid_ki = ctl->actuation_max / (ctl->position_tolerance / 1000) / 2;
 
     return PBIO_SUCCESS;
 }

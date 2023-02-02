@@ -246,7 +246,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     }
 
     // Load default settings for this device type.
-    err = pbio_servo_load_settings(&srv->control.settings, &srv->observer.model, type_id);
+    err = pbio_servo_load_settings(&srv->control.settings, &srv->observer.settings, &srv->observer.model, type_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -262,7 +262,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     }
 
     // Reset observer to current angle.
-    pbio_observer_reset(&srv->observer, &srv->control.settings, &angle);
+    pbio_observer_reset(&srv->observer, &angle);
 
     // Now that all checks have succeeded, we know that this motor is ready.
     // So we register this servo from control loop updates.
@@ -310,7 +310,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     }
 
     // Reset observer to new angle.
-    pbio_observer_reset(&srv->observer, &srv->control.settings, &new_angle);
+    pbio_observer_reset(&srv->observer, &new_angle);
 
     // Restore hold if control was active during reset.
     if (hold_after_reset) {
