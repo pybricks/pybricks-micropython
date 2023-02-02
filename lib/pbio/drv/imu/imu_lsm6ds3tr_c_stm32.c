@@ -240,7 +240,7 @@ retry:
     // Write the register address of the start of the gyro and accel data.
     buf[0] = LSM6DS3TR_C_OUTX_L_G;
     imu_dev->ctx.read_write_done = false;
-    HAL_StatusTypeDef ret = HAL_I2C_Master_Sequential_Transmit_IT(
+    HAL_StatusTypeDef ret = HAL_I2C_Master_Seq_Transmit_IT(
         &imu_dev->hi2c, LSM6DS3TR_C_I2C_ADD_L, buf, 1, I2C_FIRST_FRAME);
 
     if (ret != HAL_OK) {
@@ -265,7 +265,7 @@ retry:
         PROCESS_WAIT_EVENT_UNTIL(atomic_exchange(&imu_dev->int1, false));
 
         imu_dev->ctx.read_write_done = false;
-        ret = HAL_I2C_Master_Sequential_Receive_IT(
+        ret = HAL_I2C_Master_Seq_Receive_IT(
             &imu_dev->hi2c, LSM6DS3TR_C_I2C_ADD_L, buf, NUM_DATA_BYTES, I2C_NEXT_FRAME);
 
         if (ret != HAL_OK) {
