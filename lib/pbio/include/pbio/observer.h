@@ -39,10 +39,6 @@ typedef struct _pbio_observer_model_t {
     int32_t d_torque_d_speed;
     int32_t d_torque_d_acceleration;
     int32_t torque_friction;
-    /**
-     * Feedback gain (mV/deg) to correct the observer for a given estimation error.
-     */
-    int32_t feedback_gain;
 } pbio_observer_model_t;
 
 /**
@@ -58,6 +54,10 @@ typedef struct _pbio_observer_settings_t {
      * Minimum consecutive stall time before stall flag getter returns true.
      */
     uint32_t stall_time;
+    /**
+     * Feedback gain (mV/deg) to correct the observer for a given estimation error.
+     */
+    int32_t feedback_gain;
 } pbio_observer_settings_t;
 
 /**

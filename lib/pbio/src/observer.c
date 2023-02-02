@@ -110,7 +110,7 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
  */
 int32_t pbio_observer_get_feedback_voltage(pbio_observer_t *obs, const pbio_angle_t *angle) {
     int32_t error = pbio_angle_diff_mdeg(angle, &obs->angle);
-    return pbio_int_math_clamp(pbio_control_settings_mul_by_gain(error, obs->model->feedback_gain), MAX_NUM_VOLTAGE);
+    return pbio_int_math_clamp(pbio_control_settings_mul_by_gain(error, obs->settings.feedback_gain), MAX_NUM_VOLTAGE);
 }
 
 /**

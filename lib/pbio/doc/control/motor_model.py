@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import math
 import numpy
 import sympy
@@ -132,7 +134,7 @@ HEADER = textwrap.dedent(
 )
 
 
-def make_model(name, *, V, tau_0, tau_x, w_0, w_x, i_0, i_x, a, Lm, h, feedback_gain):
+def make_model(name, *, V, tau_0, tau_x, w_0, w_x, i_0, i_x, a, Lm, h):
     """Initialize the model using experimental data"""
 
     # Compute system parameters from motor curve data:
@@ -189,7 +191,6 @@ def make_model(name, *, V, tau_0, tau_x, w_0, w_x, i_0, i_x, a, Lm, h, feedback_
             .d_torque_d_speed = {round(PRESCALE_SPEED / dtau_dw.subs(model).evalf())},
             .d_torque_d_acceleration = {round(PRESCALE_ACCELERATION / dtau_da.subs(model).evalf())},
             .torque_friction = {round(tau_s * c_tau)},
-            .feedback_gain = {feedback_gain},
         }};"""
     )
 
@@ -216,7 +217,5 @@ if __name__ == "__main__":
             Lm=0.0008 * 30,
             # System model sample time
             h=0.005,
-            # Feedback voltage per degree of estimation error (mV/deg).
-            feedback_gain=90,
         )
     )
