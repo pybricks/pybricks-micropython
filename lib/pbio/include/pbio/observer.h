@@ -58,6 +58,17 @@ typedef struct _pbio_observer_settings_t {
      * Feedback gain (mV/deg) to correct the observer for a given estimation error.
      */
     int32_t feedback_gain;
+    /**
+     * Lower limit of the feedback voltage where we cannot get useful stall
+     * information because it is less than needed to overcome static friction.
+     */
+    int32_t feedback_voltage_negligible;
+    /**
+     * When the motor is stuck, the observer moves ahead and pushes back with
+     * a feedback voltage. When it equal the given voltage, it is fully stuck.
+     * This ratio (0--100) sets the threshold above which we say it is stalled.
+     */
+    int32_t feedback_voltage_stall_ratio;
 } pbio_observer_settings_t;
 
 /**

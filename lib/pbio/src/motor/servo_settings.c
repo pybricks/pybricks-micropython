@@ -237,10 +237,6 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     ctl->integral_change_max = DEG_TO_MDEG(15);
     ctl->integral_deadzone = DEG_TO_MDEG(8);
 
-    // Base observer settings for all motors.
-    obs->stall_speed_limit = ctl->stall_speed_limit;
-    obs->stall_time = ctl->stall_time;
-
     // Device type specific speed, acceleration, and PD settings.
     switch (id) {
         case PBIO_IODEV_TYPE_ID_NONE:
@@ -328,6 +324,12 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
+
+    // Base observer settings for all motors.
+    obs->stall_speed_limit = ctl->stall_speed_limit;
+    obs->stall_time = ctl->stall_time;
+    obs->feedback_voltage_stall_ratio = 75;
+    obs->feedback_voltage_negligible = 5 * pbio_observer_torque_to_voltage(*model, (*model)->torque_friction / 2);
 
     // The default speed is not used for servos currently (an explicit speed
     // is given for all run commands), so we initialize it to the maximum.
