@@ -33,8 +33,9 @@
  */
 void pbio_observer_reset(pbio_observer_t *obs, pbio_control_settings_t *settings, const pbio_angle_t *angle) {
 
-    // Save reference to settings.
-    obs->settings = settings;
+    // Adopt relevant model settings from control settings.
+    obs->settings.stall_speed_limit = settings->stall_speed_limit;
+    obs->settings.stall_speed_limit = settings->stall_speed_limit;
 
     // Reset angle to input and other states to zero.
     obs->angle = *angle;
@@ -84,7 +85,7 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
 
     // Check stall conditions.
     if (// Motor is going slow or even backward.
-        speed < obs->settings->stall_speed_limit &&
+        speed < obs->settings.stall_speed_limit &&
         // Model is ahead of reality (and therefore pushing back negative),
         // indicating an unmodelled load.
         feedback_voltage < 0 &&
@@ -188,7 +189,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
  */
 bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_t *stall_duration) {
     // Return stall flag, if stalled for some time.
-    if (obs->stalled && time - obs->stall_start > obs->settings->stall_time) {
+    if (obs->stalled && time - obs->stall_start > obs->settings.stall_time) {
         *stall_duration = time - obs->stall_start;
         return true;
     }

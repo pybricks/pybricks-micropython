@@ -46,6 +46,21 @@ typedef struct _pbio_observer_model_t {
 } pbio_observer_model_t;
 
 /**
+ * Configurable observer settings.
+ */
+typedef struct _pbio_observer_settings_t {
+    /**
+     * If this speed cannot be reached even with the maximum control signal
+     * defined in actuation_max, the controller is stalled.
+     */
+    int32_t stall_speed_limit;
+    /**
+     * Minimum consecutive stall time before stall flag getter returns true.
+     */
+    uint32_t stall_time;
+} pbio_observer_settings_t;
+
+/**
  * Motor state observer object.
  */
 typedef struct _pbio_observer_t {
@@ -84,7 +99,7 @@ typedef struct _pbio_observer_t {
     /**
      * Control settings, which includes stall settings.
      */
-    pbio_control_settings_t *settings;
+    pbio_observer_settings_t settings;
 } pbio_observer_t;
 
 // Observer state functions:
