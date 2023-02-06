@@ -16,6 +16,8 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 
+#include <pbdrv/imu.h>
+
 /**
  * Identifier for one side of a rectangle (e.g. screen) or box (e.g. a hub).
  */
@@ -34,6 +36,18 @@ void pbio_orientation_side_get_axis(pbio_orientation_side_t side, uint8_t *index
 
 void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign);
 
+#if PBIO_CONFIG_ORIENTATION_IMU
+
+void pbio_orientation_imu_new_data_handler(pbdrv_imu_dev_t *imu_dev);
+
+void pbio_orientation_imu_update_gyro_rate_bias(float *average_gyro_data);
+
+uint32_t pbio_orientation_imu_get_stationary_count(void);
+
+void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values);
+
+#endif // #if PBIO_CONFIG_ORIENTATION_IMU
+
 #else // PBIO_CONFIG_ORIENTATION
 
 static inline void pbio_orientation_side_get_axis(pbio_orientation_side_t side, uint8_t *index, int8_t *sign) {
@@ -41,6 +55,20 @@ static inline void pbio_orientation_side_get_axis(pbio_orientation_side_t side, 
 
 static inline void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign) {
 }
+
+#if PBIO_CONFIG_ORIENTATION_IMU
+
+static inline void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values) {
+}
+
+static inline uint32_t pbio_orientation_imu_get_stationary_count(void) {
+    return 0;
+}
+
+static inline void pbio_orientation_imu_update_gyro_rate_bias(float *average_gyro_data) {
+}
+
+#endif // #if PBIO_CONFIG_ORIENTATION_IMU
 
 #endif // PBIO_CONFIG_ORIENTATION
 

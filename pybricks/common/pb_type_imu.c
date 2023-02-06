@@ -10,6 +10,7 @@
 
 #include <pbdrv/imu.h>
 #include <pbio/error.h>
+#include <pbio/orientation.h>
 
 #include "py/obj.h"
 
@@ -169,19 +170,34 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(axis));
 
     float values[3];
-    pbdrv_imu_gyro_read(self->imu_dev, values);
+    pbio_orientation_imu_get_angular_velocity(self->imu_dev, values);
     common_IMU_rotate_3d_axis(self, values);
 
     return common_IMU_project_3d_axis(axis_in, values);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 
+// pybricks._common.IMU.stationary
+STATIC mp_obj_t common_IMU_stationary(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_bool(pbdrv_imu_is_stationary(self->imu_dev));
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stationary_obj, common_IMU_stationary);
+
+// pybricks._common.IMU.debug
+STATIC mp_obj_t common_IMU_debug(mp_obj_t self_in) {
+    return mp_obj_new_int(pbio_orientation_imu_get_stationary_count());
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_debug_obj, common_IMU_debug);
+
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_debug),            MP_ROM_PTR(&common_IMU_debug_obj)           },
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
     { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
+    { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&common_IMU_stationary_obj)      },
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 
