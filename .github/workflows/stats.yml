@@ -10,22 +10,10 @@ env:
 jobs:
   stats:
     name: Generate stats
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - name: Check cache for cross-compiler
-        id: check-cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-          key: gcc-arm-10-2020-q4
-      - name: Download cross-compiler
-        if: steps.check-cache.outputs.cache-hit != 'true'
-        uses: dlech/arm-none-eabi-gcc@master
-        with:
-          release: '10-2020-q4'
-          directory: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-      - name: Add cross-compiler to path
-        run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      - name: Install cross-compiler
+        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
       - name: Install python
         uses: actions/setup-python@v4
         with:
