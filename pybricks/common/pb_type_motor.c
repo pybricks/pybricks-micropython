@@ -117,7 +117,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
-    self->control = common_Control_obj_make_new(&self->srv->control);
+    self->control = pb_type_Control_obj_make_new(&self->srv->control);
     #endif
 
     #if PYBRICKS_PY_COMMON_LOGGER

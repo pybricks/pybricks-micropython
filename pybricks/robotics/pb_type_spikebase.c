@@ -50,8 +50,8 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     pb_assert(pbio_drivebase_get_drivebase_spike(&self->db, srv_left, srv_right));
 
     // Create instances of the Control class
-    self->heading_control = common_Control_obj_make_new(&self->db->control_heading);
-    self->distance_control = common_Control_obj_make_new(&self->db->control_distance);
+    self->heading_control = pb_type_Control_obj_make_new(&self->db->control_heading);
+    self->distance_control = pb_type_Control_obj_make_new(&self->db->control_distance);
 
     return MP_OBJ_FROM_PTR(self);
 }

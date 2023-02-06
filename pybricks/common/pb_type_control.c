@@ -16,19 +16,19 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 // pybricks._common.Control class object structure
-typedef struct _common_Control_obj_t {
+typedef struct _pb_type_Control_obj_t {
     mp_obj_base_t base;
     pbio_control_t *control;
     mp_obj_t scale;
     #if PYBRICKS_PY_COMMON_LOGGER
     mp_obj_t logger;
     #endif
-} common_Control_obj_t;
+} pb_type_Control_obj_t;
 
 // pybricks._common.Control.__init__/__new__
-mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
+mp_obj_t pb_type_Control_obj_make_new(pbio_control_t *control) {
 
-    common_Control_obj_t *self = m_new_obj(common_Control_obj_t);
+    pb_type_Control_obj_t *self = m_new_obj(pb_type_Control_obj_t);
     self->base.type = &pb_type_Control;
 
     self->control = control;
@@ -44,10 +44,10 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 }
 
 // pybricks._common.Control.limits
-STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Control_obj_t, self,
+        pb_type_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(acceleration),
         PB_ARG_DEFAULT_NONE(torque));
@@ -100,13 +100,13 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_limits_obj, 1, common_Control_limits);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_limits_obj, 1, pb_type_Control_limits);
 
 // pybricks._common.Control.pid
-STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Control_obj_t, self,
+        pb_type_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(kp),
         PB_ARG_DEFAULT_NONE(ki),
         PB_ARG_DEFAULT_NONE(kd),
@@ -141,13 +141,13 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_pid_obj, 1, common_Control_pid);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_pid_obj, 1, pb_type_Control_pid);
 
 // pybricks._common.Control.target_tolerances
-STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Control_obj_t, self,
+        pb_type_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(position));
 
@@ -171,13 +171,13 @@ STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_target_tolerances_obj, 1, common_Control_target_tolerances);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_target_tolerances_obj, 1, pb_type_Control_target_tolerances);
 
 // pybricks._common.Control.stall_tolerances
-STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_type_Control_stall_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Control_obj_t, self,
+        pb_type_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(time));
 
@@ -202,11 +202,11 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_stall_tolerances_obj, 1, common_Control_stall_tolerances);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_stall_tolerances_obj, 1, pb_type_Control_stall_tolerances);
 
 // pybricks._common.Control.trajectory
-STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
-    common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_Control_trajectory(mp_obj_t self_in) {
+    pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_trajectory_t *trj = &self->control->trajectory;
 
     mp_obj_t parms[13];
@@ -229,22 +229,22 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Control_trajectory_obj, common_Control_trajectory);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_trajectory_obj, pb_type_Control_trajectory);
 
 // DELETEME: This method should not be used in V3.2 or later. It may be removed
 // in a future version
 // pybricks._common.Control.done
-STATIC mp_obj_t common_Control_done(mp_obj_t self_in) {
-    common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_Control_done(mp_obj_t self_in) {
+    pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(pbio_control_is_done(self->control));
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Control_done_obj, common_Control_done);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_done_obj, pb_type_Control_done);
 
 // DELETEME: This method should not be used in V3.2 or later. It may be removed
 // in a future version
 // pybricks._common.Control.load
-STATIC mp_obj_t common_Control_load(mp_obj_t self_in) {
-    common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_Control_load(mp_obj_t self_in) {
+    pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (!pbio_control_is_active(self->control)) {
         return mp_obj_new_int(0);
@@ -253,46 +253,46 @@ STATIC mp_obj_t common_Control_load(mp_obj_t self_in) {
     // Read currently applied PID feedback torque and return as mNm.
     return mp_obj_new_int(self->control->pid_average / 1000);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Control_load_obj, common_Control_load);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_load_obj, pb_type_Control_load);
 
 // DELETEME: This method should not be used in V3.2 or later. It may be removed
 // in a future version
 // pybricks._common.Control.stalled
-STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
-    common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t pb_type_Control_stalled(mp_obj_t self_in) {
+    pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t stall_duration;
     return mp_obj_new_bool(pbio_control_is_stalled(self->control, &stall_duration));
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Control_stalled_obj, common_Control_stalled);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_stalled_obj, pb_type_Control_stalled);
 
-STATIC const pb_attr_dict_entry_t common_Control_attr_dict[] = {
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_scale, common_Control_obj_t, scale),
+STATIC const pb_attr_dict_entry_t pb_type_Control_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_scale, pb_type_Control_obj_t, scale),
     #if PYBRICKS_PY_COMMON_LOGGER
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Control_obj_t, logger),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, pb_type_Control_obj_t, logger),
     #endif // PYBRICKS_PY_COMMON_LOGGER
     PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.common.Control)
-STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&common_Control_limits_obj) },
-    { MP_ROM_QSTR(MP_QSTR_pid), MP_ROM_PTR(&common_Control_pid_obj) },
-    { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&common_Control_target_tolerances_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stall_tolerances), MP_ROM_PTR(&common_Control_stall_tolerances_obj) },
-    { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&common_Control_trajectory_obj) },
-    { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Control_done_obj) },
-    { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Control_load_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Control_stalled_obj) },
+STATIC const mp_rom_map_elem_t pb_type_Control_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&pb_type_Control_limits_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pid), MP_ROM_PTR(&pb_type_Control_pid_obj) },
+    { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&pb_type_Control_target_tolerances_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stall_tolerances), MP_ROM_PTR(&pb_type_Control_stall_tolerances_obj) },
+    { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&pb_type_Control_trajectory_obj) },
+    { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&pb_type_Control_done_obj) },
+    { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&pb_type_Control_load_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&pb_type_Control_stalled_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(pb_type_Control_locals_dict, pb_type_Control_locals_dict_table);
 
 // type(pybricks.common.Control)
 const mp_obj_type_t pb_type_Control = {
     { &mp_type_type },
     .name = MP_QSTR_Control,
     .attr = pb_attribute_handler,
-    .protocol = common_Control_attr_dict,
-    .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
+    .protocol = pb_type_Control_attr_dict,
+    .locals_dict = (mp_obj_dict_t *)&pb_type_Control_locals_dict,
 };
 
 #endif // PYBRICKS_PY_COMMON_CONTROL
