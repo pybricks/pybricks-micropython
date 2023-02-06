@@ -120,6 +120,11 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->control = pb_type_Control_obj_make_new(&self->srv->control);
     #endif
 
+    #if PYBRICKS_PY_COMMON_MOTOR_MODEL
+    // Create an instance of the MotorModel class
+    self->model = pb_type_MotorModel_obj_make_new(&self->srv->observer);
+    #endif
+
     #if PYBRICKS_PY_COMMON_LOGGER
     // Create an instance of the Logger class
     self->logger = common_Logger_obj_make_new(&self->srv->log, PBIO_SERVO_LOGGER_NUM_COLS);
@@ -375,6 +380,9 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_load_obj, common_Motor_load);
 STATIC const pb_attr_dict_entry_t common_Motor_attr_dict[] = {
     #if PYBRICKS_PY_COMMON_CONTROL
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_control, common_Motor_obj_t, control),
+    #endif
+    #if PYBRICKS_PY_COMMON_MOTOR_MODEL
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_model, common_Motor_obj_t, model),
     #endif
     #if PYBRICKS_PY_COMMON_LOGGER
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Motor_obj_t, logger),

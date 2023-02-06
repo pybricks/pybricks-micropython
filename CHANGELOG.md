@@ -10,6 +10,7 @@
   re-initialized later ([support#904]).
 - Fixed workaround for motor hold drifting away under external input
   movement ([support#863]).
+- Added `Motor.model` object to interact with the motor state estimator.
 
 ### Fixed
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).

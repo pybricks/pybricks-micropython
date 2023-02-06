@@ -34,6 +34,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_lightmatrix_fonts.c \
 	common/pb_type_lightmatrix.c \
 	common/pb_type_logger.c \
+	common/pb_type_motor_model.c \
 	common/pb_type_motor.c \
 	common/pb_type_speaker.c \
 	common/pb_type_system.c \

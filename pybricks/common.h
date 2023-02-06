@@ -76,6 +76,12 @@ extern const mp_obj_type_t pb_type_Control;
 mp_obj_t pb_type_Control_obj_make_new(pbio_control_t *control);
 #endif
 
+#if PYBRICKS_PY_COMMON_MOTOR_MODEL
+// pybricks._common.MotorModel()
+extern const mp_obj_type_t pb_type_MotorModel;
+mp_obj_t pb_type_MotorModel_obj_make_new(pbio_observer_t *observer);
+#endif
+
 #if PYBRICKS_PY_COMMON_LOGGER
 // pybricks._common.Logger()
 mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values);
@@ -85,6 +91,9 @@ mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values);
 typedef struct _common_Motor_obj_t {
     mp_obj_base_t base;
     pbio_servo_t *srv;
+    #if PYBRICKS_PY_COMMON_MOTOR_MODEL
+    mp_obj_t model;
+    #endif
     #if PYBRICKS_PY_COMMON_CONTROL
     mp_obj_t control;
     #endif

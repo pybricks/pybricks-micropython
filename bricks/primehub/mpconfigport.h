@@ -21,6 +21,7 @@
 #define PYBRICKS_PY_COMMON_LIGHT_ARRAY          (1)
 #define PYBRICKS_PY_COMMON_LIGHT_MATRIX         (1)
 #define PYBRICKS_PY_COMMON_LOGGER               (1)
+#define PYBRICKS_PY_COMMON_MOTOR_MODEL          (1)
 #define PYBRICKS_PY_COMMON_MOTORS               (1)
 #define PYBRICKS_PY_COMMON_SPEAKER              (1)
 #define PYBRICKS_PY_COMMON_SYSTEM               (1)
