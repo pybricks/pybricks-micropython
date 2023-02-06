@@ -111,7 +111,7 @@ static const char pybricks_ev3dev_help_text[] =
 #endif
 #endif
 #ifndef MICROPY_PY_SYS_PATH_DEFAULT
-#define MICROPY_PY_SYS_PATH_DEFAULT ".frozen:~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython"
+#define MICROPY_PY_SYS_PATH_DEFAULT ".frozen:~/.pybricks-micropython/lib"
 #endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
