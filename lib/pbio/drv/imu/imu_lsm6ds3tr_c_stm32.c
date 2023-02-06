@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <pbdrv/imu.h>
+#include <pbio/orientation.h>
 
 #include <contiki.h>
 #include <lsm6ds3tr_c_reg.h>
@@ -46,6 +47,14 @@ struct _pbdrv_imu_dev_t {
     float accel_scale;
     /** Raw data. */
     int16_t data[6];
+    /** Raw data point to which new samples are compared to detect stationary. */
+    int16_t stationary_data_start[6];
+    /** Sum of gyro samples during the stationary period. */
+    int32_t stationary_gyro_data_sum[3];
+    /** Number of sequential stationary samples. */
+    uint32_t stationary_sample_count;
+    /** Whether it is currently stationary, to be polled by higher level APIs. */
+    bool stationary_now;
     /** Initialization state. */
     imu_init_state_t init_state;
     /** INT1 oneshot. */
@@ -218,6 +227,65 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_END(pt);
 }
 
+// REVISIT: Should be selected based on expected noise characteristics given the selected parameters
+#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE (60)
+#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE (20)
+
+static inline bool bounded(int16_t diff, int16_t threshold) {
+    return diff < threshold && diff > -threshold;
+}
+
+static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t *imu_dev) {
+
+    // Check whether still stationary compared to constant start sample.
+    if (bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE) &&
+        bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE) &&
+        bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE) &&
+        bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE) &&
+        bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE) &&
+        bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE)
+        ) {
+        // Still not moved, so increment stationary sample counter.
+        imu_dev->stationary_sample_count++;
+
+        // Update sum of gyro data so they can be used to update offset later.
+        imu_dev->stationary_gyro_data_sum[0] += imu_dev->data[0];
+        imu_dev->stationary_gyro_data_sum[1] += imu_dev->data[1];
+        imu_dev->stationary_gyro_data_sum[2] += imu_dev->data[2];
+    } else {
+        // Not stationary anymore, so reset. Current sample becomes new start.
+        memcpy(&imu_dev->stationary_data_start[0], &imu_dev->data[0], NUM_DATA_BYTES);
+        imu_dev->stationary_now = false;
+
+        // Reset counter and gyro sum data so we can start over.
+        imu_dev->stationary_sample_count = 0;
+        imu_dev->stationary_gyro_data_sum[0] = 0;
+        imu_dev->stationary_gyro_data_sum[1] = 0;
+        imu_dev->stationary_gyro_data_sum[2] = 0;
+    }
+
+    // After about one second of stationary data, poke higher level code to update gyro bias.
+    if (imu_dev->stationary_sample_count == 833) { // REVISIT: get from ODR config value
+
+        // We can confidently tell external APIs now that we are really stationary.
+        imu_dev->stationary_now = true;
+
+        // Send average gyro data up for maintaining gyro bias or filtering.
+        float average_gyro_data[] = {
+            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X *imu_dev->stationary_gyro_data_sum[0] * imu_dev->gyro_scale / imu_dev->stationary_sample_count,
+            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y *imu_dev->stationary_gyro_data_sum[1] * imu_dev->gyro_scale / imu_dev->stationary_sample_count,
+            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z *imu_dev->stationary_gyro_data_sum[2] * imu_dev->gyro_scale / imu_dev->stationary_sample_count,
+        };
+        pbio_orientation_imu_update_gyro_rate_bias(average_gyro_data);
+
+        // Reset counter and gyro sum data so we can start over.
+        imu_dev->stationary_sample_count = 0;
+        imu_dev->stationary_gyro_data_sum[0] = 0;
+        imu_dev->stationary_gyro_data_sum[1] = 0;
+        imu_dev->stationary_gyro_data_sum[2] = 0;
+    }
+}
+
 PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
     pbdrv_imu_dev_t *imu_dev = &global_imu_dev;
     I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
@@ -281,6 +349,8 @@ retry:
         }
 
         memcpy(&imu_dev->data[0], buf, NUM_DATA_BYTES);
+        pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(imu_dev);
+        pbio_orientation_imu_new_data_handler(imu_dev);
     }
 
     PROCESS_END();
@@ -307,6 +377,10 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev) {
     }
 
     return PBIO_SUCCESS;
+}
+
+bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev) {
+    return imu_dev->stationary_now;
 }
 
 void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values) {

@@ -3,6 +3,10 @@
 
 #include <assert.h>
 
+#include <stdbool.h>
+
+#include <pbdrv/imu.h>
+
 #include <pbio/config.h>
 #include <pbio/orientation.h>
 
@@ -75,6 +79,70 @@ void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign) {
         (index[0] == (index[1] + 2) % 3) * (index[2] == (index[1] + 1) % 3) -
         (index[0] == (index[1] + 1) % 3) * (index[2] == (index[1] + 2) % 3)
         );
+}
+
+/**
+ * Coordinate type with x, y, and z floating point values.
+ */
+typedef struct _pbio_orientation_xyz_t {
+    float x; /**< X coordinate.*/
+    float y; /**< Y coordinate.*/
+    float z; /**< Z coordinate.*/
+} pbio_orientation_xyz_t;
+
+// Revisit: Create pbio API for IMUs. For now assume there is only one global IMU.
+static pbio_orientation_xyz_t average_gyro_data;
+static uint32_t stationary_counter = 0;
+
+/**
+ * Update gyro offset with new stationary data gathered by the driver. Expected to
+ * be called approximately once per second of stationary data.
+ * 
+ * @param [in] short_term_average_gyro_data  Average x, y, and z gyro rate values over the past second.
+ */
+void pbio_orientation_imu_update_gyro_rate_bias(float *short_term_average_gyro_data) {
+
+    // This counter is a measure for calibration accuracy, roughly equivalent
+    // to the accumulative number of seconds it was stationary.
+    stationary_counter++;
+
+    // The relative weight of the new data in order to build a long term
+    // average of the data without maintaining a data buffer.
+    float weight = stationary_counter >= 100 ? 0.01f : 1.0f / stationary_counter;
+    average_gyro_data.x = average_gyro_data.x * (1 - weight) + weight * short_term_average_gyro_data[0];
+    average_gyro_data.y = average_gyro_data.y * (1 - weight) + weight * short_term_average_gyro_data[1];
+    average_gyro_data.z = average_gyro_data.z * (1 - weight) + weight * short_term_average_gyro_data[2];
+}
+
+/**
+ * Gets a counter value indicating how long the IMU was stationary.
+ *
+ * @return    How many subsequent samples were stationary.
+ */
+uint32_t pbio_orientation_imu_get_stationary_count(void) {
+    return stationary_counter;
+}
+
+/**
+ * Reads the current IMU angular velocity in deg/s, compensated for offset.
+ * @param [in] imu_dev      The driver instance.
+ * @param [out] values      An array of 3 32-bit float values to hold the result.
+ */
+void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values) {
+
+    pbio_orientation_xyz_t gyro_data;
+    pbdrv_imu_gyro_read(imu_dev, (float *)&gyro_data);
+    values[0] = gyro_data.x - average_gyro_data.x;
+    values[1] = gyro_data.y - average_gyro_data.y;
+    values[2] = gyro_data.z - average_gyro_data.z;
+}
+
+/**
+ * Callback that runs when IMU driver has new data.
+ * @param [in] imu_dev     The driver instance.
+ */
+void pbio_orientation_imu_new_data_handler(pbdrv_imu_dev_t *imu_dev) {
+    // Do something with new data here.
 }
 
 #endif // PBIO_CONFIG_ORIENTATION
