@@ -203,8 +203,8 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_full_scale_set(&child, ctx, LSM6DS3TR_C_8g));
     imu_dev->accel_scale = lsm6ds3tr_c_from_fs8g_to_mg(1) * 9.81f;
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_1000dps));
-    imu_dev->gyro_scale = lsm6ds3tr_c_from_fs1000dps_to_mdps(1) / 1000.0f;
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_2000dps));
+    imu_dev->gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
     // Configure INT1 to trigger when new gyro data is ready.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
@@ -229,7 +229,7 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
 
 // REVISIT: Should be selected based on expected noise characteristics given the selected parameters
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE (60)
-#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE (20)
+#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE (10)
 
 static inline bool bounded(int16_t diff, int16_t threshold) {
     return diff < threshold && diff > -threshold;
