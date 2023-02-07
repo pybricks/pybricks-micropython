@@ -184,6 +184,13 @@ STATIC mp_obj_t common_IMU_stationary(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stationary_obj, common_IMU_stationary);
 
+// pybricks._common.IMU.heading
+STATIC mp_obj_t common_IMU_heading(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_float(pbio_orientation_imu_get_heading(self->imu_dev));
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_heading_obj, common_IMU_heading);
+
 // pybricks._common.IMU.debug
 STATIC mp_obj_t common_IMU_debug(mp_obj_t self_in) {
     return mp_obj_new_int(pbio_orientation_imu_get_stationary_count());
@@ -198,6 +205,7 @@ STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
     { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&common_IMU_stationary_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_heading),          MP_ROM_PTR(&common_IMU_heading_obj)         },
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 

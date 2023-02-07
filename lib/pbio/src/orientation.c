@@ -97,7 +97,7 @@ static uint32_t stationary_counter = 0;
 /**
  * Update gyro offset with new stationary data gathered by the driver. Expected to
  * be called approximately once per second of stationary data.
- * 
+ *
  * @param [in] short_term_average_gyro_data  Average x, y, and z gyro rate values over the past second.
  */
 void pbio_orientation_imu_update_gyro_rate_bias(float *short_term_average_gyro_data) {
@@ -108,7 +108,7 @@ void pbio_orientation_imu_update_gyro_rate_bias(float *short_term_average_gyro_d
 
     // The relative weight of the new data in order to build a long term
     // average of the data without maintaining a data buffer.
-    float weight = stationary_counter >= 100 ? 0.01f : 1.0f / stationary_counter;
+    float weight = stationary_counter >= 20 ? 0.05f : 1.0f / stationary_counter;
     average_gyro_data.x = average_gyro_data.x * (1 - weight) + weight * short_term_average_gyro_data[0];
     average_gyro_data.y = average_gyro_data.y * (1 - weight) + weight * short_term_average_gyro_data[1];
     average_gyro_data.z = average_gyro_data.z * (1 - weight) + weight * short_term_average_gyro_data[2];
@@ -130,19 +130,37 @@ uint32_t pbio_orientation_imu_get_stationary_count(void) {
  */
 void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values) {
 
-    pbio_orientation_xyz_t gyro_data;
+    pbio_orientation_xyz_t gyro_data = {0};
     pbdrv_imu_gyro_read(imu_dev, (float *)&gyro_data);
     values[0] = gyro_data.x - average_gyro_data.x;
     values[1] = gyro_data.y - average_gyro_data.y;
     values[2] = gyro_data.z - average_gyro_data.z;
 }
 
+static float yaw_rate_last;
+static float heading;
+
 /**
  * Callback that runs when IMU driver has new data.
  * @param [in] imu_dev     The driver instance.
  */
 void pbio_orientation_imu_new_data_handler(pbdrv_imu_dev_t *imu_dev) {
-    // Do something with new data here.
+    float gyro_rate[3];
+    pbio_orientation_imu_get_angular_velocity(imu_dev, gyro_rate);
+
+    // REVISIT: This should be 2 x 833, but it is slightly off. Need to
+    // review actual sample rate.
+    heading += (yaw_rate_last + gyro_rate[2]) / (1639);
+    yaw_rate_last = gyro_rate[2];
+}
+
+/**
+ * Reads the estimated IMU heading in degrees.
+ * @param [in] imu_dev      The driver instance.
+ * @return                  Heading angle.
+ */
+float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev) {
+    return heading;
 }
 
 #endif // PBIO_CONFIG_ORIENTATION
