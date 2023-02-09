@@ -146,7 +146,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
         // Pause if proportional torque is beyond maximum windup torque:
         pbio_int_math_abs(torque_proportional) >= max_windup_torque &&
         // But not if we're trying to run in the other direction (else we can get unstuck by just reversing).
-        pbio_int_math_sign(torque_proportional) != -pbio_int_math_sign(ref->speed) &&
+        pbio_int_math_sign(torque_proportional) != -pbio_int_math_sign(ref->speed - state->speed) &&
         // But not if we should be accelerating in the other direction (else we can get unstuck by just reversing).
         pbio_int_math_sign(torque_proportional) != -pbio_int_math_sign(ref->acceleration);
 
