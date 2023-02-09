@@ -195,8 +195,10 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
         PRESCALE_VOLTAGE * voltage / m->d_current_d_voltage +
         PRESCALE_TORQUE * torque / m->d_current_d_torque, MAX_NUM_CURRENT);
 
-    if ((speed_next < 0) != (speed_next - PRESCALE_TORQUE * coulomb_friction / m->d_speed_d_torque < 0)) {
-        speed_next = 0;
+    // In case of a speed transition through zero, undo (subtract) the effect
+    // of friction, to avoid inducing chatter in the speed signal.
+    if ((obs->speed < 0) != (speed_next < 0)) {
+        speed_next -= PRESCALE_TORQUE * coulomb_friction / m->d_speed_d_torque;
     }
 
     // Save new state.
