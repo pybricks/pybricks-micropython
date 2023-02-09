@@ -199,6 +199,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/differentiator.c \
 	src/drivebase.c \
 	src/error.c \
+	src/geometry.c \
 	src/int_math.c \
 	src/integrator.c \
 	src/iodev.c \
