@@ -5,6 +5,7 @@
 #define PBIO_CONFIG_DCMOTOR                 (1)
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (6)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (1)
+#define PBIO_CONFIG_GEOMETRY                (1)
 #define PBIO_CONFIG_LIGHT                   (1)
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_LIGHT_MATRIX            (1)
