@@ -46,6 +46,7 @@ STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_a
             mp_obj_new_int(self->observer->settings.feedback_gain_low),
             mp_obj_new_int(self->observer->settings.feedback_gain_high),
             mp_obj_new_int(self->observer->settings.feedback_gain_threshold),
+            mp_obj_new_int(self->observer->settings.coulomb_friction_speed_cutoff),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(get_values), get_values);
     }
@@ -54,7 +55,7 @@ STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_a
     size_t size;
     mp_obj_t *set_values;
     mp_obj_get_array(values_in, &size, &set_values);
-    if (size != 7) {
+    if (size != 8) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     self->observer->settings.stall_speed_limit = mp_obj_get_int(set_values[0]);
@@ -64,6 +65,7 @@ STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_a
     self->observer->settings.feedback_gain_low = mp_obj_get_int(set_values[4]);
     self->observer->settings.feedback_gain_high = mp_obj_get_int(set_values[5]);
     self->observer->settings.feedback_gain_threshold = mp_obj_get_int(set_values[6]);
+    self->observer->settings.coulomb_friction_speed_cutoff = mp_obj_get_int(set_values[7]);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_MotorModel_settings_obj, 1, pb_type_MotorModel_settings);

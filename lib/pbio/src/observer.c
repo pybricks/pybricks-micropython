@@ -165,11 +165,10 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     voltage += feedback_voltage;
 
     // Modified coulomb friction with transition linear in speed through origin.
-    const int32_t cutoff = 500;
     int32_t coulomb_friction = pbio_int_math_sign(obs->speed) * (
-        pbio_int_math_abs(obs->speed) > cutoff ?
+        pbio_int_math_abs(obs->speed) > obs->settings.coulomb_friction_speed_cutoff ?
         m->torque_friction:
-        pbio_int_math_abs(obs->speed) * m->torque_friction / cutoff
+        pbio_int_math_abs(obs->speed) * m->torque_friction / obs->settings.coulomb_friction_speed_cutoff
         );
 
     // Total torque equals friction plus any known external torques (currently none).

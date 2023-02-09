@@ -332,6 +332,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     obs->feedback_voltage_negligible = 5 * pbio_observer_torque_to_voltage(*model, (*model)->torque_friction / 2);
     obs->feedback_gain_high = obs->feedback_gain_low * 3;
     obs->feedback_gain_threshold = DEG_TO_MDEG(10);
+    obs->coulomb_friction_speed_cutoff = 500;
 
     // The default speed is not used for servos currently (an explicit speed
     // is given for all run commands), so we initialize it to the maximum.

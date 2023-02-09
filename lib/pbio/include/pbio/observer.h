@@ -77,6 +77,11 @@ typedef struct _pbio_observer_settings_t {
      * Threshold angle (mdeg) from which the higher observer feedback is used.
      */
     int32_t feedback_gain_threshold;
+    /**
+     * Speed (mdeg/s) below which the coulomb friction starts to linearly scale
+     * to zero to avoid a sudden numeric switch in the friction force.
+     */
+    int32_t coulomb_friction_speed_cutoff;
 } pbio_observer_settings_t;
 
 /**
