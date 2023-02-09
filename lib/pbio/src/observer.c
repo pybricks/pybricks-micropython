@@ -151,10 +151,6 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
 
     const pbio_observer_model_t *m = obs->model;
 
-    if (actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
-        // TODO
-    }
-
     // Update numerical derivative as speed sanity check.
     obs->speed_numeric = pbio_differentiator_get_speed(&obs->differentiator, angle);
 
@@ -180,6 +176,9 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     int32_t torque = coulomb_friction;
 
     // Get next state based on current state and input: x(k+1) = Ax(k) + Bu(k)
+    // This model assumes that the actuation mode is a voltage. If the real
+    // mode is coast, back EMF is slightly overestimated, but an accurate
+    // speed value is typically not needed in that use case.
     pbio_angle_add_mdeg(&obs->angle,
         PRESCALE_SPEED * obs->speed / m->d_angle_d_speed +
         PRESCALE_CURRENT * obs->current / m->d_angle_d_current +
