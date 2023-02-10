@@ -184,60 +184,35 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // Save (low-pass filtered) load for diagnostics
     ctl->pid_average = (ctl->pid_average * (100 - PBIO_CONFIG_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONFIG_CONTROL_LOOP_TIME_MS) / 100;
 
-    // Decide actuation based on whether control is on target.
-    if (!pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET)) {
-        // If we're not on target yet, we keep actuating with
-        // the PID torque value that has just been calculated.
+    // Decide actuation based on control status.
+    if (// Not on target yet, so keep actuating.
+        !pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET) ||
+        // Active completion type, so keep actuating.
+        PBIO_CONTROL_ON_COMPLETION_IS_ACTIVE(ctl->on_completion) ||
+        // Smart passive mode, and we're only just complete, so keep actuating.
+        // This ensures that any subsequent user command can pick up from here
+        // without resetting any controllers. This avoids accumulating errors
+        // in sequential relative maneuvers.
+        (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) && !pbio_control_time_is_later(ref->time, ref_end.time + pbio_control_time_ms_to_ticks(100)))
+        ) {
+        // Keep actuating, so apply calculated PID torque value.
         *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
         *control = torque;
     } else {
-        // If on target, decide what to do next using the on-completion type.
-        switch (ctl->on_completion) {
-            case PBIO_CONTROL_ON_COMPLETION_COAST:
-                // Coast the motor and stop the control loop.
-                *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
-                *control = 0;
-                pbio_control_stop(ctl);
-                break;
-            case PBIO_CONTROL_ON_COMPLETION_BRAKE:
-                // Passively brake and stop the control loop.
-                *actuation = PBIO_DCMOTOR_ACTUATION_BRAKE;
-                *control = 0;
-                pbio_control_stop(ctl);
-                break;
-            case PBIO_CONTROL_ON_COMPLETION_COAST_SMART:
-                // For smart coast, keep actuating (holding) briefly to enforce
-                // standstill. It also gives some time for two subsequent
-                // blocks to smoothly transition without going through coast.
-                if (ref->time - ref_end.time < pbio_control_time_ms_to_ticks(100)) {
-                    *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
-                    *control = torque;
-                }
-                // After that, coast the motor and stop the control loop.
-                else {
-                    *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
-                    *control = 0;
-                    pbio_control_stop(ctl);
-                }
-                break;
-            case PBIO_CONTROL_ON_COMPLETION_CONTINUE:
-            // Fall through, same as hold.
-            case PBIO_CONTROL_ON_COMPLETION_HOLD:
-                // Holding position or continuing the trajectory just means we
-                // have to keep actuating with the PID torque value that has
-                // just been calculated.
-                *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
-                *control = torque;
+        // No more control is needed, so switch to passive mode.
+        *actuation = pbio_control_passive_completion_to_actuation_type(ctl->on_completion);
+        *control = 0;
+        pbio_control_stop(ctl);
+    }
 
-                // If we are getting here on completion of a timed command with
-                // a stationary endpoint, convert it to a stationary angle
-                // based command and hold it.
-                if (pbio_control_type_is_time(ctl) && ref_end.speed == 0) {
-                    int32_t target = pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position);
-                    pbio_control_start_position_control_hold(ctl, time_now, target);
-                }
-                break;
-        }
+    // Handling hold after running for time requires an extra step because
+    // it can only be done by starting a new position based command.
+    if (pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET) &&
+        pbio_control_type_is_time(ctl) &&
+        ctl->on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD) {
+        // Use current state as target for holding.
+        int32_t target = pbio_control_settings_ctl_to_app_long(&ctl->settings, &state->position);
+        pbio_control_start_position_control_hold(ctl, time_now, target);
     }
 
     // Optionally log control data.
@@ -493,7 +468,7 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
         // errors in programs that use mostly relative motions like run_angle.
         pbio_trajectory_reference_t prev_end;
         pbio_trajectory_get_endpoint(&ctl->trajectory, &prev_end);
-        if (ctl->on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART &&
+        if (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) &&
             pbio_angle_diff_is_small(&prev_end.position, &state->position) &&
             pbio_int_math_abs(pbio_angle_diff_mdeg(&prev_end.position, &state->position)) < ctl->settings.position_tolerance * 2) {
             // We're close enough, so make the new target relative to the
@@ -555,9 +530,10 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
 
     pbio_error_t err;
 
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART) {
-        // For timed maneuvers, the end point has no meaning, so just coast.
-        on_completion = PBIO_CONTROL_ON_COMPLETION_COAST;
+    // For timed maneuvers, being "smart" by remembering the position endpoint
+    // does nothing useful, so discard it to keep only the passive actuation type.
+    if (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(on_completion)) {
+        on_completion = (pbio_control_on_completion_t)pbio_control_passive_completion_to_actuation_type(on_completion);
     }
 
     // Common trajectory parameters for the cases covered here.

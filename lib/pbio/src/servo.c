@@ -428,38 +428,36 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
         return err;
     }
 
-    switch (on_completion) {
-        case PBIO_CONTROL_ON_COMPLETION_COAST_SMART:
-        // Same as normal coast, so fall through.
-        case PBIO_CONTROL_ON_COMPLETION_COAST:
-            pbio_control_stop(&srv->control);
-            return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_COAST, 0);
-        case PBIO_CONTROL_ON_COMPLETION_BRAKE:
-            pbio_control_stop(&srv->control);
-            return pbio_servo_actuate(srv, PBIO_DCMOTOR_ACTUATION_BRAKE, 0);
-        case PBIO_CONTROL_ON_COMPLETION_HOLD: {
-            // To hold, we first have to figure out which angle to hold.
-            int32_t hold_target;
-            if (pbio_control_is_active(&srv->control)) {
-                // If control is active, hold at current target.
-                uint32_t time = pbio_control_get_ref_time(&srv->control, pbio_control_get_time_ticks());
-                pbio_trajectory_reference_t ref;
-                pbio_trajectory_get_reference(&srv->control.trajectory, time, &ref);
-                hold_target = pbio_control_settings_ctl_to_app_long(&srv->control.settings, &ref.position);
-            } else {
-                // If no control is ongoing, just hold measured state.
-                int32_t speed;
-                err = pbio_servo_get_state_user(srv, &hold_target, &speed);
-                if (err != PBIO_SUCCESS) {
-                    return err;
-                }
-            }
-            // Track the hold angle.
-            return pbio_servo_track_target(srv, hold_target);
-        }
-        default:
-            return PBIO_ERROR_INVALID_ARG;
+    // Can't stop with continue type, so this is invalid.
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
+        return PBIO_ERROR_INVALID_ARG;
     }
+
+    // Handle hold stop case.
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD) {
+        // To hold, we first have to figure out which angle to hold.
+        int32_t hold_target;
+        if (pbio_control_is_active(&srv->control)) {
+            // If control is active, hold at current target.
+            uint32_t time = pbio_control_get_ref_time(&srv->control, pbio_control_get_time_ticks());
+            pbio_trajectory_reference_t ref;
+            pbio_trajectory_get_reference(&srv->control.trajectory, time, &ref);
+            hold_target = pbio_control_settings_ctl_to_app_long(&srv->control.settings, &ref.position);
+        } else {
+            // If no control is ongoing, just hold measured state.
+            int32_t speed;
+            err = pbio_servo_get_state_user(srv, &hold_target, &speed);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+        }
+        // Track the hold angle.
+        return pbio_servo_track_target(srv, hold_target);
+    }
+
+    // All other stop modes are passive, so stop control and actuate accordingly.
+    pbio_control_stop(&srv->control);
+    return pbio_servo_actuate(srv, pbio_control_passive_completion_to_actuation_type(on_completion), 0);
 }
 
 /**

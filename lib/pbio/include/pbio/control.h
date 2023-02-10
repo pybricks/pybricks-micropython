@@ -29,18 +29,48 @@
  * Actions to be taken when a control command completes.
  */
 typedef enum {
-    /** On completion, coast the motor and reset control state. */
+    /** On completion, passively coast the motor and reset control state. */
     PBIO_CONTROL_ON_COMPLETION_COAST = PBIO_DCMOTOR_ACTUATION_COAST,
-    /** On completion, brake the motor and reset control state. */
+    /** On completion, passively brake the motor and reset control state. */
     PBIO_CONTROL_ON_COMPLETION_BRAKE = PBIO_DCMOTOR_ACTUATION_BRAKE,
     /** On completion, actively hold the motor in place */
     PBIO_CONTROL_ON_COMPLETION_HOLD,
-    /** On completion, keep moving at target speed */
+    /** On completion, actively keep moving at target speed */
     PBIO_CONTROL_ON_COMPLETION_CONTINUE,
-    /** On completion, coast the motor, but use endpoint of this maneuver
-     * as starting point for the next relative angle maneuver. */
+    /**
+     * A short while after completion, coast the motor, and use endpoint of
+     * this maneuver as starting point for the next relative angle maneuver.
+     */
     PBIO_CONTROL_ON_COMPLETION_COAST_SMART,
 } pbio_control_on_completion_t;
+
+/**
+ * Converts passive on-completion type to passive actuation type.
+ *
+ * @param [in] on_completion  What to do on completion.
+ * @return                    Matching passive actuation type.
+ */
+static inline pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuation_type(pbio_control_on_completion_t on_completion) {
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART || on_completion == PBIO_CONTROL_ON_COMPLETION_COAST) {
+        return PBIO_DCMOTOR_ACTUATION_COAST;
+    }
+    return PBIO_DCMOTOR_ACTUATION_BRAKE;
+}
+
+/**
+ * Checks if completion type is active.
+ * Returns true if the completion type is active (the controller keeps going).
+ * Returns false if it is passive (the controller eventually stops).
+ */
+#define PBIO_CONTROL_ON_COMPLETION_IS_ACTIVE(on_completion) ( \
+    (on_completion) == PBIO_CONTROL_ON_COMPLETION_HOLD || \
+    (on_completion) == PBIO_CONTROL_ON_COMPLETION_CONTINUE)
+
+/**
+ * Checks if completion type is passive with smart mode (see above).
+ */
+#define PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(on_completion) ( \
+    (on_completion) == PBIO_CONTROL_ON_COMPLETION_COAST_SMART)
 
 /**
  * State of a system that is being controlled.
