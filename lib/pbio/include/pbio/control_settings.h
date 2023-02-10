@@ -102,7 +102,7 @@ typedef struct _pbio_control_settings_t {
      * For how long to use hold mode before switching to passive mode in smart
      * brake and smart coast.
      */
-    int32_t smart_passive_hold_time;
+    uint32_t smart_passive_hold_time;
 } pbio_control_settings_t;
 
 /**
