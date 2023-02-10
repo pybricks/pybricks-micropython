@@ -193,8 +193,8 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
         // This ensures that any subsequent user command can pick up from here
         // without resetting any controllers. This avoids accumulating errors
         // in sequential relative maneuvers.
-        (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) && !pbio_control_time_is_later(ref->time, ref_end.time + pbio_control_time_ms_to_ticks(100)))
-        ) {
+        (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) &&
+         !pbio_control_time_is_later(ref->time, ref_end.time + ctl->settings.smart_passive_hold_time))) {
         // Keep actuating, so apply calculated PID torque value.
         *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
         *control = torque;

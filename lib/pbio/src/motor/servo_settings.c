@@ -236,6 +236,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     ctl->stall_time = pbio_control_time_ms_to_ticks(200);
     ctl->integral_change_max = DEG_TO_MDEG(15);
     ctl->integral_deadzone = DEG_TO_MDEG(8);
+    ctl->smart_passive_hold_time = pbio_control_time_ms_to_ticks(100);
 
     // Device type specific speed, acceleration, and PD settings.
     switch (id) {

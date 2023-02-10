@@ -98,6 +98,11 @@ typedef struct _pbio_control_settings_t {
      * Absolute bound on the rate at which the integrator accumulates errors.
      */
     int32_t integral_change_max;
+    /**
+     * For how long to use hold mode before switching to passive mode in smart
+     * brake and smart coast.
+     */
+    int32_t smart_passive_hold_time;
 } pbio_control_settings_t;
 
 /**
