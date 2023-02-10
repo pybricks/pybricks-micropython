@@ -105,9 +105,7 @@ share your thoughts on these new ports.
 
 ## Differences with other LEGO MicroPython Implementations
 
-Since Pybricks support for MINDSTORMS and SPIKE Prime is still in beta, we
-recommend that beginning users start with the official LEGO Python
-apps. Read more about the differences on the Pybricks [about page][about page].
+Read more about the differences on the Pybricks [about page].
 
 # How can I help?
 If you've got any of the hubs listed above, the best way to help right now is
