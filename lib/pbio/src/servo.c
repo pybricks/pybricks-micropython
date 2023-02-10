@@ -281,10 +281,12 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
  */
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs) {
 
-    // If are were busy moving, that means the reset was called while a motor
-    // was running in the background. To avoid confusion as to where the motor
-    // must go after the reset, we'll make it stop and hold right here.
-    bool hold_after_reset = pbio_control_is_active(&srv->control);
+    // If we were busy moving or holding position, that means the reset was
+    // called while a controller was running in the background. To avoid
+    // confusion as to where the motor must go after the reset, we'll make it
+    // stop and apply the configured stop mode right away.
+    bool apply_stop = pbio_control_is_active(&srv->control);
+    pbio_control_on_completion_t on_completion = srv->control.on_completion;
 
     // Get the current state so we can restore it after resetting if needed.
     pbio_dcmotor_actuation_t actuation;
@@ -296,6 +298,9 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Reset control state, including persistent on completion type.
+    pbio_control_reset(&srv->control);
 
     // Get new angle in state units.
     pbio_angle_t new_angle;
@@ -312,9 +317,9 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     // Reset observer to new angle.
     pbio_observer_reset(&srv->observer, &new_angle);
 
-    // Restore hold if control was active during reset.
-    if (hold_after_reset) {
-        return pbio_servo_stop(srv, PBIO_CONTROL_ON_COMPLETION_HOLD);
+    // Apply user selected completion mode on stop if control was active during reset.
+    if (apply_stop) {
+        return pbio_servo_stop(srv, on_completion);
     }
 
     // Otherwise, restore brake or passive voltage.
