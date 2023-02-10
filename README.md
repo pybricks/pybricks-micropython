@@ -32,25 +32,19 @@ reports. If you try Pybricks, please let us know what you think!
 
 # Supported Programmable Bricks & Hubs
 
-## Out now
-
-All modern Powered Up hubs can be used with [Pybricks Code][Pybricks Code],
+All modern Powered Up hubs can be used with [Pybricks Code],
 our online IDE:
 
 - LEGO Technic Hub
 - LEGO BOOST Move Hub
 - LEGO City Hub
+- LEGO SPIKE Prime Hub
+- LEGO SPIKE Essential Hub
+- LEGO MINDSTORMS Robot Inventor Hub
 
 We also support MINDSTORMS EV3. The community-supported version comes preinstalled
 with the latest [ev3dev][ev3dev-snapshot] image. It is also available via
 the [LEGO Education website][lego-education-ev3-micropython].
-
-## In beta
-
-Support for the following hubs is under [development][alpha version]:
-
-- LEGO SPIKE Prime Hub
-- LEGO MINDSTORMS Robot Inventor Hub
 
 # Development
 
