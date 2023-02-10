@@ -42,6 +42,11 @@ typedef enum {
      * this maneuver as starting point for the next relative angle maneuver.
      */
     PBIO_CONTROL_ON_COMPLETION_COAST_SMART,
+    /**
+     * A short while after completion, brake the motor, and use endpoint of
+     * this maneuver as starting point for the next relative angle maneuver.
+     */
+    PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART,
 } pbio_control_on_completion_t;
 
 /**
@@ -54,6 +59,8 @@ static inline pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuat
     if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART || on_completion == PBIO_CONTROL_ON_COMPLETION_COAST) {
         return PBIO_DCMOTOR_ACTUATION_COAST;
     }
+    // Brake and smart brake are the only remaining allowed completion options,
+    // so always return the matching actuation mode as brake.
     return PBIO_DCMOTOR_ACTUATION_BRAKE;
 }
 
@@ -70,7 +77,8 @@ static inline pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuat
  * Checks if completion type is passive with smart mode (see above).
  */
 #define PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(on_completion) ( \
-    (on_completion) == PBIO_CONTROL_ON_COMPLETION_COAST_SMART)
+    (on_completion) == PBIO_CONTROL_ON_COMPLETION_COAST_SMART || \
+    (on_completion) == PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART)
 
 /**
  * State of a system that is being controlled.

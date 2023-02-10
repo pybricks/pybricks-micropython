@@ -11,6 +11,8 @@
 - Fixed workaround for motor hold drifting away under external input
   movement ([support#863]).
 - Added `Motor.model` object to interact with the motor state estimator.
+- Added `Stop.BRAKE_SMART` as `then` option for motors. It works just like
+  `SMART_COAST`, but with passive electrical braking.
 
 ### Fixed
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).
