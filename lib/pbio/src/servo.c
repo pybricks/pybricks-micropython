@@ -428,13 +428,10 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
         return err;
     }
 
-    // Can't stop with continue type, so this is invalid.
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Handle hold stop case.
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD) {
+    // Handle HOLD case. Also enforce hold if the stop type was CONTINUE since
+    // this function needs to make it stop in all cases.
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD ||
+        on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
         // To hold, we first have to figure out which angle to hold.
         int32_t hold_target;
         if (pbio_control_is_active(&srv->control)) {
