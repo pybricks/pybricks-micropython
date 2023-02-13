@@ -92,8 +92,8 @@ static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minima
 // Prints the exception that ended the program.
 static void print_final_exception(mp_obj_t exc) {
     // Handle graceful stop with button or shutdown.
-    if (mp_obj_exception_match(exc, &mp_type_SystemAbort) ||
-        mp_obj_exception_match(exc, &mp_type_SystemExit)) {
+    if (mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemAbort)) ||
+        mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
         mp_printf(&mp_plat_print, "The program was stopped (%q).\n",
             ((mp_obj_exception_t *)MP_OBJ_TO_PTR(exc))->base.type->name);
         return;
@@ -116,7 +116,7 @@ static void run_repl() {
         // clear any pending exceptions (and run any callbacks).
         mp_handle_pending(false);
         // Print which exception triggered this.
-        print_final_exception(nlr.ret_val);
+        print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
     }
 }
 #endif
@@ -219,7 +219,7 @@ static void run_user_program(void) {
         mp_module_context_t *context = m_new_obj(mp_module_context_t);
         context->module.globals = mp_globals_get();
         mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
-        mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, MP_OBJ_NULL);
+        mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, NULL);
 
         // Run the script while letting CTRL-C interrupt it.
         mp_hal_set_interrupt_char(CHAR_CTRL_C);
@@ -235,11 +235,11 @@ static void run_user_program(void) {
         mp_hal_set_interrupt_char(-1);
         mp_handle_pending(false);
 
-        print_final_exception(nlr.ret_val);
+        print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
 
         #if PYBRICKS_OPT_COMPILER
         // On KeyboardInterrupt, drop to REPL for debugging.
-        if (mp_obj_exception_match((mp_obj_t)nlr.ret_val, &mp_type_KeyboardInterrupt)) {
+        if (mp_obj_exception_match(MP_OBJ_FROM_PTR(nlr.ret_val), MP_OBJ_FROM_PTR(&mp_type_KeyboardInterrupt))) {
 
             // The global scope is preserved to facilitate debugging, but we
             // stop active resources like motors and sounds. They are stopped

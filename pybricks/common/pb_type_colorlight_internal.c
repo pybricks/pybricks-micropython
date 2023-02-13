@@ -153,7 +153,7 @@ mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light) {
     self->cells_size = 0;
     #endif
 
-    return self;
+    return MP_OBJ_FROM_PTR(self);
 }
 
 #endif // PYBRICKS_PY_COMMON

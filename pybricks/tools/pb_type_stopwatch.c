@@ -61,9 +61,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_resume_obj, tools_StopWatch_res
 
 STATIC mp_obj_t tools_StopWatch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     tools_StopWatch_obj_t *self = m_new_obj(tools_StopWatch_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
-    tools_StopWatch_reset(self);
-    tools_StopWatch_resume(self);
+    self->base.type = type;
+    tools_StopWatch_reset(MP_OBJ_FROM_PTR(self));
+    tools_StopWatch_resume(MP_OBJ_FROM_PTR(self));
     return MP_OBJ_FROM_PTR(self);
 }
 

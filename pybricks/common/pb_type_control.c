@@ -40,7 +40,7 @@ mp_obj_t pb_type_Control_obj_make_new(pbio_control_t *control) {
 
     self->scale = mp_obj_new_int(control->settings.ctl_steps_per_app_step);
 
-    return self;
+    return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks._common.Control.limits

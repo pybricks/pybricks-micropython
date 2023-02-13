@@ -69,7 +69,7 @@ mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_o
     light->base.type = &pb_type_ColorLight_external;
     light->context = context;
     light->on = on;
-    return light;
+    return MP_OBJ_FROM_PTR(light);
 }
 
 #endif // PYBRICKS_PY_COMMON

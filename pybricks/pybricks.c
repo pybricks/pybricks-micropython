@@ -108,7 +108,7 @@ void pb_package_pybricks_init(bool import_all) {
         nlr_pop();
     } else {
         // Print initialization or import exception.
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+        mp_obj_print_exception(&mp_plat_print, MP_OBJ_FROM_PTR(nlr.ret_val));
     }
 }
 #else

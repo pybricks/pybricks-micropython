@@ -125,28 +125,28 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
 
 void pb_type_Color_reset(void) {
     // Set default contents of Color class
-    mp_obj_dict_t *colors = mp_obj_new_dict(13);
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_RED),     MP_OBJ_FROM_PTR(&pb_Color_RED_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BROWN),   MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_ORANGE),  MP_OBJ_FROM_PTR(&pb_Color_ORANGE_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_GREEN),   MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_CYAN),    MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BLUE),    MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_VIOLET),  MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BLACK),   MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_GRAY),    MP_OBJ_FROM_PTR(&pb_Color_GRAY_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_WHITE),   MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj));
-    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_NONE),    MP_OBJ_FROM_PTR(&pb_Color_NONE_obj));
-    MP_STATE_VM(pb_type_Color_dict) = colors;
+    mp_obj_t colors = mp_obj_new_dict(13);
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_RED), MP_OBJ_FROM_PTR(&pb_Color_RED_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_BROWN), MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_ORANGE), MP_OBJ_FROM_PTR(&pb_Color_ORANGE_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_YELLOW), MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_GREEN), MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_CYAN), MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_BLUE), MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_VIOLET), MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_BLACK), MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_GRAY), MP_OBJ_FROM_PTR(&pb_Color_GRAY_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_WHITE), MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj));
+    mp_obj_dict_store(colors, MP_ROM_QSTR(MP_QSTR_NONE), MP_OBJ_FROM_PTR(&pb_Color_NONE_obj));
+    MP_STATE_VM(pb_type_Color_dict) = MP_OBJ_TO_PTR(colors);
 }
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
     // If we're the class itself, use dict printer
     if (MP_OBJ_TO_PTR(self_in) == &pb_type_Color_obj) {
-        mp_type_dict.print(print, MP_STATE_VM(pb_type_Color_dict), kind);
+        mp_type_dict.print(print, MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), kind);
         return;
     }
 
@@ -178,7 +178,7 @@ STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t 
     }
 
     // Treat it like a dictionary
-    return mp_type_dict.subscr(MP_STATE_VM(pb_type_Color_dict), index, value);
+    return mp_type_dict.subscr(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), index, value);
 }
 
 STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
@@ -189,7 +189,7 @@ STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_
     }
 
     // Treat it like a dictionary
-    return mp_type_dict.getiter(MP_STATE_VM(pb_type_Color_dict), iter_buf);
+    return mp_type_dict.getiter(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), iter_buf);
 }
 
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {

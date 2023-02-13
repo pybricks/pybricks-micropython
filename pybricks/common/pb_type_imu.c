@@ -37,13 +37,13 @@ STATIC mp_obj_t common_IMU_project_3d_axis(mp_obj_t axis_in, float *values) {
     }
 
     // If X, Y, or Z is specified, return value directly for efficiency in most cases
-    if (axis_in == &pb_Axis_X_obj) {
+    if (MP_OBJ_TO_PTR(axis_in) == &pb_Axis_X_obj) {
         return mp_obj_new_float_from_f(values[0]);
     }
-    if (axis_in == &pb_Axis_Y_obj) {
+    if (MP_OBJ_TO_PTR(axis_in) == &pb_Axis_Y_obj) {
         return mp_obj_new_float_from_f(values[1]);
     }
-    if (axis_in == &pb_Axis_Z_obj) {
+    if (MP_OBJ_TO_PTR(axis_in) == &pb_Axis_Z_obj) {
         return mp_obj_new_float_from_f(values[2]);
     }
 
@@ -236,6 +236,9 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
         self->imu_dev = imu_dev;
     }
 
+    pb_assert_type(top_side_axis, &pb_type_Matrix);
+    pb_assert_type(front_side_axis, &pb_type_Matrix);
+
     // Check if we use the default orientation.
     if (MP_OBJ_TO_PTR(top_side_axis) == &pb_Axis_Z_obj && MP_OBJ_TO_PTR(front_side_axis) == &pb_Axis_X_obj) {
         // If so, we can avoid math on every read.
@@ -245,10 +248,10 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
         self->use_default_placement = false;
 
         // Extract the body X axis
-        get_normal_axis(front_side_axis, self->hub_x);
+        get_normal_axis(MP_OBJ_TO_PTR(front_side_axis), self->hub_x);
 
         // Extract the body Z axis
-        get_normal_axis(top_side_axis, self->hub_z);
+        get_normal_axis(MP_OBJ_TO_PTR(top_side_axis), self->hub_z);
 
         // Assert that X and Z are orthogonal
         float inner = self->hub_x[0] * self->hub_z[0] + self->hub_x[1] * self->hub_z[1] + self->hub_x[2] * self->hub_z[2];
@@ -262,7 +265,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
         self->hub_y[2] = self->hub_z[0] * self->hub_x[1] - self->hub_z[1] * self->hub_x[0];
     }
 
-    return self;
+    return MP_OBJ_FROM_PTR(self);
 }
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_IMU

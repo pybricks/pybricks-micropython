@@ -162,7 +162,7 @@ mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values) {
     logger->base.type = (mp_obj_type_t *)&tools_Logger_type;
     logger->log = log;
     logger->num_cols = num_values + PBIO_LOGGER_NUM_DEFAULT_COLS;
-    return logger;
+    return MP_OBJ_FROM_PTR(logger);
 }
 
 #endif // PYBRICKS_PY_COMMON_LOGGER

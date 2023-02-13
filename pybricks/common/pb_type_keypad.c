@@ -67,7 +67,7 @@ mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_mem
     self->buttons = buttons;
     self->is_pressed = is_pressed;
 
-    return self;
+    return MP_OBJ_FROM_PTR(self);
 }
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_KEYPAD

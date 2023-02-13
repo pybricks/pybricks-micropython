@@ -91,7 +91,7 @@ mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, 
     light->pbdev = pbdev;
     light->light_mode = light_mode;
     light->number_of_lights = number_of_lights;
-    return light;
+    return MP_OBJ_FROM_PTR(light);
 }
 
 #endif // PYBRICKS_PY_COMMON_LIGHT_ARRAY

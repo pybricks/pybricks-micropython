@@ -26,7 +26,7 @@ mp_obj_t pb_type_MotorModel_obj_make_new(pbio_observer_t *observer) {
     pb_type_MotorModel_obj_t *self = m_new_obj(pb_type_MotorModel_obj_t);
     self->base.type = &pb_type_MotorModel;
     self->observer = observer;
-    return self;
+    return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks._common.MotorModel.settings
