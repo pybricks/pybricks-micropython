@@ -20,6 +20,7 @@
 #include <pbio/error.h>
 #include <pbio/logger.h>
 #include <pbio/int_math.h>
+#include <pbio/motor_process.h>
 #include <pbio/servo.h>
 #include <test-pbio.h>
 
@@ -41,9 +42,8 @@ static PT_THREAD(test_servo(struct pt *pt)) {
         PT_YIELD(pt);
     }
 
-    // Start motor control process.
-    process_start(&pbio_motor_process);
-    tt_want(process_is_running(&pbio_motor_process));
+    // Start motor control process manually.
+    pbio_motor_process_start();
 
     // Initialize a servo that will stall.
     tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_C, &srv), ==, PBIO_SUCCESS);

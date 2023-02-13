@@ -47,7 +47,9 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     pbdrv_init();
+    #if PBIO_CONFIG_MOTOR_PROCESS_AUTO_START
     pbio_motor_process_start();
+    #endif
     autostart_start(autostart_processes);
 }
 
