@@ -15,6 +15,10 @@
 
 #if PBIO_CONFIG_SERVO
 
+#if PBIO_CONFIG_SERVO_NUM_DEV != PBIO_CONFIG_DCMOTOR_NUM_DEV
+#error "Number of DC Motors expected to be equal to number of Servo Motors."
+#endif
+
 #include <stdint.h>
 
 #include <pbdrv/config.h>

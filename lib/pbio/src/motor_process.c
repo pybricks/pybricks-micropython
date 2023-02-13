@@ -8,7 +8,7 @@
 
 #include <contiki.h>
 
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+#if PBIO_CONFIG_MOTOR_PROCESS != 0
 
 PROCESS(pbio_motor_process, "servo");
 
@@ -48,4 +48,4 @@ void pbio_motor_process_start(void) {
     process_start(&pbio_motor_process);
 }
 
-#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
+#endif // PBIO_CONFIG_MOTOR_PROCESS

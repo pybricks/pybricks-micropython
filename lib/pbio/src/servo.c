@@ -15,10 +15,10 @@
 #include <pbio/parent.h>
 #include <pbio/servo.h>
 
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+#if PBIO_CONFIG_SERVO
 
 // Servo motor objects
-static pbio_servo_t servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_servo_t servos[PBIO_CONFIG_SERVO_NUM_DEV];
 
 /**
  * Gets pointer to static servo instance using port id.
@@ -157,7 +157,7 @@ void pbio_servo_update_all(void) {
     pbio_error_t err;
 
     // Go through all motors.
-    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_SERVO_NUM_DEV; i++) {
         pbio_servo_t *srv = &servos[i];
 
         // Run update loop only if registered.
@@ -739,4 +739,4 @@ pbio_error_t pbio_servo_get_load(pbio_servo_t *srv, int32_t *load) {
     return PBIO_SUCCESS;
 }
 
-#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
+#endif // PBIO_CONFIG_SERVO

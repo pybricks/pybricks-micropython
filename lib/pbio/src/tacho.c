@@ -30,7 +30,7 @@ struct _pbio_tacho_t {
     pbdrv_counter_dev_t *counter;
 };
 
-static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_tacho_t tachos[PBDRV_CONFIG_COUNTER_NUM_DEV];
 
 /**
  * Gets pointer to static tacho instance using port id.

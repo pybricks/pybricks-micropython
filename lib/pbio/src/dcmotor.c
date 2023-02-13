@@ -20,7 +20,7 @@
 #error "this file is written with the assumption that we can pass battery duty to motor driver without scaling"
 #endif
 
-static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_dcmotor_t dcmotors[PBIO_CONFIG_DCMOTOR_NUM_DEV];
 
 /**
  * Stops all motors and all higher level parent objects that use them.

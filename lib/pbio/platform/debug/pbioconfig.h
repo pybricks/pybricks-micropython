@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2022 The Pybricks Authors
 
+#define PBIO_CONFIG_DCMOTOR                 (0)
+#define PBIO_CONFIG_DCMOTOR_NUM_DEV         (0)
 #define PBIO_CONFIG_LIGHT                   (1)
 #define PBIO_CONFIG_LOGGER                  (0)
 #define PBIO_CONFIG_MOTOR_PROCESS           (0)
 #define PBIO_CONFIG_SERVO                   (0)
+#define PBIO_CONFIG_SERVO_NUM_DEV           (0)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (0)
 #define PBIO_CONFIG_SERVO_PUP               (0)
 #define PBIO_CONFIG_SERVO_PUP_MOVE_HUB      (0)
