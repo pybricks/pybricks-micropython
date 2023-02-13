@@ -123,6 +123,10 @@ mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type) {
 void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type) {
     if (!mp_obj_is_type(obj, type)) {
         #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+        // HACK: for some reason, GCC 10 LTO optimizes out pb_assert_type()
+        // in the terse case. By adding an empty inline assembly statement,
+        // we prevent the incorrect optimization.
+        __asm__ ("");
         mp_raise_TypeError(NULL);
         #else
         mp_raise_msg_varg(&mp_type_TypeError, MP_ERROR_TEXT("can't convert %s to %s"),
