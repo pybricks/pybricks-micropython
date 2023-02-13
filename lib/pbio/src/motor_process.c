@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include <pbio/battery.h>
 #include <pbio/control.h>
@@ -42,6 +42,10 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
     }
 
     PROCESS_END();
+}
+
+void pbio_motor_process_start(void) {
+    process_start(&pbio_motor_process);
 }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

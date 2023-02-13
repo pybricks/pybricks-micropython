@@ -7,6 +7,7 @@
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_LIGHT_MATRIX            (1)
 
+#define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (1)
 #define PBIO_CONFIG_SERVO_PUP               (1)

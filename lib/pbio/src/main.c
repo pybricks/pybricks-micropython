@@ -20,6 +20,7 @@
 #include <pbio/light_matrix.h>
 #include <pbio/light.h>
 #include <pbio/main.h>
+#include <pbio/motor_process.h>
 #include <pbio/uartdev.h>
 
 #include "light/animation.h"
@@ -37,9 +38,6 @@ AUTOSTART_PROCESSES(
 #if PBIO_CONFIG_UARTDEV
     &pbio_uartdev_process,
 #endif
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
-    &pbio_motor_process,
-#endif
     NULL);
 
 /**
@@ -49,6 +47,7 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     pbdrv_init();
+    pbio_motor_process_start();
     autostart_start(autostart_processes);
 }
 
