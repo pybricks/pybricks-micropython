@@ -18,11 +18,13 @@
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).
 - Reduced motor motion while holding position and added configurable setter and
   getter for this deadzone.
+- Fixed type checking optimized out on Move hub ([support#950]).
 
 [support#829]: https://github.com/pybricks/support/issues/829
 [support#863]: https://github.com/pybricks/support/issues/863
 [support#904]: https://github.com/pybricks/support/issues/904
 [support#913]: https://github.com/pybricks/support/issues/913
+[support#950]: https://github.com/pybricks/support/issues/950
 
 ## [3.2.2] - 2023-01-06
 
