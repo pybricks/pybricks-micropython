@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 
+#include <contiki-lib.h>
+
 #include <pbdrv/clock.h>
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
@@ -13,10 +15,9 @@
 #include <pbio/imu.h>
 #include <pbio/servo.h>
 
-#if PBIO_CONFIG_NUM_DRIVEBASES > 0
+#if PBIO_CONFIG_DRIVEBASE
 
-// Drivebase objects
-static pbio_drivebase_t drivebases[PBIO_CONFIG_NUM_DRIVEBASES];
+LIST(pbio_drivebase_list);
 
 /**
  * Gets the state of the drivebase update loop.
@@ -237,7 +238,7 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
 /**
  * Gets drivebase instance from two servo instances.
  *
- * @param [out] db_address       Drivebase instance if available.
+ * @param [out] db               Uninitialized drive base struct that will be initialized on success.
  * @param [in]  left             Left servo instance.
  * @param [in]  right            Right servo instance.
  * @param [in]  wheel_diameter   Wheel diameter in um.
@@ -245,7 +246,7 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
  * @param [in]  use_gyro         Whether to use a gyro for heading (true) or the builtin rotation sensors (false).
  * @return                       Error code.
  */
-pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track, bool use_gyro) {
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track, bool use_gyro) {
 
     // Can't build a drive base with just one motor.
     if (left == right) {
@@ -263,25 +264,6 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
         // abstraction like a drivebase, we can't re-use it.
         return PBIO_ERROR_BUSY;
     }
-
-    // Now we know that the servos are free, there must be an available
-    // drivebase. We can just use the first one that isn't running.
-    uint8_t index;
-    for (index = 0; index < PBIO_CONFIG_NUM_DRIVEBASES; index++) {
-        if (!pbio_drivebase_update_loop_is_running(&drivebases[index])) {
-            break;
-        }
-    }
-    // Verify result is in range.
-    if (index == PBIO_CONFIG_NUM_DRIVEBASES) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    // So, this is the drivebase we'll use.
-    pbio_drivebase_t *db = &drivebases[index];
-
-    // Set return value.
-    *db_address = db;
 
     // Attach servos
     db->left = left;
@@ -303,6 +285,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     pbio_drivebase_stop_servo_control(db);
     pbio_error_t err = pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
     if (err != PBIO_SUCCESS) {
+        pbio_drivebase_put_drivebase(db);
         return err;
     }
 
@@ -315,6 +298,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
         left->control.settings.ctl_steps_per_app_step > INT32_MAX / ROT_MDEG_OVER_PI ||
         left->control.settings.ctl_steps_per_app_step > INT32_MAX / axle_track
         ) {
+        pbio_drivebase_put_drivebase(db);
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -330,10 +314,26 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     // Verify that wheel diameter was not so large that scale is now zero.
     if (db->control_distance.settings.ctl_steps_per_app_step < 1 ||
         db->control_heading.settings.ctl_steps_per_app_step < 1) {
+        pbio_drivebase_put_drivebase(db);
         return PBIO_ERROR_INVALID_ARG;
     }
 
+
+    list_push(pbio_drivebase_list, db);
+
     return PBIO_SUCCESS;
+}
+
+void pbio_drivebase_put_drivebase(pbio_drivebase_t *db) {
+    if (!db->left) {
+        // already released
+        return;
+    }
+
+    list_remove(pbio_drivebase_list, db);
+    pbio_parent_stop(&db->left->parent, true);
+    pbio_parent_stop(&db->right->parent, true);
+    db->left = db->right = NULL;
 }
 
 /**
@@ -466,11 +466,7 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
  * Updates all currently active (previously set up) drivebases.
  */
 void pbio_drivebase_update_all(void) {
-    // Go through all drive base candidates
-    for (uint8_t i = 0; i < PBIO_CONFIG_NUM_DRIVEBASES; i++) {
-
-        pbio_drivebase_t *db = &drivebases[i];
-
+    for (pbio_drivebase_t *db = list_head(pbio_drivebase_list); db != NULL; db = list_item_next(db)) {
         // If it's registered for updates, run its update loop
         if (pbio_drivebase_update_loop_is_running(db)) {
             pbio_drivebase_update(db);
@@ -815,18 +811,18 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
  * in motor degrees. Likewise, turning in place by N degrees means that both
  * motors turn by that amount.
  *
- * @param [out] db_address       Drivebase instance if available.
+ * @param [out] db               Uninitialized drive base struct that will be initialized on success.
  * @param [in]  left             Left servo instance.
  * @param [in]  right            Right servo instance.
  * @return                       Error code.
  */
-pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
-    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1000, 1000, false);
+pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right) {
+    pbio_error_t err = pbio_drivebase_get_drivebase(db, left, right, 1000, 1000, false);
 
     // The application input for spike bases is degrees per second average
     // between both wheels, so in millidegrees this is x1000.
-    (*db_address)->control_heading.settings.ctl_steps_per_app_step = 1000;
-    (*db_address)->control_distance.settings.ctl_steps_per_app_step = 1000;
+    db->control_heading.settings.ctl_steps_per_app_step = 1000;
+    db->control_distance.settings.ctl_steps_per_app_step = 1000;
     return err;
 }
 
@@ -931,4 +927,4 @@ pbio_error_t pbio_drivebase_spike_steering_to_tank(int32_t speed, int32_t steeri
 
 #endif // PBIO_CONFIG_DRIVEBASE_SPIKE
 
-#endif // PBIO_CONFIG_NUM_DRIVEBASES > 0
+#endif // PBIO_CONFIG_DRIVEBASE

@@ -5,6 +5,10 @@
 
 #if PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE
 
+#if !MICROPY_ENABLE_FINALISER
+#error "The DriveBase class requires MICROPY_ENABLE_FINALISER to function properly."
+#endif
+
 #include <math.h>
 #include <stdlib.h>
 
@@ -22,11 +26,11 @@
 // pybricks.robotics.SpikeBase class object
 typedef struct _robotics_SpikeBase_obj_t {
     mp_obj_base_t base;
-    pbio_drivebase_t *db;
     mp_obj_t left;
     mp_obj_t right;
     mp_obj_t heading_control;
     mp_obj_t distance_control;
+    pbio_drivebase_t db;
 } robotics_SpikeBase_obj_t;
 
 // pybricks.robotics.SpikeBase.__init__
@@ -49,11 +53,20 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     pb_assert(pbio_drivebase_get_drivebase_spike(&self->db, srv_left, srv_right));
 
     // Create instances of the Control class
-    self->heading_control = pb_type_Control_obj_make_new(&self->db->control_heading);
-    self->distance_control = pb_type_Control_obj_make_new(&self->db->control_distance);
+    self->heading_control = pb_type_Control_obj_make_new(&self->db.control_heading);
+    self->distance_control = pb_type_Control_obj_make_new(&self->db.control_distance);
 
     return MP_OBJ_FROM_PTR(self);
 }
+
+STATIC mp_obj_t robotics_SpikeBase_close(mp_obj_t self_in) {
+    robotics_SpikeBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    pbio_drivebase_put_drivebase(&self->db);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_SpikeBase_close_obj, robotics_SpikeBase_close);
 
 STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
     while (!pbio_drivebase_is_done(db)) {
@@ -79,10 +92,10 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_degrees(size_t n_args, const mp
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    pb_assert(pbio_drivebase_spike_drive_angle(self->db, speed_left, speed_right, angle, then));
+    pb_assert(pbio_drivebase_spike_drive_angle(&self->db, speed_left, speed_right, angle, then));
 
     if (mp_obj_is_true(wait_in)) {
-        wait_for_completion_drivebase(self->db);
+        wait_for_completion_drivebase(&self->db);
     }
 
     return mp_const_none;
@@ -109,10 +122,10 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_degrees(size_t n_args, cons
     int32_t speed_right;
     pb_assert(pbio_drivebase_spike_steering_to_tank(speed, steering, &speed_left, &speed_right));
 
-    pb_assert(pbio_drivebase_spike_drive_angle(self->db, speed_left, speed_right, angle, then));
+    pb_assert(pbio_drivebase_spike_drive_angle(&self->db, speed_left, speed_right, angle, then));
 
     if (mp_obj_is_true(wait_in)) {
-        wait_for_completion_drivebase(self->db);
+        wait_for_completion_drivebase(&self->db);
     }
 
     return mp_const_none;
@@ -134,10 +147,10 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_time(size_t n_args, const mp_ob
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    pb_assert(pbio_drivebase_spike_drive_time(self->db, speed_left, speed_right, time, then));
+    pb_assert(pbio_drivebase_spike_drive_time(&self->db, speed_left, speed_right, time, then));
 
     if (mp_obj_is_true(wait_in)) {
-        wait_for_completion_drivebase(self->db);
+        wait_for_completion_drivebase(&self->db);
     }
 
     return mp_const_none;
@@ -164,10 +177,10 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_time(size_t n_args, const m
     int32_t speed_right;
     pb_assert(pbio_drivebase_spike_steering_to_tank(speed, steering, &speed_left, &speed_right));
 
-    pb_assert(pbio_drivebase_spike_drive_time(self->db, speed_left, speed_right, time, then));
+    pb_assert(pbio_drivebase_spike_drive_time(&self->db, speed_left, speed_right, time, then));
 
     if (mp_obj_is_true(wait_in)) {
-        wait_for_completion_drivebase(self->db);
+        wait_for_completion_drivebase(&self->db);
     }
 
     return mp_const_none;
@@ -185,7 +198,7 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_forever(size_t n_args, const mp_obj
     mp_int_t speed_left = pb_obj_get_int(speed_left_in);
     mp_int_t speed_right = pb_obj_get_int(speed_right_in);
 
-    pb_assert(pbio_drivebase_spike_drive_forever(self->db, speed_left, speed_right));
+    pb_assert(pbio_drivebase_spike_drive_forever(&self->db, speed_left, speed_right));
 
     return mp_const_none;
 }
@@ -206,7 +219,7 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_forever(size_t n_args, const mp
     int32_t speed_right;
     pb_assert(pbio_drivebase_spike_steering_to_tank(speed, steering, &speed_left, &speed_right));
 
-    pb_assert(pbio_drivebase_spike_drive_forever(self->db, speed_left, speed_right));
+    pb_assert(pbio_drivebase_spike_drive_forever(&self->db, speed_left, speed_right));
 
     return mp_const_none;
 }
@@ -215,7 +228,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_forever_obj, 
 // pybricks.robotics.SpikeBase.stop
 STATIC mp_obj_t robotics_SpikeBase_stop(mp_obj_t self_in) {
     robotics_SpikeBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
+    pb_assert(pbio_drivebase_stop(&self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_SpikeBase_stop_obj, robotics_SpikeBase_stop);
@@ -232,6 +245,8 @@ STATIC const pb_attr_dict_entry_t robotics_SpikeBase_attr_dict[] = {
 
 // dir(pybricks.robotics.SpikeBase)
 STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___del__),                   MP_ROM_PTR(&robotics_SpikeBase_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_close),                     MP_ROM_PTR(&robotics_SpikeBase_close_obj) },
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_degrees),     MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_degrees_obj)     },
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_time),        MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_time_obj)        },
     { MP_ROM_QSTR(MP_QSTR_tank_move_forever),         MP_ROM_PTR(&robotics_SpikeBase_tank_move_forever_obj)             },

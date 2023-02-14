@@ -4,6 +4,7 @@
 #define PBIO_CONFIG_BATTERY                 (1)
 #define PBIO_CONFIG_DCMOTOR                 (1)
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (2)
+#define PBIO_CONFIG_DRIVEBASE               (1)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (0)
 #define PBIO_CONFIG_IMU                     (0)
 #define PBIO_CONFIG_LIGHT                   (1)

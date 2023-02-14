@@ -37,7 +37,7 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
 
     static pbio_servo_t *srv_left;
     static pbio_servo_t *srv_right;
-    static pbio_drivebase_t *db;
+    static pbio_drivebase_t db;
 
     static int32_t drive_distance;
     static int32_t drive_speed;
@@ -76,12 +76,12 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
 
     // Set up the drivebase.
     tt_uint_op(pbio_drivebase_get_drivebase(&db, srv_left, srv_right, 56000, 112000, false), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle_start, &turn_rate), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_drivebase_is_stalled(db, &stalled, &stall_duration), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle_start, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_is_stalled(&db, &stalled, &stall_duration), ==, PBIO_SUCCESS);
     tt_want(!stalled);
 
     // Get current settings and change them.
-    tt_uint_op(pbio_drivebase_get_drive_settings(db,
+    tt_uint_op(pbio_drivebase_get_drive_settings(&db,
         &drive_speed,
         &drive_acceleration,
         &drive_deceleration,
@@ -90,7 +90,7 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
         &turn_deceleration), ==, PBIO_SUCCESS);
 
     // Try to set invalid settings.
-    tt_uint_op(pbio_drivebase_set_drive_settings(db,
+    tt_uint_op(pbio_drivebase_set_drive_settings(&db,
         drive_speed,
         drive_acceleration * 100,
         drive_deceleration,
@@ -99,7 +99,7 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
         turn_deceleration), ==, PBIO_ERROR_INVALID_ARG);
 
     // Try to set invalid settings.
-    tt_uint_op(pbio_drivebase_set_drive_settings(db,
+    tt_uint_op(pbio_drivebase_set_drive_settings(&db,
         200,
         drive_acceleration * 2,
         drive_deceleration,
@@ -108,31 +108,31 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
         turn_deceleration), ==, PBIO_SUCCESS);
 
     // Drive straight for a distance and coast smart.
-    tt_uint_op(pbio_drivebase_drive_straight(db, 1000, PBIO_CONTROL_ON_COMPLETION_COAST_SMART), ==, PBIO_SUCCESS);
-    pbio_test_sleep_until(pbio_drivebase_is_done(db));
+    tt_uint_op(pbio_drivebase_drive_straight(&db, 1000, PBIO_CONTROL_ON_COMPLETION_COAST_SMART), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_drivebase_is_done(&db));
 
     // Target should be stationary and close to target.
     pbio_test_sleep_ms(&timer, 200);
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
     tt_want(pbio_test_int_is_close(drive_distance, 1000, 30));
     tt_want(pbio_test_int_is_close(drive_speed, 0, 50));
     tt_want(pbio_test_int_is_close(turn_angle, turn_angle_start, 5));
     tt_want(pbio_test_int_is_close(turn_rate, 0, 10));
 
     // Drive straight for a distance and keep driving.
-    tt_uint_op(pbio_drivebase_drive_straight(db, 1000, PBIO_CONTROL_ON_COMPLETION_CONTINUE), ==, PBIO_SUCCESS);
-    pbio_test_sleep_until(pbio_drivebase_is_done(db));
+    tt_uint_op(pbio_drivebase_drive_straight(&db, 1000, PBIO_CONTROL_ON_COMPLETION_CONTINUE), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_drivebase_is_done(&db));
 
     // Target should be moving at given speed and close to target.
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
     tt_want(pbio_test_int_is_close(drive_distance, 2000, 20));
     tt_want(pbio_test_int_is_close(drive_speed, 200, 5));
     tt_want(pbio_test_int_is_close(turn_angle, turn_angle_start, 5));
     tt_want(pbio_test_int_is_close(turn_rate, 0, 5));
 
     // Test driving/turning forever, maintaining the speed we are already on.
-    tt_uint_op(pbio_drivebase_drive_forever(db, 200, 90), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_drive_forever(&db, 200, 90), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
     tt_want(pbio_test_int_is_close(drive_distance, 2000, 20));
     tt_want(pbio_test_int_is_close(drive_speed, 200, 5));
     tt_want(pbio_test_int_is_close(turn_angle, turn_angle_start, 5));
@@ -140,20 +140,20 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
 
     // After a while, the target speed/rate should be reached.
     pbio_test_sleep_ms(&timer, 2000);
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
-    pbio_test_sleep_until(pbio_drivebase_is_done(db));
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_drivebase_is_done(&db));
     tt_want(pbio_test_int_is_close(drive_speed, 200, 5));
     tt_want(pbio_test_int_is_close(turn_rate, 90, 5));
-    tt_uint_op(pbio_drivebase_is_stalled(db, &stalled, &stall_duration), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_is_stalled(&db, &stalled, &stall_duration), ==, PBIO_SUCCESS);
     tt_want(!stalled);
 
     // Test a small curve.
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle_start, &turn_rate), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_drivebase_drive_curve(db, 10, 360, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
-    pbio_test_sleep_until(pbio_drivebase_is_done(db));
-    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle_start, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_drive_curve(&db, 10, 360, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_drivebase_is_done(&db));
+    tt_uint_op(pbio_drivebase_get_state_user(&db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
     tt_want(pbio_test_int_is_close(turn_angle, turn_angle_start + 360, 5));
-    tt_uint_op(pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_stop(&db, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
 
     // Stopping a single servo should stop both servos and the drivebase.
     pbio_dcmotor_get_state(srv_left->dcmotor, &actuation, &voltage);
@@ -169,7 +169,7 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     // Closing any motor should make drivebase operations invalid.
     tt_uint_op(pbio_dcmotor_close(srv_left->dcmotor), ==, PBIO_SUCCESS);
     pbio_test_sleep_ms(&timer, 100);
-    tt_uint_op(pbio_drivebase_is_stalled(db, &stalled, &stall_duration), ==, PBIO_ERROR_INVALID_OP);
+    tt_uint_op(pbio_drivebase_is_stalled(&db, &stalled, &stall_duration), ==, PBIO_ERROR_INVALID_OP);
 
 end:
 

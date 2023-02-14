@@ -5,6 +5,7 @@
 #define PBIO_CONFIG_DCMOTOR                 (1)
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (4)
 #define PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE (21) // Must be > PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE
+#define PBIO_CONFIG_DRIVEBASE               (1)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (0)
 #define PBIO_CONFIG_IMU                     (0)
 #define PBIO_CONFIG_LIGHT                   (1)
