@@ -90,7 +90,7 @@ bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_n
     }
 
     // If the integrator is paused for less than the stall time, we're still not stalled for now.
-    if (time_now - itg->time_pause_begin < itg->settings->stall_time) {
+    if (!pbio_control_settings_time_is_later(time_now, itg->time_pause_begin + itg->settings->stall_time)) {
         return false;
     }
 
@@ -218,7 +218,7 @@ bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t 
     }
 
     // If the integrator is paused for less than the stall time, we're still not stalled for now.
-    if (time_now - itg->time_pause_begin < itg->settings->stall_time) {
+    if (!pbio_control_settings_time_is_later(time_now, itg->time_pause_begin + itg->settings->stall_time)) {
         return false;
     }
 
