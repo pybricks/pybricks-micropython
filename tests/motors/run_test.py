@@ -180,9 +180,11 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     count = data[:, 2]
     rate = data[:, 3]
     status_flags = data[:, 4]
-    actuation_type = numpy.array([s & 0b0011 for s in status_flags])
-    stalled = numpy.array([(1 if s & 0b0100 else 0) for s in status_flags])
-    on_target = numpy.array([(1 if s & 0b1000 else 0) for s in status_flags])
+    actuation_type = numpy.array([s & 0b00011 for s in status_flags])
+    stalled_or_paused = numpy.array(
+        [(1 if s & 0b00100 else (2 if s & 0b10000 else 0)) for s in status_flags]
+    )
+    on_target = numpy.array([(1 if s & 0b01000 else 0) for s in status_flags])
     torque_total = data[:, 5]
     count_ref = data[:, 6]
     rate_ref = data[:, 7]
@@ -237,7 +239,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
         3: "Torque",
     }
     plot_status(actuate_ax, actuation_type, ACTUATION_TYPES, "Act")
-    plot_status(stall_ax, stalled, {0: "No", 1: "Yes"}, "Stall")
+    plot_status(stall_ax, stalled_or_paused, {0: "No", 1: "Yes", 2: "Paused"}, "Stall")
     plot_status(done_ax, on_target, {0: "No", 1: "Yes"}, "Done")
 
     for axis in axes:
