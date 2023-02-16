@@ -130,12 +130,16 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     int32_t windup_margin = pbio_control_settings_mul_by_loop_time(pbio_int_math_abs(state->speed)) * 2;
     int32_t max_windup_torque = ctl->settings.actuation_max + pbio_control_settings_mul_by_gain(windup_margin, ctl->settings.pid_kp);
 
+    // Speed value that is rounded to zero if small. This is used for a
+    // direction error check below to avoid false reverses near zero.
+    int32_t speed_for_direction_check = pbio_int_math_abs(state->speed) < ctl->settings.stall_speed_limit ? 0 : state->speed;
+
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
     bool pause_integration =
         // Pause if proportional torque is beyond maximum windup torque:
         pbio_int_math_abs(torque_proportional) >= max_windup_torque &&
         // But not if we're trying to run in the other direction (else we can get unstuck by just reversing).
-        pbio_int_math_sign(torque_proportional) != -pbio_int_math_sign(ref->speed - state->speed) &&
+        pbio_int_math_sign(torque_proportional) != -pbio_int_math_sign(ref->speed - speed_for_direction_check) &&
         // But not if we should be accelerating in the other direction (else we can get unstuck by just reversing).
         pbio_int_math_sign(torque_proportional) != -pbio_int_math_sign(ref->acceleration);
 
