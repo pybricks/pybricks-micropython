@@ -143,7 +143,6 @@ void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_contro
     itg->count_err_integral = 0;
     itg->time_paused_total = 0;
     itg->time_pause_begin = time_now;
-    itg->count_err_prev = 0;
     itg->trajectory_running = false;
 
     // Resume integration
@@ -153,8 +152,7 @@ void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_contro
 
 int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t target_error) {
 
-    // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
-    int32_t error_now = itg->count_err_prev;
+    int32_t error_now = position_error;
 
     // Check if integrator magnitude would decrease due to this error
     bool decrease = pbio_int_math_abs(itg->count_err_integral + pbio_control_settings_mul_by_loop_time(error_now)) < pbio_int_math_abs(itg->count_err_integral);
@@ -187,9 +185,7 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
             pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki));
     }
 
-    // Keep the error for use in next update
-    itg->count_err_prev = position_error;
-
+    // Return current value.
     return itg->count_err_integral;
 }
 

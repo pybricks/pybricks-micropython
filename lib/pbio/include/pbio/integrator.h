@@ -36,9 +36,7 @@ typedef struct _pbio_position_integrator_t {
     bool trajectory_running; // Whether the trajectory is running (1) or paused (0)
     uint32_t time_pause_begin; // Time at which we began pausing most recently, stopping integration
     uint32_t time_paused_total; // Total time we spent in a paused state
-    int32_t count_err_prev; // Position error in the previous control iteration
     int32_t count_err_integral; // Ongoing integral of position error
-    int32_t count_err_integral_max; // Maximum value of integrator
     pbio_control_settings_t *settings; // Control settings, which includes integrator settings.
 } pbio_position_integrator_t;
 
