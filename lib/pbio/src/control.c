@@ -22,17 +22,6 @@ uint32_t pbio_control_get_time_ticks(void) {
     return pbdrv_clock_get_100us();
 }
 
-/**
- * Checks if a time sample is equal to or newer than a given base time stamp.
- *
- * @param [in] sample         Sample time.
- * @param [in] base           Base time to compare to.
- * @return                    True if sample time is equal to or newer than base time, else false.
- */
-bool pbio_control_time_is_later(uint32_t sample, uint32_t base) {
-    return sample - base < UINT32_MAX / 2;
-}
-
 static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pbio_control_state_t *state, pbio_trajectory_reference_t *end) {
 
     // If no control is active, then all targets are complete.
@@ -41,7 +30,7 @@ static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pb
     }
 
     // Check if we are passed the nominal maneuver time.
-    bool time_completed = pbio_control_time_is_later(time, end->time);
+    bool time_completed = pbio_control_settings_time_is_later(time, end->time);
 
     // Timed maneuvers are done when the full duration has passed.
     if (pbio_control_type_is_time(ctl)) {
@@ -194,7 +183,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
         // without resetting any controllers. This avoids accumulating errors
         // in sequential relative maneuvers.
         (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) &&
-         !pbio_control_time_is_later(ref->time, ref_end.time + ctl->settings.smart_passive_hold_time))) {
+         !pbio_control_settings_time_is_later(ref->time, ref_end.time + ctl->settings.smart_passive_hold_time))) {
         // Keep actuating, so apply calculated PID torque value.
         *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
         *control = torque;

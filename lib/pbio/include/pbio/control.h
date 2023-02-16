@@ -187,7 +187,6 @@ typedef struct _pbio_control_t {
 
 uint32_t pbio_control_get_time_ticks(void);
 uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now);
-bool pbio_control_time_is_later(uint32_t sample, uint32_t base);
 
 // Control loop functions:
 

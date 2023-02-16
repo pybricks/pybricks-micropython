@@ -124,6 +124,17 @@ int32_t pbio_control_settings_mul_by_loop_time(int32_t input) {
 }
 
 /**
+ * Checks if a time sample is equal to or newer than a given base time stamp.
+ *
+ * @param [in] sample         Sample time.
+ * @param [in] base           Base time to compare to.
+ * @return                    True if sample time is equal to or newer than base time, else false.
+ */
+bool pbio_control_settings_time_is_later(uint32_t sample, uint32_t base) {
+    return sample - base < UINT32_MAX / 2;
+}
+
+/**
  * Gets the control limits for movement and actuation, in application units.
  *
  * @param [in]  s             Control settings structure from which to read.
