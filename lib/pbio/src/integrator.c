@@ -151,7 +151,7 @@ void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_contro
 
 }
 
-int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t position_remaining) {
+int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t target_error) {
 
     // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
     int32_t error_now = itg->count_err_prev;
@@ -177,8 +177,8 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
         int32_t integral_range_upper = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_kp) * 2;
 
         // Add change if we are near (but not too near) target, or always if it decreases the integral magnitude.
-        if ((pbio_int_math_abs(position_remaining) >= itg->settings->integral_deadzone &&
-             pbio_int_math_abs(position_remaining) <= integral_range_upper) || decrease) {
+        if ((pbio_int_math_abs(target_error) >= itg->settings->integral_deadzone &&
+             pbio_int_math_abs(target_error) <= integral_range_upper) || decrease) {
             itg->count_err_integral += pbio_control_settings_mul_by_loop_time(error_now);
         }
 

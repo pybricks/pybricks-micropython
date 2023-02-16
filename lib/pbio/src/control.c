@@ -101,8 +101,8 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     if (pbio_control_type_is_position(ctl)) {
 
         // Update count integral error and get current error state
-        int32_t position_remaining = pbio_angle_diff_mdeg(&ref_end.position, &ref->position);
-        integral_error = pbio_position_integrator_update(&ctl->position_integrator, position_error, position_remaining);
+        int32_t target_error = pbio_angle_diff_mdeg(&ref_end.position, &state->position);
+        integral_error = pbio_position_integrator_update(&ctl->position_integrator, position_error, target_error);
 
         // For position control, the proportional term is the real position error.
         position_error_used = position_error;
