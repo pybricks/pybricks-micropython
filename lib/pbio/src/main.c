@@ -47,10 +47,13 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     pbdrv_init();
+    // TODO: remove autostart - this currently starts legacy drivers like analog
+    // it has to be after pbdrv_init() but before anything else
+    autostart_start(autostart_processes);
+
     #if PBIO_CONFIG_MOTOR_PROCESS_AUTO_START
     pbio_motor_process_start();
     #endif
-    autostart_start(autostart_processes);
 }
 
 /**

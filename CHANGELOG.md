@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed move hub crashing on boot.
+
 ## [3.3.0b1] - 2023-02-17
 
 ### Added
