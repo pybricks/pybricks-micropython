@@ -1,7 +1,12 @@
 ## Unreleased
 
+## 7.0.0 - 2023-02-17
+
 ### Added
 - Added support for v2.1.0 metadata.
+
+### Changed
+- Updated firmware to v3.3.0b1.
 
 ## 6.7.0 - 2023-01-06
 
