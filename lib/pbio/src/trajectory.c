@@ -91,6 +91,7 @@ static void reverse_trajectory(pbio_trajectory_t *trj) {
     trj->th3 = -trj->th3;
 
     // Negate speeds and accelerations
+    trj->wu *= -1;
     trj->w0 *= -1;
     trj->w1 *= -1;
     trj->w3 *= -1;
@@ -119,8 +120,7 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
     pbio_trajectory_set_start(&trj->start, c);
 
     // Set speeds, scaled to ddeg/s.
-    trj->w0 = to_trajectory_speed(c->speed_target);
-    trj->w1 = to_trajectory_speed(c->speed_target);
+    trj->w0 = trj->w1 = trj->wu = to_trajectory_speed(c->speed_target);
     trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target): 0;
 }
 
@@ -256,7 +256,7 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
     trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target) : 0;
     trj->w0 = to_trajectory_speed(c->speed_start);
-    int32_t wt = to_trajectory_speed(c->speed_target);
+    int32_t wt = trj->wu = to_trajectory_speed(c->speed_target);
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
 
@@ -365,7 +365,7 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
     trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target) : 0;
     trj->w0 = to_trajectory_speed(c->speed_start);
-    int32_t wt = to_trajectory_speed(c->speed_target);
+    int32_t wt = trj->wu = to_trajectory_speed(c->speed_target);
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
 
@@ -667,6 +667,20 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, 
 // Get trajectory endpoint.
 void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end) {
     pbio_trajectory_offset_start(end, &trj->start, trj->t3, trj->th3, trj->w3, 0);
+}
+
+/**
+ * Gets the originally commanded speed for the current trajectory, even if
+ * this top speed is not reached.
+ *
+ * This is an indicator of the expected speed, which may be used to to alter
+ * control behavior for motion with sustained low speed values.
+ *
+ * @param [in]  trj     The trajectory instance.
+ * @return              The user given speed in control units.
+ */
+int32_t pbio_trajectory_get_abs_command_speed(pbio_trajectory_t *trj) {
+    return to_control_speed(pbio_int_math_abs(trj->wu));
 }
 
 // Get trajectory endpoint.

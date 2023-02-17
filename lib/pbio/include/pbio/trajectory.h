@@ -66,6 +66,7 @@ typedef struct _pbio_trajectory_t {
     int32_t th1;                         /**<  Encoder count after the acceleration in-phase */
     int32_t th2;                         /**<  Encoder count at start of acceleration out-phase */
     int32_t th3;                         /**<  Encoder count at end of maneuver */
+    int32_t wu;                          /**<  Encoder rate target originally given by user */
     int32_t w0;                          /**<  Encoder rate at start of maneuver */
     int32_t w1;                          /**<  Encoder rate target when not accelerating */
     int32_t w3;                          /**<  Encoder rate target after the maneuver ends */
@@ -83,6 +84,7 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader);
 // Reference getter functions:
 
 uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj);
+int32_t pbio_trajectory_get_abs_command_speed(pbio_trajectory_t *trj);
 void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
 void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
