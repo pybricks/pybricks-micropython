@@ -13,12 +13,14 @@
 - Added `Motor.model` object to interact with the motor state estimator.
 - Added `Stop.BRAKE_SMART` as `then` option for motors. It works just like
   `SMART_COAST`, but with passive electrical braking.
+- Added logging support for control stall and pause state.
 
 ### Fixed
 - Fixed `Light` controlling wrong ports on Move hub ([support#913]).
 - Reduced motor motion while holding position and added configurable setter and
   getter for this deadzone.
 - Fixed type checking optimized out on Move hub ([support#950]).
+- Fixed end-user stall flag coming up too early in position based control.
 
 [support#829]: https://github.com/pybricks/support/issues/829
 [support#863]: https://github.com/pybricks/support/issues/863
