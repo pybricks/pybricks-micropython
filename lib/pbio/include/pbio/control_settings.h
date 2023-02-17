@@ -83,6 +83,18 @@ typedef struct _pbio_control_settings_t {
      */
     int32_t pid_kp;
     /**
+     * Percentage of pid_kp to use for small errors at low speeds.
+     */
+    int32_t pid_kp_low_pct;
+    /**
+     * Threshold error angle below which to use lower kp constant at low speeds.
+     */
+    int32_t pid_kp_low_error_threshold;
+    /**
+     * Threshold speed below which to use the lower kp constant.
+     */
+    int32_t pid_kp_low_speed_threshold;
+    /**
      * Accumulated position error feedback constant.
      */
     int32_t pid_ki;

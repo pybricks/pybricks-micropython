@@ -237,6 +237,8 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     ctl->integral_change_max = DEG_TO_MDEG(15);
     ctl->integral_deadzone = DEG_TO_MDEG(8);
     ctl->smart_passive_hold_time = pbio_control_time_ms_to_ticks(100);
+    ctl->pid_kp_low_pct = 25;
+    ctl->pid_kp_low_error_threshold = DEG_TO_MDEG(5);
 
     // Device type specific speed, acceleration, and PD settings.
     switch (id) {
@@ -338,6 +340,9 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     // The default speed is not used for servos currently (an explicit speed
     // is given for all run commands), so we initialize it to the maximum.
     ctl->speed_default = ctl->speed_max;
+
+    // Take a definition for low speed as percentage of rated speed.
+    ctl->pid_kp_low_speed_threshold = ctl->speed_max * 15 / 100;
 
     // Deceleration defaults to same value as acceleration
     ctl->deceleration = ctl->acceleration;

@@ -21,7 +21,9 @@
   getter for this deadzone.
 - Fixed type checking optimized out on Move hub ([support#950]).
 - Fixed end-user stall flag coming up too early in position based control.
+- Further reduced stutter at low motor speeds  ([support#366]).
 
+[support#366]: https://github.com/pybricks/support/issues/366
 [support#829]: https://github.com/pybricks/support/issues/829
 [support#863]: https://github.com/pybricks/support/issues/863
 [support#904]: https://github.com/pybricks/support/issues/904

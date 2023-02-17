@@ -71,6 +71,57 @@ static bool pbio_control_status_test(pbio_control_t *ctl, pbio_control_status_fl
     return ctl->status & flag;
 }
 
+static int32_t pbio_control_get_pid_kp(pbio_control_settings_t *settings, int32_t position_error, int32_t target_error, int32_t abs_command_speed) {
+
+    // Reduced kp values are only needed for some motors under slow speed
+    // conditions. For everything else, use the default kp value.
+    if (abs_command_speed > settings->pid_kp_low_speed_threshold || position_error == 0) {
+        return settings->pid_kp;
+    }
+
+    // We only need a positive kp value, so work with absolute values
+    // throughout this function to make things easy to follow.
+    position_error = pbio_int_math_abs(position_error);
+    target_error = pbio_int_math_abs(target_error);
+
+    // Lowest kp value, used when steadily turning at slow speed.
+    const int32_t kp_low = settings->pid_kp * settings->pid_kp_low_pct / 100;
+
+    // Get equivalent kp value to produce a piece-wise affine (pwa) feedback in the
+    // position error. It grows slower at first, and then at the configured rate.
+    const int32_t kp_pwa = position_error <= settings->pid_kp_low_error_threshold ?
+        // For small errors, feedback is linear in low kp value.
+        kp_low :
+        // Above the threshold, feedback grows with the default gain.
+        settings->pid_kp - settings->pid_kp_low_error_threshold * (settings->pid_kp - kp_low) / position_error;
+
+    // Proportional control saturates where the error leads to maximum actuation.
+    // For errors any smaller than that,
+    const int32_t saturation_lower = pbio_control_settings_div_by_gain(settings->actuation_max, settings->pid_kp);
+
+    // Further away from the target, we can use the reduced value and still
+    // guarantee maximum actuation, to avoid getting stuck.
+    const int32_t saturation_upper = saturation_lower * 100 / settings->pid_kp_low_pct;
+
+    // Get the kp value as constrained by the condition to use maxium actuation
+    // close to the target to guarantee that we can always get there.
+    int32_t kp_target;
+    if (target_error < saturation_lower) {
+        kp_target = settings->pid_kp;
+    } else if (target_error > saturation_upper) {
+        kp_target = kp_low;
+    } else {
+        // In between, we gradually shift towards the higher value as we get
+        // closer to the final target to avoid a sudden transition.
+        kp_target = kp_low + settings->pid_kp *
+            (100 - settings->pid_kp_low_pct) * (saturation_upper - target_error) /
+            (saturation_upper - saturation_lower) / 100;
+    }
+
+    // The most constrained objective is obtained by taking the highest value.
+    return pbio_int_math_max(kp_pwa, kp_target);
+}
+
 /**
  * Updates the PID controller state to calculate the next actuation step.
  *
@@ -98,12 +149,12 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     // Calculate integral control errors, depending on control type.
     int32_t integral_error;
     int32_t position_error_used;
+    int32_t target_error;
     if (pbio_control_type_is_position(ctl)) {
-
+        // Get error to final position, used below to adjust controls near end.
+        target_error = pbio_angle_diff_mdeg(&ref_end.position, &state->position);
         // Update count integral error and get current error state
-        int32_t target_error = pbio_angle_diff_mdeg(&ref_end.position, &state->position);
         integral_error = pbio_position_integrator_update(&ctl->position_integrator, position_error, target_error);
-
         // For position control, the proportional term is the real position error.
         position_error_used = position_error;
     } else {
@@ -111,10 +162,13 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
         // There is no count integral control, because we do not need a second order integrator for speed control.
         position_error_used = pbio_speed_integrator_get_error(&ctl->speed_integrator, position_error);
         integral_error = 0;
+        // Speed maneuvers don't have a specific angle end target, so the error is infinite.
+        target_error = INT32_MAX;
     }
 
     // Corresponding PID control signal
-    int32_t torque_proportional = pbio_control_settings_mul_by_gain(position_error_used, ctl->settings.pid_kp);
+    int32_t pid_kp = pbio_control_get_pid_kp(&ctl->settings, position_error, target_error, pbio_trajectory_get_abs_command_speed(&ctl->trajectory));
+    int32_t torque_proportional = pbio_control_settings_mul_by_gain(position_error_used, pid_kp);
     int32_t torque_derivative = pbio_control_settings_mul_by_gain(speed_error, ctl->settings.pid_kd);
     int32_t torque_integral = pbio_control_settings_mul_by_gain(integral_error, ctl->settings.pid_ki);
 
