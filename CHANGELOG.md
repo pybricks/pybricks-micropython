@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.0b1] - 2023-02-17
+
 ### Added
 - Added support for frozen modules when building from source ([support#829]).
 - Added `close()` method to `DCMotor` and `Motor` so they can be closed and
@@ -480,7 +482,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...HEAD
+[3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
 [3.2.2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...v3.2.2
 [3.2.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...v3.2.0
