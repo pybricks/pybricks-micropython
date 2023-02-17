@@ -20,7 +20,7 @@
 #define PBIO_VERSION_MINOR 2
 
 /** The current patch version. */
-#define PBIO_VERSION_MICRO 2
+#define PBIO_VERSION_MICRO 3
 
 /** The current prerelease level as a hex digit. */
 #define PBIO_VERSION_LEVEL_HEX 0xF
