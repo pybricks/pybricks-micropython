@@ -63,13 +63,16 @@ static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_c
     s_distance->deceleration = pbio_int_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4;
 
     // Use minimum PID of both motors, to avoid overly aggressive control if
-    // one of the two motors has much higher PID values. For proportional
-    // control, take a much lower gain. Drivebases don't need it, and it makes
-    // for a smoother ride.
-    s_distance->pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp) / 4;
+    // one of the two motors has much higher PID values.
+    s_distance->pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp);
     s_distance->pid_kd = pbio_int_math_min(s_left->pid_kd, s_right->pid_kd);
 
-    // Integral control is not necessary since there is constant external
+    // Use the same thresholds for reduced proportional gain.
+    s_distance->pid_kp_low_pct = pbio_int_math_min(s_left->pid_kp_low_pct, s_right->pid_kp_low_pct);
+    s_distance->pid_kp_low_error_threshold = pbio_int_math_min(s_left->pid_kp_low_error_threshold, s_right->pid_kp_low_error_threshold);
+    s_distance->pid_kp_low_speed_threshold = pbio_int_math_min(s_left->pid_kp_low_speed_threshold, s_right->pid_kp_low_speed_threshold);
+
+    // Integral control is not necessary since there is no constant external
     // force to overcome that wouldn't be done by proportional control.
     s_distance->pid_ki = 0;
 
