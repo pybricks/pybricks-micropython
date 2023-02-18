@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import asyncssh
 import asyncio
 import csv
 import datetime
@@ -63,10 +64,22 @@ async def run_ev3dev_script(script_name, address):
     await hub.connect(address)
     print("Connected!")
 
-    # Run the script, get data and disconnect.
+    # Delete old log data.
+    for file in ("/home/robot/servo.txt", "/home/robot/control.txt"):
+        try:
+            await hub.client.sftp.remove(file)
+        except asyncssh.sftp.SFTPNoSuchFile:
+            pass
+
+    # Run script.
     await hub.run(str(script_name))
-    await hub.get("servo.txt", build_dir / "servo.txt")
-    await hub.get("control.txt", build_dir / "control.txt")
+
+    # Retrieve log data.
+    try:
+        await hub.get("servo.txt", build_dir / "servo.txt")
+        await hub.get("control.txt", build_dir / "control.txt")
+    except asyncssh.sftp.SFTPNoSuchFile:
+        pass
     await hub.disconnect()
 
 
