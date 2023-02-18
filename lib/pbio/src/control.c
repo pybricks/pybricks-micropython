@@ -75,7 +75,7 @@ static int32_t pbio_control_get_pid_kp(pbio_control_settings_t *settings, int32_
 
     // Reduced kp values are only needed for some motors under slow speed
     // conditions. For everything else, use the default kp value.
-    if (abs_command_speed > settings->pid_kp_low_speed_threshold || position_error == 0) {
+    if (abs_command_speed >= settings->pid_kp_low_speed_threshold || position_error == 0) {
         return settings->pid_kp;
     }
 
