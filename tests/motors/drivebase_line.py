@@ -1,4 +1,7 @@
-from pybricks.pupdevices import Motor, ColorSensor
+try:
+    from pybricks.pupdevices import Motor
+except ImportError:
+    from pybricks.ev3devices import Motor, ColorSensor
 from pybricks.tools import wait, StopWatch
 from pybricks.parameters import Port, Direction
 from pybricks.robotics import DriveBase

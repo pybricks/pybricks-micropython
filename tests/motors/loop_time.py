@@ -1,4 +1,7 @@
-from pybricks.pupdevices import Motor
+try:
+    from pybricks.pupdevices import Motor
+except ImportError:
+    from pybricks.ev3devices import Motor
 from pybricks.tools import wait, StopWatch
 from pybricks.parameters import Port
 from pybricks import version
