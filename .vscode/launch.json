@@ -34,6 +34,14 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Motor Test EV3",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/motors/run_test.py",
+            "args": ["${file}", "--target", "ev3dev", "--address", "192.168.133.244", "--show"],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Run via USB REPL",
             "type": "python",
             "request": "launch",
