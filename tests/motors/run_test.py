@@ -15,6 +15,7 @@ import subprocess
 import sys
 
 from pybricksdev.connections.pybricks import PybricksHub
+from pybricksdev.connections.ev3dev import EV3Connection
 from pybricksdev.connections.lego import REPLHub
 
 from pybricksdev.ble import find_device
@@ -51,6 +52,22 @@ async def run_usb_repl_script(script_name):
     await hub.run(script_name)
     await hub.disconnect()
     return hub.output
+
+
+async def run_ev3dev_script(script_name, address):
+    """Runs a script on a hub with ev3dev and awaits result."""
+
+    # Connect to the hub.
+    print("Searching for a hub.")
+    hub = EV3Connection()
+    await hub.connect(address)
+    print("Connected!")
+
+    # Run the script, get data and disconnect.
+    await hub.run(str(script_name))
+    await hub.get("servo.txt", build_dir / "servo.txt")
+    await hub.get("control.txt", build_dir / "control.txt")
+    await hub.disconnect()
 
 
 def get_data(path):
@@ -292,11 +309,12 @@ def make_plots(build_dir, show=True):
 parser = argparse.ArgumentParser(description="Run motor script and show log.")
 parser.add_argument("file", help="Script to run")
 parser.add_argument("--show", dest="show", default=False, action="store_true")
+parser.add_argument("--address", dest="address")
 parser.add_argument(
     "--target",
     dest="target",
     help="target type: %(choices)s",
-    choices=["ble", "usb", "virtual"],
+    choices=["ble", "usb", "virtual", "ev3dev"],
     default="ble",
 )
 args = parser.parse_args()
@@ -326,6 +344,8 @@ if args.target == "usb":
     hub_output = asyncio.run(run_usb_repl_script(script_archive))
 elif args.target == "ble":
     hub_output = asyncio.run(run_pybricks_script(script_archive))
+elif args.target == "ev3dev":
+    hub_output = asyncio.run(run_ev3dev_script(script_archive, args.address))
 else:
     top_path = (test_dir / "../..").absolute()
     bin_path = top_path / "bricks/virtualhub/build/virtualhub-micropython"
@@ -341,9 +361,10 @@ else:
         print(line.decode())
 
 # Save its standard output.
-with open(build_dir / "hub_output.txt", "wb") as f:
-    for line in hub_output:
-        f.write(line + b"\n")
+if hub_output is not None:
+    with open(build_dir / "hub_output.txt", "wb") as f:
+        for line in hub_output:
+            f.write(line + b"\n")
 
 # Visualize the data.
 make_plots(build_dir, args.show)
