@@ -135,8 +135,8 @@ def plot_status(axis, data, values, label):
 
 def plot_servo_data(time, data, build_dir, subtitle=None):
     """Plots data for a servo motor."""
-    # Get loop time.
-    wall_time = data[:, 1]
+    # Get loop time, convert ticks to ms.
+    wall_time = data[:, 1] / 10
     wall_time_shifted = numpy.append(2 * wall_time[0] - wall_time[1], wall_time[0:-1])
     loop_time = wall_time - wall_time_shifted
 
@@ -189,7 +189,7 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     duty_ax.set_ylim([-10000, 10000])
 
     time_ax.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
-    time_ax.set_ylabel("Time (us)")
+    time_ax.set_ylabel("Time (ms)")
     time_ax.set_xlabel("time (ms)")
 
     plot_status(actuate_ax, actuation_type, {0: "Coast", 1: "N/A", 2: "Voltage"}, "Act.")
@@ -206,7 +206,7 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
 
 def plot_control_data(time, data, build_dir, subtitle=None):
     """Plots data for the controller."""
-    maneuver_time = data[:, 1]
+    maneuver_time = data[:, 1] / 10
     count = data[:, 2]
     rate = data[:, 3]
     status_flags = data[:, 4]
@@ -258,7 +258,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     torque_ax.plot(time, torque_total, label="Total", drawstyle="steps-post")
     torque_ax.set_ylabel("torque")
 
-    time_ax.plot(time, maneuver_time / 1000, label="t - t_0", drawstyle="steps-post")
+    time_ax.plot(time, maneuver_time, label="t - t_0", drawstyle="steps-post")
     time_ax.set_ylabel("Maneuver time (ms)")
     time_ax.set_xlabel("time (ms)")
 
