@@ -38,7 +38,7 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         pbio_servo_update_all();
 
         // Reset timer to wait for next update
-        etimer_restart(&timer);
+        etimer_reset(&timer);
     }
 
     PROCESS_END();
