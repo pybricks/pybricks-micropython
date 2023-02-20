@@ -71,6 +71,32 @@ static bool pbio_control_status_test(pbio_control_t *ctl, pbio_control_status_fl
     return ctl->status & flag;
 }
 
+/**
+ * Gets the position, speed, and acceleration, on the reference trajectory.
+ *
+ * This expands the lower-level pbio_trajectory_get_reference(), by
+ * additionally compensating for the stall state of the integrators.
+ *
+ * @param [in]  ctl              Control status structure.
+ * @param [in]  time_now         Wall time (ticks).
+ * @param [in]  state            Current control state.
+ * @param [out] ref              Current reference, compensated for integrator state.
+ *
+ */
+void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref) {
+
+    // Get reference state, compensating for any time shift in position control.
+    pbio_trajectory_get_reference(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), ref);
+
+    // For timed control, further compensate reference position for the shift
+    // in the speed integrator that may have been incurred due to load.
+    if (pbio_control_type_is_time(ctl)) {
+        int32_t position_error = pbio_angle_diff_mdeg(&ref->position, &state->position);
+        int32_t position_error_used = pbio_speed_integrator_get_error(&ctl->speed_integrator, position_error);
+        pbio_angle_add_mdeg(&ref->position, position_error_used - position_error);
+    }
+}
+
 static int32_t pbio_control_get_pid_kp(pbio_control_settings_t *settings, int32_t position_error, int32_t target_error, int32_t abs_command_speed) {
 
     // Reduced kp values are only needed for some motors under slow speed
@@ -405,13 +431,27 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         if (err != PBIO_SUCCESS) {
             return err;
         }
+    } else if (pbio_control_type_is_time(ctl)) {
+        // If timed control is ongoing, start from its current reference,
+        // accounting for its integrator windup.
+        pbio_trajectory_reference_t ref;
+        pbio_control_get_reference(ctl, time_now, state, &ref);
+        command.time_start = time_now;
+        command.position_start = ref.position;
+        command.speed_start = ref.speed;
+
+        // With the command fully populated, we can calculate the trajectory.
+        err = pbio_trajectory_new_angle_command(&ctl->trajectory, &command);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     } else {
-        // Otherwise, If control is active, (re)start from the current
+        // Otherwise, if position control is active, (re)start from the current
         // reference. This way the reference just branches off on a new
         // trajectory instead of falling back slightly, avoiding a speed drop.
-        command.time_start = pbio_control_get_ref_time(ctl, time_now);
         pbio_trajectory_reference_t ref;
-        pbio_trajectory_get_reference(&ctl->trajectory, command.time_start, &ref);
+        pbio_control_get_reference(ctl, time_now, state, &ref);
+        command.time_start = time_now;
         command.position_start = ref.position;
         command.speed_start = ref.speed;
 
@@ -504,9 +544,8 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
 
     if (pbio_control_is_active(ctl)) {
         // If control is already active, restart from current reference.
-        uint32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
         pbio_trajectory_reference_t ref;
-        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
+        pbio_control_get_reference(ctl, time_now, state, &ref);
         pbio_angle_sum(&ref.position, &increment, &target);
     } else {
         // Control is inactive. We still have two options.
@@ -610,6 +649,9 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
         // Otherwise, If control is active, (re)start from the current
         // reference. This way the reference just branches off on a new
         // trajectory instead of falling back slightly, avoiding a speed drop.
+        // NB: We do not compensate for the speed integrator offset here using
+        // pbio_control_get_reference() since the new time based maneuver
+        // proceeds to use the same one.
         uint32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
         pbio_trajectory_reference_t ref;
         pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);

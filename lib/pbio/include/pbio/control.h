@@ -183,10 +183,11 @@ typedef struct _pbio_control_t {
     pbio_control_status_flag_t status;
 } pbio_control_t;
 
-// Time functions:
+// Time and reference functions:
 
 uint32_t pbio_control_get_time_ticks(void);
 uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now);
+void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref);
 
 // Control loop functions:
 

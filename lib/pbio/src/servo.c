@@ -437,24 +437,28 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
     // this function needs to make it stop in all cases.
     if (on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD ||
         on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
+
+        // Get current physical and estimated state.
+        pbio_control_state_t state;
+        err = pbio_servo_get_state_control(srv, &state);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
         // To hold, we first have to figure out which angle to hold.
-        int32_t hold_target;
+        pbio_angle_t *hold_target;
         if (pbio_control_is_active(&srv->control)) {
-            // If control is active, hold at current target.
-            uint32_t time = pbio_control_get_ref_time(&srv->control, pbio_control_get_time_ticks());
+            // If control is active, hold at current target, so get it.
+            uint32_t time = pbio_control_get_time_ticks();
             pbio_trajectory_reference_t ref;
-            pbio_trajectory_get_reference(&srv->control.trajectory, time, &ref);
-            hold_target = pbio_control_settings_ctl_to_app_long(&srv->control.settings, &ref.position);
+            pbio_control_get_reference(&srv->control, time, &state, &ref);
+            hold_target = &ref.position;
         } else {
             // If no control is ongoing, just hold measured state.
-            int32_t speed;
-            err = pbio_servo_get_state_user(srv, &hold_target, &speed);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
+            hold_target = &state.position;
         }
         // Track the hold angle.
-        return pbio_servo_track_target(srv, hold_target);
+        return pbio_servo_track_target(srv, pbio_control_settings_ctl_to_app_long(&srv->control.settings, hold_target));
     }
 
     // All other stop modes are passive, so stop control and actuate accordingly.
