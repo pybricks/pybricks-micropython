@@ -11,7 +11,7 @@
 #include <pbio/iodev.h>
 
 typedef struct {
-    pbio_iodev_type_id_t type_id;
+    pbio_iodev_t iodev;
 } pbdrv_ioport_test_platform_data_t;
 
 extern const pbdrv_ioport_test_platform_data_t
