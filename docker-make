@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if ! command -v docker >/dev/null; then
+	echo "Docker not found" >&2
+	exit 1
+fi
+
+
+image_name="pybricks-build"
+image_version="$(cat -- $0 tools/docker/make.Dockerfile | openssl sha256)"
+
+#echo docker image ls $image_name:$image_version
+#docker image ls -q $image_name:$image_version
+
+if [[ -z "$(docker image ls -q $image_name:$image_version)" ]]; then
+	echo "Building image..."
+	( cd tools/docker ; docker build -t $image_name:$image_version -f make.Dockerfile . )
+fi
+
+# docker ps --format '{{json .}}' --filter Name=repo -a
+
+#exec docker run -it -d --user $(id -u):$(id -g) --mount type=bind,dst=/src,src="$(pwd)" $image_name:$image_version -- "$@"
+# echo docker run -it --rm --user $(id -u):$(id -g) $image_name:$image_version  "$@"
+echo docker run -it --rm --mount "type=bind,dst=/src,src=$(pwd)" $image_name:$image_version "$@"
+exec docker run -it --rm --mount "type=bind,dst=/src,src=$(pwd)" $image_name:$image_version "$@"
+
