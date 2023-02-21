@@ -3,6 +3,7 @@
 This Pybricks port runs on [EV3RT](https://github.com/pybricks/ev3rt-lib), an
 RTOS for Mindstorms EV3 with the TOPPERS/HRP3 Kernel.
 
+
 ## Prerequisites
 
 Before attempting to build this, please follow the instructions to build the
@@ -121,3 +122,16 @@ make ev3rt -j && cp bricks/ev3rt/build/uImage /media/$USER/EV3RT/uImage && umoun
 
 For now, there is just the REPL and several builtin MicroPython modules.
 Sensors and motors are not yet enabled.
+
+## About TOPPERS/EV3RT and TOPPERS/HRP3 (general information not related to Pybricks)
+
+Most original information about the TOPPERS/EV3RT project is available in Japanese. Here are Google Translate links:
+
+* [EV3RT usage tutorial](https://ev3rt-git.github.io/about/)
+* [EV3RT on GitHub](https://github.com/ev3rt-git/)
+* Research paper: [EV3RT: A Real-time Software Platform for LEGO Mindstorms EV3](https://www.jstage.jst.go.jp/article/jssst/34/4/34_4_91/_pdf/-char/en) (2017, PDF) [Meta](https://www.jstage.jst.go.jp/article/jssst/34/4/34_4_91/_article/-char/en)
+* [TOPPERS/EV3RT Wiki](https://dev-toppers-jp.translate.goog/trac_user/ev3pf/wiki/WhatsEV3RT?_x_tr_sch=http&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp)
+* [TOPPERS/HRP3 kernel home page](https://www-toppers-jp.translate.goog/hrp3-kernel.html?_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp)
+* [EV3RT releases with changelog](https://dev.toppers.jp/trac_user/ev3pf/wiki/Download)
+* [EV3RT internals](https://toppers.jp/trac_user/ev3pf/attachment/wiki/seminar_text/ev3rt-internals-2020.pdf) (slides, JP)
+* EV3way-ET: [model](https://github-com.translate.goog/ETrobocon/etroboEV3/wiki?_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp) [EV3RT code](https://github-com.translate.goog/ETrobocon/etroboEV3/wiki/sample_program?_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en&_x_tr_pto=wapp)
