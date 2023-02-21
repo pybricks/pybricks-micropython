@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
+#include <string.h>
+
 #include "py/mpconfig.h"
 #include "py/obj.h"
 #include "py/objmodule.h"
