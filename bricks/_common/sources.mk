@@ -118,6 +118,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/battery/battery_adc.c \
 	drv/battery/battery_linux_ev3.c \
 	drv/battery/battery_nxt.c \
+	drv/battery/battery_test.c \
 	drv/battery/battery_virtual.c \
 	drv/block_device/block_device_flash_stm32.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
@@ -133,12 +134,14 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/button/button_linux_ev3.c \
 	drv/button/button_nxt.c \
 	drv/button/button_resistor_ladder.c \
+	drv/button/button_test.c \
 	drv/button/button_virtual.c \
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_ev3rt.c \
 	drv/clock/clock_linux.c \
 	drv/clock/clock_nxt.c \
 	drv/clock/clock_stm32.c \
+	drv/clock/clock_test.c \
 	drv/clock/clock_virtual.c \
 	drv/core.c \
 	drv/counter/counter_core.c \
@@ -155,6 +158,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/ioport/ioport_ev3dev_stretch.c \
 	drv/ioport/ioport_lpf2.c \
 	drv/ioport/ioport_nxt.c \
+	drv/ioport/ioport_test.c \
 	drv/ioport/ioport_virtual_cpython.c \
 	drv/led/led_array_pwm.c \
 	drv/led/led_array.c \
@@ -170,6 +174,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \
+	drv/pwm/pwm_test.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/reset/reset_nxt.c \
 	drv/reset/reset_stm32.c \
