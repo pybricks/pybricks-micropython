@@ -191,6 +191,7 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     time_ax.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
     time_ax.set_ylabel("Time (ms)")
     time_ax.set_xlabel("time (ms)")
+    time_ax.set_ylim(0, 10)
 
     plot_status(actuate_ax, actuation_type, {0: "Coast", 1: "N/A", 2: "Voltage"}, "Act.")
     plot_status(stall_ax, stalled, {0: "No", 1: "Yes"}, "Stall.")
