@@ -18,6 +18,8 @@
 #include <pbio/util.h>
 #include "counter.h"
 
+#include <pbdrv/clock.h>
+
 #define DEBUG 0
 #if DEBUG
 #define dbg_err(s) perror(s)
@@ -28,6 +30,9 @@
 typedef struct {
     pbdrv_counter_dev_t *dev;
     FILE *count;
+    uint32_t time_us_last;
+    int32_t rotations_last;
+    int32_t millidegrees_last;
 } private_data_t;
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV];
@@ -37,6 +42,16 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_angle(pbdrv_counter_dev
 
     if (!priv->count) {
         return PBIO_ERROR_NO_DEV;
+    }
+
+    uint32_t time_now = pbdrv_clock_get_us();
+
+    // If values were recently read, return those again.
+    // This reduces unnecessary I/O operations.
+    if (time_now - priv->time_us_last < 2000) {
+        *rotations = priv->rotations_last;
+        *millidegrees = priv->millidegrees_last;
+        return PBIO_SUCCESS;
     }
 
     if (fseek(priv->count, 0, SEEK_SET) == -1) {
@@ -51,6 +66,11 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_angle(pbdrv_counter_dev
     // ev3dev stretch provides 720 counts per rotation.
     *rotations = count / 720;
     *millidegrees = (count % 720) * 500;
+
+    // Updated cached values
+    priv->time_us_last = time_now;
+    priv->rotations_last = *rotations;
+    priv->millidegrees_last = *millidegrees;
 
     return PBIO_SUCCESS;
 }

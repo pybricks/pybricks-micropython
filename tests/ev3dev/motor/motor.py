@@ -1,5 +1,6 @@
 from pybricks.ev3devices import Motor
 from pybricks.parameters import Port
+from pybricks.tools import wait
 
 IIO_BASE = (
     "/sys/devices/platform/soc@1c00000/ti-pruss/1c32000.pru1"
@@ -40,6 +41,7 @@ m = Motor(Port.A)
 print(m.angle())  # expect 0
 
 write_iio("in_count0_raw", "360")
+wait(5)  # Values may be cached briefly
 print(m.angle())  # expect 180
 
 # testing stalled
