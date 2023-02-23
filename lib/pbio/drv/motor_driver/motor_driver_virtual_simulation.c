@@ -227,7 +227,7 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
             driver->current = current_next;
         }
 
-        etimer_restart(&tick_timer);
+        etimer_reset(&tick_timer);
     }
 
     PROCESS_END();
