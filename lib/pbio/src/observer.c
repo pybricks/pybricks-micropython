@@ -162,7 +162,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
 
     // The observer will get the applied voltage plus the feedback voltage to
     // keep it in sync with the real system.
-    voltage += feedback_voltage;
+    int32_t model_voltage = pbio_int_math_clamp(voltage + feedback_voltage, MAX_NUM_VOLTAGE);
 
     // Modified coulomb friction with transition linear in speed through origin.
     int32_t coulomb_friction = pbio_int_math_sign(obs->speed) * (
@@ -181,17 +181,17 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     pbio_angle_add_mdeg(&obs->angle,
         PRESCALE_SPEED * obs->speed / m->d_angle_d_speed +
         PRESCALE_CURRENT * obs->current / m->d_angle_d_current +
-        PRESCALE_VOLTAGE * voltage / m->d_angle_d_voltage +
+        PRESCALE_VOLTAGE * model_voltage / m->d_angle_d_voltage +
         PRESCALE_TORQUE * torque / m->d_angle_d_torque);
     int32_t speed_next = pbio_int_math_clamp(0 +
         PRESCALE_SPEED * obs->speed / m->d_speed_d_speed +
         PRESCALE_CURRENT * obs->current / m->d_speed_d_current +
-        PRESCALE_VOLTAGE * voltage / m->d_speed_d_voltage +
+        PRESCALE_VOLTAGE * model_voltage / m->d_speed_d_voltage +
         PRESCALE_TORQUE * torque / m->d_speed_d_torque, MAX_NUM_SPEED);
     int32_t current_next = pbio_int_math_clamp(0 +
         PRESCALE_SPEED * obs->speed / m->d_current_d_speed +
         PRESCALE_CURRENT * obs->current / m->d_current_d_current +
-        PRESCALE_VOLTAGE * voltage / m->d_current_d_voltage +
+        PRESCALE_VOLTAGE * model_voltage / m->d_current_d_voltage +
         PRESCALE_TORQUE * torque / m->d_current_d_torque, MAX_NUM_CURRENT);
 
     // In case of a speed transition through zero, undo (subtract) the effect
