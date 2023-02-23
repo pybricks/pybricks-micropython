@@ -436,7 +436,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         // accounting for its integrator windup.
         pbio_trajectory_reference_t ref;
         pbio_control_get_reference(ctl, time_now, state, &ref);
-        command.time_start = time_now;
+        command.time_start = ref.time;
         command.position_start = ref.position;
         command.speed_start = ref.speed;
 
@@ -451,7 +451,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         // trajectory instead of falling back slightly, avoiding a speed drop.
         pbio_trajectory_reference_t ref;
         pbio_control_get_reference(ctl, time_now, state, &ref);
-        command.time_start = time_now;
+        command.time_start = ref.time;
         command.position_start = ref.position;
         command.speed_start = ref.speed;
 
