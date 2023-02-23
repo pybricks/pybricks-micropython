@@ -11,7 +11,7 @@
         {
             "label": "build ev3dev deploy",
             "type": "shell",
-            "command": "make ev3dev-armel -j && cp bricks/ev3dev/pybricks-micropython /run/user/1000/gvfs/sftp:host=*,user=robot/home/robot"
+            "command": "make ev3dev-armel -j && cp bricks/ev3dev/pybricks-micropython /run/user/1000/gvfs/sftp:host=*/home/robot"
         },
         {
             "label": "build virtualhub",
