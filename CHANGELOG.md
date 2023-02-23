@@ -9,7 +9,11 @@
 - Fixed position based commands starting from the wrong position if the
   previous command was a time based command that could not hit its
   target ([support#956]).
+- Fixed EV3 motors getting out of date with the updated motor
+  controllers ([support#941]) and  ([support#955]).
 
+[support#941]: https://github.com/pybricks/support/issues/941
+[support#955]: https://github.com/pybricks/support/issues/955
 [support#956]: https://github.com/pybricks/support/issues/956
 
 ## [3.3.0b1] - 2023-02-17

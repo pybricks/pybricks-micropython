@@ -249,16 +249,16 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
             *model = &model_ev3_m;
             ctl->speed_max = DEG_TO_MDEG(2000);
             ctl->acceleration = DEG_TO_MDEG(8000);
-            ctl->pid_kp = 3000;
-            ctl->pid_kd = 30;
+            ctl->pid_kp = 15000;
+            ctl->pid_kd = 1800;
             obs->feedback_gain_low = 45;
             break;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
             *model = &model_ev3_l;
             ctl->speed_max = DEG_TO_MDEG(1600);
             ctl->acceleration = DEG_TO_MDEG(3200);
-            ctl->pid_kp = 15000;
-            ctl->pid_kd = 250;
+            ctl->pid_kp = 40000;
+            ctl->pid_kd = 5000;
             obs->feedback_gain_low = 40;
             break;
         #endif // PBIO_CONFIG_SERVO_EV3_NXT
