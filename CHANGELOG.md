@@ -10,8 +10,10 @@
   previous command was a time based command that could not hit its
   target ([support#956]).
 - Fixed EV3 motors getting out of date with the updated motor
-  controllers ([support#941]) and  ([support#955]).
+  controllers ([support#941]) and ([support#955]).
+- Fixed long delay when connecting to remote on SPIKE hubs ([support#466]).
 
+[support#466]: https://github.com/pybricks/support/issues/466
 [support#941]: https://github.com/pybricks/support/issues/941
 [support#955]: https://github.com/pybricks/support/issues/955
 [support#956]: https://github.com/pybricks/support/issues/956

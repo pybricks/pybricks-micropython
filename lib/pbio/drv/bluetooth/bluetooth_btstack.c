@@ -154,6 +154,21 @@ static void nordic_can_send(void *context) {
     send->done();
 }
 
+/**
+ * Runs tasks that may be waiting for event and notifies external subscriber.
+ *
+ * @param [in]  packet  Pointer to the raw packet data.
+ */
+static void propagate_event(uint8_t *packet) {
+    event_packet = packet;
+    pbio_task_queue_run_once(task_queue);
+    event_packet = NULL;
+
+    if (bluetooth_on_event) {
+        bluetooth_on_event();
+    }
+}
+
 static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     switch (packet_type) {
         case HCI_EVENT_PACKET:
@@ -181,6 +196,8 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
         default:
             break;
     }
+
+    propagate_event(packet);
 }
 
 // REVISIT: does this need to be separate from packet_handler()?
@@ -245,6 +262,8 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
         default:
             break;
     }
+
+    propagate_event(packet);
 }
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
@@ -370,13 +389,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             break;
     }
 
-    event_packet = packet;
-    pbio_task_queue_run_once(task_queue);
-    event_packet = NULL;
-
-    if (bluetooth_on_event) {
-        bluetooth_on_event();
-    }
+    propagate_event(packet);
 }
 
 // ATT Client Read Callback for Dynamic Data
