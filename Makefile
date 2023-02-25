@@ -111,6 +111,7 @@ virtualhub: mpy-cross
 
 clean-virtualhub: clean-mpy-cross
 	@$(MAKE) -C bricks/virtualhub clean CROSS_COMPILE=
+	@$(MAKE) -C bricks/virtualhub clean DEBUG=1
 
 debug: mpy-cross
 	@$(MAKE) -C bricks/debug build/firmware.dfu
