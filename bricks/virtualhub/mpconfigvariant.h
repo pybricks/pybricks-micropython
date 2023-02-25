@@ -35,6 +35,13 @@
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE (0)
 #define PYBRICKS_PY_TOOLS               (1)
 
+// Pybricks options
+#define PYBRICKS_OPT_COMPILER                   (1)
+#define PYBRICKS_OPT_FLOAT                      (1)
+#define PYBRICKS_OPT_TERSE_ERR                  (0)
+#define PYBRICKS_OPT_EXTRA_MOD                  (1)
+#define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
+
 // Upstream MicroPython options
 #define MICROPY_MODULE_ATTR_DELEGATION          (1)
 #define MICROPY_MODULE_BUILTIN_INIT             (1)
