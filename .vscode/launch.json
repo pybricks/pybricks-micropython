@@ -105,23 +105,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
-                "./tests/motors/single_motor.py"
+                "./tests/motors/open_loop.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
-                {
-                    "name": "PYTHONPATH",
-                    "value": "lib/pbio/cpython"
-                },
-                {
-                    "name": "PBIO_VIRTUAL_PLATFORM_MODULE",
-                    "value": "pbio_virtual.platform.robot"
-                },
-                {
-                    "name": "PATH",
-                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}",
-                }
             ],
             "externalConsole": false,
             "MIMode": "gdb",

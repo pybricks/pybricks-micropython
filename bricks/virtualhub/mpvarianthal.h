@@ -65,16 +65,12 @@ static inline int mp_hal_readline(vstr_t *vstr, const char *p) {
 #endif
 
 // MicroPython time needs to be driven by the virtual clock driver.
-
+#include <pbdrv/clock.h>
 void pb_virtualhub_delay_us(mp_uint_t us);
-mp_uint_t pb_virtualhub_ticks_ms(void);
-mp_uint_t pb_virtualhub_ticks_us(void);
-uint64_t pb_virtualhub_time_ns(void);
 
 #define mp_hal_delay_us pb_virtualhub_delay_us
-#define mp_hal_ticks_ms pb_virtualhub_ticks_ms
-#define mp_hal_ticks_us pb_virtualhub_ticks_us
-#define mp_hal_time_ns pb_virtualhub_time_ns
+#define mp_hal_ticks_ms pbdrv_clock_get_ms
+#define mp_hal_ticks_us pbdrv_clock_get_us
 #define mp_hal_ticks_cpu() 0
 
 void mp_hal_get_random(size_t n, void *buf);
