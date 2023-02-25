@@ -40,7 +40,7 @@
 #define MICROPY_ALLOC_PATH_MAX                  (256)
 #define MICROPY_ALLOC_PARSE_CHUNK_INIT          (16)
 #define MICROPY_EMIT_X64                        (0)
-#define MICROPY_EMIT_THUMB                      (0)
+#define MICROPY_EMIT_THUMB                      (1)
 #define MICROPY_EMIT_INLINE_THUMB               (0)
 #define MICROPY_COMP_MODULE_CONST               (0)
 #define MICROPY_COMP_CONST                      (0)
