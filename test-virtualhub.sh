@@ -25,7 +25,7 @@ export PYTHONPATH="$PBIO_DIR/cpython"
 export PBIO_VIRTUAL_PLATFORM_MODULE=pbio_virtual.platform.robot
 
 cd "$MP_TEST_DIR"
-./run-tests.py --test-dirs $(find "$PB_TEST_DIR/virtualhub" -type d) "$@" || \
+./run-tests.py --test-dirs $(find "$PB_TEST_DIR/virtualhub" -type d -and ! -wholename "*/build/*"  -and ! -wholename "*/run_test.py") "$@" || \
     (code=$?; ./run-tests.py --print-failures; exit $code)
 
 if [[ $COVERAGE ]]; then
