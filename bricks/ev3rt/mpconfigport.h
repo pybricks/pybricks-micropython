@@ -49,7 +49,7 @@
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
 #define PYBRICKS_OPT_EXTRA_MOD                  (1)
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
-#define PYBRICKS_OPT_EXTERNAL_MOD               (1)
+#define PYBRICKS_OPT_NATIVE_MOD                 (1)
 
 // Start with config shared by all Pybricks ports.
 #include "../_common/mpconfigport.h"
