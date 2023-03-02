@@ -1,0 +1,105 @@
+.App {
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.container {
+  height: 1000px;
+  width: 1400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.main-model {
+  width: 1400px;
+  display: inline-block;
+  position:absolute;
+}
+
+
+.shaft {
+  width: 152px;
+  display: inline-block;
+  transform: translate(-453px, 212px) rotate( 0deg );
+  transform-origin: 50% 50%;
+  position:absolute;
+}
+
+.stall {
+  width: 344px;
+  display: inline-block;
+  transform: var(--stall-angle, translate(-455px, -311px) rotate( 0deg ));
+  transform-origin: 50% 50%;
+  position:absolute;
+}
+
+
+.gear-drive {
+  width: 54px;
+  display: inline-block;
+  transform: var(--gear-drive-angle, translate(243px, 194px) rotate( -45deg ));
+  transform-origin: 50% 50%;
+  position:absolute;
+}
+
+
+.gear-follow {
+  width: 149px;
+  display: inline-block;
+  transform: var(--gear-follow-angle, translate(337px, 194px) rotate( 15deg ));
+  transform-origin: 50% 50%;
+  position:absolute;
+}
+
+
+.wheel-left {
+  width: 222px;
+  display: inline-block;
+  transform: var(--wheel-left-angle, translate(542px, -344px) rotate( -124deg ));
+  transform-origin: 50% 50%;
+  position:absolute;
+}
+
+.wheel-right {
+  width: 222px;
+  display: inline-block;
+  transform: var(--wheel-right-angle, translate(367px, -169px) rotate( 0deg ));
+  transform-origin: 50% 50%;
+  position:absolute;
+}
+

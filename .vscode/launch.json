@@ -105,11 +105,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
-                "./tests/motors/open_loop.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
+                {
+                    "name": "PBIO_TEST_DATA_PARSER",
+                    "value": "./tools/virtual-hub-animator/data_server.py"
+                },
             ],
             "externalConsole": false,
             "MIMode": "gdb",
