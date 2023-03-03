@@ -300,18 +300,13 @@ int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
     return 9000;
 }
 
-#define DEG_TO_MDEG(deg) ((deg) * 1000)
-
 /**
  * Loads device specific model parameters and control settings.
  *
- * @param [out]  ctl           Control settings like PID constants.
- * @param [out]  obs           Observer settings like gains and stall constants.
- * @param [out]  model         Model parameters for the state observer.
  * @param [in]   id            Type identifier for which to look up the settings.
- * @return                     Error code.
+ * @return                     Reduced settings or NULL if motor ID not supported.
  */
-pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observer_settings_t *obs, const pbio_observer_model_t **model, pbio_iodev_type_id_t id) {
+const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(pbio_iodev_type_id_t id) {
 
     // Some motor types are identical, so treat them the same.
     if (id == PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR) {
@@ -321,74 +316,15 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
         id = PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR;
     }
 
-    // Find the reduced set of settings for this device ID.
-    const pbio_servo_settings_reduced_t *settings_reduced = NULL;
+    // Look up reduced set of settings for this device ID.
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(servo_settings_reduced); i++) {
         if (servo_settings_reduced[i].id == id) {
-            settings_reduced = &servo_settings_reduced[i];
-            break;
+            return &servo_settings_reduced[i];
         }
     }
 
-    // ID not found means that this type of motor is not supported.
-    if (!settings_reduced) {
-        return PBIO_ERROR_NOT_SUPPORTED;
-    }
-
-    // Expand reduced settings.
-    *model = settings_reduced->model;
-    ctl->speed_max = DEG_TO_MDEG(settings_reduced->rated_max_speed);
-    ctl->pid_kp_low_speed_threshold = DEG_TO_MDEG(settings_reduced->pid_kp_low_speed_threshold);
-    obs->feedback_gain_low = settings_reduced->feedback_gain_low;
-
-    // The default speed is not used for servos currently (an explicit speed
-    // is given for all run commands), so we initialize it to the maximum.
-    ctl->speed_default = ctl->speed_max;
-
-    // Initialize maximum torque as the stall torque for maximum voltage.
-    // In practice, the nominal voltage is a bit lower than the 9V values.
-    int32_t max_voltage = pbio_dcmotor_get_max_voltage(id);
-    ctl->actuation_max = pbio_observer_voltage_to_torque(*model, max_voltage);
-    int32_t nominal_voltage = pbio_int_math_min(max_voltage, 7500);  // REVISIT: Select nominal voltage based on battery type.
-
-    // The position tolerance equals the precision profile value.
-    ctl->position_tolerance = DEG_TO_MDEG(settings_reduced->precision_profile);
-
-    // The nominal voltage is an indication for the nominal torque limit. To
-    // ensure proportional control can always get the motor to within the
-    // configured tolerance, we select pid_kp such that proportional feedback
-    // just exceeds the nominal torque at the tolerance boundary.
-    // The pid_kd is selected as a ratio of this.
-    int32_t nominal_torque = pbio_observer_voltage_to_torque(*model, nominal_voltage);
-    ctl->pid_kp = nominal_torque * 1000 / (ctl->position_tolerance - 500);
-    ctl->pid_kd = ctl->pid_kp / 8;
-
-    // Initialize ki such that integral control saturates in about two seconds
-    // if the motor were stuck at the position tolerance.
-    ctl->pid_ki = nominal_torque * 1000 / ctl->position_tolerance / 2;
-
-    // Base control settings for all motors.
-    ctl->acceleration = DEG_TO_MDEG(2000);
-    ctl->deceleration = ctl->acceleration;
-    ctl->speed_tolerance = DEG_TO_MDEG(50);
-    ctl->stall_speed_limit = DEG_TO_MDEG(20);
-    ctl->stall_time = pbio_control_time_ms_to_ticks(200);
-    ctl->integral_change_max = DEG_TO_MDEG(15);
-    ctl->integral_deadzone = DEG_TO_MDEG(8);
-    ctl->smart_passive_hold_time = pbio_control_time_ms_to_ticks(100);
-    ctl->pid_kp_low_pct = 25;
-    ctl->pid_kp_low_error_threshold = DEG_TO_MDEG(5);
-
-    // Base observer settings for all motors.
-    obs->stall_speed_limit = ctl->stall_speed_limit;
-    obs->stall_time = ctl->stall_time;
-    obs->feedback_voltage_stall_ratio = 75;
-    obs->feedback_voltage_negligible = 5 * pbio_observer_torque_to_voltage(*model, (*model)->torque_friction / 2);
-    obs->feedback_gain_high = obs->feedback_gain_low * 6;
-    obs->feedback_gain_threshold = DEG_TO_MDEG(8);
-    obs->coulomb_friction_speed_cutoff = 500;
-
-    return PBIO_SUCCESS;
+    // No settings found.
+    return NULL;
 }
 
 #endif // PBIO_CONFIG_SERVO

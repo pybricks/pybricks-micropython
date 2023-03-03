@@ -86,15 +86,15 @@ typedef struct _pbio_servo_t {
 /**
  * A minimal set of constant parameters for each motor type. All other
  * defaults are derived at runtime.
- * 
+ *
  * This is a somewhat arbitrary combination of settings from:
  * - pbio/control_settings
  * - pbio/observer
- * 
+ *
  * Any setting that does not have the same default across all motor types can
  * be added here, with the appropriate conversion made in servo_settings to
  * set it in the actual mutable settings structure.
- * 
+ *
  * This mainly saves space compared to having fully populated structures for
  * each motor. It also allows us to ensure a "correct" default configuration,
  * without settings that conflict each other.
@@ -135,7 +135,7 @@ typedef struct _pbio_servo_settings_reduced_t {
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle);
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
-pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observer_settings_t *obs, const pbio_observer_model_t **model, pbio_iodev_type_id_t id);
+const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(pbio_iodev_type_id_t id);
 void pbio_servo_update_all(void);
 
 // Servo status:

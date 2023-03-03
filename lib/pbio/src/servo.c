@@ -206,6 +206,101 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
     return pbio_parent_stop(&srv->parent, clear_parent);
 }
 
+#define DEG_TO_MDEG(deg) ((deg) * 1000)
+
+/**
+ * Loads all parameters of a servo to make it ready for use.
+ *
+ * @param [inout] srv                The servo instance.
+ * @param [in]    gear_ratio         Ratio that converts control units (mdeg) to user-defined output units (e.g. deg).
+ * @param [in]    precision_profile  Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
+ * @return                           Error code.
+ */
+pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t gear_ratio, int32_t precision_profile) {
+
+    // Get the device type to load relevant settings.
+    pbio_iodev_type_id_t type_id;
+    pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(srv->dcmotor->port, &type_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Get the minimal set of defaults for this servo type.
+    const pbio_servo_settings_reduced_t *settings_reduced = pbio_servo_get_reduced_settings(type_id);
+    if (!settings_reduced) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
+    // If precision not given (if 0), use default value for this motor.
+    if (precision_profile == 0) {
+        precision_profile = settings_reduced->precision_profile;
+    }
+
+    // The tighter the tolerances, the higher the feedback values. This enforces
+    // an upper limit on the feedback gains.
+    if (precision_profile < 5) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Save reference to motor model.
+    srv->observer.model = settings_reduced->model;
+
+    // Initialize maximum torque as the stall torque for maximum voltage.
+    // In practice, the nominal voltage is a bit lower than the 9V values.
+    // REVISIT: Select nominal voltage based on battery type instead of 7500.
+    int32_t max_voltage = pbio_dcmotor_get_max_voltage(type_id);
+    int32_t nominal_voltage = pbio_int_math_min(max_voltage, 7500);
+    int32_t nominal_torque = pbio_observer_voltage_to_torque(srv->observer.model, nominal_voltage);
+
+    // Set all control settings.
+    srv->control.settings = (pbio_control_settings_t) {
+        // For a servo, counts per output unit is counts per degree at the gear train output
+        .ctl_steps_per_app_step = gear_ratio,
+        .stall_speed_limit = DEG_TO_MDEG(20),
+        .stall_time = pbio_control_time_ms_to_ticks(200),
+        .speed_max = DEG_TO_MDEG(settings_reduced->rated_max_speed),
+        // The default speed is not used for servos currently (an explicit speed
+        // is given for all run commands), so we initialize it to the maximum.
+        .speed_default = DEG_TO_MDEG(settings_reduced->rated_max_speed),
+        .speed_tolerance = DEG_TO_MDEG(50),
+        .position_tolerance = DEG_TO_MDEG(settings_reduced->precision_profile),
+        .acceleration = DEG_TO_MDEG(2000),
+        .deceleration = DEG_TO_MDEG(2000),
+        .actuation_max = pbio_observer_voltage_to_torque(srv->observer.model, max_voltage),
+        // The nominal voltage is an indication for the nominal torque limit. To
+        // ensure proportional control can always get the motor to within the
+        // configured tolerance, we select pid_kp such that proportional feedback
+        // just exceeds the nominal torque at the tolerance boundary.
+        .pid_kp = nominal_torque / settings_reduced->precision_profile,
+        // Initialize ki such that integral control saturates in about two seconds
+        // if the motor were stuck at the position tolerance.
+        .pid_ki = nominal_torque / settings_reduced->precision_profile / 2,
+        // The kd value is the same ratio of kp on all motors to get a
+        // comparable step response.
+        .pid_kd = nominal_torque / settings_reduced->precision_profile / 8,
+        .pid_kp_low_pct = 25,
+        .pid_kp_low_error_threshold = DEG_TO_MDEG(5),
+        .pid_kp_low_speed_threshold = DEG_TO_MDEG(settings_reduced->pid_kp_low_speed_threshold),
+        .integral_deadzone = DEG_TO_MDEG(8),
+        .integral_change_max = DEG_TO_MDEG(15),
+        .smart_passive_hold_time = pbio_control_time_ms_to_ticks(100),
+    };
+
+    // Initialize all observer settings.
+    srv->observer.settings = (pbio_observer_settings_t) {
+        .stall_speed_limit = srv->control.settings.stall_speed_limit,
+        .stall_time = srv->control.settings.stall_time,
+        .feedback_voltage_negligible = pbio_observer_torque_to_voltage(srv->observer.model, srv->observer.model->torque_friction) * 5 / 2,
+        .feedback_voltage_stall_ratio = 75,
+        .feedback_gain_low = settings_reduced->feedback_gain_low,
+        .feedback_gain_high = settings_reduced->feedback_gain_low * 6,
+        .feedback_gain_threshold = DEG_TO_MDEG(8),
+        .coulomb_friction_speed_cutoff = 500,
+    };
+
+    return PBIO_SUCCESS;
+}
+
 /**
  * Sets up the servo instance to be used in an application.
  *
@@ -238,21 +333,11 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     // Reset state
     pbio_control_reset(&srv->control);
 
-    // Get the device type to load relevant settings.
-    pbio_iodev_type_id_t type_id;
-    err = pbdrv_ioport_get_motor_device_type_id(srv->dcmotor->port, &type_id);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // Load default settings for this device type.
-    err = pbio_servo_load_settings(&srv->control.settings, &srv->observer.settings, &srv->observer.model, type_id);
+    err = pbio_servo_initialize_settings(srv, gear_ratio, 0);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // For a servo, counts per output unit is counts per degree at the gear train output
-    srv->control.settings.ctl_steps_per_app_step = gear_ratio;
 
     // Get current angle.
     pbio_angle_t angle;
