@@ -83,6 +83,42 @@ typedef struct _pbio_servo_t {
     bool run_update_loop;
 } pbio_servo_t;
 
+/**
+ * A minimal set of constant parameters for each motor type from which other
+ * defaults are derived at runtime, to save space and ensure correct
+ * configuration.
+ */
+typedef struct _pbio_servo_settings_reduced_t {
+    /**
+     * Type identifier indicating which motor it is.
+     */
+    pbio_iodev_type_id_t id;
+    /**
+     * Physical model parameter for this type of motor
+     */
+    const pbio_observer_model_t *model;
+    /**
+     * The rated maximum speed (deg/s), approximately equivalent to "100%" speed in other apps.
+     */
+    int32_t rated_max_speed;
+    /**
+     * The default acceleration (deg/s/s). REVISIT: Derive from rated speed.
+     */
+    int32_t acceleration;
+    /**
+     * Position error feedback constant. REVISIT: Derive from model.
+     */
+    int32_t pid_kp;
+    /**
+     * Speed error feedback constant. REVISIT: Derive from model.
+     */
+    int32_t pid_kd;
+    /**
+     * Feedback gain (mV/deg) to correct the observer for low estimation errors.
+     */
+    int32_t feedback_gain_low;
+} pbio_servo_settings_reduced_t;
+
 // Servo initialization and updates:
 
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
