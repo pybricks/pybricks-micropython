@@ -41,6 +41,9 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 
 /**
  * Sets the drivebase settings based on the left and right motor settings.
+ * 
+ * Sets all settings except ctl_steps_per_app_step. This must be set after
+ * calling this function.
  *
  * @param [out] s_distance  Settings of the distance controller.
  * @param [out] s_heading   Settings of the heading controller.
@@ -49,45 +52,50 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
  */
 static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
-    // For all settings, take the value of the least powerful motor to ensure
-    // that the drivebase can meet the given specs.
-    s_distance->speed_max = pbio_int_math_min(s_left->speed_max, s_right->speed_max);
-    s_distance->speed_tolerance = pbio_int_math_min(s_left->speed_tolerance, s_right->speed_tolerance);
-    s_distance->stall_speed_limit = pbio_int_math_min(s_left->stall_speed_limit, s_right->stall_speed_limit);
-    s_distance->integral_change_max = pbio_int_math_min(s_left->integral_change_max, s_right->integral_change_max);
-    s_distance->actuation_max = pbio_int_math_min(s_left->actuation_max, s_right->actuation_max);
-    s_distance->stall_time = pbio_int_math_min(s_left->stall_time, s_right->stall_time);
-
-    // Make acceleration a bit slower for smoother driving.
-    s_distance->acceleration = pbio_int_math_min(s_left->acceleration, s_right->acceleration) * 3 / 4;
-    s_distance->deceleration = pbio_int_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4;
-
     // Use minimum PID of both motors, to avoid overly aggressive control if
     // one of the two motors has much higher PID values.
-    s_distance->pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp);
-    s_distance->pid_kd = pbio_int_math_min(s_left->pid_kd, s_right->pid_kd);
+    int32_t actuation_max = pbio_int_math_min(s_left->actuation_max, s_right->actuation_max);
+    int32_t pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp);
+    int32_t speed_max = pbio_int_math_min(s_left->speed_max, s_right->speed_max);
 
-    // Use the same thresholds for reduced proportional gain.
-    s_distance->pid_kp_low_pct = pbio_int_math_min(s_left->pid_kp_low_pct, s_right->pid_kp_low_pct);
-    s_distance->pid_kp_low_error_threshold = pbio_int_math_min(s_left->pid_kp_low_error_threshold, s_right->pid_kp_low_error_threshold);
-    s_distance->pid_kp_low_speed_threshold = pbio_int_math_min(s_left->pid_kp_low_speed_threshold, s_right->pid_kp_low_speed_threshold);
-
-    // Integral control is not necessary since there is no constant external
-    // force to overcome that wouldn't be done by proportional control.
-    s_distance->pid_ki = 0;
-
-    // Instead, we can adjust the position tolerance to ensure we always apply
-    // enough proportional torque to keep moving near the end.
-    s_distance->position_tolerance = s_distance->actuation_max / s_distance->pid_kp * 1000;
-
-    // The default speed is 40% of the maximum speed.
-    s_distance->speed_default = s_distance->speed_max * 10 / 25;
+    // For all settings, take the value of the least powerful motor to ensure
+    // that the drivebase can meet the given specs.
+    *s_distance = (pbio_control_settings_t) {
+        // Must be set immediately after calling the current function.
+        .ctl_steps_per_app_step = 0,
+        .stall_speed_limit = pbio_int_math_min(s_left->stall_speed_limit, s_right->stall_speed_limit),
+        .stall_time = pbio_int_math_min(s_left->stall_time, s_right->stall_time),
+        .speed_max = speed_max,
+        // The default speed is 40% of the maximum speed.
+        .speed_default = speed_max * 10 / 25,
+        .speed_tolerance = pbio_int_math_min(s_left->speed_tolerance, s_right->speed_tolerance),
+        // To account for reduced kp, adjust the position tolerance so we
+        // always apply enough proportional torque to keep moving near the end.
+        .position_tolerance = pbio_control_settings_div_by_gain(actuation_max, pid_kp),
+        // Make acceleration, deceleration a bit slower for smoother driving.
+        .acceleration = pbio_int_math_min(s_left->acceleration, s_right->acceleration) * 3 / 4,
+        .deceleration = pbio_int_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4,
+        .actuation_max = actuation_max,
+        .pid_kp = pid_kp,
+        // Use the same thresholds for reduced proportional gain.
+        .pid_kp_low_pct = pbio_int_math_min(s_left->pid_kp_low_pct, s_right->pid_kp_low_pct),
+        .pid_kp_low_error_threshold = pbio_int_math_min(s_left->pid_kp_low_error_threshold, s_right->pid_kp_low_error_threshold),
+        .pid_kp_low_speed_threshold = pbio_int_math_min(s_left->pid_kp_low_speed_threshold, s_right->pid_kp_low_speed_threshold),
+        // Integral control is not necessary since there is no constant external
+        // force to overcome that wouldn't be done by proportional control.
+        .pid_ki = 0,
+        .pid_kd = pbio_int_math_min(s_left->pid_kd, s_right->pid_kd),
+        .integral_deadzone = pbio_int_math_max(s_left->integral_deadzone, s_right->integral_deadzone),
+        .integral_change_max = pbio_int_math_min(s_left->integral_change_max, s_right->integral_change_max),
+        .smart_passive_hold_time = pbio_int_math_max(s_left->smart_passive_hold_time, s_right->smart_passive_hold_time),
+    };
 
     // By default, heading control is the nearly same as distance control.
     *s_heading = *s_distance;
 
     // We make the default turn speed a bit slower. Given the typical wheel
-    // diameter, the wheels are often quite close together, so this compensates.
+    // diameter, the wheels are often quite close together, so this
+    // compensates by setting it at 33% instead of 40%.
     s_heading->speed_default = s_heading->speed_max / 3;
 }
 
