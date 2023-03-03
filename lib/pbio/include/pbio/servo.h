@@ -84,9 +84,20 @@ typedef struct _pbio_servo_t {
 } pbio_servo_t;
 
 /**
- * A minimal set of constant parameters for each motor type from which other
- * defaults are derived at runtime, to save space and ensure correct
- * configuration.
+ * A minimal set of constant parameters for each motor type. All other
+ * defaults are derived at runtime.
+ * 
+ * This is a somewhat arbitrary combination of settings from:
+ * - pbio/control_settings
+ * - pbio/observer
+ * 
+ * Any setting that does not have the same default across all motor types can
+ * be added here, with the appropriate conversion made in servo_settings to
+ * set it in the actual mutable settings structure.
+ * 
+ * This mainly saves space compared to having fully populated structures for
+ * each motor. It also allows us to ensure a "correct" default configuration,
+ * without settings that conflict each other.
  */
 typedef struct _pbio_servo_settings_reduced_t {
     /**
@@ -113,6 +124,10 @@ typedef struct _pbio_servo_settings_reduced_t {
      * Feedback gain (mV/deg) to correct the observer for low estimation errors.
      */
     int32_t feedback_gain_low;
+    /**
+     * Threshold speed below which to use a lower kp constant.
+     */
+    int32_t pid_kp_low_speed_threshold;
 } pbio_servo_settings_reduced_t;
 
 // Servo initialization and updates:

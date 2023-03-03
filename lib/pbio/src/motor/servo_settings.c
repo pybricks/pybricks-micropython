@@ -214,6 +214,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1200,
         .feedback_gain_low = 45,
         .precision_profile = 10,
+        .pid_kp_low_speed_threshold = 0,
     },
     {
         .id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR,
@@ -221,6 +222,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 800,
         .feedback_gain_low = 40,
         .precision_profile = 10,
+        .pid_kp_low_speed_threshold = 0,
     },
     #endif // PBIO_CONFIG_SERVO_EV3_NXT
     #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
@@ -230,6 +232,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1500,
         .feedback_gain_low = 47,
         .precision_profile = 20,
+        .pid_kp_low_speed_threshold = 250,
     },
     #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
     #if PBIO_CONFIG_SERVO_PUP
@@ -239,6 +242,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1000,
         .feedback_gain_low = 66,
         .precision_profile = 12,
+        .pid_kp_low_speed_threshold = 0,
     },
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR,
@@ -246,6 +250,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1500,
         .feedback_gain_low = 26,
         .precision_profile = 20,
+        .pid_kp_low_speed_threshold = 250,
     },
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR,
@@ -253,6 +258,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1500,
         .feedback_gain_low = 38,
         .precision_profile = 20,
+        .pid_kp_low_speed_threshold = 250,
     },
     {
         .id = PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR,
@@ -260,6 +266,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 620,
         .feedback_gain_low = 24,
         .precision_profile = 11,
+        .pid_kp_low_speed_threshold = 150,
     },
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR,
@@ -267,6 +274,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1000,
         .feedback_gain_low = 32,
         .precision_profile = 11,
+        .pid_kp_low_speed_threshold = 150,
     },
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR,
@@ -274,6 +282,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 1000,
         .feedback_gain_low = 45,
         .precision_profile = 11,
+        .pid_kp_low_speed_threshold = 150,
     },
     #endif // PBIO_CONFIG_SERVO_PUP
 };
@@ -329,6 +338,7 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     // Expand reduced settings.
     *model = settings_reduced->model;
     ctl->speed_max = DEG_TO_MDEG(settings_reduced->rated_max_speed);
+    ctl->pid_kp_low_speed_threshold = DEG_TO_MDEG(settings_reduced->pid_kp_low_speed_threshold);
     obs->feedback_gain_low = settings_reduced->feedback_gain_low;
 
     // The default speed is not used for servos currently (an explicit speed
@@ -377,10 +387,6 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *ctl, pbio_observe
     obs->feedback_gain_high = obs->feedback_gain_low * 6;
     obs->feedback_gain_threshold = DEG_TO_MDEG(8);
     obs->coulomb_friction_speed_cutoff = 500;
-
-    // Take a definition for low speed as percentage of rated speed.
-    ctl->pid_kp_low_speed_threshold = ctl->speed_max * 15 / 100;
-
 
     return PBIO_SUCCESS;
 }
