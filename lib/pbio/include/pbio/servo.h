@@ -102,13 +102,13 @@ typedef struct _pbio_servo_settings_reduced_t {
      */
     int32_t rated_max_speed;
     /**
-     * Position error feedback constant. REVISIT: Derive from model.
+     * Precision profile. This is a measure for "precision" (low values)
+     * versus "smoothness" (high value), expressed roughly as the allowed
+     * deviation (in degrees) from a target angle to be considered on target.
+     * Several other settings such as kp and kd are derived from this value
+     * such that the controller can still always reach the given target.
      */
-    int32_t pid_kp;
-    /**
-     * Speed error feedback constant. REVISIT: Derive from model.
-     */
-    int32_t pid_kd;
+    int32_t precision_profile;
     /**
      * Feedback gain (mV/deg) to correct the observer for low estimation errors.
      */
