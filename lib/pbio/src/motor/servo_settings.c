@@ -210,7 +210,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR,
         .model = &model_ev3_m,
-        .rated_max_speed = 2000,
+        .rated_max_speed = 1200,
         .pid_kp = 15000,
         .pid_kd = 1800,
         .feedback_gain_low = 45,
@@ -218,7 +218,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR,
         .model = &model_ev3_l,
-        .rated_max_speed = 1600,
+        .rated_max_speed = 800,
         .pid_kp = 40000,
         .pid_kd = 5000,
         .feedback_gain_low = 40,
