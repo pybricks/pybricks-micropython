@@ -41,7 +41,7 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 
 /**
  * Sets the drivebase settings based on the left and right motor settings.
- * 
+ *
  * Sets all settings except ctl_steps_per_app_step. This must be set after
  * calling this function.
  *
@@ -53,9 +53,13 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
 static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
     // Use minimum PID of both motors, to avoid overly aggressive control if
-    // one of the two motors has much higher PID values.
+    // one of the two motors has much higher PID values. Then scale it such
+    // that we use the reduced kp value not just for low errors, but always.
+    int32_t pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp) *
+        pbio_int_math_min(s_left->pid_kp_low_pct, s_right->pid_kp_low_pct) / 100;
+
+    // Cap maximum speed at the most constrained of the two motors.
     int32_t actuation_max = pbio_int_math_min(s_left->actuation_max, s_right->actuation_max);
-    int32_t pid_kp = pbio_int_math_min(s_left->pid_kp, s_right->pid_kp);
     int32_t speed_max = pbio_int_math_min(s_left->speed_max, s_right->speed_max);
 
     // For all settings, take the value of the least powerful motor to ensure
@@ -77,10 +81,11 @@ static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_c
         .deceleration = pbio_int_math_min(s_left->deceleration, s_right->deceleration) * 3 / 4,
         .actuation_max = actuation_max,
         .pid_kp = pid_kp,
-        // Use the same thresholds for reduced proportional gain.
-        .pid_kp_low_pct = pbio_int_math_min(s_left->pid_kp_low_pct, s_right->pid_kp_low_pct),
-        .pid_kp_low_error_threshold = pbio_int_math_min(s_left->pid_kp_low_error_threshold, s_right->pid_kp_low_error_threshold),
-        .pid_kp_low_speed_threshold = pbio_int_math_min(s_left->pid_kp_low_speed_threshold, s_right->pid_kp_low_speed_threshold),
+        // Dynamic kp reduction is disabled for drivebases. Instead, it uses
+        // reduced kp across the board.
+        .pid_kp_low_pct = 0,
+        .pid_kp_low_error_threshold = 0,
+        .pid_kp_low_speed_threshold = 0,
         // Integral control is not necessary since there is no constant external
         // force to overcome that wouldn't be done by proportional control.
         .pid_ki = 0,
