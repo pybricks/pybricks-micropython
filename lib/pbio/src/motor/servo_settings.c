@@ -246,7 +246,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR,
         .model = &model_technic_l,
-        .rated_max_speed = 1470,
+        .rated_max_speed = 1500,
         .pid_kp = 17500,
         .pid_kd = 2500,
         .feedback_gain_low = 26,
@@ -254,7 +254,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR,
         .model = &model_technic_xl,
-        .rated_max_speed = 1525,
+        .rated_max_speed = 1500,
         .pid_kp = 17500,
         .pid_kd = 2500,
         .feedback_gain_low = 38,
@@ -270,7 +270,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR,
         .model = &model_technic_l_angular,
-        .rated_max_speed = 970,
+        .rated_max_speed = 1000,
         .pid_kp = 35000,
         .pid_kd = 6000,
         .feedback_gain_low = 32,
@@ -278,7 +278,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR,
         .model = &model_technic_m_angular,
-        .rated_max_speed = 1080,
+        .rated_max_speed = 1000,
         .pid_kp = 15000,
         .pid_kd = 1800,
         .feedback_gain_low = 45,
