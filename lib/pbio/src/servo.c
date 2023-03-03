@@ -335,7 +335,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     pbio_control_reset(&srv->control);
 
     // Load default settings for this device type.
-    err = pbio_servo_initialize_settings(srv, gear_ratio, 0);
+    err = pbio_servo_initialize_settings(srv, gear_ratio, precision_profile);
     if (err != PBIO_SUCCESS) {
         return err;
     }
