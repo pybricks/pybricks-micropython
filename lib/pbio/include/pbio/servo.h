@@ -102,10 +102,6 @@ typedef struct _pbio_servo_settings_reduced_t {
      */
     int32_t rated_max_speed;
     /**
-     * The default acceleration (deg/s/s). REVISIT: Derive from rated speed.
-     */
-    int32_t acceleration;
-    /**
      * Position error feedback constant. REVISIT: Derive from model.
      */
     int32_t pid_kp;
