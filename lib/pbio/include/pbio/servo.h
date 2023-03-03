@@ -133,7 +133,7 @@ typedef struct _pbio_servo_settings_reduced_t {
 // Servo initialization and updates:
 
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle);
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile);
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
 const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(pbio_iodev_type_id_t id);
 void pbio_servo_update_all(void);

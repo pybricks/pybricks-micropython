@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added
+- Added `precision_profile` parameter to `Motor` initializer. This can be used
+  to reduce control gains to get smoother motions for heavy loads or heavily
+  gear applications where precision is less relevant.
+
+### Changed
+- Changed how the PID values are initialized for each motor. This may lead to
+  slightly altered performance.
+
 ### Fixed
 - Fixed move hub crashing on boot.
 - Fixed position based commands starting from the wrong position if the

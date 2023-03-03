@@ -216,7 +216,7 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
  * @param [in]    precision_profile  Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
  * @return                           Error code.
  */
-pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t gear_ratio, int32_t precision_profile) {
+static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t gear_ratio, int32_t precision_profile) {
 
     // Get the device type to load relevant settings.
     pbio_iodev_type_id_t type_id;
@@ -304,13 +304,14 @@ pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t gear_rati
 /**
  * Sets up the servo instance to be used in an application.
  *
- * @param [in]  srv         The servo instance.
- * @param [in]  direction   The direction of positive rotation.
- * @param [in]  gear_ratio  The ratio between motor rotation (millidegrees) and the gear train output (degrees).
- * @param [in]  reset_angle If true, reset the current angle to the current absolute position if supported or 0.
- * @return                  Error code.
+ * @param [in]  srv               The servo instance.
+ * @param [in]  direction         The direction of positive rotation.
+ * @param [in]  gear_ratio        The ratio between motor rotation (millidegrees) and the gear train output (degrees).
+ * @param [in]  reset_angle       If true, reset the current angle to the current absolute position if supported or 0.
+ * @param [in]  precision_profile Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
+ * @return                        Error code.
  */
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle) {
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile) {
     pbio_error_t err;
 
     // Unregister this servo from control loop updates.
