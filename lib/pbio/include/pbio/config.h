@@ -19,7 +19,7 @@
 // Angle differentiation time window, must be integer multiple of loop time
 // and integer divisor of 1000.
 #ifndef PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS
-#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS (125)
+#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS (100)
 #endif
 
 #define PBIO_CONFIG_NUM_DRIVEBASES (PBIO_CONFIG_SERVO_NUM_DEV / 2)
