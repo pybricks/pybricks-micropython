@@ -293,8 +293,8 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
         .feedback_voltage_negligible = pbio_observer_torque_to_voltage(srv->observer.model, srv->observer.model->torque_friction) * 5 / 2,
         .feedback_voltage_stall_ratio = 75,
         .feedback_gain_low = settings_reduced->feedback_gain_low,
-        .feedback_gain_high = settings_reduced->feedback_gain_low * 6,
-        .feedback_gain_threshold = DEG_TO_MDEG(8),
+        .feedback_gain_high = settings_reduced->feedback_gain_low * 7,
+        .feedback_gain_threshold = DEG_TO_MDEG(20),
         .coulomb_friction_speed_cutoff = 500,
     };
 
