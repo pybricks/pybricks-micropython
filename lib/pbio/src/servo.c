@@ -263,7 +263,7 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
         // is given for all run commands), so we initialize it to the maximum.
         .speed_default = DEG_TO_MDEG(settings_reduced->rated_max_speed),
         .speed_tolerance = DEG_TO_MDEG(50),
-        .position_tolerance = DEG_TO_MDEG(settings_reduced->precision_profile),
+        .position_tolerance = DEG_TO_MDEG(precision_profile),
         .acceleration = DEG_TO_MDEG(2000),
         .deceleration = DEG_TO_MDEG(2000),
         .actuation_max = pbio_observer_voltage_to_torque(srv->observer.model, max_voltage),
@@ -271,12 +271,14 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
         // ensure proportional control can always get the motor to within the
         // configured tolerance, we select pid_kp such that proportional feedback
         // just exceeds the nominal torque at the tolerance boundary.
-        .pid_kp = nominal_torque / settings_reduced->precision_profile,
+        .pid_kp = nominal_torque / precision_profile,
         // Initialize ki such that integral control saturates in about two seconds
         // if the motor were stuck at the position tolerance.
-        .pid_ki = nominal_torque / settings_reduced->precision_profile / 2,
-        // The kd value is the same ratio of kp on all motors to get a
-        // comparable step response.
+        .pid_ki = nominal_torque / precision_profile / 2,
+        // By default, the kd value is the same ratio of kp on all motors to
+        // get a comparable step response. This value is not reduced along with
+        // the user given precision profile like kp, so we use the default
+        // value from the reduced settings.
         .pid_kd = nominal_torque / settings_reduced->precision_profile / 8,
         .pid_kp_low_pct = 50,
         .pid_kp_low_error_threshold = DEG_TO_MDEG(5),
