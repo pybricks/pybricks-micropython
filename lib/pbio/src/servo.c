@@ -278,7 +278,7 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
         // The kd value is the same ratio of kp on all motors to get a
         // comparable step response.
         .pid_kd = nominal_torque / settings_reduced->precision_profile / 8,
-        .pid_kp_low_pct = 25,
+        .pid_kp_low_pct = 50,
         .pid_kp_low_error_threshold = DEG_TO_MDEG(5),
         .pid_kp_low_speed_threshold = DEG_TO_MDEG(settings_reduced->pid_kp_low_speed_threshold),
         .integral_deadzone = DEG_TO_MDEG(8),
