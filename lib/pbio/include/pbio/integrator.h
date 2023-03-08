@@ -20,11 +20,16 @@
 #include <pbio/control_settings.h>
 
 typedef struct _pbio_speed_integrator_t {
-    bool running; // Whether the integrator is running (1) or paused (0)
-    uint32_t time_pause_begin; // Time at which we began pausing, stopping integration
-    int32_t position_error_resumed; // Position error when integration resumed again
-    int32_t speed_err_integral_paused; // Total integrated state up to previous pause.
-    pbio_control_settings_t *settings; // Control settings, which includes integrator settings.
+    /** Whether the integrator is running (true) or paused (false). */
+    bool running;
+    /** Time at which it began pausing, stopping integration */
+    uint32_t time_pause_begin;
+    /** Position error when integration resumed again. */
+    int32_t position_error_resumed;
+    /** Total integrated state up to previous pause. */
+    int32_t speed_err_integral_paused;
+    /** Control settings, which includes integrator settings. */
+    pbio_control_settings_t *settings;
 } pbio_speed_integrator_t;
 
 // Speed integrator functions:
@@ -36,11 +41,16 @@ int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t po
 bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref);
 
 typedef struct _pbio_position_integrator_t {
-    bool trajectory_running; // Whether the trajectory is running (1) or paused (0)
-    uint32_t time_pause_begin; // Time at which we began pausing most recently, stopping integration
-    uint32_t time_paused_total; // Total time we spent in a paused state
-    int32_t count_err_integral; // Ongoing integral of position error
-    pbio_control_settings_t *settings; // Control settings, which includes integrator settings.
+    /** Whether the trajectory is running (1) or paused (0). */
+    bool trajectory_running;
+    /** Time at which it began pausing most recently, stopping integration. */
+    uint32_t time_pause_begin;
+    /** Total time spent in a paused state. */
+    uint32_t time_paused_total;
+    /** Ongoing integral of position error. */
+    int32_t count_err_integral;
+    /** Control settings, which includes integrator settings. */
+    pbio_control_settings_t *settings;
 } pbio_position_integrator_t;
 
 // Position integrator functions:

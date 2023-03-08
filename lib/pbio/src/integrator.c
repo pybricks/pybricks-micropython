@@ -8,13 +8,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <pbio/config.h>
 #include <pbio/control_settings.h>
 #include <pbio/integrator.h>
 #include <pbio/int_math.h>
 
-/* Speed integrator used for speed-based control */
-
+/**
+ * Pauses the speed integrator at the current position error.
+ *
+ * @param [inout] itg              Speed integrator instance.
+ * @param [in]    time_now         The wall time (ticks).
+ * @param [in]    position_error   Current position error (control units).
+ */
 void pbio_speed_integrator_pause(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error) {
 
     // Pause only if running
@@ -28,10 +32,16 @@ void pbio_speed_integrator_pause(pbio_speed_integrator_t *itg, uint32_t time_now
     // Increment the paused integrator state with the integrated amount between the last resume and the newly enforced pause
     itg->speed_err_integral_paused += position_error - itg->position_error_resumed;
 
-    // Store time at which we started pausing
+    // Store time at which we started pausing, used only for stall flag hysteresis.
     itg->time_pause_begin = time_now;
 }
 
+/**
+ * Resumes the speed integrator from the current position error.
+ *
+ * @param [inout] itg              Speed integrator instance.
+ * @param [in]    position_error   Current position error (control units).
+ */
 void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, int32_t position_error) {
 
     // Resume only if paused
@@ -47,22 +57,34 @@ void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, int32_t position
     itg->position_error_resumed = position_error;
 }
 
+/**
+ * Resets the speed integrator state.
+ *
+ * @param [inout] itg       Speed integrator instance.
+ * @param [in]    settings  Control settings instance from which to read stall settings.
+ */
 void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, pbio_control_settings_t *settings) {
 
     // Save reference to settings.
     itg->settings = settings;
 
-    // Set integral to 0
+    // Reset built up integral to 0.
     itg->speed_err_integral_paused = 0;
 
-    // Set state to paused
+    // Set state to paused. It will resume immediately on start.
     itg->running = false;
 
     // Resume integration
     pbio_speed_integrator_resume(itg, 0);
 }
 
-// Get reference errors and integrals
+/**
+ * Gets the speed error integral accumulated thus far.
+ *
+ * @param [in]    itg              Speed integrator instance.
+ * @param [in]    position_error   Current position error (control units).
+ * @return                         Speed error integral (position control units).
+ */
 int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t position_error) {
 
     // The speed error integral is at least the value at which we paused it last
@@ -75,6 +97,15 @@ int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t po
     return speed_err_integral;
 }
 
+/**
+ * Checks if the speed integrator state indicates stalling.
+ *
+ * @param [in]    itg              Speed integrator instance.
+ * @param [in]    time_now         The wall time (ticks).
+ * @param [in]    speed_now        Current speed (control units).
+ * @param [in]    speed_ref        Reference speed (control units).
+ * @return                         True if stalled, false if not.
+ */
 bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
     // If were running, we're not stalled
     if (itg->running) {
@@ -101,8 +132,13 @@ bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_n
     return true;
 }
 
-/* Count integrator used for position-based control */
-
+/**
+ * Gets reference time compensated for stall duration of position controller.
+ *
+ * @param [in]    itg              Position integrator instance.
+ * @param [in]    time_now         The wall time (ticks).
+ * @return                         Wall time compensated for time spent stalling.
+ */
 uint32_t pbio_position_integrator_get_ref_time(pbio_position_integrator_t *itg, uint32_t time_now) {
     // The wall time at which we are is either the current time, or whenever we stopped last.
     uint32_t real_time = itg->trajectory_running ? time_now : itg->time_pause_begin;
@@ -111,22 +147,40 @@ uint32_t pbio_position_integrator_get_ref_time(pbio_position_integrator_t *itg, 
     return real_time - itg->time_paused_total;
 }
 
+/**
+ * Pauses the position integrator at the current time.
+ *
+ * @param [inout] itg              Speed integrator instance.
+ * @param [in]    time_now         The wall time (ticks).
+ */
 void pbio_position_integrator_pause(pbio_position_integrator_t *itg, uint32_t time_now) {
 
-    // Return if already paused
+    // Return if already paused.
     if (!itg->trajectory_running) {
         return;
     }
 
-    // Disable the integrator
+    // Disable the integrator.
     itg->trajectory_running = false;
     itg->time_pause_begin = time_now;
 }
 
+/**
+ * Tests if the position integrator is paused.
+ *
+ * @param [inout] itg              Speed integrator instance.
+ * @return                         True if integration is paused, false if not.
+ */
 bool pbio_position_integrator_is_paused(pbio_position_integrator_t *itg) {
     return !itg->trajectory_running;
 }
 
+/**
+ * Resumes the position integrator at the current time.
+ *
+ * @param [inout] itg              Speed integrator instance.
+ * @param [in]    time_now         The wall time (ticks).
+ */
 void pbio_position_integrator_resume(pbio_position_integrator_t *itg, uint32_t time_now) {
 
     // Return if already trajectory_running
@@ -141,6 +195,13 @@ void pbio_position_integrator_resume(pbio_position_integrator_t *itg, uint32_t t
     itg->time_paused_total += time_now - itg->time_pause_begin;
 }
 
+/**
+ * Resets the position integrator state.
+ *
+ * @param [inout] itg       Speed integrator instance.
+ * @param [in]    settings  Control settings instance from which to read stall settings.
+ * @param [in]    time_now  The wall time (ticks).
+ */
 void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_control_settings_t *settings, uint32_t time_now) {
 
     // Save reference to settings.
@@ -157,6 +218,14 @@ void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_contro
 
 }
 
+/**
+ * Updates the position integrator state with the latest error.
+ *
+ * @param [in]    itg              Speed integrator instance.
+ * @param [in]    position_error   Current position error (position control units).
+ * @param [in]    target_error     Remaining error to the endpoint (position control units).
+ * @return                         Integrator state value (position control units).
+ */
 int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t target_error) {
 
     int32_t error_now = position_error;
@@ -196,6 +265,15 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
     return itg->count_err_integral;
 }
 
+/**
+ * Checks if the position integrator state indicates stalling.
+ *
+ * @param [in]    itg              Speed integrator instance.
+ * @param [in]    time_now         The wall time (ticks).
+ * @param [in]    speed_now        Current speed (control units).
+ * @param [in]    speed_ref        Reference speed (control units).
+ * @return                         True if stalled, false if not.
+ */
 bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
 
     // Get integral value that would lead to maximum actuation.
