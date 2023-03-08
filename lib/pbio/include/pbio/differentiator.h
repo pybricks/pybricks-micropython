@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
+
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2022-2023 LEGO System A/S
 
 /**
  * @addtogroup Differentiator pbio/differentiator: Differentiation of angle signals.

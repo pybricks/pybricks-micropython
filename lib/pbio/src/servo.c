@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
+
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2020-2023 LEGO System A/S
 
 #include <inttypes.h>
 #include <stdlib.h>
