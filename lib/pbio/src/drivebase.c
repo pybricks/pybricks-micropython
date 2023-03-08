@@ -394,6 +394,12 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_BRAKE);
     }
 
+    // The only other expected actuation type is torque, so make sure it is.
+    if (distance_actuation != PBIO_DCMOTOR_ACTUATION_TORQUE ||
+        heading_actuation != PBIO_DCMOTOR_ACTUATION_TORQUE) {
+        return PBIO_ERROR_FAILED;
+    }
+
     // Both controllers are able to stop the other when it stalls. This ensures
     // they complete at exactly the same time.
     if (pbio_control_type_is_position(&db->control_distance) && !db->control_distance.position_integrator.trajectory_running) {
@@ -405,14 +411,14 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // The left servo drives at a torque and speed of sum + dif
     int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.speed + ref_heading.speed, ref_distance.acceleration + ref_heading.acceleration);
-    err = pbio_servo_actuate(db->left, distance_actuation, distance_torque + heading_torque + feed_forward_left);
+    err = pbio_servo_actuate(db->left, PBIO_DCMOTOR_ACTUATION_TORQUE, distance_torque + heading_torque + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // The right servo drives at a torque and speed of sum - dif
     int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.speed - ref_heading.speed, ref_distance.acceleration - ref_heading.acceleration);
-    return pbio_servo_actuate(db->right, heading_actuation, distance_torque - heading_torque + feed_forward_right);
+    return pbio_servo_actuate(db->right, PBIO_DCMOTOR_ACTUATION_TORQUE, distance_torque - heading_torque + feed_forward_right);
 }
 
 /**
