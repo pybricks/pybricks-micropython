@@ -214,7 +214,7 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
 /**
  * Loads all parameters of a servo to make it ready for use.
  *
- * @param [inout] srv                The servo instance.
+ * @param [in]    srv                The servo instance.
  * @param [in]    gear_ratio         Ratio that converts control units (mdeg) to user-defined output units (e.g. deg).
  * @param [in]    precision_profile  Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
  * @return                           Error code.
