@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.0b2] - 2023-03-08
+
 ### Added
 - Added `precision_profile` parameter to `Motor` initializer. This can be used
   to reduce control gains to get smoother motions for heavy loads or heavily
@@ -505,7 +507,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...HEAD
+[3.3.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...v3.3.0b2
 [3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
 [3.2.2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...v3.2.2
 [3.2.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...v3.2.1
