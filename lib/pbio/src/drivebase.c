@@ -131,13 +131,13 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
         return err;
     }
 
-    // Take sum to get distance state
+    // Take average to get distance state
     pbio_angle_avg(&state_left.position, &state_right.position, &state_distance->position);
     pbio_angle_avg(&state_left.position_estimate, &state_right.position_estimate, &state_distance->position_estimate);
     state_distance->speed_estimate = (state_left.speed_estimate + state_right.speed_estimate) / 2;
     state_distance->speed = (state_left.speed + state_right.speed) / 2;
 
-    // Take difference to get heading state, which is implemented as
+    // Take average difference to get heading state, which is implemented as:
     // (left - right) / 2 = (left + right) / 2 - right = avg - right.
     pbio_angle_diff(&state_distance->position, &state_right.position, &state_heading->position);
     pbio_angle_diff(&state_distance->position_estimate, &state_right.position_estimate, &state_heading->position_estimate);
@@ -378,19 +378,19 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // Get reference and torque signals
     pbio_trajectory_reference_t ref_distance;
     pbio_trajectory_reference_t ref_heading;
-    int32_t sum_torque, dif_torque;
-    pbio_dcmotor_actuation_t sum_actuation, dif_actuation;
-    pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &sum_actuation, &sum_torque);
-    pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &dif_actuation, &dif_torque);
+    int32_t distance_torque, heading_torque;
+    pbio_dcmotor_actuation_t distance_actuation, heading_actuation;
+    pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &distance_actuation, &distance_torque);
+    pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &heading_actuation, &heading_torque);
 
     // If either controller coasts, coast both, thereby also stopping control.
-    if (sum_actuation == PBIO_DCMOTOR_ACTUATION_COAST ||
-        dif_actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
+    if (distance_actuation == PBIO_DCMOTOR_ACTUATION_COAST ||
+        heading_actuation == PBIO_DCMOTOR_ACTUATION_COAST) {
         return pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
     }
     // If either controller brakes, brake both, thereby also stopping control.
-    if (sum_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE ||
-        dif_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE) {
+    if (distance_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE ||
+        heading_actuation == PBIO_DCMOTOR_ACTUATION_BRAKE) {
         return pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_BRAKE);
     }
 
@@ -405,14 +405,14 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // The left servo drives at a torque and speed of sum + dif
     int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.speed + ref_heading.speed, ref_distance.acceleration + ref_heading.acceleration);
-    err = pbio_servo_actuate(db->left, sum_actuation, sum_torque + dif_torque + feed_forward_left);
+    err = pbio_servo_actuate(db->left, distance_actuation, distance_torque + heading_torque + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // The right servo drives at a torque and speed of sum - dif
     int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.speed - ref_heading.speed, ref_distance.acceleration - ref_heading.acceleration);
-    return pbio_servo_actuate(db->right, dif_actuation, sum_torque - dif_torque + feed_forward_right);
+    return pbio_servo_actuate(db->right, heading_actuation, distance_torque - heading_torque + feed_forward_right);
 }
 
 /**
