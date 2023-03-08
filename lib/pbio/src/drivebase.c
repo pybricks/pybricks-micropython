@@ -413,16 +413,24 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         pbio_position_integrator_pause(&db->control_distance.position_integrator, time_now);
     }
 
-    // The left servo drives at a torque and speed of sum + dif
-    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(db->left->observer.model, ref_distance.speed + ref_heading.speed, ref_distance.acceleration + ref_heading.acceleration);
-    err = pbio_servo_actuate(db->left, PBIO_DCMOTOR_ACTUATION_TORQUE, distance_torque + heading_torque + feed_forward_left);
+    // The left servo drives at a torque and speed of (average) + (difference).
+    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(
+        db->left->observer.model,
+        ref_distance.speed + ref_heading.speed, // left speed
+        ref_distance.acceleration + ref_heading.acceleration); // left acceleration
+    err = pbio_servo_actuate(db->left, PBIO_DCMOTOR_ACTUATION_TORQUE,
+        distance_torque + heading_torque + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // The right servo drives at a torque and speed of sum - dif
-    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(db->right->observer.model, ref_distance.speed - ref_heading.speed, ref_distance.acceleration - ref_heading.acceleration);
-    return pbio_servo_actuate(db->right, PBIO_DCMOTOR_ACTUATION_TORQUE, distance_torque - heading_torque + feed_forward_right);
+    // The right servo drives at a torque and speed of (average) - (difference).
+    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(
+        db->right->observer.model,
+        ref_distance.speed - ref_heading.speed, // right speed
+        ref_distance.acceleration - ref_heading.acceleration); // right acceleration
+    return pbio_servo_actuate(db->right, PBIO_DCMOTOR_ACTUATION_TORQUE,
+        distance_torque - heading_torque + feed_forward_right);
 }
 
 /**
