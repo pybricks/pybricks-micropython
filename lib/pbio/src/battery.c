@@ -21,7 +21,11 @@ static int32_t battery_voltage_avg_scaled;
 // to reduce rounding errors in the moving average.
 #define SCALE (1024)
 
-// Initializes average to first measurement.
+/**
+ * Initializes battery voltage state to first measurement.
+ *
+ * @return                  Error code.
+ */
 pbio_error_t pbio_battery_init(void) {
 
     // Get battery voltage.
@@ -37,7 +41,11 @@ pbio_error_t pbio_battery_init(void) {
     return PBIO_SUCCESS;
 }
 
-// Updates the average voltage.
+/**
+ * Updates the average voltage using a new measurement.
+ *
+ * @return                  Error code.
+ */
 pbio_error_t pbio_battery_update(void) {
 
     // Get battery voltage.
@@ -53,7 +61,11 @@ pbio_error_t pbio_battery_update(void) {
     return PBIO_SUCCESS;
 }
 
-// Gets the moving average value.
+/**
+ * Gets the moving average battery voltage.
+ *
+ * @return                  The voltage in mV.
+ */
 int32_t pbio_battery_get_average_voltage(void) {
     return battery_voltage_avg_scaled / SCALE;
 }
