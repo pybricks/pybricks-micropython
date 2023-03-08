@@ -402,10 +402,14 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // Both controllers are able to stop the other when it stalls. This ensures
     // they complete at exactly the same time.
-    if (pbio_control_type_is_position(&db->control_distance) && !db->control_distance.position_integrator.trajectory_running) {
+    if (pbio_control_type_is_position(&db->control_distance) &&
+        pbio_position_integrator_is_paused(&db->control_distance.position_integrator)) {
+        // If distance controller is paused, pause heading control too.
         pbio_position_integrator_pause(&db->control_heading.position_integrator, time_now);
     }
-    if (pbio_control_type_is_position(&db->control_heading) && !db->control_heading.position_integrator.trajectory_running) {
+    if (pbio_control_type_is_position(&db->control_heading) &&
+        pbio_position_integrator_is_paused(&db->control_heading.position_integrator)) {
+        // If heading controller is paused, pause distance control too.
         pbio_position_integrator_pause(&db->control_distance.position_integrator, time_now);
     }
 

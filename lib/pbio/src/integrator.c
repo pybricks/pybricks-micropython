@@ -123,6 +123,10 @@ void pbio_position_integrator_pause(pbio_position_integrator_t *itg, uint32_t ti
     itg->time_pause_begin = time_now;
 }
 
+bool pbio_position_integrator_is_paused(pbio_position_integrator_t *itg) {
+    return !itg->trajectory_running;
+}
+
 void pbio_position_integrator_resume(pbio_position_integrator_t *itg, uint32_t time_now) {
 
     // Return if already trajectory_running
