@@ -15,7 +15,7 @@ import {
 const readFile = util.promisify(fs.readFile);
 
 test('firmware version', () => {
-    expect(firmwareVersion).toMatch(/^\d+\.\d+\.\d+/);
+    expect(firmwareVersion).toMatch(/^\d+\.\d+\.\d+(?:[abc]\d+)?$/);
 });
 
 test('bad zip data', async () => {

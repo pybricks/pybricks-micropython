@@ -2,16 +2,14 @@
 // Copyright (c) 2020-2023 The Pybricks Authors
 
 import JSZip, { JSZipObject } from 'jszip';
-import { PACKAGE_VERSION } from './version';
+import { FIRMWARE_TAG } from './version';
 
 const encoder = new TextEncoder();
 
 /**
  * String containing the firmware version.
  */
-export const firmwareVersion = PACKAGE_VERSION.substring(
-    PACKAGE_VERSION.lastIndexOf('v') + 1
-);
+export const firmwareVersion = FIRMWARE_TAG.substring(1)
 
 /**
  * LEGO Powered Up Hub IDs

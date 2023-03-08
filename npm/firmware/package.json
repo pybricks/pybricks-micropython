@@ -1,6 +1,7 @@
 {
     "name": "@pybricks/firmware",
-    "version": "7.0.0+firmware.v3.3.0b1",
+    "version": "7.0.0",
+    "firmwareTag": "v3.2.0b2",
     "description": "Pybricks firmware",
     "main": "./build/index.js",
     "types": "./build/index.d.ts",
@@ -19,7 +20,7 @@
     "author": "The Pybricks Authors",
     "license": "MIT",
     "scripts": {
-        "prebuild": "node -p \"'export const PACKAGE_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > version.ts",
+        "prebuild": "node -p \"'export const FIRMWARE_TAG = ' + JSON.stringify(require('./package.json').firmwareTag) + ';'\" > version.ts",
         "build": "./download-firmware.py && tsc",
         "test": "tsc && jest"
     },

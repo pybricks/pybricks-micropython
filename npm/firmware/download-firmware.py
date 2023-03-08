@@ -29,7 +29,7 @@ def download_firmware():
 
     package_json = pathlib.Path(__file__).parent.joinpath("package.json").absolute()
     with open(package_json) as f:
-        tag = re.sub(r".*\+firmware\.(.*)", "\\1", json.load(f)["version"])
+        tag = json.load(f)["firmwareTag"]
 
     print(tag)
 
