@@ -114,7 +114,7 @@ int32_t pbio_int_math_bind(int32_t value, int32_t min, int32_t max) {
  * @return              The clamped value.
  */
 int32_t pbio_int_math_clamp(int32_t value, int32_t abs_max) {
-    assert(abs_max > 0);
+    assert(abs_max >= 0);
 
     return pbio_int_math_bind(value, -abs_max, abs_max);
 }
