@@ -5,7 +5,9 @@
 
 #if PYBRICKS_PY_TOOLS
 
+#include "py/builtin.h"
 #include "py/mphal.h"
+#include "py/objmodule.h"
 #include "py/runtime.h"
 
 #include <pybricks/parameters.h>
@@ -55,6 +57,17 @@ STATIC mp_obj_t pb_module_tools_set_run_loop_active(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_module_tools_set_run_loop_active_obj, pb_module_tools_set_run_loop_active);
 
+#if MICROPY_MODULE_ATTR_DELEGATION
+// pybricks.tools.task is implemented as pure Python code in the frozen _task
+// module. This handler makes it available through the pybricks package.
+STATIC void pb_module_tools_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    if (attr == MP_QSTR_task) {
+        const mp_obj_t args[] = { MP_OBJ_NEW_QSTR(MP_QSTR__task) };
+        dest[0] = mp_builtin___import__(MP_ARRAY_SIZE(args), args);
+    }
+}
+#endif
+
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)      },
     { MP_ROM_QSTR(MP_QSTR___init__),    MP_ROM_PTR(&pb_module_tools___init___obj)},
@@ -68,6 +81,9 @@ STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     // backwards compatibility for pybricks.geometry.Axis
     { MP_ROM_QSTR(MP_QSTR_Axis),        MP_ROM_PTR(&pb_enum_type_Axis) },
     #endif // MICROPY_PY_BUILTINS_FLOAT
+    #if MICROPY_MODULE_ATTR_DELEGATION
+    MP_MODULE_ATTR_DELEGATION_ENTRY(&pb_module_tools_attr),
+    #endif
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_tools_globals, tools_globals_table);
 
