@@ -18,6 +18,13 @@ BUILD_DIR = build
 endif
 endif
 
+# Include frozen manifest only if there is anything to freeze.
+ifneq ("$(wildcard ../../bricks/_common/modules/*.py)","")
+FROZEN_MANIFEST ?= ../../../bricks/_common/manifest.py
+else
+FROZEN_MANIFEST =
+endif
+
 # The virtual hub is a unix port variant, so pass everything to the upstream
 # MicroPython makefile.
 %:
@@ -26,6 +33,7 @@ endif
 		VARIANT_DIR=../../../bricks/virtualhub \
 		BUILD=../../../bricks/virtualhub/$(BUILD_DIR) \
 		PROG=../../../bricks/virtualhub/$(BUILD_DIR)/virtualhub-micropython \
+		FROZEN_MANIFEST=$(FROZEN_MANIFEST) \
 		QSTR_DEFS=../../../bricks/_common/qstrdefs.h \
 		QSTR_GLOBAL_DEPENDENCIES=../../../bricks/virtualhub/mpconfigvariant.h \
 		$@
