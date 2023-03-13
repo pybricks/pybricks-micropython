@@ -276,7 +276,7 @@ int32_t pbio_int_math_mult_then_div(int32_t a, int32_t b, int32_t c) {
 
     // Set d1 to the high two base-65536 digits (bits 17 to 31) and d0 to
     // the low digit (bits 0 to 15).
-    uint32_t d1 = x >> 16;
+    uint32_t d1 = (uint32_t)(x >> 16);
     uint32_t d0 = x & 0xffffu;
 
     //  Get the quotient and remainder of dividing d1 by div.
