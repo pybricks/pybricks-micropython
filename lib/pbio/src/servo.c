@@ -487,7 +487,7 @@ pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_
  */
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload) {
 
-    // Apply the calculated actuation, by type
+    // Apply the calculated actuation, by type.
     switch (actuation_type) {
         case PBIO_DCMOTOR_ACTUATION_COAST:
             return pbio_dcmotor_coast(srv->dcmotor);
@@ -495,13 +495,11 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actu
             return pbio_dcmotor_set_voltage(srv->dcmotor, 0);
         case PBIO_DCMOTOR_ACTUATION_VOLTAGE:
             return pbio_dcmotor_set_voltage(srv->dcmotor, payload);
-        case PBIO_DCMOTOR_ACTUATION_TORQUE: {
-            int32_t voltage = pbio_observer_torque_to_voltage(srv->observer.model, payload);
-            return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
-        }
+        case PBIO_DCMOTOR_ACTUATION_TORQUE:
+            return pbio_dcmotor_set_voltage(srv->dcmotor, pbio_observer_torque_to_voltage(srv->observer.model, payload));
+        default:
+            return PBIO_ERROR_INVALID_ARG;
     }
-
-    return PBIO_ERROR_INVALID_ARG;
 }
 
 /**
