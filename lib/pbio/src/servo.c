@@ -128,7 +128,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
             // Column 3: Motor speed in degrees/second.
             pbio_control_settings_ctl_to_app(&srv->control.settings, state.speed),
             // Column 4: Actuation type (LSB 0--1), stall state (LSB 2).
-            applied_actuation | (stalled << 2),
+            applied_actuation | ((int32_t)stalled << 2),
             // Column 5: Actuation voltage.
             voltage,
             // Column 6: Estimated position in degrees.
