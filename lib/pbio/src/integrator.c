@@ -85,7 +85,7 @@ void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, pbio_control_sett
  * @param [in]    position_error   Current position error (control units).
  * @return                         Speed error integral (position control units).
  */
-int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t position_error) {
+int32_t pbio_speed_integrator_get_error(const pbio_speed_integrator_t *itg, int32_t position_error) {
 
     // The speed error integral is at least the value at which we paused it last
     int32_t speed_err_integral = itg->speed_err_integral_paused;
@@ -106,7 +106,7 @@ int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t po
  * @param [in]    speed_ref        Reference speed (control units).
  * @return                         True if stalled, false if not.
  */
-bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
+bool pbio_speed_integrator_stalled(const pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
     // If were running, we're not stalled
     if (itg->running) {
         return false;
@@ -139,7 +139,7 @@ bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_n
  * @param [in]    time_now         The wall time (ticks).
  * @return                         Wall time compensated for time spent stalling.
  */
-uint32_t pbio_position_integrator_get_ref_time(pbio_position_integrator_t *itg, uint32_t time_now) {
+uint32_t pbio_position_integrator_get_ref_time(const pbio_position_integrator_t *itg, uint32_t time_now) {
     // The wall time at which we are is either the current time, or whenever we stopped last.
     uint32_t real_time = itg->trajectory_running ? time_now : itg->time_pause_begin;
 
@@ -171,7 +171,7 @@ void pbio_position_integrator_pause(pbio_position_integrator_t *itg, uint32_t ti
  * @param [in]    itg              Speed integrator instance.
  * @return                         True if integration is paused, false if not.
  */
-bool pbio_position_integrator_is_paused(pbio_position_integrator_t *itg) {
+bool pbio_position_integrator_is_paused(const pbio_position_integrator_t *itg) {
     return !itg->trajectory_running;
 }
 
@@ -274,7 +274,7 @@ int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t
  * @param [in]    speed_ref        Reference speed (control units).
  * @return                         True if stalled, false if not.
  */
-bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
+bool pbio_position_integrator_stalled(const pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref) {
 
     // Get integral value that would lead to maximum actuation.
     int32_t integral_max = pbio_control_settings_div_by_gain(itg->settings->actuation_max, itg->settings->pid_ki);

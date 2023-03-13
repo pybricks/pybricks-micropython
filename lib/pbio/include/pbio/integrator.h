@@ -37,8 +37,8 @@ typedef struct _pbio_speed_integrator_t {
 void pbio_speed_integrator_pause(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t position_error);
 void pbio_speed_integrator_resume(pbio_speed_integrator_t *itg, int32_t position_error);
 void pbio_speed_integrator_reset(pbio_speed_integrator_t *itg, pbio_control_settings_t *settings);
-int32_t pbio_speed_integrator_get_error(pbio_speed_integrator_t *itg, int32_t position_error);
-bool pbio_speed_integrator_stalled(pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref);
+int32_t pbio_speed_integrator_get_error(const pbio_speed_integrator_t *itg, int32_t position_error);
+bool pbio_speed_integrator_stalled(const pbio_speed_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref);
 
 typedef struct _pbio_position_integrator_t {
     /** Whether the trajectory is running (1) or paused (0). */
@@ -55,13 +55,13 @@ typedef struct _pbio_position_integrator_t {
 
 // Position integrator functions:
 
-uint32_t pbio_position_integrator_get_ref_time(pbio_position_integrator_t *itg, uint32_t time_now);
+uint32_t pbio_position_integrator_get_ref_time(const pbio_position_integrator_t *itg, uint32_t time_now);
 void pbio_position_integrator_pause(pbio_position_integrator_t *itg, uint32_t time_now);
-bool pbio_position_integrator_is_paused(pbio_position_integrator_t *itg);
+bool pbio_position_integrator_is_paused(const pbio_position_integrator_t *itg);
 void pbio_position_integrator_resume(pbio_position_integrator_t *itg, uint32_t time_now);
 void pbio_position_integrator_reset(pbio_position_integrator_t *itg, pbio_control_settings_t *settings, uint32_t time_now);
 int32_t pbio_position_integrator_update(pbio_position_integrator_t *itg, int32_t position_error, int32_t target_error);
-bool pbio_position_integrator_stalled(pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref);
+bool pbio_position_integrator_stalled(const pbio_position_integrator_t *itg, uint32_t time_now, int32_t speed_now, int32_t speed_ref);
 
 #endif // _PBIO_INTEGRATOR_H_
 
