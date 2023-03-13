@@ -16,6 +16,7 @@
 #include <pbdrv/motor_driver.h>
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
+#include <pbio/int_math.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 
@@ -162,7 +163,7 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
  *                          or ::PBIO_DCMOTOR_ACTUATION_VOLTAGE.
  * @param [out] voltage_now Voltage in mV if @ actuation is voltage. Else 0.
  */
-void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now) {
+void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now) {
     *actuation = dcmotor->actuation_now;
     *voltage_now = dcmotor->voltage_now;
 }
@@ -200,13 +201,9 @@ pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
  */
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
     // Cap voltage at the configured limit.
-    if (voltage > dcmotor->max_voltage) {
-        voltage = dcmotor->max_voltage;
-    } else if (voltage < -dcmotor->max_voltage) {
-        voltage = -dcmotor->max_voltage;
-    }
+    voltage = pbio_int_math_clamp(voltage, dcmotor->max_voltage);
 
-    // Cache value so we can read it back without touching hardware again.
+    // Cache value so we can read state without touching hardware again.
     dcmotor->voltage_now = voltage;
     dcmotor->actuation_now = PBIO_DCMOTOR_ACTUATION_VOLTAGE;
 
@@ -219,7 +216,7 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     }
 
     // Apply the duty cycle.
-    pbio_error_t err = pbdrv_motor_driver_set_duty_cycle(dcmotor->motor_driver, duty_cycle);
+    pbio_error_t err = pbdrv_motor_driver_set_duty_cycle(dcmotor->motor_driver, (int16_t)duty_cycle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -259,7 +256,7 @@ pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int3
  * @param [in]  dcmotor       The motor instance.
  * @param [out] max_voltage   The configured maximum voltage for this motor.
  */
-void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
+void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
     *max_voltage = dcmotor->max_voltage;
 }
 

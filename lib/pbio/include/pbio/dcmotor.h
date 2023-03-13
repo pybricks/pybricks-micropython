@@ -71,13 +71,13 @@ void pbio_dcmotor_stop_all(bool clear_parents);
 pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
 pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
-void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now);
+void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now);
 
 // Settings:
 
 int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
-void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
+void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
 
 // Actuation for system purposes:
 
@@ -102,7 +102,7 @@ static inline pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_dire
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now) {
+static inline void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now) {
     *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
     *voltage_now = 0;
 }
@@ -111,7 +111,7 @@ static inline int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
     return 0;
 }
 
-static inline void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
+static inline void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
     *max_voltage = 0;
 }
 
