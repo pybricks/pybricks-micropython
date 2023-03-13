@@ -535,7 +535,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
         }
 
         // To hold, we first have to figure out which angle to hold.
-        pbio_angle_t *hold_target;
+        const pbio_angle_t *hold_target;
         if (pbio_control_is_active(&srv->control)) {
             // If control is active, hold at current target, so get it.
             uint32_t time = pbio_control_get_time_ticks();

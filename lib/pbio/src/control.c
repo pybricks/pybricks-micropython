@@ -218,7 +218,7 @@ static int32_t pbio_control_get_pid_kp(const pbio_control_settings_t *settings, 
  * @param [out] actuation       Required actuation type.
  * @param [out] control         The control output, which is the actuation payload (control units).
  */
-void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control) {
+void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control) {
 
     // Get reference signals at the reference time point in the trajectory.
     // This compensates for any time we may have spent pausing when the motor was stalled.
@@ -769,7 +769,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
  * @param [in]  time_now    Wall time (ticks).
  * @return int32_t          Time (ticks) on the trajectory curve.
  */
-uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now) {
+uint32_t pbio_control_get_ref_time(const pbio_control_t *ctl, uint32_t time_now) {
     // Angle controllers may pause the time so the reference position does not
     // keep accumulating while the controller is stuck.
     if (pbio_control_type_is_position(ctl)) {

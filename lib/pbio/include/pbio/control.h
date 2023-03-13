@@ -158,14 +158,14 @@ typedef struct _pbio_control_t {
 // Time and reference functions:
 
 uint32_t pbio_control_get_time_ticks(void);
-uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now);
+uint32_t pbio_control_get_ref_time(const pbio_control_t *ctl, uint32_t time_now);
 void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref);
 
 // Control loop functions:
 
 void pbio_control_reset(pbio_control_t *ctl);
 void pbio_control_stop(pbio_control_t *ctl);
-void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control);
+void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control);
 
 // Control status checks:
 
