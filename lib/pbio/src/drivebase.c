@@ -53,7 +53,7 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
  * @param [in]  s_left      Settings of the left motor controller.
  * @param [in]  s_right     Settings of the right motor controller.
  */
-static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
+static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, const pbio_control_settings_t *s_left, const pbio_control_settings_t *s_right) {
 
     // Use minimum PID of both motors, to avoid overly aggressive control if
     // one of the two motors has much higher PID values. Then scale it such
@@ -179,7 +179,7 @@ static void pbio_drivebase_stop_servo_control(pbio_drivebase_t *db) {
  * @param [in]  drivebase       Pointer to this drivebase instance.
  * @return                      True if heading and distance control are active, else false.
  */
-static bool pbio_drivebase_control_is_active(pbio_drivebase_t *db) {
+static bool pbio_drivebase_control_is_active(const pbio_drivebase_t *db) {
     return pbio_control_is_active(&db->control_distance) && pbio_control_is_active(&db->control_heading);
 }
 
@@ -195,6 +195,9 @@ static bool pbio_drivebase_control_is_active(pbio_drivebase_t *db) {
  * @return                      Error code.
  */
 static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_parent) {
+
+    // A drivebase has no parent, so clear_parent argument is not applicable.
+    (void)clear_parent;
 
     // Specify pointer type.
     pbio_drivebase_t *db = drivebase;
@@ -344,7 +347,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completio
  * @param [in]  db          The drivebase instance
  * @return                  True if still moving to target, false if not.
  */
-bool pbio_drivebase_is_done(pbio_drivebase_t *db) {
+bool pbio_drivebase_is_done(const pbio_drivebase_t *db) {
     return pbio_control_is_done(&db->control_distance) && pbio_control_is_done(&db->control_heading);
 }
 
@@ -375,12 +378,16 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return err;
     }
 
-    // Get reference and torque signals
+    // Get reference and torque signals for distance control.
     pbio_trajectory_reference_t ref_distance;
-    pbio_trajectory_reference_t ref_heading;
-    int32_t distance_torque, heading_torque;
-    pbio_dcmotor_actuation_t distance_actuation, heading_actuation;
+    int32_t distance_torque;
+    pbio_dcmotor_actuation_t distance_actuation;
     pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &distance_actuation, &distance_torque);
+
+    // Get reference and torque signals for heading control.
+    pbio_trajectory_reference_t ref_heading;
+    int32_t heading_torque;
+    pbio_dcmotor_actuation_t heading_actuation;
     pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &heading_actuation, &heading_torque);
 
     // If either controller coasts, coast both, thereby also stopping control.
@@ -651,10 +658,10 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
  * @param [out] turn_acceleration   Angular acceleration in deg/s^2.
  * @param [out] turn_deceleration   Angular deceleration in deg/s^2.
  */
-pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *drive_deceleration, int32_t *turn_rate, int32_t *turn_acceleration, int32_t *turn_deceleration) {
+pbio_error_t pbio_drivebase_get_drive_settings(const pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *drive_deceleration, int32_t *turn_rate, int32_t *turn_acceleration, int32_t *turn_deceleration) {
 
-    pbio_control_settings_t *sd = &db->control_distance.settings;
-    pbio_control_settings_t *sh = &db->control_heading.settings;
+    const pbio_control_settings_t *sd = &db->control_distance.settings;
+    const pbio_control_settings_t *sh = &db->control_heading.settings;
 
     *drive_speed = pbio_control_settings_ctl_to_app(sd, sd->speed_default);
     *drive_acceleration = pbio_control_settings_ctl_to_app(sd, sd->acceleration);
