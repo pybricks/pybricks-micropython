@@ -14,10 +14,12 @@
 #ifndef _PBIO_DCMOTOR_H_
 #define _PBIO_DCMOTOR_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbdrv/motor_driver.h>
 #include <pbio/config.h>
+#include <pbio/error.h>
 #include <pbio/iodev.h>
 #include <pbio/parent.h>
 #include <pbio/port.h>
@@ -62,31 +64,31 @@ typedef struct _pbio_dcmotor_t {
 
 #if PBIO_CONFIG_DCMOTOR
 
-// Global reset:
-
+/** @cond INTERNAL */
 void pbio_dcmotor_stop_all(bool clear_parents);
-
-// Setup and status:
-
-pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor);
-pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
-void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now);
-
-// Settings:
-
-int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
-pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
-void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
-
-// Actuation for system purposes:
-
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
+int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
+/** @endcond */
 
-// Actuation for end users:
+/** @name Initialization Functions */
+/**@{*/
+pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
+pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor);
+/**@}*/
 
+/** @name Status Functions */
+/**@{*/
+void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now);
+void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
+/**@}*/
+
+/** @name Operation Functions */
+/**@{*/
+pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
 pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int32_t voltage);
+/**@}*/
 
 #else
 
