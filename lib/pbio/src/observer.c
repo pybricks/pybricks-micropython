@@ -129,7 +129,7 @@ static int32_t pbio_observer_get_feedback_voltage_abs(int32_t error, const pbio_
  * @param [in]  angle          Measured angle used to correct the model.
  * @return                     Feedback voltage in mV.
  */
-int32_t pbio_observer_get_feedback_voltage(pbio_observer_t *obs, const pbio_angle_t *angle) {
+int32_t pbio_observer_get_feedback_voltage(const pbio_observer_t *obs, const pbio_angle_t *angle) {
 
     // Estimation error in millidegrees.
     int32_t error = pbio_angle_diff_mdeg(angle, &obs->angle);
