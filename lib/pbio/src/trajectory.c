@@ -259,7 +259,7 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
     trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target) : 0;
     trj->w0 = to_trajectory_speed(c->speed_start);
-    int32_t wt = trj->wu = to_trajectory_speed(c->speed_target);
+    int32_t wt = (trj->wu = to_trajectory_speed(c->speed_target));
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
 
@@ -363,12 +363,12 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     pbio_trajectory_set_start(&trj->start, c);
 
     // Get angle to travel.
-    trj->th3 = pbio_angle_diff_mdeg((pbio_angle_t *)&c->position_end, (pbio_angle_t *)&c->position_start);
+    trj->th3 = pbio_angle_diff_mdeg(&c->position_end, &c->position_start);
 
     // Speed continues at target speed or goes to zero. And scale to ddeg/s.
     trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target) : 0;
     trj->w0 = to_trajectory_speed(c->speed_start);
-    int32_t wt = trj->wu = to_trajectory_speed(c->speed_target);
+    int32_t wt = (trj->wu = to_trajectory_speed(c->speed_target));
     int32_t accel = to_trajectory_accel(c->acceleration);
     int32_t decel = to_trajectory_accel(c->deceleration);
 
