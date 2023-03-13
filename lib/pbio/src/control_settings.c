@@ -19,7 +19,7 @@
  * @param [in] input          Signal in control units.
  * @return                    Signal in application units.
  */
-int32_t pbio_control_settings_ctl_to_app(pbio_control_settings_t *s, int32_t input) {
+int32_t pbio_control_settings_ctl_to_app(const pbio_control_settings_t *s, int32_t input) {
     return input / s->ctl_steps_per_app_step;
 }
 
@@ -32,7 +32,7 @@ int32_t pbio_control_settings_ctl_to_app(pbio_control_settings_t *s, int32_t inp
  * @param [in] input          Signal in control units.
  * @return                    Signal in application units.
  */
-int32_t pbio_control_settings_ctl_to_app_long(pbio_control_settings_t *s, pbio_angle_t *input) {
+int32_t pbio_control_settings_ctl_to_app_long(const pbio_control_settings_t *s, const pbio_angle_t *input) {
     return pbio_angle_to_low_res(input, s->ctl_steps_per_app_step);
 }
 
@@ -45,7 +45,7 @@ int32_t pbio_control_settings_ctl_to_app_long(pbio_control_settings_t *s, pbio_a
  * @param [in] input          Signal in application units.
  * @return                    Signal in control units.
  */
-int32_t pbio_control_settings_app_to_ctl(pbio_control_settings_t *s, int32_t input) {
+int32_t pbio_control_settings_app_to_ctl(const pbio_control_settings_t *s, int32_t input) {
     return input * s->ctl_steps_per_app_step;
 }
 
@@ -58,7 +58,7 @@ int32_t pbio_control_settings_app_to_ctl(pbio_control_settings_t *s, int32_t inp
  * @param [in]  input          Signal in application units.
  * @param [out] output         Signal in control units.
  */
-void pbio_control_settings_app_to_ctl_long(pbio_control_settings_t *s, int32_t input, pbio_angle_t *output) {
+void pbio_control_settings_app_to_ctl_long(const pbio_control_settings_t *s, int32_t input, pbio_angle_t *output) {
     pbio_angle_from_low_res(output, input, s->ctl_steps_per_app_step);
 }
 
@@ -146,7 +146,7 @@ bool pbio_control_settings_time_is_later(uint32_t sample, uint32_t base) {
  * @param [out] deceleration  Absolute rate of change of the speed during off-ramp of the maneuver.
  * @param [out] actuation     Upper limit on actuation.
  */
-void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation) {
+void pbio_control_settings_get_limits(const pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation) {
     *speed = pbio_control_settings_ctl_to_app(s, s->speed_max);
     *acceleration = pbio_control_settings_ctl_to_app(s, s->acceleration);
     *deceleration = pbio_control_settings_ctl_to_app(s, s->deceleration);
@@ -187,7 +187,7 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
  * @param [out] integral_deadzone    Zone (angle) around the target within which the integrator should not accumulate errors.
  * @param [out] integral_change_max  Absolute bound on the rate at which the integrator accumulates errors, in application units.
  */
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_deadzone, int32_t *integral_change_max) {
+void pbio_control_settings_get_pid(const pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_deadzone, int32_t *integral_change_max) {
     *pid_kp = s->pid_kp;
     *pid_ki = s->pid_ki;
     *pid_kd = s->pid_kd;
@@ -228,7 +228,7 @@ pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t p
  * @param [out] speed       Speed tolerance in application units.
  * @param [out] position    Position tolerance in application units.
  */
-void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position) {
+void pbio_control_settings_get_target_tolerances(const pbio_control_settings_t *s, int32_t *speed, int32_t *position) {
     *position = pbio_control_settings_ctl_to_app(s, s->position_tolerance);
     *speed = pbio_control_settings_ctl_to_app(s, s->speed_tolerance);
 }
@@ -259,7 +259,7 @@ pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t
  * @param [out] speed       If this speed can't be reached with maximum actuation, it is stalled.
  * @param [out] time        Minimum consecutive stall time (ticks) before stall flag getter returns true.
  */
-void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s, int32_t *speed, uint32_t *time) {
+void pbio_control_settings_get_stall_tolerances(const pbio_control_settings_t *s, int32_t *speed, uint32_t *time) {
     *speed = pbio_control_settings_ctl_to_app(s, s->stall_speed_limit);
     *time = pbio_control_time_ticks_to_ms(s->stall_time);
 }

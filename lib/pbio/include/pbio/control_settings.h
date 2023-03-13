@@ -138,10 +138,10 @@ typedef struct _pbio_control_settings_t {
 
 // Unit conversion functions:
 
-int32_t pbio_control_settings_ctl_to_app(pbio_control_settings_t *s, int32_t input);
-int32_t pbio_control_settings_ctl_to_app_long(pbio_control_settings_t *s, pbio_angle_t *input);
-int32_t pbio_control_settings_app_to_ctl(pbio_control_settings_t *s, int32_t input);
-void pbio_control_settings_app_to_ctl_long(pbio_control_settings_t *s, int32_t input, pbio_angle_t *output);
+int32_t pbio_control_settings_ctl_to_app(const pbio_control_settings_t *s, int32_t input);
+int32_t pbio_control_settings_ctl_to_app_long(const pbio_control_settings_t *s, const pbio_angle_t *input);
+int32_t pbio_control_settings_app_to_ctl(const pbio_control_settings_t *s, int32_t input);
+void pbio_control_settings_app_to_ctl_long(const pbio_control_settings_t *s, int32_t input, pbio_angle_t *output);
 int32_t pbio_control_settings_actuation_ctl_to_app(int32_t input);
 int32_t pbio_control_settings_actuation_app_to_ctl(int32_t input);
 bool pbio_control_settings_time_is_later(uint32_t sample, uint32_t base);
@@ -154,13 +154,13 @@ int32_t pbio_control_settings_div_by_gain(int32_t value, int32_t gain);
 
 // Control settings getters and setters:
 
-void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation);
+void pbio_control_settings_get_limits(const pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation);
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration, int32_t actuation);
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_deadzone, int32_t *integral_change_max);
+void pbio_control_settings_get_pid(const pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_deadzone, int32_t *integral_change_max);
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_deadzone, int32_t integral_change_max);
-void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position);
+void pbio_control_settings_get_target_tolerances(const pbio_control_settings_t *s, int32_t *speed, int32_t *position);
 pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position);
-void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s,  int32_t *speed, uint32_t *time);
+void pbio_control_settings_get_stall_tolerances(const pbio_control_settings_t *s, int32_t *speed, uint32_t *time);
 pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t *s, int32_t speed, uint32_t time);
 
 #endif // _PBIO_CONTROL_SETTINGS_H_
