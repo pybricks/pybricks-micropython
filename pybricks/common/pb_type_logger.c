@@ -39,7 +39,7 @@ typedef struct _tools_Logger_obj_t {
     /**
      * Number of columns, needed when starting log which happens after object creation.
      */
-    uint32_t num_cols;
+    uint8_t num_cols;
     /**
      * Buffer size. Used to free (renew) old data when resetting logger.
      */

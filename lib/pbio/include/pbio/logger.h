@@ -64,26 +64,26 @@ typedef struct _pbio_log_t {
 // Number of values logged by the logger itself, such as time of call to logger
 #define PBIO_LOGGER_NUM_DEFAULT_COLS (1)
 
-void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint32_t num_cols, int32_t down_sample);
+void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint8_t num_cols, int32_t down_sample);
 void pbio_logger_stop(pbio_log_t *log);
-bool pbio_logger_is_active(pbio_log_t *log);
-void pbio_logger_add_row(pbio_log_t *log, int32_t *row_data);
+bool pbio_logger_is_active(const pbio_log_t *log);
+void pbio_logger_add_row(pbio_log_t *log, const int32_t *row_data);
 
-uint32_t pbio_logger_get_num_rows_used(pbio_log_t *log);
-int32_t *pbio_logger_get_row_data(pbio_log_t *log, uint32_t index);
+uint32_t pbio_logger_get_num_rows_used(const pbio_log_t *log);
+int32_t *pbio_logger_get_row_data(const pbio_log_t *log, uint32_t index);
 
 #else
 
-static inline void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint32_t num_cols, int32_t down_sample) {
+static inline void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint8_t num_cols, int32_t down_sample) {
 }
 static inline void pbio_logger_stop(pbio_log_t *log) {
 }
-static inline bool pbio_logger_is_active(pbio_log_t *log) {
+static inline bool pbio_logger_is_active(const pbio_log_t *log) {
     return false;
 }
-static inline void pbio_logger_add_row(pbio_log_t *log, int32_t *row_data) {
+static inline void pbio_logger_add_row(pbio_log_t *log, const int32_t *row_data) {
 }
-static inline uint32_t pbio_logger_get_num_rows_used(pbio_log_t *log) {
+static inline uint32_t pbio_logger_get_num_rows_used(const pbio_log_t *log) {
     return 0;
 }
 static inline int32_t *pbio_logger_get_row_data(pbio_log_t *log, uint32_t index) {

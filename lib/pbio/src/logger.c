@@ -23,7 +23,7 @@
  * @param [in]  num_cols    Number of entries in one row.
  * @param [in]  down_sample For every @p down_sample of update calls, only one row is logged.
  */
-void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint32_t num_cols, int32_t down_sample) {
+void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t num_rows, uint8_t num_cols, int32_t down_sample) {
     // (re-)initialize logger status.
     log->num_rows_used = 0;
     log->skipped_samples = 0;
@@ -52,7 +52,7 @@ void pbio_logger_stop(pbio_log_t *log) {
  * @param [in]  log         Pointer to log.
  * @return                  True if pbio_logger_add_row may be called, else false.
  */
-bool pbio_logger_is_active(pbio_log_t *log) {
+bool pbio_logger_is_active(const pbio_log_t *log) {
     return log->active;
 }
 
@@ -62,7 +62,7 @@ bool pbio_logger_is_active(pbio_log_t *log) {
  * @param [in]  log         Pointer to log.
  * @param [in]  row_data    Data to be added.
  */
-void pbio_logger_add_row(pbio_log_t *log, int32_t *row_data) {
+void pbio_logger_add_row(pbio_log_t *log, const int32_t *row_data) {
 
     // Skip logging if we are not yet at a multiple of down_sample.
     if (++log->skipped_samples != log->down_sample) {
@@ -96,7 +96,7 @@ void pbio_logger_add_row(pbio_log_t *log, int32_t *row_data) {
  * @param [in]  log         Pointer to log.
  * @return                  Number of used rows.
  */
-uint32_t pbio_logger_get_num_rows_used(pbio_log_t *log) {
+uint32_t pbio_logger_get_num_rows_used(const pbio_log_t *log) {
     return log->num_rows_used;
 }
 
@@ -106,7 +106,7 @@ uint32_t pbio_logger_get_num_rows_used(pbio_log_t *log) {
  * @param [in]  log         Pointer to log.
  * @return                  Pointer to row data.
  */
-int32_t *pbio_logger_get_row_data(pbio_log_t *log, uint32_t index) {
+int32_t *pbio_logger_get_row_data(const pbio_log_t *log, uint32_t index) {
     return log->data + index * log->num_cols;
 }
 
