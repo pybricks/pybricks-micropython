@@ -41,52 +41,95 @@
 #define assert_accel_numerator(a) (assert(pbio_int_math_abs((a)) <= ACCELERATION_MAX && pbio_int_math_abs((a)) >= ACCELERATION_MIN))
 #define assert_accel_angle(th) (assert(pbio_int_math_abs((th)) <= ANGLE_ACCEL_MAX))
 
-/**
+/*
  * Time segment length is capped at the maximum angle divided by maximum speed,
  * and scaled to time ticks. This is about 536 seconds.
  * Acceleration time segments take at most as long as reaching the maximum
  * speed with the lowest possible acceleration
- *
  */
+
 #define TIME_MAX (ANGLE_MAX / (SPEED_MAX * 100) * 10000)
 #define TIME_ACCEL_MAX (SPEED_MAX * 2 / ACCELERATION_MIN * 1000)
 #define assert_time(t) (assert((t) >= 0 && (t) < TIME_MAX))
 #define assert_accel_time(t) (assert((t) >= 0 && (t) < TIME_ACCEL_MAX))
 
-/**
+/*
  * Position (mdeg) and time (1e-4 s) are the same as in control module.
  * But speed is in millidegrees/second in control units, but this module uses
  * decidegrees per second to keep the math numerically bounded.
  */
 
+/**
+ * Converts a speed from ddeg/s to mdeg/s.
+ *
+ * @param [in]  trajectory_speed    The speed in ddeg/s.
+ * @returns                         The speed in mdeg/s.
+ */
 static int32_t to_control_speed(int32_t trajectory_speed) {
     return trajectory_speed * 100;
 }
 
+/**
+ * Converts a speed from mdeg/s to ddeg/s and limits it to +/- ::SPEED_MAX.
+ *
+ * @param [in]  control_speed       The speed in mdeg/s.
+ * @returns                         The speed in ddeg/s.
+ */
 static int32_t to_trajectory_speed(int32_t control_speed) {
     return pbio_int_math_clamp(control_speed / 100, SPEED_MAX);
 }
 
-/**
+/*
  * Acceleration is in millidegrees/second^2 in control units, but this module
  * uses deg/s^2 per second to keep the math numerically bounded.
  */
 
+/**
+ * Converts an acceleration from deg/s^2 to mdeg/s^2.
+ *
+ * @param [in]  trajectory_accel    The acceleration in deg/s^2.
+ * @returns                         The acceleration in mdeg/s^2.
+ */
 static int32_t to_control_accel(int32_t trajectory_accel) {
     return trajectory_accel * 1000;
 }
 
+/**
+ * Converts an acceleration from mdeg/s^2 to deg/s^2 and limits it to the range
+ * ::ACCELERATION_MIN to ::ACCELERATION_MAX.
+ *
+ * @param [in]  control_accel       The acceleration in mdeg/s^2.
+ * @returns                         The acceleration in deg/s^2.
+ */
 static int32_t to_trajectory_accel(int32_t control_accel) {
     return pbio_int_math_bind(control_accel / 1000, ACCELERATION_MIN, ACCELERATION_MAX);
 }
 
-/**
+/*
  * Time is unsigned everywhere except in the trajectory module.
  */
+
+/**
+ * Coverts time from unsigned to signed.
+ * @param [in]  time    Unsigned time value.
+ * @returns             Signed time value.
+ */
 #define TO_TRAJECTORY_TIME(time) ((int32_t)(time))
+
+/**
+ * Coverts time from signed to unsigned.
+ * @param [in]  time    Signed time value.
+ * @returns             Unsigned time value.
+ */
 #define TO_CONTROL_TIME(time) ((uint32_t)(time))
 
-
+/**
+ * Reverses a trajectory.
+ *
+ * On return, @p trj has been modified to contain the reverse trajectory.
+ *
+ * @param trj [in]      An initalized trajectory to be reversed.
+ */
 static void reverse_trajectory(pbio_trajectory_t *trj) {
     // Negate positions, essentially flipping around starting point.
     trj->th1 = -trj->th1;
@@ -106,7 +149,12 @@ static void reverse_trajectory(pbio_trajectory_t *trj) {
     trj->start.acceleration *= -1;
 }
 
-// Populates the starting point of a trajectory based on user command.
+/**
+ * Populates the starting point of a trajectory based on user command.
+ *
+ * @param [out] start   An uninitialized trajectory reference to hold the result.
+ * @param [in]  c       The command to use.
+ */
 static void pbio_trajectory_set_start(pbio_trajectory_reference_t *start, const pbio_trajectory_command_t *c) {
     start->acceleration = 0;
     start->position = c->position_start;
@@ -114,6 +162,12 @@ static void pbio_trajectory_set_start(pbio_trajectory_reference_t *start, const 
     start->time = c->time_start;
 }
 
+/**
+ * Initializes a trajectory struct based on a user command.
+ *
+ * @param [out] trj     An uninitialized trajectory to hold the result.
+ * @param [in]  c       The command to use.
+ */
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // Almost everything will be zero, so just zero everything.
@@ -127,7 +181,14 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
     trj->w3 = c->continue_running ? to_trajectory_speed(c->speed_target): 0;
 }
 
-// Divides speed^2 (ddeg/s)^2 by acceleration (deg/s^2)*2, giving angle (mdeg).
+/**
+ * Divides speed^2 by acceleration*2, giving angle.
+ *
+ * @param [in]  w_end   The ending speed in ddeg/s.
+ * @param [in]  w_start The starting speed in ddeg/s.
+ * @param [in]  a       The acceleration in deg/s^2.
+ * @returns             The angle in mdeg.
+ */
 static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
 
     assert_accel_numerator(a);
@@ -137,7 +198,13 @@ static int32_t div_w2_by_a(int32_t w_end, int32_t w_start, int32_t a) {
     return pbio_int_math_mult_then_div(w_end * w_end - w_start * w_start, (10 / 2), a);
 }
 
-// Divides speed (ddeg/s) by acceleration (deg/s^2), giving time (s e-4).
+/**
+ * Divides speed by acceleration, giving time.
+ *
+ * @param [in]  w       The speed in ddeg/s.
+ * @param [in]  a       The acceleration in deg/s^2.
+ * @returns             The time in s*10^-4.
+ */
 static int32_t div_w_by_a(int32_t w, int32_t a) {
 
     assert_accel_numerator(a);
@@ -146,7 +213,13 @@ static int32_t div_w_by_a(int32_t w, int32_t a) {
     return w * 1000 / a;
 }
 
-// Divides angle (mdeg) by time (s e-4), giving speed (ddeg/s).
+/**
+ * Divides angle by time, giving speed.
+ *
+ * @param [in]  th      The angle in mdeg.
+ * @param [in]  t       The time in s*10^-4.
+ * @returns             The speed in ddeg/s.
+ */
 static int32_t div_th_by_t(int32_t th, int32_t t) {
 
     assert_time(t);
@@ -158,7 +231,13 @@ static int32_t div_th_by_t(int32_t th, int32_t t) {
     return th / t * 100;
 }
 
-// Divides speed (ddeg/s) by time (s e-4), giving acceleration (deg/s^2).
+/**
+ * Divides speed by time, giving acceleration.
+ *
+ * @param [in]  w       The speed in ddeg/s.
+ * @param [in]  t       The time in s*10^-4.
+ * @returns             The acceleration in deg/s^2.
+ */
 static int32_t div_w_by_t(int32_t w, int32_t t) {
 
     assert_time(t);
@@ -167,7 +246,13 @@ static int32_t div_w_by_t(int32_t w, int32_t t) {
     return w * 1000 / t;
 }
 
-// Divides angle (mdeg) by speed (deg/s), giving time (s e-4).
+/**
+ * Divides angle by speed, giving time (s*10^-4).
+ *
+ * @param [in]  th      The angle in mdeg.
+ * @param [in]  w       The speed in ddeg/s.
+ * @returns             The time in s*10^-4.
+ */
 static int32_t div_th_by_w(int32_t th, int32_t w) {
 
     assert_angle(th);
@@ -176,7 +261,13 @@ static int32_t div_th_by_w(int32_t th, int32_t w) {
     return pbio_int_math_mult_then_div(th, 100, w);
 }
 
-// Multiplies speed (ddeg/s) by time (s e-4), giving angle (mdeg).
+/**
+ * Multiplies speed by time, giving angle.
+ *
+ * @param [in]  w       The speed in ddeg/s.
+ * @param [in]  t       The time in s*10^-4.
+ * @returns             The angle in mdeg.
+ */
 static int32_t mul_w_by_t(int32_t w, int32_t t) {
 
     assert_time(t);
@@ -185,7 +276,13 @@ static int32_t mul_w_by_t(int32_t w, int32_t t) {
     return pbio_int_math_mult_then_div(w, t, 100);
 }
 
-// Multiplies acceleration (deg/s^2) by time (s e-4), giving speed (ddeg/s).
+/**
+ * Multiplies acceleration by time, giving speed.
+ *
+ * @param [in]  a       The acceleration in deg/s^2.
+ * @param [in]  t       The time in s*10^-4.
+ * @returns             The speed in ddeg/s.
+ */
 static int32_t mul_a_by_t(int32_t a, int32_t t) {
 
     assert_time(t);
@@ -195,7 +292,13 @@ static int32_t mul_a_by_t(int32_t a, int32_t t) {
     return pbio_int_math_mult_then_div(a, t, 1000);
 }
 
-// Multiplies acceleration (deg/s^2) by time (s e-4)^2/2, giving angle (mdeg).
+/**
+ * Multiplies acceleration by time^2/2, giving angle.
+ *
+ * @param [in]  a       The acceleration in deg/s^2.
+ * @param [in]  t       The time in s*10^-4.
+ * @returns             The angle in mdeg.
+ */
 static int32_t mul_a_by_t2(int32_t a, int32_t t) {
 
     assert_time(t);
@@ -205,8 +308,16 @@ static int32_t mul_a_by_t2(int32_t a, int32_t t) {
     return mul_w_by_t(mul_a_by_t(a, t), t) / 2;
 }
 
-// Gets starting speed (ddeg/s) to reach end speed (ddeg/s) within given
-// angle (mdeg) and acceleration (deg/s^2). Inverse of div_w2_by_a.
+/**
+ * Gets starting speed to reach end speed within given angle and acceleration.
+ *
+ * Inverse of div_w2_by_a().
+ *
+ * @param [in]  w_end   The ending speed in ddeg/s.
+ * @param [in]  a       The acceleration in deg/s^2.
+ * @param [in]  th      The angle in mdeg.
+ * @returns             The starting speed in ddeg/s.
+ */
 static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
 
     assert_accel_small(a);
@@ -219,9 +330,18 @@ static int32_t bind_w0(int32_t w_end, int32_t a, int32_t th) {
     return pbio_int_math_sqrt(w_end * w_end + a * th / (10 / 2));
 }
 
-// Given a stationary starting and final angle (mdeg), computes the
-// intersection of the speed curves if we accelerate (deg/s^2) up and down
-// without a stationary speed phase.
+/**
+ * Gets the intersection of two speed curves.
+ *
+ * Given a stationary starting and final angle, computes the intersection of
+ * the speed curves if we accelerate up and down without a stationary speed phase.
+ *
+ * @param [in]  th3     The final angle in mdeg.
+ * @param [in]  th0     The starting angle in mdeg.
+ * @param [in]  a0      The "up" acceleration in deg/s^2.
+ * @param [in]  a2      The "down" acceleration in deg/s^2.
+ * @returns             The angle at which the two curves intersect in mdeg.
+ */
 static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) {
 
     assert_accel_angle(th3 - th0);
@@ -242,7 +362,15 @@ static int32_t intersect_ramp(int32_t th3, int32_t th0, int32_t a0, int32_t a2) 
     return th0 + pbio_int_math_mult_then_div(th3 - th0, a2, a2 - a0);
 }
 
-// Computes a trajectory for a timed command assuming *positive* speed
+/**
+ * Computes a trajectory for a timed command assuming *positive* speed.
+ *
+ * @param [out] trj     An uninitialized trajectory to hold the result.
+ * @param [in]  c       The command to use.
+ * @returns             ::PBIO_ERROR_INVALID_ARG if the command duration is out of range or the resulting angle is too large,
+ *                      ::PBIO_ERROR_FAILED if any of the calculated intervals are non-positive,
+ *                      otherwise ::PBIO_SUCCESS.
+ */
 static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // Return error for a long user-specified duration.
@@ -354,7 +482,15 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
     return PBIO_SUCCESS;
 }
 
-// Computes a trajectory for an angle command assuming *positive* speed
+/**
+ * Computes a trajectory for an angle command assuming *positive* speed.
+ *
+ * @param [out] trj     An uninitialized trajectory to hold the result.
+ * @param [in]  c       The command to use.
+ * @returns             ::PBIO_ERROR_INVALID_ARG if the command duration is out of range,
+ *                      ::PBIO_ERROR_FAILED if any of the calculated intervals are non-positive,
+ *                      otherwise ::PBIO_SUCCESS.
+ */
 static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *c) {
 
     // Fill out starting point based on user command.
@@ -500,6 +636,12 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     return PBIO_SUCCESS;
 }
 
+/**
+ * Stretches a trajectory to end at the same time as @p leader.
+ *
+ * @param [in]  trj     An initalized trajectory to be modified.
+ * @param [in]  leader  The trajectory to follow.
+ */
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, const pbio_trajectory_t *leader) {
 
     // Synchronize timestamps with leading trajectory.
@@ -535,6 +677,15 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, const pbio_trajectory_t *le
     trj->th2 = trj->th1 + mul_w_by_t(trj->w1, trj->t2 - trj->t1);
 }
 
+/**
+ * Computes a trajectory for a timed command.
+ *
+ * @param [out] trj     An uninitialized trajectory to hold the result.
+ * @param [in]  command The command to use.
+ * @returns             ::PBIO_ERROR_INVALID_ARG if the command duration is out of range or the resulting angle is too large,
+ *                      ::PBIO_ERROR_FAILED if any of the calculated intervals are non-positive,
+ *                      otherwise ::PBIO_SUCCESS.
+ */
 pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
 
     // Copy the command so we can modify it.
@@ -573,6 +724,15 @@ pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio
     return PBIO_SUCCESS;
 }
 
+/**
+ * Computes a trajectory for an angle command.
+ *
+ * @param [out] trj     An uninitialized trajectory to hold the result.
+ * @param [in]  command The command to use.
+ * @returns             ::PBIO_ERROR_INVALID_ARG if the command duration is out of range or the angle is too large,
+ *                      ::PBIO_ERROR_FAILED if any of the calculated intervals are non-positive,
+ *                      otherwise ::PBIO_SUCCESS.
+ */
 pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command) {
 
     // Copy the command so we can modify it.
@@ -594,7 +754,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
         return PBIO_SUCCESS;
     }
 
-    // Direction is solely defined in terms of th3 position relative to th0.
+    // Direction is solely defined in terms of the position relative to th0.
     // For speed, only the *magnitude* is relevant. Certain end-user APIs
     // allow specifying physically impossible scenarios like negative speed
     // with a positive relative position. Those cases are not handled here and
@@ -628,7 +788,16 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
     return PBIO_SUCCESS;
 }
 
-// Populates reference point with the right units and offset
+/**
+ * Populates reference point with the right units and offset.
+ *
+ * @param [out] ref     An uninitialized trajectory reference to hold the result.
+ * @param [in]  start   The starting trajectory reference.
+ * @param [in]  t       The time in s*10^-4.
+ * @param [in]  th      The angle in mdeg.
+ * @param [in]  w       The rotational speed in ddeg/s.
+ * @param [in]  a       The acceleration in deg/s^2.
+ */
 static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, const pbio_trajectory_reference_t *start, int32_t t, int32_t th, int32_t w, int32_t a) {
 
     // Convert local trajectory units to global pbio units.
@@ -641,6 +810,13 @@ static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, const
     pbio_angle_add_mdeg(&ref->position, th);
 }
 
+/**
+ * Gets the last vertex of a trajectory before a given point in time.
+ *
+ * @param [in]  trj         The trajectory instance.
+ * @param [in]  time_ref    The duration of time after the start of the trajectory in s*10^-4.
+ * @param [out] vertex      An uninitialized trajectory reference to hold the result.
+ */
 void pbio_trajectory_get_last_vertex(const pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex) {
 
     // Relative time within ongoing maneuver.
@@ -665,7 +841,12 @@ void pbio_trajectory_get_last_vertex(const pbio_trajectory_t *trj, uint32_t time
     }
 }
 
-// Get trajectory endpoint.
+/**
+ * Gets the trajectory endpoint.
+ *
+ * @param [in]  trj         The trajectory instance.
+ * @param [out] end         An uninitialized trajectory reference to hold the result.
+ */
 void pbio_trajectory_get_endpoint(const pbio_trajectory_t *trj, pbio_trajectory_reference_t *end) {
     pbio_trajectory_offset_start(end, &trj->start, trj->t3, trj->th3, trj->w3, 0);
 }
@@ -677,20 +858,33 @@ void pbio_trajectory_get_endpoint(const pbio_trajectory_t *trj, pbio_trajectory_
  * This is an indicator of the expected speed, which may be used to to alter
  * control behavior for motion with sustained low speed values.
  *
- * @param [in]  trj     The trajectory instance.
- * @return              The user given speed in control units.
+ * @param [in]  trj         The trajectory instance.
+ * @return                  The user given speed in control units (mdeg/s).
  */
 int32_t pbio_trajectory_get_abs_command_speed(const pbio_trajectory_t *trj) {
     return to_control_speed(pbio_int_math_abs(trj->wu));
 }
 
-// Get trajectory endpoint.
+/**
+ * Gets the trajectory duration.
+ *
+ * The duration is the time at when the endpoint is expected to occur.
+ *
+ * @param [in]  trj         The trajectory instance.
+ * @return                  The duration of time after the start of the trajectory in s*10^-4.
+ */
 uint32_t pbio_trajectory_get_duration(const pbio_trajectory_t *trj) {
     assert_time(trj->t3);
     return TO_CONTROL_TIME(trj->t3);
 }
 
-// Evaluate the reference speed and velocity at the (shifted) time
+/**
+ * Gets the calculated reference speed and velocity of the trajectory at the (shifted) time.
+ *
+ * @param [in]  trj         The trajectory instance.
+ * @param [in]  time_ref    The duration of time after the start of the trajectory in s*10^-4.
+ * @param [out] ref         An uninitialized trajectory reference to hold the result.
+ */
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref) {
 
     // Time within maneuver since start.
