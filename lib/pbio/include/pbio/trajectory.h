@@ -82,14 +82,14 @@ typedef struct _pbio_trajectory_t {
 pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
-void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader);
+void pbio_trajectory_stretch(pbio_trajectory_t *trj, const pbio_trajectory_t *leader);
 
 // Reference getter functions:
 
-uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj);
-int32_t pbio_trajectory_get_abs_command_speed(pbio_trajectory_t *trj);
-void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
+uint32_t pbio_trajectory_get_duration(const pbio_trajectory_t *trj);
+int32_t pbio_trajectory_get_abs_command_speed(const pbio_trajectory_t *trj);
+void pbio_trajectory_get_endpoint(const pbio_trajectory_t *trj, pbio_trajectory_reference_t *end);
+void pbio_trajectory_get_last_vertex(const pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex);
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref);
 
 #endif // _PBIO_TRAJECTORY_H_

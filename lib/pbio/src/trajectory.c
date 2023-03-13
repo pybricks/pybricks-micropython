@@ -502,7 +502,7 @@ static pbio_error_t pbio_trajectory_new_forward_angle_command(pbio_trajectory_t 
     return PBIO_SUCCESS;
 }
 
-void pbio_trajectory_stretch(pbio_trajectory_t *trj, pbio_trajectory_t *leader) {
+void pbio_trajectory_stretch(pbio_trajectory_t *trj, const pbio_trajectory_t *leader) {
 
     // Synchronize timestamps with leading trajectory.
     trj->t1 = leader->t1;
@@ -631,7 +631,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 }
 
 // Populates reference point with the right units and offset
-static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, pbio_trajectory_reference_t *start, int32_t t, int32_t th, int32_t w, int32_t a) {
+static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, const pbio_trajectory_reference_t *start, int32_t t, int32_t th, int32_t w, int32_t a) {
 
     // Convert local trajectory units to global pbio units.
     ref->time = TO_CONTROL_TIME(t) + start->time;
@@ -643,7 +643,7 @@ static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, pbio_
     pbio_angle_add_mdeg(&ref->position, th);
 }
 
-void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex) {
+void pbio_trajectory_get_last_vertex(const pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex) {
 
     // Relative time within ongoing maneuver.
     int32_t time = TO_TRAJECTORY_TIME(time_ref - trj->start.time);
@@ -668,7 +668,7 @@ void pbio_trajectory_get_last_vertex(pbio_trajectory_t *trj, uint32_t time_ref, 
 }
 
 // Get trajectory endpoint.
-void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_reference_t *end) {
+void pbio_trajectory_get_endpoint(const pbio_trajectory_t *trj, pbio_trajectory_reference_t *end) {
     pbio_trajectory_offset_start(end, &trj->start, trj->t3, trj->th3, trj->w3, 0);
 }
 
@@ -682,12 +682,12 @@ void pbio_trajectory_get_endpoint(pbio_trajectory_t *trj, pbio_trajectory_refere
  * @param [in]  trj     The trajectory instance.
  * @return              The user given speed in control units.
  */
-int32_t pbio_trajectory_get_abs_command_speed(pbio_trajectory_t *trj) {
+int32_t pbio_trajectory_get_abs_command_speed(const pbio_trajectory_t *trj) {
     return to_control_speed(pbio_int_math_abs(trj->wu));
 }
 
 // Get trajectory endpoint.
-uint32_t pbio_trajectory_get_duration(pbio_trajectory_t *trj) {
+uint32_t pbio_trajectory_get_duration(const pbio_trajectory_t *trj) {
     assert_time(trj->t3);
     return TO_CONTROL_TIME(trj->t3);
 }
@@ -700,7 +700,9 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pb
     assert_time(time);
 
     // Get angle, speed, and acceleration along reference
-    int32_t th, w, a;
+    int32_t th;
+    int32_t w;
+    int32_t a;
 
     if (time - trj->t1 < 0 || (trj->t1 == 0 && time == 0)) {
         // If we are here, then we are still in the acceleration phase.
