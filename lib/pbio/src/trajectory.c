@@ -318,7 +318,6 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
             // the best we can in the available time.
             trj->t1 = trj->t3;
             t2mt1 = 0;
-            t3mt2 = 0;
             trj->w1 = trj->w0 + mul_a_by_t(trj->a0, trj->t3);
             trj->w3 = trj->w1;
         } else {
@@ -329,7 +328,6 @@ static pbio_error_t pbio_trajectory_new_forward_time_command(pbio_trajectory_t *
 
             // There is no constant speed phase in this case.
             t2mt1 = 0;
-            t3mt2 = trj->t3 - trj->t1;
             trj->w1 = trj->w0 + mul_a_by_t(trj->a0, trj->t1);
         }
     }
