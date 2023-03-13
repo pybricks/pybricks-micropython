@@ -14,11 +14,11 @@ void pbio_parent_set(pbio_parent_t *self, void *parent_object, pbio_parent_stop_
     self->parent_stop_func = stop_func;
 }
 
-bool pbio_parent_exists(pbio_parent_t *self) {
+bool pbio_parent_exists(const pbio_parent_t *self) {
     return self->parent_object != NULL;
 }
 
-bool pbio_parent_equals(pbio_parent_t *self, void *candidate_object) {
+bool pbio_parent_equals(const pbio_parent_t *self, const void *candidate_object) {
     return self->parent_object == candidate_object;
 }
 
