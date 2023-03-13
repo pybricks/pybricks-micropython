@@ -25,6 +25,63 @@ uint32_t pbio_control_get_time_ticks(void) {
     return pbdrv_clock_get_100us();
 }
 
+/**
+ * Checks if on completion type is active (control keeps going on completion).
+ *
+ * @param [in] on_completion  What to do on completion.
+ * @return                    True if the completion type is active , else false.
+ */
+static bool pbio_control_on_completion_is_active(pbio_control_on_completion_t on_completion) {
+    return on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD ||
+           on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE;
+}
+
+/**
+ * Checks if on completion type is passive with smart mode (target position
+ * will be preserved as starting point for next relative angle maneuver).
+ *
+ * @param [in] on_completion  What to do on completion.
+ * @return                    True if the completion type is passive with smart mode.
+ */
+static bool pbio_control_on_completion_is_passive_smart(pbio_control_on_completion_t on_completion) {
+    return on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART ||
+           on_completion == PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART;
+}
+
+/**
+ * Converts passive on-completion type to passive actuation type.
+ *
+ * @param [in] on_completion  What to do on completion.
+ * @return                    Matching passive actuation type.
+ */
+pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuation_type(pbio_control_on_completion_t on_completion) {
+
+    assert(!pbio_control_on_completion_is_active(on_completion));
+
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART || on_completion == PBIO_CONTROL_ON_COMPLETION_COAST) {
+        return PBIO_DCMOTOR_ACTUATION_COAST;
+    }
+    // Brake and smart brake are the only remaining allowed completion options,
+    // so always return the matching actuation mode as brake.
+    return PBIO_DCMOTOR_ACTUATION_BRAKE;
+}
+
+/**
+ * Discards smart flag from on completion type.
+ *
+ * @param [in] on_completion  What to do on completion.
+ * @return                    What to do on completion, discarding smart option.
+ */
+static pbio_control_on_completion_t pbio_control_on_completion_discard_smart(pbio_control_on_completion_t on_completion) {
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART) {
+        return PBIO_CONTROL_ON_COMPLETION_COAST;
+    }
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART) {
+        return PBIO_CONTROL_ON_COMPLETION_BRAKE;
+    }
+    return on_completion;
+}
+
 static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t time, const pbio_control_state_t *state, const pbio_trajectory_reference_t *end) {
 
     // If no control is active, then all targets are complete.
@@ -264,12 +321,12 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
     if (// Not on target yet, so keep actuating.
         !pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET) ||
         // Active completion type, so keep actuating.
-        PBIO_CONTROL_ON_COMPLETION_IS_ACTIVE(ctl->on_completion) ||
+        pbio_control_on_completion_is_active(ctl->on_completion) ||
         // Smart passive mode, and we're only just complete, so keep actuating.
         // This ensures that any subsequent user command can pick up from here
         // without resetting any controllers. This avoids accumulating errors
         // in sequential relative maneuvers.
-        (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) &&
+        (pbio_control_on_completion_is_passive_smart(ctl->on_completion) &&
          !pbio_control_settings_time_is_later(ref->time, ref_end.time + ctl->settings.smart_passive_hold_time))) {
         // Keep actuating, so apply calculated PID torque value.
         *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
@@ -557,7 +614,7 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
         // errors in programs that use mostly relative motions like run_angle.
         pbio_trajectory_reference_t prev_end;
         pbio_trajectory_get_endpoint(&ctl->trajectory, &prev_end);
-        if (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(ctl->on_completion) &&
+        if (pbio_control_on_completion_is_passive_smart(ctl->on_completion) &&
             pbio_angle_diff_is_small(&prev_end.position, &state->position) &&
             pbio_int_math_abs(pbio_angle_diff_mdeg(&prev_end.position, &state->position)) < ctl->settings.position_tolerance * 2) {
             // We're close enough, so make the new target relative to the

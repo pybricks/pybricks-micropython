@@ -53,53 +53,6 @@ typedef enum {
 } pbio_control_on_completion_t;
 
 /**
- * Converts passive on-completion type to passive actuation type.
- *
- * @param [in] on_completion  What to do on completion.
- * @return                    Matching passive actuation type.
- */
-static inline pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuation_type(pbio_control_on_completion_t on_completion) {
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART || on_completion == PBIO_CONTROL_ON_COMPLETION_COAST) {
-        return PBIO_DCMOTOR_ACTUATION_COAST;
-    }
-    // Brake and smart brake are the only remaining allowed completion options,
-    // so always return the matching actuation mode as brake.
-    return PBIO_DCMOTOR_ACTUATION_BRAKE;
-}
-
-/**
- * Discards smart flag from on completion type.
- *
- * @param [in] on_completion  What to do on completion.
- * @return                    What to do on completion, discarding smart option.
- */
-static inline pbio_control_on_completion_t pbio_control_on_completion_discard_smart(pbio_control_on_completion_t on_completion) {
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART) {
-        return PBIO_CONTROL_ON_COMPLETION_COAST;
-    }
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART) {
-        return PBIO_CONTROL_ON_COMPLETION_BRAKE;
-    }
-    return on_completion;
-}
-
-/**
- * Checks if completion type is active.
- * Returns true if the completion type is active (the controller keeps going).
- * Returns false if it is passive (the controller eventually stops).
- */
-#define PBIO_CONTROL_ON_COMPLETION_IS_ACTIVE(on_completion) ( \
-    (on_completion) == PBIO_CONTROL_ON_COMPLETION_HOLD || \
-    (on_completion) == PBIO_CONTROL_ON_COMPLETION_CONTINUE)
-
-/**
- * Checks if completion type is passive with smart mode (see above).
- */
-#define PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(on_completion) ( \
-    (on_completion) == PBIO_CONTROL_ON_COMPLETION_COAST_SMART || \
-    (on_completion) == PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART)
-
-/**
  * State of a system that is being controlled.
  */
 typedef struct _pbio_control_state_t {
@@ -221,6 +174,7 @@ bool pbio_control_type_is_position(const pbio_control_t *ctl);
 bool pbio_control_type_is_time(const pbio_control_t *ctl);
 bool pbio_control_is_stalled(const pbio_control_t *ctl, uint32_t *stall_duration);
 bool pbio_control_is_done(const pbio_control_t *ctl);
+pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuation_type(pbio_control_on_completion_t on_completion);
 
 // Start new control command:
 
