@@ -25,7 +25,7 @@ uint32_t pbio_control_get_time_ticks(void) {
     return pbdrv_clock_get_100us();
 }
 
-static bool pbio_control_check_completion(pbio_control_t *ctl, uint32_t time, pbio_control_state_t *state, pbio_trajectory_reference_t *end) {
+static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t time, const pbio_control_state_t *state, const pbio_trajectory_reference_t *end) {
 
     // If no control is active, then all targets are complete.
     if (!pbio_control_is_active(ctl)) {
@@ -70,7 +70,7 @@ static void pbio_control_status_set(pbio_control_t *ctl, pbio_control_status_fla
     ctl->status = set ? ctl->status | flag : ctl->status & ~flag;
 }
 
-static bool pbio_control_status_test(pbio_control_t *ctl, pbio_control_status_flag_t flag) {
+static bool pbio_control_status_test(const pbio_control_t *ctl, pbio_control_status_flag_t flag) {
     return ctl->status & flag;
 }
 
@@ -86,7 +86,7 @@ static bool pbio_control_status_test(pbio_control_t *ctl, pbio_control_status_fl
  * @param [out] ref              Current reference, compensated for integrator state.
  *
  */
-void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref) {
+void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref) {
 
     // Get reference state, compensating for any time shift in position control.
     pbio_trajectory_get_reference(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), ref);
@@ -100,7 +100,7 @@ void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, pbio_con
     }
 }
 
-static int32_t pbio_control_get_pid_kp(pbio_control_settings_t *settings, int32_t position_error, int32_t target_error, int32_t abs_command_speed) {
+static int32_t pbio_control_get_pid_kp(const pbio_control_settings_t *settings, int32_t position_error, int32_t target_error, int32_t abs_command_speed) {
 
     // Reduced kp values are only needed for some motors under slow speed
     // conditions. For everything else, use the default kp value.
@@ -407,7 +407,7 @@ void pbio_control_reset(pbio_control_t *ctl) {
     // subsequent maneuvers, so nothing else needs to be reset explicitly.
 }
 
-static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_angle_t *target, int32_t speed, pbio_control_on_completion_t on_completion) {
+static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, const pbio_angle_t *target, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
 
@@ -509,7 +509,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
  * @param [in]  on_completion  What to do when reaching the target position.
  * @return                     Error code.
  */
-pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     // Convert target position to control units.
     pbio_angle_t target;
@@ -535,7 +535,7 @@ pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t t
  * @param [in]  on_completion   What to do when reaching the target position.
  * @return                      Error code.
  */
-pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     // Convert distance to control units.
     pbio_angle_t increment;
@@ -615,7 +615,7 @@ pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint3
  * @param [in]  on_completion   What to do when duration is over.
  * @return                      Error code.
  */
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t speed, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t duration, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
 
@@ -730,7 +730,7 @@ uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now) {
  * @param [in]  ctl             The control instance.
  * @return                      True if active (position or time), false if not.
  */
-bool pbio_control_is_active(pbio_control_t *ctl) {
+bool pbio_control_is_active(const pbio_control_t *ctl) {
     return ctl->type != PBIO_CONTROL_NONE;
 }
 
@@ -740,7 +740,7 @@ bool pbio_control_is_active(pbio_control_t *ctl) {
  * @param [in]  ctl             The control instance.
  * @return                      True if position control is active, false if not.
  */
-bool pbio_control_type_is_position(pbio_control_t *ctl) {
+bool pbio_control_type_is_position(const pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_POSITION;
 }
 
@@ -750,7 +750,7 @@ bool pbio_control_type_is_position(pbio_control_t *ctl) {
  * @param [in]  ctl             The control instance.
  * @return                      True if timed control is active, false if not.
  */
-bool pbio_control_type_is_time(pbio_control_t *ctl) {
+bool pbio_control_type_is_time(const pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_TIMED;
 }
 
@@ -761,7 +761,7 @@ bool pbio_control_type_is_time(pbio_control_t *ctl) {
  * @param [out] stall_duration  For how long the controller has stalled (ticks).
  * @return                      True if controller is stalled, false if not.
  */
-bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration) {
+bool pbio_control_is_stalled(const pbio_control_t *ctl, uint32_t *stall_duration) {
 
     // Return false if no control is active or if we're not stalled.
     if (!pbio_control_is_active(ctl) || !pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_STALLED)) {
@@ -784,6 +784,6 @@ bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration) {
  * @param [in]  ctl             The control instance.
  * @return                      True if the controller is done, false if not.
  */
-bool pbio_control_is_done(pbio_control_t *ctl) {
+bool pbio_control_is_done(const pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_NONE || pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET);
 }

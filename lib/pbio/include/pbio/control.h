@@ -190,7 +190,7 @@ typedef struct _pbio_control_t {
 
 uint32_t pbio_control_get_time_ticks(void);
 uint32_t pbio_control_get_ref_time(pbio_control_t *ctl, uint32_t time_now);
-void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref);
+void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref);
 
 // Control loop functions:
 
@@ -200,18 +200,18 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, pbio_control_st
 
 // Control status checks:
 
-bool pbio_control_is_active(pbio_control_t *ctl);
-bool pbio_control_type_is_position(pbio_control_t *ctl);
-bool pbio_control_type_is_time(pbio_control_t *ctl);
-bool pbio_control_is_stalled(pbio_control_t *ctl, uint32_t *stall_duration);
-bool pbio_control_is_done(pbio_control_t *ctl);
+bool pbio_control_is_active(const pbio_control_t *ctl);
+bool pbio_control_type_is_position(const pbio_control_t *ctl);
+bool pbio_control_type_is_time(const pbio_control_t *ctl);
+bool pbio_control_is_stalled(const pbio_control_t *ctl, uint32_t *stall_duration);
+bool pbio_control_is_done(const pbio_control_t *ctl);
 
 // Start new control command:
 
-pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion);
-pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t position, int32_t speed, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint32_t time_now, int32_t position);
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t speed, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t duration, int32_t speed, pbio_control_on_completion_t on_completion);
 
 #endif // _PBIO_CONTROL_H_
 
