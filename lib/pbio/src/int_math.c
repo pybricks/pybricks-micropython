@@ -132,7 +132,7 @@ int32_t pbio_int_math_sqrt(int32_t n) {
         return 0;
     }
     int32_t x0 = n;
-    int32_t x1 = x0;
+    int32_t x1;
 
     while (true) {
         x1 = (x0 + n / x0) / 2;
