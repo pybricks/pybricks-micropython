@@ -111,7 +111,7 @@ static void update_stall_state(pbio_observer_t *obs, uint32_t time, pbio_dcmotor
  * @param [in]  s              Observer settings.
  * @return                     Feedback voltage in mV.
  */
-static int32_t pbio_observer_get_feedback_voltage_abs(int32_t error, pbio_observer_settings_t *s) {
+static int32_t pbio_observer_get_feedback_voltage_abs(int32_t error, const pbio_observer_settings_t *s) {
 
     // Feedback voltage in first region is just linear in the low gain.
     if (error <= s->feedback_gain_threshold) {
