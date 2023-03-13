@@ -621,9 +621,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
 
     // For timed maneuvers, being "smart" by remembering the position endpoint
     // does nothing useful, so discard it to keep only the passive actuation type.
-    if (PBIO_CONTROL_ON_COMPLETION_IS_PASSIVE_SMART(on_completion)) {
-        on_completion = (pbio_control_on_completion_t)pbio_control_passive_completion_to_actuation_type(on_completion);
-    }
+    on_completion = pbio_control_on_completion_discard_smart(on_completion);
 
     // Common trajectory parameters for the cases covered here.
     pbio_trajectory_command_t command = {

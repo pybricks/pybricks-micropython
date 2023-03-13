@@ -33,9 +33,9 @@
  */
 typedef enum {
     /** On completion, passively coast the motor and reset control state. */
-    PBIO_CONTROL_ON_COMPLETION_COAST = PBIO_DCMOTOR_ACTUATION_COAST,
+    PBIO_CONTROL_ON_COMPLETION_COAST,
     /** On completion, passively brake the motor and reset control state. */
-    PBIO_CONTROL_ON_COMPLETION_BRAKE = PBIO_DCMOTOR_ACTUATION_BRAKE,
+    PBIO_CONTROL_ON_COMPLETION_BRAKE,
     /** On completion, actively hold the motor in place */
     PBIO_CONTROL_ON_COMPLETION_HOLD,
     /** On completion, actively keep moving at target speed */
@@ -65,6 +65,22 @@ static inline pbio_dcmotor_actuation_t pbio_control_passive_completion_to_actuat
     // Brake and smart brake are the only remaining allowed completion options,
     // so always return the matching actuation mode as brake.
     return PBIO_DCMOTOR_ACTUATION_BRAKE;
+}
+
+/**
+ * Discards smart flag from on completion type.
+ *
+ * @param [in] on_completion  What to do on completion.
+ * @return                    What to do on completion, discarding smart option.
+ */
+static inline pbio_control_on_completion_t pbio_control_on_completion_discard_smart(pbio_control_on_completion_t on_completion) {
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_COAST_SMART) {
+        return PBIO_CONTROL_ON_COMPLETION_COAST;
+    }
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_BRAKE_SMART) {
+        return PBIO_CONTROL_ON_COMPLETION_BRAKE;
+    }
+    return on_completion;
 }
 
 /**
