@@ -85,15 +85,16 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, pbio_angle_t *angle) {
  * Resets the tacho angle to a given value.
  *
  * If @p reset_to_abs is @c true, the value will be reset to the absolute angle
- * marked on the shaft if supported. In this case, @p angle serves as an
- * output so the caller knows which value it was reset to.
+ * marked on the shaft if supported. In this case, @p angle serves as an output
+ * so the caller knows which value it was reset to.
  *
  * @param [in]      tacho           The tacho instance.
- * @param [in,out]  angle           Angle that tacho should now report in millidegrees
- *                                  if @p reset_to_abs is @c true or an uninitialized
- *                                  value to hold the result if @p reset_to_abs is
- *                                  @c false.
- * @param [in]      reset_to_abs    If @c true, ignores @p angle and instead resets to
+ * @param [in,out]  angle           Angle that tacho should now report in
+ *                                  millidegrees if @p reset_to_abs is @c false
+ *                                  or an uninitialized value to hold the
+ *                                  result if @p reset_to_abs is
+ *                                  @c true.
+ * @param [in]      reset_to_abs    If @c true, ignores @p angle and resets to
  *                                  absolute angle marked on shaft instead.
  * @return                          Error code.
  */

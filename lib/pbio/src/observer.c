@@ -234,7 +234,7 @@ bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_
  * @param [in]  model               The observer model instance.
  * @param [in]  rate_ref            The reference rate in mdeg/s.
  * @param [in]  acceleration_ref    The reference acceleration in mdeg/s/s.
- * @returns                         The feedforward torque in mNm.
+ * @returns                         The feedforward torque in uNm.
  *
 */
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref) {
@@ -251,7 +251,7 @@ int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model,
  * Converts a torque to a voltage based on the given motor model.
  *
  * @param [in]  model               The observer model instance.
- * @param [in]  desired_torque      The torque in mNm.
+ * @param [in]  desired_torque      The torque in uNm.
  * @returns                         The voltage in mV.
 */
 int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque) {
@@ -263,7 +263,7 @@ int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int3
  *
  * @param [in]  model               The observer model instance.
  * @param [in]  voltage             The voltage in mV.
- * @returns                         The torque in mNm.
+ * @returns                         The torque in uNm.
 */
 int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage) {
     return PRESCALE_VOLTAGE * pbio_int_math_clamp(voltage, MAX_NUM_VOLTAGE) / model->d_torque_d_voltage;
