@@ -105,19 +105,15 @@ static int32_t to_trajectory_accel(int32_t control_accel) {
     return pbio_int_math_bind(control_accel / 1000, ACCELERATION_MIN, ACCELERATION_MAX);
 }
 
-/*
- * Time is unsigned everywhere except in the trajectory module.
- */
-
 /**
- * Coverts time from unsigned to signed.
+ * Converts time from unsigned (for use outside this file) to signed (used here).
  * @param [in]  time    Unsigned time value.
  * @returns             Signed time value.
  */
 #define TO_TRAJECTORY_TIME(time) ((int32_t)(time))
 
 /**
- * Coverts time from signed to unsigned.
+ * Converts time from signed (used here) to unsigned(for use outside this file).
  * @param [in]  time    Signed time value.
  * @returns             Unsigned time value.
  */
@@ -152,7 +148,7 @@ static void reverse_trajectory(pbio_trajectory_t *trj) {
 /**
  * Populates the starting point of a trajectory based on user command.
  *
- * @param [out] start   An uninitialized trajectory reference to hold the result.
+ * @param [out] start   An uninitialized trajectory reference point to hold the result.
  * @param [in]  c       The command to use.
  */
 static void pbio_trajectory_set_start(pbio_trajectory_reference_t *start, const pbio_trajectory_command_t *c) {
@@ -182,6 +178,8 @@ void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory
 }
 
 /**
+ * Gets the traversed angle when accelerating from one speed value to another.
+ *
  * Divides speed^2 by acceleration*2, giving angle.
  *
  * @param [in]  w_end   The ending speed in ddeg/s.
@@ -754,7 +752,7 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
         return PBIO_SUCCESS;
     }
 
-    // Direction is solely defined in terms of the position relative to th0.
+    // Direction is solely defined in terms of sign of the angle th3.
     // For speed, only the *magnitude* is relevant. Certain end-user APIs
     // allow specifying physically impossible scenarios like negative speed
     // with a positive relative position. Those cases are not handled here and
@@ -791,8 +789,8 @@ pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbi
 /**
  * Populates reference point with the right units and offset.
  *
- * @param [out] ref     An uninitialized trajectory reference to hold the result.
- * @param [in]  start   The starting trajectory reference.
+ * @param [out] ref     An uninitialized trajectory reference point to hold the result.
+ * @param [in]  start   The starting trajectory reference point.
  * @param [in]  t       The time in s*10^-4.
  * @param [in]  th      The angle in mdeg.
  * @param [in]  w       The rotational speed in ddeg/s.
@@ -815,7 +813,7 @@ static void pbio_trajectory_offset_start(pbio_trajectory_reference_t *ref, const
  *
  * @param [in]  trj         The trajectory instance.
  * @param [in]  time_ref    The duration of time after the start of the trajectory in s*10^-4.
- * @param [out] vertex      An uninitialized trajectory reference to hold the result.
+ * @param [out] vertex      An uninitialized trajectory reference point to hold the result.
  */
 void pbio_trajectory_get_last_vertex(const pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *vertex) {
 
@@ -845,7 +843,7 @@ void pbio_trajectory_get_last_vertex(const pbio_trajectory_t *trj, uint32_t time
  * Gets the trajectory endpoint.
  *
  * @param [in]  trj         The trajectory instance.
- * @param [out] end         An uninitialized trajectory reference to hold the result.
+ * @param [out] end         An uninitialized trajectory reference point to hold the result.
  */
 void pbio_trajectory_get_endpoint(const pbio_trajectory_t *trj, pbio_trajectory_reference_t *end) {
     pbio_trajectory_offset_start(end, &trj->start, trj->t3, trj->th3, trj->w3, 0);
@@ -883,7 +881,7 @@ uint32_t pbio_trajectory_get_duration(const pbio_trajectory_t *trj) {
  *
  * @param [in]  trj         The trajectory instance.
  * @param [in]  time_ref    The duration of time after the start of the trajectory in s*10^-4.
- * @param [out] ref         An uninitialized trajectory reference to hold the result.
+ * @param [out] ref         An uninitialized trajectory reference point to hold the result.
  */
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, uint32_t time_ref, pbio_trajectory_reference_t *ref) {
 
