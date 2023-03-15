@@ -265,10 +265,8 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     mp_stack_set_top(estack);
     mp_stack_set_limit(estack - sstack - 1024);
 
-    // MicroPython heap starts after program data, aligned by GC block size.
-    uint32_t align = MICROPY_BYTES_PER_GC_BLOCK -
-        (uint32_t)program->code_end % MICROPY_BYTES_PER_GC_BLOCK;
-    gc_init(program->code_end + align, program->data_end);
+    // MicroPython heap starts after program data.
+    gc_init(program->code_end, program->data_end);
 
     // Set program data reference to first script. This is used to run main,
     // and to set the starting point for finding downloaded modules.
