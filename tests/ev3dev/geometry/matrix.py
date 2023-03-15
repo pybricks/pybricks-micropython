@@ -64,9 +64,28 @@ try:
 except ValueError:
     pass
 
-# B points to A, test that data stays alive
-del A
-print("B = -A =", B)
+# 1x1 matrix is scalar and is converted to float.
+
+print(type(Matrix([[0]])))
+
+# 0-sized dimensions raise errors.
+
+try:
+    Matrix([])
+except ValueError:
+    print("ValueError")
+
+try:
+    Matrix([[]])
+except ValueError:
+    print("ValueError")
+
+# Mismatched dimensions raise error.
+
+try:
+    Matrix([[0], [1, 2]])
+except ValueError:
+    print("ValueError")
 
 # iterator
 print(*B)

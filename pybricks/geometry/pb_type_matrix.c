@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2022 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -35,40 +35,42 @@ STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args
     size_t m, n;
     mp_obj_t *row_objs, *scalar_objs;
     mp_obj_get_array(rows_in, &m, &row_objs);
-    mp_obj_get_array(row_objs[0], &n, &scalar_objs);
 
-    // It's a 1x1 object, assert type and just return it
-    if (m == 1 && n == 1) {
-        mp_obj_get_float_to_f(scalar_objs[0]);
-        return scalar_objs[0];
-    }
-
-    // Dimensions must be nonzero
-    if (m == 0 || n == 0) {
-        // TODO: raise dimension error, m >= 1, n >= 1
+    if (m == 0) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
+    mp_obj_get_array(row_objs[0], &n, &scalar_objs);
+
+    if (n == 0) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // It's a 1x1 object, return it as a float
+    if (m == 1 && n == 1) {
+        return mp_obj_new_float(mp_obj_get_float(scalar_objs[0]));
+    }
 
     // Create objects and save dimensions
     pb_type_Matrix_obj_t *self = m_new_obj(pb_type_Matrix_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->m = m;
     self->n = n;
-    self->data = m_new(float, self->m * self->n);
+    self->data = m_new(float, m * n);
 
     // Iterate through each of the rows to get the scalars
-    for (size_t r = 0; r < self->m; r++) {
+    for (size_t r = 0; r < m; r++) {
+        size_t n2;
+        mp_obj_get_array(row_objs[r], &n2, &scalar_objs);
 
-        size_t n;
-        mp_obj_get_array(row_objs[r], &n, &scalar_objs);
-        if (n != self->n) {
+        if (n2 != n) {
             // TODO: raise dimension error, all rows must have same length
             pb_assert(PBIO_ERROR_INVALID_ARG);
         }
+
         // Unpack the scalars
-        for (size_t c = 0; c < self->n; c++) {
-            self->data[r * self->n + c] = mp_obj_get_float_to_f(scalar_objs[c]);
+        for (size_t c = 0; c < n2; c++) {
+            self->data[r * n2 + c] = mp_obj_get_float_to_f(scalar_objs[c]);
         }
     }
 
