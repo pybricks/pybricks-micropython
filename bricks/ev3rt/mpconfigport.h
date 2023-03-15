@@ -99,7 +99,11 @@ static inline mp_uint_t disable_irq(void) {
         pbio_do_one_event(); \
     } while (0);
 
-#define MICROPY_GC_HOOK_LOOP MICROPY_VM_HOOK_LOOP
+#define MICROPY_GC_HOOK_LOOP(i) do { \
+        if ((i & 0xf) == 0) { \
+            MICROPY_VM_HOOK_LOOP \
+        } \
+} while (0)
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \

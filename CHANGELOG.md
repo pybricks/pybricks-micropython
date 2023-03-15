@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed allocator interfering with motor control when memory usage is high ([support#956]).
+
+[support#956]: https://github.com/pybricks/support/issues/977
+
 ## [3.3.0b2] - 2023-03-08
 
 ### Added
