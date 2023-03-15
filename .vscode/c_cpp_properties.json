@@ -24,7 +24,6 @@
                 "${workspaceFolder}/lib/pbio/include",
                 "${workspaceFolder}/lib/pbio/platform/prime_hub",
                 "${workspaceFolder}",
-                "${workspaceFolder}/bricks/stm32",
                 "${workspaceFolder}/bricks/primehub",
                 "${workspaceFolder}/bricks/primehub/build",
                 "${workspaceFolder}/micropython"
@@ -86,7 +85,7 @@
                 "-Wextra",
                 "-Wno-unused-parameter",
                 "-Wdouble-promotion",
-                "-nostdlib",
+                "-nostdlib"
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"
