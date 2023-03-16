@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Enabled the `gc` module (except on BOOST Move hub).
+
 ### Changed
 - Updated MicroPython to v1.20.0.
 
