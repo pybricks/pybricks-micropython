@@ -139,6 +139,7 @@ void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *
 
 static float yaw_rate_last;
 static float heading;
+static float heading_offset = 0;
 
 /**
  * Callback that runs when IMU driver has new data.
@@ -160,7 +161,16 @@ void pbio_orientation_imu_new_data_handler(pbdrv_imu_dev_t *imu_dev) {
  * @return                  Heading angle.
  */
 float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev) {
-    return heading;
+    return heading - heading_offset;
+}
+
+/**
+ * Sets the IMU heading in degrees.
+ * @param [in] imu_dev      The driver instance.
+ * @return                  Heading angle.
+ */
+void pbio_orientation_imu_set_heading(pbdrv_imu_dev_t *imu_dev, float desired_heading) {
+    heading_offset = heading - desired_heading;
 }
 
 #endif // PBIO_CONFIG_ORIENTATION
