@@ -186,8 +186,8 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stationary_obj, common_IMU_stationary);
 
 // pybricks._common.IMU.heading
 STATIC mp_obj_t common_IMU_heading(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_float(pbio_orientation_imu_get_heading(self->imu_dev));
+    (void)self_in;
+    return mp_obj_new_float(pbio_orientation_imu_get_heading());
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_heading_obj, common_IMU_heading);
 
