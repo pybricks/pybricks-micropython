@@ -48,6 +48,8 @@ void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *
 
 float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev);
 
+void pbio_orientation_imu_set_heading(pbdrv_imu_dev_t *imu_dev, float desired_heading);
+
 #endif // #if PBIO_CONFIG_ORIENTATION_IMU
 
 #else // PBIO_CONFIG_ORIENTATION
@@ -72,6 +74,9 @@ static inline void pbio_orientation_imu_update_gyro_rate_bias(float *average_gyr
 
 static inline float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev) {
     return 0.0f;
+}
+
+static inline void pbio_orientation_imu_set_heading(pbdrv_imu_dev_t *imu_dev, float desired_heading) {
 }
 
 #endif // #if PBIO_CONFIG_ORIENTATION_IMU
