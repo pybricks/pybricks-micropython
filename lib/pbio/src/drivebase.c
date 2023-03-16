@@ -504,7 +504,7 @@ static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t 
     // To account for this, we re-compute the shortest trajectory to have the same duration as the longest.
 
     // First, find out which controller takes the lead
-    pbio_control_t *control_leader;
+    const pbio_control_t *control_leader;
     pbio_control_t *control_follower;
 
     if (pbio_trajectory_get_duration(&db->control_distance.trajectory) >
