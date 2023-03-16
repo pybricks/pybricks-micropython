@@ -6,6 +6,7 @@
 
 ### Added
 - Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
+- Added experimental implementation of `hub.imu.heading()` ([support#912]).
 
 ### Fixed
 - Fixed iterator for `Matrix` objects giving bad values.
@@ -47,6 +48,7 @@
 [support#830]: https://github.com/pybricks/support/issues/830
 [support#881]: https://github.com/pybricks/support/issues/881
 [support#910]: https://github.com/pybricks/support/issues/910
+[support#912]: https://github.com/pybricks/support/issues/912
 [support#972]: https://github.com/pybricks/support/issues/972
 [support#977]: https://github.com/pybricks/support/issues/977
 [support#989]: https://github.com/pybricks/support/issues/989
