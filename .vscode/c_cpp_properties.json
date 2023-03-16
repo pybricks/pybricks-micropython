@@ -29,6 +29,7 @@
                 "${workspaceFolder}/micropython"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "HSE_VALUE=16000000",
                 "STM32F413xx",
@@ -75,6 +76,7 @@
                 "${workspaceFolder}/lib/ev3rt-lib/arch/gcc"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "HSE_VALUE=16000000",
                 "TOPPERS_OMIT_TECS"
@@ -109,6 +111,7 @@
                 "${workspaceFolder}/micropython"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "STM32F070xB",
                 "STM32_H=<stm32f0xx.h>",
@@ -150,6 +153,7 @@
                 "${workspaceFolder}/micropython"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "STM32F030xC",
                 "STM32_H=<stm32f0xx.h>",
@@ -194,6 +198,7 @@
                 "${workspaceFolder}/lib/pbio/include"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "HSE_VALUE=8000000",
                 "STM32L431xx",
@@ -243,6 +248,7 @@
                 "${workspaceFolder}/micropython"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "HSE_VALUE=16000000",
                 "STM32F413xx",
@@ -284,6 +290,7 @@
                 "${workspaceFolder}/micropython"
             ],
             "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION"
             ],
             "compilerArgs": [
@@ -384,6 +391,7 @@
             ],
             "defines": [
                 "UNIX",
+                "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_USE_READLINE=1"
             ],
             "compilerPath": "/usr/bin/gcc",
