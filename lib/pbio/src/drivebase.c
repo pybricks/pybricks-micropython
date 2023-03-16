@@ -10,6 +10,7 @@
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/int_math.h>
+#include <pbio/orientation.h>
 #include <pbio/servo.h>
 
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0
@@ -144,6 +145,17 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     state_heading->speed_estimate = state_distance->speed_estimate - state_right.speed_estimate;
     state_heading->speed = state_distance->speed - state_right.speed;
 
+    // Optionally use gyro to get the heading instead.
+    #if PBIO_CONFIG_ORIENTATION_IMU
+    if (db->use_gyro) {
+        state_heading->position = (pbio_angle_t) {
+            .rotations = 0,
+            // REVISIT: This will overflow after a couple of thousand rotations.
+            .millidegrees = (int32_t)(pbio_orientation_imu_get_heading() * db->control_heading.settings.ctl_steps_per_app_step),
+        };
+    }
+    #endif // PBIO_CONFIG_ORIENTATION_IMU
+
     return PBIO_SUCCESS;
 }
 
@@ -230,9 +242,10 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
  * @param [in]  right            Right servo instance.
  * @param [in]  wheel_diameter   Wheel diameter in um.
  * @param [in]  axle_track       Distance between wheel-ground contact points in um.
+ * @param [in]  use_gyro         Whether to use a gyro for heading (true) or the builtin rotation sensors (false).
  * @return                       Error code.
  */
-pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track) {
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track, bool use_gyro) {
 
     // Can't build a drive base with just one motor.
     if (left == right) {
@@ -273,6 +286,9 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     // Attach servos
     db->left = left;
     db->right = right;
+
+    // Whether to use the gyro for steering and driving straight.
+    db->use_gyro = use_gyro;
 
     // Set parents of both servos, so they can stop this drivebase.
     pbio_parent_set(&left->parent, db, pbio_drivebase_stop_from_servo);
@@ -812,7 +828,7 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
  * @return                       Error code.
  */
 pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
-    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1000, 1000);
+    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1000, 1000, false);
 
     // The application input for spike bases is degrees per second average
     // between both wheels, so in millidegrees this is x1000.

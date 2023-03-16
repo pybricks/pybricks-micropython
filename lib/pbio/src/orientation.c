@@ -137,9 +137,9 @@ void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *
     values[2] = gyro_data.z - average_gyro_data.z;
 }
 
-static float yaw_rate_last;
-static float heading;
-static float heading_offset = 0;
+float yaw_rate_last;
+float heading;
+float heading_offset = 0;
 
 /**
  * Callback that runs when IMU driver has new data.
@@ -160,7 +160,7 @@ void pbio_orientation_imu_new_data_handler(pbdrv_imu_dev_t *imu_dev) {
  * @param [in] imu_dev      The driver instance.
  * @return                  Heading angle.
  */
-float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev) {
+float pbio_orientation_imu_get_heading(void) {
     return heading - heading_offset;
 }
 

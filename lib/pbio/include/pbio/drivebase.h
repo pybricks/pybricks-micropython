@@ -19,13 +19,17 @@
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0
 
 typedef struct _pbio_drivebase_t {
+    /**
+     * True if a gyro or compass is used for heading control, else false.
+     */
+    bool use_gyro;
     pbio_servo_t *left;
     pbio_servo_t *right;
     pbio_control_t control_heading;
     pbio_control_t control_distance;
 } pbio_drivebase_t;
 
-pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track);
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track, bool use_gyro);
 
 // Drive base status:
 

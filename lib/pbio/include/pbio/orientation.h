@@ -46,7 +46,7 @@ uint32_t pbio_orientation_imu_get_stationary_count(void);
 
 void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values);
 
-float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev);
+float pbio_orientation_imu_get_heading(void);
 
 void pbio_orientation_imu_set_heading(pbdrv_imu_dev_t *imu_dev, float desired_heading);
 
@@ -72,7 +72,7 @@ static inline uint32_t pbio_orientation_imu_get_stationary_count(void) {
 static inline void pbio_orientation_imu_update_gyro_rate_bias(float *average_gyro_data) {
 }
 
-static inline float pbio_orientation_imu_get_heading(pbdrv_imu_dev_t *imu_dev) {
+static inline float pbio_orientation_imu_get_heading(void) {
     return 0.0f;
 }
 
