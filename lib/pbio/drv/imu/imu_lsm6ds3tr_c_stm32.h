@@ -16,7 +16,6 @@ typedef struct {
 
 extern const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data;
 
-
 void pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_er_irq(void);
 void pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq(void);
 void pbdrv_imu_lsm6ds3tr_c_stm32_handle_int1_irq(void);

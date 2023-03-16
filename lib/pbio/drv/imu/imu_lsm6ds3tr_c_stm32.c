@@ -227,9 +227,16 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_END(pt);
 }
 
-// REVISIT: Should be selected based on expected noise characteristics given the selected parameters
-#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE (60)
-#define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE (10)
+// REVISIT: These values should be selected based on expected noise
+// characteristics given the selected parameters. For now, use a setter so we
+// can experiment with finding the right values.
+static int16_t pbdrv_imu_lsm6ds3tr_c_gyro_noise = 20;
+static int16_t pbdrv_imu_lsm6ds3tr_c_accl_noise = 100;
+
+void pbdrv_imu_lsm6ds3tr_c_stm32_set_noise_thresholds(int16_t gyro_noise, int16_t accl_noise) {
+    pbdrv_imu_lsm6ds3tr_c_gyro_noise = gyro_noise;
+    pbdrv_imu_lsm6ds3tr_c_accl_noise = accl_noise;
+}
 
 static inline bool bounded(int16_t diff, int16_t threshold) {
     return diff < threshold && diff > -threshold;
@@ -238,12 +245,12 @@ static inline bool bounded(int16_t diff, int16_t threshold) {
 static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t *imu_dev) {
 
     // Check whether still stationary compared to constant start sample.
-    if (bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE) &&
-        bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE) &&
-        bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_GYRO_NOISE) &&
-        bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE) &&
-        bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE) &&
-        bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_ACCL_NOISE)
+    if (bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], pbdrv_imu_lsm6ds3tr_c_gyro_noise) &&
+        bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], pbdrv_imu_lsm6ds3tr_c_gyro_noise) &&
+        bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], pbdrv_imu_lsm6ds3tr_c_gyro_noise) &&
+        bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], pbdrv_imu_lsm6ds3tr_c_accl_noise) &&
+        bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], pbdrv_imu_lsm6ds3tr_c_accl_noise) &&
+        bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], pbdrv_imu_lsm6ds3tr_c_accl_noise)
         ) {
         // Still not moved, so increment stationary sample counter.
         imu_dev->stationary_sample_count++;
