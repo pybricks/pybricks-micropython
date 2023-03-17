@@ -120,24 +120,10 @@ typedef struct _pbio_control_settings_t {
     uint32_t smart_passive_hold_time;
 } pbio_control_settings_t;
 
-/**
- * Converts milliseconds to time ticks used by controller.
- *
- * @param [in] ms             Time in milliseconds.
- * @return                    Time converted to control ticks.
- */
-#define pbio_control_time_ms_to_ticks(ms) ((ms) * PBIO_TRAJECTORY_TICKS_PER_MS)
-
-/**
- * Converts time ticks used by controller to milliseconds.
- *
- * @param [in] ticks          Control timer ticks.
- * @return                    Time converted to milliseconds.
- */
-#define pbio_control_time_ticks_to_ms(ticks) ((ticks) / PBIO_TRAJECTORY_TICKS_PER_MS)
-
 // Unit conversion functions:
 
+uint32_t pbio_control_time_ms_to_ticks(uint32_t ms);
+uint32_t pbio_control_time_ticks_to_ms(uint32_t ticks);
 int32_t pbio_control_settings_ctl_to_app(const pbio_control_settings_t *s, int32_t input);
 int32_t pbio_control_settings_ctl_to_app_long(const pbio_control_settings_t *s, const pbio_angle_t *input);
 int32_t pbio_control_settings_app_to_ctl(const pbio_control_settings_t *s, int32_t input);

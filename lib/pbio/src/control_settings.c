@@ -12,6 +12,29 @@
 #include <pbio/observer.h>
 
 /**
+ * Converts milliseconds to time ticks used by controller.
+ *
+ * @param [in] ms             Time in milliseconds.
+ * @return                    Time converted to control ticks.
+ */
+uint32_t pbio_control_time_ms_to_ticks(uint32_t ms) {
+    if (ms > UINT32_MAX / PBIO_TRAJECTORY_TICKS_PER_MS) {
+        return UINT32_MAX;
+    }
+    return ms * PBIO_TRAJECTORY_TICKS_PER_MS;
+}
+
+/**
+ * Converts time ticks used by controller to milliseconds.
+ *
+ * @param [in] ticks          Control timer ticks.
+ * @return                    Time converted to milliseconds.
+ */
+uint32_t pbio_control_time_ticks_to_ms(uint32_t ticks) {
+    return ticks / PBIO_TRAJECTORY_TICKS_PER_MS;
+}
+
+/**
  * Converts position-like control units to application-specific units.
  *
  * This should only be used if input/ouput are within known bounds.
