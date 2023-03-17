@@ -34,7 +34,7 @@ static const pbio_observer_model_t model_technic_s_angular = {
     .d_voltage_d_torque = 22334,
     .d_torque_d_voltage = 17203,
     .d_torque_d_speed = 12282,
-    .d_torque_d_acceleration = 354592,
+    .d_torque_d_acceleration = 35129,
     .torque_friction = 9182,
 };
 
@@ -54,7 +54,7 @@ static const pbio_observer_model_t model_technic_m_angular = {
     .d_voltage_d_torque = 47606,
     .d_torque_d_voltage = 8071,
     .d_torque_d_speed = 5903,
-    .d_torque_d_acceleration = 163151,
+    .d_torque_d_acceleration = 16163,
     .torque_friction = 21413,
 };
 
@@ -74,7 +74,7 @@ static const pbio_observer_model_t model_technic_l_angular = {
     .d_voltage_d_torque = 133763,
     .d_torque_d_voltage = 2872,
     .d_torque_d_speed = 1919,
-    .d_torque_d_acceleration = 40344,
+    .d_torque_d_acceleration = 3997,
     .torque_friction = 23239,
 };
 
@@ -94,7 +94,7 @@ static const pbio_observer_model_t model_interactive = {
     .d_voltage_d_torque = 32225,
     .d_torque_d_voltage = 11923,
     .d_torque_d_speed = 10599,
-    .d_torque_d_acceleration = 207820,
+    .d_torque_d_acceleration = 20588,
     .torque_friction = 11227,
 };
 
@@ -114,7 +114,7 @@ static const pbio_observer_model_t model_technic_l = {
     .d_voltage_d_torque = 62889,
     .d_torque_d_voltage = 6110,
     .d_torque_d_speed = 6837,
-    .d_torque_d_acceleration = 108520,
+    .d_torque_d_acceleration = 10751,
     .torque_friction = 26430,
 };
 
@@ -134,7 +134,7 @@ static const pbio_observer_model_t model_technic_xl = {
     .d_voltage_d_torque = 55617,
     .d_torque_d_voltage = 6908,
     .d_torque_d_speed = 7713,
-    .d_torque_d_acceleration = 116867,
+    .d_torque_d_acceleration = 11578,
     .torque_friction = 12893,
 };
 
@@ -156,7 +156,7 @@ static const pbio_observer_model_t model_movehub = {
     .d_voltage_d_torque = 45536,
     .d_torque_d_voltage = 8438,
     .d_torque_d_speed = 10851,
-    .d_torque_d_acceleration = 155017,
+    .d_torque_d_acceleration = 15357,
     .torque_friction = 24835,
 };
 
@@ -182,7 +182,7 @@ static const pbio_observer_model_t model_ev3_l = {
     .d_voltage_d_torque = 107106,
     .d_torque_d_voltage = 3587,
     .d_torque_d_speed = 2083,
-    .d_torque_d_acceleration = 19838,
+    .d_torque_d_acceleration = 1965,
     .torque_friction = 16476,
 };
 
@@ -202,7 +202,7 @@ static const pbio_observer_model_t model_ev3_m = {
     .d_voltage_d_torque = 47722,
     .d_torque_d_voltage = 8051,
     .d_torque_d_speed = 7365,
-    .d_torque_d_acceleration = 94428,
+    .d_torque_d_acceleration = 9355,
     .torque_friction = 18317,
 };
 

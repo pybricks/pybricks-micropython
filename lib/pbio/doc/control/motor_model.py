@@ -84,7 +84,7 @@ MAX_SI_TORQUE = 1
 
 # Maximum numeric value that we might reach.
 MAX_NUM_SPEED = math.floor((MAX_SI_SPEED * c_th).evalf())
-MAX_NUM_ACCELERATION = math.floor((MAX_SI_SPEED * c_th).evalf())
+MAX_NUM_ACCELERATION = math.floor((MAX_SI_ACCELERATION * c_th).evalf())
 MAX_NUM_CURRENT = math.floor((MAX_SI_CURRENT * c_i))
 MAX_NUM_VOLTAGE = math.floor((MAX_SI_VOLTAGE * c_V))
 MAX_NUM_TORQUE = math.floor((MAX_SI_TORQUE * c_tau))
