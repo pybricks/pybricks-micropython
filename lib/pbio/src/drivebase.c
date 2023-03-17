@@ -818,7 +818,7 @@ pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, p
  * @param [in]  on_completion   What to do when reaching the target.
  * @return                      Error code.
  */
-pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_drivebase_spike_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, uint32_t duration, pbio_control_on_completion_t on_completion) {
     // Flip left tank motor orientation.
     speed_left = -speed_left;
 

@@ -672,7 +672,7 @@ pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint3
  * @param [in]  on_completion   What to do when duration is over.
  * @return                      Error code.
  */
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t duration, int32_t speed, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, uint32_t duration, int32_t speed, pbio_control_on_completion_t on_completion) {
 
     pbio_error_t err;
 
