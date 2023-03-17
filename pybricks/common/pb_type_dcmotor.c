@@ -49,8 +49,7 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
     pb_assert(pbio_dcmotor_setup(dcmotor, direction));
 
     // On success, create and return the MicroPython object
-    common_DCMotor_obj_t *self = m_new_obj(common_DCMotor_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    common_DCMotor_obj_t *self = mp_obj_malloc(common_DCMotor_obj_t, type);
     self->dcmotor = dcmotor;
     self->port = port;
     return MP_OBJ_FROM_PTR(self);

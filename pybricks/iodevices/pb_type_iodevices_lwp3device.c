@@ -96,8 +96,7 @@ STATIC mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000));
 
-    pb_type_iodevices_LWP3Device_obj_t *self = m_new_obj(pb_type_iodevices_LWP3Device_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    pb_type_iodevices_LWP3Device_obj_t *self = mp_obj_malloc(pb_type_iodevices_LWP3Device_obj_t, type);
 
     uint8_t hub_kind = pb_obj_get_positive_int(hub_kind_in);
 

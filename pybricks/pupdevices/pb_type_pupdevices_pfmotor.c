@@ -57,8 +57,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
     // All checks have passed, so create the object
-    pupdevices_PFMotor_obj_t *self = m_new_obj(pupdevices_PFMotor_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    pupdevices_PFMotor_obj_t *self = mp_obj_malloc(pupdevices_PFMotor_obj_t, type);
 
     // Save init arguments
     self->pbdev = sensor;

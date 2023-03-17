@@ -205,9 +205,7 @@ STATIC const mp_obj_type_t hubs_MoveHub_IMU_type = {
 };
 
 STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
-    hubs_MoveHub_IMU_obj_t *self = m_new_obj(hubs_MoveHub_IMU_obj_t);
-
-    self->base.type = &hubs_MoveHub_IMU_type;
+    hubs_MoveHub_IMU_obj_t *self = mp_obj_malloc(hubs_MoveHub_IMU_obj_t, &hubs_MoveHub_IMU_type);
 
     // PA4 gpio output - used for CS
     pbdrv_gpio_t gpio = { .bank = GPIOA, .pin = 4 };
@@ -257,8 +255,7 @@ static const pb_obj_enum_member_t *movehub_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    hubs_MoveHub_obj_t *self = m_new_obj(hubs_MoveHub_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    hubs_MoveHub_obj_t *self = mp_obj_malloc(hubs_MoveHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(movehub_buttons), movehub_buttons, pbio_button_is_pressed);
     self->imu = hubs_MoveHub_IMU_make_new();

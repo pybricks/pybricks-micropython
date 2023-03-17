@@ -50,8 +50,7 @@ const mp_obj_type_t pb_type_Charger = {
 };
 
 mp_obj_t pb_type_Charger_obj_new(void) {
-    pb_obj_Charger_t *self = m_new_obj(pb_obj_Charger_t);
-    self->base.type = &pb_type_Charger;
+    pb_obj_Charger_t *self = mp_obj_malloc(pb_obj_Charger_t, &pb_type_Charger);
     return MP_OBJ_FROM_PTR(self);
 }
 

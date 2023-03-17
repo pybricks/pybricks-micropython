@@ -63,10 +63,7 @@ STATIC const mp_obj_type_t pb_type_ColorLight_external = {
 
 // pybricks._common.ColorLight.__init__
 mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on) {
-    // Create new light instance
-    common_ColorLight_external_obj_t *light = m_new_obj(common_ColorLight_external_obj_t);
-    // Set type and iodev
-    light->base.type = &pb_type_ColorLight_external;
+    common_ColorLight_external_obj_t *light = mp_obj_malloc(common_ColorLight_external_obj_t, &pb_type_ColorLight_external);
     light->context = context;
     light->on = on;
     return MP_OBJ_FROM_PTR(light);

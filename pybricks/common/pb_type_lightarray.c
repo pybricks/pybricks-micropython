@@ -84,10 +84,7 @@ STATIC const mp_obj_type_t pb_type_LightArray = {
 
 // pybricks._common.LightArray.__init__
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
-    // Create new light instance
-    common_LightArray_obj_t *light = m_new_obj(common_LightArray_obj_t);
-    // Set type and iodev
-    light->base.type = &pb_type_LightArray;
+    common_LightArray_obj_t *light = mp_obj_malloc(common_LightArray_obj_t, &pb_type_LightArray);
     light->pbdev = pbdev;
     light->light_mode = light_mode;
     light->number_of_lights = number_of_lights;

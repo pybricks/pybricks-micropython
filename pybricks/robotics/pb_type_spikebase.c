@@ -36,8 +36,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
         PB_ARG_REQUIRED(left_motor),
         PB_ARG_REQUIRED(right_motor));
 
-    robotics_SpikeBase_obj_t *self = m_new_obj(robotics_SpikeBase_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    robotics_SpikeBase_obj_t *self = mp_obj_malloc(robotics_SpikeBase_obj_t, type);
 
     self->left = left_motor_in;
     self->right = right_motor_in;

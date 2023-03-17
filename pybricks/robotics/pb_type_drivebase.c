@@ -56,8 +56,7 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
         PB_ARG_REQUIRED(axle_track),
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
-    pb_type_DriveBase_obj_t *self = m_new_obj(pb_type_DriveBase_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    pb_type_DriveBase_obj_t *self = mp_obj_malloc(pb_type_DriveBase_obj_t, type);
 
     // Pointers to servos
     pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(left_motor_in, &pb_type_Motor))->srv;

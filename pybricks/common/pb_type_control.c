@@ -66,8 +66,7 @@ typedef struct _pb_type_Control_obj_t {
 // pybricks._common.Control.__init__/__new__
 mp_obj_t pb_type_Control_obj_make_new(pbio_control_t *control) {
 
-    pb_type_Control_obj_t *self = m_new_obj(pb_type_Control_obj_t);
-    self->base.type = &pb_type_Control;
+    pb_type_Control_obj_t *self = mp_obj_malloc(pb_type_Control_obj_t, &pb_type_Control);
 
     self->control = control;
 

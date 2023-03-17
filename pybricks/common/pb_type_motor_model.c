@@ -23,8 +23,7 @@ typedef struct _pb_type_MotorModel_obj_t {
 
 // pybricks._common.MotorModel.__init__/__new__
 mp_obj_t pb_type_MotorModel_obj_make_new(pbio_observer_t *observer) {
-    pb_type_MotorModel_obj_t *self = m_new_obj(pb_type_MotorModel_obj_t);
-    self->base.type = &pb_type_MotorModel;
+    pb_type_MotorModel_obj_t *self = mp_obj_malloc(pb_type_MotorModel_obj_t, &pb_type_MotorModel);
     self->observer = observer;
     return MP_OBJ_FROM_PTR(self);
 }

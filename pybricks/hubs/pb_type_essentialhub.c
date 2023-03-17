@@ -43,8 +43,7 @@ STATIC mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_a
         PB_ARG_DEFAULT_OBJ(top_side, pb_Axis_Z_obj),
         PB_ARG_DEFAULT_OBJ(front_side, pb_Axis_X_obj));
 
-    hubs_EssentialHub_obj_t *self = m_new_obj(hubs_EssentialHub_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    hubs_EssentialHub_obj_t *self = mp_obj_malloc(hubs_EssentialHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(essentialhub_buttons), essentialhub_buttons, pbio_button_is_pressed);
     self->charger = pb_type_Charger_obj_new();

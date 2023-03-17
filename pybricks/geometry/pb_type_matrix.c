@@ -52,8 +52,7 @@ STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args
     }
 
     // Create objects and save dimensions
-    pb_type_Matrix_obj_t *self = m_new_obj(pb_type_Matrix_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    pb_type_Matrix_obj_t *self = mp_obj_malloc(pb_type_Matrix_obj_t, type);
     self->m = m;
     self->n = n;
     self->data = m_new(float, m * n);
@@ -193,8 +192,7 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
     }
 
     // Result has same shape as both sides
-    pb_type_Matrix_obj_t *ret = m_new_obj(pb_type_Matrix_obj_t);
-    ret->base.type = &pb_type_Matrix;
+    pb_type_Matrix_obj_t *ret = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
     ret->m = lhs->m;
     ret->n = rhs->n;
     ret->data = m_new(float, ret->m * ret->n);
@@ -238,8 +236,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
     }
 
     // Result has as many rows as left hand side and as many columns as right hand side.
-    pb_type_Matrix_obj_t *ret = m_new_obj(pb_type_Matrix_obj_t);
-    ret->base.type = &pb_type_Matrix;
+    pb_type_Matrix_obj_t *ret = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
     ret->m = lhs->m;
     ret->n = rhs->n;
     ret->data = m_new(float, ret->m * ret->n);
@@ -280,8 +277,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_type_Matrix_obj_t *copy = m_new_obj(pb_type_Matrix_obj_t);
-    copy->base.type = &pb_type_Matrix;
+    pb_type_Matrix_obj_t *copy = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
 
     // Point to the same data instead of copying
     copy->data = self->data;
@@ -309,8 +305,7 @@ float pb_type_Matrix_get_scalar(mp_obj_t self_in, size_t r, size_t c) {
 STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_type_Matrix_obj_t *copy = m_new_obj(pb_type_Matrix_obj_t);
-    copy->base.type = &pb_type_Matrix;
+    pb_type_Matrix_obj_t *copy = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
 
     // Point to the same data instead of copying
     copy->data = self->data;
@@ -537,8 +532,7 @@ const mp_obj_type_t pb_type_Matrix = {
 mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {
 
     // Create object and save dimensions
-    pb_type_Matrix_obj_t *mat = m_new_obj(pb_type_Matrix_obj_t);
-    mat->base.type = &pb_type_Matrix;
+    pb_type_Matrix_obj_t *mat = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
     mat->m = m;
     mat->n = 1;
     mat->data = m_new(float, m);
@@ -558,8 +552,7 @@ mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {
 mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t src) {
 
     // Create object and save dimensions
-    pb_type_Matrix_obj_t *mat = m_new_obj(pb_type_Matrix_obj_t);
-    mat->base.type = &pb_type_Matrix;
+    pb_type_Matrix_obj_t *mat = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
     mat->m = m;
     mat->n = n;
     mat->scale = scale;

@@ -30,13 +30,12 @@ typedef struct _iodevices_UARTDevice_obj_t {
 } iodevices_UARTDevice_obj_t;
 
 // pybricks.iodevices.UARTDevice.__init__
-STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(baudrate),
         PB_ARG_DEFAULT_NONE(timeout));
-    iodevices_UARTDevice_obj_t *self = m_new_obj(iodevices_UARTDevice_obj_t);
-    self->base.type = (mp_obj_type_t *)otype;
+    iodevices_UARTDevice_obj_t *self = mp_obj_malloc(iodevices_UARTDevice_obj_t, type);
 
     // Get port number
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);

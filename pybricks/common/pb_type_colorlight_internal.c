@@ -144,10 +144,8 @@ STATIC const mp_obj_type_t pb_type_ColorLight_internal = {
 
 // pybricks._common.ColorLight.__init__
 mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light) {
-    // Create new light instance
-    common_ColorLight_internal_obj_t *self = m_new_obj(common_ColorLight_internal_obj_t);
+    common_ColorLight_internal_obj_t *self = mp_obj_malloc(common_ColorLight_internal_obj_t, &pb_type_ColorLight_internal);
 
-    self->base.type = &pb_type_ColorLight_internal;
     self->light = light;
     #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
     self->cells_size = 0;

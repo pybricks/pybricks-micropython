@@ -100,8 +100,7 @@ const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
 }
 
 pb_type_Color_obj_t *pb_type_Color_new_empty(void) {
-    pb_type_Color_obj_t *color = m_new_obj(pb_type_Color_obj_t);
-    color->base.type = &pb_type_Color;
+    pb_type_Color_obj_t *color = mp_obj_malloc(pb_type_Color_obj_t, &pb_type_Color);
     return color;
 }
 

@@ -41,8 +41,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
         PB_ARG_REQUIRED(port),
         PB_ARG_DEFAULT_OBJ(direction, pb_Direction_CLOCKWISE_obj));
 
-    ev3devices_GyroSensor_obj_t *self = m_new_obj(ev3devices_GyroSensor_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    ev3devices_GyroSensor_obj_t *self = mp_obj_malloc(ev3devices_GyroSensor_obj_t, type);
     self->direction = pb_type_enum_get_value(direction_in, &pb_enum_type_Direction);
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);

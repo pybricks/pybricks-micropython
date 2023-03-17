@@ -58,9 +58,7 @@ STATIC const mp_obj_type_t pb_type_Keypad = {
 
 // pybricks._common.Keypad.__init__
 mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons, pbio_button_is_pressed_func_t is_pressed) {
-    // Create new light instance
-    common_Keypad_obj_t *self = m_new_obj(common_Keypad_obj_t);
-    self->base.type = &pb_type_Keypad;
+    common_Keypad_obj_t *self = mp_obj_malloc(common_Keypad_obj_t, &pb_type_Keypad);
 
     // Store hub specific button info
     self->number_of_buttons = number_of_buttons;

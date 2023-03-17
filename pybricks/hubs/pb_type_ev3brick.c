@@ -35,8 +35,7 @@ static const pb_obj_enum_member_t *ev3brick_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    hubs_EV3Brick_obj_t *self = mp_obj_malloc(hubs_EV3Brick_obj_t, type);
 
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(ev3brick_buttons), ev3brick_buttons, pbio_button_is_pressed);

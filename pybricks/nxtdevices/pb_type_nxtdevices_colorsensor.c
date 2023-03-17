@@ -44,8 +44,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
-    nxtdevices_ColorSensor_obj_t *self = m_new_obj(nxtdevices_ColorSensor_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    nxtdevices_ColorSensor_obj_t *self = mp_obj_malloc(nxtdevices_ColorSensor_obj_t, type);
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 

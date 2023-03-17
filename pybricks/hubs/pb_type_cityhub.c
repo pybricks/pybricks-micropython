@@ -26,8 +26,7 @@ static const pb_obj_enum_member_t *cityhub_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    hubs_CityHub_obj_t *self = m_new_obj(hubs_CityHub_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    hubs_CityHub_obj_t *self = mp_obj_malloc(hubs_CityHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(cityhub_buttons), cityhub_buttons, pbio_button_is_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);

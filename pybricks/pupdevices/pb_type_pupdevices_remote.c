@@ -257,8 +257,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000));
 
-    pb_type_pupdevices_Remote_obj_t *self = m_new_obj(pb_type_pupdevices_Remote_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    pb_type_pupdevices_Remote_obj_t *self = mp_obj_malloc(pb_type_pupdevices_Remote_obj_t, type);
 
     const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
     mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);

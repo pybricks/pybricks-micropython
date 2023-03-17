@@ -31,8 +31,7 @@ static const pb_obj_enum_member_t *nxtbrick_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    hubs_NXTBrick_obj_t *self = m_new_obj(hubs_NXTBrick_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    hubs_NXTBrick_obj_t *self = mp_obj_malloc(hubs_NXTBrick_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(nxtbrick_buttons), nxtbrick_buttons, pbio_button_is_pressed);
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));

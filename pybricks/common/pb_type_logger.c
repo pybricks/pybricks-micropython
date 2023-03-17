@@ -158,8 +158,7 @@ STATIC const mp_obj_type_t tools_Logger_type = {
 };
 
 mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values) {
-    tools_Logger_obj_t *logger = m_new_obj(tools_Logger_obj_t);
-    logger->base.type = (mp_obj_type_t *)&tools_Logger_type;
+    tools_Logger_obj_t *logger = mp_obj_malloc(tools_Logger_obj_t, &tools_Logger_type);
     logger->log = log;
     logger->num_cols = num_values + PBIO_LOGGER_NUM_DEFAULT_COLS;
     return MP_OBJ_FROM_PTR(logger);

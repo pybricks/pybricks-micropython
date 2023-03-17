@@ -31,8 +31,7 @@ static const pb_obj_enum_member_t *virtualhub_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    hubs_VirtualHub_obj_t *self = m_new_obj(hubs_VirtualHub_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    hubs_VirtualHub_obj_t *self = mp_obj_malloc(hubs_VirtualHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(virtualhub_buttons), virtualhub_buttons, pbio_button_is_pressed);
     // FIXME: Implement lights.
