@@ -689,6 +689,31 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
 
+    pbio_error_t err = pbio_trajectory_validate_speed_limit(sd->ctl_steps_per_app_step, drive_speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_acceleration_limit(sd->ctl_steps_per_app_step, drive_acceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_acceleration_limit(sd->ctl_steps_per_app_step, drive_deceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_speed_limit(sh->ctl_steps_per_app_step, turn_rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_acceleration_limit(sh->ctl_steps_per_app_step, turn_acceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_acceleration_limit(sh->ctl_steps_per_app_step, turn_deceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     sd->speed_default = pbio_int_math_clamp(pbio_control_settings_app_to_ctl(sd, drive_speed), sd->speed_max);
     sd->acceleration = pbio_control_settings_app_to_ctl(sd, drive_acceleration);
     sd->deceleration = pbio_control_settings_app_to_ctl(sd, drive_deceleration);

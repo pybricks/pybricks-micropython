@@ -12,6 +12,11 @@ TIMEOUT = int(getenv("TIMEOUT", 10000))
 TOLERANCE = int(getenv("TOLERANCE", 5))
 
 motor = Motor(Port.A)
+try:
+    motor.control.limits(speed=2001)
+except ValueError:
+    print("ValueError")
+    motor.control.limits(speed=2000)
 watch = StopWatch()
 
 # In the future, replace with async, but this will do fine today
