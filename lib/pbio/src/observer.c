@@ -228,6 +228,16 @@ bool pbio_observer_is_stalled(const pbio_observer_t *obs, uint32_t time, uint32_
 }
 
 /**
+ * Gets the maximum torque for use by user input validators.
+ *
+ * @returns      The maximum torque in uNm.
+ *
+*/
+int32_t pbio_observer_get_max_torque(void) {
+    return MAX_NUM_TORQUE;
+}
+
+/**
  * Calculates the feedforward torque needed to achieve the requested reference
  * rotational speed and acceleration.
  *

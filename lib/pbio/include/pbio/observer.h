@@ -139,6 +139,7 @@ int32_t pbio_observer_get_feedback_voltage(const pbio_observer_t *obs, const pbi
 
 // Model conversion functions:
 
+int32_t pbio_observer_get_max_torque(void);
 int32_t pbio_observer_get_feedforward_torque(const pbio_observer_model_t *model, int32_t rate_ref, int32_t acceleration_ref);
 int32_t pbio_observer_torque_to_voltage(const pbio_observer_model_t *model, int32_t desired_torque);
 int32_t pbio_observer_voltage_to_torque(const pbio_observer_model_t *model, int32_t voltage);

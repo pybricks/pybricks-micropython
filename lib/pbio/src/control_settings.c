@@ -9,6 +9,7 @@
 #include <pbio/config.h>
 #include <pbio/control_settings.h>
 #include <pbio/int_math.h>
+#include <pbio/observer.h>
 
 /**
  * Converts position-like control units to application-specific units.
@@ -195,18 +196,17 @@ int32_t pbio_control_settings_get_actuation_limit(const pbio_control_settings_t 
  * Sets the control limit for actuation, in application units.
  *
  * @param [in] s              Control settings structure from which to read.
- * @param [in] actuation      Upper limit on actuation.
+ * @param [in] limit          Upper limit on actuation.
  * @return                    ::PBIO_SUCCESS on success
  *                            ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
 pbio_error_t pbio_control_settings_set_actuation_limit(pbio_control_settings_t *s, int32_t limit) {
-    if (limit < 1) {
+    if (limit < 1 || limit > pbio_control_settings_actuation_ctl_to_app(pbio_observer_get_max_torque())) {
         return PBIO_ERROR_INVALID_ARG;
     }
     s->actuation_max = pbio_control_settings_actuation_app_to_ctl(limit);
     return PBIO_SUCCESS;
 }
-
 
 /**
  * Gets the PID control parameters.
