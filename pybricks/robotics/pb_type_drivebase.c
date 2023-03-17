@@ -53,7 +53,8 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
         PB_ARG_REQUIRED(left_motor),
         PB_ARG_REQUIRED(right_motor),
         PB_ARG_REQUIRED(wheel_diameter),
-        PB_ARG_REQUIRED(axle_track));
+        PB_ARG_REQUIRED(axle_track),
+        PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
     pb_type_DriveBase_obj_t *self = m_new_obj(pb_type_DriveBase_obj_t);
     self->base.type = (mp_obj_type_t *)type;
@@ -63,7 +64,11 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(right_motor_in, &pb_type_Motor))->srv;
 
     // Create drivebase
-    pb_assert(pbio_drivebase_get_drivebase(&self->db, srv_left, srv_right, pb_obj_get_int(wheel_diameter_in), pb_obj_get_int(axle_track_in)));
+    pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
+    pb_assert(pbio_drivebase_get_drivebase(&self->db,
+        positive_direction == PBIO_DIRECTION_CLOCKWISE ? srv_left : srv_right,
+        positive_direction == PBIO_DIRECTION_CLOCKWISE ? srv_right : srv_left,
+        pb_obj_get_int(wheel_diameter_in), pb_obj_get_int(axle_track_in)));
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create instances of the Control class

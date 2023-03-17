@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+- Added `positive_direction` to `DriveBase` initializer. It defaults to
+  clockwise to ensure this is not a breaking change. Users can now change it
+  to counterclockwise, which is more common in engineering ([support#989]).
+
 ### Fixed
 - Fixed allocator interfering with motor control when memory usage is high ([support#956]).
 
@@ -19,6 +24,7 @@
 
 [support#484]: https://github.com/pybricks/support/issues/484
 [support#910]: https://github.com/pybricks/support/issues/910
+[support#989]: https://github.com/pybricks/support/issues/989
 
 ## [3.3.0b2] - 2023-03-08
 
