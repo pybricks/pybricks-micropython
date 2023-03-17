@@ -8,6 +8,8 @@
 - Added `positive_direction` to `DriveBase` initializer. It defaults to
   clockwise to ensure this is not a breaking change. Users can now change it
   to counterclockwise, which is more common in engineering ([support#989]).
+- Added support for setting drivebase acceleration and deceleration separately
+  using a tuple, consistent with single motors ([support#881]).
 
 ### Fixed
 - Fixed allocator interfering with motor control when memory usage is high ([support#956]).
@@ -24,6 +26,7 @@
 - Removed `DriveBase.left` and `DriveBase.right` properties ([support#910]).
 
 [support#484]: https://github.com/pybricks/support/issues/484
+[support#989]: https://github.com/pybricks/support/issues/881
 [support#910]: https://github.com/pybricks/support/issues/910
 [support#989]: https://github.com/pybricks/support/issues/989
 

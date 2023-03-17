@@ -250,10 +250,13 @@ STATIC mp_obj_t pb_type_DriveBase_settings(size_t n_args, const mp_obj_t *pos_ar
 
     // Read acceleration and speed limit settings from control
     int32_t straight_speed, turn_rate;
-    int32_t straight_acceleration, turn_acceleration, _;
+    int32_t straight_acceleration, turn_acceleration;
+    int32_t straight_deceleration, turn_deceleration;
 
-    // Get current settings. Deceleration values are currently ignored, so not accessible from Python API.
-    pbio_drivebase_get_drive_settings(self->db, &straight_speed, &straight_acceleration, &_, &turn_rate, &turn_acceleration, &_);
+    // Get current settings.
+    pbio_drivebase_get_drive_settings(self->db,
+        &straight_speed, &straight_acceleration, &straight_deceleration,
+        &turn_rate, &turn_acceleration, &turn_deceleration);
 
     // If all given values are none, return current values
     if (straight_speed_in == mp_const_none &&
@@ -261,23 +264,25 @@ STATIC mp_obj_t pb_type_DriveBase_settings(size_t n_args, const mp_obj_t *pos_ar
         turn_rate_in == mp_const_none &&
         turn_acceleration_in == mp_const_none
         ) {
-
-        mp_obj_t ret[4];
-        ret[0] = mp_obj_new_int(straight_speed);
-        ret[1] = mp_obj_new_int(straight_acceleration);
-        ret[2] = mp_obj_new_int(turn_rate);
-        ret[3] = mp_obj_new_int(turn_acceleration);
-        return mp_obj_new_tuple(4, ret);
+        mp_obj_t ret[] = {
+            mp_obj_new_int(straight_speed),
+            make_acceleration_return_value(straight_acceleration, straight_deceleration),
+            mp_obj_new_int(turn_rate),
+            make_acceleration_return_value(turn_acceleration, turn_deceleration),
+        };
+        return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
     }
 
     // Get the speeds and accelerations if given, bounded by the limit.
     straight_speed = pb_obj_get_default_abs_int(straight_speed_in, straight_speed);
     turn_rate = pb_obj_get_default_abs_int(turn_rate_in, turn_rate);
-    straight_acceleration = pb_obj_get_default_abs_int(straight_acceleration_in, straight_acceleration);
-    turn_acceleration = pb_obj_get_default_abs_int(turn_acceleration_in, turn_acceleration);
+    unpack_acceleration_value(straight_acceleration_in, &straight_acceleration, &straight_deceleration);
+    unpack_acceleration_value(turn_acceleration_in, &turn_acceleration, &turn_deceleration);
 
     // Update the settings. Acceleration and deceleration are set to the same acceleration magnitude.
-    pb_assert(pbio_drivebase_set_drive_settings(self->db, straight_speed, straight_acceleration, straight_acceleration, turn_rate, turn_acceleration, turn_acceleration));
+    pb_assert(pbio_drivebase_set_drive_settings(self->db,
+        straight_speed, straight_acceleration, straight_deceleration,
+        turn_rate, turn_acceleration, turn_deceleration));
 
     return mp_const_none;
 }
