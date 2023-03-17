@@ -229,6 +229,20 @@ void pbio_control_settings_get_pid(const pbio_control_settings_t *s, int32_t *pi
 }
 
 /**
+ * Verifies that a position-like limit (e.g. angle tolerance) has a valid value.
+ *
+ * @param [in] s                    Control settings structure.
+ * @param [in] value                Value to be tested.
+ * @return                          ::PBIO_SUCCESS or ::PBIO_ERROR_INVALID_ARG.
+ */
+static pbio_error_t pbio_control_settings_validate_position_setting(pbio_control_settings_t *s, int32_t value) {
+    if (value < 0 || value > pbio_control_settings_ctl_to_app(s, INT32_MAX)) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    return PBIO_SUCCESS;
+}
+
+/**
  * Sets the PID control parameters.
  *
  * Kp, Ki, and Kd should be given in control units. Everything else in application units.
@@ -243,11 +257,15 @@ void pbio_control_settings_get_pid(const pbio_control_settings_t *s, int32_t *pi
  *                                   ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_deadzone, int32_t integral_change_max) {
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_deadzone < 0) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
     // integral_change_max has physical units of speed, so must satisfy bound.
     pbio_error_t err = pbio_trajectory_validate_speed_limit(s->ctl_steps_per_app_step, integral_change_max);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_control_settings_validate_position_setting(s, integral_deadzone);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -285,6 +303,10 @@ pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t
         return PBIO_ERROR_INVALID_ARG;
     }
     pbio_error_t err = pbio_trajectory_validate_speed_limit(s->ctl_steps_per_app_step, speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_control_settings_validate_position_setting(s, position);
     if (err != PBIO_SUCCESS) {
         return err;
     }
