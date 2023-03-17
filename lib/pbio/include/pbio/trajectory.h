@@ -79,6 +79,8 @@ typedef struct _pbio_trajectory_t {
 
 // Make or modify trajectories:
 
+pbio_error_t pbio_trajectory_validate_speed_limit(int32_t ctl_steps_per_app_step, int32_t speed);
+pbio_error_t pbio_trajectory_validate_acceleration_limit(int32_t ctl_steps_per_app_step, int32_t acceleration);
 pbio_error_t pbio_trajectory_new_angle_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 pbio_error_t pbio_trajectory_new_time_command(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);
 void pbio_trajectory_make_constant(pbio_trajectory_t *trj, const pbio_trajectory_command_t *command);

@@ -7,7 +7,14 @@
 ### Fixed
 - Fixed allocator interfering with motor control when memory usage is high ([support#956]).
 
-[support#956]: https://github.com/pybricks/support/issues/977
+### Changed
+- Methods like `control.limits()` now check the user input and raise a
+  `ValueError` if a value is out of bounds  ([support#484]). This affects only
+  settings setters, which are usually used as a one-off. Nothing changes to
+  speed values set at runtime. These are still capped to valid numbers without
+  raising exceptions.
+
+[support#484]: https://github.com/pybricks/support/issues/484
 
 ## [3.3.0b2] - 2023-03-08
 

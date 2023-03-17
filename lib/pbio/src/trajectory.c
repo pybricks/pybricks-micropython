@@ -120,6 +120,43 @@ static int32_t to_trajectory_accel(int32_t control_accel) {
 #define TO_CONTROL_TIME(time) ((uint32_t)(time))
 
 /**
+ * Validates that the given speed limit is within the numerically allowed range.
+ *
+ * @param [in] ctl_steps_per_app_step   Control units per application unit.
+ * @param [in] speed                    Speed limit (application units, positive).
+ * @return                              ::PBIO_SUCCESS on valid values.
+ *                                      ::PBIO_ERROR_INVALID_ARG if any argument is outside the allowed range.
+ */
+pbio_error_t pbio_trajectory_validate_speed_limit(int32_t ctl_steps_per_app_step, int32_t speed) {
+
+    // Speeds can be negative but speed *limit* must be a strictly positive value.
+    const int32_t speed_min = to_control_speed(100) / ctl_steps_per_app_step;
+    const int32_t speed_max = to_control_speed(SPEED_MAX) / ctl_steps_per_app_step;
+
+    if (speed < speed_min || speed > speed_max) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Validates that the given acceleration is within the numerically allowed range.
+ *
+ * @param [in] ctl_steps_per_app_step   Control units per application unit.
+ * @param [in] acceleration             Acceleration (application units, positive).
+ * @return                              ::PBIO_SUCCESS on valid values.
+ *                                      ::PBIO_ERROR_INVALID_ARG if any argument is outside the allowed range.
+ */
+pbio_error_t pbio_trajectory_validate_acceleration_limit(int32_t ctl_steps_per_app_step, int32_t acceleration) {
+    const int32_t accel_min = to_control_accel(ACCELERATION_MIN) / ctl_steps_per_app_step;
+    const int32_t accel_max = to_control_accel(ACCELERATION_MAX) / ctl_steps_per_app_step;
+    if (acceleration < accel_min || acceleration > accel_max) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    return PBIO_SUCCESS;
+}
+
+/**
  * Reverses a trajectory.
  *
  * On return, @p trj has been modified to contain the reverse trajectory.

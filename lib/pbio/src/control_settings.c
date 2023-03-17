@@ -162,8 +162,18 @@ void pbio_control_settings_get_trajectory_limits(const pbio_control_settings_t *
  *                            ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
 pbio_error_t pbio_control_settings_set_trajectory_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration) {
-    if (speed < 1 || acceleration < 1 || deceleration < 1) {
-        return PBIO_ERROR_INVALID_ARG;
+    // Validate that all inputs are within allowed bounds.
+    pbio_error_t err = pbio_trajectory_validate_speed_limit(s->ctl_steps_per_app_step, speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_acceleration_limit(s->ctl_steps_per_app_step, acceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_trajectory_validate_acceleration_limit(s->ctl_steps_per_app_step, deceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
     s->speed_max = pbio_control_settings_app_to_ctl(s, speed);
     s->acceleration = pbio_control_settings_app_to_ctl(s, acceleration);
@@ -233,8 +243,13 @@ void pbio_control_settings_get_pid(const pbio_control_settings_t *s, int32_t *pi
  *                                   ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_deadzone, int32_t integral_change_max) {
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_change_max < 0 || integral_deadzone < 0) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_deadzone < 0) {
         return PBIO_ERROR_INVALID_ARG;
+    }
+    // integral_change_max has physical units of speed, so must satisfy bound.
+    pbio_error_t err = pbio_trajectory_validate_speed_limit(s->ctl_steps_per_app_step, integral_change_max);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     s->pid_kp = pid_kp;
@@ -266,8 +281,12 @@ void pbio_control_settings_get_target_tolerances(const pbio_control_settings_t *
  *                          ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
 pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position) {
-    if (position < 0 || speed < 0) {
+    if (position < 0) {
         return PBIO_ERROR_INVALID_ARG;
+    }
+    pbio_error_t err = pbio_trajectory_validate_speed_limit(s->ctl_steps_per_app_step, speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     s->position_tolerance = pbio_control_settings_app_to_ctl(s, position);
@@ -297,8 +316,9 @@ void pbio_control_settings_get_stall_tolerances(const pbio_control_settings_t *s
  *                          ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
 pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t *s, int32_t speed, uint32_t time) {
-    if (speed < 0) {
-        return PBIO_ERROR_INVALID_ARG;
+    pbio_error_t err = pbio_trajectory_validate_speed_limit(s->ctl_steps_per_app_step, speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     s->stall_speed_limit = pbio_control_settings_app_to_ctl(s, speed);
