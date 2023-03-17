@@ -7,8 +7,8 @@ print(version)
 
 # Initialize the fronts.
 steer = Motor(Port.C)
-front = Motor(Port.A, Direction.COUNTERCLOCKWISE)
-rear = Motor(Port.B, Direction.COUNTERCLOCKWISE)
+front = Motor(Port.A, Direction.COUNTERCLOCKWISE, profile=360)
+rear = Motor(Port.B, Direction.COUNTERCLOCKWISE, profile=360)
 
 front.control.limits(acceleration=1000)
 rear.control.limits(acceleration=1000)

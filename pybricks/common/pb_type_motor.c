@@ -86,13 +86,13 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj),
         PB_ARG_DEFAULT_NONE(gears),
         PB_ARG_DEFAULT_TRUE(reset_angle),
-        PB_ARG_DEFAULT_NONE(precision_profile));
+        PB_ARG_DEFAULT_NONE(profile));
 
     // Validate arguments before attempting to set up the motor.
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
     bool reset_angle = mp_obj_is_true(reset_angle_in);
-    int32_t precision_profile = pb_obj_get_default_abs_int(precision_profile_in, 0);
+    int32_t precision_profile = pb_obj_get_default_abs_int(profile_in, 0);
 
     pbio_error_t err;
     pbio_servo_t *srv;

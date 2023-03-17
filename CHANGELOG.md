@@ -18,6 +18,7 @@
   settings setters, which are usually used as a one-off. Nothing changes to
   speed values set at runtime. These are still capped to valid numbers without
   raising exceptions.
+- Renamed `precision_profile` to `profile` in the `Motor` initializer.
 
 ### Removed
 - Removed `DriveBase.left` and `DriveBase.right` properties ([support#910]).
