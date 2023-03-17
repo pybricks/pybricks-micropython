@@ -277,7 +277,7 @@ STATIC mp_obj_t pb_type_DriveBase_settings(size_t n_args, const mp_obj_t *pos_ar
     turn_acceleration = pb_obj_get_default_abs_int(turn_acceleration_in, turn_acceleration);
 
     // Update the settings. Acceleration and deceleration are set to the same acceleration magnitude.
-    pbio_drivebase_set_drive_settings(self->db, straight_speed, straight_acceleration, straight_acceleration, turn_rate, turn_acceleration, turn_acceleration);
+    pb_assert(pbio_drivebase_set_drive_settings(self->db, straight_speed, straight_acceleration, straight_acceleration, turn_rate, turn_acceleration, turn_acceleration));
 
     return mp_const_none;
 }

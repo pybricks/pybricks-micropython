@@ -9,7 +9,7 @@ right_motor = Motor(Port.B)
 drive_base = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=112)
 
 drive_base.settings(
-    straight_speed=1000, straight_acceleration=1000, turn_rate=800, turn_acceleration=1000
+    straight_speed=500, straight_acceleration=1000, turn_rate=500, turn_acceleration=2000
 )
 
 # Drive straight forward and back again.
