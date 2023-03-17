@@ -70,6 +70,9 @@ extern const mp_obj_module_t pb_module_battery;
 #include <pbio/port.h>
 #include <pbio/servo.h>
 
+mp_obj_t make_acceleration_return_value(int32_t acceleration, int32_t deceleration);
+void unpack_acceleration_value(mp_obj_t accel_in, int32_t *acceleration, int32_t *deceleration);
+
 #if PYBRICKS_PY_COMMON_CONTROL
 // pybricks._common.Control()
 extern const mp_obj_type_t pb_type_Control;

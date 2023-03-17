@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2022 The Pybricks Authors
 
-#include "py/mpconfig.h"
-
-#if PYBRICKS_PY_COMMON_CONTROL
-
 #include <pbio/control.h>
 
+#include "py/mpconfig.h"
 #include "py/obj.h"
 
 #include <pybricks/common.h>
@@ -14,6 +11,47 @@
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
+
+mp_obj_t make_acceleration_return_value(int32_t acceleration, int32_t deceleration) {
+    // For backwards compatibility, return a single integer if acceleration
+    // and deceleration are equal.
+    if (acceleration == deceleration) {
+        return mp_obj_new_int(acceleration);
+    }
+    // Otherwise return a tuple with both values.
+    mp_obj_t accel[] = {
+        mp_obj_new_int(acceleration),
+        mp_obj_new_int(deceleration),
+    };
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(accel), accel);
+}
+
+void unpack_acceleration_value(mp_obj_t accel_in, int32_t *acceleration, int32_t *deceleration) {
+    // If no acceleration was given, leave values unchanged.
+    if (accel_in == mp_const_none) {
+        return;
+    }
+
+    // If single value is given for acceleration, use it for deceleration too.
+    if (mp_obj_is_int(accel_in) || mp_obj_is_float(accel_in)) {
+        *acceleration = pb_obj_get_int(accel_in);
+        *deceleration = *acceleration;
+        return;
+    }
+
+    // Otherwise attempt to unpack acceleration and deceleration from tuple,
+    // raising if something invalid was given.
+    mp_obj_t *values;
+    size_t n;
+    mp_obj_get_array(accel_in, &n, &values);
+    if (n != 2) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    *acceleration = pb_obj_get_int(values[0]);
+    *deceleration = pb_obj_get_int(values[1]);
+}
+
+#if PYBRICKS_PY_COMMON_CONTROL
 
 // pybricks._common.Control class object structure
 typedef struct _pb_type_Control_obj_t {
@@ -59,42 +97,18 @@ STATIC mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, 
 
     // If all given values are none, return current values
     if (speed_in == mp_const_none && acceleration_in == mp_const_none && torque_in == mp_const_none) {
-        mp_obj_t ret[3];
-        mp_obj_t accel[2];
-        ret[0] = mp_obj_new_int(speed);
-        ret[2] = mp_obj_new_int(torque);
-        // For backwards compatibility, return acceleration and deceleration
-        // as a single integer if they are equal. Otherwise, return as tuple.
-        if (acceleration == deceleration) {
-            ret[1] = mp_obj_new_int(acceleration);
-        } else {
-            accel[0] = mp_obj_new_int(acceleration);
-            accel[1] = mp_obj_new_int(deceleration);
-            ret[1] = mp_obj_new_tuple(2, accel);
-        }
-        return mp_obj_new_tuple(3, ret);
+        mp_obj_t ret[] = {
+            mp_obj_new_int(speed),
+            make_acceleration_return_value(acceleration, deceleration),
+            mp_obj_new_int(torque),
+        };
+        return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
     }
 
-    // Set user settings if given, else keep using current value.
+    // Set user settings if given, else keep using current values.
     speed = pb_obj_get_default_abs_int(speed_in, speed);
     torque = pb_obj_get_default_abs_int(torque_in, torque);
-
-    // If single value is given for acceleration, use it for deceleration too.
-    if (mp_obj_is_int(acceleration_in) || mp_obj_is_float(acceleration_in)) {
-        acceleration = pb_obj_get_int(acceleration_in);
-        deceleration = acceleration;
-    }
-    // If something else is given, unpack acceleration and deceleration from tuple.
-    else if (acceleration_in != mp_const_none) {
-        mp_obj_t *values;
-        size_t n;
-        mp_obj_get_array(acceleration_in, &n, &values);
-        if (n != 2) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
-        acceleration = pb_obj_get_int(values[0]);
-        deceleration = pb_obj_get_int(values[1]);
-    }
+    unpack_acceleration_value(acceleration_in, &acceleration, &deceleration);
 
     // Set new values.
     pb_assert(pbio_control_settings_set_trajectory_limits(&self->control->settings, speed, acceleration, deceleration));
