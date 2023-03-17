@@ -144,36 +144,59 @@ bool pbio_control_settings_time_is_later(uint32_t sample, uint32_t base) {
  * @param [out] speed         Speed limit in application units.
  * @param [out] acceleration  Absolute rate of change of the speed during on-ramp of the maneuver.
  * @param [out] deceleration  Absolute rate of change of the speed during off-ramp of the maneuver.
- * @param [out] actuation     Upper limit on actuation.
  */
-void pbio_control_settings_get_limits(const pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation) {
+void pbio_control_settings_get_trajectory_limits(const pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration) {
     *speed = pbio_control_settings_ctl_to_app(s, s->speed_max);
     *acceleration = pbio_control_settings_ctl_to_app(s, s->acceleration);
     *deceleration = pbio_control_settings_ctl_to_app(s, s->deceleration);
-    *actuation = pbio_control_settings_actuation_ctl_to_app(s->actuation_max);
 }
 
 /**
- * Sets the control limits for movement and actuation, in application units.
+ * Sets the control limits for movement in application units.
  *
  * @param [in] s              Control settings structure from which to read.
  * @param [in] speed          Speed limit in application units.
  * @param [in] acceleration   Absolute rate of change of the speed during on-ramp of the maneuver.
  * @param [in] deceleration   Absolute rate of change of the speed during off-ramp of the maneuver.
- * @param [in] actuation      Upper limit on actuation.
  * @return                    ::PBIO_SUCCESS on success
  *                            ::PBIO_ERROR_INVALID_ARG if any argument is negative.
  */
-pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration, int32_t actuation) {
-    if (speed < 1 || acceleration < 1 || deceleration < 1 || actuation < 1) {
+pbio_error_t pbio_control_settings_set_trajectory_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration) {
+    if (speed < 1 || acceleration < 1 || deceleration < 1) {
         return PBIO_ERROR_INVALID_ARG;
     }
     s->speed_max = pbio_control_settings_app_to_ctl(s, speed);
     s->acceleration = pbio_control_settings_app_to_ctl(s, acceleration);
     s->deceleration = pbio_control_settings_app_to_ctl(s, deceleration);
-    s->actuation_max = pbio_control_settings_actuation_app_to_ctl(actuation);
     return PBIO_SUCCESS;
 }
+
+/**
+ * Gets the control limits for actuation, in application units.
+ *
+ * @param [in]  s             Control settings structure from which to read.
+ * @return      actuation     Upper limit on actuation.
+ */
+int32_t pbio_control_settings_get_actuation_limit(const pbio_control_settings_t *s) {
+    return pbio_control_settings_actuation_ctl_to_app(s->actuation_max);
+}
+
+/**
+ * Sets the control limit for actuation, in application units.
+ *
+ * @param [in] s              Control settings structure from which to read.
+ * @param [in] actuation      Upper limit on actuation.
+ * @return                    ::PBIO_SUCCESS on success
+ *                            ::PBIO_ERROR_INVALID_ARG if any argument is negative.
+ */
+pbio_error_t pbio_control_settings_set_actuation_limit(pbio_control_settings_t *s, int32_t limit) {
+    if (limit < 1) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    s->actuation_max = pbio_control_settings_actuation_app_to_ctl(limit);
+    return PBIO_SUCCESS;
+}
+
 
 /**
  * Gets the PID control parameters.

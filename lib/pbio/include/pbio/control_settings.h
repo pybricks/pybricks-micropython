@@ -154,8 +154,10 @@ int32_t pbio_control_settings_div_by_gain(int32_t value, int32_t gain);
 
 // Control settings getters and setters:
 
-void pbio_control_settings_get_limits(const pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration, int32_t *actuation);
-pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration, int32_t actuation);
+void pbio_control_settings_get_trajectory_limits(const pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *deceleration);
+pbio_error_t pbio_control_settings_set_trajectory_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t deceleration);
+int32_t pbio_control_settings_get_actuation_limit(const pbio_control_settings_t *s);
+pbio_error_t pbio_control_settings_set_actuation_limit(pbio_control_settings_t *s, int32_t limit);
 void pbio_control_settings_get_pid(const pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_deadzone, int32_t *integral_change_max);
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_deadzone, int32_t integral_change_max);
 void pbio_control_settings_get_target_tolerances(const pbio_control_settings_t *s, int32_t *speed, int32_t *position);

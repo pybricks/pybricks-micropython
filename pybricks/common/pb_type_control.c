@@ -54,7 +54,8 @@ STATIC mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, 
 
     // Read current values.
     int32_t speed, acceleration, deceleration, torque;
-    pbio_control_settings_get_limits(&self->control->settings, &speed, &acceleration, &deceleration, &torque);
+    pbio_control_settings_get_trajectory_limits(&self->control->settings, &speed, &acceleration, &deceleration);
+    torque = pbio_control_settings_get_actuation_limit(&self->control->settings);
 
     // If all given values are none, return current values
     if (speed_in == mp_const_none && acceleration_in == mp_const_none && torque_in == mp_const_none) {
@@ -96,7 +97,8 @@ STATIC mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, 
     }
 
     // Set new values.
-    pb_assert(pbio_control_settings_set_limits(&self->control->settings, speed, acceleration, deceleration, torque));
+    pb_assert(pbio_control_settings_set_trajectory_limits(&self->control->settings, speed, acceleration, deceleration));
+    pb_assert(pbio_control_settings_set_actuation_limit(&self->control->settings, torque));
 
     return mp_const_none;
 }
