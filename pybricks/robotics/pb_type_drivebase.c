@@ -24,8 +24,6 @@
 typedef struct _pb_type_DriveBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *db;
-    mp_obj_t left;
-    mp_obj_t right;
     int32_t initial_distance;
     int32_t initial_heading;
     #if PYBRICKS_PY_COMMON_CONTROL
@@ -60,12 +58,9 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     pb_type_DriveBase_obj_t *self = m_new_obj(pb_type_DriveBase_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    self->left = left_motor_in;
-    self->right = right_motor_in;
-
     // Pointers to servos
-    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
-    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(left_motor_in, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(right_motor_in, &pb_type_Motor))->srv;
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_drivebase(&self->db, srv_left, srv_right, pb_obj_get_int(wheel_diameter_in), pb_obj_get_int(axle_track_in)));
@@ -283,15 +278,13 @@ STATIC mp_obj_t pb_type_DriveBase_settings(size_t n_args, const mp_obj_t *pos_ar
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_settings_obj, 1, pb_type_DriveBase_settings);
 
+#if PYBRICKS_PY_COMMON_CONTROL
 STATIC const pb_attr_dict_entry_t pb_type_DriveBase_attr_dict[] = {
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, pb_type_DriveBase_obj_t, left),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, pb_type_DriveBase_obj_t, right),
-    #if PYBRICKS_PY_COMMON_CONTROL
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_heading_control, pb_type_DriveBase_obj_t, heading_control),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_distance_control, pb_type_DriveBase_obj_t, distance_control),
-    #endif
     PB_ATTR_DICT_SENTINEL
 };
+#endif
 
 // dir(pybricks.robotics.DriveBase)
 STATIC const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
@@ -316,7 +309,9 @@ const mp_obj_type_t pb_type_drivebase = {
     .name = MP_QSTR_DriveBase,
     .make_new = pb_type_DriveBase_make_new,
     .attr = pb_attribute_handler,
+    #if PYBRICKS_PY_COMMON_CONTROL
     .protocol = pb_type_DriveBase_attr_dict,
+    #endif
     .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
 };
 

@@ -14,7 +14,11 @@
   speed values set at runtime. These are still capped to valid numbers without
   raising exceptions.
 
+### Removed
+- Removed `DriveBase.left` and `DriveBase.right` properties ([support#910]).
+
 [support#484]: https://github.com/pybricks/support/issues/484
+[support#910]: https://github.com/pybricks/support/issues/910
 
 ## [3.3.0b2] - 2023-03-08
 
