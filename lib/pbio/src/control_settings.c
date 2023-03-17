@@ -63,13 +63,17 @@ int32_t pbio_control_settings_ctl_to_app_long(const pbio_control_settings_t *s, 
 /**
  * Converts application-specific units to position-like control units.
  *
- * This should only be used if input/ouput are within known bounds.
- *
  * @param [in] s              Control settings containing the scale.
  * @param [in] input          Signal in application units.
  * @return                    Signal in control units.
  */
 int32_t pbio_control_settings_app_to_ctl(const pbio_control_settings_t *s, int32_t input) {
+    if (input > INT32_MAX / s->ctl_steps_per_app_step) {
+        return INT32_MAX;
+    }
+    if (input < -INT32_MAX / s->ctl_steps_per_app_step) {
+        return -INT32_MAX;
+    }
     return input * s->ctl_steps_per_app_step;
 }
 
