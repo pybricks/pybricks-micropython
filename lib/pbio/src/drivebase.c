@@ -536,7 +536,7 @@ static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t 
  * @return                      Error code.
  */
 pbio_error_t pbio_drivebase_drive_straight(pbio_drivebase_t *db, int32_t distance, pbio_control_on_completion_t on_completion) {
-    // Execute the common drive command at default speed.
+    // Execute the common drive command at default speed (by passing 0 speed).
     return pbio_drivebase_drive_relative(db, distance, 0, 0, 0, on_completion);
 }
 
@@ -559,7 +559,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     // Arc length is computed accordingly.
     int32_t arc_length = (10 * pbio_int_math_abs(angle) * radius) / 573;
 
-    // Execute the common drive command at default speed.
+    // Execute the common drive command at default speed (by passing 0 speed).
     return pbio_drivebase_drive_relative(db, arc_length, 0, arc_angle, 0, on_completion);
 }
 
