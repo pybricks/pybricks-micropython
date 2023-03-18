@@ -13,6 +13,7 @@
 
 ### Fixed
 - Fixed allocator interfering with motor control when memory usage is high ([support#956]).
+- Fixed `Stop.NONE` not working properly for some drivebase geometries ([support#972]).
 
 ### Changed
 - Methods like `control.limits()` now check the user input and raise a
@@ -28,6 +29,7 @@
 [support#484]: https://github.com/pybricks/support/issues/484
 [support#989]: https://github.com/pybricks/support/issues/881
 [support#910]: https://github.com/pybricks/support/issues/910
+[support#972]: https://github.com/pybricks/support/issues/972
 [support#989]: https://github.com/pybricks/support/issues/989
 
 ## [3.3.0b2] - 2023-03-08

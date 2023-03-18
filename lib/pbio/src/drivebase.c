@@ -489,13 +489,13 @@ static pbio_error_t pbio_drivebase_drive_relative(pbio_drivebase_t *db, int32_t 
     }
 
     // Start controller that controls the average angle of both motors.
-    err = pbio_control_start_position_control_relative(&db->control_distance, time_now, &state_distance, distance, drive_speed, on_completion);
+    err = pbio_control_start_position_control_relative(&db->control_distance, time_now, &state_distance, distance, drive_speed, on_completion, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start controller that controls half the difference between both angles.
-    err = pbio_control_start_position_control_relative(&db->control_heading, time_now, &state_heading, angle, turn_speed, on_completion);
+    err = pbio_control_start_position_control_relative(&db->control_heading, time_now, &state_heading, angle, turn_speed, on_completion, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }

@@ -710,7 +710,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     }
 
     // Start the relative angle control
-    return pbio_control_start_position_control_relative(&srv->control, time_now, &state, angle, speed, on_completion);
+    return pbio_control_start_position_control_relative(&srv->control, time_now, &state, angle, speed, on_completion, true);
 }
 
 /**

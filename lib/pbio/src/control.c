@@ -464,7 +464,7 @@ void pbio_control_reset(pbio_control_t *ctl) {
     // subsequent maneuvers, so nothing else needs to be reset explicitly.
 }
 
-static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, const pbio_angle_t *target, int32_t speed, pbio_control_on_completion_t on_completion) {
+static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, const pbio_angle_t *target, int32_t speed, pbio_control_on_completion_t on_completion, bool allow_trajectory_shift) {
 
     pbio_error_t err;
 
@@ -531,7 +531,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
         // better than just branching off. Instead, we can adjust the command
         // so it starts from the same point as the previous trajectory. This
         // avoids rounding errors when restarting commands in a tight loop.
-        if (ctl->trajectory.a0 == ref.acceleration) {
+        if (ctl->trajectory.a0 == ref.acceleration && allow_trajectory_shift) {
 
             // Update command with shifted starting point, equal to ongoing
             // maneuver.
@@ -573,7 +573,7 @@ pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t t
     pbio_control_settings_app_to_ctl_long(&ctl->settings, position, &target);
 
     // Start position control in control units.
-    return _pbio_control_start_position_control(ctl, time_now, state, &target, pbio_control_settings_app_to_ctl(&ctl->settings, speed), on_completion);
+    return _pbio_control_start_position_control(ctl, time_now, state, &target, pbio_control_settings_app_to_ctl(&ctl->settings, speed), on_completion, true);
 }
 
 /**
@@ -584,15 +584,16 @@ pbio_error_t pbio_control_start_position_control(pbio_control_t *ctl, uint32_t t
  * This function computes what the new target position will be, and then
  * calls pbio_control_start_position_control to get there.
  *
- * @param [in]  ctl             The control instance.
- * @param [in]  time_now        The wall time (ticks).
- * @param [in]  state           The current state of the system being controlled (control units).
- * @param [in]  distance        The distance to run by (application units).
- * @param [in]  speed           The top speed on the way to the target (application units). Negative speed flips the distance sign.
- * @param [in]  on_completion   What to do when reaching the target position.
- * @return                      Error code.
+ * @param [in]  ctl                    The control instance.
+ * @param [in]  time_now               The wall time (ticks).
+ * @param [in]  state                  The current state of the system being controlled (control units).
+ * @param [in]  distance               The distance to run by (application units).
+ * @param [in]  speed                  The top speed on the way to the target (application units). Negative speed flips the distance sign.
+ * @param [in]  on_completion          What to do when reaching the target position.
+ * @param [in]  allow_trajectory_shift Whether trajectory may be time-shifted for better performance in tight loops (true) or not (false).
+ * @return                             Error code.
  */
-pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, int32_t distance, int32_t speed, pbio_control_on_completion_t on_completion, bool allow_trajectory_shift) {
 
     // Convert distance to control units.
     pbio_angle_t increment;
@@ -627,7 +628,7 @@ pbio_error_t pbio_control_start_position_control_relative(pbio_control_t *ctl, u
         }
     }
 
-    return _pbio_control_start_position_control(ctl, time_now, state, &target, pbio_control_settings_app_to_ctl(&ctl->settings, speed), on_completion);
+    return _pbio_control_start_position_control(ctl, time_now, state, &target, pbio_control_settings_app_to_ctl(&ctl->settings, speed), on_completion, allow_trajectory_shift);
 }
 
 /**
