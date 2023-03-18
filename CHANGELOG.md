@@ -22,11 +22,14 @@
   speed values set at runtime. These are still capped to valid numbers without
   raising exceptions.
 - Renamed `precision_profile` to `profile` in the `Motor` initializer.
+- In `DriveBase`, `wheel_diameter` and `axle_track` now accept decimal values
+  for increased precision ([support#830]).
 
 ### Removed
 - Removed `DriveBase.left` and `DriveBase.right` properties ([support#910]).
 
 [support#484]: https://github.com/pybricks/support/issues/484
+[support#830]: https://github.com/pybricks/support/issues/830
 [support#989]: https://github.com/pybricks/support/issues/881
 [support#910]: https://github.com/pybricks/support/issues/910
 [support#972]: https://github.com/pybricks/support/issues/972

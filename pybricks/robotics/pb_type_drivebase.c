@@ -67,7 +67,7 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     pb_assert(pbio_drivebase_get_drivebase(&self->db,
         positive_direction == PBIO_DIRECTION_CLOCKWISE ? srv_left : srv_right,
         positive_direction == PBIO_DIRECTION_CLOCKWISE ? srv_right : srv_left,
-        pb_obj_get_int(wheel_diameter_in), pb_obj_get_int(axle_track_in)));
+        pb_obj_get_scaled_int(wheel_diameter_in, 1000), pb_obj_get_scaled_int(axle_track_in, 1000)));
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create instances of the Control class

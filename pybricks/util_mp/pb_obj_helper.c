@@ -23,6 +23,23 @@ mp_int_t pb_obj_get_int(mp_obj_t arg) {
 #endif
 
 /**
+ * Gets an upscaled integer representing a floating point value.
+ *
+ * If @p arg cannot be converted to a float or integer, an exception is raised.
+ *
+ * @param arg [in]  A MicroPython object
+ * @return          An integer
+ */
+mp_int_t pb_obj_get_scaled_int(mp_obj_t arg, mp_uint_t scale) {
+    #if MICROPY_PY_BUILTINS_FLOAT
+    if (mp_obj_is_float(arg)) {
+        return (mp_int_t)(mp_obj_get_float(arg) * scale);
+    }
+    #endif
+    return mp_obj_get_int(arg) * scale;
+}
+
+/**
  * Gets a positive integer value.
  *
  * If @p arg cannot be converted to an integer, an exception is raised.

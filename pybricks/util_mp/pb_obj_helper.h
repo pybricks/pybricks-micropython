@@ -18,6 +18,7 @@ mp_int_t pb_obj_get_int(mp_obj_t arg);
 #define pb_obj_get_int mp_obj_get_int
 #endif
 
+mp_int_t pb_obj_get_scaled_int(mp_obj_t arg, mp_uint_t scale);
 mp_int_t pb_obj_get_positive_int(mp_obj_t arg);
 mp_int_t pb_obj_get_pct(mp_obj_t arg);
 mp_int_t pb_obj_get_hue(mp_obj_t arg);

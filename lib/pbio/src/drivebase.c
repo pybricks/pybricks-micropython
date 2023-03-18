@@ -226,8 +226,8 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
  * @param [out] db_address       Drivebase instance if available.
  * @param [in]  left             Left servo instance.
  * @param [in]  right            Right servo instance.
- * @param [in]  wheel_diameter   Wheel diameter in mm.
- * @param [in]  axle_track       Distance between wheel-ground contact points.
+ * @param [in]  wheel_diameter   Wheel diameter in um.
+ * @param [in]  axle_track       Distance between wheel-ground contact points in um.
  * @return                       Error code.
  */
 pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track) {
@@ -301,8 +301,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
 
     // Average rotation of the motors for every 1 mm forward.
     db->control_distance.settings.ctl_steps_per_app_step =
-        left->control.settings.ctl_steps_per_app_step * 2292 /
-        wheel_diameter / 20;
+        left->control.settings.ctl_steps_per_app_step * 114591 / wheel_diameter;
     return PBIO_SUCCESS;
 }
 
@@ -799,7 +798,7 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
  * @return                       Error code.
  */
 pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
-    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1, 1);
+    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1000, 1000);
 
     // The application input for spike bases is degrees per second average
     // between both wheels, so in millidegrees this is x1000.
