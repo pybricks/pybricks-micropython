@@ -1,4 +1,4 @@
-from pybricks.geometry import Matrix, vector
+from pybricks.geometry import Matrix, vector, cross, Axis
 
 # Basic matrix algebra
 A = Matrix(
@@ -21,6 +21,7 @@ print("A * A.T =", A * A.T)
 print("A.shape =", A.shape)
 print("A * 3 =", A * 3)
 print("3 * A =", 3 * A)
+print("cross(Axis.X * 4, Axis.Y * 3) = ", cross(Axis.X * 4, Axis.Y * 3))
 
 # Reading elements
 print("B[0, 1] =", B[0, 1])
