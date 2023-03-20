@@ -33,6 +33,7 @@ c = b.T
 print("b = vector(3, 4, 0) =", b)
 print("b.shape =", b.shape)
 print("abs(b) =", abs(b))
+print("[v for v in b * 2] =", [v for v in b * 2])
 print("c = b.T", c)
 print("A * b =", A * b)
 

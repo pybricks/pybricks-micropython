@@ -480,7 +480,7 @@ STATIC mp_obj_t pb_type_Matrix_it_iternext(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(self->matrix);
 
     if (self->cur < matrix->m * matrix->n) {
-        return mp_obj_new_float_from_f(matrix->data[self->cur++]);
+        return mp_obj_new_float_from_f(matrix->data[self->cur++] * matrix->scale);
     }
 
     return MP_OBJ_STOP_ITERATION;
@@ -491,7 +491,7 @@ STATIC mp_obj_t pb_type_Matrix_it_iterprev(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(self->matrix);
 
     if (self->cur > 0) {
-        return mp_obj_new_float_from_f(matrix->data[--self->cur]);
+        return mp_obj_new_float_from_f(matrix->data[--self->cur] * matrix->scale);
     }
 
     return MP_OBJ_STOP_ITERATION;
