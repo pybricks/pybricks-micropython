@@ -220,6 +220,8 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     return pbio_dcmotor_coast(db->right->dcmotor);
 }
 
+#define ROT_MDEG_OVER_PI (114592) // 360 000 / pi
+
 /**
  * Gets drivebase instance from two servo instances.
  *
@@ -280,11 +282,6 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     pbio_control_reset(&db->control_distance);
     pbio_control_reset(&db->control_heading);
 
-    // Drivebase geometry
-    if (wheel_diameter <= 0 || axle_track <= 0) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
     // Reset both motors to a passive state
     pbio_drivebase_stop_servo_control(db);
     pbio_error_t err = pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
@@ -295,13 +292,30 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     // Adopt settings as the average or sum of both servos, except scaling
     drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &left->control.settings, &right->control.settings);
 
+    // Verify that the given dimensions are not too small or large to compute
+    // a correct result for heading and distance control scale below.
+    if (wheel_diameter < 1000 || axle_track < 1000 ||
+        left->control.settings.ctl_steps_per_app_step > INT32_MAX / ROT_MDEG_OVER_PI ||
+        left->control.settings.ctl_steps_per_app_step > INT32_MAX / axle_track
+        ) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     // Average rotation of the motors for every 1 degree drivebase rotation.
     db->control_heading.settings.ctl_steps_per_app_step =
         left->control.settings.ctl_steps_per_app_step * axle_track / wheel_diameter;
 
     // Average rotation of the motors for every 1 mm forward.
     db->control_distance.settings.ctl_steps_per_app_step =
-        left->control.settings.ctl_steps_per_app_step * 114591 / wheel_diameter;
+        left->control.settings.ctl_steps_per_app_step * ROT_MDEG_OVER_PI / wheel_diameter;
+
+
+    // Verify that wheel diameter was not so large that scale is now zero.
+    if (db->control_distance.settings.ctl_steps_per_app_step < 1 ||
+        db->control_heading.settings.ctl_steps_per_app_step < 1) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     return PBIO_SUCCESS;
 }
 
