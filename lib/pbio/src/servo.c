@@ -228,6 +228,11 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
         return err;
     }
 
+    // Gear ratio must be strictly positive.
+    if (gear_ratio < 1) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     // Get the minimal set of defaults for this servo type.
     const pbio_servo_settings_reduced_t *settings_reduced = pbio_servo_get_reduced_settings(type_id);
     if (!settings_reduced) {
