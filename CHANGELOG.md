@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
+
 ## [3.3.0b3] - 2023-03-28
 
 ### Added

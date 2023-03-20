@@ -86,10 +86,39 @@ STATIC mp_obj_t vector(size_t n_args, const mp_obj_t *args) {
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_vector_obj, 2, 3, vector);
 
+// pybricks.geometry.cross
+STATIC mp_obj_t pb_func_cross(mp_obj_t a_in, mp_obj_t b_in) {
+
+    // Get a and b vectors
+    pb_type_Matrix_obj_t *a = MP_OBJ_TO_PTR(a_in);
+    pb_type_Matrix_obj_t *b = MP_OBJ_TO_PTR(b_in);
+
+    // Verify matching dimensions else raise error
+    if (a->n * a->m != 3 || b->n * b->m != 3) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Create c vector.
+    pb_type_Matrix_obj_t *c = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
+    c->m = 3;
+    c->n = 1;
+    c->data = m_new(float, 3);
+
+    // Evaluate cross product
+    c->data[0] = a->data[1] * b->data[2] - a->data[2] * b->data[1];
+    c->data[1] = a->data[2] * b->data[0] - a->data[0] * b->data[2];
+    c->data[2] = a->data[0] * b->data[1] - a->data[1] * b->data[0];
+    c->scale = a->scale * b->scale;
+
+    return MP_OBJ_FROM_PTR(c);
+}
+MP_DEFINE_CONST_FUN_OBJ_2(pb_func_cross_obj, pb_func_cross);
+
 STATIC const mp_rom_map_elem_t geometry_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Axis),        MP_ROM_PTR(&pb_enum_type_Axis)     },
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)        },
     { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_func_vector_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_cross),       MP_ROM_PTR(&pb_func_cross_obj)     },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_geometry_globals, geometry_globals_table);
 
