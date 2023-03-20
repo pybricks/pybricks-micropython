@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -317,8 +317,8 @@ const mp_obj_type_t pb_type_drivebase = {
     { &mp_type_type },
     .name = MP_QSTR_DriveBase,
     .make_new = pb_type_DriveBase_make_new,
-    .attr = pb_attribute_handler,
     #if PYBRICKS_PY_COMMON_CONTROL
+    .attr = pb_attribute_handler,
     .protocol = pb_type_DriveBase_attr_dict,
     #endif
     .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
