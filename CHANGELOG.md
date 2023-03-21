@@ -14,6 +14,7 @@
 ### Fixed
 - Fixed allocator interfering with motor control when memory usage is high ([support#956]).
 - Fixed `Stop.NONE` not working properly for some drivebase geometries ([support#972]).
+- Reduced data loss when printing in tight loop on Move hub ([support#324]).
 
 ### Changed
 - Methods like `control.limits()` now check the user input and raise a
@@ -28,6 +29,7 @@
 ### Removed
 - Removed `DriveBase.left` and `DriveBase.right` properties ([support#910]).
 
+[support#324]: https://github.com/pybricks/support/issues/324
 [support#484]: https://github.com/pybricks/support/issues/484
 [support#830]: https://github.com/pybricks/support/issues/830
 [support#989]: https://github.com/pybricks/support/issues/881

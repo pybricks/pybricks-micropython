@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 // Bluetooth for STM32 MCU with STMicro BlueNRG-MS
 
@@ -94,6 +94,8 @@ static uint16_t conn_handle;
 static uint16_t remote_handle;
 // handle to LWP3 characteristic on remote
 static uint16_t remote_lwp3_char_handle;
+// used to wait for Evt_Blue_Gatt_Tx_Pool_Available
+static bool tx_pool_available;
 
 // Pybricks GATT service handles
 static uint16_t pybricks_service_handle;
@@ -364,6 +366,8 @@ retry:
     if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
         // this will happen if notifications are enabled and the previous
         // changes haven't been sent over the air yet
+        tx_pool_available = false;
+        PT_WAIT_UNTIL(pt, tx_pool_available);
         goto retry;
     }
 
@@ -946,6 +950,14 @@ static void handle_event(hci_event_pckt *event) {
                     }
 
                     aci_gatt_write_response_begin(subevt->conn_handle, subevt->attr_handle, !!err, err, subevt->data_length, subevt->data);
+                }
+                break;
+
+                case EVT_BLUE_GATT_TX_POOL_AVAILABLE: {
+                    // REVISIT: We might need to look at the event args for
+                    // connection handle if we need to handle this in multiple
+                    // places, e.g. for notifications and write without response.
+                    tx_pool_available = true;
                 }
                 break;
             }
