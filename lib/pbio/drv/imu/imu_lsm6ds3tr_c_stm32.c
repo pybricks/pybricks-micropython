@@ -41,10 +41,8 @@ struct _pbdrv_imu_dev_t {
     stmdev_ctx_t ctx;
     /** STM32 HAL I2C context. */
     I2C_HandleTypeDef hi2c;
-    /** Scale factor to convert raw data to degrees per second. */
-    float gyro_scale;
-    /** Scale factor to convert raw data to m/s^2. */
-    float accel_scale;
+    /** IMU configuration to convert raw data to phsyical units. */
+    pbdrv_imu_config_t config;
     /** Raw data. */
     int16_t data[6];
     /** Raw data point to which new samples are compared to detect stationary. */
@@ -201,10 +199,10 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
      * Set scale
      */
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_full_scale_set(&child, ctx, LSM6DS3TR_C_8g));
-    imu_dev->accel_scale = lsm6ds3tr_c_from_fs8g_to_mg(1) * 9.81f;
+    imu_dev->config.accel_scale = lsm6ds3tr_c_from_fs8g_to_mg(1) * 9.81f;
 
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_2000dps));
-    imu_dev->gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
+    imu_dev->config.gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
     // Configure INT1 to trigger when new gyro data is ready.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
@@ -279,9 +277,9 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t
 
         // Send average gyro data up for maintaining gyro bias or filtering.
         float average_gyro_data[] = {
-            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X *imu_dev->stationary_gyro_data_sum[0] * imu_dev->gyro_scale / imu_dev->stationary_sample_count,
-            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y *imu_dev->stationary_gyro_data_sum[1] * imu_dev->gyro_scale / imu_dev->stationary_sample_count,
-            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z *imu_dev->stationary_gyro_data_sum[2] * imu_dev->gyro_scale / imu_dev->stationary_sample_count,
+            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X *imu_dev->stationary_gyro_data_sum[0] * imu_dev->config.gyro_scale / imu_dev->stationary_sample_count,
+            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y *imu_dev->stationary_gyro_data_sum[1] * imu_dev->config.gyro_scale / imu_dev->stationary_sample_count,
+            PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z *imu_dev->stationary_gyro_data_sum[2] * imu_dev->config.gyro_scale / imu_dev->stationary_sample_count,
         };
         pbio_orientation_imu_update_gyro_rate_bias(average_gyro_data);
 
@@ -372,8 +370,9 @@ void pbdrv_imu_init(void) {
 
 // public driver interface implementation
 
-pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev) {
+pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **config) {
     *imu_dev = &global_imu_dev;
+    *config = &global_imu_dev.config;
 
     if ((*imu_dev)->init_state == IMU_INIT_STATE_BUSY) {
         return PBIO_ERROR_AGAIN;
@@ -393,18 +392,18 @@ bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev) {
 void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values) {
     // Output is signed such that we have a right handed coordinate system where:
     // Forward acceleration is +X, upward acceleration is +Z and acceleration to the left is +Y.
-    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->accel_scale;
-    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->accel_scale;
-    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->accel_scale;
+    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->config.accel_scale;
+    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->config.accel_scale;
+    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->config.accel_scale;
 }
 
 void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
     // Output is signed such that we have a right handed coordinate system
     // consistent with the coordinate system above. Positive rotations along
     // those axes then follow the right hand rule.
-    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->gyro_scale;
-    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->gyro_scale;
-    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->gyro_scale;
+    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->config.gyro_scale;
+    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->config.gyro_scale;
+    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->config.gyro_scale;
 }
 
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
