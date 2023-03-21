@@ -80,14 +80,14 @@ STATIC void common_IMU_rotate_3d_axis(common_IMU_obj_t *self, float *values) {
 
 // pybricks._common.IMU.up
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    (void)self_in;
 
     // Up is which side of a unit box intersects the +Z vector first.
     // So read +Z vector of the inertial frame, in the body frame.
     // For now, this is the gravity vector. In the future, we can make this
     // slightly more accurate by using the full IMU orientation.
     float values[3];
-    pbdrv_imu_accel_read(self->imu_dev, values);
+    pbio_orientation_imu_get_acceleration(values);
 
     // Find index and sign of maximum component
     float abs_max = 0;
@@ -134,7 +134,7 @@ STATIC mp_obj_t common_IMU_tilt(mp_obj_t self_in) {
     // Read acceleration in the user frame. In the future, we can make this
     // more accurate by using the full IMU orientation.
     float accl[3];
-    pbdrv_imu_accel_read(self->imu_dev, accl);
+    pbio_orientation_imu_get_acceleration(accl);
     common_IMU_rotate_3d_axis(self, accl);
 
     mp_obj_t tilt[2];
@@ -156,7 +156,7 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_DEFAULT_NONE(axis));
 
     float values[3];
-    pbdrv_imu_accel_read(self->imu_dev, values);
+    pbio_orientation_imu_get_acceleration(values);
     common_IMU_rotate_3d_axis(self, values);
 
     return common_IMU_project_3d_axis(axis_in, values);
@@ -169,8 +169,9 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
         common_IMU_obj_t, self,
         PB_ARG_DEFAULT_NONE(axis));
 
+    (void)self;
     float values[3];
-    pbio_orientation_imu_get_angular_velocity(self->imu_dev, values);
+    pbio_orientation_imu_get_angular_velocity(values);
     common_IMU_rotate_3d_axis(self, values);
 
     return common_IMU_project_3d_axis(axis_in, values);
@@ -198,7 +199,8 @@ STATIC mp_obj_t common_IMU_reset_heading(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_REQUIRED(angle));
 
     // Set the new angle
-    pbio_orientation_imu_set_heading(self->imu_dev, mp_obj_get_float(angle_in));
+    (void)self;
+    pbio_orientation_imu_set_heading(mp_obj_get_float(angle_in));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_reset_heading_obj, 1, common_IMU_reset_heading);
@@ -284,7 +286,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
         self->base.type = &pb_type_IMU;
         self->imu_dev = imu_dev;
     }
-    pbio_orientation_imu_set_heading(self->imu_dev, 0.0f);
+    pbio_orientation_imu_set_heading(0.0f);
 
     pb_assert_type(top_side_axis, &pb_type_Matrix);
     pb_assert_type(front_side_axis, &pb_type_Matrix);
