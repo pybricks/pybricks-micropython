@@ -200,6 +200,7 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
      */
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_C_XL_ODR_833Hz));
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_data_rate_set(&child, ctx, LSM6DS3TR_C_GY_ODR_833Hz));
+    imu_dev->config.sample_time = (1 / 839.067f); // REVISIT: This implicitly scales gyro angle. Should adjust gyro scale instead.
 
     /*
      * Set scale
@@ -280,7 +281,7 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t
     }
 
     // After about one second of stationary data, poke higher level code to update gyro bias.
-    if (imu_dev->stationary_sample_count == 833) { // REVISIT: get from ODR config value
+    if (imu_dev->stationary_sample_count >= (uint32_t)(1.0f / imu_dev->config.sample_time)) {
 
         // We can confidently tell external APIs now that we are really stationary.
         imu_dev->stationary_now = true;

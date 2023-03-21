@@ -24,8 +24,8 @@ typedef struct _pbdrv_imu_dev_t pbdrv_imu_dev_t;
  * IMU configuration used to convert raw data to physical units.
  */
 typedef struct _pbdrv_imu_config_t {
-    /** The expected number of samples per second. */
-    uint32_t sample_rate;
+    /** The average time in seconds between samples. */
+    float sample_time;
     /** Angular velocity in deg/s for every unit of raw gyro data. */
     float gyro_scale;
     /** Acceleration in mm/s^2 for every unit of raw accelerometer data. */
