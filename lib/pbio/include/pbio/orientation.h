@@ -36,21 +36,6 @@ void pbio_orientation_side_get_axis(pbio_orientation_side_t side, uint8_t *index
 
 void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign);
 
-#if PBIO_CONFIG_ORIENTATION_IMU
-
-void pbio_orientation_imu_new_data_handler(pbdrv_imu_dev_t *imu_dev);
-
-void pbio_orientation_imu_update_gyro_rate_bias(float *average_gyro_data);
-
-uint32_t pbio_orientation_imu_get_stationary_count(void);
-
-void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values);
-
-float pbio_orientation_imu_get_heading(void);
-
-void pbio_orientation_imu_set_heading(pbdrv_imu_dev_t *imu_dev, float desired_heading);
-
-#endif // #if PBIO_CONFIG_ORIENTATION_IMU
 
 #else // PBIO_CONFIG_ORIENTATION
 
@@ -60,28 +45,45 @@ static inline void pbio_orientation_side_get_axis(pbio_orientation_side_t side, 
 static inline void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign) {
 }
 
+#endif // PBIO_CONFIG_ORIENTATION
+
 #if PBIO_CONFIG_ORIENTATION_IMU
 
-static inline void pbio_orientation_imu_get_angular_velocity(pbdrv_imu_dev_t *imu_dev, float *values) {
+void pbio_orientation_imu_init(void);
+
+uint32_t pbio_orientation_imu_get_stationary_count(void);
+
+void pbio_orientation_imu_get_angular_velocity(float *values);
+
+void pbio_orientation_imu_get_acceleration(float *values);
+
+float pbio_orientation_imu_get_heading(void);
+
+void pbio_orientation_imu_set_heading(float desired_heading);
+
+#else // PBIO_CONFIG_ORIENTATION_IMU
+
+static inline void pbio_orientation_imu_init(void) {
+}
+
+static inline void pbio_orientation_imu_get_angular_velocity(float *values) {
+}
+
+static inline void pbio_orientation_imu_get_acceleration(float *values) {
 }
 
 static inline uint32_t pbio_orientation_imu_get_stationary_count(void) {
     return 0;
 }
 
-static inline void pbio_orientation_imu_update_gyro_rate_bias(float *average_gyro_data) {
-}
-
 static inline float pbio_orientation_imu_get_heading(void) {
     return 0.0f;
 }
 
-static inline void pbio_orientation_imu_set_heading(pbdrv_imu_dev_t *imu_dev, float desired_heading) {
+static inline void pbio_orientation_imu_set_heading(float desired_heading) {
 }
 
-#endif // #if PBIO_CONFIG_ORIENTATION_IMU
-
-#endif // PBIO_CONFIG_ORIENTATION
+#endif // PBIO_CONFIG_ORIENTATION_IMU
 
 #endif // _PBIO_ORIENTATION_H_
 
