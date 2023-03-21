@@ -15,6 +15,7 @@
 
 #include <pbio/config.h>
 #include <pbio/error.h>
+#include <pbio/geometry.h>
 
 #include <pbdrv/imu.h>
 
@@ -51,11 +52,13 @@ static inline void pbio_orientation_get_complementary_axis(uint8_t *index, int8_
 
 void pbio_orientation_imu_init(void);
 
+pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis);
+
 uint32_t pbio_orientation_imu_get_stationary_count(void);
 
-void pbio_orientation_imu_get_angular_velocity(float *values);
+void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
 
-void pbio_orientation_imu_get_acceleration(float *values);
+void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values);
 
 float pbio_orientation_imu_get_heading(void);
 
@@ -66,10 +69,14 @@ void pbio_orientation_imu_set_heading(float desired_heading);
 static inline void pbio_orientation_imu_init(void) {
 }
 
-static inline void pbio_orientation_imu_get_angular_velocity(float *values) {
+static inline pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-static inline void pbio_orientation_imu_get_acceleration(float *values) {
+static inline void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
+}
+
+static inline void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
 }
 
 static inline uint32_t pbio_orientation_imu_get_stationary_count(void) {
