@@ -10,7 +10,9 @@
 
 #include <pbio/config.h>
 #include <pbio/error.h>
+#include <pbio/geometry.h>
 #include <pbio/orientation.h>
+#include <pbio/util.h>
 
 #if PBIO_CONFIG_ORIENTATION
 
@@ -92,21 +94,27 @@ pbdrv_imu_config_t *imu_config;
 // to the accumulative number of seconds it was stationary.
 static uint32_t stationary_counter = 0;
 
-static float angular_velocity[3];
-static float acceleration[3];
-static float gyro_bias[3];
-
-static float heading_rate_last = 0;
-static float heading = 0;
-static float heading_offset = 0;
+// Cached sensor values that can be read at any time without polling again.
+static pbio_geometry_xyz_t angular_velocity;
+static pbio_geometry_xyz_t acceleration;
+static pbio_geometry_xyz_t gyro_bias;
+static pbio_geometry_xyz_t heading_rate_last;
+static pbio_geometry_xyz_t heading;
 
 void pbio_imu_handle_frame_data_func(int16_t *data) {
-    for (uint8_t i = 0; i < 3; i++) {
-        angular_velocity[i] = data[i] * imu_config->gyro_scale - gyro_bias[i];
-        acceleration[i] = data[i + 3] * imu_config->accel_scale;
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(angular_velocity.values); i++) {
+        // Update angular velocity and acceleration cache so user can read them.
+        angular_velocity.values[i] = data[i] * imu_config->gyro_scale - gyro_bias.values[i];
+        acceleration.values[i] = data[i + 3] * imu_config->accel_scale;
+
+        // Update "heading" on all axes. This is not useful for 3D attitude
+        // estimation, but it allows the user to get a 1D heading even with
+        // the hub mounted at an arbitrary orientation. Such a 1D heading
+        // is numerically more accurate, which is useful in drive base
+        // applications so long as the vehicle drives on a flat surface.
+        heading.values[i] += (heading_rate_last.values[i] + angular_velocity.values[i]) * imu_config->sample_time / 2;
+        heading_rate_last.values[i] = angular_velocity.values[i];
     }
-    heading += (heading_rate_last + angular_velocity[2]) * imu_config->sample_time / 2;
-    heading_rate_last = angular_velocity[2];
 }
 
 void pbdrv_imu_handle_stationary_data_func(int32_t *gyro_data_sum, int32_t *accel_data_sum, uint32_t num_samples) {
@@ -117,12 +125,12 @@ void pbdrv_imu_handle_stationary_data_func(int32_t *gyro_data_sum, int32_t *acce
     // average of the data without maintaining a data buffer.
     float weight = stationary_counter >= 20 ? 0.05f : 1.0f / stationary_counter;
 
-    for (uint8_t i = 0; i < 3; i++) {
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(gyro_bias.values); i++) {
         // Average gyro rate while stationary, indicating current bias.
         float average_now = gyro_data_sum[i] * imu_config->gyro_scale / num_samples;
 
         // Update bias at decreasing rate.
-        gyro_bias[i] = gyro_bias[i] * (1 - weight) + weight * average_now;
+        gyro_bias.values[i] = gyro_bias.values[i] * (1 - weight) + weight * average_now;
     }
 }
 
@@ -132,6 +140,20 @@ void pbio_orientation_imu_init(void) {
         return;
     }
     pbdrv_imu_set_data_handlers(imu_dev, pbio_imu_handle_frame_data_func, pbdrv_imu_handle_stationary_data_func);
+}
+
+static pbio_geometry_matrix_3x3_t pbio_orientation_neutral_orientation;
+
+pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
+
+    pbio_error_t err = pbio_geometry_map_from_base_axes(x_axis, z_axis, &pbio_orientation_neutral_orientation);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    pbio_orientation_imu_set_heading(0.0f);
+
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -145,29 +167,36 @@ uint32_t pbio_orientation_imu_get_stationary_count(void) {
 
 /**
  * Reads the current IMU angular velocity in deg/s, compensated for offset.
- * @param [in] imu_dev      The driver instance.
- * @param [out] values      An array of 3 32-bit float values to hold the result.
+ *
+ * @param [out] values      The angular velocity vector.
  */
-void pbio_orientation_imu_get_angular_velocity(float *values) {
-    memcpy(values, angular_velocity, sizeof(angular_velocity));
+void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
+    pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &angular_velocity, values);
 }
 
 /**
- * Reads the current IMU angular velocity in deg/s, compensated for offset.
- * @param [in] imu_dev      The driver instance.
- * @param [out] values      An array of 3 32-bit float values to hold the result.
+ * Reads the current IMU acceleration in  velocity in deg/s, compensated for offset.
+ *
+ * @param [out] values      The acceleration vector.
  */
-void pbio_orientation_imu_get_acceleration(float *values) {
-    memcpy(values, acceleration, sizeof(acceleration));
+void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
+    pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &acceleration, values);
 }
+
+static float heading_offset = 0;
 
 /**
  * Reads the estimated IMU heading in degrees.
- * @param [in] imu_dev      The driver instance.
+ *
  * @return                  Heading angle.
  */
 float pbio_orientation_imu_get_heading(void) {
-    return heading - heading_offset;
+
+    pbio_geometry_xyz_t heading_mapped;
+
+    pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &heading, &heading_mapped);
+
+    return heading_mapped.z - heading_offset;
 }
 
 /**
@@ -176,7 +205,7 @@ float pbio_orientation_imu_get_heading(void) {
  * @return                  Heading angle.
  */
 void pbio_orientation_imu_set_heading(float desired_heading) {
-    heading_offset = heading - desired_heading;
+    heading_offset = pbio_orientation_imu_get_heading() + heading_offset - desired_heading;
 }
 
 #endif // PBIO_CONFIG_ORIENTATION_IMU

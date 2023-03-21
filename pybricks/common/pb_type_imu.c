@@ -7,9 +7,11 @@
 
 #include <math.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <pbdrv/imu.h>
 #include <pbio/error.h>
+#include <pbio/geometry.h>
 #include <pbio/orientation.h>
 
 #include "py/obj.h"
@@ -26,7 +28,6 @@ typedef struct _common_IMU_obj_t {
     float hub_x[3];
     float hub_y[3];
     float hub_z[3];
-    bool use_default_placement;
 } common_IMU_obj_t;
 
 
@@ -62,22 +63,6 @@ STATIC mp_obj_t common_IMU_project_3d_axis(mp_obj_t axis_in, float *values) {
     return mp_obj_new_float_from_f(scalar / sqrtf(axis->data[0] * axis->data[0] + axis->data[1] * axis->data[1] + axis->data[2] * axis->data[2]));
 }
 
-STATIC void common_IMU_rotate_3d_axis(common_IMU_obj_t *self, float *values) {
-
-    // If we use default placement, don't do anything.
-    if (self->use_default_placement) {
-        return;
-    }
-
-    // Make a copy of the input before we override it.
-    float v[] = {values[0], values[1], values[2]};
-
-    // Evaluate the rotation.
-    values[0] = self->hub_x[0] * v[0] + self->hub_y[0] * v[1] + self->hub_z[0] * v[2];
-    values[1] = self->hub_x[1] * v[0] + self->hub_y[1] * v[1] + self->hub_z[1] * v[2];
-    values[2] = self->hub_x[2] * v[0] + self->hub_y[2] * v[1] + self->hub_z[2] * v[2];
-}
-
 // pybricks._common.IMU.up
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
     (void)self_in;
@@ -86,20 +71,20 @@ STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
     // So read +Z vector of the inertial frame, in the body frame.
     // For now, this is the gravity vector. In the future, we can make this
     // slightly more accurate by using the full IMU orientation.
-    float values[3];
-    pbio_orientation_imu_get_acceleration(values);
+    pbio_geometry_xyz_t acceleration;
+    pbio_orientation_imu_get_acceleration(&acceleration);  // REVISIT: NEED UNROTATED VALUE
 
     // Find index and sign of maximum component
     float abs_max = 0;
     uint8_t axis = 0;
     bool positive = false;
     for (uint8_t i = 0; i < 3; i++) {
-        if (values[i] > abs_max) {
-            abs_max = values[i];
+        if (acceleration.values[i] > abs_max) {
+            abs_max = acceleration.values[i];
             positive = true;
             axis = i;
-        } else if (-values[i] > abs_max) {
-            abs_max = -values[i];
+        } else if (-acceleration.values[i] > abs_max) {
+            abs_max = -acceleration.values[i];
             positive = false;
             axis = i;
         }
@@ -129,21 +114,18 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_up_obj, common_IMU_up);
 
 // pybricks._common.IMU.tilt
 STATIC mp_obj_t common_IMU_tilt(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Read acceleration in the user frame. In the future, we can make this
-    // more accurate by using the full IMU orientation.
-    float accl[3];
-    pbio_orientation_imu_get_acceleration(accl);
-    common_IMU_rotate_3d_axis(self, accl);
+    // Read acceleration in the user frame.
+    pbio_geometry_xyz_t accl;
+    pbio_orientation_imu_get_acceleration(&accl);
 
     mp_obj_t tilt[2];
     // Pitch
-    float pitch = atan2f(-accl[0], sqrtf(accl[2] * accl[2] + accl[1] * accl[1]));
+    float pitch = atan2f(-accl.x, sqrtf(accl.z * accl.z + accl.y * accl.y));
     tilt[0] = mp_obj_new_int_from_float(pitch * 57.296f);
 
     // Roll
-    float roll = atan2f(accl[1], accl[2]);
+    float roll = atan2f(accl.y, accl.z);
     tilt[1] = mp_obj_new_int_from_float(roll * 57.296f);
     return mp_obj_new_tuple(2, tilt);
 }
@@ -155,11 +137,11 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
         common_IMU_obj_t, self,
         PB_ARG_DEFAULT_NONE(axis));
 
-    float values[3];
-    pbio_orientation_imu_get_acceleration(values);
-    common_IMU_rotate_3d_axis(self, values);
+    (void)self;
+    pbio_geometry_xyz_t acceleration;
+    pbio_orientation_imu_get_acceleration(&acceleration);
 
-    return common_IMU_project_3d_axis(axis_in, values);
+    return common_IMU_project_3d_axis(axis_in, acceleration.values);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_acceleration_obj, 1, common_IMU_acceleration);
 
@@ -170,11 +152,10 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(axis));
 
     (void)self;
-    float values[3];
-    pbio_orientation_imu_get_angular_velocity(values);
-    common_IMU_rotate_3d_axis(self, values);
+    pbio_geometry_xyz_t angular_velocity;
+    pbio_orientation_imu_get_angular_velocity(&angular_velocity);
 
-    return common_IMU_project_3d_axis(axis_in, values);
+    return common_IMU_project_3d_axis(axis_in, angular_velocity.values);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 
@@ -242,34 +223,6 @@ STATIC const mp_obj_type_t pb_type_IMU = {
     .locals_dict = (mp_obj_dict_t *)&common_IMU_locals_dict,
 };
 
-// Extracts a (scaled) 3D vector object to a plain, normalized float array
-static void get_normal_axis(pb_type_Matrix_obj_t *vector, float *dest) {
-
-    // Assert we have a vector with 3 entries
-    if (vector->m * vector->n != 3) {
-        mp_raise_ValueError(MP_ERROR_TEXT("axis must be 1x3 or 3x1 matrix"));
-    }
-
-    // compute norm
-    float magnitude = sqrtf(
-        vector->data[0] * vector->data[0] +
-        vector->data[1] * vector->data[1] +
-        vector->data[2] * vector->data[2]);
-
-    // Assert we have a vector with nonzero length
-    if (magnitude < 0.001f) {
-        mp_raise_ValueError(MP_ERROR_TEXT("axis must have nonzero length"));
-    }
-
-    // Scale and sign magnitude by matrix scale
-    magnitude *= vector->scale;
-
-    // Set destination values
-    dest[0] = vector->data[0] / magnitude;
-    dest[1] = vector->data[1] / magnitude;
-    dest[2] = vector->data[2] / magnitude;
-}
-
 STATIC common_IMU_obj_t singleton_imu_obj;
 
 // pybricks._common.IMU.__init__
@@ -291,31 +244,14 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
     pb_assert_type(top_side_axis, &pb_type_Matrix);
     pb_assert_type(front_side_axis, &pb_type_Matrix);
 
-    // Check if we use the default orientation.
-    if (MP_OBJ_TO_PTR(top_side_axis) == &pb_Axis_Z_obj && MP_OBJ_TO_PTR(front_side_axis) == &pb_Axis_X_obj) {
-        // If so, we can avoid math on every read.
-        self->use_default_placement = true;
-    } else {
-        // If not, compute the orientation and use it for reading data from now on.
-        self->use_default_placement = false;
+    // REVISIT: Extract/align pbio and pybricks matrix type
+    pbio_geometry_xyz_t hub_x;
+    memcpy(hub_x.values, ((pb_type_Matrix_obj_t *)front_side_axis)->data, sizeof(hub_x.values));
 
-        // Extract the body X axis
-        get_normal_axis(MP_OBJ_TO_PTR(front_side_axis), self->hub_x);
+    pbio_geometry_xyz_t hub_z;
+    memcpy(hub_z.values, ((pb_type_Matrix_obj_t *)top_side_axis)->data, sizeof(hub_z.values));
 
-        // Extract the body Z axis
-        get_normal_axis(MP_OBJ_TO_PTR(top_side_axis), self->hub_z);
-
-        // Assert that X and Z are orthogonal
-        float inner = self->hub_x[0] * self->hub_z[0] + self->hub_x[1] * self->hub_z[1] + self->hub_x[2] * self->hub_z[2];
-        if (inner > 0.001f || inner < -0.001f) {
-            mp_raise_ValueError(MP_ERROR_TEXT("X axis must be orthogonal to Z axis"));
-        }
-
-        // Make the body Y axis as Y = cross(Z, X)
-        self->hub_y[0] = self->hub_z[1] * self->hub_x[2] - self->hub_z[2] * self->hub_x[1];
-        self->hub_y[1] = self->hub_z[2] * self->hub_x[0] - self->hub_z[0] * self->hub_x[2];
-        self->hub_y[2] = self->hub_z[0] * self->hub_x[1] - self->hub_z[1] * self->hub_x[0];
-    }
+    pbio_orientation_set_base_orientation(&hub_x, &hub_z);
 
     return MP_OBJ_FROM_PTR(self);
 }
