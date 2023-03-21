@@ -105,9 +105,7 @@ void pbio_imu_handle_frame_data_func(int16_t *data) {
         angular_velocity[i] = data[i] * imu_config->gyro_scale - gyro_bias[i];
         acceleration[i] = data[i + 3] * imu_config->accel_scale;
     }
-    // REVISIT: This should be 2 x 833, but it is slightly off. Need to
-    // review actual sample rate.
-    heading += (heading_rate_last + angular_velocity[2]) / (1639); // REVISIT: Use config value
+    heading += (heading_rate_last + angular_velocity[2]) * imu_config->sample_time / 2;
     heading_rate_last = angular_velocity[2];
 }
 
