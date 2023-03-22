@@ -342,13 +342,13 @@ retry:
     uint16_t service_handle, attr_handle;
     if (send->connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         if (!pybricks_notify_en) {
-            goto done;
+            goto success;
         }
         service_handle = pybricks_service_handle;
         attr_handle = pybricks_command_event_char_handle;
     } else if (send->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         if (!uart_tx_notify_en) {
-            goto done;
+            goto success;
         }
         service_handle = uart_service_handle;
         attr_handle = uart_tx_char_handle;
@@ -371,10 +371,11 @@ retry:
         goto retry;
     }
 
+success:
+    task->status = PBIO_SUCCESS;
+
 done:
     send->done();
-
-    task->status = PBIO_SUCCESS;
 
     PT_END(pt);
 }
