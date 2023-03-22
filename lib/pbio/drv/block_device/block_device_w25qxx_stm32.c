@@ -56,7 +56,7 @@ typedef struct {
     /** Buffer to write from or read into. */
     uint8_t *buffer;
     /** Buffer size. */
-    uint32_t size;
+    uint16_t size;
 } spi_command_t;
 
 /**
@@ -263,7 +263,7 @@ enum {
  */
 enum {
     FLASH_SIZE_ERASE = 4 * 1024, // Limited by W25QXX operation
-    FLASH_SIZE_READ = UINT16_MAX + 1, // Limited by STM32 DMA transfer size.
+    FLASH_SIZE_READ = UINT16_MAX, // Limited by STM32 DMA transfer size.
     FLASH_SIZE_WRITE = 256, // Limited by W25QXX operation
 };
 
