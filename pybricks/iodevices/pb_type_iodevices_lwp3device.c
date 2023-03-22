@@ -65,6 +65,11 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
         pb_assert(PBIO_ERROR_BUSY);
     }
 
+    // HACK: scan and connect may block sending other Bluetooth messages, so we
+    // need to make sure the stdout queue is drained first to avoid unexpected
+    // behavior
+    mp_hal_stdout_tx_flush();
+
     // clear memory after reconnect to empty buffer
     // we are using static memory
     memset(lwp3device, 0, sizeof(*lwp3device));

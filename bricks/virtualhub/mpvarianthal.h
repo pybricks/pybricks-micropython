@@ -104,3 +104,6 @@ enum {
 
 void mp_hal_get_mac(int idx, uint8_t buf[6]);
 #endif
+
+// TODO
+#define mp_hal_stdout_tx_flush()

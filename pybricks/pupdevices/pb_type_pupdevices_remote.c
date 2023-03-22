@@ -132,6 +132,11 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
         pb_assert(PBIO_ERROR_BUSY);
     }
 
+    // HACK: scan and connect may block sending other Bluetooth messages, so we
+    // need to make sure the stdout queue is drained first to avoid unexpected
+    // behavior
+    mp_hal_stdout_tx_flush();
+
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory
     memset(remote, 0, sizeof(*remote));
