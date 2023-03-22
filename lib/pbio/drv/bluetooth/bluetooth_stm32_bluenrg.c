@@ -651,13 +651,19 @@ void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *va
 static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
-    if (remote_handle) {
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        aci_gap_terminate_begin(remote_handle, HCI_OE_USER_ENDED_CONNECTION);
-        PT_WAIT_UNTIL(pt, hci_command_complete);
-        aci_gap_terminate_end();
+    if (remote_handle == 0) {
+        // already disconnected
+        goto done;
     }
 
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_terminate_begin(remote_handle, HCI_OE_USER_ENDED_CONNECTION);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gap_terminate_end();
+
+    PT_WAIT_UNTIL(pt, remote_handle == 0);
+
+done:
     task->status = PBIO_SUCCESS;
 
     PT_END(pt);
