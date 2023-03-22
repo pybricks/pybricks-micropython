@@ -610,7 +610,6 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
-retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_write_charac_value_begin(remote_handle, remote_lwp3_char_handle + 1, value->size, value->data);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -620,10 +619,6 @@ retry:
         if (task->cancel) {
             task->status = PBIO_ERROR_CANCELED;
             PT_EXIT(pt);
-        }
-
-        if (status == BLE_STATUS_NOT_ALLOWED) {
-            goto retry;
         }
 
         task->status = ble_error_to_pbio_error(status);
