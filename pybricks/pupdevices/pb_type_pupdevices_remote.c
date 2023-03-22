@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -203,6 +203,10 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
 
 void pb_type_Remote_cleanup(void) {
     pbdrv_bluetooth_disconnect_remote();
+
+    while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+        MICROPY_EVENT_POLL_HOOK
+    }
 }
 
 STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
