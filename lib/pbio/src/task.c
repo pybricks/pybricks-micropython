@@ -31,7 +31,7 @@ void pbio_task_init(pbio_task_t *task, pbio_task_thread_t thread, void *context)
  * @param [in]  task    The task.
  * @returns             True if the protothread has completed, otherwise false.
  */
-static bool pbio_task_run_once(pbio_task_t *task) {
+bool pbio_task_run_once(pbio_task_t *task) {
     if (PT_SCHEDULE(task->thread(&task->pt, task))) {
         return false;
     }

@@ -217,6 +217,12 @@ static void spi_init(void) {
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
+static void start_task(pbio_task_t *task, pbio_task_thread_t thread, void *context) {
+    pbio_task_init(task, thread, context);
+    list_add(task_queue, task);
+    process_poll(&pbdrv_bluetooth_spi_process);
+}
+
 void pbdrv_bluetooth_init(void) {
     bluetooth_reset(true);
     spi_init();
@@ -283,8 +289,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
 
 void pbdrv_bluetooth_start_advertising(void) {
     static pbio_task_t task;
-    pbio_task_init(&task, set_discoverable, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, set_discoverable, NULL);
 }
 
 static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
@@ -302,8 +307,7 @@ static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
 
 void pbdrv_bluetooth_stop_advertising(void) {
     static pbio_task_t task;
-    pbio_task_init(&task, set_non_discoverable, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, set_non_discoverable, NULL);
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -382,8 +386,7 @@ done:
 
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
     static pbio_task_t task;
-    pbio_task_init(&task, send_value_notification, context);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, send_value_notification, context);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -602,8 +605,7 @@ end_cancel:
 }
 
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
-    pbio_task_init(task, scan_and_connect_task, context);
-    pbio_task_queue_add(task_queue, task);
+    start_task(task, scan_and_connect_task, context);
 }
 
 static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
@@ -645,8 +647,7 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 }
 
 void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
-    pbio_task_init(task, write_remote_task, value);
-    pbio_task_queue_add(task_queue, task);
+    start_task(task, write_remote_task, value);
 }
 
 static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
@@ -672,8 +673,7 @@ done:
 
 void pbdrv_bluetooth_disconnect_remote(void) {
     static pbio_task_t task;
-    pbio_task_init(&task, disconnect_remote_task, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, disconnect_remote_task, NULL);
 }
 
 // overrides weak function in start_*.S
@@ -1059,7 +1059,6 @@ void hci_send_req(struct hci_request *r) {
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = hci_command_status = false;
-    process_poll(&pbdrv_bluetooth_spi_process);
 }
 
 // implements function for BlueNRG library
@@ -1248,11 +1247,30 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     bluetooth_reset(false);
 
     static pbio_task_t task;
-    pbio_task_init(&task, init_task, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, init_task, NULL);
 
-    while (true) {
-        PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);
+    for (;;) {
+        PROCESS_WAIT_UNTIL({
+            for (;;) {
+                pbio_task_t *current_task = list_head(task_queue);
+
+                if (!current_task) {
+                    break;
+                }
+
+                if (current_task->status != PBIO_ERROR_AGAIN || pbio_task_run_once(current_task)) {
+                    // remove the task from the queue only if the task is complete
+                    list_remove(task_queue, current_task);
+                    // then start the next task
+                    continue;
+                }
+
+                break;
+            }
+
+            spi_irq || write_xfer_size;
+        });
+
         // if there is a pending read message
         if (spi_irq) {
             PROCESS_PT_SPAWN(&child_pt, spi_read(&child_pt));
@@ -1261,8 +1279,6 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         else if (write_xfer_size) {
             PROCESS_PT_SPAWN(&child_pt, spi_write(&child_pt));
         }
-
-        pbio_task_queue_run_once(task_queue);
     }
 
     PROCESS_END();
