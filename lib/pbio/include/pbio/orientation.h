@@ -60,6 +60,8 @@ void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
 
 void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values);
 
+pbio_orientation_side_t pbio_orientation_imu_get_up_side(void);
+
 float pbio_orientation_imu_get_heading(void);
 
 void pbio_orientation_imu_set_heading(float desired_heading);
@@ -77,6 +79,10 @@ static inline void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t
 }
 
 static inline void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
+}
+
+static inline pbio_orientation_side_t pbio_orientation_imu_get_up_side(void) {
+    return PBIO_ORIENTATION_SIDE_TOP;
 }
 
 static inline uint32_t pbio_orientation_imu_get_stationary_count(void) {

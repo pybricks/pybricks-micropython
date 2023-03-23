@@ -65,49 +65,21 @@ STATIC mp_obj_t common_IMU_project_3d_axis(mp_obj_t axis_in, float *values) {
 
 // pybricks._common.IMU.up
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
-    (void)self_in;
-
-    // Up is which side of a unit box intersects the +Z vector first.
-    // So read +Z vector of the inertial frame, in the body frame.
-    // For now, this is the gravity vector. In the future, we can make this
-    // slightly more accurate by using the full IMU orientation.
-    pbio_geometry_xyz_t acceleration;
-    pbio_orientation_imu_get_acceleration(&acceleration);  // REVISIT: NEED UNROTATED VALUE
-
-    // Find index and sign of maximum component
-    float abs_max = 0;
-    uint8_t axis = 0;
-    bool positive = false;
-    for (uint8_t i = 0; i < 3; i++) {
-        if (acceleration.values[i] > abs_max) {
-            abs_max = acceleration.values[i];
-            positive = true;
-            axis = i;
-        } else if (-acceleration.values[i] > abs_max) {
-            abs_max = -acceleration.values[i];
-            positive = false;
-            axis = i;
-        }
-    }
-
-    // The maximum component dictates which side of a unit box gets intersected
-    // first. So, simply look at axis and sign to give the side.
-    if (axis == 0 && positive) {
-        return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
-    }
-    if (axis == 0 && !positive) {
-        return MP_OBJ_FROM_PTR(&pb_Side_BACK_obj);
-    }
-    if (axis == 1 && positive) {
-        return MP_OBJ_FROM_PTR(&pb_Side_LEFT_obj);
-    }
-    if (axis == 1 && !positive) {
-        return MP_OBJ_FROM_PTR(&pb_Side_RIGHT_obj);
-    }
-    if (axis == 2 && positive) {
-        return MP_OBJ_FROM_PTR(&pb_Side_TOP_obj);
-    } else {
-        return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
+    switch (pbio_orientation_imu_get_up_side()) {
+        case PBIO_ORIENTATION_SIDE_FRONT:
+            return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
+        case PBIO_ORIENTATION_SIDE_LEFT:
+            return MP_OBJ_FROM_PTR(&pb_Side_LEFT_obj);
+        case PBIO_ORIENTATION_SIDE_TOP:
+            return MP_OBJ_FROM_PTR(&pb_Side_TOP_obj);
+        case PBIO_ORIENTATION_SIDE_BACK:
+            return MP_OBJ_FROM_PTR(&pb_Side_BACK_obj);
+        case PBIO_ORIENTATION_SIDE_RIGHT:
+            return MP_OBJ_FROM_PTR(&pb_Side_RIGHT_obj);
+        case PBIO_ORIENTATION_SIDE_BOTTOM:
+        // fallthrough
+        default:
+            return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
     }
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_up_obj, common_IMU_up);
