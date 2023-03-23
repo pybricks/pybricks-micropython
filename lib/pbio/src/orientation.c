@@ -126,7 +126,6 @@ static uint32_t stationary_counter = 0;
 static pbio_geometry_xyz_t angular_velocity;
 static pbio_geometry_xyz_t acceleration;
 static pbio_geometry_xyz_t gyro_bias;
-static pbio_geometry_xyz_t heading_rate_last;
 static pbio_geometry_xyz_t heading;
 
 void pbio_imu_handle_frame_data_func(int16_t *data) {
@@ -140,8 +139,7 @@ void pbio_imu_handle_frame_data_func(int16_t *data) {
         // the hub mounted at an arbitrary orientation. Such a 1D heading
         // is numerically more accurate, which is useful in drive base
         // applications so long as the vehicle drives on a flat surface.
-        heading.values[i] += (heading_rate_last.values[i] + angular_velocity.values[i]) * imu_config->sample_time / 2;
-        heading_rate_last.values[i] = angular_velocity.values[i];
+        heading.values[i] += angular_velocity.values[i] * imu_config->sample_time;
     }
 }
 
