@@ -25,43 +25,7 @@
 typedef struct _common_IMU_obj_t {
     mp_obj_base_t base;
     pbdrv_imu_dev_t *imu_dev;
-    float hub_x[3];
-    float hub_y[3];
-    float hub_z[3];
 } common_IMU_obj_t;
-
-
-STATIC mp_obj_t common_IMU_project_3d_axis(mp_obj_t axis_in, float *values) {
-
-    // If no axis is specified, return a vector of values
-    if (axis_in == mp_const_none) {
-        return pb_type_Matrix_make_vector(3, values, false);
-    }
-
-    // If X, Y, or Z is specified, return value directly for efficiency in most cases
-    if (MP_OBJ_TO_PTR(axis_in) == &pb_Axis_X_obj) {
-        return mp_obj_new_float_from_f(values[0]);
-    }
-    if (MP_OBJ_TO_PTR(axis_in) == &pb_Axis_Y_obj) {
-        return mp_obj_new_float_from_f(values[1]);
-    }
-    if (MP_OBJ_TO_PTR(axis_in) == &pb_Axis_Z_obj) {
-        return mp_obj_new_float_from_f(values[2]);
-    }
-
-    if (!mp_obj_is_type(axis_in, &pb_type_Matrix)) {
-        mp_raise_TypeError(MP_ERROR_TEXT("axis must be Matrix or None"));
-    }
-    pb_type_Matrix_obj_t *axis = MP_OBJ_TO_PTR(axis_in);
-
-    if (axis->m * axis->n != 3) {
-        mp_raise_ValueError(MP_ERROR_TEXT("axis must be 1x3 or 3x1 matrix"));
-    }
-
-    // Project data onto user specified axis and scale user axis to unit length
-    float scalar = (axis->data[0] * values[0] + axis->data[1] * values[1] + axis->data[2] * values[2]) * axis->scale;
-    return mp_obj_new_float_from_f(scalar / sqrtf(axis->data[0] * axis->data[0] + axis->data[1] * axis->data[1] + axis->data[2] * axis->data[2]));
-}
 
 // pybricks._common.IMU.up
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
@@ -103,6 +67,19 @@ STATIC mp_obj_t common_IMU_tilt(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_tilt_obj, common_IMU_tilt);
 
+STATIC void pb_type_imu_extract_axis(mp_obj_t obj_in, pbio_geometry_xyz_t *vector) {
+    if (!mp_obj_is_type(obj_in, &pb_type_Matrix)) {
+        mp_raise_TypeError(MP_ERROR_TEXT("Axis must be Matrix or None."));
+    }
+    pb_type_Matrix_obj_t *vector_obj = MP_OBJ_TO_PTR(obj_in);
+    if (vector_obj->m * vector_obj->n != 3) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Axis must be 1x3 or 3x1 matrix."));
+    }
+    for (uint8_t i = 0; i < MP_ARRAY_SIZE(vector->values); i++) {
+        vector->values[i] = vector_obj->data[i] * vector_obj->scale;
+    }
+}
+
 // pybricks._common.IMU.acceleration
 STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -113,11 +90,19 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
     pbio_geometry_xyz_t acceleration;
     pbio_orientation_imu_get_acceleration(&acceleration);
 
-    return common_IMU_project_3d_axis(axis_in, acceleration.values);
+    // If no axis is specified, return a vector of values.
+    if (axis_in == mp_const_none) {
+        return pb_type_Matrix_make_vector(3, acceleration.values, false);
+    }
+
+    // Otherwise convert user axis to pbio object and project vector onto it.
+    pbio_geometry_xyz_t axis;
+    pb_type_imu_extract_axis(axis_in, &axis);
+    return mp_obj_new_float_from_f(pbio_geometry_vector_project(&axis, &acceleration));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_acceleration_obj, 1, common_IMU_acceleration);
 
-// pybricks._common.IMU.gyro
+// pybricks._common.IMU.angular_velocity
 STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_IMU_obj_t, self,
@@ -127,7 +112,15 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
     pbio_geometry_xyz_t angular_velocity;
     pbio_orientation_imu_get_angular_velocity(&angular_velocity);
 
-    return common_IMU_project_3d_axis(axis_in, angular_velocity.values);
+    // If no axis is specified, return a vector of values.
+    if (axis_in == mp_const_none) {
+        return pb_type_Matrix_make_vector(3, angular_velocity.values, false);
+    }
+
+    // Otherwise convert user axis to pbio object and project vector onto it.
+    pbio_geometry_xyz_t axis;
+    pb_type_imu_extract_axis(axis_in, &axis);
+    return mp_obj_new_float_from_f(pbio_geometry_vector_project(&axis, &angular_velocity));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 

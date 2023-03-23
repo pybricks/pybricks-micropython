@@ -39,6 +39,22 @@ void pbio_geometry_vector_cross_product(pbio_geometry_xyz_t *a, pbio_geometry_xy
 }
 
 /**
+ * Gets the scalar projection of one vector onto the line spanned by another.
+ *
+ * @param [in]  input   The input vector.
+ * @param [in]  axis    The axis on which to project.
+ * @return              Signed projection.
+ */
+float pbio_geometry_vector_project(pbio_geometry_xyz_t *axis, pbio_geometry_xyz_t *input) {
+
+    // Normalize the given axis so its magnitude does not matter.
+    pbio_geometry_xyz_t unit_axis;
+    pbio_geometry_vector_normalize(axis, &unit_axis);
+
+    return unit_axis.x * input->x + unit_axis.y * input->y + unit_axis.z * input->z;
+}
+
+/**
  * Maps the input vector using: output = map * input
  *
  * @param [in]  map     The 3x3 rotation matrix.
