@@ -659,7 +659,7 @@ static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_terminate_begin(remote_handle, HCI_OE_USER_ENDED_CONNECTION);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
+    PT_WAIT_UNTIL(pt, hci_command_status);
     aci_gap_terminate_end();
 
     PT_WAIT_UNTIL(pt, remote_handle == 0);
