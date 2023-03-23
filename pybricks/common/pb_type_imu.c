@@ -133,8 +133,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU
 
 // pybricks._common.IMU.stationary
 STATIC mp_obj_t common_IMU_stationary(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_bool(pbdrv_imu_is_stationary(self->imu_dev));
+    return mp_obj_new_bool(pbio_orientation_imu_is_stationary());
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stationary_obj, common_IMU_stationary);
 
