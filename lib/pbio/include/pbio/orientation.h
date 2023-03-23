@@ -54,7 +54,7 @@ void pbio_orientation_imu_init(void);
 
 pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis);
 
-uint32_t pbio_orientation_imu_get_stationary_count(void);
+bool pbio_orientation_imu_is_stationary(void);
 
 void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
 
@@ -73,6 +73,10 @@ static inline void pbio_orientation_imu_init(void) {
 
 static inline pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+static inline bool pbio_orientation_imu_is_stationary(void) {
+    return false;
 }
 
 static inline void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {

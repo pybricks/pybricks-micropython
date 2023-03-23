@@ -185,12 +185,12 @@ pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, 
 }
 
 /**
- * Gets a counter value indicating how long the IMU was stationary.
+ * Checks if the IMU is currently stationary.
  *
- * @return    How many subsequent samples were stationary.
+ * @return    True if it has been stationary for about a second, false if moving.
  */
-uint32_t pbio_orientation_imu_get_stationary_count(void) {
-    return stationary_counter;
+bool pbio_orientation_imu_is_stationary(void) {
+    return pbdrv_imu_is_stationary(imu_dev);
 }
 
 /**
