@@ -158,26 +158,8 @@ STATIC mp_obj_t common_IMU_reset_heading(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_reset_heading_obj, 1, common_IMU_reset_heading);
 
-extern void pbdrv_imu_lsm6ds3tr_c_stm32_set_noise_thresholds(int16_t gyro_noise, int16_t accl_noise);
-
-// pybricks._common.IMU.debug
-STATIC mp_obj_t common_IMU_debug(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_IMU_obj_t, self,
-        PB_ARG_REQUIRED(gyro_noise),
-        PB_ARG_REQUIRED(accelerometer_noise));
-
-    (void)self;
-
-    pbdrv_imu_lsm6ds3tr_c_stm32_set_noise_thresholds(mp_obj_get_int(gyro_noise_in), mp_obj_get_int(accelerometer_noise_in));
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_debug_obj, 1, common_IMU_debug);
-
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_debug),            MP_ROM_PTR(&common_IMU_debug_obj)           },
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
     { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
