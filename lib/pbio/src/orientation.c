@@ -85,6 +85,34 @@ void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign) {
         );
 }
 
+/**
+ * Gets the side of a unit-sized box through which a given vector passes first.
+ *
+ * @param [in]  vector  The input vector.
+ * @return              The side through which the vector passes first.
+ */
+pbio_orientation_side_t pbio_orientation_side_from_vector(pbio_geometry_xyz_t *vector) {
+
+    // Find index and sign of maximum component
+    float abs_max = 0;
+    uint8_t axis = 0;
+    bool negative = true;
+    for (uint8_t i = 0; i < 3; i++) {
+        if (vector->values[i] > abs_max) {
+            abs_max = vector->values[i];
+            negative = false;
+            axis = i;
+        } else if (-vector->values[i] > abs_max) {
+            abs_max = -vector->values[i];
+            negative = true;
+            axis = i;
+        }
+    }
+
+    // Return as side enum value.
+    return axis | (negative << 2);
+}
+
 #if PBIO_CONFIG_ORIENTATION_IMU
 
 pbdrv_imu_dev_t *imu_dev;
@@ -181,6 +209,20 @@ void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
  */
 void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
     pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &acceleration, values);
+}
+
+/**
+ * Gets which side of a hub points upwards.
+ *
+ * @param [in] imu_dev      The driver instance.
+ * @param [out] values      An array of 3 32-bit float values to hold the result.
+ */
+pbio_orientation_side_t pbio_orientation_imu_get_up_side(void) {
+    // Up is which side of a unit box intersects the +Z vector first.
+    // So read +Z vector of the inertial frame, in the body frame.
+    // For now, this is the gravity vector. In the future, we can make this
+    // slightly more accurate by using the full IMU orientation.
+    return pbio_orientation_side_from_vector(&acceleration);
 }
 
 static float heading_offset = 0;
