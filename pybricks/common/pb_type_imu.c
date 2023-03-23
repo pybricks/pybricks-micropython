@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <pbdrv/imu.h>
 #include <pbio/error.h>
 #include <pbio/geometry.h>
 #include <pbio/orientation.h>
@@ -24,7 +23,6 @@
 
 typedef struct _common_IMU_obj_t {
     mp_obj_base_t base;
-    pbdrv_imu_dev_t *imu_dev;
 } common_IMU_obj_t;
 
 // pybricks._common.IMU.up
@@ -169,37 +167,24 @@ STATIC const mp_obj_type_t pb_type_IMU = {
     .locals_dict = (mp_obj_dict_t *)&common_IMU_locals_dict,
 };
 
-STATIC common_IMU_obj_t singleton_imu_obj;
+STATIC common_IMU_obj_t singleton_imu_obj = {
+    .base.type = &pb_type_IMU,
+};
 
 // pybricks._common.IMU.__init__
 mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
 
-    // Get singleton instance
-    common_IMU_obj_t *self = &singleton_imu_obj;
-
-    // Initialized if not done so already
-    if (!self->imu_dev) {
-        pbdrv_imu_dev_t *imu_dev;
-        pbdrv_imu_config_t *imu_config;
-        pb_assert(pbdrv_imu_get_imu(&imu_dev, &imu_config));
-        self->base.type = &pb_type_IMU;
-        self->imu_dev = imu_dev;
-    }
-    pbio_orientation_imu_set_heading(0.0f);
-
-    pb_assert_type(top_side_axis, &pb_type_Matrix);
-    pb_assert_type(front_side_axis, &pb_type_Matrix);
-
-    // REVISIT: Extract/align pbio and pybricks matrix type
+    // Set user base orientation.
     pbio_geometry_xyz_t hub_x;
-    memcpy(hub_x.values, ((pb_type_Matrix_obj_t *)front_side_axis)->data, sizeof(hub_x.values));
+    pb_type_imu_extract_axis(front_side_axis, &hub_x);
 
     pbio_geometry_xyz_t hub_z;
-    memcpy(hub_z.values, ((pb_type_Matrix_obj_t *)top_side_axis)->data, sizeof(hub_z.values));
+    pb_type_imu_extract_axis(top_side_axis, &hub_z);
 
     pbio_orientation_set_base_orientation(&hub_x, &hub_z);
 
-    return MP_OBJ_FROM_PTR(self);
+    // Return singleton instance.
+    return MP_OBJ_FROM_PTR(&singleton_imu_obj);
 }
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_IMU
