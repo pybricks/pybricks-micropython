@@ -30,6 +30,9 @@
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
 
 static PT_THREAD(test_servo(struct pt *pt)) {
+
+    static struct timer timer;
+
     static pbio_servo_t *srv;
 
     // Start motor driver simulation process.
@@ -56,19 +59,13 @@ static PT_THREAD(test_servo(struct pt *pt)) {
 
     // Test running by angle.
     tt_uint_op(pbio_servo_run_angle(srv, 500, 180, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
-    while (!pbio_control_is_done(&srv->control)) {
-        pbio_test_clock_tick(1);
-        PT_YIELD(pt);
-    }
-    tt_want(pbio_control_is_done(&srv->control));
+    pbio_test_sleep_until(pbio_control_is_done(&srv->control));
 
     // Test running for time.
     tt_uint_op(pbio_servo_run_time(srv, 500, 1000, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
-    while (!pbio_control_is_done(&srv->control)) {
-        pbio_test_clock_tick(1);
-        PT_YIELD(pt);
-    }
-    tt_want(pbio_control_is_done(&srv->control));
+    pbio_test_sleep_ms(&timer, 500);
+    tt_want(!pbio_control_is_done(&srv->control));
+    pbio_test_sleep_until(pbio_control_is_done(&srv->control));
 
 end:
 

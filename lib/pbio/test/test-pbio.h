@@ -41,4 +41,18 @@ pbio_test_bluetooth_control_state_t pbio_test_bluetooth_get_control_state(void);
 void pbio_test_counter_set_angle(int32_t rotations, int32_t millidegrees);
 void pbio_test_counter_set_abs_angle(int32_t millidegrees);
 
+// these can be used by tests like servo or drivebases
+#define pbio_test_sleep_until(condition) \
+    while (!(condition)) { \
+        pbio_test_clock_tick(1); \
+        PT_YIELD(pt); \
+    }
+
+#define pbio_test_sleep_ms(timer, duration) \
+    timer_set((timer), (duration)); \
+    while (!timer_expired(timer)) { \
+        pbio_test_clock_tick(1); \
+        PT_YIELD(pt); \
+    }
+
 #endif // _TEST_PBIO_H_
