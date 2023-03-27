@@ -231,6 +231,7 @@
                 "src/math/test_sqrt",
                 "src/servo/test_servo_basics",
                 "src/servo/test_servo_stall",
+                "src/servo/test_servo_gearing",
                 "src/task/test_no_yield_task",
                 "src/task/test_task_removed_when_complete",
                 "src/task/test_task_cancelation",

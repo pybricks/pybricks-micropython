@@ -16,6 +16,7 @@
 #include <tinytest_macros.h>
 
 #include <pbdrv/motor_driver.h>
+#include <pbio/angle.h>
 #include <pbio/control.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
@@ -138,8 +139,67 @@ end:
     PT_END(pt);
 }
 
+static PT_THREAD(test_servo_gearing(struct pt *pt)) {
+
+    static struct timer timer;
+    static pbio_servo_t *srv_basic;
+    static pbio_servo_t *srv_geared;
+    static int32_t angle;
+    static int32_t speed;
+    static const int32_t geared_target = 90;
+
+    // Start motor driver simulation process.
+    pbdrv_motor_driver_init_manual();
+
+    PT_BEGIN(pt);
+
+    // Wait for motor simulation process to be ready.
+    while (pbdrv_init_busy()) {
+        PT_YIELD(pt);
+    }
+
+    // Start motor control process manually.
+    pbio_motor_process_start();
+
+    // Initialize a servo without gears (1000 mdeg rotation per 1 deg output)
+    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_E, &srv_basic), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv_basic, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_reset_angle(srv_basic, 0, false), ==, PBIO_SUCCESS);
+
+    // Initialize a servo with 12:36 gears (3000 mdeg rotation per 1 deg output)
+    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_F, &srv_geared), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv_geared, PBIO_DIRECTION_CLOCKWISE, 3000, true, 0), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_reset_angle(srv_geared, 0, false), ==, PBIO_SUCCESS);
+
+    // Rotate both motors to +90 degrees.
+    tt_uint_op(pbio_servo_run_target(srv_basic, 200, geared_target, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_run_target(srv_geared, 200, geared_target, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
+    srv_geared->control.settings.position_tolerance = 2000;
+    pbio_test_sleep_until(pbio_control_is_done(&srv_basic->control) && pbio_control_is_done(&srv_geared->control));
+
+    // For both, the user angle should match target.
+    tt_uint_op(pbio_servo_get_state_user(srv_basic, &angle, &speed), ==, PBIO_SUCCESS);
+    tt_want(pbio_test_int_is_close(angle, geared_target, 5));
+    tt_uint_op(pbio_servo_get_state_user(srv_geared, &angle, &speed), ==, PBIO_SUCCESS);
+    tt_want(pbio_test_int_is_close(angle, geared_target, 5));
+
+    // Internally, the geared motor should have traveled trice as much.
+    pbio_control_state_t state;
+    pbio_angle_t angle_zero = (pbio_angle_t) {.rotations = 0, .millidegrees = 0};
+    tt_uint_op(pbio_servo_get_state_control(srv_basic, &state), ==, PBIO_SUCCESS);
+    tt_want(pbio_test_int_is_close(pbio_angle_diff_mdeg(&state.position, &angle_zero), geared_target * 1000, 5000));
+    tt_uint_op(pbio_servo_get_state_control(srv_geared, &state), ==, PBIO_SUCCESS);
+    tt_want(pbio_test_int_is_close(pbio_angle_diff_mdeg(&state.position, &angle_zero), geared_target * 3 * 1000, 5000));
+    pbio_test_sleep_ms(&timer, 2000);
+
+end:
+
+    PT_END(pt);
+}
+
 struct testcase_t pbio_servo_tests[] = {
     PBIO_PT_THREAD_TEST(test_servo_basics),
     PBIO_PT_THREAD_TEST(test_servo_stall),
+    PBIO_PT_THREAD_TEST(test_servo_gearing),
     END_OF_TESTCASES
 };
