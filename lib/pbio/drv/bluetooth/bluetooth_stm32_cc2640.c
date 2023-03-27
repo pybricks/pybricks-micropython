@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 // Bluetooth for STM32 MCU with TI CC2640
 
@@ -18,6 +18,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/gpio.h>
+#include <pbdrv/random.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>
 #include <pbio/task.h>
@@ -129,8 +130,6 @@ static uint16_t remote_handle = NO_CONNECTION;
 // handle to LWP3 characteristic on remote
 static uint16_t remote_lwp3_char_handle = NO_CONNECTION;
 
-// The Identity Resolving Key read from the Bluetooth chip.
-static uint8_t device_irk[16];
 // GATT service handles
 static uint16_t gatt_service_handle, gatt_service_end_handle;
 // GAP service handles
@@ -1243,8 +1242,6 @@ static void handle_event(uint8_t *packet) {
                     break;
 
                 case GAP_DEVICE_INIT_DONE:
-                    memcpy(device_irk, &data[12], sizeof(device_irk));
-                    __attribute__((fallthrough));
                 case HCI_EXT_SET_TX_POWER_EVENT:
                 case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT:
                 case HCI_EXT_SET_BDADDR_EVENT:
@@ -1477,12 +1474,19 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     // ignoring response data
 
     // This sets the device address to a new random value each time we reset
-    // the Bluetooth chip. Since we don't support bonding, we use the IRK as
-    // our random value. The Bluetooth stack on the chip handles setting the
-    // correct bits for the address type.
-
+    // the Bluetooth chip.
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, device_irk);
+    {
+        // NB: there doesn't seem to be a way to get random bytes from the
+        // Bluetooth chip itself.
+        uint32_t random[2];
+        pbdrv_random_get(random);
+        // REVISIT: should check return value and use second call to get more
+        // randomness
+        random[1] = ~random[0];
+
+        GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, (uint8_t *)random);
+    }
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 

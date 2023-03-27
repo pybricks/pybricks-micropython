@@ -17,6 +17,7 @@
 - Fixed reading programs larger than 65535 bytes on boot on SPIKE hubs. ([[support#996]).
 - Various Bluetooth stability and reliability improvements on BOOST Move hub
   ([support#320], [support#324], [support#417]).
+- Fixed Bluetooth random address not changing on City and Technic hubs ([support#1011]).
 
 ### Changed
 - Methods like `control.limits()` now check the user input and raise a
@@ -41,6 +42,7 @@
 [support#972]: https://github.com/pybricks/support/issues/972
 [support#989]: https://github.com/pybricks/support/issues/989
 [support#996]: https://github.com/pybricks/support/issues/996
+[support#1011]: https://github.com/pybricks/support/issues/1011
 
 ## [3.3.0b2] - 2023-03-08
 
