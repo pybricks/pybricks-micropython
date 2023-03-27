@@ -33,6 +33,7 @@
 #include "led/led.h"
 #include "motor_driver/motor_driver.h"
 #include "pwm/pwm.h"
+#include "random/random.h"
 #include "reset/reset.h"
 #include "sound/sound.h"
 #include "usb/usb.h"
@@ -82,6 +83,7 @@ void pbdrv_init(void) {
     pbdrv_led_init();
     pbdrv_motor_driver_init();
     pbdrv_pwm_init();
+    pbdrv_random_init();
     pbdrv_reset_init();
     pbdrv_sound_init();
     pbdrv_usb_init();

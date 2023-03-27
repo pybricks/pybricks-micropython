@@ -310,6 +310,7 @@ STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Sr
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rng.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_spi.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim.c \
@@ -323,6 +324,9 @@ STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Sr
 	)
 
 # some HAL drivers are not available on all MCUs
+ifeq ($(PB_MCU_SERIES),F0)
+STM32_HAL_SRC_C := $(filter-out %xx_hal_rng.c, $(STM32_HAL_SRC_C))
+endif
 ifeq ($(PB_MCU_SERIES),F4)
 STM32_HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(STM32_HAL_SRC_C))
 endif

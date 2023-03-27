@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include <pbdrv/config.h>
 
@@ -14,6 +14,10 @@
 #include <pbio/error.h>
 
 #include "stm32f0xx.h"
+
+#if PBDRV_CONFIG_ADC_STM32F0_RANDOM
+#include "../random/random_adc.h"
+#endif
 
 PROCESS(pbdrv_adc_process, "ADC");
 
@@ -73,6 +77,10 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     }
 
     *value = ADC1->DR;
+
+    #if PBDRV_CONFIG_ADC_STM32F0_RANDOM
+    pbdrv_random_adc_push_lsb(*value);
+    #endif
 
     return PBIO_SUCCESS;
 }

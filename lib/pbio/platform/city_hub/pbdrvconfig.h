@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 // platform-specific configuration for LEGO Powered Up Smart Hub
 
 #define PBDRV_CONFIG_ADC                            (1)
 #define PBDRV_CONFIG_ADC_STM32F0                    (1)
+#define PBDRV_CONFIG_ADC_STM32F0_RANDOM             (1)
 
 #define PBDRV_CONFIG_BATTERY                        (1)
 #define PBDRV_CONFIG_BATTERY_ADC                    (1)
@@ -62,6 +63,9 @@
 #define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
 #define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (3)
 #define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (0)
+
+#define PBDRV_CONFIG_RANDOM                         (1)
+#define PBDRV_CONFIG_RANDOM_ADC                     (1)
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_STM32                    (1)

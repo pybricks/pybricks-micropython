@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2022 The Pybricks Authors
+# Copyright (c) 2019-2023 The Pybricks Authors
 
 # This file contains the sources common to all Pybricks MicroPython ports.
 
@@ -176,6 +176,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_test.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
+	drv/random/random_adc.c \
+	drv/random/random_stm32_hal.c \
 	drv/reset/reset_nxt.c \
 	drv/reset/reset_stm32.c \
 	drv/resistor_ladder/resistor_ladder.c \

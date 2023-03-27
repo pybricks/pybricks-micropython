@@ -74,6 +74,9 @@
 #define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (4)
 #define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (1)
 
+#define PBDRV_CONFIG_RANDOM                         (1)
+#define PBDRV_CONFIG_RANDOM_STM32_HAL               (1)
+
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_STM32                    (1)
 #define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (1)
