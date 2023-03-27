@@ -58,7 +58,7 @@ static PT_THREAD(test_servo_basics(struct pt *pt)) {
     tt_uint_op(pbio_servo_get_state_user(srv, &start_angle, &speed), ==, PBIO_SUCCESS);
     tt_int_op(speed, ==, 0);
 
-    // Test running by angle.
+    // Test running BY angle.
     tt_uint_op(pbio_servo_run_angle(srv, 500, 180, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
     pbio_test_sleep_until(pbio_control_is_done(&srv->control));
     tt_uint_op(pbio_servo_get_state_user(srv, &angle, &speed), ==, PBIO_SUCCESS);
@@ -67,6 +67,12 @@ static PT_THREAD(test_servo_basics(struct pt *pt)) {
     pbio_test_sleep_ms(&timer, 500);
     tt_uint_op(pbio_servo_get_state_user(srv, &angle, &speed), ==, PBIO_SUCCESS);
     tt_want(pbio_test_int_is_close(speed, 0, 50)); // Want further slowdown after holding.
+
+    // Test running TO angle.
+    tt_uint_op(pbio_servo_run_target(srv, 500, -90, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_control_is_done(&srv->control));
+    tt_uint_op(pbio_servo_get_state_user(srv, &angle, &speed), ==, PBIO_SUCCESS);
+    tt_want(pbio_test_int_is_close(angle, -90, 5)); // Target should be close.
 
     // Test running for time.
     tt_uint_op(pbio_servo_run_time(srv, 500, 1000, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
