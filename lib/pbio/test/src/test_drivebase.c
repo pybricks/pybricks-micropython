@@ -141,8 +141,19 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     // After a while, the target speed/rate should be reached.
     pbio_test_sleep_ms(&timer, 2000);
     tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_drivebase_is_done(db));
     tt_want(pbio_test_int_is_close(drive_speed, 200, 5));
     tt_want(pbio_test_int_is_close(turn_rate, 90, 5));
+    tt_uint_op(pbio_drivebase_is_stalled(db, &stalled, &stall_duration), ==, PBIO_SUCCESS);
+    tt_want(!stalled);
+
+    // Test a small curve.
+    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle_start, &turn_rate), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_drive_curve(db, 10, 360, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
+    pbio_test_sleep_until(pbio_drivebase_is_done(db));
+    tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
+    tt_want(pbio_test_int_is_close(turn_angle, turn_angle_start + 360, 5));
+    tt_uint_op(pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_HOLD), ==, PBIO_SUCCESS);
 
     // Stopping a single servo should stop both servos and the drivebase.
     pbio_dcmotor_get_state(srv_left->dcmotor, &actuation, &voltage);
@@ -154,6 +165,11 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     tt_uint_op(actuation, ==, PBIO_DCMOTOR_ACTUATION_COAST);
     pbio_dcmotor_get_state(srv_right->dcmotor, &actuation, &voltage);
     tt_uint_op(actuation, ==, PBIO_DCMOTOR_ACTUATION_COAST);
+
+    // Closing any motor should make drivebase operations invalid.
+    tt_uint_op(pbio_dcmotor_close(srv_left->dcmotor), ==, PBIO_SUCCESS);
+    pbio_test_sleep_ms(&timer, 100);
+    tt_uint_op(pbio_drivebase_is_stalled(db, &stalled, &stall_duration), ==, PBIO_ERROR_INVALID_OP);
 
 end:
 
