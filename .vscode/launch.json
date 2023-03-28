@@ -221,6 +221,7 @@
                 "src/color/test_color_to_hsv",
                 "src/color/test_color_to_rgb",
                 "src/color/test_color_hsv_compression",
+                "src/drivebase/test_drivebase_basics",
                 "src/light/test_light_animation",
                 "src/light/test_color_light",
                 "src/light/test_light_matrix",
