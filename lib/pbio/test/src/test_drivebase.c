@@ -52,6 +52,9 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     static bool stalled;
     static uint32_t stall_duration;
 
+    static pbio_dcmotor_actuation_t actuation;
+    static int32_t voltage;
+
     // Start motor driver simulation process.
     pbdrv_motor_driver_init_manual();
 
@@ -140,6 +143,17 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle, &turn_rate), ==, PBIO_SUCCESS);
     tt_want(pbio_test_int_is_close(drive_speed, 200, 5));
     tt_want(pbio_test_int_is_close(turn_rate, 90, 5));
+
+    // Stopping a single servo should stop both servos and the drivebase.
+    pbio_dcmotor_get_state(srv_left->dcmotor, &actuation, &voltage);
+    tt_uint_op(actuation, ==, PBIO_DCMOTOR_ACTUATION_VOLTAGE);
+    pbio_dcmotor_get_state(srv_right->dcmotor, &actuation, &voltage);
+    tt_uint_op(actuation, ==, PBIO_DCMOTOR_ACTUATION_VOLTAGE);
+    tt_uint_op(pbio_servo_stop(srv_left, PBIO_CONTROL_ON_COMPLETION_COAST), ==, PBIO_SUCCESS);
+    pbio_dcmotor_get_state(srv_left->dcmotor, &actuation, &voltage);
+    tt_uint_op(actuation, ==, PBIO_DCMOTOR_ACTUATION_COAST);
+    pbio_dcmotor_get_state(srv_right->dcmotor, &actuation, &voltage);
+    tt_uint_op(actuation, ==, PBIO_DCMOTOR_ACTUATION_COAST);
 
 end:
 
