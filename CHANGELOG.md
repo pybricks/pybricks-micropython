@@ -14,7 +14,7 @@
   using a tuple, consistent with single motors ([support#881]).
 
 ### Fixed
-- Fixed allocator interfering with motor control when memory usage is high ([support#956]).
+- Fixed allocator interfering with motor control when memory usage is high ([support#977]).
 - Fixed `Stop.NONE` not working properly for some drivebase geometries ([support#972]).
 - Fixed reading programs larger than 65535 bytes on boot on SPIKE hubs. ([[support#996]).
 - Various Bluetooth stability and reliability improvements on BOOST Move hub
@@ -39,9 +39,10 @@
 [support#417]: https://github.com/pybricks/support/issues/417
 [support#484]: https://github.com/pybricks/support/issues/484
 [support#830]: https://github.com/pybricks/support/issues/830
-[support#989]: https://github.com/pybricks/support/issues/881
+[support#881]: https://github.com/pybricks/support/issues/881
 [support#910]: https://github.com/pybricks/support/issues/910
 [support#972]: https://github.com/pybricks/support/issues/972
+[support#977]: https://github.com/pybricks/support/issues/977
 [support#989]: https://github.com/pybricks/support/issues/989
 [support#996]: https://github.com/pybricks/support/issues/996
 [support#1011]: https://github.com/pybricks/support/issues/1011
