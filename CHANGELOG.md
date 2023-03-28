@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.0b3] - 2023-03-28
+
 ### Added
 - Added `positive_direction` to `DriveBase` initializer. It defaults to
   clockwise to ensure this is not a breaking change. Users can now change it
@@ -547,7 +549,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...HEAD
+[3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
 [3.3.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...v3.3.0b2
 [3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
 [3.2.2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...v3.2.2
