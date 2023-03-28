@@ -92,8 +92,13 @@ static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t ti
     // Check if we are passed the nominal maneuver time.
     bool time_completed = pbio_control_settings_time_is_later(time, end->time);
 
-    // Timed maneuvers are done when the full duration has passed.
     if (pbio_control_type_is_time(ctl)) {
+        // Infinite maneuvers are always done (should never block).
+        if (pbio_trajectory_get_duration(&ctl->trajectory) >= pbio_control_time_ms_to_ticks(PBIO_TRAJECTORY_DURATION_FOREVER_MS)) {
+            return true;
+        }
+
+        // Finite-time maneuvers are done when the full duration has passed.
         return time_completed;
     }
 
