@@ -339,7 +339,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completio
     }
 
     // Holding is the same as traveling by 0 degrees.
-    if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD) {
         return pbio_drivebase_drive_straight(db, 0, on_completion);
     }
 
