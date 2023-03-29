@@ -414,21 +414,4 @@ bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev) {
     return imu_dev->stationary_now;
 }
 
-void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values) {
-    // Output is signed such that we have a right handed coordinate system where:
-    // Forward acceleration is +X, upward acceleration is +Z and acceleration to the left is +Y.
-    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[3] * imu_dev->config.accel_scale;
-    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[4] * imu_dev->config.accel_scale;
-    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[5] * imu_dev->config.accel_scale;
-}
-
-void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
-    // Output is signed such that we have a right handed coordinate system
-    // consistent with the coordinate system above. Positive rotations along
-    // those axes then follow the right hand rule.
-    values[0] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X * imu_dev->data[0] * imu_dev->config.gyro_scale;
-    values[1] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y * imu_dev->data[1] * imu_dev->config.gyro_scale;
-    values[2] = PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z * imu_dev->data[2] * imu_dev->config.gyro_scale;
-}
-
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32

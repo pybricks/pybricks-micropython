@@ -53,20 +53,6 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **c
 bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev);
 
 /**
- * Reads the current IMU acceleration in m/s^2.
- * @param [in]  imu_dev     The IMU device instance.
- * @param [out] values      An array of 3 32-bit float values to hold the result.
- */
-void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values);
-
-/**
- * Reads the current IMU gyro rate in deg/s.
- * @param [in]  imu_dev     The IMU device instance.
- * @param [out] values      An array of 3 32-bit float values to hold the result.
- */
-void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values);
-
-/**
  * Callback to process one frame of unfiltered gyro and accelerometer data.
  *
  * @param [in]  data        Array with unscaled gyro (xyz) and acceleration (xyz) samples to process.
@@ -98,10 +84,8 @@ static inline pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_im
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_imu_accel_read(pbdrv_imu_dev_t *imu_dev, float *values) {
-}
-
-static inline void pbdrv_imu_gyro_read(pbdrv_imu_dev_t *imu_dev, float *values) {
+static inline bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev) {
+    return false;
 }
 
 #endif // PBDRV_CONFIG_IMU
