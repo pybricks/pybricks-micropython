@@ -172,16 +172,16 @@ STATIC common_IMU_obj_t singleton_imu_obj = {
 };
 
 // pybricks._common.IMU.__init__
-mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
+mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis_in) {
 
     // Set user base orientation.
-    pbio_geometry_xyz_t hub_x;
-    pb_type_imu_extract_axis(front_side_axis, &hub_x);
+    pbio_geometry_xyz_t front_side_axis;
+    pb_type_imu_extract_axis(front_side_axis_in, &front_side_axis);
 
-    pbio_geometry_xyz_t hub_z;
-    pb_type_imu_extract_axis(top_side_axis, &hub_z);
+    pbio_geometry_xyz_t top_side_axis;
+    pb_type_imu_extract_axis(top_side_axis_in, &top_side_axis);
 
-    pbio_orientation_set_base_orientation(&hub_x, &hub_z);
+    pbio_orientation_set_base_orientation(&front_side_axis, &top_side_axis);
 
     // Return singleton instance.
     return MP_OBJ_FROM_PTR(&singleton_imu_obj);
