@@ -123,12 +123,13 @@ pbdrv_imu_config_t *imu_config;
 static uint32_t stationary_counter = 0;
 
 // Cached sensor values that can be read at any time without polling again.
-static pbio_geometry_xyz_t angular_velocity;
+static pbio_geometry_xyz_t angular_velocity; // deg/s, already adjusted for bias.
 static pbio_geometry_xyz_t acceleration;
 static pbio_geometry_xyz_t gyro_bias;
 static pbio_geometry_xyz_t heading;
 
-void pbio_imu_handle_frame_data_func(int16_t *data) {
+// Called by driver to process one frame of unfiltered gyro and accelerometer data.
+static void pbio_imu_handle_frame_data_func(int16_t *data) {
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(angular_velocity.values); i++) {
         // Update angular velocity and acceleration cache so user can read them.
         angular_velocity.values[i] = data[i] * imu_config->gyro_scale - gyro_bias.values[i];
@@ -143,7 +144,8 @@ void pbio_imu_handle_frame_data_func(int16_t *data) {
     }
 }
 
-void pbdrv_imu_handle_stationary_data_func(int32_t *gyro_data_sum, int32_t *accel_data_sum, uint32_t num_samples) {
+// Called by driver to process unfiltered gyro and accelerometer data recorded while stationary.
+static void pbdrv_imu_handle_stationary_data_func(int32_t *gyro_data_sum, int32_t *accel_data_sum, uint32_t num_samples) {
 
     stationary_counter++;
 
@@ -160,6 +162,9 @@ void pbdrv_imu_handle_stationary_data_func(int32_t *gyro_data_sum, int32_t *acce
     }
 }
 
+/**
+ * Initializes global imu module.
+ */
 void pbio_orientation_imu_init(void) {
     pbio_error_t err = pbdrv_imu_get_imu(&imu_dev, &imu_config);
     if (err != PBIO_SUCCESS) {
@@ -168,11 +173,24 @@ void pbio_orientation_imu_init(void) {
     pbdrv_imu_set_data_handlers(imu_dev, pbio_imu_handle_frame_data_func, pbdrv_imu_handle_stationary_data_func);
 }
 
-static pbio_geometry_matrix_3x3_t pbio_orientation_neutral_orientation;
+/**
+ * The "neutral" base orientation of the hub, describing how it is mounted
+ * in the robot. All getters (tilt, acceleration, rotation, etc) give results
+ * relative to this base orientation.
+ */
+static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation;
 
-pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
+/**
+ * Sets the hub base orientation.
+ *
+ * @param [in]  front_side_axis  Which way the hub front side points when it is
+ *                               in the base orientation.
+ * @param [in]  top_side_axis    Which way the hub top side points when it is
+ *                               in the base orientation.
+ */
+pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *front_side_axis, pbio_geometry_xyz_t *top_side_axis) {
 
-    pbio_error_t err = pbio_geometry_map_from_base_axes(x_axis, z_axis, &pbio_orientation_neutral_orientation);
+    pbio_error_t err = pbio_geometry_map_from_base_axes(front_side_axis, top_side_axis, &pbio_orientation_base_orientation);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -197,23 +215,22 @@ bool pbio_orientation_imu_is_stationary(void) {
  * @param [out] values      The angular velocity vector.
  */
 void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
-    pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &angular_velocity, values);
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &angular_velocity, values);
 }
 
 /**
- * Reads the current IMU acceleration in  velocity in deg/s, compensated for offset.
+ * Reads the current IMU acceleration in mm/s^2.
  *
  * @param [out] values      The acceleration vector.
  */
 void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
-    pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &acceleration, values);
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &acceleration, values);
 }
 
 /**
  * Gets which side of a hub points upwards.
  *
- * @param [in] imu_dev      The driver instance.
- * @param [out] values      An array of 3 32-bit float values to hold the result.
+ * @return                  Which side is up.
  */
 pbio_orientation_side_t pbio_orientation_imu_get_up_side(void) {
     // Up is which side of a unit box intersects the +Z vector first.
@@ -226,23 +243,26 @@ pbio_orientation_side_t pbio_orientation_imu_get_up_side(void) {
 static float heading_offset = 0;
 
 /**
- * Reads the estimated IMU heading in degrees.
+ * Reads the estimated IMU heading in degrees, accounting for user offset.
  *
- * @return                  Heading angle.
+ * @return                  Heading angle in the base frame.
  */
 float pbio_orientation_imu_get_heading(void) {
 
     pbio_geometry_xyz_t heading_mapped;
 
-    pbio_geometry_vector_map(&pbio_orientation_neutral_orientation, &heading, &heading_mapped);
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &heading, &heading_mapped);
 
     return heading_mapped.z - heading_offset;
 }
 
 /**
- * Sets the IMU heading in degrees.
- * @param [in] imu_dev      The driver instance.
- * @return                  Heading angle.
+ * Resets the IMU heading.
+ *
+ * This only adjusts the user offset without resetting anything in the
+ * algorithm, so this can be called at any time.
+ *
+ * @param [in] desired_heading  The desired heading value.
  */
 void pbio_orientation_imu_set_heading(float desired_heading) {
     heading_offset = pbio_orientation_imu_get_heading() + heading_offset - desired_heading;
