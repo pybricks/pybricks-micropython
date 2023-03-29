@@ -51,6 +51,10 @@ struct _pbdrv_imu_dev_t {
     int16_t data[6];
     /** Raw data point to which new samples are compared to detect stationary. */
     int16_t stationary_data_start[6];
+    /** Raw gyro value below which the hub is considered stationary, smaller data is considered noise. */
+    int16_t gyro_noise_threshold;
+    /** Raw accl value below which the hub is considered stationary, smaller data is considered noise. */
+    int16_t accl_noise_threshold;
     /** Sum of gyro samples during the stationary period. */
     int32_t stationary_gyro_data_sum[3];
     /** Sum of accelerometer samples during the stationary period. */
@@ -211,6 +215,12 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_2000dps));
     imu_dev->config.gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
+    /*
+     * Set noise thresholds
+     */
+    imu_dev->gyro_noise_threshold = 20;
+    imu_dev->accl_noise_threshold = 100;
+
     // Configure INT1 to trigger when new gyro data is ready.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
         .int1_drdy_g = 1,
@@ -232,17 +242,6 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_END(pt);
 }
 
-// REVISIT: These values should be selected based on expected noise
-// characteristics given the selected parameters. For now, use a setter so we
-// can experiment with finding the right values.
-static int16_t pbdrv_imu_lsm6ds3tr_c_gyro_noise = 20;
-static int16_t pbdrv_imu_lsm6ds3tr_c_accl_noise = 100;
-
-void pbdrv_imu_lsm6ds3tr_c_stm32_set_noise_thresholds(int16_t gyro_noise, int16_t accl_noise) {
-    pbdrv_imu_lsm6ds3tr_c_gyro_noise = gyro_noise;
-    pbdrv_imu_lsm6ds3tr_c_accl_noise = accl_noise;
-}
-
 static inline bool bounded(int16_t diff, int16_t threshold) {
     return diff < threshold && diff > -threshold;
 }
@@ -250,12 +249,12 @@ static inline bool bounded(int16_t diff, int16_t threshold) {
 static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t *imu_dev) {
 
     // Check whether still stationary compared to constant start sample.
-    if (bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], pbdrv_imu_lsm6ds3tr_c_gyro_noise) &&
-        bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], pbdrv_imu_lsm6ds3tr_c_gyro_noise) &&
-        bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], pbdrv_imu_lsm6ds3tr_c_gyro_noise) &&
-        bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], pbdrv_imu_lsm6ds3tr_c_accl_noise) &&
-        bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], pbdrv_imu_lsm6ds3tr_c_accl_noise) &&
-        bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], pbdrv_imu_lsm6ds3tr_c_accl_noise)
+    if (bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], imu_dev->gyro_noise_threshold) &&
+        bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], imu_dev->gyro_noise_threshold) &&
+        bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], imu_dev->gyro_noise_threshold) &&
+        bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], imu_dev->accl_noise_threshold) &&
+        bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], imu_dev->accl_noise_threshold) &&
+        bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], imu_dev->accl_noise_threshold)
         ) {
         // Still not moved, so increment stationary sample counter.
         imu_dev->stationary_sample_count++;
@@ -412,6 +411,11 @@ void pbdrv_imu_set_data_handlers(pbdrv_imu_dev_t *imu_dev, pbdrv_imu_handle_fram
 
 bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev) {
     return imu_dev->stationary_now;
+}
+
+void pbdrv_imu_set_stationary_thresholds(pbdrv_imu_dev_t *imu_dev, int16_t gyro_threshold, int16_t accl_threshold) {
+    imu_dev->gyro_noise_threshold = gyro_threshold;
+    imu_dev->accl_noise_threshold = accl_threshold;
 }
 
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32
