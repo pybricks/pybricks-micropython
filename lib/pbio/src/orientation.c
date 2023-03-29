@@ -10,6 +10,7 @@
 
 #include <pbio/config.h>
 #include <pbio/error.h>
+#include <pbio/int_math.h>
 #include <pbio/geometry.h>
 #include <pbio/orientation.h>
 #include <pbio/util.h>
@@ -207,6 +208,20 @@ pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *front_si
  */
 bool pbio_orientation_imu_is_stationary(void) {
     return pbdrv_imu_is_stationary(imu_dev);
+}
+
+/**
+ * Sets the thresholds that define when the hub is stationary. When the
+ * measurements are steadily below these levels, the orientation module
+ * automatically recalibrates.
+ *
+ * @param [in]  angular_velocity Angular velocity threshold in deg/s.
+ * @param [in]  acceleration     Acceleration threshold in mm/s^2
+ */
+void pbio_orientation_imu_set_stationary_thresholds(float angular_velocity, float acceleration) {
+    int16_t gyro_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
+    int16_t accl_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
+    pbdrv_imu_set_stationary_thresholds(imu_dev, gyro_threshold, accl_threshold);
 }
 
 /**

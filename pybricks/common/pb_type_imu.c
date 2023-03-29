@@ -128,6 +128,19 @@ STATIC mp_obj_t common_IMU_stationary(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stationary_obj, common_IMU_stationary);
 
+// pybricks._common.IMU.set_stationary_thresholds
+STATIC mp_obj_t common_IMU_set_stationary_thresholds(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_IMU_obj_t, self,
+        PB_ARG_REQUIRED(angular_velocity),
+        PB_ARG_REQUIRED(acceleration));
+
+    (void)self;
+    pbio_orientation_imu_set_stationary_thresholds(mp_obj_get_float(angular_velocity_in), mp_obj_get_float(acceleration_in));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_set_stationary_thresholds_obj, 1, common_IMU_set_stationary_thresholds);
+
 // pybricks._common.IMU.heading
 STATIC mp_obj_t common_IMU_heading(mp_obj_t self_in) {
     (void)self_in;
@@ -155,6 +168,7 @@ STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
     { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&common_IMU_stationary_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_set_stationary_thresholds), MP_ROM_PTR(&common_IMU_set_stationary_thresholds_obj) },
     { MP_ROM_QSTR(MP_QSTR_heading),          MP_ROM_PTR(&common_IMU_heading_obj)         },
     { MP_ROM_QSTR(MP_QSTR_reset_heading),    MP_ROM_PTR(&common_IMU_reset_heading_obj)   },
 };
@@ -182,6 +196,9 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis
     pb_type_imu_extract_axis(top_side_axis_in, &top_side_axis);
 
     pbio_orientation_set_base_orientation(&front_side_axis, &top_side_axis);
+
+    // Default noise thresholds.
+    pbio_orientation_imu_set_stationary_thresholds(1.5f, 250.0f);
 
     // Return singleton instance.
     return MP_OBJ_FROM_PTR(&singleton_imu_obj);

@@ -53,6 +53,16 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **c
 bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev);
 
 /**
+ * Sets the thresholds that define when the hub is stationary. Below these
+ * levels, the sensor will automatically (re-)calibrate.
+ *
+ * @param [in]  imu_dev            The IMU device instance.
+ * @param [in]  gyro_threshold     Angular velocity threshold in raw units.
+ * @param [in]  accl_threshold     Acceleration threshold in raw units.
+ */
+void pbdrv_imu_set_stationary_thresholds(pbdrv_imu_dev_t *imu_dev, int16_t gyro_threshold, int16_t accl_threshold);
+
+/**
  * Callback to process one frame of unfiltered gyro and accelerometer data.
  *
  * @param [in]  data        Array with unscaled gyro (xyz) and acceleration (xyz) samples to process.
