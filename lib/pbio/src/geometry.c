@@ -14,15 +14,23 @@
  *
  * @param [in]  input   The vector to normalize.
  * @param [out] output  The normalized vector.
+ * @return              ::PBIO_ERROR_INVALID_ARG if the input has zero length, otherwise ::PBIO_SUCCESS.
  */
-void pbio_geometry_vector_normalize(pbio_geometry_xyz_t *input, pbio_geometry_xyz_t *output) {
+pbio_error_t pbio_geometry_vector_normalize(pbio_geometry_xyz_t *input, pbio_geometry_xyz_t *output) {
+
+    // Compute the norm.
     float norm = sqrtf(input->x * input->x + input->y * input->y + input->z * input->z);
-    if (norm < 0.0001f) {
-        return;
+
+    // If the vector norm is zero, do nothing.
+    if (norm == 0.0f) {
+        return PBIO_ERROR_INVALID_ARG;
     }
+
+    // Otherwise, normalize.
     output->x = input->x / norm;
     output->y = input->y / norm;
     output->z = input->z / norm;
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -41,17 +49,23 @@ void pbio_geometry_vector_cross_product(pbio_geometry_xyz_t *a, pbio_geometry_xy
 /**
  * Gets the scalar projection of one vector onto the line spanned by another.
  *
- * @param [in]  input   The input vector.
- * @param [in]  axis    The axis on which to project.
- * @return              Signed projection.
+ * @param [in]  input       The input vector.
+ * @param [in]  axis        The axis on which to project.
+ * @param [out] projection  The projection.
+ * @return                  ::PBIO_ERROR_INVALID_ARG if the axis has zero length, otherwise ::PBIO_SUCCESS.
  */
-float pbio_geometry_vector_project(pbio_geometry_xyz_t *axis, pbio_geometry_xyz_t *input) {
+pbio_error_t pbio_geometry_vector_project(pbio_geometry_xyz_t *axis, pbio_geometry_xyz_t *input, float *projection) {
 
     // Normalize the given axis so its magnitude does not matter.
     pbio_geometry_xyz_t unit_axis;
-    pbio_geometry_vector_normalize(axis, &unit_axis);
+    pbio_error_t err = pbio_geometry_vector_normalize(axis, &unit_axis);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
-    return unit_axis.x * input->x + unit_axis.y * input->y + unit_axis.z * input->z;
+    // Compute the projection.
+    *projection = unit_axis.x * input->x + unit_axis.y * input->y + unit_axis.z * input->z;
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -71,16 +85,22 @@ void pbio_geometry_vector_map(pbio_geometry_matrix_3x3_t *map, pbio_geometry_xyz
  * Gets a mapping (a rotation matrix) from two orthogonal base axes.
  *
  * @param [in]  x_axis  The X axis. Need not be normalized.
- * @param [in]  z_axis  The Y axis. Need not be normalized.
+ * @param [in]  z_axis  The Z axis. Need not be normalized.
  * @param [out] map     The completed map, including the computed y_axis.
  */
 pbio_error_t pbio_geometry_map_from_base_axes(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis, pbio_geometry_matrix_3x3_t *map) {
 
     pbio_geometry_xyz_t x_axis_normal;
-    pbio_geometry_vector_normalize(x_axis, &x_axis_normal);
+    pbio_error_t err = pbio_geometry_vector_normalize(x_axis, &x_axis_normal);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     pbio_geometry_xyz_t z_axis_normal;
-    pbio_geometry_vector_normalize(z_axis, &z_axis_normal);
+    err = pbio_geometry_vector_normalize(z_axis, &z_axis_normal);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Assert that X and Z are orthogonal.
     float inner_product = x_axis_normal.x * z_axis_normal.x + x_axis_normal.y * z_axis_normal.y + x_axis_normal.z * z_axis_normal.z;
