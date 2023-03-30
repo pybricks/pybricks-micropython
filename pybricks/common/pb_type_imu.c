@@ -96,7 +96,10 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
     // Otherwise convert user axis to pbio object and project vector onto it.
     pbio_geometry_xyz_t axis;
     pb_type_imu_extract_axis(axis_in, &axis);
-    return mp_obj_new_float_from_f(pbio_geometry_vector_project(&axis, &acceleration));
+
+    float projection;
+    pb_assert(pbio_geometry_vector_project(&axis, &acceleration, &projection));
+    return mp_obj_new_float_from_f(projection);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_acceleration_obj, 1, common_IMU_acceleration);
 
@@ -118,7 +121,10 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
     // Otherwise convert user axis to pbio object and project vector onto it.
     pbio_geometry_xyz_t axis;
     pb_type_imu_extract_axis(axis_in, &axis);
-    return mp_obj_new_float_from_f(pbio_geometry_vector_project(&axis, &angular_velocity));
+
+    float projection;
+    pb_assert(pbio_geometry_vector_project(&axis, &angular_velocity, &projection));
+    return mp_obj_new_float_from_f(projection);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 
