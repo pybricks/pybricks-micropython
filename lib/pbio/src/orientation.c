@@ -8,6 +8,7 @@
 
 #include <pbdrv/imu.h>
 
+#include <pbio/angle.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/int_math.h>
@@ -279,6 +280,29 @@ float pbio_orientation_imu_get_heading(void) {
  */
 void pbio_orientation_imu_set_heading(float desired_heading) {
     heading_offset = pbio_orientation_imu_get_heading() + heading_offset - desired_heading;
+}
+
+/**
+ * Gets the estimated IMU heading in control units through a given scale.
+ *
+ * This is mainly used to convert the heading to the right format for a
+ * drivebase, which measures heading as the half the difference of the two
+ * motor positions in millidegrees.
+ *
+ * @param [out]  heading               The output angle object.
+ * @param [in]   ctl_steps_per_degree  The number of control steps per heading degree.
+ */
+void pbio_orientation_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_degree) {
+
+    // Heading in degrees of the robot.
+    float heading_degrees = pbio_orientation_imu_get_heading();
+
+    // Number of whole rotations in control units (in terms of wheels, not robot).
+    heading->rotations = heading_degrees / (360000 / ctl_steps_per_degree);
+
+    // The truncated part represents everything else.
+    float truncated = heading_degrees - heading->rotations * (360000 / ctl_steps_per_degree);
+    heading->millidegrees = truncated * ctl_steps_per_degree;
 }
 
 #endif // PBIO_CONFIG_ORIENTATION_IMU

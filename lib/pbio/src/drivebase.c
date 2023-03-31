@@ -145,16 +145,10 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     state_heading->speed_estimate = state_distance->speed_estimate - state_right.speed_estimate;
     state_heading->speed = state_distance->speed - state_right.speed;
 
-    // Optionally use gyro to get the heading instead.
-    #if PBIO_CONFIG_ORIENTATION_IMU
+    // Optionally use gyro to override the heading source for more accuracy.
     if (db->use_gyro) {
-        state_heading->position = (pbio_angle_t) {
-            .rotations = 0,
-            // REVISIT: This will overflow after a couple of thousand rotations.
-            .millidegrees = (int32_t)(pbio_orientation_imu_get_heading() * db->control_heading.settings.ctl_steps_per_app_step),
-        };
+        pbio_orientation_imu_get_heading_scaled(&state_heading->position, db->control_heading.settings.ctl_steps_per_app_step);
     }
-    #endif // PBIO_CONFIG_ORIENTATION_IMU
 
     return PBIO_SUCCESS;
 }
