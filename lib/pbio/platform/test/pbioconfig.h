@@ -10,7 +10,6 @@
 
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_MOTOR_PROCESS_AUTO_START (0)
-#define PBIO_CONFIG_ORIENTATION             (1)
 #define PBIO_CONFIG_ORIENTATION_IMU         (0)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (6)
