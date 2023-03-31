@@ -215,11 +215,9 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_2000dps));
     imu_dev->config.gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
-    /*
-     * Set noise thresholds
-     */
-    imu_dev->gyro_noise_threshold = 20;
-    imu_dev->accl_noise_threshold = 100;
+    // default noise thresholds, can be changed during runtime
+    imu_dev->gyro_noise_threshold = 20; // 1.4 deg/s
+    imu_dev->accl_noise_threshold = 100; // 240 mm/s^2, or approx 2.5^ of gravity
 
     // Configure INT1 to trigger when new gyro data is ready.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
@@ -242,19 +240,19 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     PT_END(pt);
 }
 
-static inline bool bounded(int16_t diff, int16_t threshold) {
+static inline bool is_bounded(int16_t diff, int16_t threshold) {
     return diff < threshold && diff > -threshold;
 }
 
 static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t *imu_dev) {
 
     // Check whether still stationary compared to constant start sample.
-    if (bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], imu_dev->gyro_noise_threshold) &&
-        bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], imu_dev->gyro_noise_threshold) &&
-        bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], imu_dev->gyro_noise_threshold) &&
-        bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], imu_dev->accl_noise_threshold) &&
-        bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], imu_dev->accl_noise_threshold) &&
-        bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], imu_dev->accl_noise_threshold)
+    if (is_bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], imu_dev->gyro_noise_threshold) &&
+        is_bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], imu_dev->gyro_noise_threshold) &&
+        is_bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], imu_dev->gyro_noise_threshold) &&
+        is_bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], imu_dev->accl_noise_threshold) &&
+        is_bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], imu_dev->accl_noise_threshold) &&
+        is_bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], imu_dev->accl_noise_threshold)
         ) {
         // Still not moved, so increment stationary sample counter.
         imu_dev->stationary_sample_count++;
@@ -363,7 +361,8 @@ retry:
 
         memcpy(&imu_dev->data[0], buf, NUM_DATA_BYTES);
 
-        // REVISIT: Move signing to PBIO
+        // Account for mounting orientation in hub. Any other tranformations
+        // are applied at the higher level in pbio.
         imu_dev->data[0] *= PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X;
         imu_dev->data[1] *= PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y;
         imu_dev->data[2] *= PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z;

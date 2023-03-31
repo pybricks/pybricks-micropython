@@ -146,7 +146,7 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
 }
 
 // Called by driver to process unfiltered gyro and accelerometer data recorded while stationary.
-static void pbdrv_imu_handle_stationary_data_func(int32_t *gyro_data_sum, int32_t *accel_data_sum, uint32_t num_samples) {
+static void pbdrv_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, const int32_t *accel_data_sum, uint32_t num_samples) {
 
     stationary_counter++;
 
