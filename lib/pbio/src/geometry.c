@@ -3,8 +3,6 @@
 
 #include <pbio/config.h>
 
-#if PBIO_CONFIG_GEOMETRY
-
 #include <math.h>
 
 #include <pbio/geometry.h>
@@ -120,5 +118,3 @@ pbio_error_t pbio_geometry_map_from_base_axes(pbio_geometry_xyz_t *x_axis, pbio_
 
     return PBIO_SUCCESS;
 }
-
-#endif // PBIO_CONFIG_GEOMETRY
