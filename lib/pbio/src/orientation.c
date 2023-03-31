@@ -15,8 +15,6 @@
 #include <pbio/orientation.h>
 #include <pbio/util.h>
 
-#if PBIO_CONFIG_ORIENTATION
-
 /**
  * Gets @p index and @p sign of the axis that passes through given @p side of
  * a box.
@@ -284,5 +282,3 @@ void pbio_orientation_imu_set_heading(float desired_heading) {
 }
 
 #endif // PBIO_CONFIG_ORIENTATION_IMU
-
-#endif // PBIO_CONFIG_ORIENTATION

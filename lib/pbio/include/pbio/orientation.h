@@ -31,22 +31,11 @@ typedef enum {
     PBIO_ORIENTATION_SIDE_BOTTOM = (1 << 2) | 2,  /**< -Z: The bottom side of a rectangular box or screen */
 } pbio_orientation_side_t;
 
-#if PBIO_CONFIG_ORIENTATION
-
 void pbio_orientation_side_get_axis(pbio_orientation_side_t side, uint8_t *index, int8_t *sign);
 
 void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign);
 
-
-#else // PBIO_CONFIG_ORIENTATION
-
-static inline void pbio_orientation_side_get_axis(pbio_orientation_side_t side, uint8_t *index, int8_t *sign) {
-}
-
-static inline void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign) {
-}
-
-#endif // PBIO_CONFIG_ORIENTATION
+pbio_orientation_side_t pbio_orientation_side_from_vector(pbio_geometry_xyz_t *vector);
 
 #if PBIO_CONFIG_ORIENTATION_IMU
 
@@ -92,10 +81,6 @@ static inline void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *va
 
 static inline pbio_orientation_side_t pbio_orientation_imu_get_up_side(void) {
     return PBIO_ORIENTATION_SIDE_TOP;
-}
-
-static inline uint32_t pbio_orientation_imu_get_stationary_count(void) {
-    return 0;
 }
 
 static inline float pbio_orientation_imu_get_heading(void) {
