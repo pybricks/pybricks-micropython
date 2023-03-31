@@ -105,9 +105,6 @@ static uint8_t read_buf[RX_BUFFER_SIZE];
 // value is set to 0 when Tx is complete
 static uint8_t write_xfer_size;
 
-// set to true when ATT_HandleValueNoti is pending
-static bool notification_in_progress;
-
 // reflects state of SRDY signal
 volatile bool spi_srdy;
 // count of SRDY signal falling edges
@@ -173,6 +170,12 @@ static pbio_error_t ble_error_to_pbio_error(HCI_StatusCodes_t status) {
         default:
             return PBIO_ERROR_FAILED;
     }
+}
+
+static void start_task(pbio_task_t *task, pbio_task_thread_t thread, void *context) {
+    pbio_task_init(task, thread, context);
+    list_add(task_queue, task);
+    process_poll(&pbdrv_bluetooth_spi_process);
 }
 
 /**
@@ -330,8 +333,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
 
 void pbdrv_bluetooth_start_advertising(void) {
     static pbio_task_t task;
-    pbio_task_init(&task, set_discoverable, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, set_discoverable, NULL);
 }
 
 static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
@@ -352,8 +354,7 @@ static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
 
 void pbdrv_bluetooth_stop_advertising(void) {
     static pbio_task_t task;
-    pbio_task_init(&task, set_non_discoverable, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, set_non_discoverable, NULL);
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -420,9 +421,7 @@ retry:
         req.pValue = send->data;
         ATT_HandleValueNoti(conn_handle, &req);
     }
-    notification_in_progress = true;
     PT_WAIT_UNTIL(pt, hci_command_status);
-    notification_in_progress = false;
 
     HCI_StatusCodes_t status = read_buf[8];
 
@@ -445,8 +444,7 @@ done:
 
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
     static pbio_task_t task;
-    pbio_task_init(&task, send_value_notification, context);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, send_value_notification, context);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -466,7 +464,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     // calling GAP_DeviceDiscoveryRequest can cause notifications to be dropped,
     // so we need to ensure than none are pending before we proceeded
-    PT_WAIT_WHILE(pt, write_xfer_size || notification_in_progress);
+    PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
@@ -674,8 +672,7 @@ end_cancel:
 }
 
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
-    pbio_task_init(task, scan_and_connect_task, context);
-    pbio_task_queue_add(task_queue, task);
+    start_task(task, scan_and_connect_task, context);
 }
 
 static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
@@ -748,8 +745,7 @@ cancel:
 }
 
 void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
-    pbio_task_init(task, write_remote_task, value);
-    pbio_task_queue_add(task_queue, task);
+    start_task(task, write_remote_task, value);
 }
 
 static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
@@ -768,8 +764,7 @@ static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
 
 void pbdrv_bluetooth_disconnect_remote(void) {
     static pbio_task_t task;
-    pbio_task_init(&task, disconnect_remote_task, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, disconnect_remote_task, NULL);
 }
 
 // Driver interrupt callbacks
@@ -1762,13 +1757,29 @@ start:
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
     static pbio_task_t task;
-    pbio_task_init(&task, init_task, NULL);
-    pbio_task_queue_add(task_queue, &task);
+    start_task(&task, init_task, NULL);
 
-    while (true) {
-        static uint8_t real_write_xfer_size;
+    for (;;) {
+        PROCESS_WAIT_UNTIL({
+            for (;;) {
+                pbio_task_t *current_task = list_head(task_queue);
 
-        PROCESS_WAIT_UNTIL(spi_srdy || write_xfer_size);
+                if (!current_task) {
+                    break;
+                }
+
+                if (current_task->status != PBIO_ERROR_AGAIN || pbio_task_run_once(current_task)) {
+                    // remove the task from the queue only if the task is complete
+                    list_remove(task_queue, current_task);
+                    // then start the next task
+                    continue;
+                }
+
+                break;
+            }
+
+            spi_srdy || write_xfer_size;
+        });
 
         spi_set_mrdy(true);
 
@@ -1777,6 +1788,7 @@ start:
         // to a non-zero value to indicate that write_buf is being used. But we
         // still need the real size later to figure out the actual size of the
         // SPI transfer.
+        static uint8_t real_write_xfer_size;
         real_write_xfer_size = write_xfer_size;
 
         // we can either read, write, or read and write at the same time
@@ -1830,11 +1842,6 @@ start:
                 handle_event(&read_buf[NPI_SPI_HEADER_LEN + 1]);
             }
         }
-
-        pbio_task_queue_run_once(task_queue);
-
-        // clear the event packet type in case tasks are run outside of this loop
-        read_buf[NPI_SPI_HEADER_LEN] = 0;
     }
 
     PROCESS_END();
@@ -1866,8 +1873,6 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *pData, uint8_t da
     hci_command_opcode = opcode;
     hci_command_status = false;
     hci_command_complete = false;
-
-    process_poll(&pbdrv_bluetooth_spi_process);
 
     return bleSUCCESS;
 }

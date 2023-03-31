@@ -10,6 +10,9 @@
 
 ### Fixed
 - Fixed iterator for `Matrix` objects giving bad values.
+- Fixed Bluetooth sometimes locking up on Technic/City hubs ([support#567]).
+
+[support#567]: https://github.com/pybricks/support/issues/567
 
 ## [3.3.0b3] - 2023-03-28
 
