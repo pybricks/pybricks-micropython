@@ -23,7 +23,7 @@ typedef struct _pbdrv_imu_dev_t pbdrv_imu_dev_t;
 /**
  * IMU configuration used to convert raw data to physical units.
  */
-typedef struct _pbdrv_imu_config_t {
+typedef struct {
     /** The average time in seconds between samples. */
     float sample_time;
     /** Angular velocity in deg/s for every unit of raw gyro data. */
@@ -46,9 +46,10 @@ typedef struct _pbdrv_imu_config_t {
 pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **config);
 
 /**
- * Reads whether imu has been stationary for about one second.
+ * Tests if imu has been stationary for about one second.
+ *
  * @param [in]  imu_dev     The IMU device instance.
- * @return                  True if stationary, false if not.
+ * @return                  @c true if stationary, @c false if not.
  */
 bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev);
 
@@ -77,7 +78,7 @@ typedef void (*pbdrv_imu_handle_frame_data_func_t)(int16_t *data);
  * @param [in]  accel_data_sum  Array with the sums of stationary accelerometer samples.
  * @param [in]  num_samples     Number of samples summed.
  */
-typedef void (*pbdrv_imu_handle_stationary_data_func_t)(int32_t *gyro_data_sum, int32_t *accel_data_sum, uint32_t num_samples);
+typedef void (*pbdrv_imu_handle_stationary_data_func_t)(const int32_t *gyro_data_sum, const int32_t *accel_data_sum, uint32_t num_samples);
 
 /**
  * Sets the data handlers for processing new data.
