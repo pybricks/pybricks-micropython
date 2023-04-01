@@ -271,10 +271,8 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t
 
         // Reset counter and gyro sum data so we can start over.
         imu_dev->stationary_sample_count = 0;
-        for (uint8_t i = 0; i < 3; i++) {
-            imu_dev->stationary_gyro_data_sum[i] = 0;
-            imu_dev->stationary_accel_data_sum[i] = 0;
-        }
+        memset(&imu_dev->stationary_accel_data_sum, 0, sizeof(imu_dev->stationary_accel_data_sum));
+        memset(&imu_dev->stationary_gyro_data_sum, 0, sizeof(imu_dev->stationary_gyro_data_sum));
     }
 
     // After about one second of stationary data, poke higher level code to update gyro bias.
@@ -290,10 +288,8 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t
 
         // Reset counter and gyro sum data so we can start over.
         imu_dev->stationary_sample_count = 0;
-        for (uint8_t i = 0; i < 3; i++) {
-            imu_dev->stationary_gyro_data_sum[i] = 0;
-            imu_dev->stationary_accel_data_sum[i] = 0;
-        }
+        memset(&imu_dev->stationary_accel_data_sum, 0, sizeof(imu_dev->stationary_accel_data_sum));
+        memset(&imu_dev->stationary_gyro_data_sum, 0, sizeof(imu_dev->stationary_gyro_data_sum));
     }
 }
 
