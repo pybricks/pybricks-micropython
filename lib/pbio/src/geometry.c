@@ -47,8 +47,8 @@ void pbio_geometry_vector_cross_product(pbio_geometry_xyz_t *a, pbio_geometry_xy
 /**
  * Gets the scalar projection of one vector onto the line spanned by another.
  *
- * @param [in]  input       The input vector.
  * @param [in]  axis        The axis on which to project.
+ * @param [in]  input       The input vector.
  * @param [out] projection  The projection.
  * @return                  ::PBIO_ERROR_INVALID_ARG if the axis has zero length, otherwise ::PBIO_SUCCESS.
  */
@@ -69,7 +69,7 @@ pbio_error_t pbio_geometry_vector_project(pbio_geometry_xyz_t *axis, pbio_geomet
 /**
  * Maps the input vector using: output = map * input
  *
- * @param [in]  map     The 3x3 rotation matrix.
+ * @param [in]  map     The 3x3 map, such as a rotation matrix.
  * @param [in]  input   The input vector
  * @param [out] output  The resulting output vector.
  */
@@ -85,6 +85,7 @@ void pbio_geometry_vector_map(pbio_geometry_matrix_3x3_t *map, pbio_geometry_xyz
  * @param [in]  x_axis  The X axis. Need not be normalized.
  * @param [in]  z_axis  The Z axis. Need not be normalized.
  * @param [out] map     The completed map, including the computed y_axis.
+ * @return              ::PBIO_ERROR_INVALID_ARG if the axes are zero or not orthogonal, otherwise ::PBIO_SUCCESS.
  */
 pbio_error_t pbio_geometry_map_from_base_axes(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis, pbio_geometry_matrix_3x3_t *map) {
 
