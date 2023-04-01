@@ -200,6 +200,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/drivebase.c \
 	src/error.c \
 	src/geometry.c \
+	src/imu.c \
 	src/int_math.c \
 	src/integrator.c \
 	src/iodev.c \
@@ -211,7 +212,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/motor_process.c \
 	src/motor/servo_settings.c \
 	src/observer.c \
-	src/orientation.c \
 	src/parent.c \
 	src/protocol/lwp3.c \
 	src/protocol/nus.c \

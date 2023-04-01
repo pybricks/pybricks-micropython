@@ -14,7 +14,7 @@
 #include <pbio/orientation.h>
 #include <pbio/util.h>
 
-#if PBIO_CONFIG_ORIENTATION_IMU
+#if PBIO_CONFIG_IMU
 
 static pbdrv_imu_dev_t *imu_dev;
 static pbdrv_imu_config_t *imu_config;
@@ -66,7 +66,7 @@ static void pbio_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, c
 /**
  * Initializes global imu module.
  */
-void pbio_orientation_imu_init(void) {
+void pbio_imu_init(void) {
     pbio_error_t err = pbdrv_imu_get_imu(&imu_dev, &imu_config);
     if (err != PBIO_SUCCESS) {
         return;
@@ -101,7 +101,7 @@ pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *front_si
         return err;
     }
 
-    pbio_orientation_imu_set_heading(0.0f);
+    pbio_imu_set_heading(0.0f);
 
     return PBIO_SUCCESS;
 }
@@ -111,7 +111,7 @@ pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *front_si
  *
  * @return    True if it has been stationary for about a second, false if moving.
  */
-bool pbio_orientation_imu_is_stationary(void) {
+bool pbio_imu_is_stationary(void) {
     return pbdrv_imu_is_stationary(imu_dev);
 }
 
@@ -123,7 +123,7 @@ bool pbio_orientation_imu_is_stationary(void) {
  * @param [in]  angular_velocity Angular velocity threshold in deg/s.
  * @param [in]  acceleration     Acceleration threshold in mm/s^2
  */
-void pbio_orientation_imu_set_stationary_thresholds(float angular_velocity, float acceleration) {
+void pbio_imu_set_stationary_thresholds(float angular_velocity, float acceleration) {
     int16_t gyro_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
     int16_t accl_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
     pbdrv_imu_set_stationary_thresholds(imu_dev, gyro_threshold, accl_threshold);
@@ -134,7 +134,7 @@ void pbio_orientation_imu_set_stationary_thresholds(float angular_velocity, floa
  *
  * @param [out] values      The angular velocity vector.
  */
-void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
+void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
     pbio_geometry_vector_map(&pbio_orientation_base_orientation, &angular_velocity, values);
 }
 
@@ -143,7 +143,7 @@ void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
  *
  * @param [out] values      The acceleration vector.
  */
-void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
+void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values) {
     pbio_geometry_vector_map(&pbio_orientation_base_orientation, &acceleration, values);
 }
 
@@ -152,7 +152,7 @@ void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
  *
  * @return                  Which side is up.
  */
-pbio_geometry_side_t pbio_orientation_imu_get_up_side(void) {
+pbio_geometry_side_t pbio_imu_get_up_side(void) {
     // Up is which side of a unit box intersects the +Z vector first.
     // So read +Z vector of the inertial frame, in the body frame.
     // For now, this is the gravity vector. In the future, we can make this
@@ -167,7 +167,7 @@ static float heading_offset = 0;
  *
  * @return                  Heading angle in the base frame.
  */
-float pbio_orientation_imu_get_heading(void) {
+float pbio_imu_get_heading(void) {
 
     pbio_geometry_xyz_t heading_mapped;
 
@@ -184,8 +184,8 @@ float pbio_orientation_imu_get_heading(void) {
  *
  * @param [in] desired_heading  The desired heading value.
  */
-void pbio_orientation_imu_set_heading(float desired_heading) {
-    heading_offset = pbio_orientation_imu_get_heading() + heading_offset - desired_heading;
+void pbio_imu_set_heading(float desired_heading) {
+    heading_offset = pbio_imu_get_heading() + heading_offset - desired_heading;
 }
 
 /**
@@ -198,10 +198,10 @@ void pbio_orientation_imu_set_heading(float desired_heading) {
  * @param [out]  heading               The output angle object.
  * @param [in]   ctl_steps_per_degree  The number of control steps per heading degree.
  */
-void pbio_orientation_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_degree) {
+void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_degree) {
 
     // Heading in degrees of the robot.
-    float heading_degrees = pbio_orientation_imu_get_heading();
+    float heading_degrees = pbio_imu_get_heading();
 
     // Number of whole rotations in control units (in terms of wheels, not robot).
     heading->rotations = heading_degrees / (360000 / ctl_steps_per_degree);
@@ -211,4 +211,4 @@ void pbio_orientation_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_
     heading->millidegrees = truncated * ctl_steps_per_degree;
 }
 
-#endif // PBIO_CONFIG_ORIENTATION_IMU
+#endif // PBIO_CONFIG_IMU
