@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
 
 #include <stdbool.h>
 #include <string.h>
@@ -9,9 +9,9 @@
 #include <pbio/angle.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include <pbio/int_math.h>
 #include <pbio/geometry.h>
-#include <pbio/orientation.h>
+#include <pbio/imu.h>
+#include <pbio/int_math.h>
 #include <pbio/util.h>
 
 #if PBIO_CONFIG_IMU
@@ -94,7 +94,7 @@ static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation = {
  *                               in the base orientation.
  * @return                       ::PBIO_SUCCESS on success, ::PBIO_ERROR_INVALID_ARG for incorrect axis values.
  */
-pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *front_side_axis, pbio_geometry_xyz_t *top_side_axis) {
+pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *front_side_axis, pbio_geometry_xyz_t *top_side_axis) {
 
     pbio_error_t err = pbio_geometry_map_from_base_axes(front_side_axis, top_side_axis, &pbio_orientation_base_orientation);
     if (err != PBIO_SUCCESS) {

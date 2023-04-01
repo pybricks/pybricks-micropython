@@ -11,7 +11,7 @@
 
 #include <pbio/error.h>
 #include <pbio/geometry.h>
-#include <pbio/orientation.h>
+#include <pbio/imu.h>
 
 #include "py/obj.h"
 
@@ -200,7 +200,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis
     pbio_geometry_xyz_t top_side_axis;
     pb_type_imu_extract_axis(top_side_axis_in, &top_side_axis);
 
-    pbio_orientation_set_base_orientation(&front_side_axis, &top_side_axis);
+    pbio_imu_set_base_orientation(&front_side_axis, &top_side_axis);
 
     // Default noise thresholds.
     pbio_imu_set_stationary_thresholds(1.5f, 250.0f);

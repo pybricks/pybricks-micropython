@@ -17,6 +17,7 @@
 #include <pbdrv/sound.h>
 #include <pbio/config.h>
 #include <pbio/dcmotor.h>
+#include <pbio/imu.h>
 #include <pbio/light_matrix.h>
 #include <pbio/light.h>
 #include <pbio/main.h>

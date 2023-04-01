@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2023 The Pybricks Authors
 
 /**
- * @addtogroup Orientation Orientation functions
+ * @addtogroup Imu Imu functions
  *
- * Provides functions for accessing hub orientation.
+ * Provides functions for accessing hub imu.
  * @{
  */
 
-#ifndef _PBIO_ORIENTATION_H_
-#define _PBIO_ORIENTATION_H_
+#ifndef _PBIO_IMU_H_
+#define _PBIO_IMU_H_
 
 #include <stdint.h>
 
@@ -18,13 +18,11 @@
 #include <pbio/error.h>
 #include <pbio/geometry.h>
 
-#include <pbdrv/imu.h>
-
 #if PBIO_CONFIG_IMU
 
 void pbio_imu_init(void);
 
-pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis);
+pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis);
 
 bool pbio_imu_is_stationary(void);
 
@@ -47,7 +45,7 @@ void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_de
 static inline void pbio_imu_init(void) {
 }
 
-static inline pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
+static inline pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -80,6 +78,6 @@ static inline void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ct
 
 #endif // PBIO_CONFIG_IMU
 
-#endif // _PBIO_ORIENTATION_H_
+#endif // _PBIO_IMU_H_
 
 /** @} */

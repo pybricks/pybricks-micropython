@@ -13,7 +13,7 @@
 
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include <pbio/orientation.h>
+#include <pbio/geometry.h>
 
 /** A light matrix instance. */
 typedef struct _pbio_light_matrix_t pbio_light_matrix_t;

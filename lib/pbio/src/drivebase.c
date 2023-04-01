@@ -10,7 +10,7 @@
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/int_math.h>
-#include <pbio/orientation.h>
+#include <pbio/imu.h>
 #include <pbio/servo.h>
 
 #if PBIO_CONFIG_NUM_DRIVEBASES > 0

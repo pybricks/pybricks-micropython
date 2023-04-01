@@ -13,7 +13,6 @@
 #include <string.h>
 
 #include <pbdrv/imu.h>
-#include <pbio/orientation.h>
 
 #include <contiki.h>
 #include <lsm6ds3tr_c_reg.h>
