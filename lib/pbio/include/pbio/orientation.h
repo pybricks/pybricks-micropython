@@ -20,24 +20,6 @@
 
 #include <pbdrv/imu.h>
 
-/**
- * Identifier for one side of a rectangle (e.g. screen) or box (e.g. a hub).
- */
-typedef enum {
-    PBIO_ORIENTATION_SIDE_FRONT =  (0 << 2) | 0,  /**< +X: The front side of a rectangular box */
-    PBIO_ORIENTATION_SIDE_LEFT =   (0 << 2) | 1,  /**< +Y: The left side of a rectangular box or screen */
-    PBIO_ORIENTATION_SIDE_TOP =    (0 << 2) | 2,  /**< +Z: The top side of a rectangular box or screen */
-    PBIO_ORIENTATION_SIDE_BACK =   (1 << 2) | 0,  /**< -X: The back side of a rectangular box */
-    PBIO_ORIENTATION_SIDE_RIGHT =  (1 << 2) | 1,  /**< -Y: The right side of a rectangular box or screen */
-    PBIO_ORIENTATION_SIDE_BOTTOM = (1 << 2) | 2,  /**< -Z: The bottom side of a rectangular box or screen */
-} pbio_orientation_side_t;
-
-void pbio_orientation_side_get_axis(pbio_orientation_side_t side, uint8_t *index, int8_t *sign);
-
-void pbio_orientation_get_complementary_axis(uint8_t *index, int8_t *sign);
-
-pbio_orientation_side_t pbio_orientation_side_from_vector(pbio_geometry_xyz_t *vector);
-
 #if PBIO_CONFIG_ORIENTATION_IMU
 
 void pbio_orientation_imu_init(void);
@@ -52,7 +34,7 @@ void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
 
 void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values);
 
-pbio_orientation_side_t pbio_orientation_imu_get_up_side(void);
+pbio_geometry_side_t pbio_orientation_imu_get_up_side(void);
 
 float pbio_orientation_imu_get_heading(void);
 
@@ -82,8 +64,8 @@ static inline void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t
 static inline void pbio_orientation_imu_get_acceleration(pbio_geometry_xyz_t *values) {
 }
 
-static inline pbio_orientation_side_t pbio_orientation_imu_get_up_side(void) {
-    return PBIO_ORIENTATION_SIDE_TOP;
+static inline pbio_geometry_side_t pbio_orientation_imu_get_up_side(void) {
+    return PBIO_GEOMETRY_SIDE_TOP;
 }
 
 static inline float pbio_orientation_imu_get_heading(void) {

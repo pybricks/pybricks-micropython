@@ -29,17 +29,17 @@ typedef struct _common_IMU_obj_t {
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
     switch (pbio_orientation_imu_get_up_side()) {
         default:
-        case PBIO_ORIENTATION_SIDE_FRONT:
+        case PBIO_GEOMETRY_SIDE_FRONT:
             return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
-        case PBIO_ORIENTATION_SIDE_LEFT:
+        case PBIO_GEOMETRY_SIDE_LEFT:
             return MP_OBJ_FROM_PTR(&pb_Side_LEFT_obj);
-        case PBIO_ORIENTATION_SIDE_TOP:
+        case PBIO_GEOMETRY_SIDE_TOP:
             return MP_OBJ_FROM_PTR(&pb_Side_TOP_obj);
-        case PBIO_ORIENTATION_SIDE_BACK:
+        case PBIO_GEOMETRY_SIDE_BACK:
             return MP_OBJ_FROM_PTR(&pb_Side_BACK_obj);
-        case PBIO_ORIENTATION_SIDE_RIGHT:
+        case PBIO_GEOMETRY_SIDE_RIGHT:
             return MP_OBJ_FROM_PTR(&pb_Side_RIGHT_obj);
-        case PBIO_ORIENTATION_SIDE_BOTTOM:
+        case PBIO_GEOMETRY_SIDE_BOTTOM:
             return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
     }
 }
