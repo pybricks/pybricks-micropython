@@ -9,7 +9,7 @@
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_LIGHT_MATRIX            (0)
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
-#define PBIO_CONFIG_ORIENTATION_IMU         (0)
+#define PBIO_CONFIG_IMU                     (0)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (6)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (1)

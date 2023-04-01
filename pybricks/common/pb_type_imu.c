@@ -27,7 +27,7 @@ typedef struct _common_IMU_obj_t {
 
 // pybricks._common.IMU.up
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
-    switch (pbio_orientation_imu_get_up_side()) {
+    switch (pbio_imu_get_up_side()) {
         default:
         case PBIO_GEOMETRY_SIDE_FRONT:
             return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
@@ -50,7 +50,7 @@ STATIC mp_obj_t common_IMU_tilt(mp_obj_t self_in) {
 
     // Read acceleration in the user frame.
     pbio_geometry_xyz_t accl;
-    pbio_orientation_imu_get_acceleration(&accl);
+    pbio_imu_get_acceleration(&accl);
 
     mp_obj_t tilt[2];
     // Pitch
@@ -85,7 +85,7 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
 
     (void)self;
     pbio_geometry_xyz_t acceleration;
-    pbio_orientation_imu_get_acceleration(&acceleration);
+    pbio_imu_get_acceleration(&acceleration);
 
     // If no axis is specified, return a vector of values.
     if (axis_in == mp_const_none) {
@@ -110,7 +110,7 @@ STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_a
 
     (void)self;
     pbio_geometry_xyz_t angular_velocity;
-    pbio_orientation_imu_get_angular_velocity(&angular_velocity);
+    pbio_imu_get_angular_velocity(&angular_velocity);
 
     // If no axis is specified, return a vector of values.
     if (axis_in == mp_const_none) {
@@ -129,7 +129,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU
 
 // pybricks._common.IMU.stationary
 STATIC mp_obj_t common_IMU_stationary(mp_obj_t self_in) {
-    return mp_obj_new_bool(pbio_orientation_imu_is_stationary());
+    return mp_obj_new_bool(pbio_imu_is_stationary());
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_stationary_obj, common_IMU_stationary);
 
@@ -141,7 +141,7 @@ STATIC mp_obj_t common_IMU_set_stationary_thresholds(size_t n_args, const mp_obj
         PB_ARG_REQUIRED(acceleration));
 
     (void)self;
-    pbio_orientation_imu_set_stationary_thresholds(mp_obj_get_float(angular_velocity_in), mp_obj_get_float(acceleration_in));
+    pbio_imu_set_stationary_thresholds(mp_obj_get_float(angular_velocity_in), mp_obj_get_float(acceleration_in));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_set_stationary_thresholds_obj, 1, common_IMU_set_stationary_thresholds);
@@ -149,7 +149,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_set_stationary_thresholds_obj, 1, c
 // pybricks._common.IMU.heading
 STATIC mp_obj_t common_IMU_heading(mp_obj_t self_in) {
     (void)self_in;
-    return mp_obj_new_float(pbio_orientation_imu_get_heading());
+    return mp_obj_new_float(pbio_imu_get_heading());
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_heading_obj, common_IMU_heading);
 
@@ -161,7 +161,7 @@ STATIC mp_obj_t common_IMU_reset_heading(size_t n_args, const mp_obj_t *pos_args
 
     // Set the new angle
     (void)self;
-    pbio_orientation_imu_set_heading(mp_obj_get_float(angle_in));
+    pbio_imu_set_heading(mp_obj_get_float(angle_in));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_reset_heading_obj, 1, common_IMU_reset_heading);
@@ -203,7 +203,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis
     pbio_orientation_set_base_orientation(&front_side_axis, &top_side_axis);
 
     // Default noise thresholds.
-    pbio_orientation_imu_set_stationary_thresholds(1.5f, 250.0f);
+    pbio_imu_set_stationary_thresholds(1.5f, 250.0f);
 
     // Return singleton instance.
     return MP_OBJ_FROM_PTR(&singleton_imu_obj);

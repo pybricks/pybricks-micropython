@@ -55,7 +55,7 @@ void pbio_init(void) {
     pbio_motor_process_start();
     #endif
 
-    pbio_orientation_imu_init();
+    pbio_imu_init();
 }
 
 /**

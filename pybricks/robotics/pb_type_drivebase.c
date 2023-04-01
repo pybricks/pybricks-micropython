@@ -61,7 +61,7 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
 
     // REVISIT: Allow angle getter callable on any platform.
     bool use_gyro = mp_obj_is_true(use_gyro_in);
-    #if !PBIO_CONFIG_ORIENTATION_IMU
+    #if !PBIO_CONFIG_IMU
     if (use_gyro) {
         pb_assert(PBIO_ERROR_NOT_SUPPORTED);
     }
