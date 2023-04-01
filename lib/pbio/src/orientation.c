@@ -115,8 +115,8 @@ pbio_orientation_side_t pbio_orientation_side_from_vector(pbio_geometry_xyz_t *v
 
 #if PBIO_CONFIG_ORIENTATION_IMU
 
-pbdrv_imu_dev_t *imu_dev;
-pbdrv_imu_config_t *imu_config;
+static pbdrv_imu_dev_t *imu_dev;
+static pbdrv_imu_config_t *imu_config;
 
 // This counter is a measure for calibration accuracy, roughly equivalent
 // to the accumulative number of seconds it was stationary.
@@ -145,7 +145,7 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
 }
 
 // Called by driver to process unfiltered gyro and accelerometer data recorded while stationary.
-static void pbdrv_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, const int32_t *accel_data_sum, uint32_t num_samples) {
+static void pbio_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, const int32_t *accel_data_sum, uint32_t num_samples) {
 
     stationary_counter++;
 
@@ -158,7 +158,7 @@ static void pbdrv_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, 
         float average_now = gyro_data_sum[i] * imu_config->gyro_scale / num_samples;
 
         // Update bias at decreasing rate.
-        gyro_bias.values[i] = gyro_bias.values[i] * (1 - weight) + weight * average_now;
+        gyro_bias.values[i] = gyro_bias.values[i] * (1.0f - weight) + weight * average_now;
     }
 }
 
@@ -170,7 +170,7 @@ void pbio_orientation_imu_init(void) {
     if (err != PBIO_SUCCESS) {
         return;
     }
-    pbdrv_imu_set_data_handlers(imu_dev, pbio_imu_handle_frame_data_func, pbdrv_imu_handle_stationary_data_func);
+    pbdrv_imu_set_data_handlers(imu_dev, pbio_imu_handle_frame_data_func, pbio_imu_handle_stationary_data_func);
 }
 
 /**
@@ -191,6 +191,7 @@ static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation = {
  *                               in the base orientation.
  * @param [in]  top_side_axis    Which way the hub top side points when it is
  *                               in the base orientation.
+ * @return                       ::PBIO_SUCCESS on success, ::PBIO_ERROR_INVALID_ARG for incorrect axis values.
  */
 pbio_error_t pbio_orientation_set_base_orientation(pbio_geometry_xyz_t *front_side_axis, pbio_geometry_xyz_t *top_side_axis) {
 
@@ -228,7 +229,7 @@ void pbio_orientation_imu_set_stationary_thresholds(float angular_velocity, floa
 }
 
 /**
- * Reads the current IMU angular velocity in deg/s, compensated for offset.
+ * Gets the cached IMU angular velocity in deg/s, compensated for gyro bias.
  *
  * @param [out] values      The angular velocity vector.
  */
@@ -237,7 +238,7 @@ void pbio_orientation_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
 }
 
 /**
- * Reads the current IMU acceleration in mm/s^2.
+ * Gets the cached IMU acceleration in mm/s^2.
  *
  * @param [out] values      The acceleration vector.
  */
@@ -275,7 +276,7 @@ float pbio_orientation_imu_get_heading(void) {
 }
 
 /**
- * Resets the IMU heading.
+ * Sets the IMU heading.
  *
  * This only adjusts the user offset without resetting anything in the
  * algorithm, so this can be called at any time.
