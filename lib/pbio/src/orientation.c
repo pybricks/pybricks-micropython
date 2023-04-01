@@ -176,9 +176,13 @@ void pbio_orientation_imu_init(void) {
 /**
  * The "neutral" base orientation of the hub, describing how it is mounted
  * in the robot. All getters (tilt, acceleration, rotation, etc) give results
- * relative to this base orientation.
+ * relative to this base orientation. Initial orientation is identity, hub flat.
  */
-static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation;
+static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation = {
+    .m11 = 1.0f, .m12 = 0.0f, .m13 = 0.0f,
+    .m21 = 0.0f, .m22 = 1.0f, .m23 = 0.0f,
+    .m31 = 0.0f, .m32 = 0.0f, .m33 = 1.0f,
+};
 
 /**
  * Sets the hub base orientation.
