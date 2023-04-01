@@ -53,8 +53,9 @@ void pbio_init(void) {
 
     #if PBIO_CONFIG_MOTOR_PROCESS_AUTO_START
     pbio_motor_process_start();
-    pbio_orientation_imu_init();
     #endif
+
+    pbio_orientation_imu_init();
 }
 
 /**
