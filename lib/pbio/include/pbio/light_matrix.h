@@ -21,7 +21,7 @@ typedef struct _pbio_light_matrix_t pbio_light_matrix_t;
 #if PBIO_CONFIG_LIGHT_MATRIX
 
 uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix);
-void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_orientation_side_t up_side);
+void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_geometry_side_t up_side);
 pbio_error_t pbio_light_matrix_clear(pbio_light_matrix_t *light_matrix);
 pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const uint8_t *rows);
 pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness);
@@ -35,7 +35,7 @@ static inline uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matr
     return 0;
 }
 
-static inline void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_orientation_side_t up_side) {
+static inline void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_geometry_side_t up_side) {
 }
 
 static inline pbio_error_t pbio_light_matrix_clear(pbio_light_matrix_t *light_matrix) {
