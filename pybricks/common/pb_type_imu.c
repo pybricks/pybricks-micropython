@@ -28,6 +28,7 @@ typedef struct _common_IMU_obj_t {
 // pybricks._common.IMU.up
 STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
     switch (pbio_orientation_imu_get_up_side()) {
+        default:
         case PBIO_ORIENTATION_SIDE_FRONT:
             return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
         case PBIO_ORIENTATION_SIDE_LEFT:
@@ -39,8 +40,6 @@ STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
         case PBIO_ORIENTATION_SIDE_RIGHT:
             return MP_OBJ_FROM_PTR(&pb_Side_RIGHT_obj);
         case PBIO_ORIENTATION_SIDE_BOTTOM:
-        // fallthrough
-        default:
             return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
     }
 }
@@ -169,14 +168,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_reset_heading_obj, 1, common_IMU_re
 
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
-    { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
-    { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&common_IMU_stationary_obj)      },
-    { MP_ROM_QSTR(MP_QSTR_set_stationary_thresholds), MP_ROM_PTR(&common_IMU_set_stationary_thresholds_obj) },
     { MP_ROM_QSTR(MP_QSTR_heading),          MP_ROM_PTR(&common_IMU_heading_obj)         },
     { MP_ROM_QSTR(MP_QSTR_reset_heading),    MP_ROM_PTR(&common_IMU_reset_heading_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_set_stationary_thresholds), MP_ROM_PTR(&common_IMU_set_stationary_thresholds_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&common_IMU_stationary_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
+    { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 

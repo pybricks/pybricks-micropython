@@ -73,7 +73,7 @@ const mp_obj_type_t pb_enum_type_Axis = {
 };
 
 // pybricks.geometry.vector
-STATIC mp_obj_t vector(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t pb_geometry_vector(size_t n_args, const mp_obj_t *args) {
 
     // Convert user object to floats
     float data[3];
@@ -84,10 +84,10 @@ STATIC mp_obj_t vector(size_t n_args, const mp_obj_t *args) {
     // Create and return Matrix object with vector shape
     return pb_type_Matrix_make_vector(n_args, data, false);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_vector_obj, 2, 3, vector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_geometry_vector_obj, 2, 3, pb_geometry_vector);
 
 // pybricks.geometry.cross
-STATIC mp_obj_t pb_func_cross(mp_obj_t a_in, mp_obj_t b_in) {
+STATIC mp_obj_t pb_geometry_cross(mp_obj_t a_in, mp_obj_t b_in) {
 
     // Get a and b vectors
     pb_type_Matrix_obj_t *a = MP_OBJ_TO_PTR(a_in);
@@ -112,13 +112,13 @@ STATIC mp_obj_t pb_func_cross(mp_obj_t a_in, mp_obj_t b_in) {
 
     return MP_OBJ_FROM_PTR(c);
 }
-MP_DEFINE_CONST_FUN_OBJ_2(pb_func_cross_obj, pb_func_cross);
+MP_DEFINE_CONST_FUN_OBJ_2(pb_geometry_cross_obj, pb_geometry_cross);
 
 STATIC const mp_rom_map_elem_t geometry_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Axis),        MP_ROM_PTR(&pb_enum_type_Axis)     },
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)        },
-    { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_func_vector_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_cross),       MP_ROM_PTR(&pb_func_cross_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_geometry_vector_obj)},
+    { MP_ROM_QSTR(MP_QSTR_cross),       MP_ROM_PTR(&pb_geometry_cross_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_geometry_globals, geometry_globals_table);
 
