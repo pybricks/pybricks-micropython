@@ -7,7 +7,10 @@
 ### Fixed
 - Fixed gyro on Technic Hub occasionally giving a bad value, which made it
   not calibrate properly ([support#1026]).
+- Fixed discrepancy in heading value across hubs by accounting for sampling
+  time ([support#1022]).
 
+[support#1026]: https://github.com/pybricks/support/issues/1022
 [support#1026]: https://github.com/pybricks/support/issues/1026
 
 ### Added
