@@ -199,6 +199,11 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     } while (rst);
 
     /*
+     *  Enable Block Data Update
+     */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_block_data_update_set(&child, ctx, PROPERTY_ENABLE));
+
+    /*
      * Set Output Data Rate
      */
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_C_XL_ODR_833Hz));

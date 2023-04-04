@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed gyro on Technic Hub occasionally giving a bad value, which made it
+  not calibrate properly ([support#1026]).
+
+[support#1026]: https://github.com/pybricks/support/issues/1026
+
 ### Added
 - Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
 - Added experimental implementation of `hub.imu.heading()` ([support#912]).
