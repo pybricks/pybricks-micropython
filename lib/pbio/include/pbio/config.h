@@ -16,10 +16,16 @@
 #define PBIO_CONFIG_CONTROL_LOOP_TIME_MS (5)
 #endif
 
-// Angle differentiation time window, must be integer multiple of loop time
-// and integer divisor of 1000.
-#ifndef PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS
-#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS (100)
+// Angle differentiation time window, defined as a multiple of the loop time.
+// This is the time window used for calculating the average speed, so 100ms.
+#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE (20)
+
+// Total number of position samples to store in the differentiator buffer.
+// Must be >= PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE. This allows a user
+// program to get speed with additional control over the trade off between a
+// smooth but delayed value (long window) or noisy and fast value (short window).
+#ifndef PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE
+#define PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE (PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE * 3)
 #endif
 
 #define PBIO_CONFIG_NUM_DRIVEBASES (PBIO_CONFIG_SERVO_NUM_DEV / 2)

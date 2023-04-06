@@ -11,7 +11,6 @@
 #include <pbio/config.h>
 #include <pbio/control_settings.h>
 #include <pbio/differentiator.h>
-#include <pbio/int_math.h>
 #include <pbio/util.h>
 
 /**
@@ -24,14 +23,15 @@
 int32_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, const pbio_angle_t *angle) {
 
     // Difference between current angle and oldest in buffer.
-    int32_t delta = pbio_angle_diff_mdeg(angle, &dif->history[dif->index]);
+    uint8_t read_index = (dif->index - PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE + PBIO_ARRAY_SIZE(dif->history)) % PBIO_ARRAY_SIZE(dif->history);
+    int32_t delta = pbio_angle_diff_mdeg(angle, &dif->history[read_index]);
 
     // Override oldest sample with new value.
     dif->history[dif->index] = *angle;
     dif->index = (dif->index + 1) % PBIO_ARRAY_SIZE(dif->history);
 
     // Return average speed.
-    return delta * (1000 / PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS);
+    return delta * (1000 / (PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE * PBIO_CONFIG_CONTROL_LOOP_TIME_MS));
 }
 
 /**

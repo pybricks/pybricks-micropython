@@ -27,7 +27,7 @@ typedef struct _pbio_differentiator_t {
     /**
      * Ring buffer of position samples.
      */
-    pbio_angle_t history[PBIO_CONFIG_DIFFERENTIATOR_WINDOW_MS / PBIO_CONFIG_CONTROL_LOOP_TIME_MS];
+    pbio_angle_t history[PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE];
     /**
      * Ring buffer index.
      */
