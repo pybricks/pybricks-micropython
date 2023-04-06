@@ -16,6 +16,9 @@
 ### Added
 - Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
 - Added experimental implementation of `hub.imu.heading()` ([support#912]).
+- Added support for reading single-axis rotation, which is useful in
+  applications like balancing robots, where full 3D orientation is not
+  required, or even undesired.
 
 ### Fixed
 - Fixed iterator for `Matrix` objects giving bad values.

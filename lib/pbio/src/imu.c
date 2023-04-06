@@ -24,10 +24,10 @@ static pbdrv_imu_config_t *imu_config;
 static uint32_t stationary_counter = 0;
 
 // Cached sensor values that can be read at any time without polling again.
-static pbio_geometry_xyz_t angular_velocity; // deg/s, already adjusted for bias.
-static pbio_geometry_xyz_t acceleration;
+static pbio_geometry_xyz_t angular_velocity; // deg/s, in hub frame, already adjusted for bias.
+static pbio_geometry_xyz_t acceleration; // mm/s^2, in hub frame
 static pbio_geometry_xyz_t gyro_bias;
-static pbio_geometry_xyz_t heading;
+static pbio_geometry_xyz_t single_axis_rotation; // deg, in hub frame
 
 // Called by driver to process one frame of unfiltered gyro and accelerometer data.
 static void pbio_imu_handle_frame_data_func(int16_t *data) {
@@ -41,7 +41,7 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
         // the hub mounted at an arbitrary orientation. Such a 1D heading
         // is numerically more accurate, which is useful in drive base
         // applications so long as the vehicle drives on a flat surface.
-        heading.values[i] += angular_velocity.values[i] * imu_config->sample_time;
+        single_axis_rotation.values[i] += angular_velocity.values[i] * imu_config->sample_time;
     }
 }
 
@@ -148,6 +148,25 @@ void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values) {
 }
 
 /**
+ * Gets the rotation along a particular axis of the robot frame.
+ *
+ * The resulting value makes sense only for one-dimensional rotations.
+ *
+ * @param [in]  axis        The axis to project the rotation onto.
+ * @param [out] angle       The angle of rotation in degrees.
+ * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_INVALID_ARG if axis has zero length.
+ */
+pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle) {
+
+    // Transform the single axis rotations to the robot frame.
+    pbio_geometry_xyz_t rotation;
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &rotation);
+
+    // Get the requested scalar rotation along the given axis.
+    return pbio_geometry_vector_project(axis, &rotation, angle);
+}
+
+/**
  * Gets which side of a hub points upwards.
  *
  * @return                  Which side is up.
@@ -171,7 +190,7 @@ float pbio_imu_get_heading(void) {
 
     pbio_geometry_xyz_t heading_mapped;
 
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &heading, &heading_mapped);
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &heading_mapped);
 
     return heading_mapped.z - heading_offset;
 }
