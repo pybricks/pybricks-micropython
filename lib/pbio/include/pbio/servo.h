@@ -149,6 +149,7 @@ void pbio_servo_update_all(void);
 /**@{*/
 pbio_error_t pbio_servo_get_state_control(pbio_servo_t *srv, pbio_control_state_t *state);
 pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_t *speed);
+pbio_error_t pbio_servo_get_speed_user(pbio_servo_t *srv, uint32_t window, int32_t *speed);
 bool pbio_servo_update_loop_is_running(pbio_servo_t *srv);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled, uint32_t *stall_duration);
 pbio_error_t pbio_servo_get_load(pbio_servo_t *srv, int32_t *load);

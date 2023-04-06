@@ -165,13 +165,16 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_reset_angle);
 
 // pybricks._common.Motor.speed
-STATIC mp_obj_t common_Motor_speed(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t angle, speed;
-    pb_assert(pbio_servo_get_state_user(self->srv, &angle, &speed));
+STATIC mp_obj_t common_Motor_speed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_Motor_obj_t, self,
+        PB_ARG_DEFAULT_INT(window, 100));
+
+    int32_t speed;
+    pb_assert(pbio_servo_get_speed_user(self->srv, pb_obj_get_positive_int(window_in), &speed));
     return mp_obj_new_int(speed);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_speed_obj, common_Motor_speed);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_speed_obj, 1, common_Motor_speed);
 
 // pybricks._common.Motor.run
 STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {

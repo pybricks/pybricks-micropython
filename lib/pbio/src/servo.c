@@ -480,6 +480,24 @@ pbio_error_t pbio_servo_get_state_user(pbio_servo_t *srv, int32_t *angle, int32_
 }
 
 /**
+ * Gets the servo speed in units of degrees per second at the output, with
+ * a given window size to control how smooth the speed differentiation is.
+ *
+ * @param [in]  srv         The servo instance.
+ * @param [in]  window      Window size in milliseconds.
+ * @param [out] speed       Calculated speed in degrees per second.
+ * @return                  Error code.
+ */
+pbio_error_t pbio_servo_get_speed_user(pbio_servo_t *srv, uint32_t window, int32_t *speed) {
+    pbio_error_t err = pbio_differentiator_get_speed(&srv->observer.differentiator, window, speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    *speed = pbio_control_settings_ctl_to_app(&srv->control.settings, *speed);
+    return PBIO_SUCCESS;
+}
+
+/**
  * Actuates the servo with a given control type and payload.
  *
  * This is an internal function used after servo or drive base control updates

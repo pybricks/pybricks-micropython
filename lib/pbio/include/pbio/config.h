@@ -21,11 +21,11 @@
 #define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE (20)
 
 // Total number of position samples to store in the differentiator buffer.
-// Must be >= PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE. This allows a user
+// Must be > PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE. This allows a user
 // program to get speed with additional control over the trade off between a
 // smooth but delayed value (long window) or noisy and fast value (short window).
 #ifndef PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE
-#define PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE (PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE * 3)
+#define PBIO_CONFIG_DIFFERENTIATOR_BUFFER_SIZE (PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE * 3 + 1)
 #endif
 
 #define PBIO_CONFIG_NUM_DRIVEBASES (PBIO_CONFIG_SERVO_NUM_DEV / 2)

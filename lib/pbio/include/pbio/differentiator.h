@@ -34,7 +34,9 @@ typedef struct _pbio_differentiator_t {
     uint8_t index;
 } pbio_differentiator_t;
 
-int32_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, const pbio_angle_t *angle);
+int32_t pbio_differentiator_update_and_get_speed(pbio_differentiator_t *dif, const pbio_angle_t *angle);
+
+pbio_error_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, uint32_t window, int32_t *speed);
 
 void pbio_differentiator_reset(pbio_differentiator_t *dif, const pbio_angle_t *angle);
 

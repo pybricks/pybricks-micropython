@@ -155,7 +155,7 @@ void pbio_observer_update(pbio_observer_t *obs, uint32_t time, const pbio_angle_
     const pbio_observer_model_t *m = obs->model;
 
     // Update numerical derivative as speed sanity check.
-    obs->speed_numeric = pbio_differentiator_get_speed(&obs->differentiator, angle);
+    obs->speed_numeric = pbio_differentiator_update_and_get_speed(&obs->differentiator, angle);
 
     // Apply observer error feedback as voltage.
     int32_t feedback_voltage = pbio_observer_get_feedback_voltage(obs, angle);
