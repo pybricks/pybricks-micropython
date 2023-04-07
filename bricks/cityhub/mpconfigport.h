@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "stm32f030xc.h"
 
@@ -12,6 +12,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
+#define PYBRICKS_PY_COMMON_BLE                  (1)
 #define PYBRICKS_PY_COMMON_CHARGER              (0)
 #define PYBRICKS_PY_COMMON_CONTROL              (1)
 #define PYBRICKS_PY_COMMON_IMU                  (0)

@@ -243,6 +243,9 @@ STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
 typedef struct _hubs_MoveHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
+    #if PYBRICKS_PY_COMMON_BLE
+    mp_obj_t ble;
+    #endif
     mp_obj_t button;
     mp_obj_t imu;
     mp_obj_t light;
@@ -256,6 +259,9 @@ static const pb_obj_enum_member_t *movehub_buttons[] = {
 STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_MoveHub_obj_t *self = mp_obj_malloc(hubs_MoveHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
+    #if PYBRICKS_PY_COMMON_BLE
+    self->ble = MP_OBJ_FROM_PTR(&pb_module_ble);
+    #endif
     self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(movehub_buttons), movehub_buttons, pbio_button_is_pressed);
     self->imu = hubs_MoveHub_IMU_make_new();
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
@@ -265,6 +271,9 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
 STATIC const pb_attr_dict_entry_t hubs_MoveHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_MoveHub_obj_t, battery),
+    #if PYBRICKS_PY_COMMON_BLE
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_MoveHub_obj_t, ble),
+    #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_MoveHub_obj_t, button),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_imu, hubs_MoveHub_obj_t, imu),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_MoveHub_obj_t, light),

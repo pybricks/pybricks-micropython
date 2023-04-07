@@ -6,6 +6,7 @@
 
 ### Added
 - Enabled the `gc` module (except on BOOST Move hub).
+- Added `hub.ble` attribute for accessing Bluetooth capabilities.
 
 ### Changed
 - Updated MicroPython to v1.20.0.

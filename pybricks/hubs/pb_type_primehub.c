@@ -27,6 +27,9 @@
 typedef struct _hubs_PrimeHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
+    #if PYBRICKS_PY_COMMON_BLE
+    mp_obj_t ble;
+    #endif
     mp_obj_t buttons;
     mp_obj_t charger;
     mp_obj_t display;
@@ -50,6 +53,9 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
 
     hubs_PrimeHub_obj_t *self = mp_obj_malloc(hubs_PrimeHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
+    #if PYBRICKS_PY_COMMON_BLE
+    self->ble = MP_OBJ_FROM_PTR(&pb_module_ble);
+    #endif
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(primehub_buttons), primehub_buttons, pbio_button_is_pressed);
     self->charger = pb_type_Charger_obj_new();
     self->display = pb_type_LightMatrix_obj_new(pbsys_hub_light_matrix);
@@ -62,6 +68,9 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
 
 STATIC const pb_attr_dict_entry_t hubs_PrimeHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_PrimeHub_obj_t, battery),
+    #if PYBRICKS_PY_COMMON_BLE
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_PrimeHub_obj_t, ble),
+    #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_PrimeHub_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_charger, hubs_PrimeHub_obj_t, charger),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_display, hubs_PrimeHub_obj_t, display),
