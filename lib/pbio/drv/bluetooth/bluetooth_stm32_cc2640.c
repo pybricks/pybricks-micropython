@@ -1491,8 +1491,6 @@ static PT_THREAD(gap_init(struct pt *pt)) {
 // Initializes the Bluetooth chip
 // this function is largely inspired by the LEGO bootloader
 static PT_THREAD(hci_init(struct pt *pt)) {
-    static struct pt child_pt;
-
     PT_BEGIN(pt);
 
     // // set the Bluetooth address
@@ -1547,9 +1545,6 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     Util_readLegoFwVersion();
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
-
-    PT_SPAWN(pt, &child_pt, gatt_init(&child_pt));
-    PT_SPAWN(pt, &child_pt, gap_init(&child_pt));
 
     PT_END(pt);
 }
@@ -1697,6 +1692,8 @@ static PT_THREAD(init_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
     PT_SPAWN(pt, &child_pt, hci_init(&child_pt));
+    PT_SPAWN(pt, &child_pt, gatt_init(&child_pt));
+    PT_SPAWN(pt, &child_pt, gap_init(&child_pt));
     PT_SPAWN(pt, &child_pt, init_device_information_service(&child_pt));
     PT_SPAWN(pt, &child_pt, init_pybricks_service(&child_pt));
     PT_SPAWN(pt, &child_pt, init_uart_service(&child_pt));
