@@ -11,7 +11,29 @@
 #include <pbio/config.h>
 #include <pbio/control_settings.h>
 #include <pbio/differentiator.h>
+#include <pbio/int_math.h>
 #include <pbio/util.h>
+
+/**
+ * Internal function to get the speed with a variable window size. Window
+ * size must be validated externally for this function to be used safely.
+ *
+ * @param [in]  dif            The differentiator instance.
+ * @param [in]  window_size    Window size in number of samples (Must be > 0 and <= buffer size!).
+ * @param [out] speed          Average speed across given time window in mdeg/s.
+ */
+static int32_t pbio_differentiator_calc_speed(pbio_differentiator_t *dif, uint8_t window_size) {
+
+    // Sum differences including start and endpoint.
+    uint8_t start_index = (dif->index - (window_size - 1) + PBIO_ARRAY_SIZE(dif->history)) % PBIO_ARRAY_SIZE(dif->history);
+    int32_t total = dif->history[dif->index];
+    for (uint8_t i = start_index; i != dif->index; i = (i + 1) % PBIO_ARRAY_SIZE(dif->history)) {
+        total += dif->history[i];
+    }
+
+    // Each sample has units of mdeg, so take average and convert to mdeg/s.
+    return total * (1000 / PBIO_CONFIG_CONTROL_LOOP_TIME_MS) / window_size;
+}
 
 /**
  * Updates the angle buffer and calculates the average speed across buffer.
@@ -22,16 +44,17 @@
  */
 int32_t pbio_differentiator_update_and_get_speed(pbio_differentiator_t *dif, const pbio_angle_t *angle) {
 
-    // Difference between current angle and oldest in buffer.
-    uint8_t read_index = (dif->index - PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE + PBIO_ARRAY_SIZE(dif->history)) % PBIO_ARRAY_SIZE(dif->history);
-    int32_t delta = pbio_angle_diff_mdeg(angle, &dif->history[read_index]);
-
-    // Override oldest sample with new value.
-    dif->history[dif->index] = *angle;
+    // Increment index where latest difference will be stored.
     dif->index = (dif->index + 1) % PBIO_ARRAY_SIZE(dif->history);
 
-    // Return average speed.
-    return delta * (1000 / (PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE * PBIO_CONFIG_CONTROL_LOOP_TIME_MS));
+    // The difference is stored in millidegrees. Even at 6000 deg/s (well
+    // above the physical limits of the motors we use), this at most
+    // 6000 * 1000 * 0.005 = 30000, which fits in a 16-bit signed integer.
+    dif->history[dif->index] = pbio_int_math_clamp(pbio_angle_diff_mdeg(angle, &dif->prev_angle), INT16_MAX);
+    dif->prev_angle = *angle;
+
+    // Calculate the speed.
+    return pbio_differentiator_calc_speed(dif, PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE);
 }
 
 /**
@@ -51,13 +74,8 @@ pbio_error_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, uint32_t 
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // This is where the most recent angle was stored.
-    uint8_t newest_index = (dif->index - 1 + PBIO_ARRAY_SIZE(dif->history)) % PBIO_ARRAY_SIZE(dif->history);
-    uint8_t compare_index = (newest_index - window_size + PBIO_ARRAY_SIZE(dif->history)) % PBIO_ARRAY_SIZE(dif->history);
-
     // Speed is determined as position delta across the given window.
-    int32_t delta = pbio_angle_diff_mdeg(&dif->history[newest_index], &dif->history[compare_index]);
-    *speed = delta * 1000 / (window_size * PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
+    *speed = pbio_differentiator_calc_speed(dif, window_size);
     return PBIO_SUCCESS;
 }
 
@@ -68,7 +86,8 @@ pbio_error_t pbio_differentiator_get_speed(pbio_differentiator_t *dif, uint32_t 
  * @param [in]  angle          New angle sample to add to the buffer.
  */
 void pbio_differentiator_reset(pbio_differentiator_t *dif, const pbio_angle_t *angle) {
+    dif->prev_angle = *angle;
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(dif->history); i++) {
-        dif->history[i] = *angle;
+        dif->history[i] = 0;
     }
 }
