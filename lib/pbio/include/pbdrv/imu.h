@@ -30,6 +30,10 @@ typedef struct {
     float gyro_scale;
     /** Acceleration in mm/s^2 for every unit of raw accelerometer data. */
     float accel_scale;
+    /** Angular velocity threshold below which the IMU is considered stationary, in raw units. */
+    int16_t gyro_stationary_threshold;
+    /** Acceleration threshold below which the IMU is considered stationary, in raw units. */
+    int16_t accel_stationary_threshold;
 } pbdrv_imu_config_t;
 
 #if PBDRV_CONFIG_IMU
@@ -52,16 +56,6 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **c
  * @return                  @c true if stationary, @c false if not.
  */
 bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev);
-
-/**
- * Sets the thresholds that define when the hub is stationary. Below these
- * levels, the sensor will automatically (re-)calibrate.
- *
- * @param [in]  imu_dev            The IMU device instance.
- * @param [in]  gyro_threshold     Angular velocity threshold in raw units.
- * @param [in]  accl_threshold     Acceleration threshold in raw units.
- */
-void pbdrv_imu_set_stationary_thresholds(pbdrv_imu_dev_t *imu_dev, int16_t gyro_threshold, int16_t accl_threshold);
 
 /**
  * Callback to process one frame of unfiltered gyro and accelerometer data.

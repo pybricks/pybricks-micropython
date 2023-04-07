@@ -53,10 +53,6 @@ struct _pbdrv_imu_dev_t {
     uint32_t stationary_time_start;
     /** Raw data point to which new samples are compared to detect stationary. */
     int16_t stationary_data_start[6];
-    /** Raw gyro value below which the hub is considered stationary, smaller data is considered noise. */
-    int16_t gyro_noise_threshold;
-    /** Raw accl value below which the hub is considered stationary, smaller data is considered noise. */
-    int16_t accl_noise_threshold;
     /** Sum of gyro samples during the stationary period. */
     int32_t stationary_gyro_data_sum[3];
     /** Sum of accelerometer samples during the stationary period. */
@@ -232,8 +228,8 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     imu_dev->config.gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
     // default noise thresholds, can be changed during runtime
-    imu_dev->gyro_noise_threshold = 20; // 1.4 deg/s
-    imu_dev->accl_noise_threshold = 100; // 240 mm/s^2, or approx 2.5^ of gravity
+    imu_dev->config.gyro_stationary_threshold = 20; // 1.4 deg/s
+    imu_dev->config.accel_stationary_threshold = 100; // 240 mm/s^2, or approx 2.5^ of gravity
 
     // Configure INT1 to trigger when new gyro data is ready.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
@@ -270,12 +266,12 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_reset_stationary_buffer(pbdrv_imu_dev_t 
 static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t *imu_dev) {
 
     // Check whether still stationary compared to constant start sample.
-    if (!is_bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], imu_dev->gyro_noise_threshold) ||
-        !is_bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], imu_dev->gyro_noise_threshold) ||
-        !is_bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], imu_dev->gyro_noise_threshold) ||
-        !is_bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], imu_dev->accl_noise_threshold) ||
-        !is_bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], imu_dev->accl_noise_threshold) ||
-        !is_bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], imu_dev->accl_noise_threshold)
+    if (!is_bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], imu_dev->config.gyro_stationary_threshold) ||
+        !is_bounded(imu_dev->data[1] - imu_dev->stationary_data_start[1], imu_dev->config.gyro_stationary_threshold) ||
+        !is_bounded(imu_dev->data[2] - imu_dev->stationary_data_start[2], imu_dev->config.gyro_stationary_threshold) ||
+        !is_bounded(imu_dev->data[3] - imu_dev->stationary_data_start[3], imu_dev->config.accel_stationary_threshold) ||
+        !is_bounded(imu_dev->data[4] - imu_dev->stationary_data_start[4], imu_dev->config.accel_stationary_threshold) ||
+        !is_bounded(imu_dev->data[5] - imu_dev->stationary_data_start[5], imu_dev->config.accel_stationary_threshold)
         ) {
         // Not stationary anymore, so reset counter and gyro sum data so we can start over.
         imu_dev->stationary_now = false;
@@ -428,11 +424,6 @@ void pbdrv_imu_set_data_handlers(pbdrv_imu_dev_t *imu_dev, pbdrv_imu_handle_fram
 
 bool pbdrv_imu_is_stationary(pbdrv_imu_dev_t *imu_dev) {
     return imu_dev->stationary_now;
-}
-
-void pbdrv_imu_set_stationary_thresholds(pbdrv_imu_dev_t *imu_dev, int16_t gyro_threshold, int16_t accl_threshold) {
-    imu_dev->gyro_noise_threshold = gyro_threshold;
-    imu_dev->accl_noise_threshold = accl_threshold;
 }
 
 #endif // PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32

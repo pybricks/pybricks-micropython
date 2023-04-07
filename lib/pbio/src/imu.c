@@ -142,9 +142,19 @@ bool pbio_imu_is_stationary(void) {
  * @param [in]  acceleration     Acceleration threshold in mm/s^2
  */
 void pbio_imu_set_stationary_thresholds(float angular_velocity, float acceleration) {
-    int16_t gyro_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
-    int16_t accl_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
-    pbdrv_imu_set_stationary_thresholds(imu_dev, gyro_threshold, accl_threshold);
+    imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
+    imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
+}
+
+/**
+ * Gets the thresholds that define when the hub is stationary.
+ *
+ * @param [out]  angular_velocity Angular velocity threshold in deg/s.
+ * @param [out]  acceleration     Acceleration threshold in mm/s^2
+ */
+void pbio_imu_get_stationary_thresholds(float *angular_velocity, float *acceleration) {
+    *angular_velocity = imu_config->gyro_stationary_threshold * imu_config->gyro_scale;
+    *acceleration = imu_config->accel_stationary_threshold * imu_config->accel_scale;
 }
 
 /**
