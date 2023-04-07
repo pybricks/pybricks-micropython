@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 // Bluetooth driver using BlueKitchen BTStack.
 
@@ -513,6 +513,12 @@ bool pbdrv_bluetooth_is_ready(void) {
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
+}
+
+const char *pbdrv_bluetooth_get_fw_version(void) {
+    // REVISIT: this should be linked to the init script as it can be updated in software
+    // init script version
+    return "v1.4";
 }
 
 static void init_advertising_data(void) {

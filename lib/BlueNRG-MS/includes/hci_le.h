@@ -184,7 +184,8 @@ int hci_le_transmitter_test(uint8_t frequency, uint8_t length, uint8_t payload);
 
 int hci_le_test_end(uint16_t *num_pkts);
 
-int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version,
+void hci_le_read_local_version_begin(void);
+int hci_le_read_local_version_end(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version,
 			      uint16_t *manufacturer_name, uint16_t *lmp_pal_subversion);
 
 /**

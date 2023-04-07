@@ -75,27 +75,27 @@ int hci_disconnect(uint16_t handle, uint8_t reason)
   return status;
 }
 
-int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version,
-                              uint16_t *manufacturer_name, uint16_t *lmp_pal_subversion)
+void hci_le_read_local_version_begin(void)
 {
-  struct hci_request_and_response rq;
-  read_local_version_rp resp;
+  struct hci_request rq;
 
-  memset(&resp, 0, sizeof(resp));
-
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_INFO_PARAM, OCF_READ_LOCAL_VERSION);
   rq.cparam = NULL;
   rq.clen = 0;
+
+  hci_send_req(&rq);
+}
+
+int hci_le_read_local_version_end(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version,
+                              uint16_t *manufacturer_name, uint16_t *lmp_pal_subversion)
+{
+  struct hci_response rq;
+  read_local_version_rp resp;
+
   rq.rparam = &resp;
   rq.rlen = READ_LOCAL_VERSION_RP_SIZE;
 
-  hci_send_req_recv_rsp(&rq);
-
-  if (resp.status) {
-    return resp.status;
-  }
-
+  hci_recv_resp(&rq);
 
   *hci_version = resp.hci_version;
   *hci_revision =  btohs(resp.hci_revision);
@@ -103,7 +103,7 @@ int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint
   *manufacturer_name = btohs(resp.manufacturer_name);
   *lmp_pal_subversion = btohs(resp.lmp_pal_subversion);
 
-  return 0;
+  return resp.status;
 }
 
 int hci_le_read_buffer_size(uint16_t *pkt_len, uint8_t *max_pkt)

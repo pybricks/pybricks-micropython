@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
@@ -72,6 +73,8 @@
 // hub name goes in special section so that it can be modified when flashing firmware
 __attribute__((section(".name")))
 char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
+
+static char pbdrv_bluetooth_fw_version[16]; // vX.XX.XX
 
 // used to identify which hub - Device Information Service (DIS).
 // 0x2A50 - service UUID - PnP ID characteristic UUID
@@ -267,6 +270,10 @@ bool pbdrv_bluetooth_is_ready(void) {
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
+}
+
+const char *pbdrv_bluetooth_get_fw_version(void) {
+    return pbdrv_bluetooth_fw_version;
 }
 
 /**
@@ -1529,34 +1536,33 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
-    // get local version info
-    // TODO: skip this - it is for info only
-
     PT_WAIT_WHILE(pt, write_xfer_size);
     HCI_readLocalVersionInfo();
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
+
+    // firmware version is TI BLE-Stack SDK version
+    snprintf(pbdrv_bluetooth_fw_version, sizeof(pbdrv_bluetooth_fw_version),
+        "v%u.%02u.%02u", read_buf[12], read_buf[11] >> 4, read_buf[11] & 0xf);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     HCI_EXT_setLocalSupportedFeatures(HCI_EXT_LOCAL_FEATURE_ENCRYTION);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
-    // get LEGO hardware version
-    // TODO: skip this - it is for info only
-
     PT_WAIT_WHILE(pt, write_xfer_size);
     Util_readLegoHwVersion();
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    // get LEGO firmware version
-    // TODO: skip this - it is for info only
+    // REVISIT: LEGO Technic hub firmware uses this as hub HW version
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     Util_readLegoFwVersion();
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
+
+    // REVISIT: LEGO Technic hub firmware appends this to radio FW version
 
     PT_END(pt);
 }

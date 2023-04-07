@@ -39,6 +39,8 @@
 __attribute__((section(".name")))
 char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
+static char pbdrv_bluetooth_fw_version[5]; // 0.0a
+
 // used to identify which hub - Device Information Service (DIS).
 // 0x2A50 - service UUID - PnP ID characteristic UUID
 // 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
@@ -245,6 +247,10 @@ bool pbdrv_bluetooth_is_ready(void) {
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
+}
+
+const char *pbdrv_bluetooth_get_fw_version(void) {
+    return pbdrv_bluetooth_fw_version;
 }
 
 /**
@@ -1119,6 +1125,27 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     aci_hal_set_tx_power_level_begin(1, 5); // 1.4 dBm - same as LEGO firmware
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // aci_hal_set_tx_power_level_end();
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    hci_le_read_local_version_begin();
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    {
+        uint8_t hci_version;
+        uint16_t hci_revision;
+        uint8_t lmp_pal_version;
+        uint16_t manufacturer_name;
+        uint16_t lmp_pal_subversion;
+        hci_le_read_local_version_end(&hci_version, &hci_revision, &lmp_pal_version, &manufacturer_name, &lmp_pal_subversion);
+
+        // seems like STM or LEGO hacked this command to get firmware version
+        pbdrv_bluetooth_fw_version[0] = '0' + hci_revision;
+        pbdrv_bluetooth_fw_version[1] = '.';
+        pbdrv_bluetooth_fw_version[2] = '0' + (lmp_pal_subversion >> 4);
+        pbdrv_bluetooth_fw_version[3] = '`' + (lmp_pal_subversion & 0xf);
+        // LEGO firmware replaces (lmp_pal_subversion & 0xf) == 0 with "dev" but
+        // it seems highly unlikely that we would ever see that
+        pbdrv_bluetooth_fw_version[4] = '\0';
+    }
 
     // init GATT layer
 
