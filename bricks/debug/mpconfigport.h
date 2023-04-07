@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 #include "stm32f446xx.h"
 
@@ -11,6 +11,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
+#define PYBRICKS_PY_COMMON_BLE                  (0)
 #define PYBRICKS_PY_COMMON_CHARGER              (0)
 #define PYBRICKS_PY_COMMON_CONTROL              (0)
 #define PYBRICKS_PY_COMMON_IMU                  (0)

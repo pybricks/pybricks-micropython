@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
 #define PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
@@ -23,6 +23,10 @@
 
 void pb_package_pybricks_init(bool import_all);
 void pb_package_pybricks_deinit(void);
+
+#if PYBRICKS_PY_COMMON_BLE
+extern const mp_obj_module_t pb_module_ble;
+#endif
 
 #if PYBRICKS_PY_COMMON_CHARGER
 
