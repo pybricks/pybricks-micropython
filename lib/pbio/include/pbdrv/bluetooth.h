@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 /**
  * @addtogroup BluetoothDriver Driver: Bluetooth
@@ -119,6 +119,16 @@ bool pbdrv_bluetooth_is_ready(void);
 const char *pbdrv_bluetooth_get_hub_name(void);
 
 /**
+ * Gets the Bluetooth chip firmware version.
+ *
+ * This should not be called until after the Bluetooth chip is powered on and
+ * initalized.
+ *
+ * @returns A string describing the version or an empty string if not supported.
+ */
+const char *pbdrv_bluetooth_get_fw_version(void);
+
+/**
  * Starts the advertising process, including configuring advertisements and
  * telling the Bluetooth chip to start advertising. Advertising should
  * automatically stop when a connection is made.
@@ -201,6 +211,10 @@ static inline bool pbdrv_bluetooth_is_ready(void) {
 
 static inline const char *pbdrv_bluetooth_get_hub_name(void) {
     return "Pybricks Hub";
+}
+
+static inline const char *pbdrv_bluetooth_get_fw_version(void) {
+    return "";
 }
 
 static inline void pbdrv_bluetooth_start_advertising(void) {

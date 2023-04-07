@@ -514,6 +514,12 @@ const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
 }
 
+const char *pbdrv_bluetooth_get_fw_version(void) {
+    // REVISIT: this should be linked to the init script as it can be updated in software
+    // init script version
+    return "v1.4";
+}
+
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0x0030, 0x0030, 0x00, 0x00, null_addr, 0x07, 0x00);
