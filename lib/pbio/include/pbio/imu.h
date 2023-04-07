@@ -26,6 +26,8 @@ pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geo
 
 bool pbio_imu_is_stationary(void);
 
+bool pbio_imu_is_ready(void);
+
 void pbio_imu_set_stationary_thresholds(float angular_velocity, float acceleration);
 
 void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values);

@@ -19,6 +19,8 @@
 - Added support for reading single-axis rotation, which is useful in
   applications like balancing robots, where full 3D orientation is not
   required, or even undesired.
+- Added `hub.imu.ready()` to check that the IMU has been calibrated and is
+  ready for use.
 - Added optional `window` parameter to `Motor.speed` to specify the
   differentiation window size that determines the average speed. This lets the
   user choose smaller values to get a more responsive (but noisier) or higher
