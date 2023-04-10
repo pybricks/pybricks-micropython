@@ -92,7 +92,7 @@ HCI_StatusCodes_t GAP_endDiscoverable(void)
     return HCI_sendHCICommand(GAP_END_DISCOVERABLE, NULL, 0);
 }
 
-HCI_StatusCodes_t GAP_updateAdvertistigData(Gap_adType_t adType, uint8_t dataLen,
+HCI_StatusCodes_t GAP_updateAdvertisingData(Gap_adType_t adType, uint8_t dataLen,
                                             uint8_t *advertData)
 {
     uint8_t pData[33]; // dataLen must be 1 to 31

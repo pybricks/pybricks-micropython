@@ -1666,7 +1666,7 @@ extern HCI_StatusCodes_t GAP_endDiscoverable(void);
  * @param dataLen       the size of @ref advertData in bytes
  * @param advertData    raw advertisting data
  */
-extern HCI_StatusCodes_t GAP_updateAdvertistigData(Gap_adType_t adType,
+extern HCI_StatusCodes_t GAP_updateAdvertisingData(Gap_adType_t adType,
                                          uint8_t dataLen, uint8_t *advertData);
 
 /**

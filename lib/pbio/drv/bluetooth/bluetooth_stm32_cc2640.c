@@ -298,7 +298,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     data[21] = 2; // length
     data[22] = GAP_ADTYPE_POWER_LEVEL;
     data[23] = tx_power;
-    GAP_updateAdvertistigData(GAP_AD_TYPE_ADVERTISEMNT_DATA, 24, data);
+    GAP_updateAdvertisingData(GAP_AD_TYPE_ADVERTISEMNT_DATA, 24, data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
@@ -314,7 +314,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     memcpy(&data[13], pbdrv_bluetooth_hub_name, hub_name_len);
     _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
 
-    GAP_updateAdvertistigData(GAP_AD_TYPE_SCAN_RSP_DATA, 13 + hub_name_len, data);
+    GAP_updateAdvertisingData(GAP_AD_TYPE_SCAN_RSP_DATA, 13 + hub_name_len, data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
