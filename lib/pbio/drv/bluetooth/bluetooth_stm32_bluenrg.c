@@ -274,13 +274,13 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
 
     hci_le_set_scan_response_data_begin(13 + hub_name_len, response_data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    hci_le_set_scan_response_data_end();
+    // hci_le_set_scan_response_data_end();
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_set_discoverable_begin(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
         0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gap_set_discoverable_end();
+    // aci_gap_set_discoverable_end();
 
     task->status = PBIO_SUCCESS;
 
@@ -298,7 +298,7 @@ static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_set_non_discoverable_begin();
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gap_set_non_discoverable_end();
+    // aci_gap_set_non_discoverable_end();
 
     task->status = PBIO_SUCCESS;
 
@@ -589,7 +589,7 @@ cancel_connect:
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_terminate_gap_procedure_begin(GAP_DIRECT_CONNECTION_ESTABLISHMENT_PROC);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gap_terminate_gap_procedure_end();
+    // aci_gap_terminate_gap_procedure_end();
 
     goto end_cancel;
 
@@ -597,7 +597,7 @@ cancel_discovery:
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gap_terminate_gap_procedure_end();
+    // aci_gap_terminate_gap_procedure_end();
 
 end_cancel:
     task->status = PBIO_ERROR_CANCELED;
@@ -804,7 +804,7 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     aci_gatt_update_char_value_begin(service_handle, pnp_id_char_handle,
         0, sizeof(PNP_ID) - 3, &PNP_ID[2]);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_update_char_value_end();
+    // aci_gatt_update_char_value_end();
 
     PT_END(pt);
 }
@@ -857,7 +857,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
             0, PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, buf);
     }
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_update_char_value_end();
+    // aci_gatt_update_char_value_end();
 
     PT_END(pt);
 }
@@ -1093,7 +1093,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
         aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, &mode);
     }
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_hal_write_config_data_end();
+    // aci_hal_write_config_data_end();
 
     // set the Bluetooth address
 
@@ -1110,21 +1110,21 @@ static PT_THREAD(hci_init(struct pt *pt)) {
         aci_hal_write_config_data_begin(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, bd_addr);
     }
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_hal_write_config_data_end();
+    // aci_hal_write_config_data_end();
 
     // set Tx power level
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_hal_set_tx_power_level_begin(1, 5); // 1.4 dBm - same as LEGO firmware
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_hal_set_tx_power_level_end();
+    // aci_hal_set_tx_power_level_end();
 
     // init GATT layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_init_begin();
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_init_end();
+    // aci_gatt_init_end();
 
     // init GAP layer
 
@@ -1139,7 +1139,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     aci_gatt_update_char_value_begin(gap_service_handle, gap_dev_name_char_handle,
         0, strlen(pbdrv_bluetooth_hub_name), pbdrv_bluetooth_hub_name);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_update_char_value_end();
+    // aci_gatt_update_char_value_end();
 
     // The chip always uses the same random address, so we have to generate
     // an actually random one to get a new address each time. This must be
@@ -1158,7 +1158,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
         hci_le_set_random_address_begin(rand_buf);
     }
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    hci_le_set_random_address_end();
+    // hci_le_set_random_address_end();
 
     PT_END(pt);
 }
