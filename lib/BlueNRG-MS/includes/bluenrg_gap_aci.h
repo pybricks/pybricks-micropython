@@ -411,7 +411,8 @@ tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authoriz
  *                         @arg @ref NON_RESOLVABLE_PRIVATE_ADDR
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_set_non_connectable(uint8_t adv_type, uint8_t own_address_type);
+void aci_gap_set_non_connectable_begin(uint8_t adv_type, uint8_t own_address_type);
+#define aci_gap_set_non_connectable_end hci_le_command_end
 
 /**
  * @brief Put the device into undirected connectable mode.
@@ -470,7 +471,8 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
  *
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData);
+void aci_gap_update_adv_data_begin(uint8_t AdvLen, const uint8_t *AdvData);
+#define aci_gap_update_adv_data_end hci_le_command_end
 
 /**
  * @brief Delete an AD Type
@@ -479,7 +481,8 @@ tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData);
  * @param ad_type One of the allowed AD types (see @ref AD_Types)
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_delete_ad_type(uint8_t ad_type);
+void aci_gap_delete_ad_type_begin(uint8_t ad_type);
+#define aci_gap_delete_ad_type_end hci_le_command_end
 
 /**
  * @brief Get the current security settings
@@ -964,9 +967,10 @@ tBleStatus aci_gap_get_bonded_devices(uint8_t *num_devices, uint8_t *device_list
  * 					 @endcode
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_interv_max, uint8_t adv_type,
+void aci_gap_set_broadcast_mode_begin(uint16_t adv_interv_min, uint16_t adv_interv_max, uint8_t adv_type,
                                       uint8_t own_addr_type, uint8_t adv_data_length, const uint8_t *adv_data,  uint8_t num_whitelist_entries,
                                       const uint8_t *addr_array);
+#define aci_gap_set_broadcast_mode_end hci_le_command_end
 
 /**
  * @brief Starts an observation procedure, when the device is in Observer role.
@@ -991,8 +995,9 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
  * 						   @arg 0x01: Filter duplicates
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t scan_window, uint8_t scan_type,
+void aci_gap_start_observation_procedure_begin(uint16_t scan_interval, uint16_t scan_window, uint8_t scan_type,
 						 uint8_t own_address_type, uint8_t filter_duplicates);
+#define aci_gap_start_observation_procedure_end hci_le_command_end
 
 /**
  * @brief The command finds whether a device is bonded.

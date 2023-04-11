@@ -347,25 +347,19 @@ tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authoriz
   return status;
 }
 
-tBleStatus aci_gap_set_non_connectable(uint8_t adv_type, uint8_t own_address_type)
+void aci_gap_set_non_connectable_begin(uint8_t adv_type, uint8_t own_address_type)
 {
-  struct hci_request_and_response rq;
+  struct hci_request rq;
   gap_set_non_connectable_cp cp;
-  uint8_t status;
 
   cp.advertising_event_type = adv_type;
   cp.own_address_type = own_address_type;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_NON_CONNECTABLE);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.rparam = &status;
-  rq.rlen = 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  return status;
+  hci_send_req(&rq);
 }
 
 tBleStatus aci_gap_set_undirected_connectable(uint8_t own_addr_type, uint8_t adv_filter_policy)
@@ -413,52 +407,34 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
 
 }
 
-tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData)
+void aci_gap_update_adv_data_begin(uint8_t AdvLen, const uint8_t *AdvData)
 {
-  struct hci_request_and_response rq;
-  uint8_t status;
+  struct hci_request rq;
   uint8_t buffer[32];
-  uint8_t indx = 0;
 
-  if (AdvLen > (sizeof(buffer)-1))
-    return BLE_STATUS_INVALID_PARAMS;
+  buffer[0] = AdvLen;
 
-  buffer[indx] = AdvLen;
-  indx++;
+  memcpy(buffer + 1, AdvData, AdvLen);
 
-  memcpy(buffer + indx, AdvData, AdvLen);
-  indx +=  AdvLen;
-
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_UPDATE_ADV_DATA);
-  rq.cparam = (void *)buffer;
-  rq.clen = indx;
-  rq.rparam = &status;
-  rq.rlen = 1;
+  rq.cparam = buffer;
+  rq.clen = AdvLen + 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  return status;
+  hci_send_req(&rq);
 }
 
-tBleStatus aci_gap_delete_ad_type(uint8_t ad_type)
+void aci_gap_delete_ad_type_begin(uint8_t ad_type)
 {
-  struct hci_request_and_response rq;
+  struct hci_request rq;
   gap_delete_ad_type_cp cp;
-  uint8_t status;
 
   cp.ad_type = ad_type;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_DELETE_AD_TYPE);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.rparam = &status;
-  rq.rlen = 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  return status;
+  hci_send_req(&rq);
 }
 
 tBleStatus aci_gap_get_security_level(uint8_t* mitm_protection, uint8_t* bonding,
@@ -874,18 +850,14 @@ tBleStatus aci_gap_resolve_private_address(const tBDAddr private_address, tBDAdd
   return 0;
 }
 
-tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_interv_max, uint8_t adv_type,
+void aci_gap_set_broadcast_mode_begin(uint16_t adv_interv_min, uint16_t adv_interv_max, uint8_t adv_type,
                                       uint8_t own_addr_type, uint8_t adv_data_length, const uint8_t *adv_data,  uint8_t num_whitelist_entries,
                                   const uint8_t *addr_array)
 {
-  struct hci_request_and_response rq;
+  struct hci_request rq;
   gap_set_broadcast_mode_cp cp;
-  uint8_t status;
   uint8_t indx = 0;
-  uint8_t variable_size =  1 + adv_data_length + 1 + num_whitelist_entries*7;
-
-  if (variable_size > sizeof(cp.var_len_data) )
-    return BLE_STATUS_INVALID_PARAMS;
+  uint8_t variable_size = 1 + adv_data_length + 1 + num_whitelist_entries * 7;
 
   cp.adv_interv_min = htobs(adv_interv_min);
   cp.adv_interv_max = htobs(adv_interv_max);
@@ -897,27 +869,21 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
   memcpy(cp.var_len_data + indx, adv_data, adv_data_length);
   indx += adv_data_length;
   cp.var_len_data[indx] = num_whitelist_entries;
-  indx ++;
-  memcpy(cp.var_len_data + indx, addr_array, num_whitelist_entries*7);
+  indx++;
+  memcpy(cp.var_len_data + indx, addr_array, num_whitelist_entries * 7);
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_BROADCAST_MODE);
   rq.cparam = &cp;
   rq.clen = GAP_SET_BROADCAST_MODE_CP_SIZE + variable_size;
-  rq.rparam = &status;
-  rq.rlen = 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  return status;
+  hci_send_req(&rq);
 }
 
-tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t scan_window, uint8_t scan_type,
+void aci_gap_start_observation_procedure_begin(uint16_t scan_interval, uint16_t scan_window, uint8_t scan_type,
                                                        uint8_t own_address_type, uint8_t filter_duplicates)
 {
-  struct hci_request_and_response rq;
+  struct hci_request rq;
   gap_start_observation_proc_cp cp;
-  uint8_t status;
 
   cp.scan_interval = scan_interval;
   cp.scan_window = scan_window;
@@ -925,17 +891,11 @@ tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t 
   cp.own_address_type = own_address_type;
   cp.filter_duplicates = filter_duplicates;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_OBSERVATION_PROC);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.event = EVT_CMD_STATUS;
-  rq.rparam = &status;
-  rq.rlen = 1;
 
-  hci_send_req_recv_rsp(&rq);
-
-  return status;
+  hci_send_req(&rq);
 }
 
 tBleStatus aci_gap_is_device_bonded(uint8_t peer_address_type, const tBDAddr peer_address)
