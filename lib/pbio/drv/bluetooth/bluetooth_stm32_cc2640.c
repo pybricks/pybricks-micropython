@@ -298,7 +298,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     data[21] = 2; // length
     data[22] = GAP_ADTYPE_POWER_LEVEL;
     data[23] = tx_power;
-    GAP_updateAdvertisingData(GAP_AD_TYPE_ADVERTISEMNT_DATA, 24, data);
+    GAP_updateAdvertisingData(GAP_AD_TYPE_ADVERTISEMENT_DATA, 24, data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 

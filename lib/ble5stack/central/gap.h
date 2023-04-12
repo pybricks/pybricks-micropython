@@ -828,7 +828,7 @@ enum Gap_ParamIDs_t
 typedef enum
 {
     GAP_AD_TYPE_SCAN_RSP_DATA,
-    GAP_AD_TYPE_ADVERTISEMNT_DATA,
+    GAP_AD_TYPE_ADVERTISEMENT_DATA,
 } Gap_adType_t;
 
 typedef enum
