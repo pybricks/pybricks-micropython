@@ -28,6 +28,7 @@
 #include <pbsys/program_load.h>
 
 #include <contiki.h>
+#include <contiki-lib.h>
 #include <lego_lwp3.h>
 
 #include <att.h>

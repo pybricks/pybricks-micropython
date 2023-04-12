@@ -11,6 +11,7 @@
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack.h>
 #include <contiki.h>
+#include <contiki-lib.h>
 #include <lego_lwp3.h>
 
 #include <pbdrv/bluetooth.h>
@@ -155,13 +156,46 @@ static void nordic_can_send(void *context) {
 }
 
 /**
+ * Queues a tasks and runs the first iteration if there is no other task already
+ * running.
+ *
+ * @param [in]  task    An uninitialized task.
+ * @param [in]  thread  The task thread to attach to the task.
+ * @param [in]  context The context to attach to the task.
+ */
+static void start_task(pbio_task_t *task, pbio_task_thread_t thread, void *context) {
+    pbio_task_init(task, thread, context);
+
+    if (list_head(task_queue) != NULL || !pbio_task_run_once(task)) {
+        list_add(task_queue, task);
+    }
+}
+
+/**
  * Runs tasks that may be waiting for event and notifies external subscriber.
  *
  * @param [in]  packet  Pointer to the raw packet data.
  */
 static void propagate_event(uint8_t *packet) {
     event_packet = packet;
-    pbio_task_queue_run_once(task_queue);
+
+    for (;;) {
+        pbio_task_t *current_task = list_head(task_queue);
+
+        if (!current_task) {
+            break;
+        }
+
+        if (current_task->status != PBIO_ERROR_AGAIN || pbio_task_run_once(current_task)) {
+            // remove the task from the queue only if the task is complete
+            list_remove(task_queue, current_task);
+            // then start the next task
+            continue;
+        }
+
+        break;
+    }
+
     event_packet = NULL;
 
     if (bluetooth_on_event) {
@@ -612,8 +646,7 @@ cancel:
 }
 
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
-    pbio_task_init(task, scan_and_connect_task, context);
-    pbio_task_queue_add(task_queue, task);
+    start_task(task, scan_and_connect_task, context);
 }
 
 static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
@@ -652,8 +685,7 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 }
 
 void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
-    pbio_task_init(task, write_remote_task, value);
-    pbio_task_queue_add(task_queue, task);
+    start_task(task, write_remote_task, value);
 }
 
 void pbdrv_bluetooth_disconnect_remote(void) {

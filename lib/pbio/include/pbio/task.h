@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2021-2023 The Pybricks Authors
 
 /**
  * @addtogroup Task pbio/task: Tasks
@@ -14,7 +14,6 @@
 #include <stdbool.h>
 
 #include <contiki.h>
-#include <contiki-lib.h>
 
 #include <pbio/error.h>
 
@@ -47,8 +46,6 @@ struct _pbio_task_t {
 void pbio_task_init(pbio_task_t *task, pbio_task_thread_t thread, void *context);
 bool pbio_task_run_once(pbio_task_t *task);
 void pbio_task_cancel(pbio_task_t *task);
-void pbio_task_queue_add(list_t queue, pbio_task_t *task);
-void pbio_task_queue_run_once(list_t queue);
 
 #endif // _PBIO_TASK_H_
 
