@@ -119,6 +119,8 @@ static uint16_t hci_command_opcode;
 static bool hci_command_status;
 // set to false when hci command is started and true when command is completed
 static bool hci_command_complete;
+// used to wait for device discovery done event
+static bool device_discovery_done;
 // used to synchronize advertising data handler
 static bool advertising_data_received;
 // handle to connected Bluetooth device
@@ -463,13 +465,18 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     // start scanning
 
-    // calling GAP_DeviceDiscoveryRequest can cause notifications to be dropped,
-    // so we need to ensure than none are pending before we proceeded
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
     context->status = read_buf[8]; // debug
+
+    if (context->status != bleSUCCESS) {
+        task->status = ble_error_to_pbio_error(context->status);
+        PT_EXIT(pt);
+    }
+
+    device_discovery_done = false;
 
 try_again:
 
@@ -539,6 +546,8 @@ try_again:
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryCancel();
     PT_WAIT_UNTIL(pt, hci_command_status);
+
+    PT_WAIT_UNTIL(pt, device_discovery_done);
 
     // connect
 
@@ -666,6 +675,8 @@ cancel_discovery:
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryCancel();
     PT_WAIT_UNTIL(pt, hci_command_status);
+
+    PT_WAIT_UNTIL(pt, device_discovery_done);
 
 end_cancel:
     task->status = PBIO_ERROR_CANCELED;
@@ -1182,7 +1193,7 @@ static void handle_event(uint8_t *packet) {
                 break;
 
                 case GAP_DEVICE_DISCOVERY_DONE:
-                    // TODO: do something with this - occurs when scanning is complete
+                    device_discovery_done = true;
                     break;
 
                 case GAP_LINK_ESTABLISHED:
