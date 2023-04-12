@@ -1713,6 +1713,16 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         bluetooth_reset(RESET_STATE_OUT_LOW);
         bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = false;
         conn_handle = remote_handle = remote_lwp3_char_handle = NO_CONNECTION;
+
+        pbio_task_t *task;
+        while ((task = list_pop(task_queue)) != NULL) {
+            if (task->status == PBIO_ERROR_AGAIN) {
+                task->status = PBIO_ERROR_CANCELED;
+                // REVISIT: some tasks have done() callback that probably needs
+                // to be called here
+            }
+        }
+
         PROCESS_EXIT();
     });
 

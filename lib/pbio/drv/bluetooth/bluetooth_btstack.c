@@ -494,6 +494,17 @@ void pbdrv_bluetooth_init(void) {
 
 void pbdrv_bluetooth_power_on(bool on) {
     hci_power_control(on ? HCI_POWER_ON : HCI_POWER_OFF);
+
+    // When powering off, cancel all pending tasks.
+    if (!on) {
+        pbio_task_t *task;
+
+        while ((task = list_pop(task_queue)) != NULL) {
+            if (task->status == PBIO_ERROR_AGAIN) {
+                task->status = PBIO_ERROR_CANCELED;
+            }
+        }
+    }
 }
 
 bool pbdrv_bluetooth_is_ready(void) {
