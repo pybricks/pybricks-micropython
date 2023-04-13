@@ -100,6 +100,10 @@ static uint16_t remote_lwp3_char_handle;
 // used to wait for Evt_Blue_Gatt_Tx_Pool_Available
 static bool tx_pool_available;
 
+static bool is_broadcasting;
+static bool is_observing;
+static pbdrv_bluetooth_start_observing_callback_t observe_callback;
+
 // Pybricks GATT service handles
 static uint16_t pybricks_service_handle;
 static uint16_t pybricks_command_event_char_handle;
@@ -134,6 +138,9 @@ static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
 static pbio_error_t ble_error_to_pbio_error(tBleStatus status) {
     if (status == BLE_STATUS_SUCCESS) {
         return PBIO_SUCCESS;
+    }
+    if (status == BLE_STATUS_FAILED) {
+        return PBIO_ERROR_INVALID_OP;
     }
     if (status == BLE_STATUS_TIMEOUT) {
         return PBIO_ERROR_TIMEDOUT;
@@ -683,6 +690,159 @@ void pbdrv_bluetooth_disconnect_remote(void) {
     start_task(&task, disconnect_remote_task, NULL);
 }
 
+static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+
+    PT_BEGIN(pt);
+
+    if (value->size > MAX_ADV_DATA_LEN) {
+        task->status = PBIO_ERROR_INVALID_ARG;
+        PT_EXIT(pt);
+    }
+
+    tBleStatus status;
+
+    if (!is_broadcasting) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_set_non_connectable_begin(ADV_NONCONN_IND, STATIC_RANDOM_ADDR);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        status = aci_gap_set_non_connectable_end();
+
+        if (status != BLE_STATUS_SUCCESS) {
+            task->status = ble_error_to_pbio_error(status);
+            PT_EXIT(pt);
+        }
+
+        // These AD types are left over from connectable discovery and need
+        // to be deleted _after_ starting non-connectable advertising.
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_delete_ad_type_begin(AD_TYPE_128_BIT_SERV_UUID);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_delete_ad_type_begin(AD_TYPE_TX_POWER_LEVEL);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+
+        // Errors from deleting are ignored since we should only get an error
+        // if the AD does not exist, which is OK.
+
+        is_broadcasting = true;
+    }
+
+    // This has to be done _after_ other data is delete to make sure it fits.
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_update_adv_data_begin(value->size, value->data);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    status = aci_gap_update_adv_data_end();
+
+    if (status != BLE_STATUS_SUCCESS) {
+        task->status = ble_error_to_pbio_error(status);
+        PT_EXIT(pt);
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    start_task(task, broadcast_task, value);
+}
+
+static PT_THREAD(stop_broadcast_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (is_broadcasting) {
+        // REVISIT: might need to delete advertising data here
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_set_non_discoverable_begin();
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        // tBleStatus status = aci_gap_set_non_discoverable_end();
+
+        // if (status == BLE_STATUS_SUCCESS) {
+        //     task->status = ble_error_to_pbio_error(status);
+        //     PT_EXIT(pt);
+        // }
+
+        is_broadcasting = false;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_broadcasting(void) {
+    static pbio_task_t task;
+    start_task(&task, stop_broadcast_task, NULL);
+}
+
+static PT_THREAD(observe_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (!is_observing) {
+        // NB: we should probably be using aci_gap_start_observation_procedure_begin
+        // here, but we already use aci_gap_start_general_conn_establish_proc_begin
+        // elsewhere, so this reduces code size and we would also have to enable
+        // the observer role which would use more RAM in the Bluetooth chip
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x30, 0x30, STATIC_RANDOM_ADDR, 0);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        tBleStatus status = aci_gap_start_general_conn_establish_proc_end();
+
+        if (status != BLE_STATUS_SUCCESS) {
+            task->status = ble_error_to_pbio_error(status);
+            PT_EXIT(pt);
+        }
+
+        is_observing = true;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
+    observe_callback = callback;
+    start_task(task, observe_task, NULL);
+}
+
+static PT_THREAD(stop_observe_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (is_observing) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        // tBleStatus status = aci_gap_terminate_gap_procedure_end();
+
+        // if (status != BLE_STATUS_SUCCESS) {
+        //     task->status = ble_error_to_pbio_error(status);
+        //     PT_EXIT(pt);
+        // }
+
+        // TODO: wait for Evt_Blue_Gap_Procedure_Completed
+
+        is_observing = false;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_observing(void) {
+    observe_callback = NULL;
+
+    static pbio_task_t task;
+    start_task(&task, stop_observe_task, NULL);
+}
+
 // overrides weak function in start_*.S
 void DMA1_Channel4_5_IRQHandler(void) {
     // if CH4 transfer complete
@@ -907,7 +1067,14 @@ static void handle_event(hci_event_pckt *event) {
                 break;
 
                 case EVT_LE_ADVERTISING_REPORT: {
-                    // le_advertising_info *subevt = (void *)evt->data;
+                    // NB: assumes num_reports is always 1
+                    le_advertising_info *subevt = (void *)(evt->data + 1);
+
+                    if (observe_callback) {
+                        observe_callback(subevt->evt_type, subevt->data_RSSI,
+                            subevt->data_length, subevt->data_RSSI[subevt->data_length]);
+                    }
+
                     advertising_data_received = true;
                 }
                 break;
@@ -1264,7 +1431,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     PROCESS_EXITHANDLER({
         spi_disable_cs();
         bluetooth_reset(true);
-        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = false;
+        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = is_broadcasting = is_observing = false;
         conn_handle = remote_handle = remote_lwp3_char_handle = 0;
 
         pbio_task_t *task;
