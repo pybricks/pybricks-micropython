@@ -34,12 +34,17 @@ static const pb_obj_enum_member_t *technichub_buttons[] = {
 STATIC mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_OBJ(top_side, pb_type_Axis_Z_obj),
-        PB_ARG_DEFAULT_OBJ(front_side, pb_type_Axis_X_obj));
+        PB_ARG_DEFAULT_OBJ(front_side, pb_type_Axis_X_obj)
+        #if PYBRICKS_PY_COMMON_BLE
+        , PB_ARG_DEFAULT_INT(broadcast_channel, 0)
+        , PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj)
+        #endif
+        );
 
     hubs_TechnicHub_obj_t *self = mp_obj_malloc(hubs_TechnicHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     #if PYBRICKS_PY_COMMON_BLE
-    self->ble = MP_OBJ_FROM_PTR(&pb_module_ble);
+    self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
     self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(technichub_buttons), technichub_buttons, pbio_button_is_pressed);
     self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);

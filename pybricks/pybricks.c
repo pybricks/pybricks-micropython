@@ -122,7 +122,11 @@ void pb_package_pybricks_init(bool import_all) {
 }
 #endif // PYBRICKS_OPT_COMPILER
 
+// REVISIT: move these to object finalizers if we enable finalizers in the GC
 void pb_package_pybricks_deinit(void) {
+    #if PYBRICKS_PY_COMMON_BLE
+    pb_type_BLE_cleanup();
+    #endif
     // Disconnect from remote.
     #if PYBRICKS_PY_PUPDEVICES
     pb_type_Remote_cleanup();

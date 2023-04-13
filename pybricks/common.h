@@ -25,7 +25,8 @@ void pb_package_pybricks_init(bool import_all);
 void pb_package_pybricks_deinit(void);
 
 #if PYBRICKS_PY_COMMON_BLE
-extern const mp_obj_module_t pb_module_ble;
+mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in);
+void pb_type_BLE_cleanup(void);
 #endif
 
 #if PYBRICKS_PY_COMMON_CHARGER

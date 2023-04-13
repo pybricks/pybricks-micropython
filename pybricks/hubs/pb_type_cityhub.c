@@ -11,6 +11,7 @@
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
 
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 typedef struct _hubs_CityHub_obj_t {
@@ -29,10 +30,16 @@ static const pb_obj_enum_member_t *cityhub_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    #if PYBRICKS_PY_COMMON_BLE
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_INT(broadcast_channel, 0),
+        PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj));
+    #endif
+
     hubs_CityHub_obj_t *self = mp_obj_malloc(hubs_CityHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     #if PYBRICKS_PY_COMMON_BLE
-    self->ble = MP_OBJ_FROM_PTR(&pb_module_ble);
+    self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
     self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(cityhub_buttons), cityhub_buttons, pbio_button_is_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
