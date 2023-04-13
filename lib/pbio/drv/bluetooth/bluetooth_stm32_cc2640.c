@@ -116,6 +116,10 @@ volatile uint8_t spi_n_srdy_count;
 // set to false when xfer is started and true when xfer is complete
 volatile bool spi_xfer_complete;
 
+static bool is_broadcasting;
+static bool is_observing;
+static pbdrv_bluetooth_start_observing_callback_t observe_callback;
+
 // set to the pending hci command opcode when a command is sent
 static uint16_t hci_command_opcode;
 // set to false when hci command is started and true when command status is received
@@ -786,6 +790,142 @@ void pbdrv_bluetooth_disconnect_remote(void) {
     start_task(&task, disconnect_remote_task, NULL);
 }
 
+static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+
+    PT_BEGIN(pt);
+
+    if (value->size > B_MAX_ADV_LEN) {
+        task->status = PBIO_ERROR_INVALID_ARG;
+        PT_EXIT(pt);
+    }
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_updateAdvertisingData(GAP_AD_TYPE_ADVERTISEMENT_DATA, value->size, value->data);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    if (read_buf[8] != bleSUCCESS) {
+        task->status = ble_error_to_pbio_error(read_buf[8]);
+        PT_EXIT(pt);
+    }
+
+    // wait for GAP update advert data done event
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+
+    if (!is_broadcasting) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_makeDiscoverable(ADV_NONCONN_IND, GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
+            GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        // NB: This command succeeds on city hub but it doesn't actually start
+        // advertising. Apparently, only connectable advertisements work with
+        // that firmware version.
+
+        if (read_buf[8] != bleSUCCESS) {
+            task->status = ble_error_to_pbio_error(read_buf[8]);
+            PT_EXIT(pt);
+        }
+
+        // wait for make discoverable done event
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+
+        is_broadcasting = true;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    start_task(task, broadcast_task, value);
+}
+
+static PT_THREAD(stop_broadcast_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (is_broadcasting) {
+        // TODO: resolve city hub broadcast issues
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_endDiscoverable();
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        if (read_buf[8] == bleSUCCESS) {
+            // wait for discovery cancel done event
+            PT_WAIT_UNTIL(pt, hci_command_complete);
+        }
+
+        // Status could also be bleIncorrectMode which means "Not advertising".
+        // This is not expected, but should be safe to ignore.
+
+        is_broadcasting = false;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_broadcasting(void) {
+    static pbio_task_t task;
+    start_task(&task, stop_broadcast_task, NULL);
+}
+
+static PT_THREAD(observe_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (!is_observing) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_NONDISCOVERABLE, 0, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        if (read_buf[8] != bleSUCCESS) {
+            task->status = ble_error_to_pbio_error(read_buf[8]);
+            PT_EXIT(pt);
+        }
+
+        device_discovery_done = false;
+        is_observing = true;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
+    observe_callback = callback;
+    start_task(task, observe_task, NULL);
+}
+
+static PT_THREAD(stop_observe_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (is_observing) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryCancel();
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        if (read_buf[8] == bleSUCCESS) {
+            PT_WAIT_UNTIL(pt, device_discovery_done);
+        }
+
+        is_observing = false;
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_observing(void) {
+    observe_callback = NULL;
+
+    static pbio_task_t task;
+    start_task(&task, stop_observe_task, NULL);
+}
+
 // Driver interrupt callbacks
 
 void pbdrv_bluetooth_stm32_cc2640_srdy_irq(bool srdy) {
@@ -1252,6 +1392,17 @@ static void handle_event(uint8_t *packet) {
                     break;
 
                 case GAP_DEVICE_INFORMATION:
+                    if (observe_callback) {
+                        uint8_t event_type = data[3];
+                        // uint8_t addr_type = data[4];
+                        // uint8_t *addr = &data[5];
+                        int8_t rssi = data[11];
+                        uint8_t data_len = data[12];
+                        uint8_t *data_field = &data[13];
+
+                        observe_callback(event_type, data_field, data_len, rssi);
+                    }
+
                     advertising_data_received = true;
                     break;
 
@@ -1728,7 +1879,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     PROCESS_EXITHANDLER({
         spi_set_mrdy(false);
         bluetooth_reset(RESET_STATE_OUT_LOW);
-        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = false;
+        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = is_broadcasting = is_observing = false;
         conn_handle = remote_handle = remote_lwp3_char_handle = NO_CONNECTION;
 
         pbio_task_t *task;

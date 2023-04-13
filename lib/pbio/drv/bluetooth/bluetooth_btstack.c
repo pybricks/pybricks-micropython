@@ -98,6 +98,10 @@ static pup_handset_t handset;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
+static bool is_broadcasting;
+static bool is_observing;
+static pbdrv_bluetooth_start_observing_callback_t observe_callback;
+
 // note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
 // go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could go
 // to 4000000, which is the max rating of the CC2564C.
@@ -363,6 +367,11 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
             gap_event_advertising_report_get_address(packet, address);
 
+            if (observe_callback) {
+                int8_t rssi = gap_event_advertising_report_get_rssi(packet);
+                observe_callback(event_type, data, data_length, rssi);
+            }
+
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // HACK: this is making major assumptions about how the advertising data
                 // is laid out. So far LEGO devices seem consistent in this.
@@ -475,6 +484,7 @@ void pbdrv_bluetooth_init(void) {
     sm_set_ir((uint8_t *)pdata->ir_key);
 
     gap_random_address_set_mode(GAP_RANDOM_ADDRESS_NON_RESOLVABLE);
+    gap_set_max_number_peripheral_connections(2);
 
     // GATT Client setup
     gatt_client_init();
@@ -522,7 +532,7 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
 
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0x0030, 0x0030, 0x00, 0x00, null_addr, 0x07, 0x00);
+    gap_advertisements_set_params(0x30, 0x30, ADV_IND, 0x00, null_addr, 0x07, 0x00);
 
     static const uint8_t adv_data[] = {
         // Flags general discoverable, BR/EDR not supported
@@ -712,6 +722,59 @@ void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *va
 void pbdrv_bluetooth_disconnect_remote(void) {
     if (handset.con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(handset.con_handle);
+    }
+}
+
+void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    if (value->size > LE_ADVERTISING_DATA_SIZE) {
+        task->status = PBIO_ERROR_INVALID_ARG;
+        return;
+    }
+
+    bd_addr_t null_addr = { };
+    gap_advertisements_set_params(0xA0, 0xA0, ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
+
+    // have to keep copy of data here since BTStack doesn't copy
+    static uint8_t static_data[LE_ADVERTISING_DATA_SIZE];
+    memcpy(static_data, value->data, value->size);
+
+    gap_advertisements_set_data(value->size, static_data);
+
+    if (!is_broadcasting) {
+        gap_advertisements_enable(true);
+        is_broadcasting = true;
+    }
+
+    // REVISIT: use callback to actually wait for start?
+    task->status = PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_stop_broadcasting(void) {
+    if (is_broadcasting) {
+        gap_advertisements_enable(false);
+        is_broadcasting = false;
+    }
+}
+
+void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
+    observe_callback = callback;
+
+    if (!is_observing) {
+        gap_set_scan_params(0, 0x30, 0x30, 0);
+        gap_start_scan();
+        is_observing = true;
+    }
+
+    // REVISIT: use callback to actually wait for start?
+    task->status = PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_stop_observing(void) {
+    observe_callback = NULL;
+
+    if (is_observing) {
+        gap_stop_scan();
+        is_observing = false;
     }
 }
 

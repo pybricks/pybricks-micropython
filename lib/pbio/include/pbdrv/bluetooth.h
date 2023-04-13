@@ -84,6 +84,31 @@ typedef struct {
     char name[20];
 } pbdrv_bluetooth_scan_and_connect_context_t;
 
+/** Advertisement types. */
+typedef enum {
+    // NB: the numeric values come from the Bluetooth spec - do not change!
+
+    /** Undirected, scannable, connectable. */
+    PBDRV_BLUETOOTH_AD_TYPE_ADV_IND = 0,
+    /** Directed, scannable, connectable. */
+    PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND = 1,
+    /** Undirected, scannable, non-connectable. */
+    PBDRV_BLUETOOTH_AD_TYPE_ADV_SCAN_IND = 2,
+    /** Undirected, non-scannable, non-connectable. */
+    PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND = 3,
+    /** Scan response. */
+    PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP = 4,
+} pbdrv_bluetooth_ad_type_t;
+
+/**
+ * Callback called when advertising data is received.
+ * @param [in]  type    The advertisement type.
+ * @param [in]  data    The advertising data.
+ * @param [in]  length  The length of @p data in bytes.
+ * @param [in]  rssi    The RSSI value for the event.
+ */
+typedef void (*pbdrv_bluetooth_start_observing_callback_t)(pbdrv_bluetooth_ad_type_t type, const uint8_t *data, uint8_t length, int8_t rssi);
+
 #ifdef PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE
 #if PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE < 23 || PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE > 515
 #error PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE out of range
@@ -198,6 +223,44 @@ void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *va
 // TODO: make this a generic disconnect
 void pbdrv_bluetooth_disconnect_remote(void);
 
+/**
+ * Starts broadcasting undirected, non-connectable, non-scannable advertisement
+ * data.
+ *
+ * Call again to update the advertising data if needed.
+ *
+ * The advertising data must follow the Bluetooth specification. The length
+ * is validated, but the data is itself is not.
+ *
+ * @param [out] task    An uninitialized task to be filled in.
+ * @param [in]  value   The advertising data.
+ */
+void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
+
+/**
+ * Stops broadcasting that was started by pbdrv_bluetooth_start_broadcasting().
+ *
+ * It is safe to call this function even when broadcasting has not been started.
+ */
+void pbdrv_bluetooth_stop_broadcasting(void);
+
+/**
+ * Starts observing, non-connectable, non-scannable advertisements.
+ *
+ * It is safe to call this function multiple times without stopping first.
+ *
+ * @param [out] task        An uninitialized task to be filled in.
+ * @param [in]  callback    A callback that is called each time advertising data is received.
+ */
+void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback);
+
+/**
+ * Stops observing/scanning that was started by pbdrv_bluetooth_start_observing().
+ *
+ * It is safe to call this function even when observing has not been started.
+ */
+void pbdrv_bluetooth_stop_observing(void);
+
 #else // PBDRV_CONFIG_BLUETOOTH
 
 #define pbdrv_bluetooth_init
@@ -225,6 +288,7 @@ static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t con
 }
 
 static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
+    context->done();
 }
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -234,12 +298,28 @@ static inline void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_rece
 }
 
 static inline void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline void pbdrv_bluetooth_disconnect_remote(void) {
+}
+
+static inline void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_stop_broadcasting(void) {
+}
+
+static inline void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_stop_observing(void) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH
