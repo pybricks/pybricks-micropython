@@ -319,7 +319,7 @@ void nx__lcd_shutdown(void) {
   nx_systick_wait_ms(20);
 }
 
-void nx__lcd_sync_refresh() {
+void nx__lcd_sync_refresh(void) {
   int i, j;
 
   /* Start the data transfer. */

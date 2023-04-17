@@ -45,7 +45,7 @@ void pb_stack_get_info(char **sstack, char **estack) {
 }
 
 // TODO
-bool interrupts_get() {
+static bool interrupts_get(void) {
     return true;
 }
 

@@ -104,7 +104,7 @@ static void print_final_exception(mp_obj_t exc) {
 }
 
 #if PYBRICKS_OPT_COMPILER
-static void run_repl() {
+static void run_repl(void) {
     // Reset REPL history.
     readline_init0();
     nlr_buf_t nlr;

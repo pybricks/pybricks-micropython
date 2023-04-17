@@ -29,7 +29,7 @@ static int64_t get_mdeg(pbio_angle_t *a) {
     return (int64_t)a->rotations * (int64_t)360000 + (int64_t)a->millidegrees;
 }
 
-static int32_t get_random() {
+static int32_t get_random(void) {
     return rand() - RAND_MAX / 2;
 }
 

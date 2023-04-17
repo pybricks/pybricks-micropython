@@ -71,7 +71,7 @@ STATIC void pb_type_Speaker_generate_square_wave(uint16_t sample_attenuator) {
 }
 
 // For 0 frequencies that are just flat lines.
-STATIC void pb_type_Speaker_generate_line_wave() {
+STATIC void pb_type_Speaker_generate_line_wave(void) {
     for (size_t i = 0; i < MP_ARRAY_SIZE(waveform_data); i++) {
         waveform_data[i] = INT16_MAX;
     }

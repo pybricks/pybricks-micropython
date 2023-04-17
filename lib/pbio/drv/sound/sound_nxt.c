@@ -190,7 +190,7 @@ static void sound_fill_sample_buffer(void) {
 
 #else // (PDM_ENCODE == PDM_LOOKUP)
 
-static void sound_fill_sample_buffer() {
+static void sound_fill_sample_buffer(void) {
     // Fill the sample buffer converting the PCM samples in PDM samples. This
     // version uses a second order sigma-delta convertor. The actual conversion
     // used is unstable for values at the full range points. To avoid this

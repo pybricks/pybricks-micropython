@@ -70,7 +70,7 @@
 #define BYTE_ACCESS(r) (*(volatile uint8_t *)&(r))
 
 // Wait for spi operation to complete
-static void motion_spi_wait() {
+static void motion_spi_wait(void) {
     do {
         while (!(SPI1->SR & SPI_SR_RXNE)) {
             MICROPY_EVENT_POLL_HOOK;
