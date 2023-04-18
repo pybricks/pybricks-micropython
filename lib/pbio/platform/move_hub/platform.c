@@ -6,6 +6,7 @@
 #include <pbdrv/gpio.h>
 #include <pbio/button.h>
 #include <pbio/uartdev.h>
+#include <pbio/lego_port.h>
 
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/counter/counter_lpf2.h"
@@ -346,3 +347,36 @@ void SystemInit(void) {
     pbdrv_gpio_t power_gpio = { .bank = GPIOB, .pin = 11 };
     pbdrv_gpio_out_high(&power_gpio);
 }
+
+const pbio_lego_port_platform_data_t lego_port_data[] = {
+    {
+        .port_id = PBIO_PORT_ID_A,
+        .default_id = PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR,
+        .default_mode = LEGO_PORT_MODE_PUP_MOTOR_INTERNAL,
+        .available_modes = LEGO_PORT_MODE_PUP_MOTOR_INTERNAL,
+    },
+    {
+        .port_id = PBIO_PORT_ID_B,
+        .default_id = PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR,
+        .default_mode = LEGO_PORT_MODE_PUP_MOTOR_INTERNAL,
+        .available_modes = LEGO_PORT_MODE_PUP_MOTOR_INTERNAL,
+    },
+    {
+        .port_id = PBIO_PORT_ID_C,
+        .default_id = PBIO_IODEV_TYPE_ID_NONE,
+        .default_mode = LEGO_PORT_MODE_PUP_DEVICE,
+        .available_modes =
+            LEGO_PORT_MODE_PUP_DEVICE |
+            LEGO_PORT_MODE_UNIDENTIFIED_GPIO |
+            LEGO_PORT_MODE_UNIDENTIFIED_UART,
+    },
+    {
+        .port_id = PBIO_PORT_ID_D,
+        .default_id = PBIO_IODEV_TYPE_ID_NONE,
+        .default_mode = LEGO_PORT_MODE_PUP_DEVICE,
+        .available_modes =
+            LEGO_PORT_MODE_PUP_DEVICE |
+            LEGO_PORT_MODE_UNIDENTIFIED_GPIO |
+            LEGO_PORT_MODE_UNIDENTIFIED_UART,
+    },
+};
