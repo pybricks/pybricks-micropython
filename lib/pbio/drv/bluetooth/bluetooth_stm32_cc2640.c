@@ -853,7 +853,7 @@ static void handle_event(uint8_t *packet) {
                     // uint16_t client_mtu = (data[7] << 8) | data[6];
                     attExchangeMTURsp_t rsp;
 
-                    rsp.serverRxMTU = ATT_MAX_MTU_SIZE;
+                    rsp.serverRxMTU = PBDRV_BLUETOOTH_MAX_MTU_SIZE;
                     // REVISIT: may need to keep a table of min(client_mtu, MAX_ATT_MTU_SIZE)
                     // for each connection if any known clients have smaller MTU
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
@@ -1034,7 +1034,7 @@ static void handle_event(uint8_t *packet) {
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
                         // REVISIT: client MTU may be smaller, in which case we can't used fixed value for MTU
-                        pbio_pybricks_hub_capabilities(buf, ATT_MAX_MTU_SIZE - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
+                        pbio_pybricks_hub_capabilities(buf, PBDRV_BLUETOOTH_MAX_MTU_SIZE - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
