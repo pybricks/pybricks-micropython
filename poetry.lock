@@ -384,14 +384,14 @@ css = ["tinycss2 (>=1.1.0,<1.2)"]
 
 [[package]]
 name = "bleak"
-version = "0.20.1"
+version = "0.20.2"
 description = "Bluetooth Low Energy platform Agnostic Klient"
 category = "dev"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "bleak-0.20.1-py3-none-any.whl", hash = "sha256:e1661f3d36fea54d15197297d285d1d646daf8decaa174a6bbca639bd1c0e555"},
-    {file = "bleak-0.20.1.tar.gz", hash = "sha256:db599f5f100e252e9cdd4020c8657daca0371a3c697e87432abc702f3774cb4c"},
+    {file = "bleak-0.20.2-py3-none-any.whl", hash = "sha256:ce3106b7258212d92bb77be06f9301774f51f5bbc9f7cd50976ad794e9514dba"},
+    {file = "bleak-0.20.2.tar.gz", hash = "sha256:6c92a47abe34e6dea8ffc5cea9457cbff6e1be966854839dbc25cddb36b79ee4"},
 ]
 
 [package.dependencies]
@@ -2417,14 +2417,14 @@ files = [
 
 [[package]]
 name = "pybricksdev"
-version = "1.0.0a42"
+version = "1.0.0a43"
 description = "Pybricks developer tools"
 category = "dev"
 optional = false
 python-versions = ">=3.8,<3.12"
 files = [
-    {file = "pybricksdev-1.0.0a42-py3-none-any.whl", hash = "sha256:80c0109877eebc6601fd5f3d5af3417935706e44b486eaf34de5d2da9c871511"},
-    {file = "pybricksdev-1.0.0a42.tar.gz", hash = "sha256:260b87f5e7cae8317263e1456d074494b689cea2f0b416bcf8bdb6a5d4a3894a"},
+    {file = "pybricksdev-1.0.0a43-py3-none-any.whl", hash = "sha256:5d7b27b8a09abb03ffd62266c8531a1d1f486905eff1cfa92f294adb79ab76b6"},
+    {file = "pybricksdev-1.0.0a43.tar.gz", hash = "sha256:11eb9c0fe1a6365f39e4c4e13991fba5523ce9c79b5bd21525365f33ef05d61a"},
 ]
 
 [package.dependencies]
@@ -2432,7 +2432,7 @@ aioserial = ">=1.3.0,<2.0.0"
 appdirs = ">=1.4.4,<2.0.0"
 argcomplete = ">=1.11.1,<2.0.0"
 asyncssh = ">=2.2.1,<3.0.0"
-bleak = ">=0.20.0,<0.21.0"
+bleak = ">=0.20.2,<0.21.0"
 mpy-cross-v5 = ">=1.0.0,<2.0.0"
 mpy-cross-v6 = ">=1.0.0,<2.0.0"
 packaging = ">=22,<23"
@@ -2601,7 +2601,7 @@ files = [
 cffi = ">=1.4.1"
 
 [package.extras]
-docs = ["sphinx (>=1.6.5)", "sphinx-rtd-theme"]
+docs = ["sphinx (>=1.6.5)", "sphinx_rtd_theme"]
 tests = ["hypothesis (>=3.27.0)", "pytest (>=3.2.1,!=3.3.0)"]
 
 [[package]]
@@ -3663,4 +3663,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "8a590cf7d0bbb6d70eaa61020f12f3fa010ce4c8ceb498623fa185d0ba110546"
+content-hash = "8a110c4024c220a84d4372787204fceb1b9e572dc02aecb3d3b7fa468fa15fda"

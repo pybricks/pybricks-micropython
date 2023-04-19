@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021-2022 The Pybricks Authors
+// Copyright (c) 2021-2023 The Pybricks Authors
 
 /**
- * @addtogroup ProtocolPybricks pbio/protocol: Pybricks Communication Protocol
+ * @addtogroup ProtocolPybricks pbio/protocol: Pybricks Communication Profile
  *
  * Additional details about the Pybricks Profile can be found at
  * <https://github.com/pybricks/technical-info/blob/master/pybricks-ble-profile.md>.
@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 2
+#define PBIO_PROTOCOL_VERSION_MINOR 3
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -48,7 +48,7 @@ typedef enum {
     /**
      * Requests that the user program should be stopped.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM = 0,
 
@@ -58,7 +58,7 @@ typedef enum {
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM = 1,
 
@@ -68,7 +68,7 @@ typedef enum {
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_START_REPL = 2,
 
@@ -81,7 +81,7 @@ typedef enum {
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if the user program is running.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META = 3,
 
@@ -96,7 +96,7 @@ typedef enum {
      * - ::PBIO_PYBRICKS_ERROR_BUSY if the user program is running and the
      *   data would write over the user program area of the user RAM.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_USER_RAM = 4,
 
@@ -106,8 +106,22 @@ typedef enum {
      * If this command was successful, the hub will reboot immediately, which
      * means the GATT write request will fail because Bluetooth became
      * disconnected.
+     *
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE = 5,
+
+    /**
+     * Requests to write to stdin on the hub.
+     *
+     * It is up to the firmware to determine what to with the received data.
+     *
+     * Parameters:
+     * - payload: The data to write (0 to 512 bytes).
+     *
+     * @since Pybricks Profile v1.3.0
+     */
+    PBIO_PYBRICKS_COMMAND_WRITE_STDIN = 6,
 } pbio_pybricks_command_t;
 
 /**
@@ -128,13 +142,13 @@ typedef enum {
     /**
      * An invalid command was requested.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_ERROR_INVALID_COMMAND = 0x80,
     /**
      * The command cannot be completed now because the required resources are busy.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_ERROR_BUSY = 0x81,
 } pbio_pybricks_error_t;
@@ -148,14 +162,23 @@ pbio_pybricks_error_t pbio_pybricks_error_from_pbio_error(pbio_error_t error);
  */
 typedef enum {
     /**
-     * Status report.
+     * Status report event.
      *
      * The payload is a 32-bit little-endian unsigned integer containing
      * ::pbio_pybricks_status_t flags.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_EVENT_STATUS_REPORT = 0,
+
+    /**
+     * Data written to stdout event.
+     *
+     * The payload is a variable number of bytes that was written to stdout.
+     *
+     * @since Pybricks Profile v1.3.0
+     */
+    PBIO_PYBRICKS_EVENT_WRITE_STDOUT = 1,
 } pbio_pybricks_event_t;
 
 /**
@@ -167,55 +190,55 @@ typedef enum {
     /**
      * Battery voltage is low.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING = 0,
     /**
      * Battery voltage is critically low.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN = 1,
     /**
      * Battery current is too high.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT = 2,
     /**
      * Bluetooth Low Energy is advertising/discoverable.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_BLE_ADVERTISING = 3,
     /**
      * Bluetooth Low Energy has low signal.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL = 4,
     /**
      * Power button is currently pressed.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED = 5,
     /**
      * User program is currently running.
      *
-     * @since Protocol v1.0.0
+     * @since Pybricks Profile v1.0.0
      */
     PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING = 6,
     /**
      * Hub will shut down.
      *
-     * @since Protocol v1.1.0
+     * @since Pybricks Profile v1.1.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN = 7,
     /**
      * Hub shutdown has been requested. System processes may now stop.
      *
-     * @since Protocol v1.2.0
+     * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST = 8,
     /** Total number of indications. */
@@ -273,9 +296,6 @@ extern const uint8_t pbio_lwp3_hub_char_uuid[];
 extern const uint8_t pbio_nus_service_uuid[];
 extern const uint8_t pbio_nus_rx_char_uuid[];
 extern const uint8_t pbio_nus_tx_char_uuid[];
-
-// Downloaded programs are received in chunks up to this size.
-#define PBIO_PYBRICKS_PROTOCOL_DOWNLOAD_CHUNK_SIZE (100)
 
 #endif // _PBIO_PROTOCOL_H_
 

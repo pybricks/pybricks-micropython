@@ -45,7 +45,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     // TODO: enable pybricks service notifications and do concurrent pybricks service and uart service calls
 
-    pbio_test_bluetooth_enable_uart_service_notifications();
+    pbio_test_bluetooth_enable_pybricks_service_notifications();
 
     static const char *test_data_1 = "test\n";
     static const char *test_data_2 = "test2\n";
@@ -75,9 +75,9 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     PT_YIELD(pt);
 
-    static const char *test_data_3 = "test3\n";
+    static const char *test_data_3 = "\x06test3\n";
     size = strlen(test_data_3);
-    pbio_test_bluetooth_send_uart_data((const uint8_t *)test_data_3, size);
+    pbio_test_bluetooth_send_pybricks_command((const uint8_t *)test_data_3, size);
 
     static uint8_t rx_data[20];
 

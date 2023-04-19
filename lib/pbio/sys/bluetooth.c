@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2022 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 #include <pbsys/config.h>
 
@@ -23,47 +23,80 @@
 #include <pbsys/status.h>
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
-// max data size for Nordic UART characteristics
-#define NUS_CHAR_SIZE 20
+#define MAX_CHAR_SIZE 20
 
-// Nordic UART Rx hook
-static pbsys_bluetooth_stdin_event_callback_t uart_rx_callback;
-// ring buffers for UART service
-static lwrb_t uart_tx_ring;
-static lwrb_t uart_rx_ring;
+// REVISIT: this needs to be moved to a common place where it can be shared with USB
+static pbsys_bluetooth_stdin_event_callback_t stdin_event_callback;
+static lwrb_t stdout_ring_buf;
+static lwrb_t stdin_ring_buf;
 
 typedef struct {
     list_t queue;
     pbdrv_bluetooth_send_context_t context;
     bool is_queued;
-    uint8_t payload[NUS_CHAR_SIZE];
+    uint8_t payload[MAX_CHAR_SIZE];
 } send_msg_t;
 
+static send_msg_t stdout_msg;
 LIST(send_queue);
 static bool send_busy;
 
 PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
+// Internal API
+
 /** Initializes Bluetooth. */
 void pbsys_bluetooth_init(void) {
-    static uint8_t uart_tx_buf[NUS_CHAR_SIZE * 2 + 1];
-    static uint8_t uart_rx_buf[PBIO_PYBRICKS_PROTOCOL_DOWNLOAD_CHUNK_SIZE + 1];
+    // enough for two packets, one currently being sent and one to be ready
+    // as soon as the previous one completes + 1 byte for ring buf pointer
+    static uint8_t stdout_buf[MAX_CHAR_SIZE * 2 + 1];
+    // enough for one packet received + 1 byte for ring buf pointer
+    static uint8_t stdin_buf[PBDRV_BLUETOOTH_MAX_MTU_SIZE - 3 + 1];
 
-    lwrb_init(&uart_tx_ring, uart_tx_buf, PBIO_ARRAY_SIZE(uart_tx_buf));
-    lwrb_init(&uart_rx_ring, uart_rx_buf, PBIO_ARRAY_SIZE(uart_rx_buf));
+    lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
+    lwrb_init(&stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
     process_start(&pbsys_bluetooth_process);
 }
 
-static void on_event(void) {
-    process_poll(&pbsys_bluetooth_process);
+/**
+ * Gets the number of bytes currently free for writing in stdin.
+ * @return              The number of bytes.
+ */
+uint32_t pbsys_bluetooth_rx_get_free(void) {
+    return lwrb_get_free(&stdin_ring_buf);
 }
+
+/**
+ * Writes data to the stdin buffer.
+ *
+ * This does not currently return the number of bytes written, so first call
+ * pbsys_bluetooth_rx_get_free() to ensure enough free space.
+ *
+ * @param [in]  data    The data to write to the stdin buffer.
+ * @param [in]  size    The size of @p data in bytes.
+ */
+void pbsys_bluetooth_rx_write(const uint8_t *data, uint32_t size) {
+    if (stdin_event_callback) {
+        // If there is a callback hook, we have to process things one byte at
+        // a time.
+        for (uint32_t i = 0; i < size; i++) {
+            if (!stdin_event_callback(data[i])) {
+                lwrb_write(&stdin_ring_buf, &data[i], 1);
+            }
+        }
+    } else {
+        lwrb_write(&stdin_ring_buf, data, size);
+    }
+}
+
+// Public API
 
 /**
  * Sets the UART Rx callback function.
  * @param callback  [in]    The callback or NULL.
  */
 void pbsys_bluetooth_rx_set_callback(pbsys_bluetooth_stdin_event_callback_t callback) {
-    uart_rx_callback = callback;
+    stdin_event_callback = callback;
 }
 
 /**
@@ -72,11 +105,11 @@ void pbsys_bluetooth_rx_set_callback(pbsys_bluetooth_stdin_event_callback_t call
  * @return              The number of bytes.
  */
 uint32_t pbsys_bluetooth_rx_get_available(void) {
-    return lwrb_get_full(&uart_rx_ring);
+    return lwrb_get_full(&stdin_ring_buf);
 }
 
 /**
- * Reads data from the UART Rx characteristic.
+ * Reads data from the stdin buffer.
  * @param data  [in]        A buffer to receive a copy of the data.
  * @param size  [in, out]   The number of bytes to read (@p data must be at least
  *                          this big). After return @p size contains the number
@@ -89,11 +122,11 @@ uint32_t pbsys_bluetooth_rx_get_available(void) {
  */
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
     // make sure we have a Bluetooth connection
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    if ((*size = lwrb_read(&uart_rx_ring, data, *size)) == 0) {
+    if ((*size = lwrb_read(&stdin_ring_buf, data, *size)) == 0) {
         return PBIO_ERROR_AGAIN;
     }
 
@@ -105,7 +138,7 @@ pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
  * can be used to wait for new data.
  */
 void pbsys_bluetooth_rx_flush(void) {
-    lwrb_reset(&uart_rx_ring);
+    lwrb_reset(&stdin_ring_buf);
 }
 
 /**
@@ -120,30 +153,28 @@ void pbsys_bluetooth_rx_flush(void) {
  *                          if this platform does not support Bluetooth.
  */
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
-    static send_msg_t uart_msg;
-
     // make sure we have a Bluetooth connection
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
     // only allow one UART Tx message in the queue at a time
-    if (!uart_msg.is_queued) {
+    if (!stdout_msg.is_queued) {
         // Setting data and size are deferred until we actually send the message.
         // This way, if the caller is only writing one byte at a time, we can
         // still buffer data to send it more efficiently.
-        uart_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_UART;
+        stdout_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
 
-        list_add(send_queue, &uart_msg);
-        uart_msg.is_queued = true;
+        list_add(send_queue, &stdout_msg);
+        stdout_msg.is_queued = true;
     }
 
-    if ((*size = lwrb_write(&uart_tx_ring, data, *size)) == 0) {
+    if ((*size = lwrb_write(&stdout_ring_buf, data, *size)) == 0) {
         return PBIO_ERROR_AGAIN;
     }
 
     // poke the process to start tx soon-ish. This way, we can accumulate up to
-    // NUS_CHAR_SIZE bytes before actually transmitting
+    // MAX_CHAR_SIZE bytes before actually transmitting
     process_poll(&pbsys_bluetooth_process);
 
     return PBIO_SUCCESS;
@@ -157,11 +188,17 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
  * @returns @c true if the condition is met, otherwise @c false.
  */
 bool pbsys_bluetooth_tx_is_idle(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
         return true;
     }
 
-    return !send_busy && lwrb_get_full(&uart_tx_ring) == 0;
+    return !send_busy && lwrb_get_full(&stdout_ring_buf) == 0;
+}
+
+// Contiki process
+
+static void on_event(void) {
+    process_poll(&pbsys_bluetooth_process);
 }
 
 static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size) {
@@ -170,19 +207,8 @@ static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connect
     }
 
     if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
-        // This will drop data if buffer is full
-        if (uart_rx_callback) {
-            // If there is a callback hook, we have to process things one byte at
-            // a time.
-            for (uint32_t i = 0; i < size; i++) {
-                if (!uart_rx_callback(data[i])) {
-                    lwrb_write(&uart_rx_ring, &data[i], 1);
-                }
-            }
-        } else {
-            lwrb_write(&uart_rx_ring, data, size);
-        }
-
+        // TODO: need a new buffer for NUS
+        // lwrb_write(&uart_rx_ring, data, size);
         return PBIO_PYBRICKS_ERROR_OK;
     }
 
@@ -192,7 +218,7 @@ static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connect
 static void send_done(void) {
     send_msg_t *msg = list_pop(send_queue);
 
-    if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART && lwrb_get_full(&uart_tx_ring)) {
+    if (msg == &stdout_msg && lwrb_get_full(&stdout_ring_buf)) {
         // If there is more buffered data to send, put the message back in the queue
         list_add(send_queue, msg);
     } else {
@@ -213,8 +239,8 @@ static void reset_all(void) {
 
     send_busy = false;
 
-    lwrb_reset(&uart_rx_ring);
-    lwrb_reset(&uart_tx_ring);
+    lwrb_reset(&stdin_ring_buf);
+    lwrb_reset(&stdout_ring_buf);
 }
 
 static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
@@ -308,10 +334,14 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
                 send_msg_t *msg = list_head(send_queue);
                 if (msg) {
                     msg->context.done = send_done;
-                    if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
-                        msg->context.size = lwrb_read(&uart_tx_ring, &msg->payload[0], PBIO_ARRAY_SIZE(msg->payload));
-                        assert(msg->context.size);
+
+                    if (msg == &stdout_msg) {
+                        msg->payload[0] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+                        // REVISIT: use negotiated MTU instead of minimum safe size
+                        msg->context.size = lwrb_read(&stdout_ring_buf, &msg->payload[1], PBIO_ARRAY_SIZE(msg->payload) - 1) + 1;
+                        assert(msg->context.size > 1);
                     }
+
                     msg->context.data = &msg->payload[0];
                     send_busy = true;
                     pbdrv_bluetooth_send(&msg->context);
