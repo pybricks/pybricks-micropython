@@ -15,6 +15,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/robotics.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -53,24 +54,9 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
         PB_ARG_REQUIRED(left_motor),
         PB_ARG_REQUIRED(right_motor),
         PB_ARG_REQUIRED(wheel_diameter),
-        PB_ARG_REQUIRED(axle_track),
-        PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj),
-        PB_ARG_DEFAULT_FALSE(use_gyro));
+        PB_ARG_REQUIRED(axle_track));
 
     pb_type_DriveBase_obj_t *self = mp_obj_malloc(pb_type_DriveBase_obj_t, type);
-
-    // REVISIT: Allow angle getter callable on any platform.
-    bool use_gyro = mp_obj_is_true(use_gyro_in);
-    #if !PBIO_CONFIG_IMU
-    if (use_gyro) {
-        pb_assert(PBIO_ERROR_NOT_SUPPORTED);
-    }
-    #endif
-    pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
-    // REVISIT: Gyro is currently only compatible with counterclockwise drivebase.
-    if (use_gyro && positive_direction != PBIO_DIRECTION_COUNTERCLOCKWISE) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
 
     // Pointers to servos
     pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(left_motor_in, &pb_type_Motor))->srv;
@@ -78,11 +64,12 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_drivebase(&self->db,
-        positive_direction == PBIO_DIRECTION_CLOCKWISE ? srv_left : srv_right,
-        positive_direction == PBIO_DIRECTION_CLOCKWISE ? srv_right : srv_left,
+        srv_left,
+        srv_right,
         pb_obj_get_scaled_int(wheel_diameter_in, 1000),
         pb_obj_get_scaled_int(axle_track_in, 1000),
-        use_gyro));
+        // Use gyro if creating instance of GyroDriveBase.
+        type != &pb_type_drivebase));
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create instances of the Control class
@@ -338,5 +325,19 @@ const mp_obj_type_t pb_type_drivebase = {
     #endif
     .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
 };
+
+#if PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
+// type(pybricks.robotics.GyroDriveBase)
+const mp_obj_type_t pb_type_gyrodrivebase = {
+    { &mp_type_type },
+    .name = MP_QSTR_GyroDriveBase,
+    .make_new = pb_type_DriveBase_make_new,
+    #if PYBRICKS_PY_COMMON_CONTROL
+    .attr = pb_attribute_handler,
+    .protocol = pb_type_DriveBase_attr_dict,
+    #endif
+    .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
+};
+#endif // PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS

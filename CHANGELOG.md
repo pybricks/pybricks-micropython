@@ -9,9 +9,8 @@
   not calibrate properly ([support#1026]).
 - Fixed discrepancy in heading value across hubs by accounting for sampling
   time ([support#1022]).
-
-[support#1026]: https://github.com/pybricks/support/issues/1022
-[support#1026]: https://github.com/pybricks/support/issues/1026
+- Fixed iterator for `Matrix` objects giving bad values.
+- Fixed Bluetooth sometimes locking up on Technic/City hubs ([support#567]).
 
 ### Added
 - Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
@@ -21,16 +20,23 @@
   required, or even undesired.
 - Added `hub.imu.ready()` to check that the IMU has been calibrated and is
   ready for use.
+- Added `GyroDriveBase` class to control drivebase steering with the gyro.
 - Added optional `window` parameter to `Motor.speed` to specify the
   differentiation window size that determines the average speed. This lets the
   user choose smaller values to get a more responsive (but noisier) or higher
   values to get a smoother (but more delayed) speed signal.
 
+### Removed
+- Removed `positive_direction` from `DriveBase` initializer. This was
+  temporarily added in the previous beta release to facilitate gyro support,
+  but made it more complicated than needed ([support#992]).
+
 ### Fixed
-- Fixed iterator for `Matrix` objects giving bad values.
-- Fixed Bluetooth sometimes locking up on Technic/City hubs ([support#567]).
 
 [support#567]: https://github.com/pybricks/support/issues/567
+[support#992]: https://github.com/pybricks/support/issues/992
+[support#1022]: https://github.com/pybricks/support/issues/1022
+[support#1026]: https://github.com/pybricks/support/issues/1026
 
 ## [3.3.0b3] - 2023-03-28
 

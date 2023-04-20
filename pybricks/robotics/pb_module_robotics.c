@@ -11,7 +11,10 @@ STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics)   },
     #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_DriveBase),   MP_ROM_PTR(&pb_type_drivebase)  },
-    #if (PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_ESSENTIALHUB)
+    #if PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
+    { MP_ROM_QSTR(MP_QSTR_GyroDriveBase),   MP_ROM_PTR(&pb_type_gyrodrivebase)  },
+    #endif
+    #if PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE
     { MP_ROM_QSTR(MP_QSTR_SpikeBase),   MP_ROM_PTR(&pb_type_spikebase)  },
     #endif
     #endif
