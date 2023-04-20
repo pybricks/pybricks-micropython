@@ -147,7 +147,7 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
 
     // Optionally use gyro to override the heading source for more accuracy.
     if (db->use_gyro) {
-        pbio_imu_get_heading_scaled(&state_heading->position, db->control_heading.settings.ctl_steps_per_app_step);
+        pbio_imu_get_heading_scaled(&state_heading->position, &state_heading->speed, db->control_heading.settings.ctl_steps_per_app_step);
     }
 
     return PBIO_SUCCESS;

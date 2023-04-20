@@ -212,6 +212,8 @@ static float heading_offset = 0;
 /**
  * Reads the estimated IMU heading in degrees, accounting for user offset.
  *
+ * Heading is defined as clockwise positive.
+ *
  * @return                  Heading angle in the base frame.
  */
 float pbio_imu_get_heading(void) {
@@ -242,10 +244,13 @@ void pbio_imu_set_heading(float desired_heading) {
  * drivebase, which measures heading as the half the difference of the two
  * motor positions in millidegrees.
  *
- * @param [out]  heading               The output angle object.
+ * Heading is defined as clockwise positive.
+ *
+ * @param [out]  heading               The heading angle in control units.
+ * @param [out]  heading_rate          The heading rate in control units.
  * @param [in]   ctl_steps_per_degree  The number of control steps per heading degree.
  */
-void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_degree) {
+void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
 
     // Heading in degrees of the robot.
     float heading_degrees = pbio_imu_get_heading();
@@ -256,6 +261,11 @@ void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_de
     // The truncated part represents everything else.
     float truncated = heading_degrees - heading->rotations * (360000 / ctl_steps_per_degree);
     heading->millidegrees = truncated * ctl_steps_per_degree;
+
+    // The heading rate can be obtained by a simple scale because it always fits.
+    pbio_geometry_xyz_t angular_rate;
+    pbio_imu_get_angular_velocity(&angular_rate);
+    *heading_rate = (int32_t)(-angular_rate.z * ctl_steps_per_degree);
 }
 
 #endif // PBIO_CONFIG_IMU

@@ -44,7 +44,7 @@ float pbio_imu_get_heading(void);
 
 void pbio_imu_set_heading(float desired_heading);
 
-void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_degree);
+void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree);
 
 #else // PBIO_CONFIG_IMU
 
@@ -79,7 +79,7 @@ static inline float pbio_imu_get_heading(void) {
 static inline void pbio_imu_set_heading(float desired_heading) {
 }
 
-static inline void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t ctl_steps_per_degree) {
+static inline void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
 }
 
 #endif // PBIO_CONFIG_IMU
