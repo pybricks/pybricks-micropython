@@ -11,6 +11,8 @@
   time ([support#1022]).
 - Fixed iterator for `Matrix` objects giving bad values.
 - Fixed Bluetooth sometimes locking up on Technic/City hubs ([support#567]).
+- Fixed `GyroDriveBase` being slow to respond to heading perturbations when
+  driving at high speed ([support#1032]).
 
 ### Added
 - Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
@@ -37,6 +39,7 @@
 [support#992]: https://github.com/pybricks/support/issues/992
 [support#1022]: https://github.com/pybricks/support/issues/1022
 [support#1026]: https://github.com/pybricks/support/issues/1026
+[support#1032]: https://github.com/pybricks/support/issues/1032
 
 ## [3.3.0b3] - 2023-03-28
 

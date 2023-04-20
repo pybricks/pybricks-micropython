@@ -106,6 +106,11 @@ static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_c
     // diameter, the wheels are often quite close together, so this
     // compensates by setting it at 33% instead of 40%.
     s_heading->speed_default = s_heading->speed_max / 3;
+
+    // Most users intuitively expect heading control to take priority. When
+    // heading controller is completely saturated, this ensures that it "wins"
+    // against the distance controller.
+    s_heading->actuation_max = s_distance->actuation_max * 2;
 }
 
 /**
