@@ -95,7 +95,8 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
         // Calculate feedback control signal
         pbio_dcmotor_actuation_t requested_actuation;
-        pbio_control_update(&srv->control, time_now, &state, &ref, &requested_actuation, &feedback_torque);
+        bool external_pause = false;
+        pbio_control_update(&srv->control, time_now, &state, &ref, &requested_actuation, &feedback_torque, &external_pause);
 
         // Get required feedforward torque for current reference
         feedforward_torque = pbio_observer_get_feedforward_torque(srv->observer.model, ref.speed, ref.acceleration);

@@ -216,14 +216,23 @@ static int32_t pbio_control_get_pid_kp(const pbio_control_settings_t *settings, 
 /**
  * Updates the PID controller state to calculate the next actuation step.
  *
- * @param [in]  ctl             The control instance.
- * @param [in]  time_now        The wall time (ticks).
- * @param [in]  state           The current state of the system being controlled (control units).
- * @param [out] ref             Computed reference point on the trajectory (control units).
- * @param [out] actuation       Required actuation type.
- * @param [out] control         The control output, which is the actuation payload (control units).
+ * @param [in]   ctl              The control instance.
+ * @param [in]   time_now         The wall time (ticks).
+ * @param [in]   state            The current state of the system being controlled (control units).
+ * @param [out]  ref              Computed reference point on the trajectory (control units).
+ * @param [out]  actuation        Required actuation type.
+ * @param [out]  control          The control output, which is the actuation payload (control units).
+ * @param [inout] external_pause  Whether to force the controller to pause using external information (in), and
+ *                                whether the controller still needs pausing according to its own state (out).
  */
-void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control) {
+void pbio_control_update(
+    pbio_control_t *ctl,
+    uint32_t time_now,
+    const pbio_control_state_t *state,
+    pbio_trajectory_reference_t *ref,
+    pbio_dcmotor_actuation_t *actuation,
+    int32_t *control,
+    bool *external_pause) {
 
     // Get reference signals at the reference time point in the trajectory.
     // This compensates for any time we may have spent pausing when the motor was stalled.
@@ -290,7 +299,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_cont
 
     // Position anti-windup in case of angle control (accumulated position error may not get too high)
     if (pbio_control_type_is_position(ctl)) {
-        if (pause_integration) {
+        if (pause_integration || *external_pause) {
             // We are at the torque limit and we should prevent further position error integration.
             pbio_position_integrator_pause(&ctl->position_integrator, time_now);
         } else {
@@ -300,7 +309,7 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_cont
     }
     // Position anti-windup in case of timed speed control (speed integral may not get too high)
     else {
-        if (pause_integration) {
+        if (pause_integration || *external_pause) {
             // We are at the torque limit and we should prevent further speed error integration.
             pbio_speed_integrator_pause(&ctl->speed_integrator, time_now, position_error);
         } else {
@@ -308,6 +317,9 @@ void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_cont
             pbio_speed_integrator_resume(&ctl->speed_integrator, position_error);
         }
     }
+
+    // Informs caller if pausing is still needed according to this controller's state.
+    *external_pause = pause_integration;
 
     // Check if controller is stalled, and set the status.
     pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED,

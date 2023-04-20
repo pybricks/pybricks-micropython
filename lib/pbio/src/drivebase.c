@@ -164,6 +164,7 @@ static void pbio_drivebase_stop_drivebase_control(pbio_drivebase_t *db) {
     // Stop drivebase control so polling will stop
     pbio_control_stop(&db->control_distance);
     pbio_control_stop(&db->control_heading);
+    db->control_paused = false;
 }
 
 /**
@@ -291,6 +292,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     // Stop any existing drivebase controls
     pbio_control_reset(&db->control_distance);
     pbio_control_reset(&db->control_heading);
+    db->control_paused = false;
 
     // Reset both motors to a passive state
     pbio_drivebase_stop_servo_control(db);
@@ -405,13 +407,18 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     pbio_trajectory_reference_t ref_distance;
     int32_t distance_torque;
     pbio_dcmotor_actuation_t distance_actuation;
-    pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &distance_actuation, &distance_torque);
+    bool distance_external_pause = db->control_paused;
+    pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &distance_actuation, &distance_torque, &distance_external_pause);
 
     // Get reference and torque signals for heading control.
     pbio_trajectory_reference_t ref_heading;
     int32_t heading_torque;
     pbio_dcmotor_actuation_t heading_actuation;
-    pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &heading_actuation, &heading_torque);
+    bool heading_external_pause = db->control_paused;
+    pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &heading_actuation, &heading_torque, &heading_external_pause);
+
+    // If either controller is paused, pause both.
+    db->control_paused = distance_external_pause || heading_external_pause;
 
     // If either controller coasts, coast both, thereby also stopping control.
     if (distance_actuation == PBIO_DCMOTOR_ACTUATION_COAST ||
@@ -428,19 +435,6 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     if (distance_actuation != PBIO_DCMOTOR_ACTUATION_TORQUE ||
         heading_actuation != PBIO_DCMOTOR_ACTUATION_TORQUE) {
         return PBIO_ERROR_FAILED;
-    }
-
-    // Both controllers are able to stop the other when it stalls. This ensures
-    // they complete at exactly the same time.
-    if (pbio_control_type_is_position(&db->control_distance) &&
-        pbio_position_integrator_is_paused(&db->control_distance.position_integrator)) {
-        // If distance controller is paused, pause heading control too.
-        pbio_position_integrator_pause(&db->control_heading.position_integrator, time_now);
-    }
-    if (pbio_control_type_is_position(&db->control_heading) &&
-        pbio_position_integrator_is_paused(&db->control_heading.position_integrator)) {
-        // If heading controller is paused, pause distance control too.
-        pbio_position_integrator_pause(&db->control_distance.position_integrator, time_now);
     }
 
     // The left servo drives at a torque and speed of (average) + (difference).

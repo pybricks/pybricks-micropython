@@ -165,7 +165,14 @@ void pbio_control_get_reference(pbio_control_t *ctl, uint32_t time_now, const pb
 
 void pbio_control_reset(pbio_control_t *ctl);
 void pbio_control_stop(pbio_control_t *ctl);
-void pbio_control_update(pbio_control_t *ctl, uint32_t time_now, const pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_dcmotor_actuation_t *actuation, int32_t *control);
+void pbio_control_update(
+    pbio_control_t *ctl,
+    uint32_t time_now,
+    const pbio_control_state_t *state,
+    pbio_trajectory_reference_t *ref,
+    pbio_dcmotor_actuation_t *actuation,
+    int32_t *control,
+    bool *external_pause);
 
 // Control status checks:
 

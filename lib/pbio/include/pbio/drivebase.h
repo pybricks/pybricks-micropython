@@ -23,6 +23,10 @@ typedef struct _pbio_drivebase_t {
      * True if a gyro or compass is used for heading control, else false.
      */
     bool use_gyro;
+    /**
+     * Synchronization state to indicate that one or more controllers are paused.
+     */
+    bool control_paused;
     pbio_servo_t *left;
     pbio_servo_t *right;
     pbio_control_t control_heading;
