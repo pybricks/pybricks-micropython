@@ -220,7 +220,7 @@ float pbio_imu_get_heading(void) {
 
     pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &heading_mapped);
 
-    return heading_mapped.z - heading_offset;
+    return -heading_mapped.z - heading_offset;
 }
 
 /**
