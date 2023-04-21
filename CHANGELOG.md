@@ -39,8 +39,6 @@
   enum was moved to `parameters`. Each item can still be imported from its
   original location for backwards compatibility.
 
-### Fixed
-
 [support#567]: https://github.com/pybricks/support/issues/567
 [support#992]: https://github.com/pybricks/support/issues/992
 [support#1022]: https://github.com/pybricks/support/issues/1022
