@@ -1,3 +1,13 @@
+## 7.3.1 - 2023-04-28
+
+### Changed
+- Rebuild with corrected firmware to v3.3.0b4.
+
+## 7.3.0 - 2023-04-28
+
+### Changed
+- Updated firmware to v3.3.0b4.
+
 ## 7.2.0 - 2023-03-28
 
 ### Changed
