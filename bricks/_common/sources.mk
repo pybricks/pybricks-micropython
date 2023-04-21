@@ -45,8 +45,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	ev3devices/pb_type_ev3devices_touchsensor.c \
 	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
 	experimental/pb_module_experimental.c \
-	geometry/pb_module_geometry.c \
-	geometry/pb_type_matrix.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_cityhub.c \
 	hubs/pb_type_essentialhub.c \
@@ -74,6 +72,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	nxtdevices/pb_type_nxtdevices_touchsensor.c \
 	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
 	parameters/pb_module_parameters.c \
+	parameters/pb_type_axis.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
 	parameters/pb_type_direction.c \
@@ -97,6 +96,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_spikebase.c \
 	tools/pb_module_tools.c \
+	tools/pb_type_matrix.c \
 	tools/pb_type_stopwatch.c \
 	util_mp/pb_obj_helper.c \
 	util_mp/pb_type_enum.c \

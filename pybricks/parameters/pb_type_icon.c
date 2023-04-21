@@ -11,7 +11,7 @@
 #include "py/runtime.h"
 
 #include <pybricks/parameters.h>
-#include <pybricks/geometry.h>
+#include <pybricks/tools/pb_type_matrix.h>
 
 #include <pybricks/util_pb/pb_error.h>
 

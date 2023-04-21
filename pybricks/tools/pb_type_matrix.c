@@ -3,14 +3,12 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_GEOMETRY
-
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <pybricks/geometry.h>
+#include <pybricks/tools/pb_type_matrix.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -18,7 +16,7 @@
 
 #if MICROPY_PY_BUILTINS_FLOAT
 
-// pybricks.geometry.Matrix.__init__
+// pybricks.tools.Matrix.__init__
 STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(rows));
@@ -118,7 +116,7 @@ static void print_float(char *buf, float x) {
     buf[4] = '.';
 }
 
-// pybricks.geometry.Matrix.__repr__
+// pybricks.tools.Matrix.__repr__
 void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
     // Print class name
@@ -179,7 +177,7 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     mp_print_str(print, "])");
 }
 
-// pybricks.geometry.Matrix._add
+// pybricks.tools.Matrix._add
 STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add) {
 
     // Get left and right matrices
@@ -223,7 +221,7 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
     return MP_OBJ_FROM_PTR(ret);
 }
 
-// pybricks.geometry.Matrix._mul
+// pybricks.tools.Matrix._mul
 STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     // Get left and right matrices
@@ -273,7 +271,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
     return MP_OBJ_FROM_PTR(ret);
 }
 
-// pybricks.geometry.Matrix._scale
+// pybricks.tools.Matrix._scale
 STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -289,7 +287,7 @@ STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     return MP_OBJ_FROM_PTR(copy);
 }
 
-// pybricks.geometry.Matrix._get_scalar
+// pybricks.tools.Matrix._get_scalar
 float pb_type_Matrix_get_scalar(mp_obj_t self_in, size_t r, size_t c) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -301,7 +299,7 @@ float pb_type_Matrix_get_scalar(mp_obj_t self_in, size_t r, size_t c) {
     return self->data[idx] * self->scale;
 }
 
-// pybricks.geometry.Matrix._T
+// pybricks.tools.Matrix._T
 STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -515,7 +513,7 @@ STATIC mp_obj_t pb_type_Matrix_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_bu
     return MP_OBJ_FROM_PTR(matrix_it);
 }
 
-// type(pybricks.geometry.Matrix)
+// type(pybricks.tools.Matrix)
 const mp_obj_type_t pb_type_Matrix = {
     { &mp_type_type },
     .name = MP_QSTR_Matrix,
@@ -528,7 +526,7 @@ const mp_obj_type_t pb_type_Matrix = {
     .getiter = pb_type_Matrix_getiter,
 };
 
-// pybricks.geometry._make_vector
+// pybricks.tools._make_vector
 mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {
 
     // Create object and save dimensions
@@ -548,7 +546,7 @@ mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {
     return MP_OBJ_FROM_PTR(mat);
 }
 
-// pybricks.geometry._make_bitmap
+// pybricks.tools._make_bitmap
 mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t src) {
 
     // Create object and save dimensions
@@ -565,6 +563,46 @@ mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t sr
     return MP_OBJ_FROM_PTR(mat);
 }
 
-#endif // MICROPY_PY_BUILTINS_FLOAT
+// pybricks.tools.vector
+STATIC mp_obj_t pb_geometry_vector(size_t n_args, const mp_obj_t *args) {
 
-#endif // PYBRICKS_PY_GEOMETRY
+    // Convert user object to floats
+    float data[3];
+    for (size_t i = 0; i < n_args; i++) {
+        data[i] = mp_obj_get_float_to_f(args[i]);
+    }
+
+    // Create and return Matrix object with vector shape
+    return pb_type_Matrix_make_vector(n_args, data, false);
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_geometry_vector_obj, 2, 3, pb_geometry_vector);
+
+// pybricks.tools.cross
+STATIC mp_obj_t pb_type_matrix_cross(mp_obj_t a_in, mp_obj_t b_in) {
+
+    // Get a and b vectors
+    pb_type_Matrix_obj_t *a = MP_OBJ_TO_PTR(a_in);
+    pb_type_Matrix_obj_t *b = MP_OBJ_TO_PTR(b_in);
+
+    // Verify matching dimensions else raise error
+    if (a->n * a->m != 3 || b->n * b->m != 3) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Create c vector.
+    pb_type_Matrix_obj_t *c = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
+    c->m = 3;
+    c->n = 1;
+    c->data = m_new(float, 3);
+
+    // Evaluate cross product
+    c->data[0] = a->data[1] * b->data[2] - a->data[2] * b->data[1];
+    c->data[1] = a->data[2] * b->data[0] - a->data[0] * b->data[2];
+    c->data[2] = a->data[0] * b->data[1] - a->data[1] * b->data[0];
+    c->scale = a->scale * b->scale;
+
+    return MP_OBJ_FROM_PTR(c);
+}
+MP_DEFINE_CONST_FUN_OBJ_2(pb_type_matrix_cross_obj, pb_type_matrix_cross);
+
+#endif // MICROPY_PY_BUILTINS_FLOAT

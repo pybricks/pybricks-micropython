@@ -1,4 +1,12 @@
-from pybricks.geometry import Matrix, vector, cross, Axis
+from pybricks.tools import Matrix, vector, cross
+from pybricks.parameters import Axis
+
+# Test backwards compatibility imports
+from pybricks.geometry import vector as _vector, Matrix as _Matrix, Axis as _Axis
+
+assert Matrix == _Matrix
+assert vector == _vector
+assert Axis == _Axis
 
 # Basic matrix algebra
 A = Matrix(
