@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.0b4] - 2023-04-21
+
 ### Fixed
 - Fixed gyro on Technic Hub occasionally giving a bad value, which made it
   not calibrate properly ([support#1026]).
