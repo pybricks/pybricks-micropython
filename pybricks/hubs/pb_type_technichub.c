@@ -12,7 +12,7 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 #include <pybricks/common.h>
-#include <pybricks/geometry.h>
+#include <pybricks/tools/pb_type_matrix.h>
 #include <pybricks/hubs.h>
 
 typedef struct _hubs_TechnicHub_obj_t {
@@ -30,8 +30,8 @@ static const pb_obj_enum_member_t *technichub_buttons[] = {
 
 STATIC mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_OBJ(top_side, pb_Axis_Z_obj),
-        PB_ARG_DEFAULT_OBJ(front_side, pb_Axis_X_obj));
+        PB_ARG_DEFAULT_OBJ(top_side, pb_type_Axis_Z_obj),
+        PB_ARG_DEFAULT_OBJ(front_side, pb_type_Axis_X_obj));
 
     hubs_TechnicHub_obj_t *self = mp_obj_malloc(hubs_TechnicHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);

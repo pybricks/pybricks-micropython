@@ -15,7 +15,7 @@
   driving at high speed ([support#1032]).
 
 ### Added
-- Added `pybricks.geometry.cross(a, b)` to get a vector cross product.
+- Added `pybricks.tools.cross(a, b)` to get a vector cross product.
 - Added experimental implementation of `hub.imu.heading()` ([support#912]).
 - Added support for reading single-axis rotation, which is useful in
   applications like balancing robots, where full 3D orientation is not
@@ -32,6 +32,10 @@
 - Removed `positive_direction` from `DriveBase` initializer. This was
   temporarily added in the previous beta release to facilitate gyro support,
   but made it more complicated than needed ([support#992]).
+- Removed `pybricks.geometry` in an effort to reduce the number of modules with
+  just a few elements. `Matrix` and `vector` have moved to `tools`. The `Axis`
+  enum was moved to `parameters`. Each item can still be imported from its
+  original location for backwards compatibility.
 
 ### Fixed
 

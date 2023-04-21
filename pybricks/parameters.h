@@ -13,6 +13,14 @@
 #include "py/obj.h"
 
 #include <pybricks/util_mp/pb_type_enum.h>
+#include <pybricks/tools/pb_type_matrix.h>
+
+#if MICROPY_PY_BUILTINS_FLOAT
+extern const mp_obj_type_t pb_enum_type_Axis;
+extern const pb_type_Matrix_obj_t pb_type_Axis_X_obj;
+extern const pb_type_Matrix_obj_t pb_type_Axis_Y_obj;
+extern const pb_type_Matrix_obj_t pb_type_Axis_Z_obj;
+#endif // MICROPY_PY_BUILTINS_FLOAT
 
 #if PYBRICKS_PY_PARAMETERS_BUTTON
 

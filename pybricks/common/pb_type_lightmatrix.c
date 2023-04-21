@@ -12,7 +12,7 @@
 #include "py/objstr.h"
 
 #include <pybricks/common.h>
-#include <pybricks/geometry.h>
+#include <pybricks/tools/pb_type_matrix.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_pb/pb_error.h>

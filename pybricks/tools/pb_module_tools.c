@@ -8,7 +8,9 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
+#include <pybricks/parameters.h>
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_matrix.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -30,6 +32,13 @@ STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)      },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&tools_wait_obj)     },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)  },
+    #if MICROPY_PY_BUILTINS_FLOAT
+    { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)           },
+    { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_geometry_vector_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_cross),       MP_ROM_PTR(&pb_type_matrix_cross_obj) },
+    // backwards compatibility for pybricks.geometry.Axis
+    { MP_ROM_QSTR(MP_QSTR_Axis),        MP_ROM_PTR(&pb_enum_type_Axis) },
+    #endif // MICROPY_PY_BUILTINS_FLOAT
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_tools_globals, tools_globals_table);
 
@@ -44,5 +53,10 @@ MP_REGISTER_MODULE(MP_QSTR__tools, pb_module_tools);
 #else
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_tools, pb_module_tools);
 #endif
+
+// backwards compatibility for pybricks.geometry
+#if MICROPY_PY_BUILTINS_FLOAT
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_geometry, pb_module_tools);
+#endif // MICROPY_PY_BUILTINS_FLOAT
 
 #endif // PYBRICKS_PY_TOOLS

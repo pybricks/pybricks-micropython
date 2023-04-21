@@ -15,7 +15,7 @@ Q(pybricks.ev3devices)
 Q(pybricks.experimental)
 #endif
 
-#if PYBRICKS_PY_GEOMETRY
+#if MICROPY_PY_BUILTINS_FLOAT // backwards compatibility with Pybricks V3.2, maps to pybricks.tools
 Q(pybricks.geometry)
 #endif
 
