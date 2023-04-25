@@ -14,6 +14,8 @@
   in beta versions, this is not a breaking change ([support#1054]).
 - New color distance function used by the color sensors that is more
   consistent when distinguishing user-provided colors ([pybricks-micropython#104]).
+- Updated the unreleased BLE API to ensure sent and received objects are the
+  same. Allows one of the supported types or a list/tuple thereof.
 
 ### Fixed
 - Improved external device detection speed ([support#1140]).

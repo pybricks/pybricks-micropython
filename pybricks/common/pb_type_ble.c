@@ -73,6 +73,8 @@ typedef enum {
     PB_BLE_BROADCAST_DATA_TYPE_STR = 5,
     /** The Python @c bytes type. */
     PB_BLE_BROADCAST_DATA_TYPE_BYTES = 6,
+    /** Indicator that the next value is the one and only value (instead of a tuple). */
+    PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT = 7,
 } pb_ble_broadcast_data_type_t;
 
 #define MFG_SPECIFIC 0xFF
@@ -244,14 +246,14 @@ STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
  * Sets the broadcast advertising data and enables broadcasting on the Bluetooth
  * radio if it is not already enabled.
  *
- * The first argument is the "channel" and the remaining arguments are encoded
- * in the advertising data.
+ * The data can be one object of the allowed types, or a tuple/list thereof.
  *
- * @param [in]  n_args  The number of args.
- * @param [in]  args    The args passed in Python code.
- * @throws ValueError   If the channel is out of range or the encoded arguments
- *                      exceeded the available space.
- * @throws TypeError    If any of the arguments are of a type that can't be encoded.
+ * @param [in]  n_args   The number of args.
+ * @param [in]  pos_args The args passed in Python code.
+ * @param [in]  kw_args  The kwargs passed in Python code.
+ * @throws ValueError    If the channel is out of range or the encoded arguments
+ *                       exceed the available space.
+ * @throws TypeError     If any of the arguments are of a type that can't be encoded.
  */
 STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -268,11 +270,23 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
         uint8_t d[5 + OBSERVED_DATA_MAX_SIZE];
     } value;
 
+    // Get either one or several data objects ready for transmission.
     mp_obj_t *objs;
     size_t n_objs;
-    size_t index = 0;
-    mp_obj_get_array(data_in, &n_objs, &objs);
+    size_t index;
+    if (mp_obj_is_type(data_in, &mp_type_tuple) || mp_obj_is_type(data_in, &mp_type_list)) {
+        index = 0;
+        mp_obj_get_array(data_in, &n_objs, &objs);
+    } else {
+        // Set first type to indicate single object.
+        value.v.data[5] = PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT << 5;
+        // The one and only value is included directly after.
+        index = 1;
+        n_objs = 1;
+        objs = &data_in;
+    }
 
+    // Encode all objects.
     for (size_t i = 0; i < n_objs; i++) {
         index = pb_module_ble_encode(&value.v.data[5], index, objs[i]);
     }
@@ -360,6 +374,10 @@ STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
             (*index) += size;
             return mp_obj_new_bytes(bytes_data, size);
         }
+        case PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT:
+            // Does not contain data by itself, is only used as indicator
+            // that the next data is the one and only object.
+            break;
     }
 
     mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("received bad data"));
@@ -409,6 +427,12 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
     // Have not received data yet or timed out.
     if (ch_data->rssi == INT8_MIN) {
         return mp_const_none;
+    }
+
+    // Handle single object.
+    if (ch_data->size != 0 && ch_data->data[0] >> 5 == PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT) {
+        size_t value_index = 1;
+        return pb_module_ble_decode(ch_data, &value_index);
     }
 
     // Objects can be encoded in as little as one byte so we could have up to
