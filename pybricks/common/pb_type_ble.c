@@ -18,6 +18,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/tools.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // The code currently passes integers and floats directly as bytes so requires
@@ -252,23 +253,28 @@ STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
  *                      exceeded the available space.
  * @throws TypeError    If any of the arguments are of a type that can't be encoded.
  */
-STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_obj_BLE_t, self,
+        PB_ARG_DEFAULT_OBJ(data, mp_const_empty_tuple_obj));
     // REVISIT: disable this method on move hub and city hub?
     // This method will raise an OSError on move hub if it is called while the
     // move hub is connected to Pybricks Code. Also, broadcasting interferes
     // with observing even when not connected to Pybricks Code. On the city
     // hub, this method succeeds, but nothing is actually sent over the air.
 
-    pb_obj_BLE_t *self = MP_OBJ_TO_PTR(args[0]);
-
     struct {
         pbdrv_bluetooth_value_t v;
         uint8_t d[5 + OBSERVED_DATA_MAX_SIZE];
     } value;
 
+    mp_obj_t *objs;
+    size_t n_objs;
     size_t index = 0;
-    for (size_t i = 1; i < n_args; i++) {
-        index = pb_module_ble_encode(&value.v.data[5], index, args[i]);
+    mp_obj_get_array(data_in, &n_objs, &objs);
+
+    for (size_t i = 0; i < n_objs; i++) {
+        index = pb_module_ble_encode(&value.v.data[5], index, objs[i]);
     }
 
     value.v.size = index + 5;
@@ -280,7 +286,7 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *args) {
     pbdrv_bluetooth_start_broadcasting(&self->broadcast_task, &value.v);
     return pb_module_tools_pbio_task_wait_or_await(&self->broadcast_task);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
 
 /**
  * Decodes data that was received by the Bluetooth radio.
