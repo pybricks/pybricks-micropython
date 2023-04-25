@@ -13,6 +13,7 @@
 
 #include "py/obj.h"
 #include "py/misc.h"
+#include "py/mphal.h"
 #include "py/runtime.h"
 
 #include <pybricks/common.h>
@@ -25,9 +26,11 @@
 #error "this module requires little endian processor"
 #endif
 
+#define OBSERVED_DATA_TIMEOUT_MS (1000)
 #define OBSERVED_DATA_MAX_SIZE (31 /* max adv data size */ - 5 /* overhead */)
 
 typedef struct {
+    uint32_t timestamp;
     uint8_t channel;
     int8_t rssi;
     uint8_t size;
@@ -111,6 +114,7 @@ STATIC void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uin
             return;
         }
 
+        ch_data->timestamp = mp_hal_ticks_ms();
         ch_data->rssi = rssi;
         ch_data->size = data[0] - 4;
         memcpy(ch_data->data, &data[5], OBSERVED_DATA_MAX_SIZE);
@@ -365,6 +369,12 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
     pbio_task_t task;
     pbdrv_bluetooth_start_observing(&task, handle_observe_event);
     pb_wait_task(&task, -1);
+
+    // Reset the data if it is too old.
+    if (mp_hal_ticks_ms() - ch_data->timestamp > OBSERVED_DATA_TIMEOUT_MS) {
+        ch_data->size = 0;
+        ch_data->rssi = INT8_MIN;
+    }
 
     // Objects can be encoded in as little as one byte so we could have up to
     // this many objects received.
