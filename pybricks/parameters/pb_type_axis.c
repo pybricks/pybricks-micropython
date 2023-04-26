@@ -49,10 +49,9 @@ STATIC const mp_rom_map_elem_t pb_type_Axis_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_Axis_locals_dict, pb_type_Axis_table);
 
-const mp_obj_type_t pb_enum_type_Axis = {
-    { &mp_type_type },
-    .name = MP_QSTR_Axis,
-    .locals_dict = (mp_obj_dict_t *)&(pb_type_Axis_locals_dict),
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_enum_type_Axis,
+    MP_QSTR_Axis,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &(pb_type_Axis_locals_dict));
 
 #endif // PYBRICKS_PY_PARAMETERS && MICROPY_PY_BUILTINS_FLOAT

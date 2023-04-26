@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -152,10 +152,10 @@ STATIC const mp_rom_map_elem_t tools_Logger_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_table);
 
 // type(pybricks.tools.Logger)
-STATIC const mp_obj_type_t tools_Logger_type = {
-    { &mp_type_type },
-    .locals_dict = (mp_obj_dict_t *)&tools_Logger_locals_dict,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(tools_Logger_type,
+    MP_QSTR_Logger,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &tools_Logger_locals_dict);
 
 mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values) {
     tools_Logger_obj_t *logger = mp_obj_malloc(tools_Logger_obj_t, &tools_Logger_type);

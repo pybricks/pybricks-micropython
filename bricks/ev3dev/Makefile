@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2022 The Pybricks Authors
+# Copyright (c) 2019-2023 The Pybricks Authors
 
 # ensure required git submodules checked out
 ifeq ("$(wildcard ../../micropython/README.md)","")
@@ -21,6 +21,13 @@ ifeq ("$(wildcard ../../micropython/lib/berkeley-db-1.xx/README)","")
 $(info GIT cloning berkeley-db-1.xx submodule)
 $(info $(shell cd ../../micropython && git submodule update --init lib/berkeley-db-1.xx))
 ifeq ("$(wildcard ../../micropython/lib/berkeley-db-1.xx/README)","")
+$(error failed)
+endif
+endif
+ifeq ("$(wildcard ../../micropython/lib/micropython-lib/README.md)","")
+$(info GIT cloning micropython-lib submodule)
+$(info $(shell cd ../../micropython && git submodule update --init lib/micropython-lib))
+ifeq ("$(wildcard ../../micropython/lib/micropython-lib/README.md)","")
 $(error failed)
 endif
 endif
@@ -47,6 +54,7 @@ UNAME_S := $(shell uname -s)
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 INC += -I.
 INC += -I$(TOP)
@@ -213,10 +221,11 @@ SRC_C += $(SRC_MOD)
 
 SHARED_SRC_C += $(addprefix shared/,\
 	runtime/gchelper_generic.c \
-	runtime/pyexec.c \
 	timeutils/timeutils.c \
 	$(SHARED_SRC_C_EXTRA) \
 	)
+
+SRC_CXX += \
 
 # Pybricks port core source files
 PYBRICKS_SRC_C += \
@@ -242,17 +251,18 @@ EV3DEV_LIB_SRC_C = $(addprefix lib/,\
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
 OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EV3DEV_LIB_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_EXTMOD_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(SHARED_SRC_C) $(PY_EXTRA_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(SRC_C) $(SHARED_SRC_C) $(PY_EXTRA_SRC_C) $(SRC_EXTMOD_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
@@ -263,9 +273,6 @@ ifneq ($(FROZEN_MANIFEST),)
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 CFLAGS += -DMPZ_DIG_SIZE=16 # force 16 bits to work on both 32 and 64 bit archs
-endif
-
-ifneq ($(FROZEN_MANIFEST),)
 CFLAGS += -DMICROPY_MODULE_FROZEN_STR
 endif
 
@@ -292,14 +299,14 @@ $(GRX_TEST_PLUGIN_OBJ): ../../tests/ev3dev/grx-plugin.c
 $(GRX_TEST_PLUGIN_LIB): $(GRX_TEST_PLUGIN_OBJ)
 	$(Q)$(CC) -shared -o $@ $^ $(LDFLAGS)
 
-test-ev3dev: $(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
-	cd $(TOP)/tests && MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
+test-ev3dev: $(BUILD)/$(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
+	cd $(TOP)/tests && PYBRICKS_MICROPYTHON="$(realpath $<)" MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests.py --test-dirs $(EV3DEV_TEST_DIRS)
 
-test: $(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
+test: $(BUILD)/$(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
 	$(eval DIRNAME=../bricks/$(notdir $(CURDIR)))
-	cd $(TOP)/tests && MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
+	cd $(TOP)/tests && PYBRICKS_MICROPYTHON="$(realpath $<)" MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests.py
 
@@ -314,9 +321,9 @@ endif
 PREFIX = /usr/local
 BINDIR = $(DESTDIR)$(PREFIX)/bin
 
-install: $(PROG)
+install: $(BUILD)/$(PROG)
 	install -d $(BINDIR)
-	install $(PROG) $(BINDIR)/$(PROG)
+	install $(BUILD)/$(PROG) $(BINDIR)/$(PROG)
 
 uninstall:
 	-rm $(BINDIR)/$(PROG)

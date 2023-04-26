@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Updated MicroPython to v1.20.0.
+
 ## [3.3.0b4] - 2023-04-21
 
 ### Fixed

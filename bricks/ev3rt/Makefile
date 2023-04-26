@@ -108,6 +108,7 @@ PY_EMBEDDED_SRC_C = $(addprefix bricks/,\
 # between the top level directory and the micropython/ subdirectory.
 
 PY_EXTRA_SRC_C += $(addprefix shared/,\
+	libc/printf.c \
 	libc/string0.c \
 	readline/readline.c \
 	runtime/gchelper_native.c \

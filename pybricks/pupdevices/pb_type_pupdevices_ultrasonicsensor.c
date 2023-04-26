@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -69,13 +69,12 @@ STATIC const mp_rom_map_elem_t pupdevices_UltrasonicSensor_locals_dict_table[] =
 STATIC MP_DEFINE_CONST_DICT(pupdevices_UltrasonicSensor_locals_dict, pupdevices_UltrasonicSensor_locals_dict_table);
 
 // type(pybricks.pupdevices.UltrasonicSensor)
-const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor = {
-    { &mp_type_type },
-    .name = MP_QSTR_UltrasonicSensor,
-    .make_new = pupdevices_UltrasonicSensor_make_new,
-    .attr = pb_attribute_handler,
-    .protocol = pupdevices_UltrasonicSensor_attr_dict,
-    .locals_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_UltrasonicSensor,
+    MP_QSTR_UltrasonicSensor,
+    MP_TYPE_FLAG_NONE,
+    make_new, pupdevices_UltrasonicSensor_make_new,
+    attr, pb_attribute_handler,
+    protocol, pupdevices_UltrasonicSensor_attr_dict,
+    locals_dict, &pupdevices_UltrasonicSensor_locals_dict);
 
 #endif // PYBRICKS_PY_PUPDEVICES

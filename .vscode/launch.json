@@ -66,7 +66,7 @@
             "type": "cppdbg",
             "request": "launch",
             "cwd": "${workspaceFolder}/micropython/tests",
-            "program": "${workspaceFolder}/bricks/ev3dev/pybricks-micropython",
+            "program": "${workspaceFolder}/bricks/ev3dev/build-test/pybricks-micropython",
             "args": [
                 "../../tests/ev3dev/brick/battery.py"
             ],
@@ -187,7 +187,7 @@
             "name": "(gdb) Attach",
             "type": "cppdbg",
             "request": "attach",
-            "program": "${workspaceFolder}/bricks/ev3dev/pybricks-micropython",
+            "program": "${workspaceFolder}/bricks/ev3dev/built-test/pybricks-micropython",
             "processId": "${command:pickProcess}",
             "MIMode": "gdb",
             "setupCommands": [

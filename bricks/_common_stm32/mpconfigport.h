@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 // Contains the MicroPython configuration for all STM32-based Pybricks ports.
 
@@ -67,7 +67,3 @@ static inline mp_uint_t disable_irq(void) {
 #include <alloca.h>
 
 #define MP_STATE_PORT MP_STATE_VM
-
-#define MICROPY_PORT_ROOT_POINTERS \
-    mp_obj_dict_t *pb_type_Color_dict; \
-    const char *readline_hist[8];

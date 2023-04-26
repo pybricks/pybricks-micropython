@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2021-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -260,12 +260,11 @@ STATIC mp_obj_t pb_type_Icon_call(mp_obj_t self_in, size_t n_args, size_t n_kw, 
     return pb_type_Matrix_make_bitmap(5, 5, 100, mp_obj_get_int(args[0]));
 }
 
-STATIC const mp_obj_type_t pb_type_Icon = {
-    { &mp_type_type },
-    .name = MP_QSTR_Icon,
-    .call = pb_type_Icon_call,
-    .attr = pb_type_Icon_attr,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_Icon,
+    MP_QSTR_Icon,
+    MP_TYPE_FLAG_NONE,
+    call, pb_type_Icon_call,
+    attr, pb_type_Icon_attr);
 
 // We expose an instance instead of the type. This workaround allows
 // us to provide class attributes via the attribute handler, generating

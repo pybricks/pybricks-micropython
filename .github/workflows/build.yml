@@ -31,7 +31,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross/mpy-cross
+        path: micropython/mpy-cross/build/mpy-cross
 
   unix_coverage:
     name: unix coverage
@@ -48,9 +48,9 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross
+        path: micropython/mpy-cross/build
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
+      run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build
       run: |
         cd micropython
@@ -62,7 +62,7 @@ jobs:
       run: |
         cd micropython
         make -C ports/unix VARIANT=coverage test_full
-        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython-coverage ./run-multitests.py multi_net/*.py)
+        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-coverage/micropython ./run-multitests.py multi_net/*.py)
     - name: List failed tests
       if: failure()
       run: micropython/tests/run-tests.py --print-failures
@@ -104,7 +104,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: pybricks-micropython-build-${{ github.run_number }}
-        path: bricks/ev3dev/pybricks-micropython
+        path: bricks/ev3dev/build-armel/pybricks-micropython
 
   ev3dev_ubuntu_lts:
     name: ev3dev-ubuntu-lts
@@ -138,9 +138,9 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross
+        path: micropython/mpy-cross/build
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
+      run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/ev3dev
     - name: Test
@@ -172,9 +172,9 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross
+        path: micropython/mpy-cross/build
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
+      run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Install python
       uses: actions/setup-python@v4
       with:
@@ -227,9 +227,9 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross
+        path: micropython/mpy-cross/build
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
+      run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build and test
       run: COVERAGE=1 ./test-virtualhub.sh
     - name: Coveralls
@@ -256,9 +256,9 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross
+        path: micropython/mpy-cross/build
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
+      run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/ev3rt
 
@@ -278,9 +278,9 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: mpy-cross
-        path: micropython/mpy-cross
+        path: micropython/mpy-cross/build
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
+      run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/debug build/firmware.dfu
 

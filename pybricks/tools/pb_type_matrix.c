@@ -514,17 +514,16 @@ STATIC mp_obj_t pb_type_Matrix_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_bu
 }
 
 // type(pybricks.tools.Matrix)
-const mp_obj_type_t pb_type_Matrix = {
-    { &mp_type_type },
-    .name = MP_QSTR_Matrix,
-    .print = pb_type_Matrix_print,
-    .make_new = pb_type_Matrix_make_new,
-    .attr = pb_type_Matrix_attr,
-    .unary_op = pb_type_Matrix_unary_op,
-    .binary_op = pb_type_Matrix_binary_op,
-    .subscr = pb_type_Matrix_subscr,
-    .getiter = pb_type_Matrix_getiter,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_Matrix,
+    MP_QSTR_Matrix,
+    MP_TYPE_FLAG_ITER_IS_GETITER,
+    print, pb_type_Matrix_print,
+    make_new, pb_type_Matrix_make_new,
+    attr, pb_type_Matrix_attr,
+    unary_op, pb_type_Matrix_unary_op,
+    binary_op, pb_type_Matrix_binary_op,
+    subscr, pb_type_Matrix_subscr,
+    iter, pb_type_Matrix_getiter);
 
 // pybricks.tools._make_vector
 mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {

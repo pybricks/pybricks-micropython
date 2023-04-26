@@ -2,8 +2,8 @@ from pybricks.pupdevices import Motor
 from pybricks.parameters import Port
 from pybricks.tools import wait, StopWatch
 
-from errno import ETIMEDOUT
-from os import getenv
+from uerrno import ETIMEDOUT
+from uos import getenv
 
 # environment variables allow running one-off tests
 TARGET_ANGLE = int(getenv("TARGET_ANGLE", 1000))

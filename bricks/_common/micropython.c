@@ -48,7 +48,19 @@ void pb_event_poll_hook(void) {
 
 // callback for when stop button is pressed in IDE or on hub
 void pbsys_main_stop_program(bool force_stop) {
-    mp_sched_system_exit_or_abort(force_stop);
+    if (force_stop) {
+        mp_sched_vm_abort();
+    } else {
+        pyexec_system_exit = PYEXEC_FORCED_EXIT;
+
+        static mp_obj_exception_t system_exit;
+        system_exit.base.type = &mp_type_SystemExit;
+        system_exit.traceback_alloc = system_exit.traceback_len = 0;
+        system_exit.traceback_data = NULL;
+        system_exit.args = (mp_obj_tuple_t *)&mp_const_empty_tuple_obj;
+
+        mp_sched_exception(MP_OBJ_FROM_PTR(&system_exit));
+    }
 }
 
 bool pbsys_main_stdin_event(uint8_t c) {
@@ -91,8 +103,8 @@ static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minima
 
 // Prints the exception that ended the program.
 static void print_final_exception(mp_obj_t exc) {
-    // Handle graceful stop with button or shutdown.
-    if (mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemAbort)) ||
+    // Handle graceful stop with button.
+    if (pyexec_system_exit == PYEXEC_FORCED_EXIT &&
         mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
         mp_printf(&mp_plat_print, "The program was stopped (%q).\n",
             ((mp_obj_exception_t *)MP_OBJ_TO_PTR(exc))->base.type->name);
@@ -105,19 +117,31 @@ static void print_final_exception(mp_obj_t exc) {
 
 #if PYBRICKS_OPT_COMPILER
 static void run_repl(void) {
-    // Reset REPL history.
     readline_init0();
+    pyexec_system_exit = 0;
+
     nlr_buf_t nlr;
+    nlr.ret_val = NULL;
+
     if (nlr_push(&nlr) == 0) {
+        nlr_set_abort(&nlr);
         // Run the REPL.
         pyexec_friendly_repl();
         nlr_pop();
     } else {
+        // if vm abort
+        if (nlr.ret_val == NULL) {
+            // we are shutting down, so don't bother with cleanup
+            return;
+        }
+
         // clear any pending exceptions (and run any callbacks).
         mp_handle_pending(false);
         // Print which exception triggered this.
         print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
     }
+
+    nlr_set_abort(NULL);
 }
 #endif
 
@@ -203,9 +227,14 @@ static mpy_info_t *mpy_data_find(qstr name) {
  * Runs the __main__ module from user RAM.
  */
 static void run_user_program(void) {
+    pyexec_system_exit = 0;
 
     nlr_buf_t nlr;
+    nlr.ret_val = NULL;
+
     if (nlr_push(&nlr) == 0) {
+        nlr_set_abort(&nlr);
+
         mpy_info_t *info = mpy_data_find(MP_QSTR___main__);
 
         if (!info) {
@@ -218,7 +247,9 @@ static void run_user_program(void) {
         mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size));
         mp_module_context_t *context = m_new_obj(mp_module_context_t);
         context->module.globals = mp_globals_get();
-        mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+        mp_compiled_module_t compiled_module;
+        compiled_module.context = context;
+        mp_raw_code_load(&reader, &compiled_module);
         mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, NULL);
 
         // Run the script while letting CTRL-C interrupt it.
@@ -231,8 +262,15 @@ static void run_user_program(void) {
 
         nlr_pop();
     } else {
-        // Clear any pending exceptions (and run any callbacks).
         mp_hal_set_interrupt_char(-1);
+
+        // if vm abort
+        if (nlr.ret_val == NULL) {
+            // we are shutting down, so don't bother with cleanup
+            return;
+        }
+
+        // Clear any pending exceptions (and run any callbacks).
         mp_handle_pending(false);
 
         print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
@@ -251,6 +289,8 @@ static void run_user_program(void) {
         }
         #endif
     }
+
+    nlr_set_abort(NULL);
 }
 
 // Runs MicroPython with the given program data.
@@ -340,7 +380,9 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
         // Create new module and execute in its own context.
         mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);
         mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
-        mp_compiled_module_t compiled_module = mp_raw_code_load(&reader, context);
+        mp_compiled_module_t compiled_module;
+        compiled_module.context = context;
+        mp_raw_code_load(&reader, &compiled_module);
         do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
 
         // Return the newly imported module.

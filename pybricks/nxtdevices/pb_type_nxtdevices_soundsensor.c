@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -61,11 +61,10 @@ STATIC const mp_rom_map_elem_t nxtdevices_SoundSensor_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_SoundSensor_locals_dict, nxtdevices_SoundSensor_locals_dict_table);
 
 // type(pybricks.ev3devices.SoundSensor)
-const mp_obj_type_t pb_type_nxtdevices_SoundSensor = {
-    { &mp_type_type },
-    .name = MP_QSTR_SoundSensor,
-    .make_new = nxtdevices_SoundSensor_make_new,
-    .locals_dict = (mp_obj_dict_t *)&nxtdevices_SoundSensor_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_SoundSensor,
+    MP_QSTR_SoundSensor,
+    MP_TYPE_FLAG_NONE,
+    make_new, nxtdevices_SoundSensor_make_new,
+    locals_dict, &nxtdevices_SoundSensor_locals_dict);
 
 #endif // PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES

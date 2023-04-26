@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -426,16 +426,15 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
 MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);
 
 // type(pybricks.builtins.Motor)
-const mp_obj_type_t pb_type_Motor = {
-    { &mp_type_type },
-    .name = MP_QSTR_Motor,
-    .print = common_DCMotor_print,
-    .make_new = common_Motor_make_new,
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_Motor,
+    MP_QSTR_Motor,
+    MP_TYPE_FLAG_NONE,
+    print, common_DCMotor_print,
+    make_new, common_Motor_make_new,
     #if PYBRICKS_PY_COMMON_CONTROL | PYBRICKS_PY_COMMON_LOGGER
-    .attr = pb_attribute_handler,
-    .protocol = common_Motor_attr_dict,
+    attr, pb_attribute_handler,
+    protocol, common_Motor_attr_dict,
     #endif
-    .locals_dict = (mp_obj_dict_t *)&common_Motor_locals_dict,
-};
+    locals_dict, &common_Motor_locals_dict);
 
 #endif // PYBRICKS_PY_COMMON_MOTORS

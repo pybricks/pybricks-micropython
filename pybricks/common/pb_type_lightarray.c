@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -76,11 +76,10 @@ STATIC const mp_rom_map_elem_t common_LightArray_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(common_LightArray_locals_dict, common_LightArray_locals_dict_table);
 
 // type(pybricks.builtins.LightArray)
-STATIC const mp_obj_type_t pb_type_LightArray = {
-    { &mp_type_type },
-    .name = MP_QSTR_LightArray,
-    .locals_dict = (mp_obj_dict_t *)&common_LightArray_locals_dict,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightArray,
+    MP_QSTR_LightArray,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &common_LightArray_locals_dict);
 
 // pybricks._common.LightArray.__init__
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {

@@ -315,29 +315,27 @@ STATIC const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(pb_type_DriveBase_locals_dict, pb_type_DriveBase_locals_dict_table);
 
 // type(pybricks.robotics.DriveBase)
-const mp_obj_type_t pb_type_drivebase = {
-    { &mp_type_type },
-    .name = MP_QSTR_DriveBase,
-    .make_new = pb_type_DriveBase_make_new,
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_drivebase,
+    MP_QSTR_DriveBase,
+    MP_TYPE_FLAG_NONE,
+    make_new, pb_type_DriveBase_make_new,
     #if PYBRICKS_PY_COMMON_CONTROL
-    .attr = pb_attribute_handler,
-    .protocol = pb_type_DriveBase_attr_dict,
+    attr, pb_attribute_handler,
+    protocol, pb_type_DriveBase_attr_dict,
     #endif
-    .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
-};
+    locals_dict, &pb_type_DriveBase_locals_dict);
 
 #if PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
 // type(pybricks.robotics.GyroDriveBase)
-const mp_obj_type_t pb_type_gyrodrivebase = {
-    { &mp_type_type },
-    .name = MP_QSTR_GyroDriveBase,
-    .make_new = pb_type_DriveBase_make_new,
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_gyrodrivebase,
+    MP_QSTR_GyroDriveBase,
+    MP_TYPE_FLAG_NONE,
+    make_new, pb_type_DriveBase_make_new,
     #if PYBRICKS_PY_COMMON_CONTROL
-    .attr = pb_attribute_handler,
-    .protocol = pb_type_DriveBase_attr_dict,
+    attr, pb_attribute_handler,
+    protocol, pb_type_DriveBase_attr_dict,
     #endif
-    .locals_dict = (mp_obj_dict_t *)&pb_type_DriveBase_locals_dict,
-};
+    locals_dict, &pb_type_DriveBase_locals_dict);
 #endif // PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS

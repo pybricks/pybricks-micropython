@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 // class Image
 //
@@ -408,13 +408,15 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
 
     mp_int_t x = pb_obj_get_int(x_in);
     mp_int_t y = pb_obj_get_int(y_in);
+
     if (!mp_obj_is_str_or_bytes(text_in)) {
         vstr_t vstr;
         mp_print_t print;
         vstr_init_print(&vstr, 16, &print);
         mp_obj_print_helper(&print, text_in, PRINT_STR);
-        text_in = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
+        text_in = mp_obj_new_str_from_vstr(&vstr);
     }
+
     const char *text = mp_obj_str_get_str(text_in);
     GrxColor text_color = map_color(text_color_in);
     GrxColor background_color = map_color(background_color_in);
@@ -570,11 +572,10 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
 
-const mp_obj_type_t pb_type_ev3dev_Image = {
-    { &mp_type_type },
-    .name = MP_QSTR_Image,
-    .make_new = ev3dev_Image_make_new,
-    .attr = pb_attribute_handler,
-    .protocol = ev3dev_Image_attr_dict,
-    .locals_dict = (mp_obj_dict_t *)&ev3dev_Image_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3dev_Image,
+    MP_QSTR_Image,
+    MP_TYPE_FLAG_NONE,
+    make_new, ev3dev_Image_make_new,
+    attr, pb_attribute_handler,
+    protocol, ev3dev_Image_attr_dict,
+    locals_dict, &ev3dev_Image_locals_dict);

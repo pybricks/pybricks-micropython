@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -197,12 +197,11 @@ STATIC const mp_rom_map_elem_t hubs_MoveHub_IMU_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_IMU_locals_dict, hubs_MoveHub_IMU_locals_dict_table);
 
-STATIC const mp_obj_type_t hubs_MoveHub_IMU_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_Motion,
-    .attr = pb_attribute_handler,
-    .locals_dict = (mp_obj_dict_t *)&hubs_MoveHub_IMU_locals_dict,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(hubs_MoveHub_IMU_type,
+    MP_QSTR_IMU,
+    MP_TYPE_FLAG_NONE,
+    attr, pb_attribute_handler,
+    locals_dict, &hubs_MoveHub_IMU_locals_dict);
 
 STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
     hubs_MoveHub_IMU_obj_t *self = mp_obj_malloc(hubs_MoveHub_IMU_obj_t, &hubs_MoveHub_IMU_type);
@@ -273,12 +272,11 @@ STATIC const pb_attr_dict_entry_t hubs_MoveHub_attr_dict[] = {
     PB_ATTR_DICT_SENTINEL
 };
 
-const mp_obj_type_t pb_type_ThisHub = {
-    { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
-    .make_new = hubs_MoveHub_make_new,
-    .attr = pb_attribute_handler,
-    .protocol = hubs_MoveHub_attr_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_ThisHub,
+    PYBRICKS_HUB_CLASS_NAME,
+    MP_TYPE_FLAG_NONE,
+    make_new, hubs_MoveHub_make_new,
+    attr, pb_attribute_handler,
+    protocol, hubs_MoveHub_attr_dict);
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_MOVEHUB

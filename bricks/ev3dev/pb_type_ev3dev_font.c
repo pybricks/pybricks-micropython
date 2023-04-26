@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 // class Screen
 
@@ -151,14 +151,13 @@ STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Font_locals_dict, ev3dev_Font_locals_dict_table);
 
-const mp_obj_type_t pb_type_ev3dev_Font = {
-    { &mp_type_type },
-    .name = MP_QSTR_Font,
-    .make_new = ev3dev_Font_make_new,
-    .attr = pb_attribute_handler,
-    .protocol = ev3dev_Font_attr_dict,
-    .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3dev_Font,
+    MP_QSTR_Font,
+    MP_TYPE_FLAG_NONE,
+    make_new, ev3dev_Font_make_new,
+    attr, pb_attribute_handler,
+    protocol, ev3dev_Font_attr_dict,
+    locals_dict, &ev3dev_Font_locals_dict);
 
 GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj) {
     if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font)) {

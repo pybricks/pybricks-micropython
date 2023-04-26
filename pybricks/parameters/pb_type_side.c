@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -57,12 +57,11 @@ STATIC const mp_rom_map_elem_t pb_enum_Side_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Side_locals_dict, pb_enum_Side_table);
 
-const mp_obj_type_t pb_enum_type_Side = {
-    { &mp_type_type },
-    .name = MP_QSTR_Side,
-    .print = pb_type_enum_print,
-    .unary_op = mp_generic_unary_op,
-    .locals_dict = (mp_obj_dict_t *)&(pb_enum_type_Side_locals_dict),
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_enum_type_Side,
+    MP_QSTR_Side,
+    MP_TYPE_FLAG_NONE,
+    print, pb_type_enum_print,
+    unary_op, mp_generic_unary_op,
+    locals_dict, &(pb_enum_type_Side_locals_dict));
 
 #endif // PYBRICKS_PY_PARAMETERS

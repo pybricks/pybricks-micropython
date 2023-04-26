@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2022 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 // Common configuration of Pybricks MicroPython ports.
 
@@ -106,6 +106,7 @@
 #define MICROPY_FLOAT_IMPL                      (MICROPY_FLOAT_IMPL_NONE)
 #endif
 #define MICROPY_KBD_EXCEPTION                   (1)
+#define MICROPY_ENABLE_VM_ABORT                 (1)
 #define MICROPY_ENABLE_SCHEDULER                (0)
 #define MICROPY_PY_INSTANCE_ATTRS               (1)
 

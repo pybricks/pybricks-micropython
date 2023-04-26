@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -316,11 +316,10 @@ STATIC const mp_rom_map_elem_t common_LightMatrix_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(common_LightMatrix_locals_dict, common_LightMatrix_locals_dict_table);
 
 // type(pybricks.builtins.LightMatrix)
-STATIC const mp_obj_type_t pb_type_LightMatrix = {
-    { &mp_type_type },
-    .name = MP_QSTR_LightMatrix,
-    .locals_dict = (mp_obj_dict_t *)&common_LightMatrix_locals_dict,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightMatrix,
+    MP_QSTR_LightMatrix,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &common_LightMatrix_locals_dict);
 
 // pybricks._common.LightMatrix.__init__
 mp_obj_t pb_type_LightMatrix_obj_new(pbio_light_matrix_t *light_matrix) {

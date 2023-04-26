@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2022 The Pybricks Authors
+# Copyright (c) 2022-2023 The Pybricks Authors
 
 ###############################
 # Standard MicroPython config #
@@ -31,10 +31,10 @@ MICROPY_PY_SOCKET = 1
 MICROPY_PY_FFI = 1
 
 # ussl module requires one of the TLS libraries below
-MICROPY_PY_USSL = 1
+MICROPY_PY_USSL = 0
 # axTLS has minimal size but implements only a subset of modern TLS
 # functionality, so may have problems with some servers.
-MICROPY_SSL_AXTLS = 1
+MICROPY_SSL_AXTLS = 0
 # mbedTLS is more up to date and complete implementation, but also
 # more bloated.
 MICROPY_SSL_MBEDTLS = 0
@@ -45,6 +45,10 @@ MICROPY_PY_JNI = 0
 # Avoid using system libraries, use copies bundled with MicroPython
 # as submodules (currently affects only libffi).
 MICROPY_STANDALONE = 0
+
+MICROPY_VFS_FAT = 0
+MICROPY_VFS_LFS1 = 0
+MICROPY_VFS_LFS2 = 0
 
 ######################
 # Pybricks additions #
@@ -62,9 +66,8 @@ INC += -I../../../lib/pbio/platform/virtual_hub
 PBIO_PLATFORM = virtual_hub
 include ../../../bricks/_common/sources.mk
 
-EXTMOD_SRC_C += $(PYBRICKS_PYBRICKS_SRC_C)
-LIB_SRC_C += $(CONTIKI_SRC_C)
-LIB_SRC_C += $(PBIO_SRC_C)
+SRC_EXTMOD_C += $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_THIRDPARTY_C += $(CONTIKI_SRC_C) $(PBIO_SRC_C)
 
 # realtime library for timer signals
 LIB += -lrt

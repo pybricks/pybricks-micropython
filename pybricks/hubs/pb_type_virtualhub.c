@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -48,12 +48,11 @@ STATIC const pb_attr_dict_entry_t hubs_VirtualHub_attr_dict[] = {
     PB_ATTR_DICT_SENTINEL
 };
 
-const mp_obj_type_t pb_type_ThisHub = {
-    { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
-    .make_new = hubs_VirtualHub_make_new,
-    .attr = pb_attribute_handler,
-    .protocol = hubs_VirtualHub_attr_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_ThisHub,
+    PYBRICKS_HUB_CLASS_NAME,
+    MP_TYPE_FLAG_NONE,
+    make_new, hubs_VirtualHub_make_new,
+    attr, pb_attribute_handler,
+    protocol, hubs_VirtualHub_attr_dict);
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_VIRTUALHUB

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -112,11 +112,10 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorLightMatrix_locals_dict_table[] =
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorLightMatrix_locals_dict, pupdevices_ColorLightMatrix_locals_dict_table);
 
 // type(pybricks.pupdevices.ColorLightMatrix)
-const mp_obj_type_t pb_type_pupdevices_ColorLightMatrix = {
-    { &mp_type_type },
-    .name = MP_QSTR_ColorLightMatrix,
-    .make_new = pupdevices_ColorLightMatrix_make_new,
-    .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorLightMatrix_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_ColorLightMatrix,
+    MP_QSTR_ColorLightMatrix,
+    MP_TYPE_FLAG_NONE,
+    make_new, pupdevices_ColorLightMatrix_make_new,
+    locals_dict, &pupdevices_ColorLightMatrix_locals_dict);
 
 #endif // PYBRICKS_PY_PUPDEVICES

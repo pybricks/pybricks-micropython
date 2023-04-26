@@ -15,7 +15,7 @@ submodules and have built `mpy-cross` for the host OS (`make -C mpy-cross`).
 
 3. Transfer the generated `pybricks-micropython` to the EV3 Brick.
 
-        scp bricks/ev3dev/pybricks-micropython robot@ev3dev:~
+        scp bricks/ev3dev/build-armel/pybricks-micropython robot@ev3dev:~
 
 4. Run it on the EV3.
 

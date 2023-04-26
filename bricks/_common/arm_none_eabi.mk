@@ -175,8 +175,6 @@ CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 endif
 
-MPY_CROSS = $(PBTOP)/micropython/mpy-cross/mpy-cross
-
 LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 # Sources and libraries common to all pybricks bricks
@@ -192,6 +190,7 @@ include $(PBTOP)/bricks/_common/sources.mk
 # between the top level directory and the micropython/ subdirectory.
 
 PY_EXTRA_SRC_C = $(addprefix shared/,\
+	libc/printf.c \
 	libc/string0.c \
 	readline/readline.c \
 	runtime/gchelper_native.c \

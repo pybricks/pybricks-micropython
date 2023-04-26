@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 // Pybricks brick specific definitions
 #include "brickconfig.h"
@@ -143,6 +143,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_MODULE_GETATTR                  (1)
 #define MICROPY_PY_DELATTR_SETATTR              (1)
 #define MICROPY_PY_REVERSE_SPECIAL_METHODS      (1)
+#define MICROPY_PY_BUILTINS_BYTES_HEX           (1)
 #define MICROPY_PY_BUILTINS_MEMORYVIEW_ITEMSIZE (1)
 #define MICROPY_PY_BUILTINS_NEXT2               (1)
 #define MICROPY_PY_BUILTINS_RANGE_BINOP         (1)
@@ -362,12 +363,6 @@ struct _mp_bluetooth_nimble_malloc_t;
 #else
 #define MICROPY_BLUETOOTH_ROOT_POINTERS
 #endif
-
-#define MICROPY_PORT_ROOT_POINTERS \
-    mp_obj_dict_t *pb_type_Color_dict; \
-    const char *readline_hist[50]; \
-    void *mmap_region_head; \
-    MICROPY_BLUETOOTH_ROOT_POINTERS \
 
 // We need to provide a declaration/definition of alloca()
 // unless support for it is disabled.

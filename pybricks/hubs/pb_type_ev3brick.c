@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -41,8 +41,8 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(ev3brick_buttons), ev3brick_buttons, pbio_button_is_pressed);
     self->light = common_ColorLight_internal_obj_new(ev3dev_status_light);
     mp_obj_t screen_args[] = { MP_ROM_QSTR(MP_QSTR__screen_) };
-    self->screen = pb_type_ev3dev_Image.make_new(&pb_type_ev3dev_Image, 1, 0, screen_args);
-    self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
+    self->screen = MP_OBJ_TYPE_GET_SLOT(&pb_type_ev3dev_Image, make_new)(&pb_type_ev3dev_Image, 1, 0, screen_args);
+    self->speaker = MP_OBJ_TYPE_GET_SLOT(&pb_type_ev3dev_Speaker, make_new)(&pb_type_ev3dev_Speaker, 0, 0, NULL);
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
 
     return MP_OBJ_FROM_PTR(self);
@@ -58,12 +58,11 @@ STATIC const pb_attr_dict_entry_t hubs_EV3Brick_attr_dict[] = {
     PB_ATTR_DICT_SENTINEL
 };
 
-const mp_obj_type_t pb_type_ThisHub = {
-    { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
-    .make_new = hubs_EV3Brick_make_new,
-    .attr = pb_attribute_handler,
-    .protocol = hubs_EV3Brick_attr_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_ThisHub,
+    PYBRICKS_HUB_CLASS_NAME,
+    MP_TYPE_FLAG_NONE,
+    make_new, hubs_EV3Brick_make_new,
+    attr, pb_attribute_handler,
+    protocol, hubs_EV3Brick_attr_dict);
 
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_EV3BRICK

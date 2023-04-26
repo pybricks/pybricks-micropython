@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -63,11 +63,10 @@ STATIC const mp_rom_map_elem_t pupdevices_Light_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(pupdevices_Light_locals_dict, pupdevices_Light_locals_dict_table);
 
 // type(pybricks.pupdevices.Light)
-const mp_obj_type_t pb_type_pupdevices_Light = {
-    { &mp_type_type },
-    .name = MP_QSTR_Light,
-    .make_new = pupdevices_Light_make_new,
-    .locals_dict = (mp_obj_dict_t *)&pupdevices_Light_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Light,
+    MP_QSTR_Light,
+    MP_TYPE_FLAG_NONE,
+    make_new, pupdevices_Light_make_new,
+    locals_dict, &pupdevices_Light_locals_dict);
 
 #endif // PYBRICKS_PY_PUPDEVICES

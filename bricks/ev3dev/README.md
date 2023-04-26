@@ -27,7 +27,7 @@ sudo ln -s /home/robot/pybricks-micropython /usr/bin/pybricks-micropython
 Once you've followed the steps above, you can build and deploy using:
 
 ```
-make ev3dev-armel && cp bricks/ev3dev/pybricks-micropython /run/user/1000/gvfs/sftp:host=*,user=robot/home/robot
+make ev3dev-armel && cp bricks/ev3dev/build-armel/pybricks-micropython /run/user/1000/gvfs/sftp:host=*,user=robot/home/robot
 ```
 
 Then all pybricks-micropython tools and projects will use the new build without

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -145,7 +145,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
     // If we're the class itself, use dict printer
     if (MP_OBJ_TO_PTR(self_in) == &pb_type_Color_obj) {
-        mp_type_dict.print(print, MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), kind);
+        MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, print)(print, MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), kind);
         return;
     }
 
@@ -177,7 +177,7 @@ STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t 
     }
 
     // Treat it like a dictionary
-    return mp_type_dict.subscr(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), index, value);
+    return MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, subscr)(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), index, value);
 }
 
 STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
@@ -188,7 +188,7 @@ STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_
     }
 
     // Treat it like a dictionary
-    return mp_type_dict.getiter(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), iter_buf);
+    return ((mp_getiter_fun_t)MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, iter))(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), iter_buf);
 }
 
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
@@ -308,22 +308,23 @@ STATIC mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw,
     return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in));
 }
 
-const mp_obj_type_t pb_type_Color = {
-    { &mp_type_type },
-    .name = MP_QSTR_Color,
-    .call = pb_type_Color_call,
-    .attr = pb_type_Color_attr,
-    .print = pb_type_Color_print,
-    .unary_op = mp_generic_unary_op,
-    .binary_op = pb_type_Color_binary_op,
-    .subscr = pb_type_Color_subscr,
-    .getiter = pb_type_Color_getiter,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_Color,
+    MP_QSTR_Color,
+    MP_TYPE_FLAG_ITER_IS_GETITER,
+    call, pb_type_Color_call,
+    attr, pb_type_Color_attr,
+    print, pb_type_Color_print,
+    unary_op, mp_generic_unary_op,
+    binary_op, pb_type_Color_binary_op,
+    subscr, pb_type_Color_subscr,
+    iter, pb_type_Color_getiter);
 
 // We expose an instance instead of the type. This lets us provide class
 // attributes via the attribute handler for more flexibility.
 const mp_obj_base_t pb_type_Color_obj = {
     &pb_type_Color
 };
+
+MP_REGISTER_ROOT_POINTER(mp_obj_dict_t * pb_type_Color_dict);
 
 #endif // PYBRICKS_PY_PARAMETERS

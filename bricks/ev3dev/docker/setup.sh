@@ -73,6 +73,7 @@ docker run \
     --name ${container_name} \
     --env "TERM=${TERM}" \
     --env "DESTDIR=/build/dist" \
+    --env "MICROPY_MPYCROSS=/src/micropython/mpy-cross/build-armel/mpy-cross" \
     --user $(id -u):$(id -g) \
     --tty \
     --detach \

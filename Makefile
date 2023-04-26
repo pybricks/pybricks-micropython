@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2022 The Pybricks Authors
+# Copyright (c) 2019-2023 The Pybricks Authors
 
 # ensure micropython submodule is checked out for building mpy-cross
 ifeq ("$(wildcard micropython/README.md)","")
@@ -30,7 +30,7 @@ clean-doc:
 
 all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3rt doc
 
-clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-doc
+clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3rt clean-doc
 
 ifeq ($(HOST_OS),Linux)
 

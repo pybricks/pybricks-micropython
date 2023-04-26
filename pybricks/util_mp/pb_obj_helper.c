@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2023 The Pybricks Authors
 
 #include <pbio/color.h>
 #include <pbio/error.h>
@@ -156,7 +156,7 @@ void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     const mp_obj_type_t *type = mp_obj_get_type(self_in);
 
     // type may have been subclassed
-    while (type->attr != pb_attribute_handler) {
+    while (MP_OBJ_TYPE_GET_SLOT_OR_NULL(type, attr) != pb_attribute_handler) {
         type = type->base.type;
 
         if (type == &mp_type_type) {
@@ -168,7 +168,7 @@ void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     }
 
     // Get number of attributes and reference to attributes array.
-    const pb_attr_dict_entry_t *attr_dict = type->protocol;
+    const pb_attr_dict_entry_t *attr_dict = MP_OBJ_TYPE_GET_SLOT(type, protocol);
     const pb_attr_dict_entry_t *entry = NULL;
 
     // Look up the attribute offset. attr_dict is zero-terminated.

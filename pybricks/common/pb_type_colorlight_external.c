@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -55,11 +55,10 @@ STATIC const mp_rom_map_elem_t common_ColorLight_external_locals_dict_table[] = 
 STATIC MP_DEFINE_CONST_DICT(common_ColorLight_external_locals_dict, common_ColorLight_external_locals_dict_table);
 
 // type(pybricks.builtins.ColorLight)
-STATIC const mp_obj_type_t pb_type_ColorLight_external = {
-    { &mp_type_type },
-    .name = MP_QSTR_ColorLight,
-    .locals_dict = (mp_obj_dict_t *)&common_ColorLight_external_locals_dict,
-};
+STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_ColorLight_external,
+    MP_QSTR_ColorLight,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &common_ColorLight_external_locals_dict);
 
 // pybricks._common.ColorLight.__init__
 mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on) {

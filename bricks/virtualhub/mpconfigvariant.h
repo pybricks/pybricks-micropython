@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
 
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_VirtualHub)
 
@@ -42,14 +42,23 @@
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 
 // Upstream MicroPython options
+#define MICROPY_FLOAT_IMPL                      (MICROPY_FLOAT_IMPL_FLOAT)
+#define MICROPY_LONGINT_IMPL                    (MICROPY_LONGINT_IMPL_LONGLONG)
 #define MICROPY_MODULE_ATTR_DELEGATION          (1)
 #define MICROPY_MODULE_BUILTIN_INIT             (1)
 #define MICROPY_PY_BUILTINS_HELP                (1)
 #define MICROPY_PY_BUILTINS_HELP_MODULES        (1)
 #define MICROPY_PY_SYS_SETTRACE                 (1)
-#define MICROPY_PERSISTENT_CODE_SAVE            (1)
+#define MICROPY_PY_UERRNO                       (1)
+#define MICROPY_PY_UOS                          (1)
+#define MICROPY_PY_UOS_GETENV_PUTENV_UNSETENV   (1)
+#define MICROPY_PY_UOS_INCLUDEFILE              "ports/unix/moduos.c"
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS          (1)
 #define MICROPY_PY_BUILTINS_SLICE_INDICES       (1)
+#define MICROPY_PERSISTENT_CODE_SAVE            (1)
+#define MICROPY_STREAMS_POSIX_API               (1)
+#define MICROPY_HELPER_REPL                     (1)
+#define MICROPY_KBD_EXCEPTION                   (1)
 
 // REVISIT: This list currently matches the stm32 builds. We may consider
 // adding more like the ev3dev build.
@@ -76,9 +85,6 @@
         extern void pb_virtualhub_port_deinit(void); \
         pb_virtualhub_port_deinit(); \
 } while (0)
-
-#define MICROPY_VARIANT_ROOT_POINTERS \
-    mp_obj_dict_t *pb_type_Color_dict;
 
 #define MICROPY_VM_HOOK_LOOP do { \
         extern void pb_virtualhub_poll(void); \

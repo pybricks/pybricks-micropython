@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -75,11 +75,10 @@ STATIC const mp_rom_map_elem_t tools_StopWatch_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(tools_StopWatch_locals_dict, tools_StopWatch_locals_dict_table);
 
-const mp_obj_type_t pb_type_StopWatch = {
-    { &mp_type_type },
-    .name = MP_QSTR_StopWatch,
-    .make_new = tools_StopWatch_make_new,
-    .locals_dict = (mp_obj_dict_t *)&tools_StopWatch_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_StopWatch,
+    MP_QSTR_StopWatch,
+    MP_TYPE_FLAG_NONE,
+    make_new, tools_StopWatch_make_new,
+    locals_dict, &tools_StopWatch_locals_dict);
 
 #endif // PYBRICKS_PY_TOOLS

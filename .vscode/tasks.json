@@ -6,12 +6,12 @@
         {
             "label": "build ev3dev-test",
             "type": "shell",
-            "command": "poetry run make -C bricks/ev3dev pybricks-micropython build-test/libgrx-3.0-vdriver-test.so DEBUG=1 COPT=-O0 BUILD=build-test CROSS_COMPILE= -j"
+            "command": "poetry run make -C bricks/ev3dev build-test/pybricks-micropython build-test/libgrx-3.0-vdriver-test.so DEBUG=1 COPT=-O0 BUILD=build-test CROSS_COMPILE= -j"
         },
         {
             "label": "build ev3dev deploy",
             "type": "shell",
-            "command": "make ev3dev-armel -j && cp bricks/ev3dev/pybricks-micropython /run/user/1000/gvfs/sftp:host=*/home/robot"
+            "command": "make ev3dev-armel -j && cp bricks/ev3dev/build-armel/pybricks-micropython /run/user/1000/gvfs/sftp:host=*/home/robot"
         },
         {
             "label": "build virtualhub",

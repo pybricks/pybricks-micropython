@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021-2022 The Pybricks Authors
+// Copyright (c) 2021-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -43,11 +43,10 @@ STATIC const mp_rom_map_elem_t Charger_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(Charger_locals_dict, Charger_locals_dict_table);
 
-const mp_obj_type_t pb_type_Charger = {
-    .base = { .type = &mp_type_type },
-    .name = MP_QSTR_Charger,
-    .locals_dict = (mp_obj_dict_t *)&Charger_locals_dict,
-};
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_Charger,
+    MP_QSTR_Charger,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &Charger_locals_dict);
 
 mp_obj_t pb_type_Charger_obj_new(void) {
     pb_obj_Charger_t *self = mp_obj_malloc(pb_obj_Charger_t, &pb_type_Charger);
