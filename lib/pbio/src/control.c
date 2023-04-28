@@ -21,7 +21,7 @@
  * @return                    Wall time in control ticks.
  */
 uint32_t pbio_control_get_time_ticks(void) {
-    assert(PBIO_TRAJECTORY_TICKS_PER_MS == 10);
+    _Static_assert(PBIO_TRAJECTORY_TICKS_PER_MS == 10, "time config must match clock resolution");
     return pbdrv_clock_get_100us();
 }
 
