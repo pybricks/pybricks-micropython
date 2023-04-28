@@ -7,6 +7,11 @@
 ### Changed
 - Updated MicroPython to v1.20.0.
 
+### Fixed
+- Fixed stdin containing `0x06` command byte ([support#1052]).
+
+[support#1052]: https://github.com/pybricks/support/issues/1052
+
 ## [3.3.0b4] - 2023-04-21
 
 ### Fixed

@@ -87,8 +87,8 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
         pbsys_bluetooth_rx(rx_data, &size) == PBIO_SUCCESS;
     }));
 
-    tt_want_uint_op(size, ==, strlen(test_data_3));
-    tt_want_int_op(strncmp(test_data_3, (const char *)rx_data, size), ==, 0);
+    tt_want_uint_op(size, ==, strlen("test3\n"));
+    tt_want_int_op(strncmp("test3\n", (const char *)rx_data, size), ==, 0);
 
     // enabling notifications on Pybricks command characteristic should send
     // a notification right away if status is non-zero
