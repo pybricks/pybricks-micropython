@@ -10,11 +10,20 @@ jobs:
     permissions:
       pull-requests: write
     steps:
+      - name: Download pull request number
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: build.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: pr_number
       - uses: actions/github-script@v6
         with:
           # This snippet is public-domain, taken from
           # https://github.com/oprypin/nightly.link/blob/master/.github/workflows/pr-comment.yml
           script: |
+            const fs = require("fs");
+
             async function createOrUpdateComment(owner, repo, issue_number, purpose, body) {
               const {data: comments} = await github.rest.issues.listComments(
                 {owner, repo, issue_number});
@@ -41,11 +50,7 @@ jobs:
             const {owner, repo} = context.repo;
             const run_id = ${{github.event.workflow_run.id}};
 
-            const pull_requests = ${{ toJSON(github.event.workflow_run.pull_requests) }};
-
-            if (!pull_requests.length) {
-              return core.error("This workflow doesn't match any pull requests!");
-            }
+            const pr_number = Number(fs.readFileSync("pr_number", "utf-8"));
 
             const artifacts = await github.paginate(
               github.rest.actions.listWorkflowRunArtifacts, {owner, repo, run_id});
@@ -62,7 +67,4 @@ jobs:
 
             core.info("Review thread message body:", body);
 
-            for (const pr of pull_requests) {
-              await createOrUpdateComment(owner, repo, pr.number,
-                "nightly-link", body);
-            }
+            await createOrUpdateComment(owner, repo, pr_number, "nightly-link", body);

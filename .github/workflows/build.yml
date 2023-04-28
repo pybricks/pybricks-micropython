@@ -16,6 +16,22 @@ env:
   MAKEOPTS: -j2
 
 jobs:
+  upload_pr_number:
+    name: upload pull request number
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Save PR number
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./pr
+          echo $PR_NUMBER > ./pr/pr_number
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr/
+
   mpy_cross:
     name: mpy-cross
     runs-on: ubuntu-22.04
