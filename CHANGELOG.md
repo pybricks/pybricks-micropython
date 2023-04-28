@@ -12,7 +12,9 @@
 
 ### Fixed
 - Fixed stdin containing `0x06` command byte ([support#1052]).
+- Fixed motor process causing delays on ev3dev ([support#1035]).
 
+[support#1035]: https://github.com/pybricks/support/issues/1035
 [support#1052]: https://github.com/pybricks/support/issues/1052
 
 ## [3.3.0b4] - 2023-04-21
