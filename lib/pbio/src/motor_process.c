@@ -37,7 +37,19 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         // Update servos
         pbio_servo_update_all();
 
-        // Reset timer to wait for next update
+        clock_time_t now = clock_time();
+
+        // If polling was delayed too long, we need to ensure that the next
+        // poll is a minimum of 1ms in the future. If we don't, the poll loop
+        // will not yield until and the next update will be called with a 0 time
+        // diff which causes issues.
+        if (now - etimer_start_time(&timer) >= 2 * PBIO_CONFIG_CONTROL_LOOP_TIME_MS) {
+            timer.timer.start = now - (PBIO_CONFIG_CONTROL_LOOP_TIME_MS - 1);
+        }
+
+        // Reset timer to wait for next update. Using etimer_reset() instead
+        // of etimer_restart() makes average update period closer to the expected
+        // PBIO_CONFIG_CONTROL_LOOP_TIME_MS when occasional delays occur.
         etimer_reset(&timer);
     }
 
