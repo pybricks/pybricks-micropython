@@ -233,10 +233,10 @@ jobs:
     - name: Build and test
       run: COVERAGE=1 ./test-virtualhub.sh
     - name: Coveralls
-      uses: coverallsapp/github-action@master
+      uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: bricks/virtualhub/build-coverage/lcov.info
+        file: bricks/virtualhub/build-coverage/lcov.info
         flag-name: virtualhub
         parallel: true
 
@@ -308,10 +308,10 @@ jobs:
       run: |
         make $MAKEOPTS -C lib/pbio/test build-coverage/lcov.info
     - name: Coveralls
-      uses: coverallsapp/github-action@master
+      uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: lib/pbio/test/build-coverage/lcov.info
+        file: lib/pbio/test/build-coverage/lcov.info
         flag-name: PBIO
         parallel: true
 
@@ -320,7 +320,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel-finished: true
