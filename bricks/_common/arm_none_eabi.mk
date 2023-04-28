@@ -76,6 +76,7 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
 # include py core make definitions
 include $(TOP)/py/py.mk
+include $(TOP)/extmod/extmod.mk
 
 CROSS_COMPILE ?= arm-none-eabi-
 
@@ -190,7 +191,6 @@ include $(PBTOP)/bricks/_common/sources.mk
 # between the top level directory and the micropython/ subdirectory.
 
 PY_EXTRA_SRC_C = $(addprefix shared/,\
-	libc/printf.c \
 	libc/string0.c \
 	readline/readline.c \
 	runtime/gchelper_native.c \
