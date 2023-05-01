@@ -263,12 +263,26 @@ typedef enum {
 
     /**
      * Hub support interactive REPL.
+     *
+     * @since Pybricks Profile v1.2.0.
      */
     PBIO_PYBRICKS_FEATURE_REPL = 1 << 0,
     /**
-     * Hub supports user program with multiple MicroPython .mpy files ABI v6.
+     * Hub supports user program with multiple MicroPython .mpy files ABI v6
+     *
+     * Native module support is not implied by this flag but may be combined
+     * with additional flags to indicate native module support.
+     *
+     * @since Pybricks Profile v1.2.0.
      */
     PBIO_PYBRICKS_FEATURE_USER_PROG_FORMAT_MULTI_MPY_V6 = 1 << 1,
+    /**
+     * Hub supports user program with multiple MicroPython .mpy files ABI v6.1
+     * including native module support.
+     *
+     * @since Pybricks Profile v1.3.0.
+     */
+    PBIO_PYBRICKS_FEATURE_USER_PROG_FORMAT_MULTI_MPY_V6_1_NATIVE = 1 << 2,
 } pbio_pybricks_feature_flags_t;
 
 void pbio_pybricks_hub_capabilities(uint8_t *buf,
