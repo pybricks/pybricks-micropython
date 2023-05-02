@@ -389,13 +389,20 @@ STATIC observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
  *
  * @param [in]  self_in     The BLE object.
  * @param [in]  channel_in  Python object containing the channel number.
- * @returns                 Python object containing a tuple of decoded data.
+ * @returns                 Python object containing a tuple of decoded data or
+ *                          None if no data has been received within
+ *                          ::OBSERVED_DATA_TIMEOUT_MS.
  * @throws ValueError       If the channel is out of range.
  * @throws RuntimeError     If the last received data was invalid.
  */
 STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 
     observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
+
+    // Have not received data yet or timed out.
+    if (ch_data->rssi == INT8_MIN) {
+        return mp_const_none;
+    }
 
     // Objects can be encoded in as little as one byte so we could have up to
     // this many objects received.
