@@ -36,6 +36,13 @@ ifeq ("$(wildcard $(PBTOP)/micropython/README.md)","")
 $(error failed)
 endif
 endif
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/micropython-lib/README.md)","")
+$(info GIT cloning micropython-lib submodule)
+$(info $(shell cd $(PBTOP)/micropython && git submodule update --init lib/micropython-lib))
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/micropython-lib/README.md)","")
+$(error failed)
+endif
+endif
 ifeq ($(PB_LIB_STM32_HAL),1)
 ifeq ("$(wildcard $(PBTOP)/micropython/lib/stm32lib/README.md)","")
 $(info GIT cloning stm32lib submodule)
