@@ -15,6 +15,11 @@ FIRMWARE_SIZE_TABLE = os.environ.get("FIRMWARE_SIZE_TABLE")
 
 PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
+GITHUB_RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER")
+
+if GITHUB_RUN_NUMBER:
+    os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}")
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("hub", metavar="<hub>")
@@ -45,6 +50,7 @@ for commit in reversed(
 ):
     print("Checking out", commit.hexsha[:8], f'"{commit.summary}"', flush=True)
     pybricks.git.checkout(commit.hexsha)
+    os.putenv("MICROPY_GIT_HASH", commit.hexsha[:8])
 
     # update only required submodules
     pybricks.git.submodule("update", "--init", "micropython")

@@ -21,6 +21,11 @@ PYBRICKS_BRANCH = "origin/master"
 
 HUBS = ["movehub", "cityhub", "technichub", "primehub", "essentialhub", "nxt"]
 
+GITHUB_RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER")
+
+if GITHUB_RUN_NUMBER:
+    os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}")
+
 print("Building commits...")
 
 try:
@@ -66,6 +71,7 @@ for commit in pybricks.iter_commits(
     # Checkout the Pybricks MicroPython commit for processing
     print("Checking out:", commit.hexsha)
     pybricks.git.checkout(commit.hexsha)
+    os.putenv("MICROPY_GIT_HASH", commit.hexsha[:8])
 
     # update required submodules
     print("Checking out submodules")
