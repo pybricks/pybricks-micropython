@@ -18,7 +18,7 @@
 
 // Angle differentiation time window, defined as a multiple of the loop time.
 // This is the time window used for calculating the average speed, so 100ms.
-#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE (20)
+#define PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE (100 / PBIO_CONFIG_CONTROL_LOOP_TIME_MS)
 
 // Total number of position samples to store in the differentiator buffer.
 // Must be > PBIO_CONFIG_DIFFERENTIATOR_WINDOW_SIZE. This allows a user
