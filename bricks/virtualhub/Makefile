@@ -18,6 +18,16 @@ BUILD_DIR = build
 endif
 endif
 
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+PBTOP := $(patsubst %/bricks/virtualhub/Makefile,%,$(mkfile_path))
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/micropython-lib/README.md)","")
+$(info GIT cloning micropython-lib submodule)
+$(info $(shell cd $(PBTOP)/micropython && git submodule update --init lib/micropython-lib))
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/micropython-lib/README.md)","")
+$(error failed)
+endif
+endif
+
 # Include frozen manifest only if there is anything to freeze.
 ifneq ("$(wildcard ../../bricks/_common/modules/*.py)","")
 FROZEN_MANIFEST ?= ../../../bricks/_common/manifest.py
