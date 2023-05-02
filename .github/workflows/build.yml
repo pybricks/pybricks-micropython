@@ -115,11 +115,14 @@ jobs:
     - name: List failed tests
       if: failure()
       run: micropython/tests/run-tests.py --print-failures
+    - name: Short hash
+      id: vars
+      run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
     - name: Upload pybricks-micropython
       if: ${{ success() }}
       uses: actions/upload-artifact@v3
       with:
-        name: pybricks-micropython-build-${{ github.run_number }}
+        name: pybricks-micropython-build-${{ github.run_number }}-git${{ steps.vars.outputs.short_sha }}
         path: bricks/ev3dev/build-armel/pybricks-micropython
 
   ev3dev_ubuntu_lts:
@@ -214,11 +217,14 @@ jobs:
       if: ${{ success()}}
       working-directory: bricks/${{ matrix.hub }}/build
       run: unzip firmware.zip -d upload
+    - name: Short hash
+      id: vars
+      run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
     - name: Upload firmware
       if: ${{ success()}}
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.hub }}-firmware-build-${{ github.run_number }}
+        name: ${{ matrix.hub }}-firmware-build-${{ github.run_number }}-git${{ steps.vars.outputs.short_sha }}
         path: bricks/${{ matrix.hub }}/build/upload/*
 
   virtualhub:
