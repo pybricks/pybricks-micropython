@@ -361,14 +361,12 @@ STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
 /**
  * Retrieves the last received advertising data.
  *
- * @param [in]  self_in     The BLE object.
  * @param [in]  channel_in  Python object containing the channel number.
- * @returns                 Python object containing a tuple of the RSSI and
- *                          the decoded data.
+ * @returns                 Pointer to the last received channel data.
  * @throws ValueError       If the channel is out of range.
  * @throws RuntimeError     If the last received data was invalid.
  */
-STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
+STATIC observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
     mp_int_t channel = mp_obj_get_int(channel_in);
 
     observed_data_t *ch_data = lookup_observed_data(channel);
@@ -382,6 +380,22 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
         ch_data->size = 0;
         ch_data->rssi = INT8_MIN;
     }
+
+    return ch_data;
+}
+
+/**
+ * Retrieves the last received advertising data.
+ *
+ * @param [in]  self_in     The BLE object.
+ * @param [in]  channel_in  Python object containing the channel number.
+ * @returns                 Python object containing a tuple of decoded data.
+ * @throws ValueError       If the channel is out of range.
+ * @throws RuntimeError     If the last received data was invalid.
+ */
+STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
+
+    observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
 
     // Objects can be encoded in as little as one byte so we could have up to
     // this many objects received.
@@ -397,13 +411,23 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
         items[i] = pb_module_ble_decode(ch_data, &index);
     }
 
-    mp_obj_t result[2];
-    result[0] = MP_OBJ_NEW_SMALL_INT(ch_data->rssi); // RSSI
-    result[1] = mp_obj_new_tuple(i, items); // data
-
-    return mp_obj_new_tuple(MP_ARRAY_SIZE(result), result);
+    return mp_obj_new_tuple(i, items);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_obj, pb_module_ble_observe);
+
+/**
+ * Retrieves the filtered RSSI signal strength of the given channel.
+ *
+ * @param [in]  self_in     The BLE object.
+ * @param [in]  channel_in  Python object containing the channel number.
+ * @returns                 Python object containing the filtered RSSI.
+ * @throws ValueError       If the channel is out of range.
+ */
+STATIC mp_obj_t pb_module_ble_signal_strength(mp_obj_t self_in, mp_obj_t channel_in) {
+    observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
+    return mp_obj_new_int(ch_data->rssi);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_signal_strength_obj, pb_module_ble_signal_strength);
 
 /**
  * Gets the Bluetooth chip frimware version.
@@ -420,6 +444,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_version_obj, pb_module_ble_versio
 STATIC const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_broadcast), MP_ROM_PTR(&pb_module_ble_broadcast_obj) },
     { MP_ROM_QSTR(MP_QSTR_observe), MP_ROM_PTR(&pb_module_ble_observe_obj) },
+    { MP_ROM_QSTR(MP_QSTR_signal_strength), MP_ROM_PTR(&pb_module_ble_signal_strength_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);
