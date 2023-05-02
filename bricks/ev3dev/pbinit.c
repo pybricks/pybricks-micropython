@@ -39,7 +39,7 @@ static pthread_t task_caller_thread;
 static void *task_caller(void *arg) {
     struct timespec ts;
     ts.tv_sec = 0;
-    ts.tv_nsec = 1000000;
+    ts.tv_nsec = 3300000;
 
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();

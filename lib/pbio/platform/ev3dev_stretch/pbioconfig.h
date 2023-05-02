@@ -17,3 +17,6 @@
 #define PBIO_CONFIG_SERVO_PUP               (0)
 #define PBIO_CONFIG_SERVO_PUP_MOVE_HUB      (0)
 #define PBIO_CONFIG_TACHO                   (1)
+
+// On ev3dev, we can't keep up with a 5 ms loop.
+#define PBIO_CONFIG_CONTROL_LOOP_TIME_MS    (10)
