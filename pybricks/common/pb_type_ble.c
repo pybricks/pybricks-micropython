@@ -359,8 +359,7 @@ STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
 }
 
 /**
- * Retrieves the last received advertising data and enables observing in the
- * Bluetooth radio if it is not already enabled.
+ * Retrieves the last received advertising data.
  *
  * @param [in]  self_in     The BLE object.
  * @param [in]  channel_in  Python object containing the channel number.
@@ -377,10 +376,6 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
     if (!ch_data) {
         mp_raise_ValueError(MP_ERROR_TEXT("channel not allocated"));
     }
-
-    pbio_task_t task;
-    pbdrv_bluetooth_start_observing(&task, handle_observe_event);
-    pb_wait_task(&task, -1);
 
     // Reset the data if it is too old.
     if (mp_hal_ticks_ms() - ch_data->timestamp > OBSERVED_DATA_TIMEOUT_MS) {
@@ -481,6 +476,13 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     // globals for driver callback
     observed_data = self->observed_data;
     num_observed_data = num_channels;
+
+    // Start observing.
+    if (num_channels > 0) {
+        pbio_task_t task;
+        pbdrv_bluetooth_start_observing(&task, handle_observe_event);
+        pb_wait_task(&task, -1);
+    }
 
     return MP_OBJ_FROM_PTR(self);
 }
