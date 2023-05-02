@@ -43,7 +43,7 @@
 
 // Upstream MicroPython options
 #define MICROPY_FLOAT_IMPL                      (MICROPY_FLOAT_IMPL_FLOAT)
-#define MICROPY_LONGINT_IMPL                    (MICROPY_LONGINT_IMPL_LONGLONG)
+#define MICROPY_LONGINT_IMPL                    (MICROPY_LONGINT_IMPL_MPZ)
 #define MICROPY_MODULE_ATTR_DELEGATION          (1)
 #define MICROPY_MODULE_BUILTIN_INIT             (1)
 #define MICROPY_PY_BUILTINS_HELP                (1)
