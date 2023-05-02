@@ -26,6 +26,9 @@
 #error "this module requires little endian processor"
 #endif
 
+// RSSI is smoothed across a time window to reduce jitter.
+#define RSSI_FILTER_WINDOW_MS (512)
+
 #define OBSERVED_DATA_TIMEOUT_MS (1000)
 #define OBSERVED_DATA_MAX_SIZE (31 /* max adv data size */ - 5 /* overhead */)
 
@@ -109,13 +112,22 @@ STATIC void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uin
 
         observed_data_t *ch_data = lookup_observed_data(channel);
 
-        // ignore not allocated channels
+        // Ignore not allocated channels.
         if (!ch_data) {
             return;
         }
 
-        ch_data->timestamp = mp_hal_ticks_ms();
-        ch_data->rssi = rssi;
+        // Get time difference between subsequent samples.
+        uint32_t diff = mp_hal_ticks_ms() - ch_data->timestamp;
+        ch_data->timestamp += diff;
+        if (diff > RSSI_FILTER_WINDOW_MS) {
+            diff = RSSI_FILTER_WINDOW_MS;
+        }
+
+        // Update moving RSSI average based on time difference.
+        ch_data->rssi = (ch_data->rssi * (RSSI_FILTER_WINDOW_MS - diff) + rssi * diff) / RSSI_FILTER_WINDOW_MS;
+
+        // Extract user broadcast data from signal.
         ch_data->size = data[0] - 4;
         memcpy(ch_data->data, &data[5], OBSERVED_DATA_MAX_SIZE);
     }
@@ -461,6 +473,9 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
 
         self->observed_data[i].channel = channel;
         self->observed_data[i].rssi = INT8_MIN;
+
+        // Suppress stale data by making everything outdated.
+        self->observed_data[i].timestamp = mp_hal_ticks_ms() - RSSI_FILTER_WINDOW_MS - OBSERVED_DATA_TIMEOUT_MS;
     }
 
     // globals for driver callback
