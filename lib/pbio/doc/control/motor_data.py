@@ -155,7 +155,7 @@ print(
         w_0=rpm_to_rad_s(175),
         a=math.radians(1000 / 0.1),
         Lm=0.0005 * 30,
-        h=0.005,
+        h=0.01,
     )
 )
 
@@ -172,7 +172,7 @@ print(
         w_0=rpm_to_rad_s(260),
         a=math.radians(2000 / 0.1),
         Lm=0.0005 * 30,
-        h=0.005,
+        h=0.01,
     )
 )
 print("\n#endif // PBIO_CONFIG_SERVO_EV3_NXT")
