@@ -14,9 +14,9 @@ MEMORY
        in FLASH_FIRMWARE and FLASH_USER_0 add up to 0*/
     FLASH_BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 20K
     /* The firmware. Installed via BLE bootloader. */
-    FLASH_FIRMWARE (rx)   : ORIGIN = 0x08005000, LENGTH = 105K
+    FLASH_FIRMWARE (rx)   : ORIGIN = 0x08005000, LENGTH = 104K
     /* User data written by the firmware during shutdown. */
-    FLASH_USER_0 (rx)     : ORIGIN = 0x0801F400, LENGTH = 1K
+    FLASH_USER_0 (rx)     : ORIGIN = 0x0801F000, LENGTH = 2K
     /* As above, but this part is not counted by bootloader checksum. */
     FLASH_USER_1 (rx)     : ORIGIN = 0x0801F800, LENGTH = 2K
     RAM (xrw)             : ORIGIN = 0x20000000, LENGTH = 16K
