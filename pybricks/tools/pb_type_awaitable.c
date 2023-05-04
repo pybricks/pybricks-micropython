@@ -130,7 +130,7 @@ mp_obj_t pb_type_tools_await_time(mp_obj_t duration_in) {
     pb_type_tools_awaitable_obj_t *awaitable = pb_type_tools_awaitable_get();
     awaitable->obj = MP_OBJ_FROM_PTR(awaitable);
     awaitable->test_completion = duration > 0 ? pb_tools_wait_test_completion : NULL;
-    awaitable->end_time = mp_hal_ticks_ms() + duration;
+    awaitable->end_time = mp_hal_ticks_ms() + (uint32_t)duration;
     awaitable->cancel = NULL;
     return MP_OBJ_FROM_PTR(awaitable);
 }
@@ -147,16 +147,24 @@ mp_obj_t pb_type_tools_await_or_wait(mp_obj_t obj, pb_awaitable_test_completion_
         return generator;
     }
 
-    // Oterwise block and wait for it to complete.
-    while (true) {
-        mp_obj_t next = pb_type_tools_awaitable_iternext(generator);
-        if (next == mp_const_none) {
-            // Not complete, keep waiting.
+    // Otherwise block and wait for it to complete.
+    nlr_buf_t nlr;
+    mp_obj_t ret = MP_OBJ_NULL;
+    if (nlr_push(&nlr) == 0) {
+        while (pb_type_tools_awaitable_iternext(generator) == mp_const_none) {
             mp_hal_delay_ms(5);
-            continue;
         }
-        return next == MP_OBJ_STOP_ITERATION ? mp_const_none : MP_STATE_THREAD(stop_iteration_arg);
+        ret = MP_STATE_THREAD(stop_iteration_arg);
+        nlr_pop();
+    } else {
+        // Cancel the operation if an exception was raised.
+        pb_type_tools_awaitable_obj_t *self = MP_OBJ_TO_PTR(generator);
+        if (self->cancel) {
+            self->cancel(self->obj);
+        }
+        nlr_jump(nlr.ret_val);
     }
+    return ret == MP_OBJ_NULL ? mp_const_none : ret;
 }
 
 #endif // PYBRICKS_PY_TOOLS
