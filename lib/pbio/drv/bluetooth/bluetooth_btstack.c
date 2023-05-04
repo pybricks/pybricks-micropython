@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2021 The Pybricks Authors
+// Copyright (c) 2020-2023 The Pybricks Authors
 
 // Bluetooth driver using BlueKitchen BTStack.
 
@@ -49,7 +49,6 @@ typedef enum {
     CON_STATE_WAIT_ADV_IND,
     CON_STATE_WAIT_SCAN_RSP,
     CON_STATE_WAIT_CONNECT,
-    CON_STATE_CONNECT_FAILED,
     CON_STATE_WAIT_DISCOVER_SERVICES,
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
@@ -411,7 +410,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                     if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                         handset.con_state = CON_STATE_WAIT_CONNECT;
                     } else {
-                        handset.con_state = CON_STATE_CONNECT_FAILED;
+                        handset.con_state = CON_STATE_NONE;
                     }
                 }
             }
@@ -631,10 +630,15 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
             goto cancel;
         }
 
+        // if there is any failure to connect or error while enumerating
+        // attributes, con_state will be set to CON_STATE_NONE
+        if (handset.con_state == CON_STATE_NONE) {
+            task->status = PBIO_ERROR_FAILED;
+            PT_EXIT(pt);
+        }
+
         handset.con_state == CON_STATE_CONNECTED;
     }));
-
-    // TODO: set task->status to error on CON_STATE_CONNECT_FAILED
 
     // REVISIT: probably want to make a generic connection handle data structure
     // that includes handle, name, address, etc.
