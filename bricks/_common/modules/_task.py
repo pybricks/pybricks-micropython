@@ -111,7 +111,7 @@ def run(task, loop_time=10):
         tasks.run(tasks.all(task_1(), task_2()))
     """
     from gc import collect
-    from pybricks.tools import _set_run_loop_active, StopWatch, wait
+    from pybricks.tools import _set_run_loop_active, _wait_block, StopWatch
 
     _set_run_loop_active(True)
 
@@ -122,19 +122,14 @@ def run(task, loop_time=10):
         # TODO: keep track of loop time stats and provide API to user
 
         for _ in task:
-            # needed here so that wait() is blocking
-            _set_run_loop_active(False)
-
             # garbage collect to keep GC high watermark to a minimum
             collect()
 
             # GC can take many milliseconds when lots of RAM is used so we need
             # to only wait the time remaining after user code and GC.
             val = max(0, loop_time - (timer.time() - start))
-            wait(val)
+            _wait_block(val)
 
             start += loop_time
-
-            _set_run_loop_active(True)
     finally:
         _set_run_loop_active(False)
