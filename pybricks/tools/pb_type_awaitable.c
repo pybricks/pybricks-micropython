@@ -143,7 +143,7 @@ mp_obj_t pb_type_tools_await_or_wait(mp_obj_t obj, pb_awaitable_test_completion_
     mp_obj_t generator = pb_type_tools_awaitable_new(obj, test_completion, cancel);
 
     // Within run loop, just return the generator that user program will iterate.
-    if (pb_module_tools_run_loop_is_active()) {
+    if (pb_module_task_run_loop_is_active()) {
         return generator;
     }
 

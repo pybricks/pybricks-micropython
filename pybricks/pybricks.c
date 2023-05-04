@@ -16,6 +16,7 @@
 #include <pybricks/hubs.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/tools.h>
 
 #include "genhdr/mpversion.h"
 
@@ -103,6 +104,7 @@ void pb_package_pybricks_init(bool import_all) {
     if (nlr_push(&nlr) == 0) {
         // Initialize the package.
         pb_type_Color_reset();
+        pb_module_task_init();
         // Import all if requested.
         if (import_all) {
             pb_package_import_all();
@@ -119,6 +121,7 @@ void pb_package_pybricks_init(bool import_all) {
 // exceptions as it is only called before executing anything else.
 void pb_package_pybricks_init(bool import_all) {
     pb_type_Color_reset();
+    pb_module_task_init();
 }
 #endif // PYBRICKS_OPT_COMPILER
 

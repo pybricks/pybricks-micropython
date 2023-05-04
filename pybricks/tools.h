@@ -10,6 +10,9 @@
 
 #include "py/obj.h"
 
+extern const mp_obj_module_t pb_module_task;
+void pb_module_task_init(void);
+
 /**
  * Tests if awaitable operation is complete. Returns MP_OBJ_STOP_ITERATION if
  * done, possibly with return argument, else mp_const_none.
@@ -26,7 +29,7 @@ typedef mp_obj_t (*pb_awaitable_test_completion_t)(mp_obj_t obj);
  */
 typedef void (*pb_awaitable_cancel_t)(mp_obj_t obj);
 
-bool pb_module_tools_run_loop_is_active();
+bool pb_module_task_run_loop_is_active();
 
 void pb_type_tools_awaitable_init(void);
 
