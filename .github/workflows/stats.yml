@@ -14,35 +14,31 @@ jobs:
     steps:
       - name: Install cross-compiler
         run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install Python packages
-        run:  |
-          python -m pip install azure-cosmosdb-table GitPython plotly
-          python -m pip install gql[requests] --pre
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 0
+      - run: pipx install poetry
+      - run: poetry install --only=stats
       - name: Build missing commits
         env:
           STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
           STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
+          STORAGE_URL: ${{ secrets.STORAGE_URL }}
           CI_STATUS_TABLE: ${{ secrets.CI_STATUS_TABLE }}
           FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-        run: .github/build-missing-commits.py
+        run: poetry run .github/build-missing-commits.py
       - name: Download commit metadata
         env:
           STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
           STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
+          STORAGE_URL: ${{ secrets.STORAGE_URL }}
           FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: .github/download-commit-metadata.py
+        run: poetry run .github/download-commit-metadata.py
       - name: Build web pages
-        run: .github/build-stats-web.py
+        run: poetry run .github/build-stats-web.py
       - name: Install lftp
         if: ${{ success() }}
         run: sudo apt-get update && sudo apt-get install --yes lftp

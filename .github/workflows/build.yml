@@ -194,22 +194,21 @@ jobs:
         path: micropython/mpy-cross/build
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/build/mpy-cross
-    - name: Install python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    - name: Install Python packages
-      run:  python -m pip install azure-cosmosdb-table GitPython
     - name: Build firmware (pull request)
       if: ${{ github.base_ref != null }}
-      run: .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
+      run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
+    - run: pipx install poetry
+      if: ${{ github.base_ref == null && github.ref != 'refs/heads/master' }}
+    - run: poetry install --only=stats
+      if: ${{ github.base_ref == null && github.ref != 'refs/heads/master' }}
     - name: Build firmware (non-master branch)
       if: ${{ github.base_ref == null && github.ref != 'refs/heads/master' }}
       env:
         STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
         STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
+        STORAGE_URL: ${{ secrets.STORAGE_URL }}
         FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-      run: .github/build-each-commit.py ${{ matrix.hub }} ${{ github.ref_name }}
+      run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.ref_name }}
     - name: Build firmware (master branch)
       if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
       run: make -C bricks/${{ matrix.hub }}

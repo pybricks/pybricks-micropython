@@ -5,13 +5,15 @@ import json
 import os
 from pathlib import Path
 
-from azure.cosmosdb.table.tableservice import TableService
+from azure.core.credentials import AzureNamedKeyCredential
+from azure.data.tables import TableClient, EntityProperty
 from gql import gql, Client
 from gql.transport.requests import RequestsHTTPTransport
 
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 STORAGE_ACCOUNT = os.environ["STORAGE_ACCOUNT"]
 STORAGE_KEY = os.environ["STORAGE_KEY"]
+STORAGE_URL = os.environ["STORAGE_URL"]
 FIRMWARE_SIZE_TABLE = os.environ["FIRMWARE_SIZE_TABLE"]
 
 BUILD_DIR = os.environ.get("BUILD_DIR", "build")
@@ -55,12 +57,17 @@ QUERY = """query {
 
 def main():
     # grab size data from Azure
-    service = TableService(STORAGE_ACCOUNT, STORAGE_KEY)
+    firmware_size_table = TableClient(
+        STORAGE_URL,
+        FIRMWARE_SIZE_TABLE,
+        credential=AzureNamedKeyCredential(STORAGE_ACCOUNT, STORAGE_KEY),
+    )
     sizes = {
-        item["RowKey"]: {k: v for k, v in item.items() if k in HUBS}
-        for item in service.query_entities(
-            FIRMWARE_SIZE_TABLE,
-            filter="PartitionKey eq 'size'",
+        item["RowKey"]: {
+            k: v.value if isinstance(v, EntityProperty) else v for k, v in item.items() if k in HUBS
+        }
+        for item in firmware_size_table.query_entities(
+            "PartitionKey eq 'size'",
             select=",".join(["RowKey"] + HUBS),
         )
     }

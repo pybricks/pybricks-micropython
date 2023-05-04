@@ -10,25 +10,27 @@ python = ">=3.10,<3.11"
 
 
 [tool.poetry.dev-dependencies]
-azure-cosmosdb-table = "^1.0.6"
 black = "^22.3.0"
 eventlet = "^0.33.3"
 flake8 = "^3.8.3"
-GitPython = "^3.1.30"
-gql = {version = "3.0.0b0", extras = ["requests"], allow-prereleases = true}
 matplotlib = "^3.4.3"
 nbstripout = "^0.5.0"
 notebook = "^6.4.12"
-plotly = "^4.14.1"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
 pybricksdev = "1.0.0a46"
 pycryptodomex = "^3.9.9"
-PyGithub = "^1.51"
 python-dotenv = "^0.15.0"
 python-socketio = "^5.7.2"
 pyusb = "^1.0.2"
 scipy = "^1.8.1"
 sympy = "^1.10.1"
+
+[tool.poetry.group.stats.dependencies]
+azure-data-tables = "^12.4.2"
+gql = {extras = ["requests"], version = "^3.4.0"}
+gitpython = "^3.1.31"
+plotly = "^5.14.1"
+pygithub = "^1.58.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

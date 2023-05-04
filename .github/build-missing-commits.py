@@ -5,13 +5,14 @@ import os
 import subprocess
 import sys
 
+from azure.core.credentials import AzureNamedKeyCredential
+from azure.core.exceptions import ResourceNotFoundError
+from azure.data.tables import TableClient, UpdateMode
 import git
-
-from azure.common import AzureMissingResourceHttpError
-from azure.cosmosdb.table.tableservice import TableService
 
 STORAGE_ACCOUNT = os.environ["STORAGE_ACCOUNT"]
 STORAGE_KEY = os.environ["STORAGE_KEY"]
+STORAGE_URL = os.environ["STORAGE_URL"]
 CI_STATUS_TABLE = os.environ["CI_STATUS_TABLE"]
 FIRMWARE_SIZE_TABLE = os.environ["FIRMWARE_SIZE_TABLE"]
 
@@ -37,9 +38,19 @@ except Exception as e:
 
 assert not pybricks.bare, "Repository not found"
 
-service = TableService(STORAGE_ACCOUNT, STORAGE_KEY)
+ci_status_table = TableClient(
+    STORAGE_URL,
+    CI_STATUS_TABLE,
+    credential=AzureNamedKeyCredential(STORAGE_ACCOUNT, STORAGE_KEY),
+)
 
-start_hash = service.get_entity(CI_STATUS_TABLE, "build", "lastHash")["hash"]
+firmware_size_table = TableClient(
+    STORAGE_URL,
+    FIRMWARE_SIZE_TABLE,
+    credential=AzureNamedKeyCredential(STORAGE_ACCOUNT, STORAGE_KEY),
+)
+
+start_hash = ci_status_table.get_entity("build", "lastHash")["hash"]
 
 if start_hash == pybricks.commit(PYBRICKS_BRANCH).hexsha:
     print("Already up to date.")
@@ -48,19 +59,19 @@ if start_hash == pybricks.commit(PYBRICKS_BRANCH).hexsha:
 
 # Process the commits in the tree and log the data
 for commit in pybricks.iter_commits(
-    f"{start_hash}..{PYBRICKS_BRANCH}", ancestry_path=start_hash
+    f"{start_hash}..{PYBRICKS_BRANCH}", ancestry_path=start_hash, reverse=True
 ):
     print(f"trying {commit.hexsha}...")
 
     sizes = {}
 
     try:
-        entity = service.get_entity(FIRMWARE_SIZE_TABLE, "size", commit.hexsha)
+        entity = firmware_size_table.get_entity("size", commit.hexsha)
         # if entity is found but some hubs had null size, redo only those hubs
         hubs = [h for h in HUBS if entity.get(h) is None]
         # save existing sizes since we replace then entity rather than update later
-        sizes = {h: int(entity.get(h)) for h in HUBS if entity.get(h) is not None}
-    except AzureMissingResourceHttpError:
+        sizes = {h: int(entity[h]) for h in HUBS if entity.get(h) is not None}
+    except ResourceNotFoundError:
         # if there is no entry at all, build all hubs
         hubs = HUBS
 
@@ -76,6 +87,9 @@ for commit in pybricks.iter_commits(
     # update required submodules
     print("Checking out submodules")
     pybricks.git.submodule("update", "--init", "micropython")
+    pybricks.submodule("micropython").module().git.submodule(
+        "update", "--init", "lib/micropython-lib"
+    )
     pybricks.submodule("micropython").module().git.submodule(
         "update", "--init", "lib/stm32lib"
     )
@@ -115,15 +129,16 @@ for commit in pybricks.iter_commits(
         except FileNotFoundError:
             pass
 
-    service.insert_or_replace_entity(
-        FIRMWARE_SIZE_TABLE, {"PartitionKey": "size", "RowKey": commit.hexsha, **sizes}
+    firmware_size_table.upsert_entity(
+        {"PartitionKey": "size", "RowKey": commit.hexsha, **sizes},
+        UpdateMode.REPLACE,
     )
 
-service.update_entity(
-    CI_STATUS_TABLE,
+ci_status_table.update_entity(
     {
         "PartitionKey": "build",
         "RowKey": "lastHash",
         "hash": pybricks.commit(PYBRICKS_BRANCH).hexsha,
     },
+    UpdateMode.REPLACE,
 )
