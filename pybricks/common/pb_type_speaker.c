@@ -28,8 +28,11 @@ typedef struct {
     mp_obj_base_t base;
     bool initialized;
 
-    // Time at which to stop sound.
+    // State of awaitable sound
+    mp_obj_t notes_generator;
+    uint32_t note_duration;
     uint32_t beep_end_time;
+    uint32_t release_end_time;
 
     // volume in 0..100 range
     uint8_t volume;
@@ -120,18 +123,21 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_type_Speaker_test_completion(mp_obj_t self_in) {
+STATIC mp_obj_t pb_type_Speaker_beep_test_completion(mp_obj_t self_in) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
         pb_type_Speaker_stop_beep();
         return MP_OBJ_STOP_ITERATION;
     }
-    // Not done yet, keep going.
     return mp_const_none;
 }
 
 STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
     pb_type_Speaker_stop_beep();
+    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    self->beep_end_time = mp_hal_ticks_ms();
+    self->release_end_time = self->beep_end_time;
+    self->notes_generator = MP_OBJ_NULL;
 }
 
 STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -150,7 +156,9 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
     }
 
     self->beep_end_time = mp_hal_ticks_ms() + (uint32_t)duration;
-    return pb_type_tools_await_or_wait(pos_args[0], pb_type_Speaker_test_completion, pb_type_Speaker_cancel);
+    self->release_end_time = self->beep_end_time;
+    self->notes_generator = MP_OBJ_NULL;
+    return pb_type_tools_await_or_wait(pos_args[0], pb_type_Speaker_beep_test_completion, pb_type_Speaker_cancel);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
 
@@ -316,16 +324,37 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
 
     pb_type_Speaker_start_beep((uint32_t)freq, self->sample_attenuator);
 
-    // Normally, we want there to be a period of no sound (release) so that
-    // notes are distinct instead of running together. To sound good, the
-    // release period is made proportional to duration of the note.
-    if (release) {
-        mp_hal_delay_ms(7 * duration / 8);
-        pb_type_Speaker_stop_beep();
-        mp_hal_delay_ms(duration / 8);
-    } else {
-        mp_hal_delay_ms(duration);
+    uint32_t time_now = mp_hal_ticks_ms();
+    self->release_end_time = time_now + duration;
+    self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
+}
+
+STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in) {
+    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
+    bool beep_done = mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX;
+
+    if (self->notes_generator != MP_OBJ_NULL && release_done && beep_done) {
+        // Full note done, so get next note.
+        mp_obj_t item = mp_iternext(self->notes_generator);
+
+        // If there is no next note, generator is done.
+        if (item == MP_OBJ_STOP_ITERATION) {
+            return MP_OBJ_STOP_ITERATION;
+        }
+
+        // Start the note.
+        pb_type_Speaker_play_note(self, item, self->note_duration);
+        return mp_const_none;
     }
+
+    if (beep_done) {
+        // Time to release.
+        pb_type_Speaker_stop_beep();
+    }
+
+    return mp_const_none;
 }
 
 STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -334,26 +363,12 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
         PB_ARG_REQUIRED(notes),
         PB_ARG_DEFAULT_INT(tempo, 120));
 
-    // length of whole note in milliseconds = 4 quarter/whole * 60 s/min * 1000 ms/s / tempo quarter/min
-    int duration = 4 * 60 * 1000 / pb_obj_get_int(tempo_in);
+    self->notes_generator = mp_getiter(notes_in, NULL);
+    self->note_duration = 4 * 60 * 1000 / pb_obj_get_int(tempo_in);
+    self->beep_end_time = mp_hal_ticks_ms();
+    self->release_end_time = self->beep_end_time;
+    return pb_type_tools_await_or_wait(pos_args[0], pb_type_Speaker_notes_test_completion, pb_type_Speaker_cancel);
 
-    nlr_buf_t nlr;
-    mp_obj_t item;
-    mp_obj_t iterable = mp_getiter(notes_in, NULL);
-    if (nlr_push(&nlr) == 0) {
-        while ((item = mp_iternext(iterable)) != MP_OBJ_STOP_ITERATION) {
-            pb_type_Speaker_play_note(self, item, duration);
-        }
-        // in case the last note has '_'
-        pb_type_Speaker_stop_beep();
-        nlr_pop();
-    } else {
-        // ensure that sound stops if an exception is raised
-        pb_type_Speaker_stop_beep();
-        nlr_jump(nlr.ret_val);
-    }
-
-    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 
