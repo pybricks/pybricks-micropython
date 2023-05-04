@@ -19,22 +19,28 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(time));
-
+// Implementation of wait that always blocks. Needed for system runloop code
+// to briefly wait inside runloop.
+STATIC mp_obj_t pb_module_tools__wait_block(mp_obj_t time_in) {
     mp_int_t time = pb_obj_get_int(time_in);
-
-    // Within run loop, return awaitable.
-    if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_tools_wait_new(time, NULL);
-    }
-
-    // In blocking mode, wait until done.
     if (time > 0) {
         mp_hal_delay_ms(time);
     }
     return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_module_tools__wait_block_obj, pb_module_tools__wait_block);
+
+STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(time));
+
+    // Inside run loop, return generator to await time.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_tools_await_time(time_in);
+    }
+
+    // Outside of run loop, just block to wait.
+    return pb_module_tools__wait_block(time_in);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_wait_obj, 0, tools_wait);
 
@@ -47,15 +53,16 @@ bool pb_module_tools_run_loop_is_active() {
 STATIC mp_obj_t pb_module_tools___init__(void) {
     _pb_module_tools_run_loop_is_active = false;
     pb_type_tools_wait_reset();
+    pb_type_tools_awaitable_init();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(pb_module_tools___init___obj, pb_module_tools___init__);
 
-STATIC mp_obj_t pb_module_tools_set_run_loop_active(mp_obj_t self_in) {
+STATIC mp_obj_t pb_module_tools__set_run_loop_active(mp_obj_t self_in) {
     _pb_module_tools_run_loop_is_active = mp_obj_is_true(self_in);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pb_module_tools_set_run_loop_active_obj, pb_module_tools_set_run_loop_active);
+MP_DEFINE_CONST_FUN_OBJ_1(pb_module_tools__set_run_loop_active_obj, pb_module_tools__set_run_loop_active);
 
 #if MICROPY_MODULE_ATTR_DELEGATION
 // pybricks.tools.task is implemented as pure Python code in the frozen _task
@@ -71,7 +78,8 @@ STATIC void pb_module_tools_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)      },
     { MP_ROM_QSTR(MP_QSTR___init__),    MP_ROM_PTR(&pb_module_tools___init___obj)},
-    { MP_ROM_QSTR(MP_QSTR__set_run_loop_active), MP_ROM_PTR(&pb_module_tools_set_run_loop_active_obj)},
+    { MP_ROM_QSTR(MP_QSTR__set_run_loop_active), MP_ROM_PTR(&pb_module_tools__set_run_loop_active_obj)},
+    { MP_ROM_QSTR(MP_QSTR__wait_block), MP_ROM_PTR(&pb_module_tools__wait_block_obj) },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&tools_wait_obj)     },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)  },
     #if MICROPY_PY_BUILTINS_FLOAT
