@@ -24,138 +24,6 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
-// The __next__() method should raise a StopIteration if the operation is
-// complete.
-STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
-    pb_type_MotorWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    if (self->was_cancelled) {
-        // Gracefully handle cancellation: Allow generator to complete
-        // and clean up but don't raise any exceptions.
-        self->has_ended = true;
-        return MP_OBJ_STOP_ITERATION;
-    }
-
-    // Handle I/O exceptions.
-    if (!pbio_servo_update_loop_is_running(self->motor_obj->srv)) {
-        pb_assert(PBIO_ERROR_NO_DEV);
-    }
-
-    // First, handle normal case without stalling.
-    if (self->stall_voltage_restore_value == -1) {
-        if (pbio_control_is_done(&self->motor_obj->srv->control)) {
-            self->has_ended = true;
-            return MP_OBJ_STOP_ITERATION;
-        }
-        // Not done, so keep going.
-        return mp_const_none;
-    }
-
-    // The remainder handles run_until_stalled. First, check stall state.
-    bool stalled;
-    uint32_t stall_duration;
-    pb_assert(pbio_servo_is_stalled(self->motor_obj->srv, &stalled, &stall_duration));
-
-    // Keep going if not stalled.
-    if (!stalled) {
-        return mp_const_none;
-    }
-
-    // Read the angle upon completion of the stall maneuver.
-    int32_t stall_angle, stall_speed;
-    pb_assert(pbio_servo_get_state_user(self->motor_obj->srv, &stall_angle, &stall_speed));
-
-    // Stop moving.
-    pb_assert(pbio_servo_stop(self->motor_obj->srv, self->stall_stop_type));
-
-    // Restore original voltage limit.
-    pb_assert(pbio_dcmotor_set_settings(self->motor_obj->srv->dcmotor, self->stall_voltage_restore_value));
-
-    // Raise stop iteration with angle to return the final position.
-    self->has_ended = true;
-    return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
-}
-
-// Cancel all generators belonging to this motor.
-STATIC void pb_type_MotorWait_cancel_all(common_Motor_obj_t *motor_obj) {
-    pb_type_MotorWait_obj_t *self = &motor_obj->first_awaitable;
-    do {
-        self->was_cancelled = true;
-        self = self->next_awaitable;
-    } while (self != MP_OBJ_NULL);
-}
-
-// The close() method is used to cancel an operation before it completes. If
-// the operation is already complete, it should do nothing. It can be called
-// more than once.
-STATIC mp_obj_t pb_type_MotorWait_close(mp_obj_t self_in) {
-    pb_type_MotorWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_MotorWait_cancel_all(self->motor_obj);
-    pb_assert(pbio_dcmotor_user_command(self->motor_obj->srv->dcmotor, true, 0));
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_MotorWait_close_obj, pb_type_MotorWait_close);
-
-STATIC const mp_rom_map_elem_t pb_type_MotorWait_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&pb_type_MotorWait_close_obj) },
-};
-MP_DEFINE_CONST_DICT(pb_type_MotorWait_locals_dict, pb_type_MotorWait_locals_dict_table);
-
-// This is a partial implementation of the Python generator type. It is missing
-// send(value) and throw(type[, value[, traceback]])
-MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorWait,
-    MP_QSTR_MotorWait,
-    MP_TYPE_FLAG_ITER_IS_ITERNEXT,
-    iter, pb_type_MotorWait_iternext,
-    locals_dict, &pb_type_MotorWait_locals_dict);
-
-STATIC mp_obj_t pb_type_MotorWait_new_stalled(common_Motor_obj_t *motor_obj, int32_t stall_voltage_restore_value, int32_t stall_stop_type) {
-
-    // Cancel everything for this motor.
-    pb_type_MotorWait_cancel_all(motor_obj);
-
-    // Find next available previously allocated awaitable.
-    pb_type_MotorWait_obj_t *self = &motor_obj->first_awaitable;
-    while (!self->has_ended && self->next_awaitable != MP_OBJ_NULL) {
-        self = self->next_awaitable;
-    }
-    // No free awaitable available, so allocate one.
-    if (!self->has_ended) {
-        // Attach to the previous one.
-        self->next_awaitable = m_new_obj(pb_type_MotorWait_obj_t);
-
-        // Initialize the new awaitable.
-        self = self->next_awaitable;
-        self->next_awaitable = MP_OBJ_NULL;
-        self->base.type = &pb_type_MotorWait;
-    }
-
-    // Initialize what to await on.
-    self->motor_obj = motor_obj;
-    self->has_ended = false;
-    self->was_cancelled = false;
-    self->stall_stop_type = stall_stop_type;
-    self->stall_voltage_restore_value = stall_voltage_restore_value;
-
-    // Return the awaitable where the user can await it.
-    return MP_OBJ_FROM_PTR(self);
-}
-
-STATIC mp_obj_t pb_type_MotorWait_new(common_Motor_obj_t *motor_obj) {
-    return pb_type_MotorWait_new_stalled(motor_obj, -1, PBIO_CONTROL_ON_COMPLETION_COAST);
-}
-
-/* Wait for servo maneuver to complete */
-
-STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (!pbio_control_is_done(&srv->control)) {
-        mp_hal_delay_ms(5);
-    }
-    if (!pbio_servo_update_loop_is_running(srv)) {
-        pb_assert(PBIO_ERROR_NO_DEV);
-    }
-}
-
 // Gets the number of millidegrees of the motor, for each whole degree
 // of rotation at the gear train output. For example, if the gear train
 // slows the motor down using a 12 teeth and a 36 teeth gear, the result
@@ -240,11 +108,6 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->srv = srv;
     self->port = port;
 
-    // Initialize first awaitable singleton.
-    self->first_awaitable.base.type = &pb_type_MotorWait;
-    self->first_awaitable.has_ended = true;
-    self->first_awaitable.next_awaitable = MP_OBJ_NULL;
-
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
     self->control = pb_type_Control_obj_make_new(&self->srv->control);
@@ -288,9 +151,6 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
 
-    // Cancel user-level motor wait operations.
-    pb_type_MotorWait_cancel_all(self);
-
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_reset_angle);
@@ -316,9 +176,6 @@ STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map
     mp_int_t speed = pb_obj_get_int(speed_in);
     pb_assert(pbio_servo_run_forever(self->srv, speed));
 
-    // Cancel user-level motor wait operations in parallel tasks.
-    pb_type_MotorWait_cancel_all(self);
-
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
@@ -327,12 +184,29 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
 STATIC mp_obj_t common_Motor_hold(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
-
-    // Cancel user-level motor wait operations in parallel tasks.
-    pb_type_MotorWait_cancel_all(self);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_hold_obj, common_Motor_hold);
+
+STATIC mp_obj_t common_Motor_test_completion(mp_obj_t self_in) {
+
+    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Handle I/O exceptions like port unplugged.
+    if (!pbio_servo_update_loop_is_running(self->srv)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // Get completion state.
+    return pbio_control_is_done(&self->srv->control) ? MP_OBJ_STOP_ITERATION : mp_const_none;
+}
+
+STATIC void common_Motor_cancel(mp_obj_t self_in) {
+    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // TODO: Can drop next line if moved to pbio
+    pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, self->max_voltage_last));
+    pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_COAST));
+}
 
 // pybricks._common.Motor.run_time
 STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -351,19 +225,46 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_time(self->srv, speed, time, then));
 
-    // Handle async case, return a generator.
-    if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_MotorWait_new(self);
+    // Old way to do parallel movement is to start and not wait on anything.
+    if (!mp_obj_is_true(wait_in)) {
+        return mp_const_none;
     }
-
-    // Otherwise, handle default blocking wait.
-    if (mp_obj_is_true(wait_in)) {
-        wait_for_completion(self->srv);
-    }
-
-    return mp_const_none;
+    // Handle completion by awaiting or blocking.
+    return pb_type_tools_await_or_wait(pos_args[0], common_Motor_test_completion, common_Motor_cancel);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_time_obj, 1, common_Motor_run_time);
+
+STATIC mp_obj_t common_Motor_stall_test_completion(mp_obj_t self_in) {
+
+    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Restore original voltage limit.
+    pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, self->max_voltage_last));
+
+    // Handle I/O exceptions like port unplugged.
+    if (!pbio_servo_update_loop_is_running(self->srv)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    bool stalled;
+    uint32_t stall_duration;
+    pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
+
+    // Keep going if not stalled.
+    if (!stalled) {
+        return mp_const_none;
+    }
+
+    // Read the angle upon completion of the stall maneuver.
+    int32_t stall_angle, stall_speed;
+    pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
+
+    // Stop moving.
+    pb_assert(pbio_servo_stop(self->srv, self->on_stall));
+
+    // Raise stop iteration with angle to return the final position.
+    return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
+}
 
 // pybricks._common.Motor.run_until_stalled
 STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -374,11 +275,10 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         PB_ARG_DEFAULT_NONE(duty_limit));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
-    pbio_control_on_completion_t on_completion = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // Read original voltage limit so we can restore it when we're done.
-    int32_t max_voltage_old;
-    pbio_dcmotor_get_settings(self->srv->dcmotor, &max_voltage_old);
+    // Read original voltage limit and completion type so we can restore it when we're done.
+    pbio_dcmotor_get_settings(self->srv->dcmotor, &self->max_voltage_last);
+    self->on_stall = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // If duty_limit argument given, limit duty during this maneuver.
     if (duty_limit_in != mp_const_none) {
@@ -395,34 +295,8 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     // Start moving.
     pb_assert(pbio_servo_run_forever(self->srv, speed));
 
-    // Make generator for checking completion.
-    mp_obj_t gen = pb_type_MotorWait_new_stalled(self, max_voltage_old, on_completion);
-
-    // Within run loop, just return the generator.
-    if (pb_module_tools_run_loop_is_active()) {
-        return gen;
-    }
-
-    // The remainder handles blocking case. It is wrapped in an nlr so
-    // we can restore the voltage limit if an exception occurs.
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        // Await the generator.
-        while (true) {
-            mp_obj_t next = pb_type_MotorWait_iternext(gen);
-            if (next != mp_const_none) {
-                mp_obj_t ret_val = MP_STATE_THREAD(stop_iteration_arg);
-                nlr_pop();
-                return ret_val;
-            }
-            // Not complete, keep waiting.
-            mp_hal_delay_ms(5);
-        }
-    } else {
-        pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor,
-            ((pb_type_MotorWait_obj_t *)MP_OBJ_TO_PTR(gen))->stall_voltage_restore_value));
-        nlr_raise(MP_OBJ_FROM_PTR(nlr.ret_val));
-    }
+    // Handle completion by awaiting or blocking.
+    return pb_type_tools_await_or_wait(pos_args[0], common_Motor_stall_test_completion, common_Motor_cancel);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_until_stalled_obj, 1, common_Motor_run_until_stalled);
 
@@ -442,17 +316,12 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_angle(self->srv, speed, angle, then));
 
-    // Handle async case, return a generator.
-    if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_MotorWait_new(self);
+    // Old way to do parallel movement is to start and not wait on anything.
+    if (!mp_obj_is_true(wait_in)) {
+        return mp_const_none;
     }
-
-    // Otherwise, handle default blocking wait.
-    if (mp_obj_is_true(wait_in)) {
-        wait_for_completion(self->srv);
-    }
-
-    return mp_const_none;
+    // Handle completion by awaiting or blocking.
+    return pb_type_tools_await_or_wait(pos_args[0], common_Motor_test_completion, common_Motor_cancel);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_angle_obj, 1, common_Motor_run_angle);
 
@@ -472,17 +341,12 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_target(self->srv, speed, target_angle, then));
 
-    // Handle async case, return a generator.
-    if (pb_module_tools_run_loop_is_active()) {
-        return pb_type_MotorWait_new(self);
+    // Old way to do parallel movement is to start and not wait on anything.
+    if (!mp_obj_is_true(wait_in)) {
+        return mp_const_none;
     }
-
-    // Otherwise, handle default blocking wait.
-    if (mp_obj_is_true(wait_in)) {
-        wait_for_completion(self->srv);
-    }
-
-    return mp_const_none;
+    // Handle completion by awaiting or blocking.
+    return pb_type_tools_await_or_wait(pos_args[0], common_Motor_test_completion, common_Motor_cancel);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_target_obj, 1, common_Motor_run_target);
 
@@ -494,10 +358,6 @@ STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_arg
 
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
     pb_assert(pbio_servo_track_target(self->srv, target_angle));
-
-    // Cancel user-level motor wait operations in parallel tasks.
-    pb_type_MotorWait_cancel_all(self);
-
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_track_target_obj, 1, common_Motor_track_target);
