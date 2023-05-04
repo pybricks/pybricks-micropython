@@ -52,7 +52,6 @@ bool pb_module_tools_run_loop_is_active() {
 
 STATIC mp_obj_t pb_module_tools___init__(void) {
     _pb_module_tools_run_loop_is_active = false;
-    pb_type_tools_wait_reset();
     pb_type_tools_awaitable_init();
     return mp_const_none;
 }

@@ -26,12 +26,7 @@ typedef mp_obj_t (*pb_awaitable_test_completion_t)(mp_obj_t obj);
  */
 typedef void (*pb_awaitable_cancel_t)(mp_obj_t obj);
 
-
 bool pb_module_tools_run_loop_is_active();
-
-void pb_type_tools_wait_reset(void);
-
-mp_obj_t pb_type_tools_wait_new(mp_int_t duration, void (*callback)(void));
 
 void pb_type_tools_awaitable_init(void);
 
