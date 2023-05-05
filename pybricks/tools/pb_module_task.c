@@ -26,7 +26,6 @@ bool pb_module_task_run_loop_is_active() {
 
 void pb_module_task_init(void) {
     _pb_module_task_run_loop_is_active = false;
-    pb_type_tools_awaitable_init();
 }
 
 STATIC mp_obj_t pb_module_task_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -178,7 +177,7 @@ STATIC mp_obj_t pb_module_task_collection_iternext(mp_obj_t self_in) {
         }
         return mp_make_stop_iteration(mp_obj_new_list(self->num_tasks, ret));
     } else {
-        // On failure of one task, cancel others, then stop iterating collection.
+        // On failure of one task, cancel others, then stop iterating collection by re-raising.
         pb_module_task_collection_close(self_in);
         nlr_jump(nlr.ret_val);
     }

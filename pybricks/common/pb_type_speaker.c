@@ -20,6 +20,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_awaitable.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -33,6 +34,7 @@ typedef struct {
     uint32_t note_duration;
     uint32_t beep_end_time;
     uint32_t release_end_time;
+    pb_type_awaitable_obj_t *first_awaitable;
 
     // volume in 0..100 range
     uint8_t volume;
@@ -113,6 +115,7 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     if (!self->initialized) {
         self->base.type = &pb_type_Speaker;
         self->initialized = true;
+        self->first_awaitable = NULL;
     }
 
     // REVISIT: If a user creates two Speaker instances, this will reset the volume settings for both.
@@ -120,10 +123,12 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     self->volume = 100;
     self->sample_attenuator = INT16_MAX;
 
+
+
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_type_Speaker_beep_test_completion(mp_obj_t self_in) {
+STATIC mp_obj_t pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t start_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
         pb_type_Speaker_stop_beep();
@@ -139,6 +144,12 @@ STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
     self->release_end_time = self->beep_end_time;
     self->notes_generator = MP_OBJ_NULL;
 }
+
+STATIC const pb_type_awaitable_config_t speaker_beep_awaitable_config = {
+    .test_completion_func = pb_type_Speaker_beep_test_completion,
+    .cancel_func = pb_type_Speaker_cancel,
+    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK,
+};
 
 STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -158,7 +169,7 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
     self->beep_end_time = mp_hal_ticks_ms() + (uint32_t)duration;
     self->release_end_time = self->beep_end_time;
     self->notes_generator = MP_OBJ_NULL;
-    return pb_type_tools_await_or_wait(pos_args[0], pb_type_Speaker_beep_test_completion, pb_type_Speaker_cancel);
+    return pb_type_awaitable_await_or_block(pos_args[0], &speaker_beep_awaitable_config, self->first_awaitable);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
 
@@ -329,7 +340,7 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
     self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
 }
 
-STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in) {
+STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t start_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
@@ -357,6 +368,12 @@ STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in) {
     return mp_const_none;
 }
 
+STATIC const pb_type_awaitable_config_t speaker_notes_awaitable_config = {
+    .test_completion_func = pb_type_Speaker_notes_test_completion,
+    .cancel_func = pb_type_Speaker_cancel,
+    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK,
+};
+
 STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
@@ -367,7 +384,7 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
     self->note_duration = 4 * 60 * 1000 / pb_obj_get_int(tempo_in);
     self->beep_end_time = mp_hal_ticks_ms();
     self->release_end_time = self->beep_end_time;
-    return pb_type_tools_await_or_wait(pos_args[0], pb_type_Speaker_notes_test_completion, pb_type_Speaker_cancel);
+    return pb_type_awaitable_await_or_block(pos_args[0], &speaker_notes_awaitable_config, self->first_awaitable);
 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);

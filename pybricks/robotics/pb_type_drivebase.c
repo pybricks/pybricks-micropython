@@ -17,6 +17,7 @@
 #include <pybricks/parameters.h>
 #include <pybricks/robotics.h>
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_awaitable.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -34,6 +35,7 @@ struct _pb_type_DriveBase_obj_t {
     mp_obj_t heading_control;
     mp_obj_t distance_control;
     #endif
+    pb_type_awaitable_obj_t *first_awaitable;
 };
 
 // pybricks.robotics.DriveBase.reset
@@ -83,10 +85,12 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     // Reset drivebase state
     pb_type_DriveBase_reset(MP_OBJ_FROM_PTR(self));
 
+    self->first_awaitable = NULL;
+
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_type_DriveBase_test_completion(mp_obj_t self_in) {
+STATIC mp_obj_t pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t start_time) {
 
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -103,6 +107,12 @@ STATIC void pb_type_DriveBase_cancel(mp_obj_t self_in) {
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
 }
+
+STATIC const pb_type_awaitable_config_t drivebase_awaitable_config = {
+    .test_completion_func = pb_type_DriveBase_test_completion,
+    .cancel_func = pb_type_DriveBase_cancel,
+    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE,
+};
 
 // pybricks.robotics.DriveBase.straight
 STATIC mp_obj_t pb_type_DriveBase_straight(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -122,7 +132,7 @@ STATIC mp_obj_t pb_type_DriveBase_straight(size_t n_args, const mp_obj_t *pos_ar
         return mp_const_none;
     }
     // Handle completion by awaiting or blocking.
-    return pb_type_tools_await_or_wait(pos_args[0], pb_type_DriveBase_test_completion, pb_type_DriveBase_cancel);
+    return pb_type_awaitable_await_or_block(pos_args[0], &drivebase_awaitable_config, self->first_awaitable);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_straight_obj, 1, pb_type_DriveBase_straight);
 
@@ -145,7 +155,7 @@ STATIC mp_obj_t pb_type_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, 
         return mp_const_none;
     }
     // Handle completion by awaiting or blocking.
-    return pb_type_tools_await_or_wait(pos_args[0], pb_type_DriveBase_test_completion, pb_type_DriveBase_cancel);
+    return pb_type_awaitable_await_or_block(pos_args[0], &drivebase_awaitable_config, self->first_awaitable);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_turn_obj, 1, pb_type_DriveBase_turn);
 
@@ -169,7 +179,7 @@ STATIC mp_obj_t pb_type_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args,
         return mp_const_none;
     }
     // Handle completion by awaiting or blocking.
-    return pb_type_tools_await_or_wait(pos_args[0], pb_type_DriveBase_test_completion, pb_type_DriveBase_cancel);
+    return pb_type_awaitable_await_or_block(pos_args[0], &drivebase_awaitable_config, self->first_awaitable);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_curve_obj, 1, pb_type_DriveBase_curve);
 
@@ -185,7 +195,7 @@ STATIC mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
     pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
-
+    pb_type_awaitable_cancel_all(pos_args[0], drivebase_awaitable_config.cancel_opt, self->first_awaitable);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_drive_obj, 1, pb_type_DriveBase_drive);

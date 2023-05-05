@@ -20,6 +20,8 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 #include <pybricks/parameters.h>
+#include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_awaitable.h>
 
 void pb_package_pybricks_init(bool import_all);
 void pb_package_pybricks_deinit(void);
@@ -113,6 +115,7 @@ struct _common_Motor_obj_t {
     mp_obj_t logger;
     #endif
     pbio_port_id_t port;
+    pb_type_awaitable_obj_t *first_awaitable;
 };
 
 extern const mp_obj_type_t pb_type_Motor;
@@ -128,7 +131,6 @@ extern const mp_obj_type_t pb_type_DCMotor;
 
 // Nonstatic objects shared between Motor and DCMotor
 void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind);
-MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_close_obj);
 MP_DECLARE_CONST_FUN_OBJ_KW(common_DCMotor_duty_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj);
