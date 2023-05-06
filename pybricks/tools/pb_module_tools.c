@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_TOOLS
 
 #include "py/builtin.h"
+#include "py/gc.h"
 #include "py/mphal.h"
 #include "py/objmodule.h"
 #include "py/runtime.h"
@@ -22,33 +23,29 @@
 #include <pybricks/util_pb/pb_error.h>
 
 // The awaitable for the wait() function has no object associated with
-// it (unlike e.g. a motor), so we make a starting point here.
-STATIC pb_type_awaitable_obj_t *first_awaitable;
+// it (unlike e.g. a motor), so we make a starting point here. This gets
+// cleared when the module initializes.
+STATIC pb_type_awaitable_obj_t *first_wait_awaitable;
 
-void pb_module_tools_init(void) {
-    first_awaitable = NULL;
-}
-
-STATIC mp_obj_t pb_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
+STATIC mp_obj_t pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
     // obj was validated to be small int, so we can do a cheap comparison here.
     return mp_hal_ticks_ms() - start_time >= (uint32_t)MP_OBJ_SMALL_INT_VALUE(obj) ? MP_OBJ_STOP_ITERATION : mp_const_none;
 }
 
-STATIC const pb_type_awaitable_config_t wait_awaitable_config = {
-    .test_completion_func = pb_tools_wait_test_completion,
+STATIC const pb_type_awaitable_config_t pb_module_tools_wait_config = {
+    .test_completion_func = pb_module_tools_wait_test_completion,
     .cancel_func = NULL,
     .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_NONE,
 };
 
-STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(time));
 
-
     mp_int_t time = pb_obj_get_int(time_in);
 
-    // Do blocking wait outside run loop.
-    if (!pb_module_task_run_loop_is_active()) {
+    // outside run loop, do blocking wait.
+    if (!pb_module_tools_run_loop_is_active()) {
         if (time > 0) {
             mp_hal_delay_ms(time);
         }
@@ -56,18 +53,74 @@ STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
     }
 
     // Require that duration is nonnegative small int. This makes it cheaper to
-    // completion state in iteration loop.
+    // test completion state in iteration loop.
     time = pbio_int_math_bind(time, 0, INT32_MAX >> 2);
 
-    return pb_type_awaitable_await_or_block(MP_OBJ_NEW_SMALL_INT(time), &wait_awaitable_config, first_awaitable);
+    return pb_type_awaitable_await_or_block(MP_OBJ_NEW_SMALL_INT(time), &pb_module_tools_wait_config, first_wait_awaitable);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_wait_obj, 0, tools_wait);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
+
+// Global state of the run loop for async user programs. Gets set when run_task
+// is called and cleared when it completes
+STATIC bool run_loop_is_active;
+
+bool pb_module_tools_run_loop_is_active() {
+    return run_loop_is_active;
+}
+
+// Reset global state when user program starts.
+void pb_module_tools_init(void) {
+    first_wait_awaitable = NULL;
+    run_loop_is_active = false;
+}
+
+STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(task),
+        PB_ARG_DEFAULT_INT(loop_time, 10));
+
+    run_loop_is_active = true;
+
+    uint32_t start_time = mp_hal_ticks_ms();
+    uint32_t loop_time = pb_obj_get_positive_int(loop_time_in);
+
+    mp_obj_iter_buf_t iter_buf;
+    mp_obj_t iterable = mp_getiter(task_in, &iter_buf);
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+
+        while (mp_iternext(iterable) != MP_OBJ_STOP_ITERATION) {
+
+            gc_collect();
+
+            if (loop_time == 0) {
+                continue;
+            }
+
+            uint32_t elapsed = mp_hal_ticks_ms() - start_time;
+            if (elapsed < loop_time) {
+                mp_hal_delay_ms(loop_time - elapsed);
+            }
+            start_time += loop_time;
+        }
+
+        nlr_pop();
+        run_loop_is_active = false;
+    } else {
+        run_loop_is_active = false;
+        nlr_jump(nlr.ret_val);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 1, pb_module_tools_run_task);
 
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)      },
-    { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&tools_wait_obj)     },
-    { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)  },
-    { MP_ROM_QSTR(MP_QSTR_task),        MP_ROM_PTR(&pb_module_task)     },
+    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)                    },
+    { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_run_task),    MP_ROM_PTR(&pb_module_tools_run_task_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)                },
+    { MP_ROM_QSTR(MP_QSTR_Task),        MP_ROM_PTR(&pb_type_Task)                     },
     #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)           },
     { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_geometry_vector_obj)   },

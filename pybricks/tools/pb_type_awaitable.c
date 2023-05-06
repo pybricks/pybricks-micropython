@@ -172,7 +172,7 @@ mp_obj_t pb_type_awaitable_await_or_block(mp_obj_t obj, const pb_type_awaitable_
     mp_obj_t generator = pb_type_awaitable_new(obj, config, first_awaitable);
 
     // Within run loop, just return the generator that user program will iterate.
-    if (pb_module_task_run_loop_is_active()) {
+    if (pb_module_tools_run_loop_is_active()) {
         return generator;
     }
 

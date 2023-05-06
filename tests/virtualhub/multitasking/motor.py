@@ -1,7 +1,7 @@
 from pybricks.pupdevices import Motor
 from pybricks.parameters import Port, Direction
 from pybricks.robotics import DriveBase
-from pybricks.tools import wait, task
+from pybricks.tools import wait, Task, run_task
 
 # Initialize devices as usual.
 left_motor = Motor(Port.A, Direction.COUNTERCLOCKWISE)
@@ -37,10 +37,10 @@ async def hello(name):
 # This is the main program
 async def main():
     print("Running multiple tasks at once!")
-    await task.all(square(), center(), hello("Pybricks"))
+    await Task(square(), center(), hello("Pybricks"))
     print("You can also just run one task.")
     await hello("World!")
 
 
 # Run the main program.
-task.run(main())
+run_task(main())
