@@ -1,4 +1,4 @@
-from pybricks.tools import Task, run_task
+from pybricks.tools import multitask, run_task
 
 
 class CallCounter:
@@ -55,7 +55,7 @@ async def test_all_1():
     task2 = return_after(2, task2_cancel)
 
     # should return [0, 1] - both allowed to complete
-    print(await Task(task1, task2))
+    print(await multitask(task1, task2))
 
     # neither should be canceled
     print(task1_cancel.count, task2_cancel.count)
@@ -84,7 +84,7 @@ async def test_all_2():
 
     # should throw RuntimeError("task2")
     try:
-        await Task(task1, task2)
+        await multitask(task1, task2)
     except Exception as e:
         print(type(e), e.args)
 
@@ -114,7 +114,7 @@ async def test_race_1():
     task2 = return_after(2, task2_cancel)
 
     # returns [0, None] - only first completes
-    print(await Task(task1, task2, race=True))
+    print(await multitask(task1, task2, race=True))
 
     # task2 should be canceled
     print(task1_cancel.count, task2_cancel.count)
@@ -143,7 +143,7 @@ async def test_race_2():
 
     # should throw RuntimeError("task2")
     try:
-        await Task(task1, task2, race=True)
+        await multitask(task1, task2, race=True)
     except Exception as e:
         print(type(e), e.args)
 

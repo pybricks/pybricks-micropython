@@ -120,7 +120,7 @@ STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
     { MP_ROM_QSTR(MP_QSTR_run_task),    MP_ROM_PTR(&pb_module_tools_run_task_obj)     },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)                },
-    { MP_ROM_QSTR(MP_QSTR_Task),        MP_ROM_PTR(&pb_type_Task)                     },
+    { MP_ROM_QSTR(MP_QSTR_multitask),   MP_ROM_PTR(&pb_type_Task)                     },
     #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)           },
     { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_geometry_vector_obj)   },
