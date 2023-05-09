@@ -82,6 +82,10 @@ typedef struct _pbio_control_settings_t {
      */
     int32_t actuation_max;
     /**
+     * As above, but a temporary value used for only one maneuver.
+     */
+    int32_t actuation_max_temporary;
+    /**
      * Position error feedback constant.
      */
     int32_t pid_kp;

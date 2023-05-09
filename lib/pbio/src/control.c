@@ -273,7 +273,7 @@ void pbio_control_update(
     int32_t torque_integral = pbio_control_settings_mul_by_gain(integral_error, ctl->settings.pid_ki);
 
     // Total torque signal, capped by the actuation limit
-    int32_t torque = pbio_int_math_clamp(torque_proportional + torque_integral + torque_derivative, ctl->settings.actuation_max);
+    int32_t torque = pbio_int_math_clamp(torque_proportional + torque_integral + torque_derivative, ctl->settings.actuation_max_temporary);
 
     // This completes the computation of the control signal.
     // The next steps take care of handling windup, or triggering a stop if we are on target.
@@ -282,7 +282,7 @@ void pbio_control_update(
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
     int32_t windup_margin = pbio_control_settings_mul_by_loop_time(pbio_int_math_abs(state->speed)) * 2;
-    int32_t max_windup_torque = ctl->settings.actuation_max + pbio_control_settings_mul_by_gain(windup_margin, ctl->settings.pid_kp);
+    int32_t max_windup_torque = ctl->settings.actuation_max_temporary + pbio_control_settings_mul_by_gain(windup_margin, ctl->settings.pid_kp);
 
     // Speed value that is rounded to zero if small. This is used for a
     // direction error check below to avoid false reverses near zero.
@@ -436,6 +436,9 @@ static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now
 
     // Set on completion action for this maneuver.
     ctl->on_completion = on_completion;
+
+    // Reset maximum actuation value used for this run.
+    ctl->settings.actuation_max_temporary = ctl->settings.actuation_max;
 
     // Reset done state. It will get the correct value during the next control
     // update. REVISIT: Evaluate it here.
