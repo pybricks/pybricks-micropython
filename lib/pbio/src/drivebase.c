@@ -392,8 +392,8 @@ bool pbio_drivebase_is_done(const pbio_drivebase_t *db) {
  */
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
-    // If passive, then exit
-    if (db->control_heading.type == PBIO_CONTROL_NONE || db->control_distance.type == PBIO_CONTROL_NONE) {
+    // If passive, no need to update.
+    if (!pbio_drivebase_control_is_active(db)) {
         return PBIO_SUCCESS;
     }
 
