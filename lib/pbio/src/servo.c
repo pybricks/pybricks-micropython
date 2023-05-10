@@ -643,6 +643,42 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, uint32_t dura
 }
 
 /**
+ * Runs the servo at a given speed until it stalls, then stops there.
+ *
+ * @param [in]  srv                 The servo instance.
+ * @param [in]  speed               Angular velocity in degrees per second.
+ * @param [in]  torque_limit_pct    Percentage of maximum feedback torque to use.
+ *                                  It will still use the default feedforward torque.
+ * @param [in]  on_completion       What to do once stalled.
+ * @return                          Error code.
+ */
+pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, int32_t torque_limit_pct, pbio_control_on_completion_t on_completion) {
+
+    if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
+        // Can't continue after stall.
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Start an infinite maneuver.
+    pbio_error_t err = pbio_servo_run_forever(srv, speed);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Infinite maneuvers continue on completion, but here we want to set the
+    // user specified on_completion behavior.
+    srv->control.on_completion = on_completion;
+
+    // We add the objective of stopping on stall.
+    srv->control.type |= PBIO_CONTROL_TYPE_FLAG_STOP_ON_STALL;
+
+    // Set the temporary torque limit used during this maneuver.
+    srv->control.settings.actuation_max_temporary = srv->control.settings.actuation_max * torque_limit_pct / 100;
+
+    return PBIO_SUCCESS;
+}
+
+/**
  * Runs the servo at a given speed to a given target angle and stops there.
  *
  * The speed sign is ignored. It always goes in the direction needed to
