@@ -85,20 +85,24 @@ typedef enum {
     /**
      * No control is active.
      */
-    PBIO_CONTROL_TYPE_NONE,
+    PBIO_CONTROL_TYPE_NONE = 0,
     /**
      * Run at a given speed for a given amount of time. The exact position
      * during and after the maneuver is not important. This uses PI control
      * on the speed error, which is implemented as PD control on a position
      * signal whose reference pauses when it is blocked.
      */
-    PBIO_CONTROL_TYPE_TIMED,
+    PBIO_CONTROL_TYPE_TIMED = 1,
     /**
      * Run run at a given speed to a given position, however long it takes. This
      * uses classical PID control, except that D uses the estimated speed. It
      * uses anti-windup schemes to prevent P and I from growing when blocked.
      */
-    PBIO_CONTROL_TYPE_POSITION,
+    PBIO_CONTROL_TYPE_POSITION = 2,
+    /**
+     * Mask to extract the type of controller from the control type.
+     */
+    PBIO_CONTROL_TYPE_MASK = 3,
 } pbio_control_type_t;
 
 /**
@@ -107,8 +111,8 @@ typedef enum {
 typedef enum {
     /** The controller is stalled. */
     PBIO_CONTROL_STATUS_STALLED  = 1 << 0,
-    /** The control command is complete. */
-    PBIO_CONTROL_STATUS_ON_TARGET = 1 << 1,
+    /** The control objective is complete/achieved. */
+    PBIO_CONTROL_STATUS_COMPLETE = 1 << 1,
 } pbio_control_status_flag_t;
 
 /**
