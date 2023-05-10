@@ -85,20 +85,20 @@ typedef enum {
     /**
      * No control is active.
      */
-    PBIO_CONTROL_NONE,
+    PBIO_CONTROL_TYPE_NONE,
     /**
      * Run at a given speed for a given amount of time. The exact position
      * during and after the maneuver is not important. This uses PI control
      * on the speed error, which is implemented as PD control on a position
      * signal whose reference pauses when it is blocked.
      */
-    PBIO_CONTROL_TIMED,
+    PBIO_CONTROL_TYPE_TIMED,
     /**
      * Run run at a given speed to a given position, however long it takes. This
      * uses classical PID control, except that D uses the estimated speed. It
      * uses anti-windup schemes to prevent P and I from growing when blocked.
      */
-    PBIO_CONTROL_POSITION,
+    PBIO_CONTROL_TYPE_POSITION,
 } pbio_control_type_t;
 
 /**

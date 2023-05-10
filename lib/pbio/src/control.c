@@ -411,7 +411,7 @@ void pbio_control_update(
  * @param [in]  ctl         Control status structure.
  */
 void pbio_control_stop(pbio_control_t *ctl) {
-    ctl->type = PBIO_CONTROL_NONE;
+    ctl->type = PBIO_CONTROL_TYPE_NONE;
     pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET, true);
     pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED, false);
     ctl->pid_average = 0;
@@ -429,7 +429,7 @@ void pbio_control_stop(pbio_control_t *ctl) {
 static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now, pbio_control_type_t type, pbio_control_on_completion_t on_completion) {
 
     // Setting none control type is the same as stopping.
-    if (type == PBIO_CONTROL_NONE) {
+    if (type == PBIO_CONTROL_TYPE_NONE) {
         pbio_control_stop(ctl);
         return;
     }
@@ -454,7 +454,7 @@ static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now
     pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED, false);
 
     // Reset integrator for new control type.
-    if (type == PBIO_CONTROL_POSITION) {
+    if (type == PBIO_CONTROL_TYPE_POSITION) {
         // If the new type is position, reset position integrator.
         pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
     } else {
@@ -568,7 +568,7 @@ static pbio_error_t _pbio_control_start_position_control(pbio_control_t *ctl, ui
     }
 
     // Activate control type and reset integrators if needed.
-    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_POSITION, on_completion);
+    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_TYPE_POSITION, on_completion);
 
     return PBIO_SUCCESS;
 }
@@ -677,7 +677,7 @@ pbio_error_t pbio_control_start_position_control_hold(pbio_control_t *ctl, uint3
     pbio_trajectory_make_constant(&ctl->trajectory, &command);
 
     // Activate control type and reset integrators if needed.
-    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_POSITION, PBIO_CONTROL_ON_COMPLETION_HOLD);
+    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_TYPE_POSITION, PBIO_CONTROL_ON_COMPLETION_HOLD);
 
     return PBIO_SUCCESS;
 }
@@ -774,7 +774,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, uint32_t time
     }
 
     // Activate control type and reset integrators if needed.
-    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_TIMED, on_completion);
+    pbio_control_set_control_type(ctl, time_now, PBIO_CONTROL_TYPE_TIMED, on_completion);
 
     return PBIO_SUCCESS;
 }
@@ -807,7 +807,7 @@ uint32_t pbio_control_get_ref_time(const pbio_control_t *ctl, uint32_t time_now)
  * @return                      True if active (position or time), false if not.
  */
 bool pbio_control_is_active(const pbio_control_t *ctl) {
-    return ctl->type != PBIO_CONTROL_NONE;
+    return ctl->type != PBIO_CONTROL_TYPE_NONE;
 }
 
 /**
@@ -817,7 +817,7 @@ bool pbio_control_is_active(const pbio_control_t *ctl) {
  * @return                      True if position control is active, false if not.
  */
 bool pbio_control_type_is_position(const pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_POSITION;
+    return ctl->type == PBIO_CONTROL_TYPE_POSITION;
 }
 
 /**
@@ -827,7 +827,7 @@ bool pbio_control_type_is_position(const pbio_control_t *ctl) {
  * @return                      True if timed control is active, false if not.
  */
 bool pbio_control_type_is_time(const pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_TIMED;
+    return ctl->type == PBIO_CONTROL_TYPE_TIMED;
 }
 
 /**
@@ -846,7 +846,7 @@ bool pbio_control_is_stalled(const pbio_control_t *ctl, uint32_t *stall_duration
     }
 
     // Get time since stalling began.
-    uint32_t time_pause_begin = ctl->type == PBIO_CONTROL_POSITION ? ctl->position_integrator.time_pause_begin : ctl->speed_integrator.time_pause_begin;
+    uint32_t time_pause_begin = pbio_control_type_is_position(ctl) ? ctl->position_integrator.time_pause_begin : ctl->speed_integrator.time_pause_begin;
     *stall_duration = pbio_control_get_time_ticks() - time_pause_begin;
 
     return true;
@@ -861,5 +861,5 @@ bool pbio_control_is_stalled(const pbio_control_t *ctl, uint32_t *stall_duration
  * @return                      True if the controller is done, false if not.
  */
 bool pbio_control_is_done(const pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_NONE || pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET);
+    return ctl->type == PBIO_CONTROL_TYPE_NONE || pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET);
 }
