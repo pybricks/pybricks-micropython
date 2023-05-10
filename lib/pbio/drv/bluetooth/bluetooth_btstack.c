@@ -51,6 +51,7 @@ typedef enum {
     CON_STATE_WAIT_CONNECT,
     CON_STATE_WAIT_DISCOVER_SERVICES,
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
+    CON_STATE_WAIT_DISCOVER_CHARACTERISTICS_2,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
     CON_STATE_CONNECTED,
     CON_STATE_WAIT_DISCONNECT,
@@ -81,6 +82,21 @@ typedef struct {
     char name[20];
 } pup_handset_t;
 
+/** Type for managing remote Nordic UART connection. */
+typedef struct {
+    gatt_client_notification_t notification;
+    uint16_t con_handle;
+    con_state_t con_state;
+    disconnect_reason_t disconnect_reason;
+    gatt_client_service_t nus_service;
+    gatt_client_characteristic_t nus_tx_char;
+    gatt_client_characteristic_t nus_rx_char;
+    uint8_t btstack_error;
+    uint8_t address_type;
+    bd_addr_t address;
+    char name[20];
+} nus_connection_t;
+
 // hub name goes in special section so that it can be modified when flashing firmware
 #if !PBIO_TEST_BUILD
 __attribute__((section(".name")))
@@ -95,6 +111,8 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
 static pup_handset_t handset;
+// static nus_connection_t nus_central;
+static nus_connection_t nus_peripheral;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
@@ -233,25 +251,34 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
     propagate_event(packet);
 }
 
-// REVISIT: does this need to be separate from packet_handler()?
-// currently, this function just handles the Powered Up handset control.
-static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-
+static void handle_handset_gatt_client_event(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     switch (hci_event_packet_get_type(packet)) {
         case GATT_EVENT_SERVICE_QUERY_RESULT:
+            if (gatt_event_service_query_result_get_handle(packet) != handset.con_handle) {
+                break;
+            }
+
             gatt_event_service_query_result_get_service(packet, &handset.lwp3_service);
             break;
 
         case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT:
+            if (gatt_event_characteristic_query_result_get_handle(packet) != handset.con_handle) {
+                break;
+            }
+
             gatt_event_characteristic_query_result_get_characteristic(packet, &handset.lwp3_char);
             break;
 
         case GATT_EVENT_QUERY_COMPLETE:
+            if (gatt_event_query_complete_get_handle(packet) != handset.con_handle) {
+                break;
+            }
+
             if (handset.con_state == CON_STATE_WAIT_DISCOVER_SERVICES) {
                 // TODO: remove cast on lwp3_characteristic_uuid after
                 // https://github.com/bluekitchen/btstack/pull/359
                 handset.btstack_error = gatt_client_discover_characteristics_for_service_by_uuid128(
-                    handle_gatt_client_event, handset.con_handle, &handset.lwp3_service, (uint8_t *)pbio_lwp3_hub_char_uuid);
+                    handle_handset_gatt_client_event, handset.con_handle, &handset.lwp3_service, (uint8_t *)pbio_lwp3_hub_char_uuid);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                     handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
                 } else {
@@ -262,11 +289,11 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                 }
             } else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
                 handset.btstack_error = gatt_client_write_client_characteristic_configuration(
-                    handle_gatt_client_event, handset.con_handle, &handset.lwp3_char,
+                    handle_handset_gatt_client_event, handset.con_handle, &handset.lwp3_char,
                     GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                     gatt_client_listen_for_characteristic_value_updates(
-                        &handset.notification, handle_gatt_client_event, handset.con_handle, &handset.lwp3_char);
+                        &handset.notification, handle_handset_gatt_client_event, handset.con_handle, &handset.lwp3_char);
                     handset.con_state = CON_STATE_WAIT_ENABLE_NOTIFICATIONS;
                 } else {
                     // configuration failed for some reason, so disconnect
@@ -288,6 +315,98 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                 uint16_t length = gatt_event_notification_get_value_length(packet);
                 const uint8_t *value = gatt_event_notification_get_value(packet);
                 notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, value, length);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    propagate_event(packet);
+}
+
+static void handle_nus_peripheral_gatt_client_event(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    switch (hci_event_packet_get_type(packet)) {
+        case GATT_EVENT_SERVICE_QUERY_RESULT:
+            if (gatt_event_service_query_result_get_handle(packet) != nus_peripheral.con_handle) {
+                break;
+            }
+
+            gatt_event_service_query_result_get_service(packet, &nus_peripheral.nus_service);
+            break;
+
+        case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT:
+            if (gatt_event_characteristic_query_result_get_handle(packet) != nus_peripheral.con_handle) {
+                break;
+            }
+
+            if (nus_peripheral.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
+                gatt_event_characteristic_query_result_get_characteristic(packet, &nus_peripheral.nus_rx_char);
+            } else  if (nus_peripheral.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS_2) {
+                gatt_event_characteristic_query_result_get_characteristic(packet, &nus_peripheral.nus_tx_char);
+            }
+            break;
+
+        case GATT_EVENT_QUERY_COMPLETE:
+            if (gatt_event_query_complete_get_handle(packet) != nus_peripheral.con_handle) {
+                break;
+            }
+
+            if (nus_peripheral.con_state == CON_STATE_WAIT_DISCOVER_SERVICES) {
+                // TODO: remove cast on lwp3_characteristic_uuid after
+                // https://github.com/bluekitchen/btstack/pull/359
+                nus_peripheral.btstack_error = gatt_client_discover_characteristics_for_service_by_uuid128(
+                    handle_nus_peripheral_gatt_client_event, nus_peripheral.con_handle, &nus_peripheral.nus_service, (uint8_t *)pbio_nus_rx_char_uuid);
+                if (nus_peripheral.btstack_error == ERROR_CODE_SUCCESS) {
+                    nus_peripheral.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
+                } else {
+                    // configuration failed for some reason, so disconnect
+                    gap_disconnect(nus_peripheral.con_handle);
+                    nus_peripheral.con_state = CON_STATE_WAIT_DISCONNECT;
+                    nus_peripheral.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
+                }
+            } else if (nus_peripheral.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
+                // TODO: remove cast on lwp3_characteristic_uuid after
+                // https://github.com/bluekitchen/btstack/pull/359
+                nus_peripheral.btstack_error = gatt_client_discover_characteristics_for_service_by_uuid128(
+                    handle_nus_peripheral_gatt_client_event, nus_peripheral.con_handle, &nus_peripheral.nus_service, (uint8_t *)pbio_nus_tx_char_uuid);
+                if (nus_peripheral.btstack_error == ERROR_CODE_SUCCESS) {
+                    nus_peripheral.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS_2;
+                } else {
+                    // configuration failed for some reason, so disconnect
+                    gap_disconnect(nus_peripheral.con_handle);
+                    nus_peripheral.con_state = CON_STATE_WAIT_DISCONNECT;
+                    nus_peripheral.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
+                }
+            } else if (nus_peripheral.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS_2) {
+                nus_peripheral.btstack_error = gatt_client_write_client_characteristic_configuration(
+                    handle_nus_peripheral_gatt_client_event, nus_peripheral.con_handle, &nus_peripheral.nus_tx_char,
+                    GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
+                if (nus_peripheral.btstack_error == ERROR_CODE_SUCCESS) {
+                    gatt_client_listen_for_characteristic_value_updates(
+                        &nus_peripheral.notification, handle_nus_peripheral_gatt_client_event, nus_peripheral.con_handle, &nus_peripheral.nus_tx_char);
+                    nus_peripheral.con_state = CON_STATE_WAIT_ENABLE_NOTIFICATIONS;
+                } else {
+                    // configuration failed for some reason, so disconnect
+                    gap_disconnect(nus_peripheral.con_handle);
+                    nus_peripheral.con_state = CON_STATE_WAIT_DISCONNECT;
+                    nus_peripheral.disconnect_reason = DISCONNECT_REASON_CONFIGURE_CHARACTERISTIC_FAILED;
+                }
+            } else if (nus_peripheral.con_state == CON_STATE_WAIT_ENABLE_NOTIFICATIONS) {
+                nus_peripheral.con_state = CON_STATE_CONNECTED;
+            }
+            break;
+
+        case GATT_EVENT_NOTIFICATION: {
+            if (gatt_event_notification_get_handle(packet) != nus_peripheral.con_handle) {
+                break;
+            }
+
+            if (notification_handler != NULL) {
+                uint16_t length = gatt_event_notification_get_value_length(packet);
+                const uint8_t *value = gatt_event_notification_get_value(packet);
+                notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_NUS, value, length);
             }
             break;
         }
@@ -321,22 +440,35 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 // don't start advertising again on disconnect
                 gap_advertisements_enable(false);
             } else {
-                // If we aren't waiting for a handset connection, this must be a different connection.
-                if (handset.con_state != CON_STATE_WAIT_CONNECT) {
-                    break;
-                }
+                uint8_t addr[6];
+                hci_subevent_le_connection_complete_get_peer_address(packet, addr);
 
-                handset.con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+                if (memcmp(handset.address, addr, sizeof(addr)) == 0) {
+                    handset.con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
 
-                handset.btstack_error = gatt_client_discover_primary_services_by_uuid128(
-                    handle_gatt_client_event, handset.con_handle, pbio_lwp3_hub_service_uuid);
-                if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-                    handset.con_state = CON_STATE_WAIT_DISCOVER_SERVICES;
-                } else {
-                    // configuration failed for some reason, so disconnect
-                    gap_disconnect(handset.con_handle);
-                    handset.con_state = CON_STATE_WAIT_DISCONNECT;
-                    handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_SERVICE_FAILED;
+                    handset.btstack_error = gatt_client_discover_primary_services_by_uuid128(
+                        handle_handset_gatt_client_event, handset.con_handle, pbio_lwp3_hub_service_uuid);
+                    if (handset.btstack_error == ERROR_CODE_SUCCESS) {
+                        handset.con_state = CON_STATE_WAIT_DISCOVER_SERVICES;
+                    } else {
+                        // configuration failed for some reason, so disconnect
+                        gap_disconnect(handset.con_handle);
+                        handset.con_state = CON_STATE_WAIT_DISCONNECT;
+                        handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_SERVICE_FAILED;
+                    }
+                } else if (memcmp(nus_peripheral.address, addr, sizeof(addr)) == 0) {
+                    nus_peripheral.con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+
+                    nus_peripheral.btstack_error = gatt_client_discover_primary_services_by_uuid128(
+                        handle_nus_peripheral_gatt_client_event, nus_peripheral.con_handle, pbio_nus_service_uuid);
+                    if (nus_peripheral.btstack_error == ERROR_CODE_SUCCESS) {
+                        nus_peripheral.con_state = CON_STATE_WAIT_DISCOVER_SERVICES;
+                    } else {
+                        // configuration failed for some reason, so disconnect
+                        gap_disconnect(nus_peripheral.con_handle);
+                        nus_peripheral.con_state = CON_STATE_WAIT_DISCONNECT;
+                        nus_peripheral.disconnect_reason = DISCONNECT_REASON_DISCOVER_SERVICE_FAILED;
+                    }
                 }
             }
 
@@ -351,6 +483,10 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 gatt_client_stop_listening_for_characteristic_value_updates(&handset.notification);
                 handset.con_handle = HCI_CON_HANDLE_INVALID;
                 handset.con_state = CON_STATE_NONE;
+            } else if (hci_event_disconnection_complete_get_connection_handle(packet) == nus_peripheral.con_handle) {
+                gatt_client_stop_listening_for_characteristic_value_updates(&nus_peripheral.notification);
+                nus_peripheral.con_handle = HCI_CON_HANDLE_INVALID;
+                nus_peripheral.con_state = CON_STATE_NONE;
             }
 
             break;
@@ -580,6 +716,10 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_NUS && nus_peripheral.con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
+    }
+
     return false;
 }
 
@@ -598,6 +738,9 @@ void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
     } else if (context->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         send_request.callback = &nordic_can_send;
         nordic_spp_service_server_request_can_send_now(&send_request, uart_con_handle);
+    } else if (context->connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_NUS) {
+        send_request.callback = &nordic_can_send;
+        nordic_spp_service_server_request_can_send_now(&send_request, nus_peripheral.con_handle);
     }
 }
 
@@ -706,6 +849,105 @@ void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *va
 void pbdrv_bluetooth_disconnect_remote(void) {
     if (handset.con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(handset.con_handle);
+    }
+}
+
+static PT_THREAD(scan_and_connect_nus_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
+
+    PT_BEGIN(pt);
+
+    memset(&nus_peripheral, 0, sizeof(nus_peripheral));
+    nus_peripheral.con_handle = HCI_CON_HANDLE_INVALID;
+    memcpy(nus_peripheral.name, context->name, sizeof(nus_peripheral.name));
+
+    // active scanning to get scan response data.
+    // scan interval: 48 * 0.625ms = 30ms
+    gap_set_scan_params(1, 0x30, 0x30, 0);
+    gap_start_scan();
+    nus_peripheral.con_state = CON_STATE_WAIT_ADV_IND;
+
+    PT_WAIT_UNTIL(pt, ({
+        if (task->cancel) {
+            goto cancel;
+        }
+
+        // if there is any failure to connect or error while enumerating
+        // attributes, con_state will be set to CON_STATE_NONE
+        if (nus_peripheral.con_state == CON_STATE_NONE) {
+            task->status = PBIO_ERROR_FAILED;
+            PT_EXIT(pt);
+        }
+
+        nus_peripheral.con_state == CON_STATE_CONNECTED;
+    }));
+
+    // REVISIT: probably want to make a generic connection handle data structure
+    // that includes handle, name, address, etc.
+    memcpy(context->name, nus_peripheral.name, sizeof(context->name));
+
+    task->status = PBIO_SUCCESS;
+    PT_EXIT(pt);
+
+cancel:
+    if (nus_peripheral.con_state == CON_STATE_WAIT_ADV_IND || nus_peripheral.con_state == CON_STATE_WAIT_SCAN_RSP) {
+        gap_stop_scan();
+    } else if (nus_peripheral.con_state == CON_STATE_WAIT_CONNECT) {
+        gap_connect_cancel();
+    } else if (nus_peripheral.con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(nus_peripheral.con_handle);
+    }
+    nus_peripheral.con_state = CON_STATE_NONE;
+    task->status = PBIO_ERROR_CANCELED;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_scan_and_connect_nus(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
+    start_task(task, scan_and_connect_nus_task, context);
+}
+
+static PT_THREAD(write_nus_peripheral_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+
+    PT_BEGIN(pt);
+
+    // TODO: Make connection handle and value handle part of pbdrv_bluetooth_value_t
+    // to allow for simultaneous connections.
+
+    uint8_t err = gatt_client_write_value_of_characteristic(packet_handler,
+        nus_peripheral.con_handle, nus_peripheral.nus_rx_char.value_handle, value->size, value->data);
+
+    if (err != ERROR_CODE_SUCCESS) {
+        task->status = PBIO_ERROR_FAILED;
+        PT_EXIT(pt);
+    }
+
+    // NB: Value buffer must remain valid until GATT_EVENT_QUERY_COMPLETE, so
+    // this wait is not cancelable.
+    PT_WAIT_UNTIL(pt, ({
+        if (nus_peripheral.con_handle == HCI_CON_HANDLE_INVALID) {
+            // disconnected
+            task->status = PBIO_ERROR_NO_DEV;
+            PT_EXIT(pt);
+        }
+        event_packet &&
+        hci_event_packet_get_type(event_packet) == GATT_EVENT_QUERY_COMPLETE &&
+        gatt_event_query_complete_get_handle(event_packet) == nus_peripheral.con_handle;
+    }));
+
+    uint8_t status = gatt_event_query_complete_get_att_status(event_packet);
+    task->status = att_error_to_pbio_error(status);
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_write_nus_peripheral(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    start_task(task, write_nus_peripheral_task, value);
+}
+
+void pbdrv_bluetooth_disconnect_nus_peripheral(void) {
+    if (nus_peripheral.con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(nus_peripheral.con_handle);
     }
 }
 

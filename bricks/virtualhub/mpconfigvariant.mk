@@ -59,6 +59,7 @@ USER_C_MODULES = ../../..
 INC += -I../../..
 INC += -I../../../lib/contiki-core
 INC += -I../../../lib/lego
+INC += -I../../../lib/lwrb/src/include
 INC += -I../../../lib/pbio/include
 INC += -I../../../lib/pbio/platform/virtual_hub
 
@@ -67,7 +68,7 @@ PBIO_PLATFORM = virtual_hub
 include ../../../bricks/_common/sources.mk
 
 SRC_EXTMOD_C += $(PYBRICKS_PYBRICKS_SRC_C)
-SRC_THIRDPARTY_C += $(CONTIKI_SRC_C) $(PBIO_SRC_C)
+SRC_THIRDPARTY_C += $(CONTIKI_SRC_C) $(LWRB_SRC_C) $(PBIO_SRC_C)
 
 # realtime library for timer signals
 LIB += -lrt

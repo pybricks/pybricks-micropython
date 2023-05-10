@@ -110,6 +110,7 @@
 #define MICROPY_ENABLE_VM_ABORT                 (1)
 #define MICROPY_ENABLE_SCHEDULER                (0)
 #define MICROPY_PY_INSTANCE_ATTRS               (1)
+#define MICROPY_STREAMS_NON_BLOCK               (1)
 
 #define MICROPY_PERSISTENT_CODE_LOAD            (1)
 #define MICROPY_ENABLE_EXTERNAL_IMPORT          (0)

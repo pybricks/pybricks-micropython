@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
 #define PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
@@ -23,6 +23,18 @@
 
 void pb_package_pybricks_init(bool import_all);
 void pb_package_pybricks_deinit(void);
+
+#if PYBRICKS_PY_COMMON_BUFFERED_STREAM
+
+#include <lwrb/lwrb.h>
+
+typedef void(*pb_type_BufferedStream_notify_t)(void *context);
+typedef void(*pb_type_BufferedStream_close_t)(void *context);
+mp_obj_t pb_type_BufferedStream_obj_new(lwrb_t *read_buf, lwrb_t *write_buf, void* context,
+    pb_type_BufferedStream_notify_t notify, pb_type_BufferedStream_close_t close);
+extern const mp_obj_type_t pb_type_BufferedStream;
+
+#endif // PYBRICKS_PY_COMMON_BUFFERED_STREAM
 
 #if PYBRICKS_PY_COMMON_CHARGER
 

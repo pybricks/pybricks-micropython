@@ -16,6 +16,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
+#define PYBRICKS_PY_COMMON_BUFFERED_STREAM (0)
 #define PYBRICKS_PY_COMMON_CHARGER      (0)
 #define PYBRICKS_PY_COMMON_CONTROL      (0)
 #define PYBRICKS_PY_COMMON_IMU          (0)

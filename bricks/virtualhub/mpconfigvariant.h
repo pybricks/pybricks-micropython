@@ -8,6 +8,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
+#define PYBRICKS_PY_COMMON_BUFFERED_STREAM (1)
 #define PYBRICKS_PY_COMMON_CHARGER      (1)
 #define PYBRICKS_PY_COMMON_CONTROL      (1)
 #define PYBRICKS_PY_COMMON_IMU          (0)
@@ -35,6 +36,7 @@
 #define PYBRICKS_PY_TOOLS               (1)
 
 // Pybricks options
+// FIXME: these have no effect
 #define PYBRICKS_OPT_COMPILER                   (1)
 #define PYBRICKS_OPT_FLOAT                      (1)
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
@@ -59,6 +61,8 @@
 #define MICROPY_STREAMS_POSIX_API               (1)
 #define MICROPY_HELPER_REPL                     (1)
 #define MICROPY_KBD_EXCEPTION                   (1)
+#define MICROPY_ENABLE_SOURCE_LINE              (1)
+#define MICROPY_STREAMS_NON_BLOCK               (1)
 
 // REVISIT: This list currently matches the stm32 builds. We may consider
 // adding more like the ev3dev build.

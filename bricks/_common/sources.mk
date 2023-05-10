@@ -23,6 +23,7 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_battery.c \
+	common/pb_type_buffered_stream.c \
 	common/pb_type_charger.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
