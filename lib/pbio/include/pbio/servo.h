@@ -161,6 +161,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_on_completion_t on_
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed);
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, uint32_t duration, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, int32_t torque_limit_pct, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
