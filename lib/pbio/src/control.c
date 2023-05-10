@@ -97,6 +97,12 @@ static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t ti
         return true;
     }
 
+    // If stall is set as an objective (usually with run-until-stalled) and
+    // it is currently stalled, then the maneuver is complete.
+    if (ctl->type & PBIO_CONTROL_TYPE_FLAG_STOP_ON_STALL && pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_STALLED)) {
+        return true;
+    }
+
     // Check if we are passed the nominal maneuver time.
     bool time_completed = pbio_control_settings_time_is_later(time, end->time);
 

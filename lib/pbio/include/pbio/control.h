@@ -103,6 +103,10 @@ typedef enum {
      * Mask to extract the type of controller from the control type.
      */
     PBIO_CONTROL_TYPE_MASK = 3,
+    /**
+     * Flag indicating controller should stop (complete) when it stalls.
+     */
+    PBIO_CONTROL_TYPE_FLAG_STOP_ON_STALL = 1 << 2,
 } pbio_control_type_t;
 
 /**
