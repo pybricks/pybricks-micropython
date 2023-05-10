@@ -82,6 +82,14 @@ static pbio_control_on_completion_t pbio_control_on_completion_discard_smart(pbi
     return on_completion;
 }
 
+static void pbio_control_status_set(pbio_control_t *ctl, pbio_control_status_flag_t flag, bool set) {
+    ctl->status = set ? ctl->status | flag : ctl->status & ~flag;
+}
+
+static bool pbio_control_status_test(const pbio_control_t *ctl, pbio_control_status_flag_t flag) {
+    return ctl->status & flag;
+}
+
 static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t time, const pbio_control_state_t *state, const pbio_trajectory_reference_t *end) {
 
     // If no control is active, then all targets are complete.
@@ -126,14 +134,6 @@ static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t ti
     // Once we stand still, we're complete if the distance to the
     // target is equal to or less than the allowed tolerance.
     return pbio_int_math_abs(position_remaining) <= ctl->settings.position_tolerance;
-}
-
-static void pbio_control_status_set(pbio_control_t *ctl, pbio_control_status_flag_t flag, bool set) {
-    ctl->status = set ? ctl->status | flag : ctl->status & ~flag;
-}
-
-static bool pbio_control_status_test(const pbio_control_t *ctl, pbio_control_status_flag_t flag) {
-    return ctl->status & flag;
 }
 
 /**
@@ -328,7 +328,7 @@ void pbio_control_update(
         pbio_speed_integrator_stalled(&ctl->speed_integrator, time_now, state->speed, ref->speed));
 
     // Check if we are on target, and set the status.
-    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET,
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_COMPLETE,
         pbio_control_check_completion(ctl, ref->time, state, &ref_end));
 
     // Save (low-pass filtered) load for diagnostics
@@ -336,7 +336,7 @@ void pbio_control_update(
 
     // Decide actuation based on control status.
     if (// Not on target yet, so keep actuating.
-        !pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET) ||
+        !pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_COMPLETE) ||
         // Active completion type, so keep actuating.
         pbio_control_on_completion_is_active(ctl->on_completion) ||
         // Smart passive mode, and we're only just complete, so keep actuating.
@@ -357,7 +357,7 @@ void pbio_control_update(
 
     // Handling hold after running for time requires an extra step because
     // it can only be done by starting a new position based command.
-    if (pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET) &&
+    if (pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_COMPLETE) &&
         pbio_control_type_is_time(ctl) &&
         ctl->on_completion == PBIO_CONTROL_ON_COMPLETION_HOLD) {
         // Use current state as target for holding.
@@ -412,7 +412,7 @@ void pbio_control_update(
  */
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_TYPE_NONE;
-    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET, true);
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_COMPLETE, true);
     pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED, false);
     ctl->pid_average = 0;
 }
@@ -429,7 +429,7 @@ void pbio_control_stop(pbio_control_t *ctl) {
 static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now, pbio_control_type_t type, pbio_control_on_completion_t on_completion) {
 
     // Setting none control type is the same as stopping.
-    if (type == PBIO_CONTROL_TYPE_NONE) {
+    if ((type & PBIO_CONTROL_TYPE_MASK) == PBIO_CONTROL_TYPE_NONE) {
         pbio_control_stop(ctl);
         return;
     }
@@ -442,7 +442,7 @@ static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now
 
     // Reset done state. It will get the correct value during the next control
     // update. REVISIT: Evaluate it here.
-    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_ON_TARGET, false);
+    pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_COMPLETE, false);
 
     // Exit if control type already set.
     if (ctl->type == type) {
@@ -454,7 +454,7 @@ static void pbio_control_set_control_type(pbio_control_t *ctl, uint32_t time_now
     pbio_control_status_set(ctl, PBIO_CONTROL_STATUS_STALLED, false);
 
     // Reset integrator for new control type.
-    if (type == PBIO_CONTROL_TYPE_POSITION) {
+    if ((type & PBIO_CONTROL_TYPE_MASK) == PBIO_CONTROL_TYPE_POSITION) {
         // If the new type is position, reset position integrator.
         pbio_position_integrator_reset(&ctl->position_integrator, &ctl->settings, time_now);
     } else {
@@ -807,7 +807,7 @@ uint32_t pbio_control_get_ref_time(const pbio_control_t *ctl, uint32_t time_now)
  * @return                      True if active (position or time), false if not.
  */
 bool pbio_control_is_active(const pbio_control_t *ctl) {
-    return ctl->type != PBIO_CONTROL_TYPE_NONE;
+    return (ctl->type & PBIO_CONTROL_TYPE_MASK) != PBIO_CONTROL_TYPE_NONE;
 }
 
 /**
@@ -817,7 +817,7 @@ bool pbio_control_is_active(const pbio_control_t *ctl) {
  * @return                      True if position control is active, false if not.
  */
 bool pbio_control_type_is_position(const pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_TYPE_POSITION;
+    return (ctl->type & PBIO_CONTROL_TYPE_MASK) == PBIO_CONTROL_TYPE_POSITION;
 }
 
 /**
@@ -827,7 +827,7 @@ bool pbio_control_type_is_position(const pbio_control_t *ctl) {
  * @return                      True if timed control is active, false if not.
  */
 bool pbio_control_type_is_time(const pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_TYPE_TIMED;
+    return (ctl->type & PBIO_CONTROL_TYPE_MASK) == PBIO_CONTROL_TYPE_TIMED;
 }
 
 /**
@@ -861,5 +861,5 @@ bool pbio_control_is_stalled(const pbio_control_t *ctl, uint32_t *stall_duration
  * @return                      True if the controller is done, false if not.
  */
 bool pbio_control_is_done(const pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_TYPE_NONE || pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_ON_TARGET);
+    return !pbio_control_is_active(ctl) || pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_COMPLETE);
 }
