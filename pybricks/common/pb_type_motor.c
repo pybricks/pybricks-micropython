@@ -129,7 +129,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t common_Motor_test_completion(mp_obj_t self_in, uint32_t start_time) {
+STATIC bool common_Motor_test_completion(mp_obj_t self_in, uint32_t start_time) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Handle I/O exceptions like port unplugged.
     if (!pbio_servo_update_loop_is_running(self->srv)) {
@@ -137,7 +137,7 @@ STATIC mp_obj_t common_Motor_test_completion(mp_obj_t self_in, uint32_t start_ti
     }
 
     // Get completion state.
-    return pbio_control_is_done(&self->srv->control) ? MP_OBJ_STOP_ITERATION : mp_const_none;
+    return pbio_control_is_done(&self->srv->control);
 }
 
 STATIC void common_Motor_cancel(mp_obj_t self_in) {
@@ -149,6 +149,7 @@ STATIC void common_Motor_cancel(mp_obj_t self_in) {
 
 STATIC const pb_type_awaitable_config_t motor_awaitable_config = {
     .test_completion_func = common_Motor_test_completion,
+    .return_value_func = NULL,
     .cancel_func = common_Motor_cancel,
     .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE,
 };
@@ -242,31 +243,20 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_time_obj, 1, common_Motor_run_time);
 
-// REVISIT: Split return value and share completion method with other methods.
-STATIC mp_obj_t common_Motor_stall_test_completion(mp_obj_t self_in, uint32_t start_time) {
+STATIC mp_obj_t common_Motor_stall_return_value(mp_obj_t self_in) {
 
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Handle I/O exceptions like port unplugged.
-    if (!pbio_servo_update_loop_is_running(self->srv)) {
-        pb_assert(PBIO_ERROR_NO_DEV);
-    }
-
-    // Keep going if not done.
-    if (!pbio_control_is_done(&self->srv->control)) {
-        return mp_const_none;
-    }
-
-    // Read the angle upon completion of the stall maneuver.
+    // Return the angle upon completion of the stall maneuver.
     int32_t stall_angle, stall_speed;
     pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
 
-    // Raise stop iteration with angle to return the final position.
-    return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
+    return mp_obj_new_int(stall_angle);
 }
 
 STATIC const pb_type_awaitable_config_t motor_stalled_awaitable_config = {
-    .test_completion_func = common_Motor_stall_test_completion,
+    .test_completion_func = common_Motor_test_completion,
+    .return_value_func = common_Motor_stall_return_value,
     .cancel_func = common_Motor_cancel,
     .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE,
 };
