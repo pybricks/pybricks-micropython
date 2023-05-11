@@ -242,33 +242,24 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_time_obj, 1, common_Motor_run_time);
 
+// REVISIT: Split return value and share completion method with other methods.
 STATIC mp_obj_t common_Motor_stall_test_completion(mp_obj_t self_in, uint32_t start_time) {
 
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    // Restore original voltage limit.
-    pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, self->max_voltage_last));
 
     // Handle I/O exceptions like port unplugged.
     if (!pbio_servo_update_loop_is_running(self->srv)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
-    bool stalled;
-    uint32_t stall_duration;
-    pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
-
-    // Keep going if not stalled.
-    if (!stalled) {
+    // Keep going if not done.
+    if (!pbio_control_is_done(&self->srv->control)) {
         return mp_const_none;
     }
 
     // Read the angle upon completion of the stall maneuver.
     int32_t stall_angle, stall_speed;
     pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
-
-    // Stop moving.
-    pb_assert(pbio_servo_stop(self->srv, self->on_stall));
 
     // Raise stop iteration with angle to return the final position.
     return mp_make_stop_iteration(mp_obj_new_int(stall_angle));
@@ -286,28 +277,25 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         common_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_COAST_obj),
+        PB_ARG_DEFAULT_NONE(torque_limit),
         PB_ARG_DEFAULT_NONE(duty_limit));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // Read original voltage limit and completion type so we can restore it when we're done.
-    pbio_dcmotor_get_settings(self->srv->dcmotor, &self->max_voltage_last);
-    self->on_stall = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
-
-    // If duty_limit argument given, limit duty during this maneuver.
+    // Backwards compatibility <= v3.2: allow duty_limit arg as torque_limit.
     if (duty_limit_in != mp_const_none) {
-        // Internally, the use of a duty cycle limit has been deprecated and
-        // replaced by a voltage limit. Since we can't break the user API, we
-        // convert the user duty limit (0--100) to a voltage by scaling it with
-        // the battery voltage level, giving the same behavior as before.
-        uint32_t max_voltage = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_pct(duty_limit_in));
+        torque_limit_in = duty_limit_in;
+    }
 
-        // Apply the user limit
-        pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, max_voltage));
+    // Get torque limit as percentage of max torque.
+    int32_t torque_limit_pct = 100;
+    if (torque_limit_in != mp_const_none) {
+        torque_limit_pct = pb_obj_get_pct(torque_limit_in);
     }
 
     // Start moving.
-    pb_assert(pbio_servo_run_forever(self->srv, speed));
+    pb_assert(pbio_servo_run_until_stalled(self->srv, speed, torque_limit_pct, then));
 
     // Handle completion by awaiting or blocking.
     return pb_type_awaitable_await_or_block(pos_args[0], &motor_stalled_awaitable_config, self->first_awaitable);
