@@ -32,12 +32,6 @@ STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_ti
     return mp_hal_ticks_ms() - start_time >= (uint32_t)MP_OBJ_SMALL_INT_VALUE(obj);
 }
 
-STATIC const pb_type_awaitable_config_t pb_module_tools_wait_config = {
-    .test_completion_func = pb_module_tools_wait_test_completion,
-    .cancel_func = NULL,
-    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_NONE,
-};
-
 STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(time));
@@ -56,7 +50,13 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
     // test completion state in iteration loop.
     time = pbio_int_math_bind(time, 0, INT32_MAX >> 2);
 
-    return pb_type_awaitable_await_or_block(MP_OBJ_NEW_SMALL_INT(time), &pb_module_tools_wait_config, first_wait_awaitable);
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_NEW_SMALL_INT(time),
+        first_wait_awaitable,
+        pb_module_tools_wait_test_completion,
+        pb_type_awaitable_return_none,
+        pb_type_awaitable_cancel_none,
+        PB_TYPE_AWAITABLE_CANCEL_NONE);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
 

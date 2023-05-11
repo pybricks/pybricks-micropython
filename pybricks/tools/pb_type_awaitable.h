@@ -65,32 +65,21 @@ typedef mp_obj_t (*pb_type_awaitable_return_t)(mp_obj_t obj);
  */
 typedef void (*pb_type_awaitable_cancel_t)(mp_obj_t obj);
 
-/**
- * Constant configuration of functions and settings that govern the behavior
- * of an awaitable associated with a particular method or function.
- */
-typedef struct _pb_type_awaitable_config_t {
-    /**
-     * Tests if operation is complete.
-     */
-    pb_type_awaitable_test_completion_t test_completion_func;
-    /**
-     * Gets the return value of the awaitable.
-     */
-    pb_type_awaitable_return_t return_value_func;
-    /**
-     * Called on cancellation.
-     */
-    pb_type_awaitable_cancel_t cancel_func;
-    /**
-     * Cancellation options.
-     */
-    pb_type_awaitable_cancel_opt_t cancel_opt;
-} pb_type_awaitable_config_t;
+#define pb_type_awaitable_completed (NULL)
 
-void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_cancel_opt_t cancel_opt, pb_type_awaitable_obj_t *first_awaitable);
+#define pb_type_awaitable_return_none (NULL)
 
-mp_obj_t pb_type_awaitable_await_or_block(mp_obj_t obj, const pb_type_awaitable_config_t *config, pb_type_awaitable_obj_t *first_awaitable);
+#define pb_type_awaitable_cancel_none (NULL)
+
+void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_awaitable, pb_type_awaitable_cancel_opt_t cancel_opt);
+
+mp_obj_t pb_type_awaitable_await_or_wait(
+    mp_obj_t obj,
+    pb_type_awaitable_obj_t *first_awaitable,
+    pb_type_awaitable_test_completion_t test_completion_func,
+    pb_type_awaitable_return_t return_value_func,
+    pb_type_awaitable_cancel_t cancel_func,
+    pb_type_awaitable_cancel_opt_t cancel_opt);
 
 #endif // PYBRICKS_PY_TOOLS
 

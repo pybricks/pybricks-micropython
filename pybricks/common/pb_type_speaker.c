@@ -123,8 +123,6 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     self->volume = 100;
     self->sample_attenuator = INT16_MAX;
 
-
-
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -145,13 +143,6 @@ STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
     self->notes_generator = MP_OBJ_NULL;
 }
 
-STATIC const pb_type_awaitable_config_t speaker_beep_awaitable_config = {
-    .test_completion_func = pb_type_Speaker_beep_test_completion,
-    .return_value_func = NULL,
-    .cancel_func = pb_type_Speaker_cancel,
-    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK,
-};
-
 STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
@@ -170,7 +161,14 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
     self->beep_end_time = mp_hal_ticks_ms() + (uint32_t)duration;
     self->release_end_time = self->beep_end_time;
     self->notes_generator = MP_OBJ_NULL;
-    return pb_type_awaitable_await_or_block(pos_args[0], &speaker_beep_awaitable_config, self->first_awaitable);
+
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_FROM_PTR(self),
+        self->first_awaitable,
+        pb_type_Speaker_beep_test_completion,
+        pb_type_awaitable_return_none,
+        pb_type_Speaker_cancel,
+        PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
 
@@ -369,13 +367,6 @@ STATIC bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t sta
     return false;
 }
 
-STATIC const pb_type_awaitable_config_t speaker_notes_awaitable_config = {
-    .test_completion_func = pb_type_Speaker_notes_test_completion,
-    .return_value_func = NULL,
-    .cancel_func = pb_type_Speaker_cancel,
-    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK,
-};
-
 STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
@@ -386,8 +377,13 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
     self->note_duration = 4 * 60 * 1000 / pb_obj_get_int(tempo_in);
     self->beep_end_time = mp_hal_ticks_ms();
     self->release_end_time = self->beep_end_time;
-    return pb_type_awaitable_await_or_block(pos_args[0], &speaker_notes_awaitable_config, self->first_awaitable);
-
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_FROM_PTR(self),
+        self->first_awaitable,
+        pb_type_Speaker_notes_test_completion,
+        pb_type_awaitable_return_none,
+        pb_type_Speaker_cancel,
+        PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 
