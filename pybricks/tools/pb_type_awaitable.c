@@ -7,6 +7,7 @@
 
 #include "py/mphal.h"
 #include "py/mpstate.h"
+#include "py/runtime.h"
 
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_awaitable.h>
@@ -26,6 +27,10 @@ struct _pb_type_awaitable_obj_t {
      * which means that it can be used again.
      */
     pb_type_awaitable_test_completion_t test_completion;
+    /**
+     * Gets the return value of the awaitable.
+     */
+    pb_type_awaitable_return_t return_value;
     /**
      * Called on cancellation.
      */
@@ -51,19 +56,26 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_awaitable_close_obj, pb_type_awaitable_
 STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // If completed callback was unset, then we are done.
+    // If completed callback was unset, then we completed previously.
     if (self->test_completion == NULL) {
         return MP_OBJ_STOP_ITERATION;
     }
 
-    // Test completion status.
-    mp_obj_t completion = self->test_completion(self->obj, self->start_time);
-
-    // none means keep going, everything else means done so finalize.
-    if (completion != mp_const_none) {
-        self->test_completion = NULL;
+    // Keep going if not completed by returning None.
+    if (!self->test_completion(self->obj, self->start_time)) {
+        return mp_const_none;
     }
-    return completion;
+
+    // Complete, so unset callback.
+    self->test_completion = NULL;
+
+    // For no return value, return basic stop iteration.
+    if (!self->return_value) {
+        return MP_OBJ_STOP_ITERATION;
+    }
+
+    // Otherwise, set return value via stop iteration.
+    return mp_make_stop_iteration(self->return_value(self->obj));
 }
 
 STATIC const mp_rom_map_elem_t pb_type_awaitable_locals_dict_table[] = {
@@ -152,6 +164,7 @@ STATIC mp_obj_t pb_type_awaitable_new(mp_obj_t obj, const pb_type_awaitable_conf
     pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(first_awaitable);
     awaitable->obj = obj;
     awaitable->test_completion = config->test_completion_func;
+    awaitable->return_value = config->return_value_func;
     awaitable->cancel = config->cancel_func;
     awaitable->start_time = mp_hal_ticks_ms();
     return MP_OBJ_FROM_PTR(awaitable);

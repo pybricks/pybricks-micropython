@@ -90,7 +90,7 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t start_time) {
+STATIC bool pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t start_time) {
 
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -100,7 +100,7 @@ STATIC mp_obj_t pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t sta
     }
 
     // Get completion state.
-    return pbio_drivebase_is_done(self->db) ? MP_OBJ_STOP_ITERATION : mp_const_none;
+    return pbio_drivebase_is_done(self->db);
 }
 
 STATIC void pb_type_DriveBase_cancel(mp_obj_t self_in) {
@@ -110,6 +110,7 @@ STATIC void pb_type_DriveBase_cancel(mp_obj_t self_in) {
 
 STATIC const pb_type_awaitable_config_t drivebase_awaitable_config = {
     .test_completion_func = pb_type_DriveBase_test_completion,
+    .return_value_func = NULL,
     .cancel_func = pb_type_DriveBase_cancel,
     .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE,
 };

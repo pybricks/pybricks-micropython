@@ -128,13 +128,13 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t start_time) {
+STATIC bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t start_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
         pb_type_Speaker_stop_beep();
-        return MP_OBJ_STOP_ITERATION;
+        return true;
     }
-    return mp_const_none;
+    return false;
 }
 
 STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
@@ -147,6 +147,7 @@ STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
 
 STATIC const pb_type_awaitable_config_t speaker_beep_awaitable_config = {
     .test_completion_func = pb_type_Speaker_beep_test_completion,
+    .return_value_func = NULL,
     .cancel_func = pb_type_Speaker_cancel,
     .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK,
 };
@@ -340,7 +341,7 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
     self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
 }
 
-STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t start_time) {
+STATIC bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t start_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
@@ -352,12 +353,12 @@ STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t
 
         // If there is no next note, generator is done.
         if (item == MP_OBJ_STOP_ITERATION) {
-            return MP_OBJ_STOP_ITERATION;
+            return true;
         }
 
         // Start the note.
         pb_type_Speaker_play_note(self, item, self->note_duration);
-        return mp_const_none;
+        return false;
     }
 
     if (beep_done) {
@@ -365,11 +366,12 @@ STATIC mp_obj_t pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t
         pb_type_Speaker_stop_beep();
     }
 
-    return mp_const_none;
+    return false;
 }
 
 STATIC const pb_type_awaitable_config_t speaker_notes_awaitable_config = {
     .test_completion_func = pb_type_Speaker_notes_test_completion,
+    .return_value_func = NULL,
     .cancel_func = pb_type_Speaker_cancel,
     .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE | PB_TYPE_AWAITABLE_CANCEL_CALLBACK,
 };

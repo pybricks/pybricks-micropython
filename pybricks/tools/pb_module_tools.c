@@ -27,9 +27,9 @@
 // cleared when the module initializes.
 STATIC pb_type_awaitable_obj_t *first_wait_awaitable;
 
-STATIC mp_obj_t pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
+STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
     // obj was validated to be small int, so we can do a cheap comparison here.
-    return mp_hal_ticks_ms() - start_time >= (uint32_t)MP_OBJ_SMALL_INT_VALUE(obj) ? MP_OBJ_STOP_ITERATION : mp_const_none;
+    return mp_hal_ticks_ms() - start_time >= (uint32_t)MP_OBJ_SMALL_INT_VALUE(obj);
 }
 
 STATIC const pb_type_awaitable_config_t pb_module_tools_wait_config = {
