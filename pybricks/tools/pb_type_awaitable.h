@@ -65,8 +65,6 @@ typedef mp_obj_t (*pb_type_awaitable_return_t)(mp_obj_t obj);
  */
 typedef void (*pb_type_awaitable_cancel_t)(mp_obj_t obj);
 
-#define pb_type_awaitable_completed (NULL)
-
 #define pb_type_awaitable_return_none (NULL)
 
 #define pb_type_awaitable_cancel_none (NULL)

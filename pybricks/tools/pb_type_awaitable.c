@@ -12,6 +12,9 @@
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_awaitable.h>
 
+// The awaitable object is free to be reused.
+#define AWAITABLE_FREE (NULL)
+
 struct _pb_type_awaitable_obj_t {
     mp_obj_base_t base;
     /**
@@ -23,8 +26,8 @@ struct _pb_type_awaitable_obj_t {
      */
     uint32_t start_time;
     /**
-     * Tests if operation is complete. Gets reset to NULL on completion,
-     * which means that it can be used again.
+     * Tests if operation is complete. Gets reset to AWAITABLE_FREE
+     * on completion, which means that it can be used again.
      */
     pb_type_awaitable_test_completion_t test_completion;
     /**
@@ -44,7 +47,7 @@ struct _pb_type_awaitable_obj_t {
 // close() cancels the awaitable.
 STATIC mp_obj_t pb_type_awaitable_close(mp_obj_t self_in) {
     pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    self->test_completion = NULL;
+    self->test_completion = AWAITABLE_FREE;
     // Handle optional clean up/cancelling of hardware operation.
     if (self->cancel) {
         self->cancel(self->obj);
@@ -57,7 +60,7 @@ STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // If completed callback was unset, then we completed previously.
-    if (self->test_completion == NULL) {
+    if (self->test_completion == AWAITABLE_FREE) {
         return MP_OBJ_STOP_ITERATION;
     }
 
@@ -67,7 +70,7 @@ STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     }
 
     // Complete, so unset callback.
-    self->test_completion = NULL;
+    self->test_completion = AWAITABLE_FREE;
 
     // For no return value, return basic stop iteration.
     if (!self->return_value) {
@@ -95,21 +98,34 @@ STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(pb_type_awaitable_obj_t *f
 
     // Find next available awaitable that exists and is not used.
     pb_type_awaitable_obj_t *awaitable = first_awaitable;
-    while (awaitable->next_awaitable && awaitable->test_completion) {
+    while (awaitable->test_completion != AWAITABLE_FREE && awaitable->next_awaitable) {
         awaitable = awaitable->next_awaitable;
     }
-    // Above loop stops if a) there is no next awaitable or b) the current
-    // awaitable is not in use. Only case a) requires allocating another.
-    if (!awaitable->next_awaitable) {
-        // Attach to the previous one.
-        awaitable->next_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
 
-        // Initialize the new awaitable.
-        awaitable = awaitable->next_awaitable;
-        awaitable->test_completion = NULL;
-        awaitable->next_awaitable = NULL;
+    // Loop stopped because available awaitable was found, so return it.
+    if (awaitable->test_completion == AWAITABLE_FREE) {
+        return awaitable;
     }
+
+    // Otherwise no available awaitable was found, so allocate a new one
+    awaitable->next_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
+
+    // Initialize the new awaitable.
+    awaitable = awaitable->next_awaitable;
+    awaitable->test_completion = AWAITABLE_FREE;
+    awaitable->next_awaitable = NULL;
     return awaitable;
+}
+
+/**
+ * Completion checker that is always true.
+ *
+ * Linked awaitables are gracefully cancelled by setting this as the completion
+ * checker. This allows MicroPython to handle completion during the next call
+ * to iternext.
+ */
+STATIC bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
+    return true;
 }
 
 /**
@@ -130,18 +146,18 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_a
     }
 
     pb_type_awaitable_obj_t *awaitable = first_awaitable;
-    while (awaitable->next_awaitable) {
-        // Don't cancel if already done.
-        if (!awaitable->test_completion) {
-            continue;
-        }
-        // Cancel hardware operation if requested and available.
-        if (cancel_opt & PB_TYPE_AWAITABLE_CANCEL_CALLBACK && awaitable->cancel) {
-            awaitable->cancel(awaitable->obj);
-        }
-        // Set awaitable to done in order to cancel it gracefully.
-        if (cancel_opt & PB_TYPE_AWAITABLE_CANCEL_AWAITABLE) {
-            awaitable->test_completion = NULL;
+    while (awaitable) {
+        // Only cancel awaitables that are in use.
+        if (awaitable->test_completion) {
+            // Cancel hardware operation if requested and available.
+            if (cancel_opt & PB_TYPE_AWAITABLE_CANCEL_CALLBACK && awaitable->cancel) {
+                awaitable->cancel(awaitable->obj);
+            }
+            // Set awaitable to done so it gets cancelled it gracefully on the
+            // next iteration.
+            if (cancel_opt & PB_TYPE_AWAITABLE_CANCEL_AWAITABLE) {
+                awaitable->test_completion = pb_type_awaitable_completed;
+            }
         }
         awaitable = awaitable->next_awaitable;
     }
@@ -177,7 +193,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
         // If the first awaitable was not yet created, do so now.
         if (!*first_awaitable) {
             *first_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
-            (*first_awaitable)->test_completion = NULL;
+            (*first_awaitable)->test_completion = AWAITABLE_FREE;
             (*first_awaitable)->next_awaitable = NULL;
         }
 
@@ -194,7 +210,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     }
 
     // Outside run loop, block until the operation is complete.
-    while (!test_completion_func(obj, start_time)) {
+    while (test_completion_func && !test_completion_func(obj, start_time)) {
         mp_hal_delay_ms(1);
     }
     if (!return_value_func) {
