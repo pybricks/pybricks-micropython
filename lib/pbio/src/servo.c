@@ -670,7 +670,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, int3
     srv->control.on_completion = on_completion;
 
     // We add the objective of stopping on stall.
-    srv->control.type |= PBIO_CONTROL_TYPE_FLAG_STOP_ON_STALL;
+    srv->control.type |= PBIO_CONTROL_TYPE_FLAG_OBJECTIVE_IS_STALL;
 
     // Set the temporary torque limit used during this maneuver.
     srv->control.settings.actuation_max_temporary = srv->control.settings.actuation_max * torque_limit_pct / 100;
