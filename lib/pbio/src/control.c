@@ -97,8 +97,12 @@ static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t ti
         return true;
     }
 
-    // If stall is set as an objective (usually with run-until-stalled) and
-    // it is currently stalled, then the maneuver is complete.
+    // If stalling is the *objective*, stall state is completion state.
+    if (ctl->type & PBIO_CONTROL_TYPE_FLAG_OBJECTIVE_IS_STALL) {
+        return pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_STALLED);
+    }
+
+    // If request to stop on stall, return if stalled but proceed with other checks.
     if (ctl->type & PBIO_CONTROL_TYPE_FLAG_STOP_ON_STALL && pbio_control_status_test(ctl, PBIO_CONTROL_STATUS_STALLED)) {
         return true;
     }

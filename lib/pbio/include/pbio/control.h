@@ -104,9 +104,15 @@ typedef enum {
      */
     PBIO_CONTROL_TYPE_MASK = 3,
     /**
-     * Flag indicating controller should stop (complete) when it stalls.
+     * Flag indicating that controller should stop (complete) when it stalls.
+     * Can be used to have an always-active stall protection.
      */
     PBIO_CONTROL_TYPE_FLAG_STOP_ON_STALL = 1 << 2,
+    /**
+     * Flag indicating controller should run until it stalls. Can be used to
+     * explicitly run until it stalls to find a mechanism endpoint.
+     */
+    PBIO_CONTROL_TYPE_FLAG_OBJECTIVE_IS_STALL = 1 << 3,
 } pbio_control_type_t;
 
 /**
