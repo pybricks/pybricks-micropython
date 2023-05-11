@@ -125,14 +125,14 @@ STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(pb_type_awaitable_obj_t *f
  * This is normally used by the function that makes a new awaitable, but it can
  * also be called independently to cancel without starting a new awaitable.
  *
- * @param [in] obj              The object.
- * @param [in] cancel_opt       Cancellation type.
- * @param [in] first_awaitable  The first awaitable in the linked list of awaitables from @p obj.
+ * @param [in] obj                   The object whose method we want to wait for completion.
+ * @param [in] first_awaitable       The first awaitable in the linked list of awaitables from @p obj.
+ * @param [in] cancel_opt            Whether to cancel linked awaitables, hardware, or both.
  */
-void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_cancel_opt_t cancel_opt, pb_type_awaitable_obj_t *first_awaitable) {
+void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_awaitable, pb_type_awaitable_cancel_opt_t cancel_opt) {
 
     // Exit if nothing to do.
-    if (cancel_opt == PB_TYPE_AWAITABLE_CANCEL_NONE || !first_awaitable) {
+    if (!pb_module_tools_run_loop_is_active() || cancel_opt == PB_TYPE_AWAITABLE_CANCEL_NONE || !first_awaitable) {
         return;
     }
 
@@ -154,50 +154,53 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_cancel_opt_t c
     }
 }
 
-// Get an available awaitable, add callbacks, and return as object so user can await it.
-STATIC mp_obj_t pb_type_awaitable_new(mp_obj_t obj, const pb_type_awaitable_config_t *config, pb_type_awaitable_obj_t *first_awaitable) {
-
-    // First cancel linked awaitables if requested.
-    pb_type_awaitable_cancel_all(obj, config->cancel_opt, first_awaitable);
-
-    // Get and initialize awaitable.
-    pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(first_awaitable);
-    awaitable->obj = obj;
-    awaitable->test_completion = config->test_completion_func;
-    awaitable->return_value = config->return_value_func;
-    awaitable->cancel = config->cancel_func;
-    awaitable->start_time = mp_hal_ticks_ms();
-    return MP_OBJ_FROM_PTR(awaitable);
-}
-
 /**
  * Get a new awaitable in async mode or block and wait for it to complete in sync mode.
  *
  * Automatically cancels any previous awaitables associated with the object if requested.
  *
- * @param [in] obj              The object whose method we want to wait for completion.
- * @param [in] config           Configuration for the awaitable.
- * @param [in] first_awaitable  The first awaitable in the linked list of awaitables from @p obj.
+ * @param [in] obj                   The object whose method we want to wait for completion.
+ * @param [in] first_awaitable       The first awaitable in the linked list of awaitables from @p obj.
+ * @param [in] test_completion_func  Function to test if the operation is complete.
+ * @param [in] return_value_func     Function that gets the return value for the awaitable.
+ * @param [in] cancel_func           Function to cancel the hardware operation.
+ * @param [in] cancel_opt            Whether to cancel linked awaitables, hardware, or both.
  */
-mp_obj_t pb_type_awaitable_await_or_block(mp_obj_t obj, const pb_type_awaitable_config_t *config, pb_type_awaitable_obj_t *first_awaitable) {
+mp_obj_t pb_type_awaitable_await_or_wait(
+    mp_obj_t obj,
+    pb_type_awaitable_obj_t *first_awaitable,
+    pb_type_awaitable_test_completion_t test_completion_func,
+    pb_type_awaitable_return_t return_value_func,
+    pb_type_awaitable_cancel_t cancel_func,
+    pb_type_awaitable_cancel_opt_t cancel_opt) {
 
-    // Make an awaitable object for the given operation.
-    mp_obj_t generator = pb_type_awaitable_new(obj, config, first_awaitable);
+    uint32_t start_time = mp_hal_ticks_ms();
 
-    // Within run loop, just return the generator that user program will iterate.
+    // Within run loop, return the generator that user program will iterate.
     if (pb_module_tools_run_loop_is_active()) {
-        return generator;
+        // First cancel linked awaitables if requested.
+        pb_type_awaitable_cancel_all(obj, first_awaitable, cancel_opt);
+
+        // Gets existing awaitable or creates a new one.
+        pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(first_awaitable);
+
+        // Initialize awaitable.
+        awaitable->obj = obj;
+        awaitable->test_completion = test_completion_func;
+        awaitable->return_value = return_value_func;
+        awaitable->cancel = cancel_func;
+        awaitable->start_time = start_time;
+        return MP_OBJ_FROM_PTR(awaitable);
     }
 
     // Outside run loop, block until the operation is complete.
-    pb_type_awaitable_obj_t *awaitable = MP_OBJ_TO_PTR(generator);
-    while (!awaitable->test_completion(awaitable->obj, awaitable->start_time)) {
+    while (!test_completion_func(obj, start_time)) {
         mp_hal_delay_ms(1);
     }
-    if (!awaitable->return_value) {
+    if (!return_value_func) {
         return mp_const_none;
     }
-    return awaitable->return_value(awaitable->obj);
+    return return_value_func(obj);
 }
 
 #endif // PYBRICKS_PY_TOOLS

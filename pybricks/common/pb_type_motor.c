@@ -145,12 +145,16 @@ STATIC void common_Motor_cancel(mp_obj_t self_in) {
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_COAST));
 }
 
-STATIC const pb_type_awaitable_config_t motor_awaitable_config = {
-    .test_completion_func = common_Motor_test_completion,
-    .return_value_func = NULL,
-    .cancel_func = common_Motor_cancel,
-    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE,
-};
+// Common awaitable used for most motor methods.
+STATIC mp_obj_t await_or_wait(common_Motor_obj_t *self) {
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_FROM_PTR(self),
+        self->first_awaitable,
+        common_Motor_test_completion,
+        pb_type_awaitable_return_none,
+        common_Motor_cancel,
+        PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+}
 
 // pybricks._common.Motor.angle
 STATIC mp_obj_t common_Motor_angle(mp_obj_t self_in) {
@@ -176,7 +180,7 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
 
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
-    pb_type_awaitable_cancel_all(pos_args[0], motor_awaitable_config.cancel_opt, self->first_awaitable);
+    pb_type_awaitable_cancel_all(pos_args[0], self->first_awaitable, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_reset_angle);
@@ -201,7 +205,7 @@ STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     pb_assert(pbio_servo_run_forever(self->srv, speed));
-    pb_type_awaitable_cancel_all(pos_args[0], motor_awaitable_config.cancel_opt, self->first_awaitable);
+    pb_type_awaitable_cancel_all(pos_args[0], self->first_awaitable, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
@@ -210,7 +214,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
 STATIC mp_obj_t common_Motor_hold(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
-    pb_type_awaitable_cancel_all(self_in, motor_awaitable_config.cancel_opt, self->first_awaitable);
+    pb_type_awaitable_cancel_all(self_in, self->first_awaitable, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_hold_obj, common_Motor_hold);
@@ -237,7 +241,7 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
         return mp_const_none;
     }
     // Handle completion by awaiting or blocking.
-    return pb_type_awaitable_await_or_block(pos_args[0], &motor_awaitable_config, self->first_awaitable);
+    return await_or_wait(self);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_time_obj, 1, common_Motor_run_time);
 
@@ -251,13 +255,6 @@ STATIC mp_obj_t common_Motor_stall_return_value(mp_obj_t self_in) {
 
     return mp_obj_new_int(stall_angle);
 }
-
-STATIC const pb_type_awaitable_config_t motor_stalled_awaitable_config = {
-    .test_completion_func = common_Motor_test_completion,
-    .return_value_func = common_Motor_stall_return_value,
-    .cancel_func = common_Motor_cancel,
-    .cancel_opt = PB_TYPE_AWAITABLE_CANCEL_AWAITABLE,
-};
 
 // pybricks._common.Motor.run_until_stalled
 STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -286,7 +283,13 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     pb_assert(pbio_servo_run_until_stalled(self->srv, speed, torque_limit_pct, then));
 
     // Handle completion by awaiting or blocking.
-    return pb_type_awaitable_await_or_block(pos_args[0], &motor_stalled_awaitable_config, self->first_awaitable);
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_FROM_PTR(self),
+        self->first_awaitable,
+        common_Motor_test_completion,
+        common_Motor_stall_return_value,
+        common_Motor_cancel,
+        PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_until_stalled_obj, 1, common_Motor_run_until_stalled);
 
@@ -311,7 +314,7 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
         return mp_const_none;
     }
     // Handle completion by awaiting or blocking.
-    return pb_type_awaitable_await_or_block(pos_args[0], &motor_awaitable_config, self->first_awaitable);
+    return await_or_wait(self);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_angle_obj, 1, common_Motor_run_angle);
 
@@ -336,7 +339,7 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
         return mp_const_none;
     }
     // Handle completion by awaiting or blocking.
-    return pb_type_awaitable_await_or_block(pos_args[0], &motor_awaitable_config, self->first_awaitable);
+    return await_or_wait(self);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_target_obj, 1, common_Motor_run_target);
 
@@ -348,7 +351,7 @@ STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_arg
 
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
     pb_assert(pbio_servo_track_target(self->srv, target_angle));
-    pb_type_awaitable_cancel_all(pos_args[0], motor_awaitable_config.cancel_opt, self->first_awaitable);
+    pb_type_awaitable_cancel_all(pos_args[0], self->first_awaitable, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_track_target_obj, 1, common_Motor_track_target);
