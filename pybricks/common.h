@@ -103,8 +103,6 @@ typedef struct _common_Motor_obj_t common_Motor_obj_t;
 struct _common_Motor_obj_t {
     mp_obj_base_t base;
     pbio_servo_t *srv;
-    int32_t max_voltage_last; // TODO: Move to pbio, used to restore state after run_until_stalled
-    pbio_control_on_completion_t on_stall; // TODO: move to pbio, used to restore state after run_until_stalled
     #if PYBRICKS_PY_COMMON_MOTOR_MODEL
     mp_obj_t model;
     #endif

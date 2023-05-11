@@ -142,8 +142,6 @@ STATIC bool common_Motor_test_completion(mp_obj_t self_in, uint32_t start_time) 
 
 STATIC void common_Motor_cancel(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // TODO: Can drop next line if moved to pbio
-    pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, self->max_voltage_last));
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_COAST));
 }
 
