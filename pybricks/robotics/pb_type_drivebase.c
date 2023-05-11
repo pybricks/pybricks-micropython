@@ -112,7 +112,7 @@ STATIC void pb_type_DriveBase_cancel(mp_obj_t self_in) {
 STATIC mp_obj_t await_or_wait(pb_type_DriveBase_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        self->first_awaitable,
+        &self->first_awaitable,
         pb_type_DriveBase_test_completion,
         pb_type_awaitable_return_none,
         pb_type_DriveBase_cancel,

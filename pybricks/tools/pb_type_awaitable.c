@@ -93,13 +93,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_awaitable,
 
 STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(pb_type_awaitable_obj_t *first_awaitable) {
 
-    // If the first awaitable was not yet created, do so now.
-    if (!first_awaitable) {
-        first_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
-        first_awaitable->test_completion = NULL;
-        first_awaitable->next_awaitable = NULL;
-    }
-
     // Find next available awaitable that exists and is not used.
     pb_type_awaitable_obj_t *awaitable = first_awaitable;
     while (awaitable->next_awaitable && awaitable->test_completion) {
@@ -168,7 +161,7 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_a
  */
 mp_obj_t pb_type_awaitable_await_or_wait(
     mp_obj_t obj,
-    pb_type_awaitable_obj_t *first_awaitable,
+    pb_type_awaitable_obj_t **first_awaitable,
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,
@@ -179,10 +172,17 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     // Within run loop, return the generator that user program will iterate.
     if (pb_module_tools_run_loop_is_active()) {
         // First cancel linked awaitables if requested.
-        pb_type_awaitable_cancel_all(obj, first_awaitable, cancel_opt);
+        pb_type_awaitable_cancel_all(obj, *first_awaitable, cancel_opt);
+
+        // If the first awaitable was not yet created, do so now.
+        if (!*first_awaitable) {
+            *first_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
+            (*first_awaitable)->test_completion = NULL;
+            (*first_awaitable)->next_awaitable = NULL;
+        }
 
         // Gets existing awaitable or creates a new one.
-        pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(first_awaitable);
+        pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(*first_awaitable);
 
         // Initialize awaitable.
         awaitable->obj = obj;

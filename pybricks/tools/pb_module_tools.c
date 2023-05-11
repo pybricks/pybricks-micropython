@@ -25,7 +25,7 @@
 // The awaitable for the wait() function has no object associated with
 // it (unlike e.g. a motor), so we make a starting point here. This gets
 // cleared when the module initializes.
-STATIC pb_type_awaitable_obj_t *first_wait_awaitable;
+STATIC pb_type_awaitable_obj_t *first_wait_awaitable = NULL;
 
 STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
     // obj was validated to be small int, so we can do a cheap comparison here.
@@ -52,7 +52,7 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
 
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_NEW_SMALL_INT(time),
-        first_wait_awaitable,
+        &first_wait_awaitable,
         pb_module_tools_wait_test_completion,
         pb_type_awaitable_return_none,
         pb_type_awaitable_cancel_none,
