@@ -75,7 +75,7 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_a
 
 mp_obj_t pb_type_awaitable_await_or_wait(
     mp_obj_t obj,
-    pb_type_awaitable_obj_t *first_awaitable,
+    pb_type_awaitable_obj_t **first_awaitable,
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,

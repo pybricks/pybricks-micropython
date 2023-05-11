@@ -149,7 +149,7 @@ STATIC void common_Motor_cancel(mp_obj_t self_in) {
 STATIC mp_obj_t await_or_wait(common_Motor_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        self->first_awaitable,
+        &self->first_awaitable,
         common_Motor_test_completion,
         pb_type_awaitable_return_none,
         common_Motor_cancel,
@@ -285,7 +285,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     // Handle completion by awaiting or blocking.
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        self->first_awaitable,
+        &self->first_awaitable,
         common_Motor_test_completion,
         common_Motor_stall_return_value,
         common_Motor_cancel,

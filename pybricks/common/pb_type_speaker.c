@@ -164,7 +164,7 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
 
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        self->first_awaitable,
+        &self->first_awaitable,
         pb_type_Speaker_beep_test_completion,
         pb_type_awaitable_return_none,
         pb_type_Speaker_cancel,
@@ -379,7 +379,7 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
     self->release_end_time = self->beep_end_time;
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        self->first_awaitable,
+        &self->first_awaitable,
         pb_type_Speaker_notes_test_completion,
         pb_type_awaitable_return_none,
         pb_type_Speaker_cancel,
