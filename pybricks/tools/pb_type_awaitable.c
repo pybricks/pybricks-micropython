@@ -189,24 +189,15 @@ mp_obj_t pb_type_awaitable_await_or_block(mp_obj_t obj, const pb_type_awaitable_
         return generator;
     }
 
-    // Otherwise block and wait for it to complete.
-    nlr_buf_t nlr;
-    mp_obj_t ret = MP_OBJ_NULL;
-    if (nlr_push(&nlr) == 0) {
-        while (pb_type_awaitable_iternext(generator) == mp_const_none) {
-            mp_hal_delay_ms(5);
-        }
-        ret = MP_STATE_THREAD(stop_iteration_arg);
-        nlr_pop();
-    } else {
-        // Cancel the operation if an exception was raised.
-        pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(generator);
-        if (self->cancel) {
-            self->cancel(self->obj);
-        }
-        nlr_jump(nlr.ret_val);
+    // Outside run loop, block until the operation is complete.
+    pb_type_awaitable_obj_t *awaitable = MP_OBJ_TO_PTR(generator);
+    while (!awaitable->test_completion(awaitable->obj, awaitable->start_time)) {
+        mp_hal_delay_ms(1);
     }
-    return ret == MP_OBJ_NULL ? mp_const_none : ret;
+    if (!awaitable->return_value) {
+        return mp_const_none;
+    }
+    return awaitable->return_value(awaitable->obj);
 }
 
 #endif // PYBRICKS_PY_TOOLS
