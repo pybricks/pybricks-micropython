@@ -22,10 +22,26 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-// The awaitable for the wait() function has no object associated with
-// it (unlike e.g. a motor), so we make a starting point here. This gets
-// cleared when the module initializes.
-STATIC pb_type_awaitable_obj_t *first_wait_awaitable = NULL;
+
+// Global state of the run loop for async user programs. Gets set when run_task
+// is called and cleared when it completes
+STATIC bool run_loop_is_active;
+
+bool pb_module_tools_run_loop_is_active() {
+    return run_loop_is_active;
+}
+
+// The awaitables for the wait() function have no object associated with
+// it (unlike e.g. a motor), so we make a starting point here. These never
+// have to cancel each other so shouldn't need to be in a list, but this lets
+// us share the same code with other awaitables. It also minimizes allocation.
+MP_REGISTER_ROOT_POINTER(mp_obj_t wait_awaitables);
+
+// Reset global state when user program starts.
+void pb_module_tools_init(void) {
+    MP_STATE_PORT(wait_awaitables) = mp_obj_new_list(0, NULL);
+    run_loop_is_active = false;
+}
 
 STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
     // obj was validated to be small int, so we can do a cheap comparison here.
@@ -52,27 +68,13 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
 
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_NEW_SMALL_INT(time),
-        &first_wait_awaitable,
+        MP_STATE_PORT(wait_awaitables),
         pb_module_tools_wait_test_completion,
         pb_type_awaitable_return_none,
         pb_type_awaitable_cancel_none,
         PB_TYPE_AWAITABLE_CANCEL_NONE);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
-
-// Global state of the run loop for async user programs. Gets set when run_task
-// is called and cleared when it completes
-STATIC bool run_loop_is_active;
-
-bool pb_module_tools_run_loop_is_active() {
-    return run_loop_is_active;
-}
-
-// Reset global state when user program starts.
-void pb_module_tools_init(void) {
-    first_wait_awaitable = NULL;
-    run_loop_is_active = false;
-}
 
 STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,

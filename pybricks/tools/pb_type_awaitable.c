@@ -7,6 +7,7 @@
 
 #include "py/mphal.h"
 #include "py/mpstate.h"
+#include "py/obj.h"
 #include "py/runtime.h"
 
 #include <pybricks/tools.h>
@@ -38,10 +39,6 @@ struct _pb_type_awaitable_obj_t {
      * Called on cancellation.
      */
     pb_type_awaitable_cancel_t cancel;
-    /**
-     * Linked list of awaitables.
-     */
-    pb_type_awaitable_obj_t *next_awaitable;
 };
 
 // close() cancels the awaitable.
@@ -94,26 +91,31 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_awaitable,
     iter, pb_type_awaitable_iternext,
     locals_dict, &pb_type_awaitable_locals_dict);
 
-STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(pb_type_awaitable_obj_t *first_awaitable) {
+/**
+ * Gets an awaitable object that is not in use, or makes a new one.
+ *
+ * @param [in] awaitables_in        List of awaitables associated with @p obj.
+ */
+STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
 
-    // Find next available awaitable that exists and is not used.
-    pb_type_awaitable_obj_t *awaitable = first_awaitable;
-    while (awaitable->test_completion != AWAITABLE_FREE && awaitable->next_awaitable) {
-        awaitable = awaitable->next_awaitable;
+    mp_obj_list_t *awaitables = MP_OBJ_TO_PTR(awaitables_in);
+
+    for (size_t i = 0; i < awaitables->len; i++) {
+        pb_type_awaitable_obj_t *awaitable = MP_OBJ_TO_PTR(awaitables->items[i]);
+
+        // Return awaitable if it is not in use.
+        if (awaitable->test_completion == AWAITABLE_FREE) {
+            return awaitable;
+        }
     }
 
-    // Loop stopped because available awaitable was found, so return it.
-    if (awaitable->test_completion == AWAITABLE_FREE) {
-        return awaitable;
-    }
-
-    // Otherwise no available awaitable was found, so allocate a new one
-    awaitable->next_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
-
-    // Initialize the new awaitable.
-    awaitable = awaitable->next_awaitable;
+    // Otherwise allocate a new one.
+    pb_type_awaitable_obj_t *awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
     awaitable->test_completion = AWAITABLE_FREE;
-    awaitable->next_awaitable = NULL;
+
+    // Add to list of awaitables.
+    mp_obj_list_append(awaitables_in, MP_OBJ_FROM_PTR(awaitable));
+
     return awaitable;
 }
 
@@ -135,18 +137,20 @@ STATIC bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
  * also be called independently to cancel without starting a new awaitable.
  *
  * @param [in] obj                   The object whose method we want to wait for completion.
- * @param [in] first_awaitable       The first awaitable in the linked list of awaitables from @p obj.
+ * @param [in] awaitables_in         List of awaitables associated with @p obj.
  * @param [in] cancel_opt            Whether to cancel linked awaitables, hardware, or both.
  */
-void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_awaitable, pb_type_awaitable_cancel_opt_t cancel_opt) {
+void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_awaitable_cancel_opt_t cancel_opt) {
 
     // Exit if nothing to do.
-    if (!pb_module_tools_run_loop_is_active() || cancel_opt == PB_TYPE_AWAITABLE_CANCEL_NONE || !first_awaitable) {
+    if (!pb_module_tools_run_loop_is_active() || cancel_opt == PB_TYPE_AWAITABLE_CANCEL_NONE) {
         return;
     }
 
-    pb_type_awaitable_obj_t *awaitable = first_awaitable;
-    while (awaitable) {
+    mp_obj_list_t *awaitables = MP_OBJ_TO_PTR(awaitables_in);
+
+    for (size_t i = 0; i < awaitables->len; i++) {
+        pb_type_awaitable_obj_t *awaitable = MP_OBJ_TO_PTR(awaitables->items[i]);
         // Only cancel awaitables that are in use.
         if (awaitable->test_completion) {
             // Cancel hardware operation if requested and available.
@@ -159,7 +163,6 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_a
                 awaitable->test_completion = pb_type_awaitable_completed;
             }
         }
-        awaitable = awaitable->next_awaitable;
     }
 }
 
@@ -169,7 +172,7 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_a
  * Automatically cancels any previous awaitables associated with the object if requested.
  *
  * @param [in] obj                   The object whose method we want to wait for completion.
- * @param [in] first_awaitable       The first awaitable in the linked list of awaitables from @p obj.
+ * @param [in] awaitables_in         List of awaitables associated with @p obj.
  * @param [in] test_completion_func  Function to test if the operation is complete.
  * @param [in] return_value_func     Function that gets the return value for the awaitable.
  * @param [in] cancel_func           Function to cancel the hardware operation.
@@ -177,7 +180,7 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, pb_type_awaitable_obj_t *first_a
  */
 mp_obj_t pb_type_awaitable_await_or_wait(
     mp_obj_t obj,
-    pb_type_awaitable_obj_t **first_awaitable,
+    mp_obj_t awaitables_in,
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,
@@ -187,18 +190,12 @@ mp_obj_t pb_type_awaitable_await_or_wait(
 
     // Within run loop, return the generator that user program will iterate.
     if (pb_module_tools_run_loop_is_active()) {
+
         // First cancel linked awaitables if requested.
-        pb_type_awaitable_cancel_all(obj, *first_awaitable, cancel_opt);
+        pb_type_awaitable_cancel_all(obj, awaitables_in, cancel_opt);
 
-        // If the first awaitable was not yet created, do so now.
-        if (!*first_awaitable) {
-            *first_awaitable = mp_obj_malloc(pb_type_awaitable_obj_t, &pb_type_awaitable);
-            (*first_awaitable)->test_completion = AWAITABLE_FREE;
-            (*first_awaitable)->next_awaitable = NULL;
-        }
-
-        // Gets existing awaitable or creates a new one.
-        pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(*first_awaitable);
+        // Gets free existing awaitable or creates a new one.
+        pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(awaitables_in);
 
         // Initialize awaitable.
         awaitable->obj = obj;

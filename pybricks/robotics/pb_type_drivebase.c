@@ -35,7 +35,7 @@ struct _pb_type_DriveBase_obj_t {
     mp_obj_t heading_control;
     mp_obj_t distance_control;
     #endif
-    pb_type_awaitable_obj_t *first_awaitable;
+    mp_obj_t awaitables;
 };
 
 // pybricks.robotics.DriveBase.reset
@@ -85,7 +85,9 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     // Reset drivebase state
     pb_type_DriveBase_reset(MP_OBJ_FROM_PTR(self));
 
-    self->first_awaitable = NULL;
+    // List of awaitables associated with this drivebase. By keeping track,
+    // we can cancel them as needed when a new movement is started.
+    self->awaitables = mp_obj_new_list(0, NULL);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -112,7 +114,7 @@ STATIC void pb_type_DriveBase_cancel(mp_obj_t self_in) {
 STATIC mp_obj_t await_or_wait(pb_type_DriveBase_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        &self->first_awaitable,
+        self->awaitables,
         pb_type_DriveBase_test_completion,
         pb_type_awaitable_return_none,
         pb_type_DriveBase_cancel,
@@ -200,7 +202,7 @@ STATIC mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
     // Cancel awaitables but not hardware. Drive forever will handle this.
-    pb_type_awaitable_cancel_all(pos_args[0], self->first_awaitable, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(MP_OBJ_FROM_PTR(self), self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
 
     pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
     return mp_const_none;
@@ -212,7 +214,7 @@ STATIC mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
 
     // Cancel awaitables.
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_awaitable_cancel_all(self_in, self->first_awaitable, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self_in, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
 
     // Stop hardware.
     pb_type_DriveBase_cancel(self_in);
