@@ -23,6 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#include <errno.h>
 #include <unistd.h>
 
 #ifndef CHAR_CTRL_C
@@ -47,12 +48,28 @@ static inline int mp_hal_readline(vstr_t *vstr, const char *p) {
 }
 #endif
 
+#define mp_hal_delay_ms(ms) do { \
+        void pb_ev3dev_hal_delay_ms(mp_uint_t); \
+        pb_ev3dev_hal_delay_ms(ms); \
+} while (0)
+
 // TODO: POSIX et al. define usleep() as guaranteedly capable only of 1s sleep:
 // "The useconds argument shall be less than one million."
 static inline void mp_hal_delay_us(mp_uint_t us) {
     usleep(us);
 }
+
 #define mp_hal_ticks_cpu() 0
+
+#define mp_hal_ticks_ms() ((mp_uint_t)({ \
+        uint32_t pbdrv_clock_get_ms(void); \
+        pbdrv_clock_get_ms(); \
+    }))
+
+#define mp_hal_ticks_us() ((mp_uint_t)({ \
+        uint32_t pbdrv_clock_get_us(void); \
+        pbdrv_clock_get_us(); \
+    }))
 
 void mp_hal_get_random(size_t n, void *buf);
 

@@ -26,124 +26,17 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
-#include <unistd.h>
 #include <sys/time.h>
-
-#include <pbdrv/clock.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
-
-
-STATIC void sighandler(int signum) {
-    if (signum == SIGINT) {
-        if (MP_STATE_MAIN_THREAD(mp_pending_exception) == MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception))) {
-            // this is the second time we are called, so die straight away
-            exit(1);
-        }
-        mp_sched_keyboard_interrupt();
-    }
-}
-
-void mp_hal_set_interrupt_char(char c) {
-    // configure terminal settings to (not) let ctrl-C through
-    if (c == CHAR_CTRL_C) {
-        // enable signal handler
-        struct sigaction sa;
-        sa.sa_flags = 0;
-        sa.sa_handler = sighandler;
-        sigemptyset(&sa.sa_mask);
-        sigaction(SIGINT, &sa, NULL);
-    } else {
-        // disable signal handler
-        struct sigaction sa;
-        sa.sa_flags = 0;
-        sa.sa_handler = SIG_DFL;
-        sigemptyset(&sa.sa_mask);
-        sigaction(SIGINT, &sa, NULL);
-    }
-}
-
-#if MICROPY_USE_READLINE == 1
-
-#include <termios.h>
-
-static struct termios orig_termios;
-
-void mp_hal_stdio_mode_raw(void) {
-    // save and set terminal settings
-    tcgetattr(0, &orig_termios);
-    static struct termios termios;
-    termios = orig_termios;
-    termios.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-    termios.c_cflag = (termios.c_cflag & ~(CSIZE | PARENB)) | CS8;
-    termios.c_lflag = 0;
-    termios.c_cc[VMIN] = 1;
-    termios.c_cc[VTIME] = 0;
-    tcsetattr(0, TCSAFLUSH, &termios);
-}
-
-void mp_hal_stdio_mode_orig(void) {
-    // restore terminal settings
-    tcsetattr(0, TCSAFLUSH, &orig_termios);
-}
-
-#endif
-
-int mp_hal_stdin_rx_chr(void) {
-    unsigned char c;
-    int ret;
-    MP_THREAD_GIL_EXIT();
-    ret = read(STDIN_FILENO, &c, 1);
-    MP_THREAD_GIL_ENTER();
-    if (ret == 0) {
-        c = 4; // EOF, ctrl-D
-    } else if (c == '\n') {
-        c = '\r';
-    }
-    return c;
-}
-
-void mp_hal_stdout_tx_strn(const char *str, size_t len) {
-    MP_THREAD_GIL_EXIT();
-    int ret = write(STDOUT_FILENO, str, len);
-    MP_THREAD_GIL_ENTER();
-    (void)ret; // to suppress compiler warning
-}
-
-// cooked is same as uncooked because the terminal does some postprocessing
-void mp_hal_stdout_tx_strn_cooked(const char *str, size_t len) {
-    mp_hal_stdout_tx_strn(str, len);
-}
-
-void mp_hal_stdout_tx_str(const char *str) {
-    mp_hal_stdout_tx_strn(str, strlen(str));
-}
 
 void mp_hal_stdout_tx_flush(void) {
     // currently not buffered
 }
 
-mp_uint_t mp_hal_ticks_ms(void) {
-    return pbdrv_clock_get_ms();
-}
-
-mp_uint_t mp_hal_ticks_us(void) {
-    return pbdrv_clock_get_us();
-}
-
-uint64_t mp_hal_time_ns(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (uint64_t)tv.tv_sec * 1000000000ULL + (uint64_t)tv.tv_usec * 1000ULL;
-}
-
-void mp_hal_delay_ms(mp_uint_t ms) {
+void pb_ev3dev_hal_delay_ms(mp_uint_t ms) {
     struct timespec ts = {
         .tv_sec = ms / 1000,
         .tv_nsec = ms % 1000 * 1000000,
@@ -161,15 +54,4 @@ void mp_hal_delay_ms(mp_uint_t ms) {
         assert(ret == 0);
         break;
     }
-}
-
-void mp_hal_get_random(size_t n, void *buf) {
-    #ifdef _HAVE_GETRANDOM
-    RAISE_ERRNO(getrandom(buf, n, 0), errno);
-    #else
-    int fd = open("/dev/urandom", O_RDONLY);
-    RAISE_ERRNO(fd, errno);
-    RAISE_ERRNO(read(fd, buf, n), errno);
-    close(fd);
-    #endif
 }

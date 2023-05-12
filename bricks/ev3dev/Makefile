@@ -215,6 +215,7 @@ PY_EXTRA_SRC_C += $(addprefix ports/unix/,\
 	modummap.c \
 	moduselect.c \
 	mpthreadport.c \
+	unix_mphal.c \
 	)
 
 SRC_C += $(SRC_MOD)
