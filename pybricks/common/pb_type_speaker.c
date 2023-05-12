@@ -34,7 +34,7 @@ typedef struct {
     uint32_t note_duration;
     uint32_t beep_end_time;
     uint32_t release_end_time;
-    pb_type_awaitable_obj_t *first_awaitable;
+    mp_obj_t awaitables;
 
     // volume in 0..100 range
     uint8_t volume;
@@ -115,7 +115,10 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     if (!self->initialized) {
         self->base.type = &pb_type_Speaker;
         self->initialized = true;
-        self->first_awaitable = NULL;
+
+        // List of awaitables associated with speaker. By keeping track,
+        // we can cancel them as needed when a new sound is started.
+        self->awaitables = mp_obj_new_list(0, NULL);
     }
 
     // REVISIT: If a user creates two Speaker instances, this will reset the volume settings for both.
@@ -164,7 +167,7 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
 
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        &self->first_awaitable,
+        self->awaitables,
         pb_type_Speaker_beep_test_completion,
         pb_type_awaitable_return_none,
         pb_type_Speaker_cancel,
@@ -379,7 +382,7 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
     self->release_end_time = self->beep_end_time;
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        &self->first_awaitable,
+        self->awaitables,
         pb_type_Speaker_notes_test_completion,
         pb_type_awaitable_return_none,
         pb_type_Speaker_cancel,
