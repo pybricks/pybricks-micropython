@@ -118,7 +118,7 @@ STATIC mp_obj_t await_or_wait(pb_type_DriveBase_obj_t *self) {
         pb_type_DriveBase_test_completion,
         pb_type_awaitable_return_none,
         pb_type_DriveBase_cancel,
-        PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+        PB_TYPE_AWAITABLE_CANCEL_LINKED);
 }
 
 // pybricks.robotics.DriveBase.straight
@@ -202,7 +202,7 @@ STATIC mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
     // Cancel awaitables but not hardware. Drive forever will handle this.
-    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_LINKED);
 
     pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
     return mp_const_none;
@@ -214,7 +214,7 @@ STATIC mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
 
     // Cancel awaitables.
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_LINKED);
 
     // Stop hardware.
     pb_type_DriveBase_cancel(self->db);

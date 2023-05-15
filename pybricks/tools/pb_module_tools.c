@@ -69,7 +69,7 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         pb_module_tools_wait_test_completion,
         pb_type_awaitable_return_none,
         pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_CANCEL_NONE);
+        PB_TYPE_AWAITABLE_OPT_NONE);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
 
