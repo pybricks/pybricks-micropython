@@ -92,7 +92,7 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC bool pb_type_DriveBase_test_completion(void *object, uint32_t start_time) {
+STATIC bool pb_type_DriveBase_test_completion(void *object, uint32_t end_time) {
 
     pbio_drivebase_t *db = object;
 
@@ -115,6 +115,7 @@ STATIC mp_obj_t await_or_wait(pb_type_DriveBase_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
         self->db,
         self->awaitables,
+        pb_type_awaitable_end_time_none,
         pb_type_DriveBase_test_completion,
         pb_type_awaitable_return_none,
         pb_type_DriveBase_cancel,

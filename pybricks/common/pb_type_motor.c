@@ -131,7 +131,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC bool common_Motor_test_completion(void *object, uint32_t start_time) {
+STATIC bool common_Motor_test_completion(void *object, uint32_t end_time) {
     pbio_servo_t *srv = object;
 
     // Handle I/O exceptions like port unplugged.
@@ -153,6 +153,7 @@ STATIC mp_obj_t await_or_wait(common_Motor_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
         self->srv,
         self->awaitables,
+        pb_type_awaitable_end_time_none,
         common_Motor_test_completion,
         pb_type_awaitable_return_none,
         common_Motor_cancel,
@@ -289,6 +290,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     return pb_type_awaitable_await_or_wait(
         self->srv,
         self->awaitables,
+        pb_type_awaitable_end_time_none,
         common_Motor_test_completion,
         common_Motor_stall_return_value,
         common_Motor_cancel,

@@ -43,10 +43,8 @@ void pb_module_tools_init(void) {
     run_loop_is_active = false;
 }
 
-STATIC bool pb_module_tools_wait_test_completion(void *object, uint32_t start_time) {
-    // There is no object associated with wait. The object pointer encodes the duration.
-    uint32_t duration = (uintptr_t)(object);
-    return mp_hal_ticks_ms() - start_time >= duration;
+STATIC bool pb_module_tools_wait_test_completion(void *object, uint32_t end_time) {
+    return mp_hal_ticks_ms() - end_time < UINT32_MAX / 2;
 }
 
 STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -55,7 +53,8 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
 
     mp_int_t time = pb_obj_get_int(time_in);
 
-    // outside run loop, do blocking wait.
+    // outside run loop, do blocking wait. This would be handled below as well,
+    // but for this very simple call we'd rather avoid the overhead.
     if (!pb_module_tools_run_loop_is_active()) {
         if (time > 0) {
             mp_hal_delay_ms(time);
@@ -64,8 +63,9 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
     }
 
     return pb_type_awaitable_await_or_wait(
-        (void *)(uintptr_t)(time < 0 ? 0 : time),
+        NULL, // wait functions are not associated with an object
         MP_STATE_PORT(wait_awaitables),
+        mp_hal_ticks_ms() + (time < 0 ? 0 : time),
         pb_module_tools_wait_test_completion,
         pb_type_awaitable_return_none,
         pb_type_awaitable_cancel_none,
