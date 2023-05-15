@@ -43,9 +43,10 @@ void pb_module_tools_init(void) {
     run_loop_is_active = false;
 }
 
-STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t start_time) {
-    // obj was validated to be small int, so we can do a cheap comparison here.
-    return mp_hal_ticks_ms() - start_time >= (uint32_t)MP_OBJ_SMALL_INT_VALUE(obj);
+STATIC bool pb_module_tools_wait_test_completion(void *object, uint32_t start_time) {
+    // There is no object associated with wait. The object pointer encodes the duration.
+    uint32_t duration = (uintptr_t)(object);
+    return mp_hal_ticks_ms() - start_time >= duration;
 }
 
 STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -62,12 +63,8 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         return mp_const_none;
     }
 
-    // Require that duration is nonnegative small int. This makes it cheaper to
-    // test completion state in iteration loop.
-    time = pbio_int_math_bind(time, 0, INT32_MAX >> 2);
-
     return pb_type_awaitable_await_or_wait(
-        MP_OBJ_NEW_SMALL_INT(time),
+        (void *)(uintptr_t)(time < 0 ? 0 : time),
         MP_STATE_PORT(wait_awaitables),
         pb_module_tools_wait_test_completion,
         pb_type_awaitable_return_none,

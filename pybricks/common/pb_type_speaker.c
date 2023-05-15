@@ -129,8 +129,8 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t start_time) {
-    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC bool pb_type_Speaker_beep_test_completion(void *object, uint32_t start_time) {
+    pb_type_Speaker_obj_t *self = object;
     if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
         pb_type_Speaker_stop_beep();
         return true;
@@ -138,9 +138,9 @@ STATIC bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t star
     return false;
 }
 
-STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
+STATIC void pb_type_Speaker_cancel(void *object) {
     pb_type_Speaker_stop_beep();
-    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Speaker_obj_t *self = object;
     self->beep_end_time = mp_hal_ticks_ms();
     self->release_end_time = self->beep_end_time;
     self->notes_generator = MP_OBJ_NULL;
@@ -166,7 +166,7 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
     self->notes_generator = MP_OBJ_NULL;
 
     return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
+        self,
         self->awaitables,
         pb_type_Speaker_beep_test_completion,
         pb_type_awaitable_return_none,
@@ -342,8 +342,8 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
     self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
 }
 
-STATIC bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t start_time) {
-    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC bool pb_type_Speaker_notes_test_completion(void *object, uint32_t start_time) {
+    pb_type_Speaker_obj_t *self = object;
 
     bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
     bool beep_done = mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX;
@@ -381,7 +381,7 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
     self->beep_end_time = mp_hal_ticks_ms();
     self->release_end_time = self->beep_end_time;
     return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
+        self,
         self->awaitables,
         pb_type_Speaker_notes_test_completion,
         pb_type_awaitable_return_none,

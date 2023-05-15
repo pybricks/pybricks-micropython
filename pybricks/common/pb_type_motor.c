@@ -131,26 +131,27 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC bool common_Motor_test_completion(mp_obj_t self_in, uint32_t start_time) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC bool common_Motor_test_completion(void *object, uint32_t start_time) {
+    pbio_servo_t *srv = object;
+
     // Handle I/O exceptions like port unplugged.
-    if (!pbio_servo_update_loop_is_running(self->srv)) {
+    if (!pbio_servo_update_loop_is_running(srv)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
     // Get completion state.
-    return pbio_control_is_done(&self->srv->control);
+    return pbio_control_is_done(&srv->control);
 }
 
-STATIC void common_Motor_cancel(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_COAST));
+STATIC void common_Motor_cancel(void *object) {
+    pbio_servo_t *srv = object;
+    pb_assert(pbio_servo_stop(srv, PBIO_CONTROL_ON_COMPLETION_COAST));
 }
 
 // Common awaitable used for most motor methods.
 STATIC mp_obj_t await_or_wait(common_Motor_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
+        self->srv,
         self->awaitables,
         common_Motor_test_completion,
         pb_type_awaitable_return_none,
@@ -182,7 +183,7 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
 
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
-    pb_type_awaitable_cancel_all(MP_OBJ_FROM_PTR(self), self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_reset_angle);
@@ -207,7 +208,7 @@ STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     pb_assert(pbio_servo_run_forever(self->srv, speed));
-    pb_type_awaitable_cancel_all(MP_OBJ_FROM_PTR(self), self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
@@ -216,7 +217,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
 STATIC mp_obj_t common_Motor_hold(mp_obj_t self_in) {
     common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
-    pb_type_awaitable_cancel_all(self_in, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_hold_obj, common_Motor_hold);
@@ -247,13 +248,13 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_time_obj, 1, common_Motor_run_time);
 
-STATIC mp_obj_t common_Motor_stall_return_value(mp_obj_t self_in) {
+STATIC mp_obj_t common_Motor_stall_return_value(void *object) {
 
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_servo_t *srv = object;
 
     // Return the angle upon completion of the stall maneuver.
     int32_t stall_angle, stall_speed;
-    pb_assert(pbio_servo_get_state_user(self->srv, &stall_angle, &stall_speed));
+    pb_assert(pbio_servo_get_state_user(srv, &stall_angle, &stall_speed));
 
     return mp_obj_new_int(stall_angle);
 }
@@ -286,7 +287,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
 
     // Handle completion by awaiting or blocking.
     return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
+        self->srv,
         self->awaitables,
         common_Motor_test_completion,
         common_Motor_stall_return_value,
@@ -353,7 +354,7 @@ STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_arg
 
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
     pb_assert(pbio_servo_track_target(self->srv, target_angle));
-    pb_type_awaitable_cancel_all(MP_OBJ_FROM_PTR(self), self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_track_target_obj, 1, common_Motor_track_target);

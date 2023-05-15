@@ -42,37 +42,37 @@ typedef struct _pb_type_awaitable_obj_t pb_type_awaitable_obj_t;
  * operations as needed (hold a motor, etc.). This is not the same as cancel
  * below, which always stops the relevant hardware (i.e. always coast).
  *
- * @param [in]  obj            The object associated with this awaitable.
+ * @param [in]  object         The object/device associated with this awaitable.
  * @param [in]  start_time     The time when the awaitable was created.
  * @return                     True if operation is complete, False otherwise.
  */
-typedef bool (*pb_type_awaitable_test_completion_t)(mp_obj_t obj, uint32_t start_time);
+typedef bool (*pb_type_awaitable_test_completion_t)(void *object, uint32_t start_time);
 
 /**
  * Gets the return value of the awaitable. If it always returns None, providing
  * this function is not necessary.
  *
- * @param [in]  obj            The object associated with this awaitable.
+ * @param [in]  object         The object/device associated with this awaitable.
  * @return                     The return value of the awaitable.
  */
-typedef mp_obj_t (*pb_type_awaitable_return_t)(mp_obj_t obj);
+typedef mp_obj_t (*pb_type_awaitable_return_t)(void *object);
 
 /**
  * Called on cancel/close. Used to stop hardware operation in unhandled
  * conditions.
  *
- * @param [in]  obj            The object associated with this awaitable.
+ * @param [in]  object         The object/device associated with this awaitable.
  */
-typedef void (*pb_type_awaitable_cancel_t)(mp_obj_t obj);
+typedef void (*pb_type_awaitable_cancel_t)(void *object);
 
 #define pb_type_awaitable_return_none (NULL)
 
 #define pb_type_awaitable_cancel_none (NULL)
 
-void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_awaitable_cancel_opt_t cancel_opt);
+void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_cancel_opt_t cancel_opt);
 
 mp_obj_t pb_type_awaitable_await_or_wait(
-    mp_obj_t obj,
+    void *object,
     mp_obj_t awaitables_in,
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,

@@ -92,28 +92,28 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC bool pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t start_time) {
+STATIC bool pb_type_DriveBase_test_completion(void *object, uint32_t start_time) {
 
-    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_drivebase_t *db = object;
 
     // Handle I/O exceptions like port unplugged.
-    if (!pbio_drivebase_update_loop_is_running(self->db)) {
+    if (!pbio_drivebase_update_loop_is_running(db)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
     // Get completion state.
-    return pbio_drivebase_is_done(self->db);
+    return pbio_drivebase_is_done(db);
 }
 
-STATIC void pb_type_DriveBase_cancel(mp_obj_t self_in) {
-    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
+STATIC void pb_type_DriveBase_cancel(void *object) {
+    pbio_drivebase_t *db = object;
+    pb_assert(pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST));
 }
 
 // All drive base methods use the same kind of completion awaitable.
 STATIC mp_obj_t await_or_wait(pb_type_DriveBase_obj_t *self) {
     return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
+        self->db,
         self->awaitables,
         pb_type_DriveBase_test_completion,
         pb_type_awaitable_return_none,
@@ -202,7 +202,7 @@ STATIC mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
     // Cancel awaitables but not hardware. Drive forever will handle this.
-    pb_type_awaitable_cancel_all(MP_OBJ_FROM_PTR(self), self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
 
     pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
     return mp_const_none;
@@ -214,10 +214,10 @@ STATIC mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
 
     // Cancel awaitables.
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_awaitable_cancel_all(self_in, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
+    pb_type_awaitable_cancel_all(self, self->awaitables, PB_TYPE_AWAITABLE_CANCEL_AWAITABLE);
 
     // Stop hardware.
-    pb_type_DriveBase_cancel(self_in);
+    pb_type_DriveBase_cancel(self->db);
 
     return mp_const_none;
 }
