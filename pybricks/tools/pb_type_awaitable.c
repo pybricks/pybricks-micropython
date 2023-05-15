@@ -23,9 +23,10 @@ struct _pb_type_awaitable_obj_t {
      */
     void *object;
     /**
-     * Start time. Gets passed to completion test to allow for graceful timeout.
+     * End time. Gets passed to completion test to allow for graceful timeout
+     * or raise timeout errors if desired.
      */
-    uint32_t start_time;
+    uint32_t end_time;
     /**
      * Tests if operation is complete. Gets reset to AWAITABLE_FREE
      * on completion, which means that it can be used again.
@@ -62,7 +63,7 @@ STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     }
 
     // Keep going if not completed by returning None.
-    if (!self->test_completion(self->object, self->start_time)) {
+    if (!self->test_completion(self->object, self->end_time)) {
         return mp_const_none;
     }
 
@@ -173,6 +174,8 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
  *
  * @param [in] object                The object whose method we want to wait for completion.
  * @param [in] awaitables_in         List of awaitables associated with @p object.
+ * @param [in] end_time              Wall time in milliseconds when the operation should end.
+ *                                   May be arbitrary if completion function does not need it.
  * @param [in] test_completion_func  Function to test if the operation is complete.
  * @param [in] return_value_func     Function that gets the return value for the awaitable.
  * @param [in] cancel_func           Function to cancel the hardware operation.
@@ -181,12 +184,11 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
 mp_obj_t pb_type_awaitable_await_or_wait(
     void *object,
     mp_obj_t awaitables_in,
+    uint32_t end_time,
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,
     pb_type_awaitable_opt_t options) {
-
-    uint32_t start_time = mp_hal_ticks_ms();
 
     // Within run loop, return the generator that user program will iterate.
     if (pb_module_tools_run_loop_is_active()) {
@@ -207,12 +209,12 @@ mp_obj_t pb_type_awaitable_await_or_wait(
         awaitable->test_completion = test_completion_func;
         awaitable->return_value = return_value_func;
         awaitable->cancel = cancel_func;
-        awaitable->start_time = start_time;
+        awaitable->end_time = end_time;
         return MP_OBJ_FROM_PTR(awaitable);
     }
 
     // Outside run loop, block until the operation is complete.
-    while (test_completion_func && !test_completion_func(object, start_time)) {
+    while (test_completion_func && !test_completion_func(object, end_time)) {
         mp_hal_delay_ms(1);
     }
     if (!return_value_func) {

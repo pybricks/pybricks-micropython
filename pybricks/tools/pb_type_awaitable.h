@@ -52,7 +52,7 @@ typedef struct _pb_type_awaitable_obj_t pb_type_awaitable_obj_t;
  * @param [in]  start_time     The time when the awaitable was created.
  * @return                     True if operation is complete, False otherwise.
  */
-typedef bool (*pb_type_awaitable_test_completion_t)(void *object, uint32_t start_time);
+typedef bool (*pb_type_awaitable_test_completion_t)(void *object, uint32_t end_time);
 
 /**
  * Gets the return value of the awaitable. If it always returns None, providing
@@ -71,6 +71,8 @@ typedef mp_obj_t (*pb_type_awaitable_return_t)(void *object);
  */
 typedef void (*pb_type_awaitable_cancel_t)(void *object);
 
+#define pb_type_awaitable_end_time_none (0)
+
 #define pb_type_awaitable_return_none (NULL)
 
 #define pb_type_awaitable_cancel_none (NULL)
@@ -80,6 +82,7 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
 mp_obj_t pb_type_awaitable_await_or_wait(
     void *object,
     mp_obj_t awaitables_in,
+    uint32_t end_time,
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,
