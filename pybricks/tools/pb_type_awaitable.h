@@ -13,22 +13,22 @@
 /**
  * Options for canceling an awaitable.
  */
-typedef enum _pb_type_awaitable_cancel_opt_t {
-    /** Do nothing to linked awaitables. */
-    PB_TYPE_AWAITABLE_CANCEL_NONE       = 0,
+typedef enum _pb_type_awaitable_opt_t {
+    /** No options. */
+    PB_TYPE_AWAITABLE_OPT_NONE       = 0,
     /**
      * Makes all linked awaitables end gracefully. Can be used if awaitables
      * running in parallel are using the same resources. This way, the newly
      * started operation "wins" and everything else is cancelled.
      */
-    PB_TYPE_AWAITABLE_CANCEL_AWAITABLE  = 1 << 1,
+    PB_TYPE_AWAITABLE_CANCEL_LINKED  = 1 << 1,
     /**
-     * Calls the cancel function for each linked awaitable that is not already
-     * done. Only used to close hardware resources that aren't already cleaned
-     * up by lower level drivers.
+     * On cancelling the linked awaitables, also call their cancel function
+     * to stop hardware. Only used to close hardware resources that aren't
+     * already cleaned up by lower level drivers (so not needed for motors).
      */
-    PB_TYPE_AWAITABLE_CANCEL_CALLBACK   = 1 << 2,
-} pb_type_awaitable_cancel_opt_t;
+    PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK   = 1 << 2,
+} pb_type_awaitable_opt_t;
 
 /**
  * A generator-like type for waiting on some operation to complete.
@@ -69,7 +69,7 @@ typedef void (*pb_type_awaitable_cancel_t)(void *object);
 
 #define pb_type_awaitable_cancel_none (NULL)
 
-void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_cancel_opt_t cancel_opt);
+void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options);
 
 mp_obj_t pb_type_awaitable_await_or_wait(
     void *object,
@@ -77,7 +77,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,
-    pb_type_awaitable_cancel_opt_t cancel_opt);
+    pb_type_awaitable_opt_t options);
 
 #endif // PYBRICKS_PY_TOOLS
 

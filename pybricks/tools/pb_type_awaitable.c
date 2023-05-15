@@ -138,12 +138,12 @@ STATIC bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
  *
  * @param [in] object                The object whose method we want to wait for completion.
  * @param [in] awaitables_in         List of awaitables associated with @p object.
- * @param [in] cancel_opt            Whether to cancel linked awaitables, hardware, or both.
+ * @param [in] options               Controls awaitable behavior.
  */
-void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_cancel_opt_t cancel_opt) {
+void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options) {
 
     // Exit if nothing to do.
-    if (!pb_module_tools_run_loop_is_active() || cancel_opt == PB_TYPE_AWAITABLE_CANCEL_NONE) {
+    if (!pb_module_tools_run_loop_is_active() || options == PB_TYPE_AWAITABLE_OPT_NONE) {
         return;
     }
 
@@ -154,12 +154,12 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
         // Only cancel awaitables that are in use.
         if (awaitable->test_completion) {
             // Cancel hardware operation if requested and available.
-            if (cancel_opt & PB_TYPE_AWAITABLE_CANCEL_CALLBACK && awaitable->cancel) {
+            if (options & PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK && awaitable->cancel) {
                 awaitable->cancel(awaitable->object);
             }
             // Set awaitable to done so it gets cancelled it gracefully on the
             // next iteration.
-            if (cancel_opt & PB_TYPE_AWAITABLE_CANCEL_AWAITABLE) {
+            if (options & PB_TYPE_AWAITABLE_CANCEL_LINKED) {
                 awaitable->test_completion = pb_type_awaitable_completed;
             }
         }
@@ -176,7 +176,7 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
  * @param [in] test_completion_func  Function to test if the operation is complete.
  * @param [in] return_value_func     Function that gets the return value for the awaitable.
  * @param [in] cancel_func           Function to cancel the hardware operation.
- * @param [in] cancel_opt            Whether to cancel linked awaitables, hardware, or both.
+ * @param [in] options               Controls awaitable behavior.
  */
 mp_obj_t pb_type_awaitable_await_or_wait(
     void *object,
@@ -184,7 +184,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     pb_type_awaitable_test_completion_t test_completion_func,
     pb_type_awaitable_return_t return_value_func,
     pb_type_awaitable_cancel_t cancel_func,
-    pb_type_awaitable_cancel_opt_t cancel_opt) {
+    pb_type_awaitable_opt_t options) {
 
     uint32_t start_time = mp_hal_ticks_ms();
 
@@ -192,7 +192,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     if (pb_module_tools_run_loop_is_active()) {
 
         // First cancel linked awaitables if requested.
-        pb_type_awaitable_cancel_all(object, awaitables_in, cancel_opt);
+        pb_type_awaitable_cancel_all(object, awaitables_in, options);
 
         // Gets free existing awaitable or creates a new one.
         pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(awaitables_in);
