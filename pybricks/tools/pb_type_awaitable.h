@@ -17,17 +17,23 @@ typedef enum _pb_type_awaitable_opt_t {
     /** No options. */
     PB_TYPE_AWAITABLE_OPT_NONE       = 0,
     /**
+     * Forces the awaitable to block until completion. Raises RuntimeError if
+     * called inside the run loop. This can be used to wait for operations like
+     * initializing a sensor or connecting to a remote.
+     */
+    PB_TYPE_AWAITABLE_OPT_FORCE_BLOCK = 1 << 1,
+    /**
      * Makes all linked awaitables end gracefully. Can be used if awaitables
      * running in parallel are using the same resources. This way, the newly
      * started operation "wins" and everything else is cancelled.
      */
-    PB_TYPE_AWAITABLE_CANCEL_LINKED  = 1 << 1,
+    PB_TYPE_AWAITABLE_CANCEL_LINKED = 1 << 2,
     /**
      * On cancelling the linked awaitables, also call their cancel function
      * to stop hardware. Only used to close hardware resources that aren't
      * already cleaned up by lower level drivers (so not needed for motors).
      */
-    PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK   = 1 << 2,
+    PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK  = 1 << 3,
 } pb_type_awaitable_opt_t;
 
 /**
