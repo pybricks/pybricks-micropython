@@ -4,9 +4,11 @@
 
 ## [Unreleased]
 
+## [3.3.0b5] - 2023-05-16
+
 ### Added
 - Enabled the `gc` module (except on BOOST Move hub).
-- Added `hub.ble` attribute for accessing Bluetooth capabilities.
+- Added `hub.ble` attribute for broadcasting/observing ([pybricks-micropython#158]).
 
 ### Changed
 - Updated MicroPython to v1.20.0.
@@ -15,6 +17,7 @@
 - Fixed stdin containing `0x06` command byte ([support#1052]).
 - Fixed motor process causing delays on ev3dev ([support#1035]).
 
+[pybricks-micropython#158]: https://github.com/pybricks/pybricks-micropython/pull/158
 [support#1035]: https://github.com/pybricks/support/issues/1035
 [support#1052]: https://github.com/pybricks/support/issues/1052
 
@@ -606,7 +609,9 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...HEAD
+[3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
+[3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
 [3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
 [3.3.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...v3.3.0b2
 [3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
