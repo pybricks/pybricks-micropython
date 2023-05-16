@@ -32,18 +32,14 @@ STATIC mp_obj_t common_ColorLight_external_on(size_t n_args, const mp_obj_t *pos
         common_ColorLight_external_obj_t, self,
         PB_ARG_REQUIRED(color));
 
-    self->on(self->context, pb_type_Color_get_hsv(color_in));
-
-    return mp_const_none;
+    return self->on(self->context, pb_type_Color_get_hsv(color_in));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_external_on_obj, 1, common_ColorLight_external_on);
 
 // pybricks._common.ColorLight.off
 STATIC mp_obj_t common_ColorLight_external_off(mp_obj_t self_in) {
     common_ColorLight_external_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    self->on(self->context, &pb_Color_NONE_obj.hsv);
-    return mp_const_none;
+    return self->on(self->context, &pb_Color_NONE_obj.hsv);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_external_off_obj, common_ColorLight_external_off);
 

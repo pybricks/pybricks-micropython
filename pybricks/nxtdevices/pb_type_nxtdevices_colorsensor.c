@@ -22,7 +22,7 @@ typedef struct _nxtdevices_ColorSensor_obj_t {
     pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
 
-STATIC void nxtdevices_ColorSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
+STATIC mp_obj_t nxtdevices_ColorSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
     pb_device_t *pbdev = context;
     uint8_t mode;
 
@@ -37,6 +37,7 @@ STATIC void nxtdevices_ColorSensor_light_on(void *context, const pbio_color_hsv_
     }
     int32_t unused;
     pb_device_get_values(pbdev, mode, &unused);
+    return mp_const_none;
 }
 
 // pybricks.nxtdevices.ColorSensor.__init__

@@ -42,8 +42,9 @@ mp_obj_t pb_type_Charger_obj_new(void);
  * Device-specific callback for controlling a color light.
  * @param [in]  context     The instance-specific context.
  * @param [in]  hsv         The HSV color for the light.
+ * @return                  None or awaitable.
  */
-typedef void (*pb_type_ColorLight_on_t)(void *context, const pbio_color_hsv_t *hsv);
+typedef mp_obj_t (*pb_type_ColorLight_on_t)(void *context, const pbio_color_hsv_t *hsv);
 
 // pybricks._common.ColorLight()
 mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on);
