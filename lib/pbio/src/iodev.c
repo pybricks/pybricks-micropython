@@ -100,14 +100,6 @@ pbio_error_t pbio_iodev_set_mode_end(pbio_iodev_t *iodev) {
     return iodev->ops->set_mode_end(iodev);
 }
 
-void pbio_iodev_set_mode_cancel(pbio_iodev_t *iodev) {
-    if (!iodev->ops->set_mode_cancel) {
-        return;
-    }
-
-    iodev->ops->set_mode_cancel(iodev);
-}
-
 /**
  * Sets the raw data of an I/O device.
  * @param [in]  iodev       The I/O device
@@ -141,14 +133,6 @@ pbio_error_t pbio_iodev_set_data_end(pbio_iodev_t *iodev) {
     return iodev->ops->set_data_end(iodev);
 }
 
-void pbio_iodev_set_data_cancel(pbio_iodev_t *iodev) {
-    if (!iodev->ops->set_data_cancel) {
-        return;
-    }
-
-    iodev->ops->set_data_cancel(iodev);
-}
-
 /**
  * Writes arbitrary data to an I/O device.
  * @param [in]  iodev       The I/O device
@@ -174,12 +158,4 @@ pbio_error_t pbio_iodev_write_end(pbio_iodev_t *iodev) {
     }
 
     return iodev->ops->write_end(iodev);
-}
-
-void pbio_iodev_write_cancel(pbio_iodev_t *iodev) {
-    if (!iodev->ops->write_cancel) {
-        return;
-    }
-
-    iodev->ops->write_cancel(iodev);
 }
