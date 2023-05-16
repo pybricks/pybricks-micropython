@@ -416,6 +416,12 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
+    // observing while connected to another device is not going to work
+    if (is_observing) {
+        task->status = PBIO_ERROR_INVALID_OP;
+        PT_EXIT(pt);
+    }
+
     // start scanning
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_start_general_conn_establish_proc_begin(ACTIVE_SCAN, 0x0030, 0x0030, STATIC_RANDOM_ADDR, 0);

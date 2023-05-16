@@ -625,6 +625,11 @@ void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t 
     notification_handler = handler;
 }
 
+static void start_observing(void) {
+    gap_set_scan_params(0, 0x30, 0x30, 0);
+    gap_start_scan();
+}
+
 static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
 
@@ -661,7 +666,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     memcpy(context->name, handset.name, sizeof(context->name));
 
     task->status = PBIO_SUCCESS;
-    PT_EXIT(pt);
+    goto out;
 
 cancel:
     if (handset.con_state == CON_STATE_WAIT_ADV_IND || handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
@@ -673,6 +678,13 @@ cancel:
     }
     handset.con_state = CON_STATE_NONE;
     task->status = PBIO_ERROR_CANCELED;
+
+out:
+    // restore observing state
+    if (is_observing) {
+        start_observing();
+    }
+
     PT_END(pt);
 }
 
@@ -760,8 +772,7 @@ void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_ob
     observe_callback = callback;
 
     if (!is_observing) {
-        gap_set_scan_params(0, 0x30, 0x30, 0);
-        gap_start_scan();
+        start_observing();
         is_observing = true;
     }
 

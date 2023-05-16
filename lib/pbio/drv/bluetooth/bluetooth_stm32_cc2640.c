@@ -474,6 +474,17 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
+    // temporarily stop observing so we can active scan
+    if (is_observing) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryCancel();
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        if (read_buf[8] == bleSUCCESS) {
+            PT_WAIT_UNTIL(pt, device_discovery_done);
+        }
+    }
+
     // start scanning
 
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -484,7 +495,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     if (context->status != bleSUCCESS) {
         task->status = ble_error_to_pbio_error(context->status);
-        PT_EXIT(pt);
+        goto out;
     }
 
     device_discovery_done = false;
@@ -664,7 +675,7 @@ retry:
 
     task->status = PBIO_SUCCESS;
 
-    PT_EXIT(pt);
+    goto out;
 
 disconnect:
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -673,7 +684,7 @@ disconnect:
 
     // task->status must be set before goto disconnect!
 
-    PT_EXIT(pt);
+    goto out;
 
 cancel_connect:
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -691,6 +702,22 @@ cancel_discovery:
 
 end_cancel:
     task->status = PBIO_ERROR_CANCELED;
+
+out:
+    // start passive scanning again if observing
+    if (is_observing) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_NONDISCOVERABLE, 0, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        if (read_buf[8] != bleSUCCESS) {
+            task->status = ble_error_to_pbio_error(read_buf[8]);
+            PT_EXIT(pt);
+        }
+
+        device_discovery_done = false;
+    }
+
     PT_END(pt);
 }
 
