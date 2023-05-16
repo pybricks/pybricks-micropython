@@ -31,6 +31,12 @@ bool pb_module_tools_run_loop_is_active() {
     return run_loop_is_active;
 }
 
+void pb_module_tools_assert_blocking(void) {
+    if (run_loop_is_active) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("This can only be called before multitasking starts."));
+    }
+}
+
 // The awaitables for the wait() function have no object associated with
 // it (unlike e.g. a motor), so we make a starting point here. These never
 // have to cancel each other so shouldn't need to be in a list, but this lets

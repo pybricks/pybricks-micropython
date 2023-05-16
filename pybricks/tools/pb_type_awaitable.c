@@ -195,7 +195,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
 
         // Some operations are not allowed in async mode.
         if (options & PB_TYPE_AWAITABLE_OPT_FORCE_BLOCK) {
-            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("This can only be called before multitasking starts."));
+            pb_module_tools_assert_blocking();
         }
 
         // First cancel linked awaitables if requested.
