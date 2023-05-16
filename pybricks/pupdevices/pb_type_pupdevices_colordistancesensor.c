@@ -65,9 +65,10 @@ static uint8_t get_mode_for_color(const pbio_color_hsv_t *hsv) {
     return PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT; // red
 }
 
-STATIC void pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
+STATIC mp_obj_t pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
     pbio_iodev_t *iodev = context;
     pb_pup_device_get_data(iodev, get_mode_for_color(hsv));
+    return mp_const_none;
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__

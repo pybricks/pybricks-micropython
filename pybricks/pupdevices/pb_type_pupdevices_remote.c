@@ -86,7 +86,7 @@ STATIC void remote_assert_connected(void) {
     }
 }
 
-STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
+STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
     pb_remote_t *remote = &pb_remote_singleton;
 
     remote_assert_connected();
@@ -122,6 +122,7 @@ STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_h
 
     pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
     pb_wait_task(&remote->task, -1);
+    return mp_const_none;
 }
 
 STATIC void remote_connect(const char *name, mp_int_t timeout) {
