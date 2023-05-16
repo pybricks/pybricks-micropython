@@ -1082,22 +1082,13 @@ static pbio_error_t ev3_uart_write_end(pbio_iodev_t *iodev) {
     return err;
 }
 
-static void ev3_uart_write_cancel(pbio_iodev_t *iodev) {
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-
-    pbdrv_uart_write_cancel(port_data->uart);
-}
-
 static const pbio_iodev_ops_t pbio_uartdev_ops = {
     .set_mode_begin = ev3_uart_set_mode_begin,
     .set_mode_end = ev3_uart_set_mode_end,
-    .set_mode_cancel = ev3_uart_write_cancel,
     .set_data_begin = ev3_uart_set_data_begin,
     .set_data_end = ev3_uart_write_end,
-    .set_data_cancel = ev3_uart_write_cancel,
     .write_begin = ev3_uart_write_begin,
     .write_end = ev3_uart_write_end,
-    .write_cancel = ev3_uart_write_cancel,
 };
 
 static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {

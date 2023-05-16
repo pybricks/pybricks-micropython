@@ -24,23 +24,12 @@ struct _pb_device_t {
     pbio_iodev_t iodev;
 };
 
-static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_t *), pbio_iodev_t *iodev) {
-    nlr_buf_t nlr;
+static void wait(pbio_error_t (*end)(pbio_iodev_t *), pbio_iodev_t *iodev) {
     pbio_error_t err;
-
-    if (nlr_push(&nlr) == 0) {
-        while ((err = end(iodev)) == PBIO_ERROR_AGAIN) {
-            MICROPY_EVENT_POLL_HOOK
-        }
-        nlr_pop();
-        pb_assert(err);
-    } else {
-        cancel(iodev);
-        while (end(iodev) == PBIO_ERROR_AGAIN) {
-            MICROPY_VM_HOOK_LOOP
-        }
-        nlr_jump(nlr.ret_val);
+    while ((err = end(iodev)) == PBIO_ERROR_AGAIN) {
+        MICROPY_EVENT_POLL_HOOK
     }
+    pb_assert(err);
 }
 
 
@@ -70,7 +59,7 @@ static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
         MICROPY_EVENT_POLL_HOOK
     }
     pb_assert(err);
-    wait(pbio_iodev_set_mode_end, pbio_iodev_set_mode_cancel, iodev);
+    wait(pbio_iodev_set_mode_end, iodev);
 
     // Give some time for the mode to take effect and discard stale data
     uint32_t delay = get_mode_switch_delay(iodev->info->type_id, new_mode);
@@ -179,7 +168,7 @@ void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uin
         MICROPY_EVENT_POLL_HOOK
     }
     pb_assert(err);
-    wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
+    wait(pbio_iodev_set_data_end, iodev);
 
     // Give some time for the set values to take effect
     uint32_t delay = get_mode_switch_delay(iodev->info->type_id, mode);
