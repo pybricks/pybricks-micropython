@@ -1064,12 +1064,6 @@ static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *
     return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, iodev->mode, data, size);
 }
 
-static pbio_error_t ev3_uart_write_begin(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size) {
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-
-    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_CMD, LUMP_CMD_WRITE, data, size);
-}
-
 static pbio_error_t ev3_uart_write_end(pbio_iodev_t *iodev) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_error_t err;
@@ -1087,8 +1081,6 @@ static const pbio_iodev_ops_t pbio_uartdev_ops = {
     .set_mode_end = ev3_uart_set_mode_end,
     .set_data_begin = ev3_uart_set_data_begin,
     .set_data_end = ev3_uart_write_end,
-    .write_begin = ev3_uart_write_begin,
-    .write_end = ev3_uart_write_end,
 };
 
 static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {

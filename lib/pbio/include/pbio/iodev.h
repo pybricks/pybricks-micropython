@@ -553,8 +553,6 @@ typedef struct {
     pbio_error_t (*set_mode_end)(pbio_iodev_t *iodev);
     pbio_error_t (*set_data_begin)(pbio_iodev_t *iodev, const uint8_t *data);
     pbio_error_t (*set_data_end)(pbio_iodev_t *iodev);
-    pbio_error_t (*write_begin)(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size);
-    pbio_error_t (*write_end)(pbio_iodev_t *iodev);
 } pbio_iodev_ops_t;
 
 struct _pbio_iodev_t {
@@ -592,8 +590,6 @@ pbio_error_t pbio_iodev_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode);
 pbio_error_t pbio_iodev_set_mode_end(pbio_iodev_t *iodev);
 pbio_error_t pbio_iodev_set_data_begin(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data);
 pbio_error_t pbio_iodev_set_data_end(pbio_iodev_t *iodev);
-pbio_error_t pbio_iodev_write_begin(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size);
-pbio_error_t pbio_iodev_write_end(pbio_iodev_t *iodev);
 
 #endif // _PBIO_IODEV_H_
 
