@@ -6,21 +6,22 @@
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_PUPDEVICES
 
 #include <pbio/iodev.h>
+#include <pbio/int_math.h>
 
 #include "py/objstr.h"
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/pupdevices.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // Class structure for PUPDevice
 typedef struct _iodevices_PUPDevice_obj_t {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pbio_iodev_t *iodev;
 } iodevices_PUPDevice_obj_t;
 
 // pybricks.iodevices.PUPDevice.__init__
@@ -32,7 +33,7 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
+    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -41,10 +42,8 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pbio_iodev_type_id_t id = pb_device_get_id(self->pbdev);
-
     mp_obj_t info_dict = mp_obj_new_dict(1);
-    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(id));
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(self->iodev->info->type_id));
 
     return info_dict;
 }
@@ -56,19 +55,42 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode));
 
-    // Get data already in correct data format
-    int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
-    mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pb_device_get_values(self->pbdev, mp_obj_get_int(mode_in), data);
+    uint8_t num_values;
+    pbio_iodev_data_type_t type;
 
-    uint8_t num_values = pb_device_get_num_values(self->pbdev);
+    uint8_t mode = mp_obj_get_int(mode_in);
+    uint8_t *data;
+    pup_device_get_data(self->iodev, mode, &data);
+    pb_assert(pbio_iodev_get_data_format(self->iodev, mode, &num_values, &type));
 
-    // Return as MicroPython objects
-    for (uint8_t i = 0; i < num_values; i++) {
-        objs[i] = mp_obj_new_int(data[i]);
+    if (num_values == 0) {
+        pb_assert(PBIO_ERROR_IO);
     }
 
-    return mp_obj_new_tuple(num_values, objs);
+    mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
+
+    for (uint8_t i = 0; i < num_values; i++) {
+        switch (type & PBIO_IODEV_DATA_TYPE_MASK) {
+            case PBIO_IODEV_DATA_TYPE_INT8:
+                values[i] = mp_obj_new_int(*((int8_t *)(data + i * 1)));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT16:
+                values[i] = mp_obj_new_int(*((int16_t *)(data + i * 2)));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT32:
+                values[i] = mp_obj_new_int(*((int32_t *)(data + i * 4)));
+                break;
+            #if MICROPY_PY_BUILTINS_FLOAT
+            case PBIO_IODEV_DATA_TYPE_FLOAT:
+                values[i] = mp_obj_new_float(*((float *)(data + i * 4)));
+                break;
+            #endif
+            default:
+                pb_assert(PBIO_ERROR_IO);
+        }
+    }
+
+    return mp_obj_new_tuple(num_values, values);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_read_obj, 1, iodevices_PUPDevice_read);
 
@@ -79,22 +101,48 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
         PB_ARG_REQUIRED(mode),
         PB_ARG_REQUIRED(data));
 
+    // Set the mode.
+    uint8_t mode = mp_obj_get_int(mode_in);
+
     // Unpack the user data tuple
-    mp_obj_t *objs;
+    mp_obj_t *values;
     size_t num_values;
-    mp_obj_get_array(data_in, &num_values, &objs);
+    mp_obj_get_array(data_in, &num_values, &values);
     if (num_values > PBIO_IODEV_MAX_DATA_SIZE) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Pack user data to int32_t
-    int32_t _data[PBIO_IODEV_MAX_DATA_SIZE];
-    for (uint8_t i = 0; i < num_values; i++) {
-        _data[i] = mp_obj_get_int(objs[i]);
+    uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
+    uint8_t len;
+    pbio_iodev_data_type_t type;
+    pb_assert(pbio_iodev_get_data_format(self->iodev, mode, &len, &type));
+
+    if (len != num_values) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Set the data
-    pb_device_set_values(self->pbdev, mp_obj_get_int(mode_in), _data, num_values);
+    for (uint8_t i = 0; i < len; i++) {
+        switch (type & PBIO_IODEV_DATA_TYPE_MASK) {
+            case PBIO_IODEV_DATA_TYPE_INT8:
+                *(int8_t *)(data + i) = pbio_int_math_clamp(mp_obj_get_int(values[i]), INT8_MAX);
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT16:
+                *(int16_t *)(data + i * 2) = pbio_int_math_clamp(mp_obj_get_int(values[i]), INT16_MAX);
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT32:
+                *(int32_t *)(data + i * 4) = pbio_int_math_clamp(mp_obj_get_int(values[i]), INT32_MAX);
+                break;
+            #if MICROPY_PY_BUILTINS_FLOAT
+            case PBIO_IODEV_DATA_TYPE_FLOAT:
+                *(float *)(data + i * 4) = mp_obj_get_int(values[i]);
+                break;
+            #endif
+            default:
+                pb_assert(PBIO_ERROR_IO);
+        }
+    }
+    // Set the data.
+    pup_device_set_data(self->iodev, mode, data);
 
     return mp_const_none;
 }

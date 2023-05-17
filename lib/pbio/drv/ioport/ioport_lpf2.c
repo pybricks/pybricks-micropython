@@ -161,9 +161,6 @@ static void ioport_enable_uart(ioport_dev_t *ioport) {
     pbdrv_gpio_out_low(&pdata->uart_buf);
 }
 
-static const pbio_iodev_ops_t basic_dev_ops = {
-};
-
 static void init_one(uint8_t ioport) {
     const pbdrv_ioport_lpf2_port_platform_data_t *pdata =
         &pbdrv_ioport_lpf2_platform_data.ports[ioport];
@@ -188,7 +185,6 @@ static void init_one(uint8_t ioport) {
     pbdrv_gpio_set_pull(&pdata->uart_rx, PBDRV_GPIO_PULL_NONE);
 
     basic_devs[ioport].port = PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + ioport;
-    basic_devs[ioport].ops = &basic_dev_ops;
 }
 
 // TODO: This should be moved to a common ioport_core.c file or removed entirely

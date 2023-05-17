@@ -66,13 +66,10 @@ static pbio_error_t pbdrv_counter_lpf2_update(pbdrv_counter_dev_t *dev) {
     uint8_t mode_id = priv->supports_abs_angle ?
         PBIO_IODEV_MODE_PUP_ABS_MOTOR__CALIB:
         PBIO_IODEV_MODE_PUP_REL_MOTOR__POS;
-    if (iodev->mode != mode_id) {
-        return PBIO_ERROR_INVALID_OP;
-    }
 
     // Get pointer to LPF2 data buffer.
     uint8_t *data;
-    err = pbio_iodev_get_data(iodev, &data);
+    err = pbio_iodev_get_data(iodev, mode_id, &data);
     if (err != PBIO_SUCCESS) {
         return err;
     }

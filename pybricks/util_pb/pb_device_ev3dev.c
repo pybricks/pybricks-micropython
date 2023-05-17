@@ -18,11 +18,11 @@
 #include <ev3dev_stretch/lego_motor.h>
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/nxtcolor.h>
+#include <pybricks/util_pb/pb_device.h>
 
 #include "py/mphal.h"
 
 #include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_device.h>
 
 struct _pb_device_t {
     /**

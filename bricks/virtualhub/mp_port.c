@@ -139,3 +139,20 @@ void pb_virtualhub_delay_us(mp_uint_t us) {
         pb_virtualhub_poll();
     }
 }
+
+// Revisit, these don't belong here
+pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_iodev_set_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data) {
+    return PBIO_SUCCESS;
+}

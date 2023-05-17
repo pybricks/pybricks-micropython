@@ -105,7 +105,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
-                "${file}"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
