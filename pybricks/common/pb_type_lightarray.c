@@ -9,6 +9,8 @@
 
 #include <pybricks/common.h>
 
+#include <pybricks/pupdevices.h>
+
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
@@ -17,7 +19,7 @@
 // pybricks._common.Light class object
 typedef struct _common_LightArray_obj_t {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pbio_iodev_t *iodev;
     uint8_t light_mode;
     uint8_t number_of_lights;
 } common_LightArray_obj_t;
@@ -28,7 +30,7 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
         common_LightArray_obj_t, self,
         PB_ARG_DEFAULT_INT(brightness, 100));
 
-    int32_t brightness_values[4];
+    int8_t brightness_values[4];
 
     // Given an integer, make all lights the same brightness.
     if (mp_obj_is_int(brightness_in)) {
@@ -51,7 +53,7 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
     }
 
     // Set the brightness values
-    pb_device_set_values(self->pbdev, self->light_mode, brightness_values, self->number_of_lights);
+    pup_device_set_data(self->iodev, self->light_mode, (uint8_t *)brightness_values);
 
     return mp_const_none;
 }
@@ -59,11 +61,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightArray_on_obj, 1, common_LightArray
 
 // pybricks._common.LightArray.off
 STATIC mp_obj_t common_LightArray_off(mp_obj_t self_in) {
-    common_LightArray_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    int32_t brightness[4] = { };
-    pb_device_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
-
+    const mp_obj_t pos_args[] = {self_in, MP_OBJ_NEW_SMALL_INT(0) };
+    common_LightArray_on(MP_ARRAY_SIZE(pos_args), pos_args, NULL);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_LightArray_off_obj, common_LightArray_off);
@@ -82,9 +81,9 @@ STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightArray,
     locals_dict, &common_LightArray_locals_dict);
 
 // pybricks._common.LightArray.__init__
-mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
+mp_obj_t common_LightArray_obj_make_new(pbio_iodev_t *iodev, uint8_t light_mode, uint8_t number_of_lights) {
     common_LightArray_obj_t *light = mp_obj_malloc(common_LightArray_obj_t, &pb_type_LightArray);
-    light->pbdev = pbdev;
+    light->iodev = iodev;
     light->light_mode = light_mode;
     light->number_of_lights = number_of_lights;
     return MP_OBJ_FROM_PTR(light);

@@ -11,6 +11,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/pupdevices.h>
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_pb/pb_device.h>

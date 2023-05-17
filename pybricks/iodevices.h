@@ -10,8 +10,6 @@
 
 #include "py/obj.h"
 
-#include <pybricks/util_pb/pb_device.h>
-
 #if PYBRICKS_PY_PUPDEVICES
 
 extern const mp_obj_type_t pb_type_iodevices_LWP3Device;

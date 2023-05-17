@@ -13,13 +13,12 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // Class structure for ForceSensor
 typedef struct _pupdevices_ForceSensor_obj_t {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pbio_iodev_t *iodev;
     int32_t raw_released;
     int32_t raw_offset;
     int32_t raw_start;
@@ -27,16 +26,16 @@ typedef struct _pupdevices_ForceSensor_obj_t {
 } pupdevices_ForceSensor_obj_t;
 
 // pybricks.pupdevices.ForceSensor._raw
-STATIC int32_t pupdevices_ForceSensor__raw(pb_device_t *pbdev) {
-    int32_t raw;
-    pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, &raw);
-    return raw;
+STATIC int32_t pupdevices_ForceSensor__raw(pbio_iodev_t *iodev) {
+    int16_t *raw;
+    pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, (uint8_t **)&raw);
+    return *raw;
 }
 
 // pybricks.pupdevices.ForceSensor._force
 STATIC int32_t pupdevices_ForceSensor__force(pupdevices_ForceSensor_obj_t *self) {
     // Get raw sensor value
-    int32_t raw = pupdevices_ForceSensor__raw(self->pbdev);
+    int32_t raw = pupdevices_ForceSensor__raw(self->iodev);
 
     // Get force in millinewtons
     int32_t force = (10000 * (raw - self->raw_released - self->raw_offset)) / (self->raw_end - self->raw_released);
@@ -47,7 +46,7 @@ STATIC int32_t pupdevices_ForceSensor__force(pupdevices_ForceSensor_obj_t *self)
 
 // pybricks.pupdevices.ForceSensor._distance
 STATIC int32_t pupdevices_ForceSensor__distance(pupdevices_ForceSensor_obj_t *self) {
-    int32_t raw = pupdevices_ForceSensor__raw(self->pbdev);
+    int32_t raw = pupdevices_ForceSensor__raw(self->iodev);
 
     // Get distance in micrometers
     return (6670 * (raw - self->raw_released)) / (self->raw_end - self->raw_released);
@@ -62,12 +61,12 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    // Get iodevices
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
+    // Get iodevice.
+    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
 
-    // Read scaling factors
-    int32_t calib[8];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, calib);
+    // Read scaling factors.
+    int16_t *calib;
+    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, (uint8_t **)&calib);
     self->raw_offset = calib[1];
     self->raw_released = calib[2];
     self->raw_end = calib[6];
@@ -77,8 +76,8 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
         pb_assert(PBIO_ERROR_FAILED);
     }
 
-    // Do one read to verify everything works and put it in the right mode
-    pupdevices_ForceSensor__raw(self->pbdev);
+    // Do one measurement to set up mode used for all methods.
+    pupdevices_ForceSensor__raw(self->iodev);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -89,7 +88,7 @@ STATIC mp_obj_t pupdevices_ForceSensor_touched(mp_obj_t self_in) {
 
     // Return true if raw value is just above detectable change, with a small
     // margin to account for small calibration tolerances.
-    return mp_obj_new_bool(pupdevices_ForceSensor__raw(self->pbdev) > self->raw_released + 4);
+    return mp_obj_new_bool(pupdevices_ForceSensor__raw(self->iodev) > self->raw_released + 4);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_touched_obj, pupdevices_ForceSensor_touched);
 

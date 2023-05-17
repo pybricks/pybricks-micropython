@@ -13,11 +13,11 @@
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/light.h>
+#include <pbio/iodev.h>
 
 #include "py/obj.h"
 
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
 
 #include <pybricks/parameters.h>
 
@@ -49,7 +49,7 @@ mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);
 
 #if PYBRICKS_PY_COMMON_LIGHT_ARRAY
 // pybricks._common.LightArray()
-mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
+mp_obj_t common_LightArray_obj_make_new(pbio_iodev_t *iodev, uint8_t light_mode, uint8_t number_of_lights);
 #endif
 
 #if PYBRICKS_PY_COMMON_LIGHT_MATRIX

@@ -17,13 +17,12 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_color_map.h>
-#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // Class structure for PFMotor.
 typedef struct _pupdevices_PFMotor_obj_t {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pbio_iodev_t *iodev;
     uint8_t channel;
     bool use_blue_port;
     pbio_direction_t direction;
@@ -38,7 +37,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
     // Get device
-    pb_device_t *sensor = pupdevices_ColorDistanceSensor__get_device(sensor_in);
+    pbio_iodev_t *sensor = pupdevices_ColorDistanceSensor__get_device(sensor_in);
 
     // Get channel
     mp_int_t channel = mp_obj_get_int(channel_in);
@@ -60,7 +59,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     pupdevices_PFMotor_obj_t *self = mp_obj_malloc(pupdevices_PFMotor_obj_t, type);
 
     // Save init arguments
-    self->pbdev = sensor;
+    self->iodev = sensor;
     self->channel = channel;
     self->use_blue_port = use_blue_port;
     self->direction = positive_direction;
@@ -71,14 +70,17 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
 // Experimental value setter that waits for success. This may be generalized
 // with generic modes/values, and moved to pbdevice if helpful for other
 // sensors as well. A timeout could be added as well.
-STATIC void set_and_wait(pb_device_t *pbdev, int32_t data) {
+STATIC void set_and_wait(pbio_iodev_t *iodev, int16_t data) {
     // Set the values
-    pb_device_set_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &data, 1);
+    pup_device_set_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, (uint8_t *)&data);
 
     // Wait until we read back the same values
-    int32_t get = -1;
-    while (get != data) {
-        pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &get);
+    while (true) {
+        int16_t *read_data;
+        pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, (uint8_t **)&read_data);
+        if (*read_data == data) {
+            break;
+        }
         mp_hal_delay_ms(5);
     }
 }
@@ -97,9 +99,9 @@ STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int32_t mes
     // to a meaningless value (e.g. INT16_MAX) so that the sensor won't try to
     // be smart and suppress two subsequent identical values.
     for (uint8_t i = 0; i < 2; i++) {
-        set_and_wait(self->pbdev, message);
+        set_and_wait(self->iodev, message);
         mp_hal_delay_ms(75);
-        set_and_wait(self->pbdev, INT16_MAX);
+        set_and_wait(self->iodev, INT16_MAX);
     }
 }
 

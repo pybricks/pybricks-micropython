@@ -12,12 +12,11 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_conversions.h>
-#include <pybricks/util_pb/pb_device.h>
 
 // Class structure for ColorLightMatrix
 typedef struct _pupdevices_ColorLightMatrix_obj_t {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pbio_iodev_t *iodev;
 } pupdevices_ColorLightMatrix_obj_t;
 
 // pybricks.pupdevices.ColorLightMatrix.__init__
@@ -30,7 +29,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevice
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
+    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -68,7 +67,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
         pupdevices_ColorLightMatrix_obj_t, self,
         PB_ARG_REQUIRED(colors));
 
-    int32_t color_ids[9];
+    int8_t color_ids[9];
 
     // One color object, apply to all.
     if (mp_obj_is_type(colors_in, &pb_type_Color)) {
@@ -87,7 +86,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     }
 
     // Activate all colors.
-    pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, MP_ARRAY_SIZE(color_ids));
+    pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, (uint8_t *)color_ids);
 
     return mp_const_none;
 }
@@ -95,11 +94,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevi
 
 // pybricks.pupdevices.ColorLightMatrix.off
 STATIC mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
-    pupdevices_ColorLightMatrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    // Turn off all pixels.
-    int32_t color_ids[9] = { };
-    pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, MP_ARRAY_SIZE(color_ids));
+    const mp_obj_t pos_args[] = {self_in, MP_OBJ_FROM_PTR(&pb_Color_NONE_obj) };
+    pupdevices_ColorLightMatrix_on(MP_ARRAY_SIZE(pos_args), pos_args, NULL);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorLightMatrix_off_obj, pupdevices_ColorLightMatrix_off);
