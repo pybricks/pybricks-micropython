@@ -157,6 +157,7 @@ typedef enum {
  *      since last watchdog timeout.
  * @tx_busy: mutex that protects tx_msg
  * @tx_complete_time: Time of most recently completed transmission.
+ * @tx_type: The data type of the current or last transmission.
  * @speed_payload: Buffer for holding baud rate change message data
  */
 typedef struct {
@@ -185,6 +186,7 @@ typedef struct {
     bool data_rec;
     bool tx_busy;
     uint32_t tx_complete_time;
+    lump_msg_type_t tx_type;
     uint8_t speed_payload[4];
 } uartdev_port_data_t;
 
@@ -627,6 +629,7 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, lump_m
     }
 
     port_data->tx_busy = true;
+    port_data->tx_type = msg_type;
 
     if (msg_type == LUMP_MSG_TYPE_DATA) {
         // Only Powered Up devices support setting data, and they expect to have an
@@ -1072,12 +1075,12 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
  *
  * @param [in]  id          The device type ID.
  * @param [in]  mode        The device mode.
- * @return                  Required number of samples.
+ * @return                  Required delay in milliseconds.
  */
-static uint32_t pbio_iodev_stale_data_reject_time(pbio_iodev_type_id_t id, uint8_t mode) {
+static uint32_t pbio_iodev_delay_stale_data(pbio_iodev_type_id_t id, uint8_t mode) {
     switch (id) {
         case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
-            return 30;
+            return mode == PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX ? 0 : 30;
         case PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
             return mode == PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT ? 0 : 30;
         case PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR:
@@ -1086,6 +1089,27 @@ static uint32_t pbio_iodev_stale_data_reject_time(pbio_iodev_type_id_t id, uint8
             // Default delay for other sensors and modes.
             return 0;
     }
+}
+
+/**
+ * Gets the minimum time needed for the device to handle written data.
+ *
+ * This is empirically determined based on sensor experiments.
+ *
+ * @param [in]  id          The device type ID.
+ * @param [in]  mode        The device mode.
+ * @return                  Required delay in milliseconds.
+ */
+static uint32_t pbio_iodev_delay_set_data(pbio_iodev_type_id_t id, uint8_t mode) {
+    // The Boost Color Distance Sensor requires a long delay or successive
+    // writes are ignored.
+    if (id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR && mode == PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX) {
+        return 250;
+    }
+
+    // Default delay for setting data. In practice, this is the delay for setting
+    // the light on the color sensor and ultrasonic sensor.
+    return 2;
 }
 
 /**
@@ -1104,13 +1128,24 @@ pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
     }
 
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+    const pbio_iodev_type_id_t id = iodev->info->type_id;
+    const uint8_t mode = iodev->mode;
 
-    if (// Busy sending something or only just done sending (device still processing), check back later.
-        port_data->tx_busy || pbdrv_clock_get_ms() - port_data->tx_complete_time < 2 ||
-        // Mode change is underway, check back later.
+    // Not ready if busy writing.
+    if (port_data->tx_busy) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // If we were setting data, then wait for the matching delay.
+    if (port_data->tx_type == LUMP_MSG_TYPE_DATA) {
+        return (pbdrv_clock_get_ms() - port_data->tx_complete_time < pbio_iodev_delay_set_data(iodev->info->type_id, mode)) ?
+               PBIO_ERROR_AGAIN : PBIO_SUCCESS;
+    }
+
+    if (// Mode change is underway, check back later.
         port_data->iodev.mode != port_data->new_mode ||
         // May still have stale data, check back later.
-        pbdrv_clock_get_ms() - port_data->mode_switch_time < pbio_iodev_stale_data_reject_time(iodev->info->type_id, port_data->iodev.mode)) {
+        pbdrv_clock_get_ms() - port_data->mode_switch_time < pbio_iodev_delay_stale_data(id, mode)) {
         return PBIO_ERROR_AGAIN;
     }
 
