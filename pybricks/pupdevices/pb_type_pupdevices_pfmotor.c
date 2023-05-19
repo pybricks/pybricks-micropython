@@ -67,25 +67,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// Experimental value setter that waits for success. This may be generalized
-// with generic modes/values, and moved to pbdevice if helpful for other
-// sensors as well. A timeout could be added as well.
-STATIC void set_and_wait(pbio_iodev_t *iodev, int16_t data) {
-    // Set the values
-    pup_device_set_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, (uint8_t *)&data);
-
-    // Wait until we read back the same values
-    while (true) {
-        int16_t *read_data;
-        pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, (uint8_t **)&read_data);
-        if (*read_data == data) {
-            break;
-        }
-        mp_hal_delay_ms(5);
-    }
-}
-
-STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int32_t message) {
+STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t message) {
     // Choose blue or red output
     message |= (self->use_blue_port) << 4;
 
@@ -95,14 +77,10 @@ STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int32_t mes
     // Choose channel (1--4)
     message |= (self->channel - 1) << 8;
 
-    // Send the data to the device twice. In between messages, set the sensor
-    // to a meaningless value (e.g. INT16_MAX) so that the sensor won't try to
-    // be smart and suppress two subsequent identical values.
-    for (uint8_t i = 0; i < 2; i++) {
-        set_and_wait(self->iodev, message);
-        mp_hal_delay_ms(75);
-        set_and_wait(self->iodev, INT16_MAX);
-    }
+    // Send the data to the device. This automatically delays by about 250 ms
+    // to ensure the data is properly sent and received. This also ensures that
+    // the message will still work if two identical values are sent in a row.
+    pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, (uint8_t *)&message);
 }
 
 // pybricks.pupdevices.PFMotor.dc
