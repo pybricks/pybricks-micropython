@@ -25,6 +25,9 @@
 #define DBG_ERR(expr)
 #endif
 
+// Enables processing of information not needed for normal operation
+#define UARTDEV_ENABLE_EXTRAS (DEBUG)
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -394,6 +397,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     data->ext_mode = data->rx_msg[1];
                     break;
                 case LUMP_CMD_VERSION:
+                    #if UARTDEV_ENABLE_EXTRAS
                     if (test_and_set_bit(EV3_UART_INFO_BIT_CMD_VERSION, &data->info_flags)) {
                         DBG_ERR(data->last_err = "Received duplicate version INFO");
                         goto err;
@@ -401,6 +405,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     // TODO: this might be useful someday
                     debug_pr("fw version: %08" PRIx32 "\n", pbio_get_uint32_le(data->rx_msg + 1));
                     debug_pr("hw version: %08" PRIx32 "\n", pbio_get_uint32_le(data->rx_msg + 5));
+                    #endif // LUMP_CMD_VERSION
                     break;
                 default:
                     DBG_ERR(data->last_err = "Unknown command");
@@ -470,13 +475,16 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         data->rx_msg[8 + 3], data->rx_msg[8 + 4], data->rx_msg[8 + 5]);
                 }
                 break;
-                // Ignore RAW, PCT, SI, UNITS info. This is never used and can
-                // be looked up by device type if necessary.
+                #if UARTDEV_ENABLE_EXTRAS
                 case LUMP_INFO_RAW:
+                    break;
                 case LUMP_INFO_PCT:
+                    break;
                 case LUMP_INFO_SI:
+                    break;
                 case LUMP_INFO_UNITS:
                     break;
+                #endif // UARTDEV_ENABLE_EXTRAS
                 case LUMP_INFO_MAPPING:
                     if (data->new_mode != mode) {
                         DBG_ERR(data->last_err = "Received INFO for incorrect mode");
@@ -495,6 +503,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     debug_pr("Writable: %d\n", data->info->mode_info[mode].data_type & PBIO_IODEV_DATA_TYPE_WRITABLE);
 
                     break;
+                #if UARTDEV_ENABLE_EXTRAS
                 case LUMP_INFO_MODE_COMBOS:
                     if (data->new_mode != mode) {
                         DBG_ERR(data->last_err = "Received INFO for incorrect mode");
@@ -535,6 +544,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         goto err;
                     }
                     break;
+                #endif // UARTDEV_ENABLE_EXTRAS
                 case LUMP_INFO_FORMAT:
                     if (data->new_mode != mode) {
                         DBG_ERR(data->last_err = "Received INFO for incorrect mode");
