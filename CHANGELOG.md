@@ -611,7 +611,7 @@ Prerelease changes are documented at [support#48].
 <!-- diff links for headers -->
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...HEAD
 [3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
-[3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
+[3.3.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
 [3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
 [3.3.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...v3.3.0b2
 [3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
