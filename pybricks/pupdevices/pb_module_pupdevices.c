@@ -30,9 +30,7 @@ void pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
 }
 
 void pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t *data) {
-    pb_assert(pbio_iodev_set_mode(iodev, mode));
-    pup_device_wait_ready(iodev);
-    pb_assert(pbio_iodev_set_data(iodev, mode, data));
+    pb_assert(pbio_iodev_set_mode_with_data(iodev, mode, data));
     pup_device_wait_ready(iodev);
 }
 

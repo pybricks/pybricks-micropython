@@ -159,8 +159,9 @@ typedef enum {
  * @data_rec: Flag that indicates that good DATA data->msg has been received
  *      since last watchdog timeout.
  * @tx_busy: mutex that protects tx_msg
- * @tx_complete_time: Time of most recently completed transmission.
+ * @tx_start_time: Time of most recently started transmission.
  * @tx_type: The data type of the current or last transmission.
+ * @data_set_len: Length of data to be set, data is stored in bin_data.
  * @speed_payload: Buffer for holding baud rate change message data
  */
 typedef struct {
@@ -188,7 +189,8 @@ typedef struct {
     uint32_t mode_switch_time;
     bool data_rec;
     bool tx_busy;
-    uint32_t tx_complete_time;
+    uint8_t data_set_len;
+    uint32_t tx_start_time;
     lump_msg_type_t tx_type;
     uint8_t speed_payload[4];
 } uartdev_port_data_t;
@@ -592,7 +594,10 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
 
             // Data is for requested mode.
             if (mode == data->new_mode) {
-                memcpy(data->iodev.bin_data, data->rx_msg + 1, msg_size - 2);
+                if (!data->data_set_len) {
+                    // Copy the new data unless buffer contains data for sending.
+                    memcpy(data->iodev.bin_data, data->rx_msg + 1, msg_size - 2);
+                }
 
                 if (data->iodev.mode != mode) {
                     // First time getting data in this mode, so register time.
@@ -640,6 +645,7 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, lump_m
 
     port_data->tx_busy = true;
     port_data->tx_type = msg_type;
+    port_data->tx_start_time = pbdrv_clock_get_ms();
 
     if (msg_type == LUMP_MSG_TYPE_DATA) {
         // Only Powered Up devices support setting data, and they expect to have an
@@ -747,6 +753,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     data->info->type_id = PBIO_IODEV_TYPE_ID_NONE;
     data->info->capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE;
     data->ext_mode = 0;
+    data->data_set_len = 0;
     data->status = PBIO_UARTDEV_STATUS_WAITING;
 
     // block until pbio_uartdev_ready() is called
@@ -1032,7 +1039,6 @@ static void pbio_uartdev_handle_write_end(pbio_iodev_t *iodev) {
     pbio_error_t err = pbdrv_uart_write_end(port_data->uart);
     if (err != PBIO_ERROR_AGAIN) {
         port_data->tx_busy = false;
-        port_data->tx_complete_time = pbdrv_clock_get_ms();
     }
 }
 
@@ -1122,6 +1128,24 @@ static uint32_t pbio_iodev_delay_set_data(pbio_iodev_type_id_t id, uint8_t mode)
     return 2;
 }
 
+pbio_error_t pbio_iodev_start_buffered_write(pbio_iodev_t *iodev) {
+
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+    const pbio_iodev_mode_t *mode_info = &iodev->info->mode_info[iodev->mode];
+
+    // Reset data length so we transmit only once.
+    uint8_t size = port_data->data_set_len;
+    port_data->data_set_len = 0;
+
+    // Not all modes support setting data and data must be of expected size.
+    if (!(mode_info->data_type & PBIO_IODEV_DATA_TYPE_WRITABLE) ||
+        size != mode_info->num_values * pbio_iodev_size_of(mode_info->data_type)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, iodev->mode, iodev->bin_data, size);
+}
+
 /**
  * Checks if LEGO UART device has data available for reading or is ready to write.
  *
@@ -1146,19 +1170,29 @@ pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
         return PBIO_ERROR_AGAIN;
     }
 
+    uint32_t time = pbdrv_clock_get_ms();
+
     // If we were setting data, then wait for the matching delay.
     if (port_data->tx_type == LUMP_MSG_TYPE_DATA) {
-        return (pbdrv_clock_get_ms() - port_data->tx_complete_time < pbio_iodev_delay_set_data(iodev->info->type_id, mode)) ?
+        return (time - port_data->tx_start_time < pbio_iodev_delay_set_data(iodev->info->type_id, mode)) ?
                PBIO_ERROR_AGAIN : PBIO_SUCCESS;
     }
 
     if (// Mode change is underway, check back later.
         port_data->iodev.mode != port_data->new_mode ||
         // May still have stale data, check back later.
-        pbdrv_clock_get_ms() - port_data->mode_switch_time < pbio_iodev_delay_stale_data(id, mode)) {
+        time - port_data->mode_switch_time < pbio_iodev_delay_stale_data(id, mode)) {
         return PBIO_ERROR_AGAIN;
     }
 
+    // The requested modes are set. Could start sending data if there is any.
+    if (port_data->data_set_len) {
+        pbio_error_t err = pbio_iodev_start_buffered_write(iodev);
+        // On success, data only just started, so we are not ready yet.
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
+    }
+
+    // Everything is idle and nothing to send, so we are done.
     return PBIO_SUCCESS;
 }
 
@@ -1187,6 +1221,9 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
 
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
 
+    // Discard any old data that was never sent.
+    port_data->data_set_len = 0;
+
     // Mode already set or being set, so return success.
     if (port_data->new_mode == mode || iodev->mode == mode) {
         return PBIO_SUCCESS;
@@ -1197,6 +1234,7 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
     // Start setting new mode.
     err = ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &mode, 1);
     if (err != PBIO_SUCCESS) {
@@ -1247,36 +1285,33 @@ pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **da
  * @return                  ::PBIO_SUCCESS on success
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
  */
-pbio_error_t pbio_iodev_set_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data) {
+pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data) {
 
-    // Device is not there or still syncing.
-    if (iodev->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    // Can only set data for mode that is set.
-    if (iodev->mode != mode) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    pbio_iodev_mode_t *mode_info = &port_data->info->mode_info[iodev->mode];
-    uint8_t size;
-
-    // We can only initiate data transfer if currently idle.
-    pbio_error_t err = pbio_iodev_is_ready(iodev);
+    // Start setting mode.
+    pbio_error_t err = pbio_iodev_set_mode(iodev, mode);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Not all modes support setting data.
-    if (!(mode_info->data_type & PBIO_IODEV_DATA_TYPE_WRITABLE)) {
-        return PBIO_ERROR_INVALID_OP;
+    // info of the mode *to be set*, which might not be current mode.
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+    pbio_iodev_mode_t *mode_info = &port_data->info->mode_info[mode];
+
+    // Check if the device is in this mode already.
+    err = pbio_iodev_is_ready(iodev);
+    if (err != PBIO_SUCCESS && err != PBIO_ERROR_AGAIN) {
+        return err;
     }
 
-    size = mode_info->num_values * pbio_iodev_size_of(mode_info->data_type);
+    // Copy data to be sent after mode switch.
+    port_data->data_set_len = mode_info->num_values * pbio_iodev_size_of(mode_info->data_type);
+    memcpy(iodev->bin_data, data, port_data->data_set_len);
 
-    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, iodev->mode, data, size);
+    // If already in the right mode, start sending data right away.
+    if (err == PBIO_SUCCESS) {
+        return pbio_iodev_start_buffered_write(iodev);
+    }
+    return PBIO_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_UARTDEV
