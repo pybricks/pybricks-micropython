@@ -53,7 +53,7 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
     }
 
     // Set the brightness values
-    pup_device_set_data(self->iodev, self->light_mode, (uint8_t *)brightness_values);
+    pb_pup_device_set_data(self->iodev, self->light_mode, (uint8_t *)brightness_values);
 
     return mp_const_none;
 }

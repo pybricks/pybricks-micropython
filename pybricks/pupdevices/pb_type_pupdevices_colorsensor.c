@@ -29,7 +29,7 @@ STATIC void pupdevices_ColorSensor__get_hsv_reflected(pbio_iodev_t *iodev, pbio_
 
     // Read RGB
     int16_t *data;
-    pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, (uint8_t **)&data);
+    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, (uint8_t **)&data);
     const pbio_color_rgb_t rgb = {
         .r = data[0] == 1024 ? 255 : data[0] >> 2,
         .g = data[1] == 1024 ? 255 : data[1] >> 2,
@@ -45,7 +45,7 @@ STATIC void pupdevices_ColorSensor__get_hsv_ambient(pbio_iodev_t *iodev, pbio_co
 
     // Read SHSV mode (light off). This data is not available in RGB format
     int16_t *data;
-    pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, (uint8_t **)&data);
+    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, (uint8_t **)&data);
 
     // Scale saturation and value to match 0-100% range in typical applications
     hsv->h = data[0];
@@ -69,7 +69,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevices
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
 
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
@@ -130,7 +130,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
 
     // Get reflection from average RGB reflection, which ranges from 0 to 3*1024
     int16_t *data;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, (uint8_t **)&data);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, (uint8_t **)&data);
 
     // Return value as reflection
     return mp_obj_new_int((data[0] + data[1] + data[2]) * 100 / 3072);
@@ -143,7 +143,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
 
     // Get ambient from "V" in SHSV, which ranges from 0 to 10000
     int16_t *data;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, (uint8_t **)&data);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, (uint8_t **)&data);
 
     // Return scaled to 100.
     return pb_obj_new_fraction(data[2], 100);

@@ -29,7 +29,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevice
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -86,7 +86,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     }
 
     // Activate all colors.
-    pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, (uint8_t *)color_ids);
+    pb_pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, (uint8_t *)color_ids);
 
     return mp_const_none;
 }
@@ -94,7 +94,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevi
 
 // pybricks.pupdevices.ColorLightMatrix.off
 STATIC mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
-    const mp_obj_t pos_args[] = {self_in, MP_OBJ_FROM_PTR(&pb_Color_NONE_obj) };
+    const mp_obj_t pos_args[] = { self_in, MP_OBJ_FROM_PTR(&pb_Color_NONE_obj) };
     pupdevices_ColorLightMatrix_on(MP_ARRAY_SIZE(pos_args), pos_args, NULL);
     return mp_const_none;
 }

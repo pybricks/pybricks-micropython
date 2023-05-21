@@ -28,7 +28,7 @@ typedef struct _pupdevices_ForceSensor_obj_t {
 // pybricks.pupdevices.ForceSensor._raw
 STATIC int32_t pupdevices_ForceSensor__raw(pbio_iodev_t *iodev) {
     int16_t *raw;
-    pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, (uint8_t **)&raw);
+    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, (uint8_t **)&raw);
     return *raw;
 }
 
@@ -62,11 +62,11 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevice.
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
 
     // Read scaling factors.
     int16_t *calib;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, (uint8_t **)&calib);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, (uint8_t **)&calib);
     self->raw_offset = calib[1];
     self->raw_released = calib[2];
     self->raw_end = calib[6];
