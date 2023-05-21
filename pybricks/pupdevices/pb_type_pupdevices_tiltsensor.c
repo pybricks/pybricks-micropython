@@ -28,7 +28,7 @@ STATIC mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevice
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_WEDO2_TILT_SENSOR);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_WEDO2_TILT_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -37,7 +37,7 @@ STATIC mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
 STATIC mp_obj_t pupdevices_TiltSensor_tilt(mp_obj_t self_in) {
     pupdevices_TiltSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t *tilt;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, (uint8_t **)&tilt);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, (uint8_t **)&tilt);
     mp_obj_t ret[2];
     ret[0] = mp_obj_new_int(tilt[1]);
     ret[1] = mp_obj_new_int(tilt[0]);

@@ -150,6 +150,8 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
 }
 
 pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
+    static uint8_t empty_data[PBIO_IODEV_MAX_DATA_SIZE] __attribute__((aligned(4)));
+    *data = empty_data;
     return PBIO_SUCCESS;
 }
 

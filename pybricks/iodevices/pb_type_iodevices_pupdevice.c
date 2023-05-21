@@ -33,7 +33,7 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -60,11 +60,11 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
 
     uint8_t mode = mp_obj_get_int(mode_in);
     uint8_t *data;
-    pup_device_get_data(self->iodev, mode, &data);
     pb_assert(pbio_iodev_get_data_format(self->iodev, mode, &num_values, &type));
+    pb_pup_device_get_data(self->iodev, mode, &data);
 
     if (num_values == 0) {
-        pb_assert(PBIO_ERROR_IO);
+        pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
@@ -82,7 +82,7 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
                 break;
             #if MICROPY_PY_BUILTINS_FLOAT
             case PBIO_IODEV_DATA_TYPE_FLOAT:
-                values[i] = mp_obj_new_float(*((float *)(data + i * 4)));
+                values[i] = mp_obj_new_float_from_f(*((float *)(data + i * 4)));
                 break;
             #endif
             default:
@@ -134,7 +134,7 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
                 break;
             #if MICROPY_PY_BUILTINS_FLOAT
             case PBIO_IODEV_DATA_TYPE_FLOAT:
-                *(float *)(data + i * 4) = mp_obj_get_int(values[i]);
+                *(float *)(data + i * 4) = mp_obj_get_float_to_f(values[i]);
                 break;
             #endif
             default:
@@ -142,7 +142,7 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
         }
     }
     // Set the data.
-    pup_device_set_data(self->iodev, mode, data);
+    pb_pup_device_set_data(self->iodev, mode, data);
 
     return mp_const_none;
 }

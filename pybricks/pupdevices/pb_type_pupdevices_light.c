@@ -29,19 +29,12 @@ STATIC mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevices
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC void set_power(pbio_iodev_t *iodev, int32_t duty) {
-
-    // Bind user input to percentage
-    if (duty < 0) {
-        duty = 0;
-    } else if (duty > 100) {
-        duty = 100;
-    }
 
     // FIXME: this should be a callback function on a port instance rather
     // than poking the motor driver directly. The current implementation
@@ -64,7 +57,7 @@ STATIC mp_obj_t pupdevices_Light_on(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set the brightness
-    set_power(self->iodev, pb_obj_get_int(brightness_in));
+    set_power(self->iodev, pb_obj_get_pct(brightness_in));
 
     return mp_const_none;
 }

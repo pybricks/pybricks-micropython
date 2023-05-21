@@ -30,7 +30,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevices
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
 
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
@@ -42,7 +42,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 STATIC mp_obj_t pupdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int16_t *distance;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, (uint8_t **)&distance);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, (uint8_t **)&distance);
     return mp_obj_new_int(*distance < 0 || *distance >= 2000 ? 2000 : *distance);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupdevices_UltrasonicSensor_distance);
@@ -51,7 +51,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupde
 STATIC mp_obj_t pupdevices_UltrasonicSensor_presence(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t *presence;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, (uint8_t **)&presence);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, (uint8_t **)&presence);
     return mp_obj_new_bool(*presence);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_presence_obj, pupdevices_UltrasonicSensor_presence);

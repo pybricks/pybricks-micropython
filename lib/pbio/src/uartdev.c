@@ -156,10 +156,10 @@ typedef enum {
  * @err_count: Total number of errors that have occurred
  * @num_data_err: Number of bad reads when receiving DATA data->msgs.
  * @mode_switch_time: Time of most recent successful mode switch, used to discard stale data.
+ * @tx_start_time: Time of most recently started transmission.
  * @data_rec: Flag that indicates that good DATA data->msg has been received
  *      since last watchdog timeout.
  * @tx_busy: mutex that protects tx_msg
- * @tx_start_time: Time of most recently started transmission.
  * @tx_type: The data type of the current or last transmission.
  * @data_set_len: Length of data to be set, data is stored in bin_data.
  * @speed_payload: Buffer for holding baud rate change message data
@@ -187,10 +187,10 @@ typedef struct {
     uint32_t err_count;
     uint32_t num_data_err;
     uint32_t mode_switch_time;
+    uint32_t tx_start_time;
     bool data_rec;
     bool tx_busy;
     uint8_t data_set_len;
-    uint32_t tx_start_time;
     lump_msg_type_t tx_type;
     uint8_t speed_payload[4];
 } uartdev_port_data_t;
@@ -479,11 +479,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 break;
                 #if UARTDEV_ENABLE_EXTRAS
                 case LUMP_INFO_RAW:
-                    break;
                 case LUMP_INFO_PCT:
-                    break;
                 case LUMP_INFO_SI:
-                    break;
                 case LUMP_INFO_UNITS:
                     break;
                 #endif // UARTDEV_ENABLE_EXTRAS
@@ -1247,6 +1244,8 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
 /**
  * Atomic operation for asserting the mode/id and getting the data of a LEGO UART device.
  *
+ * The returned data buffer is 4-byte aligned. Data is in little-endian format.
+ *
  * @param [in]  iodev       The I/O device
  * @param [out] data        Pointer to hold array of data values.
  * @return                  ::PBIO_SUCCESS on success
@@ -1264,7 +1263,7 @@ pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **da
 
     // Can only request data for mode that is set.
     if (mode != port_data->iodev.mode) {
-        return PBIO_ERROR_BUSY;
+        return PBIO_ERROR_INVALID_OP;
     }
 
     pbio_error_t err = pbio_iodev_is_ready(iodev);

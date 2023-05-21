@@ -44,7 +44,7 @@ pbio_iodev_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t obj) {
 // Ensures sensor is in RGB mode then converts the measured raw RGB value to HSV.
 STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_hsv_t *hsv) {
     int16_t *raw;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, (uint8_t **)&raw);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, (uint8_t **)&raw);
 
     pbio_color_rgb_t rgb;
     raw_to_rgb(raw, &rgb);
@@ -69,7 +69,7 @@ static uint8_t get_mode_for_color(const pbio_color_hsv_t *hsv) {
 STATIC void pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
     pbio_iodev_t *iodev = context;
     uint8_t *data;
-    pup_device_get_data(iodev, get_mode_for_color(hsv), &data);
+    pb_pup_device_get_data(iodev, get_mode_for_color(hsv), &data);
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
@@ -81,7 +81,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->iodev = pup_device_get_device(port, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
+    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
     self->light = pb_type_ColorLight_external_obj_new(self->iodev, pupdevices_ColorDistanceSensor_light_on);
@@ -108,7 +108,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupde
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_distance(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t *distance;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX, (uint8_t **)&distance);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX, (uint8_t **)&distance);
     return mp_obj_new_int(*distance * 10);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_distance_obj, pupdevices_ColorDistanceSensor_distance);
@@ -117,7 +117,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_distance_obj, pupdevice
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int16_t *rgb;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, (uint8_t **)&rgb);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, (uint8_t **)&rgb);
     return mp_obj_new_int((rgb[0] + rgb[1] + rgb[2]) / 12);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_reflection_obj, pupdevices_ColorDistanceSensor_reflection);
@@ -126,7 +126,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_reflection_obj, pupdevi
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t *ambient;
-    pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI, (uint8_t **)&ambient);
+    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI, (uint8_t **)&ambient);
     return mp_obj_new_int(*ambient);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_ambient_obj, pupdevices_ColorDistanceSensor_ambient);

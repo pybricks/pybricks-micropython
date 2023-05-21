@@ -15,7 +15,7 @@
 
 #include <py/mphal.h>
 
-static void pup_device_wait_ready(pbio_iodev_t *iodev) {
+static void pb_pup_device_wait_ready(pbio_iodev_t *iodev) {
     pbio_error_t err;
     while ((err = pbio_iodev_is_ready(iodev)) == PBIO_ERROR_AGAIN) {
         MICROPY_EVENT_POLL_HOOK
@@ -23,18 +23,20 @@ static void pup_device_wait_ready(pbio_iodev_t *iodev) {
     pb_assert(err);
 }
 
-void pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
+// This will be replaced by an async handler
+void pb_pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
     pb_assert(pbio_iodev_set_mode(iodev, mode));
-    pup_device_wait_ready(iodev);
+    pb_pup_device_wait_ready(iodev);
     pb_assert(pbio_iodev_get_data(iodev, mode, data));
 }
 
-void pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t *data) {
+// This will be replaced by an async handler
+void pb_pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t *data) {
     pb_assert(pbio_iodev_set_mode_with_data(iodev, mode, data));
-    pup_device_wait_ready(iodev);
+    pb_pup_device_wait_ready(iodev);
 }
 
-pbio_iodev_t *pup_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
+pbio_iodev_t *pb_pup_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
 
     pbio_iodev_t *iodev;
     pbio_error_t err;
@@ -51,7 +53,7 @@ pbio_iodev_t *pup_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t va
     return iodev;
 }
 
-void pup_device_setup_motor(pbio_port_id_t port, bool is_servo) {
+void pb_pup_device_setup_motor(pbio_port_id_t port, bool is_servo) {
     // HACK: Built-in motors on BOOST Move hub do not have I/O ports associated
     // with them.
     #if PYBRICKS_HUB_MOVEHUB
@@ -87,12 +89,12 @@ void pup_device_setup_motor(pbio_port_id_t port, bool is_servo) {
 
     // Activate mode.
     pb_assert(pbio_iodev_set_mode(iodev, mode_id));
-    pup_device_wait_ready(iodev);
+    pb_pup_device_wait_ready(iodev);
 }
 
 // REVISIT: Drop pb_device abstraction layer
 void pb_device_setup_motor(pbio_port_id_t port, bool is_servo) {
-    pup_device_setup_motor(port, is_servo);
+    pb_pup_device_setup_motor(port, is_servo);
 }
 
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {

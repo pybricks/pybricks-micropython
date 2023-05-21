@@ -24,11 +24,11 @@ extern const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor;
 pbio_iodev_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t obj);
 void pb_type_Remote_cleanup(void);
 
-pbio_iodev_t *pup_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id);
-void pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data);
-void pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t *data);
+pbio_iodev_t *pb_pup_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id);
+void pb_pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data);
+void pb_pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t *data);
 
-void pup_device_setup_motor(pbio_port_id_t port, bool is_servo);
+void pb_pup_device_setup_motor(pbio_port_id_t port, bool is_servo);
 
 #endif // PYBRICKS_PY_PUPDEVICES
 
