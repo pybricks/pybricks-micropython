@@ -101,8 +101,16 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
         // Get required feedforward torque for current reference
         feedforward_torque = pbio_observer_get_feedforward_torque(srv->observer.model, ref.speed, ref.acceleration);
 
+        // HACK: Constrain total torque to respect temporary duty_cycle limit.
+        // See https://github.com/pybricks/support/issues/1069.
+        // The feedback torque is already constrained by the temporary limit,
+        // and this would be enough in a run_until_overload-like scenario. But
+        // for now we must limit the feedforward torque also, or it would never
+        // get into the stall state at high speeds.
+        int32_t total_torque = pbio_int_math_clamp(feedback_torque + feedforward_torque, srv->control.settings.actuation_max_temporary);
+
         // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
-        err = pbio_servo_actuate(srv, requested_actuation, feedback_torque + feedforward_torque);
+        err = pbio_servo_actuate(srv, requested_actuation, total_torque);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -647,12 +655,11 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, uint32_t dura
  *
  * @param [in]  srv                 The servo instance.
  * @param [in]  speed               Angular velocity in degrees per second.
- * @param [in]  torque_limit_pct    Percentage of maximum feedback torque to use.
- *                                  It will still use the default feedforward torque.
+ * @param [in]  torque_limit        Maximum torque to use.
  * @param [in]  on_completion       What to do once stalled.
  * @return                          Error code.
  */
-pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, int32_t torque_limit_pct, pbio_control_on_completion_t on_completion) {
+pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, int32_t torque_limit, pbio_control_on_completion_t on_completion) {
 
     if (on_completion == PBIO_CONTROL_ON_COMPLETION_CONTINUE) {
         // Can't continue after stall.
@@ -673,7 +680,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, int3
     srv->control.type |= PBIO_CONTROL_TYPE_FLAG_OBJECTIVE_IS_STALL;
 
     // Set the temporary torque limit used during this maneuver.
-    srv->control.settings.actuation_max_temporary = srv->control.settings.actuation_max * torque_limit_pct / 100;
+    srv->control.settings.actuation_max_temporary = torque_limit;
 
     return PBIO_SUCCESS;
 }
