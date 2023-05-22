@@ -36,12 +36,11 @@ STATIC mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
 // pybricks.pupdevices.TiltSensor.tilt
 STATIC mp_obj_t pupdevices_TiltSensor_tilt(mp_obj_t self_in) {
     pupdevices_TiltSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int8_t *tilt;
-    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, (uint8_t **)&tilt);
+    int8_t *tilt = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE);
     mp_obj_t ret[2];
     ret[0] = mp_obj_new_int(tilt[1]);
     ret[1] = mp_obj_new_int(tilt[0]);
-    return mp_obj_new_tuple(2, ret);
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_TiltSensor_tilt_obj, pupdevices_TiltSensor_tilt);
 

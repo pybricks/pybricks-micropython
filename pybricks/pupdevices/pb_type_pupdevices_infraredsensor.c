@@ -21,15 +21,13 @@ typedef struct _pupdevices_InfraredSensor_obj_t {
 
 // pybricks.pupdevices.InfraredSensor._raw
 STATIC int32_t pupdevices_InfraredSensor__raw(pbio_iodev_t *iodev) {
-    int32_t *raw;
-    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, (uint8_t **)&raw);
+    int32_t *raw = pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
     return raw[0];
 }
 
 // pybricks.pupdevices.InfraredSensor._count
 STATIC int32_t pupdevices_InfraredSensor__count(pbio_iodev_t *iodev) {
-    int32_t *count;
-    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, (uint8_t **)&count);
+    int32_t *count = pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT);
     return *count;
 }
 

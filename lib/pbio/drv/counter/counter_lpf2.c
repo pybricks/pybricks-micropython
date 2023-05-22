@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
 
 // LPF2 Counter driver
 //
@@ -68,7 +68,7 @@ static pbio_error_t pbdrv_counter_lpf2_update(pbdrv_counter_dev_t *dev) {
         PBIO_IODEV_MODE_PUP_REL_MOTOR__POS;
 
     // Get pointer to LPF2 data buffer.
-    uint8_t *data;
+    void *data;
     err = pbio_iodev_get_data(iodev, mode_id, &data);
     if (err != PBIO_SUCCESS) {
         return err;

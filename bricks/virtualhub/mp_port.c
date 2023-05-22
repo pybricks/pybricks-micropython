@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2023 The Pybricks Authors
 
 // MicroPython port-specific implementation hooks
 
@@ -149,12 +149,12 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
+pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data) {
     static uint8_t empty_data[PBIO_IODEV_MAX_DATA_SIZE] __attribute__((aligned(4)));
     *data = empty_data;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data) {
+pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
     return PBIO_SUCCESS;
 }
