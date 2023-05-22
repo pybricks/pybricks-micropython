@@ -1026,6 +1026,114 @@ static PT_THREAD(pbio_uartdev_receive_data(uartdev_port_data_t * data)) {
     PT_END(&data->data_pt);
 }
 
+/**
+ * Gets the minimum time needed before stale data is discarded.
+ *
+ * This is empirically determined based on sensor experiments.
+ *
+ * @param [in]  id          The device type ID.
+ * @param [in]  mode        The device mode.
+ * @return                  Required delay in milliseconds.
+ */
+static uint32_t pbio_iodev_delay_stale_data(pbio_iodev_type_id_t id, uint8_t mode) {
+    switch (id) {
+        case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
+            return mode == PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX ? 0 : 30;
+        case PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
+            return mode == PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT ? 0 : 30;
+        case PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR:
+            return mode == PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT ? 0 : 50;
+        default:
+            // Default delay for other sensors and modes.
+            return 0;
+    }
+}
+
+/**
+ * Gets the minimum time needed for the device to handle written data.
+ *
+ * This is empirically determined based on sensor experiments.
+ *
+ * @param [in]  id          The device type ID.
+ * @param [in]  mode        The device mode.
+ * @return                  Required delay in milliseconds.
+ */
+static uint32_t pbio_iodev_delay_set_data(pbio_iodev_type_id_t id, uint8_t mode) {
+    // The Boost Color Distance Sensor requires a long delay or successive
+    // writes are ignored.
+    if (id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR && mode == PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX) {
+        return 250;
+    }
+
+    // Default delay for setting data. In practice, this is the delay for setting
+    // the light on the color sensor and ultrasonic sensor.
+    return 2;
+}
+
+/**
+ * Checks if LEGO UART device mode change or data set operation is complete.
+ *
+ * @param [in]  iodev       The I/O device
+ * @return                  @c true if ready, @c false otherwise.
+ */
+static bool pbio_uartdev_operation_complete(pbio_iodev_t *iodev) {
+
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+    const pbio_iodev_type_id_t id = iodev->info->type_id;
+    const uint8_t mode = iodev->mode;
+
+    // Not ready if busy writing.
+    if (port_data->tx_busy) {
+        return false;
+    }
+
+    uint32_t time = pbdrv_clock_get_ms();
+
+    // If we were setting data, then wait for the matching delay.
+    if (port_data->tx_type == LUMP_MSG_TYPE_DATA) {
+        return time - port_data->tx_start_time >= pbio_iodev_delay_set_data(id, mode);
+    }
+
+    // Ready if mode change is complete and we have waited long enough for stale data to be discarded.
+    return mode == port_data->new_mode &&
+           time - port_data->mode_switch_time >= pbio_iodev_delay_stale_data(id, mode);
+}
+
+/**
+ * Starts sending data to the LEGO UART device mode.
+ *
+ * @param [in]  iodev       The I/O device
+ * @return                  Error code corresponding to ::ev3_uart_begin_tx_msg
+ *                          or ::PBIO_ERROR_INVALID_OP if device not in expected mode.
+ */
+static pbio_error_t pbio_uartdev_start_buffered_data_set(pbio_iodev_t *iodev) {
+
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+    const pbio_iodev_mode_t *mode_info = &iodev->info->mode_info[iodev->mode];
+
+    // Reset data length so we transmit only once.
+    uint8_t size = port_data->data_set_len;
+    port_data->data_set_len = 0;
+
+    // Not all modes support setting data and data must be of expected size.
+    if (!(mode_info->data_type & PBIO_IODEV_DATA_TYPE_WRITABLE) ||
+        size != mode_info->num_values * pbio_iodev_size_of(mode_info->data_type)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, iodev->mode, iodev->bin_data, size);
+}
+
+/**
+ * Starts sending data to the LEGO UART device mode if there is any.
+ */
+static void pbio_uartdev_handle_data_set_start(pbio_iodev_t *iodev) {
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+    if (pbio_uartdev_operation_complete(iodev) && port_data->data_set_len > 0) {
+        pbio_uartdev_start_buffered_data_set(iodev);
+    }
+}
+
 static void pbio_uartdev_handle_write_end(pbio_iodev_t *iodev) {
 
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
@@ -1074,73 +1182,14 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
                 pbio_uartdev_receive_data(data);
             }
             pbio_uartdev_handle_write_end(&data->iodev);
+            if (data->status == PBIO_UARTDEV_STATUS_DATA) {
+                pbio_uartdev_handle_data_set_start(&data->iodev);
+            }
         }
         PROCESS_WAIT_EVENT();
     }
 
     PROCESS_END();
-}
-
-/**
- * Gets the minimum time needed before stale data is discarded.
- *
- * This is empirically determined based on sensor experiments.
- *
- * @param [in]  id          The device type ID.
- * @param [in]  mode        The device mode.
- * @return                  Required delay in milliseconds.
- */
-static uint32_t pbio_iodev_delay_stale_data(pbio_iodev_type_id_t id, uint8_t mode) {
-    switch (id) {
-        case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
-            return mode == PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX ? 0 : 30;
-        case PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
-            return mode == PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT ? 0 : 30;
-        case PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR:
-            return mode == PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT ? 0 : 50;
-        default:
-            // Default delay for other sensors and modes.
-            return 0;
-    }
-}
-
-/**
- * Gets the minimum time needed for the device to handle written data.
- *
- * This is empirically determined based on sensor experiments.
- *
- * @param [in]  id          The device type ID.
- * @param [in]  mode        The device mode.
- * @return                  Required delay in milliseconds.
- */
-static uint32_t pbio_iodev_delay_set_data(pbio_iodev_type_id_t id, uint8_t mode) {
-    // The Boost Color Distance Sensor requires a long delay or successive
-    // writes are ignored.
-    if (id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR && mode == PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX) {
-        return 250;
-    }
-
-    // Default delay for setting data. In practice, this is the delay for setting
-    // the light on the color sensor and ultrasonic sensor.
-    return 2;
-}
-
-pbio_error_t pbio_iodev_start_buffered_write(pbio_iodev_t *iodev) {
-
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    const pbio_iodev_mode_t *mode_info = &iodev->info->mode_info[iodev->mode];
-
-    // Reset data length so we transmit only once.
-    uint8_t size = port_data->data_set_len;
-    port_data->data_set_len = 0;
-
-    // Not all modes support setting data and data must be of expected size.
-    if (!(mode_info->data_type & PBIO_IODEV_DATA_TYPE_WRITABLE) ||
-        size != mode_info->num_values * pbio_iodev_size_of(mode_info->data_type)) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, iodev->mode, iodev->bin_data, size);
 }
 
 /**
@@ -1158,39 +1207,9 @@ pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
         return PBIO_ERROR_NO_DEV;
     }
 
+    // Ready if operations are complete and there is no data left to set.
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    const pbio_iodev_type_id_t id = iodev->info->type_id;
-    const uint8_t mode = iodev->mode;
-
-    // Not ready if busy writing.
-    if (port_data->tx_busy) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    uint32_t time = pbdrv_clock_get_ms();
-
-    // If we were setting data, then wait for the matching delay.
-    if (port_data->tx_type == LUMP_MSG_TYPE_DATA) {
-        return (time - port_data->tx_start_time < pbio_iodev_delay_set_data(iodev->info->type_id, mode)) ?
-               PBIO_ERROR_AGAIN : PBIO_SUCCESS;
-    }
-
-    if (// Mode change is underway, check back later.
-        port_data->iodev.mode != port_data->new_mode ||
-        // May still have stale data, check back later.
-        time - port_data->mode_switch_time < pbio_iodev_delay_stale_data(id, mode)) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    // The requested modes are set. Could start sending data if there is any.
-    if (port_data->data_set_len) {
-        pbio_error_t err = pbio_iodev_start_buffered_write(iodev);
-        // On success, data only just started, so we are not ready yet.
-        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
-    }
-
-    // Everything is idle and nothing to send, so we are done.
-    return PBIO_SUCCESS;
+    return pbio_uartdev_operation_complete(iodev) && port_data->data_set_len == 0 ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 /**
@@ -1248,8 +1267,8 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
  *
  * @param [in]  iodev       The I/O device
  * @param [out] data        Pointer to hold array of data values.
- * @return                  ::PBIO_SUCCESS on success
- *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached.
  *                          ::PBIO_ERROR_AGAIN if the device is not ready for this operation.
  */
 pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
@@ -1281,8 +1300,8 @@ pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **da
  *
  * @param [in]  iodev       The I/O device
  * @param [out] data        Data to be set.
- * @return                  ::PBIO_SUCCESS on success
- *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached.
  */
 pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data) {
 
@@ -1308,7 +1327,7 @@ pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, co
 
     // If already in the right mode, start sending data right away.
     if (err == PBIO_SUCCESS) {
-        return pbio_iodev_start_buffered_write(iodev);
+        return pbio_uartdev_start_buffered_data_set(iodev);
     }
     return PBIO_SUCCESS;
 }
