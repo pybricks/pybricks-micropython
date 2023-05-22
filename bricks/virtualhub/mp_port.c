@@ -13,6 +13,7 @@
 #include <contiki.h>
 
 #include <pbio/main.h>
+#include <pbio/uartdev.h>
 #include <pbsys/core.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
@@ -138,23 +139,4 @@ void pb_virtualhub_delay_us(mp_uint_t us) {
     while (mp_hal_ticks_us() - start < us) {
         pb_virtualhub_poll();
     }
-}
-
-// Revisit, these don't belong here
-pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data) {
-    static uint8_t empty_data[PBIO_IODEV_MAX_DATA_SIZE] __attribute__((aligned(4)));
-    *data = empty_data;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
-    return PBIO_SUCCESS;
 }

@@ -18,6 +18,7 @@
 #include <pbdrv/ioport.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
+#include <pbio/uartdev.h>
 #include <pbio/util.h>
 
 #include "counter.h"
@@ -69,7 +70,7 @@ static pbio_error_t pbdrv_counter_lpf2_update(pbdrv_counter_dev_t *dev) {
 
     // Get pointer to LPF2 data buffer.
     void *data;
-    err = pbio_iodev_get_data(iodev, mode_id, &data);
+    err = pbio_uartdev_get_data(iodev, mode_id, &data);
     if (err != PBIO_SUCCESS) {
         return err;
     }
