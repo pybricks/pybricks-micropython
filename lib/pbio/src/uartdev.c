@@ -1200,7 +1200,7 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
  *                          ::PBIO_ERROR_AGAIN if not ready yet.
  *                          ::PBIO_ERROR_NO_DEV if no device is attached.
  */
-pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
+pbio_error_t pbio_uartdev_is_ready(pbio_iodev_t *iodev) {
 
     // Device is not there or still syncing.
     if (iodev->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
@@ -1223,7 +1223,7 @@ pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev) {
  *                          ::PBIO_ERROR_INVALID_ARG if the mode is not valid.
  *                          ::PBIO_ERROR_AGAIN if the device is not ready for this operation.
  */
-pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
+pbio_error_t pbio_uartdev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
 
     // Device is not there or still syncing.
     if (iodev->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
@@ -1246,7 +1246,7 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
     }
 
     // We can only initiate a mode switch if currently idle (receiving data).
-    pbio_error_t err = pbio_iodev_is_ready(iodev);
+    pbio_error_t err = pbio_uartdev_is_ready(iodev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -1271,7 +1271,7 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached.
  *                          ::PBIO_ERROR_AGAIN if the device is not ready for this operation.
  */
-pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data) {
+pbio_error_t pbio_uartdev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data) {
 
     // Device is not there or still syncing.
     if (iodev->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
@@ -1285,7 +1285,7 @@ pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data)
         return PBIO_ERROR_INVALID_OP;
     }
 
-    pbio_error_t err = pbio_iodev_is_ready(iodev);
+    pbio_error_t err = pbio_uartdev_is_ready(iodev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -1303,10 +1303,10 @@ pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data)
  * @return                  ::PBIO_SUCCESS on success.
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached.
  */
-pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
+pbio_error_t pbio_uartdev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
 
     // Start setting mode.
-    pbio_error_t err = pbio_iodev_set_mode(iodev, mode);
+    pbio_error_t err = pbio_uartdev_set_mode(iodev, mode);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -1316,7 +1316,7 @@ pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, co
     pbio_iodev_mode_t *mode_info = &port_data->info->mode_info[mode];
 
     // Check if the device is in this mode already.
-    err = pbio_iodev_is_ready(iodev);
+    err = pbio_uartdev_is_ready(iodev);
     if (err != PBIO_SUCCESS && err != PBIO_ERROR_AGAIN) {
         return err;
     }

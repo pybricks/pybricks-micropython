@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #ifndef _PBIO_UARTDEV_H_
 #define _PBIO_UARTDEV_H_
@@ -17,8 +17,15 @@ typedef struct {
 
 #if PBIO_CONFIG_UARTDEV
 
+/** @cond INTERNAL */
 pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev);
 void pbio_uartdev_ready(uint8_t id);
+/** @endcond */
+
+pbio_error_t pbio_uartdev_is_ready(pbio_iodev_t *iodev);
+pbio_error_t pbio_uartdev_set_mode(pbio_iodev_t *iodev, uint8_t mode);
+pbio_error_t pbio_uartdev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data);
+pbio_error_t pbio_uartdev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data);
 
 #if !PBIO_CONFIG_UARTDEV_NUM_DEV
 #error Must define PBIO_CONFIG_UARTDEV_NUM_DEV
@@ -34,6 +41,23 @@ static inline pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
 }
 
 static inline void pbio_uartdev_ready(uint8_t id) {
+}
+
+static inline pbio_error_t pbio_uartdev_is_ready(pbio_iodev_t *iodev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_uartdev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_uartdev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_uartdev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data) {
+    *data = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBIO_CONFIG_UARTDEV
