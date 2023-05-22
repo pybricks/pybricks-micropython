@@ -1073,14 +1073,12 @@ static uint32_t pbio_iodev_delay_set_data(pbio_iodev_type_id_t id, uint8_t mode)
 /**
  * Checks if LEGO UART device mode change or data set operation is complete.
  *
- * @param [in]  iodev       The I/O device
+ * @param [in]  port_data   The uartdev instance.
  * @return                  @c true if ready, @c false otherwise.
  */
-static bool pbio_uartdev_operation_complete(pbio_iodev_t *iodev) {
-
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    const pbio_iodev_type_id_t id = iodev->info->type_id;
-    const uint8_t mode = iodev->mode;
+static bool pbio_uartdev_operation_complete(uartdev_port_data_t *port_data) {
+    const pbio_iodev_type_id_t id = port_data->iodev.info->type_id;
+    const uint8_t mode = port_data->iodev.mode;
 
     // Not ready if busy writing.
     if (port_data->tx_busy) {
@@ -1102,14 +1100,12 @@ static bool pbio_uartdev_operation_complete(pbio_iodev_t *iodev) {
 /**
  * Starts sending data to the LEGO UART device mode.
  *
- * @param [in]  iodev       The I/O device
+ * @param [in]  port_data   The uartdev instance.
  * @return                  Error code corresponding to ::ev3_uart_begin_tx_msg
  *                          or ::PBIO_ERROR_INVALID_OP if device not in expected mode.
  */
-static pbio_error_t pbio_uartdev_start_buffered_data_set(pbio_iodev_t *iodev) {
-
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    const pbio_iodev_mode_t *mode_info = &iodev->info->mode_info[iodev->mode];
+static pbio_error_t pbio_uartdev_start_buffered_data_set(uartdev_port_data_t *port_data) {
+    const pbio_iodev_mode_t *mode_info = &port_data->iodev.info->mode_info[port_data->iodev.mode];
 
     // Reset data length so we transmit only once.
     uint8_t size = port_data->data_set_len;
@@ -1121,22 +1117,21 @@ static pbio_error_t pbio_uartdev_start_buffered_data_set(pbio_iodev_t *iodev) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, iodev->mode, iodev->bin_data, size);
+    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, port_data->iodev.mode, port_data->iodev.bin_data, size);
 }
 
 /**
  * Starts sending data to the LEGO UART device mode if there is any.
+ *
+ * @param [in]  port_data   The uartdev instance.
  */
-static void pbio_uartdev_handle_data_set_start(pbio_iodev_t *iodev) {
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    if (pbio_uartdev_operation_complete(iodev) && port_data->data_set_len > 0) {
-        pbio_uartdev_start_buffered_data_set(iodev);
+static void pbio_uartdev_handle_data_set_start(uartdev_port_data_t *port_data) {
+    if (pbio_uartdev_operation_complete(port_data) && port_data->data_set_len > 0) {
+        pbio_uartdev_start_buffered_data_set(port_data);
     }
 }
 
-static void pbio_uartdev_handle_write_end(pbio_iodev_t *iodev) {
-
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
+static void pbio_uartdev_handle_write_end(uartdev_port_data_t *port_data) {
     if (!port_data->tx_busy) {
         return;
     }
@@ -1177,13 +1172,17 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
     while (true) {
         for (i = 0; i < PBIO_CONFIG_UARTDEV_NUM_DEV; i++) {
             uartdev_port_data_t *data = &dev_data[i];
+
             pbio_uartdev_update(data);
+
             if (data->status == PBIO_UARTDEV_STATUS_DATA) {
                 pbio_uartdev_receive_data(data);
             }
-            pbio_uartdev_handle_write_end(&data->iodev);
+
+            pbio_uartdev_handle_write_end(data);
+
             if (data->status == PBIO_UARTDEV_STATUS_DATA) {
-                pbio_uartdev_handle_data_set_start(&data->iodev);
+                pbio_uartdev_handle_data_set_start(data);
             }
         }
         PROCESS_WAIT_EVENT();
@@ -1209,7 +1208,7 @@ pbio_error_t pbio_uartdev_is_ready(pbio_iodev_t *iodev) {
 
     // Ready if operations are complete and there is no data left to set.
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
-    return pbio_uartdev_operation_complete(iodev) && port_data->data_set_len == 0 ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
+    return pbio_uartdev_operation_complete(port_data) && port_data->data_set_len == 0 ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 /**
@@ -1327,8 +1326,9 @@ pbio_error_t pbio_uartdev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, 
 
     // If already in the right mode, start sending data right away.
     if (err == PBIO_SUCCESS) {
-        return pbio_uartdev_start_buffered_data_set(iodev);
+        return pbio_uartdev_start_buffered_data_set(port_data);
     }
+
     return PBIO_SUCCESS;
 }
 
