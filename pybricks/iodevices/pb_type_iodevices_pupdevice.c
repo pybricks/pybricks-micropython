@@ -59,30 +59,30 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
     pbio_iodev_data_type_t type;
 
     uint8_t mode = mp_obj_get_int(mode_in);
-    uint8_t *data;
     pb_assert(pbio_iodev_get_data_format(self->iodev, mode, &num_values, &type));
-    pb_pup_device_get_data(self->iodev, mode, &data);
 
     if (num_values == 0) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
+
+    void *data = pb_pup_device_get_data(self->iodev, mode);
 
     mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
 
     for (uint8_t i = 0; i < num_values; i++) {
         switch (type & PBIO_IODEV_DATA_TYPE_MASK) {
             case PBIO_IODEV_DATA_TYPE_INT8:
-                values[i] = mp_obj_new_int(*((int8_t *)(data + i * 1)));
+                values[i] = mp_obj_new_int(((int8_t *)data)[i]);
                 break;
             case PBIO_IODEV_DATA_TYPE_INT16:
-                values[i] = mp_obj_new_int(*((int16_t *)(data + i * 2)));
+                values[i] = mp_obj_new_int(((int16_t *)data)[i]);
                 break;
             case PBIO_IODEV_DATA_TYPE_INT32:
-                values[i] = mp_obj_new_int(*((int32_t *)(data + i * 4)));
+                values[i] = mp_obj_new_int(((int32_t *)data)[i]);
                 break;
             #if MICROPY_PY_BUILTINS_FLOAT
             case PBIO_IODEV_DATA_TYPE_FLOAT:
-                values[i] = mp_obj_new_float_from_f(*((float *)(data + i * 4)));
+                values[i] = mp_obj_new_float_from_f(((float *)data)[i]);
                 break;
             #endif
             default:

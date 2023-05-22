@@ -41,18 +41,16 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 // pybricks.pupdevices.UltrasonicSensor.distance
 STATIC mp_obj_t pupdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int16_t *distance;
-    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, (uint8_t **)&distance);
-    return mp_obj_new_int(*distance < 0 || *distance >= 2000 ? 2000 : *distance);
+    int16_t *distance = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL);
+    return mp_obj_new_int(distance[0] < 0 || distance[0] >= 2000 ? 2000 : *distance);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupdevices_UltrasonicSensor_distance);
 
 // pybricks.pupdevices.UltrasonicSensor.presence
 STATIC mp_obj_t pupdevices_UltrasonicSensor_presence(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int8_t *presence;
-    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, (uint8_t **)&presence);
-    return mp_obj_new_bool(*presence);
+    int8_t *presence = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN);
+    return mp_obj_new_bool(presence[0]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_presence_obj, pupdevices_UltrasonicSensor_presence);
 

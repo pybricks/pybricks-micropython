@@ -28,8 +28,8 @@ typedef struct _pupdevices_ColorSensor_obj_t {
 STATIC void pupdevices_ColorSensor__get_hsv_reflected(pbio_iodev_t *iodev, pbio_color_hsv_t *hsv) {
 
     // Read RGB
-    int16_t *data;
-    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, (uint8_t **)&data);
+    int16_t *data = pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
+
     const pbio_color_rgb_t rgb = {
         .r = data[0] == 1024 ? 255 : data[0] >> 2,
         .g = data[1] == 1024 ? 255 : data[1] >> 2,
@@ -44,8 +44,7 @@ STATIC void pupdevices_ColorSensor__get_hsv_reflected(pbio_iodev_t *iodev, pbio_
 STATIC void pupdevices_ColorSensor__get_hsv_ambient(pbio_iodev_t *iodev, pbio_color_hsv_t *hsv) {
 
     // Read SHSV mode (light off). This data is not available in RGB format
-    int16_t *data;
-    pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, (uint8_t **)&data);
+    int16_t *data = pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV);
 
     // Scale saturation and value to match 0-100% range in typical applications
     hsv->h = data[0];
@@ -129,8 +128,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Get reflection from average RGB reflection, which ranges from 0 to 3*1024
-    int16_t *data;
-    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, (uint8_t **)&data);
+    int16_t *data = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
 
     // Return value as reflection
     return mp_obj_new_int((data[0] + data[1] + data[2]) * 100 / 3072);
@@ -142,8 +140,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Get ambient from "V" in SHSV, which ranges from 0 to 10000
-    int16_t *data;
-    pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, (uint8_t **)&data);
+    int16_t *data = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV);
 
     // Return scaled to 100.
     return pb_obj_new_fraction(data[2], 100);

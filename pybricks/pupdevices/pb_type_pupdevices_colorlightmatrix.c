@@ -86,7 +86,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     }
 
     // Activate all colors.
-    pb_pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, (uint8_t *)color_ids);
+    pb_pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids);
 
     return mp_const_none;
 }

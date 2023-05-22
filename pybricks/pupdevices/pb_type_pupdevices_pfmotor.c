@@ -80,7 +80,7 @@ STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t mes
     // Send the data to the device. This automatically delays by about 250 ms
     // to ensure the data is properly sent and received. This also ensures that
     // the message will still work if two identical values are sent in a row.
-    pb_pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, (uint8_t *)&message);
+    pb_pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message);
 }
 
 // pybricks.pupdevices.PFMotor.dc

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR GPL-2.0-only
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 /*
  * Based on:
@@ -1271,7 +1271,7 @@ pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached.
  *                          ::PBIO_ERROR_AGAIN if the device is not ready for this operation.
  */
-pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
+pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data) {
 
     // Device is not there or still syncing.
     if (iodev->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
@@ -1303,7 +1303,7 @@ pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **da
  * @return                  ::PBIO_SUCCESS on success.
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached.
  */
-pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data) {
+pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
 
     // Start setting mode.
     pbio_error_t err = pbio_iodev_set_mode(iodev, mode);

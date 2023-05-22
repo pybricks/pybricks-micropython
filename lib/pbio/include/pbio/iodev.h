@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 /**
  * @addtogroup Iodev pbio/iodev: Input and output devices
@@ -574,8 +574,8 @@ pbio_error_t pbio_iodev_get_data_format(pbio_iodev_t *iodev, uint8_t mode, uint8
 
 pbio_error_t pbio_iodev_is_ready(pbio_iodev_t *iodev);
 pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode);
-pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data);
-pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data);
+pbio_error_t pbio_iodev_set_mode_with_data(pbio_iodev_t *iodev, uint8_t mode, const void *data);
+pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t mode, void **data);
 #endif // _PBIO_IODEV_H_
 
 /** @} */

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -24,14 +24,18 @@ static void pb_pup_device_wait_ready(pbio_iodev_t *iodev) {
 }
 
 // This will be replaced by an async handler
-void pb_pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t **data) {
+void *pb_pup_device_get_data(pbio_iodev_t *iodev, uint8_t mode) {
     pb_assert(pbio_iodev_set_mode(iodev, mode));
     pb_pup_device_wait_ready(iodev);
-    pb_assert(pbio_iodev_get_data(iodev, mode, data));
+
+    void *data;
+    pb_assert(pbio_iodev_get_data(iodev, mode, &data));
+
+    return data;
 }
 
 // This will be replaced by an async handler
-void pb_pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, uint8_t *data) {
+void pb_pup_device_set_data(pbio_iodev_t *iodev, uint8_t mode, const void *data) {
     pb_assert(pbio_iodev_set_mode_with_data(iodev, mode, data));
     pb_pup_device_wait_ready(iodev);
 }
