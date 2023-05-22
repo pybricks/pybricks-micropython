@@ -266,25 +266,22 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         common_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_COAST_obj),
-        PB_ARG_DEFAULT_NONE(torque_limit),
         PB_ARG_DEFAULT_NONE(duty_limit));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // Backwards compatibility <= v3.2: allow duty_limit arg as torque_limit.
+    // REVISIT: Use torque limit. See https://github.com/pybricks/support/issues/1069.
+    int32_t torque_limit;
     if (duty_limit_in != mp_const_none) {
-        torque_limit_in = duty_limit_in;
-    }
-
-    // Get torque limit as percentage of max torque.
-    int32_t torque_limit_pct = 100;
-    if (torque_limit_in != mp_const_none) {
-        torque_limit_pct = pb_obj_get_pct(torque_limit_in);
+        int32_t voltage_limit = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_pct(duty_limit_in));
+        torque_limit = pbio_observer_voltage_to_torque(self->srv->observer.model, voltage_limit);
+    } else {
+        torque_limit = self->srv->control.settings.actuation_max;
     }
 
     // Start moving.
-    pb_assert(pbio_servo_run_until_stalled(self->srv, speed, torque_limit_pct, then));
+    pb_assert(pbio_servo_run_until_stalled(self->srv, speed, torque_limit, then));
 
     // Handle completion by awaiting or blocking.
     return pb_type_awaitable_await_or_wait(

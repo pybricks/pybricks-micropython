@@ -20,8 +20,6 @@
 
 ### Changed
 - Updated MicroPython to v1.20.0.
-- Changed `duty_limit` argument of `Motor.run_until_stalled` to `torque_limit`.
-  The original name continues to work as well.
 
 ### Fixed
 - Fixed stdin containing `0x06` command byte ([support#1052]).
