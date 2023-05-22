@@ -87,6 +87,9 @@ void pb_pup_device_setup_motor(pbio_port_id_t port, bool is_servo) {
         return;
     }
 
+    // FIXME: there is no guarantee that the iodev is a uartdev
+    #if !PYBRICKS_HUB_VIRTUALHUB
+
     // Choose mode based on device capabilities.
     uint8_t mode_id = PBIO_IODEV_IS_ABS_MOTOR(iodev) ?
         PBIO_IODEV_MODE_PUP_ABS_MOTOR__CALIB:
@@ -95,6 +98,8 @@ void pb_pup_device_setup_motor(pbio_port_id_t port, bool is_servo) {
     // Activate mode.
     pb_assert(pbio_uartdev_set_mode(iodev, mode_id));
     pb_pup_device_wait_ready(iodev);
+
+    #endif // !PYBRICKS_HUB_VIRTUALHUB
 }
 
 // REVISIT: Drop pb_device abstraction layer
