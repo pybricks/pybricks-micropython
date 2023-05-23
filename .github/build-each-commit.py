@@ -90,5 +90,5 @@ for commit in pybricks.iter_commits(
                 "RowKey": commit.hexsha,
                 args.hub: size,
             },
-            UpdateMode.REPLACE,
+            UpdateMode.MERGE,
         )

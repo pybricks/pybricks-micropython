@@ -131,7 +131,7 @@ for commit in pybricks.iter_commits(
 
     firmware_size_table.upsert_entity(
         {"PartitionKey": "size", "RowKey": commit.hexsha, **sizes},
-        UpdateMode.REPLACE,
+        UpdateMode.MERGE,
     )
 
 ci_status_table.update_entity(
@@ -140,5 +140,5 @@ ci_status_table.update_entity(
         "RowKey": "lastHash",
         "hash": pybricks.commit(PYBRICKS_BRANCH).hexsha,
     },
-    UpdateMode.REPLACE,
+    UpdateMode.MERGE,
 )
