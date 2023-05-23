@@ -107,7 +107,11 @@ STATIC observed_data_t *lookup_observed_data(uint8_t channel) {
  * @param [in]  rssi            The RSSI of the event in dBm.
  */
 STATIC void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uint8_t *data, uint8_t length, int8_t rssi) {
-    if (event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND && length >= 5 && data[1] == MFG_SPECIFIC && pbio_get_uint16_le(&data[2]) == LEGO_CID) {
+    // NB: ideally we would also be checking `event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND`
+    // here but due to a Bluetooth firmware bug on city hub, we have to allow other
+    // advertisement types. This would filter out broadcasts from the experimental
+    // feature in official LEGO Robot Inventor firmware.
+    if (length >= 5 && data[1] == MFG_SPECIFIC && pbio_get_uint16_le(&data[2]) == LEGO_CID) {
         uint8_t channel = data[4];
 
         observed_data_t *ch_data = lookup_observed_data(channel);

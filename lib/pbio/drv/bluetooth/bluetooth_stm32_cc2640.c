@@ -840,14 +840,35 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
 
     if (!is_broadcasting) {
+        #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
+        // On city hub, since we have to use connectable advertisement, we
+        // set the advertising interval to 100ms to match other platforms.
+
         PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_makeDiscoverable(ADV_NONCONN_IND, GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
+        GAP_SetParamValue(TGAP_CONN_ADV_INT_MIN, 0xA0);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_SetParamValue(TGAP_CONN_ADV_INT_MAX, 0xA0);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+
+        #endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_makeDiscoverable(
+            #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
+            // City hub fails to send non-connectable advertisements so we
+            // have to use the wrong advertisement type to get it to actually
+            // send something over the air.
+            ADV_IND,
+            #else
+            ADV_NONCONN_IND,
+            #endif
+            GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
             GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
         PT_WAIT_UNTIL(pt, hci_command_status);
-
-        // NB: This command succeeds on city hub but it doesn't actually start
-        // advertising. Apparently, only connectable advertisements work with
-        // that firmware version.
 
         if (read_buf[8] != bleSUCCESS) {
             task->status = ble_error_to_pbio_error(read_buf[8]);
@@ -885,6 +906,21 @@ static PT_THREAD(stop_broadcast_task(struct pt *pt, pbio_task_t *task)) {
 
         // Status could also be bleIncorrectMode which means "Not advertising".
         // This is not expected, but should be safe to ignore.
+
+        #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
+        // Restore advertising interval from gap_init().
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_SetParamValue(TGAP_CONN_ADV_INT_MIN, 40);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_SetParamValue(TGAP_CONN_ADV_INT_MAX, 40);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+
+        #endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
 
         is_broadcasting = false;
     }
