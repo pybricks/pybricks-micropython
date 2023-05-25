@@ -18,35 +18,62 @@
 
 // Class structure for ColorSensor. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _pupdevices_ColorSensor_obj_t {
-    mp_obj_base_t base;
+    pb_pupdevices_obj_base_t pup_base;
     mp_obj_t color_map;
-    pbio_iodev_t *iodev;
     mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
 
-// pybricks._common.ColorSensor._get_hsv_reflected
-STATIC void pupdevices_ColorSensor__get_hsv_reflected(pbio_iodev_t *iodev, pbio_color_hsv_t *hsv) {
+// pybricks.pupdevices.ColorSensor.__init__
+STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port));
 
-    // Read RGB
-    int16_t *data = pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
+    pupdevices_ColorSensor_obj_t *self = mp_obj_malloc(pupdevices_ColorSensor_obj_t, type);
+    pb_pupdevices_init_class(&self->pup_base, port_in, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
 
+    // Create an instance of the LightArray class
+    self->lights = common_LightArray_obj_make_new(&self->pup_base, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
+
+    // Do one reading to make sure everything is working and to set default mode
+    pb_pupdevices_get_data_blocking(&self->pup_base, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
+
+    // Save default settings
+    pb_color_map_save_default(&self->color_map);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.pupdevices.ColorSensor.reflection
+STATIC mp_obj_t get_reflection(mp_obj_t self_in) {
+    // Get reflection from average RGB reflection, which ranges from 0 to 3*1024
+    int16_t *data = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
+    return mp_obj_new_int((data[0] + data[1] + data[2]) * 100 / 3072);
+}
+STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_reflection_obj, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, get_reflection);
+
+// pybricks.pupdevices.ColorSensor.ambient
+STATIC mp_obj_t get_ambient(mp_obj_t self_in) {
+    // Get ambient from "V" in SHSV (0--10000), scaled to 0 to 100
+    int16_t *data = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV);
+    return pb_obj_new_fraction(data[2], 100);
+}
+STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_ambient_obj, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, get_ambient);
+
+// Helper for getting HSV with the light on.
+STATIC void get_hsv_reflected(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
+    int16_t *data = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
     const pbio_color_rgb_t rgb = {
         .r = data[0] == 1024 ? 255 : data[0] >> 2,
         .g = data[1] == 1024 ? 255 : data[1] >> 2,
         .b = data[2] == 1024 ? 255 : data[2] >> 2,
     };
-
-    // Convert to HSV
     pb_color_map_rgb_to_hsv(&rgb, hsv);
 }
 
-// pybricks._common.ColorSensor._get_hsv_ambient
-STATIC void pupdevices_ColorSensor__get_hsv_ambient(pbio_iodev_t *iodev, pbio_color_hsv_t *hsv) {
-
-    // Read SHSV mode (light off). This data is not available in RGB format
-    int16_t *data = pb_pup_device_get_data(iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV);
-
-    // Scale saturation and value to match 0-100% range in typical applications
+// Helper for getting HSV with the light off, scale saturation and value to
+// match 0-100% range in typical applications.
+STATIC void get_hsv_ambient(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
+    int16_t *data = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV);
     hsv->h = data[0];
     hsv->s = data[1] / 10;
     if (hsv->s > 100) {
@@ -58,94 +85,67 @@ STATIC void pupdevices_ColorSensor__get_hsv_ambient(pbio_iodev_t *iodev, pbio_co
     }
 }
 
-// pybricks.pupdevices.ColorSensor.__init__
-STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    pupdevices_ColorSensor_obj_t *self = mp_obj_malloc(pupdevices_ColorSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    // Get iodevices
-    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
-
-    // Create an instance of the LightArray class
-    self->lights = common_LightArray_obj_make_new(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
-
-    // Do one reading to make sure everything is working and to set default mode
-    pbio_color_hsv_t hsv;
-    pupdevices_ColorSensor__get_hsv_reflected(self->iodev, &hsv);
-
-    // Save default settings
-    pb_color_map_save_default(&self->color_map);
-
-    return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks._common.ColorSensor.hsv
-STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pupdevices_ColorSensor_obj_t, self,
-        PB_ARG_DEFAULT_TRUE(surface));
-
-    // Create color object
+// pybricks.pupdevices.ColorSensor.hsv(surface=True)
+STATIC mp_obj_t get_hsv_surface_true(mp_obj_t self_in) {
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-
-    // Get either reflected or ambient HSV
-    if (mp_obj_is_true(surface_in)) {
-        pupdevices_ColorSensor__get_hsv_reflected(self->iodev, &color->hsv);
-    } else {
-        pupdevices_ColorSensor__get_hsv_ambient(self->iodev, &color->hsv);
-    }
-
-    // Return color
+    get_hsv_reflected(self_in, &color->hsv);
     return MP_OBJ_FROM_PTR(color);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_hsv_obj, 1, pupdevices_ColorSensor_hsv);
+STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_hsv_surface_true_obj, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, get_hsv_surface_true);
 
-// pybricks._common.ColorSensor.color
-STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.pupdevices.ColorSensor.hsv(surface=False)
+STATIC mp_obj_t get_hsv_surface_false(mp_obj_t self_in) {
+    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
+    get_hsv_ambient(self_in, &color->hsv);
+    return MP_OBJ_FROM_PTR(color);
+}
+STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_hsv_surface_false_obj, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, get_hsv_surface_false);
+
+// pybricks.pupdevices.ColorSensor.color(surface=True)
+STATIC mp_obj_t get_color_surface_true(mp_obj_t self_in) {
+    pbio_color_hsv_t hsv;
+    get_hsv_reflected(self_in, &hsv);
+    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return pb_color_map_get_color(&self->color_map, &hsv);
+}
+STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_color_surface_true_obj, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, get_color_surface_true);
+
+// pybricks.pupdevices.ColorSensor.color(surface=False)
+STATIC mp_obj_t get_color_surface_false(mp_obj_t self_in) {
+    pbio_color_hsv_t hsv;
+    get_hsv_ambient(self_in, &hsv);
+    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return pb_color_map_get_color(&self->color_map, &hsv);
+}
+STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_color_surface_false_obj, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, get_color_surface_false);
+
+// pybricks.pupdevices.ColorSensor.hsv
+STATIC mp_obj_t get_hsv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(surface));
 
-    // Get either reflected or ambient HSV
-    pbio_color_hsv_t hsv;
+    (void)self;
     if (mp_obj_is_true(surface_in)) {
-        pupdevices_ColorSensor__get_hsv_reflected(self->iodev, &hsv);
-    } else {
-        pupdevices_ColorSensor__get_hsv_ambient(self->iodev, &hsv);
+        return pb_pupdevices_method_call(MP_OBJ_FROM_PTR(&get_hsv_surface_true_obj), 1, 0, pos_args);
     }
-
-    // Get and return discretized color
-    return pb_color_map_get_color(&self->color_map, &hsv);
+    return pb_pupdevices_method_call(MP_OBJ_FROM_PTR(&get_hsv_surface_false_obj), 1, 0, pos_args);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(get_hsv_obj, 1, get_hsv);
 
-// pybricks.pupdevices.ColorSensor.reflection
-STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
-    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks.pupdevices.ColorSensor.color
+STATIC mp_obj_t get_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pupdevices_ColorSensor_obj_t, self,
+        PB_ARG_DEFAULT_TRUE(surface));
 
-    // Get reflection from average RGB reflection, which ranges from 0 to 3*1024
-    int16_t *data = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I);
-
-    // Return value as reflection
-    return mp_obj_new_int((data[0] + data[1] + data[2]) * 100 / 3072);
+    (void)self;
+    if (mp_obj_is_true(surface_in)) {
+        return pb_pupdevices_method_call(MP_OBJ_FROM_PTR(&get_color_surface_true_obj), 1, 0, pos_args);
+    }
+    return pb_pupdevices_method_call(MP_OBJ_FROM_PTR(&get_color_surface_false_obj), 1, 0, pos_args);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_reflection_obj, pupdevices_ColorSensor_reflection);
-
-// pybricks.pupdevices.ColorSensor.ambient
-STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
-    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    // Get ambient from "V" in SHSV, which ranges from 0 to 10000
-    int16_t *data = pb_pup_device_get_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV);
-
-    // Return scaled to 100.
-    return pb_obj_new_fraction(data[2], 100);
-}
-MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSensor_ambient);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(get_color_obj, 1, get_color);
 
 STATIC const pb_attr_dict_entry_t pupdevices_ColorSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_ColorSensor_obj_t, lights),
@@ -154,10 +154,10 @@ STATIC const pb_attr_dict_entry_t pupdevices_ColorSensor_attr_dict[] = {
 
 // dir(pybricks.pupdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&pupdevices_ColorSensor_hsv_obj)                  },
-    { MP_ROM_QSTR(MP_QSTR_color),       MP_ROM_PTR(&pupdevices_ColorSensor_color_obj)                },
-    { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorSensor_reflection_obj)           },
-    { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorSensor_ambient_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&get_hsv_obj)                  },
+    { MP_ROM_QSTR(MP_QSTR_color),       MP_ROM_PTR(&get_color_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&get_reflection_obj)           },
+    { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&get_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_detectable_colors),   MP_ROM_PTR(&pb_ColorSensor_detectable_colors_obj)                    },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);

@@ -123,11 +123,16 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     return match;
 }
 
-// Generic class structure for ColorDistanceSensor
-// Any color sensor structure with a color_map
-// must have base and color_map as the first two members.
+#include <pybricks/pupdevices.h>
+
+// HACK: all color sensor structures must have color_map as second item
+// REVISIT: Replace with a safer solution to share this method across sensors
 typedef struct _pb_ColorSensor_obj_t {
+    #if PYBRICKS_PY_PUPDEVICES
+    pb_pupdevices_obj_base_t pup_base;
+    #else
     mp_obj_base_t base;
+    #endif
     mp_obj_t color_map;
 } pb_ColorSensor_obj_t;
 
