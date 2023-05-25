@@ -48,28 +48,28 @@ typedef struct _pb_type_awaitable_obj_t pb_type_awaitable_obj_t;
  * operations as needed (hold a motor, etc.). This is not the same as cancel
  * below, which always stops the relevant hardware (i.e. always coast).
  *
- * @param [in]  object         The object/device associated with this awaitable.
+ * @param [in]  obj            The object associated with this awaitable.
  * @param [in]  start_time     The time when the awaitable was created.
  * @return                     True if operation is complete, False otherwise.
  */
-typedef bool (*pb_type_awaitable_test_completion_t)(void *object, uint32_t end_time);
+typedef bool (*pb_type_awaitable_test_completion_t)(mp_obj_t objt, uint32_t end_time);
 
 /**
  * Gets the return value of the awaitable. If it always returns None, providing
  * this function is not necessary.
  *
- * @param [in]  object         The object/device associated with this awaitable.
+ * @param [in]  obj            The object associated with this awaitable.
  * @return                     The return value of the awaitable.
  */
-typedef mp_obj_t (*pb_type_awaitable_return_t)(void *object);
+typedef mp_obj_t (*pb_type_awaitable_return_t)(mp_obj_t obj);
 
 /**
  * Called on cancel/close. Used to stop hardware operation in unhandled
  * conditions.
  *
- * @param [in]  object         The object/device associated with this awaitable.
+ * @param [in]  obj            The object associated with this awaitable.
  */
-typedef void (*pb_type_awaitable_cancel_t)(void *object);
+typedef void (*pb_type_awaitable_cancel_t)(mp_obj_t obj);
 
 #define pb_type_awaitable_end_time_none (0)
 
@@ -77,10 +77,10 @@ typedef void (*pb_type_awaitable_cancel_t)(void *object);
 
 #define pb_type_awaitable_cancel_none (NULL)
 
-void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options);
+void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options);
 
 mp_obj_t pb_type_awaitable_await_or_wait(
-    void *object,
+    mp_obj_t obj,
     mp_obj_t awaitables_in,
     uint32_t end_time,
     pb_type_awaitable_test_completion_t test_completion_func,
