@@ -1162,6 +1162,7 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
 PROCESS_THREAD(pbio_uartdev_process, ev, data) {
     static struct pt pt;
     static int i;
+    static uartdev_port_data_t *port_data;
 
     PROCESS_BEGIN();
 
@@ -1171,18 +1172,18 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
 
     while (true) {
         for (i = 0; i < PBIO_CONFIG_UARTDEV_NUM_DEV; i++) {
-            uartdev_port_data_t *data = &dev_data[i];
+            port_data = &dev_data[i];
 
-            pbio_uartdev_update(data);
+            pbio_uartdev_update(port_data);
 
-            if (data->status == PBIO_UARTDEV_STATUS_DATA) {
-                pbio_uartdev_receive_data(data);
+            if (port_data->status == PBIO_UARTDEV_STATUS_DATA) {
+                pbio_uartdev_receive_data(port_data);
             }
 
-            pbio_uartdev_handle_write_end(data);
+            pbio_uartdev_handle_write_end(port_data);
 
-            if (data->status == PBIO_UARTDEV_STATUS_DATA) {
-                pbio_uartdev_handle_data_set_start(data);
+            if (port_data->status == PBIO_UARTDEV_STATUS_DATA) {
+                pbio_uartdev_handle_data_set_start(port_data);
             }
         }
         PROCESS_WAIT_EVENT();
