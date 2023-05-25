@@ -14,6 +14,11 @@
             "command": "make ev3dev-armel -j && cp bricks/ev3dev/build-armel/pybricks-micropython /run/user/1000/gvfs/sftp:host=*/home/robot"
         },
         {
+            "label": "build movehub",
+            "type": "shell",
+            "command": "make movehub -j"
+        },
+        {
             "label": "build virtualhub",
             "type": "shell",
             "command": "poetry run make -C bricks/virtualhub DEBUG=1 COPT=-O0 CROSS_COMPILE= -j"
