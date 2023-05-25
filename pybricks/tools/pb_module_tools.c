@@ -49,7 +49,7 @@ void pb_module_tools_init(void) {
     run_loop_is_active = false;
 }
 
-STATIC bool pb_module_tools_wait_test_completion(void *object, uint32_t end_time) {
+STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t end_time) {
     return mp_hal_ticks_ms() - end_time < UINT32_MAX / 2;
 }
 
@@ -67,6 +67,10 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         }
         return mp_const_none;
     }
+
+    // Require that duration is nonnegative small int. This makes it cheaper to
+    // test completion state in iteration loop.
+    time = pbio_int_math_bind(time, 0, INT32_MAX >> 2);
 
     return pb_type_awaitable_await_or_wait(
         NULL, // wait functions are not associated with an object

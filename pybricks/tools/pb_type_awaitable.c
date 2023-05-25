@@ -21,7 +21,7 @@ struct _pb_type_awaitable_obj_t {
     /**
      * Object associated with this awaitable, such as the motor we wait on.
      */
-    void *object;
+    mp_obj_t obj;
     /**
      * End time. Gets passed to completion test to allow for graceful timeout
      * or raise timeout errors if desired.
@@ -48,7 +48,7 @@ STATIC mp_obj_t pb_type_awaitable_close(mp_obj_t self_in) {
     self->test_completion = AWAITABLE_FREE;
     // Handle optional clean up/cancelling of hardware operation.
     if (self->cancel) {
-        self->cancel(self->object);
+        self->cancel(self->obj);
     }
     return mp_const_none;
 }
@@ -63,7 +63,7 @@ STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     }
 
     // Keep going if not completed by returning None.
-    if (!self->test_completion(self->object, self->end_time)) {
+    if (!self->test_completion(self->obj, self->end_time)) {
         return mp_const_none;
     }
 
@@ -76,7 +76,7 @@ STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     }
 
     // Otherwise, set return value via stop iteration.
-    return mp_make_stop_iteration(self->return_value(self->object));
+    return mp_make_stop_iteration(self->return_value(self->obj));
 }
 
 STATIC const mp_rom_map_elem_t pb_type_awaitable_locals_dict_table[] = {
@@ -95,7 +95,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_awaitable,
 /**
  * Gets an awaitable object that is not in use, or makes a new one.
  *
- * @param [in] awaitables_in        List of awaitables associated with @p object.
+ * @param [in] awaitables_in        List of awaitables associated with @p obj.
  */
 STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
 
@@ -137,11 +137,11 @@ STATIC bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
  * This is normally used by the function that makes a new awaitable, but it can
  * also be called independently to cancel without starting a new awaitable.
  *
- * @param [in] object                The object whose method we want to wait for completion.
- * @param [in] awaitables_in         List of awaitables associated with @p object.
+ * @param [in] obj                   The object whose method we want to wait for completion.
+ * @param [in] awaitables_in         List of awaitables associated with @p obj.
  * @param [in] options               Controls awaitable behavior.
  */
-void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options) {
+void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options) {
 
     // Exit if nothing to do.
     if (!pb_module_tools_run_loop_is_active() || options == PB_TYPE_AWAITABLE_OPT_NONE) {
@@ -156,7 +156,7 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
         if (awaitable->test_completion) {
             // Cancel hardware operation if requested and available.
             if (options & PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK && awaitable->cancel) {
-                awaitable->cancel(awaitable->object);
+                awaitable->cancel(awaitable->obj);
             }
             // Set awaitable to done so it gets cancelled it gracefully on the
             // next iteration.
@@ -172,8 +172,8 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
  *
  * Automatically cancels any previous awaitables associated with the object if requested.
  *
- * @param [in] object                The object whose method we want to wait for completion.
- * @param [in] awaitables_in         List of awaitables associated with @p object.
+ * @param [in] obj                   The object whose method we want to wait for completion.
+ * @param [in] awaitables_in         List of awaitables associated with @p obj.
  * @param [in] end_time              Wall time in milliseconds when the operation should end.
  *                                   May be arbitrary if completion function does not need it.
  * @param [in] test_completion_func  Function to test if the operation is complete.
@@ -182,7 +182,7 @@ void pb_type_awaitable_cancel_all(void *object, mp_obj_t awaitables_in, pb_type_
  * @param [in] options               Controls awaitable behavior.
  */
 mp_obj_t pb_type_awaitable_await_or_wait(
-    void *object,
+    mp_obj_t obj,
     mp_obj_t awaitables_in,
     uint32_t end_time,
     pb_type_awaitable_test_completion_t test_completion_func,
@@ -199,13 +199,13 @@ mp_obj_t pb_type_awaitable_await_or_wait(
         }
 
         // First cancel linked awaitables if requested.
-        pb_type_awaitable_cancel_all(object, awaitables_in, options);
+        pb_type_awaitable_cancel_all(obj, awaitables_in, options);
 
         // Gets free existing awaitable or creates a new one.
         pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(awaitables_in);
 
         // Initialize awaitable.
-        awaitable->object = object;
+        awaitable->obj = obj;
         awaitable->test_completion = test_completion_func;
         awaitable->return_value = return_value_func;
         awaitable->cancel = cancel_func;
@@ -214,13 +214,13 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     }
 
     // Outside run loop, block until the operation is complete.
-    while (test_completion_func && !test_completion_func(object, end_time)) {
+    while (test_completion_func && !test_completion_func(obj, end_time)) {
         mp_hal_delay_ms(1);
     }
     if (!return_value_func) {
         return mp_const_none;
     }
-    return return_value_func(object);
+    return return_value_func(obj);
 }
 
 #endif // PYBRICKS_PY_TOOLS
