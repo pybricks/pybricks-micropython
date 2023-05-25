@@ -22,7 +22,8 @@
 // Class structure for PFMotor.
 typedef struct _pupdevices_PFMotor_obj_t {
     mp_obj_base_t base;
-    pbio_iodev_t *iodev;
+    // Point to ColorDistanceSensor, this class does not manage its own device.
+    pb_pupdevices_obj_base_t *pup_base;
     uint8_t channel;
     bool use_blue_port;
     pbio_direction_t direction;
@@ -35,9 +36,6 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
         PB_ARG_REQUIRED(channel),
         PB_ARG_REQUIRED(color),
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
-
-    // Get device
-    pbio_iodev_t *sensor = pupdevices_ColorDistanceSensor__get_device(sensor_in);
 
     // Get channel
     mp_int_t channel = mp_obj_get_int(channel_in);
@@ -57,9 +55,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
 
     // All checks have passed, so create the object
     pupdevices_PFMotor_obj_t *self = mp_obj_malloc(pupdevices_PFMotor_obj_t, type);
-
-    // Save init arguments
-    self->iodev = sensor;
+    self->pup_base = pupdevices_ColorDistanceSensor__get_device(sensor_in);
     self->channel = channel;
     self->use_blue_port = use_blue_port;
     self->direction = positive_direction;
@@ -67,7 +63,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t message) {
+STATIC mp_obj_t pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t message) {
     // Choose blue or red output
     message |= (self->use_blue_port) << 4;
 
@@ -80,7 +76,7 @@ STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t mes
     // Send the data to the device. This automatically delays by about 250 ms
     // to ensure the data is properly sent and received. This also ensures that
     // the message will still work if two identical values are sent in a row.
-    pb_pup_device_set_data(self->iodev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message);
+    return pb_pupdevices_set_data(self->pup_base, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message);
 }
 
 // pybricks.pupdevices.PFMotor.dc
@@ -106,23 +102,19 @@ STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, m
     // // For forward, PWM steps 1--7 are binary 1 to 7, backward is 15--9
     int32_t message = (forward || pwm == 0) ? pwm : 16 - pwm;
 
-    pupdevices_PFMotor__send(self, message);
-
-    return mp_const_none;
+    return pupdevices_PFMotor__send(self, message);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_PFMotor_dc_obj, 1, pupdevices_PFMotor_dc);
 
 // pybricks.pupdevices.PFMotor.stop
 STATIC mp_obj_t pupdevices_PFMotor_stop(mp_obj_t self_in) {
-    pupdevices_PFMotor__send(MP_OBJ_TO_PTR(self_in), 0);
-    return mp_const_none;
+    return pupdevices_PFMotor__send(MP_OBJ_TO_PTR(self_in), 0);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_PFMotor_stop_obj, pupdevices_PFMotor_stop);
 
 // pybricks.pupdevices.PFMotor.brake
 STATIC mp_obj_t pupdevices_PFMotor_brake(mp_obj_t self_in) {
-    pupdevices_PFMotor__send(MP_OBJ_TO_PTR(self_in), 8);
-    return mp_const_none;
+    return pupdevices_PFMotor__send(MP_OBJ_TO_PTR(self_in), 8);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_PFMotor_brake_obj, pupdevices_PFMotor_brake);
 

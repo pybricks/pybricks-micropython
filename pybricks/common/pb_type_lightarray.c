@@ -19,7 +19,7 @@
 // pybricks._common.Light class object
 typedef struct _common_LightArray_obj_t {
     mp_obj_base_t base;
-    pbio_iodev_t *iodev;
+    pb_pupdevices_obj_base_t *sensor;
     uint8_t light_mode;
     uint8_t number_of_lights;
 } common_LightArray_obj_t;
@@ -52,10 +52,8 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
         }
     }
 
-    // Set the brightness values
-    pb_pup_device_set_data(self->iodev, self->light_mode, brightness_values);
-
-    return mp_const_none;
+    // Set the brightness values and wait or await it.
+    return pb_pupdevices_set_data(self->sensor, self->light_mode, brightness_values);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightArray_on_obj, 1, common_LightArray_on);
 
@@ -81,9 +79,9 @@ STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightArray,
     locals_dict, &common_LightArray_locals_dict);
 
 // pybricks._common.LightArray.__init__
-mp_obj_t common_LightArray_obj_make_new(pbio_iodev_t *iodev, uint8_t light_mode, uint8_t number_of_lights) {
+mp_obj_t common_LightArray_obj_make_new(pb_pupdevices_obj_base_t *sensor, uint8_t light_mode, uint8_t number_of_lights) {
     common_LightArray_obj_t *light = mp_obj_malloc(common_LightArray_obj_t, &pb_type_LightArray);
-    light->iodev = iodev;
+    light->sensor = sensor;
     light->light_mode = light_mode;
     light->number_of_lights = number_of_lights;
     return MP_OBJ_FROM_PTR(light);

@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_PUPDEVICES
 
 #include <pbio/iodev.h>
+#include <pbio/uartdev.h>
 #include <pbio/int_math.h>
 
 #include "py/objstr.h"
@@ -20,8 +21,11 @@
 
 // Class structure for PUPDevice
 typedef struct _iodevices_PUPDevice_obj_t {
-    mp_obj_base_t base;
-    pbio_iodev_t *iodev;
+    pb_pupdevices_obj_base_t pup_base;
+    // Mode used when initiating awaitable read. REVISIT: This should be stored
+    // on the awaitable instead, as extra context. For now, it is safe since
+    // concurrent reads with the same sensor are not permitten.
+    uint8_t last_mode;
 } iodevices_PUPDevice_obj_t;
 
 // pybricks.iodevices.PUPDevice.__init__
@@ -30,42 +34,30 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
         PB_ARG_REQUIRED(port));
 
     iodevices_PUPDevice_obj_t *self = mp_obj_malloc(iodevices_PUPDevice_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
-
+    pb_pupdevices_init_class(&self->pup_base, port_in, PBIO_IODEV_TYPE_ID_LUMP_UART);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.iodevices.PUPDevice.info
 STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
     mp_obj_t info_dict = mp_obj_new_dict(1);
-    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(self->iodev->info->type_id));
-
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(self->pup_base.iodev->info->type_id));
     return info_dict;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(iodevices_PUPDevice_info_obj, iodevices_PUPDevice_info);
 
-// pybricks.iodevices.PUPDevice.read
-STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        iodevices_PUPDevice_obj_t, self,
-        PB_ARG_REQUIRED(mode));
+STATIC mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
+    iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    void *data = pb_pupdevices_get_data(self_in, self->last_mode);
 
     uint8_t num_values;
     pbio_iodev_data_type_t type;
-
-    uint8_t mode = mp_obj_get_int(mode_in);
-    pb_assert(pbio_iodev_get_data_format(self->iodev, mode, &num_values, &type));
+    pb_assert(pbio_iodev_get_data_format(self->pup_base.iodev, self->last_mode, &num_values, &type));
 
     if (num_values == 0) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-
-    void *data = pb_pup_device_get_data(self->iodev, mode);
 
     mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
 
@@ -92,6 +84,24 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
 
     return mp_obj_new_tuple(num_values, values);
 }
+
+// pybricks.iodevices.PUPDevice.read
+STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        iodevices_PUPDevice_obj_t, self,
+        PB_ARG_REQUIRED(mode));
+
+    self->last_mode = mp_obj_get_int(mode_in);
+
+    // We can re-use the same code as for specific sensor types, only the mode
+    // is not hardcoded per call, so we create that object here.
+    const pb_obj_pupdevices_method_t method = {
+        {&pb_type_pupdevices_method},
+        .mode = self->last_mode,
+        .get_values = get_pup_data_tuple,
+    };
+    return pb_pupdevices_method_call(MP_OBJ_FROM_PTR(&method), 1, 0, pos_args);
+}
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_read_obj, 1, iodevices_PUPDevice_read);
 
 // pybricks.iodevices.PUPDevice.write
@@ -115,7 +125,7 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
     uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
     uint8_t len;
     pbio_iodev_data_type_t type;
-    pb_assert(pbio_iodev_get_data_format(self->iodev, mode, &len, &type));
+    pb_assert(pbio_iodev_get_data_format(self->pup_base.iodev, mode, &len, &type));
 
     if (len != num_values) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
@@ -142,9 +152,7 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
         }
     }
     // Set the data.
-    pb_pup_device_set_data(self->iodev, mode, data);
-
-    return mp_const_none;
+    return pb_pupdevices_set_data(&self->pup_base, mode, data);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_write_obj, 1, iodevices_PUPDevice_write);
 
