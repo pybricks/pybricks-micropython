@@ -27,7 +27,6 @@
 
 typedef struct {
     mp_obj_base_t base;
-    bool initialized;
 
     // State of awaitable sound
     mp_obj_t notes_generator;
@@ -43,8 +42,6 @@ typedef struct {
     // The original sample amplitude must be in the -1..1 range.
     uint16_t sample_attenuator;
 } pb_type_Speaker_obj_t;
-
-STATIC pb_type_Speaker_obj_t pb_type_Speaker_singleton;
 
 STATIC uint16_t waveform_data[128];
 
@@ -111,15 +108,12 @@ STATIC void pb_type_Speaker_stop_beep(void) {
 }
 
 STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    pb_type_Speaker_obj_t *self = &pb_type_Speaker_singleton;
-    if (!self->initialized) {
-        self->base.type = &pb_type_Speaker;
-        self->initialized = true;
 
-        // List of awaitables associated with speaker. By keeping track,
-        // we can cancel them as needed when a new sound is started.
-        self->awaitables = mp_obj_new_list(0, NULL);
-    }
+    pb_type_Speaker_obj_t *self = mp_obj_malloc(pb_type_Speaker_obj_t, type);
+
+    // List of awaitables associated with speaker. By keeping track,
+    // we can cancel them as needed when a new sound is started.
+    self->awaitables = mp_obj_new_list(0, NULL);
 
     // REVISIT: If a user creates two Speaker instances, this will reset the volume settings for both.
     // If done only once per singleton, however, altered volume settings would be persisted between program runs.
