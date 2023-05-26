@@ -34,6 +34,11 @@ typedef enum _pb_type_awaitable_opt_t {
      * already cleaned up by lower level drivers (so not needed for motors).
      */
     PB_TYPE_AWAITABLE_OPT_CANCEL_HARDWARE  = 1 << 3,
+    /**
+     * Raises EBUSY if the resource is already in use. Used for resources that
+     * do not support graceful cancellation.
+     */
+    PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY = 1 << 4,
 } pb_type_awaitable_opt_t;
 
 /**
