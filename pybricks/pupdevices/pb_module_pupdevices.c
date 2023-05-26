@@ -96,7 +96,7 @@ mp_obj_t pb_pupdevices_set_data(pb_pupdevices_obj_base_t *sensor, uint8_t mode, 
         pb_pup_device_test_completion,
         pb_type_awaitable_return_none,
         pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_NONE); // choose opt raise on busy
+        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
 }
 
 void pb_pupdevices_init_class(pb_pupdevices_obj_base_t *self, mp_obj_t port_in, pbio_iodev_type_id_t valid_id) {

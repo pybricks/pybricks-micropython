@@ -148,18 +148,27 @@ void pb_type_awaitable_update_all(mp_obj_t awaitables_in, pb_type_awaitable_opt_
 
     for (size_t i = 0; i < awaitables->len; i++) {
         pb_type_awaitable_obj_t *awaitable = MP_OBJ_TO_PTR(awaitables->items[i]);
-        // Only cancel awaitables that are in use.
-        if (awaitable->test_completion) {
-            // Cancel hardware operation if requested and available.
-            if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_HARDWARE && awaitable->cancel) {
-                awaitable->cancel(awaitable->obj);
-            }
-            // Set awaitable to done so it gets cancelled it gracefully on the
-            // next iteration.
-            if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_ALL) {
-                awaitable->test_completion = pb_type_awaitable_completed;
-            }
+
+        // Skip awaitables that are not in use.
+        if (!awaitable->test_completion) {
+            continue;
         }
+
+        // Raise EBUSY if requested.
+        if (options & PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY) {
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("This resource cannot be used in two tasks at once."));
+        }
+
+        // Cancel hardware operation if requested and available.
+        if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_HARDWARE && awaitable->cancel) {
+            awaitable->cancel(awaitable->obj);
+        }
+        // Set awaitable to done so it gets cancelled it gracefully on the
+        // next iteration.
+        if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_ALL) {
+            awaitable->test_completion = pb_type_awaitable_completed;
+        }
+
     }
 }
 
