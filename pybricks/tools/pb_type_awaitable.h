@@ -27,13 +27,13 @@ typedef enum _pb_type_awaitable_opt_t {
      * running in parallel are using the same resources. This way, the newly
      * started operation "wins" and everything else is cancelled.
      */
-    PB_TYPE_AWAITABLE_CANCEL_LINKED = 1 << 2,
+    PB_TYPE_AWAITABLE_OPT_CANCEL_ALL = 1 << 2,
     /**
      * On cancelling the linked awaitables, also call their cancel function
      * to stop hardware. Only used to close hardware resources that aren't
      * already cleaned up by lower level drivers (so not needed for motors).
      */
-    PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK  = 1 << 3,
+    PB_TYPE_AWAITABLE_OPT_CANCEL_HARDWARE  = 1 << 3,
 } pb_type_awaitable_opt_t;
 
 /**
@@ -52,7 +52,7 @@ typedef struct _pb_type_awaitable_obj_t pb_type_awaitable_obj_t;
  * @param [in]  start_time     The time when the awaitable was created.
  * @return                     True if operation is complete, False otherwise.
  */
-typedef bool (*pb_type_awaitable_test_completion_t)(mp_obj_t objt, uint32_t end_time);
+typedef bool (*pb_type_awaitable_test_completion_t)(mp_obj_t obj, uint32_t end_time);
 
 /**
  * Gets the return value of the awaitable. If it always returns None, providing
@@ -77,7 +77,7 @@ typedef void (*pb_type_awaitable_cancel_t)(mp_obj_t obj);
 
 #define pb_type_awaitable_cancel_none (NULL)
 
-void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options);
+void pb_type_awaitable_update_all(mp_obj_t awaitables_in, pb_type_awaitable_opt_t options);
 
 mp_obj_t pb_type_awaitable_await_or_wait(
     mp_obj_t obj,

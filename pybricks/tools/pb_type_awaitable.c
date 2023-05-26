@@ -132,16 +132,12 @@ STATIC bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
 }
 
 /**
- * Cancels all awaitables associated with an object.
+ * Checks and updates all awaitables associated with an object.
  *
- * This is normally used by the function that makes a new awaitable, but it can
- * also be called independently to cancel without starting a new awaitable.
- *
- * @param [in] obj                   The object whose method we want to wait for completion.
  * @param [in] awaitables_in         List of awaitables associated with @p obj.
- * @param [in] options               Controls awaitable behavior.
+ * @param [in] options               Controls update behavior.
  */
-void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_awaitable_opt_t options) {
+void pb_type_awaitable_update_all(mp_obj_t awaitables_in, pb_type_awaitable_opt_t options) {
 
     // Exit if nothing to do.
     if (!pb_module_tools_run_loop_is_active() || options == PB_TYPE_AWAITABLE_OPT_NONE) {
@@ -155,12 +151,12 @@ void pb_type_awaitable_cancel_all(mp_obj_t obj, mp_obj_t awaitables_in, pb_type_
         // Only cancel awaitables that are in use.
         if (awaitable->test_completion) {
             // Cancel hardware operation if requested and available.
-            if (options & PB_TYPE_AWAITABLE_CANCEL_LINKED_CALLBACK && awaitable->cancel) {
+            if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_HARDWARE && awaitable->cancel) {
                 awaitable->cancel(awaitable->obj);
             }
             // Set awaitable to done so it gets cancelled it gracefully on the
             // next iteration.
-            if (options & PB_TYPE_AWAITABLE_CANCEL_LINKED) {
+            if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_ALL) {
                 awaitable->test_completion = pb_type_awaitable_completed;
             }
         }
@@ -199,7 +195,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
         }
 
         // First cancel linked awaitables if requested.
-        pb_type_awaitable_cancel_all(obj, awaitables_in, options);
+        pb_type_awaitable_update_all(awaitables_in, options);
 
         // Gets free existing awaitable or creates a new one.
         pb_type_awaitable_obj_t *awaitable = pb_type_awaitable_get(awaitables_in);
