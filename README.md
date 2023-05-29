@@ -42,8 +42,8 @@ our online IDE:
 - LEGO SPIKE Essential Hub
 - LEGO MINDSTORMS Robot Inventor Hub
 
-We also support MINDSTORMS EV3. The community-supported version comes preinstalled
-with the latest [ev3dev][ev3dev-snapshot] image. It is also available via
+We also support Pybricks v2.x on MINDSTORMS EV3. The community-supported version
+comes preinstalled with the latest [ev3dev image]. It is also available via
 the [LEGO Education website][lego-education-ev3-micropython].
 
 # Development
@@ -127,8 +127,7 @@ consider [sponsoring the project][sponsors].
 [pybricks.com]: https://pybricks.com
 [docs]: https://docs.pybricks.com
 
-[ev3dev-snapshot]: https://oss.jfrog.org/list/oss-snapshot-local/org/ev3dev/brickstrap/
-
+[ev3dev image]: https://www.ev3dev.org/downloads
 [ev3dev.org]: https://www.ev3dev.org/
 [ev3dev-lang]: https://github.com/ev3dev/ev3dev-lang-python
 
