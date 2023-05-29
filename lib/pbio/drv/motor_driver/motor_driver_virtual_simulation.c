@@ -15,7 +15,6 @@
 
 #include "../core.h"
 #include <pbdrv/clock.h>
-#include <pbdrv/ioport.h>
 #include <pbdrv/motor_driver.h>
 
 #include <pbio/battery.h>
@@ -112,25 +111,18 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
         driver->torque = 0;
         driver->voltage = 0;
 
-        // Get device ID.
-        static pbio_iodev_type_id_t type_id;
-        pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(driver->pdata->port_id, &type_id);
-        if (err != PBIO_SUCCESS && err != PBIO_ERROR_NO_DEV) {
-            PROCESS_EXIT();
-        }
-
         // Select model corresponding to device ID.
-        switch (type_id) {
-            case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
+        switch (driver->pdata->type_id) {
+            case PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR:
                 driver->model = &model_technic_m_angular; // TODO
                 break;
-            case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
+            case PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR:
                 driver->model = &model_technic_m_angular;
                 break;
-            case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
+            case PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR:
                 driver->model = &model_technic_m_angular; // TODO
                 break;
-            case PBIO_IODEV_TYPE_ID_NONE:
+            case PBDRV_LEGODEV_TYPE_ID_NONE:
                 driver->model = NULL;
                 break;
             default:

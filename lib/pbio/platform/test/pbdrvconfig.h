@@ -14,22 +14,18 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_TEST                     (1)
 
-#define PBDRV_CONFIG_COUNTER                        (1)
-#define PBDRV_CONFIG_COUNTER_NUM_DEV                (6)
-#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION     (6)
-#define PBDRV_CONFIG_COUNTER_VIRTUAL_SIMULATION_NUM_DEV (6)
-
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (0)
 
 #define PBDRV_CONFIG_LED_ARRAY                      (1)
 #define PBDRV_CONFIG_LED_ARRAY_NUM_DEV              (0)
 
-#define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_TEST                    (1)
-#define PBDRV_CONFIG_IOPORT_TEST_NUM_PORTS          (6)
-#define PBDRV_CONFIG_IOPORT_TEST_FIRST_PORT         PBIO_PORT_ID_A
-#define PBDRV_CONFIG_IOPORT_TEST_LAST_PORT          PBIO_PORT_ID_F
+#define PBDRV_CONFIG_LEGODEV                        (1)
+#define PBDRV_CONFIG_LEGODEV_TEST                   (1)
+#define PBDRV_CONFIG_LEGODEV_TEST_NUM_DEV           (6)
+#define PBDRV_CONFIG_LEGODEV_PUP_UART               (1)
+#define PBDRV_CONFIG_LEGODEV_MODE_INFO              (1)
+#define PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV       (1)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (6)

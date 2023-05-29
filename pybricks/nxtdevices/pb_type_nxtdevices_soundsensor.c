@@ -11,12 +11,11 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.nxtdevices.SoundSensor class object
 typedef struct _nxtdevices_SoundSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } nxtdevices_SoundSensor_obj_t;
 
 // pybricks.nxtdevices.SoundSensor.intensity
@@ -26,11 +25,10 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
         nxtdevices_SoundSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(audible_only));
 
-    uint8_t mode = mp_obj_is_true(audible_only_in) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    int32_t analog;
-    pb_device_get_values(self->pbdev, mode, &analog);
+    uint8_t mode = mp_obj_is_true(audible_only_in) ? PBDRV_LEGODEV_MODE_NXT_ANALOG__ACTIVE : PBDRV_LEGODEV_MODE_NXT_ANALOG__PASSIVE;
+    int32_t *analog = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), mode);
 
-    return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
+    return mp_obj_new_int(analog_scale(analog[0], 650, 4860, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_SoundSensor_intensity_obj, 1, nxtdevices_SoundSensor_intensity);
 
@@ -40,10 +38,7 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_SoundSensor_obj_t *self = mp_obj_malloc(nxtdevices_SoundSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_SOUND_SENSOR);
 
     // Do one reading for consistent initial mode
     mp_obj_t pos_args[1] = { self };

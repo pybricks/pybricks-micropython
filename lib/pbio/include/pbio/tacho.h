@@ -18,6 +18,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <pbdrv/counter.h>
+
 #include <pbio/angle.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
@@ -31,7 +33,7 @@ typedef struct _pbio_tacho_t pbio_tacho_t;
 
 /** @name Initialization Functions */
 /**@{*/
-pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho);
+pbio_error_t pbio_tacho_get_tacho(pbdrv_legodev_dev_t *legodev, pbio_tacho_t **tacho);
 pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, pbio_direction_t direction, bool reset_angle);
 /**@}*/
 
@@ -47,7 +49,7 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *reset_ang
 
 #else
 
-static inline pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho) {
+pbio_error_t pbio_tacho_get_tacho(pbdrv_legodev_dev_t *legodev, pbio_tacho_t **tacho) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

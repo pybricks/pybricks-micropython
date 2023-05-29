@@ -16,6 +16,7 @@
 #include <pybricks/hubs.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
 #include <pybricks/tools.h>
 
 #include "genhdr/mpversion.h"

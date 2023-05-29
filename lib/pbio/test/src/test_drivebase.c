@@ -37,6 +37,8 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
 
     static pbio_servo_t *srv_left;
     static pbio_servo_t *srv_right;
+    static pbdrv_legodev_dev_t *legodev_left;
+    static pbdrv_legodev_dev_t *legodev_right;
     static pbio_drivebase_t *db;
 
     static int32_t drive_distance;
@@ -69,10 +71,15 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     pbio_motor_process_start();
 
     // Initialize the servos.
-    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_A, &srv_left), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv_left, PBIO_DIRECTION_COUNTERCLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_B, &srv_right), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv_right, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_A, &id, &legodev_left), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_get_servo(legodev_left, &srv_left), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv_left, id, PBIO_DIRECTION_COUNTERCLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_B, &id, &legodev_right), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_get_servo(legodev_right, &srv_right), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv_right, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
 
     // Set up the drivebase.
     tt_uint_op(pbio_drivebase_get_drivebase(&db, srv_left, srv_right, 56000, 112000, false), ==, PBIO_SUCCESS);

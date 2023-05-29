@@ -31,6 +31,7 @@
 #include "ioport/ioport.h"
 #include "led/led_array.h"
 #include "led/led.h"
+#include "legodev/legodev.h"
 #include "motor_driver/motor_driver.h"
 #include "pwm/pwm.h"
 #include "random/random.h"
@@ -88,6 +89,9 @@ void pbdrv_init(void) {
     pbdrv_sound_init();
     pbdrv_usb_init();
     pbdrv_watchdog_init();
+
+    // Last driver to init.
+    pbdrv_legodev_init();
 
     // Some hubs have a bootloader that disables interrupts. Has to be done
     // here otherwise Essential hub can hang on boot if it is earlier.

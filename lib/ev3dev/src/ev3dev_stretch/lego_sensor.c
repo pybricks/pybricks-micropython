@@ -10,7 +10,7 @@
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
 
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 #include <pbio/port.h>
 #include <pbio/util.h>
 
@@ -27,7 +27,7 @@ struct _lego_sensor_t {
     FILE *f_num_values;
     FILE *f_bin_data_format;
     char modes[12][17];
-    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
+    uint8_t bin_data[PBDRV_LEGODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
 };
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
 static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_id_t port) {
@@ -81,7 +81,7 @@ static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_id_t port) 
 }
 
 // Get the device ID
-static pbio_error_t ev3_sensor_get_id(lego_sensor_t *sensor, pbio_iodev_type_id_t *id) {
+static pbio_error_t ev3_sensor_get_id(lego_sensor_t *sensor, pbdrv_legodev_type_id_t *id) {
     char driver_name[MAX_PATH_LENGTH];
 
     pbio_error_t err = sysfs_read_str(sensor->f_driver_name, driver_name);
@@ -90,49 +90,49 @@ static pbio_error_t ev3_sensor_get_id(lego_sensor_t *sensor, pbio_iodev_type_id_
     }
 
     if (!strcmp(driver_name, "lego-ev3-ir")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_EV3_IR_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-color")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_EV3_COLOR_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-touch")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_EV3_TOUCH_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-us")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-gyro")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_EV3_GYRO_SENSOR;
     }
     else if (!strcmp(driver_name, "nxt-analog")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
+        *id = PBDRV_LEGODEV_TYPE_ID_NXT_ANALOG;
     }
     else if (!strcmp(driver_name, "lego-nxt-us")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-nxt-touch")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_NXT_TOUCH_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-nxt-light")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_NXT_LIGHT_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-nxt-temp")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR;
+        *id = PBDRV_LEGODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-power-storage")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER;
+        *id = PBDRV_LEGODEV_TYPE_ID_NXT_ENERGY_METER;
     }
     else {
-        *id = PBIO_IODEV_TYPE_ID_NONE;
+        *id = PBDRV_LEGODEV_TYPE_ID_NONE;
     }
     return PBIO_SUCCESS;
 }
 
 // Get the device ID
-static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
+static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbdrv_legodev_type_id_t valid_id) {
 
     pbio_error_t err;
-    pbio_iodev_type_id_t id;
+    pbdrv_legodev_type_id_t id;
     err = ev3_sensor_get_id(sensor, &id);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -140,8 +140,8 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
 
     // If we are here, we have already confirmed that a lego-sensor exists.
     // So if the user asserts that this should be a LUMP or lego-sensor, this passes.
-    if (valid_id == PBIO_IODEV_TYPE_ID_LUMP_UART ||
-        valid_id == PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR) {
+    if (valid_id == PBDRV_LEGODEV_TYPE_ID_ANY_LUMP_UART ||
+        valid_id == PBDRV_LEGODEV_TYPE_ID_EV3DEV_LEGO_SENSOR) {
         return PBIO_SUCCESS;
     }
 
@@ -151,8 +151,8 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
     }
 
     // NXT Sound Sensors and NXT Touch Sensors without auto-id also pass as NXT Analog
-    if ((valid_id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && id == PBIO_IODEV_TYPE_ID_NXT_ANALOG) ||
-        (valid_id == PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR && id == PBIO_IODEV_TYPE_ID_NXT_ANALOG)) {
+    if ((valid_id == PBDRV_LEGODEV_TYPE_ID_NXT_TOUCH_SENSOR && id == PBDRV_LEGODEV_TYPE_ID_NXT_ANALOG) ||
+        (valid_id == PBDRV_LEGODEV_TYPE_ID_NXT_SOUND_SENSOR && id == PBDRV_LEGODEV_TYPE_ID_NXT_ANALOG)) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_NO_DEV;
@@ -161,7 +161,7 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
 struct _lego_sensor_t sensors[4];
 
 // Get an ev3dev sensor
-pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
+pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbdrv_legodev_type_id_t valid_id) {
     if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -178,9 +178,9 @@ pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbio_i
 
     // For some custom sensors, there is no
     // lego-sensor to initialize, so we're done.
-    if (valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C  ||
-        valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_UART ||
-        valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+    if (valid_id == PBDRV_LEGODEV_TYPE_ID_CUSTOM_I2C  ||
+        valid_id == PBDRV_LEGODEV_TYPE_ID_CUSTOM_UART ||
+        valid_id == PBDRV_LEGODEV_TYPE_ID_NXT_COLOR_SENSOR) {
         return PBIO_SUCCESS;
     }
 

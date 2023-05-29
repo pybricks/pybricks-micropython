@@ -54,10 +54,7 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
 
-#define PBDRV_CONFIG_COUNTER                        (1)
-#define PBDRV_CONFIG_COUNTER_NUM_DEV                (2)
-#define PBDRV_CONFIG_COUNTER_LPF2                   (1)
-#define PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV           (2)
+#define PBDRV_CONFIG_COUNTER                        (0)
 
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F4                   (1)
@@ -69,15 +66,21 @@
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z    (-1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_LPF2                    (1)
-#define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (2)
-#define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_ID_A
-#define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_ID_B
+#define PBDRV_CONFIG_IOPORT_PUP                     (1)
+#define PBDRV_CONFIG_IOPORT_NUM_DEV                 (2)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (2)
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (2)
+
+#define PBDRV_CONFIG_LEGODEV                        (1)
+#define PBDRV_CONFIG_LEGODEV_PUP                    (1)
+#define PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV        (0)
+#define PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV        (2)
+#define PBDRV_CONFIG_LEGODEV_PUP_UART               (1)
+#define PBDRV_CONFIG_LEGODEV_MODE_INFO       (1)
+#define PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV       (PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (2)

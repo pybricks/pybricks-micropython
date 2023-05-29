@@ -21,7 +21,6 @@
 #include <pybricks/tools/pb_type_awaitable.h>
 
 #include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
@@ -88,21 +87,21 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     pbio_error_t err;
     pbio_servo_t *srv;
+    pbdrv_legodev_dev_t *legodev = NULL;
 
-    // Setup motor device and raise error if not connected or ready.
-    pb_device_setup_motor(port, true);
-
-    // Parse gears argument to get gear ratio.
-    int32_t gear_ratio = get_gear_ratio(gears_in);
-
-    // Get pointer to servo and allow tacho to finish syncing
-    while ((err = pbio_servo_get_servo(port, &srv)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
+    // Get i/o device.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    while ((err = pbdrv_legodev_get_device(port, &id, &legodev)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(50);
     }
     pb_assert(err);
 
+    // Get pointer to servo.
+    pb_assert(pbio_servo_get_servo(legodev, &srv));
+
     // Set up servo
-    pb_assert(pbio_servo_setup(srv, positive_direction, gear_ratio, reset_angle, precision_profile));
+    int32_t gear_ratio = get_gear_ratio(gears_in);
+    pb_assert(pbio_servo_setup(srv, id, positive_direction, gear_ratio, reset_angle, precision_profile));
 
     // On success, proceed to create and return the MicroPython object
     common_Motor_obj_t *self = mp_obj_malloc(common_Motor_obj_t, type);

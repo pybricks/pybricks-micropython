@@ -24,28 +24,36 @@
 #include "counter.h"
 #include "counter_stm32f0_gpio_quad_enc.h"
 
-typedef struct {
-    pbdrv_counter_dev_t *dev;
+struct _pbdrv_counter_dev_t {
     int32_t count;
-} private_data_t;
+    const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata;
+};
 
-static private_data_t private_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
+static pbdrv_counter_dev_t counters[PBDRV_CONFIG_COUNTER_NUM_DEV];
 
-static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
-    private_data_t *priv = dev->priv;
-
-    *millidegrees = (priv->count % 360) * 1000;
-    *rotations = priv->count / 360;
-
+pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
+    if (id >= PBIO_ARRAY_SIZE(counters)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    *dev = &counters[id];
     return PBIO_SUCCESS;
 }
 
-static void pbdrv_counter_stm32f0_gpio_quad_enc_update_count(private_data_t *priv,
-    bool int_pin_state, bool dir_pin_state) {
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+    *millidegrees = (dev->count % 360) * 1000;
+    *rotations = dev->count / 360;
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static void pbdrv_counter_update_count(pbdrv_counter_dev_t *dev, bool int_pin_state, bool dir_pin_state) {
     if (int_pin_state ^ dir_pin_state) {
-        priv->count--;
+        dev->count--;
     } else {
-        priv->count++;
+        dev->count++;
     }
 }
 
@@ -58,42 +66,29 @@ void EXTI0_1_IRQHandler(void) {
 
     // Port A - inverted.
     if (exti_pr & EXTI_PR_PR1) {
-        private_data_t *priv = &private_data[0];
-        const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
-        pbdrv_counter_stm32f0_gpio_quad_enc_update_count(priv,
-            pbdrv_gpio_input(&pdata->gpio_int), !pbdrv_gpio_input(&pdata->gpio_dir));
+        pbdrv_counter_dev_t *dev = &counters[0];
+        pbdrv_counter_update_count(dev, pbdrv_gpio_input(&dev->pdata->gpio_int), !pbdrv_gpio_input(&dev->pdata->gpio_dir));
     }
 
     // Port B
     if (exti_pr & EXTI_PR_PR0) {
-        private_data_t *priv = &private_data[1];
-        const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
-        pbdrv_counter_stm32f0_gpio_quad_enc_update_count(priv,
-            pbdrv_gpio_input(&pdata->gpio_int), pbdrv_gpio_input(&pdata->gpio_dir));
+        pbdrv_counter_dev_t *dev = &counters[1];
+        pbdrv_counter_update_count(dev, pbdrv_gpio_input(&dev->pdata->gpio_int), pbdrv_gpio_input(&dev->pdata->gpio_dir));
     }
 }
 
-static const pbdrv_counter_funcs_t pbdrv_counter_stm32f0_gpio_quad_enc_funcs = {
-    .get_angle = pbdrv_counter_stm32f0_gpio_quad_enc_get_angle,
-};
+void pbdrv_counter_init(void) {
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(counters); i++) {
 
-void pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_dev_t *devs) {
-    for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata =
-            &pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[i];
-        private_data_t *priv = &private_data[i];
+        pbdrv_counter_dev_t *dev = &counters[i];
+        dev->pdata = &pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[i];
 
         // TODO: may need to add pull to platform data if we add more platforms
         // that use this driver.
 
-        pbdrv_gpio_input(&pdata->gpio_int);
-        pbdrv_gpio_set_pull(&pdata->gpio_dir, PBDRV_GPIO_PULL_DOWN);
-        pbdrv_gpio_input(&pdata->gpio_dir);
-
-        priv->dev = &devs[pdata->counter_id];
-        priv->dev->pdata = pdata;
-        priv->dev->funcs = &pbdrv_counter_stm32f0_gpio_quad_enc_funcs;
-        priv->dev->priv = priv;
+        pbdrv_gpio_input(&dev->pdata->gpio_int);
+        pbdrv_gpio_set_pull(&dev->pdata->gpio_dir, PBDRV_GPIO_PULL_DOWN);
+        pbdrv_gpio_input(&dev->pdata->gpio_dir);
     }
 
     // TODO: IRQ support should be added to gpio driver

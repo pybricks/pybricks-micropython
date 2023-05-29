@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #include <pbio/error.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 pbio_error_t sysfs_get_number(pbio_port_id_t port, const char *rdir, int *sysfs_number);
 

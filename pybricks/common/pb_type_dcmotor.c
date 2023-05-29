@@ -5,6 +5,7 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
+#include <pbdrv/legodev.h>
 #include <pbio/battery.h>
 
 #include "py/mphal.h"
@@ -12,9 +13,9 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
 
 #include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
@@ -42,12 +43,15 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
-    pb_device_setup_motor(port, false);
+    // Get i/o device.
+    pbdrv_legodev_dev_t *legodev;
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_DC_MOTOR;
+    pb_assert(pbdrv_legodev_get_device(port, &id, &legodev));
 
     // Get and initialize DC Motor
     pbio_dcmotor_t *dcmotor;
-    pb_assert(pbio_dcmotor_get_dcmotor(port, &dcmotor));
-    pb_assert(pbio_dcmotor_setup(dcmotor, direction));
+    pb_assert(pbio_dcmotor_get_dcmotor(legodev, &dcmotor));
+    pb_assert(pbio_dcmotor_setup(dcmotor, id, direction));
 
     // On success, create and return the MicroPython object
     common_DCMotor_obj_t *self = mp_obj_malloc(common_DCMotor_obj_t, type);

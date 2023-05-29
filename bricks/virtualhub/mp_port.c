@@ -13,7 +13,7 @@
 #include <contiki.h>
 
 #include <pbio/main.h>
-#include <pbio/uartdev.h>
+#include <pbdrv/legodev.h>
 #include <pbsys/core.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>

@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 #include "py/mphal.h"
 #include "py/objstr.h"
@@ -16,7 +16,7 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_pb/pb_serial.h>
 
@@ -24,7 +24,7 @@
 
 // pybricks.iodevices.UARTDevice class object
 typedef struct _iodevices_UARTDevice_obj_t {
-    mp_obj_base_t base;
+    pb_type_device_obj_base_t device_base;
     pb_serial_t *serial;
     mp_int_t timeout;
 } iodevices_UARTDevice_obj_t;
@@ -35,16 +35,14 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *type, size_t 
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(baudrate),
         PB_ARG_DEFAULT_NONE(timeout));
+
+    // Get device, which inits UART port
     iodevices_UARTDevice_obj_t *self = mp_obj_malloc(iodevices_UARTDevice_obj_t, type);
-
-    // Get port number
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    // Init UART port
-    pb_device_get_device(port, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_CUSTOM_UART);
 
     // Initialize serial
     self->timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_int(timeout_in);
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(pb_serial_get(&self->serial, port, pb_obj_get_int(baudrate_in)));
     pb_assert(pb_serial_clear(self->serial));
 

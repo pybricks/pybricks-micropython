@@ -10,6 +10,7 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -17,7 +18,7 @@
 
 // Class structure for ForceSensor
 typedef struct _pupdevices_ForceSensor_obj_t {
-    pb_pupdevices_obj_base_t pup_base;
+    pb_type_device_obj_base_t device_base;
     int32_t raw_released;
     int32_t raw_offset;
     int32_t raw_start;
@@ -31,10 +32,10 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     pupdevices_ForceSensor_obj_t *self = mp_obj_malloc(pupdevices_ForceSensor_obj_t, type);
-    pb_pupdevices_init_class(&self->pup_base, port_in, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
 
     // Read scaling factors.
-    int16_t *calib = pb_pupdevices_get_data_blocking(&self->pup_base, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB);
+    int16_t *calib = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__CALIB);
     self->raw_offset = calib[1];
     self->raw_released = calib[2];
     self->raw_end = calib[6];
@@ -46,14 +47,14 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     }
 
     // Do one measurement to set up mode used for all methods.
-    pb_pupdevices_get_data_blocking(&self->pup_base, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW);
+    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__FRAW);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.pupdevices.ForceSensor._raw
 STATIC int32_t get_raw(mp_obj_t self_in) {
-    int16_t *raw = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW);
+    int16_t *raw = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__FRAW);
     return *raw;
 }
 
@@ -73,13 +74,13 @@ STATIC mp_obj_t get_touched(mp_obj_t self_in) {
     // margin to account for small calibration tolerances.
     return mp_obj_new_bool(get_raw(self_in) > self->raw_released + 4);
 }
-STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_touched_obj, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_touched);
+STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_touched_obj, PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_touched);
 
 // pybricks.pupdevices.ForceSensor.force
 STATIC mp_obj_t get_force(mp_obj_t self_in) {
     return pb_obj_new_fraction(get_force_mN(self_in), 1000);
 }
-STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_force_obj, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_force);
+STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_force_obj, PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_force);
 
 // pybricks.pupdevices.ForceSensor.distance
 STATIC mp_obj_t get_distance(mp_obj_t self_in) {
@@ -87,14 +88,14 @@ STATIC mp_obj_t get_distance(mp_obj_t self_in) {
     int32_t distance_um = (6670 * (get_raw(self_in) - self->raw_released)) / (self->raw_end - self->raw_released);
     return pb_obj_new_fraction(distance_um, 1000);
 }
-STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_distance_obj, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_distance);
+STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_distance);
 
 // pybricks.pupdevices.ForceSensor.pressed(force=default)
 STATIC mp_obj_t get_pressed_simple(mp_obj_t self_in) {
     pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(get_force_mN(self_in) >= self->pressed_threshold);
 }
-STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_pressed_simple_obj, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_pressed_simple);
+STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_pressed_simple_obj, PBDRV_LEGODEV_MODE_PUP_FORCE_SENSOR__FRAW, get_pressed_simple);
 
 // pybricks.pupdevices.ForceSensor.pressed
 STATIC mp_obj_t get_pressed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -108,7 +109,7 @@ STATIC mp_obj_t get_pressed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *k
     self->pressed_threshold = pb_obj_get_int(force_in) * 1000;
     #endif
 
-    return pb_pupdevices_method_call(MP_OBJ_FROM_PTR(&get_pressed_simple_obj), 1, 0, pos_args);
+    return pb_type_device_method_call(MP_OBJ_FROM_PTR(&get_pressed_simple_obj), 1, 0, pos_args);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(get_pressed_obj, 1, get_pressed);
 

@@ -150,8 +150,8 @@ class Platform:
             self.ioport[port_id] = VirtualIOPort(port_id)
             self.ioport[port_id].motor_type_id = type_id
             self.ioport[port_id]._iodev.info[0].capability_flags = (
-                IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT
-                | IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS
+                IODeviceCapabilityFlags.PBDRV_LEGODEV_CAPABILITY_FLAG_IS_DC_OUTPUT
+                | IODeviceCapabilityFlags.PBDRV_LEGODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS
             )
 
             # Initialize motor simulation model.

@@ -11,12 +11,11 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -25,20 +24,14 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR);
-
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
-    nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t distance;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance);
-    return mp_obj_new_int(distance * 10);
+    int8_t *distance = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM);
+    return mp_obj_new_int(distance[0] * 10);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_distance_obj, nxtdevices_UltrasonicSensor_distance);
 

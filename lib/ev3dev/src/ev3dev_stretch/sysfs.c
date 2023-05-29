@@ -9,7 +9,7 @@
 #include <ev3dev_stretch/lego_sensor.h>
 
 #include <pbio/port.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"

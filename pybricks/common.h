@@ -13,7 +13,7 @@
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/light.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 #include "py/obj.h"
 
@@ -53,7 +53,7 @@ mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);
 
 #if PYBRICKS_PY_COMMON_LIGHT_ARRAY
 // pybricks._common.LightArray()
-mp_obj_t common_LightArray_obj_make_new(pb_pupdevices_obj_base_t *sensor, uint8_t light_mode, uint8_t number_of_lights);
+mp_obj_t common_LightArray_obj_make_new(pb_type_device_obj_base_t *sensor, uint8_t light_mode, uint8_t number_of_lights);
 #endif
 
 #if PYBRICKS_PY_COMMON_LIGHT_MATRIX

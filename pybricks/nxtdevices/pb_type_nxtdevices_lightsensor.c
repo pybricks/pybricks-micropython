@@ -13,7 +13,7 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // Generic linear scaling of an analog value between a known min and max to a percentage
 int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert) {
@@ -26,29 +26,20 @@ int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, boo
 
 // pybricks.nxtdevices.LightSensor class object
 typedef struct _nxtdevices_LightSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } nxtdevices_LightSensor_obj_t;
 
 // pybricks.nxtdevices.LightSensor.ambient
 STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
-    nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t analog;
-
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog);
-
-    return mp_obj_new_int(analog_scale(analog, 1906, 4164, true));
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT);
+    return mp_obj_new_int(analog_scale(analog[0], 1906, 4164, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
 // pybricks.nxtdevices.LightSensor.reflection
 STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
-    nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t analog;
-
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog);
-
-    return mp_obj_new_int(analog_scale(analog, 1906, 3000, true));
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_LIGHT_SENSOR__REFLECT);
+    return mp_obj_new_int(analog_scale(analog[0], 1906, 3000, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
@@ -58,13 +49,10 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_LightSensor_obj_t *self = mp_obj_malloc(nxtdevices_LightSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_LIGHT_SENSOR);
 
     // Read one value to ensure a consistent initial mode
-    nxtdevices_LightSensor_reflection(self);
+    nxtdevices_LightSensor_reflection(MP_OBJ_FROM_PTR(self));
 
     return MP_OBJ_FROM_PTR(self);
 }

@@ -33,26 +33,29 @@
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
 
 #define PBDRV_CONFIG_COUNTER                        (1)
-#define PBDRV_CONFIG_COUNTER_NUM_DEV                (4)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                (2)
 #define PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC  (1)
 #define PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV (2)
-#define PBDRV_CONFIG_COUNTER_LPF2                   (1)
-#define PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV           (2)
 
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F0                   (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_LPF2                    (1)
-#define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (2)
-#define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_ID_C
-#define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_ID_D
-#define PBDRV_CONFIG_IOPORT_LPF2_MOVE_HUB_HACK      (1)
+#define PBDRV_CONFIG_IOPORT_PUP                     (1)
+#define PBDRV_CONFIG_IOPORT_NUM_DEV                 (2)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (1)
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (1)
+
+#define PBDRV_CONFIG_LEGODEV                        (1)
+#define PBDRV_CONFIG_LEGODEV_PUP                    (1)
+#define PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV        (2)
+#define PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV        (2)
+#define PBDRV_CONFIG_LEGODEV_PUP_UART               (1)
+#define PBDRV_CONFIG_LEGODEV_MODE_INFO       (0) // Reduces build size by disabling some unused features of the protocol.
+#define PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV       (PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (4)

@@ -5,22 +5,23 @@
 
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbio/iodev.h>
+#include <string.h>
+
+#include <pbdrv/legodev.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 #include <ev3dev_stretch/sysfs.h>
 
 // Class structure for Ev3devSensor
 typedef struct _iodevices_Ev3devSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
     mp_obj_t sensor_index;
     mp_obj_t port_index;
 } iodevices_Ev3devSensor_obj_t;
@@ -31,14 +32,12 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     iodevices_Ev3devSensor_obj_t *self = mp_obj_malloc(iodevices_Ev3devSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
 
     // Get the sysfs index. This is not currently exposed through pb_device,
     // so read it again by searching through the sysfs tree.
     int32_t sensor_index, port_index;
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(sysfs_get_number(port, "/sys/class/lego-sensor", &sensor_index));
     pb_assert(sysfs_get_number(port, "/sys/class/lego-port", &port_index));
     self->sensor_index = mp_obj_new_int(sensor_index);
@@ -53,22 +52,43 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
         iodevices_Ev3devSensor_obj_t, self,
         PB_ARG_REQUIRED(mode));
 
-    // Get mode index from mode string
-    uint8_t mode_idx = pb_device_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode_in));
+    pbdrv_legodev_info_t *info;
+    pb_assert(pbdrv_legodev_get_info(self->device_base.legodev, &info));
 
-    // Get data already in correct data format
-    int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
-    mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pb_device_get_values(self->pbdev, mode_idx, data);
-
-    uint8_t num_values = pb_device_get_num_values(self->pbdev);
-
-    // Return as MicroPython objects
-    for (uint8_t i = 0; i < num_values; i++) {
-        objs[i] = mp_obj_new_int(data[i]);
+    uint8_t mode = 0;
+    for (mode = 0; mode < info->num_modes; mode++) {
+        if (!strncmp(info->mode_info[mode].name, mp_obj_str_get_str(mode_in), LUMP_MAX_NAME_SIZE)) {
+            break;
+        }
+    }
+    if (mode == info->num_modes) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    return mp_obj_new_tuple(num_values, objs);
+    void *data = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), mode);
+    mp_obj_t values[PBDRV_LEGODEV_MAX_DATA_SIZE];
+
+    for (uint8_t i = 0; i < info->mode_info[mode].num_values; i++) {
+        switch (info->mode_info[mode].data_type) {
+            case PBDRV_LEGODEV_DATA_TYPE_INT8:
+                values[i] = mp_obj_new_int(((int8_t *)data)[i]);
+                break;
+            case PBDRV_LEGODEV_DATA_TYPE_INT16:
+                values[i] = mp_obj_new_int(((int16_t *)data)[i]);
+                break;
+            case PBDRV_LEGODEV_DATA_TYPE_INT32:
+                values[i] = mp_obj_new_int(((int32_t *)data)[i]);
+                break;
+            #if MICROPY_PY_BUILTINS_FLOAT
+            case PBDRV_LEGODEV_DATA_TYPE_FLOAT:
+                values[i] = mp_obj_new_float_from_f(((float *)data)[i]);
+                break;
+            #endif
+            default:
+                pb_assert(PBIO_ERROR_IO);
+        }
+    }
+    return mp_obj_new_tuple(info->mode_info[mode].num_values, values);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_Ev3devSensor_read_obj, 1, iodevices_Ev3devSensor_read);
 

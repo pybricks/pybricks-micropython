@@ -22,6 +22,8 @@
 typedef struct {
     /** Port identifier. */
     pbio_port_id_t port_id;
+    /** Device type ID of the simulated motor. */
+    pbdrv_legodev_type_id_t type_id;
     /** Initial angle of the motor (mdeg). */
     double initial_angle;
     /** Initial speed of the motor (mdeg/s). */

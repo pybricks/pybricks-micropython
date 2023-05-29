@@ -149,8 +149,8 @@ class Motor:
     ) -> None:
         port.motor_type_id = IODeviceTypeId.SPIKE_M_MOTOR
         port._iodev.info[0].capability_flags = (
-            IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT
-            | IODeviceCapabilityFlags.PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS
+            IODeviceCapabilityFlags.PBDRV_LEGODEV_CAPABILITY_FLAG_IS_DC_OUTPUT
+            | IODeviceCapabilityFlags.PBDRV_LEGODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS
         )
 
         # REVISIT: if we need to detach the motor, we will need to save the

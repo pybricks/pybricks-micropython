@@ -10,7 +10,7 @@
 
 #include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
-#include <pbdrv/ioport.h>
+#include <pbdrv/legodev.h>
 
 #include <pbio/angle.h>
 #include <pbio/int_math.h>
@@ -26,26 +26,28 @@ static pbio_servo_t servos[PBIO_CONFIG_SERVO_NUM_DEV];
 /**
  * Gets pointer to static servo instance using port id.
  *
- * @param [in]  port        Port identifier.
+ * @param [in]  legodev     The legodev instance.
  * @param [out] srv         Pointer to servo object.
  * @return                  Error code.
  */
-pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
+pbio_error_t pbio_servo_get_servo(pbdrv_legodev_dev_t *legodev, pbio_servo_t **srv) {
 
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_ARG;
+    uint8_t id;
+    pbio_error_t err = pbdrv_legodev_get_motor_index(legodev, &id);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Get address of static servo object.
-    *srv = &servos[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    *srv = &servos[id];
 
     // Get dcmotor object, without additional setup.
-    pbio_error_t err = pbio_tacho_get_tacho(port, &((*srv)->tacho));
+    err = pbio_tacho_get_tacho(legodev, &((*srv)->tacho));
     if (err != PBIO_SUCCESS) {
         return err;
     }
     // Get tacho object, without additional setup.
-    return pbio_dcmotor_get_dcmotor(port, &((*srv)->dcmotor));
+    return pbio_dcmotor_get_dcmotor(legodev, &((*srv)->dcmotor));
 }
 
 static void pbio_servo_update_loop_set_state(pbio_servo_t *srv, bool update) {
@@ -224,18 +226,12 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
  * Loads all parameters of a servo to make it ready for use.
  *
  * @param [in]    srv                The servo instance.
+ * @param [in]    type               The type of motor.
  * @param [in]    gear_ratio         Ratio that converts control units (mdeg) to user-defined output units (e.g. deg).
  * @param [in]    precision_profile  Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
  * @return                           Error code.
  */
-static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t gear_ratio, int32_t precision_profile) {
-
-    // Get the device type to load relevant settings.
-    pbio_iodev_type_id_t type_id;
-    pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(srv->dcmotor->port, &type_id);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, pbdrv_legodev_type_id_t type, int32_t gear_ratio, int32_t precision_profile) {
 
     // Gear ratio must be strictly positive.
     if (gear_ratio < 1) {
@@ -243,7 +239,7 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
     }
 
     // Get the minimal set of defaults for this servo type.
-    const pbio_servo_settings_reduced_t *settings_reduced = pbio_servo_get_reduced_settings(type_id);
+    const pbio_servo_settings_reduced_t *settings_reduced = pbio_servo_get_reduced_settings(type);
     if (!settings_reduced) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
@@ -265,7 +261,7 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
     // Initialize maximum torque as the stall torque for maximum voltage.
     // In practice, the nominal voltage is a bit lower than the 9V values.
     // REVISIT: Select nominal voltage based on battery type instead of 7500.
-    int32_t max_voltage = pbio_dcmotor_get_max_voltage(type_id);
+    int32_t max_voltage = pbio_dcmotor_get_max_voltage(type);
     int32_t nominal_voltage = pbio_int_math_min(max_voltage, 7500);
     int32_t nominal_torque = pbio_observer_voltage_to_torque(srv->observer.model, nominal_voltage);
 
@@ -325,13 +321,14 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, int32_t ge
  * Sets up the servo instance to be used in an application.
  *
  * @param [in]  srv               The servo instance.
+ * @param [in]  type              The type of motor.
  * @param [in]  direction         The direction of positive rotation.
  * @param [in]  gear_ratio        The ratio between motor rotation (millidegrees) and the gear train output (degrees).
  * @param [in]  reset_angle       If true, reset the current angle to the current absolute position if supported or 0.
  * @param [in]  precision_profile Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
  * @return                        Error code.
  */
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile) {
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbdrv_legodev_type_id_t type, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile) {
     pbio_error_t err;
 
     // Unregister this servo from control loop updates.
@@ -344,7 +341,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     }
 
     // Coast and configure dcmotors, and stop its parents, if any.
-    err = pbio_dcmotor_setup(srv->dcmotor, direction);
+    err = pbio_dcmotor_setup(srv->dcmotor, type, direction);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -355,7 +352,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, int
     pbio_control_reset(&srv->control);
 
     // Load default settings for this device type.
-    err = pbio_servo_initialize_settings(srv, gear_ratio, precision_profile);
+    err = pbio_servo_initialize_settings(srv, type, gear_ratio, precision_profile);
     if (err != PBIO_SUCCESS) {
         return err;
     }

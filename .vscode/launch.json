@@ -208,7 +208,6 @@
             "options": [
                 "drv/bluetooth/test_btstack_run_loop_contiki_timer",
                 "drv/bluetooth/test_btstack_run_loop_contiki_poll",
-                "drv/counter/test_counter_get",
                 "drv/pwm/test_pwm_get",
                 "drv/pwm/test_pwm_set_duty",
                 "src/angle/test_scaling",

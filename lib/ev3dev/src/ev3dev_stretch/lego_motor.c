@@ -9,7 +9,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 #include <pbio/port.h>
 
 #include <ev3dev_stretch/lego_motor.h>
@@ -22,7 +22,7 @@ typedef struct {
     int n_motor;
     bool connected;
     bool coasting;
-    pbio_iodev_type_id_t id;
+    pbdrv_legodev_type_id_t id;
     FILE *f_command;
     FILE *f_duty;
 } ev3dev_motor_t;
@@ -53,9 +53,9 @@ static pbio_error_t ev3dev_motor_init(ev3dev_motor_t *mtr, pbio_port_id_t port) 
         }
         // Determine motor type ID
         if (!strcmp(driver_name, "lego-ev3-l-motor")) {
-            mtr->id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR;
+            mtr->id = PBDRV_LEGODEV_TYPE_ID_EV3_LARGE_MOTOR;
         } else {
-            mtr->id = PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR;
+            mtr->id = PBDRV_LEGODEV_TYPE_ID_EV3_MEDIUM_MOTOR;
         }
         // Close driver name file
         if (fclose(f_driver_name) != 0) {
@@ -81,7 +81,7 @@ static pbio_error_t ev3dev_motor_init(ev3dev_motor_t *mtr, pbio_port_id_t port) 
             return err;
         }
         // On success, open relevant sysfs files and set ID type
-        mtr->id = PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR;
+        mtr->id = PBDRV_LEGODEV_TYPE_ID_EV3DEV_DC_MOTOR;
         // Open command
         err = sysfs_open_dc_motor_attr(&mtr->f_command, mtr->n_motor, "command", "w");
         if (err != PBIO_SUCCESS) {
@@ -151,7 +151,7 @@ pbio_error_t ev3dev_motor_setup(pbio_port_id_t port, bool is_servo) {
     motors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT].connected = false;
 
     return ev3dev_lego_port_configure(port,
-        is_servo ? PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR : PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR);
+        is_servo ? PBDRV_LEGODEV_TYPE_ID_EV3_LARGE_MOTOR : PBDRV_LEGODEV_TYPE_ID_EV3DEV_DC_MOTOR);
 }
 
 /**
@@ -161,7 +161,7 @@ pbio_error_t ev3dev_motor_setup(pbio_port_id_t port, bool is_servo) {
  * @param [out] id          The type identifier.
  * @return                  Error code.
  */
-pbio_error_t ev3dev_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
+pbio_error_t ev3dev_motor_get_id(pbio_port_id_t port, pbdrv_legodev_type_id_t *id) {
     ev3dev_motor_t *mtr;
     pbio_error_t err = ev3dev_motor_get(&mtr, port);
     if (err != PBIO_SUCCESS) {

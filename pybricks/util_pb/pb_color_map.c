@@ -3,7 +3,11 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_NXTDEVICES || PYBRICKS_PY_PUPDEVICES
+#if PYBRICKS_PY_DEVICES
+
+#include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
+
 
 #include <stdint.h>
 #include <stdio.h>
@@ -123,16 +127,10 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     return match;
 }
 
-#include <pybricks/pupdevices.h>
-
 // HACK: all color sensor structures must have color_map as second item
 // REVISIT: Replace with a safer solution to share this method across sensors
 typedef struct _pb_ColorSensor_obj_t {
-    #if PYBRICKS_PY_PUPDEVICES
-    pb_pupdevices_obj_base_t pup_base;
-    #else
-    mp_obj_base_t base;
-    #endif
+    pb_type_device_obj_base_t device_base;
     mp_obj_t color_map;
 } pb_ColorSensor_obj_t;
 

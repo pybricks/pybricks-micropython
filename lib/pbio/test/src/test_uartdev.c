@@ -13,11 +13,14 @@
 #include <tinytest_macros.h>
 
 #include <pbdrv/uart.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
+#include <pbdrv/legodev.h>
 #include <pbio/main.h>
-#include <pbio/uartdev.h>
 #include <pbio/util.h>
 #include <test-pbio.h>
+
+#include "../drv/legodev/legodev_pup.h"
+#include "../drv/legodev/legodev_pup_uart.h"
 
 #include "../src/processes.h"
 #include "../drv/clock/clock_test.h"
@@ -52,7 +55,7 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     tt_uint_op(test_uart_dev.rx_msg_length, ==, 1);
     memcpy(test_uart_dev.rx_msg, msg, 1);
     test_uart_dev.rx_msg_result = PBIO_SUCCESS;
-    process_poll(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_poll();
 
     if (length == 1) {
         *ok = true;
@@ -67,7 +70,7 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     tt_uint_op(test_uart_dev.rx_msg_length, ==, length - 1);
     memcpy(test_uart_dev.rx_msg, &msg[1], length - 1);
     test_uart_dev.rx_msg_result = PBIO_SUCCESS;
-    process_poll(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_poll();
 
     *ok = true;
     PT_END(pt);
@@ -91,7 +94,7 @@ PT_THREAD(simulate_tx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     }
 
     test_uart_dev.tx_msg_result = PBIO_SUCCESS;
-    process_poll(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_poll();
 
     *ok = true;
     PT_END(pt);
@@ -202,11 +205,13 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     static const uint8_t msg83[] = { 0x04 }; // ACK
 
+    static const uint8_t msg83b[] = { 0x43, 0x06, 0xBA }; // set default mode
+
     static const uint8_t msg84[] = { 0x02 }; // NACK
 
-    // mode 0 DATA message captured from BOOST Color and Distance Sensor
-    static const uint8_t msg85[] = { 0x46, 0x00, 0xB9 }; // extened mode info
-    static const uint8_t msg86[] = { 0xC0, 0xFF, 0xC0 }; // mode 0 data
+    // mode 6 DATA message captured from BOOST Color and Distance Sensor
+    static const uint8_t msg85[] = { 0x46, 0x00, 0xB9 }; // extended mode info
+    static const uint8_t msg86[] = { 0xC0 | 0x18 | 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x21 }; // mode 6 data
 
     static const uint8_t msg87[] = { 0x43, 0x01, 0xBD }; // set mode 1
     static const uint8_t msg88[] = { 0xC1, 0x00, 0x3E }; // mode 1 data
@@ -219,10 +224,18 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
+    static pbdrv_legodev_dev_t *legodev;
+    static pbdrv_legodev_info_t *info;
+    static pbio_error_t err;
+
     PT_BEGIN(pt);
 
-    process_start(&pbio_uartdev_process);
-    pbio_uartdev_ready(0);
+    // Expect no device at first.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+
+    pbdrv_legodev_pup_uart_process_start();
+    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
@@ -322,7 +335,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg81);
     SIMULATE_RX_MSG(msg82);
 
-    // wait for ACK
     SIMULATE_TX_MSG(msg83);
 
     // wait for baud rate change
@@ -333,89 +345,105 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     PT_YIELD(pt);
 
+    // Simulate setting default mode
+    SIMULATE_TX_MSG(msg83b);
+
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
-        // wait for NACK
+        // Send nack (keep alive)
         SIMULATE_TX_MSG(msg84);
 
-        // reply with data
+        // receive data
         SIMULATE_RX_MSG(msg85);
         SIMULATE_RX_MSG(msg86);
     }
 
-    static pbio_iodev_t *iodev;
-    tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
-    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    tt_want_uint_op(iodev->info->num_modes, ==, 11);
+
+    // Wait for default mode to complete
+    PT_WAIT_WHILE(pt, ({
+        pbio_test_clock_tick(1);
+        (err = pbdrv_legodev_is_ready(legodev)) == PBIO_ERROR_AGAIN;
+    }));
+    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
+
+    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_COLOR_DIST_SENSOR);
+    tt_want_uint_op(info->num_modes, ==, 11);
     // TODO: verify fw/hw versions
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_NONE);
-    tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
 
-    tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[3].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[4].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[4].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[4].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[6].num_values, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[6].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[5].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[5].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[5].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[7].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[7].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[6].num_values, ==, 3);
+    tt_want_uint_op(info->mode_info[6].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[6].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[8].num_values, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[8].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[7].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[7].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[7].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[9].num_values, ==, 2);
-    tt_want_uint_op(iodev->info->mode_info[9].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[8].num_values, ==, 4);
+    tt_want_uint_op(info->mode_info[8].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[8].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[10].num_values, ==, 8);
-    tt_want_uint_op(iodev->info->mode_info[10].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[9].num_values, ==, 2);
+    tt_want_uint_op(info->mode_info[9].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[9].writable, ==, 0);
 
+    tt_want_uint_op(info->mode_info[10].num_values, ==, 8);
+    tt_want_uint_op(info->mode_info[10].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[10].writable, ==, 0);
 
     // test changing the mode
 
-    // static struct etimer timer;
-    int err;
-
-    err = pbio_uartdev_set_mode(iodev, 1);
+    err = pbdrv_legodev_set_mode(legodev, 1);
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
     // wait for mode change message to be sent
     SIMULATE_TX_MSG(msg87);
 
     // should be blocked since data with new mode has not been received yet
-    tt_uint_op(pbio_uartdev_is_ready(iodev), ==, PBIO_ERROR_AGAIN);
-    tt_uint_op(iodev->mode, !=, 1);
+    tt_uint_op(pbdrv_legodev_is_ready(legodev), ==, PBIO_ERROR_AGAIN);
 
     // data message with new mode
     SIMULATE_RX_MSG(msg88);
 
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbio_uartdev_is_ready(iodev)) == PBIO_ERROR_AGAIN;
+        (err = pbdrv_legodev_is_ready(legodev)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
-    tt_uint_op(iodev->mode, ==, 1);
+    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
+    tt_uint_op(info->mode, ==, 1);
 
 
     // also do mode 8 since it requires the extended mode flag
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbio_uartdev_set_mode(iodev, 8)) == PBIO_ERROR_AGAIN;
+        (err = pbdrv_legodev_set_mode(legodev, 8)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
@@ -423,8 +451,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg89);
 
     // should be blocked since data with new mode has not been received yet
-    tt_uint_op(pbio_uartdev_is_ready(iodev), ==, PBIO_ERROR_AGAIN);
-    tt_uint_op(iodev->mode, !=, 8);
+    tt_uint_op(pbdrv_legodev_is_ready(legodev), ==, PBIO_ERROR_AGAIN);
 
     // send data message with new mode
     SIMULATE_RX_MSG(msg90);
@@ -432,15 +459,16 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbio_uartdev_is_ready(iodev)) == PBIO_ERROR_AGAIN;
+        (err = pbdrv_legodev_is_ready(legodev)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
-    tt_uint_op(iodev->mode, ==, 8);
+    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
+    tt_uint_op(info->mode, ==, 8);
 
     PT_YIELD(pt);
 
 end:
-    process_exit(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_exit();
 
     PT_END(pt);
 }
@@ -484,7 +512,9 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     static const uint8_t msg34[] = { 0x04 }; // ACK
 
-    static const uint8_t msg36[] = { 0xD0, 0xFF, 0xFF, 0xFF, 0xFF, 0x2F }; // DATA length 4, mode 0
+    static const uint8_t msg35[] = { 0x43, 0x02, 0xBE }; // set default mode
+
+    static const uint8_t msg36[] = { 0xC0 | 0x10 | 0x02, 0x00, 0x00, 0x00, 0x00, 0x2D }; // mode 2, angle 0
 
     static const uint8_t msg37[] = { 0x02 }; // NACK
 
@@ -492,10 +522,17 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
+    static pbdrv_legodev_dev_t *legodev;
+    static pbdrv_legodev_info_t *info;
+
     PT_BEGIN(pt);
 
-    process_start(&pbio_uartdev_process);
-    pbio_uartdev_ready(0);
+    // Expect no device at first.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+
+    pbdrv_legodev_pup_uart_process_start();
+    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
@@ -557,6 +594,9 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     PT_YIELD(pt);
 
+    // Simulate setting default mode
+    SIMULATE_TX_MSG(msg35);
+
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
@@ -567,31 +607,32 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg36);
     }
 
-    static pbio_iodev_t *iodev;
-    tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
-    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR);
-    tt_want_uint_op(iodev->info->num_modes, ==, 4);
-    // TODO: verify fw/hw versions
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT |
-        PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS);
-    tt_want_uint_op(iodev->mode, ==, 0);
+    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR);
+    tt_want_uint_op(info->num_modes, ==, 4);
+    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_REL_MOTOR__POS);
 
-    tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].writable, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].writable, ==, 0);
+
+    tt_want_uint_op(info->mode_info[3].num_values, ==, 5);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].writable, ==, 0);
 
     PT_YIELD(pt);
 
 end:
-    process_exit(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_exit();
 
     PT_END(pt);
 }
@@ -654,7 +695,9 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     static const uint8_t msg55[] = { 0x04 }; // ACK
 
-    static const uint8_t msg57[] = { 0xD0, 0xFF, 0xFF, 0xFF, 0xFF, 0x2F }; // DATA length 4, mode 0
+    static const uint8_t msg56[] = { 0x43, 0x04, 0xB8 }; // set default mode
+
+    static const uint8_t msg57[] = { 0xC0 | 0x10 | 0x04, 0x00, 0x00, 0x00, 0x00, 0x2B }; // mode 4, data 0, 0
 
     static const uint8_t msg58[] = { 0x02 }; // NACK
 
@@ -662,10 +705,17 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
+    static pbdrv_legodev_dev_t *legodev;
+    static pbdrv_legodev_info_t *info;
+
     PT_BEGIN(pt);
 
-    process_start(&pbio_uartdev_process);
-    pbio_uartdev_ready(0);
+    // Expect no device at first.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+
+    pbdrv_legodev_pup_uart_process_start();
+    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
@@ -740,6 +790,9 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     PT_YIELD(pt);
 
+    // Simulate setting default mode
+    SIMULATE_TX_MSG(msg56);
+
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
@@ -750,37 +803,41 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg57);
     }
 
-    static pbio_iodev_t *iodev;
-    tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
-    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR);
-    tt_want_uint_op(iodev->info->num_modes, ==, 6);
-    // TODO: verify fw/hw versions
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
-        | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
-    tt_want_uint_op(iodev->mode, ==, 0);
+    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_MOTOR);
+    tt_want_uint_op(info->num_modes, ==, 6);
+    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_ABS_MOTOR__CALIB);
 
-    tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
-    tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 14);
-    tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[4].num_values, ==, 2);
+    tt_want_uint_op(info->mode_info[4].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[4].writable, ==, 0);
+
+    tt_want_uint_op(info->mode_info[5].num_values, ==, 14);
+    tt_want_uint_op(info->mode_info[5].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[5].writable, ==, 0);
+
 
     PT_YIELD(pt);
 
 end:
-    process_exit(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_exit();
 
     PT_END(pt);
 }
@@ -843,7 +900,9 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     static const uint8_t msg55[] = { 0x04 }; // ACK
 
-    static const uint8_t msg57[] = { 0xD0, 0xFF, 0xFF, 0xFF, 0xFF, 0x2F }; // DATA length 4, mode 0
+    static const uint8_t msg56[] = { 0x43, 0x04, 0xB8 }; // set default mode
+
+    static const uint8_t msg57[] = { 0xC0 | 0x10 | 0x04, 0x00, 0x00, 0x00, 0x00, 0x2B }; // mode 4, data 0, 0
 
     static const uint8_t msg58[] = { 0x02 }; // NACK
 
@@ -851,10 +910,17 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
+    static pbdrv_legodev_dev_t *legodev;
+    static pbdrv_legodev_info_t *info;
+
     PT_BEGIN(pt);
 
-    process_start(&pbio_uartdev_process);
-    pbio_uartdev_ready(0);
+    // Expect no device at first.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+
+    pbdrv_legodev_pup_uart_process_start();
+    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
@@ -929,6 +995,9 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     PT_YIELD(pt);
 
+    // Simulate setting default mode
+    SIMULATE_TX_MSG(msg56);
+
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
@@ -939,53 +1008,51 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg57);
     }
 
-    static pbio_iodev_t *iodev;
-    tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
-    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR);
-    tt_want_uint_op(iodev->info->num_modes, ==, 6);
-    // TODO: verify fw/hw versions
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
-        | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
-    tt_want_uint_op(iodev->mode, ==, 0);
+    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_TECHNIC_XL_MOTOR);
+    tt_want_uint_op(info->num_modes, ==, 6);
+    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_ABS_MOTOR__CALIB);
 
-    tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16 | PBIO_IODEV_DATA_TYPE_WRITABLE);
+    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
-    tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].writable, ==, 1);
 
-    tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 14);
-    tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[4].num_values, ==, 2);
+    tt_want_uint_op(info->mode_info[4].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[4].writable, ==, 0);
+
+    tt_want_uint_op(info->mode_info[5].num_values, ==, 14);
+    tt_want_uint_op(info->mode_info[5].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[5].writable, ==, 0);
+
 
     PT_YIELD(pt);
 
 end:
-    process_exit(&pbio_uartdev_process);
+    pbdrv_legodev_pup_uart_process_exit();
 
     PT_END(pt);
 }
 
-struct testcase_t pbio_uartdev_tests[] = {
+struct testcase_t pbdrv_legodev_tests[] = {
     PBIO_PT_THREAD_TEST(test_boost_color_distance_sensor),
     PBIO_PT_THREAD_TEST(test_boost_interactive_motor),
     PBIO_PT_THREAD_TEST(test_technic_large_motor),
     PBIO_PT_THREAD_TEST(test_technic_xl_motor),
     END_OF_TESTCASES
-};
-
-const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[] = {
-    [0] = {
-        .uart_id = 0,
-    },
 };
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
@@ -1045,7 +1112,11 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_
 }
 
 pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart) {
-    assert(test_uart_dev.tx_msg);
+    if (!test_uart_dev.tx_msg) {
+        // Write end called without begin
+        // REVISIT: This passes but not very clean.
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     if (test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN && etimer_expired(&test_uart_dev.tx_timer)) {
         test_uart_dev.tx_msg_result = PBIO_ERROR_TIMEDOUT;

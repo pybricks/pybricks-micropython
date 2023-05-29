@@ -13,6 +13,7 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -23,7 +24,7 @@
 typedef struct _pupdevices_PFMotor_obj_t {
     mp_obj_base_t base;
     // Point to ColorDistanceSensor, this class does not manage its own device.
-    pb_pupdevices_obj_base_t *pup_base;
+    pb_type_device_obj_base_t *device_base;
     uint8_t channel;
     bool use_blue_port;
     pbio_direction_t direction;
@@ -55,7 +56,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
 
     // All checks have passed, so create the object
     pupdevices_PFMotor_obj_t *self = mp_obj_malloc(pupdevices_PFMotor_obj_t, type);
-    self->pup_base = pupdevices_ColorDistanceSensor__get_device(sensor_in);
+    self->device_base = pupdevices_ColorDistanceSensor__get_device(sensor_in);
     self->channel = channel;
     self->use_blue_port = use_blue_port;
     self->direction = positive_direction;
@@ -76,7 +77,7 @@ STATIC mp_obj_t pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t
     // Send the data to the device. This automatically delays by about 250 ms
     // to ensure the data is properly sent and received. This also ensures that
     // the message will still work if two identical values are sent in a row.
-    return pb_pupdevices_set_data(self->pup_base, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message);
+    return pb_type_device_set_data(self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, sizeof(message));
 }
 
 // pybricks.pupdevices.PFMotor.dc

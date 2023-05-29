@@ -12,31 +12,29 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_color_map.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.nxtdevices.ColorSensor class object. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _nxtdevices_ColorSensor_obj_t {
-    mp_obj_base_t base;
+    pb_type_device_obj_base_t device_base;
     mp_obj_t color_map;
     mp_obj_t light;
-    pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
 
 STATIC mp_obj_t nxtdevices_ColorSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
-    pb_device_t *pbdev = context;
+    pb_type_device_obj_base_t *sensor = context;
     uint8_t mode;
 
     if (hsv->h == PBIO_COLOR_HUE_RED) {
-        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_R;
+        mode = PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__LAMP_R;
     } else if (hsv->h == PBIO_COLOR_HUE_GREEN) {
-        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_G;
+        mode = PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__LAMP_G;
     } else if (hsv->h == PBIO_COLOR_HUE_BLUE) {
-        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
+        mode = PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
     } else {
-        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_OFF;
+        mode = PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__LAMP_OFF;
     }
-    int32_t unused;
-    pb_device_get_values(pbdev, mode, &unused);
+    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(sensor), mode);
     return mp_const_none;
 }
 
@@ -46,16 +44,13 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_ColorSensor_obj_t *self = mp_obj_malloc(nxtdevices_ColorSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_COLOR_SENSOR);
 
     // Create an instance of the Light class
-    self->light = pb_type_ColorLight_external_obj_new(self->pbdev, nxtdevices_ColorSensor_light_on);
+    self->light = pb_type_ColorLight_external_obj_new(&self->device_base, nxtdevices_ColorSensor_light_on);
 
     // Set the light color to red
-    nxtdevices_ColorSensor_light_on(self->pbdev, &pb_Color_RED_obj.hsv);
+    nxtdevices_ColorSensor_light_on(&self->device_base, &pb_Color_RED_obj.hsv);
 
     // Save default color settings
     pb_color_map_save_default(&self->color_map);
@@ -65,9 +60,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
 // pybricks.nxtdevices.ColorSensor.rgb
 STATIC mp_obj_t nxtdevices_ColorSensor_rgb(mp_obj_t self_in) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t all[4];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__MEASURE);
     mp_obj_t ret[3];
     for (uint8_t i = 0; i < 3; i++) {
         // scale rgb bytes to percentage
@@ -79,9 +72,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_rgb_obj, nxtdevices_Colo
 
 // pybricks.nxtdevices.ColorSensor.reflection
 STATIC mp_obj_t nxtdevices_ColorSensor_reflection(mp_obj_t self_in) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t all[4];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__MEASURE);
     // Return the average of red, green, and blue reflection
     return mp_obj_new_int((all[0] + all[1] + all[2]) * 101 / (3 * 256));
 }
@@ -89,9 +80,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_reflection_obj, nxtdevic
 
 // pybricks.nxtdevices.ColorSensor.ambient
 STATIC mp_obj_t nxtdevices_ColorSensor_ambient(mp_obj_t self_in) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t all[4];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__MEASURE);
     // Return the ambient light
     return mp_obj_new_int(all[3]);
 }
@@ -99,11 +88,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_ambient_obj, nxtdevices_
 
 // pybricks.nxtdevices.ColorSensor.hsv
 STATIC mp_obj_t nxtdevices_ColorSensor_hsv(mp_obj_t self_in) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
     // Read sensor data
-    int32_t all[4];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__MEASURE);
     pbio_color_rgb_t rgb = {
         .r = all[0],
         .g = all[1],
@@ -125,8 +111,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_hsv_obj, nxtdevices_ColorSensor
 STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t all[4];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_COLOR_SENSOR__MEASURE);
 
     pbio_color_hsv_t hsv;
     pbio_color_rgb_t rgb = {

@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2023 The Pybricks Authors
 
@@ -11,12 +12,11 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } ev3devices_TouchSensor_obj_t;
 
 // pybricks.ev3devices.TouchSensor.__init__
@@ -25,20 +25,14 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     ev3devices_TouchSensor_obj_t *self = mp_obj_malloc(ev3devices_TouchSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR);
-
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3_TOUCH_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.ev3devices.TouchSensor.pressed
 STATIC mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
-    ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t analog;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog);
-    return mp_obj_new_bool(analog > 250);
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_TOUCH_SENSOR__TOUCH);
+    return mp_obj_new_bool(analog[0] > 250);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
 

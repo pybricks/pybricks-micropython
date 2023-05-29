@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #include <pbio/error.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 /**
  * Data types used by ev3dev sensors.
@@ -49,7 +49,7 @@ typedef enum {
 
 typedef struct _lego_sensor_t lego_sensor_t;
 
-pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbio_iodev_type_id_t valid_id);
+pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbdrv_legodev_type_id_t valid_id);
 
 pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego_sensor_data_type_t *data_type);
 

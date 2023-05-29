@@ -20,8 +20,4 @@ PROCESS_NAME(pbdrv_adc_process);
 PROCESS_NAME(pbdrv_uart_process);
 #endif
 
-#if PBIO_CONFIG_UARTDEV
-PROCESS_NAME(pbio_uartdev_process);
-#endif
-
 #endif // _PBIO_PROCESSES_H_

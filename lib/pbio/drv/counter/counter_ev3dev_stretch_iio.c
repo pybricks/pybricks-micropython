@@ -16,8 +16,9 @@
 #include <libudev.h>
 
 #include <pbio/util.h>
-#include "counter.h"
+#include <pbio/error.h>
 
+#include <pbdrv/counter.h>
 #include <pbdrv/clock.h>
 
 #define DEBUG 0
@@ -27,18 +28,25 @@
 #define dbg_err(s)
 #endif
 
-typedef struct {
-    pbdrv_counter_dev_t *dev;
+struct _pbdrv_counter_dev_t {
     FILE *count;
     uint32_t time_us_last;
     int32_t rotations_last;
     int32_t millidegrees_last;
-} private_data_t;
+};
 
-static private_data_t private_data[PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV];
+static pbdrv_counter_dev_t private_data[PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV];
 
-static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
-    private_data_t *priv = dev->priv;
+pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
+    if (id >= PBIO_ARRAY_SIZE(private_data)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    *dev = &private_data[id];
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+    pbdrv_counter_dev_t *priv = dev;
 
     if (!priv->count) {
         return PBIO_ERROR_NO_DEV;
@@ -75,11 +83,11 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_angle(pbdrv_counter_dev
     return PBIO_SUCCESS;
 }
 
-static const pbdrv_counter_funcs_t pbdrv_counter_ev3dev_stretch_iio_funcs = {
-    .get_angle = pbdrv_counter_ev3dev_stretch_iio_get_angle,
-};
+pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
-void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs) {
+void pbdrv_counter_init(void) {
     char buf[256];
     struct udev *udev;
     struct udev_enumerate *enumerate;
@@ -120,7 +128,7 @@ void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs) {
 
 
     for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        private_data_t *priv = &private_data[i];
+        pbdrv_counter_dev_t *priv = &private_data[i];
 
         snprintf(buf, sizeof(buf), "%s/in_count%d_raw", udev_list_entry_get_name(entry), (int)i);
         priv->count = fopen(buf, "r");
@@ -130,14 +138,6 @@ void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs) {
         }
 
         setbuf(priv->count, NULL);
-
-        // FIXME: assuming that these are the only counter devices
-        // counter_id should be passed from platform data instead
-        _Static_assert(PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV == PBDRV_CONFIG_COUNTER_NUM_DEV,
-            "need to fix counter_ev3dev_stretch_iio implementation to allow other counter devices");
-        priv->dev = &devs[i];
-        priv->dev->funcs = &pbdrv_counter_ev3dev_stretch_iio_funcs;
-        priv->dev->priv = priv;
     }
 
 free_enumerate:

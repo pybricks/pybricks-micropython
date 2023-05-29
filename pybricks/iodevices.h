@@ -10,16 +10,16 @@
 
 #include "py/obj.h"
 
+extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
+
 #if PYBRICKS_PY_PUPDEVICES
 
 extern const mp_obj_type_t pb_type_iodevices_LWP3Device;
-extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 
 #endif // PYBRICKS_PY_PUPDEVICES
 
 #if PYBRICKS_PY_EV3DEVICES
 
-extern const mp_obj_type_t pb_type_iodevices_LUMPDevice;
 extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
 extern const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
 extern const mp_obj_type_t pb_type_iodevices_I2CDevice;

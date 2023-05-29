@@ -11,11 +11,10 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 // pybricks.nxtdevices.EnergyMeter class object
 typedef struct _nxtdevices_EnergyMeter_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } nxtdevices_EnergyMeter_obj_t;
 
 // pybricks.nxtdevices.EnergyMeter.__init__
@@ -24,32 +23,24 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_EnergyMeter_obj_t *self = mp_obj_malloc(nxtdevices_EnergyMeter_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_ENERGY_METER);
 
     // Read once so we are in the mode we'll be using for all methods, to avoid mode switch delays later
-    int32_t all[7];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.nxtdevices.EnergyMeter.storage
 STATIC mp_obj_t nxtdevices_EnergyMeter_storage(mp_obj_t self_in) {
-    nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t all[7];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
     return mp_obj_new_int(all[4]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_EnergyMeter_storage);
 
 // pybricks.nxtdevices.EnergyMeter.input
 STATIC mp_obj_t nxtdevices_EnergyMeter_input(mp_obj_t self_in) {
-    nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t all[7];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[0]);
     dat[1] = mp_obj_new_int(all[1]);
@@ -60,9 +51,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_input_obj, nxtdevices_En
 
 // pybricks.nxtdevices.EnergyMeter.output
 STATIC mp_obj_t nxtdevices_EnergyMeter_output(mp_obj_t self_in) {
-    nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t all[7];
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[2]);
     dat[1] = mp_obj_new_int(all[3]);

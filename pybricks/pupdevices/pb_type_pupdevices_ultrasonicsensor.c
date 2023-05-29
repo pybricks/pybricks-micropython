@@ -8,6 +8,7 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -15,7 +16,7 @@
 
 // Class structure for UltrasonicSensor
 typedef struct _pupdevices_UltrasonicSensor_obj_t {
-    pb_pupdevices_obj_base_t pup_base;
+    pb_type_device_obj_base_t device_base;
     mp_obj_base_t base;
     mp_obj_t lights;
 } pupdevices_UltrasonicSensor_obj_t;
@@ -26,27 +27,27 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     pupdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(pupdevices_UltrasonicSensor_obj_t, type);
-    pb_pupdevices_init_class(&self->pup_base, port_in, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
 
     // Create an instance of the LightArray class
-    self->lights = common_LightArray_obj_make_new(&self->pup_base, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
+    self->lights = common_LightArray_obj_make_new(&self->device_base, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.pupdevices.UltrasonicSensor.distance
 STATIC mp_obj_t get_distance(mp_obj_t self_in) {
-    int16_t *data = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL);
+    int16_t *data = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL);
     return mp_obj_new_int(data[0] < 0 || data[0] >= 2000 ? 2000 : data[0]);
 }
-STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_distance_obj, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, get_distance);
+STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, get_distance);
 
 // pybricks.pupdevices.UltrasonicSensor.presence
 STATIC mp_obj_t get_presence(mp_obj_t self_in) {
-    int8_t *data = pb_pupdevices_get_data(self_in, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN);
+    int8_t *data = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN);
     return mp_obj_new_bool(data[0]);
 }
-STATIC PB_DEFINE_CONST_PUPDEVICES_METHOD_OBJ(get_presence_obj, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, get_presence);
+STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_presence_obj, PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, get_presence);
 
 STATIC const pb_attr_dict_entry_t pupdevices_UltrasonicSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_UltrasonicSensor_obj_t, lights),

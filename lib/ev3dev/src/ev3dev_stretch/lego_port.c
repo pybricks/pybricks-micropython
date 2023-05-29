@@ -9,7 +9,7 @@
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
 
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 #include <pbio/port.h>
 #include <pbio/util.h>
 
@@ -121,7 +121,7 @@ static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_id_t port, ev3dev_lego_p
 }
 
 // Set compatible port configuration for given device
-pbio_error_t ev3dev_lego_port_configure(pbio_port_id_t port, pbio_iodev_type_id_t id) {
+pbio_error_t ev3dev_lego_port_configure(pbio_port_id_t port, pbdrv_legodev_type_id_t id) {
     pbio_error_t err;
 
     // Get the current port mode and status
@@ -136,50 +136,50 @@ pbio_error_t ev3dev_lego_port_configure(pbio_port_id_t port, pbio_iodev_type_id_
     }
 
     // If special modes have been set previously and they're still good, we're done.
-    if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
-        (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG       && mode_now == NXT_ANALOG) ||
-        (id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && status_now == NXT_ANALOG) ||
-        (id == PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR && status_now == NXT_ANALOG) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ||
-        (id == PBIO_IODEV_TYPE_ID_LUMP_UART        && status_now == EV3_UART)   ||
-        (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR  && status_now == DC_MOTOR)
+    if ((id == PBDRV_LEGODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
+        (id == PBDRV_LEGODEV_TYPE_ID_NXT_ANALOG       && mode_now == NXT_ANALOG) ||
+        (id == PBDRV_LEGODEV_TYPE_ID_NXT_TOUCH_SENSOR && status_now == NXT_ANALOG) ||
+        (id == PBDRV_LEGODEV_TYPE_ID_NXT_SOUND_SENSOR && status_now == NXT_ANALOG) ||
+        (id == PBDRV_LEGODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
+        (id == PBDRV_LEGODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ||
+        (id == PBDRV_LEGODEV_TYPE_ID_ANY_LUMP_UART    && status_now == EV3_UART)   ||
+        (id == PBDRV_LEGODEV_TYPE_ID_EV3DEV_DC_MOTOR  && status_now == DC_MOTOR)
     ){
         return PBIO_SUCCESS;
     }
 
     // For undetected analog sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG || id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR) {
+    if (id == PBDRV_LEGODEV_TYPE_ID_NXT_ANALOG || id == PBDRV_LEGODEV_TYPE_ID_NXT_TOUCH_SENSOR) {
         err = ev3dev_lego_port_set_mode(port, NXT_ANALOG);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
     // For Custom UART Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART) {
+    if (id == PBDRV_LEGODEV_TYPE_ID_CUSTOM_UART) {
         err = ev3dev_lego_port_set_mode(port, OTHER_UART);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
     // For Custom I2C Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C) {
+    if (id == PBDRV_LEGODEV_TYPE_ID_CUSTOM_I2C) {
         err = ev3dev_lego_port_set_mode(port, OTHER_I2C);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
     // For NXT 2.0 Color Sensor, port must be set to raw mode on first use
-    if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+    if (id == PBDRV_LEGODEV_TYPE_ID_NXT_COLOR_SENSOR) {
         err = ev3dev_lego_port_set_mode(port, RAW);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
     // For DC Motors Sensor, port must be set to DC Motor on first use
-    if (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR) {
+    if (id == PBDRV_LEGODEV_TYPE_ID_EV3DEV_DC_MOTOR) {
         err = ev3dev_lego_port_set_mode(port, DC_MOTOR);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
     // For custom LUMP sensors, port must be set to EV3 UART on first use
-    if (id == PBIO_IODEV_TYPE_ID_LUMP_UART) {
+    if (id == PBDRV_LEGODEV_TYPE_ID_ANY_LUMP_UART) {
         err = ev3dev_lego_port_set_mode(port, EV3_UART);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }

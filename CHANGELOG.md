@@ -4,11 +4,17 @@
 
 ## [Unreleased]
 
+### Added
+- Added `'modes'` entry to the dictionary returned by `PUPDevice.info()`. It
+  is a tuple of `(name, num_values, data_type)` tuples for each available mode.
+
+### Changed
+- Changed internal drivers for LEGO devices on all platforms.
+
 ### Fixed
 - Fixed hub will not power off when Bluetooth chip crashes on City and Technic hubs ([support#1095]).
 
 [support#1095]: https://github.com/pybricks/support/issues/1095
-
 
 ## [3.3.0b6] - 2023-06-02
 

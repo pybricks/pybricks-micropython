@@ -12,8 +12,9 @@
 #include <inttypes.h>
 
 #include <pbdrv/config.h>
-#include <pbdrv/ioport.h>
 #include <pbdrv/motor_driver.h>
+#include <pbdrv/legodev.h>
+
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
 #include <pbio/int_math.h>
@@ -38,20 +39,14 @@ static pbio_dcmotor_t dcmotors[PBIO_CONFIG_DCMOTOR_NUM_DEV];
 void pbio_dcmotor_stop_all(bool clear_parents) {
 
     // Go through all ports.
-    for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_DCMOTOR_NUM_DEV; i++) {
 
-        // Get device from port index.
-        pbio_dcmotor_t *dcmotor;
-        pbio_error_t err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
-        if (err != PBIO_SUCCESS) {
-            continue;
-        }
+        // HACK: Drop this, but need to ensure dc motors are initialized.
+        pbio_dcmotor_t *dcmotor = &dcmotors[i];
+        pbdrv_motor_driver_get_dev(i, &dcmotor->motor_driver);
 
-        // Get the device type ID to ensure we are dealing with a motor.
-        pbio_iodev_type_id_t type_id;
-        err = pbdrv_ioport_get_motor_device_type_id(port, &type_id);
-        if (err != PBIO_SUCCESS) {
-            // It's something other than a motor, so don't touch it.
+        if (pbdrv_legodev_needs_permanent_power(dcmotor->legodev)) {
+            // Don't touch devices that always need power.
             continue;
         }
 
@@ -92,16 +87,10 @@ pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor) {
  * Sets up the DC motor instance to be used in an application.
  *
  * @param [in]  dcmotor     The DC motor instance.
+ * @param [in]  type        The type of motor.
  * @param [in]  direction   The direction of positive rotation.
  */
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
-
-    // Get the device type ID to ensure we are dealing with a motor.
-    pbio_iodev_type_id_t type_id;
-    pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(dcmotor->port, &type_id);
-    if (err != PBIO_SUCCESS || type_id == PBIO_IODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbdrv_legodev_type_id_t type, pbio_direction_t direction) {
 
     // If the device already has a parent, we shouldn't allow this device
     // to be used as a new object.
@@ -110,13 +99,14 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
     }
 
     // Coast the device.
-    err = pbio_dcmotor_coast(dcmotor);
+    pbio_error_t err = pbio_dcmotor_coast(dcmotor);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Load settings for this motor
-    dcmotor->max_voltage = pbio_dcmotor_get_max_voltage(type_id);
+    dcmotor->max_voltage = pbio_dcmotor_get_max_voltage(type);
+    dcmotor->max_voltage_hardware = dcmotor->max_voltage;
 
     // Set direction and state
     dcmotor->direction = direction;
@@ -127,32 +117,19 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
 /**
  * Gets the DC motor instance for the specified port.
  *
- * @param [in]  port        The port the motor is connected to.
+ * @param [in]  legodev     The device.
  * @param [out] dcmotor     The motor instance.
  * @return                  Error code.
  */
-pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
-    // Validate port
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_ARG;
+pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor) {
+    uint8_t id;
+    pbio_error_t err = pbdrv_legodev_get_motor_index(legodev, &id);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
-
-    *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-
-    // if this is the first time getting the device, we need to get the motor
-    // driver instance
-    if ((*dcmotor)->motor_driver == NULL) {
-        // since there is no dcmotor module init, we init the port here
-        (*dcmotor)->port = port;
-        // REVISIT: this assumes that the motor driver id corresponds to the port
-        pbio_error_t err = pbdrv_motor_driver_get_dev(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &(*dcmotor)->motor_driver);
-
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-
-    return PBIO_SUCCESS;
+    *dcmotor = &dcmotors[id];
+    (*dcmotor)->legodev = legodev;
+    return pbdrv_motor_driver_get_dev(id, &(*dcmotor)->motor_driver);
 }
 
 /**
@@ -269,15 +246,8 @@ void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_volta
  */
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage) {
 
-    // Get the device type.
-    pbio_iodev_type_id_t type_id;
-    pbio_error_t err = pbdrv_ioport_get_motor_device_type_id(dcmotor->port, &type_id);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // New maximum voltage must be positive and at or below hardware limit.
-    if (max_voltage < 0 || max_voltage > pbio_dcmotor_get_max_voltage(type_id)) {
+    if (max_voltage < 0 || max_voltage > dcmotor->max_voltage_hardware) {
         return PBIO_ERROR_INVALID_ARG;
     }
     // Set the new value.

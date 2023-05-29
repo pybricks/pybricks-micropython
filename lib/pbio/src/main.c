@@ -13,7 +13,6 @@
 #include <pbdrv/button.h>
 #include <pbdrv/config.h>
 #include <pbdrv/core.h>
-#include <pbdrv/ioport.h>
 #include <pbdrv/sound.h>
 #include <pbio/config.h>
 #include <pbio/dcmotor.h>
@@ -22,7 +21,6 @@
 #include <pbio/light.h>
 #include <pbio/main.h>
 #include <pbio/motor_process.h>
-#include <pbio/uartdev.h>
 
 #include "light/animation.h"
 #include "processes.h"
@@ -36,9 +34,6 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_UART
     &pbdrv_uart_process,
 #endif
-#if PBIO_CONFIG_UARTDEV
-    &pbio_uartdev_process,
-#endif
     NULL);
 
 /**
@@ -48,6 +43,7 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     pbdrv_init();
+
     // TODO: remove autostart - this currently starts legacy drivers like analog
     // it has to be after pbdrv_init() but before anything else
     autostart_start(autostart_processes);

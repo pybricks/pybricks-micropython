@@ -5,15 +5,13 @@
 #include <pbdrv/gpio.h>
 #include <pbio/button.h>
 #include <pbio/error.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 #include <pbio/port.h>
-#include <pbio/uartdev.h>
 
 #include "stm32f4xx_hal.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
-#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
@@ -143,15 +141,6 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
     }
 };
 
-// counters
-
-const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
-    [0] = {
-        .counter_id = 0,
-        .port_id = PBIO_PORT_ID_1,
-    },
-};
-
 // LED
 
 // TODO: these are move/city hub values
@@ -239,12 +228,6 @@ const pbdrv_uart_stm32f4_ll_irq_platform_data_t
     },
 };
 
-const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
-    [0] = {
-        .uart_id = UART_ID_0,
-    },
-};
-
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
     GPIO_InitTypeDef gpio_init;
@@ -266,16 +249,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
 // overrides weak function in setup.m
 void USART2_IRQHandler(void) {
     pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_ID_0);
-}
-
-// HACK: we don't have a generic ioport interface yet so defining this function
-// in platform.c
-pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
-    if (port != PBIO_PORT_ID_1) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    return pbio_uartdev_get(0, iodev);
 }
 
 uint32_t SystemCoreClock = 16000000;

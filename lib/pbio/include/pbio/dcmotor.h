@@ -18,9 +18,12 @@
 #include <stdint.h>
 
 #include <pbdrv/motor_driver.h>
+#include <pbdrv/counter.h>
+#include <pbdrv/legodev.h>
+
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 #include <pbio/parent.h>
 #include <pbio/port.h>
 
@@ -46,16 +49,18 @@ typedef enum {
  * DC Motor instance.
  */
 typedef struct _pbio_dcmotor_t {
-    /** Port to which this motor is attached. */
-    pbio_port_id_t port;
+    /** The associated legodevice instance. */
+    pbdrv_legodev_dev_t *legodev;
     /** Direction for positive speeds. */
     pbio_direction_t direction;
     /** Currently active actuation type. */
     pbio_dcmotor_actuation_t actuation_now;
     /** Currently applied voltage. */
     int32_t voltage_now;
-    /** Maximum allowed voltage. */
+    /** User-specified maximum allowed voltage, capped to hardware limit below */
     int32_t max_voltage;
+    /** Maximum allowed voltage by hardware specifications. */
+    int32_t max_voltage_hardware;
     /** Parent object (like a servo) that uses this motor. */
     pbio_parent_t parent;
     /** Low level motor driver. */
@@ -68,13 +73,13 @@ typedef struct _pbio_dcmotor_t {
 void pbio_dcmotor_stop_all(bool clear_parents);
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
-int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
+int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id);
 /** @endcond */
 
 /** @name Initialization Functions */
 /**@{*/
-pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
+pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor);
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor,  pbdrv_legodev_type_id_t type, pbio_direction_t direction);
 pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor);
 /**@}*/
 
@@ -95,7 +100,7 @@ pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int3
 static inline void pbio_dcmotor_stop_all(bool clear_parents) {
 }
 
-static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
+static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor) {
     *dcmotor = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -109,7 +114,7 @@ static inline void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dc
     *voltage_now = 0;
 }
 
-static inline int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
+static inline int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id) {
     return 0;
 }
 

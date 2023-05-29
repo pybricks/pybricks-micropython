@@ -7,8 +7,8 @@
 #include <stdint.h>
 
 #include <pbio/error.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
-pbio_error_t ev3dev_lego_port_configure(pbio_port_id_t port, pbio_iodev_type_id_t id);
+pbio_error_t ev3dev_lego_port_configure(pbio_port_id_t port, pbdrv_legodev_type_id_t id);
 
 #endif // _PBIO_LEGO_PORT_H_

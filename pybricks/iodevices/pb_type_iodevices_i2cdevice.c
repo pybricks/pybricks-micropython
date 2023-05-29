@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 #include "py/objstr.h"
 
@@ -14,15 +14,14 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 #include "pbsmbus.h"
 
 // pybricks.iodevices.I2CDevice class object
 typedef struct _iodevices_I2CDevice_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
     smbus_t *bus;
     int8_t address;
 } iodevices_I2CDevice_obj_t;
@@ -32,10 +31,10 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *type, size_t n
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(address));
-    iodevices_I2CDevice_obj_t *self = mp_obj_malloc(iodevices_I2CDevice_obj_t, type);
 
-    // Get port number
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    // Get device, which inits I2C port
+    iodevices_I2CDevice_obj_t *self = mp_obj_malloc(iodevices_I2CDevice_obj_t, type);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_CUSTOM_I2C);
 
     // Get selected I2C Address
     mp_int_t address = mp_obj_get_int(address_in);
@@ -44,10 +43,8 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *type, size_t n
     }
     self->address = address;
 
-    // Init I2C port
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_CUSTOM_I2C);
-
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(pb_smbus_get(&self->bus, port - PBIO_PORT_ID_1 + 3));
 
     return MP_OBJ_FROM_PTR(self);
@@ -150,7 +147,6 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_write_obj, 1, iodevices_I2CDevice_write);
-
 
 // dir(pybricks.iodevices.I2CDevice)
 STATIC const mp_rom_map_elem_t iodevices_I2CDevice_locals_dict_table[] = {

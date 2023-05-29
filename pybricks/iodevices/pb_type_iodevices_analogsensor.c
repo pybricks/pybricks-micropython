@@ -5,36 +5,35 @@
 
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbio/iodev.h>
+#include "py/obj.h"
+#include "py/smallint.h"
+
+#include <pbdrv/legodev.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // pybricks.iodevices.AnalogSensor class object
 typedef struct _iodevices_AnalogSensor_obj_t {
-    mp_obj_base_t base;
+    pb_type_device_obj_base_t device_base;
     bool active;
-    pb_device_t *pbdev;
 } iodevices_AnalogSensor_obj_t;
 
 // pybricks.iodevices.AnalogSensor.__init__
 STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
+
     iodevices_AnalogSensor_obj_t *self = mp_obj_malloc(iodevices_AnalogSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_ANALOG);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_ANALOG);
 
     // Initialize NXT sensors to passive state
-    int32_t voltage;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
+    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_NXT_ANALOG__PASSIVE);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -42,24 +41,22 @@ STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *type, size_
 // pybricks.iodevices.AnalogSensor.voltage
 STATIC mp_obj_t iodevices_AnalogSensor_voltage(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_device_get_values(self->pbdev, mode, &voltage);
-    return mp_obj_new_int(voltage);
+    uint8_t mode = self->active ? PBDRV_LEGODEV_MODE_NXT_ANALOG__ACTIVE : PBDRV_LEGODEV_MODE_NXT_ANALOG__PASSIVE;
+    int32_t *voltage = pb_type_device_get_data_blocking(self_in, mode);
+    return mp_obj_new_int(voltage[0]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_voltage_obj, iodevices_AnalogSensor_voltage);
 
 // pybricks.iodevices.AnalogSensor.resistance
 STATIC mp_obj_t iodevices_AnalogSensor_resistance(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_device_get_values(self->pbdev, mode, &voltage);
+    uint8_t mode = self->active ? PBDRV_LEGODEV_MODE_NXT_ANALOG__ACTIVE : PBDRV_LEGODEV_MODE_NXT_ANALOG__PASSIVE;
+    int32_t voltage = *(int32_t *)pb_type_device_get_data_blocking(self_in, mode);
 
     // Open terminal/infinite resistance, return infinite resistance
     const int32_t vmax = 4972;
     if (voltage >= vmax) {
-        return mp_obj_new_int(MP_SSIZE_MAX);
+        return mp_obj_new_int(MP_SMALL_INT_MAX);
     }
     // Return as if a pure voltage divider between load and 10K internal resistor
     return mp_obj_new_int((10000 * voltage) / (vmax - voltage));
@@ -69,8 +66,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_resistance_obj, iodevice
 // pybricks.iodevices.AnalogSensor.active
 STATIC mp_obj_t iodevices_AnalogSensor_active(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage);
+    pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ANALOG__ACTIVE);
     self->active = true;
     return mp_const_none;
 }
@@ -79,8 +75,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_active_obj, iodevices_An
 // pybricks.iodevices.AnalogSensor.passive
 STATIC mp_obj_t iodevices_AnalogSensor_passive(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
+    pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ANALOG__PASSIVE);
     self->active = false;
     return mp_const_none;
 }

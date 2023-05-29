@@ -8,7 +8,6 @@
 #include <stm32f4xx_hal.h>
 
 #include <pbdrv/clock.h>
-#include "pbio/uartdev.h"
 #include "pbio/light_matrix.h"
 #include "pbio/version.h"
 
@@ -19,10 +18,10 @@
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/charger/charger_mp2639a.h"
-#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
-#include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/ioport/ioport_pup.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/legodev/legodev_pup.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_lp50xx_stm32.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
@@ -154,19 +153,6 @@ const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data 
     .ib_adc_ch = 3,
 };
 
-// counters
-
-const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
-    [COUNTER_PORT_A] = {
-        .counter_id = COUNTER_PORT_A,
-        .port_id = PBIO_PORT_ID_A,
-    },
-    [COUNTER_PORT_B] = {
-        .counter_id = COUNTER_PORT_B,
-        .port_id = PBIO_PORT_ID_B,
-    },
-};
-
 // IMU
 
 const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t pbdrv_imu_lsm6s3tr_c_stm32_platform_data = {
@@ -234,26 +220,45 @@ void EXTI15_10_IRQHandler(void) {
 
 // I/O ports
 
-const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
+const pbdrv_legodev_pup_ext_platform_data_t pbdrv_legodev_pup_ext_platform_data[PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV] = {
+    {
+        .port_id = PBIO_PORT_ID_A,
+        .ioport_index = 0,
+    },
+    {
+        .port_id = PBIO_PORT_ID_B,
+        .ioport_index = 1,
+    },
+};
+
+const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data = {
     .port_vcc = { .bank = GPIOC, .pin = 7 },
     .ports = {
-        // Port A
         {
-            .id1 = { .bank = GPIOC, .pin = 1 },
-            .id2 = { .bank = GPIOC, .pin = 0 },
-            .uart_buf = { .bank = GPIOB, .pin = 9 },
-            .uart_tx = { .bank = GPIOC, .pin = 12 },
-            .uart_rx = { .bank = GPIOD, .pin = 2 },
-            .alt = GPIO_AF8_UART5,
+            .port_id = PBIO_PORT_ID_A,
+            .motor_driver_index = 0,
+            .uart_driver_index = UART_PORT_A,
+            .pins = {
+                .gpio1 = { .bank = GPIOC, .pin = 1 },
+                .gpio2 = { .bank = GPIOC, .pin = 0 },
+                .uart_buf = { .bank = GPIOB, .pin = 9 },
+                .uart_tx = { .bank = GPIOC, .pin = 12 },
+                .uart_rx = { .bank = GPIOD, .pin = 2 },
+                .uart_alt = GPIO_AF8_UART5,
+            },
         },
-        // Port B
         {
-            .id1 = { .bank = GPIOA, .pin = 5 },
-            .id2 = { .bank = GPIOA, .pin = 4 },
-            .uart_buf = { .bank = GPIOB, .pin = 8 },
-            .uart_tx = { .bank = GPIOC, .pin = 10 },
-            .uart_rx = { .bank = GPIOC, .pin = 11 },
-            .alt = GPIO_AF7_USART3,
+            .port_id = PBIO_PORT_ID_B,
+            .uart_driver_index = UART_PORT_B,
+            .motor_driver_index = 1,
+            .pins = {
+                .gpio1 = { .bank = GPIOA, .pin = 5 },
+                .gpio2 = { .bank = GPIOA, .pin = 4 },
+                .uart_buf = { .bank = GPIOB, .pin = 8 },
+                .uart_tx = { .bank = GPIOC, .pin = 10 },
+                .uart_rx = { .bank = GPIOC, .pin = 11 },
+                .uart_alt = GPIO_AF7_USART3,
+            },
         },
     },
 };
@@ -473,15 +478,6 @@ void UART5_IRQHandler(void) {
 void USART3_IRQHandler(void) {
     pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_B);
 }
-
-const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
-    [COUNTER_PORT_A] = {
-        .uart_id = UART_PORT_A,
-    },
-    [COUNTER_PORT_B] = {
-        .uart_id = UART_PORT_B,
-    },
-};
 
 // STM32 HAL integration
 

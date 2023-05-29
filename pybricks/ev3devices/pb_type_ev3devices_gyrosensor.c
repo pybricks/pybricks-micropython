@@ -11,21 +11,19 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.ev3devices.GyroSensor class object
 typedef struct _ev3devices_GyroSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
     pbio_direction_t direction;
     mp_int_t offset;
 } ev3devices_GyroSensor_obj_t;
 
 // pybricks.ev3devices.GyroSensor (internal) Get new offset  for new reset angle
-STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pb_device_t *pbdev, pbio_direction_t direction, mp_int_t new_angle) {
+STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(mp_obj_t self_in, pbio_direction_t direction, mp_int_t new_angle) {
     // Read raw sensor values
-    int32_t raw_angle;
-    pb_device_get_values(pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__ANG, &raw_angle);
+    int32_t raw_angle = *(int16_t *)pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_GYRO_SENSOR__ANG);
 
     // Get new offset using arguments and raw values
     if (direction == PBIO_DIRECTION_CLOCKWISE) {
@@ -42,21 +40,18 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
         PB_ARG_DEFAULT_OBJ(direction, pb_Direction_CLOCKWISE_obj));
 
     ev3devices_GyroSensor_obj_t *self = mp_obj_malloc(ev3devices_GyroSensor_obj_t, type);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3_GYRO_SENSOR);
     self->direction = pb_type_enum_get_value(direction_in, &pb_enum_type_Direction);
 
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR);
-
-    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, 0);
+    // Read initial angle to as offset.
+    self->offset = ev3devices_GyroSensor_get_angle_offset(MP_OBJ_FROM_PTR(self), self->direction, 0);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.ev3devices.GyroSensor.speed
 STATIC mp_obj_t ev3devices_GyroSensor_speed(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t raw_speed;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__RATE, &raw_speed);
+    int32_t raw_speed = *(int16_t *)pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_GYRO_SENSOR__RATE);
 
     // changing modes resets angle to 0
     self->offset = 0;
@@ -72,8 +67,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_GyroSensor_speed_obj, ev3devices_Gyr
 // pybricks.ev3devices.GyroSensor.angle
 STATIC mp_obj_t ev3devices_GyroSensor_angle(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t raw_angle;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__ANG, &raw_angle);
+    int32_t raw_angle = *(int16_t *)pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_GYRO_SENSOR__ANG);
 
     if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_angle - self->offset);
@@ -89,7 +83,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t 
         ev3devices_GyroSensor_obj_t, self,
         PB_ARG_REQUIRED(angle));
 
-    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, pb_obj_get_int(angle_in));
+    self->offset = ev3devices_GyroSensor_get_angle_offset(MP_OBJ_FROM_PTR(self), self->direction, pb_obj_get_int(angle_in));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 1, ev3devices_GyroSensor_reset_angle);

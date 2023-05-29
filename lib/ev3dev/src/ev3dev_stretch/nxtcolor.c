@@ -14,7 +14,7 @@
 #include <pbdrv/clock.h>
 #include <pbio/color.h>
 #include <pbio/port.h>
-#include <pbio/iodev.h>
+#include <pbdrv/legodev.h>
 
 #define IN (0)
 #define OUT (1)

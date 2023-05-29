@@ -11,12 +11,11 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.ev3devices.UltrasonicSensor class object
 typedef struct _ev3devices_UltrasonicSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } ev3devices_UltrasonicSensor_obj_t;
 
 
@@ -26,11 +25,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     ev3devices_UltrasonicSensor_obj_t *self = mp_obj_malloc(ev3devices_UltrasonicSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR);
-
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -41,22 +36,16 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_distance(size_t n_args, const mp_obj
         ev3devices_UltrasonicSensor_obj_t, self,
         PB_ARG_DEFAULT_FALSE(silent));
 
-    int32_t distance;
-    if (mp_obj_is_true(silent_in)) {
-        pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM, &distance);
-    } else {
-        pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM, &distance);
-    }
-    return mp_obj_new_int(distance);
+    uint8_t mode = mp_obj_is_true(silent_in) ? PBDRV_LEGODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM : PBDRV_LEGODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM;
+    int16_t *distance = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), mode);
+    return mp_obj_new_int(distance[0]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_UltrasonicSensor_distance_obj, 1, ev3devices_UltrasonicSensor_distance);
 
 // pybricks.ev3devices.UltrasonicSensor.presence
 STATIC mp_obj_t ev3devices_UltrasonicSensor_presence(mp_obj_t self_in) {
-    ev3devices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t presence;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN, &presence);
-    return mp_obj_new_bool(presence);
+    int8_t *presence = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN);
+    return mp_obj_new_bool(presence[0]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_UltrasonicSensor_presence_obj, ev3devices_UltrasonicSensor_presence);
 

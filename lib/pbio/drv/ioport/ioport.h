@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2021 The Pybricks Authors
+// Copyright (c) 2023 The Pybricks Authors
 
-#ifndef _INTERNAL_PBDRV_IOPORT_H_
-#define _INTERNAL_PBDRV_IOPORT_H_
+#ifndef _INTERNAL_PBDRV_IOPORT_H
+#define _INTERNAL_PBDRV_IOPORT_H
 
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_IOPORT
 
-#include "ioport_lpf2.h"
+void pbdrv_ioport_init(void);
 
-/**
- * Initializes the ioport driver.
- */
-static inline void pbdrv_ioport_init(void) {
-    pbdrv_ioport_lpf2_init();
-}
+void pbdrv_ioport_deinit(void);
 
 #else // PBDRV_CONFIG_IOPORT
 
-#define pbdrv_ioport_init()
+static inline void pbdrv_ioport_init(void) {
+}
+
+static inline void pbdrv_ioport_deinit(void) {
+}
 
 #endif // PBDRV_CONFIG_IOPORT
 
-#endif // _INTERNAL_PBDRV_IOPORT_H_
+#endif // _INTERNAL_PBDRV_IOPORT_H

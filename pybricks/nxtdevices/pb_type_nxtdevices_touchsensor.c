@@ -11,12 +11,11 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/common/pb_type_device.h>
 
 // pybricks.nxtdevices.TouchSensor class object
 typedef struct _nxtdevices_TouchSensor_obj_t {
-    mp_obj_base_t base;
-    pb_device_t *pbdev;
+    pb_type_device_obj_base_t device_base;
 } nxtdevices_TouchSensor_obj_t;
 
 // pybricks.nxtdevices.TouchSensor.__init__
@@ -25,20 +24,14 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_TouchSensor_obj_t *self = mp_obj_malloc(nxtdevices_TouchSensor_obj_t, type);
-
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-
-    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR);
-
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_TOUCH_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.nxtdevices.TouchSensor.pressed
 STATIC mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
-    nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t analog;
-    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog);
-    return mp_obj_new_bool(analog < 2500);
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, 0);
+    return mp_obj_new_bool(analog[0] < 2500);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);
 

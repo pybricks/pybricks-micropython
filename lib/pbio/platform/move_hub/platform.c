@@ -5,13 +5,12 @@
 
 #include <pbdrv/gpio.h>
 #include <pbio/button.h>
-#include <pbio/uartdev.h>
 
 #include "../../drv/button/button_gpio.h"
-#include "../../drv/counter/counter_lpf2.h"
 #include "../../drv/counter/counter_stm32f0_gpio_quad_enc.h"
-#include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/ioport/ioport_pup.h"
 #include "../../drv/led/led_pwm.h"
+#include "../../drv/legodev/legodev_pup.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f0.h"
@@ -68,41 +67,64 @@ const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
     },
 };
 
-const pbdrv_counter_lpf2_platform_data_t pbdrv_counter_lpf2_platform_data[PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV] = {
-    [0] = {
-        .counter_id = COUNTER_PORT_C,
-        .port_id = PBIO_PORT_ID_C,
+// I/O ports
+
+const pbdrv_legodev_pup_int_platform_data_t pbdrv_legodev_pup_int_platform_data[PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV] = {
+    {
+        .port_id = PBIO_PORT_ID_A,
+        .type_id = PBDRV_LEGODEV_TYPE_ID_MOVE_HUB_MOTOR,
+        .motor_driver_index = 0,
+        .quadrature_index = 0,
     },
-    [1] = {
-        .counter_id = COUNTER_PORT_D,
-        .port_id = PBIO_PORT_ID_D,
+    {
+        .port_id = PBIO_PORT_ID_B,
+        .type_id = PBDRV_LEGODEV_TYPE_ID_MOVE_HUB_MOTOR,
+        .motor_driver_index = 1,
+        .quadrature_index = 1,
     },
 };
 
-// I/O ports
+const pbdrv_legodev_pup_ext_platform_data_t pbdrv_legodev_pup_ext_platform_data[PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV] = {
+    {
+        .port_id = PBIO_PORT_ID_C,
+        .ioport_index = 0,
+    },
+    {
+        .port_id = PBIO_PORT_ID_D,
+        .ioport_index = 1,
+    },
+};
 
-const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
+const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data = {
     .port_vcc = { .bank = GPIOB, .pin = 2 },
     .ports = {
-        // Port C
         {
-            .id1 = { .bank = GPIOB, .pin = 7  },
-            .id2 = { .bank = GPIOC, .pin = 15 },
-            .uart_buf = { .bank = GPIOB, .pin = 4  },
-            .uart_tx = { .bank = GPIOC, .pin = 10 },
-            .uart_rx = { .bank = GPIOC, .pin = 11 },
-            .alt = 0, // USART4
+            .port_id = PBIO_PORT_ID_C,
+            .motor_driver_index = 2,
+            .uart_driver_index = UART_ID_0,
+            .pins = {
+                .gpio1 = { .bank = GPIOB, .pin = 7  },
+                .gpio2 = { .bank = GPIOC, .pin = 15 },
+                .uart_buf = { .bank = GPIOB, .pin = 4  },
+                .uart_tx = { .bank = GPIOC, .pin = 10 },
+                .uart_rx = { .bank = GPIOC, .pin = 11 },
+                .uart_alt = 0, // USART4
+            },
         },
-        // Port D
         {
-            .id1 = { .bank = GPIOB, .pin = 10 },
-            .id2 = { .bank = GPIOA, .pin = 12 },
-            .uart_buf = { .bank = GPIOB, .pin = 0  },
-            .uart_tx = { .bank = GPIOC, .pin = 4  },
-            .uart_rx = { .bank = GPIOC, .pin = 5  },
-            .alt = 1, // USART3
-        },
-    },
+            .port_id = PBIO_PORT_ID_D,
+            .motor_driver_index = 3,
+            .uart_driver_index = UART_ID_1,
+            .pins = {
+                .gpio1 = { .bank = GPIOB, .pin = 10 },
+                .gpio2 = { .bank = GPIOA, .pin = 12 },
+                .uart_buf = { .bank = GPIOB, .pin = 0  },
+                .uart_tx = { .bank = GPIOC, .pin = 4  },
+                .uart_rx = { .bank = GPIOC, .pin = 5  },
+                .uart_alt = 1, // USART3
+            },
+        }
+    }
 };
 
 // LED
@@ -296,18 +318,6 @@ void USART3_4_IRQHandler(void) {
     pbdrv_uart_stm32f0_handle_irq(UART_ID_0);
     pbdrv_uart_stm32f0_handle_irq(UART_ID_1);
 }
-
-#if PBIO_CONFIG_UARTDEV
-const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
-    [0] = {
-        .uart_id = UART_ID_0,
-    },
-    [1] = {
-        .uart_id = UART_ID_1,
-    },
-};
-
-#endif // PBIO_CONFIG_UARTDEV
 
 // special memory addresses defined in linker script
 extern uint32_t _fw_isr_vector_src[48];

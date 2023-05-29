@@ -17,8 +17,14 @@
 #define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO             (1)
 #define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV     (4)
 
-#define PBDRV_CONFIG_IOPORT                                 (1)
-#define PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH                  (1)
+#define PBDRV_CONFIG_IOPORT                                 (0)
+#define PBDRV_CONFIG_IOPORT_NUM_DEV                         (8)
+
+#define PBDRV_CONFIG_LEGODEV                                (1)
+#define PBDRV_CONFIG_LEGODEV_MODE_INFO                      (1)
+#define PBDRV_CONFIG_LEGODEV_EV3DEV                         (1)
+#define PBDRV_CONFIG_LEGODEV_EV3DEV_NUM_MOTOR               (4)
+#define PBDRV_CONFIG_LEGODEV_EV3DEV_NUM_SENSOR              (4)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (4)
@@ -32,9 +38,6 @@
 #define PBDRV_CONFIG_HAS_PORT_2 (1)
 #define PBDRV_CONFIG_HAS_PORT_3 (1)
 #define PBDRV_CONFIG_HAS_PORT_4 (1)
-
-#define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT PBIO_PORT_ID_1
-#define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT PBIO_PORT_ID_4
 
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT PBIO_PORT_ID_A
 #define PBDRV_CONFIG_LAST_MOTOR_PORT PBIO_PORT_ID_D

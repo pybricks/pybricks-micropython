@@ -5,9 +5,13 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
+#include <pbio/battery.h>
+#include <pbio/dcmotor.h>
+
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/common/pb_type_device.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -16,7 +20,7 @@
 // Class structure for Light
 typedef struct _pupdevices_Light_obj_t {
     mp_obj_base_t base;
-    pbio_iodev_t *iodev;
+    pbio_dcmotor_t *dcmotor;
 } pupdevices_Light_obj_t;
 
 // pybricks.pupdevices.Light.__init__
@@ -27,27 +31,14 @@ STATIC mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
     pupdevices_Light_obj_t *self = mp_obj_malloc(pupdevices_Light_obj_t, type);
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbdrv_legodev_dev_t *legodev;
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_LPF2_LIGHT;
+    pb_assert(pbdrv_legodev_get_device(port, &id, &legodev));
 
-    // Get iodevices
-    self->iodev = pb_pup_device_get_device(port, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
+    // Get and initialize DC Motor
+    pb_assert(pbio_dcmotor_get_dcmotor(legodev, &self->dcmotor));
 
     return MP_OBJ_FROM_PTR(self);
-}
-
-STATIC void set_power(pbio_iodev_t *iodev, int32_t duty) {
-
-    // FIXME: this should be a callback function on a port instance rather
-    // than poking the motor driver directly. The current implementation
-    // is only valid on Powered Up platforms and it assumes that motor driver
-    // id corresponds to the port.
-
-    #ifdef PBDRV_CONFIG_FIRST_MOTOR_PORT
-    pbdrv_motor_driver_dev_t *motor_driver;
-    pb_assert(pbdrv_motor_driver_get_dev(iodev->port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &motor_driver));
-
-    // Apply duty cycle in reverse to activate power
-    pb_assert(pbdrv_motor_driver_set_duty_cycle(motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY * duty / 100));
-    #endif
 }
 
 // pybricks.pupdevices.Light.on
@@ -57,7 +48,8 @@ STATIC mp_obj_t pupdevices_Light_on(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set the brightness
-    set_power(self->iodev, pb_obj_get_pct(brightness_in));
+    int32_t voltage = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_pct(brightness_in));
+    pb_assert(pbio_dcmotor_set_voltage(self->dcmotor, voltage));
 
     return mp_const_none;
 }
@@ -66,7 +58,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_Light_on_obj, 1, pupdevices_Light_on);
 // pybricks.pupdevices.Light.off
 STATIC mp_obj_t pupdevices_Light_off(mp_obj_t self_in) {
     pupdevices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    set_power(self->iodev, 0);
+    pb_assert(pbio_dcmotor_set_voltage(self->dcmotor, 0));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_Light_off_obj, pupdevices_Light_off);

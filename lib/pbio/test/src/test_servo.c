@@ -29,6 +29,7 @@
 #include "../drv/core.h"
 #include "../drv/clock/clock_test.h"
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
+#include "../drv/legodev/legodev_virtual.h"
 
 static PT_THREAD(test_servo_basics(struct pt *pt)) {
 
@@ -39,6 +40,7 @@ static PT_THREAD(test_servo_basics(struct pt *pt)) {
     static int32_t speed;
 
     static pbio_servo_t *srv;
+    static pbdrv_legodev_dev_t *legodev;
 
     // Start motor driver simulation process.
     pbdrv_motor_driver_init_manual();
@@ -53,9 +55,16 @@ static PT_THREAD(test_servo_basics(struct pt *pt)) {
     // Start motor control process manually.
     pbio_motor_process_start();
 
-    // Initialize the servo.
-    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_A, &srv), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    // Get legodev.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_A, &id, &legodev), ==, PBIO_SUCCESS);
+    tt_uint_op(id, ==, pbdrv_motor_driver_virtual_simulation_platform_data[0].type_id);
+
+    // Set up servo with given id.
+    tt_uint_op(pbio_servo_get_servo(legodev, &srv), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+
+    // Assert not moving to begin with.
     tt_uint_op(pbio_servo_get_state_user(srv, &start_angle, &speed), ==, PBIO_SUCCESS);
     tt_int_op(speed, ==, 0);
 
@@ -91,6 +100,7 @@ static PT_THREAD(test_servo_stall(struct pt *pt)) {
 
     static struct timer timer;
     static pbio_servo_t *srv;
+    static pbdrv_legodev_dev_t *legodev;
 
     static bool stalled;
     static uint32_t stall_duration;
@@ -108,9 +118,15 @@ static PT_THREAD(test_servo_stall(struct pt *pt)) {
     // Start motor control process manually.
     pbio_motor_process_start();
 
-    // Initialize a servo that will stall.
-    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_C, &srv), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    // Get legodev.
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_C, &id, &legodev), ==, PBIO_SUCCESS);
+
+    // Set up servo with given id.
+    tt_uint_op(pbio_servo_get_servo(legodev, &srv), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+
+    // Start moving forever.
     tt_uint_op(pbio_servo_run_forever(srv, -500), ==, PBIO_SUCCESS);
 
     // Should not be stalled at first.
@@ -144,6 +160,8 @@ static PT_THREAD(test_servo_gearing(struct pt *pt)) {
     static struct timer timer;
     static pbio_servo_t *srv_basic;
     static pbio_servo_t *srv_geared;
+    static pbdrv_legodev_dev_t *legodev_basic;
+    static pbdrv_legodev_dev_t *legodev_geared;
     static int32_t angle;
     static int32_t speed;
     static const int32_t geared_target = 90;
@@ -162,13 +180,17 @@ static PT_THREAD(test_servo_gearing(struct pt *pt)) {
     pbio_motor_process_start();
 
     // Initialize a servo without gears (1000 mdeg rotation per 1 deg output)
-    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_E, &srv_basic), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv_basic, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_E, &id, &legodev_basic), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_get_servo(legodev_basic, &srv_basic), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv_basic, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_reset_angle(srv_basic, 0, false), ==, PBIO_SUCCESS);
 
     // Initialize a servo with 12:36 gears (3000 mdeg rotation per 1 deg output)
-    tt_uint_op(pbio_servo_get_servo(PBIO_PORT_ID_F, &srv_geared), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv_geared, PBIO_DIRECTION_CLOCKWISE, 3000, true, 0), ==, PBIO_SUCCESS);
+    id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_F, &id, &legodev_geared), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_get_servo(legodev_geared, &srv_geared), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv_geared, id, PBIO_DIRECTION_CLOCKWISE, 3000, true, 0), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_reset_angle(srv_geared, 0, false), ==, PBIO_SUCCESS);
 
     // Rotate both motors to +90 degrees.

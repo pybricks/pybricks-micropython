@@ -19,20 +19,15 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
 
-#define PBDRV_CONFIG_COUNTER                        (1)
-#define PBDRV_CONFIG_COUNTER_NUM_DEV                (1)
-#define PBDRV_CONFIG_COUNTER_LPF2                   (1)
-#define PBDRV_CONFIG_COUNTER_LPF2_NUM_DEV           (1)
-
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F4                   (1)
-
-#define PBDRV_CONFIG_IOPORT                         (1)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (1)
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (1)
+
+#define PBDRV_CONFIG_LEGODEV                        (0)
 
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (3)
