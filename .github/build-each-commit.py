@@ -78,7 +78,7 @@ for commit in pybricks.iter_commits(
     )
 
     # upload firmware size
-    if "service" in globals():
+    if "firmware_size_table" in globals():
         bin_path = os.path.join(
             PYBRICKS_PATH, "bricks", args.hub, "build", "firmware-base.bin"
         )
