@@ -736,10 +736,14 @@ void pbdrv_bluetooth_disconnect_remote(void) {
     }
 }
 
-void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+
+    PT_BEGIN(pt);
+
     if (value->size > LE_ADVERTISING_DATA_SIZE) {
         task->status = PBIO_ERROR_INVALID_ARG;
-        return;
+        PT_EXIT(pt);
     }
 
     bd_addr_t null_addr = { };
@@ -758,6 +762,12 @@ void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value
 
     // REVISIT: use callback to actually wait for start?
     task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    start_task(task, start_broadcasting_task, value);
 }
 
 void pbdrv_bluetooth_stop_broadcasting(void) {
@@ -767,7 +777,11 @@ void pbdrv_bluetooth_stop_broadcasting(void) {
     }
 }
 
-void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
+static PT_THREAD(start_observing_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_start_observing_callback_t callback = task->context;
+
+    PT_BEGIN(pt);
+
     observe_callback = callback;
 
     if (!is_observing) {
@@ -777,6 +791,12 @@ void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_ob
 
     // REVISIT: use callback to actually wait for start?
     task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
+    start_task(task, start_observing_task, callback);
 }
 
 void pbdrv_bluetooth_stop_observing(void) {
