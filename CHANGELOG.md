@@ -7,6 +7,9 @@
 ### Added
 - Enabled builtin `set` type (except on BOOST Move hub) ([support#402]).
 
+### Changed
+- Updated BTStack to v1.5.5.
+
 ### Fixed
 - Fixed BLE broadcast not working on City hub.
 

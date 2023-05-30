@@ -336,6 +336,37 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
                 case 0x200f: // LE Read White List Size
                     queue_command_complete(opcode, 0x00, 0x01);
                     break;
+                case 0x2016: { // LE Read Remote Features
+                    uint16_t connection_handle = little_endian_read_16(buffer, 4);
+
+                    {
+                        uint8_t buffer[7];
+
+                        buffer[0] = 0x04; // packet type = Event
+                        buffer[1] = 0x0f; // HCI command status event
+                        buffer[2] = sizeof(buffer) - 3; // length
+                        buffer[3] = 0x00; // status
+                        buffer[4] = 1; // number of packets
+                        little_endian_store_16(buffer, 5, opcode);
+
+                        queue_packet(buffer, sizeof(buffer));
+                    }
+                    {
+                        uint8_t buffer[15];
+
+                        buffer[0] = 0x04; // packet type = Event
+                        buffer[1] = 0x3e; // LE Read Remote Features Complete event
+                        buffer[2] = sizeof(buffer) - 3; // length
+                        buffer[3] = 0x04; // Subevent code
+                        buffer[4] = 0x00; // Status
+                        little_endian_store_16(buffer, 5, connection_handle); // connection handle
+                        little_endian_store_32(buffer, 7, 0x00000000); // LE Features (low)
+                        little_endian_store_32(buffer, 11, 0x00000000); // LE Features (high)
+
+                        queue_packet(buffer, sizeof(buffer));
+                    }
+                }
+                break;
                 case 0x2017: // LE Encrypt - key 16, data 16
                     queue_command_complete(opcode, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
