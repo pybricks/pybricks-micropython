@@ -29,7 +29,7 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev);
  * @param [in]  baud    The baud rate
  * @return              ::PBIO_SUCCESS if the baud rate was set or
  */
-pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud);
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud);
 pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout);
 pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart);
 void pbdrv_uart_read_cancel(pbdrv_uart_dev_t *uart);
@@ -44,8 +44,7 @@ static inline pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_de
     *uart_dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
 }
 static inline pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
     return PBIO_ERROR_NOT_SUPPORTED;

@@ -759,7 +759,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     pbdrv_uart_flush(data->uart);
 
     // Send SPEED command at 115200 baud
-    PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2));
+    pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2);
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
     PT_SPAWN(&data->pt, &data->speed_pt, pbio_uartdev_send_speed_msg(data, EV3_UART_SPEED_LPF2));
 
@@ -773,7 +773,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_end(data->uart));
     if ((err == PBIO_SUCCESS && data->rx_msg[0] != LUMP_SYS_ACK) || err == PBIO_ERROR_TIMEDOUT) {
         // if we did not get ACK within 100ms, then switch to slow baud rate for sync
-        PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN));
+        pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN);
         debug_pr("set baud: %d\n", EV3_UART_SPEED_MIN);
     } else if (err != PBIO_SUCCESS) {
         DBG_ERR(data->last_err = "UART Rx error during baud");
@@ -902,7 +902,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     PT_WAIT_UNTIL(&data->pt, etimer_expired(&data->timer));
 
     // change the baud rate
-    PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, data->new_baud_rate));
+    pbdrv_uart_set_baud_rate(data->uart, data->new_baud_rate);
     debug_pr("set baud: %" PRIu32 "\n", data->new_baud_rate);
 
     data->status = PBIO_UARTDEV_STATUS_DATA;

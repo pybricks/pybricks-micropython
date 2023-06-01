@@ -151,7 +151,7 @@ void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
     // TODO
 }
 
-pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     USART_TypeDef *USARTx = uart->pdata->uart;
     uint32_t periphclk = LL_RCC_PERIPH_FREQUENCY_NO;
@@ -175,8 +175,6 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
     }
 
     LL_USART_SetBaudRate(USARTx, periphclk, LL_USART_OVERSAMPLING_16, baud);
-
-    return PBIO_SUCCESS;
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {

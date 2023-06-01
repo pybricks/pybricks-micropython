@@ -166,16 +166,10 @@ void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
     uart->tx_result = PBIO_ERROR_CANCELED;
 }
 
-pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
-    if (uart->tx_buf || uart->rx_buf) {
-        return PBIO_ERROR_AGAIN;
-    }
-
     uart->USART->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / baud;
-
-    return PBIO_SUCCESS;
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {

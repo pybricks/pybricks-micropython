@@ -993,9 +993,8 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
     test_uart_dev.baud = baud;
-    return PBIO_SUCCESS;
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
