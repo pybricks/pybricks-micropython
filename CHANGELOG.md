@@ -13,8 +13,10 @@
 ### Fixed
 - Fixed BLE broadcast not working on City hub.
 - Fixed crash on BTStack hubs when program stopped during call to `ble.broadcast()`.
+- Fixed BLE broadcast not working on Technic hub when not connected ([support#1086]).
 
 [support#402]: https://github.com/pybricks/support/issues/402
+[support#1086]: https://github.com/pybricks/support/issues/402
 
 ## [3.3.0b5] - 2023-05-16
 

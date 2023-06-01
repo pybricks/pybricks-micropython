@@ -864,7 +864,10 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
             // send something over the air.
             ADV_IND,
             #else
-            ADV_NONCONN_IND,
+            // Technic hub will send non-connectable advertisements only if
+            // it is connected to something else, otherwise we need the same
+            // hack as the City hub.
+            (conn_handle == NO_CONNECTION && remote_handle == NO_CONNECTION) ? ADV_IND : ADV_NONCONN_IND,
             #endif
             GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
             GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
