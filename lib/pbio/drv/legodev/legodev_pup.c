@@ -25,6 +25,7 @@
 
 #include <pbdrv/counter.h>
 #include <pbdrv/legodev.h>
+#include <pbdrv/ioport.h>
 #include "../ioport/ioport_pup.h"
 
 #include "legodev_pup.h"
@@ -319,6 +320,14 @@ PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
     static ext_dev_t *dev;
 
     PROCESS_BEGIN();
+
+    // Some hubs turn on power to the I/O ports in the bootloader. This causes
+    // UART sync delays after boot. It is faster to power cycle the I/O devices
+    // than it is to wait for long sync in most cases.
+    pbdrv_ioport_enable_vcc(false);
+    etimer_set(&timer, 500);
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+    pbdrv_ioport_enable_vcc(true);
 
     etimer_set(&timer, 2);
 

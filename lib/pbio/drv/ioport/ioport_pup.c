@@ -30,7 +30,10 @@ void pbdrv_ioport_init(void) {
     for (uint8_t i = 0; i < PBDRV_CONFIG_IOPORT_NUM_DEV; i++) {
         init_one_port(&pbdrv_ioport_pup_platform_data.ports[i].pins);
     }
-    pbdrv_ioport_enable_vcc(true);
+
+    // Begin with vcc disabled. The relevant ioport mode will turn this on
+    // when needed.
+    pbdrv_ioport_enable_vcc(false);
 }
 
 void pbdrv_ioport_deinit(void) {
