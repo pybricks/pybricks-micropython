@@ -756,15 +756,15 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     // block until pbio_uartdev_ready() is called
     PT_WAIT_UNTIL(&data->pt, data->status == PBIO_UARTDEV_STATUS_SYNCING);
 
-    pbdrv_uart_flush(data->uart);
-
     // Send SPEED command at 115200 baud
     pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2);
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
     PT_SPAWN(&data->pt, &data->speed_pt, pbio_uartdev_send_speed_msg(data, EV3_UART_SPEED_LPF2));
 
+    pbdrv_uart_flush(data->uart);
+
     // read one byte to check for ACK
-    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, 100));
+    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, 10));
     if (err != PBIO_SUCCESS) {
         DBG_ERR(data->last_err = "UART Rx error during baud");
         goto err;
