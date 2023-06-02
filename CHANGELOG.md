@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.0b6] - 2023-06-02
+
 ### Added
 - Enabled builtin `set` type (except on BOOST Move hub) ([support#402]).
 
@@ -625,7 +627,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...HEAD
+[3.3.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b6
 [3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
 [3.3.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
 [3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
