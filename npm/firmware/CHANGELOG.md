@@ -1,3 +1,8 @@
+## 7.5.0 - 2023-06-02
+
+### Changed
+- Updated firmware to v3.3.0b6.
+
 ## 7.4.0 - 2023-05-16
 
 ### Changed
