@@ -49,6 +49,7 @@ void pb_wait_task(pbio_task_t *task, mp_int_t timeout) {
                // requested. See https://github.com/pybricks/pybricks-micropython/pull/129
                // We can remove this hack once we can ensure that task
                // cancellation does not fail (for known cases).
+               // Also see hack in pbsys_program_stop().
                && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)
                #endif
                ) {
