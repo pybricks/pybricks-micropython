@@ -199,13 +199,17 @@ include $(PBTOP)/bricks/_common/sources.mk
 
 PY_EXTRA_SRC_C = $(addprefix shared/,\
 	libc/string0.c \
-	readline/readline.c \
 	runtime/gchelper_native.c \
 	runtime/interrupt_char.c \
 	runtime/pyexec.c \
 	runtime/stdout_helpers.c \
 	runtime/sys_stdio_mphal.c \
 	)
+
+ifneq ($(PBIO_PLATFORM),move_hub)
+# to avoid adding unused root pointers
+PY_EXTRA_SRC_C += shared/readline/readline.c
+endif
 
 PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
 	micropython.c \
