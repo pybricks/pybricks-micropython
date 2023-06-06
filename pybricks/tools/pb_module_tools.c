@@ -10,6 +10,7 @@
 #include "py/mphal.h"
 #include "py/objmodule.h"
 #include "py/runtime.h"
+#include "py/stream.h"
 
 #include <pbio/int_math.h>
 
@@ -83,6 +84,24 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
 
+/**
+ * Reads one byte from stdin without blocking.
+ *
+ * @returns The integer value of the byte read or @c None if no data is available.
+ */
+STATIC mp_obj_t pb_module_tools_read_input_byte(void) {
+    if (!(mp_hal_stdio_poll(MP_STREAM_POLL_RD) & MP_STREAM_POLL_RD)) {
+        // No bytes available.
+        return mp_const_none;
+    }
+
+    // REVISIT: In theory, this should not block if mp_hal_stdio_poll() and
+    // mp_hal_stdin_rx_chr() are implemented correctly and nothing happens
+    // in a thread/interrupt/kernel that changes the state.
+    return MP_OBJ_NEW_SMALL_INT(mp_hal_stdin_rx_chr());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_module_tools_read_input_byte_obj, pb_module_tools_read_input_byte);
+
 STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(task),
@@ -127,6 +146,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 1, pb_module_too
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)                    },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_read_input_byte), MP_ROM_PTR(&pb_module_tools_read_input_byte_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_task),    MP_ROM_PTR(&pb_module_tools_run_task_obj)     },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)                },
     { MP_ROM_QSTR(MP_QSTR_multitask),   MP_ROM_PTR(&pb_type_Task)                     },

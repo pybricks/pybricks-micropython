@@ -26,11 +26,14 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <poll.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include "py/stream.h"
 
 void mp_hal_stdout_tx_flush(void) {
     // currently not buffered
@@ -54,4 +57,27 @@ void pb_ev3dev_hal_delay_ms(mp_uint_t ms) {
         assert(ret == 0);
         break;
     }
+}
+
+uintptr_t mp_hal_stdio_poll(uintptr_t flags) {
+    struct pollfd fds[] = {
+        { .fd = STDIN_FILENO, .events = flags & MP_STREAM_POLL_RD ? POLLIN : 0, },
+        { .fd = STDOUT_FILENO, .events = flags & MP_STREAM_POLL_WR ? POLLOUT : 0, },
+    };
+    int ret;
+
+    MP_HAL_RETRY_SYSCALL(ret, poll(fds, MP_ARRAY_SIZE(fds), 0), mp_raise_OSError(err));
+
+    uintptr_t rflags = 0;
+
+    if (ret > 0) {
+        if (fds[0].revents & POLLIN) {
+            rflags |= MP_STREAM_POLL_RD;
+        }
+        if (fds[1].revents & POLLOUT) {
+            rflags |= MP_STREAM_POLL_WR;
+        }
+    }
+
+    return rflags;
 }

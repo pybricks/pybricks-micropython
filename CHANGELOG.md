@@ -7,6 +7,7 @@
 ### Added
 - Added `'modes'` entry to the dictionary returned by `PUPDevice.info()`. It
   is a tuple of `(name, num_values, data_type)` tuples for each available mode.
+- Added `pybricks.tools.read_input_byte()` function ([support#1102]).
 
 ### Changed
 - Changed internal drivers for LEGO devices (motors and sensors) on all platforms.
@@ -17,6 +18,7 @@
 
 [support#1095]: https://github.com/pybricks/support/issues/1095
 [support#1098]: https://github.com/pybricks/support/issues/1098
+[support#1102]: https://github.com/pybricks/support/issues/1102
 
 ## [3.3.0b6] - 2023-06-02
 

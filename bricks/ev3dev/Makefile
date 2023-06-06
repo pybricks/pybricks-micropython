@@ -311,6 +311,9 @@ test: $(BUILD)/$(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests.py
 
+repl: $(BUILD)/$(PROG) $(GRX_TEST_PLUGIN_LIB) modules/core.py
+	GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test $< -i modules/core.py
+
 # Value of configure's --host= option (required for cross-compilation).
 # Deduce it from CROSS_COMPILE by default, but can be overridden.
 ifneq ($(CROSS_COMPILE),)

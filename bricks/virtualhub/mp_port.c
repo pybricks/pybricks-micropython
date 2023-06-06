@@ -3,12 +3,14 @@
 
 // MicroPython port-specific implementation hooks
 
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/select.h>
+#include <unistd.h>
 
 #include <contiki.h>
 
@@ -25,6 +27,7 @@
 #include "py/objstr.h"
 #include "py/objtuple.h"
 #include "py/runtime.h"
+#include "py/stream.h"
 
 #include "pybricks/util_pb/pb_error.h"
 #include <pybricks/common.h>
@@ -139,4 +142,27 @@ void pb_virtualhub_delay_us(mp_uint_t us) {
     while (mp_hal_ticks_us() - start < us) {
         pb_virtualhub_poll();
     }
+}
+
+uintptr_t mp_hal_stdio_poll(uintptr_t flags) {
+    struct pollfd fds[] = {
+        { .fd = STDIN_FILENO, .events = flags & MP_STREAM_POLL_RD ? POLLIN : 0, },
+        { .fd = STDOUT_FILENO, .events = flags & MP_STREAM_POLL_WR ? POLLOUT : 0, },
+    };
+    int ret;
+
+    MP_HAL_RETRY_SYSCALL(ret, poll(fds, MP_ARRAY_SIZE(fds), 0), mp_raise_OSError(err));
+
+    uintptr_t rflags = 0;
+
+    if (ret > 0) {
+        if (fds[0].revents & POLLIN) {
+            rflags |= MP_STREAM_POLL_RD;
+        }
+        if (fds[1].revents & POLLOUT) {
+            rflags |= MP_STREAM_POLL_WR;
+        }
+    }
+
+    return rflags;
 }
