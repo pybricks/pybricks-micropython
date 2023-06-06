@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2023 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -27,7 +27,7 @@
 // is called and cleared when it completes
 STATIC bool run_loop_is_active;
 
-bool pb_module_tools_run_loop_is_active() {
+bool pb_module_tools_run_loop_is_active(void) {
     return run_loop_is_active;
 }
 
