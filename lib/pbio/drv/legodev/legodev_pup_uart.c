@@ -156,7 +156,7 @@ static uint32_t pbdrv_legodev_pup_uart_delay_set_data(pbdrv_legodev_type_id_t id
 
     // Default delay for setting data. In practice, this is the delay for setting
     // the light on the color sensor and ultrasonic sensor.
-    return 2;
+    return 10;
 }
 
 /**
@@ -231,17 +231,30 @@ typedef enum {
     PBDRV_LEGODEV_PUP_UART_STATUS_DATA,
 } pbdrv_legodev_pup_uart_status_t;
 
+typedef struct {
+    /**< The mode to be set. */
+    uint8_t desired_mode;
+    /**< Whether a mode change was requested (set low when handled). */
+    bool requested;
+    /**< Time of switch completion (if info.mode == desired_mode) or time of switch request (if info.mode != desired_mode). */
+    uint32_t time;
+} pbdrv_legodev_pup_uart_mode_switch_t;
+
+typedef struct {
+    /**< The data to be set. */
+    uint8_t bin_data[PBDRV_LEGODEV_MAX_DATA_SIZE]  __attribute__((aligned(4)));
+    /**< The size of the data to be set, also acts as set request flag. */
+    uint8_t size;
+    /**< The mode at which to set data */
+    uint8_t desired_mode;
+    /**< Time of the data set request (if size != 0) or time of completing transmission (if size == 0). */
+    uint32_t time;
+} pbdrv_legodev_pup_uart_data_set_t;
+
 /**
  * struct ev3_uart_port_data - Data for EV3/LPF2 UART Sensor communication
  */
 struct _pbdrv_legodev_pup_uart_dev_t {
-    /**
-     * Most recent binary data read from the device. How to interpret this data
-     * is determined by the ::pbdrv_legodev_mode_info_t info associated with the current
-     * *mode* of the device. For example, it could be an array of int32_t and/or
-     * the values could be foreign-endian.
-     */
-    uint8_t bin_data[PBDRV_LEGODEV_MAX_DATA_SIZE]  __attribute__((aligned(4)));
     /**< Protothread for main communication protocol. */
     struct pt pt;
     /**< Protothread for receiving sensor data. */
@@ -256,10 +269,19 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     pbdrv_uart_dev_t *uart;
     /**< Pointer to the DC motor device to use for powered devices. */
     pbio_dcmotor_t *dcmotor;
+    /**
+     * Most recent binary data read from the device. How to interpret this data
+     * is determined by the ::pbdrv_legodev_mode_info_t info associated with the current
+     * *mode* of the device. For example, it could be an array of int32_t and/or
+     * the values could be foreign-endian.
+     */
+    uint8_t *bin_data;
     /**< The current device connection state. */
     pbdrv_legodev_pup_uart_status_t status;
-    /**< The mode requested by set_mode. Also used to keep track of mode in INFO messages while syncing. */
-    uint8_t new_mode;
+    /**< Mode switch status. */
+    pbdrv_legodev_pup_uart_mode_switch_t mode_switch;
+    /**< Data set buffer and status. */
+    pbdrv_legodev_pup_uart_data_set_t *data_set;
     /**< Extra mode adder for Powered Up devices (for modes > LUMP_MAX_MODE). */
     uint8_t ext_mode;
     /**< New baud rate that will be set with ev3_uart_change_bitrate. */
@@ -274,8 +296,6 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint32_t err_count;
     /**< Number of bad reads when receiving DATA data->msgs. */
     uint32_t num_data_err;
-    /**< Time of most recent successful mode switch, used to discard stale data. */
-    uint32_t mode_switch_time;
     /**< Time of most recently started transmission. */
     uint32_t tx_start_time;
     /**< Flag that indicates that good DATA data->msg has been received since last watchdog timeout. */
@@ -284,8 +304,6 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     bool tx_busy;
     /**< Length of data to be set, data is stored in bin_data. */
     uint8_t data_set_len;
-    /**< The data type of the current or last transmission. */
-    lump_msg_type_t tx_type;
     /**< Buffer for holding baud rate change message data. */
     uint8_t speed_payload[4];
     /**< ID of the UART device to use for communications. */
@@ -293,6 +311,8 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     /**< data->msg to be printed in case of an error. */
     DBG_ERR(const char *last_err);
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
+    /**< Mode value used to keep track of mode in INFO messages while syncing. */
+    uint8_t new_mode;
     /**< Flags indicating what information has already been read from the data. */
     uint32_t info_flags;
     #endif // #define PBDRV_CONFIG_LEGODEV_MODE_INFO
@@ -306,10 +326,13 @@ enum {
     NUM_BUF
 };
 
-
 static uint8_t bufs[PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV][NUM_BUF][EV3_UART_MAX_MESSAGE_SIZE];
 
 static pbdrv_legodev_pup_uart_dev_t dev_data[PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV];
+
+// The following data is really just part of dev_data, but separate allocation reduces overal code size
+static uint8_t data_read_bufs[PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV][PBDRV_LEGODEV_MAX_DATA_SIZE] __attribute__((aligned(4)));
+static pbdrv_legodev_pup_uart_data_set_t data_set_bufs[PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV];
 
 #define PBIO_PT_WAIT_READY(pt, expr) PT_WAIT_UNTIL((pt), (expr) != PBIO_ERROR_AGAIN)
 
@@ -318,6 +341,21 @@ pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_pup_uart_configure(uint8_t device_in
     dev->uart_id = uart_driver_index;
     dev->dcmotor = dcmotor;
     return dev;
+}
+
+static void pbdrv_legodev_request_mode(pbdrv_legodev_pup_uart_dev_t *port_data, uint8_t mode) {
+    port_data->mode_switch.desired_mode = mode;
+    port_data->mode_switch.time = pbdrv_clock_get_ms();
+    port_data->mode_switch.requested = true;
+    pbdrv_legodev_pup_uart_process_poll();
+}
+
+static void pbdrv_legodev_request_data_set(pbdrv_legodev_pup_uart_dev_t *port_data, uint8_t mode, const uint8_t *data, uint8_t size) {
+    port_data->data_set->size = size;
+    port_data->data_set->desired_mode = mode;
+    port_data->data_set->time = pbdrv_clock_get_ms();
+    memcpy(port_data->data_set->bin_data, data, size);
+    pbdrv_legodev_pup_uart_process_poll();
 }
 
 /**
@@ -419,10 +457,10 @@ static void pbdrv_legodev_pup_uart_parse_msg(pbdrv_legodev_pup_uart_dev_t *data)
                         DBG_ERR(data->last_err = "Did not receive all required INFO");
                         goto err;
                     }
+                    data->device_info.mode = data->new_mode;
                     #endif
 
                     data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ACK;
-                    data->device_info.mode = data->new_mode;
 
                     return;
             }
@@ -676,15 +714,12 @@ static void pbdrv_legodev_pup_uart_parse_msg(pbdrv_legodev_pup_uart_dev_t *data)
             #endif
 
             // Data is for requested mode.
-            if (mode == data->new_mode) {
-                if (!data->data_set_len) {
-                    // Copy the new data unless buffer contains data for sending.
-                    memcpy(data->bin_data, data->rx_msg + 1, msg_size - 2);
-                }
+            if (mode == data->mode_switch.desired_mode) {
+                memcpy(data->bin_data, data->rx_msg + 1, msg_size - 2);
 
                 if (data->device_info.mode != mode) {
                     // First time getting data in this mode, so register time.
-                    data->mode_switch_time = pbdrv_clock_get_ms();
+                    data->mode_switch.time = pbdrv_clock_get_ms();
                 }
             }
             data->device_info.mode = mode;
@@ -724,7 +759,6 @@ static pbio_error_t ev3_uart_begin_tx_msg(pbdrv_legodev_pup_uart_dev_t *port_dat
     }
 
     port_data->tx_busy = true;
-    port_data->tx_type = msg_type;
     port_data->tx_start_time = pbdrv_clock_get_ms();
 
     if (msg_type == LUMP_MSG_TYPE_DATA) {
@@ -819,6 +853,7 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
 
     // reset state for new device
     data->device_info.type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
+    data->device_info.mode = 0;
     data->ext_mode = 0;
     data->data_set_len = 0;
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
@@ -1001,59 +1036,102 @@ sync:
         pbdrv_motor_driver_coast(data->dcmotor->motor_driver);
     }
 
-    // Switch to default mode for this device.
-    uint8_t default_mode = pbdrv_legodev_pup_uart_default_mode(data->device_info.type_id);
-    PBIO_PT_WAIT_READY(&data->pt, err = ev3_uart_begin_tx_msg(data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &default_mode, sizeof(default_mode)));
-    if (err != PBIO_SUCCESS) {
-        data->tx_busy = false;
-        DBG_ERR(data->last_err = "Setting default mode failed.");
-        goto err;
-    }
-    data->new_mode = default_mode;
-    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
-    if (err != PBIO_SUCCESS) {
-        data->tx_busy = false;
-        DBG_ERR(data->last_err = "Setting default mode failed.");
-        goto err;
-    }
+    // Request switch to default mode for this device.
+    pbdrv_legodev_request_mode(data, pbdrv_legodev_pup_uart_default_mode(data->device_info.type_id));
 
-    // Whether or not mode was switched, set time in order to discard stale data.
-    data->mode_switch_time = pbdrv_clock_get_ms();
+    // Reset other timers
+    etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
+    data->data_set->time = pbdrv_clock_get_ms();
 
     while (data->status == PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
-        // setup keepalive timer
-        etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
-        PT_WAIT_UNTIL(&data->pt, etimer_expired(&data->timer));
 
-        // make sure we are receiving data
-        if (!data->data_rec) {
-            data->num_data_err++;
-            DBG_ERR(data->last_err = "No data since last keepalive");
-            if (data->num_data_err > 6) {
-                data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
+        PT_WAIT_UNTIL(&data->pt, etimer_expired(&data->timer) || data->mode_switch.requested || data->data_set->size > 0);
+
+        // Handle keep alive timeout
+        if (etimer_expired(&data->timer)) {
+            // make sure we are receiving data
+            if (!data->data_rec) {
+                data->num_data_err++;
+                DBG_ERR(data->last_err = "No data since last keepalive");
+                if (data->num_data_err > 6) {
+                    data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
+                    goto err;
+                }
+            }
+            data->data_rec = false;
+
+            PT_WAIT_WHILE(&data->pt, data->tx_busy);
+            data->tx_busy = true;
+            data->tx_msg[0] = LUMP_SYS_NACK;
+            PBIO_PT_WAIT_READY(&data->pt,
+                err = pbdrv_uart_write_begin(data->uart, data->tx_msg, 1, EV3_UART_IO_TIMEOUT));
+            if (err != PBIO_SUCCESS) {
+                data->tx_busy = false;
+                DBG_ERR(data->last_err = "UART Tx begin error during keepalive");
                 goto err;
             }
-        }
-        data->data_rec = false;
+            PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
+            if (err != PBIO_SUCCESS) {
+                data->tx_busy = false;
+                DBG_ERR(data->last_err = "UART Tx end error during keepalive");
+                goto err;
+            }
+            data->tx_busy = false;
+            etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
 
-        // send keepalive
-        PT_WAIT_WHILE(&data->pt, data->tx_busy);
-        data->tx_busy = true;
-        data->tx_msg[0] = LUMP_SYS_NACK;
-        PBIO_PT_WAIT_READY(&data->pt,
-            err = pbdrv_uart_write_begin(data->uart, data->tx_msg, 1, EV3_UART_IO_TIMEOUT));
-        if (err != PBIO_SUCCESS) {
-            data->tx_busy = false;
-            DBG_ERR(data->last_err = "UART Tx begin error during keepalive");
-            goto err;
+            // Retry mode switch if it hasn't been handled or failed.
+            if (data->device_info.mode != data->mode_switch.desired_mode && pbdrv_clock_get_ms() - data->mode_switch.time > EV3_UART_IO_TIMEOUT) {
+                data->mode_switch.requested = true;
+            }
         }
-        PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
-        if (err != PBIO_SUCCESS) {
+
+        // Handle requested mode change
+        if (data->mode_switch.requested) {
+            data->mode_switch.requested = false;
+            PBIO_PT_WAIT_READY(&data->pt, err = ev3_uart_begin_tx_msg(data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &data->mode_switch.desired_mode, 1));
+            if (err != PBIO_SUCCESS) {
+                data->tx_busy = false;
+                DBG_ERR(data->last_err = "Begin setting requested mode failed.");
+                goto err;
+            }
+            PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
+            if (err != PBIO_SUCCESS) {
+                data->tx_busy = false;
+                DBG_ERR(data->last_err = "End setting requested mode failed.");
+                goto err;
+            }
             data->tx_busy = false;
-            DBG_ERR(data->last_err = "UART Tx end error during keepalive");
-            goto err;
         }
-        data->tx_busy = false;
+
+        // Handle requested data set
+        if (data->data_set->size > 0) {
+            // Only set data if we are in the correct mode already.
+            if (data->device_info.mode == data->data_set->desired_mode) {
+                PBIO_PT_WAIT_READY(&data->pt, err = ev3_uart_begin_tx_msg(data, LUMP_MSG_TYPE_DATA, data->data_set->desired_mode, data->data_set->bin_data, data->data_set->size));
+                data->data_set->size = 0;
+                data->data_set->time = pbdrv_clock_get_ms();
+                if (err != PBIO_SUCCESS) {
+                    data->tx_busy = false;
+                    DBG_ERR(data->last_err = "Begin setting requested data failed.");
+                    goto err;
+                }
+                PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
+                if (err != PBIO_SUCCESS) {
+                    data->tx_busy = false;
+                    DBG_ERR(data->last_err = "End setting requested data failed.");
+                    goto err;
+                }
+                data->tx_busy = false;
+                data->data_set->time = pbdrv_clock_get_ms();
+            } else if (pbdrv_clock_get_ms() - data->data_set->time < 500) {
+                // Not in the right mode yet, try again later for a reasonable amount of time.
+                pbdrv_legodev_pup_uart_process_poll();
+                PT_YIELD(&data->pt);
+            } else {
+                // Give up setting data.
+                data->data_set->size = 0;
+            }
+        }
     }
 
 err:
@@ -1126,33 +1204,6 @@ static PT_THREAD(pbdrv_legodev_pup_uart_receive_data(pbdrv_legodev_pup_uart_dev_
 }
 
 /**
- * Checks if LEGO UART device mode change or data set operation is complete.
- *
- * @param [in]  port_data   The device instance.
- * @return                  @c true if ready, @c false otherwise.
- */
-static bool pbdrv_legodev_pup_uart_operation_complete(pbdrv_legodev_pup_uart_dev_t *port_data) {
-    const pbdrv_legodev_type_id_t id = port_data->device_info.type_id;
-    const uint8_t mode = port_data->device_info.mode;
-
-    // Not ready if busy writing.
-    if (port_data->tx_busy) {
-        return false;
-    }
-
-    uint32_t time = pbdrv_clock_get_ms();
-
-    // If we were setting data, then wait for the matching delay.
-    if (port_data->tx_type == LUMP_MSG_TYPE_DATA) {
-        return time - port_data->tx_start_time >= pbdrv_legodev_pup_uart_delay_set_data(id, mode);
-    }
-
-    // Ready if mode change is complete and we have waited long enough for stale data to be discarded.
-    return mode == port_data->new_mode &&
-           time - port_data->mode_switch_time >= pbdrv_legodev_pup_uart_delay_stale_data(id, mode);
-}
-
-/**
  * Gets the size of a data type.
  * @param [in]  type        The data type
  * @return                  The size of the type or 0 if the type was not valid
@@ -1170,52 +1221,6 @@ size_t pbdrv_legodev_size_of(pbdrv_legodev_data_type_t type) {
     return 0;
 }
 
-/**
- * Starts sending data to the LEGO UART device mode.
- *
- * @param [in]  port_data   The device instance.
- * @return                  Error code corresponding to ::ev3_uart_begin_tx_msg
- *                          or ::PBIO_ERROR_INVALID_OP if device not in expected mode.
- */
-static pbio_error_t pbdrv_legodev_pup_uart_start_buffered_data_set(pbdrv_legodev_pup_uart_dev_t *port_data) {
-
-    // Reset data length so we transmit only once.
-    uint8_t size = port_data->data_set_len;
-    port_data->data_set_len = 0;
-
-    #if PBDRV_CONFIG_LEGODEV_MODE_INFO
-    const pbdrv_legodev_mode_info_t *mode_info = &port_data->device_info.mode_info[port_data->device_info.mode];
-    // Not all modes support setting data and data must be of expected size.
-    if (!mode_info->writable || size != mode_info->num_values * pbdrv_legodev_size_of(mode_info->data_type)) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-    #endif
-
-    return ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_DATA, port_data->device_info.mode, port_data->bin_data, size);
-}
-
-/**
- * Starts sending data to the LEGO UART device mode if there is any.
- *
- * @param [in]  port_data   The device instance.
- */
-static void pbdrv_legodev_pup_uart_handle_data_set_start(pbdrv_legodev_pup_uart_dev_t *port_data) {
-    if (pbdrv_legodev_pup_uart_operation_complete(port_data) && port_data->data_set_len > 0) {
-        pbdrv_legodev_pup_uart_start_buffered_data_set(port_data);
-    }
-}
-
-static void pbdrv_legodev_pup_uart_handle_write_end(pbdrv_legodev_pup_uart_dev_t *port_data) {
-    if (!port_data->tx_busy) {
-        return;
-    }
-
-    pbio_error_t err = pbdrv_uart_write_end(port_data->uart);
-    if (err != PBIO_ERROR_AGAIN) {
-        port_data->tx_busy = false;
-    }
-}
-
 static PT_THREAD(pbdrv_legodev_pup_uart_init(struct pt *pt, uint8_t id)) {
 
     pbdrv_legodev_pup_uart_dev_t *port_data = &dev_data[id];
@@ -1227,6 +1232,8 @@ static PT_THREAD(pbdrv_legodev_pup_uart_init(struct pt *pt, uint8_t id)) {
     port_data->rx_msg = &bufs[id][BUF_RX_MSG][0];
     port_data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
     port_data->err_count = 0;
+    port_data->data_set = &data_set_bufs[id];
+    port_data->bin_data = data_read_bufs[id];
     PT_END(pt);
 }
 
@@ -1249,12 +1256,6 @@ PROCESS_THREAD(pbdrv_legodev_pup_uart_process, ev, data) {
 
             if (port_data->status == PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
                 pbdrv_legodev_pup_uart_receive_data(port_data);
-            }
-
-            pbdrv_legodev_pup_uart_handle_write_end(port_data);
-
-            if (port_data->status == PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
-                pbdrv_legodev_pup_uart_handle_data_set_start(port_data);
             }
         }
         PROCESS_WAIT_EVENT();
@@ -1286,21 +1287,37 @@ void pbdrv_legodev_pup_uart_process_exit(void) {
 pbio_error_t pbdrv_legodev_is_ready(pbdrv_legodev_dev_t *legodev) {
 
     pbdrv_legodev_pup_uart_dev_t *port_data = pbdrv_legodev_get_uart_dev(legodev);
-    if (!port_data) {
+    if (!port_data || port_data->status == PBDRV_LEGODEV_PUP_UART_STATUS_ERR) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    if (port_data->status == PBDRV_LEGODEV_PUP_UART_STATUS_SYNCING) {
+    if (port_data->status != PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
         return PBIO_ERROR_AGAIN;
     }
 
-    // Device is not there or still syncing.
-    if (port_data->device_info.type_id == PBDRV_LEGODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
+    // Not ready if busy writing.
+    if (port_data->tx_busy) {
+        return PBIO_ERROR_AGAIN;
     }
 
-    // Ready if operations are complete and there is no data left to set.
-    return pbdrv_legodev_pup_uart_operation_complete(port_data) && port_data->data_set_len == 0 ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
+    uint32_t time = pbdrv_clock_get_ms();
+
+    // Not ready if waiting for mode change
+    if (port_data->device_info.mode != port_data->mode_switch.desired_mode) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // Not ready if waiting for stale data to be discarded.
+    if (time - port_data->mode_switch.time <= pbdrv_legodev_pup_uart_delay_stale_data(port_data->device_info.type_id, port_data->device_info.mode)) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // Not ready if just recently set new data.
+    if (port_data->data_set->size > 0 || time - port_data->data_set->time <= pbdrv_legodev_pup_uart_delay_set_data(port_data->device_info.type_id, port_data->device_info.mode)) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -1321,23 +1338,8 @@ pbio_error_t pbdrv_legodev_set_mode(pbdrv_legodev_dev_t *legodev, uint8_t mode) 
         return PBIO_ERROR_NO_DEV;
     }
 
-    // Device is not there or still syncing.
-    if (port_data->device_info.type_id == PBDRV_LEGODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    #if PBDRV_CONFIG_LEGODEV_MODE_INFO
-    // Can only set available modes.
-    if (mode >= port_data->device_info.num_modes) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    #endif
-
-    // Discard any old data that was never sent.
-    port_data->data_set_len = 0;
-
     // Mode already set or being set, so return success.
-    if (port_data->new_mode == mode || port_data->device_info.mode == mode) {
+    if (port_data->mode_switch.desired_mode == mode || port_data->device_info.mode == mode) {
         return PBIO_SUCCESS;
     }
 
@@ -1347,12 +1349,16 @@ pbio_error_t pbdrv_legodev_set_mode(pbdrv_legodev_dev_t *legodev, uint8_t mode) 
         return err;
     }
 
-    // Start setting new mode.
-    err = ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &mode, 1);
-    if (err != PBIO_SUCCESS) {
-        return err;
+    #if PBDRV_CONFIG_LEGODEV_MODE_INFO
+    // Can only set available modes.
+    if (mode >= port_data->device_info.num_modes) {
+        return PBIO_ERROR_INVALID_ARG;
     }
-    port_data->new_mode = mode;
+    #endif
+
+    // Request mode switch.
+    pbdrv_legodev_request_mode(port_data, mode);
+
     return PBIO_SUCCESS;
 }
 
@@ -1374,24 +1380,14 @@ pbio_error_t pbdrv_legodev_get_data(pbdrv_legodev_dev_t *legodev, uint8_t mode, 
         return PBIO_ERROR_NO_DEV;
     }
 
-    // Device is not there or still syncing.
-    if (port_data->device_info.type_id == PBDRV_LEGODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
     // Can only request data for mode that is set.
     if (mode != port_data->device_info.mode) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    pbio_error_t err = pbdrv_legodev_is_ready(legodev);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
+    // Can only read if ready.
     *data = port_data->bin_data;
-
-    return PBIO_SUCCESS;
+    return pbdrv_legodev_is_ready(legodev);
 }
 
 /**
@@ -1410,27 +1406,22 @@ pbio_error_t pbdrv_legodev_set_mode_with_data(pbdrv_legodev_dev_t *legodev, uint
         return PBIO_ERROR_NO_DEV;
     }
 
+    #if PBDRV_CONFIG_LEGODEV_MODE_INFO
+    const pbdrv_legodev_mode_info_t *mode_info = &port_data->device_info.mode_info[mode];
+    // Not all modes support setting data and data must be of expected size.
+    if (!mode_info->writable || size != mode_info->num_values * pbdrv_legodev_size_of(mode_info->data_type)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    #endif
+
     // Start setting mode.
     pbio_error_t err = pbdrv_legodev_set_mode(legodev, mode);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Check if the device is in this mode already.
-    err = pbdrv_legodev_is_ready(legodev);
-    if (err != PBIO_SUCCESS && err != PBIO_ERROR_AGAIN) {
-        return err;
-    }
-
-    // Copy data to be sent after mode switch.
-    port_data->data_set_len = size;
-    memcpy(port_data->bin_data, data, size);
-
-    // If already in the right mode, start sending data right away.
-    if (err == PBIO_SUCCESS) {
-        return pbdrv_legodev_pup_uart_start_buffered_data_set(port_data);
-    }
-
+    // Request data set.
+    pbdrv_legodev_request_data_set(port_data, mode, data, size);
     return PBIO_SUCCESS;
 }
 
