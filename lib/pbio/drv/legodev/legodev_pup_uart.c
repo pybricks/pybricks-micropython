@@ -257,10 +257,10 @@ typedef struct {
 struct _pbdrv_legodev_pup_uart_dev_t {
     /**< Protothread for main communication protocol. */
     struct pt pt;
+    /**< Child protothread of the main protothread used for writing data */
+    struct pt write_pt;
     /**< Protothread for receiving sensor data. */
     struct pt data_pt;
-    /**< Protothread for setting the baud rate. */
-    struct pt speed_pt;
     /**< Timer for sending keepalive messages and other delays. */
     struct etimer timer;
     /**< Device information, including mode info */
@@ -288,6 +288,8 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint32_t new_baud_rate;
     /**< Buffer to hold messages transmitted to the device. */
     uint8_t *tx_msg;
+    /**< Size of the current message being transmitted. */
+    uint8_t tx_msg_size;
     /**< Buffer to hold messages received from the device. */
     uint8_t *rx_msg;
     /**< Size of the current message being received. */
@@ -300,12 +302,6 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint32_t tx_start_time;
     /**< Flag that indicates that good DATA data->msg has been received since last watchdog timeout. */
     bool data_rec;
-    /**< Mutex that protects tx_msg. */
-    bool tx_busy;
-    /**< Length of data to be set, data is stored in bin_data. */
-    uint8_t data_set_len;
-    /**< Buffer for holding baud rate change message data. */
-    uint8_t speed_payload[4];
     /**< ID of the UART device to use for communications. */
     uint8_t uart_id;
     /**< data->msg to be printed in case of an error. */
@@ -743,23 +739,11 @@ static uint8_t ev3_uart_set_msg_hdr(lump_msg_type_t type, lump_msg_size_t size, 
     return (type & LUMP_MSG_TYPE_MASK) | (size & LUMP_MSG_SIZE_MASK) | (cmd & LUMP_MSG_CMD_MASK);
 }
 
-static pbio_error_t ev3_uart_begin_tx_msg(pbdrv_legodev_pup_uart_dev_t *port_data, lump_msg_type_t msg_type,
+static void ev3_uart_prepare_tx_msg(pbdrv_legodev_pup_uart_dev_t *port_data, lump_msg_type_t msg_type,
     lump_cmd_t cmd, const uint8_t *data, uint8_t len) {
     uint8_t header, checksum, i;
     uint8_t offset = 0;
     lump_msg_size_t size;
-    pbio_error_t err;
-
-    if (len == 0 || len > 32) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    if (port_data->tx_busy) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    port_data->tx_busy = true;
-    port_data->tx_start_time = pbdrv_clock_get_ms();
 
     if (msg_type == LUMP_MSG_TYPE_DATA) {
         // Only Powered Up devices support setting data, and they expect to have an
@@ -805,48 +789,21 @@ static pbio_error_t ev3_uart_begin_tx_msg(pbdrv_legodev_pup_uart_dev_t *port_dat
 
     port_data->tx_msg[offset] = header;
     port_data->tx_msg[offset + i + 1] = checksum;
-
-    err = pbdrv_uart_write_begin(port_data->uart, port_data->tx_msg, offset + i + 2, EV3_UART_IO_TIMEOUT);
-    if (err != PBIO_SUCCESS) {
-        port_data->tx_busy = false;
-    }
-
-    return err;
+    port_data->tx_msg_size = offset + i + 2;
 }
 
-static PT_THREAD(pbdrv_legodev_pup_uart_send_speed_msg(pbdrv_legodev_pup_uart_dev_t * data, uint32_t speed)) {
-    pbio_error_t err;
-
-    PT_BEGIN(&data->speed_pt);
-
-    PT_WAIT_WHILE(&data->speed_pt, data->tx_busy);
-
-    pbio_set_uint32_le(&data->speed_payload[0], speed);
-    PBIO_PT_WAIT_READY(&data->speed_pt, err = ev3_uart_begin_tx_msg(data,
-        LUMP_MSG_TYPE_CMD, LUMP_CMD_SPEED,
-        data->speed_payload, PBIO_ARRAY_SIZE(data->speed_payload)));
-    if (err != PBIO_SUCCESS) {
-        DBG_ERR(data->last_err = "SPEED tx begin failed");
-        goto err;
+static PT_THREAD(pbdrv_legodev_pup_uart_send_prepared_msg(pbdrv_legodev_pup_uart_dev_t * data, pbio_error_t * err)) {
+    PT_BEGIN(&data->write_pt);
+    data->tx_start_time = pbdrv_clock_get_ms();
+    PBIO_PT_WAIT_READY(&data->write_pt, *err = pbdrv_uart_write_begin(data->uart, data->tx_msg, data->tx_msg_size, EV3_UART_IO_TIMEOUT));
+    if (*err == PBIO_SUCCESS) {
+        PBIO_PT_WAIT_READY(&data->write_pt, *err = pbdrv_uart_write_end(data->uart));
     }
-
-    PBIO_PT_WAIT_READY(&data->speed_pt, err = pbdrv_uart_write_end(data->uart));
-    if (err != PBIO_SUCCESS) {
-        data->tx_busy = false;
-        DBG_ERR(data->last_err = "SPEED tx end failed");
-        goto err;
-    }
-
-    data->tx_busy = false;
-
-    PT_END(&data->speed_pt);
-
-err:
-    PT_EXIT(&data->speed_pt);
+    PT_END(&data->write_pt);
 }
 
 static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * data)) {
-    pbio_error_t err;
+    static pbio_error_t err;
     uint8_t checksum;
 
     PT_BEGIN(&data->pt);
@@ -855,7 +812,6 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
     data->device_info.type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
     data->device_info.mode = 0;
     data->ext_mode = 0;
-    data->data_set_len = 0;
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
     data->device_info.flags = PBDRV_LEGODEV_CAPABILITY_FLAG_NONE;
     #endif
@@ -864,9 +820,16 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
     debug_pr_str("Wait for STATUS_SYNCING: done\n");
 
     // Send SPEED command at 115200 baud
-    pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2);
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
-    PT_SPAWN(&data->pt, &data->speed_pt, pbdrv_legodev_pup_uart_send_speed_msg(data, EV3_UART_SPEED_LPF2));
+    pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2);
+    uint8_t speed_payload[4];
+    pbio_set_uint32_le(speed_payload, EV3_UART_SPEED_LPF2);
+    ev3_uart_prepare_tx_msg(data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SPEED, speed_payload, sizeof(speed_payload));
+    PT_SPAWN(&data->pt, &data->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(data, &err));
+    if (err != PBIO_SUCCESS) {
+        DBG_ERR(data->last_err = "Speed tx failed");
+        goto err;
+    }
 
     pbdrv_uart_flush(data->uart);
 
@@ -993,22 +956,13 @@ sync:
     }
 
     // reply with ACK
-    PT_WAIT_WHILE(&data->pt, data->tx_busy);
-    data->tx_busy = true;
     data->tx_msg[0] = LUMP_SYS_ACK;
-    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_begin(data->uart, data->tx_msg, 1, EV3_UART_IO_TIMEOUT));
+    data->tx_msg_size = 1;
+    PT_SPAWN(&data->pt, &data->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(data, &err));
     if (err != PBIO_SUCCESS) {
-        data->tx_busy = false;
-        DBG_ERR(data->last_err = "UART Tx begin error during ack");
+        DBG_ERR(data->last_err = "UART Tx error during ack.");
         goto err;
     }
-    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
-    if (err != PBIO_SUCCESS) {
-        data->tx_busy = false;
-        DBG_ERR(data->last_err = "UART Tx end error during ack");
-        goto err;
-    }
-    data->tx_busy = false;
 
     // schedule baud rate change
     etimer_set(&data->timer, 10);
@@ -1042,6 +996,7 @@ sync:
     // Reset other timers
     etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
     data->data_set->time = pbdrv_clock_get_ms();
+    data->data_set->size = 0;
 
     while (data->status == PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
 
@@ -1059,24 +1014,13 @@ sync:
                 }
             }
             data->data_rec = false;
-
-            PT_WAIT_WHILE(&data->pt, data->tx_busy);
-            data->tx_busy = true;
             data->tx_msg[0] = LUMP_SYS_NACK;
-            PBIO_PT_WAIT_READY(&data->pt,
-                err = pbdrv_uart_write_begin(data->uart, data->tx_msg, 1, EV3_UART_IO_TIMEOUT));
+            data->tx_msg_size = 1;
+            PT_SPAWN(&data->pt, &data->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(data, &err));
             if (err != PBIO_SUCCESS) {
-                data->tx_busy = false;
-                DBG_ERR(data->last_err = "UART Tx begin error during keepalive");
+                DBG_ERR(data->last_err = "Error during keepalive.");
                 goto err;
             }
-            PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
-            if (err != PBIO_SUCCESS) {
-                data->tx_busy = false;
-                DBG_ERR(data->last_err = "UART Tx end error during keepalive");
-                goto err;
-            }
-            data->tx_busy = false;
             etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
 
             // Retry mode switch if it hasn't been handled or failed.
@@ -1088,40 +1032,26 @@ sync:
         // Handle requested mode change
         if (data->mode_switch.requested) {
             data->mode_switch.requested = false;
-            PBIO_PT_WAIT_READY(&data->pt, err = ev3_uart_begin_tx_msg(data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &data->mode_switch.desired_mode, 1));
+            ev3_uart_prepare_tx_msg(data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &data->mode_switch.desired_mode, 1);
+            PT_SPAWN(&data->pt, &data->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(data, &err));
             if (err != PBIO_SUCCESS) {
-                data->tx_busy = false;
-                DBG_ERR(data->last_err = "Begin setting requested mode failed.");
+                DBG_ERR(data->last_err = "Setting requested mode failed.");
                 goto err;
             }
-            PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
-            if (err != PBIO_SUCCESS) {
-                data->tx_busy = false;
-                DBG_ERR(data->last_err = "End setting requested mode failed.");
-                goto err;
-            }
-            data->tx_busy = false;
         }
 
         // Handle requested data set
         if (data->data_set->size > 0) {
             // Only set data if we are in the correct mode already.
             if (data->device_info.mode == data->data_set->desired_mode) {
-                PBIO_PT_WAIT_READY(&data->pt, err = ev3_uart_begin_tx_msg(data, LUMP_MSG_TYPE_DATA, data->data_set->desired_mode, data->data_set->bin_data, data->data_set->size));
+                ev3_uart_prepare_tx_msg(data, LUMP_MSG_TYPE_DATA, data->data_set->desired_mode, data->data_set->bin_data, data->data_set->size);
                 data->data_set->size = 0;
                 data->data_set->time = pbdrv_clock_get_ms();
+                PT_SPAWN(&data->pt, &data->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(data, &err));
                 if (err != PBIO_SUCCESS) {
-                    data->tx_busy = false;
-                    DBG_ERR(data->last_err = "Begin setting requested data failed.");
+                    DBG_ERR(data->last_err = "Setting requested data failed.");
                     goto err;
                 }
-                PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_write_end(data->uart));
-                if (err != PBIO_SUCCESS) {
-                    data->tx_busy = false;
-                    DBG_ERR(data->last_err = "End setting requested data failed.");
-                    goto err;
-                }
-                data->tx_busy = false;
                 data->data_set->time = pbdrv_clock_get_ms();
             } else if (pbdrv_clock_get_ms() - data->data_set->time < 500) {
                 // Not in the right mode yet, try again later for a reasonable amount of time.
@@ -1292,11 +1222,6 @@ pbio_error_t pbdrv_legodev_is_ready(pbdrv_legodev_dev_t *legodev) {
     }
 
     if (port_data->status != PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    // Not ready if busy writing.
-    if (port_data->tx_busy) {
         return PBIO_ERROR_AGAIN;
     }
 
