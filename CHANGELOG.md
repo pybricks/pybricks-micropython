@@ -9,12 +9,14 @@
   is a tuple of `(name, num_values, data_type)` tuples for each available mode.
 
 ### Changed
-- Changed internal drivers for LEGO devices on all platforms.
+- Changed internal drivers for LEGO devices (motors and sensors) on all platforms.
 
 ### Fixed
 - Fixed hub will not power off when Bluetooth chip crashes on City and Technic hubs ([support#1095]).
+- Fixed `off()` method in `ColorLightMatrix`, `UltrasonicSensor`, `ColorSensor` ([support#1098]).
 
 [support#1095]: https://github.com/pybricks/support/issues/1095
+[support#1098]: https://github.com/pybricks/support/issues/1098
 
 ## [3.3.0b6] - 2023-06-02
 

@@ -88,8 +88,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevi
 
 // pybricks.pupdevices.ColorLightMatrix.off
 STATIC mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
-    const mp_obj_t pos_args[] = { self_in, MP_OBJ_FROM_PTR(&pb_Color_NONE_obj) };
-    return pupdevices_ColorLightMatrix_on(MP_ARRAY_SIZE(pos_args), pos_args, NULL);
+    pupdevices_ColorLightMatrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int8_t color_ids[9] = { };
+    return pb_type_device_set_data(&self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorLightMatrix_off_obj, pupdevices_ColorLightMatrix_off);
 

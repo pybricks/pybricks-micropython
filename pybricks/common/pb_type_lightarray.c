@@ -54,15 +54,15 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
     }
 
     // Set the brightness values and wait or await it.
-    return pb_type_device_set_data(self->sensor, self->light_mode, brightness_values, sizeof(brightness_values));
+    return pb_type_device_set_data(self->sensor, self->light_mode, brightness_values, self->number_of_lights);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightArray_on_obj, 1, common_LightArray_on);
 
 // pybricks._common.LightArray.off
 STATIC mp_obj_t common_LightArray_off(mp_obj_t self_in) {
-    const mp_obj_t pos_args[] = {self_in, MP_OBJ_NEW_SMALL_INT(0) };
-    common_LightArray_on(MP_ARRAY_SIZE(pos_args), pos_args, NULL);
-    return mp_const_none;
+    common_LightArray_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int8_t brightness_values[4] = { };
+    return pb_type_device_set_data(self->sensor, self->light_mode, brightness_values, self->number_of_lights);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_LightArray_off_obj, common_LightArray_off);
 
