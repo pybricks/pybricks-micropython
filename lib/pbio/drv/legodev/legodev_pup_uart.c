@@ -1356,14 +1356,10 @@ pbio_error_t pbdrv_legodev_get_info(pbdrv_legodev_dev_t *legodev, pbdrv_legodev_
     if (!port_data) {
         return PBIO_ERROR_NO_DEV;
     }
-
-    pbio_error_t err = pbdrv_legodev_is_ready(legodev);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
+    // Info is set even in case of error. Caller can decide what values apply
+    // based on the error code.
     *info = &port_data->device_info;
-    return PBIO_SUCCESS;
+    return pbdrv_legodev_is_ready(legodev);
 }
 
 #endif // PBDRV_CONFIG_LEGODEV_PUP_UART

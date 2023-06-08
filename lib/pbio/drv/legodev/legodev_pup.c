@@ -604,9 +604,10 @@ bool pbdrv_legodev_needs_permanent_power(pbdrv_legodev_dev_t *legodev) {
         return false;
     }
 
-    // Get device information, and check if device is ready.
+    // Get device information as test for device presence and to read properties.
     pbdrv_legodev_info_t *info;
-    if (pbdrv_legodev_get_info(legodev, &info) != PBIO_SUCCESS) {
+    pbio_error_t err = pbdrv_legodev_get_info(legodev, &info);
+    if (err != PBIO_SUCCESS && err != PBIO_ERROR_AGAIN) {
         return false;
     }
 
