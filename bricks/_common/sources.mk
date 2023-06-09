@@ -28,7 +28,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
 	common/pb_type_control.c \
-	common/pb_type_dcmotor.c \
 	common/pb_type_device.c \
 	common/pb_type_imu.c \
 	common/pb_type_keypad.c \

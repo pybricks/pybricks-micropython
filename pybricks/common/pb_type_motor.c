@@ -70,8 +70,8 @@ static int32_t get_gear_ratio(mp_obj_t gears_in) {
     return 1000 * last_gear_product / first_gear_product;
 }
 
-// pybricks._common.Motor.__init__
-STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+// pybricks.common.Motor.__init__
+STATIC mp_obj_t pb_type_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj),
@@ -82,31 +82,31 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     // Validate arguments before attempting to set up the motor.
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
+
+    pb_type_Motor_obj_t *self = mp_obj_malloc(pb_type_Motor_obj_t, type);
+    self->port = port;
+
+    // Initialize device and get resulting device ID.
+    pbdrv_legodev_type_id_t type_id = pb_type_device_init_class(&self->device_base, port_in,
+        type == &pb_type_DCMotor ? PBDRV_LEGODEV_TYPE_ID_ANY_DC_MOTOR : PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR);
+
+    pb_assert(pbio_servo_get_servo(self->device_base.legodev, &self->srv));
+
+    // For a DC motor, all we need to do is get the dc motor device.
+    if (type == &pb_type_DCMotor) {
+        // Parse args again but this time restrict to 2 args, in order to raise
+        // the appropriate exception if non-DCMotor arguments are given.
+        mp_arg_parse_all(n_args, args, &kw_args, 2, allowed_args, parsed_args);
+        pb_assert(pbio_dcmotor_setup(self->srv->dcmotor, type_id, positive_direction));
+        return MP_OBJ_FROM_PTR(self);
+    }
+
     bool reset_angle = mp_obj_is_true(reset_angle_in);
     int32_t precision_profile = pb_obj_get_default_abs_int(profile_in, 0);
 
-    pbio_error_t err;
-    pbio_servo_t *srv;
-    pbdrv_legodev_dev_t *legodev = NULL;
-
-    // Get i/o device.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    while ((err = pbdrv_legodev_get_device(port, &id, &legodev)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(50);
-    }
-    pb_assert(err);
-
-    // Get pointer to servo.
-    pb_assert(pbio_servo_get_servo(legodev, &srv));
-
     // Set up servo
     int32_t gear_ratio = get_gear_ratio(gears_in);
-    pb_assert(pbio_servo_setup(srv, id, positive_direction, gear_ratio, reset_angle, precision_profile));
-
-    // On success, proceed to create and return the MicroPython object
-    common_Motor_obj_t *self = mp_obj_malloc(common_Motor_obj_t, type);
-    self->srv = srv;
-    self->port = port;
+    pb_assert(pbio_servo_setup(self->srv, type_id, positive_direction, gear_ratio, reset_angle, precision_profile));
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create an instance of the Control class
@@ -123,56 +123,89 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->logger = common_Logger_obj_make_new(&self->srv->log, PBIO_SERVO_LOGGER_NUM_COLS);
     #endif
 
-    // List of awaitables associated with this motor. By keeping track,
-    // we can cancel them as needed when a new movement is started.
-    self->awaitables = mp_obj_new_list(0, NULL);
-
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.common.Motor.__repr__
+STATIC void pb_type_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, "%q(Port.%c, %q.%q)",
+        self->device_base.base.type->name, self->port, MP_QSTR_Direction,
+        self->srv->dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? MP_QSTR_CLOCKWISE : MP_QSTR_COUNTERCLOCKWISE);
+}
 
-STATIC bool common_Motor_test_completion(mp_obj_t self_in, uint32_t end_time) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // Handle I/O exceptions like port unplugged.
-    if (!pbio_servo_update_loop_is_running(self->srv)) {
-        pb_assert(PBIO_ERROR_NO_DEV);
+// pybricks.common.Motor.dc
+STATIC mp_obj_t pb_type_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_Motor_obj_t, self,
+        PB_ARG_REQUIRED(duty));
+
+    // pbio has only voltage setters now, but the .dc() method will continue to
+    // exist for backwards compatibility. So, we convert duty cycle to voltages.
+    int32_t voltage = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_int(duty_in));
+    pb_assert(pbio_dcmotor_user_command(self->srv->dcmotor, false, voltage));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_duty_obj, 1, pb_type_Motor_duty);
+
+// pybricks.common.Motor.stop
+STATIC mp_obj_t pb_type_Motor_stop(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pbio_dcmotor_user_command(self->srv->dcmotor, true, 0));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_stop_obj, pb_type_Motor_stop);
+
+// pybricks.common.Motor.brake
+STATIC mp_obj_t pb_type_Motor_brake(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pbio_dcmotor_user_command(self->srv->dcmotor, false, 0));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_brake_obj, pb_type_Motor_brake);
+
+// pybricks.common.Motor.dc
+STATIC mp_obj_t pb_type_Motor_dc_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_Motor_obj_t, self,
+        PB_ARG_DEFAULT_NONE(max_voltage));
+
+    // If no arguments given, return existing values
+    if (max_voltage_in == mp_const_none) {
+        int32_t max_voltage_now;
+        pbio_dcmotor_get_settings(self->srv->dcmotor, &max_voltage_now);
+        mp_obj_t retval[1];
+        retval[0] = mp_obj_new_int(max_voltage_now);
+        return mp_obj_new_tuple(1, retval);
     }
 
-    // Get completion state.
-    return pbio_control_is_done(&self->srv->control);
+    // Set the new limit
+    pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, pb_obj_get_int(max_voltage_in)));
+    return mp_const_none;
 }
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_settings_obj, 1, pb_type_Motor_dc_settings);
 
-STATIC void common_Motor_cancel(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_COAST));
+// pybricks.common.Motor.close
+STATIC mp_obj_t pb_type_Motor_close(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pbio_dcmotor_close(self->srv->dcmotor));
+    return mp_const_none;
 }
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_close_obj, pb_type_Motor_close);
 
-// Common awaitable used for most motor methods.
-STATIC mp_obj_t await_or_wait(common_Motor_obj_t *self) {
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
-        self->awaitables,
-        pb_type_awaitable_end_time_none,
-        common_Motor_test_completion,
-        pb_type_awaitable_return_none,
-        common_Motor_cancel,
-        PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
-}
-
-// pybricks._common.Motor.angle
-STATIC mp_obj_t common_Motor_angle(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks.common.Motor.angle
+STATIC mp_obj_t pb_type_Motor_angle(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t angle, speed;
     pb_assert(pbio_servo_get_state_user(self->srv, &angle, &speed));
-
     return mp_obj_new_int(angle);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_angle_obj, common_Motor_angle);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_angle_obj, pb_type_Motor_angle);
 
-// pybricks._common.Motor.reset_angle
-STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.reset_angle
+STATIC mp_obj_t pb_type_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_DEFAULT_NONE(angle));
 
     // If no angle argument is given, reset to the absolute value
@@ -183,49 +216,76 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
 
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
-    pb_type_awaitable_update_all(self->awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+    pb_type_awaitable_update_all(self->device_base.awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_reset_angle_obj, 1, common_Motor_reset_angle);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_reset_angle_obj, 1, pb_type_Motor_reset_angle);
 
-// pybricks._common.Motor.speed
-STATIC mp_obj_t common_Motor_speed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.speed
+STATIC mp_obj_t pb_type_Motor_speed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_DEFAULT_INT(window, 100));
 
     int32_t speed;
     pb_assert(pbio_servo_get_speed_user(self->srv, pb_obj_get_positive_int(window_in), &speed));
     return mp_obj_new_int(speed);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_speed_obj, 1, common_Motor_speed);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_speed_obj, 1, pb_type_Motor_speed);
 
-// pybricks._common.Motor.run
-STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.run
+STATIC mp_obj_t pb_type_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     pb_assert(pbio_servo_run_forever(self->srv, speed));
-    pb_type_awaitable_update_all(self->awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+    pb_type_awaitable_update_all(self->device_base.awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_obj, 1, common_Motor_run);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_obj, 1, pb_type_Motor_run);
 
-// pybricks._common.Motor.hold
-STATIC mp_obj_t common_Motor_hold(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks.common.Motor.hold
+STATIC mp_obj_t pb_type_Motor_hold(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
-    pb_type_awaitable_update_all(self->awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+    pb_type_awaitable_update_all(self->device_base.awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_hold_obj, common_Motor_hold);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_hold_obj, pb_type_Motor_hold);
 
-// pybricks._common.Motor.run_time
-STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC bool pb_type_Motor_test_completion(mp_obj_t self_in, uint32_t end_time) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Handle I/O exceptions like port unplugged.
+    if (!pbio_servo_update_loop_is_running(self->srv)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // Get completion state.
+    return pbio_control_is_done(&self->srv->control);
+}
+
+STATIC void pb_type_Motor_cancel(mp_obj_t self_in) {
+    pb_type_Motor_stop(self_in);
+}
+
+// Common awaitable used for most motor methods.
+STATIC mp_obj_t await_or_wait(pb_type_Motor_obj_t *self) {
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_FROM_PTR(self),
+        self->device_base.awaitables,
+        pb_type_awaitable_end_time_none,
+        pb_type_Motor_test_completion,
+        pb_type_awaitable_return_none,
+        pb_type_Motor_cancel,
+        PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+}
+
+// pybricks.common.Motor.run_time
+STATIC mp_obj_t pb_type_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(time),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
@@ -246,11 +306,11 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
     // Handle completion by awaiting or blocking.
     return await_or_wait(self);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_time_obj, 1, common_Motor_run_time);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_time_obj, 1, pb_type_Motor_run_time);
 
-STATIC mp_obj_t common_Motor_stall_return_value(mp_obj_t self_in) {
+STATIC mp_obj_t pb_type_Motor_stall_return_value(mp_obj_t self_in) {
 
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Return the angle upon completion of the stall maneuver.
     int32_t stall_angle, stall_speed;
@@ -259,10 +319,10 @@ STATIC mp_obj_t common_Motor_stall_return_value(mp_obj_t self_in) {
     return mp_obj_new_int(stall_angle);
 }
 
-// pybricks._common.Motor.run_until_stalled
-STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.run_until_stalled
+STATIC mp_obj_t pb_type_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_NONE(duty_limit));
@@ -285,19 +345,19 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     // Handle completion by awaiting or blocking.
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
-        self->awaitables,
+        self->device_base.awaitables,
         pb_type_awaitable_end_time_none,
-        common_Motor_test_completion,
-        common_Motor_stall_return_value,
-        common_Motor_cancel,
+        pb_type_Motor_test_completion,
+        pb_type_Motor_stall_return_value,
+        pb_type_Motor_cancel,
         PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_until_stalled_obj, 1, common_Motor_run_until_stalled);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_until_stalled_obj, 1, pb_type_Motor_run_until_stalled);
 
-// pybricks._common.Motor.run_angle
-STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.run_angle
+STATIC mp_obj_t pb_type_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(rotation_angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
@@ -317,12 +377,12 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
     // Handle completion by awaiting or blocking.
     return await_or_wait(self);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_angle_obj, 1, common_Motor_run_angle);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_angle_obj, 1, pb_type_Motor_run_angle);
 
-// pybricks._common.Motor.run_target
-STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.run_target
+STATIC mp_obj_t pb_type_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(target_angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
@@ -342,100 +402,122 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
     // Handle completion by awaiting or blocking.
     return await_or_wait(self);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_run_target_obj, 1, common_Motor_run_target);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_target_obj, 1, pb_type_Motor_run_target);
 
-// pybricks._common.Motor.track_target
-STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.common.Motor.track_target
+STATIC mp_obj_t pb_type_Motor_track_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_Motor_obj_t, self,
+        pb_type_Motor_obj_t, self,
         PB_ARG_REQUIRED(target_angle));
 
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
     pb_assert(pbio_servo_track_target(self->srv, target_angle));
-    pb_type_awaitable_update_all(self->awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+    pb_type_awaitable_update_all(self->device_base.awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Motor_track_target_obj, 1, common_Motor_track_target);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_track_target_obj, 1, pb_type_Motor_track_target);
 
-// pybricks._common.Motor.stalled
-STATIC mp_obj_t common_Motor_stalled(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks.common.Motor.stalled
+STATIC mp_obj_t pb_type_Motor_stalled(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t stall_duration;
     bool stalled;
     pb_assert(pbio_servo_is_stalled(self->srv, &stalled, &stall_duration));
     return mp_obj_new_bool(stalled);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_stalled_obj, common_Motor_stalled);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_stalled_obj, pb_type_Motor_stalled);
 
-// pybricks._common.Motor.done
-STATIC mp_obj_t common_Motor_done(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks.common.Motor.done
+STATIC mp_obj_t pb_type_Motor_done(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(pbio_control_is_done(&self->srv->control));
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_done_obj, common_Motor_done);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_done_obj, pb_type_Motor_done);
 
-// pybricks._common.Motor.load
-STATIC mp_obj_t common_Motor_load(mp_obj_t self_in) {
-    common_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks.common.Motor.load
+STATIC mp_obj_t pb_type_Motor_load(mp_obj_t self_in) {
+    pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t load;
     pb_assert(pbio_servo_get_load(self->srv, &load));
     return mp_obj_new_int(load);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_load_obj, common_Motor_load);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_load_obj, pb_type_Motor_load);
 
 #if PYBRICKS_PY_COMMON_CONTROL | PYBRICKS_PY_COMMON_LOGGER
-STATIC const pb_attr_dict_entry_t common_Motor_attr_dict[] = {
+STATIC const pb_attr_dict_entry_t pb_type_Motor_attr_dict[] = {
     #if PYBRICKS_PY_COMMON_CONTROL
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_control, common_Motor_obj_t, control),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_control, pb_type_Motor_obj_t, control),
     #endif
     #if PYBRICKS_PY_COMMON_MOTOR_MODEL
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_model, common_Motor_obj_t, model),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_model, pb_type_Motor_obj_t, model),
     #endif
     #if PYBRICKS_PY_COMMON_LOGGER
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, common_Motor_obj_t, logger),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, pb_type_Motor_obj_t, logger),
     #endif
     PB_ATTR_DICT_SENTINEL
 };
 #endif // PYBRICKS_PY_COMMON_CONTROL | PYBRICKS_PY_COMMON_LOGGER
 
 // dir(pybricks.builtins.Motor)
-STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t pb_type_Motor_locals_dict_table[] = {
     //
     // Methods common to DC motors and encoded motors
     //
-    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&common_DCMotor_duty_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&common_DCMotor_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&common_DCMotor_brake_obj) },
-    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&common_DCMotor_dc_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&pb_type_Motor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&pb_type_Motor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&pb_type_Motor_brake_obj) },
+    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&pb_type_Motor_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&pb_type_Motor_close_obj) },
     //
     // Methods specific to encoded motors
     //
-    { MP_ROM_QSTR(MP_QSTR_hold), MP_ROM_PTR(&common_Motor_hold_obj) },
-    { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&common_Motor_angle_obj) },
-    { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&common_Motor_speed_obj) },
-    { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&common_Motor_reset_angle_obj) },
-    { MP_ROM_QSTR(MP_QSTR_run), MP_ROM_PTR(&common_Motor_run_obj) },
-    { MP_ROM_QSTR(MP_QSTR_run_time), MP_ROM_PTR(&common_Motor_run_time_obj) },
-    { MP_ROM_QSTR(MP_QSTR_run_until_stalled), MP_ROM_PTR(&common_Motor_run_until_stalled_obj) },
-    { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&common_Motor_run_angle_obj) },
-    { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&common_Motor_run_target_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Motor_stalled_obj) },
-    { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Motor_done_obj) },
-    { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&common_Motor_track_target_obj) },
-    { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Motor_load_obj) },
+    { MP_ROM_QSTR(MP_QSTR_hold), MP_ROM_PTR(&pb_type_Motor_hold_obj) },
+    { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&pb_type_Motor_angle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&pb_type_Motor_speed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&pb_type_Motor_reset_angle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run), MP_ROM_PTR(&pb_type_Motor_run_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_time), MP_ROM_PTR(&pb_type_Motor_run_time_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_until_stalled), MP_ROM_PTR(&pb_type_Motor_run_until_stalled_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&pb_type_Motor_run_angle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&pb_type_Motor_run_target_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&pb_type_Motor_stalled_obj) },
+    { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&pb_type_Motor_done_obj) },
+    { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&pb_type_Motor_track_target_obj) },
+    { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&pb_type_Motor_load_obj) },
 };
-MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(pb_type_Motor_locals_dict, pb_type_Motor_locals_dict_table);
+
+// The DC Motor methods are shared with the DCMotor class, so use the first section of the same table.
+STATIC const mp_obj_dict_t pb_type_DCMotor_locals_dict = {
+    .base = {&mp_type_dict},
+    .map = {
+        .all_keys_are_qstrs = 1,
+        .is_fixed = 1,
+        .is_ordered = 1,
+        .used = 5,
+        .alloc = 5,
+        .table = (mp_map_elem_t *)(mp_rom_map_elem_t *)pb_type_Motor_locals_dict_table,
+    },
+};
+
+// type(pybricks.builtins.DCMotor)
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_DCMotor,
+    MP_QSTR_DCMotor,
+    MP_TYPE_FLAG_NONE,
+    print, pb_type_Motor_print,
+    make_new, pb_type_Motor_make_new,
+    locals_dict, &pb_type_DCMotor_locals_dict);
 
 // type(pybricks.builtins.Motor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_Motor,
     MP_QSTR_Motor,
     MP_TYPE_FLAG_NONE,
-    print, common_DCMotor_print,
-    make_new, common_Motor_make_new,
+    print, pb_type_Motor_print,
+    make_new, pb_type_Motor_make_new,
     #if PYBRICKS_PY_COMMON_CONTROL | PYBRICKS_PY_COMMON_LOGGER
     attr, pb_attribute_handler,
-    protocol, common_Motor_attr_dict,
+    protocol, pb_type_Motor_attr_dict,
     #endif
-    locals_dict, &common_Motor_locals_dict);
+    locals_dict, &pb_type_Motor_locals_dict);
 
 #endif // PYBRICKS_PY_COMMON_MOTORS

@@ -104,18 +104,19 @@ mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode
         PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
 }
 
-void pb_type_device_init_class(pb_type_device_obj_base_t *self, mp_obj_t port_in, pbdrv_legodev_type_id_t valid_id) {
+pbdrv_legodev_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self, mp_obj_t port_in, pbdrv_legodev_type_id_t valid_id) {
 
     pb_module_tools_assert_blocking();
 
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_error_t err;
-    while ((err = pbdrv_legodev_get_device(port, &valid_id, &self->legodev)) == PBIO_ERROR_AGAIN) {
+    pbdrv_legodev_type_id_t actual_id = valid_id;
+    while ((err = pbdrv_legodev_get_device(port, &actual_id, &self->legodev)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(50);
     }
     pb_assert(err);
-
     self->awaitables = mp_obj_new_list(0, NULL);
+    return actual_id;
 }
 
 #endif // PYBRICKS_PY_PUPDEVICES

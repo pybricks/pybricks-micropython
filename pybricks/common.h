@@ -23,6 +23,7 @@
 #include <pybricks/pupdevices.h>
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_awaitable.h>
+#include <pybricks/common/pb_type_device.h>
 
 void pb_package_pybricks_init(bool import_all);
 void pb_package_pybricks_deinit(void);
@@ -99,12 +100,11 @@ mp_obj_t pb_type_MotorModel_obj_make_new(pbio_observer_t *observer);
 mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values);
 #endif
 
-typedef struct _common_Motor_obj_t common_Motor_obj_t;
-
-// pybricks._common.Motor()
-struct _common_Motor_obj_t {
-    mp_obj_base_t base;
+// pybricks.common.DCMotor and pybricks.common.Motor
+typedef struct {
+    pb_type_device_obj_base_t device_base;
     pbio_servo_t *srv;
+    pbio_port_id_t port;
     #if PYBRICKS_PY_COMMON_MOTOR_MODEL
     mp_obj_t model;
     #endif
@@ -114,27 +114,10 @@ struct _common_Motor_obj_t {
     #if PYBRICKS_PY_COMMON_LOGGER
     mp_obj_t logger;
     #endif
-    pbio_port_id_t port;
-    mp_obj_t awaitables;
-};
+} pb_type_Motor_obj_t;
 
 extern const mp_obj_type_t pb_type_Motor;
-
-// pybricks._common.DCMotor()
-typedef struct _common_DCMotor_obj_t {
-    mp_obj_base_t base;
-    pbio_dcmotor_t *dcmotor;
-    pbio_port_id_t port;
-} common_DCMotor_obj_t;
-
 extern const mp_obj_type_t pb_type_DCMotor;
-
-// Nonstatic objects shared between Motor and DCMotor
-void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind);
-MP_DECLARE_CONST_FUN_OBJ_KW(common_DCMotor_duty_obj);
-MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj);
-MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj);
-MP_DECLARE_CONST_FUN_OBJ_KW(common_DCMotor_dc_settings_obj);
 
 #endif // PYBRICKS_PY_COMMON_MOTORS
 

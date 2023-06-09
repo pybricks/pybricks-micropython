@@ -64,8 +64,8 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     pb_type_DriveBase_obj_t *self = mp_obj_malloc(pb_type_DriveBase_obj_t, type);
 
     // Pointers to servos
-    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(left_motor_in, &pb_type_Motor))->srv;
-    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(right_motor_in, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_left = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(left_motor_in, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_right = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(right_motor_in, &pb_type_Motor))->srv;
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_drivebase(&self->db,
