@@ -43,6 +43,15 @@ void pbsys_program_stop(bool force_stop) {
 }
 
 /**
+ * Gets the stop button(s) used during a user program.
+ * @param [in]  buttons     One or more button flags that stop the program
+ *                          or 0 if stopping by button is disabled.
+ */
+pbio_button_flags_t pbsys_program_stop_get_buttons(void) {
+    return stop_buttons;
+}
+
+/**
  * Sets the stop button(s) to be used during a user program.
  * @param [in]  buttons     One or more button flags to set the stop button
  *                          or 0 to disable the stop button.

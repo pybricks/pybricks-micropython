@@ -17,6 +17,7 @@
 
 #if PBSYS_CONFIG_PROGRAM_STOP
 
+pbio_button_flags_t pbsys_program_stop_get_buttons(void);
 void pbsys_program_stop_set_buttons(pbio_button_flags_t buttons);
 
 #else // PBSYS_CONFIG_PROGRAM_STOP
