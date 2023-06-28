@@ -53,12 +53,7 @@ STATIC mp_obj_t common_LightMatrix_orientation(size_t n_args, const mp_obj_t *po
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightMatrix_orientation_obj, 1, common_LightMatrix_orientation);
 
-// pybricks._common.LightMatrix.char
-STATIC mp_obj_t common_LightMatrix_char(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_LightMatrix_obj_t, self,
-        PB_ARG_REQUIRED(char));
-
+void pb_type_LightMatrix_display_char(pbio_light_matrix_t *light_matrix, mp_obj_t char_in) {
     // Argument must be a qstr or string
     if (!mp_obj_is_qstr(char_in)) {
         pb_assert_type(char_in, &mp_type_str);
@@ -71,7 +66,16 @@ STATIC mp_obj_t common_LightMatrix_char(size_t n_args, const mp_obj_t *pos_args,
     }
 
     // Pick corresponding icon and display it
-    pb_assert(pbio_light_matrix_set_rows(self->light_matrix, pb_font_5x5[text[0] - 32]));
+    pb_assert(pbio_light_matrix_set_rows(light_matrix, pb_font_5x5[text[0] - 32]));
+}
+
+// pybricks._common.LightMatrix.char
+STATIC mp_obj_t common_LightMatrix_char(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightMatrix_obj_t, self,
+        PB_ARG_REQUIRED(char));
+
+    pb_type_LightMatrix_display_char(self->light_matrix, char_in);
 
     return mp_const_none;
 }
@@ -163,33 +167,27 @@ STATIC mp_obj_t common_LightMatrix_off(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_LightMatrix_off_obj, common_LightMatrix_off);
 
-// pybricks._common.LightMatrix.number
-STATIC mp_obj_t common_LightMatrix_number(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        common_LightMatrix_obj_t, self,
-        PB_ARG_REQUIRED(number));
+void pb_type_LightMatrix_display_number(pbio_light_matrix_t *light_matrix, mp_obj_t number_in) {
 
+    mp_int_t number = pb_obj_get_int(number_in);
 
-    uint8_t size = pbio_light_matrix_get_size(self->light_matrix);
+    uint8_t size = pbio_light_matrix_get_size(light_matrix);
 
     // Currently numbers are only implemented for 5x5 matrices
     if (size != 5) {
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    // Get the number
-    mp_int_t number = pb_obj_get_int(number_in);
-
     // > 99 gets displayed as >
     if (number > 99) {
-        pb_assert(pbio_light_matrix_set_rows(self->light_matrix, pb_font_5x5['>' - 32]));
-        return mp_const_none;
+        pb_assert(pbio_light_matrix_set_rows(light_matrix, pb_font_5x5['>' - 32]));
+        return;
     }
 
     // < -99 gets displayed as <
     if (number < -99) {
-        pb_assert(pbio_light_matrix_set_rows(self->light_matrix, pb_font_5x5['<' - 32]));
-        return mp_const_none;
+        pb_assert(pbio_light_matrix_set_rows(light_matrix, pb_font_5x5['<' - 32]));
+        return;
     }
 
     // Remember sign but make value positive
@@ -205,13 +203,22 @@ STATIC mp_obj_t common_LightMatrix_number(size_t n_args, const mp_obj_t *pos_arg
     }
 
     // Display the result
-    pb_assert(pbio_light_matrix_set_rows(self->light_matrix, composite));
+    pb_assert(pbio_light_matrix_set_rows(light_matrix, composite));
 
     // Display one faint dot in the middle to indicate negative
     if (negative) {
-        pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, 2, 2, 50));
+        pb_assert(pbio_light_matrix_set_pixel(light_matrix, 2, 2, 50));
     }
+}
 
+// pybricks._common.LightMatrix.number
+STATIC mp_obj_t common_LightMatrix_number(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightMatrix_obj_t, self,
+        PB_ARG_REQUIRED(number));
+
+    // Display the number
+    pb_type_LightMatrix_display_number(self->light_matrix, number_in);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightMatrix_number_obj, 1, common_LightMatrix_number);
