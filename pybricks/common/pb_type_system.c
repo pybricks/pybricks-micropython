@@ -48,7 +48,7 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
     pbio_button_flags_t buttons = 0;
 
     if (mp_obj_is_true(buttons_in)) {
-        #if PYBRICKS_PY_PARAMETERS_BUTTON
+        #if PYBRICKS_PY_COMMON_KEYPAD_HUB_BUTTONS > 1
         nlr_buf_t nlr;
         if (nlr_push(&nlr) == 0) {
             // try an iterator first in case there are multiple buttons
@@ -66,10 +66,9 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
             // which is the same error that will be raised here.
             buttons = pb_type_enum_get_value(buttons_in, &pb_enum_type_Button);
         }
-        #else // PYBRICKS_PY_PARAMETERS_BUTTON
-        // if the buttons enum is not enabled, then there is only one button
+        #else // PYBRICKS_PY_COMMON_KEYPAD_HUB_BUTTONS > 1
         buttons = PBIO_BUTTON_CENTER;
-        #endif // PYBRICKS_PY_PARAMETERS_BUTTON
+        #endif // PYBRICKS_PY_COMMON_KEYPAD_HUB_BUTTONS > 1
     }
 
     pbsys_program_stop_set_buttons(buttons);
