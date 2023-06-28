@@ -13,6 +13,8 @@
 #include "py/stream.h"
 
 #include <pbio/int_math.h>
+#include <pbsys/light.h>
+#include <pbsys/program_stop.h>
 
 #include <pybricks/parameters.h>
 #include <pybricks/common.h>
@@ -143,10 +145,107 @@ STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 1, pb_module_tools_run_task);
 
+#if PYBRICKS_PY_TOOLS_HUB_MENU
+
+STATIC void pb_module_tools_hub_menu_display_symbol(mp_obj_t symbol) {
+    if (mp_obj_is_str(symbol)) {
+        pb_type_LightMatrix_display_char(pbsys_hub_light_matrix, symbol);
+    } else {
+        pb_type_LightMatrix_display_number(pbsys_hub_light_matrix, symbol);
+    }
+}
+
+/**
+ * Waits for a button press or release.
+ *
+ * @param [in]  press   Choose @c true to wait for press or @c false to wait for release.
+ * @returns             When waiting for pressed, it returns the button that was pressed, otherwise returns 0.
+ */
+STATIC pbio_button_flags_t pb_module_tools_hub_menu_wait_for_press(bool press) {
+
+    // This function should only be used in a blocking context.
+    pb_module_tools_assert_blocking();
+
+    pbio_error_t err;
+    pbio_button_flags_t btn;
+    while ((err = pbio_button_is_pressed(&btn)) == PBIO_SUCCESS && ((bool)btn) == !press) {
+        MICROPY_EVENT_POLL_HOOK;
+    }
+    pb_assert(err);
+    return btn;
+}
+
+/**
+ * Displays a menu on the hub display and allows the user to pick a symbol
+ * using the buttons.
+ *
+ * @param [in]  n_args  The number of args.
+ * @param [in]  args    The args passed in Python code (the menu entries).
+ */
+STATIC mp_obj_t pb_module_tools_hub_menu(size_t n_args, const mp_obj_t *args) {
+
+    // Validate arguments by displaying all of them, ending with the first.
+    // This ensures we fail right away instead of midway through the menu. It
+    // happens so fast that there isn't a time penalty for this.
+    for (int i = n_args - 1; i >= 0; i--) {
+        pb_module_tools_hub_menu_display_symbol(args[i]);
+    }
+
+    // Disable stop button and cache original setting to restore later.
+    pbio_button_flags_t stop_button = pbsys_program_stop_get_buttons();
+    pbsys_program_stop_set_buttons(0);
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+
+        size_t selection = 0;
+
+        while (true) {
+            pb_module_tools_hub_menu_wait_for_press(false);
+            pbio_button_flags_t btn = pb_module_tools_hub_menu_wait_for_press(true);
+
+            // Selection made, exit.
+            if (btn & PBIO_BUTTON_CENTER) {
+                break;
+            }
+
+            // Increment/decrement selection for left/right buttons.
+            if (btn & PBIO_BUTTON_RIGHT) {
+                selection = (selection + 1) % n_args;
+            } else if (btn & PBIO_BUTTON_LEFT) {
+                selection = selection == 0 ? n_args - 1 : selection - 1;
+            }
+
+            // Display current selection.
+            pb_module_tools_hub_menu_display_symbol(args[selection]);
+        }
+
+        // Wait for release before returning, just like starting a normal program.
+        pb_module_tools_hub_menu_wait_for_press(false);
+
+        // Restore stop button setting prior to starting menu.
+        pbsys_program_stop_set_buttons(stop_button);
+
+        // Complete and return selected object.
+        nlr_pop();
+        return args[selection];
+    } else {
+        pbsys_program_stop_set_buttons(stop_button);
+        nlr_jump(nlr.ret_val);
+        return mp_const_none;
+    }
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR(pb_module_tools_hub_menu_obj, 2, pb_module_tools_hub_menu);
+
+#endif // PYBRICKS_PY_TOOLS_HUB_MENU
+
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)                    },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
     { MP_ROM_QSTR(MP_QSTR_read_input_byte), MP_ROM_PTR(&pb_module_tools_read_input_byte_obj) },
+    #if PYBRICKS_PY_TOOLS_HUB_MENU
+    { MP_ROM_QSTR(MP_QSTR_hub_menu),    MP_ROM_PTR(&pb_module_tools_hub_menu_obj)     },
+    #endif // PYBRICKS_PY_TOOLS_HUB_MENU
     { MP_ROM_QSTR(MP_QSTR_run_task),    MP_ROM_PTR(&pb_module_tools_run_task_obj)     },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)                },
     { MP_ROM_QSTR(MP_QSTR_multitask),   MP_ROM_PTR(&pb_type_Task)                     },

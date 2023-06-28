@@ -43,6 +43,7 @@
 #define PYBRICKS_PY_ROBOTICS            (0)
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE (0)
 #define PYBRICKS_PY_TOOLS               (1)
+#define PYBRICKS_PY_TOOLS_HUB_MENU      (0)
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (1)
