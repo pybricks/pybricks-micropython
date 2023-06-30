@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.3.0b7] - 2023-06-30
+
 ### Added
 - Added `'modes'` entry to the dictionary returned by `PUPDevice.info()`. It
   is a tuple of `(name, num_values, data_type)` tuples for each available mode.
@@ -645,8 +647,9 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...HEAD
-[3.3.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b6
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...HEAD
+[3.3.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...v3.3.0b7
+[3.3.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...v3.3.0b6
 [3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
 [3.3.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
 [3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
