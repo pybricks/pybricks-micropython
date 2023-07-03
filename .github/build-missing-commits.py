@@ -24,9 +24,6 @@ HUBS = ["movehub", "cityhub", "technichub", "primehub", "essentialhub", "nxt"]
 
 GITHUB_RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER")
 
-if GITHUB_RUN_NUMBER:
-    os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}")
-
 print("Building commits...")
 
 try:
@@ -49,6 +46,12 @@ firmware_size_table = TableClient(
     FIRMWARE_SIZE_TABLE,
     credential=AzureNamedKeyCredential(STORAGE_ACCOUNT, STORAGE_KEY),
 )
+
+if GITHUB_RUN_NUMBER:
+    tag = pybricks.git.execute(
+        ["git", "describe", "--tags", "--dirty", "--always", "--exclude", "@pybricks/*"]
+    )
+    os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}-{tag}")
 
 start_hash = ci_status_table.get_entity("build", "lastHash")["hash"]
 

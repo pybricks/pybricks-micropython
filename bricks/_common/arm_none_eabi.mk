@@ -483,7 +483,12 @@ $(BUILD)/genhdr/%.h: $(PBTOP)/lib/pbio/drv/bluetooth/%.gatt
 
 endif
 
+ifeq ($(MICROPY_GIT_TAG),)
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
+else
+# CI builds use build number + git hash as tag/firmware version
+FW_VERSION := $(MICROPY_GIT_TAG)
+endif
 
 ifeq ($(PB_MCU_FAMILY),STM32)
 FW_SECTIONS := -j .isr_vector -j .text -j .data -j .name

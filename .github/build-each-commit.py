@@ -18,10 +18,6 @@ PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
 GITHUB_RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER")
 
-if GITHUB_RUN_NUMBER:
-    os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}")
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("hub", metavar="<hub>")
 parser.add_argument("commit", metavar="<commit>")
@@ -37,6 +33,12 @@ if STORAGE_ACCOUNT:
         FIRMWARE_SIZE_TABLE,
         credential=AzureNamedKeyCredential(STORAGE_ACCOUNT, STORAGE_KEY),
     )
+
+if GITHUB_RUN_NUMBER:
+    tag = pybricks.git.execute(
+        ["git", "describe", "--tags", "--dirty", "--always", "--exclude", "@pybricks/*"]
+    )
+    os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}-{tag}")
 
 # build each commit starting with the oldest
 start_commit = (
