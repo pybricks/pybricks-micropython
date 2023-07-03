@@ -12,6 +12,8 @@ uint32_t pbdrv_legodev_spec_stale_data_delay(pbdrv_legodev_type_id_t id, uint8_t
 
 uint32_t pbdrv_legodev_spec_data_set_delay(pbdrv_legodev_type_id_t id, uint8_t mode);
 
+bool pbdrv_legodev_spec_device_category_match(pbdrv_legodev_type_id_t id, pbdrv_legodev_type_id_t category);
+
 uint8_t pbdrv_legodev_spec_default_mode(pbdrv_legodev_type_id_t id);
 
 pbdrv_legodev_capability_flags_t pbdrv_legodev_spec_basic_flags(pbdrv_legodev_type_id_t id);

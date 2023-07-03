@@ -29,6 +29,7 @@
 
 #include "legodev_pup.h"
 #include "legodev_pup_uart.h"
+#include "legodev_spec.h"
 
 /** The number of consecutive repeated detections needed for an affirmative ID. */
 #define AFFIRMATIVE_MATCH_COUNT 20
@@ -519,32 +520,17 @@ pbio_error_t pbdrv_legodev_get_abs_angle(pbdrv_legodev_dev_t *legodev, pbio_angl
 
 static bool type_id_matches(pbdrv_legodev_type_id_t *type, pbdrv_legodev_type_id_t actual_type) {
 
-    // Returns what was actually detected.
-    pbdrv_legodev_type_id_t desired_type = *type;
+    // Set return value to what was actually detected.
+    pbdrv_legodev_type_id_t desired = *type;
     *type = actual_type;
 
-    // Pass for any dc motor.
-    if (desired_type == PBDRV_LEGODEV_TYPE_ID_ANY_DC_MOTOR) {
-        return actual_type == PBDRV_LEGODEV_TYPE_ID_LPF2_MMOTOR || actual_type == PBDRV_LEGODEV_TYPE_ID_LPF2_TRAIN;
+    // Test for category match.
+    if (pbdrv_legodev_spec_device_category_match(actual_type, desired)) {
+        return true;
     }
 
-    // Pass for any encoded motor.
-    if (desired_type == PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR) {
-        return actual_type == PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR ||
-               actual_type == PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR ||
-               actual_type == PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR ||
-               actual_type == PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR ||
-               actual_type == PBDRV_LEGODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR ||
-               actual_type == PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR;
-    }
-
-    // Pass for any LEGO UART device.
-    if (desired_type == PBDRV_LEGODEV_TYPE_ID_ANY_LUMP_UART) {
-        return actual_type > PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART && actual_type <= PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR;
-    }
-
-    // Require an exact match.
-    return desired_type == actual_type;
+    // Otherwise require an exact match.
+    return desired == actual_type;
 }
 
 pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type_id_t *type_id, pbdrv_legodev_dev_t **legodev) {

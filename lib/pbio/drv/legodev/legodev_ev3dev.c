@@ -18,6 +18,7 @@
 #include <ev3dev_stretch/nxtcolor.h>
 
 #include "legodev_ev3dev.h"
+#include "legodev_spec.h"
 
 typedef struct {
     const pbdrv_legodev_ev3dev_sensor_platform_data_t *pdata;
@@ -83,10 +84,6 @@ pbio_error_t pbdrv_legodev_get_abs_angle(pbdrv_legodev_dev_t *legodev, pbio_angl
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-bool type_id_matches(pbdrv_legodev_type_id_t *type, pbdrv_legodev_type_id_t actual_type) {
-    return false;
-}
-
 pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type_id_t *type_id, pbdrv_legodev_dev_t **legodev) {
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(devs); i++) {
         pbdrv_legodev_dev_t *candidate = &devs[i];
@@ -138,25 +135,6 @@ pbio_error_t pbdrv_legodev_get_info(pbdrv_legodev_dev_t *legodev, pbdrv_legodev_
     return PBIO_SUCCESS;
 }
 
-// Get the required mode switch time delay for a given sensor type and/or mode
-static uint32_t get_mode_switch_delay(pbdrv_legodev_type_id_t id, uint8_t mode) {
-    switch (id) {
-        case PBDRV_LEGODEV_TYPE_ID_EV3_COLOR_SENSOR:
-            return 30;
-        case PBDRV_LEGODEV_TYPE_ID_EV3_IR_SENSOR:
-            return 1100;
-        case PBDRV_LEGODEV_TYPE_ID_NXT_LIGHT_SENSOR:
-            return 20;
-        case PBDRV_LEGODEV_TYPE_ID_NXT_SOUND_SENSOR:
-            return 300;
-        case PBDRV_LEGODEV_TYPE_ID_NXT_ENERGY_METER:
-            return 200;
-        // Default delay for other sensors and modes:
-        default:
-            return 0;
-    }
-}
-
 pbio_error_t pbdrv_legodev_is_ready(pbdrv_legodev_dev_t *legodev) {
     if (legodev->is_motor) {
         return PBIO_SUCCESS;
@@ -167,7 +145,7 @@ pbio_error_t pbdrv_legodev_is_ready(pbdrv_legodev_dev_t *legodev) {
     }
 
     // Some device/mode pairs require time to discard stale data
-    uint32_t delay = get_mode_switch_delay(legodev->sensor->info.type_id, legodev->sensor->info.mode);
+    uint32_t delay = pbdrv_legodev_spec_stale_data_delay(legodev->sensor->info.type_id, legodev->sensor->info.mode);
     if (pbdrv_clock_get_ms() - legodev->sensor->mode_switch_time < delay) {
         return PBIO_ERROR_AGAIN;
     }

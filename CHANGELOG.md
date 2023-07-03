@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+- Fixed Technic (Extra) Large motors not working ([support#1131]) on all hubs.
+
+[support#1064]: https://github.com/pybricks/support/issues/1131
+
 ## [3.3.0b7] - 2023-06-30
 
 ### Added
