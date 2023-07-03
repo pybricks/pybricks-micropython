@@ -209,7 +209,10 @@ jobs:
       run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.ref_name }}
     - name: Build firmware (master branch)
       if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
-      run: make -C bricks/${{ matrix.hub }}
+      run: |
+        export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}
+        export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
+        make -C bricks/${{ matrix.hub }}
     - name: Extract firmware.zip for upload
       if: ${{ success()}}
       working-directory: bricks/${{ matrix.hub }}/build
