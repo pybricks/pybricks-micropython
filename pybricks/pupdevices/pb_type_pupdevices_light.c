@@ -37,6 +37,7 @@ STATIC mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
 
     // Get and initialize DC Motor
     pb_assert(pbio_dcmotor_get_dcmotor(legodev, &self->dcmotor));
+    pb_assert(pbio_dcmotor_setup(self->dcmotor, PBDRV_LEGODEV_TYPE_ID_LPF2_LIGHT, PBIO_DIRECTION_CLOCKWISE));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -49,7 +50,7 @@ STATIC mp_obj_t pupdevices_Light_on(size_t n_args, const mp_obj_t *pos_args, mp_
 
     // Set the brightness
     int32_t voltage = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_pct(brightness_in));
-    pb_assert(pbio_dcmotor_set_voltage(self->dcmotor, voltage));
+    pb_assert(pbio_dcmotor_user_command(self->dcmotor, false, -voltage));
 
     return mp_const_none;
 }
@@ -58,7 +59,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_Light_on_obj, 1, pupdevices_Light_on);
 // pybricks.pupdevices.Light.off
 STATIC mp_obj_t pupdevices_Light_off(mp_obj_t self_in) {
     pupdevices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_dcmotor_set_voltage(self->dcmotor, 0));
+    pb_assert(pbio_dcmotor_user_command(self->dcmotor, true, 0));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_Light_off_obj, pupdevices_Light_off);

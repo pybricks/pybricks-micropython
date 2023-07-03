@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 - Fixed Technic (Extra) Large motors not working ([support#1131]) on all hubs.
+- Fixed Powered Up Light not working ([support#1131]) on all hubs.
 
 [support#1064]: https://github.com/pybricks/support/issues/1131
 
