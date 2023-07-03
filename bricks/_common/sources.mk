@@ -161,6 +161,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/legodev/legodev_nxt.c \
 	drv/legodev/legodev_pup.c \
 	drv/legodev/legodev_pup_uart.c \
+	drv/legodev/legodev_spec.c \
 	drv/legodev/legodev_test.c \
 	drv/legodev/legodev_virtual.c \
 	drv/motor_driver/motor_driver_ev3dev_stretch.c \

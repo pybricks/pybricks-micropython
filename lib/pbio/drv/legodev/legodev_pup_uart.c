@@ -18,6 +18,7 @@
 #if PBDRV_CONFIG_LEGODEV_PUP_UART
 
 #include "legodev_pup_uart.h"
+#include "legodev_spec.h"
 
 #define DEBUG 0
 #if DEBUG
@@ -114,106 +115,6 @@ enum ev3_uart_info_flags {
         | EV3_UART_INFO_FLAG_INFO_NAME
         | EV3_UART_INFO_FLAG_INFO_FORMAT,
 };
-
-/**
- * Gets the minimum time needed before stale data is discarded.
- *
- * This is empirically determined based on sensor experiments.
- *
- * @param [in]  id          The device type ID.
- * @param [in]  mode        The device mode.
- * @return                  Required delay in milliseconds.
- */
-static uint32_t pbdrv_legodev_pup_uart_delay_stale_data(pbdrv_legodev_type_id_t id, uint8_t mode) {
-    switch (id) {
-        case PBDRV_LEGODEV_TYPE_ID_COLOR_DIST_SENSOR:
-            return mode == PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX ? 0 : 30;
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
-            return mode == PBDRV_LEGODEV_MODE_PUP_COLOR_SENSOR__LIGHT ? 0 : 30;
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR:
-            return mode == PBDRV_LEGODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT ? 0 : 50;
-        default:
-            // Default delay for other sensors and modes.
-            return 0;
-    }
-}
-
-/**
- * Gets the minimum time needed for the device to handle written data.
- *
- * This is empirically determined based on sensor experiments.
- *
- * @param [in]  id          The device type ID.
- * @param [in]  mode        The device mode.
- * @return                  Required delay in milliseconds.
- */
-static uint32_t pbdrv_legodev_pup_uart_delay_set_data(pbdrv_legodev_type_id_t id, uint8_t mode) {
-    // The Boost Color Distance Sensor requires a long delay or successive
-    // writes are ignored.
-    if (id == PBDRV_LEGODEV_TYPE_ID_COLOR_DIST_SENSOR && mode == PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX) {
-        return 250;
-    }
-
-    // Default delay for setting data. In practice, this is the delay for setting
-    // the light on the color sensor and ultrasonic sensor.
-    return 10;
-}
-
-/**
- * Gets the desired default mode for a device.
- *
- * @param [in]  id          The device type ID.
- * @param [in]  mode        The device mode.
- * @return                  Required delay in milliseconds.
- */
-static uint8_t pbdrv_legodev_pup_uart_default_mode(pbdrv_legodev_type_id_t id) {
-    switch (id) {
-        case PBDRV_LEGODEV_TYPE_ID_COLOR_DIST_SENSOR:
-            return PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
-        case PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR:
-            return PBDRV_LEGODEV_MODE_PUP_REL_MOTOR__POS;
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_XL_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
-            return PBDRV_LEGODEV_MODE_PUP_ABS_MOTOR__CALIB;
-        default:
-            return 0;
-    }
-}
-
-/**
- * Gets flags like power requirements for a given device type.
- *
- * Can be used if the device does not report its requirements or reporting is not enabled.
- *
- * @param [in]  id          The device type ID.
- * @return                  Power reqquirement capability flag.
- */
-pbdrv_legodev_capability_flags_t pbdrv_legodev_pup_uart_basic_flags(pbdrv_legodev_type_id_t id) {
-    switch (id) {
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR:
-            return PBDRV_LEGODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1;
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX:
-            return PBDRV_LEGODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2;
-        case PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR:
-            return PBDRV_LEGODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS;
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_XL_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
-        case PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
-            return PBDRV_LEGODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS;
-        default:
-            return 0;
-    }
-}
 
 /**
  * Indicates the current state of the UART device.
@@ -978,7 +879,7 @@ sync:
 
     // Load static flags on platforms that don't read device info
     #if !PBDRV_CONFIG_LEGODEV_MODE_INFO
-    data->device_info.flags = pbdrv_legodev_pup_uart_basic_flags(data->device_info.type_id);
+    data->device_info.flags = pbdrv_legodev_spec_basic_flags(data->device_info.type_id);
     #endif
 
     // Turn on power for devices that need it
@@ -991,7 +892,7 @@ sync:
     }
 
     // Request switch to default mode for this device.
-    pbdrv_legodev_request_mode(data, pbdrv_legodev_pup_uart_default_mode(data->device_info.type_id));
+    pbdrv_legodev_request_mode(data, pbdrv_legodev_spec_default_mode(data->device_info.type_id));
 
     // Reset other timers
     etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
@@ -1233,12 +1134,12 @@ pbio_error_t pbdrv_legodev_is_ready(pbdrv_legodev_dev_t *legodev) {
     }
 
     // Not ready if waiting for stale data to be discarded.
-    if (time - port_data->mode_switch.time <= pbdrv_legodev_pup_uart_delay_stale_data(port_data->device_info.type_id, port_data->device_info.mode)) {
+    if (time - port_data->mode_switch.time <= pbdrv_legodev_spec_stale_data_delay(port_data->device_info.type_id, port_data->device_info.mode)) {
         return PBIO_ERROR_AGAIN;
     }
 
     // Not ready if just recently set new data.
-    if (port_data->data_set->size > 0 || time - port_data->data_set->time <= pbdrv_legodev_pup_uart_delay_set_data(port_data->device_info.type_id, port_data->device_info.mode)) {
+    if (port_data->data_set->size > 0 || time - port_data->data_set->time <= pbdrv_legodev_spec_data_set_delay(port_data->device_info.type_id, port_data->device_info.mode)) {
         return PBIO_ERROR_AGAIN;
     }
 
