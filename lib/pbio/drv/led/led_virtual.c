@@ -26,7 +26,7 @@
 static pbio_error_t pbdrv_led_virtual_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
     uint8_t id = (intptr_t)dev->pdata;
 
-    return pbdrv_virtual_call_method("led", id, "on_set_hsv", "IBBB", pbdrv_clock_get_us(), hsv->h, hsv->s, hsv->v);
+    return pbdrv_virtual_call_method("led", id, "on_set_hsv", "IBBB", pbdrv_clock_get_us(), hsv->h, hsv->s, pbio_color_hsv_get_v(hsv));
 }
 
 static const pbdrv_led_funcs_t pbdrv_led_virtual_funcs = {

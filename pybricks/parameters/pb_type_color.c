@@ -12,6 +12,7 @@
 #endif
 
 #include <pbio/color.h>
+#include <pbio/int_math.h>
 
 #include "py/objstr.h"
 
@@ -112,12 +113,10 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
     self->hsv.h = h < 0 ? h + 360 : h;
 
     // Bind s to 0--100
-    s = s < 0 ? 0 : s;
-    self->hsv.s = s > 100 ? 100 : s;
+    self->hsv.s = pbio_int_math_bind(s, 0, 100);
 
-    // Bind v to 0--100
-    v = v < 0 ? 0 : v;
-    self->hsv.v = v > 100 ? 100 : v;
+    // Bind v to -100 to 100
+    self->hsv.v = pbio_int_math_clamp(v, 100);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -161,7 +160,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
     // Otherwise, print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "Color(h=%u, s=%u, v=%u)", self->hsv.h, self->hsv.s, self->hsv.v);
+    mp_printf(print, "Color(h=%u, s=%u, v=%d)", self->hsv.h, self->hsv.s, self->hsv.v);
 }
 
 STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t value) {

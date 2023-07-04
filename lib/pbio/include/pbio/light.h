@@ -29,7 +29,7 @@ typedef struct _pbio_color_light_t pbio_color_light_t;
     { .h = (hue), .s = (saturation), .v = (value) }
 
 /** Sentinel value for a color light animation array. */
-#define PBIO_COLOR_LIGHT_ANIMATION_END_V (UINT8_MAX)
+#define PBIO_COLOR_LIGHT_ANIMATION_END_V (INT8_MAX)
 #define PBIO_COLOR_LIGHT_ANIMATION_END_HSV { .v = PBIO_COLOR_LIGHT_ANIMATION_END_V }
 
 #if PBIO_CONFIG_LIGHT

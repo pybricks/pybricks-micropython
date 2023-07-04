@@ -37,7 +37,7 @@ STATIC uint8_t get_color_id(mp_obj_t color_in) {
     const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
 
     // Brightness is defined in 10 increments.
-    uint8_t brightness = hsv->v / 10;
+    uint8_t brightness = pbio_color_hsv_get_v(hsv) / 10;
     pb_powered_up_color_id_t color;
 
     // For low saturation, assume grayscale.

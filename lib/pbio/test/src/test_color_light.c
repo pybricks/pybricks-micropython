@@ -37,7 +37,7 @@ static const pbio_color_compressed_hsv_t test_animation[] = {
 static pbio_error_t test_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
     test_light_set_hsv_call_count++;
     test_light_set_hsv_last_hue = hsv->h;
-    test_light_set_hsv_last_brightness = hsv->v;
+    test_light_set_hsv_last_brightness = pbio_color_hsv_get_v(hsv);
     return PBIO_SUCCESS;
 }
 

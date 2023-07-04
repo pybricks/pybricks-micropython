@@ -3,6 +3,7 @@
 
 #include <pbio/color.h>
 #include <pbio/error.h>
+#include <pbio/int_math.h>
 
 #include "py/builtin.h"
 #include "py/mpconfig.h"
@@ -104,7 +105,7 @@ mp_int_t pb_obj_get_hue(mp_obj_t arg) {
 void pb_obj_get_hsv(mp_obj_t arg, pbio_color_hsv_t *hsv) {
     hsv->h = pb_obj_get_hue(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_SENTINEL));
     hsv->s = pb_obj_get_pct(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_SENTINEL));
-    hsv->v = pb_obj_get_pct(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(2), MP_OBJ_SENTINEL));
+    hsv->v = pbio_int_math_clamp(pb_obj_get_int(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(2), MP_OBJ_SENTINEL)), 100);
 }
 
 mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator) {

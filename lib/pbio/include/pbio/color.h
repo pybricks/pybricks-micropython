@@ -92,9 +92,14 @@ typedef struct {
     uint16_t h;
     /** The saturation component. 0 to 100 percent. */
     uint8_t s;
-    /** The value component. 0 to 100 percent. */
-    uint8_t v;
+    /** The value component. Normally 0 to 100 percent but allowed to be
+     * negative to provide higher contrast in color scanning applications. */
+    int8_t v;
 } pbio_color_hsv_t;
+
+static inline uint8_t pbio_color_hsv_get_v(const pbio_color_hsv_t *hsv) {
+    return hsv->v < 0 ? 0 : hsv->v;
+}
 
 /** Compressed HSV color. Stores data in 24 bytes instead of 32. */
 typedef struct __attribute__((__packed__)) {
@@ -102,8 +107,9 @@ typedef struct __attribute__((__packed__)) {
     uint16_t h : 9;
     /** The saturation component. 0 to 100 percent. */
     uint8_t s : 7;
-    /** The value component. 0 to 100 percent. */
-    uint8_t v;
+    /** The value component. Normally 0 to 100 percent but allowed to be
+     * negative to provide higher contrast in color scanning applications. */
+    int8_t v;
 } pbio_color_compressed_hsv_t;
 
 void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);

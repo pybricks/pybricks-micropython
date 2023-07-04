@@ -108,6 +108,15 @@ static void test_hsv_to_rgb(void *env) {
     pbio_color_hsv_t hsv;
     pbio_color_rgb_t rgb;
 
+    // no-color (negative brightness)
+    hsv.h = 0;
+    hsv.s = 0;
+    hsv.v = -50;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, ==, 0);
+
     // black
     hsv.h = 0;
     hsv.s = 0;

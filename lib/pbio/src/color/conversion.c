@@ -105,7 +105,7 @@ void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb) {
     // the output more visually linear.
 
     // Scale 0..100 percent to 0..255
-    uint8_t value = 327 * hsv->v / 128;
+    uint8_t value = 327 * pbio_color_hsv_get_v(hsv) / 128;
     uint8_t saturation = 327 * hsv->s / 128;
 
     // The brightness floor is minimum number that all of
