@@ -264,6 +264,7 @@ static void pbdrv_legodev_request_data_set(pbdrv_legodev_pup_uart_dev_t *port_da
 void pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_pup_uart_dev_t *dev) {
     debug_pr_str("Wait for STATUS_SYNCING: set\n");
     dev->status = PBDRV_LEGODEV_PUP_UART_STATUS_SYNCING;
+    pbdrv_legodev_pup_reset_watchdog(dev);
     process_poll(&pbdrv_legodev_pup_uart_process);
 }
 
@@ -293,6 +294,9 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
 static void pbdrv_legodev_pup_uart_parse_msg(pbdrv_legodev_pup_uart_dev_t *data) {
     uint32_t speed;
     uint8_t msg_type, cmd, msg_size, mode, cmd2;
+
+    // Getting messages from the device means it is alive.
+    pbdrv_legodev_pup_reset_watchdog(data);
 
     msg_type = data->rx_msg[0] & LUMP_MSG_TYPE_MASK;
     cmd = data->rx_msg[0] & LUMP_MSG_CMD_MASK;
@@ -633,7 +637,6 @@ static void pbdrv_legodev_pup_uart_parse_msg(pbdrv_legodev_pup_uart_dev_t *data)
 err:
     data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
     debug_pr("Data error: %s\n", data->last_err);
-    pbdrv_legodev_pup_reset_device_detection(data);
 }
 
 static uint8_t ev3_uart_set_msg_hdr(lump_msg_type_t type, lump_msg_size_t size, lump_cmd_t cmd) {
@@ -726,6 +729,9 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
     uint8_t speed_payload[4];
     pbio_set_uint32_le(speed_payload, EV3_UART_SPEED_LPF2);
     ev3_uart_prepare_tx_msg(data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SPEED, speed_payload, sizeof(speed_payload));
+
+    pbdrv_uart_flush(data->uart);
+
     PT_SPAWN(&data->pt, &data->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(data, &err));
     if (err != PBIO_SUCCESS) {
         DBG_ERR(data->last_err = "Speed tx failed");
@@ -733,6 +739,8 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
     }
 
     pbdrv_uart_flush(data->uart);
+
+    pbdrv_legodev_pup_reset_watchdog(data);
 
     // read one byte to check for ACK
     PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, 10));
@@ -755,6 +763,9 @@ sync:
 
     // To get in sync with the data stream from the sensor, we look for a valid TYPE command.
     for (;;) {
+
+        pbdrv_legodev_pup_reset_watchdog(data);
+
         PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, EV3_UART_IO_TIMEOUT));
         if (err != PBIO_SUCCESS) {
             DBG_ERR(data->last_err = "UART Rx error during sync");
@@ -973,9 +984,6 @@ err:
 
     // Turn off battery supply to this port
     pbdrv_motor_driver_coast(data->dcmotor->motor_driver);
-
-    // reset device detection manager
-    pbdrv_legodev_pup_reset_device_detection(data);
 
     PT_END(&data->pt);
 }

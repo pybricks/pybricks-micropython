@@ -19,7 +19,6 @@
 #include <pbio/util.h>
 #include <test-pbio.h>
 
-#include "../drv/legodev/legodev_pup.h"
 #include "../drv/legodev/legodev_pup_uart.h"
 
 #include "../src/processes.h"

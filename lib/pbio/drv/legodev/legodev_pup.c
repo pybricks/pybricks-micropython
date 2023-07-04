@@ -34,6 +34,10 @@
 /** The number of consecutive repeated detections needed for an affirmative ID. */
 #define AFFIRMATIVE_MATCH_COUNT 20
 
+/** If the UART device did not call back to this driver after this time, assume
+    it is disconnected and restart device detection. */
+#define UART_WATCHDOG_TIMEOUT 1100
+
 typedef enum {
     DEV_ID_GROUP_GND,
     DEV_ID_GROUP_VCC,
@@ -49,6 +53,7 @@ typedef struct {
     uint8_t gpio_value;
     uint8_t prev_gpio_value;
     uint8_t dev_id_match_count;
+    struct timer watchdog;
 } dcm_data_t;
 
 typedef struct {
@@ -325,6 +330,13 @@ PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
             for (int i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV; i++) {
                 dev = &ext_devs[i];
 
+                // If UART device was connected but not reporting data, restart detection.
+                if (dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART &&
+                    dev->connected_type_id == dev->prev_type_id && timer_expired(&dev->dcm.watchdog)) {
+                    dev->connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
+                    dev->dcm.dev_id_match_count = 0;
+                }
+
                 // Keep running device detection unless UART sensor is attached.
                 if (dev->connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
                     poll_dcm(dev);
@@ -383,6 +395,7 @@ void pbdrv_legodev_init(void) {
         const pbdrv_ioport_pup_port_platform_data_t *port_data = &pbdrv_ioport_pup_platform_data.ports[legodev_data->ioport_index];
         legodev->ext_dev->pdata = legodev_data;
         legodev->ext_dev->pins = &port_data->pins;
+        timer_set(&legodev->ext_dev->dcm.watchdog, UART_WATCHDOG_TIMEOUT);
 
         // Initialize uart device manager.
         pbio_dcmotor_t *dcmotor;
@@ -394,25 +407,28 @@ void pbdrv_legodev_init(void) {
     pbdrv_legodev_pup_uart_process_start();
 }
 
+static pbdrv_legodev_dev_t *pbdrv_legodev_get_parent_of(pbdrv_legodev_pup_uart_dev_t *uartdev) {
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(devs); i++) {
+        pbdrv_legodev_dev_t *dev = &devs[i];
+        if (!dev->is_internal && dev->ext_dev->uart_dev == uartdev) {
+            return dev;
+        }
+    }
+    return NULL;
+}
+
 /**
- * Resets device detection. Called by legodev_uart if a device gets out of sync, usually by unplugging.
+ * Resets device connection watchdog timer. This allows the detection manager
+ * to resume when a UART device stopped working, usually by being unplugged.
  *
  * @param [in]  dev           legodev device.
  */
-void pbdrv_legodev_pup_reset_device_detection(pbdrv_legodev_pup_uart_dev_t *uartdev) {
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(devs); i++) {
-        pbdrv_legodev_dev_t *dev = &devs[i];
-        if (dev->is_internal) {
-            // Internal devices don't have a uart device.
-            continue;
-        }
-        if (dev->ext_dev->uart_dev == uartdev) {
-            // On match reset device connection manager state.
-            dev->ext_dev->connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
-            dev->ext_dev->dcm.dev_id_match_count = 0;
-            return;
-        }
+void pbdrv_legodev_pup_reset_watchdog(pbdrv_legodev_pup_uart_dev_t *uartdev) {
+    pbdrv_legodev_dev_t *dev = pbdrv_legodev_get_parent_of(uartdev);
+    if (dev == NULL) {
+        return;
     }
+    timer_restart(&dev->ext_dev->dcm.watchdog);
 }
 
 pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_get_uart_dev(pbdrv_legodev_dev_t *legodev) {
