@@ -116,7 +116,7 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
     }
 
     // sentinel value
-    cells[colors_len].v = UINT8_MAX;
+    cells[colors_len].v = PBIO_COLOR_LIGHT_ANIMATION_END_V;
 
     mp_int_t interval = pb_obj_get_int(interval_in);
 

@@ -147,7 +147,7 @@ static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation)
     const pbio_color_compressed_hsv_t *cell = &cells[light->current_cell++];
 
     // if we have reached the array terminator, start back at the beginning
-    if (cell->v == UINT8_MAX) {
+    if (cell->v == PBIO_COLOR_LIGHT_ANIMATION_END_V) {
         cell = &cells[0];
         light->current_cell = 1;
     }
@@ -169,7 +169,7 @@ static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation)
  *
  * @param [in]  light       The light instance
  * @param [in]  interval    The the time intervale between animation cells in milliseconds
- * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
+ * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END_HSV
  */
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_compressed_hsv_t *cells) {
     pbio_color_light_stop_animation(light);
