@@ -8,6 +8,7 @@
 - Fixed Technic (Extra) Large motors not working ([support#1131]) on all hubs.
 - Fixed Powered Up Light not working ([support#1131]) on all hubs.
 - Fixed UART sensors not working on Technic Hub ([support#1137]).
+- Fixed incorrect number of ports on City Hub ([support#1131]).
 
 [support#1131]: https://github.com/pybricks/support/issues/1131
 [support#1137]: https://github.com/pybricks/support/issues/1137
