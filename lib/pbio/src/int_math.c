@@ -294,3 +294,46 @@ int32_t pbio_int_math_mult_then_div(int32_t a, int32_t b, int32_t c) {
     assert(result == (int64_t)a * (int64_t)b / (int64_t)c);
     return result;
 }
+
+/**
+ * Approximates first 90-degree segment of a sine in degrees, output
+ * upscaled by 10000.
+ *
+ * @param [in]  x        Angle in degrees (0-90).
+ * @returns              Approximately sin(x) * 10000.
+ */
+static int32_t pbio_int_math_sin_deg_branch0(int32_t x) {
+    return (201 - x) * x;
+}
+
+// integer sine approximation from degrees to (-10000, 10000)
+
+/**
+ * Approximates sine of an angle in degrees, output upscaled by 10000.
+ *
+ * @param [in]  x        Angle in degrees.
+ * @returns              Approximately sin(x) * 10000.
+ */
+int32_t pbio_int_math_sin_deg(int32_t x) {
+    x = x % 360;
+    if (x < 90) {
+        return pbio_int_math_sin_deg_branch0(x);
+    }
+    if (x < 180) {
+        return pbio_int_math_sin_deg_branch0(180 - x);
+    }
+    if (x < 270) {
+        return -pbio_int_math_sin_deg_branch0(x - 180);
+    }
+    return -pbio_int_math_sin_deg_branch0(360 - x);
+}
+
+/**
+ * Approximates cosine of an angle in degrees, output upscaled by 10000.
+ *
+ * @param [in]  x        Angle in degrees.
+ * @returns              Approximately cos(x) * 10000.
+ */
+int32_t pbio_int_math_cos_deg(int32_t x) {
+    return pbio_int_math_sin_deg(x + 90);
+}

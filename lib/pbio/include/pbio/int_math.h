@@ -35,6 +35,8 @@ int32_t pbio_int_math_sign(int32_t a);
 int32_t pbio_int_math_atan2(int32_t y, int32_t x);
 int32_t pbio_int_math_mult_then_div(int32_t a, int32_t b, int32_t c);
 int32_t pbio_int_math_sqrt(int32_t n);
+int32_t pbio_int_math_sin_deg(int32_t x);
+int32_t pbio_int_math_cos_deg(int32_t x);
 
 #endif // _PBIO_INT_MATH_H_
 
