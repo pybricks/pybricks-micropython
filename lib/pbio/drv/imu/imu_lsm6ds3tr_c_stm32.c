@@ -228,8 +228,8 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     imu_dev->config.gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
     // default noise thresholds, can be changed during runtime
-    imu_dev->config.gyro_stationary_threshold = 20; // 1.4 deg/s
-    imu_dev->config.accel_stationary_threshold = 100; // 240 mm/s^2, or approx 2.5^ of gravity
+    imu_dev->config.gyro_stationary_threshold = 71; // 5 deg/s
+    imu_dev->config.accel_stationary_threshold = 1044; // 2500 mm/s^2, or approx 25% of gravity
 
     // Configure INT1 to trigger when new gyro data is ready.
     PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {

@@ -249,7 +249,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis
     pbio_imu_set_base_orientation(&front_side_axis, &top_side_axis);
 
     // Default noise thresholds.
-    pbio_imu_set_stationary_thresholds(1.5f, 250.0f);
+    pbio_imu_set_stationary_thresholds(5.0f, 2500.0f);
 
     // Return singleton instance.
     return MP_OBJ_FROM_PTR(&singleton_imu_obj);

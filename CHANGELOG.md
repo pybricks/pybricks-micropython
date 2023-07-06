@@ -10,6 +10,10 @@
   is a tuple of `(name, num_values, data_type)` tuples for each available mode.
 - Added `pybricks.tools.read_input_byte()` function ([support#1102]).
 
+### Changed
+- Relaxed thesholds that define when the IMU is stationary, to make the
+  defaults work better in noisier conditions ([support#1105]).
+
 ### Fixed
 - Fixed Technic (Extra) Large motors not working ([support#1131]) on all hubs.
 - Fixed Powered Up Light not working ([support#1131]) on all hubs.
@@ -17,6 +21,7 @@
 - Fixed incorrect number of ports on City Hub ([support#1131]).
 
 [support#1054]: https://github.com/pybricks/support/issues/1054
+[support#1105]: https://github.com/pybricks/support/issues/1105
 [support#1131]: https://github.com/pybricks/support/issues/1131
 [support#1137]: https://github.com/pybricks/support/issues/1137
 
