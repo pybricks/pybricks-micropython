@@ -37,7 +37,7 @@ void pb_wait_task(pbio_task_t *task, mp_int_t timeout) {
         }
 
         mp_raise_OSError(MP_ETIMEDOUT);
-        nlr_pop();
+        MP_UNREACHABLE
     } else {
         pbio_task_cancel(task);
 
