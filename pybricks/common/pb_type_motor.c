@@ -488,17 +488,7 @@ STATIC const mp_rom_map_elem_t pb_type_Motor_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(pb_type_Motor_locals_dict, pb_type_Motor_locals_dict_table);
 
 // The DC Motor methods are shared with the DCMotor class, so use the first section of the same table.
-STATIC const mp_obj_dict_t pb_type_DCMotor_locals_dict = {
-    .base = {&mp_type_dict},
-    .map = {
-        .all_keys_are_qstrs = 1,
-        .is_fixed = 1,
-        .is_ordered = 1,
-        .used = 5,
-        .alloc = 5,
-        .table = (mp_map_elem_t *)(mp_rom_map_elem_t *)pb_type_Motor_locals_dict_table,
-    },
-};
+STATIC MP_DEFINE_CONST_DICT_WITH_SIZE(pb_type_DCMotor_locals_dict, pb_type_Motor_locals_dict_table, 5);
 
 // type(pybricks.builtins.DCMotor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_DCMotor,
