@@ -4,12 +4,19 @@
 
 ## [Unreleased]
 
+### Added
+- Added `use_gyro` method to toggle gyro use on and off in the `GyroDriveBase`
+  class ([support#1054]).
+  is a tuple of `(name, num_values, data_type)` tuples for each available mode.
+- Added `pybricks.tools.read_input_byte()` function ([support#1102]).
+
 ### Fixed
 - Fixed Technic (Extra) Large motors not working ([support#1131]) on all hubs.
 - Fixed Powered Up Light not working ([support#1131]) on all hubs.
 - Fixed UART sensors not working on Technic Hub ([support#1137]).
 - Fixed incorrect number of ports on City Hub ([support#1131]).
 
+[support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1131]: https://github.com/pybricks/support/issues/1131
 [support#1137]: https://github.com/pybricks/support/issues/1137
 
