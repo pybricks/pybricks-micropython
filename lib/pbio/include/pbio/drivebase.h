@@ -33,7 +33,7 @@ typedef struct _pbio_drivebase_t {
     pbio_control_t control_distance;
 } pbio_drivebase_t;
 
-pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track, bool use_gyro);
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track);
 
 // Drive base status:
 
@@ -58,6 +58,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completio
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);
 pbio_error_t pbio_drivebase_get_drive_settings(const pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *drive_deceleration, int32_t *turn_rate, int32_t *turn_acceleration, int32_t *turn_deceleration);
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t drive_deceleration, int32_t turn_rate, int32_t turn_acceleration, int32_t turn_deceleration);
+pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, bool use_gyro);
 
 #if PBIO_CONFIG_DRIVEBASE_SPIKE
 

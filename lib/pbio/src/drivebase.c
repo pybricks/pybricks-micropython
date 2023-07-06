@@ -242,10 +242,9 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
  * @param [in]  right            Right servo instance.
  * @param [in]  wheel_diameter   Wheel diameter in um.
  * @param [in]  axle_track       Distance between wheel-ground contact points in um.
- * @param [in]  use_gyro         Whether to use a gyro for heading (true) or the builtin rotation sensors (false).
  * @return                       Error code.
  */
-pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track, bool use_gyro) {
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, int32_t wheel_diameter, int32_t axle_track) {
 
     // Can't build a drive base with just one motor.
     if (left == right) {
@@ -287,8 +286,8 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     db->left = left;
     db->right = right;
 
-    // Whether to use the gyro for steering and driving straight.
-    db->use_gyro = use_gyro;
+    // By default, don't use gyro.
+    db->use_gyro = false;
 
     // Set parents of both servos, so they can stop this drivebase.
     pbio_parent_set(&left->parent, db, pbio_drivebase_stop_from_servo);
@@ -333,6 +332,28 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
         return PBIO_ERROR_INVALID_ARG;
     }
 
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Makes the drivebase use gyro or motor rotation sensors for heading control.
+ *
+ * This function will stop the drivebase if it is running.
+ *
+ * @param [in]  db               Drivebase instance.
+ * @param [in]  use_gyro         Whether to use the gyro for heading control.
+ * @return                       Error code.
+ */
+pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, bool use_gyro) {
+
+    // We stop so that new commands will reinitialize the state using the
+    // newly selected input for heading control.
+    pbio_error_t err = pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    db->use_gyro = use_gyro;
     return PBIO_SUCCESS;
 }
 
@@ -821,7 +842,7 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
  * @return                       Error code.
  */
 pbio_error_t pbio_drivebase_get_drivebase_spike(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
-    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1000, 1000, false);
+    pbio_error_t err = pbio_drivebase_get_drivebase(db_address, left, right, 1000, 1000);
 
     // The application input for spike bases is degrees per second average
     // between both wheels, so in millidegrees this is x1000.

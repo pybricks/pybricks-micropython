@@ -82,7 +82,7 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     tt_uint_op(pbio_servo_setup(srv_right, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
 
     // Set up the drivebase.
-    tt_uint_op(pbio_drivebase_get_drivebase(&db, srv_left, srv_right, 56000, 112000, false), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_drivebase_get_drivebase(&db, srv_left, srv_right, 56000, 112000), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_drivebase_get_state_user(db, &drive_distance, &drive_speed, &turn_angle_start, &turn_rate), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_drivebase_is_stalled(db, &stalled, &stall_duration), ==, PBIO_SUCCESS);
     tt_want(!stalled);
