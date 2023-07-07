@@ -4,14 +4,15 @@
 
 ## [Unreleased]
 
+## [3.3.0b8] - 2023-07-07
+
 ### Added
 - Added `use_gyro` method to toggle gyro use on and off in the `GyroDriveBase`
   class ([support#1054]).
-  is a tuple of `(name, num_values, data_type)` tuples for each available mode.
 - Added `pybricks.tools.read_input_byte()` function ([support#1102]).
 
 ### Changed
-- Relaxed thesholds that define when the IMU is stationary, to make the
+- Relaxed thresholds that define when the IMU is stationary, to make the
   defaults work better in noisier conditions ([support#1105]).
 
 ### Fixed
@@ -670,7 +671,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b8...HEAD
+[3.3.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...v3.3.0b8
 [3.3.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...v3.3.0b7
 [3.3.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...v3.3.0b6
 [3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
