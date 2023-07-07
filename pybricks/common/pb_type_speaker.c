@@ -166,7 +166,7 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
         pb_type_Speaker_beep_test_completion,
         pb_type_awaitable_return_none,
         pb_type_Speaker_cancel,
-        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+        PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
 
@@ -382,7 +382,7 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
         pb_type_Speaker_notes_test_completion,
         pb_type_awaitable_return_none,
         pb_type_Speaker_cancel,
-        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+        PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 
