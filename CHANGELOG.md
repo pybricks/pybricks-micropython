@@ -37,6 +37,7 @@
 
 ### Added
 - Enabled builtin `set` type (except on BOOST Move hub) ([support#402]).
+- Added experimental support for multitasking ([pybricks-micropython#166]).
 
 ### Changed
 - Updated BTStack to v1.5.5.
@@ -47,6 +48,7 @@
 - Fixed BLE broadcast not working on Technic hub when not connected ([support#1086]).
 - Fixed delayed sensor sync on boot on City hub ([support#747]).
 
+[pybricks-micropython#166]: https://github.com/pybricks/pybricks-micropython/pull/166
 [support#402]: https://github.com/pybricks/support/issues/402
 [support#747]: https://github.com/pybricks/support/issues/747
 [support#1086]: https://github.com/pybricks/support/issues/1086
