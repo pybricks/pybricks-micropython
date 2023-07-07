@@ -106,7 +106,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_conversions.c \
 	util_pb/pb_error.c \
 	util_pb/pb_serial_ev3dev.c \
-	util_pb/pb_task.c \
 	)
 
 # Pybricks I/O library

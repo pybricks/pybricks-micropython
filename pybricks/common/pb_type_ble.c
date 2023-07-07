@@ -17,8 +17,8 @@
 #include "py/runtime.h"
 
 #include <pybricks/common.h>
+#include <pybricks/tools.h>
 #include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_task.h>
 
 // The code currently passes integers and floats directly as bytes so requires
 // little-endian to get the correct ordering over the air.
@@ -47,6 +47,7 @@ static uint8_t num_observed_data;
 typedef struct {
     mp_obj_base_t base;
     uint8_t broadcast_channel;
+    pbio_task_t broadcast_task;
     observed_data_t observed_data[];
 } pb_obj_BLE_t;
 
@@ -276,12 +277,8 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *args) {
     pbio_set_uint16_le(&value.v.data[2], LEGO_CID);
     value.v.data[4] = self->broadcast_channel;
 
-    pbio_task_t task;
-    pbdrv_bluetooth_start_broadcasting(&task, &value.v);
-
-    pb_wait_task(&task, -1);
-
-    return mp_const_none;
+    pbdrv_bluetooth_start_broadcasting(&self->broadcast_task, &value.v);
+    return pb_module_tools_pbio_task_wait_or_await(&self->broadcast_task);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
 
@@ -517,7 +514,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     if (num_channels > 0) {
         pbio_task_t task;
         pbdrv_bluetooth_start_observing(&task, handle_observe_event);
-        pb_wait_task(&task, -1);
+        pb_module_tools_pbio_task_do_blocking(&task, -1);
     }
 
     return MP_OBJ_FROM_PTR(self);

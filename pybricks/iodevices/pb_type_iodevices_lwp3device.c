@@ -17,10 +17,10 @@
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/tools.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_task.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
@@ -82,7 +82,7 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
 
     pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&lwp3device->task, &lwp3device->context);
-    pb_wait_task(&lwp3device->task, timeout);
+    pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
 }
 
 STATIC void lwp3device_assert_connected(void) {
@@ -144,7 +144,7 @@ STATIC mp_obj_t lwp3device_name(size_t n_args, const mp_obj_t *args) {
 
         // NB: operation is not cancelable, so timeout is not used
         pbdrv_bluetooth_write_remote(&lwp3device->task, &msg.value);
-        pb_wait_task(&lwp3device->task, -1);
+        pb_module_tools_pbio_task_do_blocking(&lwp3device->task, -1);
 
         // assuming write was successful instead of reading back from the handset
         memcpy(lwp3device->context.name, name, len);
@@ -181,9 +181,7 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
     memcpy(msg.payload, bufinfo.buf, bufinfo.len);
 
     pbdrv_bluetooth_write_remote(&lwp3device->task, &msg.value);
-    pb_wait_task(&lwp3device->task, -1);
-
-    return MP_OBJ_NEW_SMALL_INT(bufinfo.len);
+    return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
 

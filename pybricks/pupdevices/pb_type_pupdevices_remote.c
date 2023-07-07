@@ -18,10 +18,10 @@
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/tools.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_task.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
@@ -121,8 +121,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_col
     msg.payload[2] = msg.payload[2] * 3 / 8;
 
     pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-    pb_wait_task(&remote->task, -1);
-    return mp_const_none;
+    return pb_module_tools_pbio_task_wait_or_await(&remote->task);
 }
 
 STATIC void remote_connect(const char *name, mp_int_t timeout) {
@@ -150,7 +149,7 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
 
     pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
-    pb_wait_task(&remote->task, timeout);
+    pb_module_tools_pbio_task_do_blocking(&remote->task, timeout);
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
@@ -177,13 +176,13 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
         // set mode for left buttons
 
         pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-        pb_wait_task(&remote->task, -1);
+        pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // set mode for right buttons
 
         msg.port = REMOTE_PORT_RIGHT_BUTTONS;
         pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-        pb_wait_task(&remote->task, -1);
+        pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // set status light to RGB mode
 
@@ -191,7 +190,7 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
         msg.mode = STATUS_LIGHT_MODE_RGB_0;
         msg.enable_notifications = 0;
         pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-        pb_wait_task(&remote->task, -1);
+        pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // REVISIT: Could possibly use system color here to make remote match
         // hub status light. For now, the system color is hard-coded to blue.
@@ -310,7 +309,7 @@ STATIC mp_obj_t remote_name(size_t n_args, const mp_obj_t *args) {
 
         // NB: operation is not cancelable, so timeout is not used
         pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-        pb_wait_task(&remote->task, -1);
+        pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // assuming write was successful instead of reading back from the handset
         memcpy(remote->context.name, name, len);

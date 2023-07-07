@@ -13,6 +13,7 @@
 #include "py/stream.h"
 
 #include <pbio/int_math.h>
+#include <pbio/task.h>
 #include <pbsys/light.h>
 #include <pbsys/program_stop.h>
 
@@ -45,12 +46,6 @@ void pb_module_tools_assert_blocking(void) {
 // have to cancel each other so shouldn't need to be in a list, but this lets
 // us share the same code with other awaitables. It also minimizes allocation.
 MP_REGISTER_ROOT_POINTER(mp_obj_t wait_awaitables);
-
-// Reset global state when user program starts.
-void pb_module_tools_init(void) {
-    MP_STATE_PORT(wait_awaitables) = mp_obj_new_list(0, NULL);
-    run_loop_is_active = false;
-}
 
 STATIC bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t end_time) {
     return mp_hal_ticks_ms() - end_time < UINT32_MAX / 2;
@@ -85,6 +80,76 @@ STATIC mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         PB_TYPE_AWAITABLE_OPT_NONE);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
+
+/**
+ * Waits for a task to complete.
+ *
+ * If an exception is raised while waiting, then the task is canceled.
+ *
+ * @param [in]  task    The task
+ * @param [in]  timeout The timeout in milliseconds or -1 to wait forever.
+ */
+void pb_module_tools_pbio_task_do_blocking(pbio_task_t *task, mp_int_t timeout) {
+
+    pb_module_tools_assert_blocking();
+
+    nlr_buf_t nlr;
+
+    if (nlr_push(&nlr) == 0) {
+        mp_uint_t start = mp_hal_ticks_ms();
+
+        while (timeout < 0 || mp_hal_ticks_ms() - start < (mp_uint_t)timeout) {
+            MICROPY_EVENT_POLL_HOOK
+
+            if (task->status != PBIO_ERROR_AGAIN) {
+                nlr_pop();
+                pb_assert(task->status);
+                return;
+            }
+        }
+
+        mp_raise_OSError(MP_ETIMEDOUT);
+        MP_UNREACHABLE
+    } else {
+        pbio_task_cancel(task);
+
+        while (task->status == PBIO_ERROR_AGAIN) {
+            MICROPY_VM_HOOK_LOOP
+        }
+
+        nlr_jump(nlr.ret_val);
+    }
+}
+
+// The awaitables associated with pbio tasks can originate from different
+// objects. At the moment, they are only associated with Bluetooth tasks, and
+// they cannot run at the same time. So we keep a single list of awaitables
+// here instead of with each Bluetooth-related MicroPython object.
+MP_REGISTER_ROOT_POINTER(mp_obj_t pbio_task_awaitables);
+
+STATIC bool pb_module_tools_pbio_task_test_completion(mp_obj_t obj, uint32_t end_time) {
+    pbio_task_t *task = MP_OBJ_TO_PTR(obj);
+
+    // Keep going if not done yet.
+    if (task->status == PBIO_ERROR_AGAIN) {
+        return false;
+    }
+
+    // If done, make sure it was successful.
+    pb_assert(task->status);
+    return true;
+}
+
+mp_obj_t pb_module_tools_pbio_task_wait_or_await(pbio_task_t *task) {
+    return pb_type_awaitable_await_or_wait(
+        MP_OBJ_FROM_PTR(task),
+        MP_STATE_PORT(pbio_task_awaitables),
+        pb_type_awaitable_end_time_none,
+        pb_module_tools_pbio_task_test_completion,
+        pb_type_awaitable_return_none,
+        pb_type_awaitable_cancel_none,
+        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+}
 
 /**
  * Reads one byte from stdin without blocking.
@@ -144,6 +209,13 @@ STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 1, pb_module_tools_run_task);
+
+// Reset global awaitable state when user program starts.
+void pb_module_tools_init(void) {
+    MP_STATE_PORT(wait_awaitables) = mp_obj_new_list(0, NULL);
+    MP_STATE_PORT(pbio_task_awaitables) = mp_obj_new_list(0, NULL);
+    run_loop_is_active = false;
+}
 
 #if PYBRICKS_PY_TOOLS_HUB_MENU
 
