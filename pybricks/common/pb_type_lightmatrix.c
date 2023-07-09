@@ -27,6 +27,8 @@ typedef struct _common_LightMatrix_obj_t {
     pbio_light_matrix_t *light_matrix;
     uint8_t *data;
     uint8_t frames;
+    // Frozen Python implementation of the async text() method.
+    mp_obj_t async_text_method;
 } common_LightMatrix_obj_t;
 
 // Renews memory for a given number of frames
@@ -279,6 +281,19 @@ STATIC mp_obj_t common_LightMatrix_text(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_DEFAULT_INT(on, 500),
         PB_ARG_DEFAULT_INT(off, 50));
 
+    if (pb_module_tools_run_loop_is_active()) {
+        if (self->async_text_method == MP_OBJ_NULL) {
+            self->async_text_method = pb_frozen_function_import(MP_QSTR__hub_extra, MP_QSTR_light_matrix_text_async);
+        }
+        mp_obj_t args[] = {
+            MP_OBJ_FROM_PTR(self),
+            text_in,
+            on_in,
+            off_in,
+        };
+        return mp_call_function_n_kw(self->async_text_method, MP_ARRAY_SIZE(args), 0, args);
+    }
+
     // Assert that the input is a single text
     GET_STR_DATA_LEN(text_in, text, text_len);
 
@@ -333,6 +348,7 @@ mp_obj_t pb_type_LightMatrix_obj_new(pbio_light_matrix_t *light_matrix) {
     common_LightMatrix_obj_t *self = mp_obj_malloc(common_LightMatrix_obj_t, &pb_type_LightMatrix);
     self->light_matrix = light_matrix;
     pbio_light_matrix_set_orientation(light_matrix, PBIO_GEOMETRY_SIDE_TOP);
+    self->async_text_method = MP_OBJ_NULL;
     return MP_OBJ_FROM_PTR(self);
 }
 
