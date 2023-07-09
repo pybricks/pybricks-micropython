@@ -8,5 +8,6 @@ PB_CMSIS_MCU = STM32F030xC
 PB_MCU_EXT_OSC_HZ = 0 # uses internal oscillator
 PB_LIB_STM32_HAL = 1
 PB_LIB_BLE5STACK = 1
+PB_FROZEN_MODULES = 1
 
 include ../_common/arm_none_eabi.mk
