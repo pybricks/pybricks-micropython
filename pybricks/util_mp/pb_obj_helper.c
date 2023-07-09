@@ -4,6 +4,7 @@
 #include <pbio/color.h>
 #include <pbio/error.h>
 
+#include "py/builtin.h"
 #include "py/mpconfig.h"
 #include "py/obj.h"
 #include "py/objstr.h"
@@ -193,3 +194,17 @@ void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 
     // Write/delete not supported.
 }
+
+
+#if MICROPY_MODULE_FROZEN_MPY
+mp_obj_t pb_frozen_function_import(qstr module_name, qstr function_name) {
+    const mp_obj_t import_args[] = { MP_OBJ_NEW_QSTR(module_name) };
+    mp_obj_t module = mp_builtin___import__(MP_ARRAY_SIZE(import_args), import_args);
+    mp_obj_t dest[2];
+    mp_load_method_maybe(module, function_name, dest);
+    if (dest[0] == MP_OBJ_NULL) {
+        mp_raise_msg(&mp_type_ImportError, MP_ERROR_TEXT("text method not found"));
+    }
+    return dest[0];
+}
+#endif
