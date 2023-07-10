@@ -17,7 +17,8 @@ void pbdrv_uart_init(void);
 
 #else // PBDRV_CONFIG_UART
 
-#define pbdrv_uart_init()
+static inline void pbdrv_uart_init() {
+}
 
 #endif // PBDRV_CONFIG_UART
 

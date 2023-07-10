@@ -25,11 +25,46 @@
 
 struct _pbdrv_legodev_dev_t {
     const pbdrv_legodev_test_platform_data_t *pdata;
+    struct pt pt;
+    struct pt uart_dev_pt;
     pbdrv_legodev_pup_uart_dev_t *uart_dev;
     bool is_motor;
 };
 
 static pbdrv_legodev_dev_t devs[PBDRV_CONFIG_LEGODEV_TEST_NUM_DEV];
+
+PROCESS(pbio_legodev_test_process, "legodev_test");
+
+static PT_THREAD(pbdrv_legodev_test_thread(pbdrv_legodev_dev_t * dev)) {
+    PT_BEGIN(&dev->pt);
+    if (!dev->is_motor) {
+        PT_SPAWN(&dev->pt, &dev->uart_dev_pt, pbdrv_legodev_pup_uart_thread(&dev->uart_dev_pt, dev->uart_dev));
+    }
+    PT_END(&dev->pt);
+}
+
+void pbdrv_legodev_pup_uart_process_poll(void) {
+    process_poll(&pbio_legodev_test_process);
+}
+
+PROCESS_THREAD(pbio_legodev_test_process, ev, data) {
+    static int i;
+
+    PROCESS_BEGIN();
+
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+        for (i = 0; i < PBDRV_CONFIG_LEGODEV_TEST_NUM_DEV; i++) {
+            (void)PT_SCHEDULE(pbdrv_legodev_test_thread(&devs[i]));
+        }
+        PROCESS_WAIT_EVENT();
+    }
+
+    PROCESS_END();
+}
+
+void pbdrv_legodev_test_start_process(void) {
+    process_start(&pbio_legodev_test_process);
+}
 
 void pbdrv_legodev_init(void) {
     for (uint8_t i = 0; i < PBDRV_CONFIG_LEGODEV_TEST_NUM_DEV; i++) {
@@ -46,6 +81,9 @@ void pbdrv_legodev_init(void) {
             legodev->uart_dev = pbdrv_legodev_pup_uart_configure(0, 0, dcmotor);
         }
     }
+
+    // We would normally start the process here, but this also causes it to
+    // start in other tests where this is not needed.
 }
 
 pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_get_uart_dev(pbdrv_legodev_dev_t *legodev) {

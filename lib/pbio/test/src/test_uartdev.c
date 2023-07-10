@@ -19,7 +19,9 @@
 #include <pbio/util.h>
 #include <test-pbio.h>
 
+#include "../drv/legodev/legodev.h"
 #include "../drv/legodev/legodev_pup_uart.h"
+#include "../drv/legodev/legodev_test.h"
 
 #include "../src/processes.h"
 #include "../drv/clock/clock_test.h"
@@ -229,12 +231,11 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     PT_BEGIN(pt);
 
+    pbdrv_legodev_test_start_process();
+
     // Expect no device at first.
     pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
     tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
-
-    pbdrv_legodev_pup_uart_process_start();
-    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
@@ -467,7 +468,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     PT_YIELD(pt);
 
 end:
-    pbdrv_legodev_pup_uart_process_exit();
 
     PT_END(pt);
 }
@@ -526,12 +526,11 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     PT_BEGIN(pt);
 
+    pbdrv_legodev_test_start_process();
+
     // Expect no device at first.
     pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
     tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
-
-    pbdrv_legodev_pup_uart_process_start();
-    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
@@ -631,7 +630,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     PT_YIELD(pt);
 
 end:
-    pbdrv_legodev_pup_uart_process_exit();
 
     PT_END(pt);
 }
@@ -709,12 +707,11 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     PT_BEGIN(pt);
 
+    pbdrv_legodev_test_start_process();
+
     // Expect no device at first.
     pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
     tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
-
-    pbdrv_legodev_pup_uart_process_start();
-    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
@@ -836,8 +833,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     PT_YIELD(pt);
 
 end:
-    pbdrv_legodev_pup_uart_process_exit();
-
     PT_END(pt);
 }
 
@@ -914,12 +909,11 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     PT_BEGIN(pt);
 
+    pbdrv_legodev_test_start_process();
+
     // Expect no device at first.
     pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
     tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
-
-    pbdrv_legodev_pup_uart_process_start();
-    pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_get_uart_dev(legodev));
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
@@ -1041,8 +1035,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     PT_YIELD(pt);
 
 end:
-    pbdrv_legodev_pup_uart_process_exit();
-
     PT_END(pt);
 }
 
@@ -1064,6 +1056,11 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
+}
+
+extern bool pbio_legodev_test_process_auto_start;
+
+void pbdrv_uart_init(void) {
 }
 
 pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {

@@ -35,10 +35,6 @@
 /** The number of consecutive repeated detections needed for an affirmative ID. */
 #define AFFIRMATIVE_MATCH_COUNT 20
 
-/** If the UART device did not call back to this driver after this time, assume
-    it is disconnected and restart device detection. */
-#define UART_WATCHDOG_TIMEOUT 1500
-
 typedef enum {
     DEV_ID_GROUP_GND,
     DEV_ID_GROUP_VCC,
@@ -48,21 +44,23 @@ typedef enum {
 
 // Device connection manager state for each port
 typedef struct {
+    struct pt pt;
     dev_id_group_t dev_id1_group;
     pbdrv_legodev_type_id_t type_id;
     pbdrv_legodev_type_id_t prev_type_id;
     uint8_t gpio_value;
     uint8_t prev_gpio_value;
     uint8_t dev_id_match_count;
-    struct timer watchdog;
 } dcm_data_t;
 
 typedef struct {
     const pbdrv_ioport_pup_pins_t *pins;
     const pbdrv_legodev_pup_ext_platform_data_t *pdata;
     pbdrv_legodev_pup_uart_dev_t *uart_dev;
+    struct pt uart_dev_pt;
     dcm_data_t dcm;
     struct pt pt;
+    struct etimer timer;
     pbdrv_legodev_type_id_t connected_type_id;
     pbdrv_legodev_type_id_t prev_type_id;
     pbio_angle_t angle;
@@ -88,7 +86,7 @@ static const pbdrv_legodev_type_id_t legodev_pup_type_id_lookup[3][3] = {
     },
 };
 
-PROCESS(pbio_legodev_pup_process, "I/O port");
+PROCESS(pbio_legodev_pup_process, "legodev_pup");
 
 static void legodev_pup_enable_uart(const pbdrv_ioport_pup_pins_t *pins) {
     // REVISIT: Move to ioport.
@@ -100,8 +98,8 @@ static void legodev_pup_enable_uart(const pbdrv_ioport_pup_pins_t *pins) {
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
 // on the port to see when devices are connected or disconnected.
 // It is expected for there to be a 2ms delay between calls to this function.
-static PT_THREAD(poll_dcm(ext_dev_t * dev)) {
-    struct pt *pt = &dev->pt;
+PT_THREAD(poll_dcm(ext_dev_t * dev)) {
+    struct pt *pt = &dev->dcm.pt;
     dcm_data_t *data = &dev->dcm;
     const pbdrv_ioport_pup_pins_t *pins = dev->pins;
 
@@ -301,6 +299,12 @@ static void debug_state_change(ext_dev_t *dev) {
             break;
         }
     }
+
+    // Nothing to do if it's the same device as before.
+    if (dev->connected_type_id == dev->prev_type_id) {
+        return;
+    }
+
     printf("Port %c: ", i + 'A' + PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV);
     if (dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
         printf("UART device detected.\n");
@@ -314,62 +318,37 @@ static void debug_state_change(ext_dev_t *dev) {
 #define debug_state_change(...)
 #endif
 
-PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
-    static struct etimer timer;
+static PT_THREAD(pbdrv_legodev_pup_thread(ext_dev_t * dev)) {
 
-    static ext_dev_t *dev;
+    PT_BEGIN(&dev->pt);
 
-    PROCESS_BEGIN();
+    while (true) {
 
-    // Some hubs turn on power to the I/O ports in the bootloader. This causes
-    // UART sync delays after boot. It is faster to power cycle the I/O devices
-    // than it is to wait for long sync in most cases.
-    pbdrv_ioport_enable_vcc(false);
-    etimer_set(&timer, 500);
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-    pbdrv_ioport_enable_vcc(true);
+        // Initially assume nothing is connected.
+        dev->connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
+        dev->dcm.dev_id_match_count = 0;
 
-    etimer_set(&timer, 2);
-
-    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-        PROCESS_WAIT_EVENT();
-        if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
-            etimer_reset(&timer);
-
-            for (int i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV; i++) {
-                dev = &ext_devs[i];
-
-                // If UART device was connected but not reporting data, restart detection.
-                if (dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART &&
-                    dev->connected_type_id == dev->prev_type_id && timer_expired(&dev->dcm.watchdog)) {
-                    dev->connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
-                    dev->dcm.dev_id_match_count = 0;
-                }
-
-                // Keep running device detection unless UART sensor is attached.
-                if (dev->connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                    poll_dcm(dev);
-                }
-
-                // Nothing more to do if it's the same device as before.
-                if (dev->connected_type_id == dev->prev_type_id) {
-                    continue;
-                }
-
+        // Run the device detection manager until a UART device is detected.
+        etimer_set(&dev->timer, 2);
+        PT_WAIT_UNTIL(&dev->pt, ({
+            if (etimer_expired(&dev->timer)) {
+                etimer_reset(&dev->timer);
+                (void)PT_SCHEDULE(poll_dcm(dev));
                 debug_state_change(dev);
-
-                // New device. Enable UART if needed for this device.
-                if (dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                    legodev_pup_enable_uart(dev->pins);
-
-                    pbdrv_legodev_pup_uart_start_sync(dev->uart_dev);
-                }
                 dev->prev_type_id = dev->connected_type_id;
             }
-        }
-    }
+            dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART;
+        }));
 
-    PROCESS_END();
+        // UART device detected, so run that protocol until it disconnects.
+        legodev_pup_enable_uart(dev->pins);
+        PT_SPAWN(&dev->pt, &dev->uart_dev_pt, pbdrv_legodev_pup_uart_thread(&dev->uart_dev_pt, dev->uart_dev));
+    }
+    PT_END(&dev->pt);
+}
+
+void pbdrv_legodev_pup_uart_process_poll(void) {
+    process_poll(&pbio_legodev_pup_process);
 }
 
 struct _pbdrv_legodev_dev_t {
@@ -383,6 +362,30 @@ struct _pbdrv_legodev_dev_t {
 };
 
 static pbdrv_legodev_dev_t devs[PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV + PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV];
+
+PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
+    static struct etimer timer;
+    static int i;
+
+    PROCESS_BEGIN();
+
+    // Some hubs turn on power to the I/O ports in the bootloader. This causes
+    // UART sync delays after boot. It is faster to power cycle the I/O devices
+    // than it is to wait for long sync in most cases.
+    pbdrv_ioport_enable_vcc(false);
+    etimer_set(&timer, 500);
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+    pbdrv_ioport_enable_vcc(true);
+
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+        for (i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV; i++) {
+            (void)PT_SCHEDULE(pbdrv_legodev_pup_thread(&ext_devs[i]));
+        }
+        PROCESS_WAIT_EVENT();
+    }
+
+    PROCESS_END();
+}
 
 void pbdrv_legodev_init(void) {
     #if PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV > 0
@@ -404,7 +407,6 @@ void pbdrv_legodev_init(void) {
         const pbdrv_ioport_pup_port_platform_data_t *port_data = &pbdrv_ioport_pup_platform_data.ports[legodev_data->ioport_index];
         legodev->ext_dev->pdata = legodev_data;
         legodev->ext_dev->pins = &port_data->pins;
-        timer_set(&legodev->ext_dev->dcm.watchdog, UART_WATCHDOG_TIMEOUT);
 
         // Initialize uart device manager.
         pbio_dcmotor_t *dcmotor;
@@ -413,31 +415,6 @@ void pbdrv_legodev_init(void) {
 
     }
     process_start(&pbio_legodev_pup_process);
-    pbdrv_legodev_pup_uart_process_start();
-}
-
-static pbdrv_legodev_dev_t *pbdrv_legodev_get_parent_of(pbdrv_legodev_pup_uart_dev_t *uartdev) {
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(devs); i++) {
-        pbdrv_legodev_dev_t *dev = &devs[i];
-        if (!dev->is_internal && dev->ext_dev->uart_dev == uartdev) {
-            return dev;
-        }
-    }
-    return NULL;
-}
-
-/**
- * Resets device connection watchdog timer. This allows the detection manager
- * to resume when a UART device stopped working, usually by being unplugged.
- *
- * @param [in]  dev           legodev device.
- */
-void pbdrv_legodev_pup_reset_watchdog(pbdrv_legodev_pup_uart_dev_t *uartdev) {
-    pbdrv_legodev_dev_t *dev = pbdrv_legodev_get_parent_of(uartdev);
-    if (dev == NULL) {
-        return;
-    }
-    timer_restart(&dev->ext_dev->dcm.watchdog);
 }
 
 pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_get_uart_dev(pbdrv_legodev_dev_t *legodev) {

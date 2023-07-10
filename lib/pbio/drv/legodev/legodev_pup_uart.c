@@ -203,8 +203,6 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint32_t tx_start_time;
     /**< Flag that indicates that good DATA data->msg has been received since last watchdog timeout. */
     bool data_rec;
-    /**< ID of the UART device to use for communications. */
-    uint8_t uart_id;
     /**< data->msg to be printed in case of an error. */
     DBG_ERR(const char *last_err);
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
@@ -214,8 +212,6 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint32_t info_flags;
     #endif // #define PBDRV_CONFIG_LEGODEV_MODE_INFO
 };
-
-PROCESS(pbdrv_legodev_pup_uart_process, "UART device");
 
 enum {
     BUF_TX_MSG,
@@ -234,10 +230,19 @@ static pbdrv_legodev_pup_uart_data_set_t data_set_bufs[PBDRV_CONFIG_LEGODEV_PUP_
 #define PBIO_PT_WAIT_READY(pt, expr) PT_WAIT_UNTIL((pt), (expr) != PBIO_ERROR_AGAIN)
 
 pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_pup_uart_configure(uint8_t device_index, uint8_t uart_driver_index, pbio_dcmotor_t *dcmotor) {
-    pbdrv_legodev_pup_uart_dev_t *dev = &dev_data[device_index];
-    dev->uart_id = uart_driver_index;
-    dev->dcmotor = dcmotor;
-    return dev;
+    pbdrv_legodev_pup_uart_dev_t *port_data = &dev_data[device_index];
+    port_data->dcmotor = dcmotor;
+    port_data->tx_msg = &bufs[device_index][BUF_TX_MSG][0];
+    port_data->rx_msg = &bufs[device_index][BUF_RX_MSG][0];
+    port_data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
+    port_data->err_count = 0;
+    port_data->data_set = &data_set_bufs[device_index];
+    port_data->bin_data = data_read_bufs[device_index];
+
+    // legodev driver is started after all other drivers, so we
+    // assume that we do not need to wait for this to be ready.
+    pbdrv_uart_get(uart_driver_index, &port_data->uart);
+    return port_data;
 }
 
 static void pbdrv_legodev_request_mode(pbdrv_legodev_pup_uart_dev_t *port_data, uint8_t mode) {
@@ -253,19 +258,6 @@ static void pbdrv_legodev_request_data_set(pbdrv_legodev_pup_uart_dev_t *port_da
     port_data->data_set->time = pbdrv_clock_get_ms();
     memcpy(port_data->data_set->bin_data, data, size);
     pbdrv_legodev_pup_uart_process_poll();
-}
-
-/**
- * Indicates to the driver that the port has been placed in uart mode
- * (i.e. pin mux) and is ready to start syncing with the attached I/O device.
- *
- * @param [in] dev     The device instance.
- */
-void pbdrv_legodev_pup_uart_start_sync(pbdrv_legodev_pup_uart_dev_t *dev) {
-    debug_pr_str("Wait for STATUS_SYNCING: set\n");
-    dev->status = PBDRV_LEGODEV_PUP_UART_STATUS_SYNCING;
-    pbdrv_legodev_pup_reset_watchdog(dev);
-    process_poll(&pbdrv_legodev_pup_uart_process);
 }
 
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
@@ -294,9 +286,6 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
 static void pbdrv_legodev_pup_uart_parse_msg(pbdrv_legodev_pup_uart_dev_t *data) {
     uint32_t speed;
     uint8_t msg_type, cmd, msg_size, mode, cmd2;
-
-    // Getting messages from the device means it is alive.
-    pbdrv_legodev_pup_reset_watchdog(data);
 
     msg_type = data->rx_msg[0] & LUMP_MSG_TYPE_MASK;
     cmd = data->rx_msg[0] & LUMP_MSG_CMD_MASK;
@@ -719,9 +708,7 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
     data->device_info.flags = PBDRV_LEGODEV_CAPABILITY_FLAG_NONE;
     #endif
-    debug_pr_str("Wait for STATUS_SYNCING: start\n");
-    PT_WAIT_UNTIL(&data->pt, data->status == PBDRV_LEGODEV_PUP_UART_STATUS_SYNCING);
-    debug_pr_str("Wait for STATUS_SYNCING: done\n");
+    data->status = PBDRV_LEGODEV_PUP_UART_STATUS_SYNCING;
 
     // Send SPEED command at 115200 baud
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
@@ -739,8 +726,6 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * da
     }
 
     pbdrv_uart_flush(data->uart);
-
-    pbdrv_legodev_pup_reset_watchdog(data);
 
     // read one byte to check for ACK
     PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, 10));
@@ -1058,59 +1043,17 @@ size_t pbdrv_legodev_size_of(pbdrv_legodev_data_type_t type) {
     return 0;
 }
 
-static PT_THREAD(pbdrv_legodev_pup_uart_init(struct pt *pt, uint8_t id)) {
-
-    pbdrv_legodev_pup_uart_dev_t *port_data = &dev_data[id];
-
+PT_THREAD(pbdrv_legodev_pup_uart_thread(struct pt *pt, pbdrv_legodev_pup_uart_dev_t *port_data)) {
     PT_BEGIN(pt);
-
-    PT_WAIT_UNTIL(pt, pbdrv_uart_get(port_data->uart_id, &port_data->uart) == PBIO_SUCCESS);
-    port_data->tx_msg = &bufs[id][BUF_TX_MSG][0];
-    port_data->rx_msg = &bufs[id][BUF_RX_MSG][0];
-    port_data->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
-    port_data->err_count = 0;
-    port_data->data_set = &data_set_bufs[id];
-    port_data->bin_data = data_read_bufs[id];
-    PT_END(pt);
-}
-
-PROCESS_THREAD(pbdrv_legodev_pup_uart_process, ev, data) {
-    static struct pt pt;
-    static int i;
-    static pbdrv_legodev_pup_uart_dev_t *port_data;
-
-    PROCESS_BEGIN();
-
-    for (i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV; i++) {
-        PROCESS_PT_SPAWN(&pt, pbdrv_legodev_pup_uart_init(&pt, i));
-    }
-
-    while (true) {
-        for (i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_UART_NUM_DEV; i++) {
-            port_data = &dev_data[i];
-
-            pbdrv_legodev_pup_uart_update(port_data);
-
-            if (port_data->status == PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
-                pbdrv_legodev_pup_uart_receive_data(port_data);
-            }
+    PT_INIT(&port_data->pt);
+    while (PT_SCHEDULE(pbdrv_legodev_pup_uart_update(port_data))) {
+        if (port_data->status == PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
+            pbdrv_legodev_pup_uart_receive_data(port_data);
         }
-        PROCESS_WAIT_EVENT();
+        PT_YIELD(pt);
     }
 
-    PROCESS_END();
-}
-
-void pbdrv_legodev_pup_uart_process_start(void) {
-    process_start(&pbdrv_legodev_pup_uart_process);
-}
-
-void pbdrv_legodev_pup_uart_process_poll(void) {
-    process_poll(&pbdrv_legodev_pup_uart_process);
-}
-
-void pbdrv_legodev_pup_uart_process_exit(void) {
-    process_exit(&pbdrv_legodev_pup_uart_process);
+    PT_END(pt);
 }
 
 /**

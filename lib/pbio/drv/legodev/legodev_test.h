@@ -22,6 +22,8 @@ typedef struct {
 extern const pbdrv_legodev_test_platform_data_t
     pbdrv_legodev_test_platform_data[PBDRV_CONFIG_LEGODEV_TEST_NUM_DEV];
 
+void pbdrv_legodev_test_start_process(void);
+
 #endif // PBDRV_CONFIG_LEGODEV_TEST
 
 #endif // _INTERNAL_PBDRV_LEGODEV_TEST_H_

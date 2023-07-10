@@ -33,13 +33,6 @@ extern const pbdrv_legodev_pup_int_platform_data_t
 extern const pbdrv_legodev_pup_ext_platform_data_t
     pbdrv_legodev_pup_ext_platform_data[PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV];
 
-void pbdrv_legodev_pup_reset_watchdog(pbdrv_legodev_pup_uart_dev_t *uartdev);
-
-#else
-
-static inline void pbdrv_legodev_pup_reset_watchdog(pbdrv_legodev_pup_uart_dev_t *uartdev) {
-}
-
 #endif // PBDRV_CONFIG_LEGODEV_PUP
 
 #endif // _INTERNAL_PBDRV_LEGODEV_PUP_H_
