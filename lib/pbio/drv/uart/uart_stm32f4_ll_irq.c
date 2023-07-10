@@ -21,6 +21,7 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
+#include "../core.h"
 #include "./uart_stm32f4_ll_irq.h"
 #include "../../src/processes.h"
 
@@ -247,11 +248,17 @@ static void handle_exit(void) {
     }
 }
 
+void pbdrv_uart_init(void) {
+    process_start(&pbdrv_uart_process);
+}
+
 PROCESS_THREAD(pbdrv_uart_process, ev, data) {
     PROCESS_POLLHANDLER(handle_poll());
     PROCESS_EXITHANDLER(handle_exit());
 
     PROCESS_BEGIN();
+
+    pbdrv_init_busy_up();
 
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART; i++) {
         const pbdrv_uart_stm32f4_ll_irq_platform_data_t *pdata = &pbdrv_uart_stm32f4_ll_irq_platform_data[i];
@@ -280,6 +287,8 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
         // start receiving as soon as everything is configured
         LL_USART_Enable(pdata->uart);
     }
+
+    pbdrv_init_busy_down();
 
     while (true) {
         PROCESS_WAIT_EVENT();

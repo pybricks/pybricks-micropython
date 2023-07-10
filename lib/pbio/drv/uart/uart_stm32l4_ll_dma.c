@@ -21,6 +21,7 @@
 
 #include "./uart_stm32l4_ll_dma.h"
 #include "../../src/processes.h"
+#include "../core.h"
 
 #include "stm32l4xx_ll_dma.h"
 #include "stm32l4xx_ll_lpuart.h"
@@ -382,11 +383,17 @@ static void handle_exit(void) {
     }
 }
 
+void pbdrv_uart_init(void) {
+    process_start(&pbdrv_uart_process);
+}
+
 PROCESS_THREAD(pbdrv_uart_process, ev, data) {
     PROCESS_POLLHANDLER(handle_poll());
     PROCESS_EXITHANDLER(handle_exit());
 
     PROCESS_BEGIN();
+
+    pbdrv_init_busy_up();
 
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART; i++) {
         const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[i];
@@ -468,6 +475,8 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
         LL_DMA_EnableChannel(pdata->rx_dma, pdata->rx_dma_ch);
         LL_USART_Enable(pdata->uart);
     }
+
+    pbdrv_init_busy_down();
 
     while (true) {
         PROCESS_WAIT_EVENT();

@@ -31,9 +31,6 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
     &pbdrv_adc_process,
 #endif
-#if PBDRV_CONFIG_UART
-    &pbdrv_uart_process,
-#endif
     NULL);
 
 /**

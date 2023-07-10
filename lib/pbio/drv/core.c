@@ -37,6 +37,7 @@
 #include "random/random.h"
 #include "reset/reset.h"
 #include "sound/sound.h"
+#include "uart/uart.h"
 #include "usb/usb.h"
 #include "watchdog/watchdog.h"
 
@@ -87,6 +88,7 @@ void pbdrv_init(void) {
     pbdrv_random_init();
     pbdrv_reset_init();
     pbdrv_sound_init();
+    pbdrv_uart_init();
     pbdrv_usb_init();
     pbdrv_watchdog_init();
 
