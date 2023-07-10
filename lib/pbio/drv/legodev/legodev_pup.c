@@ -37,7 +37,7 @@
 
 /** If the UART device did not call back to this driver after this time, assume
     it is disconnected and restart device detection. */
-#define UART_WATCHDOG_TIMEOUT 1100
+#define UART_WATCHDOG_TIMEOUT 1500
 
 typedef enum {
     DEV_ID_GROUP_GND,

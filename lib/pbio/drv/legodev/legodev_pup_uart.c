@@ -764,8 +764,6 @@ sync:
     // To get in sync with the data stream from the sensor, we look for a valid TYPE command.
     for (;;) {
 
-        pbdrv_legodev_pup_reset_watchdog(data);
-
         PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, EV3_UART_IO_TIMEOUT));
         if (err != PBIO_SUCCESS) {
             DBG_ERR(data->last_err = "UART Rx error during sync");
