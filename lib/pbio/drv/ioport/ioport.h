@@ -5,6 +5,7 @@
 #define _INTERNAL_PBDRV_IOPORT_H
 
 #include <pbdrv/config.h>
+#include <stdbool.h>
 
 #if PBDRV_CONFIG_IOPORT
 

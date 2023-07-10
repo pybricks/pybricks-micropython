@@ -18,11 +18,19 @@ static void init_one_port(const pbdrv_ioport_pup_pins_t *pins) {
     pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
 }
 
+void pbdrv_ioport_enable_vcc(bool enable) {
+    if (enable) {
+        pbdrv_gpio_out_high(&pbdrv_ioport_pup_platform_data.port_vcc);
+    } else {
+        pbdrv_gpio_out_low(&pbdrv_ioport_pup_platform_data.port_vcc);
+    }
+}
+
 void pbdrv_ioport_init(void) {
     for (uint8_t i = 0; i < PBDRV_CONFIG_IOPORT_NUM_DEV; i++) {
         init_one_port(&pbdrv_ioport_pup_platform_data.ports[i].pins);
     }
-    pbdrv_gpio_out_high(&pbdrv_ioport_pup_platform_data.port_vcc);
+    pbdrv_ioport_enable_vcc(true);
 }
 
 void pbdrv_ioport_deinit(void) {

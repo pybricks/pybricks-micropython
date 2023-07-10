@@ -11,10 +11,21 @@
 #define PBDRV_IOPORT_H
 
 #include <pbdrv/config.h>
+#include <stdbool.h>
 
 #if PBDRV_CONFIG_IOPORT
 
+/**
+ * Enables or disables VCC on pin 4 of all ioports.
+ *
+ * @param [in]  enable        Whether to enable or disable power.
+ */
+void pbdrv_ioport_enable_vcc(bool enable);
+
 #else // PBDRV_CONFIG_IOPORT
+
+static inline void pbdrv_ioport_enable_vcc(bool enable) {
+}
 
 #endif // PBDRV_CONFIG_IOPORT
 
