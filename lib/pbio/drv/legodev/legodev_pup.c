@@ -44,25 +44,37 @@ typedef enum {
 
 // Device connection manager state for each port
 typedef struct {
-    struct pt pt;
-    dev_id_group_t dev_id1_group;
+    /** Most recent one-off device ID candidate. */
     pbdrv_legodev_type_id_t type_id;
+    /** Previous one-off device ID candidate. */
     pbdrv_legodev_type_id_t prev_type_id;
+    /** Most recent device ID with enough consecutive detections. */
+    pbdrv_legodev_type_id_t connected_type_id;
+    /** Previous device ID with enough consecutive detections. */
+    pbdrv_legodev_type_id_t prev_connected_type_id;
+    /** Number of consecutive detections of the same device ID. */
+    uint8_t dev_id_match_count;
+    // Intermediate state values to preserve in between async calls.
+    dev_id_group_t dev_id1_group;
     uint8_t gpio_value;
     uint8_t prev_gpio_value;
-    uint8_t dev_id_match_count;
 } dcm_data_t;
 
 typedef struct {
+    /**
+     * Main protothread for the legodev. Each external legodev port has one,
+     * all driven by a single process that runs until the hub shuts down.
+     */
+    struct pt pt;
+    /**
+     * Child protothread used for the device connection manager and the uart
+     * device process. These don't run at the same time, so we can reuse it. */
+    struct pt child;
     const pbdrv_ioport_pup_pins_t *pins;
     const pbdrv_legodev_pup_ext_platform_data_t *pdata;
     pbdrv_legodev_pup_uart_dev_t *uart_dev;
-    struct pt uart_dev_pt;
     dcm_data_t dcm;
-    struct pt pt;
     struct etimer timer;
-    pbdrv_legodev_type_id_t connected_type_id;
-    pbdrv_legodev_type_id_t prev_type_id;
     pbio_angle_t angle;
 } ext_dev_t;
 
@@ -99,7 +111,7 @@ static void legodev_pup_enable_uart(const pbdrv_ioport_pup_pins_t *pins) {
 // on the port to see when devices are connected or disconnected.
 // It is expected for there to be a 2ms delay between calls to this function.
 PT_THREAD(poll_dcm(ext_dev_t * dev)) {
-    struct pt *pt = &dev->dcm.pt;
+    struct pt *pt = &dev->child;
     dcm_data_t *data = &dev->dcm;
     const pbdrv_ioport_pup_pins_t *pins = dev->pins;
 
@@ -280,7 +292,7 @@ PT_THREAD(poll_dcm(ext_dev_t * dev)) {
         }
 
         if (data->dev_id_match_count >= AFFIRMATIVE_MATCH_COUNT) {
-            dev->connected_type_id = data->type_id;
+            dev->dcm.connected_type_id = data->type_id;
         }
     } else {
         data->dev_id_match_count = 0;
@@ -301,7 +313,7 @@ static void debug_state_change(ext_dev_t *dev) {
     }
 
     // Nothing to do if it's the same device as before.
-    if (dev->connected_type_id == dev->prev_type_id) {
+    if (dev->connected_type_id == dev->prev_connected_type_id) {
         return;
     }
 
@@ -325,24 +337,25 @@ static PT_THREAD(pbdrv_legodev_pup_thread(ext_dev_t * dev)) {
     while (true) {
 
         // Initially assume nothing is connected.
-        dev->connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
+        dev->dcm.connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
         dev->dcm.dev_id_match_count = 0;
 
         // Run the device detection manager until a UART device is detected.
         etimer_set(&dev->timer, 2);
+        PT_INIT(&dev->child);
         PT_WAIT_UNTIL(&dev->pt, ({
             if (etimer_expired(&dev->timer)) {
                 etimer_reset(&dev->timer);
                 (void)PT_SCHEDULE(poll_dcm(dev));
                 debug_state_change(dev);
-                dev->prev_type_id = dev->connected_type_id;
+                dev->dcm.prev_connected_type_id = dev->dcm.connected_type_id;
             }
-            dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART;
+            dev->dcm.connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART;
         }));
 
         // UART device detected, so run that protocol until it disconnects.
         legodev_pup_enable_uart(dev->pins);
-        PT_SPAWN(&dev->pt, &dev->uart_dev_pt, pbdrv_legodev_pup_uart_thread(&dev->uart_dev_pt, dev->uart_dev));
+        PT_SPAWN(&dev->pt, &dev->child, pbdrv_legodev_pup_uart_thread(&dev->child, dev->uart_dev));
     }
     PT_END(&dev->pt);
 }
@@ -419,7 +432,7 @@ void pbdrv_legodev_init(void) {
 
 pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_get_uart_dev(pbdrv_legodev_dev_t *legodev) {
     // Device is not a uart device.
-    if (legodev->is_internal || legodev->ext_dev->connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+    if (legodev->is_internal || legodev->ext_dev->dcm.connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
         return NULL;
     }
     return legodev->ext_dev->uart_dev;
@@ -562,7 +575,7 @@ pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type
         }
 
         // Device check is ready, now test if something is attached.
-        if (candidate->ext_dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_NONE) {
+        if (candidate->ext_dev->dcm.connected_type_id == PBDRV_LEGODEV_TYPE_ID_NONE) {
             return PBIO_ERROR_NO_DEV;
         }
 
@@ -570,8 +583,8 @@ pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type
         *legodev = candidate;
 
         // Passive devices are always ready.
-        if (candidate->ext_dev->connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-            return type_id_matches(type_id, candidate->ext_dev->connected_type_id) ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
+        if (candidate->ext_dev->dcm.connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+            return type_id_matches(type_id, candidate->ext_dev->dcm.connected_type_id) ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
         }
 
         // Get device information, and check if device is ready.
@@ -593,7 +606,7 @@ bool pbdrv_legodev_needs_permanent_power(pbdrv_legodev_dev_t *legodev) {
     }
 
     // Known passive devices don't need permanent power.
-    if (legodev->ext_dev->connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+    if (legodev->ext_dev->dcm.connected_type_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
         return false;
     }
 
