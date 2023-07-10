@@ -570,7 +570,12 @@ pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type
             continue;
         }
 
-        // Found device instance object, now test if something is attached.
+        // Found device instance object, now test if device is ready.
+        if (candidate->ext_dev->dcm.dev_id_match_count < AFFIRMATIVE_MATCH_COUNT) {
+            return PBIO_ERROR_AGAIN;
+        }
+
+        // Device check is ready, now test if something is attached.
         if (candidate->ext_dev->connected_type_id == PBDRV_LEGODEV_TYPE_ID_NONE) {
             return PBIO_ERROR_NO_DEV;
         }
