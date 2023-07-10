@@ -90,16 +90,24 @@ void pbdrv_init(void) {
     pbdrv_usb_init();
     pbdrv_watchdog_init();
 
-    // Last driver to init.
-    pbdrv_legodev_init();
-
     // Some hubs have a bootloader that disables interrupts. Has to be done
     // here otherwise Essential hub can hang on boot if it is earlier.
     #if PBDRV_CONFIG_INIT_ENABLE_INTERRUPTS_ARM
     __asm volatile ("cpsie i" : : : "memory");
     #endif
 
+    // Wait for all async pbdrv drivers to initialize before starting
+    // higher level system processes.
     while (pbdrv_init_busy()) {
         process_run();
     }
+
+    // The driver for external LEGO devices (legodev) is somewhere in between
+    // a low-level driver (it does have platform-specific implementations) and
+    // a high-level process (it relies on lower-level drivers to poke hardware).
+    // We start it after low-level code is initialized so we can safely access
+    // the ioports. It is not necessary to wait on this driver: requesting
+    // devices behaves the same as if unknown devices are still syncing up after
+    // just being plugged in.
+    pbdrv_legodev_init();
 }
