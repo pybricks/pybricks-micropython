@@ -35,6 +35,11 @@ static inline pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_get_uart_dev(pbdrv_leg
     return NULL;
 }
 
+static inline PT_THREAD(pbdrv_legodev_pup_uart_thread(struct pt *pt, pbdrv_legodev_pup_uart_dev_t *port_data)) {
+    PT_BEGIN(pt);
+    PT_END(pt);
+}
+
 static inline void pbdrv_legodev_pup_uart_process_poll(void) {
 }
 
