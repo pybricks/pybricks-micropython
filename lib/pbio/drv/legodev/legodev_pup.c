@@ -377,11 +377,15 @@ struct _pbdrv_legodev_dev_t {
 static pbdrv_legodev_dev_t devs[PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV + PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV];
 
 PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
+    #if PBDRV_CONFIG_LEGODEV_PUP_POWER_CYCLE_PORTS
     static struct etimer timer;
+    #endif
+
     static int i;
 
     PROCESS_BEGIN();
 
+    #if PBDRV_CONFIG_LEGODEV_PUP_POWER_CYCLE_PORTS
     // Some hubs turn on power to the I/O ports in the bootloader. This causes
     // UART sync delays after boot. It is faster to power cycle the I/O devices
     // than it is to wait for long sync in most cases.
@@ -389,6 +393,7 @@ PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
     etimer_set(&timer, 500);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
     pbdrv_ioport_enable_vcc(true);
+    #endif // PBDRV_CONFIG_LEGODEV_PUP_POWER_CYCLE_PORTS
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
         for (i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV; i++) {

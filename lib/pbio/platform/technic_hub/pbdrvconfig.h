@@ -62,6 +62,7 @@
 
 #define PBDRV_CONFIG_LEGODEV                        (1)
 #define PBDRV_CONFIG_LEGODEV_PUP                    (1)
+#define PBDRV_CONFIG_LEGODEV_PUP_POWER_CYCLE_PORTS  (1)
 #define PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV        (0)
 #define PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV        (4)
 #define PBDRV_CONFIG_LEGODEV_PUP_UART               (1)
