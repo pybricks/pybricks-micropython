@@ -203,6 +203,8 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint32_t tx_start_time;
     /**< Flag that indicates that good DATA ludev->msg has been received since last watchdog timeout. */
     bool data_rec;
+    /**< Return value for synchronization thread. */
+    pbio_error_t err;
     /**< ludev->msg to be printed in case of an error. */
     DBG_ERR(const char *last_err);
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
@@ -696,7 +698,6 @@ static PT_THREAD(pbdrv_legodev_pup_uart_send_prepared_msg(pbdrv_legodev_pup_uart
 }
 
 static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * ludev)) {
-    static pbio_error_t err;
 
     PT_BEGIN(&ludev->pt);
 
@@ -718,8 +719,8 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * lu
 
     pbdrv_uart_flush(ludev->uart);
 
-    PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &err));
-    if (err != PBIO_SUCCESS) {
+    PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &ludev->err));
+    if (ludev->err != PBIO_SUCCESS) {
         DBG_ERR(ludev->last_err = "Speed tx failed");
         goto err;
     }
@@ -727,18 +728,18 @@ static PT_THREAD(pbdrv_legodev_pup_uart_update(pbdrv_legodev_pup_uart_dev_t * lu
     pbdrv_uart_flush(ludev->uart);
 
     // read one byte to check for ACK
-    PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg, 1, 10));
-    if (err != PBIO_SUCCESS) {
+    PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg, 1, 10));
+    if (ludev->err != PBIO_SUCCESS) {
         DBG_ERR(ludev->last_err = "UART Rx error during baud");
         goto err;
     }
 
-    PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_end(ludev->uart));
-    if ((err == PBIO_SUCCESS && ludev->rx_msg[0] != LUMP_SYS_ACK) || err == PBIO_ERROR_TIMEDOUT) {
+    PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_end(ludev->uart));
+    if ((ludev->err == PBIO_SUCCESS && ludev->rx_msg[0] != LUMP_SYS_ACK) || ludev->err == PBIO_ERROR_TIMEDOUT) {
         // if we did not get ACK within 100ms, then switch to slow baud rate for sync
         pbdrv_uart_set_baud_rate(ludev->uart, EV3_UART_SPEED_MIN);
         debug_pr("set baud: %d\n", EV3_UART_SPEED_MIN);
-    } else if (err != PBIO_SUCCESS) {
+    } else if (ludev->err != PBIO_SUCCESS) {
         DBG_ERR(ludev->last_err = "UART Rx error during baud");
         goto err;
     }
@@ -748,16 +749,16 @@ sync:
     // To get in sync with the data stream from the sensor, we look for a valid TYPE command.
     for (;;) {
 
-        PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
-        if (err != PBIO_SUCCESS) {
+        PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        if (ludev->err != PBIO_SUCCESS) {
             DBG_ERR(ludev->last_err = "UART Rx error during sync");
             goto err;
         }
-        PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_end(ludev->uart));
-        if (err == PBIO_ERROR_TIMEDOUT) {
+        PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_end(ludev->uart));
+        if (ludev->err == PBIO_ERROR_TIMEDOUT) {
             continue;
         }
-        if (err != PBIO_SUCCESS) {
+        if (ludev->err != PBIO_SUCCESS) {
             DBG_ERR(ludev->last_err = "UART Rx error during sync");
             goto err;
         }
@@ -769,13 +770,13 @@ sync:
 
     // then read the rest of the message
 
-    PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg + 1, 2, EV3_UART_IO_TIMEOUT));
-    if (err != PBIO_SUCCESS) {
+    PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg + 1, 2, EV3_UART_IO_TIMEOUT));
+    if (ludev->err != PBIO_SUCCESS) {
         DBG_ERR(ludev->last_err = "UART Rx error while reading type");
         goto err;
     }
-    PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_end(ludev->uart));
-    if (err != PBIO_SUCCESS) {
+    PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_end(ludev->uart));
+    if (ludev->err != PBIO_SUCCESS) {
         DBG_ERR(ludev->last_err = "UART Rx error while reading type");
         goto err;
     }
@@ -808,13 +809,13 @@ sync:
 
     while (ludev->status == PBDRV_LEGODEV_PUP_UART_STATUS_INFO) {
         // read the message header
-        PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
-        if (err != PBIO_SUCCESS) {
+        PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        if (ludev->err != PBIO_SUCCESS) {
             DBG_ERR(ludev->last_err = "UART Rx begin error during info header");
             goto err;
         }
-        PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_end(ludev->uart));
-        if (err != PBIO_SUCCESS) {
+        PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_end(ludev->uart));
+        if (ludev->err != PBIO_SUCCESS) {
             DBG_ERR(ludev->last_err = "UART Rx end error during info header");
             goto err;
         }
@@ -827,13 +828,13 @@ sync:
 
         // read the rest of the message
         if (ludev->rx_msg_size > 1) {
-            PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg + 1, ludev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
-            if (err != PBIO_SUCCESS) {
+            PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_begin(ludev->uart, ludev->rx_msg + 1, ludev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
+            if (ludev->err != PBIO_SUCCESS) {
                 DBG_ERR(ludev->last_err = "UART Rx begin error during info");
                 goto err;
             }
-            PBIO_PT_WAIT_READY(&ludev->pt, err = pbdrv_uart_read_end(ludev->uart));
-            if (err != PBIO_SUCCESS) {
+            PBIO_PT_WAIT_READY(&ludev->pt, ludev->err = pbdrv_uart_read_end(ludev->uart));
+            if (ludev->err != PBIO_SUCCESS) {
                 DBG_ERR(ludev->last_err = "UART Rx end error during info");
                 goto err;
             }
@@ -852,8 +853,8 @@ sync:
     // reply with ACK
     ludev->tx_msg[0] = LUMP_SYS_ACK;
     ludev->tx_msg_size = 1;
-    PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &err));
-    if (err != PBIO_SUCCESS) {
+    PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &ludev->err));
+    if (ludev->err != PBIO_SUCCESS) {
         DBG_ERR(ludev->last_err = "UART Tx error during ack.");
         goto err;
     }
@@ -910,8 +911,8 @@ sync:
             ludev->data_rec = false;
             ludev->tx_msg[0] = LUMP_SYS_NACK;
             ludev->tx_msg_size = 1;
-            PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &err));
-            if (err != PBIO_SUCCESS) {
+            PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &ludev->err));
+            if (ludev->err != PBIO_SUCCESS) {
                 DBG_ERR(ludev->last_err = "Error during keepalive.");
                 goto err;
             }
@@ -927,8 +928,8 @@ sync:
         if (ludev->mode_switch.requested) {
             ludev->mode_switch.requested = false;
             ev3_uart_prepare_tx_msg(ludev, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &ludev->mode_switch.desired_mode, 1);
-            PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &err));
-            if (err != PBIO_SUCCESS) {
+            PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &ludev->err));
+            if (ludev->err != PBIO_SUCCESS) {
                 DBG_ERR(ludev->last_err = "Setting requested mode failed.");
                 goto err;
             }
@@ -941,8 +942,8 @@ sync:
                 ev3_uart_prepare_tx_msg(ludev, LUMP_MSG_TYPE_DATA, ludev->data_set->desired_mode, ludev->data_set->bin_data, ludev->data_set->size);
                 ludev->data_set->size = 0;
                 ludev->data_set->time = pbdrv_clock_get_ms();
-                PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &err));
-                if (err != PBIO_SUCCESS) {
+                PT_SPAWN(&ludev->pt, &ludev->write_pt, pbdrv_legodev_pup_uart_send_prepared_msg(ludev, &ludev->err));
+                if (ludev->err != PBIO_SUCCESS) {
                     DBG_ERR(ludev->last_err = "Setting requested data failed.");
                     goto err;
                 }
