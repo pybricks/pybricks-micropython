@@ -16,10 +16,6 @@
 
 extern const mp_obj_type_t pb_type_drivebase;
 
-#if PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
-extern const mp_obj_type_t pb_type_gyrodrivebase;
-#endif
-
 #if PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE
 extern const mp_obj_type_t pb_type_spikebase;
 #endif

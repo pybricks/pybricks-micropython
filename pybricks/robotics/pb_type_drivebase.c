@@ -67,15 +67,12 @@ STATIC mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     pbio_servo_t *srv_left = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(left_motor_in, &pb_type_Motor))->srv;
     pbio_servo_t *srv_right = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(right_motor_in, &pb_type_Motor))->srv;
 
-    // Create drivebase
+    // Create drivebase. Initialized to use motor encoders (not gyro) for heading.
     pb_assert(pbio_drivebase_get_drivebase(&self->db,
         srv_left,
         srv_right,
         pb_obj_get_scaled_int(wheel_diameter_in, 1000),
         pb_obj_get_scaled_int(axle_track_in, 1000)));
-
-    // Use gyro if creating instance of GyroDriveBase.
-    pb_assert(pbio_drivebase_set_use_gyro(self->db, type != &pb_type_drivebase));
 
     #if PYBRICKS_PY_COMMON_CONTROL
     // Create instances of the Control class
@@ -370,7 +367,7 @@ STATIC const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
     #endif
 };
 // First N entries are common to both drive base classes.
-STATIC MP_DEFINE_CONST_DICT_WITH_SIZE(pb_type_DriveBase_locals_dict, pb_type_DriveBase_locals_dict_table, 12);
+STATIC MP_DEFINE_CONST_DICT(pb_type_DriveBase_locals_dict, pb_type_DriveBase_locals_dict_table);
 
 // type(pybricks.robotics.DriveBase)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_drivebase,
@@ -382,22 +379,5 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_drivebase,
     protocol, pb_type_DriveBase_attr_dict,
     #endif
     locals_dict, &pb_type_DriveBase_locals_dict);
-
-#if PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
-
-// GyroDriveBase has all methods enabled.
-STATIC MP_DEFINE_CONST_DICT(pb_type_GyroDriveBase_locals_dict, pb_type_DriveBase_locals_dict_table);
-
-// type(pybricks.robotics.GyroDriveBase)
-MP_DEFINE_CONST_OBJ_TYPE(pb_type_gyrodrivebase,
-    MP_QSTR_GyroDriveBase,
-    MP_TYPE_FLAG_NONE,
-    make_new, pb_type_DriveBase_make_new,
-    #if PYBRICKS_PY_COMMON_CONTROL
-    attr, pb_attribute_handler,
-    protocol, pb_type_DriveBase_attr_dict,
-    #endif
-    locals_dict, &pb_type_GyroDriveBase_locals_dict);
-#endif // PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
 
 #endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS
