@@ -5,9 +5,10 @@
 
 #if PBDRV_CONFIG_IOPORT_PUP
 
-#include <pbdrv/ioport.h>
+#include <contiki.h>
 
 #include "ioport_pup.h"
+#include "../core.h"
 
 static void init_one_port(const pbdrv_ioport_pup_pins_t *pins) {
     // Normally should be set already, but could have been changed by bootloader.
@@ -26,11 +27,21 @@ void pbdrv_ioport_enable_vcc(bool enable) {
     }
 }
 
+#if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
+// This is generic ioport process. It is currently only used for the power
+// cycle quirk, so it is protected by guards to save space elsewhere.
+PROCESS(pbdrv_ioport_pup_process, "ioport_pup");
+#endif
+
 void pbdrv_ioport_init(void) {
     for (uint8_t i = 0; i < PBDRV_CONFIG_IOPORT_NUM_DEV; i++) {
         init_one_port(&pbdrv_ioport_pup_platform_data.ports[i].pins);
     }
-    pbdrv_ioport_enable_vcc(true);
+
+    #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
+    pbdrv_init_busy_up();
+    process_start(&pbdrv_ioport_pup_process);
+    #endif
 }
 
 void pbdrv_ioport_deinit(void) {
@@ -41,5 +52,27 @@ void pbdrv_ioport_deinit(void) {
     // as soon as the user releases the power button
     pbdrv_gpio_input(&pbdrv_ioport_pup_platform_data.port_vcc);
 }
+
+#if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
+PROCESS_THREAD(pbdrv_ioport_pup_process, ev, data) {
+
+    static struct etimer timer;
+
+    PROCESS_BEGIN();
+
+    // Some hubs turn on power to the I/O ports in the bootloader. This causes
+    // UART sync delays after boot. This process turns them off to make sure
+    // power can be enabled at the right time by the legodev driver instead.
+    pbdrv_ioport_enable_vcc(false);
+
+    etimer_set(&timer, 500);
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+
+    pbdrv_init_busy_down();
+
+    PROCESS_END();
+}
+
+#endif // PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
 
 #endif // PBDRV_CONFIG_IOPORT_PUP
