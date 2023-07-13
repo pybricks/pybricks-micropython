@@ -249,6 +249,7 @@ static void handle_exit(void) {
 }
 
 void pbdrv_uart_init(void) {
+    pbdrv_init_busy_up();
     process_start(&pbdrv_uart_process);
 }
 
@@ -257,8 +258,6 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
     PROCESS_EXITHANDLER(handle_exit());
 
     PROCESS_BEGIN();
-
-    pbdrv_init_busy_up();
 
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART; i++) {
         const pbdrv_uart_stm32f4_ll_irq_platform_data_t *pdata = &pbdrv_uart_stm32f4_ll_irq_platform_data[i];

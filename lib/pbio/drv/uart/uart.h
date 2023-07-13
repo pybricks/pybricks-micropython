@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2023 The Pybricks Authors
 
 // Common interface shared by UART drivers
 
