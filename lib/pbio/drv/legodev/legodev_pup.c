@@ -341,6 +341,12 @@ static PT_THREAD(pbdrv_legodev_pup_thread(ext_dev_t * dev)) {
         dev->dcm.dev_id_match_count = 0;
 
         // Run the device detection manager until a UART device is detected.
+        // This process continously checks which type of passive device is
+        // attached by setting and reading the ID1 and ID2 pins in a predefined
+        // sequence at 2ms intervals. Once a UART device is detected, this
+        // detection process stops because it would interfere with the UART
+        // data. Once the UART process completes (i.e. the device disconnects),
+        // device detection will resume here.
         etimer_set(&dev->timer, 2);
         PT_INIT(&dev->child);
         PT_WAIT_UNTIL(&dev->pt, ({
@@ -353,7 +359,8 @@ static PT_THREAD(pbdrv_legodev_pup_thread(ext_dev_t * dev)) {
             dev->dcm.connected_type_id == PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART;
         }));
 
-        // UART device detected, so run that protocol until it disconnects.
+        // UART device detected, so hand off control to that protocol until it
+        // disconnects, as observed by the UART process not getting valid data.
         legodev_pup_enable_uart(dev->pins);
         PT_SPAWN(&dev->pt, &dev->child, pbdrv_legodev_pup_uart_thread(&dev->child, dev->uart_dev));
     }

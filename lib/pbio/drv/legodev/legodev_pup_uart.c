@@ -122,33 +122,33 @@ enum ev3_uart_info_flags {
 typedef enum {
     /** Something bad happened. */
     PBDRV_LEGODEV_PUP_UART_STATUS_ERR,
-    /**< Waiting for data that looks like LEGO UART protocol. */
+    /** Waiting for data that looks like LEGO UART protocol. */
     PBDRV_LEGODEV_PUP_UART_STATUS_SYNCING,
-    /**< Reading device info before changing baud rate. */
+    /** Reading device info before changing baud rate. */
     PBDRV_LEGODEV_PUP_UART_STATUS_INFO,
-    /**< ACK received, delay changing baud rate. */
+    /** ACK received, delay changing baud rate. */
     PBDRV_LEGODEV_PUP_UART_STATUS_ACK,
-    /**< Ready to send commands and receive data. */
+    /** Ready to send commands and receive data. */
     PBDRV_LEGODEV_PUP_UART_STATUS_DATA,
 } pbdrv_legodev_pup_uart_status_t;
 
 typedef struct {
-    /**< The mode to be set. */
+    /** The mode to be set. */
     uint8_t desired_mode;
-    /**< Whether a mode change was requested (set low when handled). */
+    /** Whether a mode change was requested (set low when handled). */
     bool requested;
-    /**< Time of switch completion (if info.mode == desired_mode) or time of switch request (if info.mode != desired_mode). */
+    /** Time of switch completion (if info.mode == desired_mode) or time of switch request (if info.mode != desired_mode). */
     uint32_t time;
 } pbdrv_legodev_pup_uart_mode_switch_t;
 
 typedef struct {
-    /**< The data to be set. */
+    /** The data to be set. */
     uint8_t bin_data[PBDRV_LEGODEV_MAX_DATA_SIZE]  __attribute__((aligned(4)));
-    /**< The size of the data to be set, also acts as set request flag. */
+    /** The size of the data to be set, also acts as set request flag. */
     uint8_t size;
-    /**< The mode at which to set data */
+    /** The mode at which to set data */
     uint8_t desired_mode;
-    /**< Time of the data set request (if size != 0) or time of completing transmission (if size == 0). */
+    /** Time of the data set request (if size != 0) or time of completing transmission (if size == 0). */
     uint32_t time;
 } pbdrv_legodev_pup_uart_data_set_t;
 
@@ -156,19 +156,19 @@ typedef struct {
  * struct ev3_uart_port_data - Data for EV3/LPF2 UART Sensor communication
  */
 struct _pbdrv_legodev_pup_uart_dev_t {
-    /**< Main protothread, first used for synchronization thread and then for data send thread. */
+    /** Main protothread, first used for synchronization thread and then for data send thread. */
     struct pt pt;
-    /**< Protothread for receiving sensor data, running in parallel to the data send thread. */
+    /** Protothread for receiving sensor data, running in parallel to the data send thread. */
     struct pt recv_pt;
-    /**< Child protothread of the main protothread used for writing data */
+    /** Child protothread of the main protothread used for writing data */
     struct pt write_pt;
-    /**< Timer for sending keepalive messages and other delays. */
+    /** Timer for sending keepalive messages and other delays. */
     struct etimer timer;
-    /**< Device information, including mode info */
+    /** Device information, including mode info */
     pbdrv_legodev_info_t device_info;
-    /**< Pointer to the UART device to use for communications. */
+    /** Pointer to the UART device to use for communications. */
     pbdrv_uart_dev_t *uart;
-    /**< Pointer to the DC motor device to use for powered devices. */
+    /** Pointer to the DC motor device to use for powered devices. */
     pbio_dcmotor_t *dcmotor;
     /**
      * Most recent binary data read from the device. How to interpret this data
@@ -177,40 +177,40 @@ struct _pbdrv_legodev_pup_uart_dev_t {
      * the values could be foreign-endian.
      */
     uint8_t *bin_data;
-    /**< The current device connection state. */
+    /** The current device connection state. */
     pbdrv_legodev_pup_uart_status_t status;
-    /**< Mode switch status. */
+    /** Mode switch status. */
     pbdrv_legodev_pup_uart_mode_switch_t mode_switch;
-    /**< Data set buffer and status. */
+    /** Data set buffer and status. */
     pbdrv_legodev_pup_uart_data_set_t *data_set;
-    /**< Extra mode adder for Powered Up devices (for modes > LUMP_MAX_MODE). */
+    /** Extra mode adder for Powered Up devices (for modes > LUMP_MAX_MODE). */
     uint8_t ext_mode;
-    /**< New baud rate that will be set with ev3_uart_change_bitrate. */
+    /** New baud rate that will be set with ev3_uart_change_bitrate. */
     uint32_t new_baud_rate;
-    /**< Buffer to hold messages transmitted to the device. */
+    /** Buffer to hold messages transmitted to the device. */
     uint8_t *tx_msg;
-    /**< Size of the current message being transmitted. */
+    /** Size of the current message being transmitted. */
     uint8_t tx_msg_size;
-    /**< Buffer to hold messages received from the device. */
+    /** Buffer to hold messages received from the device. */
     uint8_t *rx_msg;
-    /**< Size of the current message being received. */
+    /** Size of the current message being received. */
     uint8_t rx_msg_size;
-    /**< Total number of errors that have occurred. */
+    /** Total number of errors that have occurred. */
     uint32_t err_count;
-    /**< Number of bad reads when receiving DATA ludev->msgs. */
+    /** Number of bad reads when receiving DATA ludev->msgs. */
     uint32_t num_data_err;
-    /**< Time of most recently started transmission. */
+    /** Time of most recently started transmission. */
     uint32_t tx_start_time;
-    /**< Flag that indicates that good DATA ludev->msg has been received since last watchdog timeout. */
+    /** Flag that indicates that good DATA ludev->msg has been received since last watchdog timeout. */
     bool data_rec;
-    /**< Return value for synchronization thread. */
+    /** Return value for synchronization thread. */
     pbio_error_t err;
-    /**< ludev->msg to be printed in case of an error. */
+    /** ludev->msg to be printed in case of an error. */
     DBG_ERR(const char *last_err);
     #if PBDRV_CONFIG_LEGODEV_MODE_INFO
-    /**< Mode value used to keep track of mode in INFO messages while syncing. */
+    /** Mode value used to keep track of mode in INFO messages while syncing. */
     uint8_t new_mode;
-    /**< Flags indicating what information has already been read from the data. */
+    /** Flags indicating what information has already been read from the data. */
     uint32_t info_flags;
     #endif // #define PBDRV_CONFIG_LEGODEV_MODE_INFO
 };
