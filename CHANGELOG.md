@@ -11,9 +11,11 @@
 
 ### Fixed
 - Improved external device detection speed ([support#1140]).
+- Fixed Powered Up Tilt Sensor not working  ([support#1189]).
 
 [support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1140]: https://github.com/pybricks/support/issues/1140
+[support#1189]: https://github.com/pybricks/support/issues/1189
 
 ## [3.3.0b8] - 2023-07-07
 

@@ -24,7 +24,7 @@ STATIC mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
         PB_ARG_REQUIRED(port));
 
     pupdevices_TiltSensor_obj_t *self = mp_obj_malloc(pupdevices_TiltSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_WEDO2_MOTION_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_WEDO2_TILT_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
