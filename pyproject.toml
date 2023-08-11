@@ -28,7 +28,7 @@ sympy = "^1.10.1"
 [tool.poetry.group.stats.dependencies]
 azure-data-tables = "^12.4.2"
 gql = {extras = ["requests"], version = "^3.4.0"}
-gitpython = "^3.1.31"
+gitpython = "^3.1.32"
 plotly = "^5.14.1"
 pygithub = "^1.58.1"
 
