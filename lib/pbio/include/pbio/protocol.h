@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 3
+#define PBIO_PROTOCOL_VERSION_MINOR 4
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -241,6 +241,12 @@ typedef enum {
      * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST = 8,
+    /**
+     * Bluetooth toggle button pressed.
+     *
+     * @since Pybricks Profile v1.4.0
+     */
+    PBIO_PYBRICKS_STATUS_BLUETOOTH_BUTTON_PRESSED = 9,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;
