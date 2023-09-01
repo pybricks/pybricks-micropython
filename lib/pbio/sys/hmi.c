@@ -3,7 +3,7 @@
 
 // Provides Human Machine Interface (HMI) between hub and user.
 
-// TODO: implement additional buttons and Bluetooth light for SPIKE Prime
+// TODO: implement additional buttons for SPIKE Prime
 // TODO: implement additional buttons and menu system (via screen) for NXT
 
 #include <stdbool.h>

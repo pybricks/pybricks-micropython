@@ -7,6 +7,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/led.h>
 #include <pbio/color.h>
@@ -18,6 +19,7 @@
 #include <pbsys/status.h>
 
 #include "../src/light/color_light.h"
+#include "program_load.h"
 
 #if PBSYS_CONFIG_STATUS_LIGHT
 
@@ -345,6 +347,9 @@ void pbsys_status_light_poll(void) {
     pbio_color_t new_color = pbsys_status_light_pattern_next(
         &instance->pattern_state, pbsys_status_light_indication_pattern);
 
+    pbdrv_led_dev_t *led;
+    pbio_color_hsv_t hsv;
+
     // If the new system indication is not overriding the status light and a user
     // program is running, then we can allow the user program to directly change
     // the status light.
@@ -353,7 +358,6 @@ void pbsys_status_light_poll(void) {
 
     // FIXME: currently system status light is hard-coded as LED at index 0 on
     // all platforms
-    pbdrv_led_dev_t *led;
     if (pbdrv_led_get_dev(0, &led) == PBIO_SUCCESS) {
         if (instance->allow_user_update) {
             pbdrv_led_set_hsv(led, &instance->user_color);
@@ -362,7 +366,6 @@ void pbsys_status_light_poll(void) {
                 // System ID color
                 new_color = PBIO_COLOR_BLUE;
             }
-            pbio_color_hsv_t hsv;
             pbio_color_to_hsv(new_color, &hsv);
             pbdrv_led_set_hsv(led, &hsv);
         }
@@ -383,12 +386,27 @@ void pbsys_status_light_poll(void) {
 
     // FIXME: battery light is currently hard-coded to id 1 on all platforms
     if (pbdrv_led_get_dev(1, &led) == PBIO_SUCCESS) {
-        pbio_color_hsv_t hsv;
         pbio_color_to_hsv(new_color, &hsv);
         pbdrv_led_set_hsv(led, &hsv);
     }
 
     #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY
+
+    // Update Bluetooth light
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+        new_color = PBIO_COLOR_BLACK;
+    } else if (pbsys_program_load_get_bluetooth_disabled()) {
+        new_color = pbdrv_bluetooth_is_ready() ?
+            PBIO_COLOR_YELLOW :
+            PBIO_COLOR_RED;
+    } else {
+        new_color = PBIO_COLOR_BLACK;
+    }
+
+    if (pbdrv_led_get_dev(2, &led) == PBIO_SUCCESS) {
+        pbio_color_to_hsv(new_color, &hsv);
+        pbdrv_led_set_hsv(led, &hsv);
+    }
 }
 
 #endif // PBSYS_CONFIG_STATUS_LIGHT
