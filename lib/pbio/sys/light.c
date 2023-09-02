@@ -63,6 +63,10 @@ typedef struct {
 // so that we don't have the light off at the beginning of the pattern.
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern[] = {
+    [PBSYS_STATUS_LIGHT_INDICATION_NONE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
+    },
     [PBSYS_STATUS_LIGHT_INDICATION_HIGH_CURRENT] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
@@ -183,6 +187,7 @@ static void pbsys_status_light_handle_status_change(void) {
     pbsys_status_light_indication_t new_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
     bool ble_advertising = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
     bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
+    bool ble_shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN);
     bool low_voltage = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     bool high_current = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT);
     bool shutdown_requested = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
@@ -205,6 +210,8 @@ static void pbsys_status_light_handle_status_change(void) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL;
     } else if (low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE;
+    } else if (ble_shutdown) {
+        new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN;
     }
 
     // if the indication changed, then reset the indication pattern to the beginning
