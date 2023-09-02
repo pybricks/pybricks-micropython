@@ -110,6 +110,11 @@ void pbsys_hmi_poll(void) {
                 bluetooth_toggled = true;
                 bluetooth_disabled = !pbsys_program_load_get_bluetooth_disabled();
                 pbsys_program_load_set_bluetooth_disabled(bluetooth_disabled);
+                if (bluetooth_disabled) {
+                    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN);
+                } else {
+                    pbsys_bluetooth_init();
+                }
             }
         } else {
             pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);

@@ -247,6 +247,12 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_STATUS_BLUETOOTH_BUTTON_PRESSED = 9,
+    /**
+     * Bluetooth shutdown started.
+     *
+     * @since Pybricks Profile v1.4.0
+     */
+    PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN = 10,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;
