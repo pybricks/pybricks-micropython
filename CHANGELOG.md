@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+- Added `hub.buttons` as an alias for `hub.button` on buttons with one
+  hub ([support#1254]).
+
 ### Changed
 - The `use_gyro` method is added to the normal `DriveBase` class instead of
   having a separate `GyroDriveBase` class. Since the latter was only released
@@ -19,6 +23,7 @@
 [support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1140]: https://github.com/pybricks/support/issues/1140
 [support#1189]: https://github.com/pybricks/support/issues/1189
+[support#1254]: https://github.com/pybricks/support/issues/1254
 
 ## [3.3.0b8] - 2023-07-07
 

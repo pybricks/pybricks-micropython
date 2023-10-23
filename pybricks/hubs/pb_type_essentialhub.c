@@ -69,7 +69,8 @@ STATIC const pb_attr_dict_entry_t hubs_EssentialHub_attr_dict[] = {
     #if PYBRICKS_PY_COMMON_BLE
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_EssentialHub_obj_t, ble),
     #endif
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_EssentialHub_obj_t, buttons),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_EssentialHub_obj_t, buttons),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_EssentialHub_obj_t, buttons), // backwards compatibility
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_charger, hubs_EssentialHub_obj_t, charger),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_imu, hubs_EssentialHub_obj_t, imu),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_EssentialHub_obj_t, light),

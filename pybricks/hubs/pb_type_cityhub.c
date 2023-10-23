@@ -52,7 +52,8 @@ STATIC const pb_attr_dict_entry_t hubs_CityHub_attr_dict[] = {
     #if PYBRICKS_PY_COMMON_BLE
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_CityHub_obj_t, ble),
     #endif
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_CityHub_obj_t, button),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_CityHub_obj_t, button),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_CityHub_obj_t, button), // backwards compatibility
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_CityHub_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_CityHub_obj_t, system),
     PB_ATTR_DICT_SENTINEL

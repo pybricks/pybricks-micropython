@@ -58,7 +58,8 @@ STATIC const pb_attr_dict_entry_t hubs_TechnicHub_attr_dict[] = {
     #if PYBRICKS_PY_COMMON_BLE
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_TechnicHub_obj_t, ble),
     #endif
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_TechnicHub_obj_t, button),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_TechnicHub_obj_t, button),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_TechnicHub_obj_t, button), // backwards compatibility
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_imu, hubs_TechnicHub_obj_t, imu),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_TechnicHub_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_TechnicHub_obj_t, system),
