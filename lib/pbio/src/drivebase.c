@@ -286,9 +286,6 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     db->left = left;
     db->right = right;
 
-    // By default, don't use gyro.
-    pbio_drivebase_set_use_gyro(db, false);
-
     // Set parents of both servos, so they can stop this drivebase.
     pbio_parent_set(&left->parent, db, pbio_drivebase_stop_from_servo);
     pbio_parent_set(&right->parent, db, pbio_drivebase_stop_from_servo);
@@ -332,7 +329,8 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    return PBIO_SUCCESS;
+    // Finish setup. By default, don't use gyro.
+    return pbio_drivebase_set_use_gyro(db, false);
 }
 
 /**
