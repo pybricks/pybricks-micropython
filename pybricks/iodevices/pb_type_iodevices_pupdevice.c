@@ -127,7 +127,7 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
         PB_ARG_REQUIRED(mode),
         PB_ARG_REQUIRED(data));
 
-    // Set the mode.
+    // Get requested mode.
     uint8_t mode = mp_obj_get_int(mode_in);
 
     // Unpack the user data tuple
@@ -142,30 +142,31 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
     pbdrv_legodev_info_t *info;
     pb_assert(pbdrv_legodev_get_info(self->device_base.legodev, &info));
 
-    if (!info->mode_info[mode].writable) {
+    pbdrv_legodev_mode_info_t *mode_info = &info->mode_info[mode];
+    if (!mode_info->writable) {
         pb_assert(PBIO_ERROR_INVALID_OP);
     }
 
     uint8_t size = 0;
 
-    for (uint8_t i = 0; i < info->mode_info[info->mode].num_values; i++) {
-        switch (info->mode_info[info->mode].data_type) {
+    for (uint8_t i = 0; i < mode_info->num_values; i++) {
+        switch (mode_info->data_type) {
             case PBDRV_LEGODEV_DATA_TYPE_INT8:
                 *(int8_t *)(data + i) = pbio_int_math_clamp(mp_obj_get_int(values[i]), INT8_MAX);
-                size = sizeof(int8_t) * info->mode_info[info->mode].num_values;
+                size = sizeof(int8_t) * mode_info->num_values;
                 break;
             case PBDRV_LEGODEV_DATA_TYPE_INT16:
                 *(int16_t *)(data + i * 2) = pbio_int_math_clamp(mp_obj_get_int(values[i]), INT16_MAX);
-                size = sizeof(int16_t) * info->mode_info[info->mode].num_values;
+                size = sizeof(int16_t) * mode_info->num_values;
                 break;
             case PBDRV_LEGODEV_DATA_TYPE_INT32:
                 *(int32_t *)(data + i * 4) = pbio_int_math_clamp(mp_obj_get_int(values[i]), INT32_MAX);
-                size = sizeof(int32_t) * info->mode_info[info->mode].num_values;
+                size = sizeof(int32_t) * mode_info->num_values;
                 break;
             #if MICROPY_PY_BUILTINS_FLOAT
             case PBDRV_LEGODEV_DATA_TYPE_FLOAT:
                 *(float *)(data + i * 4) = mp_obj_get_float_to_f(values[i]);
-                size = sizeof(float) * info->mode_info[info->mode].num_values;
+                size = sizeof(float) * mode_info->num_values;
                 break;
             #endif
             default:
