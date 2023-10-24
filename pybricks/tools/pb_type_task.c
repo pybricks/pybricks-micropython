@@ -122,7 +122,7 @@ STATIC mp_obj_t pb_type_Task_iternext(mp_obj_t self_in) {
         for (size_t i = 0; i < self->num_tasks; i++) {
             ret[i] = self->tasks[i].return_val;
         }
-        return mp_make_stop_iteration(mp_obj_new_list(self->num_tasks, ret));
+        return mp_make_stop_iteration(mp_obj_new_tuple(self->num_tasks, ret));
     } else {
         // On failure of one task, cancel others, then stop iterating collection by re-raising.
         pb_type_Task_close(self_in);

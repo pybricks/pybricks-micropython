@@ -1,5 +1,5 @@
 test_all_1
-[0, 1]
+(0, 1)
 0 0
 <class 'StopIteration'> ()
 <class 'StopIteration'> ()
@@ -9,7 +9,7 @@ test_all_2
 <class 'StopIteration'> ()
 <class 'StopIteration'> ()
 test_race_1
-[0, None]
+(0, None)
 0 1
 <class 'StopIteration'> ()
 <class 'StopIteration'> ()
