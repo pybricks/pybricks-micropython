@@ -59,8 +59,8 @@ typedef enum {
     // NB: These values are sent over the air so the numeric values must not be changed.
     // There can be at most 8 types since the values have to fit in 3 bits.
 
-    /** The Python @c None value. */
-    PB_BLE_BROADCAST_DATA_TYPE_NONE = 0,
+    /** Indicator that the next value is the one and only value (instead of a tuple). */
+    PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT = 0,
     /** The Python @c True value. */
     PB_BLE_BROADCAST_DATA_TYPE_TRUE = 1,
     /** The Python @c False value. */
@@ -73,8 +73,6 @@ typedef enum {
     PB_BLE_BROADCAST_DATA_TYPE_STR = 5,
     /** The Python @c bytes type. */
     PB_BLE_BROADCAST_DATA_TYPE_BYTES = 6,
-    /** Indicator that the next value is the one and only value (instead of a tuple). */
-    PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT = 7,
 } pb_ble_broadcast_data_type_t;
 
 #define MFG_SPECIFIC 0xFF
@@ -169,7 +167,7 @@ STATIC size_t pb_module_ble_append(uint8_t *dst, size_t index, const void *src, 
  * Encodes a Python object using the Pybricks Broadcast encoding scheme and
  * appends it to the advertising data.
  *
- * @p arg must be @c None, @c True, @c False, an @c int, a @c float, a @c str
+ * @p arg must be @c True, @c False, an @c int, a @c float, a @c str
  * or bytes-like (supports buffer protocol).
  *
  * @param [in]  dst     Pointer to the start of the manufacturer-specific advertising data.
@@ -180,9 +178,6 @@ STATIC size_t pb_module_ble_append(uint8_t *dst, size_t index, const void *src, 
  * @throws TypeError    If @p arg is not one of the supported types.
  */
 STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
-    if (arg == mp_const_none) {
-        return pb_module_ble_append(dst, index, NULL, 0, PB_BLE_BROADCAST_DATA_TYPE_NONE);
-    }
 
     if (arg == mp_const_true) {
         return pb_module_ble_append(dst, index, NULL, 0, PB_BLE_BROADCAST_DATA_TYPE_TRUE);
@@ -237,7 +232,7 @@ STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
         return pb_module_ble_append(dst, index, info.buf, info.len, is_str ? PB_BLE_BROADCAST_DATA_TYPE_STR : PB_BLE_BROADCAST_DATA_TYPE_BYTES);
     }
 
-    mp_raise_TypeError(MP_ERROR_TEXT("must be None, True, False, int, float, str or bytes"));
+    mp_raise_TypeError(MP_ERROR_TEXT("must be True, False, int, float, str or bytes"));
 
     MP_UNREACHABLE
 }
@@ -258,12 +253,15 @@ STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
 STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_obj_BLE_t, self,
-        PB_ARG_DEFAULT_OBJ(data, mp_const_empty_tuple_obj));
+        PB_ARG_REQUIRED(data));
     // REVISIT: disable this method on move hub and city hub?
     // This method will raise an OSError on move hub if it is called while the
     // move hub is connected to Pybricks Code. Also, broadcasting interferes
     // with observing even when not connected to Pybricks Code. On the city
     // hub, this method succeeds, but nothing is actually sent over the air.
+
+
+    // TODO: Stop broadcasting if data is None.
 
     struct {
         pbdrv_bluetooth_value_t v;
@@ -318,9 +316,6 @@ STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
     (*index)++;
 
     switch (data_type) {
-        case PB_BLE_BROADCAST_DATA_TYPE_NONE:
-            assert(size == 0);
-            return mp_const_none;
         case PB_BLE_BROADCAST_DATA_TYPE_TRUE:
             assert(size == 0);
             return mp_const_true;
