@@ -23,10 +23,13 @@
 - Fixed `surface=False` not working in `ColorSensor` ([support#1232]).
 - Fixed `PUPDevice.write` not selecting correct mode ([support#1213]).
 - Fixed City Hub turning back on after shutdown ([support#1195]).
+- Fixed SPIKE hubs not broadcasting at all when attempting to broadcast in a
+  tight loop ([support#1151]).
 
 [pybricks-micropython#104]: https://github.com/pybricks/pybricks-micropython/pull/104
 [support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1140]: https://github.com/pybricks/support/issues/1140
+[support#1151]: https://github.com/pybricks/support/issues/1151
 [support#1189]: https://github.com/pybricks/support/issues/1189
 [support#1195]: https://github.com/pybricks/support/issues/1195
 [support#1213]:  https://github.com/pybricks/support/issues/1213

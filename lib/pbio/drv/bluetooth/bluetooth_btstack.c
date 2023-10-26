@@ -739,6 +739,8 @@ void pbdrv_bluetooth_disconnect_remote(void) {
 static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
 
+    static struct timer broadcast_delay;
+
     PT_BEGIN(pt);
 
     if (value->size > LE_ADVERTISING_DATA_SIZE) {
@@ -759,6 +761,13 @@ static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
         gap_advertisements_enable(true);
         is_broadcasting = true;
     }
+
+    // Delay to allow for advertising to start. FIXME: This is technically only
+    // needed if a previous broadcast was started sooner than this. It would be
+    // better to conditionally await just before the broadcast so we can avoid
+    // unnecessary delays.
+    timer_set(&broadcast_delay, 10);
+    PT_WAIT_UNTIL(pt, timer_expired(&broadcast_delay));
 
     // REVISIT: use callback to actually wait for start?
     task->status = PBIO_SUCCESS;
