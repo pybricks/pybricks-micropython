@@ -10,13 +10,25 @@
 #include "ioport_pup.h"
 #include "../core.h"
 
-static void init_one_port(const pbdrv_ioport_pup_pins_t *pins) {
-    // Normally should be set already, but could have been changed by bootloader.
-    pbdrv_gpio_set_pull(&pins->gpio1, PBDRV_GPIO_PULL_NONE);
-    pbdrv_gpio_set_pull(&pins->gpio2, PBDRV_GPIO_PULL_NONE);
-    pbdrv_gpio_set_pull(&pins->uart_buf, PBDRV_GPIO_PULL_NONE);
-    pbdrv_gpio_set_pull(&pins->uart_tx, PBDRV_GPIO_PULL_NONE);
-    pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
+static void init_ports(void) {
+    for (uint8_t i = 0; i < PBDRV_CONFIG_IOPORT_NUM_DEV; i++) {
+        const pbdrv_ioport_pup_pins_t *pins = &pbdrv_ioport_pup_platform_data.ports[i].pins;
+
+        pbdrv_gpio_input(&pins->gpio1);
+        pbdrv_gpio_input(&pins->gpio2);
+        pbdrv_gpio_input(&pins->uart_buf);
+        pbdrv_gpio_input(&pins->uart_tx);
+        pbdrv_gpio_input(&pins->uart_rx);
+
+        // These should be set by default already, but it seems that the
+        // bootloader on the Technic hub changes these and causes wrong
+        // detection if we don't make sure pull is disabled.
+        pbdrv_gpio_set_pull(&pins->gpio1, PBDRV_GPIO_PULL_NONE);
+        pbdrv_gpio_set_pull(&pins->gpio2, PBDRV_GPIO_PULL_NONE);
+        pbdrv_gpio_set_pull(&pins->uart_buf, PBDRV_GPIO_PULL_NONE);
+        pbdrv_gpio_set_pull(&pins->uart_tx, PBDRV_GPIO_PULL_NONE);
+        pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
+    }
 }
 
 void pbdrv_ioport_enable_vcc(bool enable) {
@@ -34,9 +46,7 @@ PROCESS(pbdrv_ioport_pup_process, "ioport_pup");
 #endif
 
 void pbdrv_ioport_init(void) {
-    for (uint8_t i = 0; i < PBDRV_CONFIG_IOPORT_NUM_DEV; i++) {
-        init_one_port(&pbdrv_ioport_pup_platform_data.ports[i].pins);
-    }
+    init_ports();
 
     #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
     pbdrv_init_busy_up();
@@ -45,7 +55,7 @@ void pbdrv_ioport_init(void) {
 }
 
 void pbdrv_ioport_deinit(void) {
-    pbdrv_ioport_init();
+    init_ports();
 
     // Turn off power on pin 4 on all ports. This is set to input instead of
     // low to avoid city/move hubs turning back on when button released.

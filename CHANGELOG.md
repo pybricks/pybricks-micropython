@@ -22,11 +22,13 @@
 - Fixed Powered Up Tilt Sensor not working  ([support#1189]).
 - Fixed `surface=False` not working in `ColorSensor` ([support#1232]).
 - Fixed `PUPDevice.write` not selecting correct mode ([support#1213]).
+- Fixed City Hub turning back on after shutdown ([support#1195]).
 
 [pybricks-micropython#104]: https://github.com/pybricks/pybricks-micropython/pull/104
 [support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1140]: https://github.com/pybricks/support/issues/1140
 [support#1189]: https://github.com/pybricks/support/issues/1189
+[support#1195]: https://github.com/pybricks/support/issues/1195
 [support#1213]:  https://github.com/pybricks/support/issues/1213
 [support#1232]: https://github.com/pybricks/support/issues/1232
 [support#1254]: https://github.com/pybricks/support/issues/1254
