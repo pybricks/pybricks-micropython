@@ -98,6 +98,7 @@ static pbdrv_bluetooth_receive_handler_t notification_handler;
 static pup_handset_t handset;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
+static struct timer broadcast_delay;
 
 static bool is_broadcasting;
 static bool is_observing;
@@ -498,6 +499,8 @@ void pbdrv_bluetooth_init(void) {
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
+
+    timer_set(&broadcast_delay, 10);
 }
 
 void pbdrv_bluetooth_power_on(bool on) {
@@ -745,6 +748,12 @@ static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
         task->status = PBIO_ERROR_INVALID_ARG;
         PT_EXIT(pt);
     }
+
+    // If new data was very recently set, await before broadcasting again. This
+    // ensures broadcast works even if called in a tight loop in user code,
+    // without introducing additional delays when called infrequently.
+    PT_WAIT_UNTIL(pt, timer_expired(&broadcast_delay));
+    timer_restart(&broadcast_delay);
 
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0xA0, 0xA0, ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
