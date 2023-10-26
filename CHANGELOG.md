@@ -7,6 +7,7 @@
 ### Added
 - Added `hub.buttons` as an alias for `hub.button` on buttons with one
   hub ([support#1254]).
+- Implemented `brake` for `DriveBase` ([support#881]).
 
 ### Changed
 - The `use_gyro` method is added to the normal `DriveBase` class instead of
@@ -27,6 +28,7 @@
   tight loop ([support#1151]).
 
 [pybricks-micropython#104]: https://github.com/pybricks/pybricks-micropython/pull/104
+[support#881]: https://github.com/pybricks/support/issues/881
 [support#1054]: https://github.com/pybricks/support/issues/1054
 [support#1140]: https://github.com/pybricks/support/issues/1140
 [support#1151]: https://github.com/pybricks/support/issues/1151

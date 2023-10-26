@@ -222,6 +222,20 @@ STATIC mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_stop_obj, pb_type_DriveBase_stop);
 
+// pybricks.robotics.DriveBase.brake
+STATIC mp_obj_t pb_type_DriveBase_brake(mp_obj_t self_in) {
+
+    // Cancel awaitables.
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_awaitable_update_all(self->awaitables, PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+
+    // Stop hardware.
+    pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_BRAKE));
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_brake_obj, pb_type_DriveBase_brake);
+
 // pybricks.robotics.DriveBase.distance
 STATIC mp_obj_t pb_type_DriveBase_distance(mp_obj_t self_in) {
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -355,6 +369,7 @@ STATIC const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_turn),             MP_ROM_PTR(&pb_type_DriveBase_turn_obj)     },
     { MP_ROM_QSTR(MP_QSTR_drive),            MP_ROM_PTR(&pb_type_DriveBase_drive_obj)    },
     { MP_ROM_QSTR(MP_QSTR_stop),             MP_ROM_PTR(&pb_type_DriveBase_stop_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_brake),            MP_ROM_PTR(&pb_type_DriveBase_brake_obj)    },
     { MP_ROM_QSTR(MP_QSTR_distance),         MP_ROM_PTR(&pb_type_DriveBase_distance_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle),            MP_ROM_PTR(&pb_type_DriveBase_angle_obj)    },
     { MP_ROM_QSTR(MP_QSTR_done),             MP_ROM_PTR(&pb_type_DriveBase_done_obj)     },
