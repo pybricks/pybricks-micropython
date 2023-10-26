@@ -27,9 +27,34 @@ typedef struct _iodevices_PUPDevice_obj_t {
     pb_type_device_obj_base_t device_base;
     // Mode used when initiating awaitable read. REVISIT: This should be stored
     // on the awaitable instead, as extra context. For now, it is safe since
-    // concurrent reads with the same sensor are not permitten.
+    // concurrent reads with the same sensor are not permitted.
     uint8_t last_mode;
+    // ID of a passive device, if any.
+    pbdrv_legodev_type_id_t passive_id;
 } iodevices_PUPDevice_obj_t;
+
+/**
+ * Tests if the given device is a passive device and stores ID.
+ *
+ * @param [in]  self        The PUP device.
+ * @param [in]  port_in     The port.
+ * @return                  True if passive device, false otherwise.
+ */
+STATIC bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t port_in) {
+    pb_module_tools_assert_blocking();
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbdrv_legodev_type_id_t candidates[] = {
+        PBDRV_LEGODEV_TYPE_ID_ANY_DC_MOTOR,
+        PBDRV_LEGODEV_TYPE_ID_LPF2_LIGHT,
+    };
+    for (uint8_t i = 0; i < MP_ARRAY_SIZE(candidates); i++) {
+        if (pbdrv_legodev_get_device(port, &candidates[i], &self->device_base.legodev) == PBIO_SUCCESS) {
+            self->passive_id = candidates[i];
+            return true;
+        }
+    }
+    return false;
+}
 
 // pybricks.iodevices.PUPDevice.__init__
 STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -37,13 +62,29 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
         PB_ARG_REQUIRED(port));
 
     iodevices_PUPDevice_obj_t *self = mp_obj_malloc(iodevices_PUPDevice_obj_t, type);
+
+    // For backwards compatibility, allow class to be used with passive devices.
+    if (init_passive_pup_device(self, port_in)) {
+        return MP_OBJ_FROM_PTR(self);
+    }
+
+    // Initialize any UART PUP device.
     pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_ANY_LUMP_UART);
+    self->passive_id = PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART;
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.iodevices.PUPDevice.info
 STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Passive devices only have an ID.
+    if (self->passive_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+        mp_obj_t info_dict = mp_obj_new_dict(1);
+        mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(self->passive_id));
+        return info_dict;
+    }
+
     pbdrv_legodev_info_t *info;
     pb_assert(pbdrv_legodev_get_info(self->device_base.legodev, &info));
 
@@ -107,6 +148,11 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode));
 
+    // Passive devices don't support reading.
+    if (self->passive_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+        pb_assert(PBIO_ERROR_INVALID_OP);
+    }
+
     self->last_mode = mp_obj_get_int(mode_in);
 
     // We can re-use the same code as for specific sensor types, only the mode
@@ -126,6 +172,11 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode),
         PB_ARG_REQUIRED(data));
+
+    // Passive devices don't support writing.
+    if (self->passive_id != PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+        pb_assert(PBIO_ERROR_INVALID_OP);
+    }
 
     // Get requested mode.
     uint8_t mode = mp_obj_get_int(mode_in);
