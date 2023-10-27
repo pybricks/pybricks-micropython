@@ -201,7 +201,6 @@ STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_IMU_locals_dict, hubs_MoveHub_IMU_local
 STATIC MP_DEFINE_CONST_OBJ_TYPE(hubs_MoveHub_IMU_type,
     MP_QSTR_IMU,
     MP_TYPE_FLAG_NONE,
-    attr, pb_attribute_handler,
     locals_dict, &hubs_MoveHub_IMU_locals_dict);
 
 STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
