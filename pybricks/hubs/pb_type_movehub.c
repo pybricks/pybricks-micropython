@@ -134,8 +134,20 @@ static void motion_get_acceleration_raw(int8_t *data) {
     data[1] = -data[1];
 }
 
+static void motion_get_acceleration_rotated(int8_t *accel, uint8_t *index, int8_t *sign) {
+    int8_t raw[3];
+    motion_get_acceleration_raw(raw);
+
+    // Based on given orientation, shift and flip the data.
+    for (uint8_t i = 0; i < 3; i++) {
+        accel[index[i]] = raw[i] * sign[i];
+    }
+}
+
 typedef struct {
     mp_obj_base_t base;
+    uint8_t transform_index[3];
+    int8_t transform_sign[3];
 } hubs_MoveHub_IMU_obj_t;
 
 // This is an integer version of pybricks._common.IMU.up
@@ -183,11 +195,13 @@ MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_up_obj, hubs_MoveHub_IMU_up);
 
 STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 
-    // Gets signed acceleration data
-    int8_t data[3];
-    motion_get_acceleration_raw(data);
+    hubs_MoveHub_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Convert to appropriate units and return as tuple
+    // Gets signed acceleration data.
+    int8_t data[3];
+    motion_get_acceleration_rotated(data, self->transform_index, self->transform_sign);
+
+    // Convert to appropriate units and return as tuple.
     mp_obj_t values[3];
     for (uint8_t i = 0; i < 3; i++) {
         values[i] = MP_OBJ_NEW_SMALL_INT(data[i] * 158);
@@ -197,41 +211,13 @@ STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_acceleration_obj, hubs_MoveHub_IMU_acceleration);
 
 // pybricks._common.SimpleAccelerometer.tilt
-STATIC mp_obj_t hubs_MoveHub_IMU_tilt(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t hubs_MoveHub_IMU_tilt(mp_obj_t self_in) {
 
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        hubs_MoveHub_IMU_obj_t, self,
-        PB_ARG_DEFAULT_OBJ(up, pb_Side_TOP_obj),
-        PB_ARG_DEFAULT_OBJ(forward, pb_Side_FRONT_obj));
-
-    (void)self;
-
-    // REVISIT: Re-orientation should be a one-off in the hub init like
-    // we do on the other hubs.
-
-    // Get the local X and Z axes corresponding to given sides.
-    uint8_t index[3];
-    int8_t sign[3];
-    pbio_geometry_side_get_axis(pb_type_enum_get_value(up_in, &pb_enum_type_Side), &index[2], &sign[2]);
-    pbio_geometry_side_get_axis(pb_type_enum_get_value(forward_in, &pb_enum_type_Side), &index[0], &sign[0]);
-
-    // Given axes may not be parallel (i.e. not same or opposite sides).
-    if (index[2] == index[0]) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
-    // Get the remaining Y axis to complete the coordinate system.
-    pbio_geometry_get_complementary_axis(index, sign);
+    hubs_MoveHub_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Get acceleration data in arbitrary units.
-    int8_t data[3];
-    motion_get_acceleration_raw(data);
-
-    // Based on given orientation, shift and flip the data.
-    int32_t accel[3];
-    for (uint8_t i = 0; i < 3; i++) {
-        accel[index[i]] = data[i] * sign[index[i]];
-    }
+    int8_t accel[3];
+    motion_get_acceleration_rotated(accel, self->transform_index, self->transform_sign);
 
     // Now we can compute the tilt values.
     mp_obj_t tilt[2];
@@ -245,7 +231,7 @@ STATIC mp_obj_t hubs_MoveHub_IMU_tilt(size_t n_args, const mp_obj_t *pos_args, m
     // Return as tuple
     return mp_obj_new_tuple(2, tilt);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(hubs_MoveHub_IMU_tilt_obj, 1, hubs_MoveHub_IMU_tilt);
+MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_tilt_obj, hubs_MoveHub_IMU_tilt);
 
 STATIC const mp_rom_map_elem_t hubs_MoveHub_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acceleration), MP_ROM_PTR(&hubs_MoveHub_IMU_acceleration_obj) },
@@ -259,8 +245,27 @@ STATIC MP_DEFINE_CONST_OBJ_TYPE(hubs_MoveHub_IMU_type,
     MP_TYPE_FLAG_NONE,
     locals_dict, &hubs_MoveHub_IMU_locals_dict);
 
-STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
+STATIC mp_obj_t hubs_MoveHub_IMU_make_new(mp_obj_t top_side_in, mp_obj_t front_side_in) {
     hubs_MoveHub_IMU_obj_t *self = mp_obj_malloc(hubs_MoveHub_IMU_obj_t, &hubs_MoveHub_IMU_type);
+
+    // Save base orientation.
+    int8_t top_side_axis = mp_obj_get_int(top_side_in);
+    int8_t front_side_axis = mp_obj_get_int(front_side_in);
+    if (top_side_axis == front_side_axis ||
+        top_side_axis == 0 || front_side_axis == 0 ||
+        pbio_int_math_abs(top_side_axis) > 3 ||
+        pbio_int_math_abs(front_side_axis) > 3) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Get the local X and Z axes corresponding to given sides.
+    self->transform_index[0] = pbio_int_math_abs(front_side_axis) - 1,
+    self->transform_index[2] = pbio_int_math_abs(top_side_axis) - 1,
+    self->transform_sign[0] = pbio_int_math_sign(front_side_axis),
+    self->transform_sign[2] = pbio_int_math_sign(top_side_axis),
+
+    // Get the remaining Y axis to complete the coordinate system.
+    pbio_geometry_get_complementary_axis(self->transform_index, self->transform_sign);
 
     // PA4 gpio output - used for CS
     pbdrv_gpio_t gpio = { .bank = GPIOA, .pin = 4 };
@@ -313,11 +318,14 @@ static const pb_obj_enum_member_t *movehub_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    #if PYBRICKS_PY_COMMON_BLE
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_INT(broadcast_channel, 0),
-        PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj));
-    #endif
+        PB_ARG_DEFAULT_INT(top_side, pb_type_Axis_Z_int_enum),
+        PB_ARG_DEFAULT_INT(front_side, pb_type_Axis_X_int_enum)
+        #if PYBRICKS_PY_COMMON_BLE
+        , PB_ARG_DEFAULT_INT(broadcast_channel, 0)
+        , PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj)
+        #endif
+        );
 
     hubs_MoveHub_obj_t *self = mp_obj_malloc(hubs_MoveHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
@@ -325,7 +333,7 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
     self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(movehub_buttons), movehub_buttons, pbio_button_is_pressed);
-    self->imu = hubs_MoveHub_IMU_make_new();
+    self->imu = hubs_MoveHub_IMU_make_new(top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);

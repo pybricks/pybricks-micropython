@@ -6,6 +6,7 @@
 
 ### Added
 - Added `MoveHub.imu.tilt()` ([support#539]).
+- Enabled hub init orientation support for Move Hub ([support#539]).
 
 ### Fixed
 - Fixed Move Hub accelerometer not working since v3.3.0b5 ([support#1269]).

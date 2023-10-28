@@ -15,11 +15,18 @@
 #include <pybricks/util_mp/pb_type_enum.h>
 #include <pybricks/tools/pb_type_matrix.h>
 
-#if MICROPY_PY_BUILTINS_FLOAT
 extern const mp_obj_type_t pb_enum_type_Axis;
+#if MICROPY_PY_BUILTINS_FLOAT
 extern const pb_type_Matrix_obj_t pb_type_Axis_X_obj;
 extern const pb_type_Matrix_obj_t pb_type_Axis_Y_obj;
 extern const pb_type_Matrix_obj_t pb_type_Axis_Z_obj;
+#else
+// Systems without floating point don't support vector math but the
+// axes are still used as setup parameters. We use nonzero int indexes
+// so that they may still be negated to get the opposite direction.
+#define pb_type_Axis_X_int_enum (1)
+#define pb_type_Axis_Y_int_enum (2)
+#define pb_type_Axis_Z_int_enum (3)
 #endif // MICROPY_PY_BUILTINS_FLOAT
 
 #if PYBRICKS_PY_PARAMETERS_BUTTON

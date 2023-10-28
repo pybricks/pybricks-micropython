@@ -9,9 +9,7 @@
 
 STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_parameters)     },
-    #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_Axis),        MP_ROM_PTR(&pb_enum_type_Axis)      },
-    #endif
     #if PYBRICKS_PY_PARAMETERS_BUTTON
     { MP_ROM_QSTR(MP_QSTR_Button),      MP_ROM_PTR(&pb_enum_type_Button)    },
     #endif
