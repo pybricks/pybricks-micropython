@@ -1530,7 +1530,8 @@ static bool get_npi_rx_size(uint8_t *rx_size) {
         return false;
     }
 
-    *rx_size = read_buf[2];
+    // total read size is payload length plus 1 FCS byte
+    *rx_size = read_buf[2] + 1;
 
     return true;
 }
@@ -2068,10 +2069,12 @@ start:
 
         // Total transfer size is biggest of read and write sizes.
         read_xfer_size = 0;
-        if (get_npi_rx_size(&read_xfer_size) && read_xfer_size > real_write_xfer_size - 4) {
-            xfer_size = read_xfer_size + 4;
+        if (get_npi_rx_size(&read_xfer_size) && read_xfer_size + NPI_SPI_HEADER_LEN > real_write_xfer_size) {
+            xfer_size = read_xfer_size;
         } else {
-            xfer_size = real_write_xfer_size;
+            // remaining size is write size - 3 bytes already sent
+            xfer_size = real_write_xfer_size - NPI_SPI_HEADER_LEN;
+
         }
 
         // read the remaining message
@@ -2118,6 +2121,7 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *pData, uint8_t da
         memcpy(&write_buf[6], pData, dataLength);
     }
 
+    // calculate and append FCS byte
     uint8_t checksum = 0;
     for (int i = 1; i < dataLength + 6; i++) {
         checksum ^= write_buf[i];
