@@ -132,9 +132,6 @@ STATIC bool pb_module_tools_pbio_task_test_completion(mp_obj_t obj, uint32_t end
 
     // Keep going if not done yet.
     if (task->status == PBIO_ERROR_AGAIN) {
-        pbio_task_run_once(task);
-    }
-    if (task->status == PBIO_ERROR_AGAIN) {
         return false;
     }
 
