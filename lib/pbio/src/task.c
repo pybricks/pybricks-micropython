@@ -47,14 +47,15 @@ bool pbio_task_run_once(pbio_task_t *task) {
 }
 
 /**
- * Cancels @p task and runs one iteration unless the task is already complete.
+ * Sets cancel flag for @p task.
  * @param [in]  task The task.
  */
 void pbio_task_cancel(pbio_task_t *task) {
-    if (task->status != PBIO_ERROR_AGAIN) {
-        return;
-    }
-
     task->cancel = true;
-    pbio_task_run_once(task);
+    // FIXME: need a way to poll the process that has the task queue to
+    // expedite the cancellation. e.g. if the task is not the first in the
+    // queue, it can just be removed from the queue. For btstack, we probably
+    // need to create a synthetic event. For other drivers, we can probably
+    // do something with contiki events. Since it is driver-specific, this
+    // means we probably need to add a cancel callback to the task struct.
 }

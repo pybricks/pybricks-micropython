@@ -62,6 +62,7 @@ static void test_task_cancellation(void *env) {
     tt_want_uint_op(task.status, ==, PBIO_ERROR_AGAIN);
 
     pbio_task_cancel(&task);
+    pbio_task_run_once(&task);
 
     tt_want_uint_op(call_count, ==, 3);
     tt_want_uint_op(task.status, ==, PBIO_ERROR_CANCELED);
