@@ -876,7 +876,7 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
             (conn_handle == NO_CONNECTION && remote_handle == NO_CONNECTION) ? ADV_IND : ADV_NONCONN_IND,
             #endif
             GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
-            GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+            GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_WHITELIST);
         PT_WAIT_UNTIL(pt, hci_command_status);
 
         if (read_buf[8] != bleSUCCESS) {
