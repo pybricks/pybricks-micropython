@@ -10,7 +10,9 @@
 
 ### Fixed
 - Fixed Move Hub accelerometer not working since v3.3.0b5 ([support#1269]).
+- Fixed Bluetooth chip locking up on Technic and City hubs when broadcasting ([[support#1095]]).
 
+[support#1095]: https://github.com/pybricks/support/issues/1095
 [support#1269]: https://github.com/pybricks/support/issues/1269
 
 ## [3.3.0b9] - 2023-10-26

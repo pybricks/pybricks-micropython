@@ -827,16 +827,13 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
         PT_EXIT(pt);
     }
 
+    // HACK: calling GAP_updateAdvertisingData() repeatedly will cause the
+    // Bluetooth chips on Technic and City hubs to eventually lock up. So we
+    // call the standard Bluetooth command instead. We still get the vendor-
+    // specific command complete event as if we had called the TI command (but
+    // not the command status).
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_updateAdvertisingData(GAP_AD_TYPE_ADVERTISEMENT_DATA, value->size, value->data);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    if (read_buf[8] != bleSUCCESS) {
-        task->status = ble_error_to_pbio_error(read_buf[8]);
-        PT_EXIT(pt);
-    }
-
-    // wait for GAP update advert data done event
+    HCI_LE_setAdvertisingData(value->size, value->data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
 
     if (!is_broadcasting) {

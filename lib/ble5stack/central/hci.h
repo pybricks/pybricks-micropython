@@ -6,5 +6,6 @@
 HCI_StatusCodes_t HCI_readBdaddr(void);
 HCI_StatusCodes_t HCI_readLocalVersionInfo(void);
 HCI_StatusCodes_t HCI_LE_readAdvertisingChannelTxPower(void);
+HCI_StatusCodes_t HCI_LE_setAdvertisingData(uint8_t len, uint8_t *data);
 
 #endif // HCI_H
