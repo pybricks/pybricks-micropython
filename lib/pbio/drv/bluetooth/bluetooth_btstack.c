@@ -748,9 +748,6 @@ static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
         PT_EXIT(pt);
     }
 
-    bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0xA0, 0xA0, ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
-
     // have to keep copy of data here since BTStack doesn't copy
     static uint8_t static_data[LE_ADVERTISING_DATA_SIZE];
     memcpy(static_data, value->data, value->size);
@@ -758,6 +755,8 @@ static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
     gap_advertisements_set_data(value->size, static_data);
 
     if (!is_broadcasting) {
+        bd_addr_t null_addr = { };
+        gap_advertisements_set_params(0xA0, 0xA0, ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
         gap_advertisements_enable(true);
         is_broadcasting = true;
     }
