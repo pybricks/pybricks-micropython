@@ -309,7 +309,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_
  * @returns                 The decoded value as a Python object.
  * @throws RuntimeError     If the data was invalid and could not be decoded.
  */
-STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
+STATIC mp_obj_t pb_module_ble_decode(const observed_data_t *data, size_t *index) {
     uint8_t size = data->data[*index] & 0x1F;
     pb_ble_broadcast_data_type_t data_type = data->data[*index] >> 5;
 
@@ -389,7 +389,7 @@ STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
  * @throws ValueError       If the channel is out of range.
  * @throws RuntimeError     If the last received data was invalid.
  */
-STATIC observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
+STATIC const observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
     mp_int_t channel = mp_obj_get_int(channel_in);
 
     observed_data_t *ch_data = lookup_observed_data(channel);
@@ -425,7 +425,7 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
     // during any MicroPython function call that allocates memory. So, we have
     // to make a copy of it since we are potentially allocating multiple times
     // in a loop below.
-    observed_data_t ch_data = *pb_module_ble_get_channel_data(channel_in);
+    const observed_data_t ch_data = *pb_module_ble_get_channel_data(channel_in);
 
     // Have not received data yet or timed out.
     if (ch_data.rssi == INT8_MIN) {
@@ -465,7 +465,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_obj, pb_module_ble_observ
  * @throws ValueError       If the channel is out of range.
  */
 STATIC mp_obj_t pb_module_ble_signal_strength(mp_obj_t self_in, mp_obj_t channel_in) {
-    observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
+    const observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
     return mp_obj_new_int(ch_data->rssi);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_signal_strength_obj, pb_module_ble_signal_strength);
