@@ -381,6 +381,9 @@ STATIC mp_obj_t pb_module_ble_decode(observed_data_t *data, size_t *index) {
 /**
  * Retrieves the last received advertising data.
  *
+ * The data in the returned pointer is only consistent until the next PBIO event
+ * is processed!
+ *
  * @param [in]  channel_in  Python object containing the channel number.
  * @returns                 Pointer to the last received channel data.
  * @throws ValueError       If the channel is out of range.
@@ -417,17 +420,22 @@ STATIC observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
  */
 STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 
-    observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
+    // BEWARE OF DRAGONS: The data returned by pb_module_ble_get_channel_data()
+    // is only valid until the next PBIO event is processed, which can happen
+    // during any MicroPython function call that allocates memory. So, we have
+    // to make a copy of it since we are potentially allocating multiple times
+    // in a loop below.
+    observed_data_t ch_data = *pb_module_ble_get_channel_data(channel_in);
 
     // Have not received data yet or timed out.
-    if (ch_data->rssi == INT8_MIN) {
+    if (ch_data.rssi == INT8_MIN) {
         return mp_const_none;
     }
 
     // Handle single object.
-    if (ch_data->size != 0 && ch_data->data[0] >> 5 == PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT) {
+    if (ch_data.size != 0 && ch_data.data[0] >> 5 == PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT) {
         size_t value_index = 1;
-        return pb_module_ble_decode(ch_data, &value_index);
+        return pb_module_ble_decode(&ch_data, &value_index);
     }
 
     // Objects can be encoded in as little as one byte so we could have up to
@@ -437,11 +445,11 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
     size_t index = 0;
     size_t i;
     for (i = 0; i < OBSERVED_DATA_MAX_SIZE; i++) {
-        if (index >= ch_data->size) {
+        if (index >= ch_data.size) {
             break;
         }
 
-        items[i] = pb_module_ble_decode(ch_data, &index);
+        items[i] = pb_module_ble_decode(&ch_data, &index);
     }
 
     return mp_obj_new_tuple(i, items);
