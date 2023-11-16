@@ -7,6 +7,10 @@ and creating virtual robots in a 3-D environment.
 
 ## Building
 
+Prerequisites:
+
+    make -C micropython/ports/unix submodules
+
 Run:
 
     make virtualhub
