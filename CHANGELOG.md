@@ -8,6 +8,12 @@
 - Added `MoveHub.imu.tilt()` ([support#539]).
 - Enabled hub init orientation support for Move Hub ([support#539]).
 
+### Changed
+- Changed steering direction with `DriveBase.drive()` when reversing. Now, 
+  a positive angle or turn rate means the robot travels along a circle to
+  its right. The speed or radius can be negated to travel in reverse along
+  that same circle ([support#1191]).
+
 ### Fixed
 - Fixed Move Hub accelerometer not working since v3.3.0b5 ([support#1269]).
 - Fixed Bluetooth chip locking up on Technic and City hubs when broadcasting ([support#1095]).

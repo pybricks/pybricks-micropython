@@ -641,6 +641,12 @@ static pbio_error_t pbio_drivebase_drive_time_common(pbio_drivebase_t *db, int32
         return err;
     }
 
+    // When reversing, also reverse steering. This way, driving backwards without
+    // changing the steering sign means driving along the same circle, backwards.
+    if (drive_speed < 0) {
+        turn_speed = -turn_speed;
+    }
+
     err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration, turn_speed, on_completion);
     if (err != PBIO_SUCCESS) {
         return err;
