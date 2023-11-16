@@ -18,9 +18,9 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=4000 react-scripts start",
     "build": "react-scripts build",
-    "postinstall": "cp ../../lib/pbio/test/animator/img/* public/img/pbio",
+    "postinstall": "mkdir -p public/img/pbio && cp ../../lib/pbio/test/animator/img/* public/img/pbio",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
