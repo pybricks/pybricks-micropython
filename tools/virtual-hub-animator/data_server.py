@@ -35,7 +35,7 @@ motor_angles = [0, 0, 0, 0, 0, 0]
 def socket_send_data_task():
     while True:
         sio.sleep(0.04)
-        sio.emit("hubStateData", {"data": motor_angles}, broadcast=True)
+        sio.emit("hubStateData", {"data": motor_angles})
 
 
 def server_task():
