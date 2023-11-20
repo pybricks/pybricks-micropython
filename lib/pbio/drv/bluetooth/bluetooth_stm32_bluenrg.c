@@ -716,6 +716,14 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
 
         if (status != BLE_STATUS_SUCCESS) {
             task->status = ble_error_to_pbio_error(status);
+
+            // Broadcasting does not work while connected to the computer. But
+            // returning an error means that Move Hub programs with
+            // broadcasting can never run while connected, which makes it very
+            // impractical to test any program. So mark as success.
+            if (task->status == PBIO_ERROR_INVALID_OP) {
+                task->status = PBIO_SUCCESS;
+            }
             PT_EXIT(pt);
         }
 

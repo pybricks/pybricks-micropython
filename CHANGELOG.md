@@ -8,6 +8,10 @@
 - Added `MoveHub.imu.tilt()` ([support#539]).
 - Enabled hub init orientation support for Move Hub ([support#539]).
 
+### Changed
+- Allow Move Hub to ignore `broadcast` instead of raising an exception while
+  connected.
+
 ### Fixed
 - Fixed Move Hub accelerometer not working since v3.3.0b5 ([support#1269]).
 - Fixed Bluetooth chip locking up on Technic and City hubs when broadcasting ([support#1095]).
