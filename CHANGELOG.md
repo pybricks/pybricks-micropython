@@ -2,7 +2,7 @@
 
 # Changelog
 
-## [Unreleased]
+## [3.3.0c1] - 2023-11-20
 
 ### Added
 - Added `MoveHub.imu.tilt()` ([support#539]).
@@ -728,7 +728,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...HEAD
+[3.3.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...v3.3.0c1
 [3.3.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b8...v3.3.0b9
 [3.3.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...v3.3.0b8
 [3.3.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...v3.3.0b7
