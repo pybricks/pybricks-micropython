@@ -954,6 +954,20 @@ void pbdrv_bluetooth_stop_broadcasting(void) {
 static PT_THREAD(observe_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
+    // HACK: Always stop observing first so that this task always does a clean
+    // restart of observing. This clears the size limited buffer of discovered
+    // devices. Should be replaced by a generalized scan process that only
+    // restarts scanning when needed. https://github.com/pybricks/support/issues/1096
+    if (is_observing) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_DeviceDiscoveryCancel();
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        if (read_buf[8] == bleSUCCESS) {
+            PT_WAIT_UNTIL(pt, device_discovery_done);
+        }
+        is_observing = false;
+    }
+
     if (!is_observing) {
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_NONDISCOVERABLE, 0, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);

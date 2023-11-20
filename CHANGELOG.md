@@ -12,8 +12,11 @@
 - Fixed Move Hub accelerometer not working since v3.3.0b5 ([support#1269]).
 - Fixed Bluetooth chip locking up on Technic and City hubs when broadcasting ([support#1095]).
 - Fixed potential crash when GC occurs while observing BLE data ([support#1278])
+- Fixed Technic Hub and City Hub eventually stopping observing BLE data after
+  a few minutes ([support#1096]) by implementing an auto-reset workaround.
 
 [support#1095]: https://github.com/pybricks/support/issues/1095
+[support#1096]: https://github.com/pybricks/support/issues/1096
 [support#1269]: https://github.com/pybricks/support/issues/1269
 [support#1278]: https://github.com/pybricks/support/issues/1278
 
