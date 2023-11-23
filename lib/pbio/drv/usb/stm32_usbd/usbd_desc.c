@@ -53,8 +53,8 @@
 #define USBD_LANGID_STRING            0x409
 #define USBD_MANUFACTURER_STRING      "STMicroelectronics"
 #define USBD_PRODUCT_FS_STRING        "Pybricks Hub"
-#define USBD_CONFIGURATION_FS_STRING  "VCP Config"
-#define USBD_INTERFACE_FS_STRING      "VCP Interface"
+#define USBD_CONFIGURATION_FS_STRING  "Pybricks Config"
+#define USBD_INTERFACE_FS_STRING      "Pybricks Interface"
 
 #define         DEVICE_ID1          (0x1FFF7A10)
 #define         DEVICE_ID2          (0x1FFF7A14)
@@ -63,7 +63,7 @@
 #define  USB_SIZ_STRING_SERIAL       0x1A
 
 /* USB Standard Device Descriptor */
-__ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
+__ALIGN_BEGIN static const uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     0x12,                     /* bLength */
     USB_DESC_TYPE_DEVICE,     /* bDescriptorType */
     0x00,                     /* bcdUSB */
@@ -85,19 +85,19 @@ __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
 }; /* USB_DeviceDescriptor */
 
 /* USB Standard Device Descriptor */
-__ALIGN_BEGIN uint8_t USBD_LangIDDesc[USB_LEN_LANGID_STR_DESC] __ALIGN_END = {
+__ALIGN_BEGIN static const uint8_t USBD_LangIDDesc[USB_LEN_LANGID_STR_DESC] __ALIGN_END = {
     USB_LEN_LANGID_STR_DESC,
     USB_DESC_TYPE_STRING,
     LOBYTE(USBD_LANGID_STRING),
     HIBYTE(USBD_LANGID_STRING),
 };
 
-__ALIGN_BEGIN uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
+__ALIGN_BEGIN static uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
     USB_SIZ_STRING_SERIAL,
     USB_DESC_TYPE_STRING,
 };
 
-__ALIGN_BEGIN uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ] __ALIGN_END;
+__ALIGN_BEGIN static uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ] __ALIGN_END;
 
 
 /**
@@ -149,7 +149,7 @@ static void Get_SerialNum(void) {
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -163,7 +163,7 @@ uint8_t *USBD_VCP_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -177,7 +177,7 @@ uint8_t *USBD_VCP_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     USBD_GetString((uint8_t *)USBD_PRODUCT_FS_STRING, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
@@ -188,7 +188,7 @@ uint8_t *USBD_VCP_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -202,7 +202,7 @@ uint8_t *USBD_VCP_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -220,7 +220,7 @@ uint8_t *USBD_VCP_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     USBD_GetString((uint8_t *)USBD_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
@@ -231,17 +231,17 @@ uint8_t *USBD_VCP_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     USBD_GetString((uint8_t *)USBD_INTERFACE_FS_STRING, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
 
-USBD_DescriptorsTypeDef VCP_Desc = {
-    USBD_VCP_DeviceDescriptor,
-    USBD_VCP_LangIDStrDescriptor,
-    USBD_VCP_ManufacturerStrDescriptor,
-    USBD_VCP_ProductStrDescriptor,
-    USBD_VCP_SerialStrDescriptor,
-    USBD_VCP_ConfigStrDescriptor,
-    USBD_VCP_InterfaceStrDescriptor,
+USBD_DescriptorsTypeDef USBD_Pybricks_Desc = {
+    .GetDeviceDescriptor = USBD_Pybricks_DeviceDescriptor,
+    .GetLangIDStrDescriptor = USBD_Pybricks_LangIDStrDescriptor,
+    .GetManufacturerStrDescriptor = USBD_Pybricks_ManufacturerStrDescriptor,
+    .GetProductStrDescriptor = USBD_Pybricks_ProductStrDescriptor,
+    .GetSerialStrDescriptor = USBD_Pybricks_SerialStrDescriptor,
+    .GetConfigurationStrDescriptor = USBD_Pybricks_ConfigStrDescriptor,
+    .GetInterfaceStrDescriptor = USBD_Pybricks_InterfaceStrDescriptor,
 };
