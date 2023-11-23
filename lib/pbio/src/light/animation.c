@@ -50,10 +50,10 @@ void pbio_light_animation_start(pbio_light_animation_t *animation) {
     pbio_light_animation_list_head = animation;
 
     process_start(&pbio_light_animation_process);
-    // HACK: init timer since we don't call etimer_set()
-    timer_set(&animation->timer.timer, 0);
-    // fake a timer event to load the first cell and start the timer
-    process_post_synch(&pbio_light_animation_process, PROCESS_EVENT_TIMER, &animation->timer);
+
+    PROCESS_CONTEXT_BEGIN(&pbio_light_animation_process);
+    etimer_set(&animation->timer, 0);
+    PROCESS_CONTEXT_END(&pbio_light_animation_process);
 
     assert(animation->next_animation != PBIO_LIGHT_ANIMATION_STOPPED);
 }
@@ -120,6 +120,7 @@ PROCESS_THREAD(pbio_light_animation_process, ev, data) {
         clock_time_t interval = animation->next(animation);
         if (pbio_light_animation_is_started(animation)) {
             etimer_reset_with_new_interval(&animation->timer, interval);
+            etimer_restart(&animation->timer);
         }
     }
 
