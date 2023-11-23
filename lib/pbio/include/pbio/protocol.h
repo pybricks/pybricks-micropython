@@ -301,7 +301,9 @@ extern const uint8_t pbio_pybricks_hub_capabilities_char_uuid[];
 
 extern const uint16_t pbio_gatt_device_info_service_uuid;
 extern const uint16_t pbio_gatt_firmware_version_char_uuid;
+extern const uint8_t pbio_gatt_firmware_version_char_uuid_128[];
 extern const uint16_t pbio_gatt_software_version_char_uuid;
+extern const uint8_t pbio_gatt_software_version_char_uuid_128[];
 extern const uint16_t pbio_gatt_pnp_id_char_uuid;
 
 extern const uint8_t pbio_lwp3_hub_service_uuid[];

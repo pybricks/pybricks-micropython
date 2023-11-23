@@ -87,9 +87,17 @@ const uint16_t pbio_gatt_device_info_service_uuid = 0x180A;
 
 /** Bluetooth Firmware Version Characteristic UUID. */
 const uint16_t pbio_gatt_firmware_version_char_uuid = 0x2A26;
+const uint8_t pbio_gatt_firmware_version_char_uuid_128[] = {
+    0x00, 0x00, 0x2A, 0x26, 0x00, 0x00, 0x10, 0x00,
+    0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB,
+};
 
 /** Bluetooth Software Version Characteristic UUID (Pybricks protocol version). */
 const uint16_t pbio_gatt_software_version_char_uuid = 0x2A28;
+const uint8_t pbio_gatt_software_version_char_uuid_128[] = {
+    0x00, 0x00, 0x2A, 0x28, 0x00, 0x00, 0x10, 0x00,
+    0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB,
+};
 
 /** Bluetooth PnP ID Characteristic UUID. */
 const uint16_t pbio_gatt_pnp_id_char_uuid = 0x2A50;

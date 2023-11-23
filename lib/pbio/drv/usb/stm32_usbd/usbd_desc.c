@@ -43,9 +43,18 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>
+
 #include "usbd_core.h"
 #include "usbd_conf.h"
 #include "usbd_pybricks.h"
+
+#include "pbio/protocol.h"
+#include "pbio/version.h"
+#include "pbsys/app.h"
+#include "pbsys/program_load.h"
+#include "pbdrvconfig.h"
+#include "sys/config.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -57,12 +66,21 @@
 #define USBD_CONFIGURATION_FS_STRING  "Pybricks Config"
 #define USBD_INTERFACE_FS_STRING      "Pybricks Interface"
 
+static const char firmware_version[] = PBIO_VERSION_STR;
+static const char software_version[] = PBIO_PROTOCOL_VERSION_STR;
+
 #define         DEVICE_ID1          (0x1FFF7A10)
 #define         DEVICE_ID2          (0x1FFF7A14)
 #define         DEVICE_ID3          (0x1FFF7A18)
 
 #define  USB_SIZ_STRING_SERIAL       0x1A
-#define  USB_SIZ_BOS_DESC            33
+#define  USB_SIZ_BOS_DESC_CONST      (5 + 28)
+#define  USB_SIZ_UUID                (128 / 8)
+#define  USB_SIZ_PLATFORM_HDR        (4 + USB_SIZ_UUID)
+#define  USB_SIZ_BOS_DESC            (USB_SIZ_BOS_DESC_CONST + \
+    USB_SIZ_PLATFORM_HDR + sizeof(firmware_version) + \
+    USB_SIZ_PLATFORM_HDR + sizeof(software_version) + \
+    USB_SIZ_PLATFORM_HDR + PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE)
 
 /* USB Standard Device Descriptor */
 __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
@@ -377,6 +395,57 @@ static uint8_t *USBD_Pybricks_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, ui
 static uint8_t *USBD_Pybricks_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
+
+    static uint8_t created = 0;
+    uint8_t *ptr;
+
+    /* Generate BOS Descriptor on first attempt */
+    if (!created) {
+        created = 1;
+        ptr = &USBD_BOSDesc[USB_SIZ_BOS_DESC_CONST];
+
+        /* Add firmware version */
+        *ptr++ = USB_SIZ_PLATFORM_HDR + sizeof(firmware_version);
+        *ptr++ = USB_DEVICE_CAPABITY_TYPE;
+        *ptr++ = 0x05;
+        *ptr++ = 0x00;
+
+        pbio_uuid128_le_copy(ptr, pbio_gatt_firmware_version_char_uuid_128);
+        ptr += USB_SIZ_UUID;
+
+        memcpy(ptr, firmware_version, sizeof(firmware_version));
+        ptr += sizeof(firmware_version);
+
+        /* Add software (protocol) version */
+        *ptr++ = USB_SIZ_PLATFORM_HDR + sizeof(software_version);
+        *ptr++ = USB_DEVICE_CAPABITY_TYPE;
+        *ptr++ = 0x05;
+        *ptr++ = 0x00;
+
+        pbio_uuid128_le_copy(ptr, pbio_gatt_software_version_char_uuid_128);
+        ptr += USB_SIZ_UUID;
+
+        memcpy(ptr, software_version, sizeof(software_version));
+        ptr += sizeof(software_version);
+
+        /* Add hub capabilities */
+        *ptr++ = USB_SIZ_PLATFORM_HDR + PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
+        *ptr++ = USB_DEVICE_CAPABITY_TYPE;
+        *ptr++ = 0x05;
+        *ptr++ = 0x00;
+
+        pbio_uuid128_le_copy(ptr, pbio_pybricks_hub_capabilities_char_uuid);
+        ptr += USB_SIZ_UUID;
+
+        pbio_pybricks_hub_capabilities(ptr,
+            USBD_PYBRICKS_MAX_PACKET_SIZE - USB_SIZ_UUID,
+            PBSYS_APP_HUB_FEATURE_FLAGS,
+            PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
+        ptr += PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
+
+        /* Update bNumDeviceCaps field in BOS Descriptor */
+        USBD_BOSDesc[4] += 3;
+    }
 
     *length = sizeof(USBD_BOSDesc);
     return (uint8_t *)USBD_BOSDesc;
