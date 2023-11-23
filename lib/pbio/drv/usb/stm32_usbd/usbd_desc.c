@@ -53,8 +53,8 @@
 #define USBD_LANGID_STRING            0x409
 #define USBD_MANUFACTURER_STRING      "STMicroelectronics"
 #define USBD_PRODUCT_FS_STRING        "Pybricks Hub"
-#define USBD_CONFIGURATION_FS_STRING  "VCP Config"
-#define USBD_INTERFACE_FS_STRING      "VCP Interface"
+#define USBD_CONFIGURATION_FS_STRING  "Pybricks Config"
+#define USBD_INTERFACE_FS_STRING      "Pybricks Interface"
 
 #define         DEVICE_ID1          (0x1FFF7A10)
 #define         DEVICE_ID2          (0x1FFF7A14)
@@ -149,7 +149,7 @@ static void Get_SerialNum(void) {
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -163,7 +163,7 @@ uint8_t *USBD_VCP_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -177,7 +177,7 @@ uint8_t *USBD_VCP_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     USBD_GetString((uint8_t *)USBD_PRODUCT_FS_STRING, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
@@ -188,7 +188,7 @@ uint8_t *USBD_VCP_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -202,7 +202,7 @@ uint8_t *USBD_VCP_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
@@ -220,7 +220,7 @@ uint8_t *USBD_VCP_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     USBD_GetString((uint8_t *)USBD_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
@@ -231,17 +231,17 @@ uint8_t *USBD_VCP_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   * @param  length: Pointer to data length variable
   * @retval Pointer to descriptor buffer
   */
-uint8_t *USBD_VCP_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+static uint8_t *USBD_Pybricks_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     USBD_GetString((uint8_t *)USBD_INTERFACE_FS_STRING, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
 
-USBD_DescriptorsTypeDef VCP_Desc = {
-    USBD_VCP_DeviceDescriptor,
-    USBD_VCP_LangIDStrDescriptor,
-    USBD_VCP_ManufacturerStrDescriptor,
-    USBD_VCP_ProductStrDescriptor,
-    USBD_VCP_SerialStrDescriptor,
-    USBD_VCP_ConfigStrDescriptor,
-    USBD_VCP_InterfaceStrDescriptor,
+USBD_DescriptorsTypeDef Pybricks_Desc = {
+    .GetDeviceDescriptor = USBD_Pybricks_DeviceDescriptor,
+    .GetLangIDStrDescriptor = USBD_Pybricks_LangIDStrDescriptor,
+    .GetManufacturerStrDescriptor = USBD_Pybricks_ManufacturerStrDescriptor,
+    .GetProductStrDescriptor = USBD_Pybricks_ProductStrDescriptor,
+    .GetSerialStrDescriptor = USBD_Pybricks_SerialStrDescriptor,
+    .GetConfigurationStrDescriptor = USBD_Pybricks_ConfigStrDescriptor,
+    .GetInterfaceStrDescriptor = USBD_Pybricks_InterfaceStrDescriptor,
 };
