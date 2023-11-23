@@ -12,10 +12,6 @@
 #include <contiki.h>
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_pcd_ex.h>
-
-// TODO: Remove these
-#undef MIN
-#undef MAX
 #include <usbd_core.h>
 
 #include <pbdrv/usb.h>
