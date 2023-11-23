@@ -217,6 +217,7 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
             default:
                 break;
         }
+        dest[1] = MP_OBJ_SENTINEL;
         return;
     }
 
@@ -307,6 +308,20 @@ STATIC mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw,
     return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in));
 }
 
+STATIC mp_obj_t pb_type_Color_get_distance(mp_obj_t self_in, mp_obj_t other_in) {
+    const pbio_color_hsv_t *self = pb_type_Color_get_hsv(self_in);
+    const pbio_color_hsv_t *other = pb_type_Color_get_hsv(other_in);
+    return mp_obj_new_int(pbio_color_get_bicone_squared_distance(self, other));
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(get_distance_obj, pb_type_Color_get_distance);
+
+STATIC const mp_rom_map_elem_t pb_type_Color_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&get_distance_obj)},
+};
+
+STATIC MP_DEFINE_CONST_DICT(pb_type_Color_locals_dict, pb_type_Color_locals_dict_table);
+
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_Color,
     MP_QSTR_Color,
     MP_TYPE_FLAG_ITER_IS_GETITER,
@@ -316,7 +331,8 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_Color,
     unary_op, mp_generic_unary_op,
     binary_op, pb_type_Color_binary_op,
     subscr, pb_type_Color_subscr,
-    iter, pb_type_Color_getiter);
+    iter, pb_type_Color_getiter,
+    locals_dict, &pb_type_Color_locals_dict);
 
 // We expose an instance instead of the type. This lets us provide class
 // attributes via the attribute handler for more flexibility.
