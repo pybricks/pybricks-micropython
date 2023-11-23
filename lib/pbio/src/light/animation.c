@@ -120,7 +120,11 @@ PROCESS_THREAD(pbio_light_animation_process, ev, data) {
         clock_time_t interval = animation->next(animation);
         if (pbio_light_animation_is_started(animation)) {
             etimer_reset_with_new_interval(&animation->timer, interval);
-            etimer_restart(&animation->timer);
+            /* If the timer is to fire in the past, restart it immediately instead. */
+            if (clock_time() > etimer_expiration_time(&animation->timer)) {
+                etimer_reset_with_new_interval(&animation->timer, 0);
+                etimer_restart(&animation->timer);
+            }
         }
     }
 
