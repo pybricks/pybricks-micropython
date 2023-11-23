@@ -10,3 +10,6 @@
 	path = lib/ev3rt-lib
 	url = https://github.com/pybricks/ev3rt-lib.git
 	update = none
+[submodule "lib/STM32_USB_Device_Library"]
+	path = lib/STM32_USB_Device_Library
+	url = https://github.com/STMicroelectronics/stm32_mw_usb_device.git
