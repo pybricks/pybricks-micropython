@@ -118,6 +118,8 @@ void pbio_set_uint32_be(uint8_t *buf, uint32_t value) {
     buf[3] = value;
 }
 
+bool pbio_uuid128_le_compare(const uint8_t *le, const uint8_t *uuid);
+void pbio_uuid128_le_copy(uint8_t *dst, const uint8_t *src);
 bool pbio_uuid128_reverse_compare(const uint8_t *uuid1, const uint8_t *uuid2);
 void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 

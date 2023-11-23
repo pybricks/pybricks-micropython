@@ -3,6 +3,58 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
+
+/**
+ * Compares a 128-bit UUID from @p le in little endian format with
+ * the given uuid @p uuid.
+ *
+ * According to RFC 4122, the UUID is grouped into the following:
+ * 1) One 32-bit
+ * 2) Two 16-bit
+ * 3) Eight 8-bit
+ *
+ * @param [in]  le      The little endian UUID.
+ * @param [in]  uuid    The UUID to compare against.
+ */
+bool pbio_uuid128_le_compare(const uint8_t *le, const uint8_t *uuid) {
+    return (le[0] == uuid[3]) &&
+           (le[1] == uuid[2]) &&
+           (le[2] == uuid[1]) &&
+           (le[3] == uuid[0]) &&
+           (le[4] == uuid[5]) &&
+           (le[5] == uuid[4]) &&
+           (le[6] == uuid[7]) &&
+           (le[7] == uuid[6]) &&
+           (memcmp(&le[8], &uuid[8], 8) == 0);
+}
+
+/**
+ * Copies a 128-bit UUID from @p src to a buffer @p dst,
+ * which is a buffer used by a little endian medium.
+ *
+ * According to RFC 4122, the UUID is grouped into the following:
+ * 1) One 32-bit
+ * 2) Two 16-bit
+ * 3) Eight 8-bit
+ *
+ * @param [in]  dst     The destination array.
+ * @param [in]  src     The UUID to reverse and copy.
+ */
+void pbio_uuid128_le_copy(uint8_t *dst, const uint8_t *src) {
+    dst[0] = src[3];
+    dst[1] = src[2];
+    dst[2] = src[1];
+    dst[3] = src[0];
+
+    dst[4] = src[5];
+    dst[5] = src[4];
+
+    dst[6] = src[7];
+    dst[7] = src[6];
+
+    memcpy(&dst[8], &src[8], 8);
+}
 
 /**
  * Compares two 128-bit UUIDs with opposite byte ordering for equality.
