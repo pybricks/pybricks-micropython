@@ -373,6 +373,7 @@ endif
 SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 	usbd_conf.c \
 	usbd_desc.c \
+	usbd_pybricks.c \
 	)
 
 NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\

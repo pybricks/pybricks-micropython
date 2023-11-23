@@ -45,6 +45,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_core.h"
 #include "usbd_conf.h"
+#include "usbd_pybricks.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -61,12 +62,18 @@
 #define         DEVICE_ID3          (0x1FFF7A18)
 
 #define  USB_SIZ_STRING_SERIAL       0x1A
+#define  USB_SIZ_BOS_DESC            33
 
 /* USB Standard Device Descriptor */
 __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     0x12,                     /* bLength */
     USB_DESC_TYPE_DEVICE,     /* bDescriptorType */
+    #if ((USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1))
+    0x01,                     /* bcdUSB */  /* changed to USB version 2.01
+                                               in order to support BOS Desc */
+    #else
     0x00,                     /* bcdUSB */
+    #endif /* (USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1) */
     0x02,
     0x02,                     /* bDeviceClass */
     0x02,                     /* bDeviceSubClass */
@@ -74,8 +81,8 @@ __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     USB_MAX_EP0_SIZE,         /* bMaxPacketSize */
     LOBYTE(USBD_VID),         /* idVendor */
     HIBYTE(USBD_VID),         /* idVendor */
-    LOBYTE(USBD_PID),         /* idVendor */
-    HIBYTE(USBD_PID),         /* idVendor */
+    LOBYTE(USBD_PID),         /* idProduct */
+    HIBYTE(USBD_PID),         /* idProduct */
     0x00,                     /* bcdDevice rel. 2.00 */
     0x02,
     USBD_IDX_MFC_STR,         /* Index of manufacturer string */
@@ -83,6 +90,136 @@ __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     USBD_IDX_SERIAL_STR,      /* Index of serial number string */
     USBD_MAX_NUM_CONFIGURATION /* bNumConfigurations */
 }; /* USB_DeviceDescriptor */
+
+/** BOS descriptor. */
+#if ((USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1))
+#if defined(__ICCARM__)    /* IAR Compiler */
+  #pragma data_alignment=4
+#endif /* defined ( __ICCARM__ ) */
+__ALIGN_BEGIN uint8_t USBD_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
+{
+    5,                        /* bLength */
+    USB_DESC_TYPE_BOS,        /* bDescriptorType = BOS */
+    LOBYTE(USB_SIZ_BOS_DESC), /* wTotalLength */
+    HIBYTE(USB_SIZ_BOS_DESC), /* wTotalLength */
+    0x01,                     /* bNumDeviceCaps = 1 */
+
+    28,                       /* bLength */
+    USB_DEVICE_CAPABITY_TYPE, /* bDescriptorType = Device Capability */
+    0x05,                     /* bDevCapabilityType = Platform */
+    0x00,                     /* bReserved */
+
+    /*
+     * PlatformCapabilityUUID
+     * Microsoft OS 2.0 descriptor platform capability ID
+     * D8DD60DF-4589-4CC7-9CD2-659D9E648A9F
+     * RFC 4122 explains the correct byte ordering
+     */
+    0xDF, 0x60, 0xDD, 0xD8,           /* 32-bit value */
+    0x89, 0x45,                       /* 16-bit value */
+    0xC7, 0x4C,                       /* 16-bit value */
+    0x9C, 0xD2,
+    0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F,
+
+    0x00, 0x00, 0x03, 0x06,           /* dwWindowsVersion = 0x06030000 for Windows 8.1 Build */
+    LOBYTE(USBD_SIZ_MS_OS_DSCRPTR_SET), /* wMSOSDescriptorSetTotalLength */
+    HIBYTE(USBD_SIZ_MS_OS_DSCRPTR_SET), /* wMSOSDescriptorSetTotalLength */
+    USBD_MS_VENDOR_CODE,              /* bMS_VendorCode */
+    0x00                              /* bAltEnumCode = Does not support alternate enumeration */
+};
+#endif /* (USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1) */
+
+#if ((USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1))
+#if defined(__ICCARM__)    /* IAR Compiler */
+  #pragma data_alignment=4
+#endif /* defined ( __ICCARM__ ) */
+__ALIGN_BEGIN uint8_t USBD_OSDescSet[USBD_SIZ_MS_OS_DSCRPTR_SET] __ALIGN_END =
+{
+    0x0A, 0x00,                       /* wLength = 10 */
+    0x00, 0x00,                       /* wDescriptorType = MS_OS_20_SET_HEADER_DESCRIPTOR */
+    0x00, 0x00, 0x03, 0x06,           /* dwWindowsVersion = 0x06030000 for Windows 8.1 Build */
+    LOBYTE(USBD_SIZ_MS_OS_DSCRPTR_SET), /* wTotalLength */
+    HIBYTE(USBD_SIZ_MS_OS_DSCRPTR_SET), /* wTotalLength (cont.) */
+
+    0x14, 0x00,                       /* wLength = 20 */
+    0x03, 0x00,                       /* wDescriptorType = MS_OS_20_FEATURE_COMPATBLE_ID */
+    'W', 'I', 'N', 'U', 'S', 'B',     /* CompatibleID */
+    0x00, 0x00,                       /* CompatibleID (cont.) */
+    0x00, 0x00, 0x00, 0x00,           /* SubCompatibleID */
+    0x00, 0x00, 0x00, 0x00,           /* SubCompatibleID (cont.) */
+
+    0x82, 0x00,                       /* wLength = 130 */
+    0x04, 0x00,                       /* wDescriptorType = MS_OS_20_FEATURE_REG_PROPERTY */
+    0x07, 0x00,                       /* wStringType = REG_MULTI_SZ */
+    /* wPropertyNameLength = 42 */
+    0x2A, 0x00,
+    /* PropertyName = DeviceInterfaceGUIDs */
+    'D', '\0',
+    'e', '\0',
+    'v', '\0',
+    'i', '\0',
+    'c', '\0',
+    'e', '\0',
+    'I', '\0',
+    'n', '\0',
+    't', '\0',
+    'e', '\0',
+    'r', '\0',
+    'f', '\0',
+    'a', '\0',
+    'c', '\0',
+    'e', '\0',
+    'G', '\0',
+    'U', '\0',
+    'I', '\0',
+    'D', '\0',
+    's', '\0',
+    '\0', '\0',
+
+    /* wPropertyDataLength = 78 */
+    0x4E, 0x00,
+    /* PropertyData = {A5C44A4C-53D4-4389-9821-AE95051908A1} */
+    '{', '\0',
+    'A', '\0',
+    '5', '\0',
+    'C', '\0',
+    '4', '\0',
+    '4', '\0',
+    'A', '\0',
+    '4', '\0',
+    'C', '\0',
+    '-', '\0',
+    '5', '\0',
+    '3', '\0',
+    'D', '\0',
+    '4', '\0',
+    '-', '\0',
+    '4', '\0',
+    '3', '\0',
+    '8', '\0',
+    '9', '\0',
+    '-', '\0',
+    '9', '\0',
+    '8', '\0',
+    '2', '\0',
+    '1', '\0',
+    '-', '\0',
+    'A', '\0',
+    'E', '\0',
+    '9', '\0',
+    '5', '\0',
+    '0', '\0',
+    '5', '\0',
+    '1', '\0',
+    '9', '\0',
+    '0', '\0',
+    '8', '\0',
+    'A', '\0',
+    '1', '\0',
+    '}', '\0',
+    '\0', '\0'
+};
+#endif /* (USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1) */
 
 /* USB Standard Device Descriptor */
 __ALIGN_BEGIN uint8_t USBD_LangIDDesc[USB_LEN_LANGID_STR_DESC] __ALIGN_END = {
@@ -236,6 +373,16 @@ static uint8_t *USBD_Pybricks_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, ui
     return USBD_StrDesc;
 }
 
+#if ((USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1))
+static uint8_t *USBD_Pybricks_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(speed);
+
+    *length = sizeof(USBD_BOSDesc);
+    return (uint8_t *)USBD_BOSDesc;
+}
+#endif /* (USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1) */
+
 USBD_DescriptorsTypeDef Pybricks_Desc = {
     .GetDeviceDescriptor = USBD_Pybricks_DeviceDescriptor,
     .GetLangIDStrDescriptor = USBD_Pybricks_LangIDStrDescriptor,
@@ -244,4 +391,7 @@ USBD_DescriptorsTypeDef Pybricks_Desc = {
     .GetSerialStrDescriptor = USBD_Pybricks_SerialStrDescriptor,
     .GetConfigurationStrDescriptor = USBD_Pybricks_ConfigStrDescriptor,
     .GetInterfaceStrDescriptor = USBD_Pybricks_InterfaceStrDescriptor,
+    #if ((USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1))
+    .GetBOSDescriptor = USBD_Pybricks_BOSDescriptor,
+    #endif
 };
