@@ -24,6 +24,7 @@
 - Fixed Technic Hub and City Hub eventually stopping observing BLE data after
   a few minutes ([support#1096]) by implementing an auto-reset workaround.
 
+[support#539]: https://github.com/pybricks/support/issues/539
 [support#1095]: https://github.com/pybricks/support/issues/1095
 [support#1096]: https://github.com/pybricks/support/issues/1096
 [support#1269]: https://github.com/pybricks/support/issues/1269
@@ -733,7 +734,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...v3.3.0
 [3.3.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...v3.3.0c1
 [3.3.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b8...v3.3.0b9
 [3.3.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...v3.3.0b8
