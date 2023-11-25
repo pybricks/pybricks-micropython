@@ -2,6 +2,13 @@
 
 # Changelog
 
+## [Unreleased]
+
+### Fixes
+- Fix observing stopping on City and Technic hubs after some time ([support#1096]).
+
+[support#1096]: https://github.com/pybricks/support/issues/1096
+
 ## [3.3.0] - 2023-11-24
 
 ### Changed

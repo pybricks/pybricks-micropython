@@ -162,6 +162,12 @@ static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
+// HACK: restart observing every 10 seconds to work around a bug in the Bluetooth
+// chip firmware that causes it to stop receiving advertisements after a while.
+#define OBSERVE_RESTART_INTERVAL 10000
+static struct etimer observe_restart_timer;
+static bool observe_restart_enabled;
+
 /**
  * Converts a ble error code to the most appropriate pbio error code.
  * @param [in]  status      The ble error code.
@@ -476,6 +482,8 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     // temporarily stop observing so we can active scan
     if (is_observing) {
+        observe_restart_enabled = false;
+
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_DeviceDiscoveryCancel();
         PT_WAIT_UNTIL(pt, hci_command_status);
@@ -716,6 +724,11 @@ out:
         }
 
         device_discovery_done = false;
+
+        PROCESS_CONTEXT_BEGIN(&pbdrv_bluetooth_spi_process);
+        etimer_set(&observe_restart_timer, OBSERVE_RESTART_INTERVAL);
+        PROCESS_CONTEXT_END(&pbdrv_bluetooth_spi_process);
+        observe_restart_enabled = true;
     }
 
     PT_END(pt);
@@ -966,6 +979,11 @@ static PT_THREAD(observe_task(struct pt *pt, pbio_task_t *task)) {
 
         device_discovery_done = false;
         is_observing = true;
+
+        PROCESS_CONTEXT_BEGIN(&pbdrv_bluetooth_spi_process);
+        etimer_set(&observe_restart_timer, OBSERVE_RESTART_INTERVAL);
+        PROCESS_CONTEXT_END(&pbdrv_bluetooth_spi_process);
+        observe_restart_enabled = true;
     }
 
     task->status = PBIO_SUCCESS;
@@ -1000,6 +1018,8 @@ static PT_THREAD(stop_observe_task(struct pt *pt, pbio_task_t *task)) {
 
 void pbdrv_bluetooth_stop_observing(void) {
     observe_callback = NULL;
+    // avoid restarting observing even if this task get queued
+    observe_restart_enabled = false;
 
     static pbio_task_t task;
     start_task(&task, stop_observe_task, NULL);
@@ -1959,7 +1979,8 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     PROCESS_EXITHANDLER({
         spi_set_mrdy(false);
         bluetooth_reset(RESET_STATE_OUT_LOW);
-        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = is_broadcasting = is_observing = false;
+        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en =
+            is_broadcasting = is_observing = observe_restart_enabled = false;
         conn_handle = remote_handle = remote_lwp3_char_handle = NO_CONNECTION;
 
         pbio_task_t *task;
@@ -2018,6 +2039,14 @@ start:
     for (;;) {
         PROCESS_WAIT_UNTIL({
             for (;;) {
+                if (observe_restart_enabled && etimer_expired(&observe_restart_timer)) {
+                    static pbio_task_t observe_restart_task;
+                    pbdrv_bluetooth_start_observing_callback_t callback = observe_callback;
+
+                    pbdrv_bluetooth_stop_observing();
+                    pbdrv_bluetooth_start_observing(&observe_restart_task, callback);
+                }
+
                 pbio_task_t *current_task = list_head(task_queue);
 
                 if (!current_task) {
