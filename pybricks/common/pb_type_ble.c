@@ -426,22 +426,6 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 
     // Have not received data yet or timed out.
     if (ch_data.rssi == INT8_MIN) {
-
-        // HACK: Work around observing eventually stopping on the CC2640 due to
-        // full buffer of discovered devices. Needs to be fixed at the driver
-        // level with a scan process that restarts automatically.
-        // See https://github.com/pybricks/support/issues/1096
-        #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640
-        static uint32_t time_restart = 0;
-        uint32_t time_now = mp_hal_ticks_ms();
-        if (time_now - time_restart > OBSERVED_DATA_TIMEOUT_MS) {
-            pbio_task_t task;
-            pbdrv_bluetooth_start_observing(&task, handle_observe_event);
-            pb_module_tools_pbio_task_do_blocking(&task, -1);
-            time_restart = time_now;
-        }
-        #endif
-
         return mp_const_none;
     }
 
