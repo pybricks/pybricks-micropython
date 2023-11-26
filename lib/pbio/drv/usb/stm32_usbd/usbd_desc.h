@@ -7,5 +7,6 @@
 #include "usbd_def.h"
 
 extern USBD_DescriptorsTypeDef USBD_Pybricks_Desc;
+void USBD_Pybricks_Desc_Init(void);
 
 #endif /* _USBD_DESC_H_ */
