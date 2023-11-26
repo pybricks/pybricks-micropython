@@ -850,11 +850,10 @@ static PT_THREAD(stop_observe_task(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_stop_observing(void) {
+void pbdrv_bluetooth_stop_observing(pbio_task_t *task) {
     observe_callback = NULL;
 
-    static pbio_task_t task;
-    start_task(&task, stop_observe_task, NULL);
+    start_task(task, stop_observe_task, NULL);
 }
 
 // overrides weak function in start_*.S

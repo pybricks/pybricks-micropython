@@ -258,8 +258,10 @@ void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_ob
  * Stops observing/scanning that was started by pbdrv_bluetooth_start_observing().
  *
  * It is safe to call this function even when observing has not been started.
+ *
+ * @param [out] task        An uninitialized task to be filled in.
  */
-void pbdrv_bluetooth_stop_observing(void);
+void pbdrv_bluetooth_stop_observing(pbio_task_t *task);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
@@ -319,7 +321,8 @@ static inline void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_blue
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_stop_observing(void) {
+static inline void pbdrv_bluetooth_stop_observing(pbio_task_t *task) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

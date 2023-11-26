@@ -1016,13 +1016,12 @@ static PT_THREAD(stop_observe_task(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_stop_observing(void) {
+void pbdrv_bluetooth_stop_observing(pbio_task_t *task) {
     observe_callback = NULL;
     // avoid restarting observing even if this task get queued
     observe_restart_enabled = false;
 
-    static pbio_task_t task;
-    start_task(&task, stop_observe_task, NULL);
+    start_task(task, stop_observe_task, NULL);
 }
 
 // Driver interrupt callbacks
@@ -2040,11 +2039,12 @@ start:
         PROCESS_WAIT_UNTIL({
             for (;;) {
                 if (observe_restart_enabled && etimer_expired(&observe_restart_timer)) {
-                    static pbio_task_t observe_restart_task;
+                    static pbio_task_t observe_restart_stop_task;
+                    static pbio_task_t observe_restart_start_task;
                     pbdrv_bluetooth_start_observing_callback_t callback = observe_callback;
 
-                    pbdrv_bluetooth_stop_observing();
-                    pbdrv_bluetooth_start_observing(&observe_restart_task, callback);
+                    pbdrv_bluetooth_stop_observing(&observe_restart_stop_task);
+                    pbdrv_bluetooth_start_observing(&observe_restart_start_task, callback);
                 }
 
                 pbio_task_t *current_task = list_head(task_queue);

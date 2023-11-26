@@ -551,11 +551,16 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
 }
 
 void pb_type_BLE_cleanup(void) {
+    static pbio_task_t stop_observing_task;
     pbdrv_bluetooth_stop_broadcasting();
-    pbdrv_bluetooth_stop_observing();
+    pbdrv_bluetooth_stop_observing(&stop_observing_task);
     observed_data = NULL;
     num_observed_data = 0;
     // TODO: wait for stop?
+
+    while (stop_observing_task.status == PBIO_ERROR_AGAIN) {
+        MICROPY_VM_HOOK_LOOP
+    }
 }
 
 #endif // PYBRICKS_PY_COMMON_BLE

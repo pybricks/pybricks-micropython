@@ -800,13 +800,23 @@ void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_ob
     start_task(task, start_observing_task, callback);
 }
 
-void pbdrv_bluetooth_stop_observing(void) {
-    observe_callback = NULL;
+static PT_THREAD(stop_observing_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
 
     if (is_observing) {
         gap_stop_scan();
         is_observing = false;
     }
+
+    // REVISIT: use callback to actually wait for stop?
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_observing(pbio_task_t *task) {
+    observe_callback = NULL;
+    start_task(task, stop_observing_task, NULL);
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK
