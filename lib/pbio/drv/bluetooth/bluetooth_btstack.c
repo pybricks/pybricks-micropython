@@ -771,11 +771,22 @@ void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value
     start_task(task, start_broadcasting_task, value);
 }
 
-void pbdrv_bluetooth_stop_broadcasting(void) {
+static PT_THREAD(stop_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
     if (is_broadcasting) {
         gap_advertisements_enable(false);
         is_broadcasting = false;
     }
+
+    // REVISIT: use callback to actually wait for stop?
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_broadcasting(pbio_task_t *task) {
+    start_task(task, stop_broadcasting_task, NULL);
 }
 
 static PT_THREAD(start_observing_task(struct pt *pt, pbio_task_t *task)) {

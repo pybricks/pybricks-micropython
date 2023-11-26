@@ -959,9 +959,8 @@ static PT_THREAD(stop_broadcast_task(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_stop_broadcasting(void) {
-    static pbio_task_t task;
-    start_task(&task, stop_broadcast_task, NULL);
+void pbdrv_bluetooth_stop_broadcasting(pbio_task_t *task) {
+    start_task(task, stop_broadcast_task, NULL);
 }
 
 static PT_THREAD(observe_task(struct pt *pt, pbio_task_t *task)) {

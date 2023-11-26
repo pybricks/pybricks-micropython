@@ -241,8 +241,10 @@ void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value
  * Stops broadcasting that was started by pbdrv_bluetooth_start_broadcasting().
  *
  * It is safe to call this function even when broadcasting has not been started.
+ *
+ * @param [out] task    An uninitialized task to be filled in.
  */
-void pbdrv_bluetooth_stop_broadcasting(void);
+void pbdrv_bluetooth_stop_broadcasting(pbio_task_t *task);
 
 /**
  * Starts observing, non-connectable, non-scannable advertisements.
@@ -314,7 +316,8 @@ static inline void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_b
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_stop_broadcasting(void) {
+static inline void pbdrv_bluetooth_stop_broadcasting(pbio_task_t *task) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline void pbdrv_bluetooth_start_observing(pbio_task_t *task, pbdrv_bluetooth_start_observing_callback_t callback) {
