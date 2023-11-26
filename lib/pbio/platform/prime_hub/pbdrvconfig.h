@@ -118,7 +118,14 @@
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (6)
 
 #define PBDRV_CONFIG_USB                            (1)
+#define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
+#define PBDRV_CONFIG_USB_PID                        0xFFFF
+#define PBDRV_CONFIG_USB_PID_0                      LEGO_USB_PID_SPIKE_PRIME
+#define PBDRV_CONFIG_USB_PID_1                      LEGO_USB_PID_ROBOT_INVENTOR
+#define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
+#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_LARGE_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
+#define PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR   0x08007d80
 
 #define PBDRV_CONFIG_WATCHDOG                       (1)
 #define PBDRV_CONFIG_WATCHDOG_STM32                 (1)

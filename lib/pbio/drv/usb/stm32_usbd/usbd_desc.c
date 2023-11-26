@@ -49,20 +49,17 @@
 #include "usbd_conf.h"
 #include "usbd_pybricks.h"
 
+#include "pbdrv/config.h"
 #include "pbio/protocol.h"
 #include "pbio/version.h"
 #include "pbsys/app.h"
 #include "pbsys/program_load.h"
-#include "pbdrvconfig.h"
-#include "sys/config.h"
+
+#include "lego_usb.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define USBD_VID                      0x0483
-#define USBD_PID                      0x5740
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      "STMicroelectronics"
-#define USBD_PRODUCT_FS_STRING        "Pybricks Hub"
 #define USBD_CONFIGURATION_FS_STRING  "Pybricks Config"
 #define USBD_INTERFACE_FS_STRING      "Pybricks Interface"
 
@@ -97,10 +94,10 @@ __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     0x02,                     /* bDeviceSubClass */
     0x00,                     /* bDeviceProtocol */
     USB_MAX_EP0_SIZE,         /* bMaxPacketSize */
-    LOBYTE(USBD_VID),         /* idVendor */
-    HIBYTE(USBD_VID),         /* idVendor */
-    LOBYTE(USBD_PID),         /* idProduct */
-    HIBYTE(USBD_PID),         /* idProduct */
+    LOBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
+    HIBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
+    LOBYTE(PBDRV_CONFIG_USB_PID), /* idProduct */
+    HIBYTE(PBDRV_CONFIG_USB_PID), /* idProduct */
     0x00,                     /* bcdDevice rel. 2.00 */
     0x02,
     USBD_IDX_MFC_STR,         /* Index of manufacturer string */
@@ -308,6 +305,19 @@ static uint8_t *USBD_Pybricks_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
+    // the same firmware runs on both SPIKE Prime and Robot Inventor so we need
+    // to dynamically set the PID based on the variant
+    #ifdef PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR
+    #define VARIANT (*(uint32_t *)PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR)
+    if (VARIANT == 0) {
+        USBD_DeviceDesc[10] = LOBYTE(PBDRV_CONFIG_USB_PID_0);
+        USBD_DeviceDesc[11] = HIBYTE(PBDRV_CONFIG_USB_PID_0);
+    } else if (VARIANT == 1) {
+        USBD_DeviceDesc[10] = LOBYTE(PBDRV_CONFIG_USB_PID_1);
+        USBD_DeviceDesc[11] = HIBYTE(PBDRV_CONFIG_USB_PID_1);
+    }
+    #endif
+
     *length = sizeof(USBD_DeviceDesc);
     return (uint8_t *)USBD_DeviceDesc;
 }
@@ -333,7 +343,7 @@ static uint8_t *USBD_Pybricks_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint1
   * @retval Pointer to descriptor buffer
   */
 static uint8_t *USBD_Pybricks_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-    USBD_GetString((uint8_t *)USBD_PRODUCT_FS_STRING, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)PBDRV_CONFIG_USB_PROD_STR, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
 
@@ -347,7 +357,7 @@ static uint8_t *USBD_Pybricks_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed,
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
-    USBD_GetString((uint8_t *)USBD_MANUFACTURER_STRING, USBD_StrDesc, length);
+    USBD_GetString((uint8_t *)PBDRV_CONFIG_USB_MFG_STR, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
 
