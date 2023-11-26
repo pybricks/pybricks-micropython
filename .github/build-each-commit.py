@@ -66,6 +66,7 @@ for commit in pybricks.iter_commits(
         )
     if args.hub == "primehub" or args.hub == "essentialhub":
         pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
+        pybricks.git.submodule("update", "--init", "--checkout", "lib/STM32_USB_Device_Library")
 
     # build the firmware
     subprocess.check_call(
