@@ -47,6 +47,7 @@
 #include <lego_usb.h>
 
 #include <pbdrv/config.h>
+#include <pbio/protocol.h>
 
 #include "usbd_core.h"
 #include "usbd_conf.h"
@@ -73,9 +74,9 @@ uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     USB_DESC_TYPE_DEVICE,     /* bDescriptorType */
     0x00,                     /* bcdUSB */
     0x02,
-    0x02,                     /* bDeviceClass */
-    0x02,                     /* bDeviceSubClass */
-    0x00,                     /* bDeviceProtocol */
+    PBIO_PYBRICKS_USB_DEVICE_CLASS,     /* bDeviceClass */
+    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,  /* bDeviceSubClass */
+    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,  /* bDeviceProtocol */
     USB_MAX_EP0_SIZE,         /* bMaxPacketSize */
     LOBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
     HIBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */

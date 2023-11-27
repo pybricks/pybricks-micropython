@@ -311,6 +311,13 @@ extern const uint8_t pbio_nus_service_uuid[];
 extern const uint8_t pbio_nus_rx_char_uuid[];
 extern const uint8_t pbio_nus_tx_char_uuid[];
 
+/** USB bDeviceClass for Pybricks hubs */
+#define PBIO_PYBRICKS_USB_DEVICE_CLASS 0xFF
+/** USB bDeviceSubClass for Pybricks hubs */
+#define PBIO_PYBRICKS_USB_DEVICE_SUBCLASS 0xC5
+/** USB bDeviceProtocol for Pybricks hubs */
+#define PBIO_PYBRICKS_USB_DEVICE_PROTOCOL 0xF5
+
 #endif // _PBIO_PROTOCOL_H_
 
 /** @} */
