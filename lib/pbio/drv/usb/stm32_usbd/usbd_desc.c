@@ -90,9 +90,9 @@ __ALIGN_BEGIN uint8_t USBD_DeviceDesc[USB_LEN_DEV_DESC] __ALIGN_END = {
     0x00,                     /* bcdUSB */
     #endif /* (USBD_LPM_ENABLED == 1) || (USBD_CLASS_BOS_ENABLED == 1) */
     0x02,
-    0x02,                     /* bDeviceClass */
-    0x02,                     /* bDeviceSubClass */
-    0x00,                     /* bDeviceProtocol */
+    PBIO_PYBRICKS_USB_DEVICE_CLASS,     /* bDeviceClass */
+    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,  /* bDeviceSubClass */
+    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,  /* bDeviceProtocol */
     USB_MAX_EP0_SIZE,         /* bMaxPacketSize */
     LOBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
     HIBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
