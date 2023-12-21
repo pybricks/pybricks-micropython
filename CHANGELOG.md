@@ -8,8 +8,15 @@
 - Fix observing stopping on City and Technic hubs after some time ([support#1096]).
 - Fix Bluetooth locking up when connecting Bluetooth adapter with small MTU to Technic and City hubs ([support#947]).
 
+### Changed
+- Changed polarity of output in the `Light` class. This makes no difference for
+  the Light class, but it makes the class usable for certain custom
+  devices ([pybricks-micropython#166]).
+
 [support#947]: https://github.com/pybricks/support/issues/947
 [support#1096]: https://github.com/pybricks/support/issues/1096
+[pybricks-micropython#222]: https://github.com/pybricks/pybricks-micropython/pull/222
+
 
 ## [3.3.0] - 2023-11-24
 

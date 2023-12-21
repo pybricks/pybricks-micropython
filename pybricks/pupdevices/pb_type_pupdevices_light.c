@@ -50,7 +50,7 @@ STATIC mp_obj_t pupdevices_Light_on(size_t n_args, const mp_obj_t *pos_args, mp_
 
     // Set the brightness
     int32_t voltage = pbio_battery_get_voltage_from_duty_pct(pb_obj_get_pct(brightness_in));
-    pb_assert(pbio_dcmotor_user_command(self->dcmotor, false, -voltage));
+    pb_assert(pbio_dcmotor_user_command(self->dcmotor, false, voltage));
 
     return mp_const_none;
 }
