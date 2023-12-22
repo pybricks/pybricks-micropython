@@ -79,20 +79,6 @@ subdirectories.
 - Restrictions: Liability, warranty
 
 
-### BlueKitchen BTStack
-
-**path**: `lib/btstack/`
-
-**origin**: Git commit 039b5ecb8b267d3c4fc6d0521ab55182e00567a9
-
-**url**: https://github.com/bluekitchen/btstack
-
-**terms**:
-- License: BSD-3-Clause + personal use only restriction
-- Permissions: Distribution, modification, private use
-- Conditions: License and copyright notice
-- Restrictions: Commercial use, liability, warranty
-
 ### Lightweight ring buffer manager
 
 **path**: `lib/lwrb/`
