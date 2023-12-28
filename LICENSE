@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2018-2023 The Pybricks Authors
+Copyright (c) 2018-2024 The Pybricks Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+------------------------------------------------------------------------------
+
+NOTE: The aforementioned MIT license applies only to files with the header:
+
+SPDX-License-Identifier: MIT
+Copyright (c) <years> The Pybricks Authors
+
+Building and redistributing Pybricks firmware will inheritenly include
+libraries and code that is subject to different licenses with more restrictive
+terms. In particular, components that prohibit you from charging for the
+Pybricks firmware include but are not limited to the BTstack library.
+
