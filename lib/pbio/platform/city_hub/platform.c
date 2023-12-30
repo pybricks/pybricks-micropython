@@ -168,10 +168,12 @@ const pbdrv_legodev_pup_ext_platform_data_t pbdrv_legodev_pup_ext_platform_data[
         .port_id = PBIO_PORT_ID_A,
         .ioport_index = 0,
     },
+    #if PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV == PBDRV_CONFIG_IOPORT_NUM_DEV
     {
         .port_id = PBIO_PORT_ID_B,
         .ioport_index = 1,
     },
+    #endif
 };
 
 const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data = {

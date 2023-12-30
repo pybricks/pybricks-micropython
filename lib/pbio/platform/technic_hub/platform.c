@@ -262,10 +262,12 @@ const pbdrv_legodev_pup_ext_platform_data_t pbdrv_legodev_pup_ext_platform_data[
         .port_id = PBIO_PORT_ID_C,
         .ioport_index = 2,
     },
+    #if PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV == PBDRV_CONFIG_IOPORT_NUM_DEV
     {
         .port_id = PBIO_PORT_ID_D,
         .ioport_index = 3,
     },
+    #endif
 };
 
 const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data = {
