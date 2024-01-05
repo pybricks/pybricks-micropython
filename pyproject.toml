@@ -18,7 +18,7 @@ nbstripout = "^0.5.0"
 notebook = "^6.4.12"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
 pybricksdev = "1.0.0a46"
-pycryptodomex = "^3.9.9"
+pycryptodomex = "^3.19.1"
 python-dotenv = "^0.15.0"
 python-socketio = "^5.7.2"
 pyusb = "^1.0.2"
