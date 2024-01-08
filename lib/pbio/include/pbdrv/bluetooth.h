@@ -82,6 +82,7 @@ typedef struct {
     uint8_t bdaddr_type;
     uint8_t bdaddr[6];
     char name[20];
+    pbdrv_bluetooth_receive_handler_t notification_handler;
 } pbdrv_bluetooth_scan_and_connect_context_t;
 
 /** Advertisement types. */
@@ -200,9 +201,6 @@ void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context);
  */
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler);
 
-// TODO: combine this with pbdrv_bluetooth_set_receive_handler()
-void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler);
-
 /**
  * Starts scanning for a BLE device and connects to it.
  *
@@ -296,9 +294,6 @@ static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context)
 }
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
-}
-
-static inline void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler) {
 }
 
 static inline void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {

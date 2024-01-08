@@ -142,12 +142,12 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
     memset(remote, 0, sizeof(*remote));
 
     remote->context.hub_kind = LWP3_HUB_KIND_HANDSET;
+    remote->context.notification_handler = handle_notification;
 
     if (name) {
         strncpy(remote->context.name, name, sizeof(remote->context.name));
     }
 
-    pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
     pb_module_tools_pbio_task_do_blocking(&remote->task, timeout);
 

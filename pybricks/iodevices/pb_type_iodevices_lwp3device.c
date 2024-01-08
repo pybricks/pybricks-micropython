@@ -75,12 +75,12 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
     memset(lwp3device, 0, sizeof(*lwp3device));
 
     lwp3device->context.hub_kind = hub_kind;
+    lwp3device->context.notification_handler = handle_notification;
 
     if (name) {
         strncpy(lwp3device->context.name, name, sizeof(lwp3device->context.name));
     }
 
-    pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&lwp3device->task, &lwp3device->context);
     pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
 }

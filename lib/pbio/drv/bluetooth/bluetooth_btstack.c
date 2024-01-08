@@ -620,10 +620,6 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
     receive_handler = handler;
 }
 
-void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler) {
-    notification_handler = handler;
-}
-
 static void start_observing(void) {
     gap_set_scan_params(0, 0x30, 0x30, 0);
     gap_start_scan();
@@ -638,6 +634,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     handset.con_handle = HCI_CON_HANDLE_INVALID;
     memcpy(handset.name, context->name, sizeof(handset.name));
     handset.hub_kind = context->hub_kind;
+    notification_handler = context->notification_handler;
 
     // active scanning to get scan response data.
     // scan interval: 48 * 0.625ms = 30ms

@@ -472,14 +472,12 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
     receive_handler = handler;
 }
 
-void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler) {
-    notification_handler = handler;
-}
-
 static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
 
     PT_BEGIN(pt);
+
+    notification_handler = context->notification_handler;
 
     // temporarily stop observing so we can active scan
     if (is_observing) {
