@@ -437,22 +437,10 @@ try_again:
             advertising_data_received;
         }));
 
-        /** 00001623-1212-EFDE-1623-785FEABCD123 */
-        static const uint8_t lwp3_hub_service_uuid[] = {
-            0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x23, 0x16, 0x00, 0x00,
-        };
-
         le_advertising_info *subevt = (void *)&read_buf[5];
 
-        // TODO: Properly parse advertising data. For now, we are assuming that
-        // the service UUID is at a fixed position and we are getting only
-        // AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST and not AD_TYPE_128_BIT_SERV_UUID
-        if (
-            subevt->evt_type != ADV_IND /* connectable undirected advertisement */ ||
-            subevt->data_RSSI[3] != 17 /* length */ || subevt->data_RSSI[4] != AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST ||
-            memcmp(&subevt->data_RSSI[5], lwp3_hub_service_uuid, sizeof(lwp3_hub_service_uuid)) != 0 ||
-            subevt->data_RSSI[26] != context->hub_kind) {
-
+        // TODO: Properly parse advertising data. For now, we are assuming LWP3
+        if (!pbio_lwp3_advertisement_matches(subevt->evt_type, subevt->data_RSSI, context->hub_kind)) {
             // if this is not the desired LEGO LWP3 device, keep scanning
             continue;
         }

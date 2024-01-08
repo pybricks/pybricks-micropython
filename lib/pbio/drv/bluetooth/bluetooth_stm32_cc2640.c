@@ -518,15 +518,8 @@ try_again:
             advertising_data_received;
         }));
 
-        // TODO: Properly parse advertising data. For now, we are assuming that
-        // the service UUID is at a fixed position and we are getting only
-        // GAP_ADTYPE_128BIT_COMPLETE and not GAP_ADTYPE_128BIT_MORE
-        if (
-            read_buf[9] != ADV_IND /* connectable undirected advertisement */ ||
-            read_buf[22] != 17 /* length */ || read_buf[23] != GAP_ADTYPE_128BIT_COMPLETE ||
-            !pbio_uuid128_reverse_compare(&read_buf[24], pbio_lwp3_hub_service_uuid) ||
-            read_buf[45] != context->hub_kind) {
-
+        // TODO: Properly parse advertising data. For now, we are assuming LWP3
+        if (!pbio_lwp3_advertisement_matches(read_buf[9], &read_buf[19], context->hub_kind)) {
             // if this is not the desired LEGO LWP3 device, keep scanning
             continue;
         }

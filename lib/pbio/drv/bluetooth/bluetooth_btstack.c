@@ -380,9 +380,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 // - Complete List of 128-bit Service Class UUIDs (0x07)
                 // - Manufacturer Specific Data (0xFF)
                 //   - LEGO System A/S (0x0397) + 6 bytes
-                if (event_type == ADV_IND && data_length == 31
-                    && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
-                    && data[26] == handset.hub_kind) {
+                if (pbio_lwp3_advertisement_matches(event_type, data, handset.hub_kind)) {
 
                     if (memcmp(address, handset.address, 6) == 0) {
                         // This was the same device as last time. If the scan response
