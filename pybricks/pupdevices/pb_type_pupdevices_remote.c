@@ -81,7 +81,7 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
 }
 
 STATIC void remote_assert_connected(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         mp_raise_OSError(MP_ENODEV);
     }
 }
@@ -128,7 +128,7 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
     pb_remote_t *remote = &pb_remote_singleton;
 
     // REVISIT: for now, we only allow a single connection to a LWP3 device.
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         pb_assert(PBIO_ERROR_BUSY);
     }
 
@@ -209,7 +209,7 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
 void pb_type_Remote_cleanup(void) {
     pbdrv_bluetooth_disconnect_remote();
 
-    while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+    while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         MICROPY_EVENT_POLL_HOOK
     }
 }

@@ -135,8 +135,8 @@ static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
 // handle to connected remote control
 static uint16_t remote_handle = NO_CONNECTION;
-// handle to LWP3 characteristic on remote
-static uint16_t remote_lwp3_char_handle = NO_CONNECTION;
+// handle to the one characteristic of interest on remote
+static uint16_t remote_char_handle = NO_CONNECTION;
 
 // GATT service handles
 static uint16_t gatt_service_handle, gatt_service_end_handle;
@@ -391,7 +391,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3 && remote_handle != NO_CONNECTION) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && remote_handle != NO_CONNECTION) {
         return true;
     }
 
@@ -599,7 +599,7 @@ try_again:
 
     // discover LWP3 characteristic to get attribute handle
 
-    assert(remote_lwp3_char_handle == NO_CONNECTION);
+    assert(remote_char_handle == NO_CONNECTION);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
@@ -643,7 +643,7 @@ try_again:
             // (if there is more than one, we will end up with the last)
             // it also assumes that it is the only characteristic in the response
             if (status == bleSUCCESS) {
-                remote_lwp3_char_handle = pbio_get_uint16_le(&payload[4]);
+                remote_char_handle = pbio_get_uint16_le(&payload[4]);
             }
 
             status == bleProcedureComplete;
@@ -659,7 +659,7 @@ retry:
         attWriteReq_t req = {
             // assuming that client characteristic configuration descriptor
             // is next attribute after the characteristic value attribute
-            .handle = remote_lwp3_char_handle + 1,
+            .handle = remote_char_handle + 1,
             .len = sizeof(enable),
             .pValue = (uint8_t *)&enable,
         };
@@ -749,7 +749,7 @@ retry:
     {
         GattWriteCharValue_t req = {
             .connHandle = remote_handle,
-            .handle = remote_lwp3_char_handle,
+            .handle = remote_char_handle,
             .value = value->data,
             .dataSize = value->size,
         };
@@ -787,7 +787,7 @@ retry:
         uint16_t event;
         (payload = get_vendor_event(remote_handle, &event, &status)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_WRITE_REQ
-                && pbio_get_uint16_le(&payload[1]) == remote_lwp3_char_handle) {
+                && pbio_get_uint16_le(&payload[1]) == remote_char_handle) {
 
                 task->status = PBIO_ERROR_FAILED;
                 PT_EXIT(pt);
@@ -1458,7 +1458,7 @@ static void handle_event(uint8_t *packet) {
                     // TODO: match callback to handle
                     // uint8_t attr_handle = (data[7] << 8) | data[6];
                     if (notification_handler) {
-                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, &data[8], pdu_len - 2);
+                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL, &data[8], pdu_len - 2);
                     }
                 }
                 break;
@@ -1508,7 +1508,7 @@ static void handle_event(uint8_t *packet) {
                         uart_tx_notify_en = false;
                     } else if (remote_handle == connection_handle) {
                         remote_handle = NO_CONNECTION;
-                        remote_lwp3_char_handle = NO_CONNECTION;
+                        remote_char_handle = NO_CONNECTION;
                     }
                 }
                 break;
@@ -2008,7 +2008,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         bluetooth_reset(RESET_STATE_OUT_LOW);
         bluetooth_ready = pybricks_notify_en = uart_tx_notify_en =
             is_broadcasting = is_observing = observe_restart_enabled = false;
-        conn_handle = remote_handle = remote_lwp3_char_handle = NO_CONNECTION;
+        conn_handle = remote_handle = remote_char_handle = NO_CONNECTION;
 
         pbio_task_t *task;
         while ((task = list_pop(task_queue)) != NULL) {

@@ -290,7 +290,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
             if (notification_handler != NULL) {
                 uint16_t length = gatt_event_notification_get_value_length(packet);
                 const uint8_t *value = gatt_event_notification_get_value(packet);
-                notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, value, length);
+                notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL, value, length);
             }
             break;
         }
@@ -591,7 +591,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3 && handset.con_handle != HCI_CON_HANDLE_INVALID) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && handset.con_handle != HCI_CON_HANDLE_INVALID) {
         return true;
     }
 

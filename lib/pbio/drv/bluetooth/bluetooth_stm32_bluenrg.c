@@ -96,7 +96,7 @@ static uint16_t conn_handle;
 // handle to connected remote control
 static uint16_t remote_handle;
 // handle to LWP3 characteristic on remote
-static uint16_t remote_lwp3_char_handle;
+static uint16_t remote_char_handle;
 // used to wait for Evt_Blue_Gatt_Tx_Pool_Available
 static bool tx_pool_available;
 
@@ -337,7 +337,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3 && remote_handle) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && remote_handle) {
         return true;
     }
 
@@ -528,7 +528,7 @@ try_again:
 
     // discover LWP3 characteristic to get attribute handle
 
-    assert(!remote_lwp3_char_handle);
+    assert(!remote_char_handle);
 
     static const uint8_t lwp3_char_uuid[] = {
         0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x24, 0x16, 0x00, 0x00,
@@ -548,7 +548,7 @@ try_again:
                 evt_gatt_disc_read_char_by_uuid_resp *subevt = payload;
 
                 if (subevt->conn_handle == remote_handle) {
-                    remote_lwp3_char_handle = subevt->attr_handle;
+                    remote_char_handle = subevt->attr_handle;
                 }
 
             }
@@ -566,7 +566,7 @@ try_again:
 
 retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_charac_value_begin(remote_handle, remote_lwp3_char_handle + 2, sizeof(enable), (const uint8_t *)&enable);
+    aci_gatt_write_charac_value_begin(remote_handle, remote_char_handle + 2, sizeof(enable), (const uint8_t *)&enable);
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gatt_write_charac_value_end();
 
@@ -634,7 +634,7 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_charac_value_begin(remote_handle, remote_lwp3_char_handle + 1, value->size, value->data);
+    aci_gatt_write_charac_value_begin(remote_handle, remote_char_handle + 1, value->size, value->data);
     PT_WAIT_UNTIL(pt, hci_command_status);
     tBleStatus status = aci_gatt_write_charac_value_end();
 
@@ -1052,7 +1052,7 @@ static void handle_event(hci_event_pckt *event) {
                 uart_tx_notify_en = false;
             } else if (evt->handle == remote_handle) {
                 remote_handle = 0;
-                remote_lwp3_char_handle = 0;
+                remote_char_handle = 0;
             }
         }
         break;
@@ -1122,7 +1122,7 @@ static void handle_event(hci_event_pckt *event) {
                     // REVISIT: this assumes that the Powered Up remote is the
                     // only thing receiving notifications
                     if (notification_handler) {
-                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, subevt->attr_value, subevt->event_data_length - 2);
+                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL, subevt->attr_value, subevt->event_data_length - 2);
                     }
                 }
                 break;
@@ -1444,7 +1444,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         spi_disable_cs();
         bluetooth_reset(true);
         bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = is_broadcasting = is_observing = false;
-        conn_handle = remote_handle = remote_lwp3_char_handle = 0;
+        conn_handle = remote_handle = remote_char_handle = 0;
 
         pbio_task_t *task;
         while ((task = list_pop(task_queue)) != NULL) {

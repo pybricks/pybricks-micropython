@@ -61,7 +61,7 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // REVISIT: for now, we only allow a single connection to a LWP3 device.
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         pb_assert(PBIO_ERROR_BUSY);
     }
 
@@ -86,7 +86,7 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
 }
 
 STATIC void lwp3device_assert_connected(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         mp_raise_OSError(MP_ENODEV);
     }
 }

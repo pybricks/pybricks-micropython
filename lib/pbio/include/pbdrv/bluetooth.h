@@ -30,7 +30,7 @@ typedef enum {
     /** The Nordic UART service. */
     PBDRV_BLUETOOTH_CONNECTION_UART,
     /** A LEGO Powered Up Handset peripheral connection. */
-    PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3,
+    PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL,
 } pbdrv_bluetooth_connection_t;
 
 /** Data structure that holds context needed for sending BLE notifications. */
