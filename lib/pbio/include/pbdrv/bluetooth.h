@@ -101,6 +101,9 @@ typedef struct {
     uint8_t data[0];
 } pbdrv_bluetooth_value_t;
 
+/**
+ * State of a peripheral that the hub may be connected to, such as a remote.
+ */
 typedef struct {
     uint8_t status;
     uint8_t bdaddr_type;
@@ -109,7 +112,7 @@ typedef struct {
     pbdrv_bluetooth_ad_match_t match_adv;
     pbdrv_bluetooth_ad_match_t match_adv_rsp;
     pbdrv_bluetooth_receive_handler_t notification_handler;
-} pbdrv_bluetooth_scan_and_connect_context_t;
+} pbdrv_bluetooth_peripheral_t;
 
 /** Advertisement types. */
 typedef enum {
@@ -235,22 +238,27 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
 /**
  * Starts scanning for a BLE device and connects to it.
  *
- * @param [in]  task    The task that is used to wait for completion.
- * @param [in]  context The context data for the call.
- *
- * When calling, @p context->bdaddr must be zeroed and @p context->name must
- * be zeroed or set to a name to filter advertising data based on the local
- * name.
- *
- * Currently, this function is hard-coded to only match LEGO Powered Up Handset
- * devices.
+ * @param [in]  task           The task that is used to wait for completion.
+ * @param [in]  match_adv      Callback to match the advertisement data during scan.
+ * @param [in]  match_adv_rsp  Callback to match the advertisement response data during scan.
  */
-void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context);
+void pbdrv_bluetooth_peripheral_scan_and_connect(
+    pbio_task_t *task,
+    pbdrv_bluetooth_ad_match_t match_adv,
+    pbdrv_bluetooth_ad_match_t match_adv_rsp,
+    pbdrv_bluetooth_receive_handler_t notification_handler);
+
+/**
+ * Gets the name of the connected peripheral.
+ *
+ * @return  The name of the connected peripheral. May not be set.
+ */
+const char *pbdrv_bluetooth_peripheral_get_name(void);
 
 // TODO: make this a generic write without response function
-void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
+void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
 // TODO: make this a generic disconnect
-void pbdrv_bluetooth_disconnect_remote(void);
+void pbdrv_bluetooth_peripheral_disconnect(void);
 
 /**
  * Starts broadcasting undirected, non-connectable, non-scannable advertisement
@@ -327,15 +335,15 @@ static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context)
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
 }
 
-static inline void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
+static inline void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_peripheral_t *context) {
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+static inline void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_disconnect_remote(void) {
+static inline void pbdrv_bluetooth_peripheral_disconnect(void) {
 }
 
 static inline void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {

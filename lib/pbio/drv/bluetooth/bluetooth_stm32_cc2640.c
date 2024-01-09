@@ -139,6 +139,9 @@ static uint16_t remote_handle = NO_CONNECTION;
 // handle to the one characteristic of interest on remote
 static uint16_t remote_char_handle = NO_CONNECTION;
 
+// The peripheral singleton. Used to connect to a device like the LEGO Remote.
+pbdrv_bluetooth_peripheral_t pbdrv_bluetooth_peripheral_singleton;
+
 // GATT service handles
 static uint16_t gatt_service_handle, gatt_service_end_handle;
 // GAP service handles
@@ -161,7 +164,6 @@ LIST(task_queue);
 static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
-static pbdrv_bluetooth_receive_handler_t notification_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 // HACK: restart observing every 10 seconds to work around a bug in the Bluetooth
@@ -473,18 +475,14 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
     receive_handler = handler;
 }
 
-static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
-    pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
+static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
+
+    assert(peri->match_adv);
+    assert(peri->match_adv_rsp);
+    assert(peri->notification_handler);
 
     PT_BEGIN(pt);
-
-    // Advertising data parsers must be set.
-    if (!context->match_adv || !context->match_adv_rsp) {
-        task->status = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
-    }
-
-    notification_handler = context->notification_handler;
 
     // temporarily stop observing so we can active scan
     if (is_observing) {
@@ -505,10 +503,10 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    context->status = read_buf[8]; // debug
+    peri->status = read_buf[8]; // debug
 
-    if (context->status != bleSUCCESS) {
-        task->status = ble_error_to_pbio_error(context->status);
+    if (peri->status != bleSUCCESS) {
+        task->status = ble_error_to_pbio_error(peri->status);
         goto out;
     }
 
@@ -528,7 +526,7 @@ try_again:
 
 
         // Context specific advertisement filter.
-        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = context->match_adv(read_buf[9], &read_buf[19], NULL, &read_buf[11], context->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->match_adv(read_buf[9], &read_buf[19], NULL, &read_buf[11], peri->bdaddr);
 
         // If it doesn't match context-specific filter, keep scanning.
         if (!(adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE)) {
@@ -543,8 +541,8 @@ try_again:
         }
 
         // Save the Bluetooth address for later comparison against response.
-        context->bdaddr_type = read_buf[10];
-        memcpy(context->bdaddr, &read_buf[11], 6);
+        peri->bdaddr_type = read_buf[10];
+        memcpy(peri->bdaddr, &read_buf[11], 6);
         break;
     }
 
@@ -560,7 +558,7 @@ try_again:
 
         const char *detected_name = (const char *)&read_buf[21];
         const uint8_t *response_address = &read_buf[11];
-        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = context->match_adv_rsp(read_buf[9], NULL, detected_name, response_address, context->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->match_adv_rsp(read_buf[9], NULL, detected_name, response_address, peri->bdaddr);
 
         // If the response data is not right or if the address doesn't match advertisement, keep scanning.
         if (!(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) || !(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
@@ -572,7 +570,7 @@ try_again:
             goto try_again;
         }
 
-        memcpy(context->name, detected_name, sizeof(context->name));
+        memcpy(peri->name, detected_name, sizeof(peri->name));
         break;
     }
 
@@ -588,10 +586,10 @@ try_again:
     assert(remote_handle == NO_CONNECTION);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_EstablishLinkReq(0, 0, context->bdaddr_type, context->bdaddr);
+    GAP_EstablishLinkReq(0, 0, peri->bdaddr_type, peri->bdaddr);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    context->status = read_buf[8]; // debug
+    peri->status = read_buf[8]; // debug
 
     PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
@@ -616,7 +614,7 @@ try_again:
     }
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    context->status = read_buf[8]; // debug
+    peri->status = read_buf[8]; // debug
 
     // GATT_DiscCharsByUUID() sends a "read by type request" so we have to
     // wait until we get an error response to the request or we get a "read
@@ -683,7 +681,7 @@ retry:
         goto retry;
     }
 
-    context->status = read_buf[8]; // debug
+    peri->status = read_buf[8]; // debug
 
     task->status = PBIO_SUCCESS;
 
@@ -738,11 +736,24 @@ out:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
-    start_task(task, scan_and_connect_task, context);
+const char *pbdrv_bluetooth_peripheral_get_name(void) {
+    pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
+    return peri->name;
 }
 
-static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
+void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler) {
+    // Unset previous bluetooth addresses and other state variables.
+    pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
+    memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
+
+    // Set scan filters and notification handler, then start scannning.
+    peri->match_adv = match_adv;
+    peri->match_adv_rsp = match_adv_rsp;
+    peri->notification_handler = notification_handler;
+    start_task(task, peripheral_scan_and_connect_task, NULL);
+}
+
+static PT_THREAD(peripheral_write_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
 
     PT_BEGIN(pt);
@@ -811,11 +822,11 @@ cancel:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
-    start_task(task, write_remote_task, value);
+void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    start_task(task, peripheral_write_task, value);
 }
 
-static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
+static PT_THREAD(peripheral_disconnect_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
     if (remote_handle != NO_CONNECTION) {
@@ -829,9 +840,9 @@ static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_disconnect_remote(void) {
+void pbdrv_bluetooth_peripheral_disconnect(void) {
     static pbio_task_t task;
-    start_task(&task, disconnect_remote_task, NULL);
+    start_task(&task, peripheral_disconnect_task, NULL);
 }
 
 static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
@@ -1460,8 +1471,9 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_HANDLE_VALUE_NOTI: {
                     // TODO: match callback to handle
                     // uint8_t attr_handle = (data[7] << 8) | data[6];
-                    if (notification_handler) {
-                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL, &data[8], pdu_len - 2);
+                    pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
+                    if (peri->notification_handler) {
+                        peri->notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL, &data[8], pdu_len - 2);
                     }
                 }
                 break;

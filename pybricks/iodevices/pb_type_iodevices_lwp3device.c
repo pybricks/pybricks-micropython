@@ -65,8 +65,10 @@ typedef struct {
     uint8_t left[3];
     uint8_t right[3];
     uint8_t center;
-    pbdrv_bluetooth_scan_and_connect_context_t context;
     lwp3_hub_kind_t hub_kind;
+    // Name used to filter advertisements and responses.
+    // Also used as the name of the device when setting the name, since this
+    // is not updated in the driver until the next time it connects.
     char name[LWP3_MAX_HUB_PROPERTY_NAME_SIZE + 1];
 } pb_lwp3device_t;
 
@@ -125,6 +127,9 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_
 }
 
 STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+
+    pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
+
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
 
     // This is the only value check we do on LWP3 response messages.
@@ -138,7 +143,7 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_match
     }
 
     // Compare name to user-provided name if given.
-    if (pb_lwp3device_singleton.name[0] != '\0' && strncmp(name, pb_lwp3device_singleton.name, 20) != 0) {
+    if (lwp3device->name[0] != '\0' && strncmp(name, lwp3device->name, 20) != 0) {
         flags |= PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED;
     }
 
@@ -152,7 +157,7 @@ STATIC void pb_lwp3device_assert_connected(void) {
 }
 
 STATIC void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_kind_t hub_kind) {
-    pb_lwp3device_t *remote = &pb_lwp3device_singleton;
+    pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // REVISIT: for now, we only allow a single connection to a LWP3 device.
     if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
@@ -166,23 +171,23 @@ STATIC void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
 
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory
-    memset(remote, 0, sizeof(*remote));
+    memset(lwp3device, 0, sizeof(*lwp3device));
 
-    remote->hub_kind = hub_kind;
-    remote->context.notification_handler = handle_notification;
-    remote->context.match_adv = lwp3_advertisement_matches;
-    remote->context.match_adv_rsp = lwp3_advertisement_response_matches;
-
+    // Hub kind and name are set to filter advertisements and responses.
+    lwp3device->hub_kind = hub_kind;
     if (name) {
-        strncpy(remote->name, name, sizeof(remote->name));
+        strncpy(lwp3device->name, name, sizeof(lwp3device->name));
     }
 
-    pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
-    pb_module_tools_pbio_task_do_blocking(&remote->task, timeout);
+    pbdrv_bluetooth_peripheral_scan_and_connect(&lwp3device->task, lwp3_advertisement_matches, lwp3_advertisement_response_matches, handle_notification);
+    pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
+
+    // Copy the name so we can read it back later, and override locally.
+    memcpy(lwp3device->name, pbdrv_bluetooth_peripheral_get_name(), sizeof(lwp3device->name));
 }
 
 STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
-    pb_lwp3device_t *remote = &pb_lwp3device_singleton;
+    pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
 
@@ -215,8 +220,8 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_col
     msg.payload[1] = msg.payload[1] * 3 / 8;
     msg.payload[2] = msg.payload[2] * 3 / 8;
 
-    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-    return pb_module_tools_pbio_task_wait_or_await(&remote->task);
+    pbdrv_bluetooth_peripheral_write(&lwp3device->task, &msg.value);
+    return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
 }
 
 STATIC void pb_lwp3device_configure_remote(void) {
@@ -247,13 +252,13 @@ STATIC void pb_lwp3device_configure_remote(void) {
 
         // set mode for left buttons
 
-        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pbdrv_bluetooth_peripheral_write(&remote->task, &msg.value);
         pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // set mode for right buttons
 
         msg.port = REMOTE_PORT_RIGHT_BUTTONS;
-        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pbdrv_bluetooth_peripheral_write(&remote->task, &msg.value);
         pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // set status light to RGB mode
@@ -261,7 +266,7 @@ STATIC void pb_lwp3device_configure_remote(void) {
         msg.port = REMOTE_PORT_STATUS_LIGHT;
         msg.mode = STATUS_LIGHT_MODE_RGB_0;
         msg.enable_notifications = 0;
-        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pbdrv_bluetooth_peripheral_write(&remote->task, &msg.value);
         pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
         // REVISIT: Could possibly use system color here to make remote match
@@ -273,13 +278,13 @@ STATIC void pb_lwp3device_configure_remote(void) {
         nlr_pop();
     } else {
         // disconnect if any setup task failed
-        pbdrv_bluetooth_disconnect_remote();
+        pbdrv_bluetooth_peripheral_disconnect();
         nlr_jump(nlr.ret_val);
     }
 }
 
 void pb_type_Remote_cleanup(void) {
-    pbdrv_bluetooth_disconnect_remote();
+    pbdrv_bluetooth_peripheral_disconnect();
 
     while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         MICROPY_EVENT_POLL_HOOK
@@ -351,7 +356,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
 }
 
 STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
-    pb_lwp3device_t *remote = &pb_lwp3device_singleton;
+    pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
 
@@ -381,17 +386,17 @@ STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
         memcpy(msg.payload, name, len);
 
         // NB: operation is not cancelable, so timeout is not used
-        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-        pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
+        pbdrv_bluetooth_peripheral_write(&lwp3device->task, &msg.value);
+        pb_module_tools_pbio_task_do_blocking(&lwp3device->task, -1);
 
         // assuming write was successful instead of reading back from the handset
-        memcpy(remote->context.name, name, len);
-        remote->context.name[len] = 0;
+        memcpy(lwp3device->name, name, len);
+        lwp3device->name[len] = 0;
 
         return mp_const_none;
     }
 
-    return mp_obj_new_str(remote->context.name, strlen(remote->context.name));
+    return mp_obj_new_str(lwp3device->name, strlen(lwp3device->name));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
 
@@ -455,7 +460,7 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
     };
     memcpy(msg.payload, bufinfo.buf, bufinfo.len);
 
-    pbdrv_bluetooth_write_remote(&lwp3device->task, &msg.value);
+    pbdrv_bluetooth_peripheral_write(&lwp3device->task, &msg.value);
     return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
