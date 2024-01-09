@@ -38,13 +38,6 @@
 #define HUB_VARIANT 0x0000
 #endif
 
-// these aren't in btstack for some reason
-#define ADV_IND                                0x00
-#define ADV_DIRECT_IND                         0x01
-#define ADV_SCAN_IND                           0x02
-#define ADV_NONCONN_IND                        0x03
-#define SCAN_RSP                               0x04
-
 typedef enum {
     CON_STATE_NONE,
     CON_STATE_WAIT_ADV_IND,
@@ -387,7 +380,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             } else if (handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
                 // REVISIT: for now it is assumed that the saved Bluetooth address compare
                 //          is a sufficient check to check that scan response matches what we detected before
-                if (event_type == SCAN_RSP && bd_addr_cmp(address, handset.scan_and_connect_context->bdaddr) == 0) {
+                if (event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP && bd_addr_cmp(address, handset.scan_and_connect_context->bdaddr) == 0) {
                     if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
                         // if the name was passed in from the caller, then filter on name
                         char *name = handset.scan_and_connect_context->name;
@@ -520,7 +513,7 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
 
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0x30, 0x30, ADV_IND, 0x00, null_addr, 0x07, 0x00);
+    gap_advertisements_set_params(0x30, 0x30, PBDRV_BLUETOOTH_AD_TYPE_ADV_IND, 0x00, null_addr, 0x07, 0x00);
 
     static const uint8_t adv_data[] = {
         // Flags general discoverable, BR/EDR not supported
@@ -735,7 +728,7 @@ static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {
 
     if (!is_broadcasting) {
         bd_addr_t null_addr = { };
-        gap_advertisements_set_params(0xA0, 0xA0, ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
+        gap_advertisements_set_params(0xA0, 0xA0, PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
         gap_advertisements_enable(true);
         is_broadcasting = true;
     }
