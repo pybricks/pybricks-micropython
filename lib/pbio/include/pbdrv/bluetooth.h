@@ -110,6 +110,11 @@ typedef enum {
     PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP = 4,
 } pbdrv_bluetooth_ad_type_t;
 
+/** Advertisement data types. */
+typedef enum {
+    PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST = 0x07,
+} pbdrv_bluetooth_ad_data_type_t;
+
 /**
  * Callback called when advertising data is received.
  * @param [in]  type    The advertisement type.

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <pbio/util.h>
 #include <pbio/lwp3.h>
+#include <pbdrv/bluetooth.h>
 
 /**
  * LEGO Wireless Protocol v3 Hub Service UUID.
@@ -26,10 +27,6 @@ const uint8_t pbio_lwp3_hub_char_uuid[] = {
     0x16, 0x23, 0x78, 0x5F, 0xEA, 0xBC, 0xD1, 0x23,
 };
 
-// TODO: Get these from 3 different BLE APIs.
-#define ADV_IND (0x00) // Connectable undirected advertisement
-#define GAP_ADTYPE_128BIT_COMPLETE (0x07)
-
 /*
  * Check if the advertisement matches the LEGO Wireless Protocol v3 Hub Service.
  *
@@ -40,9 +37,9 @@ const uint8_t pbio_lwp3_hub_char_uuid[] = {
  */
 bool pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, lwp3_hub_kind_t hub_kind) {
     return
-        event_type == ADV_IND
+        event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_IND
         && data[3] == 17 /* length */
-        && data[4] == GAP_ADTYPE_128BIT_COMPLETE
+        && data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
         && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
         && data[26] == hub_kind;
 }
