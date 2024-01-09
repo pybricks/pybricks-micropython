@@ -105,6 +105,7 @@ typedef struct {
  * State of a peripheral that the hub may be connected to, such as a remote.
  */
 typedef struct {
+    uint16_t con_handle;
     uint8_t status;
     uint8_t bdaddr_type;
     uint8_t bdaddr[6];
