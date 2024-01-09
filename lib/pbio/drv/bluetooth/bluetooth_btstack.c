@@ -364,9 +364,13 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // Match advertisement data against context-specific filter.
-                if (handset.scan_and_connect_context->match_adv &&
-                    handset.scan_and_connect_context->match_adv(event_type, data, NULL) == PBDRV_BLUETOOTH_AD_MATCH_SUCCESS) {
-                    if (memcmp(address, handset.scan_and_connect_context->bdaddr, 6) == 0) {
+                pbdrv_bluetooth_ad_match_result_flags_t adv_flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
+                if (handset.scan_and_connect_context->match_adv) {
+                    adv_flags = handset.scan_and_connect_context->match_adv(event_type, data, NULL, address, handset.scan_and_connect_context->bdaddr);
+                }
+
+                if (adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) {
+                    if (adv_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS) {
                         // This was the same device as last time. If the scan response
                         // didn't match before, it probably won't match now and we
                         // should try a different device.
@@ -378,20 +382,24 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                     handset.con_state = CON_STATE_WAIT_SCAN_RSP;
                 }
             } else if (handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
-                // REVISIT: for now it is assumed that the saved Bluetooth address compare
-                //          is a sufficient check to check that scan response matches what we detected before
-                if (event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP && bd_addr_cmp(address, handset.scan_and_connect_context->bdaddr) == 0) {
-                    if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
-                        // if the name was passed in from the caller, then filter on name
-                        char *name = handset.scan_and_connect_context->name;
-                        const uint8_t max_len = sizeof(handset.scan_and_connect_context->name);
-                        if (name[0] != '\0' && strncmp(name, (char *)&data[2], max_len) != 0) {
-                            // A name was requested but it doesn't match, so go back to scanning stage.
-                            handset.con_state = CON_STATE_WAIT_ADV_IND;
-                            break;
-                        }
 
-                        memcpy(name, &data[2], max_len);
+                char *detected_name = (char *)&data[2];
+                const uint8_t max_len = sizeof(handset.scan_and_connect_context->name);
+
+                pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
+                if (handset.scan_and_connect_context->match_adv_rsp) {
+                    rsp_flags = handset.scan_and_connect_context->match_adv_rsp(event_type, NULL, detected_name, address, handset.scan_and_connect_context->bdaddr);
+                }
+                if ((rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) && (rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
+
+                    if (rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED) {
+                        // A name was requested but it doesn't match, so go back to scanning stage.
+                        handset.con_state = CON_STATE_WAIT_ADV_IND;
+                        break;
+                    }
+
+                    if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
+                        memcpy(handset.scan_and_connect_context->name, detected_name, max_len);
                     }
 
                     gap_stop_scan();

@@ -12,6 +12,4 @@
 extern const uint8_t pbio_lwp3_hub_service_uuid[];
 extern const uint8_t pbio_lwp3_hub_char_uuid[];
 
-pbdrv_bluetooth_ad_match_result_type_t pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, lwp3_hub_kind_t hub_kind);
-
 #endif // _PBIO_LWP3_H_

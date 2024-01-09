@@ -478,6 +478,12 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
+    // Advertising data parsers must be set.
+    if (!context->match_adv || !context->match_adv_rsp) {
+        task->status = PBIO_ERROR_INVALID_ARG;
+        PT_EXIT(pt);
+    }
+
     notification_handler = context->notification_handler;
 
     // temporarily stop observing so we can active scan
@@ -520,22 +526,25 @@ try_again:
             advertising_data_received;
         }));
 
+
+        // Context specific advertisement filter.
+        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = context->match_adv(read_buf[9], &read_buf[19], NULL, &read_buf[11], context->bdaddr);
+
         // If it doesn't match context-specific filter, keep scanning.
-        if (!context->match_adv || context->match_adv(read_buf[9], &read_buf[19], NULL) != PBDRV_BLUETOOTH_AD_MATCH_SUCCESS) {
+        if (!(adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE)) {
             continue;
         }
 
-        if (memcmp(context->bdaddr, &read_buf[11], 6) == 0) {
-            // This was the same device as last time. If the scan response
-            // didn't match before, it probably won't match now and we
-            // should try a different device.
+        // If the value matched but it's the same device as last time, we're
+        // here because the scan response failed the last time. It probably
+        // won't match now and we should try a different device.
+        if (adv_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS) {
             goto try_again;
         }
 
-        // save the Bluetooth address for later
+        // Save the Bluetooth address for later comparison against response.
         context->bdaddr_type = read_buf[10];
         memcpy(context->bdaddr, &read_buf[11], 6);
-
         break;
     }
 
@@ -549,18 +558,21 @@ try_again:
             advertising_data_received;
         }));
 
-        // TODO: Properly parse scan response data. For now, we are assuming
-        // that the saved Bluetooth address is sufficient to recognize correct device
-        if (read_buf[9] != SCAN_RSP || memcmp(&read_buf[11], context->bdaddr, 6) != 0) {
+        const char *detected_name = (const char *)&read_buf[21];
+        const uint8_t *response_address = &read_buf[11];
+        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = context->match_adv_rsp(read_buf[9], NULL, detected_name, response_address, context->bdaddr);
+
+        // If the response data is not right or if the address doesn't match advertisement, keep scanning.
+        if (!(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) || !(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
             continue;
         }
 
-        // if the name was passed in from the caller, then filter on name
-        if (context->name[0] != '\0' && strncmp(context->name, (char *)&read_buf[21], sizeof(context->name)) != 0) {
+        // If the device checks passed but the name doesn't match, start over.
+        if (rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED) {
             goto try_again;
         }
 
-        memcpy(context->name, &read_buf[21], sizeof(context->name));
+        memcpy(context->name, detected_name, sizeof(context->name));
         break;
     }
 

@@ -58,23 +58,27 @@ typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetoo
 
 /** Advertisement of scan response match result */
 typedef enum {
-    /** Matched the expected value. */
-    PBDRV_BLUETOOTH_AD_MATCH_SUCCESS = 0,
-    /** Did not match */
-    PBDRV_BLUETOOTH_AD_MATCH_FAIL = 1,
-    /** Matched the expected value, but did not match Bluetooth name filter.*/
-    PBDRV_BLUETOOTH_AD_MATCH_BAD_NAME = 2,
-} pbdrv_bluetooth_ad_match_result_type_t;
-
+    /** No match. */
+    PBDRV_BLUETOOTH_AD_MATCH_NONE = 0,
+    /** Matched the expected value such as device type or manufacturer data. */
+    PBDRV_BLUETOOTH_AD_MATCH_VALUE = 1 << 0,
+    /** Failed to matched the expected Bluetooth address.*/
+    PBDRV_BLUETOOTH_AD_MATCH_ADDRESS = 1 << 1,
+    /** A name filter was given and it did NOT match. */
+    PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED = 1 << 2,
+} pbdrv_bluetooth_ad_match_result_flags_t;
 /**
  * Callback to match an advertisement or scan response.
  *
  * @param [in]  event_type  The type of advertisement.
  * @param [in]  data        The advertisement data.
- * @param [in]  match_name  The name to match. If NULL, no name filter is applied.
+ * @param [in]  name        The name to match. If NULL, no name filter is applied.
+ * @param [in]  addr        The currently detected address if known, else NULL.
+ * @param [in]  match_addr  The address to match. If NULL, no address filter is applied.
  * @return                  True if the advertisement matches, false otherwise.
  */
-typedef pbdrv_bluetooth_ad_match_result_type_t (*pbdrv_bluetooth_ad_match_t)(uint8_t event_type, const uint8_t *data, const char *match_name);
+typedef pbdrv_bluetooth_ad_match_result_flags_t (*pbdrv_bluetooth_ad_match_t)
+    (uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr);
 
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
@@ -103,6 +107,7 @@ typedef struct {
     uint8_t bdaddr[6];
     char name[20];
     pbdrv_bluetooth_ad_match_t match_adv;
+    pbdrv_bluetooth_ad_match_t match_adv_rsp;
     pbdrv_bluetooth_receive_handler_t notification_handler;
 } pbdrv_bluetooth_scan_and_connect_context_t;
 
