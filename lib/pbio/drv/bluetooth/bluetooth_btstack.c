@@ -12,9 +12,9 @@
 #include <btstack.h>
 #include <contiki.h>
 #include <contiki-lib.h>
-#include <lego_lwp3.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbio/lwp3.h>
 #include <pbio/protocol.h>
 #include <pbio/task.h>
 #include <pbio/version.h>
@@ -76,10 +76,8 @@ typedef struct {
     gatt_client_service_t lwp3_service;
     gatt_client_characteristic_t lwp3_char;
     uint8_t btstack_error;
-    uint8_t address_type;
-    bd_addr_t address;
     lwp3_hub_kind_t hub_kind;
-    char name[20];
+    pbdrv_bluetooth_scan_and_connect_context_t *scan_and_connect_context;
 } pup_handset_t;
 
 // hub name goes in special section so that it can be modified when flashing firmware
@@ -372,46 +370,39 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             }
 
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
-                // HACK: this is making major assumptions about how the advertising data
-                // is laid out. So far LEGO devices seem consistent in this.
-                // It is expected that the advertising data contains 3 values in
-                // this order:
-                // - Flags (0x01)
-                // - Complete List of 128-bit Service Class UUIDs (0x07)
-                // - Manufacturer Specific Data (0xFF)
-                //   - LEGO System A/S (0x0397) + 6 bytes
-                if (pbio_lwp3_advertisement_matches(event_type, data, handset.hub_kind)) {
-
-                    if (memcmp(address, handset.address, 6) == 0) {
+                // Match advertisement data against context-specific filter.
+                if (handset.scan_and_connect_context->advertisement_matches &&
+                    handset.scan_and_connect_context->advertisement_matches(event_type, data)) {
+                    if (memcmp(address, handset.scan_and_connect_context->bdaddr, 6) == 0) {
                         // This was the same device as last time. If the scan response
                         // didn't match before, it probably won't match now and we
                         // should try a different device.
                         break;
                     }
-
-                    memcpy(handset.address, address, sizeof(bd_addr_t));
-                    handset.address_type = gap_event_advertising_report_get_address_type(packet);
+                    // Advertising data matched, prepare for scan response.
+                    memcpy(handset.scan_and_connect_context->bdaddr, address, sizeof(bd_addr_t));
+                    handset.scan_and_connect_context->bdaddr_type = gap_event_advertising_report_get_address_type(packet);
                     handset.con_state = CON_STATE_WAIT_SCAN_RSP;
                 }
             } else if (handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
                 // REVISIT: for now it is assumed that the saved Bluetooth address compare
-                //          is a sufficient check to check that scan response is from LWP3 device
-                // PREVIOUSLY: extra check: data_length == 30 for HANDSET
-                //                          data_length == 27 for MARIO
-                //                          data_length == 20 for SYSTEM_2IO ... etc
-                if (event_type == SCAN_RSP && bd_addr_cmp(address, handset.address) == 0) {
+                //          is a sufficient check to check that scan response matches what we detected before
+                if (event_type == SCAN_RSP && bd_addr_cmp(address, handset.scan_and_connect_context->bdaddr) == 0) {
                     if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
                         // if the name was passed in from the caller, then filter on name
-                        if (handset.name[0] != '\0' && strncmp(handset.name, (char *)&data[2], sizeof(handset.name)) != 0) {
+                        char *name = handset.scan_and_connect_context->name;
+                        const uint8_t max_len = sizeof(handset.scan_and_connect_context->name);
+                        if (name[0] != '\0' && strncmp(name, (char *)&data[2], max_len) != 0) {
+                            // A name was requested but it doesn't match, so go back to scanning stage.
                             handset.con_state = CON_STATE_WAIT_ADV_IND;
                             break;
                         }
 
-                        memcpy(handset.name, &data[2], sizeof(handset.name));
+                        memcpy(name, &data[2], max_len);
                     }
 
                     gap_stop_scan();
-                    handset.btstack_error = gap_connect(handset.address, handset.address_type);
+                    handset.btstack_error = gap_connect(handset.scan_and_connect_context->bdaddr, handset.scan_and_connect_context->bdaddr_type);
 
                     if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                         handset.con_state = CON_STATE_WAIT_CONNECT;
@@ -630,9 +621,8 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     memset(&handset, 0, sizeof(handset));
     handset.con_handle = HCI_CON_HANDLE_INVALID;
-    memcpy(handset.name, context->name, sizeof(handset.name));
-    handset.hub_kind = context->hub_kind;
-    notification_handler = context->notification_handler;
+    handset.scan_and_connect_context = context;
+    notification_handler = handset.scan_and_connect_context->notification_handler;
 
     // active scanning to get scan response data.
     // scan interval: 48 * 0.625ms = 30ms
@@ -654,10 +644,6 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
         handset.con_state == CON_STATE_CONNECTED;
     }));
-
-    // REVISIT: probably want to make a generic connection handle data structure
-    // that includes handle, name, address, etc.
-    memcpy(context->name, handset.name, sizeof(context->name));
 
     task->status = PBIO_SUCCESS;
     goto out;

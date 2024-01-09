@@ -55,6 +55,15 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  */
 typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size);
 
+/**
+ * Callback to match an advertisement.
+ * 
+ * @param [in]  event_type  The type of advertisement.
+ * @param [in]  data        The advertisement data.
+ * @return                  True if the advertisement matches, false otherwise.
+ */
+typedef bool (*pbdrv_bluetooth_advertisement_match_t)(uint8_t event_type, const uint8_t *data);
+
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
     pbdrv_bluetooth_send_done_t done;
@@ -77,11 +86,11 @@ typedef struct {
 } pbdrv_bluetooth_value_t;
 
 typedef struct {
-    lwp3_hub_kind_t hub_kind;
     uint8_t status;
     uint8_t bdaddr_type;
     uint8_t bdaddr[6];
     char name[20];
+    pbdrv_bluetooth_advertisement_match_t advertisement_matches;
     pbdrv_bluetooth_receive_handler_t notification_handler;
 } pbdrv_bluetooth_scan_and_connect_context_t;
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <pbio/util.h>
+#include <pbio/lwp3.h>
 
 /**
  * LEGO Wireless Protocol v3 Hub Service UUID.
@@ -37,7 +38,7 @@ const uint8_t pbio_lwp3_hub_char_uuid[] = {
  * @param hub_kind      The kind of hub to match.
  * @return              True if the advertisement matches, false otherwise.
  */
-bool pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, uint8_t hub_kind) {
+bool pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, lwp3_hub_kind_t hub_kind) {
     return
         event_type == ADV_IND
         && data[3] == 17 /* length */

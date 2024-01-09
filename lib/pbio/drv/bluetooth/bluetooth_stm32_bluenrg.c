@@ -439,9 +439,8 @@ try_again:
 
         le_advertising_info *subevt = (void *)&read_buf[5];
 
-        // TODO: Properly parse advertising data. For now, we are assuming LWP3
-        if (!pbio_lwp3_advertisement_matches(subevt->evt_type, subevt->data_RSSI, context->hub_kind)) {
-            // if this is not the desired LEGO LWP3 device, keep scanning
+        // If it doesn't match context-specific filter, keep scanning.
+        if (!context->advertisement_matches || !context->advertisement_matches(subevt->evt_type, subevt->data_RSSI)) {
             continue;
         }
 

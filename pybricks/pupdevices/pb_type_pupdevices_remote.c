@@ -8,12 +8,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <lego_lwp3.h>
-
 #include <pbdrv/bluetooth.h>
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
+#include <pbio/lwp3.h>
 #include <pbio/task.h>
 
 #include <pybricks/common.h>
@@ -80,6 +79,10 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
     return PBIO_PYBRICKS_ERROR_OK;
 }
 
+STATIC bool remote_advertisement_matches(uint8_t event_type, const uint8_t *data) {
+    return pbio_lwp3_advertisement_matches(event_type, data, LWP3_HUB_KIND_HANDSET);
+}
+
 STATIC void remote_assert_connected(void) {
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         mp_raise_OSError(MP_ENODEV);
@@ -141,8 +144,8 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
     // we are using static memory
     memset(remote, 0, sizeof(*remote));
 
-    remote->context.hub_kind = LWP3_HUB_KIND_HANDSET;
     remote->context.notification_handler = handle_notification;
+    remote->context.advertisement_matches = remote_advertisement_matches;
 
     if (name) {
         strncpy(remote->context.name, name, sizeof(remote->context.name));

@@ -21,6 +21,7 @@
 #include <pbdrv/gpio.h>
 #include <pbdrv/random.h>
 #include <pbio/error.h>
+#include <pbio/lwp3.h>
 #include <pbio/protocol.h>
 #include <pbio/task.h>
 #include <pbio/util.h>
@@ -509,6 +510,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
 try_again:
 
+    // Wait for advertising data packet.
     for (;;) {
         advertising_data_received = false;
         PT_WAIT_UNTIL(pt, ({
@@ -518,9 +520,8 @@ try_again:
             advertising_data_received;
         }));
 
-        // TODO: Properly parse advertising data. For now, we are assuming LWP3
-        if (!pbio_lwp3_advertisement_matches(read_buf[9], &read_buf[19], context->hub_kind)) {
-            // if this is not the desired LEGO LWP3 device, keep scanning
+        // If it doesn't match context-specific filter, keep scanning.
+        if (!context->advertisement_matches || !context->advertisement_matches(read_buf[9], &read_buf[19])) {
             continue;
         }
 
@@ -538,6 +539,7 @@ try_again:
         break;
     }
 
+    // Wait for scan response packet matching previously detected device.
     for (;;) {
         advertising_data_received = false;
         PT_WAIT_UNTIL(pt, ({
@@ -550,7 +552,6 @@ try_again:
         // TODO: Properly parse scan response data. For now, we are assuming
         // that the saved Bluetooth address is sufficient to recognize correct device
         if (read_buf[9] != SCAN_RSP || memcmp(&read_buf[11], context->bdaddr, 6) != 0) {
-
             continue;
         }
 
@@ -560,7 +561,6 @@ try_again:
         }
 
         memcpy(context->name, &read_buf[21], sizeof(context->name));
-
         break;
     }
 

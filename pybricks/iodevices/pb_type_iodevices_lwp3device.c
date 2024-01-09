@@ -9,10 +9,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <lego_lwp3.h>
-
 #include <pbdrv/bluetooth.h>
 #include <pbio/error.h>
+#include <pbio/lwp3.h>
 #include <pbio/task.h>
 
 #include <pybricks/common.h>
@@ -57,6 +56,12 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
     return PBIO_PYBRICKS_ERROR_OK;
 }
 
+static lwp3_hub_kind_t _scan_for_hub_kind;
+
+STATIC bool lwp3_hub_advertisement_matches(uint8_t event_type, const uint8_t *data) {
+    return pbio_lwp3_advertisement_matches(event_type, data, _scan_for_hub_kind);
+}
+
 STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_t timeout) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
@@ -74,8 +79,9 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
     // we are using static memory
     memset(lwp3device, 0, sizeof(*lwp3device));
 
-    lwp3device->context.hub_kind = hub_kind;
+    _scan_for_hub_kind = hub_kind;
     lwp3device->context.notification_handler = handle_notification;
+    lwp3device->context.advertisement_matches = lwp3_hub_advertisement_matches;
 
     if (name) {
         strncpy(lwp3device->context.name, name, sizeof(lwp3device->context.name));

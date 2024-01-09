@@ -304,11 +304,6 @@ extern const uint16_t pbio_gatt_firmware_version_char_uuid;
 extern const uint16_t pbio_gatt_software_version_char_uuid;
 extern const uint16_t pbio_gatt_pnp_id_char_uuid;
 
-extern const uint8_t pbio_lwp3_hub_service_uuid[];
-extern const uint8_t pbio_lwp3_hub_char_uuid[];
-
-bool pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, uint8_t hub_kind);
-
 extern const uint8_t pbio_nus_service_uuid[];
 extern const uint8_t pbio_nus_rx_char_uuid[];
 extern const uint8_t pbio_nus_tx_char_uuid[];
