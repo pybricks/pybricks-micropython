@@ -364,8 +364,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // Match advertisement data against context-specific filter.
-                if (handset.scan_and_connect_context->advertisement_matches &&
-                    handset.scan_and_connect_context->advertisement_matches(event_type, data)) {
+                if (handset.scan_and_connect_context->match_adv &&
+                    handset.scan_and_connect_context->match_adv(event_type, data, NULL) == PBDRV_BLUETOOTH_AD_MATCH_SUCCESS) {
                     if (memcmp(address, handset.scan_and_connect_context->bdaddr, 6) == 0) {
                         // This was the same device as last time. If the scan response
                         // didn't match before, it probably won't match now and we

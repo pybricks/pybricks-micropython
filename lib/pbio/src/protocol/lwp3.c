@@ -33,13 +33,14 @@ const uint8_t pbio_lwp3_hub_char_uuid[] = {
  * @param event_type    The type of advertisement.
  * @param data          The advertisement data.
  * @param hub_kind      The kind of hub to match.
- * @return              True if the advertisement matches, false otherwise.
+ * @return              The result of the match.
  */
-bool pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, lwp3_hub_kind_t hub_kind) {
-    return
+pbdrv_bluetooth_ad_match_result_type_t pbio_lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, lwp3_hub_kind_t hub_kind) {
+    bool match =
         event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_IND
         && data[3] == 17 /* length */
         && data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
         && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
         && data[26] == hub_kind;
+    return match ? PBDRV_BLUETOOTH_AD_MATCH_SUCCESS : PBDRV_BLUETOOTH_AD_MATCH_FAIL;
 }

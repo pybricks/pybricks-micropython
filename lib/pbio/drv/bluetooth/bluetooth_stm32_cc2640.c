@@ -521,7 +521,7 @@ try_again:
         }));
 
         // If it doesn't match context-specific filter, keep scanning.
-        if (!context->advertisement_matches || !context->advertisement_matches(read_buf[9], &read_buf[19])) {
+        if (!context->match_adv || context->match_adv(read_buf[9], &read_buf[19], NULL) != PBDRV_BLUETOOTH_AD_MATCH_SUCCESS) {
             continue;
         }
 

@@ -55,14 +55,26 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  */
 typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size);
 
+
+/** Advertisement of scan response match result */
+typedef enum {
+    /** Matched the expected value. */
+    PBDRV_BLUETOOTH_AD_MATCH_SUCCESS = 0,
+    /** Did not match */
+    PBDRV_BLUETOOTH_AD_MATCH_FAIL = 1,
+    /** Matched the expected value, but did not match Bluetooth name filter.*/
+    PBDRV_BLUETOOTH_AD_MATCH_BAD_NAME = 2,
+} pbdrv_bluetooth_ad_match_result_type_t;
+
 /**
- * Callback to match an advertisement.
- * 
+ * Callback to match an advertisement or scan response.
+ *
  * @param [in]  event_type  The type of advertisement.
  * @param [in]  data        The advertisement data.
+ * @param [in]  match_name  The name to match. If NULL, no name filter is applied.
  * @return                  True if the advertisement matches, false otherwise.
  */
-typedef bool (*pbdrv_bluetooth_advertisement_match_t)(uint8_t event_type, const uint8_t *data);
+typedef pbdrv_bluetooth_ad_match_result_type_t (*pbdrv_bluetooth_ad_match_t)(uint8_t event_type, const uint8_t *data, const char *match_name);
 
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
@@ -90,7 +102,7 @@ typedef struct {
     uint8_t bdaddr_type;
     uint8_t bdaddr[6];
     char name[20];
-    pbdrv_bluetooth_advertisement_match_t advertisement_matches;
+    pbdrv_bluetooth_ad_match_t match_adv;
     pbdrv_bluetooth_receive_handler_t notification_handler;
 } pbdrv_bluetooth_scan_and_connect_context_t;
 

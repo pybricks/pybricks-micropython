@@ -58,7 +58,7 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
 
 static lwp3_hub_kind_t _scan_for_hub_kind;
 
-STATIC bool lwp3_hub_advertisement_matches(uint8_t event_type, const uint8_t *data) {
+STATIC pbdrv_bluetooth_ad_match_result_type_t lwp3_hub_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *match_name) {
     return pbio_lwp3_advertisement_matches(event_type, data, _scan_for_hub_kind);
 }
 
@@ -81,7 +81,7 @@ STATIC void lwp3device_connect(const uint8_t hub_kind, const char *name, mp_int_
 
     _scan_for_hub_kind = hub_kind;
     lwp3device->context.notification_handler = handle_notification;
-    lwp3device->context.advertisement_matches = lwp3_hub_advertisement_matches;
+    lwp3device->context.match_adv = lwp3_hub_advertisement_matches;
 
     if (name) {
         strncpy(lwp3device->context.name, name, sizeof(lwp3device->context.name));

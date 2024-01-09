@@ -440,7 +440,7 @@ try_again:
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // If it doesn't match context-specific filter, keep scanning.
-        if (!context->advertisement_matches || !context->advertisement_matches(subevt->evt_type, subevt->data_RSSI)) {
+        if (!context->match_adv || context->match_adv(subevt->evt_type, subevt->data_RSSI, NULL) != PBDRV_BLUETOOTH_AD_MATCH_SUCCESS) {
             continue;
         }
 
