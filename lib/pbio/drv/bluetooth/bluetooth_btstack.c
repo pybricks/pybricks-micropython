@@ -230,9 +230,10 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
     propagate_event(packet);
 }
 
-// REVISIT: does this need to be separate from packet_handler()?
 // currently, this function just handles the Powered Up handset control.
-static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+
+    pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
 
     switch (hci_event_packet_get_type(packet)) {
         case GATT_EVENT_SERVICE_QUERY_RESULT:
@@ -246,7 +247,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
         case GATT_EVENT_QUERY_COMPLETE:
             if (handset.con_state == CON_STATE_WAIT_DISCOVER_SERVICES) {
                 handset.btstack_error = gatt_client_discover_characteristics_for_service_by_uuid128(
-                    handle_gatt_client_event, handset.con_handle, &handset.lwp3_service, pbio_lwp3_hub_char_uuid);
+                    packet_handler, handset.con_handle, &handset.lwp3_service, pbio_lwp3_hub_char_uuid);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                     handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
                 } else {
@@ -257,11 +258,11 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                 }
             } else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
                 handset.btstack_error = gatt_client_write_client_characteristic_configuration(
-                    handle_gatt_client_event, handset.con_handle, &handset.lwp3_char,
+                    packet_handler, handset.con_handle, &handset.lwp3_char,
                     GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                     gatt_client_listen_for_characteristic_value_updates(
-                        &handset.notification, handle_gatt_client_event, handset.con_handle, &handset.lwp3_char);
+                        &handset.notification, packet_handler, handset.con_handle, &handset.lwp3_char);
                     handset.con_state = CON_STATE_WAIT_ENABLE_NOTIFICATIONS;
                 } else {
                     // configuration failed for some reason, so disconnect
@@ -278,7 +279,6 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
             if (gatt_event_notification_get_handle(packet) != handset.con_handle) {
                 break;
             }
-            pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
             if (peri->notification_handler) {
                 uint16_t length = gatt_event_notification_get_value_length(packet);
                 const uint8_t *value = gatt_event_notification_get_value(packet);
@@ -287,24 +287,6 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
             break;
         }
 
-        default:
-            break;
-    }
-
-    propagate_event(packet);
-}
-
-static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-    UNUSED(channel);
-    UNUSED(size);
-
-    if (packet_type != HCI_EVENT_PACKET) {
-        return;
-    }
-
-    pbdrv_bluetooth_peripheral_t *peri = &pbdrv_bluetooth_peripheral_singleton;
-
-    switch (hci_event_packet_get_type(packet)) {
         case HCI_EVENT_LE_META:
             if (hci_event_le_meta_get_subevent_code(packet) != HCI_SUBEVENT_LE_CONNECTION_COMPLETE) {
                 break;
@@ -326,7 +308,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 handset.con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
 
                 handset.btstack_error = gatt_client_discover_primary_services_by_uuid128(
-                    handle_gatt_client_event, handset.con_handle, pbio_lwp3_hub_service_uuid);
+                    packet_handler, handset.con_handle, pbio_lwp3_hub_service_uuid);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                     handset.con_state = CON_STATE_WAIT_DISCOVER_SERVICES;
                 } else {
