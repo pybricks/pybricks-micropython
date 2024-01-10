@@ -43,7 +43,6 @@ typedef enum {
     CON_STATE_WAIT_ADV_IND,
     CON_STATE_WAIT_SCAN_RSP,
     CON_STATE_WAIT_CONNECT,
-    CON_STATE_WAIT_DISCOVER_SERVICES,
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
     CON_STATE_CONNECTED,
@@ -244,18 +243,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             break;
 
         case GATT_EVENT_QUERY_COMPLETE:
-            if (handset.con_state == CON_STATE_WAIT_DISCOVER_SERVICES) {
-                handset.btstack_error = gatt_client_discover_characteristics_for_service_by_uuid128(
-                    packet_handler, peri->con_handle, &handset.lwp3_service, pbio_lwp3_hub_char_uuid);
-                if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-                    handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
-                } else {
-                    // configuration failed for some reason, so disconnect
-                    gap_disconnect(peri->con_handle);
-                    handset.con_state = CON_STATE_WAIT_DISCONNECT;
-                    handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
-                }
-            } else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
+            if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
                 handset.btstack_error = gatt_client_write_client_characteristic_configuration(
                     packet_handler, peri->con_handle, &handset.lwp3_char,
                     GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
@@ -306,15 +294,15 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
                 peri->con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
 
-                handset.btstack_error = gatt_client_discover_primary_services_by_uuid128(
-                    packet_handler, peri->con_handle, pbio_lwp3_hub_service_uuid);
+                handset.btstack_error = gatt_client_discover_characteristics_for_handle_range_by_uuid128(
+                    packet_handler, peri->con_handle, 0x0001, 0xffff, pbio_lwp3_hub_char_uuid);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-                    handset.con_state = CON_STATE_WAIT_DISCOVER_SERVICES;
+                    handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
                 } else {
                     // configuration failed for some reason, so disconnect
                     gap_disconnect(peri->con_handle);
                     handset.con_state = CON_STATE_WAIT_DISCONNECT;
-                    handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_SERVICE_FAILED;
+                    handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
                 }
             }
 
