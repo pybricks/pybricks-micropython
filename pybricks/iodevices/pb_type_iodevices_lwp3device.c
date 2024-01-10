@@ -12,7 +12,6 @@
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
-#include <pbio/lwp3.h>
 #include <pbio/task.h>
 
 #include <pybricks/common.h>
@@ -54,6 +53,32 @@ enum {
 enum {
     STATUS_LIGHT_MODE_COL_0     = 0,
     STATUS_LIGHT_MODE_RGB_0     = 1,
+};
+
+/**
+ * LEGO Wireless Protocol v3 Hub Service UUID.
+ *
+ * 00001623-1212-EFDE-1623-785FEABCD123
+ */
+static const uint8_t pbio_lwp3_hub_service_uuid[] = {
+    0x00, 0x00, 0x16, 0x23, 0x12, 0x12, 0xEF, 0xDE,
+    0x16, 0x23, 0x78, 0x5F, 0xEA, 0xBC, 0xD1, 0x23,
+};
+
+/**
+ * LEGO Wireless Protocol v3 Hub Characteristic UUID.
+ *
+ * 00001624-1212-EFDE-1623-785FEABCD123
+ */
+static pbdrv_bluetooth_peripheral_char_discovery_t pb_lwp3device_char = {
+    .discovered_handle = 0, // Will be set during discovery.
+    .properties = 0,
+    .uuid16 = 0,
+    .uuid128 = {
+        0x00, 0x00, 0x16, 0x24, 0x12, 0x12, 0xEF, 0xDE,
+        0x16, 0x23, 0x78, 0x5F, 0xEA, 0xBC, 0xD1, 0x23,
+    },
+    .request_notification = true,
 };
 
 typedef struct {
@@ -184,6 +209,10 @@ STATIC void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
 
     // Copy the name so we can read it back later, and override locally.
     memcpy(lwp3device->name, pbdrv_bluetooth_peripheral_get_name(), sizeof(lwp3device->name));
+
+    // Discover the characteristic and enable notifications.
+    pbdrv_bluetooth_periperal_discover_characteristic(&lwp3device->task, &pb_lwp3device_char);
+    pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
 }
 
 STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
@@ -212,6 +241,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_col
         .cmd = LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA,
         .mode = STATUS_LIGHT_MODE_RGB_0,
     };
+    pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
 
     pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
 
@@ -249,6 +279,7 @@ STATIC void pb_lwp3device_configure_remote(void) {
             .delta_interval = 1,
             .enable_notifications = 1,
         };
+        pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
 
         // set mode for left buttons
 
@@ -378,6 +409,7 @@ STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
             char payload[LWP3_MAX_HUB_PROPERTY_NAME_SIZE];
         } __attribute__((packed)) msg;
 
+        pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
         msg.value.size = msg.length = len + 5;
         msg.hub = 0;
         msg.type = LWP3_MSG_TYPE_HUB_PROPERTIES;
@@ -459,6 +491,7 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
         .value.size = bufinfo.len,
     };
     memcpy(msg.payload, bufinfo.buf, bufinfo.len);
+    pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
 
     pbdrv_bluetooth_peripheral_write(&lwp3device->task, &msg.value);
     return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);

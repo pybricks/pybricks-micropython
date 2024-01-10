@@ -21,7 +21,6 @@
 #include <pbdrv/gpio.h>
 #include <pbdrv/random.h>
 #include <pbio/error.h>
-#include <pbio/lwp3.h>
 #include <pbio/protocol.h>
 #include <pbio/task.h>
 #include <pbio/util.h>
@@ -134,9 +133,6 @@ static bool advertising_data_received;
 // handle to connected Bluetooth device
 static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
-
-// handle to the one characteristic of interest on remote
-static uint16_t remote_char_handle = NO_CONNECTION;
 
 // The peripheral singleton. Used to connect to a device like the LEGO Remote.
 pbdrv_bluetooth_peripheral_t peripheral_singleton = {
@@ -599,101 +595,7 @@ try_again:
         peri->con_handle != NO_CONNECTION;
     }));
 
-    // discover LWP3 characteristic to get attribute handle
-
-    assert(remote_char_handle == NO_CONNECTION);
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    {
-        attReadByTypeReq_t req = {
-            .startHandle = 0x0001,
-            .endHandle = 0xFFFF,
-            .type.len = 16,
-        };
-        pbio_uuid128_reverse_copy(req.type.uuid, pbio_lwp3_hub_char_uuid);
-        GATT_DiscCharsByUUID(peri->con_handle, &req);
-    }
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    peri->status = read_buf[8]; // debug
-
-    // GATT_DiscCharsByUUID() sends a "read by type request" so we have to
-    // wait until we get an error response to the request or we get a "read
-    // by type response" with status of bleProcedureComplete. There can be
-    // multiple responses received before the procedure is complete.
-    // REVISIT: what happens when remote is disconnected while waiting here?
-
-    PT_WAIT_UNTIL(pt, ({
-        uint8_t *payload;
-        uint16_t event;
-        HCI_StatusCodes_t status;
-        (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
-            if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_BY_TYPE_REQ) {
-                task->status = PBIO_ERROR_FAILED;
-                goto disconnect;
-            }
-
-            event == ATT_EVENT_READ_BY_TYPE_RSP;
-        }) && ({
-            // hopefully the docs are correct and this is the only possible error
-            if (status == bleTimeout) {
-                task->status = PBIO_ERROR_TIMEDOUT;
-                goto disconnect;
-            }
-
-            // this assumes that there is only one matching characteristic
-            // (if there is more than one, we will end up with the last)
-            // it also assumes that it is the only characteristic in the response
-            if (status == bleSUCCESS) {
-                remote_char_handle = pbio_get_uint16_le(&payload[4]);
-            }
-
-            status == bleProcedureComplete;
-        });
-    }));
-
-    // enable notifications
-
-retry:
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    {
-        static const uint16_t enable = 0x0001;
-        attWriteReq_t req = {
-            // assuming that client characteristic configuration descriptor
-            // is next attribute after the characteristic value attribute
-            .handle = remote_char_handle + 1,
-            .len = sizeof(enable),
-            .pValue = (uint8_t *)&enable,
-        };
-        // REVISIT: we may want to change this to write with response to ensure
-        // that the remote device received the message.
-        GATT_WriteNoRsp(peri->con_handle, &req);
-    }
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    HCI_StatusCodes_t status = read_buf[8];
-
-    if (status == blePending) {
-        if (task->cancel) {
-            task->status = PBIO_ERROR_CANCELED;
-            goto disconnect;
-        }
-
-        goto retry;
-    }
-
-    peri->status = read_buf[8]; // debug
-
     task->status = PBIO_SUCCESS;
-
-    goto out;
-
-disconnect:
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_TerminateLinkReq(peri->con_handle, 0x13);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    // task->status must be set before goto disconnect!
 
     goto out;
 
@@ -737,9 +639,113 @@ out:
     PT_END(pt);
 }
 
-const char *pbdrv_bluetooth_peripheral_get_name(void) {
+static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
-    return peri->name;
+
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        attReadByTypeReq_t req = {
+            .startHandle = 0x0001,
+            .endHandle = 0xFFFF,
+        };
+        if (peri->char_discovery->uuid16) {
+            pbio_set_uint16_le(req.type.uuid, peri->char_discovery->uuid16);
+            req.type.len = 2;
+        } else {
+            pbio_uuid128_reverse_copy(req.type.uuid, peri->char_discovery->uuid128);
+            req.type.len = 16;
+        }
+        GATT_DiscCharsByUUID(peri->con_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    peri->status = read_buf[8]; // debug
+
+    // GATT_DiscCharsByUUID() sends a "read by type request" so we have to
+    // wait until we get an error response to the request or we get a "read
+    // by type response" with status of bleProcedureComplete. There can be
+    // multiple responses received before the procedure is complete.
+    // REVISIT: what happens when remote is disconnected while waiting here?
+
+    PT_WAIT_UNTIL(pt, ({
+        uint8_t *payload;
+        uint16_t event;
+        HCI_StatusCodes_t status;
+        (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
+            if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_BY_TYPE_REQ) {
+                task->status = PBIO_ERROR_FAILED;
+                goto disconnect;
+            }
+
+            event == ATT_EVENT_READ_BY_TYPE_RSP;
+        }) && ({
+            // hopefully the docs are correct and this is the only possible error
+            if (status == bleTimeout) {
+                task->status = PBIO_ERROR_TIMEDOUT;
+                goto disconnect;
+            }
+
+            // this assumes that there is only one matching characteristic
+            // (if there is more than one, we will end up with the last)
+            // it also assumes that it is the only characteristic in the response
+            if (status == bleSUCCESS) {
+                peri->char_discovery->discovered_handle = pbio_get_uint16_le(&payload[4]);
+            }
+
+            status == bleProcedureComplete;
+        });
+    }));
+
+    // If notifications are not requested, we're done.
+    if (!peri->char_discovery->request_notification) {
+        task->status = PBIO_SUCCESS;
+        PT_EXIT(pt);
+    }
+
+    // enable notifications
+
+retry:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        static const uint16_t enable = 0x0001;
+        attWriteReq_t req = {
+            // assuming that client characteristic configuration descriptor
+            // is next attribute after the characteristic value attribute
+            .handle = peri->char_discovery->discovered_handle + 1,
+            .len = sizeof(enable),
+            .pValue = (uint8_t *)&enable,
+        };
+        // REVISIT: we may want to change this to write with response to ensure
+        // that the remote device received the message.
+        GATT_WriteNoRsp(peri->con_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    HCI_StatusCodes_t status = read_buf[8];
+
+    if (status == blePending) {
+        if (task->cancel) {
+            task->status = PBIO_ERROR_CANCELED;
+            goto disconnect;
+        }
+
+        goto retry;
+    }
+
+    peri->status = read_buf[8]; // debug
+    task->status = PBIO_SUCCESS;
+
+    PT_EXIT(pt);
+
+disconnect:
+    // task->status must be set before goto disconnect.
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_TerminateLinkReq(peri->con_handle, 0x13);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    PT_END(pt);
 }
 
 void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler) {
@@ -755,6 +761,17 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery) {
+    discovery->discovered_handle = 0;
+    peripheral_singleton.char_discovery = discovery;
+    start_task(task, periperal_discover_characteristic_task, NULL);
+}
+
+const char *pbdrv_bluetooth_peripheral_get_name(void) {
+    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    return peri->name;
+}
+
 static PT_THREAD(peripheral_write_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
@@ -766,7 +783,7 @@ retry:
     {
         GattWriteCharValue_t req = {
             .connHandle = peri->con_handle,
-            .handle = remote_char_handle,
+            .handle = pbio_get_uint16_le(value->handle),
             .value = value->data,
             .dataSize = value->size,
         };
@@ -804,7 +821,7 @@ retry:
         uint16_t event;
         (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_WRITE_REQ
-                && pbio_get_uint16_le(&payload[1]) == remote_char_handle) {
+                && pbio_get_uint16_le(&payload[1]) == pbio_get_uint16_le(value->handle)) {
 
                 task->status = PBIO_ERROR_FAILED;
                 PT_EXIT(pt);
@@ -1530,7 +1547,6 @@ static void handle_event(uint8_t *packet) {
                         uart_tx_notify_en = false;
                     } else if (peri->con_handle == connection_handle) {
                         peri->con_handle = NO_CONNECTION;
-                        remote_char_handle = NO_CONNECTION;
                     }
                 }
                 break;
@@ -2030,7 +2046,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         bluetooth_reset(RESET_STATE_OUT_LOW);
         bluetooth_ready = pybricks_notify_en = uart_tx_notify_en =
             is_broadcasting = is_observing = observe_restart_enabled = false;
-        conn_handle = peripheral_singleton.con_handle = remote_char_handle = NO_CONNECTION;
+        conn_handle = peripheral_singleton.con_handle = NO_CONNECTION;
 
         pbio_task_t *task;
         while ((task = list_pop(task_queue)) != NULL) {

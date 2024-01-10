@@ -95,11 +95,32 @@ struct _pbdrv_bluetooth_send_context_t {
  * A GATT value.
  */
 typedef struct {
+    /** Value handle, little endian. Stored as two bytes to ensure safe packing. */
+    uint8_t handle[2];
     /** The size of @p data in bytes. */
     uint8_t size;
     /** The value data. */
     uint8_t data[0];
 } pbdrv_bluetooth_value_t;
+
+/**
+ * Client characteristic discovery request and resulting handle.
+ *
+ * These structures are (staically) allocated in the application and are
+ * assumed to persist until the discovery is complete.
+ */
+typedef struct {
+    /** Discovered handle. Will remain 0 if not yet found or failed. */
+    uint16_t discovered_handle;
+    /** Properties to filter discovered results. Leave 0 for no filtering. */
+    uint16_t properties;
+    /** The 16-bit UUID. Leave at 0 if 128-bit UUID should be used. */
+    uint16_t uuid16;
+    /** The 128-bit UUID (big endian), used if uuid16 not set. */
+    const uint8_t uuid128[16];
+    /** Whether to request enabling notifications after successful discovery. */
+    bool request_notification;
+} pbdrv_bluetooth_peripheral_char_discovery_t;
 
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
@@ -110,6 +131,8 @@ typedef struct {
     uint8_t bdaddr_type;
     uint8_t bdaddr[6];
     char name[20];
+    /** Handle to the characteristic currently being discovered. */
+    pbdrv_bluetooth_peripheral_char_discovery_t *char_discovery;
     pbdrv_bluetooth_ad_match_t match_adv;
     pbdrv_bluetooth_ad_match_t match_adv_rsp;
     pbdrv_bluetooth_receive_handler_t notification_handler;
@@ -135,6 +158,12 @@ typedef enum {
 typedef enum {
     PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST = 0x07,
 } pbdrv_bluetooth_ad_data_type_t;
+
+/** Characteristic size */
+typedef enum {
+    PBDRV_BLUETOOTH_CHAR_UUID_SIZE_16 = 0x01,
+    PBDRV_BLUETOOTH_CHAR_UUID_SIZE_128 = 0x02,
+} pbdrv_bluetooth_char_size_t;
 
 /**
  * Callback called when advertising data is received.
@@ -255,6 +284,8 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(
  * @return  The name of the connected peripheral. May not be set.
  */
 const char *pbdrv_bluetooth_peripheral_get_name(void);
+
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery);
 
 // TODO: make this a generic write without response function
 void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value);

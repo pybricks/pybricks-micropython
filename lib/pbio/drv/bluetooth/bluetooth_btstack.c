@@ -14,7 +14,6 @@
 #include <contiki-lib.h>
 
 #include <pbdrv/bluetooth.h>
-#include <pbio/lwp3.h>
 #include <pbio/protocol.h>
 #include <pbio/task.h>
 #include <pbio/version.h>
@@ -43,9 +42,10 @@ typedef enum {
     CON_STATE_WAIT_ADV_IND,
     CON_STATE_WAIT_SCAN_RSP,
     CON_STATE_WAIT_CONNECT,
+    CON_STATE_CONNECTED,
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
-    CON_STATE_CONNECTED,
+    CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE,
     CON_STATE_WAIT_DISCONNECT,
 } con_state_t;
 
@@ -65,8 +65,11 @@ typedef struct {
     gatt_client_notification_t notification;
     con_state_t con_state;
     disconnect_reason_t disconnect_reason;
-    gatt_client_service_t lwp3_service;
-    gatt_client_characteristic_t lwp3_char;
+    /**
+     *  Character information used during discovery. Assuming properties and chars
+     *  are set up such that only one char is discovered at a time
+     */
+    gatt_client_characteristic_t current_char;
     uint8_t btstack_error;
 } pup_handset_t;
 
@@ -234,22 +237,34 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
     switch (hci_event_packet_get_type(packet)) {
-        case GATT_EVENT_SERVICE_QUERY_RESULT:
-            gatt_event_service_query_result_get_service(packet, &handset.lwp3_service);
+        case GATT_EVENT_SERVICE_QUERY_RESULT: {
+            // Service discovery not used.
+            gatt_client_service_t service;
+            gatt_event_service_query_result_get_service(packet, &service);
             break;
-
+        }
         case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT:
-            gatt_event_characteristic_query_result_get_characteristic(packet, &handset.lwp3_char);
+            // TODO: Filter by properties, only assign on match.
+            gatt_event_characteristic_query_result_get_characteristic(packet, &handset.current_char);
+            peri->char_discovery->discovered_handle = handset.current_char.value_handle;
             break;
 
         case GATT_EVENT_QUERY_COMPLETE:
             if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
+
+                // Discovered characteristics, ready enable notifications.
+                if (!peri->char_discovery->request_notification) {
+                    // If no notification is requested, we are done.
+                    handset.con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
+                    break;
+                }
+
                 handset.btstack_error = gatt_client_write_client_characteristic_configuration(
-                    packet_handler, peri->con_handle, &handset.lwp3_char,
+                    packet_handler, peri->con_handle, &handset.current_char,
                     GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
                 if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                     gatt_client_listen_for_characteristic_value_updates(
-                        &handset.notification, packet_handler, peri->con_handle, &handset.lwp3_char);
+                        &handset.notification, packet_handler, peri->con_handle, &handset.current_char);
                     handset.con_state = CON_STATE_WAIT_ENABLE_NOTIFICATIONS;
                 } else {
                     // configuration failed for some reason, so disconnect
@@ -258,7 +273,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                     handset.disconnect_reason = DISCONNECT_REASON_CONFIGURE_CHARACTERISTIC_FAILED;
                 }
             } else if (handset.con_state == CON_STATE_WAIT_ENABLE_NOTIFICATIONS) {
-                handset.con_state = CON_STATE_CONNECTED;
+                // Done enabling notifications.
+                handset.con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
             }
             break;
 
@@ -293,17 +309,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 }
 
                 peri->con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-
-                handset.btstack_error = gatt_client_discover_characteristics_for_handle_range_by_uuid128(
-                    packet_handler, peri->con_handle, 0x0001, 0xffff, pbio_lwp3_hub_char_uuid);
-                if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-                    handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
-                } else {
-                    // configuration failed for some reason, so disconnect
-                    gap_disconnect(peri->con_handle);
-                    handset.con_state = CON_STATE_WAIT_DISCONNECT;
-                    handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
-                }
+                handset.con_state = CON_STATE_CONNECTED;
             }
 
             break;
@@ -641,9 +647,69 @@ out:
     PT_END(pt);
 }
 
-const char *pbdrv_bluetooth_peripheral_get_name(void) {
+static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
-    return peri->name;
+    PT_BEGIN(pt);
+
+    if (handset.con_state != CON_STATE_CONNECTED) {
+        task->status = PBIO_ERROR_FAILED;
+        PT_EXIT(pt);
+    }
+
+    handset.btstack_error = peri->char_discovery->uuid16 ?
+        gatt_client_discover_characteristics_for_handle_range_by_uuid16(
+        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_discovery->uuid16) :
+        gatt_client_discover_characteristics_for_handle_range_by_uuid128(
+        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_discovery->uuid128);
+
+    if (handset.btstack_error == ERROR_CODE_SUCCESS) {
+        handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
+    } else {
+        // configuration failed for some reason, so disconnect
+        gap_disconnect(peri->con_handle);
+        handset.con_state = CON_STATE_WAIT_DISCONNECT;
+        handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
+    }
+
+    PT_WAIT_UNTIL(pt, ({
+        if (task->cancel) {
+            goto cancel;
+        }
+
+        // if there is any error while enumerating
+        // attributes, con_state will be set to CON_STATE_NONE
+        if (handset.con_state == CON_STATE_NONE) {
+            task->status = PBIO_ERROR_FAILED;
+            PT_EXIT(pt);
+        }
+
+        handset.con_state == CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
+    }));
+
+    // State state back to simply connected, so we can discover other characteristics.
+    handset.con_state = CON_STATE_CONNECTED;
+
+    task->status = peri->char_discovery->discovered_handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
+    goto out;
+
+cancel:
+    if (handset.con_state == CON_STATE_WAIT_ADV_IND || handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
+        gap_stop_scan();
+    } else if (handset.con_state == CON_STATE_WAIT_CONNECT) {
+        gap_connect_cancel();
+    } else if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(peri->con_handle);
+    }
+    handset.con_state = CON_STATE_NONE;
+    task->status = PBIO_ERROR_CANCELED;
+
+out:
+    // restore observing state
+    if (is_observing) {
+        start_observing();
+    }
+
+    PT_END(pt);
 }
 
 void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler) {
@@ -658,6 +724,17 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery) {
+    discovery->discovered_handle = 0;
+    peripheral_singleton.char_discovery = discovery;
+    start_task(task, periperal_discover_characteristic_task, NULL);
+}
+
+const char *pbdrv_bluetooth_peripheral_get_name(void) {
+    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    return peri->name;
+}
+
 static PT_THREAD(peripheral_write_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
 
@@ -665,11 +742,8 @@ static PT_THREAD(peripheral_write_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
-    // TODO: Make connection handle and value handle part of pbdrv_bluetooth_value_t
-    // to allow for simultaneous connections.
-
     uint8_t err = gatt_client_write_value_of_characteristic(packet_handler,
-        peri->con_handle, handset.lwp3_char.value_handle, value->size, value->data);
+        peri->con_handle, pbio_get_uint16_le(value->handle), value->size, value->data);
 
     if (err != ERROR_CODE_SUCCESS) {
         task->status = PBIO_ERROR_FAILED;
