@@ -687,11 +687,16 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
                 goto disconnect;
             }
 
-            // this assumes that there is only one matching characteristic
-            // (if there is more than one, we will end up with the last)
-            // it also assumes that it is the only characteristic in the response
+            // this assumes that there is only one matching characteristic with
+            // the matching properties. If there is more than one, we will end
+            // up with the last. It also assumes that it is the only
+            // characteristic in the response.
             if (status == bleSUCCESS) {
-                peri->char_discovery->discovered_handle = pbio_get_uint16_le(&payload[4]);
+                if ((payload[3] & peri->char_discovery->properties) == peri->char_discovery->properties) {
+                    peri->char_discovery->discovered_handle = pbio_get_uint16_le(&payload[4]);
+                    // Don't break out of this even though we found it. We need to
+                    // wait until the range scan completes.
+                }
             }
 
             status == bleProcedureComplete;
