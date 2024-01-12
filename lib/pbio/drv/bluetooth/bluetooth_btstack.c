@@ -42,10 +42,12 @@ typedef enum {
     CON_STATE_WAIT_ADV_IND,
     CON_STATE_WAIT_SCAN_RSP,
     CON_STATE_WAIT_CONNECT,
-    CON_STATE_CONNECTED,
+    CON_STATE_CONNECTED, // End of connection state machine
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
-    CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE,
+    CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE, // End of discovery state machine, goes back to CONNECTED
+    CON_STATE_WAIT_READ_CHARACTERISTIC,
+    CON_STATE_READ_CHARACTERISTIC_COMPLETE, // End of read state machine, goes back to CONNECTED
     CON_STATE_WAIT_DISCONNECT,
 } con_state_t;
 
@@ -253,8 +255,16 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             }
             break;
         }
+        case GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT:
+            // TODO: Process received value. For now we just need to read it
+            // without storing the result.
+            break;
         case GATT_EVENT_QUERY_COMPLETE:
-            if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
+            if (handset.con_state == CON_STATE_WAIT_READ_CHARACTERISTIC) {
+                // Done reading characteristic.
+                handset.con_state = CON_STATE_READ_CHARACTERISTIC_COMPLETE;
+            }
+            else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
 
                 // Discovered characteristics, ready enable notifications.
                 if (!peri->char_discovery->request_notification) {
@@ -694,24 +704,14 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     handset.con_state = CON_STATE_CONNECTED;
 
     task->status = peri->char_discovery->discovered_handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
-    goto out;
+    PT_EXIT(pt);
 
 cancel:
-    if (handset.con_state == CON_STATE_WAIT_ADV_IND || handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
-        gap_stop_scan();
-    } else if (handset.con_state == CON_STATE_WAIT_CONNECT) {
-        gap_connect_cancel();
-    } else if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
+    if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(peri->con_handle);
     }
     handset.con_state = CON_STATE_NONE;
     task->status = PBIO_ERROR_CANCELED;
-
-out:
-    // restore observing state
-    if (is_observing) {
-        start_observing();
-    }
 
     PT_END(pt);
 }
@@ -732,6 +732,66 @@ void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_
     discovery->discovered_handle = 0;
     peripheral_singleton.char_discovery = discovery;
     start_task(task, periperal_discover_characteristic_task, NULL);
+}
+
+static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    PT_BEGIN(pt);
+
+    if (handset.con_state != CON_STATE_CONNECTED) {
+        task->status = PBIO_ERROR_FAILED;
+        PT_EXIT(pt);
+    }
+
+    gatt_client_characteristic_t characteristic = {
+        .value_handle = peri->char_discovery->discovered_handle,
+    };
+    handset.btstack_error = gatt_client_read_value_of_characteristic(packet_handler, peri->con_handle, &characteristic);
+
+    if (handset.btstack_error == ERROR_CODE_SUCCESS) {
+        handset.con_state = CON_STATE_WAIT_READ_CHARACTERISTIC;
+    } else {
+        // configuration failed for some reason, so disconnect
+        gap_disconnect(peri->con_handle);
+        handset.con_state = CON_STATE_WAIT_DISCONNECT;
+        handset.disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
+    }
+
+    PT_WAIT_UNTIL(pt, ({
+        if (task->cancel) {
+            goto cancel;
+        }
+
+        // if there is any error while reading, con_state will be set to CON_STATE_NONE
+        if (handset.con_state == CON_STATE_NONE) {
+            task->status = PBIO_ERROR_FAILED;
+            PT_EXIT(pt);
+        }
+
+        handset.con_state == CON_STATE_READ_CHARACTERISTIC_COMPLETE;
+    }));
+
+    // TODO: return read value. Currently not used. Generalize discovery type to just char result type.
+
+    // State state back to simply connected, so we can discover other characteristics.
+    handset.con_state = CON_STATE_CONNECTED;
+
+    task->status = PBIO_SUCCESS;
+    PT_EXIT(pt);
+
+cancel:
+    if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(peri->con_handle);
+    }
+    handset.con_state = CON_STATE_NONE;
+    task->status = PBIO_ERROR_CANCELED;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
+    peripheral_singleton.char_discovery = characteristic;
+    start_task(task, periperal_read_characteristic_task, NULL);
 }
 
 const char *pbdrv_bluetooth_peripheral_get_name(void) {

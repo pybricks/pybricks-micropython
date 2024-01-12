@@ -772,6 +772,17 @@ void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_
     start_task(task, periperal_discover_characteristic_task, NULL);
 }
 
+static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
+    peripheral_singleton.char_discovery = characteristic;
+    start_task(task, periperal_read_characteristic_task, NULL);
+}
+
 const char *pbdrv_bluetooth_peripheral_get_name(void) {
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     return peri->name;

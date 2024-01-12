@@ -292,6 +292,8 @@ const char *pbdrv_bluetooth_peripheral_get_name(void);
 
 void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery);
 
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic);
+
 // TODO: make this a generic write without response function
 void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
 // TODO: make this a generic disconnect
