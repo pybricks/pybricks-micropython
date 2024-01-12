@@ -43,31 +43,24 @@
 
 #include "./bluetooth_stm32_cc2640.h"
 
-#define DEBUG 0
-#if DEBUG == 1
-#include <stdio.h>
-#include <stm32f0xx.h>
-#define DBG(fmt, ...) { \
-        char dbg[64]; \
-        snprintf(dbg, 64, fmt "\r\n",##__VA_ARGS__); \
-        for (char *d = dbg; *d; d++) { \
-            while (!(USART3->ISR & USART_ISR_TXE)) { } \
-            USART3->TDR = *d; \
-        } \
-}
-#elif DEBUG == 2
-#include <stdio.h>
-#include <stm32l431xx.h>
-#define DBG(fmt, ...) { \
-        char dbg[64]; \
-        snprintf(dbg, 64, fmt "\r\n",##__VA_ARGS__); \
-        for (char *d = dbg; *d; d++) { \
-            while (!(LPUART1->ISR & USART_ISR_TXE)) { } \
-            LPUART1->TDR = *d; \
-        } \
-}
+#define DEBUG_LL (0x01)
+#define DEBUG_PT (0x02)
+
+// Choose either/or DEBUG_LL | DEBUG_PT
+#define DEBUG (0)
+
+#if DEBUG
+#include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
+#endif
+#if (DEBUG & DEBUG_LL)
+#define DBG pbdrv_ioport_debug_uart_printf
 #else
 #define DBG(...)
+#endif
+#if (DEBUG & DEBUG_PT)
+#define DEBUG_PRINT_PT PBDRV_IOPORT_DEBUG_UART_PT_PRINTF
+#else
+#define DEBUG_PRINT_PT(...)
 #endif
 
 // hub name goes in special section so that it can be modified when flashing firmware
