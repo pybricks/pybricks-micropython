@@ -769,6 +769,62 @@ void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_
 static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 
+    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    static uint8_t status;
+
+retry:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        attReadReq_t req = {
+            .handle = peri->char_now->handle,
+        };
+        GATT_ReadCharValue(peri->con_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    status = read_buf[8];
+
+    if (status != bleSUCCESS) {
+        if (status == blePending) {
+            if (task->cancel) {
+                goto cancel;
+            }
+            goto retry;
+
+        }
+        goto exit;
+    }
+
+    // This gets a bit tricky. Once the request has been sent, we can't cancel
+    // the task, so we have to wait for the response (otherwise the response
+    // could be confused with the next request). The device could also become
+    // disconnected, in which case we never receive a response.
+    PT_WAIT_UNTIL(pt, ({
+        if (peri->con_handle == NO_CONNECTION) {
+            task->status = PBIO_ERROR_NO_DEV;
+            PT_EXIT(pt);
+        }
+
+        uint8_t *payload;
+        uint16_t event;
+        (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
+            if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_REQ
+                && pbio_get_uint16_le(&payload[1]) == peri->char_now->handle) {
+                task->status = PBIO_ERROR_FAILED;
+                PT_EXIT(pt);
+            }
+            // Not processing the data yet, just waiting for the event.
+            event == ATT_EVENT_READRSP;
+        });
+    }));
+
+exit:
+    task->status = ble_error_to_pbio_error(status);
+    PT_EXIT(pt);
+
+cancel:
+    task->status = PBIO_ERROR_CANCELED;
+
     PT_END(pt);
 }
 
