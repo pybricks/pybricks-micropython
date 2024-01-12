@@ -15,6 +15,7 @@ extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 #if PYBRICKS_PY_PUPDEVICES
 
 extern const mp_obj_type_t pb_type_iodevices_LWP3Device;
+extern const mp_obj_type_t pb_type_iodevices_XboxController;
 
 #endif // PYBRICKS_PY_PUPDEVICES
 
