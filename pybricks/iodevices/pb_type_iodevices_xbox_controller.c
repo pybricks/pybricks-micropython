@@ -25,31 +25,33 @@
 #include "py/obj.h"
 #include "py/mperrno.h"
 
-#define XBOX_HEADER_SIZE 3
-
 #define XBOX_MAX_MESSAGE_SIZE 20
 
-// /**
-//  * LEGO Wireless Protocol v3 Hub Service UUID.
-//  *
-//  * 00001623-1212-EFDE-1623-785FEABCD123
-//  */
-// static const uint8_t pbio_xbox_hub_service_uuid[] = {
-//     0x00, 0x00, 0x16, 0x23, 0x12, 0x12, 0xEF, 0xDE,
-//     0x16, 0x23, 0x78, 0x5F, 0xEA, 0xBC, 0xD1, 0x23,
-// };
-
 /**
- * LEGO Wireless Protocol v3 Hub Characteristic UUID.
- *
- * 00001624-1212-EFDE-1623-785FEABCD123
+ * The main HID Characteristic.
  */
 static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char = {
     .discovered_handle = 0, // Will be set during discovery.
-    .properties = 0x12,
+    .properties = 0x12, // Needed to distingish it from another char with same UUID.
     .uuid16 = 0x2a4d,
     .uuid128 = { 0 },
     .request_notification = true,
+};
+
+/**
+ * Unused characteristic that needs to be read for controller to become active.
+ */
+static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char_a = {
+    .uuid16 = 0x2a4a,
+    .request_notification = false,
+};
+
+/**
+ * Unused characteristic that needs to be read for controller to become active.
+ */
+static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char_b = {
+    .uuid16 = 0x2a4b,
+    .request_notification = false,
 };
 
 typedef struct {
@@ -78,8 +80,8 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
 
 STATIC pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
 
-    // The controller seems to advertise two different packets, so allow both.
-    
+    // The controller seems to advertise three different packets, so allow all.
+
     const uint8_t advertising_data1[] = {
         // Type field for BLE-enabled.
         0x02, PBDRV_BLUETOOTH_AD_DATA_TYPE_FLAGS, 0x06,
@@ -102,12 +104,19 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_
         0x03, PBDRV_BLUETOOTH_AD_DATA_TYPE_16_BIT_SERV_UUID_COMPLETE_LIST, _16BIT_AS_LE(0x1812),
     };
 
+    // As above, but without discovery mode.
+    uint8_t advertising_data3[sizeof(advertising_data2)];
+    memcpy(advertising_data3, advertising_data2, sizeof(advertising_data2));
+    advertising_data3[2] = 0x04; 
+
     // Exit if neither of the expected values match.
-    if (memcmp(data, advertising_data1, sizeof(advertising_data1)) && memcmp(data, advertising_data2, sizeof(advertising_data2))) {
+    if (memcmp(data, advertising_data1, sizeof(advertising_data1)) &&
+        memcmp(data, advertising_data2, sizeof(advertising_data2)) &&
+        memcmp(data, advertising_data3, sizeof(advertising_data3))) {
         return PBDRV_BLUETOOTH_AD_MATCH_NONE;
     }
 
-    //Expected value matches at this point.
+    // Expected value matches at this point.
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_VALUE;
 
     // Compare address in advertisement to previously scanned address.
@@ -170,12 +179,24 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
-    mp_printf(&mp_plat_print, "connected\n");
 
-    // Discover the characteristic and enable notifications.
+    // Discover and read char A but discard the result.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_a);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_a);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+
+    // Discover and read char B but discard the result.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_b);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_b);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+
+    // Discover and read char D but discard the result, and enable notifications.
     pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
-    mp_printf(&mp_plat_print, "discovered\n");
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
 
     return MP_OBJ_FROM_PTR(self);
 }
