@@ -558,7 +558,10 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
         && ({
             if (event == EVT_BLUE_GATT_DISC_READ_CHAR_BY_UUID_RESP) {
                 evt_gatt_disc_read_char_by_uuid_resp *subevt = payload;
-
+                // Filtering by properties is not implemented due to build size
+                // limitations. This means it will find only one characteristic
+                // even if there are multiple matches. There is no guarantee
+                // which one it will find, but probably the last one.
                 if (subevt->conn_handle == peri->con_handle) {
                     peri->char_discovery->discovered_handle = subevt->attr_handle;
                 }
