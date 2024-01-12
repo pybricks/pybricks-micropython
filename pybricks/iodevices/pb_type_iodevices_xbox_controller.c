@@ -25,8 +25,6 @@
 #include "py/obj.h"
 #include "py/mperrno.h"
 
-#define XBOX_MAX_MESSAGE_SIZE 20
-
 /**
  * The main HID Characteristic.
  */
@@ -54,25 +52,37 @@ static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char_b = {
     .request_notification = false,
 };
 
+// Decoding via https://github.com/esp32beans/ESP32-BLE-HID-exp, MIT license.
+typedef struct __attribute__((packed)) {
+    uint16_t x; // 0..65534
+    uint16_t y; // 0..65534
+    uint16_t z; // 0..65534
+    uint16_t rz; // 0..65534
+    uint16_t brake : 10; // 0..1023
+    uint16_t filler1 : 6;
+    uint16_t accelerator : 10; // 0..1023
+    uint16_t filler2 : 6;
+    uint8_t hat : 4;
+    uint8_t filler3 : 4;
+    uint16_t buttons : 15;
+    uint16_t filler4 : 1;
+    uint8_t record : 1;
+    uint8_t filler5 : 7;
+} xbox_one_gamepad_t;
+
 typedef struct {
     pbio_task_t task;
-    uint8_t buffer[XBOX_MAX_MESSAGE_SIZE];
+    xbox_one_gamepad_t state;
 } pb_xbox_t;
 
 STATIC pb_xbox_t pb_xbox_singleton;
 
-#include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
-#include <string.h>
-#include <stdio.h>
-
 // Handles LEGO Wireless protocol messages from the XBOX Device.
 STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_xbox_t *xbox = &pb_xbox_singleton;
-
-    // Each message overwrites the previous received messages
-    // Messages will be lost if they are not read fast enough
-    memcpy(xbox->buffer, &value[0], (size < XBOX_MAX_MESSAGE_SIZE) ? size : XBOX_MAX_MESSAGE_SIZE);
-
+    if (size == sizeof(xbox_one_gamepad_t)) {
+        memcpy(&xbox->state, &value[0], (size < sizeof(xbox_one_gamepad_t)) ? size : sizeof(xbox_one_gamepad_t));
+    }    
     return PBIO_PYBRICKS_ERROR_OK;
 }
 
@@ -107,7 +117,7 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_
     // As above, but without discovery mode.
     uint8_t advertising_data3[sizeof(advertising_data2)];
     memcpy(advertising_data3, advertising_data2, sizeof(advertising_data2));
-    advertising_data3[2] = 0x04; 
+    advertising_data3[2] = 0x04;
 
     // Exit if neither of the expected values match.
     if (memcmp(data, advertising_data1, sizeof(advertising_data1)) &&
@@ -176,6 +186,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory
     memset(xbox, 0, sizeof(*xbox));
+    xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
     // Connect with bonding enabled.
     pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification, true);
@@ -210,10 +221,21 @@ STATIC mp_obj_t pb_xbox_name(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name);
 
-STATIC mp_obj_t pb_xbox_state(size_t n_args, const mp_obj_t *args) {
-    return mp_obj_new_bytes(pb_xbox_singleton.buffer, sizeof(pb_xbox_singleton.buffer));
+STATIC mp_obj_t pb_xbox_state(mp_obj_t self_in) {
+    mp_obj_t state[] = {
+        mp_obj_new_int(pb_xbox_singleton.state.x - INT16_MAX),
+        mp_obj_new_int(pb_xbox_singleton.state.y - INT16_MAX),
+        mp_obj_new_int(pb_xbox_singleton.state.z - INT16_MAX),
+        mp_obj_new_int(pb_xbox_singleton.state.rz - INT16_MAX),
+        mp_obj_new_int(pb_xbox_singleton.state.brake),
+        mp_obj_new_int(pb_xbox_singleton.state.accelerator),
+        mp_obj_new_int(pb_xbox_singleton.state.hat),
+        mp_obj_new_int(pb_xbox_singleton.state.buttons),
+        mp_obj_new_int(pb_xbox_singleton.state.record),
+    };
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(state), state);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_state_obj, 1, 2, pb_xbox_state);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_state_obj, pb_xbox_state);
 
 STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)   },
