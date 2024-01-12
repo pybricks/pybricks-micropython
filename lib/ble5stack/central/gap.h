@@ -75,6 +75,7 @@
 #define GAP_SETPARAMVALUE               0xFE30
 #define GAP_GETPARAMVALUE               0xFE31
 #define GAP_BOND_MGR_SET_PARAMETER      0xFE36
+#define GAP_BOND_MGR_GET_PARAMETER      0xFE37
 #define GAPSCAN_ENABLE                  0xFE51
 #define GAPSCAN_DISABLE                 0xFE52
 #define GAPSCAN_SETPHYPARAMS            0xFE53
@@ -140,6 +141,7 @@
 #define GAPBOND_AUTO_FAIL_REASON        0x40B
 #define GAPBOND_KEYSIZE                 0x40C
 #define GAPBOND_AUTO_SYNC_WL            0x40D
+#define GAPBOND_BOND_COUNT              0x40E
 #define GAPBOND_BOND_FAIL_ACTION        0x40F
 #define GAPBOND_ERASE_SINGLEBOND        0x410
 #define GAPBOND_SECURE_CONNECTION       0x411
@@ -157,6 +159,10 @@
 #define GAPBOND_IO_CAP_KEYBOARD_ONLY        0x02
 #define GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT   0x03
 #define GAPBOND_IO_CAP_KEYBOARD_DISPLAY     0x04
+
+#define GAPBOND_SECURE_CONNECTION_NONE      0x00
+#define GAPBOND_SECURE_CONNECTION_ALLOW     0x01
+#define GAPBOND_SECURE_CONNECTION_ONLY      0x02
 
 /*-------------------------------------------------------------------
  * MACROS
@@ -2019,5 +2025,7 @@ extern HCI_StatusCodes_t GAP_Bond(uint16_t connectionHandle, uint8_t authenticat
  * @param paramData parameter-specific data (value/size depends on paramID)
  */
 extern HCI_StatusCodes_t GAP_BondMgrSetParameter(uint16_t paramID, uint8_t paramDataLen, uint8_t *paramData);
+
+extern HCI_StatusCodes_t GAP_BondMgrGetParameter(uint16_t paramID);
 
 #endif /* GAP_H_ */

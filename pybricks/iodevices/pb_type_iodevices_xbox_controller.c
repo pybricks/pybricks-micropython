@@ -191,24 +191,31 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // Connect with bonding enabled.
     pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification, true);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Connected to XBOX controller.\n");
 
     // Discover and read char A but discard the result.
     pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_a);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Found A.\n");
     pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_a);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Read A.\n");
 
     // Discover and read char B but discard the result.
     pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_b);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Found B.\n");
     pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_b);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Read B.\n");
 
     // Discover and read char D but discard the result, and enable notifications.
     pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Found D.\n");
     pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    mp_printf(&mp_plat_print, "Read D.\n");
 
     return MP_OBJ_FROM_PTR(self);
 }

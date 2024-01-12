@@ -608,3 +608,15 @@ HCI_StatusCodes_t GAP_BondMgrSetParameter(uint16_t paramID, uint8_t paramDataLen
 
     return HCI_sendHCICommand(GAP_BOND_MGR_SET_PARAMETER, pData, paramDataLen + 3);
 }
+
+// GAP_BondMgrGetParameter(0x040E)
+
+HCI_StatusCodes_t GAP_BondMgrGetParameter(uint16_t paramID)
+{
+    uint8_t pData[2];
+
+    pData[0] = LO_UINT16(paramID);
+    pData[1] = HI_UINT16(paramID);
+
+    return HCI_sendHCICommand(GAP_BOND_MGR_GET_PARAMETER, pData, 2);
+}

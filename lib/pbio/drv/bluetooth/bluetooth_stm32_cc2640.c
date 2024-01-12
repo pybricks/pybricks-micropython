@@ -47,7 +47,7 @@
 #define DEBUG_PT (0x02)
 
 // Choose either/or DEBUG_LL | DEBUG_PT
-#define DEBUG (0)
+#define DEBUG (DEBUG_PT)
 
 #if DEBUG
 #include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
@@ -58,9 +58,11 @@
 #define DBG(...)
 #endif
 #if (DEBUG & DEBUG_PT)
+#define DEBUG_PRINT pbdrv_ioport_debug_uart_printf
 #define DEBUG_PRINT_PT PBDRV_IOPORT_DEBUG_UART_PT_PRINTF
 #else
 #define DEBUG_PRINT_PT(...)
+#define DEBUG_PRINT(...)
 #endif
 
 // hub name goes in special section so that it can be modified when flashing firmware
@@ -86,6 +88,8 @@ static char pbdrv_bluetooth_fw_version[16]; // vX.XX.XX
 #define NPI_SPI_HEADER_LEN      3       // zero pad, SOF, length
 
 #define NO_CONNECTION           0xFFFF
+#define NO_AUTH                 0xFF
+#define GAP_BOND_ERR_OFFSET     0x600
 
 typedef enum {
     RESET_STATE_OUT_HIGH,   // in reset
@@ -126,6 +130,9 @@ static bool advertising_data_received;
 // handle to connected Bluetooth device
 static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
+
+// Bonding status of the peripheral.
+static uint16_t bond_auth_err = NO_AUTH;
 
 // The peripheral singleton. Used to connect to a device like the LEGO Remote.
 pbdrv_bluetooth_peripheral_t peripheral_singleton = {
@@ -468,6 +475,8 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
 static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
+    static uint8_t buf[1];
+
     assert(peri->match_adv);
     assert(peri->match_adv_rsp);
     assert(peri->notification_handler);
@@ -486,6 +495,14 @@ static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *ta
             PT_WAIT_UNTIL(pt, device_discovery_done);
         }
     }
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_BondMgrSetParameter(GAPBOND_ERASE_ALLBONDS, 0, NULL);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_BondMgrSetParameter(GAPBOND_ERASE_LOCAL_INFO, 0, NULL);
+    PT_WAIT_UNTIL(pt, hci_command_status);
 
     // start scanning
 
@@ -575,6 +592,17 @@ try_again:
 
     assert(peri->con_handle == NO_CONNECTION);
 
+    bond_auth_err = NO_AUTH;
+
+    // Configure to initiate pairing right after connect.
+    // REVISIT: This ultimately calls GAP_Authenticate(). If we can call it
+    // ourselves with the same parameters, we can drop this setting so we don't
+    // have to unset it later.
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    buf[0] = GAPBOND_PAIRING_MODE_INITIATE;
+    GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_EstablishLinkReq(0, 0, peri->bdaddr_type, peri->bdaddr);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -583,12 +611,42 @@ try_again:
 
     PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
-            goto cancel_connect;
+            goto cancel_connect; // TODO, clean exit including unsetting settings
         }
         peri->con_handle != NO_CONNECTION;
     }));
 
+    DEBUG_PRINT_PT(pt, "connected\n");
+
+    PT_WAIT_UNTIL(pt, ({
+        if (task->cancel) {
+            goto cancel_connect; // TODO: need cancel_auth point, and unset pairing mode there too.
+        }
+        bond_auth_err != NO_AUTH;
+    }));
+    
+    DEBUG_PRINT_PT(pt, "auth complete %d\n", bond_auth_err);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    buf[0] = GAPBOND_PAIRING_MODE_NO_PAIRING;
+    GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    if (bond_auth_err != 0) {
+        task->status = PBIO_ERROR_FAILED;
+        goto disconnect;
+    }
+
     task->status = PBIO_SUCCESS;
+
+    goto out;
+
+disconnect:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_TerminateLinkReq(peri->con_handle, 0x13);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    // task->status must be set before goto disconnect!
 
     goto out;
 
@@ -773,6 +831,7 @@ static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *
     static uint8_t status;
 
 retry:
+    DEBUG_PRINT_PT(pt, "going to read %04x:\n", peri->char_now->handle);
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
         attReadReq_t req = {
@@ -789,11 +848,14 @@ retry:
             if (task->cancel) {
                 goto cancel;
             }
+            DEBUG_PRINT_PT(pt, "retry\n");
             goto retry;
 
         }
+        DEBUG_PRINT_PT(pt, "exit %d\n", status);
         goto exit;
     }
+    DEBUG_PRINT_PT(pt, "did read %04x:\n", peri->char_now->handle);
 
     // This gets a bit tricky. Once the request has been sent, we can't cancel
     // the task, so we have to wait for the response (otherwise the response
@@ -817,6 +879,8 @@ retry:
             event == ATT_EVENT_READRSP;
         });
     }));
+
+    DEBUG_PRINT_PT(pt, "received reply with status %d\n", status);
 
 exit:
     task->status = ble_error_to_pbio_error(status);
@@ -1646,6 +1710,21 @@ static void handle_event(uint8_t *packet) {
                     hci_command_complete = true;
                     break;
 
+                case GAP_BOND_ERR_OFFSET + GAP_SIGNATURE_UPDATED_EVENT:
+                case GAP_BOND_ERR_OFFSET + GAP_PASSKEY_NEEDED_EVENT:
+                case GAP_BOND_ERR_OFFSET + GAP_SLAVE_REQUESTED_SECURITY_EVENT:
+                case GAP_BOND_ERR_OFFSET + GAP_PAIRING_REQ_EVENT:
+                case GAP_BOND_ERR_OFFSET + GAP_AUTHENTICATION_FAILURE_EVT:
+                case GAP_BOND_ERR_OFFSET + GAP_BOND_COMPLETE_EVENT:
+                    DEBUG_PRINT("Bond info: 0x%04X %d\n", event_code, status);
+                    bond_auth_err = status;
+                    break;
+
+                case GAP_BOND_ERR_OFFSET + GAP_AUTHENTICATION_COMPLETE_EVENT:
+                    DEBUG_PRINT("Auth complete: 0x%04X %d\n", event_code, status);
+                    bond_auth_err = status;
+                    break;
+
                 case HCI_COMMAND_STATUS: {
                     uint16_t opcode = (data[4] << 8) | data[3];
                     // This filters out responses that were sent from commands
@@ -1661,6 +1740,7 @@ static void handle_event(uint8_t *packet) {
 
                 default:
                     DBG("unhandled: %04X", event_code);
+                    DEBUG_PRINT("unhandled: %04X\n", event_code);
                     break;
             }
         }
@@ -1754,6 +1834,16 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_BondMgrGetParameter(GAPBOND_BOND_COUNT);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    // DEBUG, REMOVE
+    static int i = 0;
+    for (i = 0; i < 15; i++) {
+        PBDRV_IOPORT_DEBUG_UART_PT_PRINTF(pt, "response %d = %d\n", i, read_buf[i]);
+    }
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
     buf[0] = 0; // disabled
     GAP_BondMgrSetParameter(GAPBOND_MITM_PROTECTION, 1, buf);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -1766,8 +1856,14 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = 0; // disabled
+    buf[0] = 1; // enabled, as in allowed. It won't happen by default.
     GAP_BondMgrSetParameter(GAPBOND_BONDING_ENABLED, 1, buf);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    buf[0] = GAPBOND_SECURE_CONNECTION_NONE;
+    GAP_BondMgrSetParameter(GAPBOND_SECURE_CONNECTION, 1, buf);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
