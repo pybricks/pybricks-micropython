@@ -243,12 +243,16 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             gatt_event_service_query_result_get_service(packet, &service);
             break;
         }
-        case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT:
-            // TODO: Filter by properties, only assign on match.
-            gatt_event_characteristic_query_result_get_characteristic(packet, &handset.current_char);
-            peri->char_discovery->discovered_handle = handset.current_char.value_handle;
+        case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT: {
+            gatt_client_characteristic_t found_char;
+            gatt_event_characteristic_query_result_get_characteristic(packet, &found_char);
+            // We only care about the one characteristic that has at least the requested properties.
+            if ((found_char.properties & peri->char_discovery->properties) == peri->char_discovery->properties) {
+                peri->char_discovery->discovered_handle = found_char.value_handle;
+                gatt_event_characteristic_query_result_get_characteristic(packet, &handset.current_char);
+            }
             break;
-
+        }
         case GATT_EVENT_QUERY_COMPLETE:
             if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
 
