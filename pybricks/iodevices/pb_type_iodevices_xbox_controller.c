@@ -28,8 +28,8 @@
 /**
  * The main HID Characteristic.
  */
-static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char = {
-    .discovered_handle = 0, // Will be set during discovery.
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char = {
+    .handle = 0, // Will be set during discovery.
     .properties = 0x12, // Needed to distingish it from another char with same UUID.
     .uuid16 = 0x2a4d,
     .uuid128 = { 0 },
@@ -39,7 +39,7 @@ static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char_a = {
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_a = {
     .uuid16 = 0x2a4a,
     .request_notification = false,
 };
@@ -47,7 +47,7 @@ static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char_a = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_discovery_t pb_xbox_char_b = {
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_b = {
     .uuid16 = 0x2a4b,
     .request_notification = false,
 };
@@ -82,7 +82,7 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
     pb_xbox_t *xbox = &pb_xbox_singleton;
     if (size == sizeof(xbox_one_gamepad_t)) {
         memcpy(&xbox->state, &value[0], (size < sizeof(xbox_one_gamepad_t)) ? size : sizeof(xbox_one_gamepad_t));
-    }    
+    }
     return PBIO_PYBRICKS_ERROR_OK;
 }
 

@@ -650,11 +650,11 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
             .startHandle = 0x0001,
             .endHandle = 0xFFFF,
         };
-        if (peri->char_discovery->uuid16) {
-            pbio_set_uint16_le(req.type.uuid, peri->char_discovery->uuid16);
+        if (peri->char_now->uuid16) {
+            pbio_set_uint16_le(req.type.uuid, peri->char_now->uuid16);
             req.type.len = 2;
         } else {
-            pbio_uuid128_reverse_copy(req.type.uuid, peri->char_discovery->uuid128);
+            pbio_uuid128_reverse_copy(req.type.uuid, peri->char_now->uuid128);
             req.type.len = 16;
         }
         GATT_DiscCharsByUUID(peri->con_handle, &req);
@@ -692,8 +692,8 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
             // up with the last. It also assumes that it is the only
             // characteristic in the response.
             if (status == bleSUCCESS) {
-                if ((payload[3] & peri->char_discovery->properties) == peri->char_discovery->properties) {
-                    peri->char_discovery->discovered_handle = pbio_get_uint16_le(&payload[4]);
+                if ((payload[3] & peri->char_now->properties) == peri->char_now->properties) {
+                    peri->char_now->handle = pbio_get_uint16_le(&payload[4]);
                     // Don't break out of this even though we found it. We need to
                     // wait until the range scan completes.
                 }
@@ -704,7 +704,7 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     }));
 
     // If notifications are not requested, we're done.
-    if (!peri->char_discovery->request_notification) {
+    if (!peri->char_now->request_notification) {
         task->status = PBIO_SUCCESS;
         PT_EXIT(pt);
     }
@@ -718,7 +718,7 @@ retry:
         attWriteReq_t req = {
             // assuming that client characteristic configuration descriptor
             // is next attribute after the characteristic value attribute
-            .handle = peri->char_discovery->discovered_handle + 1,
+            .handle = peri->char_now->handle + 1,
             .len = sizeof(enable),
             .pValue = (uint8_t *)&enable,
         };
@@ -767,9 +767,9 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
-void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery) {
-    discovery->discovered_handle = 0;
-    peripheral_singleton.char_discovery = discovery;
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+    characteristic->handle = 0;
+    peripheral_singleton.char_now = characteristic;
     start_task(task, periperal_discover_characteristic_task, NULL);
 }
 
@@ -779,8 +779,8 @@ static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
-    peripheral_singleton.char_discovery = characteristic;
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+    peripheral_singleton.char_now = characteristic;
     start_task(task, periperal_read_characteristic_task, NULL);
 }
 

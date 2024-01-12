@@ -70,8 +70,8 @@ static const uint8_t pbio_lwp3_hub_service_uuid[] = {
  *
  * 00001624-1212-EFDE-1623-785FEABCD123
  */
-static pbdrv_bluetooth_peripheral_char_discovery_t pb_lwp3device_char = {
-    .discovered_handle = 0, // Will be set during discovery.
+static pbdrv_bluetooth_peripheral_char_t pb_lwp3device_char = {
+    .handle = 0, // Will be set during discovery.
     .properties = 0,
     .uuid16 = 0,
     .uuid128 = {
@@ -241,7 +241,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_col
         .cmd = LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA,
         .mode = STATUS_LIGHT_MODE_RGB_0,
     };
-    pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
+    pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.handle);
 
     pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
 
@@ -279,7 +279,7 @@ STATIC void pb_lwp3device_configure_remote(void) {
             .delta_interval = 1,
             .enable_notifications = 1,
         };
-        pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
+        pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.handle);
 
         // set mode for left buttons
 
@@ -409,7 +409,7 @@ STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
             char payload[LWP3_MAX_HUB_PROPERTY_NAME_SIZE];
         } __attribute__((packed)) msg;
 
-        pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
+        pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.handle);
         msg.value.size = msg.length = len + 5;
         msg.hub = 0;
         msg.type = LWP3_MSG_TYPE_HUB_PROPERTIES;
@@ -491,7 +491,7 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
         .value.size = bufinfo.len,
     };
     memcpy(msg.payload, bufinfo.buf, bufinfo.len);
-    pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.discovered_handle);
+    pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.handle);
 
     pbdrv_bluetooth_peripheral_write(&lwp3device->task, &msg.value);
     return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);

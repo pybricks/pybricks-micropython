@@ -111,7 +111,7 @@ typedef struct {
  */
 typedef struct {
     /** Discovered handle. Will remain 0 if not yet found or failed. */
-    uint16_t discovered_handle;
+    uint16_t handle;
     /** Properties to filter discovered results. Leave 0 for no filtering. */
     uint16_t properties;
     /** The 16-bit UUID. Leave at 0 if 128-bit UUID should be used. */
@@ -120,7 +120,7 @@ typedef struct {
     const uint8_t uuid128[16];
     /** Whether to request enabling notifications after successful discovery. */
     bool request_notification;
-} pbdrv_bluetooth_peripheral_char_discovery_t;
+} pbdrv_bluetooth_peripheral_char_t;
 
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
@@ -132,7 +132,7 @@ typedef struct {
     uint8_t bdaddr[6];
     char name[20];
     /** Handle to the characteristic currently being discovered. */
-    pbdrv_bluetooth_peripheral_char_discovery_t *char_discovery;
+    pbdrv_bluetooth_peripheral_char_t *char_now;
     pbdrv_bluetooth_ad_match_t match_adv;
     pbdrv_bluetooth_ad_match_t match_adv_rsp;
     pbdrv_bluetooth_receive_handler_t notification_handler;
@@ -277,6 +277,8 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
  * @param [in]  task           The task that is used to wait for completion.
  * @param [in]  match_adv      Callback to match the advertisement data during scan.
  * @param [in]  match_adv_rsp  Callback to match the advertisement response data during scan.
+ * @param [in]  notification_handler  Callback to handle notifications from the peripheral.
+ * @param [in]  bond           Whether to bond with the peripheral.
  */
 void pbdrv_bluetooth_peripheral_scan_and_connect(
     pbio_task_t *task,
@@ -292,9 +294,23 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(
  */
 const char *pbdrv_bluetooth_peripheral_get_name(void);
 
-void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery);
+/**
+ * Find a characteristic by UUID and properties.
+ *
+ * If found, the value handle in the characteristic is set.
+ *
+ * @param [in]  task           The task that is used to wait for completion.
+ * @param [in]  characteristic The characteristic to discover.
+ */
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic);
 
-void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic);
+/**
+ * Read a characteristic.
+ *
+ * @param [in]  task           The task that is used to wait for completion.
+ * @param [in]  characteristic The characteristic to read.
+ */
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic);
 
 // TODO: make this a generic write without response function
 void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
@@ -373,10 +389,24 @@ static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context)
     context->done();
 }
 
-static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
+static inline void pbdrv_bluetooth_peripheral_scan_and_connect(
+    pbio_task_t *task,
+    pbdrv_bluetooth_ad_match_t match_adv,
+    pbdrv_bluetooth_ad_match_t match_adv_rsp,
+    pbdrv_bluetooth_receive_handler_t notification_handler,
+    bool bond) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_peripheral_t *context) {
+static inline const char *pbdrv_bluetooth_peripheral_get_name(void) {
+    return NULL;
+}
+
+static inline void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+    task->status = PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 

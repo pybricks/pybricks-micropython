@@ -259,8 +259,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             gatt_client_characteristic_t found_char;
             gatt_event_characteristic_query_result_get_characteristic(packet, &found_char);
             // We only care about the one characteristic that has at least the requested properties.
-            if ((found_char.properties & peri->char_discovery->properties) == peri->char_discovery->properties) {
-                peri->char_discovery->discovered_handle = found_char.value_handle;
+            if ((found_char.properties & peri->char_now->properties) == peri->char_now->properties) {
+                peri->char_now->handle = found_char.value_handle;
                 gatt_event_characteristic_query_result_get_characteristic(packet, &handset.current_char);
             }
             break;
@@ -276,7 +276,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             } else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
 
                 // Discovered characteristics, ready enable notifications.
-                if (!peri->char_discovery->request_notification) {
+                if (!peri->char_now->request_notification) {
                     // If no notification is requested, we are done.
                     handset.con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
                     break;
@@ -783,11 +783,11 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     }
 
     handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
-    handset.btstack_error = peri->char_discovery->uuid16 ?
+    handset.btstack_error = peri->char_now->uuid16 ?
         gatt_client_discover_characteristics_for_handle_range_by_uuid16(
-        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_discovery->uuid16) :
+        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_now->uuid16) :
         gatt_client_discover_characteristics_for_handle_range_by_uuid128(
-        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_discovery->uuid128);
+        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_now->uuid128);
 
     if (handset.btstack_error != ERROR_CODE_SUCCESS) {
         // configuration failed for some reason, so disconnect
@@ -814,7 +814,7 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     // State state back to simply connected, so we can discover other characteristics.
     handset.con_state = CON_STATE_CONNECTED;
 
-    task->status = peri->char_discovery->discovered_handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
+    task->status = peri->char_now->handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
     PT_EXIT(pt);
 
 cancel:
@@ -840,9 +840,9 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
-void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery) {
-    discovery->discovered_handle = 0;
-    peripheral_singleton.char_discovery = discovery;
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+    characteristic->handle = 0;
+    peripheral_singleton.char_now = characteristic;
     start_task(task, periperal_discover_characteristic_task, NULL);
 }
 
@@ -856,7 +856,7 @@ static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *
     }
 
     gatt_client_characteristic_t characteristic = {
-        .value_handle = peri->char_discovery->discovered_handle,
+        .value_handle = peri->char_now->handle,
     };
     handset.btstack_error = gatt_client_read_value_of_characteristic(packet_handler, peri->con_handle, &characteristic);
 
@@ -901,8 +901,8 @@ cancel:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
-    peripheral_singleton.char_discovery = characteristic;
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+    peripheral_singleton.char_now = characteristic;
     start_task(task, periperal_read_characteristic_task, NULL);
 }
 

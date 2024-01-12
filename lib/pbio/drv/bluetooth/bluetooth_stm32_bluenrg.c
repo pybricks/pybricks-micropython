@@ -540,11 +540,11 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
 
     uint8_t uuid_le[16];
     uint8_t uuid_type;
-    if (peri->char_discovery->uuid16) {
-        pbio_set_uint16_le(uuid_le, peri->char_discovery->uuid16);
+    if (peri->char_now->uuid16) {
+        pbio_set_uint16_le(uuid_le, peri->char_now->uuid16);
         uuid_type = UUID_TYPE_16;
     } else {
-        pbio_uuid128_reverse_copy(uuid_le, peri->char_discovery->uuid128);
+        pbio_uuid128_reverse_copy(uuid_le, peri->char_now->uuid128);
         uuid_type = UUID_TYPE_128;
     }
     aci_gatt_disc_charac_by_uuid_begin(peri->con_handle, 0x0001, 0xFFFF, uuid_type, uuid_le);
@@ -563,7 +563,7 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
                 // even if there are multiple matches. There is no guarantee
                 // which one it will find, but probably the last one.
                 if (subevt->conn_handle == peri->con_handle) {
-                    peri->char_discovery->discovered_handle = subevt->attr_handle;
+                    peri->char_now->handle = subevt->attr_handle;
                 }
             }
             event == EVT_BLUE_GATT_PROCEDURE_COMPLETE;
@@ -574,7 +574,7 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     }));
 
     // If notifications are not requested, we're done.
-    if (!peri->char_discovery->request_notification) {
+    if (!peri->char_now->request_notification) {
         task->status = ble_error_to_pbio_error(peri->status);
         PT_EXIT(pt);
     }
@@ -583,7 +583,7 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
 
 retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_discovery->discovered_handle + 2, sizeof(enable), (const uint8_t *)&enable);
+    aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_now->handle + 2, sizeof(enable), (const uint8_t *)&enable);
     PT_WAIT_UNTIL(pt, hci_command_status);
     peri->status = aci_gatt_write_charac_value_end();
 
@@ -637,13 +637,13 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
-void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *discovery) {
-    discovery->discovered_handle = 0;
-    peripheral_singleton.char_discovery = discovery;
+void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+    characteristic->handle = 0;
+    peripheral_singleton.char_now = characteristic;
     start_task(task, periperal_discover_characteristic_task, NULL);
 }
 
-void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
+void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_bluetooth_peripheral_char_t *characteristic) {
     // Not implemented.
 }
 
