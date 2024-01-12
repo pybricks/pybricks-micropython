@@ -7,6 +7,8 @@
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
+#include <inttypes.h>
+
 #include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack.h>
@@ -37,11 +39,19 @@
 #define HUB_VARIANT 0x0000
 #endif
 
+#if 0
+#include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
+#define DEBUG_PRINT pbdrv_ioport_debug_uart_printf
+#else
+#define DEBUG_PRINT(...)
+#endif
+
 typedef enum {
     CON_STATE_NONE,
     CON_STATE_WAIT_ADV_IND,
     CON_STATE_WAIT_SCAN_RSP,
     CON_STATE_WAIT_CONNECT,
+    CON_STATE_WAIT_BONDING,
     CON_STATE_CONNECTED, // End of connection state machine
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
@@ -263,8 +273,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             if (handset.con_state == CON_STATE_WAIT_READ_CHARACTERISTIC) {
                 // Done reading characteristic.
                 handset.con_state = CON_STATE_READ_CHARACTERISTIC_COMPLETE;
-            }
-            else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
+            } else if (handset.con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
 
                 // Discovered characteristics, ready enable notifications.
                 if (!peri->char_discovery->request_notification) {
@@ -317,13 +326,24 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 // don't start advertising again on disconnect
                 gap_advertisements_enable(false);
             } else {
-                // If we aren't waiting for a handset connection, this must be a different connection.
+                // If we aren't waiting for a peripheral connection, this must be a different connection.
                 if (handset.con_state != CON_STATE_WAIT_CONNECT) {
                     break;
                 }
 
                 peri->con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
-                handset.con_state = CON_STATE_CONNECTED;
+
+                // Request bonding if needed for this device, otherwise set
+                // connection state to complete.
+                if (peri->bond) {
+                    // Re-encryption doesn't seem to work reliably, so we just
+                    // delete the bond and start over.
+                    gap_delete_bonding(peri->bdaddr_type, peri->bdaddr);
+                    sm_request_pairing(peri->con_handle);
+                    handset.con_state = CON_STATE_WAIT_BONDING;
+                } else {
+                    handset.con_state = CON_STATE_CONNECTED;
+                }
             }
 
             break;
@@ -415,6 +435,94 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     propagate_event(packet);
 }
 
+// Security manager callbacks. This is adapted from the BTstack examples.
+static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    UNUSED(channel);
+    UNUSED(size);
+
+    if (packet_type != HCI_EVENT_PACKET) {
+        return;
+    }
+
+    bd_addr_t addr;
+    bd_addr_type_t addr_type;
+
+    switch (hci_event_packet_get_type(packet)) {
+        case SM_EVENT_IDENTITY_RESOLVING_STARTED:
+            DEBUG_PRINT("IDENTITY_RESOLVING_STARTED\n");
+            break;
+        case SM_EVENT_IDENTITY_RESOLVING_FAILED:
+            DEBUG_PRINT("IDENTITY_RESOLVING_FAILED\n");
+            break;
+        case SM_EVENT_JUST_WORKS_REQUEST:
+            // This is the only expected path for known compatible peripherals.
+            DEBUG_PRINT("Just works requested\n");
+            sm_just_works_confirm(sm_event_just_works_request_get_handle(packet));
+            break;
+        case SM_EVENT_NUMERIC_COMPARISON_REQUEST:
+            DEBUG_PRINT("Confirming numeric comparison: %" PRIu32 "\n", sm_event_numeric_comparison_request_get_passkey(packet));
+            sm_numeric_comparison_confirm(sm_event_passkey_display_number_get_handle(packet));
+            break;
+        case SM_EVENT_PASSKEY_DISPLAY_NUMBER:
+            DEBUG_PRINT("Display Passkey: %" PRIu32 "\n", sm_event_passkey_display_number_get_passkey(packet));
+            break;
+        case SM_EVENT_PASSKEY_INPUT_NUMBER: {
+            const uint32_t passkey = 123456U;
+            DEBUG_PRINT("Passkey Input requested\n");
+            DEBUG_PRINT("Sending fixed passkey %" PRIu32 "\n", passkey);
+            sm_passkey_input(sm_event_passkey_input_number_get_handle(packet), passkey);
+            break;
+        }
+        case SM_EVENT_PAIRING_STARTED:
+            DEBUG_PRINT("Pairing started\n");
+            break;
+        case SM_EVENT_PAIRING_COMPLETE:
+            switch (sm_event_pairing_complete_get_status(packet)) {
+                case ERROR_CODE_SUCCESS:
+                    // This is the final state for known compatible peripherals
+                    // with bonding under normal circumstances.
+                    DEBUG_PRINT("Pairing complete, success\n");
+                    handset.con_state = CON_STATE_CONNECTED;
+                    break;
+                case ERROR_CODE_CONNECTION_TIMEOUT:
+                // fall through to disconnect.
+                case ERROR_CODE_REMOTE_USER_TERMINATED_CONNECTION:
+                // fall through to disconnect.
+                case ERROR_CODE_AUTHENTICATION_FAILURE:
+                // fall through to disconnect.
+                default:
+                    DEBUG_PRINT(
+                        "Pairing completed with error code %u and reason %u\n",
+                        sm_event_pairing_complete_get_status(packet),
+                        sm_event_pairing_complete_get_reason(packet)
+                        );
+                    gap_disconnect(sm_event_reencryption_complete_get_handle(packet));
+                    break;
+            }
+            break;
+        case SM_EVENT_REENCRYPTION_STARTED:
+            sm_event_reencryption_complete_get_address(packet, addr);
+            DEBUG_PRINT("Bonding information exists for addr type %u, identity addr %s -> start re-encryption\n",
+                sm_event_reencryption_started_get_addr_type(packet), bd_addr_to_str(addr));
+            break;
+        case SM_EVENT_REENCRYPTION_COMPLETE:
+            // BTstack supports re-encryption, but it gets the hub in a hung
+            // state with certain peripherals. Instead we just delete the bond
+            // just before connecting. If we still get here, we should delete
+            // the bond and disconnect, causing the user program stop without
+            // hanging. We rely on HCI_EVENT_DISCONNECTION_COMPLETE to set
+            // the connection state appropriately to unblock the task.
+            DEBUG_PRINT("Re-encryption complete. Handling not implemented.\n");
+            sm_event_reencryption_complete_get_address(packet, addr);
+            addr_type = sm_event_reencryption_started_get_addr_type(packet);
+            gap_delete_bonding(addr_type, addr);
+            gap_disconnect(sm_event_reencryption_complete_get_handle(packet));
+            break;
+        default:
+            break;
+    }
+}
+
 // ATT Client Read Callback for Dynamic Data
 // - if buffer == NULL, don't copy data, just return size of value
 // - if buffer != NULL, copy data and return number bytes copied
@@ -437,6 +545,7 @@ static uint16_t att_read_callback(hci_con_handle_t con_handle, uint16_t attribut
 
 void pbdrv_bluetooth_init(void) {
     static btstack_packet_callback_registration_t hci_event_callback_registration;
+    static btstack_packet_callback_registration_t sm_event_callback_registration;
 
     // don't need to init the whole struct, so doing this here
     peripheral_singleton.con_handle = HCI_CON_HANDLE_INVALID;
@@ -461,8 +570,11 @@ void pbdrv_bluetooth_init(void) {
     // setup security manager
     sm_init();
     sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
+    sm_set_authentication_requirements(SM_AUTHREQ_BONDING);
     sm_set_er((uint8_t *)pdata->er_key);
     sm_set_ir((uint8_t *)pdata->ir_key);
+    sm_event_callback_registration.callback = &sm_packet_handler;
+    sm_add_event_handler(&sm_event_callback_registration);
 
     gap_random_address_set_mode(GAP_RANDOM_ADDRESS_NON_RESOLVABLE);
     gap_set_max_number_peripheral_connections(2);
@@ -670,15 +782,14 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
         PT_EXIT(pt);
     }
 
+    handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
     handset.btstack_error = peri->char_discovery->uuid16 ?
         gatt_client_discover_characteristics_for_handle_range_by_uuid16(
         packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_discovery->uuid16) :
         gatt_client_discover_characteristics_for_handle_range_by_uuid128(
         packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_discovery->uuid128);
 
-    if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-        handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
-    } else {
+    if (handset.btstack_error != ERROR_CODE_SUCCESS) {
         // configuration failed for some reason, so disconnect
         gap_disconnect(peri->con_handle);
         handset.con_state = CON_STATE_WAIT_DISCONNECT;
@@ -716,7 +827,7 @@ cancel:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler) {
+void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, bool bond) {
     // Unset previous bluetooth addresses and other state variables.
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
@@ -725,6 +836,7 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     peri->match_adv = match_adv;
     peri->match_adv_rsp = match_adv_rsp;
     peri->notification_handler = notification_handler;
+    peri->bond = bond;
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 

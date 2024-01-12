@@ -177,7 +177,8 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // we are using static memory
     memset(xbox, 0, sizeof(*xbox));
 
-    pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification);
+    // Connect with bonding enabled.
+    pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification, true);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
 
     // Discover and read char A but discard the result.

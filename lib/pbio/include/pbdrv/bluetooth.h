@@ -136,6 +136,7 @@ typedef struct {
     pbdrv_bluetooth_ad_match_t match_adv;
     pbdrv_bluetooth_ad_match_t match_adv_rsp;
     pbdrv_bluetooth_receive_handler_t notification_handler;
+    bool bond;
 } pbdrv_bluetooth_peripheral_t;
 
 /** Advertisement types. */
@@ -281,7 +282,8 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(
     pbio_task_t *task,
     pbdrv_bluetooth_ad_match_t match_adv,
     pbdrv_bluetooth_ad_match_t match_adv_rsp,
-    pbdrv_bluetooth_receive_handler_t notification_handler);
+    pbdrv_bluetooth_receive_handler_t notification_handler,
+    bool bond);
 
 /**
  * Gets the name of the connected peripheral.
