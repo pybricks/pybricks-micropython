@@ -586,12 +586,12 @@ try_again:
 
     bond_auth_err = NO_AUTH;
 
-    // Configure to initiate pairing right after connect.
-    // REVISIT: This ultimately calls GAP_Authenticate(). If we can call it
-    // ourselves with the same parameters, we can drop this setting so we don't
-    // have to unset it later.
+    // Configure to initiate pairing right after connect if bonding required.
+    // NB: We must unset "initiate" before we allow a new connection to
+    // Pybricks Code or it will try to pair with the PC. However, this happens
+    // automatically since gap_init runs again on disconnect, which resets it.
     PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = GAPBOND_PAIRING_MODE_INITIATE;
+    buf[0] = peri->bond ? GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
     GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
@@ -603,30 +603,26 @@ try_again:
 
     PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
-            goto cancel_connect; // TODO, clean exit including unsetting settings
+            goto cancel_connect;
         }
         peri->con_handle != NO_CONNECTION;
     }));
 
-    DEBUG_PRINT_PT(pt, "connected\n");
+    DEBUG_PRINT_PT(pt, "Connected.\n");
 
-    PT_WAIT_UNTIL(pt, ({
-        if (task->cancel) {
-            goto cancel_connect; // TODO: need cancel_auth point, and unset pairing mode there too.
+    if (peri->bond) {
+        PT_WAIT_UNTIL(pt, ({
+            if (task->cancel) {
+                goto disconnect;
+            }
+            bond_auth_err != NO_AUTH;
+        }));
+        DEBUG_PRINT_PT(pt, "Auth complete: %d\n", bond_auth_err);
+
+        if (bond_auth_err != 0) {
+            task->status = PBIO_ERROR_FAILED;
+            goto disconnect;
         }
-        bond_auth_err != NO_AUTH;
-    }));
-    
-    DEBUG_PRINT_PT(pt, "auth complete %d\n", bond_auth_err);
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = GAPBOND_PAIRING_MODE_NO_PAIRING;
-    GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    if (bond_auth_err != 0) {
-        task->status = PBIO_ERROR_FAILED;
-        goto disconnect;
     }
 
     task->status = PBIO_SUCCESS;
@@ -1836,7 +1832,7 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     // just always clear the bond information if there is any, and start over.
     if (read_buf[12] > 0) {
         DEBUG_PRINT_PT(pt, "Old bond count: %d\n", read_buf[12]);
-        
+
         // Erase all bonds stored on Bluetooth chip. We can also erase local
         // info, but this does not appear to be necessary.
         PT_WAIT_WHILE(pt, write_xfer_size);
