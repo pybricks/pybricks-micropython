@@ -620,7 +620,12 @@ try_again:
         DEBUG_PRINT_PT(pt, "Auth complete: %d\n", bond_auth_err);
 
         if (bond_auth_err != 0) {
-            task->status = PBIO_ERROR_FAILED;
+            // This can happen if the peripheral has been connected with
+            // a different device while the hub was connected to Pybricks Code,
+            // meaning that it has not had the chance to erase old bond info.
+            // The only way to work around it is to disconnect from the
+            // computer or turn off the hub to achieve the same result.
+            task->status = PBIO_ERROR_INVALID_OP;
             goto disconnect;
         }
     }
