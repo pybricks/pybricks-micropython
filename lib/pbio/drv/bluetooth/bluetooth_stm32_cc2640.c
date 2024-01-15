@@ -496,14 +496,6 @@ static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *ta
         }
     }
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_BondMgrSetParameter(GAPBOND_ERASE_ALLBONDS, 0, NULL);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_BondMgrSetParameter(GAPBOND_ERASE_LOCAL_INFO, 0, NULL);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
     // start scanning
 
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -1833,14 +1825,29 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // Read the number of bonds stored in flash.
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_BondMgrGetParameter(GAPBOND_BOND_COUNT);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    // DEBUG, REMOVE
-    static int i = 0;
-    for (i = 0; i < 15; i++) {
-        PBDRV_IOPORT_DEBUG_UART_PT_PRINTF(pt, "response %d = %d\n", i, read_buf[i]);
+    // Connecting to previously bonded devices does not always work reliably
+    // due to particular behaviors of some peripherals, combined with the
+    // random address used by Pybricks. Bonding takes only a few seconds, so we
+    // just always clear the bond information if there is any, and start over.
+    if (read_buf[12] > 0) {
+        DEBUG_PRINT_PT(pt, "Old bond count: %d\n", read_buf[12]);
+        
+        // Erase all bonds stored on Bluetooth chip. We can also erase local
+        // info, but this does not appear to be necessary.
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_BondMgrSetParameter(GAPBOND_ERASE_ALLBONDS, 0, NULL);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+
+        // Read the number of bonds stored in flash, should now be zero.
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_BondMgrGetParameter(GAPBOND_BOND_COUNT);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        DEBUG_PRINT_PT(pt, "New bond count: %d\n", read_buf[12]);
     }
 
     PT_WAIT_WHILE(pt, write_xfer_size);
