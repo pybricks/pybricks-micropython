@@ -20,10 +20,15 @@
   the Light class, but it makes the class usable for certain custom
   devices ([pybricks-micropython#166]).
 
+### Changed
+- Changed keypad return type to set instead of tuple. This affects the remote
+  and hubs.
+
 [support#947]: https://github.com/pybricks/support/issues/947
 [support#1096]: https://github.com/pybricks/support/issues/1096
 [support#1408]: https://github.com/pybricks/support/issues/1408
 [pybricks-micropython#222]: https://github.com/pybricks/pybricks-micropython/pull/222
+
 
 
 ## [3.3.0] - 2023-11-24

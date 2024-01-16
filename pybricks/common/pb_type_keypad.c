@@ -39,7 +39,11 @@ STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
         }
     }
 
+    #if MICROPY_PY_BUILTINS_SET
+    return mp_obj_new_set(size, button_list);
+    #else
     return mp_obj_new_tuple(size, button_list);
+    #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Keypad_pressed_obj, common_Keypad_pressed);
 
