@@ -16,7 +16,6 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/tools.h>
-#include <pybricks/tools/pb_type_matrix.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -315,29 +314,29 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_dpad_obj, pb_xbox_dpad);
 
 STATIC mp_obj_t pb_xbox_left(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
-    float directions[] = {
-        ((float) (buttons->x - INT16_MAX)) / (INT16_MAX),
-        ((float) (INT16_MAX - buttons->y)) / (INT16_MAX),
+    mp_obj_t directions[] = {
+        mp_obj_new_int((buttons->x - INT16_MAX) * 100 / INT16_MAX),
+        mp_obj_new_int((INT16_MAX - buttons->y) * 100 / INT16_MAX),
     };
-    return pb_type_Matrix_make_vector(MP_ARRAY_SIZE(directions), directions, false);;
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_left_obj, pb_xbox_left);
 
 STATIC mp_obj_t pb_xbox_right(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
-    float directions[] = {
-        ((float) (buttons->z - INT16_MAX)) / (INT16_MAX),
-        ((float) (INT16_MAX - buttons->rz)) / (INT16_MAX),
+    mp_obj_t directions[] = {
+        mp_obj_new_int((buttons->z - INT16_MAX) * 100 / INT16_MAX),
+        mp_obj_new_int((INT16_MAX - buttons->rz) * 100 / INT16_MAX),
     };
-    return pb_type_Matrix_make_vector(MP_ARRAY_SIZE(directions), directions, false);;
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_right_obj, pb_xbox_right);
 
 STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
     mp_obj_t tiggers[] = {
-        mp_obj_new_float_from_f(buttons->brake / 1023.0f),
-        mp_obj_new_float_from_f(buttons->accelerator / 1023.0f),
+        mp_obj_new_int(buttons->brake * 100 / 1023),
+        mp_obj_new_int(buttons->accelerator * 100 / 1023),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(tiggers), tiggers);
 }
