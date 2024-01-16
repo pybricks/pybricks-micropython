@@ -611,8 +611,8 @@ try_again:
     // connect
 
     assert(peri->con_handle == NO_CONNECTION);
-
     bond_auth_err = NO_AUTH;
+    DEBUG_PRINT_PT(pt, "Found %s. Going to connect.\n", peri->name);
 
     // Configure to initiate pairing right after connect if bonding required.
     // NB: We must unset "initiate" before we allow a new connection to
