@@ -25,6 +25,13 @@
 #include "py/obj.h"
 #include "py/mperrno.h"
 
+#define DEBUG 0
+#if DEBUG
+#define DEBUG_PRINT(...) mp_printf(&mp_plat_print, __VA_ARGS__)
+#else
+#define DEBUG_PRINT(...)
+#endif
+
 /**
  * The main HID Characteristic.
  */
@@ -124,7 +131,10 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_
         0x03, PBDRV_BLUETOOTH_AD_DATA_TYPE_16_BIT_SERV_UUID_COMPLETE_LIST, _16BIT_AS_LE(0x1812),
     };
 
-    // As above, but without discovery mode.
+    // As above, but without discovery mode. This is advertised if the
+    // controller is turned on but not in pairing mode. We can only connect
+    // to the controller in this case if the hub is the most recent connection
+    // to that controller.
     uint8_t advertising_data3[sizeof(advertising_data2)];
     memcpy(advertising_data3, advertising_data2, sizeof(advertising_data2));
     advertising_data3[2] = 0x04;
@@ -173,6 +183,45 @@ typedef struct _pb_type_xbox_obj_t {
     mp_obj_base_t base;
 } pb_type_xbox_obj_t;
 
+
+static void pb_xbox_post_connect_read(void) {
+    pb_xbox_t *xbox = &pb_xbox_singleton;
+
+    // Discover and read char A but discard the result.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_info);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    DEBUG_PRINT(&mp_plat_print, "Found A.\n");
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_info);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    DEBUG_PRINT(&mp_plat_print, "Read A.\n");
+
+    // Discover and read char B but discard the result.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_map);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    DEBUG_PRINT(&mp_plat_print, "Found B.\n");
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_map);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    DEBUG_PRINT(&mp_plat_print, "Read B.\n");
+
+    // Discover and read char D but discard the result, and enable notifications.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_report);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    DEBUG_PRINT(&mp_plat_print, "Found D.\n");
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_report);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    DEBUG_PRINT(&mp_plat_print, "Read D.\n");
+
+    // Discover and read battery char.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_battery);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_battery);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    if (pb_xbox_char_battery.value_len != 1) {
+        pb_assert(PBIO_ERROR_IO);
+    }
+    DEBUG_PRINT(&mp_plat_print, "Battery %d pct\n", pb_xbox_char_battery.value[0]);
+}
+
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_INT(timeout, 10000));
@@ -201,41 +250,23 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // Connect with bonding enabled.
     pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification, true);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
-    mp_printf(&mp_plat_print, "Connected to XBOX controller.\n");
+    DEBUG_PRINT(&mp_plat_print, "Connected to XBOX controller.\n");
 
-    // Discover and read char A but discard the result.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_info);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    mp_printf(&mp_plat_print, "Found A.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_info);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    mp_printf(&mp_plat_print, "Read A.\n");
-
-    // Discover and read char B but discard the result.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_map);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    mp_printf(&mp_plat_print, "Found B.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_map);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    mp_printf(&mp_plat_print, "Read B.\n");
-
-    // Discover and read char D but discard the result, and enable notifications.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_report);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    mp_printf(&mp_plat_print, "Found D.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_report);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    mp_printf(&mp_plat_print, "Read D.\n");
-
-    // Discover and read battery char.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_battery);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_battery);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    if (pb_xbox_char_battery.value_len != 1) {
-        pb_assert(PBIO_ERROR_IO);
+    // If the controller was most recently connected to another device like the
+    // actual Xbox or a phone, the controller needs to be not just turned on,
+    // but also put into pairing mode before connecting to the hub. Otherwise,
+    // it will appear to connect and even bond, but return errors when trying
+    // to read the HID characteristics. So inform the user to press/hold the
+    // pair button to put it into the right mode.
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        pb_xbox_post_connect_read();
+        nlr_pop();
+    } else {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+            "Connected, but not allowed to read buttons. Is the controller in pairing mode?"
+        ));
     }
-    mp_printf(&mp_plat_print, "Battery %d pct\n", pb_xbox_char_battery.value[0]);
 
     return MP_OBJ_FROM_PTR(self);
 }
