@@ -869,14 +869,10 @@ retry:
             if (task->cancel) {
                 goto cancel;
             }
-            DEBUG_PRINT_PT(pt, "retry\n");
             goto retry;
-
         }
-        DEBUG_PRINT_PT(pt, "exit %d\n", status);
         goto exit;
     }
-    DEBUG_PRINT_PT(pt, "did read %04x:\n", peri->char_now->handle);
 
     // This gets a bit tricky. Once the request has been sent, we can't cancel
     // the task, so we have to wait for the response (otherwise the response
@@ -901,7 +897,7 @@ retry:
         });
     }));
 
-    DEBUG_PRINT_PT(pt, "received reply with status %d\n", status);
+    DEBUG_PRINT_PT(pt, "Read %04x with status %d\n", peri->char_now->handle, status);
 
 exit:
     task->status = ble_error_to_pbio_error(status);
