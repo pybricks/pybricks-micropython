@@ -163,9 +163,12 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
-// HACK: restart observing every 10 seconds to work around a bug in the Bluetooth
-// chip firmware that causes it to stop receiving advertisements after a while.
+// HACK: restart observing and scanning repeatedly to work around a bug in the
+// Bluetooth chip firmware that causes it to stop receiving advertisements
+// after a while.
+#define SCAN_RESTART_INTERVAL 3000
 #define OBSERVE_RESTART_INTERVAL 10000
+static struct etimer scan_restart_timer;
 static struct etimer observe_restart_timer;
 static bool observe_restart_enabled;
 
@@ -496,8 +499,14 @@ static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *ta
         }
     }
 
-    // start scanning
+restart_scan:
 
+    PROCESS_CONTEXT_BEGIN(&pbdrv_bluetooth_spi_process);
+    etimer_set(&scan_restart_timer, SCAN_RESTART_INTERVAL);
+    PROCESS_CONTEXT_END(&pbdrv_bluetooth_spi_process);
+
+    // start scanning
+    DEBUG_PRINT_PT(pt, "Start scanning.\n");
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -520,8 +529,18 @@ try_again:
             if (task->cancel) {
                 goto cancel_discovery;
             }
-            advertising_data_received;
+            advertising_data_received || etimer_expired(&scan_restart_timer);
         }));
+
+        // Sub-scan interval timed out, so stop scan and restart.
+        if (!advertising_data_received) {
+            PT_WAIT_WHILE(pt, write_xfer_size);
+            GAP_DeviceDiscoveryCancel();
+            PT_WAIT_UNTIL(pt, hci_command_status);
+            PT_WAIT_UNTIL(pt, device_discovery_done);
+            DEBUG_PRINT_PT(pt, "Sub-scan interval timed out.\n");
+            goto restart_scan;
+        }
 
 
         // Context specific advertisement filter.
@@ -552,8 +571,18 @@ try_again:
             if (task->cancel) {
                 goto cancel_discovery;
             }
-            advertising_data_received;
+            advertising_data_received || etimer_expired(&scan_restart_timer);
         }));
+
+        // Sub-scan interval timed out, so stop scan and restart.
+        if (!advertising_data_received) {
+            PT_WAIT_WHILE(pt, write_xfer_size);
+            GAP_DeviceDiscoveryCancel();
+            PT_WAIT_UNTIL(pt, hci_command_status);
+            PT_WAIT_UNTIL(pt, device_discovery_done);
+            DEBUG_PRINT_PT(pt, "Scan response timed out.\n");
+            goto restart_scan;
+        }
 
         const char *detected_name = (const char *)&read_buf[21];
         const uint8_t *response_address = &read_buf[11];
@@ -577,7 +606,6 @@ try_again:
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryCancel();
     PT_WAIT_UNTIL(pt, hci_command_status);
-
     PT_WAIT_UNTIL(pt, device_discovery_done);
 
     // connect
