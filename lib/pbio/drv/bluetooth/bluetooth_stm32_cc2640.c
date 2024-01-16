@@ -47,7 +47,7 @@
 #define DEBUG_PT (0x02)
 
 // Choose either/or DEBUG_LL | DEBUG_PT
-#define DEBUG (DEBUG_PT)
+#define DEBUG (0)
 
 #if DEBUG
 #include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
