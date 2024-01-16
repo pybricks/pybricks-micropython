@@ -203,11 +203,12 @@ static void start_task(pbio_task_t *task, pbio_task_thread_t thread, void *conte
  * @param [in]  handle      The connection handle.
  * @param [out] event       The vendor-specific event.
  * @param [out] status      The event status.
+ * @param [out] len         The payload length.
  * @return                  The event payload or NULL if there is no pending
  *                          vendor-specific event or the event is for a different
  *                          connection handle.
  */
-static uint8_t *get_vendor_event(uint16_t handle, uint16_t *event, HCI_StatusCodes_t *status) {
+static uint8_t *get_vendor_event(uint16_t handle, uint16_t *event, HCI_StatusCodes_t *status, uint8_t *len) {
     if (read_buf[NPI_SPI_HEADER_LEN] != HCI_EVENT_PACKET) {
         return NULL;
     }
@@ -222,6 +223,8 @@ static uint8_t *get_vendor_event(uint16_t handle, uint16_t *event, HCI_StatusCod
     if (pbio_get_uint16_le(&read_buf[NPI_SPI_HEADER_LEN + 6]) != handle) {
         return NULL;
     }
+
+    *len = read_buf[NPI_SPI_HEADER_LEN + 8];
 
     return &read_buf[NPI_SPI_HEADER_LEN + 9];
 }
@@ -743,9 +746,10 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
 
     PT_WAIT_UNTIL(pt, ({
         uint8_t *payload;
+        uint8_t len;
         uint16_t event;
         HCI_StatusCodes_t status;
-        (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
+        (payload = get_vendor_event(peri->con_handle, &event, &status, &len)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_BY_TYPE_REQ) {
                 task->status = PBIO_ERROR_FAILED;
                 goto disconnect;
@@ -846,9 +850,11 @@ void pbdrv_bluetooth_periperal_discover_characteristic(pbio_task_t *task, pbdrv_
 }
 
 static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *task)) {
-    PT_BEGIN(pt);
 
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+
+    PT_BEGIN(pt);
+
     static uint8_t status;
 
 retry:
@@ -885,14 +891,19 @@ retry:
         }
 
         uint8_t *payload;
+        uint8_t len;
         uint16_t event;
-        (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
+        (payload = get_vendor_event(peri->con_handle, &event, &status, &len)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_REQ
                 && pbio_get_uint16_le(&payload[1]) == peri->char_now->handle) {
                 task->status = PBIO_ERROR_FAILED;
                 PT_EXIT(pt);
             }
-            // Not processing the data yet, just waiting for the event.
+            // Get the response value.
+            if (event == ATT_EVENT_READRSP && len <= sizeof(peri->char_now->value)) {
+                peri->char_now->value_len = len;
+                memcpy(peri->char_now->value, payload, len);
+            }
             event == ATT_EVENT_READRSP;
         });
     }));
@@ -965,8 +976,9 @@ retry:
         }
 
         uint8_t *payload;
+        uint8_t len;
         uint16_t event;
-        (payload = get_vendor_event(peri->con_handle, &event, &status)) && ({
+        (payload = get_vendor_event(peri->con_handle, &event, &status, &len)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_WRITE_REQ
                 && pbio_get_uint16_le(&payload[1]) == pbio_get_uint16_le(value->handle)) {
 
@@ -1395,6 +1407,9 @@ static void handle_event(uint8_t *packet) {
                     }
                 }
                 break;
+
+                case ATT_EVENT_READ_BY_TYPE_RSP:
+                    break;
 
                 case ATT_EVENT_READ_REQ: {
                     uint16_t handle = (data[7] << 8) | data[6];
@@ -1840,7 +1855,8 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
 }
 
 static PT_THREAD(gap_init(struct pt *pt)) {
-    uint8_t buf[1];
+
+    static uint8_t buf[1];
 
     PT_BEGIN(pt);
 

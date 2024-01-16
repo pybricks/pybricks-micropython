@@ -120,6 +120,9 @@ typedef struct {
     const uint8_t uuid128[16];
     /** Whether to request enabling notifications after successful discovery. */
     bool request_notification;
+    /** Most recently received value. */
+    uint8_t value_len;
+    uint8_t value[20];
 } pbdrv_bluetooth_peripheral_char_t;
 
 /**

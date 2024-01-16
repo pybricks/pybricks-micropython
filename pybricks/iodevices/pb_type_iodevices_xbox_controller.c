@@ -28,7 +28,7 @@
 /**
  * The main HID Characteristic.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char = {
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_report = {
     .handle = 0, // Will be set during discovery.
     .properties = 0x12, // Needed to distingish it from another char with same UUID.
     .uuid16 = 0x2a4d,
@@ -39,7 +39,7 @@ static pbdrv_bluetooth_peripheral_char_t pb_xbox_char = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_a = {
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_info = {
     .uuid16 = 0x2a4a,
     .request_notification = false,
 };
@@ -47,8 +47,18 @@ static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_a = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_b = {
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_map = {
     .uuid16 = 0x2a4b,
+    .request_notification = false,
+};
+
+/**
+ * Battery characteristic within battery service (0x180F). Somewhat useful, and
+ * serves as a check that reading characteristics works.
+ */
+static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_battery = {
+    .uuid16 = 0x2a19,
+    .properties = 0x12,
     .request_notification = false,
 };
 
@@ -194,28 +204,38 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     mp_printf(&mp_plat_print, "Connected to XBOX controller.\n");
 
     // Discover and read char A but discard the result.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_a);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_info);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
     mp_printf(&mp_plat_print, "Found A.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_a);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_info);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
     mp_printf(&mp_plat_print, "Read A.\n");
 
     // Discover and read char B but discard the result.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_b);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_map);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
     mp_printf(&mp_plat_print, "Found B.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_b);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_map);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
     mp_printf(&mp_plat_print, "Read B.\n");
 
     // Discover and read char D but discard the result, and enable notifications.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_report);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
     mp_printf(&mp_plat_print, "Found D.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_report);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
     mp_printf(&mp_plat_print, "Read D.\n");
+
+    // Discover and read battery char.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_battery);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_battery);
+    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+    if (pb_xbox_char_battery.value_len != 1) {
+        pb_assert(PBIO_ERROR_IO);
+    }
+    mp_printf(&mp_plat_print, "Battery %d pct\n", pb_xbox_char_battery.value[0]);
 
     return MP_OBJ_FROM_PTR(self);
 }

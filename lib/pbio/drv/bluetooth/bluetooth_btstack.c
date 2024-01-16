@@ -265,10 +265,16 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             }
             break;
         }
-        case GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT:
-            // TODO: Process received value. For now we just need to read it
-            // without storing the result.
+        case GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT: {
+            hci_con_handle_t handle = gatt_event_characteristic_value_query_result_get_handle(packet);
+            uint16_t value_handle = gatt_event_characteristic_value_query_result_get_value_handle(packet);
+            uint16_t value_length = gatt_event_characteristic_value_query_result_get_value_length(packet);
+            if (peri->con_handle == handle && peri->char_now->handle == value_handle) {
+                peri->char_now->value_len = gatt_event_characteristic_value_query_result_get_value_length(packet);
+                memcpy(peri->char_now->value, gatt_event_characteristic_value_query_result_get_value(packet), value_length);
+            }
             break;
+        }
         case GATT_EVENT_QUERY_COMPLETE:
             if (handset.con_state == CON_STATE_WAIT_READ_CHARACTERISTIC) {
                 // Done reading characteristic.
