@@ -16,6 +16,7 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_matrix.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -279,25 +280,123 @@ STATIC mp_obj_t pb_xbox_name(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name);
 
+STATIC xbox_one_gamepad_t *pb_xbox_get_buttons(void) {
+    xbox_one_gamepad_t *buttons = &pb_xbox_singleton.state;
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+        mp_raise_OSError(MP_ENODEV);
+    }
+    return buttons;
+}
+
 STATIC mp_obj_t pb_xbox_state(mp_obj_t self_in) {
+
+    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+
     mp_obj_t state[] = {
-        mp_obj_new_int(pb_xbox_singleton.state.x - INT16_MAX),
-        mp_obj_new_int(pb_xbox_singleton.state.y - INT16_MAX),
-        mp_obj_new_int(pb_xbox_singleton.state.z - INT16_MAX),
-        mp_obj_new_int(pb_xbox_singleton.state.rz - INT16_MAX),
-        mp_obj_new_int(pb_xbox_singleton.state.brake),
-        mp_obj_new_int(pb_xbox_singleton.state.accelerator),
-        mp_obj_new_int(pb_xbox_singleton.state.hat),
-        mp_obj_new_int(pb_xbox_singleton.state.buttons),
-        mp_obj_new_int(pb_xbox_singleton.state.record),
+        mp_obj_new_int(buttons->x - INT16_MAX),
+        mp_obj_new_int(buttons->y - INT16_MAX),
+        mp_obj_new_int(buttons->z - INT16_MAX),
+        mp_obj_new_int(buttons->rz - INT16_MAX),
+        mp_obj_new_int(buttons->brake),
+        mp_obj_new_int(buttons->accelerator),
+        mp_obj_new_int(buttons->hat),
+        mp_obj_new_int(buttons->buttons),
+        mp_obj_new_int(buttons->record),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(state), state);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_state_obj, pb_xbox_state);
 
+STATIC mp_obj_t pb_xbox_dpad(mp_obj_t self_in) {
+    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    return mp_obj_new_int(buttons->hat);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_dpad_obj, pb_xbox_dpad);
+
+STATIC mp_obj_t pb_xbox_left(mp_obj_t self_in) {
+    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    float directions[] = {
+        ((float) (buttons->x - INT16_MAX)) / (INT16_MAX),
+        ((float) (INT16_MAX - buttons->y)) / (INT16_MAX),
+    };
+    return pb_type_Matrix_make_vector(MP_ARRAY_SIZE(directions), directions, false);;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_left_obj, pb_xbox_left);
+
+STATIC mp_obj_t pb_xbox_right(mp_obj_t self_in) {
+    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    float directions[] = {
+        ((float) (buttons->z - INT16_MAX)) / (INT16_MAX),
+        ((float) (INT16_MAX - buttons->rz)) / (INT16_MAX),
+    };
+    return pb_type_Matrix_make_vector(MP_ARRAY_SIZE(directions), directions, false);;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_right_obj, pb_xbox_right);
+
+STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
+    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    mp_obj_t tiggers[] = {
+        mp_obj_new_float_from_f(buttons->brake / 1023.0f),
+        mp_obj_new_float_from_f(buttons->accelerator / 1023.0f),
+    };
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(tiggers), tiggers);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
+
+STATIC mp_obj_t pb_xbox_buttons(mp_obj_t self_in) {
+    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+
+    mp_obj_t items[10];
+    uint8_t count = 0;
+
+    if (buttons->buttons & 1) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_A);
+    }
+    if (buttons->buttons & (1 << 1)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_B);
+    }
+    if (buttons->buttons & (1 << 3)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_X);
+    }
+    if (buttons->buttons & (1 << 4)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_Y);
+    }
+    if (buttons->buttons & (1 << 6)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_LB);
+    }
+    if (buttons->buttons & (1 << 7)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RB);
+    }
+    if (buttons->buttons & (1 << 10)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_VIEW);
+    }
+    if (buttons->buttons & (1 << 11)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_MENU);
+    }
+    if (buttons->buttons & (1 << 12)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_GUIDE);
+    }
+    if (buttons->buttons & (1 << 13)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_LY);
+    }
+    if (buttons->buttons & (1 << 14)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RY);
+    }
+    if (buttons->record) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_UPLOAD);
+    }   
+    return mp_obj_new_set(count, items);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_buttons_obj, pb_xbox_buttons);
+
 STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dpad),  MP_ROM_PTR(&pb_xbox_dpad_obj) },
+    { MP_ROM_QSTR(MP_QSTR_left),  MP_ROM_PTR(&pb_xbox_left_obj) }, 
+    { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_PTR(&pb_xbox_right_obj) },
+    { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
+    { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&pb_xbox_buttons_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_xbox_locals_dict, pb_type_xbox_locals_dict_table);
 
