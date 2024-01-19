@@ -342,7 +342,7 @@ STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
 
-STATIC mp_obj_t pb_xbox_buttons(mp_obj_t self_in) {
+STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
 
     mp_obj_t items[10];
@@ -386,7 +386,23 @@ STATIC mp_obj_t pb_xbox_buttons(mp_obj_t self_in) {
     }   
     return mp_obj_new_set(count, items);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_buttons_obj, pb_xbox_buttons);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_pressed_obj, pb_xbox_pressed);
+
+// Make XboxController.buttons work just like Remote.buttons. We don't use
+// a Keypad class instance since this version just returns string literals.
+STATIC const mp_rom_map_elem_t QstrKeypad_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&pb_xbox_pressed_obj)     },
+};
+STATIC MP_DEFINE_CONST_DICT(QstrKeypad_locals_dict, QstrKeypad_locals_dict_table);
+
+STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_QstrKeypad,
+    MP_QSTR_Keypad,
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &QstrKeypad_locals_dict);
+
+STATIC const mp_obj_base_t pb_xbox_buttons_obj = {
+    .type = &pb_type_QstrKeypad,
+};
 
 STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)  },
