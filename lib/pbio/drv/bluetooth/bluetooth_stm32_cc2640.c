@@ -1433,6 +1433,27 @@ static void handle_event(uint8_t *packet) {
                 }
                 break;
 
+                case ATT_EVENT_PREPARE_WRITE_REQ: {
+                    uint16_t char_handle = (data[7] << 8) | data[6];
+
+                    // long writes are not currently supported for any characteristic
+                    attErrorRsp_t rsp;
+                    rsp.reqOpcode = ATT_PREPARE_WRITE_REQ;
+                    rsp.handle = char_handle;
+                    rsp.errCode = ATT_ERR_ATTR_NOT_LONG;
+                    ATT_ErrorRsp(connection_handle, &rsp);
+                }
+                break;
+
+                case ATT_EVENT_EXECUTE_WRITE_REQ: {
+                    // uint8_t flags = data[6];
+
+                    // Send this to keep host happy. Should only be receiving
+                    // cancel since we don't support long writes.
+                    ATT_ExecuteWriteRsp(connection_handle);
+                }
+                break;
+
                 case ATT_EVENT_HANDLE_VALUE_NOTI: {
                     // TODO: match callback to handle
                     // uint8_t attr_handle = (data[7] << 8) | data[6];

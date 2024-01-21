@@ -81,6 +81,15 @@ bStatus_t ATT_WriteRsp(uint16_t connHandle) {
     return HCI_sendHCICommand(ATT_CMD_WRITE_RSP, buf, 2);
 }
 
+bStatus_t ATT_ExecuteWriteRsp(uint16_t connHandle) {
+    uint8_t buf[2];
+
+    buf[0] = connHandle & 0xFF;
+    buf[1] = (connHandle >> 8) & 0xFF;
+
+    return HCI_sendHCICommand(ATT_CMD_EXECUTE_WRITE_RSP, buf, 2);
+}
+
 bStatus_t ATT_HandleValueNoti(uint16_t connHandle, attHandleValueNoti_t *pNoti) {
     uint8_t buf[32];
 
