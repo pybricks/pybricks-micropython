@@ -312,7 +312,7 @@ STATIC mp_obj_t pb_xbox_dpad(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_dpad_obj, pb_xbox_dpad);
 
-STATIC mp_obj_t pb_xbox_left(mp_obj_t self_in) {
+STATIC mp_obj_t pb_xbox_joystick_left(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
     mp_obj_t directions[] = {
         mp_obj_new_int((buttons->x - INT16_MAX) * 100 / INT16_MAX),
@@ -320,9 +320,9 @@ STATIC mp_obj_t pb_xbox_left(mp_obj_t self_in) {
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_left_obj, pb_xbox_left);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_left_obj, pb_xbox_joystick_left);
 
-STATIC mp_obj_t pb_xbox_right(mp_obj_t self_in) {
+STATIC mp_obj_t pb_xbox_joystick_right(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
     mp_obj_t directions[] = {
         mp_obj_new_int((buttons->z - INT16_MAX) * 100 / INT16_MAX),
@@ -330,7 +330,7 @@ STATIC mp_obj_t pb_xbox_right(mp_obj_t self_in) {
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_right_obj, pb_xbox_right);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_right_obj, pb_xbox_joystick_right);
 
 STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
     xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
@@ -376,10 +376,10 @@ STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
         items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_GUIDE);
     }
     if (buttons->buttons & (1 << 13)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_LY);
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_LJ);
     }
     if (buttons->buttons & (1 << 14)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RY);
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RJ);
     }
     if (buttons->record) {
         items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_UPLOAD);
@@ -408,8 +408,8 @@ STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
     { MP_ROM_QSTR(MP_QSTR_dpad),  MP_ROM_PTR(&pb_xbox_dpad_obj) },
-    { MP_ROM_QSTR(MP_QSTR_left),  MP_ROM_PTR(&pb_xbox_left_obj) }, 
-    { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_PTR(&pb_xbox_right_obj) },
+    { MP_ROM_QSTR(MP_QSTR_joystick_left),  MP_ROM_PTR(&pb_xbox_joystick_left_obj) }, 
+    { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_xbox_joystick_right_obj) },
     { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
     { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&pb_xbox_buttons_obj) },
 };
