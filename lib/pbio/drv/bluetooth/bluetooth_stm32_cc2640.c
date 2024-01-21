@@ -132,6 +132,7 @@ static bool device_discovery_done;
 static bool advertising_data_received;
 // handle to connected Bluetooth device
 static uint16_t conn_handle = NO_CONNECTION;
+static uint16_t conn_mtu;
 // handle to connected remote control
 static uint16_t remote_handle = NO_CONNECTION;
 // handle to LWP3 characteristic on remote
@@ -1094,12 +1095,17 @@ static void handle_event(uint8_t *packet) {
 
             switch (event_code) {
                 case ATT_EVENT_EXCHANGE_MTU_REQ: {
-                    // uint16_t client_mtu = (data[7] << 8) | data[6];
-                    attExchangeMTURsp_t rsp;
+                    uint16_t client_mtu = (data[7] << 8) | data[6];
 
+                    // REVISIT: Just saving the main connection MTU for now.
+                    // If we allow multiple connections, this will need to be
+                    // changed.
+                    if (connection_handle == conn_handle) {
+                        conn_mtu = MIN(client_mtu, PBDRV_BLUETOOTH_MAX_MTU_SIZE);
+                    }
+
+                    attExchangeMTURsp_t rsp;
                     rsp.serverRxMTU = PBDRV_BLUETOOTH_MAX_MTU_SIZE;
-                    // REVISIT: may need to keep a table of min(client_mtu, MAX_ATT_MTU_SIZE)
-                    // for each connection if any known clients have smaller MTU
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
                 }
                 break;
@@ -1277,8 +1283,8 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
-                        // REVISIT: client MTU may be smaller, in which case we can't used fixed value for MTU
-                        pbio_pybricks_hub_capabilities(buf, PBDRV_BLUETOOTH_MAX_MTU_SIZE - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
+                        // REVISIT: this assumes connection_handle == conn_handle
+                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE);
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
@@ -1445,6 +1451,8 @@ static void handle_event(uint8_t *packet) {
                         // we currently only allow connection from one central
                         conn_handle = (data[11] << 8) | data[10];
                         DBG("link: %04x", conn_handle);
+                        // assume minimum MTU until we get an exchange MTU request
+                        conn_mtu = ATT_MTU_SIZE;
 
                         // On 2019 and newer MacBooks, the default interval was
                         // measured to be 15 ms. This caused advertisement to
