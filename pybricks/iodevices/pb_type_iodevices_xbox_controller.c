@@ -223,12 +223,8 @@ static void pb_xbox_post_connect_read(void) {
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_INT(timeout, 10000));
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
-
-    mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
 
     pb_xbox_t *xbox = &pb_xbox_singleton;
 
@@ -247,9 +243,28 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     memset(xbox, 0, sizeof(*xbox));
     xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
-    // Connect with bonding enabled.
-    pbdrv_bluetooth_peripheral_scan_and_connect(&xbox->task, xbox_advertisement_matches, xbox_advertisement_response_matches, handle_notification, true);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, timeout);
+    // Connect with bonding enabled. On some computers, the pairing step will
+    // fail if the hub is still connected to Pybricks Code. Since it is unclear
+    // which computer will have this problem, recommend to disconnect the hub
+    // if this happens.
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        pbdrv_bluetooth_peripheral_scan_and_connect(
+            &xbox->task,
+            xbox_advertisement_matches,
+            xbox_advertisement_response_matches,
+            handle_notification, true);
+        pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+        nlr_pop();
+    } else {
+        if (xbox->task.status == PBIO_ERROR_INVALID_OP) {
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+                "Failed to pair. Disconnect the hub from the computer "
+                "and re-start the program with the green button on the hub."
+                ));
+        }
+        nlr_jump(nlr.ret_val);
+    }
     DEBUG_PRINT(&mp_plat_print, "Connected to XBOX controller.\n");
 
     // If the controller was most recently connected to another device like the
@@ -258,14 +273,17 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // it will appear to connect and even bond, but return errors when trying
     // to read the HID characteristics. So inform the user to press/hold the
     // pair button to put it into the right mode.
-    nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
         pb_xbox_post_connect_read();
         nlr_pop();
     } else {
-        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
-            "Connected, but not allowed to read buttons. Is the controller in pairing mode?"
-        ));
+        if (xbox->task.status != PBIO_SUCCESS) {
+            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+                "Connected, but not allowed to read buttons. "
+                "Is the controller in pairing mode?"
+                ));
+        }
+        nlr_jump(nlr.ret_val);
     }
 
     return MP_OBJ_FROM_PTR(self);
@@ -383,7 +401,7 @@ STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
     }
     if (buttons->record) {
         items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_UPLOAD);
-    }   
+    }
     return mp_obj_new_set(count, items);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_pressed_obj, pb_xbox_pressed);
@@ -408,7 +426,7 @@ STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
     { MP_ROM_QSTR(MP_QSTR_dpad),  MP_ROM_PTR(&pb_xbox_dpad_obj) },
-    { MP_ROM_QSTR(MP_QSTR_joystick_left),  MP_ROM_PTR(&pb_xbox_joystick_left_obj) }, 
+    { MP_ROM_QSTR(MP_QSTR_joystick_left),  MP_ROM_PTR(&pb_xbox_joystick_left_obj) },
     { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_xbox_joystick_right_obj) },
     { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
     { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&pb_xbox_buttons_obj) },
