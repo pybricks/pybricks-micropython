@@ -6,7 +6,9 @@
 
 ### Fixes
 - Fix observing stopping on City and Technic hubs after some time ([support#1096]).
+- Fix Bluetooth locking up when connecting Bluetooth adapter with small MTU to Technic and City hubs ([support#947]).
 
+[support#947]: https://github.com/pybricks/support/issues/947
 [support#1096]: https://github.com/pybricks/support/issues/1096
 
 ## [3.3.0] - 2023-11-24
