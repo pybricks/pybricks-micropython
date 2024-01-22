@@ -110,7 +110,7 @@
 #define MICROPY_ENABLE_SCHEDULER                (0)
 #define MICROPY_PY_INSTANCE_ATTRS               (1)
 
-#define MICROPY_MODULE_ATTR_DELEGATION          (0)
+#define MICROPY_MODULE_ATTR_DELEGATION          (PYBRICKS_OPT_EXTRA_MOD)
 #define MICROPY_PERSISTENT_CODE_LOAD            (1)
 #define MICROPY_ENABLE_EXTERNAL_IMPORT          (0)
 #define MICROPY_HAS_FILE_READER                 (0)

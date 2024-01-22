@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+- Added `pybricks.robotics.Car` for controlling a car with one or more drive
+  motors and a steering motor. This is a convenience class that combines
+  several motors to provide the functionality used in most Technic cars.
+
 ### Fixes
 - Fix observing stopping on City and Technic hubs after some time ([support#1096]).
 - Fix Bluetooth locking up when connecting Bluetooth adapter with small MTU to Technic and City hubs ([support#947]).

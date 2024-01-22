@@ -204,7 +204,7 @@ mp_obj_t pb_frozen_function_import(qstr module_name, qstr function_name) {
     mp_obj_t dest[2];
     mp_load_method_maybe(module, function_name, dest);
     if (dest[0] == MP_OBJ_NULL) {
-        mp_raise_msg(&mp_type_ImportError, MP_ERROR_TEXT("text method not found"));
+        mp_raise_msg(&mp_type_ImportError, MP_ERROR_TEXT("not found"));
     }
     return dest[0];
 }
