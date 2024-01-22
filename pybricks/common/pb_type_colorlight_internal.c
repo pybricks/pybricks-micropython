@@ -137,7 +137,7 @@ STATIC MP_DEFINE_CONST_DICT(common_ColorLight_internal_locals_dict, common_Color
 
 // type(pybricks.builtins.ColorLight)
 STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_ColorLight_internal,
-    MP_QSTR_ColorLight,
+    MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_ColorLight_internal_locals_dict);
 

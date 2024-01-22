@@ -241,7 +241,7 @@ STATIC const mp_rom_map_elem_t hubs_MoveHub_IMU_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_IMU_locals_dict, hubs_MoveHub_IMU_locals_dict_table);
 
 STATIC MP_DEFINE_CONST_OBJ_TYPE(hubs_MoveHub_IMU_type,
-    MP_QSTR_IMU,
+    MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &hubs_MoveHub_IMU_locals_dict);
 

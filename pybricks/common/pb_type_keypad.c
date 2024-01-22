@@ -51,7 +51,7 @@ STATIC MP_DEFINE_CONST_DICT(common_Keypad_locals_dict, common_Keypad_locals_dict
 
 // type(pybricks.common.Keypad)
 STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_Keypad,
-    MP_QSTR_Keypad,
+    MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_Keypad_locals_dict);
 

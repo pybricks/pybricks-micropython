@@ -75,7 +75,7 @@ STATIC MP_DEFINE_CONST_DICT(common_LightArray_locals_dict, common_LightArray_loc
 
 // type(pybricks.builtins.LightArray)
 STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightArray,
-    MP_QSTR_LightArray,
+    MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_LightArray_locals_dict);
 
