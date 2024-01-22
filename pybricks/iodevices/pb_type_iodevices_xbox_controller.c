@@ -183,43 +183,27 @@ typedef struct _pb_type_xbox_obj_t {
     mp_obj_base_t base;
 } pb_type_xbox_obj_t;
 
-
-static void pb_xbox_post_connect_read(void) {
+static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_info) {
     pb_xbox_t *xbox = &pb_xbox_singleton;
 
-    // Discover and read char A but discard the result.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_info);
+    // Discover characteristic and optionally enable notifications.
+    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, char_info);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    DEBUG_PRINT(&mp_plat_print, "Found A.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_info);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    DEBUG_PRINT(&mp_plat_print, "Read A.\n");
 
-    // Discover and read char B but discard the result.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_map);
+    // Read characteristic.
+    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, char_info);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    DEBUG_PRINT(&mp_plat_print, "Found B.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_map);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    DEBUG_PRINT(&mp_plat_print, "Read B.\n");
+}
 
-    // Discover and read char D but discard the result, and enable notifications.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_hid_report);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    DEBUG_PRINT(&mp_plat_print, "Found D.\n");
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_hid_report);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    DEBUG_PRINT(&mp_plat_print, "Read D.\n");
-
-    // Discover and read battery char.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, &pb_xbox_char_battery);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, &pb_xbox_char_battery);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+static void pb_xbox_post_connect_read(void) {
+    pb_xbox_discover_and_read(&pb_xbox_char_hid_info);
+    pb_xbox_discover_and_read(&pb_xbox_char_hid_map);
+    pb_xbox_discover_and_read(&pb_xbox_char_hid_report);
+    pb_xbox_discover_and_read(&pb_xbox_char_battery);
     if (pb_xbox_char_battery.value_len != 1) {
         pb_assert(PBIO_ERROR_IO);
     }
-    DEBUG_PRINT(&mp_plat_print, "Battery %d pct\n", pb_xbox_char_battery.value[0]);
+    DEBUG_PRINT("Battery %d pct\n", pb_xbox_char_battery.value[0]);
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -265,7 +249,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         }
         nlr_jump(nlr.ret_val);
     }
-    DEBUG_PRINT(&mp_plat_print, "Connected to XBOX controller.\n");
+    DEBUG_PRINT("Connected to XBOX controller.\n");
 
     // If the controller was most recently connected to another device like the
     // actual Xbox or a phone, the controller needs to be not just turned on,
