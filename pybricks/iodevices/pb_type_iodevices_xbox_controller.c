@@ -207,6 +207,8 @@ static void pb_xbox_post_connect_read(void) {
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_FALSE(connect_anyway));
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
 
@@ -227,6 +229,17 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     memset(xbox, 0, sizeof(*xbox));
     xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
+    // On some computers, the CC2640 appears to get no responses from the controller
+    // if the hub is connected to Pybricks Code. For a consistent experience, we
+    // require that the user disconnect the hub from the computer.
+    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) && !mp_obj_is_true(connect_anyway_in)) {
+        mp_printf(&mp_plat_print,
+            "\nTechnic Hub cannot connect to the computer and controller at the same time."
+            "\n1. Disconnect the hub from the computer."
+            "\n2. Start the program using the green hub button.\n\n");
+        return MP_OBJ_FROM_PTR(self);
+    }
+
     // Connect with bonding enabled. On some computers, the pairing step will
     // fail if the hub is still connected to Pybricks Code. Since it is unclear
     // which computer will have this problem, recommend to disconnect the hub
@@ -244,7 +257,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         if (xbox->task.status == PBIO_ERROR_INVALID_OP) {
             mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
                 "Failed to pair. Disconnect the hub from the computer "
-                "and re-start the program with the green button on the hub."
+                "and re-start the program with the green button on the hub\n."
                 ));
         }
         nlr_jump(nlr.ret_val);
@@ -274,7 +287,6 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
 }
 
 STATIC mp_obj_t pb_xbox_name(size_t n_args, const mp_obj_t *args) {
-    // pb_xbox_t *xbox = &pb_xbox_singleton;
     pb_xbox_assert_connected();
     const char *name = pbdrv_bluetooth_peripheral_get_name();
     return mp_obj_new_str(name, strlen(name));
@@ -283,9 +295,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name)
 
 STATIC xbox_one_gamepad_t *pb_xbox_get_buttons(void) {
     xbox_one_gamepad_t *buttons = &pb_xbox_singleton.state;
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
-        mp_raise_OSError(MP_ENODEV);
-    }
+    // pb_xbox_assert_connected();
     return buttons;
 }
 
