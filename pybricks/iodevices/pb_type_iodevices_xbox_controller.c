@@ -233,11 +233,11 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // if the hub is connected to Pybricks Code. For a consistent experience, we
     // require that the user disconnect the hub from the computer.
     if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) && !mp_obj_is_true(connect_anyway_in)) {
-        mp_printf(&mp_plat_print,
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
             "\nTechnic Hub cannot connect to the computer and controller at the same time."
             "\n1. Disconnect the hub from the computer."
-            "\n2. Start the program using the green hub button.\n\n");
-        return MP_OBJ_FROM_PTR(self);
+            "\n2. Put the controller in pairing mode."
+            "\n3. Start the program using the green hub button.\n\n"));
     }
 
     // Connect with bonding enabled. On some computers, the pairing step will
@@ -295,7 +295,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name)
 
 STATIC xbox_one_gamepad_t *pb_xbox_get_buttons(void) {
     xbox_one_gamepad_t *buttons = &pb_xbox_singleton.state;
-    // pb_xbox_assert_connected();
+    pb_xbox_assert_connected();
     return buttons;
 }
 
