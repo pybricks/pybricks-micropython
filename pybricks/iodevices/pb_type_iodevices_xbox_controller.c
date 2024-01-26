@@ -1,8 +1,10 @@
 // Copyright (C) 2024 The Pybricks Authors - All rights reserved
+// To build the firmware without this non-free component, set
+// PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER to 0 in mpconfigport.h.
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_PUPDEVICES
+#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
 
 #include <stdint.h>
 #include <string.h>
@@ -207,8 +209,10 @@ static void pb_xbox_post_connect_read(void) {
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    #if PYBRICKS_HUB_TECHNICHUB
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_FALSE(connect_anyway));
+    #endif // PYBRICKS_HUB_TECHNICHUB
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
 
@@ -229,6 +233,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     memset(xbox, 0, sizeof(*xbox));
     xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
+    #if PYBRICKS_HUB_TECHNICHUB
     // On some computers, the CC2640 appears to get no responses from the controller
     // if the hub is connected to Pybricks Code. For a consistent experience, we
     // require that the user disconnect the hub from the computer.
@@ -239,6 +244,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
             "\n2. Put the controller in pairing mode."
             "\n3. Start the program using the green hub button.\n\n"));
     }
+    #endif // PYBRICKS_HUB_TECHNICHUB
 
     // Connect with bonding enabled. On some computers, the pairing step will
     // fail if the hub is still connected to Pybricks Code. Since it is unclear
@@ -433,4 +439,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_XboxController,
     make_new, pb_type_xbox_make_new,
     locals_dict, &pb_type_xbox_locals_dict);
 
-#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_PUPDEVICES
+#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER

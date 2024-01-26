@@ -12,8 +12,9 @@ STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)                },
     #if PYBRICKS_PY_PUPDEVICES
     { MP_ROM_QSTR(MP_QSTR_PUPDevice),        MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
+    #endif
+    #if PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
     { MP_ROM_QSTR(MP_QSTR_XboxController),   MP_ROM_PTR(&pb_type_iodevices_XboxController) },
-
     #endif
     #if PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
