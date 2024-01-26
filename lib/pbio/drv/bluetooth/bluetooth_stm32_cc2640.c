@@ -487,6 +487,8 @@ static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *ta
     assert(peri->match_adv_rsp);
     assert(peri->notification_handler);
 
+    static pbio_error_t connection_error;
+
     PT_BEGIN(pt);
 
     // temporarily stop observing so we can active scan
@@ -615,6 +617,7 @@ try_again:
 
     assert(peri->con_handle == NO_CONNECTION);
     bond_auth_err = NO_AUTH;
+    connection_error = PBIO_SUCCESS;
     DEBUG_PRINT_PT(pt, "Found %s. Going to connect.\n", peri->name);
 
     // Configure to initiate pairing right after connect if bonding required.
@@ -634,6 +637,7 @@ try_again:
 
     PT_WAIT_UNTIL(pt, ({
         if (task->cancel) {
+            connection_error = PBIO_ERROR_CANCELED;
             goto cancel_connect;
         }
         peri->con_handle != NO_CONNECTION;
@@ -644,19 +648,27 @@ try_again:
     if (peri->bond) {
         PT_WAIT_UNTIL(pt, ({
             if (task->cancel) {
-                goto disconnect;
+                connection_error = PBIO_ERROR_CANCELED;
+                goto cancel_auth_then_disconnect;
             }
             bond_auth_err != NO_AUTH;
         }));
-        DEBUG_PRINT_PT(pt, "Auth complete: %d\n", bond_auth_err);
+        DEBUG_PRINT_PT(pt, "Auth complete: 0x%02x\n", bond_auth_err);
 
         if (bond_auth_err != 0) {
-            // This can happen if the peripheral has been connected with
-            // a different device while the hub was connected to Pybricks Code,
-            // meaning that it has not had the chance to erase old bond info.
-            // The only way to work around it is to disconnect from the
-            // computer or turn off the hub to achieve the same result.
-            task->status = PBIO_ERROR_INVALID_OP;
+            if (bond_auth_err == bleInvalidEventId) {
+                // Pairing rejected by peripheral. This can happen if the
+                // peripheral has been connected with a different device before
+                // we had a chance to delete our bonding info, which can only
+                // be done after all connections are closed, including Pybricks Code.
+                connection_error = PBIO_ERROR_INVALID_OP; // maps to permission error.
+            } else if (bond_auth_err == bleTimeout) {
+                // Pairing failed eventually, usually because it got no replies
+                // from peripheral at all while connected to Pybricks Code.
+                connection_error = PBIO_ERROR_TIMEDOUT;
+            } else {
+                connection_error = PBIO_ERROR_FAILED;
+            }
             goto disconnect;
         }
     }
@@ -665,13 +677,20 @@ try_again:
 
     goto out;
 
+cancel_auth_then_disconnect:
+
+    DEBUG_PRINT_PT(pt, "Cancel auth.\n");
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_TerminateAuth(peri->con_handle, 0x13);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
 disconnect:
+
+    DEBUG_PRINT_PT(pt, "Disconnect due to %s.\n", task->cancel ? "cancel" : "error");
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_TerminateLinkReq(peri->con_handle, 0x13);
     PT_WAIT_UNTIL(pt, hci_command_status);
-
-    // task->status must be set before goto disconnect!
-
+    task->status = connection_error;
     goto out;
 
 cancel_connect:
