@@ -260,7 +260,7 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
 
     // TODO: Stop broadcasting if data is None.
 
-    struct {
+    static struct {
         pbdrv_bluetooth_value_t v;
         uint8_t d[5 + OBSERVED_DATA_MAX_SIZE];
     } value;
