@@ -258,7 +258,12 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     // move hub is connected to Pybricks Code. Also, broadcasting interferes
     // with observing even when not connected to Pybricks Code.
 
-    // TODO: Stop broadcasting if data is None.
+    // Stop broadcasting if data is None.
+    if (data_in == mp_const_none) {
+        static pbio_task_t stop_broadcasting_task;
+        pbdrv_bluetooth_stop_broadcasting(&stop_broadcasting_task);
+        return pb_module_tools_pbio_task_wait_or_await(&stop_broadcasting_task);
+    }
 
     static struct {
         pbdrv_bluetooth_value_t v;
