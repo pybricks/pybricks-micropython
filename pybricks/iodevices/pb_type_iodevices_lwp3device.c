@@ -220,7 +220,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_col
 
     pb_lwp3device_assert_connected();
 
-    struct {
+    static struct {
         pbdrv_bluetooth_value_t value;
         uint8_t length;
         uint8_t hub;
@@ -260,7 +260,7 @@ STATIC void pb_lwp3device_configure_remote(void) {
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        struct {
+        static struct {
             pbdrv_bluetooth_value_t value;
             uint8_t length;
             uint8_t hub;
@@ -399,7 +399,7 @@ STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
             mp_raise_ValueError(MP_ERROR_TEXT("bad name length"));
         }
 
-        struct {
+        static struct {
             pbdrv_bluetooth_value_t value;
             uint8_t length;
             uint8_t hub;
@@ -484,12 +484,12 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
         mp_raise_ValueError(MP_ERROR_TEXT("length in header wrong"));
     }
 
-    struct {
+    static struct {
         pbdrv_bluetooth_value_t value;
         char payload[LWP3_MAX_MESSAGE_SIZE];
     } __attribute__((packed)) msg = {
-        .value.size = bufinfo.len,
     };
+    msg.value.size = bufinfo.len;
     memcpy(msg.payload, bufinfo.buf, bufinfo.len);
     pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.handle);
 
