@@ -1078,31 +1078,6 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
 
     if (!is_broadcasting) {
-        // Since we have to sometimes use connectable advertisement, we
-        // set the advertising interval to 100ms to match other platforms.
-        // We have to do this for both general discoverable and connectable
-        // depending on if the hub is connected to another device or not.
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MIN, 0xA0);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MAX, 0xA0);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_CONN_ADV_INT_MIN, 0xA0);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_CONN_ADV_INT_MAX, 0xA0);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_makeDiscoverable(
             #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
@@ -1156,28 +1131,6 @@ static PT_THREAD(stop_broadcast_task(struct pt *pt, pbio_task_t *task)) {
 
         // Status could also be bleIncorrectMode which means "Not advertising".
         // This is not expected, but should be safe to ignore.
-
-        // Restore advertising interval from gap_init().
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MIN, 40);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MAX, 40);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_CONN_ADV_INT_MIN, 40);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
-
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_SetParamValue(TGAP_CONN_ADV_INT_MAX, 40);
-        PT_WAIT_UNTIL(pt, hci_command_status);
-        // ignoring response data
 
         is_broadcasting = false;
     }
