@@ -45,10 +45,12 @@ typedef struct {
 static observed_data_t *observed_data;
 static uint8_t num_observed_data;
 
+static pbio_task_t broadcast_task;
+
 typedef struct {
     mp_obj_base_t base;
     uint8_t broadcast_channel;
-    pbio_task_t broadcast_task;
+    pbio_task_t *broadcast_task;
     observed_data_t observed_data[];
 } pb_obj_BLE_t;
 
@@ -297,8 +299,8 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     pbio_set_uint16_le(&value.v.data[2], LEGO_CID);
     value.v.data[4] = self->broadcast_channel;
 
-    pbdrv_bluetooth_start_broadcasting(&self->broadcast_task, &value.v);
-    return pb_module_tools_pbio_task_wait_or_await(&self->broadcast_task);
+    pbdrv_bluetooth_start_broadcasting(self->broadcast_task, &value.v);
+    return pb_module_tools_pbio_task_wait_or_await(self->broadcast_task);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
 
@@ -524,6 +526,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     }
 
     pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data_t, num_channels, &pb_type_BLE);
+    self->broadcast_task = &broadcast_task;
     self->broadcast_channel = broadcast_channel;
 
     for (mp_int_t i = 0; i < num_channels; i++) {
