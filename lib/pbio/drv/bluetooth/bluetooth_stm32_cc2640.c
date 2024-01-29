@@ -1080,17 +1080,7 @@ static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
     if (!is_broadcasting) {
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_makeDiscoverable(
-            #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND
-            // City hub fails to send non-connectable advertisements so we
-            // have to use the wrong advertisement type to get it to actually
-            // send something over the air.
             ADV_IND,
-            #else
-            // Technic hub will send non-connectable advertisements only if
-            // it is connected to something else, otherwise we need the same
-            // hack as the City hub.
-            (conn_handle == NO_CONNECTION && peripheral_singleton.con_handle == NO_CONNECTION) ? ADV_IND : ADV_NONCONN_IND,
-            #endif
             GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, NULL,
             GAP_CHANNEL_MAP_ALL, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_WHITELIST);
         PT_WAIT_UNTIL(pt, hci_command_status);

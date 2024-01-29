@@ -32,7 +32,6 @@
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         158 // 158 matches LEGO firmware - could go up to ~251 - see ATT_MAX_MTU_SIZE
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID  "\x41"
-#define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_QUIRK_BROKEN_NONCONN_IND (1)
 
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
