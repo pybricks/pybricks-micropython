@@ -624,7 +624,7 @@ cancel_disconnect:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, bool bond) {
+void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, pbdrv_bluetooth_peripheral_options_t options) {
     // Unset previous bluetooth addresses and other state variables.
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
@@ -633,7 +633,7 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     peri->match_adv = match_adv;
     peri->match_adv_rsp = match_adv_rsp;
     peri->notification_handler = notification_handler;
-    peri->bond = bond;
+    peri->options = options;
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 

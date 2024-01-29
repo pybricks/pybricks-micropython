@@ -55,7 +55,6 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  */
 typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size);
 
-
 /** Advertisement of scan response match result */
 typedef enum {
     /** No match. */
@@ -67,6 +66,7 @@ typedef enum {
     /** A name filter was given and it did NOT match. */
     PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED = 1 << 2,
 } pbdrv_bluetooth_ad_match_result_flags_t;
+
 /**
  * Callback to match an advertisement or scan response.
  *
@@ -125,6 +125,17 @@ typedef struct {
     uint8_t value[20];
 } pbdrv_bluetooth_peripheral_char_t;
 
+
+/** Peripheral connection options. */
+typedef enum {
+    /** No options. */
+    PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE = 0,
+    /** Whether to initiate pairing after connecting. */
+    PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR = 1 << 0,
+    /** Whether to disconnect from the host before connecting to peripheral. */
+    PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST = 1 << 1,
+} pbdrv_bluetooth_peripheral_options_t;
+
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
  */
@@ -139,7 +150,7 @@ typedef struct {
     pbdrv_bluetooth_ad_match_t match_adv;
     pbdrv_bluetooth_ad_match_t match_adv_rsp;
     pbdrv_bluetooth_receive_handler_t notification_handler;
-    bool bond;
+    pbdrv_bluetooth_peripheral_options_t options;
 } pbdrv_bluetooth_peripheral_t;
 
 /** Advertisement types. */
@@ -281,14 +292,14 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
  * @param [in]  match_adv      Callback to match the advertisement data during scan.
  * @param [in]  match_adv_rsp  Callback to match the advertisement response data during scan.
  * @param [in]  notification_handler  Callback to handle notifications from the peripheral.
- * @param [in]  bond           Whether to bond with the peripheral.
+ * @param [in]  options        Connect options such as pairing.
  */
 void pbdrv_bluetooth_peripheral_scan_and_connect(
     pbio_task_t *task,
     pbdrv_bluetooth_ad_match_t match_adv,
     pbdrv_bluetooth_ad_match_t match_adv_rsp,
     pbdrv_bluetooth_receive_handler_t notification_handler,
-    bool bond);
+    pbdrv_bluetooth_peripheral_options_t options);
 
 /**
  * Gets the name of the connected peripheral.
@@ -397,7 +408,7 @@ static inline void pbdrv_bluetooth_peripheral_scan_and_connect(
     pbdrv_bluetooth_ad_match_t match_adv,
     pbdrv_bluetooth_ad_match_t match_adv_rsp,
     pbdrv_bluetooth_receive_handler_t notification_handler,
-    bool bond) {
+    pbdrv_bluetooth_peripheral_options_t options) {
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 

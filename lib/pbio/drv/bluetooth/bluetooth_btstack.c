@@ -339,9 +339,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
                 peri->con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
 
-                // Request bonding if needed for this device, otherwise set
+                // Request pairing if needed for this device, otherwise set
                 // connection state to complete.
-                if (peri->bond) {
+                if (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) {
                     // Re-encryption doesn't seem to work reliably, so we just
                     // delete the bond and start over.
                     gap_delete_bonding(peri->bdaddr_type, peri->bdaddr);
@@ -833,7 +833,7 @@ cancel:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, bool bond) {
+void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, pbdrv_bluetooth_peripheral_options_t options) {
     // Unset previous bluetooth addresses and other state variables.
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
@@ -842,7 +842,7 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     peri->match_adv = match_adv;
     peri->match_adv_rsp = match_adv_rsp;
     peri->notification_handler = notification_handler;
-    peri->bond = bond;
+    peri->options = options;
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
@@ -888,8 +888,6 @@ static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *
 
         handset.con_state == CON_STATE_READ_CHARACTERISTIC_COMPLETE;
     }));
-
-    // TODO: return read value. Currently not used. Generalize discovery type to just char result type.
 
     // State state back to simply connected, so we can discover other characteristics.
     handset.con_state = CON_STATE_CONNECTED;

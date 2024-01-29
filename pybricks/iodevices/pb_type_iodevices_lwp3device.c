@@ -204,7 +204,11 @@ STATIC void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
         strncpy(lwp3device->name, name, sizeof(lwp3device->name));
     }
 
-    pbdrv_bluetooth_peripheral_scan_and_connect(&lwp3device->task, lwp3_advertisement_matches, lwp3_advertisement_response_matches, handle_notification, false);
+    pbdrv_bluetooth_peripheral_scan_and_connect(&lwp3device->task,
+        lwp3_advertisement_matches,
+        lwp3_advertisement_response_matches,
+        handle_notification,
+        PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE);
     pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
 
     // Copy the name so we can read it back later, and override locally.

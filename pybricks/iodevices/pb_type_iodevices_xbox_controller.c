@@ -209,9 +209,11 @@ static void pb_xbox_post_connect_read(void) {
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    // Debug parameter to stay connected to the host on Technic Hub.
+    // Works only on some hosts for the moment, so False by default.
     #if PYBRICKS_HUB_TECHNICHUB
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_FALSE(connect_anyway));
+        PB_ARG_DEFAULT_FALSE(stay_connected));
     #endif // PYBRICKS_HUB_TECHNICHUB
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
@@ -233,16 +235,14 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     memset(xbox, 0, sizeof(*xbox));
     xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
+    // Xbox Controller requires pairing.
+    pbdrv_bluetooth_peripheral_options_t options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
+
+    // By default, disconnect Technic Hub from host, as this is required for
+    // most hosts. Stay connected only if the user explicitly requests it.
     #if PYBRICKS_HUB_TECHNICHUB
-    // On some computers, the CC2640 appears to get no responses from the controller
-    // if the hub is connected to Pybricks Code. For a consistent experience, we
-    // require that the user disconnect the hub from the computer.
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) && !mp_obj_is_true(connect_anyway_in)) {
-        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
-            "\nTechnic Hub cannot connect to the computer and controller at the same time."
-            "\n1. Disconnect the hub from the computer."
-            "\n2. Put the controller in pairing mode."
-            "\n3. Start the program using the green hub button.\n\n"));
+    if (!mp_obj_is_true(stay_connected_in)) {
+        options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
@@ -256,7 +256,8 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
             &xbox->task,
             xbox_advertisement_matches,
             xbox_advertisement_response_matches,
-            handle_notification, true);
+            handle_notification,
+            options);
         pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
         nlr_pop();
     } else {

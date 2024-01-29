@@ -613,7 +613,16 @@ try_again:
     PT_WAIT_UNTIL(pt, hci_command_status);
     PT_WAIT_UNTIL(pt, device_discovery_done);
 
-    // connect
+    // Optionally, disconnect from host (usually Pybricks Code).
+    if (conn_handle != NO_CONNECTION &&
+        (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
+        DEBUG_PRINT_PT(pt, "Disconnect from Pybricks code (%d).\n", conn_handle);
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_TerminateLinkReq(conn_handle, 0x13);
+        PT_WAIT_UNTIL(pt, conn_handle == NO_CONNECTION);
+    }
+
+    // Connect to the peripheral.
 
     assert(peri->con_handle == NO_CONNECTION);
     bond_auth_err = NO_AUTH;
@@ -624,8 +633,11 @@ try_again:
     // NB: We must unset "initiate" before we allow a new connection to
     // Pybricks Code or it will try to pair with the PC. However, this happens
     // automatically since gap_init runs again on disconnect, which resets it.
+    // It won't unset automatically if Pybricks Code is already connected, but
+    // then it doesn't matter since we're already connected.
     PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = peri->bond ? GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
+    buf[0] = (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
+        GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
     GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
@@ -645,7 +657,7 @@ try_again:
 
     DEBUG_PRINT_PT(pt, "Connected.\n");
 
-    if (peri->bond) {
+    if (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) {
         PT_WAIT_UNTIL(pt, ({
             if (task->cancel) {
                 connection_error = PBIO_ERROR_CANCELED;
@@ -848,7 +860,7 @@ disconnect:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, bool bond) {
+void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_ad_match_t match_adv, pbdrv_bluetooth_ad_match_t match_adv_rsp, pbdrv_bluetooth_receive_handler_t notification_handler, pbdrv_bluetooth_peripheral_options_t options) {
     // Unset previous bluetooth addresses and other state variables.
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
@@ -858,7 +870,7 @@ void pbdrv_bluetooth_peripheral_scan_and_connect(pbio_task_t *task, pbdrv_blueto
     peri->match_adv = match_adv;
     peri->match_adv_rsp = match_adv_rsp;
     peri->notification_handler = notification_handler;
-    peri->bond = bond;
+    peri->options = options;
     start_task(task, peripheral_scan_and_connect_task, NULL);
 }
 
