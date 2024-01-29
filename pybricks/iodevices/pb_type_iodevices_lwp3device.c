@@ -262,31 +262,33 @@ STATIC void pb_lwp3device_configure_remote(void) {
 
     pb_lwp3device_t *remote = &pb_lwp3device_singleton;
 
+    static struct {
+        pbdrv_bluetooth_value_t value;
+        uint8_t length;
+        uint8_t hub;
+        uint8_t type;
+        uint8_t port;
+        uint8_t mode;
+        uint32_t delta_interval;
+        uint8_t enable_notifications;
+    } __attribute__((packed)) msg = {
+        .value.size = 10,
+        .length = 10,
+        .hub = 0,
+        .type = LWP3_MSG_TYPE_PORT_MODE_SETUP,
+        .delta_interval = 1,
+    };
+
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        static struct {
-            pbdrv_bluetooth_value_t value;
-            uint8_t length;
-            uint8_t hub;
-            uint8_t type;
-            uint8_t port;
-            uint8_t mode;
-            uint32_t delta_interval;
-            uint8_t enable_notifications;
-        } __attribute__((packed)) msg = {
-            .value.size = 10,
-            .length = 10,
-            .hub = 0,
-            .type = LWP3_MSG_TYPE_PORT_MODE_SETUP,
-            .port = REMOTE_PORT_LEFT_BUTTONS,
-            .mode = REMOTE_BUTTONS_MODE_KEYSD,
-            .delta_interval = 1,
-            .enable_notifications = 1,
-        };
+
         pbio_set_uint16_le(msg.value.handle, pb_lwp3device_char.handle);
 
         // set mode for left buttons
 
+        msg.port = REMOTE_PORT_LEFT_BUTTONS,
+        msg.mode = REMOTE_BUTTONS_MODE_KEYSD,
+        msg.enable_notifications = 1,
         pbdrv_bluetooth_peripheral_write(&remote->task, &msg.value);
         pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
 
