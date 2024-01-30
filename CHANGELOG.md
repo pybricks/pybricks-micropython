@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.4.0b1] - 2023-11-24
+
 ### Added
 - Added `pybricks.robotics.Car` for controlling a car with one or more drive
   motors and a steering motor. This is a convenience class that combines
@@ -38,8 +40,6 @@
 [support#1357]: https://github.com/pybricks/support/issues/1357
 [support#1408]: https://github.com/pybricks/support/issues/1408
 [pybricks-micropython#222]: https://github.com/pybricks/pybricks-micropython/pull/222
-
-
 
 ## [3.3.0] - 2023-11-24
 
@@ -773,7 +773,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...HEAD
+[3.4.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...v3.4.0b1
 [3.3.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...v3.3.0
 [3.3.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...v3.3.0c1
 [3.3.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b8...v3.3.0b9
