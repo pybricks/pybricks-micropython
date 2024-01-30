@@ -14,18 +14,28 @@
 - Fix Bluetooth locking up when connecting Bluetooth adapter with small MTU to Technic and City hubs ([support#947]).
 - Fix Technic Hub not always starting automatically after firmware exiting
   update mode ([support#1408]). Also apply this to Move Hub and City Hub.
+- Fix Bluetooth locking up when connecting Bluetooth adapter with small MTU to
+  Technic and City hubs ([support#947]).
+- Fix Remote pairing difficulty ([support#880]).
+- Fix Remote light not working or crashing the hub ([support#1357]).
+- Fix Technic Hub and City Hub broadcasting missing messages ([support#1357]).
+- Fix Technic Hub and City Hub broadcasting delays.
 
 ### Changed
 - Changed polarity of output in the `Light` class. This makes no difference for
   the Light class, but it makes the class usable for certain custom
   devices ([pybricks-micropython#166]).
+- Improved Bluetooth peripheral scanning and connect process to allow for new
+  device types to be added in the future.
 
 ### Changed
 - Changed keypad return type to set instead of tuple. This affects the remote
   and hubs.
 
+[support#880]: https://github.com/pybricks/support/issues/880
 [support#947]: https://github.com/pybricks/support/issues/947
 [support#1096]: https://github.com/pybricks/support/issues/1096
+[support#1357]: https://github.com/pybricks/support/issues/1357
 [support#1408]: https://github.com/pybricks/support/issues/1408
 [pybricks-micropython#222]: https://github.com/pybricks/pybricks-micropython/pull/222
 
