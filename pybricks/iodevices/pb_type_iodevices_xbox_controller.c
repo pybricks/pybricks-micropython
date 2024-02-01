@@ -76,27 +76,25 @@ static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_battery = {
     .request_notification = false,
 };
 
-// Decoding via https://github.com/esp32beans/ESP32-BLE-HID-exp, MIT license.
 typedef struct __attribute__((packed)) {
-    uint16_t x; // 0..65534
-    uint16_t y; // 0..65534
-    uint16_t z; // 0..65534
-    uint16_t rz; // 0..65534
-    uint16_t brake : 10; // 0..1023
-    uint16_t filler1 : 6;
-    uint16_t accelerator : 10; // 0..1023
-    uint16_t filler2 : 6;
-    uint8_t hat : 4;
-    uint8_t filler3 : 4;
-    uint16_t buttons : 15;
-    uint16_t filler4 : 1;
-    uint8_t record : 1;
-    uint8_t filler5 : 7;
-} xbox_one_gamepad_t;
+    uint16_t x; // left to right
+    uint16_t y; // bottom to top
+    uint16_t z; // left to right
+    uint16_t rz; // bottom to top
+    uint16_t left_trigger; // 10-bit
+    uint16_t right_trigger; // 10-bit
+    uint8_t dpad;
+    uint16_t buttons;
+    uint8_t upload;
+    // Following only available on Elite Series 2 controller.
+    uint8_t profile;
+    uint8_t trigger_switches;
+    uint8_t paddles;
+} xbox_input_map_t;
 
 typedef struct {
     pbio_task_t task;
-    xbox_one_gamepad_t state;
+    xbox_input_map_t state;
 } pb_xbox_t;
 
 STATIC pb_xbox_t pb_xbox_singleton;
@@ -104,8 +102,8 @@ STATIC pb_xbox_t pb_xbox_singleton;
 // Handles LEGO Wireless protocol messages from the XBOX Device.
 STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_xbox_t *xbox = &pb_xbox_singleton;
-    if (size == sizeof(xbox_one_gamepad_t)) {
-        memcpy(&xbox->state, &value[0], (size < sizeof(xbox_one_gamepad_t)) ? size : sizeof(xbox_one_gamepad_t));
+    if (size <= sizeof(xbox_input_map_t)) {
+        memcpy(&xbox->state, &value[0], size);
     }
     return PBIO_PYBRICKS_ERROR_OK;
 }
@@ -237,7 +235,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory
-    memset(xbox, 0, sizeof(*xbox));
+    memset(&xbox->state, 0, sizeof(xbox_input_map_t));
     xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
     // Xbox Controller requires pairing.
@@ -305,39 +303,48 @@ STATIC mp_obj_t pb_xbox_name(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name);
 
-STATIC xbox_one_gamepad_t *pb_xbox_get_buttons(void) {
-    xbox_one_gamepad_t *buttons = &pb_xbox_singleton.state;
+STATIC xbox_input_map_t *pb_xbox_get_buttons(void) {
+    xbox_input_map_t *buttons = &pb_xbox_singleton.state;
     pb_xbox_assert_connected();
     return buttons;
 }
 
 STATIC mp_obj_t pb_xbox_state(mp_obj_t self_in) {
 
-    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
 
     mp_obj_t state[] = {
         mp_obj_new_int(buttons->x - INT16_MAX),
         mp_obj_new_int(buttons->y - INT16_MAX),
         mp_obj_new_int(buttons->z - INT16_MAX),
         mp_obj_new_int(buttons->rz - INT16_MAX),
-        mp_obj_new_int(buttons->brake),
-        mp_obj_new_int(buttons->accelerator),
-        mp_obj_new_int(buttons->hat),
+        mp_obj_new_int(buttons->left_trigger),
+        mp_obj_new_int(buttons->right_trigger),
+        mp_obj_new_int(buttons->dpad),
         mp_obj_new_int(buttons->buttons),
-        mp_obj_new_int(buttons->record),
+        mp_obj_new_int(buttons->upload),
+        mp_obj_new_int(buttons->profile),
+        mp_obj_new_int(buttons->trigger_switches),
+        mp_obj_new_int(buttons->paddles),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(state), state);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_state_obj, pb_xbox_state);
 
 STATIC mp_obj_t pb_xbox_dpad(mp_obj_t self_in) {
-    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
-    return mp_obj_new_int(buttons->hat);
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+    return mp_obj_new_int(buttons->dpad);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_dpad_obj, pb_xbox_dpad);
 
+STATIC mp_obj_t pb_xbox_profile(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+    return mp_obj_new_int(buttons->profile);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_profile_obj, pb_xbox_profile);
+
 STATIC mp_obj_t pb_xbox_joystick_left(mp_obj_t self_in) {
-    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
     mp_obj_t directions[] = {
         mp_obj_new_int((buttons->x - INT16_MAX) * 100 / INT16_MAX),
         mp_obj_new_int((INT16_MAX - buttons->y) * 100 / INT16_MAX),
@@ -347,7 +354,7 @@ STATIC mp_obj_t pb_xbox_joystick_left(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_left_obj, pb_xbox_joystick_left);
 
 STATIC mp_obj_t pb_xbox_joystick_right(mp_obj_t self_in) {
-    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
     mp_obj_t directions[] = {
         mp_obj_new_int((buttons->z - INT16_MAX) * 100 / INT16_MAX),
         mp_obj_new_int((INT16_MAX - buttons->rz) * 100 / INT16_MAX),
@@ -357,17 +364,17 @@ STATIC mp_obj_t pb_xbox_joystick_right(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_right_obj, pb_xbox_joystick_right);
 
 STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
-    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
     mp_obj_t tiggers[] = {
-        mp_obj_new_int(buttons->brake * 100 / 1023),
-        mp_obj_new_int(buttons->accelerator * 100 / 1023),
+        mp_obj_new_int(buttons->left_trigger * 100 / 1023),
+        mp_obj_new_int(buttons->right_trigger * 100 / 1023),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(tiggers), tiggers);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
 
 STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
-    xbox_one_gamepad_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
 
     mp_obj_t items[10];
     uint8_t count = 0;
@@ -405,9 +412,22 @@ STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
     if (buttons->buttons & (1 << 14)) {
         items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RJ);
     }
-    if (buttons->record) {
+    if (buttons->upload) {
         items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_UPLOAD);
     }
+    if (buttons->paddles & (1 << 0)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P1);
+    }
+    if (buttons->paddles & (1 << 1)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P2);
+    }
+    if (buttons->paddles & (1 << 2)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P3);
+    }
+    if (buttons->paddles & (1 << 3)) {
+        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P4);
+    }
+
     return mp_obj_new_set(count, items);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_pressed_obj, pb_xbox_pressed);
@@ -429,10 +449,11 @@ STATIC const mp_obj_base_t pb_xbox_buttons_obj = {
 };
 
 STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_name),  MP_ROM_PTR(&pb_xbox_name_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
-    { MP_ROM_QSTR(MP_QSTR_dpad),  MP_ROM_PTR(&pb_xbox_dpad_obj) },
-    { MP_ROM_QSTR(MP_QSTR_joystick_left),  MP_ROM_PTR(&pb_xbox_joystick_left_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dpad), MP_ROM_PTR(&pb_xbox_dpad_obj) },
+    { MP_ROM_QSTR(MP_QSTR_profile), MP_ROM_PTR(&pb_xbox_profile_obj) },
+    { MP_ROM_QSTR(MP_QSTR_joystick_left), MP_ROM_PTR(&pb_xbox_joystick_left_obj) },
     { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_xbox_joystick_right_obj) },
     { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
     { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&pb_xbox_buttons_obj) },
