@@ -63,6 +63,7 @@ defined in linker script */
   .weak Reset_Handler
   .type Reset_Handler, %function
 Reset_Handler:
+  cpsid i   /* Disable interrupts because LEGO bootloader leaves them enabled before handover. */
   ldr   r0, =_estack
   mov   sp, r0          /* set stack pointer */
 
