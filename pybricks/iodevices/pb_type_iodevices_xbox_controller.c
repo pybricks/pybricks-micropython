@@ -39,7 +39,12 @@
  */
 static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_report = {
     .handle = 0, // Will be set during discovery.
-    .properties = 0x12, // Needed to distingish it from another char with same UUID.
+    // Even with the property filter, there are still 3 matches for this
+    // characteristic on the Elite Series 2 controller. For now limit discovery
+    // to find only the first one. It may be possible to find the right one by
+    // reading the descriptor instead.
+    .handle_max = 32,
+    .properties = 0x12, // Needed to distinguish it from another char with same UUID.
     .uuid16 = 0x2a4d,
     .uuid128 = { 0 },
     .request_notification = true,

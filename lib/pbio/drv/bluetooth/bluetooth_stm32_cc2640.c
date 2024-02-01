@@ -754,7 +754,8 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     {
         attReadByTypeReq_t req = {
             .startHandle = 0x0001,
-            .endHandle = 0xFFFF,
+            // User upper limit if no end handle specified.
+            .endHandle = peri->char_now->handle_max ? peri->char_now->handle_max : 0xFFFF,
         };
         if (peri->char_now->uuid16) {
             pbio_set_uint16_le(req.type.uuid, peri->char_now->uuid16);

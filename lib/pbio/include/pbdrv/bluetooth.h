@@ -106,12 +106,14 @@ typedef struct {
 /**
  * Client characteristic discovery request and resulting handle.
  *
- * These structures are (staically) allocated in the application and are
+ * These structures are (statically) allocated in the application and are
  * assumed to persist until the discovery is complete.
  */
 typedef struct {
     /** Discovered handle. Will remain 0 if not yet found or failed. */
     uint16_t handle;
+    /** Highest handle to look for. */
+    uint16_t handle_max;
     /** Properties to filter discovered results. Leave 0 for no filtering. */
     uint16_t properties;
     /** The 16-bit UUID. Leave at 0 if 128-bit UUID should be used. */

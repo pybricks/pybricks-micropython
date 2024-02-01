@@ -789,11 +789,12 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
     }
 
     handset.con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
+    uint16_t handle_max = peri->char_now->handle_max ? peri->char_now->handle_max : 0xffff;
     handset.btstack_error = peri->char_now->uuid16 ?
         gatt_client_discover_characteristics_for_handle_range_by_uuid16(
-        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_now->uuid16) :
+        packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_now->uuid16) :
         gatt_client_discover_characteristics_for_handle_range_by_uuid128(
-        packet_handler, peri->con_handle, 0x0001, 0xffff, peri->char_now->uuid128);
+        packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_now->uuid128);
 
     if (handset.btstack_error != ERROR_CODE_SUCCESS) {
         // configuration failed for some reason, so disconnect

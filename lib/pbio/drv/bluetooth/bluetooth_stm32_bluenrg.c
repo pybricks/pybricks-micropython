@@ -547,7 +547,8 @@ static PT_THREAD(periperal_discover_characteristic_task(struct pt *pt, pbio_task
         pbio_uuid128_reverse_copy(uuid_le, peri->char_now->uuid128);
         uuid_type = UUID_TYPE_128;
     }
-    aci_gatt_disc_charac_by_uuid_begin(peri->con_handle, 0x0001, 0xFFFF, uuid_type, uuid_le);
+    uint16_t handle_max = /* peri->char_now->handle_max ? peri->char_now->handle_max : */ 0xffff; // Not implemented due to build size limitations.
+    aci_gatt_disc_charac_by_uuid_begin(peri->con_handle, 0x0001, handle_max, uuid_type, uuid_le);
     PT_WAIT_UNTIL(pt, hci_command_status);
     peri->status = aci_gatt_disc_charac_by_uuid_end();
 
