@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+- Added `pybricks.iodevices.XboxController` ([support#191], [support#1024]).
+
+[support#191]: https://github.com/pybricks/support/issues/191
+[support#1024]: https://github.com/pybricks/support/issues/1024
+
 ## [3.4.0b1] - 2023-11-24
 
 ### Added
