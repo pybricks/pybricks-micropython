@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON
+#if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_COLOR_LIGHT
 
 #include <stdbool.h>
 
@@ -153,4 +153,4 @@ mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light) {
     return MP_OBJ_FROM_PTR(self);
 }
 
-#endif // PYBRICKS_PY_COMMON
+#endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_COLOR_LIGHT

@@ -104,8 +104,12 @@ void pb_package_pybricks_init(bool import_all) {
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
         // Initialize the package.
+        #if PYBRICKS_PY_PARAMETERS
         pb_type_Color_reset();
+        #endif
+        #if PYBRICKS_PY_TOOLS
         pb_module_tools_init();
+        #endif
         // Import all if requested.
         if (import_all) {
             pb_package_import_all();

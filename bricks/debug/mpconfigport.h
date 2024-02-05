@@ -13,6 +13,7 @@
 #define PYBRICKS_PY_COMMON                      (1)
 #define PYBRICKS_PY_COMMON_BLE                  (0)
 #define PYBRICKS_PY_COMMON_CHARGER              (0)
+#define PYBRICKS_PY_COMMON_COLOR_LIGHT          (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (0)
 #define PYBRICKS_PY_COMMON_IMU                  (0)
 #define PYBRICKS_PY_COMMON_KEYPAD               (1)
