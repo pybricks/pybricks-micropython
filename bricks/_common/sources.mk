@@ -138,6 +138,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_ev3rt.c \
 	drv/clock/clock_linux.c \
+	drv/clock/clock_none.c \
 	drv/clock/clock_nxt.c \
 	drv/clock/clock_stm32.c \
 	drv/clock/clock_test.c \
