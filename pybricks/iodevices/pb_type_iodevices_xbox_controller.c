@@ -53,26 +53,8 @@ static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_report = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_info = {
-    .uuid16 = 0x2a4a,
-    .request_notification = false,
-};
-
-/**
- * Unused characteristic that needs to be read for controller to become active.
- */
 static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_map = {
     .uuid16 = 0x2a4b,
-    .request_notification = false,
-};
-
-/**
- * Battery characteristic within battery service (0x180F). Somewhat useful, and
- * serves as a check that reading characteristics works.
- */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_battery = {
-    .uuid16 = 0x2a19,
-    .properties = 0x12,
     .request_notification = false,
 };
 
@@ -200,17 +182,6 @@ static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_in
     pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
 }
 
-static void pb_xbox_post_connect_read(void) {
-    pb_xbox_discover_and_read(&pb_xbox_char_hid_info);
-    pb_xbox_discover_and_read(&pb_xbox_char_hid_map);
-    pb_xbox_discover_and_read(&pb_xbox_char_hid_report);
-    pb_xbox_discover_and_read(&pb_xbox_char_battery);
-    if (pb_xbox_char_battery.value_len != 1) {
-        pb_assert(PBIO_ERROR_IO);
-    }
-    DEBUG_PRINT("Battery %d pct\n", pb_xbox_char_battery.value[0]);
-}
-
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     // Debug parameter to stay connected to the host on Technic Hub.
     // Works only on some hosts for the moment, so False by default.
@@ -281,7 +252,15 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // to read the HID characteristics. So inform the user to press/hold the
     // pair button to put it into the right mode.
     if (nlr_push(&nlr) == 0) {
-        pb_xbox_post_connect_read();
+        // It seems we need to read the (unused) map only once after pairing
+        // to make the controller active. We'll still read it every time to
+        // catch the case where user might not have done this at least once.
+        // Connecting takes about a second longer this way, but we can provide
+        // better error messages.
+        pb_xbox_discover_and_read(&pb_xbox_char_hid_map);
+
+        // This is the main characteristic that notifies us of button state.
+        pb_xbox_discover_and_read(&pb_xbox_char_hid_report);
         nlr_pop();
     } else {
         if (xbox->task.status != PBIO_SUCCESS) {
