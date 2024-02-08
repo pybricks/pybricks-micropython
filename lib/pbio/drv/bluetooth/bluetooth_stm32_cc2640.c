@@ -1963,6 +1963,15 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // When acting as a central, make the hub reject connection parameter
+    // changes requested by peripherals. This ensures that things like
+    // broadcasting keep working. May need to revisit this if we ever have
+    // peripherals that only work with their own connection parameters.
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_SetParamValue(TGAP_REJECT_CONN_PARAMS, 1);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_SetParamValue(TGAP_CONN_EST_LATENCY, 0);
     PT_WAIT_UNTIL(pt, hci_command_status);
