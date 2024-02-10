@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.4.0b1] - 2024-02-10
+
 ### Added
 - Added `pybricks.iodevices.XboxController` ([support#191], [support#1024]).
 - Re-enable `pybricks.iodevices.LWP3Device` missing from last beta.
@@ -20,7 +22,7 @@
 [support#1024]: https://github.com/pybricks/support/issues/1024
 [support#1438]: https://github.com/pybricks/support/issues/1438
 
-## [3.4.0b1] - 2023-11-24
+## [3.4.0b1] - 2024-01-30
 
 ### Added
 - Added `pybricks.robotics.Car` for controlling a car with one or more drive
@@ -789,7 +791,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...HEAD
+[3.4.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...v3.4.0b2
 [3.4.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...v3.4.0b1
 [3.3.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...v3.3.0
 [3.3.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...v3.3.0c1
