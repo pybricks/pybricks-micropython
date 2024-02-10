@@ -6,6 +6,12 @@
 
 ### Added
 - Added `pybricks.iodevices.XboxController` ([support#191], [support#1024]).
+- Re-enable `pybricks.iodevices.LWP3Device` missing from last beta.
+
+### Changed
+- On Technic Hub and City Hub, the Bluetooth chip is now configured to reject
+  connection parameter updates from peripherals. This avoids interference with
+  broadcast when used with the Xbox controller.
 
 [support#191]: https://github.com/pybricks/support/issues/191
 [support#1024]: https://github.com/pybricks/support/issues/1024
