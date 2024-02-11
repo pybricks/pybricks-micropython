@@ -8,6 +8,9 @@
 - Added `pybricks.iodevices.XboxController` ([support#191], [support#1024]).
 - Re-enable `pybricks.iodevices.LWP3Device` missing from last beta.
 
+### Fixes
+- Fix hub not shutting down while a program runs ([support#1438]).
+
 ### Changed
 - On Technic Hub and City Hub, the Bluetooth chip is now configured to reject
   connection parameter updates from peripherals. This avoids interference with
@@ -15,6 +18,7 @@
 
 [support#191]: https://github.com/pybricks/support/issues/191
 [support#1024]: https://github.com/pybricks/support/issues/1024
+[support#1438]: https://github.com/pybricks/support/issues/1438
 
 ## [3.4.0b1] - 2023-11-24
 
