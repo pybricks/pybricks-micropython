@@ -215,8 +215,10 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     // By default, disconnect Technic Hub from host, as this is required for
     // most hosts. Stay connected only if the user explicitly requests it.
     #if PYBRICKS_HUB_TECHNICHUB
-    if (!mp_obj_is_true(stay_connected_in)) {
+    if (!mp_obj_is_true(stay_connected_in) && pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
         options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
+        mp_printf(&mp_plat_print, "The hub may disconnect from the computer for better connectivity with the controller.\n");
+        mp_hal_delay_ms(500);
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
