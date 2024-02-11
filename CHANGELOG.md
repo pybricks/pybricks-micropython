@@ -14,6 +14,7 @@
 - Fix Bluetooth locking up when connecting Bluetooth adapter with small MTU to Technic and City hubs ([support#947]).
 - Fix Technic Hub not always starting automatically after firmware exiting
   update mode ([support#1408]). Also apply this to Move Hub and City Hub.
+- Fix hub not shutting down while a program runs ([support#1438]).
 
 ### Changed
 - Changed polarity of output in the `Light` class. This makes no difference for
@@ -23,6 +24,7 @@
 [support#947]: https://github.com/pybricks/support/issues/947
 [support#1096]: https://github.com/pybricks/support/issues/1096
 [support#1408]: https://github.com/pybricks/support/issues/1408
+[support#1438]: https://github.com/pybricks/support/issues/1438
 [pybricks-micropython#222]: https://github.com/pybricks/pybricks-micropython/pull/222
 
 

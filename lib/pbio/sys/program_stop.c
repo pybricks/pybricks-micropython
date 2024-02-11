@@ -32,12 +32,6 @@ static bool stop_button_pressed;
  */
 void pbsys_program_stop(bool force_stop) {
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        if (force_stop) {
-            // HACK: Bluetooth drivers have issues with pending tasks not being
-            // cancellable, so this should force them to be canceled and avoid
-            // undefined behavior due to use after free.
-            pbdrv_bluetooth_power_on(false);
-        }
         pbsys_main_stop_program(force_stop);
     }
 }
