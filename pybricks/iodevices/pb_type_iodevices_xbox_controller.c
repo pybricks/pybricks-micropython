@@ -357,7 +357,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
 STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
     xbox_input_map_t *buttons = pb_xbox_get_buttons();
 
-    mp_obj_t items[10];
+    mp_obj_t items[16];
     uint8_t count = 0;
 
     if (buttons->buttons & 1) {
