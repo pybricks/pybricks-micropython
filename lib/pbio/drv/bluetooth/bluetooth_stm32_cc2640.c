@@ -128,6 +128,7 @@ static bool device_discovery_done;
 // used to synchronize advertising data handler
 static bool advertising_data_received;
 // handle to connected Bluetooth device
+static bool busy_disconnecting;
 static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
 
@@ -385,7 +386,7 @@ void pbdrv_bluetooth_stop_advertising(void) {
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle != NO_CONNECTION) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle != NO_CONNECTION && !busy_disconnecting) {
         return true;
     }
 
@@ -504,6 +505,19 @@ static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *ta
         }
     }
 
+    // Optionally, disconnect from host (usually Pybricks Code).
+    if (conn_handle != NO_CONNECTION &&
+        (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
+        DEBUG_PRINT_PT(pt, "Disconnect from Pybricks code (%d).\n", conn_handle);
+        // Guard used in pbdrv_bluetooth_is_connected so higher level processes
+        // won't try to send anything while we are disconnecting.
+        busy_disconnecting = true;
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_TerminateLinkReq(conn_handle, 0x13);
+        PT_WAIT_UNTIL(pt, conn_handle == NO_CONNECTION);
+        busy_disconnecting = false;
+    }
+
 restart_scan:
 
     PROCESS_CONTEXT_BEGIN(&pbdrv_bluetooth_spi_process);
@@ -612,15 +626,6 @@ try_again:
     GAP_DeviceDiscoveryCancel();
     PT_WAIT_UNTIL(pt, hci_command_status);
     PT_WAIT_UNTIL(pt, device_discovery_done);
-
-    // Optionally, disconnect from host (usually Pybricks Code).
-    if (conn_handle != NO_CONNECTION &&
-        (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
-        DEBUG_PRINT_PT(pt, "Disconnect from Pybricks code (%d).\n", conn_handle);
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        GAP_TerminateLinkReq(conn_handle, 0x13);
-        PT_WAIT_UNTIL(pt, conn_handle == NO_CONNECTION);
-    }
 
     // Connect to the peripheral.
 
