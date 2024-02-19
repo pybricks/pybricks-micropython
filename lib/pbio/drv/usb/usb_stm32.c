@@ -31,8 +31,10 @@ PROCESS(pbdrv_usb_process, "USB");
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static uint8_t usb_response_buf[1 + sizeof(uint32_t)] __aligned(4);
+static uint8_t usb_status_buf[1 + PBSYS_STATUS_REPORT_SIZE] __aligned(4);
 static volatile uint32_t usb_in_sz;
 static volatile uint32_t usb_response_sz;
+static volatile uint32_t usb_status_sz;
 static volatile bool transmitting;
 
 static USBD_HandleTypeDef husbd;
@@ -145,6 +147,7 @@ static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
     USBD_Pybricks_SetRxBuffer(&husbd, usb_in_buf);
     usb_in_sz = 0;
     usb_response_sz = 0;
+    usb_status_sz = 0;
     transmitting = false;
 
     return USBD_OK;
@@ -192,6 +195,8 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
 
     if (Buf == usb_response_buf) {
         usb_response_sz = 0;
+    } else if (Buf == usb_status_buf) {
+        usb_status_sz = 0;
     } else {
         ret = USBD_FAIL;
     }
@@ -240,6 +245,9 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static PBIO_ONESHOT(pwrdn_oneshot);
     static bool bcd_busy;
     static pbio_pybricks_error_t result;
+    static struct etimer timer;
+    static uint32_t prev_status_flags = ~0;
+    static uint32_t new_status_flags;
 
     PROCESS_POLLHANDLER({
         if (!bcd_busy && pbio_oneshot(!vbus_active, &no_vbus_oneshot)) {
@@ -257,6 +265,8 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     })
 
     PROCESS_BEGIN();
+
+    etimer_set(&timer, 500);
 
     for (;;) {
         PROCESS_WAIT_EVENT();
@@ -302,9 +312,23 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
             continue;
         }
 
+        new_status_flags = pbsys_status_get_flags();
+
+        // Transmit. Give priority to response, then status updates.
         if (usb_response_sz) {
             transmitting = true;
             USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
+        } else if ((new_status_flags != prev_status_flags) || etimer_expired(&timer)) {
+            usb_status_buf[0] = USBD_PYBRICKS_IN_EP_MSG_EVENT;
+            _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
+                "size of status report does not match size of event");
+            usb_status_sz = 1 + pbsys_status_get_status_report(&usb_status_buf[1]);
+
+            etimer_restart(&timer);
+            prev_status_flags = new_status_flags;
+
+            transmitting = true;
+            USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
         }
     }
 
