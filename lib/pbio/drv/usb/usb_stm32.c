@@ -13,17 +13,27 @@
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_pcd_ex.h>
 #include <usbd_core.h>
+#include <usbd_desc.h>
+#include <usbd_pybricks.h>
 
 #include <pbdrv/usb.h>
 #include <pbio/util.h>
+#include <pbsys/command.h>
+#include <pbsys/status.h>
 
 #include "../charger/charger.h"
 #include "./usb_stm32.h"
 
 PROCESS(pbdrv_usb_process, "USB");
 
+// These buffers need to be 32-bit aligned because the USB driver moves data
+// to/from FIFOs in 32-bit chunks.
+static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
+static volatile uint32_t usb_in_sz;
+
 static USBD_HandleTypeDef husbd;
 static PCD_HandleTypeDef hpcd;
+
 static volatile bool vbus_active;
 static pbdrv_usb_bcd_t pbdrv_usb_bcd;
 
@@ -121,6 +131,68 @@ void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
     process_poll(&pbdrv_usb_process);
 }
 
+/**
+  * @brief  Pybricks_Itf_Init
+  *         Initializes the Pybricks media low layer
+  * @param  None
+  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+  */
+static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
+    USBD_Pybricks_SetRxBuffer(&husbd, usb_in_buf);
+    usb_in_sz = 0;
+
+    return USBD_OK;
+}
+
+/**
+  * @brief  Pybricks_Itf_DeInit
+  *         DeInitializes the Pybricks media low layer
+  * @param  None
+  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+  */
+static USBD_StatusTypeDef Pybricks_Itf_DeInit(void) {
+    return USBD_OK;
+}
+
+/**
+  * @brief  Pybricks_Itf_DataRx
+  *         Data received over USB OUT endpoint are sent over Pybricks interface
+  *         through this function.
+  * @param  Buf: Buffer of data to be transmitted
+  * @param  Len: Number of data received (in bytes)
+  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+  */
+static USBD_StatusTypeDef Pybricks_Itf_Receive(uint8_t *Buf, uint32_t Len) {
+
+    usb_in_sz = Len;
+    process_poll(&pbdrv_usb_process);
+    return USBD_OK;
+}
+
+/**
+  * @brief  Pybricks_Itf_TransmitCplt
+  *         Data transmitted callback
+  *
+  * @note
+  *         This function is IN transfer complete callback used to inform user that
+  *         the submitted Data is successfully sent over USB.
+  *
+  * @param  Buf: Buffer of data that was transmitted
+  * @param  Len: Number of data transmitted (in bytes)
+  * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
+  */
+static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, uint8_t epnum) {
+    process_poll(&pbdrv_usb_process);
+    return USBD_OK;
+}
+
+static USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
+    .Init = Pybricks_Itf_Init,
+    .DeInit = Pybricks_Itf_DeInit,
+    .Receive = Pybricks_Itf_Receive,
+    .TransmitCplt = Pybricks_Itf_TransmitCplt,
+};
+
 // Common USB driver implementation.
 
 void pbdrv_usb_init(void) {
@@ -128,7 +200,12 @@ void pbdrv_usb_init(void) {
     husbd.pData = &hpcd;
     hpcd.pData = &husbd;
 
-    USBD_Init(&husbd, NULL, 0);
+    USBD_Pybricks_Desc_Init();
+    USBD_Init(&husbd, &USBD_Pybricks_Desc, 0);
+    USBD_RegisterClass(&husbd, &USBD_Pybricks_ClassDriver);
+    USBD_Pybricks_RegisterInterface(&husbd, &USBD_Pybricks_fops);
+    USBD_Start(&husbd);
+
     process_start(&pbdrv_usb_process);
 
     // VBUS may already be active
@@ -145,6 +222,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static struct pt bcd_pt;
     static PBIO_ONESHOT(no_vbus_oneshot);
     static PBIO_ONESHOT(bcd_oneshot);
+    static PBIO_ONESHOT(pwrdn_oneshot);
     static bool bcd_busy;
 
     PROCESS_POLLHANDLER({
@@ -169,6 +247,34 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
         if (bcd_busy) {
             bcd_busy = PT_SCHEDULE(pbdrv_usb_stm32_bcd_detect(&bcd_pt));
+
+            if (bcd_busy) {
+                // All other USB functions are halted if BCD is busy
+                continue;
+            }
+        }
+
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+            if (pbio_oneshot(true, &pwrdn_oneshot)) {
+                USBD_Stop(&husbd);
+                USBD_DeInit(&husbd);
+            }
+
+            // USB communication is stopped after a shutdown, but
+            // the process is still needed to track the BCD state
+            continue;
+        }
+
+        if (usb_in_sz) {
+            switch (usb_in_buf[0]) {
+                case USBD_PYBRICKS_OUT_EP_MSG_COMMAND:
+                    pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
+                    break;
+            }
+
+            // Prepare to receive the next packet
+            usb_in_sz = 0;
+            USBD_Pybricks_ReceivePacket(&husbd);
         }
     }
 

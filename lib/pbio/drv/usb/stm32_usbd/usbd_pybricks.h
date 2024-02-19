@@ -54,6 +54,28 @@ extern "C" {
   * @}
   */
 
+// NOTE: These enums values are sent over the wire, so cannot be changed. Also,
+// 0 is skipped to avoid a zeroed buffer from being misinterpreted as a message.
+
+/** Hub to host messages via the Pybricks interface IN endpoint. */
+enum {
+    /**
+     * Analog of BLE status response. Emitted in response to every OUT message
+     * received.
+     */
+    USBD_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
+    /**Analog to BLE notification. Only emitted if subscribed. */
+    USBD_PYBRICKS_IN_EP_MSG_EVENT = 2,
+};
+
+/** Host to hub messages via the Pybricks USB interface OUT endpoint. */
+enum {
+    /** Analog of BLE Client Characteristic Configuration Descriptor (CCCD). */
+    USBD_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
+    /** Analog of BLE Client Characteristic Write with response. */
+    USBD_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
+};
+
 
 /** @defgroup USBD_Pybricks_Exported_TypesDefinitions
   * @{
