@@ -7,6 +7,7 @@
 
 #if PBDRV_CONFIG_USB_STM32F4
 
+#include <string.h>
 #include <stdbool.h>
 
 #include <contiki.h>
@@ -32,9 +33,11 @@ PROCESS(pbdrv_usb_process, "USB");
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static uint8_t usb_response_buf[1 + sizeof(uint32_t)] __aligned(4);
 static uint8_t usb_status_buf[1 + PBSYS_STATUS_REPORT_SIZE] __aligned(4);
+static uint8_t usb_stdout_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static volatile uint32_t usb_in_sz;
 static volatile uint32_t usb_response_sz;
 static volatile uint32_t usb_status_sz;
+static volatile uint32_t usb_stdout_sz;
 static volatile bool transmitting;
 
 static USBD_HandleTypeDef husbd;
@@ -138,6 +141,52 @@ void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
 }
 
 /**
+ * Queues data to be transmitted via USB.
+ * @param data  [in]        The data to be sent.
+ * @param size  [in, out]   The size of @p data in bytes. After return, @p size
+ *                          contains the number of bytes actually written.
+ * @return                  ::PBIO_SUCCESS if @p data was queued, ::PBIO_ERROR_AGAIN
+ *                          if @p data could not be queued at this time (e.g. buffer
+ *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active USB connection or ::PBIO_ERROR_NOT_SUPPORTED
+ *                          if this platform does not support USB.
+ */
+pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
+    uint8_t *ptr = usb_stdout_buf;
+    uint32_t ptr_len = sizeof(usb_stdout_buf);
+
+    // TODO: return PBIO_ERROR_INVALID_OP if app flag is not set. Also need a
+    // timeout in case the app crashes and doesn't clear the flag on exit.
+
+    if (usb_stdout_sz) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    *ptr++ = USBD_PYBRICKS_IN_EP_MSG_EVENT;
+    ptr_len--;
+
+    *ptr++ = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+    ptr_len--;
+
+    *size = MIN(*size, ptr_len);
+    memcpy(ptr, data, *size);
+
+    usb_stdout_sz = 1 + 1 + *size;
+
+    process_poll(&pbdrv_usb_process);
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Indicates if there is stdout data waiting to be transmitted over USB.
+ * @retval  false if stdout data is currently being transmitted.
+ */
+bool pbdrv_usb_stdout_tx_is_idle(void) {
+    return usb_stdout_sz == 0;
+}
+
+/**
   * @brief  Pybricks_Itf_Init
   *         Initializes the Pybricks media low layer
   * @param  None
@@ -148,6 +197,7 @@ static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
     usb_in_sz = 0;
     usb_response_sz = 0;
     usb_status_sz = 0;
+    usb_stdout_sz = 0;
     transmitting = false;
 
     return USBD_OK;
@@ -197,6 +247,8 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
         usb_response_sz = 0;
     } else if (Buf == usb_status_buf) {
         usb_status_sz = 0;
+    } else if (Buf == usb_stdout_buf) {
+        usb_stdout_sz = 0;
     } else {
         ret = USBD_FAIL;
     }
@@ -314,7 +366,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
         new_status_flags = pbsys_status_get_flags();
 
-        // Transmit. Give priority to response, then status updates.
+        // Transmit. Give priority to response, then status updates, then stdout.
         if (usb_response_sz) {
             transmitting = true;
             USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
@@ -329,6 +381,9 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
             transmitting = true;
             USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
+        } else if (usb_stdout_sz) {
+            transmitting = true;
+            USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
         }
     }
 
