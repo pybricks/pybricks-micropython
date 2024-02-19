@@ -41,7 +41,11 @@ extern "C" {
   * @{
   */
 #define USBD_MS_VENDOR_CODE                0x01
+#define USBD_WEBUSB_VENDOR_CODE            0x02
+
 #define USBD_SIZ_MS_OS_DSCRPTR_SET         (10 + 20 + 132)
+
+#define USBD_WEBUSB_LANDING_PAGE_IDX       1
 
 #define USBD_PYBRICKS_CONFIG_DESC_SIZ      (9 + 9 + 7 + 7)
 
