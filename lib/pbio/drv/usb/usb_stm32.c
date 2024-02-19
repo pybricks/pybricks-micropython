@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2025 The Pybricks Authors
 
 // Main file for STM32F4 USB driver.
 
@@ -17,6 +17,7 @@
 #include <usbd_pybricks.h>
 
 #include <pbdrv/usb.h>
+#include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbsys/command.h>
 #include <pbsys/status.h>
@@ -29,7 +30,10 @@ PROCESS(pbdrv_usb_process, "USB");
 // These buffers need to be 32-bit aligned because the USB driver moves data
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
+static uint8_t usb_response_buf[1 + sizeof(uint32_t)] __aligned(4);
 static volatile uint32_t usb_in_sz;
+static volatile uint32_t usb_response_sz;
+static volatile bool transmitting;
 
 static USBD_HandleTypeDef husbd;
 static PCD_HandleTypeDef hpcd;
@@ -140,6 +144,8 @@ void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
 static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
     USBD_Pybricks_SetRxBuffer(&husbd, usb_in_buf);
     usb_in_sz = 0;
+    usb_response_sz = 0;
+    transmitting = false;
 
     return USBD_OK;
 }
@@ -182,8 +188,17 @@ static USBD_StatusTypeDef Pybricks_Itf_Receive(uint8_t *Buf, uint32_t Len) {
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, uint8_t epnum) {
+    USBD_StatusTypeDef ret = USBD_OK;
+
+    if (Buf == usb_response_buf) {
+        usb_response_sz = 0;
+    } else {
+        ret = USBD_FAIL;
+    }
+
+    transmitting = false;
     process_poll(&pbdrv_usb_process);
-    return USBD_OK;
+    return ret;
 }
 
 static USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
@@ -224,6 +239,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static PBIO_ONESHOT(bcd_oneshot);
     static PBIO_ONESHOT(pwrdn_oneshot);
     static bool bcd_busy;
+    static pbio_pybricks_error_t result;
 
     PROCESS_POLLHANDLER({
         if (!bcd_busy && pbio_oneshot(!vbus_active, &no_vbus_oneshot)) {
@@ -268,13 +284,27 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
         if (usb_in_sz) {
             switch (usb_in_buf[0]) {
                 case USBD_PYBRICKS_OUT_EP_MSG_COMMAND:
-                    pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
+                    if (usb_response_sz == 0) {
+                        result = pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
+                        usb_response_buf[0] = USBD_PYBRICKS_IN_EP_MSG_RESPONSE;
+                        pbio_set_uint32_le(&usb_response_buf[1], result);
+                        usb_response_sz = sizeof(usb_response_buf);
+                    }
                     break;
             }
 
             // Prepare to receive the next packet
             usb_in_sz = 0;
             USBD_Pybricks_ReceivePacket(&husbd);
+        }
+
+        if (transmitting) {
+            continue;
+        }
+
+        if (usb_response_sz) {
+            transmitting = true;
+            USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
         }
     }
 
