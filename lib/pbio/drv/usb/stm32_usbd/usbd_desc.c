@@ -43,11 +43,15 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>
 
 #include <lego_usb.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/config.h>
 #include <pbio/protocol.h>
+#include <pbio/version.h>
+#include <pbsys/storage.h>
 
 #include "usbd_core.h"
 #include "usbd_conf.h"
@@ -59,6 +63,9 @@
 #define USBD_CONFIGURATION_FS_STRING  "Pybricks Config"
 #define USBD_INTERFACE_FS_STRING      "Pybricks Interface"
 
+static const char firmware_version[] = PBIO_VERSION_STR;
+static const char software_version[] = PBIO_PROTOCOL_VERSION_STR;
+
 #define         DEVICE_ID1          (0x1FFF7A10)
 #define         DEVICE_ID2          (0x1FFF7A14)
 #define         DEVICE_ID3          (0x1FFF7A18)
@@ -66,7 +73,15 @@
 #define  USB_DEV_CAP_TYPE_PLATFORM   (5)
 
 #define  USB_SIZ_STRING_SERIAL       0x1A
-#define  USB_SIZ_BOS_DESC            33
+#define  USB_SIZ_BOS_DESC_CONST      (5 + 28)
+#define  USB_SIZ_UUID                (128 / 8)
+#define  USB_SIZ_PLATFORM_HDR        (4 + USB_SIZ_UUID)
+#define  USB_SIZ_HUB_NAME_MAX        (16)
+#define  USB_SIZ_BOS_DESC            (USB_SIZ_BOS_DESC_CONST + \
+    USB_SIZ_PLATFORM_HDR + USB_SIZ_HUB_NAME_MAX + \
+    USB_SIZ_PLATFORM_HDR + sizeof(firmware_version) - 1 + \
+    USB_SIZ_PLATFORM_HDR + sizeof(software_version) - 1 + \
+    USB_SIZ_PLATFORM_HDR + PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE)
 
 /* USB Standard Device Descriptor */
 __ALIGN_BEGIN static
@@ -127,6 +142,8 @@ __ALIGN_BEGIN static uint8_t USBD_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
     USBD_MS_VENDOR_CODE,              /* bMS_VendorCode */
     0x00                              /* bAltEnumCode = Does not support alternate enumeration */
 };
+
+static uint16_t USBD_BOSDesc_Len;
 
 __ALIGN_BEGIN const uint8_t USBD_OSDescSet[USBD_SIZ_MS_OS_DSCRPTR_SET] __ALIGN_END =
 {
@@ -276,6 +293,38 @@ static void Get_SerialNum(void) {
 }
 
 /**
+  * @brief  Add the short BLE UUID to the buffer in little-endian format.
+  * @param  dst     The destination buffer
+  * @param  dst     The short BLE UUID to add
+  * @retval None
+  */
+static void add_ble_short_uuid_le(uint8_t *dst, uint16_t short_uuid) {
+    /* 32-bit */
+    dst[0] = LOBYTE(short_uuid);
+    dst[1] = HIBYTE(short_uuid);
+    dst[2] = 0x00;
+    dst[3] = 0x00;
+
+    /* 16-bit */
+    dst[4] = 0x00;
+    dst[5] = 0x00;
+
+    /* 16-bit */
+    dst[6] = 0x00;
+    dst[7] = 0x10;
+
+    /* 8-byte buffer */
+    dst[8] = 0x80;
+    dst[9] = 0x00;
+    dst[10] = 0x00;
+    dst[11] = 0x80;
+    dst[12] = 0x5F;
+    dst[13] = 0x9B;
+    dst[14] = 0x34;
+    dst[15] = 0xFB;
+}
+
+/**
   * @brief  Returns the device descriptor.
   * @param  speed: Current device speed
   * @param  length: Pointer to data length variable
@@ -372,7 +421,7 @@ static uint8_t *USBD_Pybricks_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
-    *length = sizeof(USBD_BOSDesc);
+    *length = USBD_BOSDesc_Len;
     return (uint8_t *)USBD_BOSDesc;
 }
 
@@ -400,4 +449,79 @@ void USBD_Pybricks_Desc_Init(void) {
         USBD_DeviceDesc[11] = HIBYTE(PBDRV_CONFIG_USB_PID_1);
     }
     #endif
+
+    const char *str;
+    size_t len;
+
+    uint8_t *ptr = &USBD_BOSDesc[USB_SIZ_BOS_DESC_CONST];
+
+    /* Add device name */
+    str = pbdrv_bluetooth_get_hub_name();
+    len = MIN(strlen(str), USB_SIZ_HUB_NAME_MAX);
+
+    *ptr++ = USB_SIZ_PLATFORM_HDR + len; // bLength
+    *ptr++ = USB_DEVICE_CAPABITY_TYPE;   // bDescriptorType
+    *ptr++ = USB_DEV_CAP_TYPE_PLATFORM;  // bDevCapabilityType
+    *ptr++ = 0x00;                       // bReserved
+
+    // PlatformCapabilityUUID
+    add_ble_short_uuid_le(ptr, pbio_gatt_device_name_char_uuid);
+    ptr += USB_SIZ_UUID;
+
+    // CapabilityData: Device Name
+    memcpy(ptr, str, len);
+    ptr += len;
+
+    /* Add firmware version */
+    *ptr++ = USB_SIZ_PLATFORM_HDR + sizeof(firmware_version) - 1; // bLength
+    *ptr++ = USB_DEVICE_CAPABITY_TYPE;                            // bDescriptorType
+    *ptr++ = USB_DEV_CAP_TYPE_PLATFORM;                           // bDevCapabilityType
+    *ptr++ = 0x00;                                                // bReserved
+
+    // PlatformCapabilityUUID
+    add_ble_short_uuid_le(ptr, pbio_gatt_firmware_version_char_uuid);
+    ptr += USB_SIZ_UUID;
+
+    // CapabilityData: Firmware Version
+    memcpy(ptr, firmware_version, sizeof(firmware_version) - 1);
+    ptr += sizeof(firmware_version) - 1;
+
+    /* Add software (protocol) version */
+    *ptr++ = USB_SIZ_PLATFORM_HDR + sizeof(software_version) - 1; // bLength
+    *ptr++ = USB_DEVICE_CAPABITY_TYPE;                            // bDescriptorType
+    *ptr++ = USB_DEV_CAP_TYPE_PLATFORM;                           // bDevCapabilityType
+    *ptr++ = 0x00;                                                // bReserved
+
+    // PlatformCapabilityUUID
+    add_ble_short_uuid_le(ptr, pbio_gatt_software_version_char_uuid);
+    ptr += USB_SIZ_UUID;
+
+    // CapabilityData: Software Version
+    memcpy(ptr, software_version, sizeof(software_version) - 1);
+    ptr += sizeof(software_version) - 1;
+
+    /* Add hub capabilities */
+    *ptr++ = USB_SIZ_PLATFORM_HDR + PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE; // bLength
+    *ptr++ = USB_DEVICE_CAPABITY_TYPE;                                         // bDescriptorType
+    *ptr++ = USB_DEV_CAP_TYPE_PLATFORM;                                        // bDevCapabilityType
+    *ptr++ = 0x00;                                                             // bReserved
+
+    // PlatformCapabilityUUID
+    pbio_uuid128_le_copy(ptr, pbio_pybricks_hub_capabilities_char_uuid);
+    ptr += USB_SIZ_UUID;
+
+    // CapabilityData: Hub Capabilities
+    pbio_pybricks_hub_capabilities(ptr,
+        USBD_PYBRICKS_MAX_PACKET_SIZE - 1,
+        PBSYS_CONFIG_APP_FEATURE_FLAGS,
+        pbsys_storage_get_maximum_program_size());
+    ptr += PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
+
+    /* Update wTotalLength field in BOS Descriptor */
+    USBD_BOSDesc_Len = ptr - USBD_BOSDesc;
+    USBD_BOSDesc[2] = LOBYTE(USBD_BOSDesc_Len);
+    USBD_BOSDesc[3] = HIBYTE(USBD_BOSDesc_Len);
+
+    /* Update bNumDeviceCaps field in BOS Descriptor */
+    USBD_BOSDesc[4] += 4;
 }
