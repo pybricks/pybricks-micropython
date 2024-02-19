@@ -155,6 +155,18 @@ __ALIGN_BEGIN static uint8_t USBD_Pybricks_CfgDesc[USBD_PYBRICKS_CONFIG_DESC_SIZ
     0x00                                      /* bInterval */
 };
 
+__ALIGN_BEGIN static const uint8_t WebUSB_DescSet[20] __ALIGN_END =
+{
+    20,    /* bLength */
+    0x03,  /* bDescriptorType = URL */
+    0x01,  /* bScheme = https:// */
+
+    /* URL */
+    'c', 'o', 'd', 'e', '.',
+    'p', 'y', 'b', 'r', 'i', 'c', 'k', 's', '.',
+    'c', 'o', 'm'
+};
+
 /**
   * @}
   */
@@ -242,6 +254,14 @@ static USBD_StatusTypeDef USBD_Pybricks_Setup(USBD_HandleTypeDef *pdev,
                     (void)USBD_CtlSendData(pdev,
                         (uint8_t *)USBD_OSDescSet,
                         MIN(sizeof(USBD_OSDescSet), req->wLength));
+                    break;
+
+                case USBD_WEBUSB_VENDOR_CODE:
+                    if ((req->wValue == USBD_WEBUSB_LANDING_PAGE_IDX) && (req->wIndex == 0x02)) {
+                        (void)USBD_CtlSendData(pdev,
+                            (uint8_t *)WebUSB_DescSet,
+                            MIN(sizeof(WebUSB_DescSet), req->wLength));
+                    }
                     break;
 
                 default:

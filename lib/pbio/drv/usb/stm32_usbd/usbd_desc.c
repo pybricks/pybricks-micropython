@@ -73,7 +73,7 @@ static const char software_version[] = PBIO_PROTOCOL_VERSION_STR;
 #define  USB_DEV_CAP_TYPE_PLATFORM   (5)
 
 #define  USB_SIZ_STRING_SERIAL       0x1A
-#define  USB_SIZ_BOS_DESC_CONST      (5 + 28)
+#define  USB_SIZ_BOS_DESC_CONST      (5 + 28 + 24)
 #define  USB_SIZ_UUID                (128 / 8)
 #define  USB_SIZ_PLATFORM_HDR        (4 + USB_SIZ_UUID)
 #define  USB_SIZ_HUB_NAME_MAX        (16)
@@ -117,7 +117,7 @@ __ALIGN_BEGIN static uint8_t USBD_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
     USB_DESC_TYPE_BOS,          /* bDescriptorType = BOS */
     LOBYTE(USB_SIZ_BOS_DESC),   /* wTotalLength */
     HIBYTE(USB_SIZ_BOS_DESC),   /* wTotalLength */
-    1,                          /* bNumDeviceCaps */
+    2,                          /* bNumDeviceCaps */
 
     28,                         /* bLength */
     USB_DEVICE_CAPABITY_TYPE,   /* bDescriptorType = Device Capability */
@@ -140,7 +140,29 @@ __ALIGN_BEGIN static uint8_t USBD_BOSDesc[USB_SIZ_BOS_DESC] __ALIGN_END =
     LOBYTE(USBD_SIZ_MS_OS_DSCRPTR_SET), /* wMSOSDescriptorSetTotalLength */
     HIBYTE(USBD_SIZ_MS_OS_DSCRPTR_SET), /* wMSOSDescriptorSetTotalLength */
     USBD_MS_VENDOR_CODE,              /* bMS_VendorCode */
-    0x00                              /* bAltEnumCode = Does not support alternate enumeration */
+    0x00,                             /* bAltEnumCode = Does not support alternate enumeration */
+
+    24,                         /* bLength */
+    USB_DEVICE_CAPABITY_TYPE,   /* bDescriptorType = Device Capability */
+    USB_DEV_CAP_TYPE_PLATFORM,  /* bDevCapabilityType */
+    0x00,                       /* bReserved */
+
+    /*
+     * PlatformCapabilityUUID
+     * WebUSB Platform Capability descriptor
+     * 3408B638-09A9-47A0-8BFD-A0768815B665
+     * RFC 4122 explains the correct byte ordering
+     */
+    0x38, 0xB6, 0x08, 0x34,           /* 32-bit value */
+    0xA9, 0x09,                       /* 16-bit value */
+    0xA0, 0x47,                       /* 16-bit value */
+    0x8B, 0xFD,
+    0xA0, 0x76, 0x88, 0x15, 0xB6, 0x65,
+
+    LOBYTE(0x0100),                   /* bcdVersion */
+    HIBYTE(0x0100),                   /* bcdVersion */
+    USBD_WEBUSB_VENDOR_CODE,          /* bVendorCode */
+    USBD_WEBUSB_LANDING_PAGE_IDX      /* iLandingPage */
 };
 
 static uint16_t USBD_BOSDesc_Len;
