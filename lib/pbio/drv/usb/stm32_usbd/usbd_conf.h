@@ -9,6 +9,7 @@
 #define USBD_MAX_NUM_INTERFACES               1
 #define USBD_MAX_NUM_CONFIGURATION            1
 #define USBD_MAX_STR_DESC_SIZ                 0x100
-#define USBD_SELF_POWERED                     1
+#define USBD_SELF_POWERED                     0
+#define USBD_CLASS_BOS_ENABLED                1
 
 #endif /* _USBD_CONF_H_ */
