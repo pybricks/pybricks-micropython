@@ -26,7 +26,11 @@ typedef struct _pb_type_device_obj_base_t {
 #if PYBRICKS_PY_DEVICES
 
 /**
- * Callable sensor method with a particular mode and return map.
+ * Callable sensor method with a particular mode and return map. Instances of
+ * these are used similar to normal callable methods in classes, in its locals
+ * dict table. The call handler is the same for all such methods. Instead, what
+ * makes each sensor method unique is the mode and return map that creates the
+ * MicroPython object return data when the data is available.
  */
 typedef struct {
     mp_obj_base_t base;
@@ -34,8 +38,20 @@ typedef struct {
     uint8_t mode;
 } pb_type_device_method_obj_t;
 
+/**
+ * The type object for the sensor method callable. See the implementation
+ * of this type for more details.
+ */
 extern const mp_obj_type_t pb_type_device_method;
 
+/**
+ * Define a constant sensor method object. Plays a role similar to
+ * MP_DEFINE_CONST_FUN and friends in normal MicroPython methods, thus creating
+ * the constant entries in the locals dict table of the sensor class. The
+ * difference is that this contains a constant reference not to the method
+ * called now (which is handled by the same call handler for all sensors), but
+ * to the mapping function called later, when the data is available.
+ */
 #define PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(obj_name, mode_id, get_values_func) \
     const pb_type_device_method_obj_t obj_name = \
     {{&pb_type_device_method}, .mode = mode_id, .get_values = get_values_func}

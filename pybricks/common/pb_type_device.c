@@ -57,6 +57,18 @@ void *pb_type_device_get_data_blocking(mp_obj_t self_in, uint8_t mode) {
     return data;
 }
 
+/**
+ * Tests that a Powered Up device read or write operation has completed.
+ * For reading, this means that the mode has been set and the first data for
+ * the mode is ready. For writing, this means that the mode has been set and
+ * data has been written to the device, including the neccessary delays for
+ * discarding stale data or the time needed to externally process written data.
+ * 
+ * @param [in]  self_in     The sensor object instance.
+ * @param [in]  end_time    Not used.
+ * @return                  True if operation is complete (device ready),
+ *                          false otherwise.
+ */
 STATIC bool pb_pup_device_test_completion(mp_obj_t self_in, uint32_t end_time) {
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbdrv_legodev_is_ready(sensor->legodev);
@@ -67,6 +79,17 @@ STATIC bool pb_pup_device_test_completion(mp_obj_t self_in, uint32_t end_time) {
     return true;
 }
 
+/**
+ * Implements calling of async sensor methods. This is called when a (constant)
+ * entry of pb_type_device_method type in a sensor class is called. It is
+ * responsible for setting the sensor mode and returning an awaitable object.
+ *
+ * This is also called in a few places where a simple constant sensor method
+ * is not sufficient, where additional wrapping code is used to dynamically
+ * set the mode or return mapping, such as in the multi-purpose PUPDevice, or
+ * the ColorSensor class variants, where different modes or mappings are needed
+ * for a single method depending on a keyword argument.
+ */
 mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     assert(mp_obj_is_type(self_in, &pb_type_device_method));
     pb_type_device_method_obj_t *method = MP_OBJ_TO_PTR(self_in);
@@ -86,12 +109,28 @@ mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw
         PB_TYPE_AWAITABLE_OPT_NONE);
 }
 
+/**
+ * Function-like callable type for async sensor methods. This type is used for
+ * constant pb_type_device_method_obj_t instances, which store a sensor mode to
+ * set and a mapping function to create a return object when that data is ready.
+ */
 MP_DEFINE_CONST_OBJ_TYPE(
     pb_type_device_method, MP_QSTR_function, MP_TYPE_FLAG_BINDS_SELF | MP_TYPE_FLAG_BUILTIN_FUN,
     call, pb_type_device_method_call,
     unary_op, mp_generic_unary_op
     );
 
+/**
+ * Set data for a Powered Up device, such as the brightness of multiple external
+ * lights on a sensor. Automatically sets the mode if not already set. Returns
+ * an awaitable object that can be used to wait for the operation to complete.
+ *
+ * @param [in]  sensor      The powered up device.
+ * @param [in]  mode        Desired mode.
+ * @param [in]  data        Data to set.
+ * @param [in]  size        Size of data.
+ * @return                  Awaitable object.
+ */
 mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode, const void *data, uint8_t size) {
     pb_assert(pbdrv_legodev_set_mode_with_data(sensor->legodev, mode, data, size));
     return pb_type_awaitable_await_or_wait(
