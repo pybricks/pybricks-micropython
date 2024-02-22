@@ -63,7 +63,7 @@ void *pb_type_device_get_data_blocking(mp_obj_t self_in, uint8_t mode) {
  * the mode is ready. For writing, this means that the mode has been set and
  * data has been written to the device, including the neccessary delays for
  * discarding stale data or the time needed to externally process written data.
- * 
+ *
  * @param [in]  self_in     The sensor object instance.
  * @param [in]  end_time    Not used.
  * @return                  True if operation is complete (device ready),

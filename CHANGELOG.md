@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixes
+- Fix `pybricks.iodevices` not allowing writig -128 value ([support#1366]) and
+  raise informative error messages instead of clamping the input.
+
+[support#1366]: https://github.com/pybricks/support/issues/1366
+
 ## [3.4.0b1] - 2024-02-10
 
 ### Added
