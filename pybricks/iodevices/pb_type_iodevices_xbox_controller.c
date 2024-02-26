@@ -168,6 +168,7 @@ STATIC void pb_xbox_assert_connected(void) {
 
 typedef struct _pb_type_xbox_obj_t {
     mp_obj_base_t base;
+    mp_int_t drift;
 } pb_type_xbox_obj_t;
 
 static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_info) {
@@ -183,14 +184,18 @@ static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_in
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    // Debug parameter to stay connected to the host on Technic Hub.
-    // Works only on some hosts for the moment, so False by default.
-    #if PYBRICKS_HUB_TECHNICHUB
+
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_FALSE(stay_connected));
-    #endif // PYBRICKS_HUB_TECHNICHUB
+        PB_ARG_DEFAULT_INT(drift, 6)
+        // Debug parameter to stay connected to the host on Technic Hub.
+        // Works only on some hosts for the moment, so False by default.
+        #if PYBRICKS_HUB_TECHNICHUB
+        , PB_ARG_DEFAULT_FALSE(stay_connected)
+        #endif // PYBRICKS_HUB_TECHNICHUB
+        );
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
+    self->drift = pb_obj_get_pct(drift_in);
 
     pb_xbox_t *xbox = &pb_xbox_singleton;
 
@@ -324,23 +329,34 @@ STATIC mp_obj_t pb_xbox_profile(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_profile_obj, pb_xbox_profile);
 
-STATIC mp_obj_t pb_xbox_joystick_left(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+STATIC mp_obj_t pb_xbox_joystick(mp_obj_t self_in, uint16_t x_raw, uint16_t y_raw) {
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    mp_int_t x = (x_raw - INT16_MAX) * 100 / INT16_MAX;
+    mp_int_t y = (INT16_MAX - y_raw) * 100 / INT16_MAX;
+
+    // Apply circular deadzone to prevent drift.
+    if (x * x + y * y <= self->drift * self->drift) {
+        x = 0;
+        y = 0;
+    }
+
     mp_obj_t directions[] = {
-        mp_obj_new_int((buttons->x - INT16_MAX) * 100 / INT16_MAX),
-        mp_obj_new_int((INT16_MAX - buttons->y) * 100 / INT16_MAX),
+        mp_obj_new_int(x),
+        mp_obj_new_int(y),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
+}
+
+STATIC mp_obj_t pb_xbox_joystick_left(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+    return pb_xbox_joystick(self_in, buttons->x, buttons->y);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_left_obj, pb_xbox_joystick_left);
 
 STATIC mp_obj_t pb_xbox_joystick_right(mp_obj_t self_in) {
     xbox_input_map_t *buttons = pb_xbox_get_buttons();
-    mp_obj_t directions[] = {
-        mp_obj_new_int((buttons->z - INT16_MAX) * 100 / INT16_MAX),
-        mp_obj_new_int((INT16_MAX - buttons->rz) * 100 / INT16_MAX),
-    };
-    return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
+    return pb_xbox_joystick(self_in, buttons->z, buttons->rz);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_right_obj, pb_xbox_joystick_right);
 
