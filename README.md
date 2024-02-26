@@ -1,8 +1,12 @@
+## Quick links
+
 - :arrow_right: [Try the latest **stable** release][Pybricks Code].
 - :arrow_right: [Try the latest **beta** release][Pybricks Code Beta].
 - :arrow_right: You can now [**sponsor**][sponsors] this project!
 
-
+## Issues & discussion
+- :arrow_right: [Issues for all Pybricks repositories](https://github.com/pybricks/support/issues).
+- :arrow_right: [Discussions for all Pybricks repositories](https://github.com/orgs/pybricks/discussions).
 
 # Pybricks
 
@@ -24,11 +28,6 @@ the [documentation][docs].
 *Are you a developer or just super curious?*
 
 Read on!
-
-# Questions and Support
-
-We have a single [issue tracker][issue tracker] for all  questions and bug
-reports. If you try Pybricks, please let us know what you think!
 
 # Supported Programmable Bricks & Hubs
 
@@ -91,6 +90,8 @@ documentation, and fun projects. Here's an overview of the other repositories:
 - [`pybricks-projects`][pybricks-projects]: This is a broad
   collection of end-user MicroPython scripts that you can run! This includes
   example snippets and projects for official LEGO models and custom made ones.
+- [`pybricks-code`][pybricks-code]: This is the source code for the
+  Pybricks Code online IDE.
 
 ## What about the other stuff in /bricks?
 
@@ -121,6 +122,7 @@ consider [sponsoring the project][sponsors].
 
 [pybricks-api]: https://github.com/pybricks/pybricks-api
 [pybricks-projects]: https://github.com/pybricks/pybricks-api
+[pybricks-code]: https://github.com/pybricks/pybricks-code
 
 [micropython/micropython]: https://github.com/micropython/micropython
 
