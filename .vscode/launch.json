@@ -112,7 +112,7 @@
             "environment": [
                 {
                     "name": "PBIO_TEST_DATA_PARSER",
-                    "value": "./tools/virtual-hub-animator/data_server.py"
+                    "value": "poetry run ./tools/virtual-hub-animator/data_server.py"
                 },
             ],
             "externalConsole": false,
