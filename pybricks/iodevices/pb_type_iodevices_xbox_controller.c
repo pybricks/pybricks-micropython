@@ -168,7 +168,7 @@ STATIC void pb_xbox_assert_connected(void) {
 
 typedef struct _pb_type_xbox_obj_t {
     mp_obj_base_t base;
-    mp_int_t drift;
+    mp_int_t joystick_deadzone;
 } pb_type_xbox_obj_t;
 
 static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_info) {
@@ -186,7 +186,7 @@ static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_in
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_INT(drift, 6)
+        PB_ARG_DEFAULT_INT(joystick_deadzone, 10)
         // Debug parameter to stay connected to the host on Technic Hub.
         // Works only on some hosts for the moment, so False by default.
         #if PYBRICKS_HUB_TECHNICHUB
@@ -195,7 +195,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         );
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
-    self->drift = pb_obj_get_pct(drift_in);
+    self->joystick_deadzone = pb_obj_get_pct(joystick_deadzone_in);
 
     pb_xbox_t *xbox = &pb_xbox_singleton;
 
@@ -335,8 +335,9 @@ STATIC mp_obj_t pb_xbox_joystick(mp_obj_t self_in, uint16_t x_raw, uint16_t y_ra
     mp_int_t x = (x_raw - INT16_MAX) * 100 / INT16_MAX;
     mp_int_t y = (INT16_MAX - y_raw) * 100 / INT16_MAX;
 
-    // Apply circular deadzone to prevent drift.
-    if (x * x + y * y <= self->drift * self->drift) {
+    // Apply square deadzone to prevent drift.
+    if (x < self->joystick_deadzone && x > -self->joystick_deadzone &&
+        y < self->joystick_deadzone && y > -self->joystick_deadzone) {
         x = 0;
         y = 0;
     }

@@ -5,7 +5,7 @@
 ## [Unreleased]
 
 ### Added
-- Added `drift` keyword argument to suppress controller drift in
+- Added `joystick_deadzone` keyword argument to suppress controller drift in
   the `XboxController` ([support#1473]).
 
 ### Fixes
