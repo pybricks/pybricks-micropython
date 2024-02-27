@@ -55,7 +55,7 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
             mp_obj_t iter = mp_getiter(buttons_in, NULL);
             mp_obj_t item;
             while ((item = mp_iternext(iter)) != MP_OBJ_STOP_ITERATION) {
-                buttons |= pb_type_enum_get_value(item, &pb_enum_type_Button);
+                buttons |= pb_type_button_get_button_flag(item);
             }
             nlr_pop();
         } else {
@@ -64,7 +64,7 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
             // button enum value. Technically there could be other error that
             // get us here, but they should be rare and will likely be a ValueError
             // which is the same error that will be raised here.
-            buttons = pb_type_enum_get_value(buttons_in, &pb_enum_type_Button);
+            buttons = pb_type_button_get_button_flag(buttons_in);
         }
         #else // PYBRICKS_PY_COMMON_KEYPAD_HUB_BUTTONS > 1
         buttons = PBIO_BUTTON_CENTER;

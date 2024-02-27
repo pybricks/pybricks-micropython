@@ -11,6 +11,7 @@
 #include <pybricks/hubs.h>
 
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 #include "py/misc.h"
 #include "py/obj.h"
@@ -24,16 +25,30 @@ typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_t system;
 } hubs_NXTBrick_obj_t;
 
-static const pb_obj_enum_member_t *nxtbrick_buttons[] = {
-    &pb_Button_LEFT_obj,
-    &pb_Button_RIGHT_obj,
-    &pb_Button_CENTER_obj,
-};
+STATIC mp_obj_t pb_type_nxtbrick_button_pressed(void) {
+    pbio_button_flags_t flags;
+    pb_assert(pbio_button_is_pressed(&flags));
+    mp_obj_t pressed[4];
+    size_t num = 0;
+    if (flags & PBIO_BUTTON_LEFT) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_LEFT);
+    }
+    if (flags & PBIO_BUTTON_RIGHT) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT);
+    }
+    if (flags & PBIO_BUTTON_CENTER) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_CENTER);
+    }
+    if (flags & PBIO_BUTTON_DOWN) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_DOWN);
+    }
+    return mp_obj_new_set(num, pressed);
+}
 
 STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_NXTBrick_obj_t *self = mp_obj_malloc(hubs_NXTBrick_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
-    self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(nxtbrick_buttons), nxtbrick_buttons, pbio_button_is_pressed);
+    self->buttons = pb_type_Keypad_obj_new(pb_type_nxtbrick_button_pressed);
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);
