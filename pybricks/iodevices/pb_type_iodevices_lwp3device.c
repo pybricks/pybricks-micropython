@@ -328,35 +328,41 @@ void pb_type_Remote_cleanup(void) {
     }
 }
 
-STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
+mp_obj_t pb_type_remote_button_pressed(void) {
     pb_lwp3device_t *remote = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
 
-    *pressed = 0;
+    mp_obj_t pressed[7];
+    size_t num = 0;
 
     if (remote->left[0]) {
-        *pressed |= PBIO_BUTTON_LEFT_UP;
+        pressed[num++] = pb_type_button_new(MP_QSTR_LEFT_PLUS);
     }
     if (remote->left[1]) {
-        *pressed |= PBIO_BUTTON_LEFT;
+        pressed[num++] = pb_type_button_new(MP_QSTR_LEFT);
     }
     if (remote->left[2]) {
-        *pressed |= PBIO_BUTTON_LEFT_DOWN;
+        pressed[num++] = pb_type_button_new(MP_QSTR_LEFT_MINUS);
     }
     if (remote->right[0]) {
-        *pressed |= PBIO_BUTTON_RIGHT_UP;
+        pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT_PLUS);
     }
     if (remote->right[1]) {
-        *pressed |= PBIO_BUTTON_RIGHT;
+        pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT);
     }
     if (remote->right[2]) {
-        *pressed |= PBIO_BUTTON_RIGHT_DOWN;
+        pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT_MINUS);
     }
     if (remote->center) {
-        *pressed |= PBIO_BUTTON_CENTER;
+        pressed[num++] = pb_type_button_new(MP_QSTR_CENTER);
     }
-    return PBIO_SUCCESS;
+
+    #if MICROPY_PY_BUILTINS_SET
+    return mp_obj_new_set(num, pressed);
+    #else
+    return mp_obj_new_tuple(num, pressed);
+    #endif
 }
 
 typedef struct _pb_type_pupdevices_Remote_obj_t {
@@ -364,16 +370,6 @@ typedef struct _pb_type_pupdevices_Remote_obj_t {
     mp_obj_t buttons;
     mp_obj_t light;
 } pb_type_pupdevices_Remote_obj_t;
-
-STATIC const pb_obj_enum_member_t *remote_buttons[] = {
-    &pb_Button_LEFT_MINUS_obj,
-    &pb_Button_RIGHT_MINUS_obj,
-    &pb_Button_LEFT_obj,
-    &pb_Button_CENTER_obj,
-    &pb_Button_RIGHT_obj,
-    &pb_Button_LEFT_PLUS_obj,
-    &pb_Button_RIGHT_PLUS_obj
-};
 
 STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -387,7 +383,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     pb_lwp3device_connect(name, timeout, LWP3_HUB_KIND_HANDSET);
     pb_lwp3device_configure_remote();
 
-    self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
+    self->buttons = pb_type_Keypad_obj_new(pb_type_remote_button_pressed);
     self->light = pb_type_ColorLight_external_obj_new(NULL, pb_type_pupdevices_Remote_light_on);
     return MP_OBJ_FROM_PTR(self);
 }

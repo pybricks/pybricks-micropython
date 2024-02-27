@@ -89,43 +89,43 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
         case 0:
             break;
         case 1:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
             break;
         case 2:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_DOWN_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_DOWN);
             break;
         case 3:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_UP);
             break;
         case 4:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_DOWN_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_DOWN);
             break;
         case 5:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_UP);
             break;
         case 6:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_DOWN_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_DOWN);
             break;
         case 7:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_DOWN_obj);
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_DOWN);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_UP);
             break;
         case 8:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_DOWN_obj);
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_DOWN_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_DOWN);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_DOWN);
             break;
         case 9:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_BEACON_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_BEACON);
             break;
         case 10:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_DOWN_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
+            pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_DOWN);
             break;
         case 11:
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
-            pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_DOWN_obj);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_UP);
+            pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_DOWN);
             break;
         default:
             pb_assert(PBIO_ERROR_IO);
@@ -149,16 +149,16 @@ STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
     uint8_t len = 0;
 
     if (keypad_data & 0x10) {
-        pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
+        pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
     }
     if (keypad_data & 0x20) {
-        pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
+        pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
     }
     if (keypad_data & 0x40) {
-        pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
+        pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_UP);
     }
     if (keypad_data & 0x80) {
-        pressed[len++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_DOWN_obj);
+        pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_DOWN);
     }
 
     return mp_obj_new_list(len, pressed);

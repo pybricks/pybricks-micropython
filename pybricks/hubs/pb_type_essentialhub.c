@@ -37,10 +37,6 @@ typedef struct _hubs_EssentialHub_obj_t {
     mp_obj_t system;
 } hubs_EssentialHub_obj_t;
 
-static const pb_obj_enum_member_t *essentialhub_buttons[] = {
-    &pb_Button_CENTER_obj,
-};
-
 STATIC mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_OBJ(top_side, pb_type_Axis_Z_obj),
@@ -56,7 +52,7 @@ STATIC mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_a
     #if PYBRICKS_PY_COMMON_BLE
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
-    self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(essentialhub_buttons), essentialhub_buttons, pbio_button_is_pressed);
+    self->buttons = pb_type_Keypad_obj_new(pb_type_button_pressed_hub_single_button);
     self->charger = pb_type_Charger_obj_new();
     self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);

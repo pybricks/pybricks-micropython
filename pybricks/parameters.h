@@ -8,6 +8,7 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
+#include <pbio/button.h>
 #include <pbio/color.h>
 
 #include "py/obj.h"
@@ -28,28 +29,6 @@ extern const pb_type_Matrix_obj_t pb_type_Axis_Z_obj;
 #define pb_type_Axis_Y_int_enum (2)
 #define pb_type_Axis_Z_int_enum (3)
 #endif // MICROPY_PY_BUILTINS_FLOAT
-
-#if PYBRICKS_PY_PARAMETERS_BUTTON
-
-extern const mp_obj_type_t pb_enum_type_Button;
-
-extern const pb_obj_enum_member_t pb_Button_UP_obj;
-extern const pb_obj_enum_member_t pb_Button_DOWN_obj;
-extern const pb_obj_enum_member_t pb_Button_LEFT_obj;
-extern const pb_obj_enum_member_t pb_Button_RIGHT_obj;
-extern const pb_obj_enum_member_t pb_Button_RIGHT_PLUS_obj;
-extern const pb_obj_enum_member_t pb_Button_RIGHT_MINUS_obj;
-extern const pb_obj_enum_member_t pb_Button_CENTER_obj;
-extern const pb_obj_enum_member_t pb_Button_LEFT_UP_obj;
-extern const pb_obj_enum_member_t pb_Button_LEFT_DOWN_obj;
-extern const pb_obj_enum_member_t pb_Button_LEFT_PLUS_obj;
-extern const pb_obj_enum_member_t pb_Button_LEFT_MINUS_obj;
-extern const pb_obj_enum_member_t pb_Button_RIGHT_UP_obj;
-extern const pb_obj_enum_member_t pb_Button_RIGHT_DOWN_obj;
-extern const pb_obj_enum_member_t pb_Button_BEACON_obj;
-extern const pb_obj_enum_member_t pb_Button_BLUETOOTH_obj;
-
-#endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
 extern const mp_obj_type_t pb_type_Color;
 extern const mp_obj_base_t pb_type_Color_obj;

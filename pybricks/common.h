@@ -20,6 +20,7 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 #include <pybricks/parameters.h>
+#include <pybricks/parameters/pb_type_button.h>
 #include <pybricks/pupdevices.h>
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_awaitable.h>
@@ -69,7 +70,7 @@ void pb_type_LightMatrix_display_char(pbio_light_matrix_t *light_matrix, mp_obj_
 
 #if PYBRICKS_PY_COMMON_KEYPAD
 // pybricks._common.KeyPad()
-mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons, pbio_button_is_pressed_func_t is_pressed);
+mp_obj_t pb_type_Keypad_obj_new(pb_type_button_get_pressed_t get_pressed);
 #endif
 
 // pybricks._common.Battery()

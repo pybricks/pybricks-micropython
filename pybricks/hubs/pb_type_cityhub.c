@@ -25,10 +25,6 @@ typedef struct _hubs_CityHub_obj_t {
     mp_obj_t system;
 } hubs_CityHub_obj_t;
 
-static const pb_obj_enum_member_t *cityhub_buttons[] = {
-    &pb_Button_CENTER_obj,
-};
-
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     #if PYBRICKS_PY_COMMON_BLE
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -41,7 +37,7 @@ STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     #if PYBRICKS_PY_COMMON_BLE
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
-    self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(cityhub_buttons), cityhub_buttons, pbio_button_is_pressed);
+    self->button = pb_type_Keypad_obj_new(pb_type_button_pressed_hub_single_button);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);
