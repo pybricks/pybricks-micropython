@@ -168,6 +168,7 @@ STATIC void pb_xbox_assert_connected(void) {
 
 typedef struct _pb_type_xbox_obj_t {
     mp_obj_base_t base;
+    mp_obj_t buttons;
     mp_int_t joystick_deadzone;
 } pb_type_xbox_obj_t;
 
@@ -181,6 +182,70 @@ static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_in
     // Read characteristic.
     pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, char_info);
     pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
+}
+
+STATIC xbox_input_map_t *pb_xbox_get_buttons(void) {
+    xbox_input_map_t *buttons = &pb_xbox_singleton.state;
+    pb_xbox_assert_connected();
+    return buttons;
+}
+
+STATIC mp_obj_t pb_xbox_button_pressed(void) {
+    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+
+    mp_obj_t items[16];
+    size_t count = 0;
+
+    if (buttons->buttons & 1) {
+        items[count++] = pb_type_button_new(MP_QSTR_A);
+    }
+    if (buttons->buttons & (1 << 1)) {
+        items[count++] = pb_type_button_new(MP_QSTR_B);
+    }
+    if (buttons->buttons & (1 << 3)) {
+        items[count++] = pb_type_button_new(MP_QSTR_X);
+    }
+    if (buttons->buttons & (1 << 4)) {
+        items[count++] = pb_type_button_new(MP_QSTR_Y);
+    }
+    if (buttons->buttons & (1 << 6)) {
+        items[count++] = pb_type_button_new(MP_QSTR_LB);
+    }
+    if (buttons->buttons & (1 << 7)) {
+        items[count++] = pb_type_button_new(MP_QSTR_RB);
+    }
+    if (buttons->buttons & (1 << 10)) {
+        items[count++] = pb_type_button_new(MP_QSTR_VIEW);
+    }
+    if (buttons->buttons & (1 << 11)) {
+        items[count++] = pb_type_button_new(MP_QSTR_MENU);
+    }
+    if (buttons->buttons & (1 << 12)) {
+        items[count++] = pb_type_button_new(MP_QSTR_GUIDE);
+    }
+    if (buttons->buttons & (1 << 13)) {
+        items[count++] = pb_type_button_new(MP_QSTR_LJ);
+    }
+    if (buttons->buttons & (1 << 14)) {
+        items[count++] = pb_type_button_new(MP_QSTR_RJ);
+    }
+    if (buttons->upload) {
+        items[count++] = pb_type_button_new(MP_QSTR_UPLOAD);
+    }
+    if (buttons->paddles & (1 << 0)) {
+        items[count++] = pb_type_button_new(MP_QSTR_P1);
+    }
+    if (buttons->paddles & (1 << 1)) {
+        items[count++] = pb_type_button_new(MP_QSTR_P2);
+    }
+    if (buttons->paddles & (1 << 2)) {
+        items[count++] = pb_type_button_new(MP_QSTR_P3);
+    }
+    if (buttons->paddles & (1 << 3)) {
+        items[count++] = pb_type_button_new(MP_QSTR_P4);
+    }
+
+    return mp_obj_new_set(count, items);
 }
 
 STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -279,6 +344,8 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         nlr_jump(nlr.ret_val);
     }
 
+    self->buttons = pb_type_Keypad_obj_new(pb_xbox_button_pressed);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -288,12 +355,6 @@ STATIC mp_obj_t pb_xbox_name(size_t n_args, const mp_obj_t *args) {
     return mp_obj_new_str(name, strlen(name));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name);
-
-STATIC xbox_input_map_t *pb_xbox_get_buttons(void) {
-    xbox_input_map_t *buttons = &pb_xbox_singleton.state;
-    pb_xbox_assert_connected();
-    return buttons;
-}
 
 STATIC mp_obj_t pb_xbox_state(mp_obj_t self_in) {
 
@@ -371,81 +432,6 @@ STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
 
-STATIC mp_obj_t pb_xbox_pressed(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
-
-    mp_obj_t items[16];
-    uint8_t count = 0;
-
-    if (buttons->buttons & 1) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_A);
-    }
-    if (buttons->buttons & (1 << 1)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_B);
-    }
-    if (buttons->buttons & (1 << 3)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_X);
-    }
-    if (buttons->buttons & (1 << 4)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_Y);
-    }
-    if (buttons->buttons & (1 << 6)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_LB);
-    }
-    if (buttons->buttons & (1 << 7)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RB);
-    }
-    if (buttons->buttons & (1 << 10)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_VIEW);
-    }
-    if (buttons->buttons & (1 << 11)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_MENU);
-    }
-    if (buttons->buttons & (1 << 12)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_GUIDE);
-    }
-    if (buttons->buttons & (1 << 13)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_LJ);
-    }
-    if (buttons->buttons & (1 << 14)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_RJ);
-    }
-    if (buttons->upload) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_UPLOAD);
-    }
-    if (buttons->paddles & (1 << 0)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P1);
-    }
-    if (buttons->paddles & (1 << 1)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P2);
-    }
-    if (buttons->paddles & (1 << 2)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P3);
-    }
-    if (buttons->paddles & (1 << 3)) {
-        items[count++] = MP_OBJ_NEW_QSTR(MP_QSTR_P4);
-    }
-
-    return mp_obj_new_set(count, items);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_pressed_obj, pb_xbox_pressed);
-
-// Make XboxController.buttons work just like Remote.buttons. We don't use
-// a Keypad class instance since this version just returns string literals.
-STATIC const mp_rom_map_elem_t QstrKeypad_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&pb_xbox_pressed_obj)     },
-};
-STATIC MP_DEFINE_CONST_DICT(QstrKeypad_locals_dict, QstrKeypad_locals_dict_table);
-
-STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_QstrKeypad,
-    MP_QSTR_Keypad,
-    MP_TYPE_FLAG_NONE,
-    locals_dict, &QstrKeypad_locals_dict);
-
-STATIC const mp_obj_base_t pb_xbox_buttons_obj = {
-    .type = &pb_type_QstrKeypad,
-};
-
 STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
@@ -454,14 +440,20 @@ STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_joystick_left), MP_ROM_PTR(&pb_xbox_joystick_left_obj) },
     { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_xbox_joystick_right_obj) },
     { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
-    { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_PTR(&pb_xbox_buttons_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_xbox_locals_dict, pb_type_xbox_locals_dict_table);
+
+STATIC const pb_attr_dict_entry_t pb_type_xbox_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, pb_type_xbox_obj_t, buttons),
+    PB_ATTR_DICT_SENTINEL
+};
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_XboxController,
     MP_QSTR_XboxController,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_xbox_make_new,
-    locals_dict, &pb_type_xbox_locals_dict);
+    locals_dict, &pb_type_xbox_locals_dict,
+    attr, pb_attribute_handler,
+    protocol, pb_type_xbox_attr_dict);
 
 #endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER

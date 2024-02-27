@@ -35,7 +35,23 @@ STATIC const qstr buttons[] = {
     MP_QSTR_RIGHT_UP,
     MP_QSTR_RIGHT_DOWN,
     MP_QSTR_BEACON,
-    MP_QSTR_BLUETOOTH
+    MP_QSTR_BLUETOOTH,
+    MP_QSTR_A,
+    MP_QSTR_B,
+    MP_QSTR_X,
+    MP_QSTR_Y,
+    MP_QSTR_LB,
+    MP_QSTR_RB,
+    MP_QSTR_VIEW,
+    MP_QSTR_MENU,
+    MP_QSTR_GUIDE,
+    MP_QSTR_LJ,
+    MP_QSTR_RJ,
+    MP_QSTR_UPLOAD,
+    MP_QSTR_P1,
+    MP_QSTR_P2,
+    MP_QSTR_P3,
+    MP_QSTR_P4,
     #endif
 };
 

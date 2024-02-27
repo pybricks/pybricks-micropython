@@ -8,12 +8,16 @@
 - Added `joystick_deadzone` keyword argument to suppress controller drift in
   the `XboxController` ([support#1473]).
 
+### Changed
+- Use `Button` parameter for `XboxController` ([support#1488]).
+
 ### Fixes
 - Fix `pybricks.iodevices` not allowing writig -128 value ([support#1366]) and
   raise informative error messages instead of clamping the input.
 
 [support#1366]: https://github.com/pybricks/support/issues/1366
 [support#1473]: https://github.com/pybricks/support/issues/1473
+[support#1488]: https://github.com/pybricks/support/issues/1488
 
 ## [3.4.0b1] - 2024-02-10
 
