@@ -9,5 +9,6 @@ PB_MCU_EXT_OSC_HZ = 0 # uses internal oscillator
 PB_LIB_STM32_HAL = 1
 PB_LIB_BLUENRG = 1
 PB_FROZEN_MODULES = 0
+MICROPY_ROM_TEXT_COMPRESSION = 0 # Needed for PYBRICKS_OPT_TERSE_ERR
 
 include ../_common/arm_none_eabi.mk
