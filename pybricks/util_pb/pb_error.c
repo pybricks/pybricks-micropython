@@ -15,7 +15,7 @@
  * cases that use another built-in python exception when it is more appropriate.
  */
 void pb_assert(pbio_error_t error) {
-    #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+    #if PYBRICKS_OPT_TERSE_ERR
     // using EINVAL to mean that the argument to this function was invalid.
     // since we raise ValueError for PBIO_ERROR_INVALID_ARG, there isn't a
     // possible conflict
@@ -61,7 +61,7 @@ void pb_assert(pbio_error_t error) {
 
     mp_raise_OSError(os_err);
     __builtin_unreachable();
-    #else // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+    #else // PYBRICKS_OPT_TERSE_ERR
     static const MP_DEFINE_STR_OBJ(msg_io_obj, "\n\n"
         "Unexpected hardware input/output error with a motor or sensor:\n"
         "--> Try unplugging the sensor or motor and plug it back in again.\n"
@@ -140,5 +140,5 @@ void pb_assert(pbio_error_t error) {
 
     nlr_raise(mp_obj_new_exception_args(&mp_type_OSError, 2, args));
     __builtin_unreachable();
-    #endif // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+    #endif // PYBRICKS_OPT_TERSE_ERR
 }
