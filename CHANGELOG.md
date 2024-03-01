@@ -10,6 +10,8 @@
 
 ### Changed
 - Use `Button` parameter for `XboxController` ([support#1488]).
+- If `pybricks.tools.run_task` is called without arguments, it will return
+  whether the runloop is running or not.
 
 ### Fixes
 - Fix `pybricks.iodevices` not allowing writig -128 value ([support#1366]) and

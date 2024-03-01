@@ -171,8 +171,18 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_module_tools_read_input_byte_obj, pb_module_
 
 STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(task),
+        PB_ARG_DEFAULT_NONE(task),
         PB_ARG_DEFAULT_INT(loop_time, 10));
+
+    // Without args, this function is used to test if the run loop is active.
+    if (n_args == 0) {
+        return mp_obj_new_bool(run_loop_is_active);
+    }
+
+    // Can only run one loop at a time.
+    if (run_loop_is_active) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Run loop already active."));
+    }
 
     run_loop_is_active = true;
 
@@ -208,7 +218,7 @@ STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 1, pb_module_tools_run_task);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 0, pb_module_tools_run_task);
 
 // Reset global awaitable state when user program starts.
 void pb_module_tools_init(void) {
