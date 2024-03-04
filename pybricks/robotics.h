@@ -14,6 +14,7 @@
 
 #include "pybricks/util_mp/pb_obj_helper.h"
 
+extern const mp_obj_type_t pb_type_car;
 extern const mp_obj_type_t pb_type_drivebase;
 
 #if PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE

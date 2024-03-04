@@ -93,6 +93,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	pupdevices/pb_type_pupdevices_ultrasonicsensor.c \
 	pybricks.c \
 	robotics/pb_module_robotics.c \
+	robotics/pb_type_car.c \
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_spikebase.c \
 	tools/pb_module_tools.c \

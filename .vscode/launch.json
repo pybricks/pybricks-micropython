@@ -105,14 +105,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
-                "${file}"
+                "${workspaceFolder}/tests/virtualhub/motor/car.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "PBIO_TEST_DATA_PARSER",
-                    "value": "poetry run ./tools/virtual-hub-animator/data_server.py"
+                    "value": "./tools/virtual-hub-animator/data_server.py"
                 },
             ],
             "externalConsole": false,
