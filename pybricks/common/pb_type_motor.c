@@ -24,6 +24,10 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
+pbio_servo_t *pb_type_motor_get_servo(mp_obj_t motor_in) {
+    return ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(motor_in, &pb_type_Motor))->srv;
+}
+
 // Gets the number of millidegrees of the motor, for each whole degree
 // of rotation at the gear train output. For example, if the gear train
 // slows the motor down using a 12 teeth and a 36 teeth gear, the result

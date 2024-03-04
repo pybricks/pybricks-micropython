@@ -76,7 +76,7 @@ STATIC mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, s
     pb_type_Car_obj_t *self = mp_obj_malloc(pb_type_Car_obj_t, type);
 
     // Should be one motor for steering.
-    self->srv_steer = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(steer_motor_in, &pb_type_Motor))->srv;
+    self->srv_steer = pb_type_motor_get_servo(steer_motor_in);
 
     if (mp_obj_is_type(drive_motors_in, &mp_type_tuple) || mp_obj_is_type(drive_motors_in, &mp_type_list)) {
         // Unpack the drive motors if multiple are given.
@@ -86,11 +86,11 @@ STATIC mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, s
             mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("drive_motors must be a list of 1 to %d motors"), PB_TYPE_CAR_MAX_DRIVE_MOTORS);
         }
         for (size_t i = 0; i < self->n_drive; i++) {
-            self->srv_drive[i] = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(drive_motors[i], &pb_type_Motor))->srv;
+            self->srv_drive[i] = pb_type_motor_get_servo(drive_motors[i]);
         }
     } else {
         // Otherwise use one motor.
-        self->srv_drive[0] = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(drive_motors_in, &pb_type_Motor))->srv;
+        self->srv_drive[0] = pb_type_motor_get_servo(drive_motors_in);
         self->n_drive = 1;
     }
 

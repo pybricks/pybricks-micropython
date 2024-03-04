@@ -122,6 +122,8 @@ typedef struct {
 extern const mp_obj_type_t pb_type_Motor;
 extern const mp_obj_type_t pb_type_DCMotor;
 
+pbio_servo_t *pb_type_motor_get_servo(mp_obj_t motor_in);
+
 #endif // PYBRICKS_PY_COMMON_MOTORS
 
 #if PYBRICKS_PY_COMMON_SPEAKER

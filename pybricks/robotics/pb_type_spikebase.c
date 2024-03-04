@@ -42,8 +42,8 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     self->right = right_motor_in;
 
     // Pointers to servos
-    pbio_servo_t *srv_left = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
-    pbio_servo_t *srv_right = ((pb_type_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_left = pb_type_motor_get_servo(self->left);
+    pbio_servo_t *srv_right = pb_type_motor_get_servo(self->right);
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_drivebase_spike(&self->db, srv_left, srv_right));
