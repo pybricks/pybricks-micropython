@@ -120,6 +120,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/battery/battery_test.c \
 	drv/battery/battery_virtual.c \
 	drv/block_device/block_device_flash_stm32.c \
+	drv/block_device/block_device_test.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
 	drv/bluetooth/bluetooth_btstack_control_gpio.c \
 	drv/bluetooth/bluetooth_btstack_run_loop_contiki.c \
