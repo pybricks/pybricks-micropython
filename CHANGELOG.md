@@ -9,17 +9,25 @@
   the `XboxController` ([support#1473]).
 
 ### Changed
-- Use `Button` parameter for `XboxController` ([support#1488]).
+- Use `Button` parameter for `XboxController` ([support#1488]), not strings.
 - If `pybricks.tools.run_task` is called without arguments, it will return
-  whether the runloop is running or not.
+  whether the runloop is running or not ([support#1499]).
+- On Move Hub, the verbosity of error messages is further reduced to reduce
+  the firmware size, to allow for bug fixes/updates ([pybricks-micropython#240]).
+- Re-implemented `pybricks.robotics.Car` in C so it can be enabled on Move Hub
+  which does not support frozen modules ([support#1502]).
 
 ### Fixes
-- Fix `pybricks.iodevices` not allowing writig -128 value ([support#1366]) and
+- Fix `pybricks.iodevices` not allowing writing -128 value ([support#1366]) and
   raise informative error messages instead of clamping the input.
 
+[pybricks-micropython#240]: https://github.com/pybricks/pybricks-micropython/pull/240
 [support#1366]: https://github.com/pybricks/support/issues/1366
+[support#1453]: https://github.com/pybricks/support/issues/1453
 [support#1473]: https://github.com/pybricks/support/issues/1473
 [support#1488]: https://github.com/pybricks/support/issues/1488
+[support#1499]: https://github.com/pybricks/support/issues/1499
+[support#1502]: https://github.com/pybricks/support/issues/1502
 
 ## [3.4.0b1] - 2024-02-10
 
