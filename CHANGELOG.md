@@ -7,6 +7,8 @@
 ### Added
 - Added `joystick_deadzone` keyword argument to suppress controller drift in
   the `XboxController` ([support#1473]).
+- Added `pybricks.tools.running` to return if a stopwatch is currently running
+  ([support#1490]).
 
 ### Changed
 - Use `Button` parameter for `XboxController` ([support#1488]), not strings.
@@ -26,6 +28,7 @@
 [support#1453]: https://github.com/pybricks/support/issues/1453
 [support#1473]: https://github.com/pybricks/support/issues/1473
 [support#1488]: https://github.com/pybricks/support/issues/1488
+[support#1490]: https://github.com/pybricks/support/issues/1490
 [support#1499]: https://github.com/pybricks/support/issues/1499
 [support#1502]: https://github.com/pybricks/support/issues/1502
 

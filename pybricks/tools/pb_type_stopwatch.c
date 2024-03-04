@@ -49,6 +49,12 @@ STATIC mp_obj_t tools_StopWatch_pause(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_pause_obj, tools_StopWatch_pause);
 
+STATIC mp_obj_t tools_StopWatch_running(mp_obj_t self_in) {
+    tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_bool(self->running);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_running_obj, tools_StopWatch_running);
+
 STATIC mp_obj_t tools_StopWatch_resume(mp_obj_t self_in) {
     tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (!self->running) {
@@ -62,6 +68,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_resume_obj, tools_StopWatch_res
 STATIC mp_obj_t tools_StopWatch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     tools_StopWatch_obj_t *self = m_new_obj(tools_StopWatch_obj_t);
     self->base.type = type;
+    self->running = false;
     tools_StopWatch_reset(MP_OBJ_FROM_PTR(self));
     tools_StopWatch_resume(MP_OBJ_FROM_PTR(self));
     return MP_OBJ_FROM_PTR(self);
@@ -72,6 +79,7 @@ STATIC const mp_rom_map_elem_t tools_StopWatch_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&tools_StopWatch_time_obj) },
     { MP_ROM_QSTR(MP_QSTR_pause), MP_ROM_PTR(&tools_StopWatch_pause_obj) },
     { MP_ROM_QSTR(MP_QSTR_resume), MP_ROM_PTR(&tools_StopWatch_resume_obj) },
+    { MP_ROM_QSTR(MP_QSTR_running), MP_ROM_PTR(&tools_StopWatch_running_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(tools_StopWatch_locals_dict, tools_StopWatch_locals_dict_table);
 
