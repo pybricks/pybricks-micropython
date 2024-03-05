@@ -294,6 +294,10 @@ pbio_error_t pbsys_program_load_wait_command(pbsys_main_program_t *program) {
             return PBIO_ERROR_CANCELED;
         }
 
+        #if PBSYS_CONFIG_PROGRAM_LOAD_AUTO_START
+        pbsys_program_load_start_user_program_requested = true;
+        #endif
+
         if (pbsys_program_load_start_user_program_requested) {
             pbsys_program_load_start_user_program_requested = false;
             program->run_builtin = false;
