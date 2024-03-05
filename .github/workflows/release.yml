@@ -6,31 +6,23 @@ on:
 name: Upload Release Assets
 
 env:
-  MAKEOPTS: -j2
+  MAKEOPTS: -j
+
+permissions:
+  contents: write
 
 jobs:
   upload_release:
     name: Upload Release Assets
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-      - name: Check cache
-        id: check-cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-          key: gcc-arm-10-2020-q4
-      - name: Download
-        if: steps.check-cache.outputs.cache-hit != 'true'
-        uses: dlech/arm-none-eabi-gcc@master
-        with:
-          release: '10-2020-q4'
-          directory: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-      - name: Add cross-compiler to path
-        run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      - name: Install cross-compiler
+        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: true
+          fetch-depth: 0
       - name: Build firmware
         run: |
           make $MAKEOPTS -C micropython/mpy-cross
@@ -41,63 +33,25 @@ jobs:
           make $MAKEOPTS -C bricks/essentialhub
       - name: Get tag
         run: echo "GITHUB_TAG=${GITHUB_REF#*refs/tags/}" >> $GITHUB_ENV
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create Release and Upload Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: ${{ contains(env.GITHUB_TAG, 'a') || contains(env.GITHUB_TAG, 'b') || contains(env.GITHUB_TAG, 'c') }}
-      - name: Upload movehub firmware
-        id: upload-movehub
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bricks/movehub/build/firmware.zip
-          asset_name: pybricks-movehub-${{ env.GITHUB_TAG }}.zip
-          asset_content_type: application/zip
-      - name: Upload cityhub firmware
-        id: upload-cityhub
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bricks/cityhub/build/firmware.zip
-          asset_name: pybricks-cityhub-${{ env.GITHUB_TAG }}.zip
-          asset_content_type: application/zip
-      - name: Upload technichub firmware
-        id: upload-technichub
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bricks/technichub/build/firmware.zip
-          asset_name: pybricks-technichub-${{ env.GITHUB_TAG }}.zip
-          asset_content_type: application/zip
-      - name: Upload primehub firmware
-        id: upload-primehub
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bricks/primehub/build/firmware.zip
-          asset_name: pybricks-primehub-${{ env.GITHUB_TAG }}.zip
-          asset_content_type: application/zip
-      - name: Upload essentialhub firmware
-        id: upload-essentialhub
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bricks/essentialhub/build/firmware.zip
-          asset_name: pybricks-essentialhub-${{ env.GITHUB_TAG }}.zip
-          asset_content_type: application/zip
+          tag: ${{ github.ref_name }}
+        run: |
+          if [[ "${{ contains(env.GITHUB_TAG, 'a') || contains(env.GITHUB_TAG, 'b') || contains(env.GITHUB_TAG, 'c') }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          else
+            PRERELEASE_FLAG=""
+          fi
+          HUBS="movehub cityhub technichub primehub essentialhub"
+          for HUB in $HUBS; do
+            NEW_FILENAME="./bricks/$HUB/build/pybricks-$HUB-${{ env.GITHUB_TAG }}.zip"
+            mv "./bricks/$HUB/build/firmware.zip" "$NEW_FILENAME"
+            ASSETS="$ASSETS $NEW_FILENAME"
+          done
+          gh release create "$tag" \
+              --repo="$GITHUB_REPOSITORY" \
+              --title="${tag#v}" \
+              -F CHANGELOG.md \
+              $PRERELEASE_FLAG \
+              $ASSETS
