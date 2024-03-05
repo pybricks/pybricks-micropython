@@ -152,7 +152,11 @@ else
 ifeq ($(PB_MCU_FAMILY),AT91SAM7)
 CFLAGS_MCU = -mthumb -mthumb-interwork -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 else
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+CFLAGS_MCU =
+else
 $(error unsupported PB_MCU_FAMILY)
+endif
 endif
 endif
 
@@ -181,6 +185,8 @@ CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
 CFLAGS += -Og -ggdb
+else ifeq ($(DEBUG), 2)
+CFLAGS += -Os -DNDEBUG -flto
 else
 CFLAGS += -Os -DNDEBUG -flto
 CFLAGS += -fdata-sections -ffunction-sections
@@ -240,6 +246,14 @@ endif
 
 ifeq ($(PB_MCU_FAMILY),AT91SAM7)
 PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
+	mphalport.c \
+	)
+
+SRC_S += shared/runtime/gchelper_thumb1.s
+endif
+
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+PY_EXTRA_SRC_C += $(addprefix bricks/ev3/,\
 	mphalport.c \
 	)
 
