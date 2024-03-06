@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.4.0b3] - 2024-03-05
+
 ### Added
 - Added `joystick_deadzone` keyword argument to suppress controller drift in
   the `XboxController` ([support#1473]).
@@ -32,7 +34,7 @@
 [support#1499]: https://github.com/pybricks/support/issues/1499
 [support#1502]: https://github.com/pybricks/support/issues/1502
 
-## [3.4.0b1] - 2024-02-10
+## [3.4.0b2] - 2024-02-10
 
 ### Added
 - Added `pybricks.iodevices.XboxController` ([support#191], [support#1024]).
@@ -819,7 +821,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b3...HEAD
+[3.4.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...v3.4.0b3
 [3.4.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...v3.4.0b2
 [3.4.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...v3.4.0b1
 [3.3.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...v3.3.0
