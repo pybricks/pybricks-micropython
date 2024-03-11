@@ -94,6 +94,17 @@ STATIC mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, s
         self->n_drive = 1;
     }
 
+    for (size_t i = 0; i < self->n_drive; i++) {
+        if (self->srv_drive[i] == self->srv_steer) {
+            mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("drive_motors and steer_motor must be different"));
+        }
+        for (size_t j = i + 1; j < self->n_drive; j++) {
+            if (self->srv_drive[i] == self->srv_drive[j]) {
+                mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("drive_motors must be unique"));
+            }
+        }
+    }
+
     // Find left and right end of steering range.
     int32_t angle_left = run_until_stalled_blocking(self->srv_steer, PBIO_DIRECTION_COUNTERCLOCKWISE, torque_limit_in);
     int32_t angle_right = run_until_stalled_blocking(self->srv_steer, PBIO_DIRECTION_CLOCKWISE, torque_limit_in);
