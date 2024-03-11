@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2023 The Pybricks Authors
+// Copyright (c) 2019-2024 The Pybricks Authors
 
 /**
  * @addtogroup Version pbio/version: Version Information
@@ -23,10 +23,10 @@
 #define PBIO_VERSION_MICRO 0
 
 /** The current prerelease level as a hex digit. */
-#define PBIO_VERSION_LEVEL_HEX 0xB
+#define PBIO_VERSION_LEVEL_HEX 0xF
 
 /** The current prerelease serial. */
-#define PBIO_VERSION_SERIAL 3
+#define PBIO_VERSION_SERIAL 0
 
 /**
  * The current prerelease level as a string.

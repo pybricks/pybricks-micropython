@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.4.0] - 2024-03-11
+
 ### Changed
 - Additional error checking in `pybricks.robotics.Car` setup ([support#1502]).
 
