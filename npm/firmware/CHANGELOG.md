@@ -1,3 +1,8 @@
+## 7.14.0 - 2024-03-11
+
+### Changed
+- Updated firmware to v3.4.0.
+
 ## 7.13.0 - 2024-03-06
 
 ### Changed
