@@ -19,6 +19,8 @@ pbio_error_t pbsys_program_load_set_program_size(uint32_t size);
 pbio_error_t pbsys_program_load_set_program_data(uint32_t offset, const void *data, uint32_t size);
 pbio_error_t pbsys_program_load_start_user_program(void);
 pbio_error_t pbsys_program_load_start_repl(void);
+void pbsys_program_load_set_bluetooth_disabled(bool bluetooth_disabled);
+bool pbsys_program_load_get_bluetooth_disabled(void);
 
 #else
 static inline void pbsys_program_load_init(void) {
@@ -40,6 +42,14 @@ static inline pbio_error_t pbsys_program_load_start_user_program(void) {
 static inline pbio_error_t pbsys_program_load_start_repl(void) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+
+static inline void pbsys_program_load_set_bluetooth_disabled(bool bluetooth_disabled) {
+}
+
+static inline bool pbsys_program_load_get_bluetooth_disabled(void) {
+    return false;
+}
+
 
 #endif // PBSYS_CONFIG_PROGRAM_LOAD
 

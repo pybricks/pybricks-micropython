@@ -82,6 +82,28 @@ pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, u
     return PBIO_SUCCESS;
 }
 
+// Start with Bluetooth disabled to be secure by default
+// TODO: Replace with persistent storage
+static bool my_bluetooth_disabled = true;
+
+/**
+ * Changes setting for disabling Bluetooth
+ *
+ * @param [in]  bluetooth_disabled  true if Bluetooth should be disabled
+ */
+void pbsys_program_load_set_bluetooth_disabled(bool bluetooth_disabled) {
+    my_bluetooth_disabled = bluetooth_disabled;
+}
+
+/**
+ * Retrieves setting if Bluetooth should be disabled
+ *
+ * @returns     true if Bluetooth should be disabled
+ */
+bool pbsys_program_load_get_bluetooth_disabled(void) {
+    return my_bluetooth_disabled;
+}
+
 static bool pbsys_program_load_start_user_program_requested;
 static bool pbsys_program_load_start_repl_requested;
 

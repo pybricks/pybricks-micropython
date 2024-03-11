@@ -3,7 +3,7 @@
 
 // Provides Human Machine Interface (HMI) between hub and user.
 
-// TODO: implement additional buttons and Bluetooth light for SPIKE Prime
+// TODO: implement additional buttons for SPIKE Prime
 // TODO: implement additional buttons and menu system (via screen) for NXT
 
 #include <stdbool.h>
@@ -19,6 +19,7 @@
 #include <pbio/color.h>
 #include <pbio/event.h>
 #include <pbio/light.h>
+#include <pbsys/bluetooth.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 
@@ -87,6 +88,9 @@ void pbsys_hmi_handle_event(process_event_t event, process_data_t data) {
  */
 void pbsys_hmi_poll(void) {
     pbio_button_flags_t btn;
+    bool bluetooth_disabled;
+
+    static bool bluetooth_toggled = false;
 
     if (pbio_button_is_pressed(&btn) == PBIO_SUCCESS) {
         if (btn & PBIO_BUTTON_CENTER) {
@@ -97,9 +101,27 @@ void pbsys_hmi_poll(void) {
             if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
                 pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
             }
+        } else if ((btn & PBIO_BUTTON_RIGHT_UP) &&
+                   !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BUTTON_PRESSED);
+
+            if (!bluetooth_toggled &&
+                pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BLUETOOTH_BUTTON_PRESSED, true, 50)) {
+                bluetooth_toggled = true;
+                bluetooth_disabled = !pbsys_program_load_get_bluetooth_disabled();
+                pbsys_program_load_set_bluetooth_disabled(bluetooth_disabled);
+                if (bluetooth_disabled) {
+                    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN);
+                } else {
+                    pbsys_bluetooth_init();
+                }
+            }
         } else {
             pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
             user_program_start(false);
+
+            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLUETOOTH_BUTTON_PRESSED);
+            bluetooth_toggled = false;
         }
     }
 

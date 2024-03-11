@@ -9,6 +9,7 @@
 
 #include <pbsys/battery.h>
 #include <pbsys/bluetooth.h>
+#include <pbsys/status.h>
 
 #include "core.h"
 #include "hmi.h"
@@ -46,9 +47,13 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
 
 void pbsys_init(void) {
     pbsys_battery_init();
-    pbsys_bluetooth_init();
     pbsys_hmi_init();
     pbsys_program_load_init();
+    if (pbsys_program_load_get_bluetooth_disabled()) {
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN);
+    } else {
+        pbsys_bluetooth_init();
+    }
     process_start(&pbsys_system_process);
 
     while (pbsys_init_busy()) {

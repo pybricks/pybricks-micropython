@@ -53,6 +53,8 @@ void pbsys_bluetooth_init(void) {
     // enough for one packet received + 1 byte for ring buf pointer
     static uint8_t stdin_buf[PBDRV_BLUETOOTH_MAX_MTU_SIZE - 3 + 1];
 
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN);
+
     lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
     lwrb_init(&stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
     process_start(&pbsys_bluetooth_process);
@@ -289,7 +291,8 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     pbdrv_bluetooth_set_on_event(on_event);
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
-    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN) &&
+           !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
         // make sure the Bluetooth chip is in reset long enough to actually reset
         etimer_set(&timer, 150);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
@@ -305,6 +308,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         PROCESS_WAIT_UNTIL(
             pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
             || pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
+            || pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN)
             || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN));
 
         if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
@@ -317,6 +321,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         PT_INIT(&status_monitor_pt);
 
         while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
+               && !pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_SHUTDOWN)
                && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
 
             if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
