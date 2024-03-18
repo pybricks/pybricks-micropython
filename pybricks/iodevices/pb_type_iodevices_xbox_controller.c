@@ -432,6 +432,93 @@ STATIC mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
 
+typedef struct {
+    uint8_t activation_flags;
+    uint8_t power_left_trigger;
+    uint8_t power_right_trigger;
+    uint8_t power_left_handle;
+    uint8_t power_right_handle;
+    uint8_t duration_10ms;
+    uint8_t delay_10ms;
+    uint8_t repetitions;
+} __attribute__((packed)) xbox_rumble_command_t;
+
+STATIC mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_xbox_obj_t, self,
+        PB_ARG_REQUIRED(power),
+        PB_ARG_REQUIRED(duration),
+        PB_ARG_REQUIRED(delay),
+        PB_ARG_REQUIRED(count)
+        );
+
+    (void)self;
+    pb_xbox_assert_connected();
+    pb_xbox_t *xbox = &pb_xbox_singleton;
+
+    // 1 unit is 10ms, max duration is 250=2500ms.
+    mp_int_t duration = pb_obj_get_positive_int(duration_in) / 10;
+    mp_int_t delay = pb_obj_get_positive_int(delay_in) / 10;
+
+    // Number of rumbles, capped at 100.
+    mp_int_t count = pb_obj_get_pct(count_in);
+
+    // User order is left, right, left trigger, right trigger.
+    int8_t intensity[4];
+    pb_obj_get_pct_or_array(power_in, 4, intensity);
+
+    // If a single value is given, rumble only the main actuators.
+    if (!pb_obj_is_array(power_in)) {
+        intensity[2] = 0;
+        intensity[3] = 0;
+    }
+
+    xbox_rumble_command_t command = {
+        .activation_flags = 0,
+        .power_left_trigger = intensity[2],
+        .power_right_trigger = intensity[3],
+        .power_left_handle = intensity[0],
+        .power_right_handle = intensity[1],
+        .duration_10ms = duration > 250 ? 250 : duration,
+        .delay_10ms = delay > 250 ? 250 : delay,
+        .repetitions = count - 1,
+    };
+
+    if (command.power_right_handle) {
+        command.activation_flags |= 0x01;
+    }
+    if (command.power_left_handle) {
+        command.activation_flags |= 0x02;
+    }
+    if (command.power_right_trigger) {
+        command.activation_flags |= 0x04;
+    }
+    if (command.power_left_trigger) {
+        command.activation_flags |= 0x08;
+    }
+
+    // If all intensities are zero or duration or number is invalid, do nothing.
+    if (command.activation_flags == 0 || count < 1 || duration < 1) {
+        return mp_const_none;
+    }
+
+    // REVISIT: Discover this handle dynamically.
+    const uint16_t handle = 34;
+
+    static struct {
+        pbdrv_bluetooth_value_t value;
+        char payload[sizeof(command)];
+    } __attribute__((packed)) msg = {
+    };
+    msg.value.size = sizeof(command);
+    memcpy(msg.payload, &command, sizeof(command));
+    pbio_set_uint16_le(msg.value.handle, handle);
+
+    pbdrv_bluetooth_peripheral_write(&xbox->task, &msg.value);
+    return pb_module_tools_pbio_task_wait_or_await(&xbox->task);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_xbox_rumble_obj, 1, pb_xbox_rumble);
+
 STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
@@ -440,6 +527,7 @@ STATIC const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_joystick_left), MP_ROM_PTR(&pb_xbox_joystick_left_obj) },
     { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_xbox_joystick_right_obj) },
     { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
+    { MP_ROM_QSTR(MP_QSTR_rumble), MP_ROM_PTR(&pb_xbox_rumble_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_xbox_locals_dict, pb_type_xbox_locals_dict_table);
 
