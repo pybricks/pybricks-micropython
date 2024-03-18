@@ -124,6 +124,34 @@ mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val) {
     return value > 0 ? value: -value;
 }
 
+/**
+ * Populates an array of percentages from a single number or tuple.
+ *
+ * @param obj_in [in]  A MicroPython object
+ * @param num    [in]  The number of values to populate
+ * @param values [out] The array to populate
+ *
+ * Raises exception if @p obj_in is not a number or a tuple of @p num values.
+ */
+void pb_obj_get_pct_or_array(mp_obj_t obj_in, size_t num, int8_t *values) {
+    if (mp_obj_is_type(obj_in, &mp_type_tuple) || mp_obj_is_type(obj_in, &mp_type_list)) {
+        mp_obj_t *items;
+        size_t len;
+        mp_obj_get_array(obj_in, &len, &items);
+        if (len != num) {
+            mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("expected 1 number or tuple of %d values"), num);
+        }
+        for (size_t i = 0; i < num; i++) {
+            values[i] = pb_obj_get_pct(items[i]);
+        }
+    } else {
+        mp_int_t pct = pb_obj_get_pct(obj_in);
+        for (size_t i = 0; i < num; i++) {
+            values[i] = pct;
+        }
+    }
+}
+
 mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type) {
 
     // If it equals the base type then return as is

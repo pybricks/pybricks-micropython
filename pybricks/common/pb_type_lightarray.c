@@ -32,26 +32,7 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     int8_t brightness_values[4];
-
-    // Given an integer, make all lights the same brightness.
-    if (mp_obj_is_int(brightness_in)) {
-        int32_t b = pb_obj_get_pct(brightness_in);
-        for (uint8_t i = 0; i < self->number_of_lights; i++) {
-            brightness_values[i] = b;
-        }
-    }
-    // Otherwise, get each brightness value from list or tuple.
-    else {
-        mp_obj_t *brightness_objects;
-        size_t num_values;
-        mp_obj_get_array(brightness_in, &num_values, &brightness_objects);
-        if (num_values != self->number_of_lights) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
-        for (uint8_t i = 0; i < self->number_of_lights; i++) {
-            brightness_values[i] = pb_obj_get_pct(brightness_objects[i]);
-        }
-    }
+    pb_obj_get_pct_or_array(brightness_in, self->number_of_lights, brightness_values);
 
     // Set the brightness values and wait or await it.
     return pb_type_device_set_data(self->sensor, self->light_mode, brightness_values, self->number_of_lights);

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Changed
+- Allow single floating point value for brightness array ([support#1547]).
+
+[support#1547]: https://github.com/pybricks/support/issues/1547
+
 ## [3.4.0] - 2024-03-11
 
 ### Changed
