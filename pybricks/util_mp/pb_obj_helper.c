@@ -125,6 +125,16 @@ mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val) {
 }
 
 /**
+ * Tests if an object is a tuple or list.
+ *
+ * @param obj_in [in]  A MicroPython object
+ * @return             True if @p obj_in is a tuple or list, otherwise false.
+*/
+bool pb_obj_is_array(mp_obj_t obj_in) {
+    return mp_obj_is_type(obj_in, &mp_type_tuple) || mp_obj_is_type(obj_in, &mp_type_list);
+}
+
+/**
  * Populates an array of percentages from a single number or tuple.
  *
  * @param obj_in [in]  A MicroPython object
@@ -134,7 +144,7 @@ mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val) {
  * Raises exception if @p obj_in is not a number or a tuple of @p num values.
  */
 void pb_obj_get_pct_or_array(mp_obj_t obj_in, size_t num, int8_t *values) {
-    if (mp_obj_is_type(obj_in, &mp_type_tuple) || mp_obj_is_type(obj_in, &mp_type_list)) {
+    if (pb_obj_is_array(obj_in)) {
         mp_obj_t *items;
         size_t len;
         mp_obj_get_array(obj_in, &len, &items);

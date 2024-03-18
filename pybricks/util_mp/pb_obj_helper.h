@@ -30,6 +30,9 @@ mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator);
 // Get absolute value if object is not none, else return default
 mp_int_t pb_obj_get_default_abs_int(mp_obj_t obj, mp_int_t default_val);
 
+// Tests if an object is a tuple or list
+bool pb_obj_is_array(mp_obj_t obj_in);
+
 // Get array of percentages from single value or tuple
 void pb_obj_get_pct_or_array(mp_obj_t obj_in, size_t num, int8_t *values);
 

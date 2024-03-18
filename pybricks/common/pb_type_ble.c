@@ -276,7 +276,7 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     mp_obj_t *objs;
     size_t n_objs;
     size_t index;
-    if (mp_obj_is_type(data_in, &mp_type_tuple) || mp_obj_is_type(data_in, &mp_type_list)) {
+    if (pb_obj_is_array(data_in)) {
         index = 0;
         mp_obj_get_array(data_in, &n_objs, &objs);
     } else {

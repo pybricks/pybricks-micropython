@@ -33,7 +33,7 @@ void unpack_acceleration_value(mp_obj_t accel_in, int32_t *acceleration, int32_t
     }
 
     // If single value is given for acceleration, use it for deceleration too.
-    if (mp_obj_is_int(accel_in) || mp_obj_is_float(accel_in)) {
+    if (!pb_obj_is_array(accel_in)) {
         *acceleration = pb_obj_get_int(accel_in);
         *deceleration = *acceleration;
         return;

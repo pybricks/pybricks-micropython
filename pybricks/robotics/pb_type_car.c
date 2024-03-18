@@ -78,7 +78,7 @@ STATIC mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, s
     // Should be one motor for steering.
     self->srv_steer = pb_type_motor_get_servo(steer_motor_in);
 
-    if (mp_obj_is_type(drive_motors_in, &mp_type_tuple) || mp_obj_is_type(drive_motors_in, &mp_type_list)) {
+    if (pb_obj_is_array(drive_motors_in)) {
         // Unpack the drive motors if multiple are given.
         mp_obj_t *drive_motors;
         mp_obj_get_array(drive_motors_in, &self->n_drive, &drive_motors);
