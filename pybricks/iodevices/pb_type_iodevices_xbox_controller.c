@@ -471,10 +471,10 @@ typedef struct {
 STATIC mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_xbox_obj_t, self,
-        PB_ARG_REQUIRED(power),
-        PB_ARG_REQUIRED(duration),
-        PB_ARG_REQUIRED(delay),
-        PB_ARG_REQUIRED(count)
+        PB_ARG_DEFAULT_INT(power, 100),
+        PB_ARG_DEFAULT_INT(duration, 200),
+        PB_ARG_DEFAULT_INT(delay, 100),
+        PB_ARG_DEFAULT_INT(count, 1)
         );
 
     (void)self;
@@ -487,6 +487,11 @@ STATIC mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t
 
     // Number of rumbles, capped at 100.
     mp_int_t count = pb_obj_get_pct(count_in);
+
+    // Don't prefix delay if there is only one rumble.
+    if (count == 1) {
+        delay = 0;
+    }
 
     // User order is left, right, left trigger, right trigger.
     int8_t intensity[4];
