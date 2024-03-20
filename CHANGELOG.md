@@ -6,11 +6,15 @@
 
 ### Added
 - Added support for rumble in `XboxController` ([support#1024]).
+- Added `Button.UP`, `Button.DOWN`, `Button.LEFT`, and `Button.RIGHT` to
+  `XboxController` buttons method ([support#1537]). The separate directional
+  pad method remains available.
 
 ### Changed
 - Allow single floating point value for brightness array ([support#1547]).
 
 [support#1024]: https://github.com/pybricks/support/issues/1024
+[support#1537]: https://github.com/orgs/pybricks/discussions/1537
 [support#1547]: https://github.com/pybricks/support/issues/1547
 
 ## [3.4.0] - 2024-03-11

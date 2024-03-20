@@ -193,7 +193,8 @@ STATIC xbox_input_map_t *pb_xbox_get_buttons(void) {
 STATIC mp_obj_t pb_xbox_button_pressed(void) {
     xbox_input_map_t *buttons = pb_xbox_get_buttons();
 
-    mp_obj_t items[16];
+    // At most 16 simultaneous button presses, plus up to two dpad directions.
+    mp_obj_t items[16 + 2];
     size_t count = 0;
 
     if (buttons->buttons & 1) {
@@ -243,6 +244,30 @@ STATIC mp_obj_t pb_xbox_button_pressed(void) {
     }
     if (buttons->paddles & (1 << 3)) {
         items[count++] = pb_type_button_new(MP_QSTR_P4);
+    }
+
+    // Dpad is available as separate method, but can also be used as
+    // a normal set of buttons.
+    if (buttons->dpad == 1) {
+        items[count++] = pb_type_button_new(MP_QSTR_UP);
+    } else if (buttons->dpad == 2) {
+        items[count++] = pb_type_button_new(MP_QSTR_UP);
+        items[count++] = pb_type_button_new(MP_QSTR_RIGHT);
+    } else if (buttons->dpad == 3) {
+        items[count++] = pb_type_button_new(MP_QSTR_RIGHT);
+    } else if (buttons->dpad == 4) {
+        items[count++] = pb_type_button_new(MP_QSTR_RIGHT);
+        items[count++] = pb_type_button_new(MP_QSTR_DOWN);
+    } else if (buttons->dpad == 5) {
+        items[count++] = pb_type_button_new(MP_QSTR_DOWN);
+    } else if (buttons->dpad == 6) {
+        items[count++] = pb_type_button_new(MP_QSTR_DOWN);
+        items[count++] = pb_type_button_new(MP_QSTR_LEFT);
+    } else if (buttons->dpad == 7) {
+        items[count++] = pb_type_button_new(MP_QSTR_LEFT);
+    } else if (buttons->dpad == 8) {
+        items[count++] = pb_type_button_new(MP_QSTR_LEFT);
+        items[count++] = pb_type_button_new(MP_QSTR_UP);
     }
 
     return mp_obj_new_set(count, items);
