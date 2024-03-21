@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.5.0b1] - 2024-03-21
+
 ### Added
 - Added support for rumble in `XboxController` ([support#1024]).
 - Added `Button.UP`, `Button.DOWN`, `Button.LEFT`, and `Button.RIGHT` to
@@ -841,7 +843,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...HEAD
+[3.5.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0...v3.5.0b1
 [3.4.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b3...v3.4.0
 [3.4.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...v3.4.0b3
 [3.4.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...v3.4.0b2
