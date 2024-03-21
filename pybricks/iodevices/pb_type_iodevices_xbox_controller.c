@@ -473,9 +473,8 @@ STATIC mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t
         pb_type_xbox_obj_t, self,
         PB_ARG_DEFAULT_INT(power, 100),
         PB_ARG_DEFAULT_INT(duration, 200),
-        PB_ARG_DEFAULT_INT(delay, 100),
-        PB_ARG_DEFAULT_INT(count, 1)
-        );
+        PB_ARG_DEFAULT_INT(count, 1),
+        PB_ARG_DEFAULT_INT(delay, 100));
 
     (void)self;
     pb_xbox_assert_connected();
