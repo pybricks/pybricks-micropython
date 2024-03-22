@@ -150,21 +150,8 @@ void SystemInit(void) {
 
     /* Delay a little post-init, to let all the drivers settle down. */
     nx_systick_wait_ms(100);
-}
 
-// For now, this file is the main entry point for NXT. Eventually, this
-// can be dropped and we can use main() in pbsys/main.
-// For now it enters the MicroPython REPL directly for convenient debugging.
-
-/**
- * Initializes the PBIO library, runs custom main program, and handles shutdown.
- *
- * @param [in]  main    The main program.
- */
-int main(int argc, char **argv) {
-
-    pbio_init();
-    pbsys_init();
+    // REVISIT: Integrate via pbsys/bluetooth
 
     // Accept incoming serial connection and get ready to read first byte.
     if (bluetooth_connect()) {
@@ -184,6 +171,21 @@ int main(int argc, char **argv) {
         nx_display_string("Connected. REPL.\n");
     out:;
     }
+}
+
+// For now, this file is the main entry point for NXT. Eventually, this
+// can be dropped and we can use main() in pbsys/main.
+// For now it enters the MicroPython REPL directly for convenient debugging.
+
+/**
+ * Initializes the PBIO library, runs custom main program, and handles shutdown.
+ *
+ * @param [in]  main    The main program.
+ */
+int main(int argc, char **argv) {
+
+    pbio_init();
+    pbsys_init();
 
     // Keep loading and running user programs until shutdown is requested.
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
