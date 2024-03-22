@@ -41,6 +41,7 @@
         .endm
 
         .global nx_start
+        .extern SystemInit
         .extern main
 
 
@@ -221,6 +222,11 @@ wait_mclk_3:
          * and Thumb modes. */
         mov fp, #0
         mov r7, #0
+
+        /* Run SystemInit */
+        ldr r5, =SystemInit
+        mov lr, pc
+        bx  r5
 
         /* Start the main kernel code using an interworking branch. */
         ldr r5, =main

@@ -14,8 +14,18 @@
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
 
-#include "nxos/_display.h"
-#include "nxos/drivers/bt.h"
+#include <nxos/_display.h>
+#include <nxos/assert.h>
+#include <nxos/drivers/_aic.h>
+#include <nxos/drivers/_avr.h>
+#include <nxos/drivers/_lcd.h>
+#include <nxos/drivers/_motors.h>
+#include <nxos/drivers/_sensors.h>
+#include <nxos/drivers/_usb.h>
+#include <nxos/drivers/bt.h>
+#include <nxos/drivers/i2c.h>
+#include <nxos/drivers/systick.h>
+#include <nxos/interrupts.h>
 
 #include "../../drv/legodev/legodev_nxt.h"
 
@@ -112,6 +122,34 @@ static bool bluetooth_connect(void) {
     nx_display_cursor_set_pos(0, 0);
 
     return true;
+}
+
+// Called from assembly code in startup.S
+void SystemInit(void) {
+    nx__aic_init();
+    // TODO: can probably move nx_interrupts_enable() to pbdrv/core.c under
+    // PBDRV_CONFIG_INIT_ENABLE_INTERRUPTS_ARM after nx_systick_wait_ms()
+    // is removed
+    nx_interrupts_enable(0);
+
+    // Clock init must be first, since almost everything depends on clocks.
+    // This probably should be moved here instead of in pbdrv_clock_init, just
+    // as we do on other platforms.
+    extern void pbdrv_clock_init(void);
+    pbdrv_clock_init();
+
+    // TODO: we should be able to convert these to generic pbio drivers and use
+    // pbdrv_init_busy instead of busy waiting for 100ms.
+    nx__avr_init();
+    nx__motors_init();
+    nx__lcd_init();
+    nx__display_init();
+    nx__sensors_init();
+    nx__usb_init();
+    nx_i2c_init();
+
+    /* Delay a little post-init, to let all the drivers settle down. */
+    nx_systick_wait_ms(100);
 }
 
 // For now, this file is the main entry point for NXT. Eventually, this
