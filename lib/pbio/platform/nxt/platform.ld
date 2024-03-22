@@ -86,6 +86,11 @@ SECTIONS {
     * (*.bss *.bss.*)
   } > ram
 
+  .noinit (NOLOAD) :
+  {
+      . = ALIGN(4);
+      *(.noinit)
+  } > ram
 
   /*
    * The various kernel stacks.
