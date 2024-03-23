@@ -85,6 +85,9 @@ const uint8_t pbio_pybricks_hub_capabilities_char_uuid[] = {
 /** Bluetooth Device Information Service UUID. */
 const uint16_t pbio_gatt_device_info_service_uuid = 0x180A;
 
+/** Bluetooth Device Name Characteristic UUID. */
+const uint16_t pbio_gatt_device_name_char_uuid = 0x2A00;
+
 /** Bluetooth Firmware Version Characteristic UUID. */
 const uint16_t pbio_gatt_firmware_version_char_uuid = 0x2A26;
 
