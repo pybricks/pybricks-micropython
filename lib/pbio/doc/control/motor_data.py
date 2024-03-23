@@ -145,6 +145,23 @@ print("\n#if PBIO_CONFIG_SERVO_EV3_NXT")
 print(
     make_model(
         # Partially based on https://www.philohome.com/motors/motorcomp.htm
+        name="nxt",
+        V=9,
+        tau_x=16.7 / 100,
+        i_x=0.55,
+        w_x=rpm_to_rad_s(117),
+        tau_0=0,
+        i_0=0.06,
+        w_0=rpm_to_rad_s(170),
+        a=math.radians(1000 / 0.1),
+        Lm=0.0005 * 30,
+        h=0.01,
+    )
+)
+
+print(
+    make_model(
+        # Partially based on https://www.philohome.com/motors/motorcomp.htm
         name="ev3_l",
         V=9,
         tau_x=17.3 / 100,
