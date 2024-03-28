@@ -13,10 +13,13 @@
 ### Changed
 - Raise a descriptive error when the `Car` class can't find a steering mechanism
   end stop within 10 seconds ([support#1564]).
+- Extended region of readable data with `hub.system.storage` to include
+  user program ([pybricks-micropython#243]).
 
 ### Fixed
 - Fixed hubs not shutting down when holding hub button ([support#1419]).
 
+[pybricks-micropython#243]: https://github.com/pybricks/pybricks-micropython/pull/243
 [support#802]: https://github.com/pybricks/support/issues/802
 [support#1419]: https://github.com/pybricks/support/issues/1419
 [support#1564]: https://github.com/pybricks/support/issues/1564

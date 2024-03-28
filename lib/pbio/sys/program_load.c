@@ -66,7 +66,7 @@ pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *da
 }
 
 /**
- * Gets pointer to user data.
+ * Gets pointer to user data or user program.
  *
  * @param [in]  offset  Offset from the base address.
  * @param [in]  data    The data reference.
@@ -75,7 +75,7 @@ pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *da
  *                      Otherwise, ::PBIO_SUCCESS.
  */
 pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
-    if (offset + size > sizeof(map->header.user_data)) {
+    if (offset + size > sizeof(map->header.user_data) + sizeof(map->header.program_size) + map->header.program_size) {
         return PBIO_ERROR_INVALID_ARG;
     }
     *data = map->header.user_data + offset;
