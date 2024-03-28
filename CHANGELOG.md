@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+- Extended region of readable data with `hub.system.storage` to include
+  user program.
+
 ## [3.5.0b1] - 2024-03-21
 
 ### Added
