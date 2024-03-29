@@ -50,10 +50,15 @@ STATIC int32_t run_until_stalled_blocking(pbio_servo_t *srv, pbio_direction_t di
     int32_t speed = (direction == PBIO_DIRECTION_CLOCKWISE ? 1 : -1) * 300;
     pb_assert(pbio_servo_run_until_stalled(srv, speed, torque_limit, PBIO_CONTROL_ON_COMPLETION_COAST));
 
+    uint32_t start_time = mp_hal_ticks_ms();
+
     // Wait for the movement to complete or be cancelled.
     while (!pbio_control_is_done(&srv->control)) {
         if (!pbio_servo_update_loop_is_running(srv)) {
             pb_assert(PBIO_ERROR_NO_DEV);
+        }
+        if (mp_hal_ticks_ms() - start_time > 10000) {
+            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("The steering mechanism has no end stop. Did you build a car yet?"));
         }
         mp_hal_delay_ms(10);
     }
