@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+### Added
+- Added optional keyword arguments to `pybricks.tools.read_input_byte()` for
+  automatic conversion via `chr` and to skip to the last byte ([support#1574]).
+
+### Changed
+- Raise a descriptive error when the `Car` class can't find a steering mechanism
+  end stop within 10 seconds ([support#1564]).
+
+[support#1564]: https://github.com/pybricks/support/issues/1564
+[support#1574]: https://github.com/pybricks/support/issues/1574
+
 ## [3.5.0b1] - 2024-03-21
 
 ### Added
@@ -14,13 +25,10 @@
 
 ### Changed
 - Allow single floating point value for brightness array ([support#1547]).
-- Raise a descriptive error when the `Car` class can't find a steering mechanism
-  end stop within 10 seconds ([support#1564]).
 
 [support#1024]: https://github.com/pybricks/support/issues/1024
 [support#1537]: https://github.com/orgs/pybricks/discussions/1537
 [support#1547]: https://github.com/pybricks/support/issues/1547
-[support#1564]: https://github.com/pybricks/support/issues/1564
 
 ## [3.4.0] - 2024-03-11
 

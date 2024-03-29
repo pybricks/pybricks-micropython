@@ -152,22 +152,58 @@ mp_obj_t pb_module_tools_pbio_task_wait_or_await(pbio_task_t *task) {
 }
 
 /**
- * Reads one byte from stdin without blocking.
+ * Reads one byte from stdin without blocking if a byte is available, and
+ * optionally converts it to character representation.
  *
- * @returns The integer value of the byte read or @c None if no data is available.
+ * @param [in]  last    Choose @c True to read until the last byte is read
+ *                      or @c False to get the first available byte.
+ * @param [in]  chr     Choose @c False to return the integer value of the byte.
+ *                      Choose @c True to return a single character string of
+ *                      the resulting byte if it is printable and otherwise
+ *                      return @c None .
+ *
+ * @returns The resulting byte if there was one, converted as above, otherwise @c None .
+ *
  */
-STATIC mp_obj_t pb_module_tools_read_input_byte(void) {
-    if (!(mp_hal_stdio_poll(MP_STREAM_POLL_RD) & MP_STREAM_POLL_RD)) {
-        // No bytes available.
+STATIC mp_obj_t pb_module_tools_read_input_byte(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_FALSE(last),
+        PB_ARG_DEFAULT_FALSE(chr));
+
+    int chr = -1;
+
+    while ((mp_hal_stdio_poll(MP_STREAM_POLL_RD) & MP_STREAM_POLL_RD)) {
+        // REVISIT: In theory, this should not block if mp_hal_stdio_poll() and
+        // mp_hal_stdin_rx_chr() are implemented correctly and nothing happens
+        // in a thread/interrupt/kernel that changes the state.
+        chr = mp_hal_stdin_rx_chr();
+
+        // For last=False, break to stop at first byte. Otherwise, keep reading.
+        if (!mp_obj_is_true(last_in)) {
+            break;
+        }
+    }
+
+    // If no data is available, return None.
+    if (chr < 0) {
         return mp_const_none;
     }
 
-    // REVISIT: In theory, this should not block if mp_hal_stdio_poll() and
-    // mp_hal_stdin_rx_chr() are implemented correctly and nothing happens
-    // in a thread/interrupt/kernel that changes the state.
-    return MP_OBJ_NEW_SMALL_INT(mp_hal_stdin_rx_chr());
+    // If chr=False, return the integer value of the byte.
+    if (!mp_obj_is_true(chr_in)) {
+        return MP_OBJ_NEW_SMALL_INT(chr);
+    }
+
+    // If char requested but not printable, return None.
+    if (chr < 32 || chr > 126) {
+        return mp_const_none;
+    }
+
+    // Return the character as a string.
+    const char result[] = {chr};
+    return mp_obj_new_str(result, sizeof(result));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_module_tools_read_input_byte_obj, pb_module_tools_read_input_byte);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_read_input_byte_obj, 0, pb_module_tools_read_input_byte);
 
 STATIC mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
