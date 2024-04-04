@@ -433,6 +433,14 @@ STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
 
+STATIC mp_obj_t pb_lwp3device_disconnect(mp_obj_t self_in) {
+    pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
+    pb_lwp3device_assert_connected();
+    pbdrv_bluetooth_peripheral_disconnect(&lwp3device->task);
+    return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_disconnect_obj, pb_lwp3device_disconnect);
+
 STATIC const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, pb_type_pupdevices_Remote_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, pb_type_pupdevices_Remote_obj_t, light),
@@ -440,6 +448,7 @@ STATIC const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
 };
 
 STATIC const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_lwp3device_name_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);
@@ -525,6 +534,7 @@ STATIC mp_obj_t lwp3device_read(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
 
 STATIC const mp_rom_map_elem_t pb_type_iodevices_LWP3Device_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_lwp3device_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&lwp3device_write_obj) },
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&lwp3device_read_obj) },

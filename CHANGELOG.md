@@ -7,6 +7,8 @@
 ### Added
 - Added optional keyword arguments to `pybricks.tools.read_input_byte()` for
   automatic conversion via `chr` and to skip to the last byte ([support#1574]).
+- Added `disconnect` method to `pybricks.pupdevices.Remote` and
+  `pybricks.iodevices.LWP3Device` ([support#802]).
 
 ### Changed
 - Raise a descriptive error when the `Car` class can't find a steering mechanism
@@ -15,6 +17,7 @@
 ### Fixed
 - Fixed hubs not shutting down when holding hub button ([support#1419]).
 
+[support#802]: https://github.com/pybricks/support/issues/802
 [support#1419]: https://github.com/pybricks/support/issues/1419
 [support#1564]: https://github.com/pybricks/support/issues/1564
 [support#1574]: https://github.com/pybricks/support/issues/1574
