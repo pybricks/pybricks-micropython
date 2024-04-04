@@ -12,6 +12,10 @@
 - Raise a descriptive error when the `Car` class can't find a steering mechanism
   end stop within 10 seconds ([support#1564]).
 
+### Fixed
+- Fixed hubs not shutting down when holding hub button ([support#1419]).
+
+[support#1419]: https://github.com/pybricks/support/issues/1419
 [support#1564]: https://github.com/pybricks/support/issues/1564
 [support#1574]: https://github.com/pybricks/support/issues/1574
 

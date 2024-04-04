@@ -331,10 +331,8 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     }
     #endif // PYBRICKS_OPT_COMPILER
 
-    // Ensure all buffered output has been sent over the air.
-    mp_hal_stdout_tx_flush();
-
-    // Clean up non-MicroPython resources used by the pybricks package.
+    // De-init bluetooth resources (including flushing stdout) that may use
+    // memory allocated by MicroPython before we wipe it.
     pb_package_pybricks_deinit();
 
     gc_sweep_all();
