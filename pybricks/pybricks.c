@@ -138,14 +138,15 @@ void pb_package_pybricks_deinit(void) {
     #if PYBRICKS_PY_COMMON_BLE
     pb_type_ble_start_cleanup();
     #endif
-    // Disconnect from remote.
-    #if PYBRICKS_PY_PUPDEVICES
-    pb_type_lwp3device_start_cleanup();
-    #endif // PYBRICKS_PY_PUPDEVICES
 
-    #if PYBRICKS_PY_COMMON_BLE && PYBRICKS_PY_PUPDEVICES
+    #if PYBRICKS_PY_PUPDEVICES_REMOTE
+    // Disconnect from remote or LWP3 device.
+    pb_type_lwp3device_start_cleanup();
+    #endif // PYBRICKS_PY_PUPDEVICES_REMOTE
+
+    #if PYBRICKS_PY_COMMON_BLE || PYBRICKS_PY_PUPDEVICES_REMOTE
     // By queueing and awaiting a task that does nothing, we know that all user
-    // tasks and deinit tasks have completed.
+    // tasks and deinit tasks queued before it have completed.
     static pbio_task_t noop_task;
     pbdrv_bluetooth_queue_noop(&noop_task);
     while (noop_task.status == PBIO_ERROR_AGAIN || !pbsys_bluetooth_tx_is_idle()) {
@@ -156,5 +157,5 @@ void pb_package_pybricks_deinit(void) {
             break;
         }
     }
-    #endif
+    #endif // PYBRICKS_PY_COMMON_BLE || PYBRICKS_PY_PUPDEVICES_REMOTE
 }

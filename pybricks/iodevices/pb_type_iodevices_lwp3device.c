@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_PUPDEVICES
+#if PYBRICKS_PY_PUPDEVICES_REMOTE
 
 #include <stdint.h>
 #include <string.h>
@@ -549,4 +549,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_LWP3Device,
 
 #endif // PYBRICKS_PY_IODEVICES
 
-#endif // PYBRICKS_PY_PUPDEVICES
+#endif // PYBRICKS_PY_PUPDEVICES_REMOTE
