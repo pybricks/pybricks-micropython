@@ -10,6 +10,7 @@
 #include "py/objtuple.h"
 #include "py/runtime.h"
 
+#include <pbdrv/bluetooth.h>
 #include <pbio/version.h>
 
 #include <pybricks/common.h>
@@ -133,10 +134,20 @@ void pb_package_pybricks_init(bool import_all) {
 // REVISIT: move these to object finalizers if we enable finalizers in the GC
 void pb_package_pybricks_deinit(void) {
     #if PYBRICKS_PY_COMMON_BLE
-    pb_type_BLE_cleanup();
+    pb_type_ble_start_cleanup();
     #endif
     // Disconnect from remote.
     #if PYBRICKS_PY_PUPDEVICES
-    pb_type_Remote_cleanup();
+    pb_type_lwp3device_start_cleanup();
     #endif // PYBRICKS_PY_PUPDEVICES
+
+    #if PYBRICKS_PY_COMMON_BLE && PYBRICKS_PY_PUPDEVICES
+    // By queueing and awaiting a task that does nothing, we know that all user
+    // tasks and deinit tasks have completed.
+    static pbio_task_t noop_task;
+    pbdrv_bluetooth_queue_noop(&noop_task);
+    while (noop_task.status == PBIO_ERROR_AGAIN) {
+        MICROPY_VM_HOOK_LOOP
+    }
+    #endif
 }

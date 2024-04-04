@@ -294,6 +294,16 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
     return pbdrv_bluetooth_fw_version;
 }
 
+static PT_THREAD(noop_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+    task->status = PBIO_SUCCESS;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_queue_noop(pbio_task_t *task) {
+    start_task(task, noop_task, NULL);
+}
+
 /**
  * Sets advertising data and enables advertisements.
  */

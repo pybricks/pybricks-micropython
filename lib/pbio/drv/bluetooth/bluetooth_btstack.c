@@ -629,6 +629,16 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
     return "v1.4";
 }
 
+static PT_THREAD(noop_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+    task->status = PBIO_SUCCESS;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_queue_noop(pbio_task_t *task) {
+    start_task(task, noop_task, NULL);
+}
+
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0x30, 0x30, PBDRV_BLUETOOTH_AD_TYPE_ADV_IND, 0x00, null_addr, 0x07, 0x00);

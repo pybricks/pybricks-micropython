@@ -321,13 +321,10 @@ STATIC void pb_lwp3device_configure_remote(void) {
     }
 }
 
-void pb_type_Remote_cleanup(void) {
+void pb_type_lwp3device_start_cleanup(void) {
     static pbio_task_t disconnect_task;
     pbdrv_bluetooth_peripheral_disconnect(&disconnect_task);
-
-    while (disconnect_task.status == PBIO_ERROR_AGAIN) {
-        MICROPY_EVENT_POLL_HOOK
-    }
+    // Task awaited in pybricks de-init.
 }
 
 mp_obj_t pb_type_remote_button_pressed(void) {

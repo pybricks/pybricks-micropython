@@ -502,7 +502,7 @@ STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
 /**
  * Creates a new instance of the BLE class.
  *
- * Do not call this function more than once unless pb_type_BLE_cleanup() is called first.
+ * Do not call this function more than once unless pb_type_ble_start_cleanup() is called first.
  *
  * @param [in]  broadcast_channel_in    (int) The channel number to use for broadcasting.
  * @param [in]  observe_channels_in     (list[int]) A list of channels numbers to observe.
@@ -510,7 +510,7 @@ STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
  * @throws ValueError                   If either parameter contains an out of range channel number.
  */
 mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
-    // making the assumption that this is only called once before each pb_type_BLE_cleanup()
+    // making the assumption that this is only called once before each pb_type_ble_start_cleanup()
     assert(observed_data == NULL);
 
     mp_int_t broadcast_channel = mp_obj_get_int(broadcast_channel_in);
@@ -558,17 +558,14 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     return MP_OBJ_FROM_PTR(self);
 }
 
-void pb_type_BLE_cleanup(void) {
+void pb_type_ble_start_cleanup(void) {
     static pbio_task_t stop_broadcasting_task;
     static pbio_task_t stop_observing_task;
     pbdrv_bluetooth_stop_broadcasting(&stop_broadcasting_task);
     pbdrv_bluetooth_stop_observing(&stop_observing_task);
     observed_data = NULL;
     num_observed_data = 0;
-
-    while (stop_broadcasting_task.status == PBIO_ERROR_AGAIN || stop_observing_task.status == PBIO_ERROR_AGAIN) {
-        MICROPY_VM_HOOK_LOOP
-    }
+    // Tasks awaited in pybricks de-init.
 }
 
 #endif // PYBRICKS_PY_COMMON_BLE

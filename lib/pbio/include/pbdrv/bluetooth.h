@@ -241,6 +241,12 @@ const char *pbdrv_bluetooth_get_hub_name(void);
 const char *pbdrv_bluetooth_get_fw_version(void);
 
 /**
+ * Queues a task that does nothing. When this task completes, all tasks
+ * before it will have finished or failed.
+ */
+void pbdrv_bluetooth_queue_noop(pbio_task_t *task);
+
+/**
  * Starts the advertising process, including configuring advertisements and
  * telling the Bluetooth chip to start advertising. Advertising should
  * automatically stop when a connection is made.
@@ -392,6 +398,9 @@ static inline const char *pbdrv_bluetooth_get_hub_name(void) {
 
 static inline const char *pbdrv_bluetooth_get_fw_version(void) {
     return "";
+}
+
+static inline void pbdrv_bluetooth_queue_noop(pbio_task_t *task) {
 }
 
 static inline void pbdrv_bluetooth_start_advertising(void) {
