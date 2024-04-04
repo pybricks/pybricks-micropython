@@ -1052,6 +1052,7 @@ static PT_THREAD(peripheral_disconnect_task(struct pt *pt, pbio_task_t *task)) {
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_TerminateLinkReq(peri->con_handle, 0x13);
         PT_WAIT_UNTIL(pt, hci_command_status);
+        PT_WAIT_UNTIL(pt, peri->con_handle == NO_CONNECTION);
     }
 
     task->status = PBIO_SUCCESS;
@@ -1059,9 +1060,8 @@ static PT_THREAD(peripheral_disconnect_task(struct pt *pt, pbio_task_t *task)) {
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_peripheral_disconnect(void) {
-    static pbio_task_t task;
-    start_task(&task, peripheral_disconnect_task, NULL);
+void pbdrv_bluetooth_peripheral_disconnect(pbio_task_t *task) {
+    start_task(task, peripheral_disconnect_task, NULL);
 }
 
 static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {

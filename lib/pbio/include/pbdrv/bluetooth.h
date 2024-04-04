@@ -331,7 +331,7 @@ void pbdrv_bluetooth_periperal_read_characteristic(pbio_task_t *task, pbdrv_blue
 // TODO: make this a generic write without response function
 void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
 // TODO: make this a generic disconnect
-void pbdrv_bluetooth_peripheral_disconnect(void);
+void pbdrv_bluetooth_peripheral_disconnect(pbio_task_t *task);
 
 /**
  * Starts broadcasting undirected, non-connectable, non-scannable advertisement
@@ -430,7 +430,7 @@ static inline void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_blu
     task->status = PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_peripheral_disconnect(void) {
+static inline void pbdrv_bluetooth_peripheral_disconnect(pbio_task_t *task) {
 }
 
 static inline void pbdrv_bluetooth_start_broadcasting(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {

@@ -954,11 +954,22 @@ void pbdrv_bluetooth_peripheral_write(pbio_task_t *task, pbdrv_bluetooth_value_t
     start_task(task, peripheral_write_task, value);
 }
 
-void pbdrv_bluetooth_peripheral_disconnect(void) {
+static PT_THREAD(peripheral_disconnect_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(peri->con_handle);
     }
+
+    PT_WAIT_UNTIL(pt, peri->con_handle == HCI_CON_HANDLE_INVALID);
+
+    task->status = PBIO_SUCCESS;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_peripheral_disconnect(pbio_task_t *task) {
+    start_task(task, peripheral_disconnect_task, NULL);
 }
 
 static PT_THREAD(start_broadcasting_task(struct pt *pt, pbio_task_t *task)) {

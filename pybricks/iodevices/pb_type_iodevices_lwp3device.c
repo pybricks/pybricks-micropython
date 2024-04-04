@@ -315,15 +315,17 @@ STATIC void pb_lwp3device_configure_remote(void) {
         nlr_pop();
     } else {
         // disconnect if any setup task failed
-        pbdrv_bluetooth_peripheral_disconnect();
+        pbdrv_bluetooth_peripheral_disconnect(&remote->task);
+        pb_module_tools_pbio_task_do_blocking(&remote->task, -1);
         nlr_jump(nlr.ret_val);
     }
 }
 
 void pb_type_Remote_cleanup(void) {
-    pbdrv_bluetooth_peripheral_disconnect();
+    static pbio_task_t disconnect_task;
+    pbdrv_bluetooth_peripheral_disconnect(&disconnect_task);
 
-    while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+    while (disconnect_task.status == PBIO_ERROR_AGAIN) {
         MICROPY_EVENT_POLL_HOOK
     }
 }

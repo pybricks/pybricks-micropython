@@ -723,9 +723,8 @@ done:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_peripheral_disconnect(void) {
-    static pbio_task_t task;
-    start_task(&task, peripheral_disconnect_task, NULL);
+void pbdrv_bluetooth_peripheral_disconnect(pbio_task_t *task) {
+    start_task(task, peripheral_disconnect_task, NULL);
 }
 
 static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
