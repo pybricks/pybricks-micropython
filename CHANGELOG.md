@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.5.0b2] - 2024-04-05
+
 ### Added
 - Added optional keyword arguments to `pybricks.tools.read_input_byte()` for
   automatic conversion via `chr` and to skip to the last byte ([support#1574]).
@@ -864,7 +866,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...HEAD
+[3.5.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...v3.5.0b2
 [3.5.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0...v3.5.0b1
 [3.4.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b3...v3.4.0
 [3.4.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...v3.4.0b3
