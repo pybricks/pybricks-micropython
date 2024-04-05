@@ -16,6 +16,7 @@
 #include <pbio/task.h>
 #include <pbsys/light.h>
 #include <pbsys/program_stop.h>
+#include <pbsys/status.h>
 
 #include <pybricks/parameters.h>
 #include <pybricks/common.h>
@@ -115,6 +116,11 @@ void pb_module_tools_pbio_task_do_blocking(pbio_task_t *task, mp_int_t timeout) 
 
         while (task->status == PBIO_ERROR_AGAIN) {
             MICROPY_VM_HOOK_LOOP
+
+            // Stop waiting (and potentially blocking) in case of forced shutdown.
+            if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
+                break;
+            }
         }
 
         nlr_jump(nlr.ret_val);
