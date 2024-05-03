@@ -24,6 +24,8 @@ mp_obj_t pb_module_tools_pbio_task_wait_or_await(pbio_task_t *task);
 
 extern const mp_obj_type_t pb_type_StopWatch;
 
+extern const mp_obj_type_t pb_type_hostbuffer;
+
 extern const mp_obj_type_t pb_type_Task;
 
 #endif // PYBRICKS_PY_TOOLS
