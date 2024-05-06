@@ -122,6 +122,28 @@ typedef enum {
      * @since Pybricks Profile v1.3.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_STDIN = 6,
+
+    /**
+     * Requests to write to a buffer that is pre-allocated by a user program.
+     *
+     * It is up to the user program to determine what to with the received
+     * data.
+     *
+     * Unlike writing to stdin, this data is not queued but overwriten from the
+     * given offset.
+     *
+     * It is up to the sender to ensure that the written data chunks keep the
+     * overal data valid, assuming that the user can read it in whole at any
+     * time between subsequent writes.
+     *
+     * Parameters:
+     * - offset: The offset from the buffer base address (16-bit little-endian
+     *   unsigned integer).
+     * - payload: The data to write.
+     *
+     * @since Pybricks Profile v1.4.0
+     */
+    PBIO_PYBRICKS_COMMAND_WRITE_PROGRAM_DATA_BUFFER = 7,
 } pbio_pybricks_command_t;
 
 /**

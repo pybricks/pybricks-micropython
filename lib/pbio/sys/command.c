@@ -6,6 +6,7 @@
 
 #include <pbdrv/reset.h>
 #include <pbio/protocol.h>
+#include <pbsys/command.h>
 
 #include <pbsys/storage.h>
 
@@ -13,6 +14,17 @@
 #include "./storage.h"
 #include "./program_stop.h"
 #include "./user_program.h"
+
+static pbsys_command_write_program_data_buffer_callback_t write_program_data_buffer_callback = NULL;
+
+/**
+ * Sets callback for the write program data buffer command.
+ *
+ * @param [in]  callback  The callback to set or @c NULL to unset.
+ */
+void pbsys_command_set_write_program_data_buffer_callback(pbsys_command_write_program_data_buffer_callback_t callback) {
+    write_program_data_buffer_callback = callback;
+}
 
 /**
  * Parses binary data for command and dispatches handler for command.
@@ -49,6 +61,15 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             }
             pbsys_bluetooth_rx_write(&data[1], size - 1);
             #endif
+            // If no consumers are configured, goes to "/dev/null" without error
+            return PBIO_PYBRICKS_ERROR_OK;
+        case PBIO_PYBRICKS_COMMAND_WRITE_PROGRAM_DATA_BUFFER:
+            if (write_program_data_buffer_callback && size > 3) {
+                uint16_t offset = pbio_get_uint16_le(&data[1]);
+                uint16_t data_size = size - 3;
+                const uint8_t *data_write = &data[3];
+                write_program_data_buffer_callback(offset, data_size, data_write);
+            }
             // If no consumers are configured, goes to "/dev/null" without error
             return PBIO_PYBRICKS_ERROR_OK;
         default:
