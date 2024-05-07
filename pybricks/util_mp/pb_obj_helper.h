@@ -66,8 +66,6 @@ typedef struct {
 // to the mp_obj_type_t protocol slot.
 void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest);
 
-#if MICROPY_MODULE_FROZEN_MPY
-mp_obj_t pb_frozen_function_import(qstr module_name, qstr function_name);
-#endif
+mp_obj_t pb_function_import_helper(qstr module_name, qstr function_name);
 
 #endif // PYBRICKS_INCLUDED_PBOBJ_H

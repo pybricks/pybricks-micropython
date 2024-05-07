@@ -230,7 +230,7 @@ STATIC mp_obj_t pb_type_imu_update_heading_correction(mp_obj_t self_in) {
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        mp_obj_t func = pb_frozen_function_import(MP_QSTR__hub_extra, MP_QSTR_imu_update_heading_correction);
+        mp_obj_t func = pb_function_import_helper(MP_QSTR__hub_extra, MP_QSTR_imu_update_heading_correction);
         mp_call_function_1(func, self->hub);
         pbsys_program_stop_set_buttons(stop_button);
         nlr_pop();
