@@ -22,6 +22,8 @@
 #include <pbsys/command.h>
 #include <pbsys/status.h>
 
+#include "light.h"
+
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
 #define MAX_CHAR_SIZE 20
 
@@ -47,11 +49,13 @@ PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
 static void bluetooth_start(void) {
     pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
+    pbsys_status_light_bluetooth_set_color(PBIO_COLOR_BLUE);
     process_start(&pbsys_bluetooth_process);
 }
 
 static void bluetooth_stop(void) {
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
+    pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
     process_exit(&pbsys_bluetooth_process);
 }
 

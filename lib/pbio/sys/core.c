@@ -13,6 +13,7 @@
 #include "core.h"
 #include "hmi.h"
 #include "io_ports.h"
+#include "light.h"
 #include "program_load.h"
 #include "supervisor.h"
 #include "program_stop.h"
@@ -57,6 +58,8 @@ void pbsys_init(void) {
 }
 
 void pbsys_deinit(void) {
+
+    pbsys_status_light_bluetooth_deinit();
     pbsys_program_load_deinit();
 
     uint32_t start = pbdrv_clock_get_ms();

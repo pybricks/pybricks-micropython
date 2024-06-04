@@ -12,4 +12,5 @@
 #define PBSYS_CONFIG_PROGRAM_LOAD_USER_DATA_SIZE    (512)
 #define PBSYS_CONFIG_STATUS_LIGHT                   (1)
 #define PBSYS_CONFIG_STATUS_LIGHT_BATTERY           (1)
+#define PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH         (0)
 #define PBSYS_CONFIG_PROGRAM_STOP                   (1)

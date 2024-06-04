@@ -9,4 +9,5 @@
 #define PBSYS_CONFIG_PROGRAM_LOAD_AUTO_START        (1)
 #define PBSYS_CONFIG_STATUS_LIGHT                   (0)
 #define PBSYS_CONFIG_STATUS_LIGHT_BATTERY           (0)
+#define PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH         (0)
 #define PBSYS_CONFIG_PROGRAM_STOP                   (1)

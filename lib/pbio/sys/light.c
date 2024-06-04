@@ -392,3 +392,19 @@ void pbsys_status_light_poll(void) {
 }
 
 #endif // PBSYS_CONFIG_STATUS_LIGHT
+
+#if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
+void pbsys_status_light_bluetooth_set_color(pbio_color_t color) {
+    pbdrv_led_dev_t *led;
+    // FIXME: Bluetooth light is currently hard-coded to id 2 on all platforms
+    if (pbdrv_led_get_dev(2, &led) == PBIO_SUCCESS) {
+        pbio_color_hsv_t hsv;
+        pbio_color_to_hsv(color, &hsv);
+        pbdrv_led_set_hsv(led, &hsv);
+    }
+}
+
+void pbsys_status_light_bluetooth_deinit(void) {
+    pbsys_status_light_bluetooth_set_color(PBIO_COLOR_NONE);
+}
+#endif
