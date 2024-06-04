@@ -195,6 +195,34 @@ bool pbsys_bluetooth_tx_is_idle(void) {
     return !send_busy && lwrb_get_full(&stdout_ring_buf) == 0;
 }
 
+#if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+
+static bool bluetooth_enabled_by_user = true;
+
+void pbsys_bluetooth_enabled_state_request_toggle(void) {
+
+    // Ignore toggle request in all but idle system status.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
+        || pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)
+        || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)
+        || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)
+        // Ignore toggle is Bluetooth is currently being used in a connection.
+        || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
+        || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)
+        ) {
+        return;
+    }
+
+    bluetooth_enabled_by_user = !bluetooth_enabled_by_user;
+
+    if (bluetooth_enabled_by_user) {
+        process_start(&pbsys_bluetooth_process);
+    } else {
+        process_exit(&pbsys_bluetooth_process);
+    }
+}
+#endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
+
 // Contiki process
 
 static void on_event(void) {
@@ -283,6 +311,14 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
 PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     static struct etimer timer;
     static struct pt status_monitor_pt;
+
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    PROCESS_EXITHANDLER({
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+        pbdrv_bluetooth_power_on(false);
+        PROCESS_EXIT();
+    });
+    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     PROCESS_BEGIN();
 

@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Allow Bluetooth to be toggled off and on with the Bluetooth button on the
+  Prime Hub and the Inventor Hub ([support#1615]).
+
+[support#1615]: https://github.com/pybricks/support/issues/1615
+
 ## [3.5.0] - 2024-04-11
 
 ### Changed
