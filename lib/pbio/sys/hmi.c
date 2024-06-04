@@ -26,14 +26,14 @@
 #include "light.h"
 #include "program_load.h"
 
-static struct pt user_program_start_pt;
+static struct pt update_program_run_button_wait_state_pt;
 
 /**
  * Protothread to monitor the button state to trigger starting the user program.
  * @param [in]  button_pressed      The current button state.
  */
-static PT_THREAD(user_program_start(bool button_pressed)) {
-    struct pt *pt = &user_program_start_pt;
+static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
+    struct pt *pt = &update_program_run_button_wait_state_pt;
     // HACK: Misuse of protothread to reduce code size. This is the same
     // as checking if the user program is running after each PT_WAIT.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
@@ -60,7 +60,7 @@ static PT_THREAD(user_program_start(bool button_pressed)) {
 void pbsys_hmi_init(void) {
     pbsys_status_light_init();
     pbsys_hub_light_matrix_init();
-    PT_INIT(&user_program_start_pt);
+    PT_INIT(&update_program_run_button_wait_state_pt);
 }
 
 void pbsys_hmi_handle_event(process_event_t event, process_data_t data) {
@@ -91,7 +91,7 @@ void pbsys_hmi_poll(void) {
     if (pbio_button_is_pressed(&btn) == PBIO_SUCCESS) {
         if (btn & PBIO_BUTTON_CENTER) {
             pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-            user_program_start(true);
+            update_program_run_button_wait_state(true);
 
             // power off when button is held down for 3 seconds
             if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
@@ -99,7 +99,7 @@ void pbsys_hmi_poll(void) {
             }
         } else {
             pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-            user_program_start(false);
+            update_program_run_button_wait_state(false);
         }
     }
 
