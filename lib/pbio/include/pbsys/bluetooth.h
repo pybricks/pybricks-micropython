@@ -32,13 +32,7 @@ uint32_t pbsys_bluetooth_rx_get_available(void);
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size);
 bool pbsys_bluetooth_tx_is_idle(void);
-
-#if PBSYS_CONFIG_BLUETOOTH_TOGGLE
 void pbsys_bluetooth_enabled_state_request_toggle(void);
-#else
-static inline void pbsys_bluetooth_enabled_state_request_toggle(void) {
-}
-#endif
 
 #else // PBSYS_CONFIG_BLUETOOTH
 

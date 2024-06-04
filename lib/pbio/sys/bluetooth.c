@@ -45,6 +45,16 @@ PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
 // Internal API
 
+static void bluetooth_start(void) {
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
+    process_start(&pbsys_bluetooth_process);
+}
+
+static void bluetooth_stop(void) {
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
+    process_exit(&pbsys_bluetooth_process);
+}
+
 /** Initializes Bluetooth. */
 void pbsys_bluetooth_init(void) {
     // enough for two packets, one currently being sent and one to be ready
@@ -56,8 +66,7 @@ void pbsys_bluetooth_init(void) {
     lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
     lwrb_init(&stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
 
-    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
-    process_start(&pbsys_bluetooth_process);
+    bluetooth_start();
 }
 
 /**
@@ -197,8 +206,6 @@ bool pbsys_bluetooth_tx_is_idle(void) {
     return !send_busy && lwrb_get_full(&stdout_ring_buf) == 0;
 }
 
-#if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
 void pbsys_bluetooth_enabled_state_request_toggle(void) {
 
     // Ignore toggle request in all but idle system status.
@@ -215,14 +222,11 @@ void pbsys_bluetooth_enabled_state_request_toggle(void) {
 
     // Toggle BLE flag and Bluetooth system process.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED)) {
-        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
-        process_exit(&pbsys_bluetooth_process);
+        bluetooth_stop();
     } else {
-        pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
-        process_start(&pbsys_bluetooth_process);
+        bluetooth_start();
     }
 }
-#endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
 // Contiki process
 
@@ -313,13 +317,11 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     static struct etimer timer;
     static struct pt status_monitor_pt;
 
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
     PROCESS_EXITHANDLER({
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
         pbdrv_bluetooth_power_on(false);
         PROCESS_EXIT();
     });
-    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     PROCESS_BEGIN();
 
