@@ -11,6 +11,9 @@
 
 #include <pbdrv/bluetooth.h>
 
+#include <pbsys/config.h>
+#include <pbsys/status.h>
+
 #include "py/obj.h"
 #include "py/misc.h"
 #include "py/mphal.h"
@@ -259,6 +262,15 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     // On Move Hub, nothing is broadcast if it is called while the
     // move hub is connected to Pybricks Code. Also, broadcasting interferes
     // with observing even when not connected to Pybricks Code.
+
+    // FIXME: This check is (and should only be) done in the BLE constructor,
+    // but it may still pass there since 0 is a valid broadcast channel. That
+    // should be fixed by defaulting to None if no broadcast channel is provided.
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED)) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
+    }
+    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     // Stop broadcasting if data is None.
     if (data_in == mp_const_none) {
@@ -520,6 +532,12 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     }
 
     mp_int_t num_channels = mp_obj_get_int(mp_obj_len(observe_channels_in));
+
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED) && (num_channels > 0 || broadcast_channel)) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
+    }
+    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     if (num_channels < 0 || num_channels > UINT8_MAX) {
         mp_raise_ValueError(MP_ERROR_TEXT("len observe channels must be 0 to 255"));

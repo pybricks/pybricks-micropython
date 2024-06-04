@@ -15,6 +15,9 @@
 #include <pbio/error.h>
 #include <pbio/task.h>
 
+#include <pbsys/config.h>
+#include <pbsys/status.h>
+
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/tools.h>
@@ -283,6 +286,12 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         , PB_ARG_DEFAULT_FALSE(stay_connected)
         #endif // PYBRICKS_HUB_TECHNICHUB
         );
+
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED)) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
+    }
+    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
     self->joystick_deadzone = pb_obj_get_pct(joystick_deadzone_in);

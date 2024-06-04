@@ -9,10 +9,14 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/task.h>
+
+#include <pbsys/config.h>
+#include <pbsys/status.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
@@ -374,6 +378,12 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000));
+
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED)) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
+    }
+    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     pb_type_pupdevices_Remote_obj_t *self = mp_obj_malloc(pb_type_pupdevices_Remote_obj_t, type);
 
