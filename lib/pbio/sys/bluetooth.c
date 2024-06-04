@@ -55,6 +55,8 @@ void pbsys_bluetooth_init(void) {
 
     lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
     lwrb_init(&stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
+
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
     process_start(&pbsys_bluetooth_process);
 }
 
@@ -197,8 +199,6 @@ bool pbsys_bluetooth_tx_is_idle(void) {
 
 #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
-static bool bluetooth_enabled_by_user = true;
-
 void pbsys_bluetooth_enabled_state_request_toggle(void) {
 
     // Ignore toggle request in all but idle system status.
@@ -213,12 +213,13 @@ void pbsys_bluetooth_enabled_state_request_toggle(void) {
         return;
     }
 
-    bluetooth_enabled_by_user = !bluetooth_enabled_by_user;
-
-    if (bluetooth_enabled_by_user) {
-        process_start(&pbsys_bluetooth_process);
-    } else {
+    // Toggle BLE flag and Bluetooth system process.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED)) {
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
         process_exit(&pbsys_bluetooth_process);
+    } else {
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED);
+        process_start(&pbsys_bluetooth_process);
     }
 }
 #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
