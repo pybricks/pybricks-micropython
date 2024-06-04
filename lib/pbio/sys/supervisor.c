@@ -11,7 +11,7 @@
 #include <pbdrv/watchdog.h>
 #include <pbsys/status.h>
 
-#define IDLE_SHUTDOWN_TIMEOUT (3 * 60000)
+#include <pbdrv/bluetooth.h>
 
 /**
  * Polls the system supervisor.
@@ -25,10 +25,10 @@ void pbsys_supervisor_poll(void) {
     // Shut down on low voltage so we don't damage rechargeable batteries.
     bool low_battery_shutdown = pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000);
 
-    // Shut down after several minutes of activity.
-    bool idle_shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED) ?
-        pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING, true, IDLE_SHUTDOWN_TIMEOUT) :
-        pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING, false, IDLE_SHUTDOWN_TIMEOUT);
+    // If not connected to a host, shut down after several minutes of not
+    // running any program.
+    bool idle_shutdown = !pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) &&
+        pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING, false, 3 * 60000);
 
     if (low_battery_shutdown || idle_shutdown) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
