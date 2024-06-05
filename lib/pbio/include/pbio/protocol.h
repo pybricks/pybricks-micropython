@@ -241,12 +241,6 @@ typedef enum {
      * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST = 8,
-    /**
-     * Bluetooth Low Energy is enabled.
-     *
-     * @since Pybricks Profile v1.4.0
-     */
-    PBIO_PYBRICKS_STATUS_BLUETOOTH_BLE_ENABLED = 9,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;

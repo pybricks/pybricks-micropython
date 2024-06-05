@@ -200,7 +200,11 @@ bool pbsys_bluetooth_tx_is_idle(void) {
 
 static bool pbsys_bluetooth_user_enabled = true;
 
-void pbsys_bluetooth_enabled_state_request_toggle(void) {
+bool pbsys_bluetooth_is_user_enabled(void) {
+    return pbsys_bluetooth_user_enabled;
+}
+
+void pbsys_bluetooth_is_user_enabled_request_toggle(void) {
 
     // Ignore toggle request in all but idle system status.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
