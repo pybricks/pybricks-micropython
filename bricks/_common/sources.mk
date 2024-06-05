@@ -234,6 +234,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/program_stop.c \
 	sys/status.c \
 	sys/supervisor.c \
+	sys/user_program.c \
 	)
 
 # MicroPython math library

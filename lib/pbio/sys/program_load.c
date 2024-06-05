@@ -75,9 +75,6 @@ pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, u
     return PBIO_SUCCESS;
 }
 
-static bool pbsys_program_load_start_user_program_requested;
-static bool pbsys_program_load_start_repl_requested;
-
 #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
 // Updates checksum in data map to satisfy bootloader requirements.
 static void pbsys_program_load_update_checksum(void) {
@@ -161,44 +158,29 @@ pbio_error_t pbsys_program_load_set_program_data(uint32_t offset, const void *da
 }
 
 /**
- * Requests to start the user program.
+ * Asserts that the loaded/stored user program is valid and ready to run.
  *
- * @returns     ::PBIO_ERROR_BUSY if a user program is already running.
- *              ::PBIO_ERROR_INVALID_ARG if the user program has an invalid size.
- *              ::PBIO_ERROR_NOT_SUPPORTED if the program load module is disabled.
- *              Otherwise ::PBIO_SUCCESS.
+ * @returns                 ::PBIO_ERROR_INVALID_ARG if loaded program is not
+ *                          valid. Otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_program_load_start_user_program(void) {
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        return PBIO_ERROR_BUSY;
-    }
-
+pbio_error_t pbsys_program_load_assert_program_valid(void) {
     // Don't run invalid programs.
     if (map->program_size == 0 || map->program_size > PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE) {
         // TODO: Validate the data beyond just size.
         return PBIO_ERROR_INVALID_ARG;
     }
-
-    pbsys_program_load_start_user_program_requested = true;
-
     return PBIO_SUCCESS;
 }
 
 /**
- * Requests to start the REPL.
+ * Populates the program data with references to the loaded program data.
  *
- * @returns     ::PBIO_ERROR_BUSY if a user program is already running.
- *              ::PBIO_ERROR_NOT_SUPPORTED if the program load module is disabled.
- *              Otherwise ::PBIO_SUCCESS.
+ * @param [in]  offset      The program data structure.
  */
-pbio_error_t pbsys_program_load_start_repl(void) {
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    pbsys_program_load_start_repl_requested = true;
-
-    return PBIO_SUCCESS;
+void pbsys_program_load_get_program_data(pbsys_main_program_t *program) {
+    program->code_start = map->program_data;
+    program->code_end = map->program_data + map->program_size;
+    program->data_end = map->program_data + PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE;
 }
 
 PROCESS(pbsys_program_load_process, "program_load");
@@ -262,52 +244,6 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     pbsys_init_busy_down();
 
     PROCESS_END();
-}
-
-/**
- * Waits for a command to start a user program or REPL.
- *
- * NOTE: this function runs the contiki event loop, so it should not be called
- * from inside an contiki process.
- *
- * @param [out] program         Program info structure to be populated.
- * @return                      ::PBIO_SUCCESS on success.
- *                              ::PBIO_ERROR_CANCELED when canceled due to shutdown request.
- *                              ::PBIO_ERROR_NOT_SUPPORTED if the program load module is disabled.
- */
-pbio_error_t pbsys_program_load_wait_command(pbsys_main_program_t *program) {
-    for (;;) {
-        // REVISIT: this can be long waiting, so we could do a more efficient
-        // wait (i.e. __WFI() on embedded system)
-        pbio_do_one_event();
-
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-            return PBIO_ERROR_CANCELED;
-        }
-
-        #if PBSYS_CONFIG_PROGRAM_LOAD_AUTO_START
-        pbsys_program_load_start_user_program_requested = true;
-        #endif
-
-        if (pbsys_program_load_start_user_program_requested) {
-            pbsys_program_load_start_user_program_requested = false;
-            program->run_builtin = false;
-            break;
-        }
-
-        if (pbsys_program_load_start_repl_requested) {
-            pbsys_program_load_start_repl_requested = false;
-            program->run_builtin = true;
-            break;
-        }
-    }
-
-    // REPL can also use user program (e.g. in MicroPython, import user modules)
-    program->code_start = map->program_data;
-    program->code_end = map->program_data + map->program_size;
-    program->data_end = map->program_data + PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE;
-
-    return PBIO_SUCCESS;
 }
 
 #endif // PBSYS_CONFIG_PROGRAM_LOAD

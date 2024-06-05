@@ -14,7 +14,7 @@
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
-#include "program_load.h"
+#include "user_program.h"
 #include "program_stop.h"
 #include <pbsys/program_stop.h>
 #include <pbsys/bluetooth.h>
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
         // Receive a program. This cancels itself on shutdown.
         static pbsys_main_program_t program;
-        pbio_error_t err = pbsys_program_load_wait_command(&program);
+        pbio_error_t err = pbsys_user_program_wait_command(&program);
         if (err != PBIO_SUCCESS) {
             continue;
         }

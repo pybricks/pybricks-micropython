@@ -26,6 +26,7 @@
 #include "light_matrix.h"
 #include "light.h"
 #include "program_load.h"
+#include "user_program.h"
 
 static struct pt update_program_run_button_wait_state_pt;
 
@@ -52,7 +53,7 @@ static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
 
         // if we made it through a full press and release, without the user
         // program running, then start the user program
-        pbsys_program_load_start_user_program();
+        pbsys_user_program_start_program();
     }
 
     PT_END(pt);
