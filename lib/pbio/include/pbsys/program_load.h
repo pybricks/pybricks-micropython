@@ -26,7 +26,7 @@
 /**
  * Header of loaded data. All data types are little-endian.
  */
-typedef struct _pbsys_program_load_data_header_t {
+typedef struct _pbsys_program_load_data_map_t {
     /**
      * How much to write on shutdown (and how much to load on boot). This is
      * reset to 0 in RAM on load, and should be set whenever any data is
@@ -49,9 +49,13 @@ typedef struct _pbsys_program_load_data_header_t {
      * Size of the application program (size of code only).
      */
     uint32_t program_size;
-} pbsys_program_load_data_header_t;
+    /**
+     * Data of the application program (code + heap).
+     */
+    uint8_t program_data[] __attribute__((aligned(sizeof(void *))));
+} pbsys_program_load_data_map_t;
 
-#define PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE (PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE - sizeof(pbsys_program_load_data_header_t))
+#define PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE (PBSYS_CONFIG_PROGRAM_LOAD_ROM_SIZE - sizeof(pbsys_program_load_data_map_t))
 
 pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size);
 
