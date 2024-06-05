@@ -18,7 +18,7 @@
 #include <pbsys/status.h>
 
 #include "core.h"
-#include "program_load.h"
+#include "storage.h"
 
 static bool pbsys_user_program_start_user_program_requested;
 static bool pbsys_user_program_start_repl_requested;
@@ -36,7 +36,7 @@ pbio_error_t pbsys_user_program_start_program(void) {
         return PBIO_ERROR_BUSY;
     }
 
-    pbio_error_t err = pbsys_program_load_assert_program_valid();
+    pbio_error_t err = pbsys_storage_assert_program_valid();
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -103,7 +103,7 @@ pbio_error_t pbsys_user_program_wait_command(pbsys_main_program_t *program) {
 
     // Builtin program can also use user program (e.g. in MicroPython, REPL may
     // import user modules), so load data in all cases.
-    pbsys_program_load_get_program_data(program);
+    pbsys_storage_get_program_data(program);
 
     return PBIO_SUCCESS;
 }

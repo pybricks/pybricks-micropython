@@ -3,7 +3,7 @@
 
 #include <pbsys/config.h>
 
-#if PBSYS_CONFIG_PROGRAM_LOAD
+#if PBSYS_CONFIG_STORAGE
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -15,7 +15,7 @@
 #include <pbio/main.h>
 #include <pbio/protocol.h>
 #include <pbsys/main.h>
-#include <pbsys/program_load.h>
+#include <pbsys/storage.h>
 #include <pbsys/status.h>
 
 #include "core.h"
@@ -24,18 +24,18 @@
  * Map of loaded data sits at the start of user RAM.
  */
 union {
-    pbsys_program_load_data_map_t data_map;
-    uint8_t data[PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE];
+    pbsys_storage_data_map_t data_map;
+    uint8_t data[PBSYS_CONFIG_STORAGE_RAM_SIZE];
 } pbsys_user_ram_data_map __attribute__((section(".noinit"), used));
 
-static pbsys_program_load_data_map_t *map = &pbsys_user_ram_data_map.data_map;
+static pbsys_storage_data_map_t *map = &pbsys_user_ram_data_map.data_map;
 
 /**
  * Sets write size to how much data must be written on shutdown. This is not
  * simply a boolean flag because it is also used as the load size on boot.
  */
 static void update_write_size(void) {
-    map->write_size = sizeof(pbsys_program_load_data_map_t) + map->program_size;
+    map->write_size = sizeof(pbsys_storage_data_map_t) + map->program_size;
 }
 
 /**
@@ -47,7 +47,7 @@ static void update_write_size(void) {
  * @returns             ::PBIO_ERROR_INVALID_ARG if the data won't fit.
  *                      Otherwise, ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size) {
+pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size) {
     if (offset + size > sizeof(map->user_data)) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -66,7 +66,7 @@ pbio_error_t pbsys_program_load_set_user_data(uint32_t offset, const uint8_t *da
  * @returns             ::PBIO_ERROR_INVALID_ARG if reading out of range.
  *                      Otherwise, ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
+pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
     // User is allowed to read beyond user storage to include program data.
     if (offset + size > sizeof(map->user_data) + sizeof(map->program_size) + map->program_size) {
         return PBIO_ERROR_INVALID_ARG;
@@ -75,9 +75,9 @@ pbio_error_t pbsys_program_load_get_user_data(uint32_t offset, uint8_t **data, u
     return PBIO_SUCCESS;
 }
 
-#if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
+#if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
 // Updates checksum in data map to satisfy bootloader requirements.
-static void pbsys_program_load_update_checksum(void) {
+static void pbsys_storage_update_checksum(void) {
 
     // Align writable data by a double word, to simplify checksum
     // computation and storage drivers that write double words.
@@ -88,8 +88,8 @@ static void pbsys_program_load_update_checksum(void) {
     // The area scanned by the bootloader adds up to 0 when all user data
     // is 0xFFFFFFFF. So the bootloader value up until just before the user
     // data is always 0 + the number of words in the scanned user data.
-    extern uint32_t _pbsys_program_load_checked_size;
-    uint32_t checksize = (uint32_t)&_pbsys_program_load_checked_size;
+    extern uint32_t _pbsys_storage_checked_size;
+    uint32_t checksize = (uint32_t)&_pbsys_storage_checked_size;
     uint32_t checksum = checksize / sizeof(uint32_t);
 
     // Don't count existing value.
@@ -105,7 +105,7 @@ static void pbsys_program_load_update_checksum(void) {
     // Set the checksum complement to cancel out user data checksum.
     map->checksum_complement = 0xFFFFFFFF - checksum + 1;
 }
-#endif // PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
+#endif // PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
 
 /**
  * Writes the user program metadata.
@@ -115,7 +115,7 @@ static void pbsys_program_load_update_checksum(void) {
  * @returns             ::PBIO_ERROR_BUSY if the user program is running.
  *                      Otherwise, ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_program_load_set_program_size(uint32_t size) {
+pbio_error_t pbsys_storage_set_program_size(uint32_t size) {
     // we can't allow this to be changed while a user program is running
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
         return PBIO_ERROR_BUSY;
@@ -142,8 +142,8 @@ pbio_error_t pbsys_program_load_set_program_size(uint32_t size) {
  *                          ::PBIO_ERROR_BUSY if the user program is running.
  *                          Otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_program_load_set_program_data(uint32_t offset, const void *data, uint32_t size) {
-    if (offset + size > PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE) {
+pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, uint32_t size) {
+    if (offset + size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -163,9 +163,9 @@ pbio_error_t pbsys_program_load_set_program_data(uint32_t offset, const void *da
  * @returns                 ::PBIO_ERROR_INVALID_ARG if loaded program is not
  *                          valid. Otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_program_load_assert_program_valid(void) {
+pbio_error_t pbsys_storage_assert_program_valid(void) {
     // Don't run invalid programs.
-    if (map->program_size == 0 || map->program_size > PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE) {
+    if (map->program_size == 0 || map->program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
         // TODO: Validate the data beyond just size.
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -177,34 +177,34 @@ pbio_error_t pbsys_program_load_assert_program_valid(void) {
  *
  * @param [in]  offset      The program data structure.
  */
-void pbsys_program_load_get_program_data(pbsys_main_program_t *program) {
+void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
     program->code_start = map->program_data;
     program->code_end = map->program_data + map->program_size;
-    program->data_end = map->program_data + PBSYS_PROGRAM_LOAD_MAX_PROGRAM_SIZE;
+    program->data_end = map->program_data + PBSYS_STORAGE_MAX_PROGRAM_SIZE;
 }
 
-PROCESS(pbsys_program_load_process, "program_load");
+PROCESS(pbsys_storage_process, "storage");
 
 /**
  * Starts loading the user data from storage to RAM.
  */
-void pbsys_program_load_init(void) {
+void pbsys_storage_init(void) {
     pbsys_init_busy_up();
-    process_start(&pbsys_program_load_process);
+    process_start(&pbsys_storage_process);
 }
 
 /**
  * Starts saving the user data from RAM to storage.
  */
-void pbsys_program_load_deinit(void) {
+void pbsys_storage_deinit(void) {
     pbsys_init_busy_up();
-    process_post(&pbsys_program_load_process, PROCESS_EVENT_CONTINUE, NULL);
+    process_post(&pbsys_storage_process, PROCESS_EVENT_CONTINUE, NULL);
 }
 
 /**
  * This process loads data from storage on boot, and saves it on shutdown.
  */
-PROCESS_THREAD(pbsys_program_load_process, ev, data) {
+PROCESS_THREAD(pbsys_storage_process, ev, data) {
 
     static pbio_error_t err;
     static struct pt pt;
@@ -232,8 +232,8 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     // Write data to storage if it was updated.
     if (map->write_size) {
 
-        #if PBSYS_CONFIG_PROGRAM_LOAD_OVERLAPS_BOOTLOADER_CHECKSUM
-        pbsys_program_load_update_checksum();
+        #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
+        pbsys_storage_update_checksum();
         #endif
 
         // Write the data.
@@ -246,4 +246,4 @@ PROCESS_THREAD(pbsys_program_load_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBSYS_CONFIG_PROGRAM_LOAD
+#endif // PBSYS_CONFIG_STORAGE

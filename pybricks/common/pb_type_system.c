@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
-#include <pbsys/program_load.h>
+#include <pbsys/storage.h>
 
 #include "py/obj.h"
 #include "py/objstr.h"
@@ -104,7 +104,7 @@ STATIC mp_obj_t pb_type_System_storage(size_t n_args, const mp_obj_t *pos_args, 
     if (read_in != mp_const_none && write_in == mp_const_none) {
         byte *data;
         mp_uint_t size = mp_obj_get_int(read_in);
-        pb_assert(pbsys_program_load_get_user_data(offset, &data, size));
+        pb_assert(pbsys_storage_get_user_data(offset, &data, size));
         return mp_obj_new_bytes(data, size);
     }
 
@@ -113,7 +113,7 @@ STATIC mp_obj_t pb_type_System_storage(size_t n_args, const mp_obj_t *pos_args, 
         mp_buffer_info_t bufinfo;
         mp_get_buffer_raise(write_in, &bufinfo, MP_BUFFER_READ);
 
-        pb_assert(pbsys_program_load_set_user_data(offset, bufinfo.buf, bufinfo.len));
+        pb_assert(pbsys_storage_set_user_data(offset, bufinfo.buf, bufinfo.len));
 
         return mp_const_none;
     }

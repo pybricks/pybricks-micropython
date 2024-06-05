@@ -25,11 +25,11 @@ MEMORY
 "MAGIC_OFFSET" = 0x100;
 
 /* Minimal stack size to allow the build to proceed. The actual stack size is whatever is left after
-   statically allocated memory. It can be tuned by setting PBSYS_CONFIG_PROGRAM_LOAD_RAM_SIZE. */
+   statically allocated memory. It can be tuned by setting PBSYS_CONFIG_STORAGE_RAM_SIZE. */
 _minimal_stack_size = 3K;
 
 /* Start of data storage. */
 _pbdrv_block_device_storage_start = ORIGIN(FLASH_USER_0);
 
 /* Portion of the data parsed for the checksum on boot. */
-_pbsys_program_load_checked_size = LENGTH(FLASH_USER_0);
+_pbsys_storage_checked_size = LENGTH(FLASH_USER_0);

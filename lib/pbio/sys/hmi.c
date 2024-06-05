@@ -25,7 +25,6 @@
 
 #include "light_matrix.h"
 #include "light.h"
-#include "program_load.h"
 #include "user_program.h"
 
 static struct pt update_program_run_button_wait_state_pt;
