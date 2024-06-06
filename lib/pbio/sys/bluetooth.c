@@ -327,6 +327,13 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+
+        // Show inactive status only if user requested Bluetooth as disabled to
+        // avoid always flashing red in between program runs when disconnected.
+        if (!settings->bluetooth_ble_user_enabled) {
+            pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
+        }
+
         // make sure the Bluetooth chip is in reset long enough to actually reset
         etimer_set(&timer, 150);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
@@ -410,12 +417,6 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         reset_all();
         PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
-
-        // Indicate status only if user requested Bluetooth to be disabled to
-        // avoid always flashing red in between program runs when disconnected.
-        if (!settings->bluetooth_ble_user_enabled) {
-            pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
-        }
 
         // reset Bluetooth chip
         pbdrv_bluetooth_power_on(false);
