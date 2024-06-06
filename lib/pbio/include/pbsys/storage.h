@@ -16,6 +16,16 @@
 
 #include <pbsys/config.h>
 
+/**
+ * System settings. All data types are little-endian.
+ */
+typedef struct _pbsys_storage_settings_t {
+    /**
+     * User has enabled Bluetooth Low Energy.
+     */
+    bool bluetooth_ble_user_enabled : 1;
+} pbsys_storage_settings_t;
+
 #if PBSYS_CONFIG_STORAGE
 
 // Sanity check that application RAM is enough to load ROM and still do something useful
@@ -52,6 +62,11 @@ typedef struct _pbsys_storage_data_map_t {
      */
     uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
     /**
+     * System settings. Settings will be reset to defaults when the firmware
+     * version changes due to an update.
+     */
+    pbsys_storage_settings_t settings;
+    /**
      * Size of the application program (size of code only).
      */
     uint32_t program_size;
@@ -67,6 +82,10 @@ pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, u
 
 pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32_t size);
 
+pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings);
+
+void pbsys_storage_request_settings_write(void);
+
 #else
 
 #define PBSYS_STORAGE_MAX_PROGRAM_SIZE (0)
@@ -80,6 +99,13 @@ static inline pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t 
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+static inline pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings) {
+    *settings = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbsys_storage_request_settings_write(void) {
+}
 
 #endif // PBSYS_CONFIG_STORAGE
 

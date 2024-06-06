@@ -31,6 +31,8 @@ union {
 
 static pbsys_storage_data_map_t *map = &pbsys_user_ram_data_map.data_map;
 
+static bool data_map_is_loaded = false;
+
 /**
  * Sets write size to how much data must be written on shutdown. This is not
  * simply a boolean flag because it is also used as the load size on boot.
@@ -73,6 +75,30 @@ pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32
         return PBIO_ERROR_INVALID_ARG;
     }
     *data = map->user_data + offset;
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Requests that settings will be saved on shutdown. Should be called by
+ * functions that change user settings.
+ */
+void pbsys_storage_request_settings_write(void) {
+    update_write_size();
+}
+
+/**
+ * Gets the stored system settings.
+ *
+ * @param [out] settings   The settings.
+ * @returns                ::PBIO_ERROR_AGAIN if settings still being loaded.
+ *                         Otherwise, ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings) {
+    if (!data_map_is_loaded) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    *settings = &map->settings;
     return PBIO_SUCCESS;
 }
 
@@ -235,6 +261,10 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
         map->stored_firmware_version = PBIO_HEXVERSION;
         update_write_size();
     }
+
+    // Poke processes that await on system settings to become available.
+    data_map_is_loaded = true;
+    process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
 
     // Initialization done.
     pbsys_init_busy_down();

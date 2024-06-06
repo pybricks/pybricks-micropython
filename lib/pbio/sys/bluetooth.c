@@ -21,6 +21,7 @@
 #include <pbsys/bluetooth.h>
 #include <pbsys/command.h>
 #include <pbsys/status.h>
+#include <pbsys/storage.h>
 
 #include "light.h"
 
@@ -202,10 +203,13 @@ bool pbsys_bluetooth_tx_is_idle(void) {
     return !send_busy && lwrb_get_full(&stdout_ring_buf) == 0;
 }
 
-static bool pbsys_bluetooth_user_enabled = true;
+static pbsys_storage_settings_t *settings;
 
 bool pbsys_bluetooth_is_user_enabled(void) {
-    return pbsys_bluetooth_user_enabled;
+    if (!settings) {
+        return false;
+    }
+    return settings->bluetooth_ble_user_enabled;
 }
 
 void pbsys_bluetooth_is_user_enabled_request_toggle(void) {
@@ -219,13 +223,14 @@ void pbsys_bluetooth_is_user_enabled_request_toggle(void) {
         || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
         || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)
         // Ignore if last request not yet finished processing.
-        || pbsys_bluetooth_user_enabled != pbdrv_bluetooth_is_ready()
+        || settings->bluetooth_ble_user_enabled != pbdrv_bluetooth_is_ready()
         ) {
         return;
     }
 
     // Toggle the user enabled state and poll process to take action.
-    pbsys_bluetooth_user_enabled = !pbsys_bluetooth_user_enabled;
+    settings->bluetooth_ble_user_enabled = !settings->bluetooth_ble_user_enabled;
+    pbsys_storage_request_settings_write();
     pbsys_bluetooth_process_poll();
 }
 
@@ -316,6 +321,8 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
     PROCESS_BEGIN();
 
+    PROCESS_WAIT_EVENT_UNTIL(pbsys_storage_get_settings(&settings) == PBIO_SUCCESS);
+
     pbdrv_bluetooth_set_on_event(pbsys_bluetooth_process_poll);
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
@@ -325,7 +332,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
         // Wait until Bluetooth enabled requested by user, but stop waiting on shutdown.
-        PROCESS_WAIT_UNTIL(pbsys_bluetooth_user_enabled || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN));
+        PROCESS_WAIT_UNTIL(settings->bluetooth_ble_user_enabled || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN));
         if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
             break;
         }
@@ -346,7 +353,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
             pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
             || pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
             || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)
-            || !pbsys_bluetooth_user_enabled);
+            || !settings->bluetooth_ble_user_enabled);
 
         // Now change the state depending on which of the above was triggered.
 
@@ -365,7 +372,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         // The Bluetooth enabled flag can only change while disconnected and
         // while no program is running. So here it just serves to skip the
         // Bluetooth loop below and go directly to the disable step below it.
-        while (pbsys_bluetooth_user_enabled
+        while (settings->bluetooth_ble_user_enabled
                && pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
                && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
 
@@ -406,7 +413,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         // Indicate status only if user requested Bluetooth to be disabled to
         // avoid always flashing red in between program runs when disconnected.
-        if (!pbsys_bluetooth_user_enabled) {
+        if (!settings->bluetooth_ble_user_enabled) {
             pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
         }
 
