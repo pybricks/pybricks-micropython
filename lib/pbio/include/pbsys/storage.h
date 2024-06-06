@@ -24,7 +24,7 @@
 #endif
 
 /**
- * Header of loaded data. All data types are little-endian.
+ * Map of loaded data. All data types are little-endian.
  */
 typedef struct _pbsys_storage_data_map_t {
     /**
@@ -41,6 +41,12 @@ typedef struct _pbsys_storage_data_map_t {
      */
     volatile uint32_t checksum_complement;
     #endif
+    /**
+     * Firmware version used to create the stored data. See pbio/version.
+     * Human-readable when printed as hex. If this value does not match
+     * the version of the running firmware, user data will be reset to 0.
+     */
+    uint32_t stored_firmware_version;
     /**
      * End-user read-write accessible data.
      */

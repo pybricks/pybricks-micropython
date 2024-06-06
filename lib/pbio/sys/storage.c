@@ -14,6 +14,7 @@
 #include <pbdrv/block_device.h>
 #include <pbio/main.h>
 #include <pbio/protocol.h>
+#include <pbio/version.h>
 #include <pbsys/main.h>
 #include <pbsys/storage.h>
 #include <pbsys/status.h>
@@ -222,6 +223,18 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
 
     // Reset write size, so we don't write data if nothing changed.
     map->write_size = 0;
+
+    // Test that storage matches current firmware version.
+    if (map->stored_firmware_version != PBIO_HEXVERSION) {
+        // Reset storage except for program data. It is sufficient to set its
+        // size to 0, which is what happens here since it is in the map.
+        memset(map, 0, sizeof(pbsys_storage_data_map_t));
+
+        // Make sure the new version will be written on shutdown, even if no
+        // new program is uploaded.
+        map->stored_firmware_version = PBIO_HEXVERSION;
+        update_write_size();
+    }
 
     // Initialization done.
     pbsys_init_busy_down();
