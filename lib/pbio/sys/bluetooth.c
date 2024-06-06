@@ -45,6 +45,10 @@ static bool send_busy;
 
 PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
+static void pbsys_bluetooth_process_poll(void) {
+    process_poll(&pbsys_bluetooth_process);
+}
+
 // Internal API
 
 /** Initializes Bluetooth. */
@@ -178,7 +182,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
 
     // poke the process to start tx soon-ish. This way, we can accumulate up to
     // MAX_CHAR_SIZE bytes before actually transmitting
-    process_poll(&pbsys_bluetooth_process);
+    pbsys_bluetooth_process_poll();
 
     return PBIO_SUCCESS;
 }
@@ -222,14 +226,10 @@ void pbsys_bluetooth_is_user_enabled_request_toggle(void) {
 
     // Toggle the user enabled state and poll process to take action.
     pbsys_bluetooth_user_enabled = !pbsys_bluetooth_user_enabled;
-    process_poll(&pbsys_bluetooth_process);
+    pbsys_bluetooth_process_poll();
 }
 
 // Contiki process
-
-static void on_event(void) {
-    process_poll(&pbsys_bluetooth_process);
-}
 
 static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
@@ -256,7 +256,7 @@ static void send_done(void) {
     }
 
     send_busy = false;
-    process_poll(&pbsys_bluetooth_process);
+    pbsys_bluetooth_process_poll();
 }
 
 // drain all buffers and queues and reset global state
@@ -316,7 +316,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    pbdrv_bluetooth_set_on_event(on_event);
+    pbdrv_bluetooth_set_on_event(pbsys_bluetooth_process_poll);
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
