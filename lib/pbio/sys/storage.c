@@ -34,10 +34,14 @@ static pbsys_storage_data_map_t *map = &pbsys_user_ram_data_map.data_map;
 static bool data_map_is_loaded = false;
 
 /**
- * Sets write size to how much data must be written on shutdown. This is not
- * simply a boolean flag because it is also used as the load size on boot.
+ * Requests that storage (program, user data, settings) will be saved (some
+ * time before shutdown). Should be called by functions that change data.
+ *
+ * This is done by setting the write size to how much data must be written on
+ * shutdown. This is not simply a boolean flag because it is also used as the
+ * load size on boot.
  */
-static void update_write_size(void) {
+void pbsys_storage_request_write(void) {
     map->write_size = sizeof(pbsys_storage_data_map_t) + map->program_size;
 }
 
@@ -56,7 +60,7 @@ pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, u
     }
     // Update data and write size to request write on poweroff.
     memcpy(map->user_data + offset, data, size);
-    update_write_size();
+    pbsys_storage_request_write();
     return PBIO_SUCCESS;
 }
 
@@ -79,14 +83,6 @@ pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32
 }
 
 /**
- * Requests that settings will be saved on shutdown. Should be called by
- * functions that change user settings.
- */
-void pbsys_storage_request_settings_write(void) {
-    update_write_size();
-}
-
-/**
  * Gets the stored system settings.
  *
  * @param [out] settings   The settings.
@@ -100,6 +96,14 @@ pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings) {
 
     *settings = &map->settings;
     return PBIO_SUCCESS;
+}
+
+/**
+ * Sets the default settings after an erase.
+ */
+static void pbsys_storage_set_default_settings(void) {
+    map->settings.bluetooth_ble_user_enabled = true;
+    pbsys_storage_request_write();
 }
 
 #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
@@ -151,14 +155,16 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t size) {
     // Update program size.
     map->program_size = size;
 
-    // Program size was updated, so set the write size.
-    update_write_size();
+    // Program size was updated, so request write.
+    pbsys_storage_request_write();
 
     return PBIO_SUCCESS;
 }
 
 /**
- * Writes data to user RAM.
+ * Writes program data to user RAM.
+ *
+ * Should be combined with at least one call to ::pbsys_storage_set_program_size.
  *
  * @param [in]  offset      The offset in bytes from the base user RAM address.
  * @param [in]  data        The data to write.
@@ -256,10 +262,12 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
         // size to 0, which is what happens here since it is in the map.
         memset(map, 0, sizeof(pbsys_storage_data_map_t));
 
-        // Make sure the new version will be written on shutdown, even if no
-        // new program is uploaded.
+        // Set firmware version used to create current storage map.
         map->stored_firmware_version = PBIO_HEXVERSION;
-        update_write_size();
+
+        // Set defaults user settings. This also raises the write flag to save
+        // on shutdown.
+        pbsys_storage_set_default_settings();
     }
 
     // Poke processes that await on system settings to become available.

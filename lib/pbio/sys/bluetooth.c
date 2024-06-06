@@ -230,7 +230,7 @@ void pbsys_bluetooth_is_user_enabled_request_toggle(void) {
 
     // Toggle the user enabled state and poll process to take action.
     settings->bluetooth_ble_user_enabled = !settings->bluetooth_ble_user_enabled;
-    pbsys_storage_request_settings_write();
+    pbsys_storage_request_write();
     pbsys_bluetooth_process_poll();
 }
 

@@ -84,7 +84,7 @@ pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32
 
 pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings);
 
-void pbsys_storage_request_settings_write(void);
+void pbsys_storage_request_write(void);
 
 #else
 
@@ -104,7 +104,7 @@ static inline pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t *
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbsys_storage_request_settings_write(void) {
+static inline void pbsys_storage_request_write(void) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE
