@@ -7,9 +7,16 @@
 ### Added
 
 - Allow Bluetooth to be toggled off and on with the Bluetooth button on the
-  Prime Hub and the Inventor Hub ([support#1615]).
+  Prime Hub and the Inventor Hub ([support#1615]), and have this state persist
+  between reboots.
+
+### Changed
+
+- When upgrading the firmware to a new version, the user program will now
+  be erased. This avoids issues with incompatible program files ([support#1622]).
 
 [support#1615]: https://github.com/pybricks/support/issues/1615
+[support#1622]: https://github.com/pybricks/support/issues/1622
 
 ## [3.5.0] - 2024-04-11
 
