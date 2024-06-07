@@ -25,7 +25,7 @@
  */
 void pbsys_storage_set_default_settings(pbsys_storage_settings_t *settings) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    settings->bluetooth_ble_user_enabled = true;
+    settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #endif
 }
 
@@ -35,7 +35,7 @@ bool pbsys_storage_settings_bluetooth_enabled(void) {
     if (!settings) {
         return true;
     }
-    return settings->bluetooth_ble_user_enabled;
+    return settings->flags & PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #else
     return true;
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
@@ -55,13 +55,13 @@ void pbsys_storage_settings_bluetooth_enabled_request_toggle(void) {
         || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
         || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)
         // Ignore if last request not yet finished processing.
-        || settings->bluetooth_ble_user_enabled != pbdrv_bluetooth_is_ready()
+        || pbsys_storage_settings_bluetooth_enabled() != pbdrv_bluetooth_is_ready()
         ) {
         return;
     }
 
     // Toggle the user enabled state and poll process to take action.
-    settings->bluetooth_ble_user_enabled = !settings->bluetooth_ble_user_enabled;
+    settings->flags ^= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     pbsys_storage_request_write();
     pbsys_bluetooth_process_poll();
     #endif

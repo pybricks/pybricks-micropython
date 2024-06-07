@@ -19,15 +19,20 @@
 #include <pbsys/config.h>
 
 /**
+ * System setting flags
+ */
+typedef enum {
+    /**
+     * Bluetooth is enabled by the user (defaults to true).
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED = (1 << 0),
+} pbsys_storage_settings_flags_t;
+
+/**
  * System settings. All data types are little-endian.
  */
 typedef struct _pbsys_storage_settings_t {
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    /**
-     * User has enabled Bluetooth Low Energy.
-     */
-    bool bluetooth_ble_user_enabled : 1;
-    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    uint32_t flags;
 } pbsys_storage_settings_t;
 
 #if PBSYS_CONFIG_STORAGE
