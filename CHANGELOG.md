@@ -13,6 +13,8 @@
   correction of the `hub.imu.heading()` value ([support#1678]).
 - Added `update_heading_correction` to interactively set the heading
   correction value ([support#1678]).
+- Reduced hub poweroff time from 3 to 2 second to make it easier to turn off
+  the hub ([pybricks-micropython#250]).
 
 ### Changed
 
@@ -21,6 +23,7 @@
 - The `angular_velocity_threshold`, and `acceleration_threshold` settings
   in `hub.imu.settings` are now persistent between reboots.
 
+[pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [support#1615]: https://github.com/pybricks/support/issues/1615
 [support#1622]: https://github.com/pybricks/support/issues/1622
 [support#1678]: https://github.com/pybricks/support/issues/1678
