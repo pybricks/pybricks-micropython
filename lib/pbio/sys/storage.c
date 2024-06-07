@@ -72,7 +72,7 @@ pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, u
 }
 
 /**
- * Gets pointer to user data or user program.
+ * Gets pointer to user data, settings, or program.
  *
  * @param [in]  offset  Offset from the base address.
  * @param [in]  data    The data reference.
@@ -81,8 +81,9 @@ pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, u
  *                      Otherwise, ::PBIO_SUCCESS.
  */
 pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
-    // User is allowed to read beyond user storage to include program data.
-    if (offset + size > sizeof(map->user_data) + sizeof(map->program_size) + map->program_size) {
+    // User is allowed to read beyond user storage to include settings and
+    // program data.
+    if (offset + size > (map->program_data - map->user_data) + map->program_size) {
         return PBIO_ERROR_INVALID_ARG;
     }
     *data = map->user_data + offset;
@@ -112,7 +113,8 @@ static void pbsys_storage_update_checksum(void) {
     // Add checksum for each word in the written data and empty checked size.
     for (uint32_t offset = 0; offset < checksize; offset += sizeof(uint32_t)) {
         uint32_t *word = (uint32_t *)((uint8_t *)map + offset);
-        // Assume that everything after written data is erased.
+        // Assume that everything after written data is erased by the block
+        // device driver prior to writing.
         checksum += offset < map->write_size ? *word : 0xFFFFFFFF;
     }
 

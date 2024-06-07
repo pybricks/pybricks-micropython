@@ -49,7 +49,8 @@ typedef struct _pbsys_storage_data_map_t {
      */
     uint32_t stored_firmware_version;
     /**
-     * End-user read-write accessible data.
+     * End-user read-write accessible data. Everything after this is also
+     * user-readable but not writable.
      */
     uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
     /**
