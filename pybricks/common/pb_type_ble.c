@@ -12,7 +12,7 @@
 #include <pbdrv/bluetooth.h>
 
 #include <pbsys/config.h>
-#include <pbsys/bluetooth.h>
+#include <pbsys/storage_settings.h>
 
 #include "py/obj.h"
 #include "py/misc.h"
@@ -267,7 +267,7 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     // but it may still pass there since 0 is a valid broadcast channel. That
     // should be fixed by defaulting to None if no broadcast channel is provided.
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_bluetooth_is_user_enabled()) {
+    if (!pbsys_storage_settings_bluetooth_enabled()) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
@@ -534,7 +534,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     mp_int_t num_channels = mp_obj_get_int(mp_obj_len(observe_channels_in));
 
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_bluetooth_is_user_enabled() && (num_channels > 0 || broadcast_channel)) {
+    if (!pbsys_storage_settings_bluetooth_enabled() && (num_channels > 0 || broadcast_channel)) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE

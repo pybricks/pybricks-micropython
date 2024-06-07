@@ -33,6 +33,13 @@ static pbsys_storage_data_map_t *map = &pbsys_user_ram_data_map.data_map;
 
 static bool data_map_is_loaded = false;
 
+pbsys_storage_settings_t *pbsys_storage_get_settings(void) {
+    if (!data_map_is_loaded) {
+        return NULL;
+    }
+    return &map->settings;
+}
+
 /**
  * Requests that storage (program, user data, settings) will be saved (some
  * time before shutdown). Should be called by functions that change data.
@@ -80,30 +87,6 @@ pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32
     }
     *data = map->user_data + offset;
     return PBIO_SUCCESS;
-}
-
-/**
- * Gets the stored system settings.
- *
- * @param [out] settings   The settings.
- * @returns                ::PBIO_ERROR_AGAIN if settings still being loaded.
- *                         Otherwise, ::PBIO_SUCCESS.
- */
-pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings) {
-    if (!data_map_is_loaded) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    *settings = &map->settings;
-    return PBIO_SUCCESS;
-}
-
-/**
- * Sets the default settings after an erase.
- */
-static void pbsys_storage_set_default_settings(void) {
-    map->settings.bluetooth_ble_user_enabled = true;
-    pbsys_storage_request_write();
 }
 
 #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
@@ -261,13 +244,13 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
         // Reset storage except for program data. It is sufficient to set its
         // size to 0, which is what happens here since it is in the map.
         memset(map, 0, sizeof(pbsys_storage_data_map_t));
+        pbsys_storage_set_default_settings(&map->settings);
 
         // Set firmware version used to create current storage map.
         map->stored_firmware_version = PBIO_HEXVERSION;
 
-        // Set defaults user settings. This also raises the write flag to save
-        // on shutdown.
-        pbsys_storage_set_default_settings();
+        // Ensure new firmware version and default settings are written.
+        pbsys_storage_request_write();
     }
 
     // Poke processes that await on system settings to become available.

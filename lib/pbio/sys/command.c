@@ -7,6 +7,8 @@
 #include <pbdrv/reset.h>
 #include <pbio/protocol.h>
 
+#include <pbsys/storage.h>
+
 #include "./bluetooth.h"
 #include "./storage.h"
 #include "./program_stop.h"

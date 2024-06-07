@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2024 The Pybricks Authors
 
 /**
- * @addtogroup SysProgramLoad System: Load user programs.
+ * @addtogroup SysStorage System: Load user programs, data, and settings.
  *
- * Configuration for loading data.
+ * Load user programs, data, and settings.
  *
  * @{
  */
@@ -15,16 +15,7 @@
 #include <stdint.h>
 
 #include <pbsys/config.h>
-
-/**
- * System settings. All data types are little-endian.
- */
-typedef struct _pbsys_storage_settings_t {
-    /**
-     * User has enabled Bluetooth Low Energy.
-     */
-    bool bluetooth_ble_user_enabled : 1;
-} pbsys_storage_settings_t;
+#include <pbsys/storage_settings.h>
 
 #if PBSYS_CONFIG_STORAGE
 
@@ -82,10 +73,6 @@ pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, u
 
 pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32_t size);
 
-pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings);
-
-void pbsys_storage_request_write(void);
-
 #else
 
 #define PBSYS_STORAGE_MAX_PROGRAM_SIZE (0)
@@ -93,18 +80,9 @@ void pbsys_storage_request_write(void);
 static inline pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-
 static inline pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32_t size) {
     *data = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbsys_storage_get_settings(pbsys_storage_settings_t **settings) {
-    *settings = NULL;
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbsys_storage_request_write(void) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE

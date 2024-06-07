@@ -16,7 +16,7 @@
 #include <pbio/task.h>
 
 #include <pbsys/config.h>
-#include <pbsys/bluetooth.h>
+#include <pbsys/storage_settings.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
@@ -288,7 +288,7 @@ STATIC mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         );
 
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_bluetooth_is_user_enabled()) {
+    if (!pbsys_storage_settings_bluetooth_enabled()) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE

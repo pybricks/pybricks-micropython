@@ -32,8 +32,6 @@ uint32_t pbsys_bluetooth_rx_get_available(void);
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size);
 bool pbsys_bluetooth_tx_is_idle(void);
-bool pbsys_bluetooth_is_user_enabled(void);
-void pbsys_bluetooth_is_user_enabled_request_toggle(void);
 
 #else // PBSYS_CONFIG_BLUETOOTH
 
@@ -50,11 +48,6 @@ static inline pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *siz
 }
 static inline bool pbsys_bluetooth_tx_is_idle(void) {
     return false;
-}
-static inline void pbsys_bluetooth_is_user_enabled_request_toggle(void) {
-}
-static inline bool pbsys_bluetooth_is_user_enabled(void) {
-    return true;
 }
 
 #endif // PBSYS_CONFIG_BLUETOOTH
