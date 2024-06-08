@@ -12,6 +12,7 @@
 #ifndef _PBSYS_STORAGE_SETTINGS_H_
 #define _PBSYS_STORAGE_SETTINGS_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbio/error.h>
