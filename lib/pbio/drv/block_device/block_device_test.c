@@ -14,6 +14,10 @@
 
 #include <pbdrv/block_device.h>
 
+#include <pbio/version.h>
+
+#include <pbsys/storage.h>
+
 /**
  * The following script is compiled using pybricksdev compile hello.py
  * in MULTI_MPY_V6.
@@ -46,22 +50,17 @@ const uint8_t script[] = {
     0x34, 0x01, 0x59, 0x11, 0x07, 0x65, 0x51, 0x63,
 };
 
-#define MAX_PROGRAM_SIZE ((PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE)-(PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER)-sizeof(uint32_t) * 2)
-
-/**
- * Mimics data structure expected by pbsys.
- */
-static struct {
-    uint32_t write_size;
-    uint8_t user_data[PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER];
-    uint32_t program_size;
-    uint8_t program_data[MAX_PROGRAM_SIZE] __attribute__((aligned(sizeof(void *))));
+static union {
+    pbsys_storage_data_map_t data_map;
+    uint8_t blockdev[PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE];
 } blockdev = { 0 };
 
 void pbdrv_block_device_init(void) {
-    blockdev.program_size = sizeof(script);
-    memcpy(blockdev.program_data, script, sizeof(script));
-    blockdev.write_size = sizeof(blockdev) - sizeof(blockdev.program_data) + blockdev.program_size;
+    pbsys_storage_data_map_t *map = &blockdev.data_map;
+    map->program_size = sizeof(script);
+    map->stored_firmware_version = PBIO_HEXVERSION;
+    memcpy(&map->program_data, script, sizeof(script));
+    map->write_size = sizeof(pbsys_storage_data_map_t) + map->program_size;
 }
 
 PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
