@@ -21,7 +21,7 @@
 #define PYBRICKS_PY_COMMON_LIGHT_ARRAY          (0)
 #define PYBRICKS_PY_COMMON_LIGHT_MATRIX         (0)
 #define PYBRICKS_PY_COMMON_LOGGER               (1)
-#define PYBRICKS_PY_COMMON_MOTOR_MODEL          (1)
+#define PYBRICKS_PY_COMMON_MOTOR_MODEL          (0)
 #define PYBRICKS_PY_COMMON_MOTORS               (1)
 #define PYBRICKS_PY_COMMON_SPEAKER              (1)
 #define PYBRICKS_PY_COMMON_SYSTEM               (1)
@@ -44,7 +44,7 @@
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (1)
-#define PYBRICKS_OPT_FLOAT                      (1)
+#define PYBRICKS_OPT_FLOAT                      (0)
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
 #define PYBRICKS_OPT_EXTRA_MOD                  (1)
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
