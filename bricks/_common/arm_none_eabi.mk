@@ -305,9 +305,10 @@ AM18X_LIB_LIB_SRC_C = $(addprefix lib/am18x-lib/lib/,\
 
 AM18X_LIB_PRJ_SRC_S = $(addprefix lib/am18x-lib/prj/,\
 	abt_handler.S \
+	start.S \
     uart_dbg.S \
     undef_handler.S \
-	) # excluding start.S for now since it conflics with start.s in platform/startup.s
+	)
 
 AM18X_LIB_LIB_SRC_S = $(addprefix lib/am18x-lib/lib/,\
     arm920t_s.S \

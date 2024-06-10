@@ -1,47 +1,78 @@
-/* The bootloader will look at this image and start execution at the symbol
-   designated as the entry point. */
+/* tary, 1:09 2012/12/23 */
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
 ENTRY(_start)
+SEARCH_DIR("=/usr/local/lib");
+SEARCH_DIR("=/lib");
+SEARCH_DIR("=/usr/lib");
+SECTIONS {
+	. = 0xc0008000;
+	. = ALIGN(0x4);
+	PROVIDE (__text_start = .);
+	.text : {
+		*(.init);
+		*(.text);
+		. = ALIGN(0x10);
 
-/* Tell where the various sections of the object files will be put in the final
-   kernel image. */
-SECTIONS
-{
-	/* Begin putting sections at this number, taken from U-boot env */
-	. = 0xC0008000;
-	/* Begin putting sections at this number, for use with qemu */
-	/*. = 0x00010000;*/
+		*(.rodata .rodata.*);
+		. = ALIGN(0x10);
 
-	/* First put the multiboot header, as it is required to be put very early
-	   early in the image or the bootloader won't recognize the file format.
-	   Next we'll put the .text section. */
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-    KEEP(*(.text.boot))
-		*(.text)
-	}
+		PROVIDE (__lds_got_start = .);
+		*(.got.plt);
+		*(.got);
+		. = ALIGN(0x10);
+		PROVIDE (__lds_got_end = .);
+		PROVIDE (__lds_got_size = __lds_got_end - __lds_got_start);
+		. = ALIGN(0x10);
+	} = 0
+	PROVIDE (__text_end = .);
 
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
+	PROVIDE (__data_start = .);
+	.data : {
+		*(.data);
+		. = ALIGN(0x10);
 
-	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
+		*(.data.rel .data.rel.*);
+		. = ALIGN(0x10);
 
-	/* Read-write data (uninitialized) and stack */
-  __bss_start = .;
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
+		PROVIDE (__lds_rel_start = .);
+		*(.rel.*);
+		. = ALIGN(0x10);
+		PROVIDE (__lds_rel_end = .);
+		PROVIDE (__lds_rel_size = __lds_rel_end - __lds_rel_start);
+	} = 0
+	. = ALIGN(0x10);
+	PROVIDE (__data_end = .);
+
+	/*
+	.rel __data_end : {
+	} = 0
+	*/
+
+	.bss __lds_rel_start (NOLOAD): {
+		PROVIDE (__lds_bss_start = .);
 		*(.bss)
-    . += 8K;
-	}
-  __bss_end = .;
+		*(COMMON)
+		. = ALIGN(0x10);
+		PROVIDE (__lds_bss_end = .);
+	} = 0
 
-	/* The compiler may produce other sections, by default it will put them in
-	   a segment with the same name. Simply add stuff here as needed. */
+	. = ALIGN(0x10);
+	.stack : {
+		*(.stack)
+		. = ALIGN(0x10);
+	}
+	PROVIDE (end = .);
+
+	/DISCARD/ : {
+		*(.note.GNU-stack)
+		*(.gnu_debuglink)
+		*(.gnu.lto_*)
+		/*(.debug*)*/
+		*(.ARM.attributes)
+		*(.comment)
+		*(.interp)
+		*(.dyn*)
+		*(.hash)
+	}
 }

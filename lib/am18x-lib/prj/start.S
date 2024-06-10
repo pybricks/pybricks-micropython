@@ -143,6 +143,10 @@ HandleReset:
 		.extern	low_level_init
 		BL	low_level_init
 
+		@ call to SystemInit
+		.extern	SystemInit
+		bl	SystemInit
+
 		@ call to main entry point
 		.extern	main
 		bl	main
