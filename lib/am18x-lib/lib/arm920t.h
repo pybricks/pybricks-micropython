@@ -64,7 +64,7 @@ typedef struct {
 static inline cp15_id_code_t arm_read_cp15_id_code(void) {
 	cp15_id_code_t c0;
 
-	asm volatile(
+	__asm volatile(
 	"mrc	p15, 0, %0, c0, c0, 0\n"
 	: "=r" (c0)
 	);
@@ -99,7 +99,7 @@ typedef struct {
 static inline cp15_cache_type_t arm_read_cp15_cache_type(void) {
 	cp15_cache_type_t c0;
 
-	asm volatile(
+	__asm volatile(
 	"mrc	p15, 0, %0, c0, c0, 1\n"
 	: "=r" (c0)
 	);
@@ -137,14 +137,14 @@ typedef struct {
 static inline cp15_control_t arm_read_cp15_control(void) {
 	cp15_control_t c1;
 
-	asm volatile(
+	__asm volatile(
 	"mrc	p15, 0, %0, c1, c0, 0\n"
 	: "=r" (c1)
 	);
 	return c1;
 }
 static inline cp15_control_t arm_write_cp15_control(cp15_control_t c1) {
-	asm volatile(
+	__asm volatile(
 	"mcr	p15, 0, %0, c1, c0, 0\n"
 	: "=r" (c1)
 	);
@@ -207,7 +207,7 @@ unsigned arm_read_cp15_fault_address(void);
 
 #ifndef __ASSEMBLY__
 static inline int arm_wfi(void) {
-	asm volatile(
+	__asm volatile(
 	"mov	r0, #0\n"
 	"mcr	p15, 0, r0, c7, c0, 4\n"	/* wait for interrupt */
 	::: "r0"
@@ -231,7 +231,7 @@ static inline int arm_wfi(void) {
 
 #ifndef __ASSEMBLY__
 static inline int arm_tlb_invalid_all(void) {
-	asm volatile(
+	__asm volatile(
 	"mov	r0, #0\n"
 	"mcr	p15, 0, r0, c7, c10, 4\n"	/* drain WB */
 	"mcr	p15, 0, r0, c8, c7, 0\n"	/* invalidate I & D TLBs */

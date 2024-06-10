@@ -25,6 +25,7 @@ static uint32_t do_change_PLL##pll_nr##_SYSCLK##s_nr (uint32_t parent) {	\
 	uint32_t reg, divider;							\
 										\
 	divider = clk_nodes[id].divider;					\
+	(void)divider; \
 	reg = PLL##pll_nr->PLLDIVxA[PLLDIVxA_IDX_##s_nr];			\
 	if (clk_nodes[id].parent == CLK_NODE_PLL##pll_nr##_PLLEN) {		\
 		reg = FIELD_SET(reg, msk, XXXDIVx_DxEN_enable);			\
@@ -56,6 +57,7 @@ static uint32_t do_change_PLL##pll_nr##_SYSCLK##s_nr (uint32_t parent) {	\
 	uint32_t reg, divider;							\
 										\
 	divider = clk_nodes[id].divider;					\
+	(void)divider; \
 	reg = PLL##pll_nr->PLLDIVxB[PLLDIVxB_IDX_##s_nr];			\
 	if (clk_nodes[id].parent == CLK_NODE_PLL##pll_nr##_PLLEN) {		\
 		reg = FIELD_SET(reg, msk, XXXDIVx_DxEN_enable);			\
@@ -312,43 +314,43 @@ static uint32_t do_change_OCSEL1_OCSRC (uint32_t parent) {
 #define RECALC		CN_FLAG_RECALC
 
 static clk_node_t clk_nodes[] = {
-	// ID                  PARENT,       FLAG, MULT, DIV, CALC_FREQ, DO_CHANGE, PARENT_LIST
-	{ cnm(INVALID),      cm(INVALID),          0, 0, 0, },
-	{ cnm(PLL0_SYSCLK1), cm(PLL0_PLLEN),  REREAD, 0, 1, cfdc(PLL0_SYSCLK1), },
-	{ cnm(PLL0_SYSCLK2), cm(PLL0_PLLEN),  REREAD, 0, 2, cfdc(PLL0_SYSCLK2), },
-	{ cnm(PLL0_SYSCLK3), cm(PLL0_PLLEN),  REREAD, 0, 3, cfdc(PLL0_SYSCLK3), },
-	{ cnm(PLL0_SYSCLK4), cm(PLL0_PLLEN),  REREAD, 0, 4, cfdc(PLL0_SYSCLK4), },
-	{ cnm(PLL0_SYSCLK5), cm(PLL0_PLLEN),  REREAD, 0, 3, cfdc(PLL0_SYSCLK5), },
-	{ cnm(PLL0_SYSCLK6), cm(PLL0_PLLEN),  REREAD, 0, 1, cfdc(PLL0_SYSCLK6), },
-	{ cnm(PLL0_SYSCLK7), cm(PLL0_PLLEN),  REREAD, 0, 6, cfdc(PLL0_SYSCLK7), },
-	{ cnm(EMA_CLKSRC),   cm(PLL0_SYSCLK3), CFMUX, 0, 0, cfdc(EMA_CLKSRC),   },
-	{ cnm(PLL0_AUXCLK),  cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(PLL0_AUXCLK),  },
-	{ cnm(PLL0_OBSCLK),  cm(OSCDIV0),      CFMUX, 0, 0, cfdc(PLL0_OBSCLK),  },
-	{ cnm(PLL1_SYSCLK1), cm(PLL1_PLLEN),  REREAD, 0, 1, cfdc(PLL1_SYSCLK1), },
-	{ cnm(PLL1_SYSCLK2), cm(PLL1_PLLEN),  REREAD, 0, 2, cfdc(PLL1_SYSCLK2), },
-	{ cnm(PLL1_SYSCLK3), cm(PLL1_PLLEN),  REREAD, 0, 3, cfdc(PLL1_SYSCLK3), },
-	{ cnm(PLL1_OBSCLK),  cm(OSCDIV1),      CFMUX, 0, 0, cfdc(PLL1_OBSCLK),  },
-	{ cnm(ASYNC3),       cm(PLL0_SYSCLK2), CFMUX, 0, 0, cfdc(ASYNC3),       },
-	{ cnm(PLL0_PLLEN),   cm(PLL_EXTSRC),   CFMUX, 0, 0, cfdc(PLL0_PLLEN),   },
-	{ cnm(PLL_EXTSRC),   cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(PLL_EXTSRC),   },
-	{ cnm(POSTDIV0),     cm(PLLM0),       REREAD, 0, 0, cfdc(POSTDIV0),     },
-	{ cnm(PLLM0),        cm(PREDIV0),     REREAD, 0, 0, cfdc(PLLM0),        },
-	{ cnm(PREDIV0),      cm(PLL_CLKMODE), REREAD, 0, 0, cfdc(PREDIV0),      },
-	{ cnm(PLL_CLKMODE),  cm(OSCIN),            0, 1, 0, },
-	{ cnm(DIV4_5X),      cm(DIV4_5),       CFMUX, 0, 0, cfdc(DIV4_5X),      },
-	{ cnm(DIV4_5),       cm(PLLM0),            0, 2, 9, },
-	{ cnm(OSCDIV0),      cm(OCSEL0_OCSRC),REREAD, 0, 0, cfdc(OSCDIV0),      },
-	{ cnm(OCSEL0_OCSRC), cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(OCSEL0_OCSRC), },
-	{ cnm(PLL1_PLLEN),   cm(POSTDIV1),     CFMUX, 0, 0, cfdc(PLL1_PLLEN),   },
-	{ cnm(POSTDIV1),     cm(PLLM1),       REREAD, 0, 0, cfdc(POSTDIV1),     },
-	{ cnm(PLLM1),        cm(PLL_CLKMODE), REREAD, 0, 0, cfdc(PLLM1),        },
-	{ cnm(OSCDIV1),      cm(OCSEL1_OCSRC),REREAD, 0, 0, cfdc(OSCDIV1),      },
-	{ cnm(OCSEL1_OCSRC), cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(OCSEL1_OCSRC), },
-	{ cnm(OSCIN),	     cm(INVALID),          0, 0, 0, },
+	// ID                  PARENT,       FLAG, MULT,DIV, CALC_FREQ, DO_CHANGE, PARENT_LIST
+	{ cnm(INVALID),      cm(INVALID),          0, 0, 0, NULL, NULL        , NULL, 0},
+	{ cnm(PLL0_SYSCLK1), cm(PLL0_PLLEN),  REREAD, 0, 1, cfdc(PLL0_SYSCLK1), NULL, 0},
+	{ cnm(PLL0_SYSCLK2), cm(PLL0_PLLEN),  REREAD, 0, 2, cfdc(PLL0_SYSCLK2), NULL, 0},
+	{ cnm(PLL0_SYSCLK3), cm(PLL0_PLLEN),  REREAD, 0, 3, cfdc(PLL0_SYSCLK3), NULL, 0},
+	{ cnm(PLL0_SYSCLK4), cm(PLL0_PLLEN),  REREAD, 0, 4, cfdc(PLL0_SYSCLK4), NULL, 0},
+	{ cnm(PLL0_SYSCLK5), cm(PLL0_PLLEN),  REREAD, 0, 3, cfdc(PLL0_SYSCLK5), NULL, 0},
+	{ cnm(PLL0_SYSCLK6), cm(PLL0_PLLEN),  REREAD, 0, 1, cfdc(PLL0_SYSCLK6), NULL, 0},
+	{ cnm(PLL0_SYSCLK7), cm(PLL0_PLLEN),  REREAD, 0, 6, cfdc(PLL0_SYSCLK7), NULL, 0},
+	{ cnm(EMA_CLKSRC),   cm(PLL0_SYSCLK3), CFMUX, 0, 0, cfdc(EMA_CLKSRC),   NULL, 0},
+	{ cnm(PLL0_AUXCLK),  cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(PLL0_AUXCLK),  NULL, 0},
+	{ cnm(PLL0_OBSCLK),  cm(OSCDIV0),      CFMUX, 0, 0, cfdc(PLL0_OBSCLK),  NULL, 0},
+	{ cnm(PLL1_SYSCLK1), cm(PLL1_PLLEN),  REREAD, 0, 1, cfdc(PLL1_SYSCLK1), NULL, 0},
+	{ cnm(PLL1_SYSCLK2), cm(PLL1_PLLEN),  REREAD, 0, 2, cfdc(PLL1_SYSCLK2), NULL, 0},
+	{ cnm(PLL1_SYSCLK3), cm(PLL1_PLLEN),  REREAD, 0, 3, cfdc(PLL1_SYSCLK3), NULL, 0},
+	{ cnm(PLL1_OBSCLK),  cm(OSCDIV1),      CFMUX, 0, 0, cfdc(PLL1_OBSCLK),  NULL, 0},
+	{ cnm(ASYNC3),       cm(PLL0_SYSCLK2), CFMUX, 0, 0, cfdc(ASYNC3),       NULL, 0},
+	{ cnm(PLL0_PLLEN),   cm(PLL_EXTSRC),   CFMUX, 0, 0, cfdc(PLL0_PLLEN),   NULL, 0},
+	{ cnm(PLL_EXTSRC),   cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(PLL_EXTSRC),   NULL, 0},
+	{ cnm(POSTDIV0),     cm(PLLM0),       REREAD, 0, 0, cfdc(POSTDIV0),     NULL, 0},
+	{ cnm(PLLM0),        cm(PREDIV0),     REREAD, 0, 0, cfdc(PLLM0),        NULL, 0},
+	{ cnm(PREDIV0),      cm(PLL_CLKMODE), REREAD, 0, 0, cfdc(PREDIV0),      NULL, 0},
+	{ cnm(PLL_CLKMODE),  cm(OSCIN),            0, 1, 0, NULL, NULL        , NULL, 0},
+	{ cnm(DIV4_5X),      cm(DIV4_5),       CFMUX, 0, 0, cfdc(DIV4_5X),      NULL, 0},
+	{ cnm(DIV4_5),       cm(PLLM0),            0, 2, 9, NULL, NULL        , NULL, 0},
+	{ cnm(OSCDIV0),      cm(OCSEL0_OCSRC),REREAD, 0, 0, cfdc(OSCDIV0),      NULL, 0},
+	{ cnm(OCSEL0_OCSRC), cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(OCSEL0_OCSRC), NULL, 0},
+	{ cnm(PLL1_PLLEN),   cm(POSTDIV1),     CFMUX, 0, 0, cfdc(PLL1_PLLEN),   NULL, 0},
+	{ cnm(POSTDIV1),     cm(PLLM1),       REREAD, 0, 0, cfdc(POSTDIV1),     NULL, 0},
+	{ cnm(PLLM1),        cm(PLL_CLKMODE), REREAD, 0, 0, cfdc(PLLM1),        NULL, 0},
+	{ cnm(OSCDIV1),      cm(OCSEL1_OCSRC),REREAD, 0, 0, cfdc(OSCDIV1),      NULL, 0},
+	{ cnm(OCSEL1_OCSRC), cm(PLL_CLKMODE),  CFMUX, 0, 0, cfdc(OCSEL1_OCSRC), NULL, 0},
+	{ cnm(OSCIN),	     cm(INVALID),          0, 0, 0, NULL, NULL        , NULL, 0},
 };
 
 am18x_rt clk_node_init(void) {
-	int i;
+	uint32_t i;
 
 	for (i = 0; i < countof(clk_nodes); i++) {
 		clk_node_t* cni = clk_nodes + i;
@@ -451,7 +453,7 @@ static uint32_t clk_node_tree_innner(uint32_t id, int level) {
 	freq = clk_node_get_freq(id);
 
 	sprintf(line0 + LINE_UNIT * level, "[%12s]", clk_nodes[id].name);
-	sprintf(line1 + LINE_UNIT * level, "    %4dMhz   ", freq / ONE_MEGA);
+	sprintf(line1 + LINE_UNIT * level, "    %4dMhz   ", (int)(freq / ONE_MEGA));
 
 	for (i = CLK_NODE_INVALID + 1; i < CLK_NODE_CNT; i++) {
 		if (clk_nodes[i].parent == id) {

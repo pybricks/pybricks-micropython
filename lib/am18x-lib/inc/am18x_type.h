@@ -3,6 +3,9 @@
 #ifndef __AM18X_TYPE_H__
 #define __AM18X_TYPE_H__
 
+typedef enum { AM18X_ERR = -1, AM18X_OK = 0} am18x_rt;
+typedef enum { AM18X_FALSE = 0, AM18X_TRUE = !AM18X_FALSE} am18x_bool;
+
 #define __USE_STDINT_H
 
 #ifdef __USE_STDINT_H
@@ -122,9 +125,6 @@ static inline uint32_t __field_xset(uint32_t reg, uint32_t msk, uint32_t vx) {
 	return (reg & ~msk) | ((vx << __ffs(msk)) & msk);
 }
 
-typedef enum { AM18X_ERR = -1, AM18X_OK = 0} am18x_rt;
-typedef enum { AM18X_FALSE = 0, AM18X_TRUE = !AM18X_FALSE} am18x_bool;
-
 #ifndef NULL
 #define NULL				((void*)0UL)
 #endif
@@ -137,6 +137,5 @@ typedef enum { AM18X_FALSE = 0, AM18X_TRUE = !AM18X_FALSE} am18x_bool;
 	r##_##b##_##MASK = (0x1UL << (of)),	\
 	r##_##b##_##bdis = (0x0UL << (of)),	\
 	r##_##b##_##ben  = (0x1UL << (of))
-
 
 #endif//__AM18X_TYPE_H__

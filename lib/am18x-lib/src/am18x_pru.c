@@ -4,7 +4,7 @@
 
 am18x_rt pru_load(PRU_con_t* pcon, const uint32_t* inst, uint32_t count) {
 	uint32_t* pram;
-	int i;
+	uint32_t i;
 
 	pram = (uint32_t*)PRU_InstRAM0_BASE;
 	if (pcon == PRU1) {
@@ -79,7 +79,7 @@ static kv_t of_regs[] = {
 
 am18x_rt pru_dump_regs(PRU_con_t* pcon) {
 	uint32_t* ptr;
-	int i;
+	uint32_t i;
 
 	for (i = 0; i < countof(of_regs); i++) {
 		int of;

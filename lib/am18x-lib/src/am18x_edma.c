@@ -34,14 +34,14 @@ static am18x_bool is_qchannel(const edma_conf_t* conf) {
 	return AM18X_TRUE;
 }
 
-static am18x_bool is_null_pa_entry(const pa_conf_t* pa) {
+am18x_bool is_null_pa_entry(const pa_conf_t* pa) {
 	if (pa->a_cnt == 0 && pa->b_cnt == 0 && pa->c_cnt == 0) {
 		return AM18X_TRUE;
 	}
 	return AM18X_FALSE;
 }
 
-static am18x_bool is_dummy_pa_entry(const pa_conf_t* pa) {
+am18x_bool is_dummy_pa_entry(const pa_conf_t* pa) {
 	if ((pa->a_cnt == 0 || pa->b_cnt == 0 || pa->c_cnt == 0)
 	&& (pa->a_cnt != 0 || pa->b_cnt != 0 || pa->c_cnt != 0)
 	) {

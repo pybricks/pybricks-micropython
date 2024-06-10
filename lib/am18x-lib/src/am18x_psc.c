@@ -127,7 +127,7 @@ static kv_t of_regs[] = {
 
 am18x_rt psc_dump_regs(PSC_con_t* pcon) {
 	uint32_t* ptr;
-	int i, s;
+	uint32_t i, s;
 
 	for (i = 0; i < countof(of_regs) - 2; i++) {
 		int of;
@@ -139,11 +139,11 @@ am18x_rt psc_dump_regs(PSC_con_t* pcon) {
 
 	s = MODULE_NR_PER_PSC;
 	if (pcon == PSC0) s = s / 2;
-	ptr = &pcon->MDSTATx;
+	ptr = (uint32_t*) &pcon->MDSTATx;
 	for (i = 0; i < s; i++) {
 		printk("MDSTAT%-2d[0x%.8X] = 0x%.8X\n", i, ptr + i, ptr[i]);
 	}
-	ptr = &pcon->MDCTLx;
+	ptr = (uint32_t*) &pcon->MDCTLx;
 	for (i = 0; i < s; i++) {
 		printk("MDCTL%-3d[0x%.8X] = 0x%.8X\n", i, ptr + i, ptr[i]);
 	}

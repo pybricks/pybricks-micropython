@@ -25,7 +25,8 @@ static int abs(int x) {
 }
 
 int dvfs_get_opp(void) {
-	int i, volt;
+	int volt;
+	uint32_t i;
 
 	if (pll_cmd(PLL0, PLL_CMD_IS_ENABLE, 0) != AM18X_OK) {
 		return 0;
@@ -46,14 +47,14 @@ int dvfs_get_opp(void) {
 
 // unit, mV
 int dvfs_get_volt(int opp) {
-	if (opp < 0 || opp >= countof(opps)) {
+	if (opp < 0 || opp >= (int) countof(opps)) {
 		return 0;
 	}
 	return opps[opp].volt;
 }
 
 int dvfs_get_freq(int opp) {
-	if (opp < 0 || opp >= countof(opps)) {
+	if (opp < 0 || opp >= (int) countof(opps)) {
 		return 0;
 	}
 	return opps[opp].freq;

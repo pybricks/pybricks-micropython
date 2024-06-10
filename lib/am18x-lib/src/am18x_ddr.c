@@ -214,7 +214,7 @@ am18x_rt ddr_clock_off(DDR_con_t* dcon) {
 	dcon->SDRCR = reg;
 
 	// 4. Wait 150 CPU clock cycles to allow MCLK to stop
-	for (v = 0; v < 150; v++) asm volatile("nop");
+	for (v = 0; v < 150; v++) __asm volatile("nop");
 
 	// 5. Program the PSC to disable the DDR2/mDDR memory controller VCLK
 	psc_state_transition(PSC_DDR2, PSC_STATE_DISABLE);
@@ -244,7 +244,7 @@ am18x_rt ddr_clock_on(DDR_con_t* dcon) {
 	clk_node_recalc();
 
 	// 2. Once 2X_CLK is stable, program the PSC to enable VCLK
-	for (v = 0; v < 150; v++) asm volatile("nop");
+	for (v = 0; v < 150; v++) __asm volatile("nop");
 	psc_state_transition(PSC_DDR2, PSC_STATE_ENABLE);
 
 	// 3. Set the RESET_PHY bit in the DRPYRCR to 1

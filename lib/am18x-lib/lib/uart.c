@@ -31,49 +31,49 @@ int __putchar(int c) {
 	return c;
 }
 
-int putchar(int c) {
-	if (c == UART_LF) {
-		__putchar(UART_CR);
-	}
-	__putchar(c);
-	return c;
-}
+// int putchar(int c) {
+// 	if (c == UART_LF) {
+// 		__putchar(UART_CR);
+// 	}
+// 	__putchar(c);
+// 	return c;
+// }
 
-int getchar(void) {
-	while (AM18X_FALSE == uart_state(UART1, STATE_RX_READY));
-	return uart_read_byte(UART1);
-}
+// int getchar(void) {
+// 	while (AM18X_FALSE == uart_state(UART1, STATE_RX_READY));
+// 	return uart_read_byte(UART1);
+// }
 
-int peekchar(void) {
-	if (AM18X_FALSE == uart_state(UART1, STATE_RX_READY)) {
-		return -1;
-	}
-	return uart_read_byte(UART1);
-}
+// int peekchar(void) {
+// 	if (AM18X_FALSE == uart_state(UART1, STATE_RX_READY)) {
+// 		return -1;
+// 	}
+// 	return uart_read_byte(UART1);
+// }
 
-int uart_gets(char *line, int n) {
-	int cnt = 0;
-	char c;
+// int uart_gets(char *line, int n) {
+// 	int cnt = 0;
+// 	char c;
 
-	do {
-		if ((c = getchar()) == UART_CR) {
-			c = UART_LF;				/* read character */
-		}
+// 	do {
+// 		if ((c = getchar()) == UART_CR) {
+// 			c = UART_LF;				/* read character */
+// 		}
 
-		if (c != UART_BACKSPACE	&& c != UART_DEL) {	/* process backspace */
-			cnt++;
-			*line++ = c;
-			if (c != UART_LF) {			/* echo and store character */
-				putchar(c);
-			}
-		} else if (cnt != 0) {
-			cnt--;
-			line--;
-			putchar(UART_BACKSPACE);		/* echo backspace */
-			putchar(' ');
-			putchar(UART_BACKSPACE);
-		}
-	} while (cnt < n - 1 &&	c != UART_LF);			/* check limit and line feed */
-	*line = 0;						/* mark end of string */
-	return cnt;
-}
+// 		if (c != UART_BACKSPACE	&& c != UART_DEL) {	/* process backspace */
+// 			cnt++;
+// 			*line++ = c;
+// 			if (c != UART_LF) {			/* echo and store character */
+// 				putchar(c);
+// 			}
+// 		} else if (cnt != 0) {
+// 			cnt--;
+// 			line--;
+// 			putchar(UART_BACKSPACE);		/* echo backspace */
+// 			putchar(' ');
+// 			putchar(UART_BACKSPACE);
+// 		}
+// 	} while (cnt < n - 1 &&	c != UART_LF);			/* check limit and line feed */
+// 	*line = 0;						/* mark end of string */
+// 	return cnt;
+// }

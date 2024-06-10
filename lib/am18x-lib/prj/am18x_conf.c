@@ -130,7 +130,7 @@ static none_arg_handler_t isr_vector[] = {
 };
 
 int isr_set_handler(int intr_nr, none_arg_handler_t handle) {
-	if (intr_nr >= countof(isr_vector)) {
+	if (intr_nr >= (int) countof(isr_vector)) {
 		return -1;
 	}
 	isr_vector[intr_nr] = handle;

@@ -130,6 +130,11 @@ endif
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
 endif
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+INC += -I$(PBTOP)/lib/am18x-lib/inc
+INC += -I$(PBTOP)/lib/am18x-lib/lib
+INC += -I$(PBTOP)/lib/am18x-lib/prj
+endif
 INC += -I$(PBTOP)
 INC += -I$(BUILD)
 
@@ -153,7 +158,7 @@ ifeq ($(PB_MCU_FAMILY),AT91SAM7)
 CFLAGS_MCU = -mthumb -mthumb-interwork -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 else
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
-CFLAGS_MCU =
+CFLAGS_MCU = -mcpu=arm926ej-s -mabi=aapcs -gdwarf-2
 else
 $(error unsupported PB_MCU_FAMILY)
 endif
@@ -259,6 +264,57 @@ PY_EXTRA_SRC_C += $(addprefix bricks/ev3/,\
 
 SRC_S += shared/runtime/gchelper_thumb1.s
 endif
+
+# AM18X-LIB
+
+AM18X_LIB_PRJ_SRC_C = $(addprefix lib/am18x-lib/prj/,\
+	am1808exp.c \
+	am18x_conf.c \
+	tca6416.c \
+	tps6507x.c \
+	)
+
+AM18X_LIB_SRC_SRC_C = $(addprefix lib/am18x-lib/src/,\
+    am18x_aintc.c \
+    am18x_ddr.c \
+    am18x_edma.c \
+    am18x_i2c.c \
+    am18x_mmcsd.c \
+    am18x_pru.c \
+    am18x_rtc.c \
+    am18x_timer.c \
+    am18x_usb0.c \
+    am18x_dclk.c \
+    am18x_ecap.c \
+    am18x_gpio.c \
+    am18x_lcd.c \
+    am18x_pll.c \
+    am18x_psc.c \
+    am18x_syscfg.c \
+    am18x_uart.c \
+	)
+
+AM18X_LIB_LIB_SRC_C = $(addprefix lib/am18x-lib/lib/,\
+    arm920t.c \
+    ctype.c \
+    dvfs.c \
+    i2c_inf.c \
+    systick.c \
+    uart.c \
+	)
+
+AM18X_LIB_PRJ_SRC_S = $(addprefix lib/am18x-lib/prj/,\
+	abt_handler.S \
+    uart_dbg.S \
+    undef_handler.S \
+	) # excluding start.S for now since it conflics with start.s in platform/startup.s
+
+AM18X_LIB_LIB_SRC_S = $(addprefix lib/am18x-lib/lib/,\
+    arm920t_s.S \
+    div64.S \
+    lib1funcs.S \
+    lshrdi3.S \
+	)
 
 # STM32 Bluetooth stack
 
@@ -472,6 +528,18 @@ endif
 ifeq ($(PBIO_PLATFORM),nxt)
 OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_S:.s=.o))
+endif
+
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_PRJ_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_SRC_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_LIB_SRC_C:.c=.o))
+
+OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_PRJ_SRC_S:.S=.o))
+OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_LIB_SRC_S:.S=.o))
+$(addprefix $(BUILD)/, $(AM18X_LIB_PRJ_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
+$(addprefix $(BUILD)/, $(AM18X_LIB_LIB_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
+
 endif
 
 # List of sources for qstr extraction

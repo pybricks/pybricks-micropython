@@ -54,7 +54,7 @@ am18x_rt i2c_conf(I2C_con_t* icon, i2c_conf_t* conf);
 static inline int32_t i2c_get_rx(I2C_con_t* icon) {
 	return icon->ICDRR;
 }
-static inline am18x_rt i2c_set_tx(I2C_con_t* icon, uint8_t data) {
+static inline am18x_bool i2c_set_tx(I2C_con_t* icon, uint8_t data) {
 	icon->ICDXR = data;
 	return AM18X_TRUE;
 }

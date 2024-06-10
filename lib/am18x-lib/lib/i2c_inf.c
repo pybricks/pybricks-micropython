@@ -50,7 +50,7 @@ int i2c_init(I2C_con_t* bus, uint32_t freq) {
 }
 
 int i2c_read(I2C_con_t* bus, uint16_t dev, uint8_t* bytes, uint32_t cnt) {
-	int i;
+	uint32_t i;
 	i2c_conf_t* iconf = bus2conf(bus);
 
 	iconf->opermode = I2C_OPERMODE_Master_receiver;
@@ -76,7 +76,7 @@ int i2c_read(I2C_con_t* bus, uint16_t dev, uint8_t* bytes, uint32_t cnt) {
 }
 
 int i2c_write(I2C_con_t* bus, uint16_t dev, cuint8_t* bytes, uint32_t cnt) {
-	int i;
+	uint32_t i;
 	i2c_conf_t* iconf = bus2conf(bus);
 
 	iconf->opermode = I2C_OPERMODE_Master_transmitter;

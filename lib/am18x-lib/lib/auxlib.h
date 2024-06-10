@@ -30,8 +30,10 @@ typedef struct {
 
 // typedef unsigned long size_t;
 
+#define __HAS_STRING_H__
+
 int delay(int d);
-#ifndef __LINUX_STRING_H__
+#ifndef __HAS_STRING_H__
 int puts(const char* s);
 #endif
 int printk(const char* s, ...);
@@ -40,7 +42,7 @@ int sprintf(char * buf, const char *fmt, ...);
 size_t strlen(const char* s);
 int strcmp(const char* ss, const char* sd);
 int strncmp(const char* ss, const char* sd, size_t size);
-#ifndef __LINUX_STRING_H__
+#ifndef __HAS_STRING_H__
 int memset(void* dst, int pattern, size_t size);
 int memcpy(char* dst, const char* src, size_t size);
 #endif

@@ -5,11 +5,12 @@
 #include "auxlib.h"
 #include "tps6507x.h"
 #include "am1808exp.h"
+#include "am18x_type.h"
 
 #define SYSTICK_PERIOD			10/* milli seconds */
 
 
-static const ddr_conf_t mt46h64m16_6 = {
+const ddr_conf_t mt46h64m16_6 = {
 	.ddr2_not_mddr = AM18X_FALSE,
 	.page_size = 10,
 	.row_size  = 9,
@@ -71,7 +72,7 @@ int low_level_init(void) {
 	// ddr_initialize(DDR0, &mt46h64m16_6);
 
 	if (AM18X_OK != (r = systick_init(SYSTICK_PERIOD))) {
-		printk("systick_init() error\n");
+		// printk("systick_init() error\n");
 		return r;
 	}
 
@@ -89,7 +90,7 @@ int low_level_init(void) {
 
 	// tps6507x_conf();
 
-	printk("ARM CLK: %9d Hz\n", dev_get_freq(DCLK_ID_ARM));
+	// printk("ARM CLK: %9d Hz\n", dev_get_freq(DCLK_ID_ARM));
 
 	return AM18X_OK;
 }

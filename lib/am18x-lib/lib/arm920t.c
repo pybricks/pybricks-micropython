@@ -60,7 +60,7 @@ int arm_mmu_show_control(const cp15_control_t* c1) {
 unsigned arm_read_cp15_fault_address(void) {
 	unsigned fadr;
 
-	asm volatile(
+	__asm volatile(
 	"mrc	p15, 0, %0, c6, c0, 0\n"
 	: "=r"(fadr));
 	return fadr;

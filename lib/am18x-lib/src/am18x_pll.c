@@ -118,7 +118,7 @@ am18x_rt pll_set_conf(PLL_con_t* pcon, const pll_conf_t* conf) {
 	// d) Wait for 4 OSCIN cycles to ensure that
 	//    the PLLC has switch to bypass mode
 	for (v = 0; v < 456 * 4 / 12; v++) {
-		asm volatile ("nop");
+		__asm volatile ("nop");
 	}
 
 	// 3. Clear PLLRST in PLLCTL to 0
@@ -159,7 +159,7 @@ am18x_rt pll_set_conf(PLL_con_t* pcon, const pll_conf_t* conf) {
 	// N = Pre-Divider Ratio
 	// M = PLL Multiplier
 	for (v = 0; v < 456 * ( 2000 * conf->prediv / 2) / 12; v++) {
-		asm volatile ("nop");
+		__asm volatile ("nop");
 	}
 
 	// 9. Set the PLLEN bit in PLLCTL to 1 (removes PLL from bypass mode)
@@ -171,7 +171,7 @@ am18x_rt pll_set_conf(PLL_con_t* pcon, const pll_conf_t* conf) {
 
 am18x_rt pll_cmd(PLL_con_t* pcon, uint32_t cmd, uint32_t arg) {
 	uint32_t reg, msk;
-	int i;
+	uint32_t i;
 
 	switch (cmd) {
 	case PLL_CMD_SOFT_RESET:
@@ -204,14 +204,14 @@ am18x_rt pll_cmd(PLL_con_t* pcon, uint32_t cmd, uint32_t arg) {
 		msk = PLLCTL_PLLEN_MASK;
 		pcon->PLLCTL = FIELD_SET(pcon->PLLCTL, msk, PLLCTL_PLLEN_no);
 		for (i = 0; i < 456 * 4 / 12; i++) {
-			asm volatile ("nop");
+			__asm volatile ("nop");
 		}
 		break;
 
 	case PLL_CMD_CHG_MULT:
 		pcon->PLLM = FIELD_SET(0, PLLM_MASK, PLLM_WR(arg));
 		for (i = 0; i < 456 * ( 2000 * (pcon->PREDIV + 1) / 2) / 12; i++) {
-			asm volatile ("nop");
+			__asm volatile ("nop");
 		}
 		break;
 

@@ -136,7 +136,7 @@ static uint32_t freq_table[][2] = {
 // USB#0 (USB2.0 subsystem)
 am18x_rt syscfg_set_usb0phy(am18x_bool y_on_n_off, uint32_t freq) {
 	uint32_t reg, msk, v;
-	int i;
+	uint32_t i;
 
 	reg = SYSCFG0->CFGCHIP2;
 
@@ -151,7 +151,7 @@ am18x_rt syscfg_set_usb0phy(am18x_bool y_on_n_off, uint32_t freq) {
 	SYSCFG0->CFGCHIP2 = reg;
 	// Drive Reset for few clock cycles
 	for (v = 0; v < 50; v++) {
-		asm volatile ("nop");
+		__asm volatile ("nop");
 	}
 
 	if (!y_on_n_off) {

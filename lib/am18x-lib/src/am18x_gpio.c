@@ -56,7 +56,7 @@ am18x_rt gpio_set_mux(gpio_bank_t bank, gpio_pin_t pin, gpio_dir_t dir) {
 			val = 4;
 		} else
 	// PINMUX04[7..0] = (GP1[0..7], value = 4)
-		if (GPIO_PIN_0 <= pin && pin <= GPIO_PIN_7) {
+		if (pin <= GPIO_PIN_7) {
 			mux = 4;
 			pos = GPIO_PIN_7 - pin;
 			val = 4;
@@ -123,7 +123,7 @@ am18x_rt gpio_set_mux(gpio_bank_t bank, gpio_pin_t pin, gpio_dir_t dir) {
 			pos = GPIO_PIN_6 - pin;
 		} else
 	// PINMUX19[6..2] = (GP6[0..4], value = 8)
-		if (GPIO_PIN_0 <= pin && pin <= GPIO_PIN_4) {
+		if (pin <= GPIO_PIN_4) {
 			mux = 19;
 			pos = GPIO_PIN_6 - pin;
 		}
@@ -140,7 +140,7 @@ am18x_rt gpio_set_mux(gpio_bank_t bank, gpio_pin_t pin, gpio_dir_t dir) {
 			pos = GPIO_PIN_9 - pin;
 		} else
 	// PINMUX18[1..0] = (GP7[0..1], value = 8)
-		if (GPIO_PIN_0 <= pin && pin <= GPIO_PIN_1) {
+		if (pin <= GPIO_PIN_1) {
 			mux = 18;
 			pos = GPIO_PIN_1 - pin;
 		}
@@ -169,7 +169,7 @@ am18x_rt gpio_set_mux(gpio_bank_t bank, gpio_pin_t pin, gpio_dir_t dir) {
 			val = 4;
 		} else
 	// PINMUX19[7..7] = (GP8[0], value = 8)
-		if (GPIO_PIN_0 <= pin && pin <= GPIO_PIN_0) {
+		if (pin <= GPIO_PIN_0) {
 			mux = 19;
 			pos = GPIO_PIN_7 - pin;
 		}
