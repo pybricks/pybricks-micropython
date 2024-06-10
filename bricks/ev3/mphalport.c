@@ -92,7 +92,7 @@ static void debug(pb_hal_uart_t *uart, const char *s) {
 
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     debug(&UART0, str);
-    MICROPY_EVENT_POLL_HOOK
+    // MICROPY_EVENT_POLL_HOOK
 }
 
 void mp_hal_stdout_tx_flush(void) {
