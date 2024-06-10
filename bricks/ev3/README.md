@@ -114,13 +114,23 @@ OK
 
 Starting kernel ...
 
-Hello!
-World!
+System init in platform.c called from startup.s
+
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
+Hello, world at time (ms): 0
 Traceback (most recent call last):
 
-  File "%q", line %dhello.py", line %d8D��D�, in %q
+  File "%q", line %dhello.py", line %d9���D�, in %q
 <module>
-KeyboardInterrupt: 
+KeyboardInterrupt:
 Pybricks MicroPython v1.20.0-23-g6c633a8dd on 2024-06-08; MINDSTORMS EV3 Brick with TI Sitara AM1808
 Type "help()" for more information.
 >>> 

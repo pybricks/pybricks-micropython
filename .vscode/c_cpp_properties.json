@@ -56,6 +56,34 @@
             "intelliSenseMode": "gcc-arm"
         },
         {
+            "name": "ev3",
+            "includePath": [
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/ev3",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/ev3",
+                "${workspaceFolder}/bricks/ev3/build",
+                "${workspaceFolder}/micropython",
+            ],
+            "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
+                "MICROPY_ROM_TEXT_COMPRESSION",
+            ],
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
+                "-nostdlib"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
             "name": "ev3rt",
             "includePath": [
                 "${workspaceFolder}/lib/contiki-core",

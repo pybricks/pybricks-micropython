@@ -143,6 +143,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/clock/clock_nxt.c \
 	drv/clock/clock_stm32.c \
 	drv/clock/clock_test.c \
+	drv/clock/clock_tiam1808.c \
 	drv/clock/clock_virtual.c \
 	drv/core.c \
 	drv/counter/counter_ev3dev_stretch_iio.c \
