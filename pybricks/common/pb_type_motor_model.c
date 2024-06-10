@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON_MOTOR_MODEL
+#if PYBRICKS_PY_COMMON_MOTOR_MODEL && MICROPY_PY_BUILTINS_FLOAT
 
 #include <pbio/observer.h>
 
@@ -99,4 +99,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorModel,
     MP_TYPE_FLAG_NONE,
     locals_dict, &pb_type_MotorModel_locals_dict);
 
-#endif // PYBRICKS_PY_COMMON_MOTOR_MODEL
+#endif // PYBRICKS_PY_COMMON_MOTOR_MODEL && MICROPY_PY_BUILTINS_FLOAT

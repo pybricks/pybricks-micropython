@@ -10,7 +10,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON_SPEAKER
+#if PYBRICKS_PY_COMMON_SPEAKER && MICROPY_PY_BUILTINS_FLOAT
 
 #include <math.h>
 #include <pbdrv/sound.h>
@@ -399,4 +399,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_Speaker,
     make_new, pb_type_Speaker_make_new,
     locals_dict, &pb_type_Speaker_locals_dict);
 
-#endif // PYBRICKS_PY_COMMON_SPEAKER
+#endif // PYBRICKS_PY_COMMON_SPEAKER && MICROPY_PY_BUILTINS_FLOAT
