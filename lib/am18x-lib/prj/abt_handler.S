@@ -25,7 +25,7 @@ HandlePrefetchAbort:
 	LDRNE	R1, =__thumb_mode_fmt
 	SUBNE	V2, LR, #4
 
-	LDR	V1, =printk
+	LDR	V1, =printf
 
 	LDR	R0, =__pabt_fmt
 	MOV	LR, PC
@@ -68,7 +68,7 @@ HandleDataAbort:
 	LDRNE	R1, =__thumb_mode_fmt
 	SUBNE	V2, LR, #8
 
-	LDR	V1, =printk
+	LDR	V1, =printf
 
 	ADR	R0, __dabt_fmt
 	MOV	LR, PC

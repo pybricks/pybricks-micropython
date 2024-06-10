@@ -2,10 +2,6 @@
 #include "am18x_lib.h"
 #include "auxlib.h"
 
-int printk(const char* s, ...) {
-	return 0;
-}
-
 extern int output_a_char(int);
 
 static none_arg_handler_t isr_vector[] = {

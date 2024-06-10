@@ -535,6 +535,9 @@ ifeq ($(PB_MCU_FAMILY),TIAM1808)
 OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_PRJ_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_SRC_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_LIB_SRC_C:.c=.o))
+$(addprefix $(BUILD)/, $(AM18X_LIB_PRJ_SRC_C:.c=.o)): CFLAGS += -Wno-error=format= -Wno-format
+$(addprefix $(BUILD)/, $(AM18X_LIB_SRC_SRC_C:.c=.o)): CFLAGS += -Wno-error=format= -Wno-format
+$(addprefix $(BUILD)/, $(AM18X_LIB_LIB_SRC_C:.c=.o)): CFLAGS += -Wno-error=format= -Wno-format
 
 OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_PRJ_SRC_S:.S=.o))
 OBJ += $(addprefix $(BUILD)/, $(AM18X_LIB_LIB_SRC_S:.S=.o))

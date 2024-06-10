@@ -32,11 +32,15 @@ typedef struct {
 
 #define __HAS_STRING_H__
 
+#include <stdio.h>
+
 int delay(int d);
 #ifndef __HAS_STRING_H__
 int puts(const char* s);
 #endif
-int printk(const char* s, ...);
+
+#define printk printf
+
 int sscanf(const char* buf, const char* fmt, ...);
 int sprintf(char * buf, const char *fmt, ...);
 size_t strlen(const char* s);

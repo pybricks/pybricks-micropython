@@ -25,7 +25,7 @@ HandleUndef:
 	LDRNE	R1, =__thumb_mode_fmt
 	SUBNE	V2, LR, #2
 	ADR	R0, __undef_fmt
-	LDR	V1, =printk
+	LDR	V1, =printf
 	MOV	LR, PC
 	BX	V1
 
