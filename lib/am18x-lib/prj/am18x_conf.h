@@ -76,7 +76,9 @@ extern const uint32_t f_osc;
 #define assert(expr) ((expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
 void assert_failed(uint8_t* file, uint32_t line);
 #else
+#ifndef assert
 #define assert(expr) ((void)0)
+#endif
 #endif // DEBUG
 
 typedef void (*none_arg_handler_t)(void);

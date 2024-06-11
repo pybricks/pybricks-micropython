@@ -7,7 +7,7 @@
 #include "am1808exp.h"
 #include "am18x_type.h"
 
-#define SYSTICK_PERIOD			10/* milli seconds */
+#define SYSTICK_PERIOD_MS (1)
 
 
 const ddr_conf_t mt46h64m16_6 = {
@@ -71,16 +71,15 @@ int low_level_init(void) {
 
 	// ddr_initialize(DDR0, &mt46h64m16_6);
 
-	if (AM18X_OK != (r = systick_init(SYSTICK_PERIOD))) {
-		// printk("systick_init() error\n");
+	if (AM18X_OK != (r = systick_init(SYSTICK_PERIOD_MS))) {
+		printk("systick_init() error\n");
 		return r;
 	}
 
-/*	if (AM18X_OK != (r = systick_start())) {
+	if (AM18X_OK != (r = systick_start())) {
 		printk("systick_start() error\n");
 		return r;
 	}
-*/
 	// invalid operation ?
 	sata_100m_clk_enable(AM18X_FALSE);
 
@@ -90,7 +89,7 @@ int low_level_init(void) {
 
 	// tps6507x_conf();
 
-	// printk("ARM CLK: %9d Hz\n", dev_get_freq(DCLK_ID_ARM));
+	printk("ARM CLK: %9d Hz\n", dev_get_freq(DCLK_ID_ARM));
 
 	return AM18X_OK;
 }
