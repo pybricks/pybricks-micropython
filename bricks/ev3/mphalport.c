@@ -16,6 +16,10 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
+#include <systick.h>
+#include <arm920t.h>
+#include <am18x_aintc.h>
+
 void pb_stack_get_info(char **sstack, char **estack) {
 
     volatile int stack_dummy;
@@ -31,24 +35,17 @@ void pb_event_poll_hook_leave(void) {
     // have a critical section where we disable interrupts and check see if there
     // are any last second events. If not, we can call __WFI(), which still wakes
     // up the CPU on interrupt even though interrupts are otherwise disabled.
-
-
-    // TODO: TIAM1808 Implement commented out parts
-
-    // mp_uint_t state = disable_irq();
+    arm_intr_disable();
     if (!process_nevents()) {
-        // __WFI();
+        arm_wfi();
     }
-    // enable_irq(state);
+    arm_intr_enable();
 }
 
 // Core delay function that does an efficient sleep and may switch thread context.
 // If IRQs are enabled then we must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {
-
-    // TODO: TIAM1808 implement IRQ enabled check
-
-    if (/*__get_PRIMASK() == 0*/ 0) {
+    if (aintc_get_active() != AINTC_INVALID_ACTIVE) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = pbdrv_clock_get_ms();
         // Wraparound of tick is taken care of by 2's complement arithmetic.
@@ -60,7 +57,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         } while (pbdrv_clock_get_ms() - start < Delay);
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
-        // TODO: TIAM1808
+        systick_sleep(Delay);
     }
 }
 
@@ -80,7 +77,7 @@ typedef struct {
 } pb_hal_uart_t;
 
 // Sensor port 1
-static pb_hal_uart_t UART0 = { .thr = (volatile uint8_t *)0x01D0C000, .lsr = (volatile uint8_t *)0x01D0C014 };
+static pb_hal_uart_t DBG_UART = { .thr = (volatile uint8_t *)0x01D0C000, .lsr = (volatile uint8_t *)0x01D0C014 };
 
 static void debug(pb_hal_uart_t *uart, const char *s) {
     while (*s) {
@@ -91,7 +88,7 @@ static void debug(pb_hal_uart_t *uart, const char *s) {
 }
 
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    debug(&UART0, str);
+    debug(&DBG_UART, str);
     // MICROPY_EVENT_POLL_HOOK
 }
 
