@@ -9,6 +9,8 @@
 - Allow Bluetooth to be toggled off and on with the Bluetooth button on the
   Prime Hub and the Inventor Hub ([support#1615]), and have this state persist
   between reboots.
+- Reduced hub poweroff time from 3 to 2 second to make it easier to turn off
+  the hub.
 
 ### Changed
 
