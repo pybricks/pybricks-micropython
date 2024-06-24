@@ -137,13 +137,19 @@ bool pbio_imu_is_stationary(void) {
  * Sets the thresholds that define when the hub is stationary. When the
  * measurements are steadily below these levels, the orientation module
  * automatically recalibrates.
+ * 
+ * If a value is negative, it is ignored.
  *
  * @param [in]  angular_velocity Angular velocity threshold in deg/s.
  * @param [in]  acceleration     Acceleration threshold in mm/s^2
  */
 void pbio_imu_set_stationary_thresholds(float angular_velocity, float acceleration) {
-    imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
-    imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
+    if (angular_velocity >= 0) {
+        imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
+    }
+    if (acceleration >= 0) {
+        imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
+    }
 }
 
 /**
