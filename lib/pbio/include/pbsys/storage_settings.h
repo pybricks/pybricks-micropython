@@ -17,6 +17,7 @@
 
 #include <pbio/error.h>
 
+#include <pbio/config.h>
 #include <pbsys/config.h>
 
 /**
@@ -33,25 +34,41 @@ typedef enum {
  * System settings. All data types are little-endian.
  */
 typedef struct _pbsys_storage_settings_t {
+    /** System setting flags. */
     uint32_t flags;
+    #if PBIO_CONFIG_IMU
+    /** Angular velocity threshold below which the IMU is considered stationary, in deg/s. */
+    float gyro_stationary_threshold;
+    /** Acceleration threshold below which the IMU is considered stationary, in mm/s^2. */
+    float accel_stationary_threshold;
+    #endif
 } pbsys_storage_settings_t;
 
 #if PBSYS_CONFIG_STORAGE
 
-void pbsys_storage_set_default_settings(pbsys_storage_settings_t *settings);
+void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings);
+
+void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings);
 
 bool pbsys_storage_settings_bluetooth_enabled(void);
 
 void pbsys_storage_settings_bluetooth_enabled_request_toggle(void);
 
+void pbsys_storage_settings_save_imu_settings(void);
+
 #else
 
-static inline void pbsys_storage_set_default_settings(pbsys_storage_settings_t *settings) {
+static inline void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
+}
+static inline void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings) {
 }
 static inline bool pbsys_storage_settings_bluetooth_enabled(void) {
     return true;
 }
 static inline void pbsys_storage_settings_bluetooth_enabled_request_toggle(void) {
+}
+
+static inline void pbsys_storage_settings_save_imu_settings(void) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE

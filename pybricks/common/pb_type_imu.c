@@ -13,6 +13,8 @@
 #include <pbio/geometry.h>
 #include <pbio/imu.h>
 
+#include <pbsys/storage_settings.h>
+
 #include "py/obj.h"
 
 #include <pybricks/common.h>
@@ -187,6 +189,7 @@ STATIC mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         acceleration = mp_obj_get_float(acceleration_threshold_in);
     }
     pbio_imu_set_stationary_thresholds(angular_velocity, acceleration);
+    pbsys_storage_settings_save_imu_settings();
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_settings_obj, 1, pb_type_imu_settings);
@@ -247,9 +250,6 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis
     pb_type_imu_extract_axis(top_side_axis_in, &top_side_axis);
 
     pbio_imu_set_base_orientation(&front_side_axis, &top_side_axis);
-
-    // Default noise thresholds.
-    pbio_imu_set_stationary_thresholds(5.0f, 2500.0f);
 
     // Return singleton instance.
     return MP_OBJ_FROM_PTR(&singleton_imu_obj);

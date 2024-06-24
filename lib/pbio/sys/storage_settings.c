@@ -12,6 +12,7 @@
 #include <pbdrv/bluetooth.h>
 
 #include <pbio/error.h>
+#include <pbio/imu.h>
 #include <pbsys/status.h>
 #include <pbsys/storage_settings.h>
 
@@ -23,15 +24,46 @@
  *
  * @param [in]  settings  Settings to populate.
  */
-void pbsys_storage_set_default_settings(pbsys_storage_settings_t *settings) {
+void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
     settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #endif
+    #if PBIO_CONFIG_IMU
+    settings->gyro_stationary_threshold = 5;
+    settings->accel_stationary_threshold = 2500;
+    #endif // PBIO_CONFIG_IMU
+}
+
+/**
+ * Applies the loaded settings and preferences after boot.
+ *
+ * @param [in]  settings  Settings to populate.
+ */
+void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings) {
+    #if PBIO_CONFIG_IMU
+    pbio_imu_set_stationary_thresholds(settings->gyro_stationary_threshold, settings->accel_stationary_threshold);
+    #endif // PBIO_CONFIG_IMU
+}
+
+/**
+ * Copies the configured IMU settings to storage and requests them to be saved.
+ *
+ * @param [in]  settings  Settings to populate.
+ */
+void pbsys_storage_settings_save_imu_settings(void) {
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
+    if (!settings) {
+        return;
+    }
+    #if PBIO_CONFIG_IMU
+    pbio_imu_get_stationary_thresholds(&settings->gyro_stationary_threshold, &settings->accel_stationary_threshold);
+    pbsys_storage_request_write();
+    #endif // PBIO_CONFIG_IMU
 }
 
 bool pbsys_storage_settings_bluetooth_enabled(void) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    pbsys_storage_settings_t *settings = pbsys_storage_get_settings();
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
     if (!settings) {
         return true;
     }
@@ -43,7 +75,7 @@ bool pbsys_storage_settings_bluetooth_enabled(void) {
 
 void pbsys_storage_settings_bluetooth_enabled_request_toggle(void) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    pbsys_storage_settings_t *settings = pbsys_storage_get_settings();
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
 
     // Ignore toggle request in all but idle system status.
     if (!settings
