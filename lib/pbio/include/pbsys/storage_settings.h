@@ -41,6 +41,12 @@ typedef struct _pbsys_storage_settings_t {
     float gyro_stationary_threshold;
     /** Acceleration threshold below which the IMU is considered stationary, in mm/s^2. */
     float accel_stationary_threshold;
+    /**
+     * Number of degrees measured for one full turn along the user Z axis. This
+     * is used to correct the heading value. Other rotation methods are not
+     * affected.
+     */
+    float heading_correction;
     #endif
 } pbsys_storage_settings_t;
 

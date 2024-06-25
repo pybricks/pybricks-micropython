@@ -164,27 +164,33 @@ STATIC mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_imu_obj_t, self,
         PB_ARG_DEFAULT_NONE(angular_velocity_threshold),
-        PB_ARG_DEFAULT_NONE(acceleration_threshold));
+        PB_ARG_DEFAULT_NONE(acceleration_threshold),
+        PB_ARG_DEFAULT_NONE(heading_correction));
 
     (void)self;
 
     // Return current values if no arguments are given.
-    if (angular_velocity_threshold_in == mp_const_none && acceleration_threshold_in == mp_const_none) {
+    if (angular_velocity_threshold_in == mp_const_none &&
+        acceleration_threshold_in == mp_const_none &&
+        heading_correction_in == mp_const_none) {
         float angular_velocity;
         float acceleration;
-        pbio_imu_get_stationary_thresholds(&angular_velocity, &acceleration);
+        float heading_correction;
+        pbio_imu_get_settings(&angular_velocity, &acceleration, &heading_correction);
         mp_obj_t ret[] = {
             mp_obj_new_float_from_f(angular_velocity),
             mp_obj_new_float_from_f(acceleration),
+            mp_obj_new_float_from_f(heading_correction),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
     }
 
     // Otherwise set new values, only if given.
-    pbio_imu_set_stationary_thresholds(
-        angular_velocity_threshold_in == mp_const_none ? -1.0f : mp_obj_get_float(angular_velocity_threshold_in),
-        acceleration_threshold_in == mp_const_none ? -1.0f : mp_obj_get_float(acceleration_threshold_in)
-    );
+    pb_assert(pbio_imu_set_settings(
+        angular_velocity_threshold_in == mp_const_none ? NAN : mp_obj_get_float(angular_velocity_threshold_in),
+        acceleration_threshold_in == mp_const_none ? NAN : mp_obj_get_float(acceleration_threshold_in),
+        heading_correction_in == mp_const_none ? NAN : mp_obj_get_float(heading_correction_in)
+        ));
 
     // Request that changed settings are saved on shutdown.
     pbsys_storage_settings_save_imu_settings();

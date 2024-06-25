@@ -9,14 +9,19 @@
 - Allow Bluetooth to be toggled off and on with the Bluetooth button on the
   Prime Hub and the Inventor Hub ([support#1615]), and have this state persist
   between reboots.
+- Added `heading_correction` to `hub.imu.settings` to allow for automatic
+  correction of the `hub.imu.heading()` value ([support#1678]).
 
 ### Changed
 
 - When upgrading the firmware to a new version, the user program will now
   be erased. This avoids issues with incompatible program files ([support#1622]).
+- The `angular_velocity_threshold`, and `acceleration_threshold` settings
+  in `hub.imu.settings` are now persistent between reboots.
 
 [support#1615]: https://github.com/pybricks/support/issues/1615
 [support#1622]: https://github.com/pybricks/support/issues/1622
+[support#1678]: https://github.com/pybricks/support/issues/1678
 
 ## [3.5.0] - 2024-04-11
 

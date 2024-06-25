@@ -31,6 +31,7 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     #if PBIO_CONFIG_IMU
     settings->gyro_stationary_threshold = 5;
     settings->accel_stationary_threshold = 2500;
+    settings->heading_correction = 360.0f;
     #endif // PBIO_CONFIG_IMU
 }
 
@@ -41,7 +42,12 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
  */
 void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings) {
     #if PBIO_CONFIG_IMU
-    pbio_imu_set_stationary_thresholds(settings->gyro_stationary_threshold, settings->accel_stationary_threshold);
+    // return value not checked, assumed to be set valid previously
+    pbio_imu_set_settings(
+        settings->gyro_stationary_threshold,
+        settings->accel_stationary_threshold,
+        settings->heading_correction
+        );
     #endif // PBIO_CONFIG_IMU
 }
 
@@ -56,7 +62,11 @@ void pbsys_storage_settings_save_imu_settings(void) {
         return;
     }
     #if PBIO_CONFIG_IMU
-    pbio_imu_get_stationary_thresholds(&settings->gyro_stationary_threshold, &settings->accel_stationary_threshold);
+    pbio_imu_get_settings(
+        &settings->gyro_stationary_threshold,
+        &settings->accel_stationary_threshold,
+        &settings->heading_correction
+        );
     pbsys_storage_request_write();
     #endif // PBIO_CONFIG_IMU
 }
