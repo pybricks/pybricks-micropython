@@ -11,6 +11,8 @@
   between reboots.
 - Added `heading_correction` to `hub.imu.settings` to allow for automatic
   correction of the `hub.imu.heading()` value ([support#1678]).
+- Added `update_heading_correction` to interactively set the heading
+  correction value ([support#1678]).
 
 ### Changed
 

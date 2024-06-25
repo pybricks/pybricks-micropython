@@ -54,7 +54,7 @@ STATIC mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_a
     #endif
     self->buttons = pb_type_Keypad_obj_new(pb_type_button_pressed_hub_single_button);
     self->charger = pb_type_Charger_obj_new();
-    self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);
+    self->imu = pb_type_IMU_obj_new(MP_OBJ_FROM_PTR(self), top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);

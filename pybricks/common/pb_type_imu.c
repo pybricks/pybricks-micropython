@@ -14,6 +14,7 @@
 #include <pbio/imu.h>
 
 #include <pbsys/storage_settings.h>
+#include <pbsys/program_stop.h>
 
 #include "py/obj.h"
 
@@ -25,6 +26,7 @@
 
 typedef struct _pb_type_imu_obj_t {
     mp_obj_base_t base;
+    mp_obj_t hub;
 } pb_type_imu_obj_t;
 
 // pybricks._common.IMU.up
@@ -218,6 +220,28 @@ STATIC mp_obj_t pb_type_imu_reset_heading(size_t n_args, const mp_obj_t *pos_arg
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_reset_heading_obj, 1, pb_type_imu_reset_heading);
 
+// pybricks._common.IMU.update_heading_correction
+STATIC mp_obj_t pb_type_imu_update_heading_correction(mp_obj_t self_in) {
+    pb_type_imu_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_module_tools_assert_blocking();
+
+    // Disable stop button and cache original setting to restore later.
+    pbio_button_flags_t stop_button = pbsys_program_stop_get_buttons();
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        mp_obj_t func = pb_frozen_function_import(MP_QSTR__hub_extra, MP_QSTR_imu_update_heading_correction);
+        mp_call_function_1(func, self->hub);
+        pbsys_program_stop_set_buttons(stop_button);
+        nlr_pop();
+    } else {
+        pbsys_program_stop_set_buttons(stop_button);
+        nlr_jump(nlr.ret_val);
+    }
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_imu_update_heading_correction_obj, pb_type_imu_update_heading_correction);
+
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t pb_type_imu_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&pb_type_imu_acceleration_obj)    },
@@ -230,6 +254,7 @@ STATIC const mp_rom_map_elem_t pb_type_imu_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&pb_type_imu_stationary_obj)      },
     { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&pb_type_imu_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&pb_type_imu_up_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_update_heading_correction), MP_ROM_PTR(&pb_type_imu_update_heading_correction_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_imu_locals_dict, pb_type_imu_locals_dict_table);
 
@@ -244,7 +269,7 @@ STATIC pb_type_imu_obj_t singleton_imu_obj = {
 };
 
 // pybricks._common.IMU.__init__
-mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis_in) {
+mp_obj_t pb_type_IMU_obj_new(mp_obj_t hub_in, mp_obj_t top_side_axis_in, mp_obj_t front_side_axis_in) {
 
     // Set user base orientation.
     pbio_geometry_xyz_t front_side_axis;
@@ -256,6 +281,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis_in, mp_obj_t front_side_axis
     pbio_imu_set_base_orientation(&front_side_axis, &top_side_axis);
 
     // Return singleton instance.
+    singleton_imu_obj.hub = hub_in;
     return MP_OBJ_FROM_PTR(&singleton_imu_obj);
 }
 

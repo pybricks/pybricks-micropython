@@ -79,7 +79,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
     self->buttons = pb_type_Keypad_obj_new(pb_type_primehub_button_pressed);
     self->charger = pb_type_Charger_obj_new();
     self->display = pb_type_LightMatrix_obj_new(pbsys_hub_light_matrix);
-    self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);
+    self->imu = pb_type_IMU_obj_new(MP_OBJ_FROM_PTR(self), top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
