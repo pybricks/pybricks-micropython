@@ -293,7 +293,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
     // Ensures Bluetooth preferences are loaded before we read them.
     #if PBSYS_CONFIG_STORAGE && PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    PROCESS_WAIT_EVENT_UNTIL(pbsys_storage_get_settings() != NULL);
+    PROCESS_WAIT_EVENT_UNTIL(pbsys_storage_settings_get_settings() != NULL);
     #endif // PBSYS_CONFIG_STORAGE && PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     pbdrv_bluetooth_set_on_event(pbsys_bluetooth_process_poll);

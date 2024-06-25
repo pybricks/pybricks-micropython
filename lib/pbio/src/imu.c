@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 
 #include <pbdrv/clock.h>
 #include <pbdrv/imu.h>
@@ -133,28 +134,52 @@ bool pbio_imu_is_stationary(void) {
     return pbdrv_imu_is_stationary(imu_dev);
 }
 
+// Measured rotation of the Z axis in the user frame for exactly one rotation
+// of the hub. This will be used to adjust the heading value, which is slightly
+// different for each hub.
+static float heading_degrees_per_rotation = 360.0f;
+
 /**
- * Sets the thresholds that define when the hub is stationary. When the
- * measurements are steadily below these levels, the orientation module
- * automatically recalibrates.
+ * Sets the IMU settings. This includes the thresholds that define when the hub
+ * is stationary. When the measurements are steadily below these levels, the
+ * orientation module automatically recalibrates. Also includes the hub-specific
+ * correction value to get a more accurate heading value.
  *
- * @param [in]  angular_velocity Angular velocity threshold in deg/s.
- * @param [in]  acceleration     Acceleration threshold in mm/s^2
+ * If a value is nan, it is ignored.
+ *
+ * @param [in]  angular_velocity    Angular velocity threshold in deg/s.
+ * @param [in]  acceleration        Acceleration threshold in mm/s^2
+ * @param [in]  heading_correction  Measured degrees per full rotation of the hub.
+ * @returns ::PBIO_ERROR_INVALID_ARG if the heading correction is out of range,
+ *          otherwise ::PBIO_SUCCESS.
  */
-void pbio_imu_set_stationary_thresholds(float angular_velocity, float acceleration) {
-    imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
-    imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
+pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction) {
+    if (!isnan(angular_velocity)) {
+        imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
+    }
+    if (!isnan(acceleration)) {
+        imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
+    }
+    if (!isnan(heading_correction)) {
+        if (heading_correction < 350 || heading_correction > 370) {
+            return PBIO_ERROR_INVALID_ARG;
+        }
+        heading_degrees_per_rotation = heading_correction;
+    }
+    return PBIO_SUCCESS;
 }
 
 /**
  * Gets the thresholds that define when the hub is stationary.
  *
- * @param [out]  angular_velocity Angular velocity threshold in deg/s.
- * @param [out]  acceleration     Acceleration threshold in mm/s^2
+ * @param [out]  angular_velocity    Angular velocity threshold in deg/s.
+ * @param [out]  acceleration        Acceleration threshold in mm/s^2
+ * @param [out]  heading_correction  Measured degrees per full rotation of the hub.
  */
-void pbio_imu_get_stationary_thresholds(float *angular_velocity, float *acceleration) {
+void pbio_imu_get_settings(float *angular_velocity, float *acceleration, float *heading_correction) {
     *angular_velocity = imu_config->gyro_stationary_threshold * imu_config->gyro_scale;
     *acceleration = imu_config->accel_stationary_threshold * imu_config->accel_scale;
+    *heading_correction = heading_degrees_per_rotation;
 }
 
 /**
@@ -210,7 +235,8 @@ pbio_geometry_side_t pbio_imu_get_up_side(void) {
 static float heading_offset = 0;
 
 /**
- * Reads the estimated IMU heading in degrees, accounting for user offset.
+ * Reads the estimated IMU heading in degrees, accounting for user offset and
+ * user-specified heading correction scaling constant.
  *
  * Heading is defined as clockwise positive.
  *
@@ -222,7 +248,7 @@ float pbio_imu_get_heading(void) {
 
     pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &heading_mapped);
 
-    return -heading_mapped.z - heading_offset;
+    return -heading_mapped.z * 360.0f / heading_degrees_per_rotation - heading_offset;
 }
 
 /**
