@@ -367,9 +367,9 @@ static const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)                    },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
     { MP_ROM_QSTR(MP_QSTR_read_input_byte), MP_ROM_PTR(&pb_module_tools_read_input_byte_obj) },
-    #if PYBRICKS_PY_TOOLS_HOSTBUFFER
-    { MP_ROM_QSTR(MP_QSTR_HostBuffer),  MP_ROM_PTR(&pb_type_hostbuffer)               },
-    #endif // PYBRICKS_PY_TOOLS_HOSTBUFFER
+    #if PYBRICKS_PY_TOOLS_APP_DATA
+    { MP_ROM_QSTR(MP_QSTR_AppData),  MP_ROM_PTR(&pb_type_app_data)               },
+    #endif // PYBRICKS_PY_TOOLS_APP_DATA
     #if PYBRICKS_PY_TOOLS_HUB_MENU
     { MP_ROM_QSTR(MP_QSTR_hub_menu),    MP_ROM_PTR(&pb_module_tools_hub_menu_obj)     },
     #endif // PYBRICKS_PY_TOOLS_HUB_MENU

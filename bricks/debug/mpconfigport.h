@@ -38,7 +38,7 @@
 #define PYBRICKS_PY_ROBOTICS                    (0)
 #define PYBRICKS_PY_TOOLS                       (1)
 #define PYBRICKS_PY_TOOLS_HUB_MENU              (0)
-#define PYBRICKS_PY_TOOLS_HOSTBUFFER            (1)
+#define PYBRICKS_PY_TOOLS_APP_DATA              (1)
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (0)
