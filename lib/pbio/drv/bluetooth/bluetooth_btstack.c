@@ -142,7 +142,9 @@ static void pybricks_can_send(void *context) {
     pbdrv_bluetooth_send_context_t *send = context;
 
     pybricks_service_server_send(pybricks_con_handle, send->data, send->size);
-    send->done();
+    if (send->done) {
+        send->done();
+    }
 }
 
 static pbio_pybricks_error_t pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
@@ -161,7 +163,9 @@ static void nordic_can_send(void *context) {
     pbdrv_bluetooth_send_context_t *send = context;
 
     nordic_spp_service_server_send(uart_con_handle, send->data, send->size);
-    send->done();
+    if (send->done) {
+        send->done();
+    }
 }
 
 /**
@@ -712,18 +716,40 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
     bluetooth_on_event = on_event;
 }
 
-void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
-    static btstack_context_callback_registration_t send_request;
+void pbdrv_bluetooth_send_request(btstack_context_callback_registration_t *send_request, pbdrv_bluetooth_send_context_t *context) {
 
-    send_request.context = context;
+    send_request->context = context;
 
     if (context->connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
-        send_request.callback = &pybricks_can_send;
-        pybricks_service_server_request_can_send_now(&send_request, pybricks_con_handle);
+        send_request->callback = &pybricks_can_send;
+        pybricks_service_server_request_can_send_now(send_request, pybricks_con_handle);
     } else if (context->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
-        send_request.callback = &nordic_can_send;
-        nordic_spp_service_server_request_can_send_now(&send_request, uart_con_handle);
+        send_request->callback = &nordic_can_send;
+        nordic_spp_service_server_request_can_send_now(send_request, uart_con_handle);
     }
+}
+
+void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
+    // Callers of this function take care of making new requests only
+    // the last one is complete, so we can immediately send it.
+    static btstack_context_callback_registration_t send_request;
+    pbdrv_bluetooth_send_request(&send_request, context);
+}
+
+static pbio_task_t *send_task;
+
+static void pbdrv_bluetooth_send_queued_done(void) {
+    send_task->status = PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_send_queued(pbio_task_t *task, pbdrv_bluetooth_send_context_t *context) {
+    // This function does the same as pbdrv_bluetooth_send, but works like
+    // all other user-facing Bluetooth commands that can be awaited.
+    static btstack_context_callback_registration_t send_request;
+    send_task = task;
+    task->status = PBIO_ERROR_AGAIN;
+    context->done = pbdrv_bluetooth_send_queued_done;
+    pbdrv_bluetooth_send_request(&send_request, context);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {

@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 3
+#define PBIO_PROTOCOL_VERSION_MINOR 4
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -126,7 +126,8 @@ typedef enum {
     /**
      * Requests to write to a buffer that is pre-allocated by a user program.
      *
-     * This is typically used by an app such as Pybricks Code to set
+     * This is typically used by an app such as Pybricks Code to set data that
+     * can be polled by a user program.
      *
      * It is up to the user program to determine what to with the received
      * data or how to decode it.
@@ -135,7 +136,7 @@ typedef enum {
      * given offset.
      *
      * It is up to the sender to ensure that the written data chunks keep the
-     * overal data valid, assuming that the user can read it in whole at any
+     * overall data valid, assuming that the user can read it in whole at any
      * time between subsequent writes.
      *
      * Parameters:
@@ -145,7 +146,7 @@ typedef enum {
      *
      * @since Pybricks Profile v1.4.0
      */
-    PBIO_PYBRICKS_COMMAND_WRITE_PROGRAM_DATA_BUFFER = 7,
+    PBIO_PYBRICKS_COMMAND_WRITE_APP_DATA = 7,
 } pbio_pybricks_command_t;
 
 /**
@@ -203,6 +204,17 @@ typedef enum {
      * @since Pybricks Profile v1.3.0
      */
     PBIO_PYBRICKS_EVENT_WRITE_STDOUT = 1,
+
+    /**
+     * App data sent from the hub to the host. This is similar to stdout, but
+     * typically used for data that should not be shown in the user terminal,
+     * such as sensor telemetry.
+     *
+     * The payload is a variable number of bytes that was written to app data.
+     *
+     * @since Pybricks Profile v1.4.0
+     */
+    PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2,
 } pbio_pybricks_event_t;
 
 /**

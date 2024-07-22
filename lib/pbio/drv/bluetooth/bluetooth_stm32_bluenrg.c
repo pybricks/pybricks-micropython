@@ -402,7 +402,9 @@ success:
     task->status = PBIO_SUCCESS;
 
 done:
-    send->done();
+    if (send->done) {
+        send->done();
+    }
 
     PT_END(pt);
 }
@@ -410,6 +412,10 @@ done:
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
     static pbio_task_t task;
     start_task(&task, send_value_notification, context);
+}
+
+void pbdrv_bluetooth_send_queued(pbio_task_t *task, pbdrv_bluetooth_send_context_t *context) {
+    start_task(task, send_value_notification, context);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {

@@ -25,8 +25,9 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size);
  * @param [in]  offset  Offset from the start of the buffer.
  * @param [in]  size    Size of the data to be written.
  * @param [in]  data    The data to write.
+ * @returns             Error code.
  */
-typedef void (*pbsys_command_write_app_data_callback_t)(uint16_t offset, uint32_t size, const uint8_t *data);
+typedef pbio_error_t (*pbsys_command_write_app_data_callback_t)(uint16_t offset, uint32_t size, const uint8_t *data);
 
 void pbsys_command_set_write_app_data_callback(pbsys_command_write_app_data_callback_t callback);
 
