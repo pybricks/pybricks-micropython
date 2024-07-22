@@ -22,18 +22,18 @@ typedef struct _pb_type_app_data_obj_t {
     mp_obj_base_t base;
     mp_obj_t format;
     mp_obj_str_t bytes_obj;
-    uint8_t buffer[];
+    uint8_t rx_buffer[];
 } pb_type_app_data_obj_t;
 
 // pointer to dynamically allocated app_data singleton for driver callback.
 static pb_type_app_data_obj_t *app_data_instance;
 
-static void handle_write_data_buffer(uint16_t offset, uint32_t size, const uint8_t *data) {
-    // Can't write if buffer does not exist or isn't big enough.
+static void handle_incoming_app_data(uint16_t offset, uint32_t size, const uint8_t *data) {
+    // Can't write if rx_buffer does not exist or isn't big enough.
     if (!app_data_instance || offset + size > app_data_instance->bytes_obj.len) {
         return;
     }
-    memcpy(app_data_instance->buffer + offset, data, size);
+    memcpy(app_data_instance->rx_buffer + offset, data, size);
 }
 
 STATIC mp_obj_t pb_type_app_data_get_bytes(mp_obj_t self_in) {
@@ -73,28 +73,28 @@ STATIC mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_ar
 
     // Can only create one instance for now.
     if (app_data_instance) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("host buffer already allocated"));
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("host rx_buffer already allocated"));
     }
 
-    // Use finalizer so we can deactivate the data callback when buffer is garbage collected.
+    // Use finalizer so we can deactivate the data callback when rx_buffer is garbage collected.
     app_data_instance = m_new_obj_var_with_finaliser(pb_type_app_data_obj_t, uint8_t, size);
     app_data_instance->base.type = type;
     app_data_instance->format = format_in;
 
-    // Keep buffer in bytes object format for compatibility with unpack.
+    // Keep rx_buffer in bytes object format for compatibility with unpack.
     app_data_instance->bytes_obj.base.type = &mp_type_bytes;
     app_data_instance->bytes_obj.len = size;
-    app_data_instance->bytes_obj.data = app_data_instance->buffer;
+    app_data_instance->bytes_obj.data = app_data_instance->rx_buffer;
 
-    // Activate callback now that we have allocated the buffer.
-    pbsys_command_set_write_program_data_buffer_callback(handle_write_data_buffer);
+    // Activate callback now that we have allocated the rx_buffer.
+    pbsys_command_set_write_app_data_callback(handle_incoming_app_data);
 
     return MP_OBJ_FROM_PTR(app_data_instance);
 }
 
 mp_obj_t pb_type_app_data_close(mp_obj_t stream) {
     if (app_data_instance) {
-        pbsys_command_set_write_program_data_buffer_callback(NULL);
+        pbsys_command_set_write_app_data_callback(NULL);
         app_data_instance = NULL;
     }
     return mp_const_none;

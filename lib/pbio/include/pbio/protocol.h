@@ -126,8 +126,10 @@ typedef enum {
     /**
      * Requests to write to a buffer that is pre-allocated by a user program.
      *
+     * This is typically used by an app such as Pybricks Code to set
+     *
      * It is up to the user program to determine what to with the received
-     * data.
+     * data or how to decode it.
      *
      * Unlike writing to stdin, this data is not queued but overwriten from the
      * given offset.
