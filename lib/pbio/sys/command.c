@@ -7,13 +7,12 @@
 #include <pbdrv/reset.h>
 #include <pbio/protocol.h>
 #include <pbsys/command.h>
-
+#include <pbsys/config.h>
 #include <pbsys/storage.h>
 
 #include "./bluetooth.h"
 #include "./storage.h"
 #include "./program_stop.h"
-#include "./user_program.h"
 
 static pbsys_command_write_app_data_callback_t write_app_data_callback = NULL;
 
@@ -41,10 +40,24 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
         case PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM:
             pbsys_program_stop(false);
             return PBIO_PYBRICKS_ERROR_OK;
-        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM:
-            return pbio_pybricks_error_from_pbio_error(pbsys_user_program_start_program());
-        case PBIO_PYBRICKS_COMMAND_START_REPL:
-            return pbio_pybricks_error_from_pbio_error(pbsys_user_program_start_repl());
+        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM: {
+            uint32_t id = 0;
+            if (size == (1 + sizeof(uint32_t))) {
+                id = pbio_get_uint32_le(&data[1]);
+            }
+            return pbio_pybricks_error_from_pbio_error(
+                pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_USER, id));
+        }
+        #if PBSYS_CONFIG_APP_BUILTIN_PROGRAMS
+        case PBIO_PYBRICKS_COMMAND_START_BUILTIN_PROGRAM: {
+            uint32_t id = 0;
+            if (size == (1 + sizeof(uint32_t))) {
+                id = pbio_get_uint32_le(&data[1]);
+            }
+            return pbio_pybricks_error_from_pbio_error(
+                pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_BUILTIN, id));
+        }
+        #endif // PBIO_PYBRICKS_FEATURE_TEST(PBIO_PYBRICKS_FEATURE_BUILTIN_PROGRAMS)
         case PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META:
             return pbio_pybricks_error_from_pbio_error(pbsys_storage_set_program_size(
                 pbio_get_uint32_le(&data[1])));
