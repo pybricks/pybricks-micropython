@@ -295,27 +295,47 @@ static void run_user_program(void) {
     nlr_set_abort(NULL);
 }
 
+/**
+ * Builtin Pybricks MicroPython program identifiers.
+ */
+typedef enum {
+    /**
+     * The MicroPython REPL.
+     */
+    PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_REPL = 0,
+    /**
+     * Program that detects attached devices, displays sensor values, and
+     * relays sensor data to host if connected.
+     */
+    PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_PORT_VIEW = 1,
+    /**
+     * The number of builtin programs.
+     */
+    PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_NUMBER_OF_PROGRAMS,
+} pybricks_micropython_builtin_program_id_t;
+
 pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
 
-    #if !PYBRICKS_OPT_COMPILER
+    // Validate builtin programs for existence.
     if (program->type == PBSYS_MAIN_PROGRAM_TYPE_BUILTIN) {
+        #if PBSYS_CONFIG_APP_BUILTIN_PROGRAMS
+        if (program->id < PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_NUMBER_OF_PROGRAMS) {
+            return PBIO_SUCCESS;
+        }
+        #endif
         return PBIO_ERROR_NOT_SUPPORTED;
     }
-    #endif
 
-    if (program->type == PBSYS_MAIN_PROGRAM_TYPE_USER) {
-
-        // If requesting a user program, ensure that it exists and is valid.
-        // Currently, only programs on slot 0 are supported.
-        uint32_t program_size = program->code_end - program->code_start;
-        if (program->id != 0 || program_size == 0 || program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
-            return PBIO_ERROR_NOT_SUPPORTED;
-        }
-
-        // TODO: Now that we have moved these checks to the MicroPython
-        // application code, we can check that a valid program is in fact
-        // present by checking the MicroPython format.
+    // If requesting a user program, ensure that it exists and is valid.
+    // Currently, only programs on slot 0 are supported.
+    uint32_t program_size = program->code_end - program->code_start;
+    if (program->id != 0 || program_size == 0 || program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
+        return PBIO_ERROR_NOT_SUPPORTED;
     }
+
+    // TODO: Now that we have moved these checks to the MicroPython
+    // application code, we can check that a valid program is in fact
+    // present by checking the MicroPython format.
     return PBIO_SUCCESS;
 }
 
@@ -345,15 +365,25 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     if (program->type == PBSYS_MAIN_PROGRAM_TYPE_USER) {
         // Init Pybricks package without auto-import.
         pb_package_pybricks_init(false);
-        // Run loaded program.
+        // Run loaded user program.
         run_user_program();
     }
-    #if PYBRICKS_OPT_COMPILER
+    #if PBSYS_CONFIG_APP_BUILTIN_PROGRAMS
     else {
-        // For MicroPython, the builtin program is the REPL.
-        // Run it with everything auto-imported.
-        pb_package_pybricks_init(true);
-        run_repl();
+        switch (program->id) {
+            case PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_REPL:
+                // Run REPL with everything auto-imported.
+                pb_package_pybricks_init(true);
+                run_repl();
+                break;
+            case PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_PORT_VIEW:
+                pyexec_frozen_module("_builtin_port_view.py", false);
+                break;
+            default:
+                // Existence was already validated above, so just quietly exit
+                // since we can't get here.
+                break;
+        }
     }
     #endif // PYBRICKS_OPT_COMPILER
 
