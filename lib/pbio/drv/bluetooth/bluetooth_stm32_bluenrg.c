@@ -22,7 +22,7 @@
 #include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
-#include <pbsys/app.h>
+#include <pbsys/config.h>
 #include <pbsys/storage.h>
 
 #include <contiki.h>
@@ -1078,7 +1078,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
-        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_STORAGE_MAX_PROGRAM_SIZE);
+        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, PBSYS_STORAGE_MAX_PROGRAM_SIZE);
         aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_hub_capabilities_char_handle,
             0, PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, buf);
     }

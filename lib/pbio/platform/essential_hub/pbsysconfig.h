@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021-2023 The Pybricks Authors
 
+#define PBSYS_CONFIG_APP_BUILTIN_PROGRAMS                        (1)
+#define PBSYS_CONFIG_APP_USER_PROG_FORMAT_MULTI_MPY_V6           (1)
+#define PBSYS_CONFIG_APP_USER_PROG_FORMAT_MULTI_MPY_V6_1_NATIVE  (1)
 #define PBSYS_CONFIG_BATTERY_CHARGER                (1)
 #define PBSYS_CONFIG_BLUETOOTH                      (1)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (0)

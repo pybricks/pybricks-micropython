@@ -25,7 +25,7 @@
 #include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
-#include <pbsys/app.h>
+#include <pbsys/config.h>
 #include <pbsys/storage.h>
 
 #include <contiki.h>
@@ -1480,7 +1480,7 @@ static void handle_event(uint8_t *packet) {
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
                         // REVISIT: this assumes connection_handle == conn_handle
-                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_APP_HUB_FEATURE_FLAGS, PBSYS_STORAGE_MAX_PROGRAM_SIZE);
+                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, PBSYS_STORAGE_MAX_PROGRAM_SIZE);
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
