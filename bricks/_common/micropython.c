@@ -10,8 +10,10 @@
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/util.h>
+#include <pbio/protocol.h>
 #include <pbsys/main.h>
 #include <pbsys/program_stop.h>
+#include <pbsys/storage.h>
 
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -293,6 +295,30 @@ static void run_user_program(void) {
     nlr_set_abort(NULL);
 }
 
+pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
+
+    #if !PYBRICKS_OPT_COMPILER
+    if (program->type == PBSYS_MAIN_PROGRAM_TYPE_BUILTIN) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+    #endif
+
+    if (program->type == PBSYS_MAIN_PROGRAM_TYPE_USER) {
+
+        // If requesting a user program, ensure that it exists and is valid.
+        // Currently, only programs on slot 0 are supported.
+        uint32_t program_size = program->code_end - program->code_start;
+        if (program->id != 0 || program_size == 0 || program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
+            return PBIO_ERROR_NOT_SUPPORTED;
+        }
+
+        // TODO: Now that we have moved these checks to the MicroPython
+        // application code, we can check that a valid program is in fact
+        // present by checking the MicroPython format.
+    }
+    return PBIO_SUCCESS;
+}
+
 // Runs MicroPython with the given program data.
 void pbsys_main_run_program(pbsys_main_program_t *program) {
 
@@ -316,7 +342,7 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     mp_init();
 
     // Check for run type.
-    if (!program->run_builtin) {
+    if (program->type == PBSYS_MAIN_PROGRAM_TYPE_USER) {
         // Init Pybricks package without auto-import.
         pb_package_pybricks_init(false);
         // Run loaded program.

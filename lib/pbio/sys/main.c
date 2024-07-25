@@ -10,14 +10,52 @@
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
+#include <pbio/protocol.h>
 #include <pbsys/core.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
-#include "user_program.h"
 #include "program_stop.h"
+#include "storage.h"
 #include <pbsys/program_stop.h>
 #include <pbsys/bluetooth.h>
+
+static pbsys_main_program_t program;
+
+#include <stdio.h>
+
+/**
+ * Requests to start the main user application program.
+ *
+ * @param [in]  type    Chooses to start a builtin program or a user program.
+ * @param [in]  id      Selects which builtin or user program will run.
+ * @returns     ::PBIO_ERROR_BUSY if a user program is already running.
+ *              ::PBIO_ERROR_NOT_SUPPORTED if the program is not available.
+ *              Otherwise ::PBIO_SUCCESS.
+ */
+pbio_error_t pbsys_main_program_request_start(pbsys_main_program_type_t type, uint32_t id) {
+
+    // Can't start new program if already running or new requested.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || program.start_requested) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    program.type = type;
+    program.id = id;
+
+    // Builtin programs are also allowed to access user program,
+    // so load data in all cases.
+    pbsys_storage_get_program_data(&program);
+
+    pbio_error_t err = pbsys_main_program_validate(&program);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    program.start_requested = true;
+
+    return PBIO_SUCCESS;
+}
 
 /**
  * Initializes the PBIO library, runs custom main program, and handles shutdown.
@@ -32,10 +70,12 @@ int main(int argc, char **argv) {
     // Keep loading and running user programs until shutdown is requested.
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
-        // Receive a program. This cancels itself on shutdown.
-        static pbsys_main_program_t program;
-        pbio_error_t err = pbsys_user_program_wait_command(&program);
-        if (err != PBIO_SUCCESS) {
+        // REVISIT: this can be long waiting, so we could do a more efficient
+        // wait (i.e. __WFI() on embedded system)
+        while (pbio_do_one_event()) {
+        }
+
+        if (!program.start_requested) {
             continue;
         }
 
@@ -56,6 +96,7 @@ int main(int argc, char **argv) {
         pbsys_bluetooth_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
         pbio_stop_all(true);
+        program.start_requested = false;
     }
 
     // Stop system processes and save user data before we shutdown.
