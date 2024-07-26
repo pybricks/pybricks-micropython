@@ -129,13 +129,19 @@ def unknown_pup_device(port, type_id, dev):
         yield f"{port}\t{type_id}\tunknown"
 
 
-def device_task(index):
-    port = ports[index]
+# Monitoring task for one port.
+def device_task(port):
+
     while True:
         try:
+            # Use generic class to find device type.
             dev = PUPDevice(port)
             type_id = dev.info()["id"]
-            mode = app_data.get_values()[index]
+
+            # Incoming app data can be used to set the device mode.
+            mode = app_data.get_values()[ports.index(port)]
+
+            # Run device specific monitoring task until it is disconnected.
             if type_id == 34:
                 yield from update_tilt_sensor(port, type_id)
             if type_id == 35:
@@ -155,29 +161,23 @@ def device_task(index):
             else:
                 yield from unknown_pup_device(port, type_id, dev)
         except OSError:
+            # No device or previous device was disconnected.
             yield f"{port}\t--"
 
 
-tasks = [device_task(index) for index in range(len(ports))]
-
-MAX_LEN = 158
+tasks = [device_task(port) for port in ports]
 
 while True:
-    appended = ""
 
-    # Get the message for each sensor.
+    # Get the messages for each sensor.
+    msg = ""
     for task in tasks:
-        msg = next(task)
+        msg += next(task) + "\r\n"
 
-        # Try to concatenate the messages for reduced traffic,
-        # but send early if the next message can't be appended.
-        if len(appended) + len(msg) > MAX_LEN - 2:
-            app_data.write_bytes(appended)
-            appended = ""
-        appended += msg + "\r\n"
-
-    # Send any remaining appended data.
-    app_data.write_bytes(appended)
+    # REVISIT: It would be better to send whole messages (or multiples), but we
+    # are currently limited to 19 bytes per message, so write in chunks.
+    for i in range(0, len(msg), 19):
+        app_data.write_bytes(msg[i : i + 19])
 
     # Loop time.
     wait(100)
