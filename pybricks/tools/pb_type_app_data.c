@@ -26,7 +26,7 @@ typedef struct _pb_type_app_data_obj_t {
     pbdrv_bluetooth_send_context_t tx_context;
     mp_obj_t rx_format;
     mp_obj_str_t rx_bytes_obj;
-    uint8_t tx_buffer[PBDRV_BLUETOOTH_MAX_MTU_SIZE];
+    uint8_t tx_buffer[20]; // REVISIT: Could be the negotiated MTU - 3 for better throughput https://github.com/pybricks/support/issues/1727
     uint8_t rx_buffer[] __attribute__((aligned(4)));
 } pb_type_app_data_obj_t;
 
@@ -71,9 +71,9 @@ STATIC mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in)
     size_t len;
     const char *data = mp_obj_str_get_data(data_in, &len);
 
-    if (len > PBDRV_BLUETOOTH_MAX_MTU_SIZE - 1) {
+    if (len > sizeof(self->tx_buffer) - 1) {
         mp_raise_msg_varg(&mp_type_ValueError,
-            MP_ERROR_TEXT("Cannot send more than %d bytes\n"), PBDRV_BLUETOOTH_MAX_MTU_SIZE - 1);
+            MP_ERROR_TEXT("Cannot send more than %d bytes\n"), sizeof(self->tx_buffer) - 1);
     }
 
     memcpy(self->tx_buffer + 1, data, len);
