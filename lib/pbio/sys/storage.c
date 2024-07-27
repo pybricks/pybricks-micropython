@@ -176,21 +176,6 @@ pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, u
 }
 
 /**
- * Asserts that the loaded/stored user program is valid and ready to run.
- *
- * @returns                 ::PBIO_ERROR_INVALID_ARG if loaded program is not
- *                          valid. Otherwise ::PBIO_SUCCESS.
- */
-pbio_error_t pbsys_storage_assert_program_valid(void) {
-    // Don't run invalid programs.
-    if (map->program_size == 0 || map->program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
-        // TODO: Validate the data beyond just size.
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    return PBIO_SUCCESS;
-}
-
-/**
  * Populates the program data with references to the loaded program data.
  *
  * @param [in]  offset      The program data structure.
