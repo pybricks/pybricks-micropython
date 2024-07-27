@@ -84,10 +84,12 @@ STATIC mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in)
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_type_app_data_write_bytes_obj, pb_type_app_data_write_bytes);
 
+static const mp_obj_str_t pb_const_empty_str_obj = {{&mp_type_str}, 0, 0, (const byte *)""};
+
 STATIC mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(rx_format));
+        PB_ARG_DEFAULT_OBJ(rx_format, pb_const_empty_str_obj));
 
     // Use ustruct.calcsize to parse user rx_format for size.
     mp_obj_t ustruct_calcsize = pb_function_import_helper(MP_QSTR_ustruct, MP_QSTR_calcsize);
