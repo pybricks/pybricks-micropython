@@ -25,6 +25,9 @@
 - Improved font for the digits ``0--9`` when displaying them
   with `hub.display.char(str(x))` ([pybricks-micropython#253]).
 
+### Fixed
+- Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
+
 [pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253
 [support#1615]: https://github.com/pybricks/support/issues/1615
