@@ -142,7 +142,8 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_
     // Whether this looks like a LWP3 advertisement of the correct hub kind.
     if (event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_IND
         && data[3] == 17 /* length */
-        && data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+        && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+            || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
         && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
         && data[26] == pb_lwp3device_singleton.hub_kind) {
         flags |= PBDRV_BLUETOOTH_AD_MATCH_VALUE;
