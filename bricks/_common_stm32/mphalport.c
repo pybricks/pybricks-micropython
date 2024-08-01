@@ -9,6 +9,7 @@
 #include <contiki.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/usb.h>
 #include <pbio/main.h>
 #include <pbsys/bluetooth.h>
 
@@ -128,9 +129,40 @@ int mp_hal_stdin_rx_chr(void) {
 
 // Send string of given length
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+    uint32_t size;
+    pbio_error_t err;
+
+    #if PBDRV_CONFIG_USB
+
+    const char *usb_ptr = str;
+    mp_uint_t usb_len = len;
+
+    while (usb_len) {
+        size = usb_len;
+        err = pbdrv_usb_stdout_tx((const uint8_t *)usb_ptr, &size);
+
+        if (err == PBIO_SUCCESS) {
+            usb_ptr += size;
+            usb_len -= size;
+            continue;
+        }
+
+        if (err != PBIO_ERROR_AGAIN) {
+            // Ignoring error for now. This means
+            // stdout lost if USB is disconnected.
+            break;
+        }
+
+        if (usb_len) {
+            MICROPY_EVENT_POLL_HOOK
+        }
+    }
+
+    #endif // PBDRV_CONFIG_USB
+
     while (len) {
-        uint32_t size = len;
-        pbio_error_t err = pbsys_bluetooth_tx((const uint8_t *)str, &size);
+        size = len;
+        err = pbsys_bluetooth_tx((const uint8_t *)str, &size);
 
         if (err == PBIO_SUCCESS) {
             str += size;
@@ -144,12 +176,14 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
             return;
         }
 
-        MICROPY_EVENT_POLL_HOOK
+        if (len) {
+            MICROPY_EVENT_POLL_HOOK
+        }
     }
 }
 
 void mp_hal_stdout_tx_flush(void) {
-    while (!pbsys_bluetooth_tx_is_idle()) {
+    while (!pbsys_bluetooth_tx_is_idle() && !pbdrv_usb_stdout_tx_is_idle()) {
         MICROPY_EVENT_POLL_HOOK
     }
 }
