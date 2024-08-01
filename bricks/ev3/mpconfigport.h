@@ -78,14 +78,14 @@ typedef long mp_off_t;
 // value from disable_irq back to enable_irq.  If you really need
 // to know the machine-specific values, see irq.h.
 
+#include <arm920t.h>
+
 static inline void enable_irq(mp_uint_t state) {
-    // __set_PRIMASK(state);
+    arm_intr_enable();
 }
 
 static inline mp_uint_t disable_irq(void) {
-    // mp_uint_t state = __get_PRIMASK();
-    // __disable_irq();
-    // return state;
+    arm_intr_disable();
     return 0;
 }
 

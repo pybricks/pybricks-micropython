@@ -67,6 +67,9 @@
                 "${workspaceFolder}/bricks/ev3",
                 "${workspaceFolder}/bricks/ev3/build",
                 "${workspaceFolder}/micropython",
+                "${workspaceFolder}/lib/am18x-lib/inc",
+                "${workspaceFolder}/lib/am18x-lib/lib",
+                "${workspaceFolder}/lib/am18x-lib/prj",
             ],
             "defines": [
                 "MICROPY_MODULE_FROZEN_MPY",
