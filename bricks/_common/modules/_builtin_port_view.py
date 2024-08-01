@@ -126,7 +126,7 @@ def update_dc_motor(port, type_id):
 # Any unknown Powered Up device.
 def unknown_pup_device(port, type_id):
     while True:
-        dev = PUPDevice(port)  # reset on the un-plug of the unknown device
+        PUPDevice(port)  # reset on the un-plug of the unknown device
         yield f"{port}\t{type_id}\tunknown"
 
 
