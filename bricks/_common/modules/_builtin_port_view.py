@@ -124,8 +124,9 @@ def update_dc_motor(port, type_id):
 
 
 # Any unknown Powered Up device.
-def unknown_pup_device(port, type_id, dev):
+def unknown_pup_device(port, type_id):
     while True:
+        PUPDevice(port)
         yield f"{port}\t{type_id}\tunknown"
 
 
@@ -159,7 +160,7 @@ def device_task(port):
             elif type_id in (38, 46, 47, 48, 49, 65, 75, 76):
                 yield from update_motor(port, type_id)
             else:
-                yield from unknown_pup_device(port, type_id, dev)
+                yield from unknown_pup_device(port, type_id)
         except OSError:
             # No device or previous device was disconnected.
             yield f"{port}\t--"
