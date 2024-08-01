@@ -287,6 +287,16 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event);
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context);
 
 /**
+ * Requests for @p data to be sent via a characteristic notification.
+ *
+ * Works just like ::pbdrv_bluetooth_send, but can be run as an awaitable task
+ * that gets queued with other pbio tasks.
+ *
+ * @param [in]  context     The data to be sent and where to send it.
+ */
+void pbdrv_bluetooth_send_queued(pbio_task_t *task, pbdrv_bluetooth_send_context_t *context);
+
+/**
  * Registers a callback that will be called when data is received via a
  * characteristic write.
  *
@@ -412,7 +422,15 @@ static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t con
 }
 
 static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
-    context->done();
+    if (context->done) {
+        context->done();
+    }
+}
+
+static inline void pbdrv_bluetooth_send_queued(pbio_task_t *task, pbdrv_bluetooth_send_context_t *context) {
+    if (context->done) {
+        context->done();
+    }
 }
 
 static inline void pbdrv_bluetooth_peripheral_scan_and_connect(
