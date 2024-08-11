@@ -186,7 +186,7 @@ static void pb_lwp3device_assert_connected(void) {
     }
 }
 
-static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_kind_t hub_kind) {
+static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_kind_t hub_kind, bool pair) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // REVISIT: for now, we only allow a single connection to a LWP3 device.
@@ -209,11 +209,17 @@ static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
         strncpy(lwp3device->name, name, sizeof(lwp3device->name));
     }
 
+    pbdrv_bluetooth_peripheral_options_t options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE;
+
+    if (pair) {
+        options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
+    }
+
     pbdrv_bluetooth_peripheral_scan_and_connect(&lwp3device->task,
         lwp3_advertisement_matches,
         lwp3_advertisement_response_matches,
         handle_notification,
-        PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE);
+        options);
     pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
 
     // Copy the name so we can read it back later, and override locally.
@@ -390,7 +396,7 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
 
     const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
     mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
-    pb_lwp3device_connect(name, timeout, LWP3_HUB_KIND_HANDSET);
+    pb_lwp3device_connect(name, timeout, LWP3_HUB_KIND_HANDSET, false);
     pb_lwp3device_configure_remote();
 
     self->buttons = pb_type_Keypad_obj_new(pb_type_remote_button_pressed);
@@ -478,14 +484,16 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(hub_kind),
         PB_ARG_DEFAULT_NONE(name),
-        PB_ARG_DEFAULT_INT(timeout, 10000));
+        PB_ARG_DEFAULT_INT(timeout, 10000),
+        PB_ARG_DEFAULT_FALSE(pair));
 
     pb_type_pupdevices_Remote_obj_t *self = mp_obj_malloc(pb_type_pupdevices_Remote_obj_t, type);
 
     const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
     mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
     uint8_t hub_kind = pb_obj_get_positive_int(hub_kind_in);
-    pb_lwp3device_connect(name, timeout, hub_kind);
+    bool pair = mp_obj_is_true(pair_in);
+    pb_lwp3device_connect(name, timeout, hub_kind, pair);
 
     return MP_OBJ_FROM_PTR(self);
 }
