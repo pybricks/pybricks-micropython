@@ -5,6 +5,7 @@ name: Format
 on:
   push:
     paths:
+    - ".github/workflows/format.yml"
     - "bricks/**/*.[ch]"
     - "lib/pbio/**/*.[ch]"
     - "py/*.[ch]"
@@ -14,6 +15,7 @@ on:
     - "tools/**/*.py"
   pull_request:
     paths:
+    - ".github/workflows/format.yml"
     - "bricks/**/*.[ch]"
     - "lib/pbio/**/*.[ch]"
     - "py/*.[ch]"
