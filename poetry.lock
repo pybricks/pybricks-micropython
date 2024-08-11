@@ -1886,6 +1886,26 @@ files = [
 ]
 
 [[package]]
+name = "micropython-uncrustify"
+version = "1.0.0.post1"
+description = ""
+optional = false
+python-versions = "*"
+files = [
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-macosx_10_9_universal2.macosx_10_9_x86_64.macosx_11_0_arm64.macosx_11_0_universal2.whl", hash = "sha256:4ca4cc35e13f9d5bad97e8d147fd0b08eb565954c2374a69b3038d62735bef64"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:6c0ff6d999ccbd1b78ccf3ce0ef7a0ada01b4ce4fbd9f65f540fddc153f9c6d1"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-manylinux2014_i686.manylinux_2_17_i686.whl", hash = "sha256:8afa2aa14f25b6aef703d05d75ba4f66b0c200e2b4ce36f218bb67b42b172566"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:0a8e099d7a3b51c203ef2f73cb3d8ac8aea3a491f9e15cf91a0ef94e88d13710"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:ad2d690b13841e82957499e3054ab232bd1905c88c00b5522c374a61e0e59244"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-musllinux_1_2_i686.whl", hash = "sha256:464e39edb248704facce4378288149e1acd44f4569ea15a35834d179bd6fc0dc"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:25d657919f5c00eb8b895abca52a24456badde1b1f3407b3024b50ee975e7b6b"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-win32.whl", hash = "sha256:a6242d18d98339bf95ab3d7e08582118b0eb6a702043aac159a95ac7e181fc18"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-win_amd64.whl", hash = "sha256:9e6d264a2891b1088352c79c1916366f1b2c69988b4a9b8e9b8178ab801ef369"},
+    {file = "micropython_uncrustify-1.0.0.post1-py2.py3-none-win_arm64.whl", hash = "sha256:7285fb0b6ea30567834d86eb797369c8d8fcf41c041413305a0c0bc681b69a1f"},
+    {file = "micropython_uncrustify-1.0.0.post1.tar.gz", hash = "sha256:11cff928b20048526f94685970b66daf53a32918b14c4ea0601ed5fcdbdb90b1"},
+]
+
+[[package]]
 name = "mistune"
 version = "3.0.2"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
@@ -4204,4 +4224,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "457afc74d3de63752cf0e1b1097bd0fda380ecb2c0d07491ea071f6190200d8a"
+content-hash = "fe9a1f582e87b17938bdfac09886926f5b51d42eb3d516f7f6214886932a0a6b"

@@ -29,24 +29,15 @@ concurrency:
 jobs:
   format:
     name: Check code formatting
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-    - name: Install uncrustify
-      run: |
-        sudo apt-add-repository --update --yes ppa:pybricks/ppa
-        sudo apt-get install uncrustify
-        uncrustify --version
-    - name: Install python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.6'
-    - name: Install black
-      run:  python -m pip install black
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
+    - run: pipx install poetry
+    - run: poetry install --only=lint
     - name: Run codeformat.py
       run: |
-        ./tools/codeformat.py
+        poetry run ./tools/codeformat.py
         git diff --exit-code
