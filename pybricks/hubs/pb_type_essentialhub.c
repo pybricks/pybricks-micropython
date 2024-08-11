@@ -37,7 +37,7 @@ typedef struct _hubs_EssentialHub_obj_t {
     mp_obj_t system;
 } hubs_EssentialHub_obj_t;
 
-STATIC mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_OBJ(top_side, pb_type_Axis_Z_obj),
         PB_ARG_DEFAULT_OBJ(front_side, pb_type_Axis_X_obj)
@@ -60,7 +60,7 @@ STATIC mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_a
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC const pb_attr_dict_entry_t hubs_EssentialHub_attr_dict[] = {
+static const pb_attr_dict_entry_t hubs_EssentialHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_EssentialHub_obj_t, battery),
     #if PYBRICKS_PY_COMMON_BLE
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_EssentialHub_obj_t, ble),

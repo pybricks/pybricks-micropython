@@ -19,7 +19,7 @@ typedef struct _nxtdevices_TouchSensor_obj_t {
 } nxtdevices_TouchSensor_obj_t;
 
 // pybricks.nxtdevices.TouchSensor.__init__
-STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -29,17 +29,17 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 }
 
 // pybricks.nxtdevices.TouchSensor.pressed
-STATIC mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     int32_t *analog = pb_type_device_get_data_blocking(self_in, 0);
     return mp_obj_new_bool(analog[0] < 2500);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);
 
 // dir(pybricks.ev3devices.TouchSensor)
-STATIC const mp_rom_map_elem_t nxtdevices_TouchSensor_locals_dict_table[] = {
+static const mp_rom_map_elem_t nxtdevices_TouchSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_pressed), MP_ROM_PTR(&nxtdevices_TouchSensor_pressed_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(nxtdevices_TouchSensor_locals_dict, nxtdevices_TouchSensor_locals_dict_table);
+static MP_DEFINE_CONST_DICT(nxtdevices_TouchSensor_locals_dict, nxtdevices_TouchSensor_locals_dict_table);
 
 // type(pybricks.ev3devices.TouchSensor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_TouchSensor,

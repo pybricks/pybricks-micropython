@@ -44,7 +44,7 @@ void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv)
     hsv->v = hsv->v * (200 - hsv->v) / 100;
 }
 
-STATIC const mp_rom_obj_tuple_t pb_color_map_default = {
+static const mp_rom_obj_tuple_t pb_color_map_default = {
     {&mp_type_tuple},
     6,
     {
@@ -98,7 +98,7 @@ typedef struct _pb_ColorSensor_obj_t {
 } pb_ColorSensor_obj_t;
 
 // pybricks._common.ColorDistanceSensor.detectable_colors
-STATIC mp_obj_t pupdevices_ColorDistanceSensor_detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pupdevices_ColorDistanceSensor_detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_NONE(colors));

@@ -27,7 +27,7 @@ typedef struct _iodevices_I2CDevice_obj_t {
 } iodevices_I2CDevice_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(address));
@@ -51,7 +51,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *type, size_t n
 }
 
 // pybricks.iodevices.I2CDevice.read
-STATIC mp_obj_t iodevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t iodevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_I2CDevice_obj_t, self,
@@ -95,10 +95,10 @@ STATIC mp_obj_t iodevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args
 
     return mp_obj_new_bytes(buf, length);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_read_obj, 1, iodevices_I2CDevice_read);
+static MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_read_obj, 1, iodevices_I2CDevice_read);
 
 // pybricks.iodevices.I2CDevice.write
-STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_I2CDevice_obj_t, self,
@@ -146,14 +146,14 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
     pb_assert(pb_smbus_write_bytes(self->bus, self->address, reg, data_len, data));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_write_obj, 1, iodevices_I2CDevice_write);
+static MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_write_obj, 1, iodevices_I2CDevice_write);
 
 // dir(pybricks.iodevices.I2CDevice)
-STATIC const mp_rom_map_elem_t iodevices_I2CDevice_locals_dict_table[] = {
+static const mp_rom_map_elem_t iodevices_I2CDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),    MP_ROM_PTR(&iodevices_I2CDevice_read_obj)    },
     { MP_ROM_QSTR(MP_QSTR_write),   MP_ROM_PTR(&iodevices_I2CDevice_write_obj)    },
 };
-STATIC MP_DEFINE_CONST_DICT(iodevices_I2CDevice_locals_dict, iodevices_I2CDevice_locals_dict_table);
+static MP_DEFINE_CONST_DICT(iodevices_I2CDevice_locals_dict, iodevices_I2CDevice_locals_dict_table);
 
 // type(pybricks.iodevices.I2CDevice)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_I2CDevice,

@@ -43,9 +43,9 @@ typedef struct {
     uint16_t sample_attenuator;
 } pb_type_Speaker_obj_t;
 
-STATIC uint16_t waveform_data[128];
+static uint16_t waveform_data[128];
 
-STATIC mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
         PB_ARG_DEFAULT_NONE(volume));
@@ -61,9 +61,9 @@ STATIC mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_volume_obj, 1, pb_type_Speaker_volume);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_volume_obj, 1, pb_type_Speaker_volume);
 
-STATIC void pb_type_Speaker_generate_square_wave(uint16_t sample_attenuator) {
+static void pb_type_Speaker_generate_square_wave(uint16_t sample_attenuator) {
     uint16_t lo_amplitude_value = INT16_MAX - sample_attenuator;
     uint16_t hi_amplitude_value = sample_attenuator + INT16_MAX;
 
@@ -77,13 +77,13 @@ STATIC void pb_type_Speaker_generate_square_wave(uint16_t sample_attenuator) {
 }
 
 // For 0 frequencies that are just flat lines.
-STATIC void pb_type_Speaker_generate_line_wave(void) {
+static void pb_type_Speaker_generate_line_wave(void) {
     for (size_t i = 0; i < MP_ARRAY_SIZE(waveform_data); i++) {
         waveform_data[i] = INT16_MAX;
     }
 }
 
-STATIC void pb_type_Speaker_start_beep(uint32_t frequency, uint16_t sample_attenuator) {
+static void pb_type_Speaker_start_beep(uint32_t frequency, uint16_t sample_attenuator) {
     // TODO: allow other wave shapes - sine, triangle, sawtooth
     // TODO: don't recreate waveform if it hasn't changed shape or volume
 
@@ -103,11 +103,11 @@ STATIC void pb_type_Speaker_start_beep(uint32_t frequency, uint16_t sample_atten
     pbdrv_sound_start(&waveform_data[0], MP_ARRAY_SIZE(waveform_data), frequency * MP_ARRAY_SIZE(waveform_data));
 }
 
-STATIC void pb_type_Speaker_stop_beep(void) {
+static void pb_type_Speaker_stop_beep(void) {
     pbdrv_sound_stop();
 }
 
-STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     pb_type_Speaker_obj_t *self = mp_obj_malloc(pb_type_Speaker_obj_t, type);
 
@@ -123,7 +123,7 @@ STATIC mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t end_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
         pb_type_Speaker_stop_beep();
@@ -132,7 +132,7 @@ STATIC bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t end_
     return false;
 }
 
-STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
+static void pb_type_Speaker_cancel(mp_obj_t self_in) {
     pb_type_Speaker_stop_beep();
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->beep_end_time = mp_hal_ticks_ms();
@@ -140,7 +140,7 @@ STATIC void pb_type_Speaker_cancel(mp_obj_t self_in) {
     self->notes_generator = MP_OBJ_NULL;
 }
 
-STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
         PB_ARG_DEFAULT_INT(frequency, 500),
@@ -168,9 +168,9 @@ STATIC mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
         pb_type_Speaker_cancel,
         PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
 
-STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj, int duration) {
+static void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj, int duration) {
     const char *note = mp_obj_str_get_str(obj);
     int pos = 0;
     mp_float_t freq;
@@ -337,7 +337,7 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
     self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
 }
 
-STATIC bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t end_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
@@ -365,7 +365,7 @@ STATIC bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t end
     return false;
 }
 
-STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
         PB_ARG_REQUIRED(notes),
@@ -384,14 +384,14 @@ STATIC mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
         pb_type_Speaker_cancel,
         PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 
-STATIC const mp_rom_map_elem_t pb_type_Speaker_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_Speaker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_volume), MP_ROM_PTR(&pb_type_Speaker_volume_obj) },
     { MP_ROM_QSTR(MP_QSTR_beep), MP_ROM_PTR(&pb_type_Speaker_beep_obj) },
     { MP_ROM_QSTR(MP_QSTR_play_notes), MP_ROM_PTR(&pb_type_Speaker_play_notes_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_type_Speaker_locals_dict, pb_type_Speaker_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pb_type_Speaker_locals_dict, pb_type_Speaker_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_Speaker,
     MP_QSTR_Speaker,

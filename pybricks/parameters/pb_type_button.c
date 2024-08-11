@@ -19,7 +19,7 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
-STATIC const qstr buttons[] = {
+static const qstr buttons[] = {
     MP_QSTR_LEFT,
     MP_QSTR_RIGHT,
     MP_QSTR_CENTER,
@@ -57,7 +57,7 @@ STATIC const qstr buttons[] = {
 
 extern const mp_obj_type_t pb_type_button_;
 
-STATIC void pb_type_button_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+static void pb_type_button_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pb_obj_button_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, self->name == pb_type_button.name ? "%q" : "%q.%q", MP_QSTR_Button, self->name);
 }
@@ -68,7 +68,7 @@ mp_obj_t pb_type_button_new(qstr name) {
     return MP_OBJ_FROM_PTR(result);
 }
 
-STATIC void pb_type_button_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+static void pb_type_button_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 
     // Write and delete not supported. Re-reading from an instance also not supported.
     if (dest[0] != MP_OBJ_NULL || MP_OBJ_TO_PTR(self_in) != &pb_type_button) {
@@ -84,7 +84,7 @@ STATIC void pb_type_button_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj
     }
 }
 
-STATIC mp_obj_t pb_type_button_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
+static mp_obj_t pb_type_button_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     // Only equality comparison is supported.
     if (op != MP_BINARY_OP_EQUAL) {

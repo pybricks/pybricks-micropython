@@ -20,21 +20,21 @@
 // an instance of a Battery type. That would make it consistent with the other
 // C types and the high level Python API.
 
-STATIC mp_obj_t battery_voltage(void) {
+static mp_obj_t battery_voltage(void) {
     return mp_obj_new_int(pbio_battery_get_average_voltage());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
+static MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
 
-STATIC mp_obj_t battery_current(void) {
+static mp_obj_t battery_current(void) {
     uint16_t cur;
     pb_assert(pbdrv_battery_get_current_now(&cur));
     return mp_obj_new_int(cur);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);
+static MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);
 
 #if !PYBRICKS_HUB_MOVEHUB
 
-STATIC mp_obj_t battery_type(void) {
+static mp_obj_t battery_type(void) {
     pbdrv_battery_type_t type;
     pb_assert(pbdrv_battery_get_type(&type));
     switch (type) {
@@ -46,20 +46,20 @@ STATIC mp_obj_t battery_type(void) {
             return MP_OBJ_NEW_QSTR(MP_QSTR_Unknown);
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_type_obj, battery_type);
+static MP_DEFINE_CONST_FUN_OBJ_0(battery_type_obj, battery_type);
 
-STATIC mp_obj_t battery_temperature(void) {
+static mp_obj_t battery_temperature(void) {
     uint32_t temperature;
     pb_assert(pbdrv_battery_get_temperature(&temperature));
     return mp_obj_new_int(temperature);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_temperature_obj, battery_temperature);
+static MP_DEFINE_CONST_FUN_OBJ_0(battery_temperature_obj, battery_temperature);
 
 #endif // !PYBRICKS_HUB_MOVEHUB
 
 /* battery module tables */
 
-STATIC const mp_rom_map_elem_t battery_globals_table[] = {
+static const mp_rom_map_elem_t battery_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_battery)        },
     { MP_ROM_QSTR(MP_QSTR_voltage),     MP_ROM_PTR(&battery_voltage_obj)    },
     { MP_ROM_QSTR(MP_QSTR_current),     MP_ROM_PTR(&battery_current_obj)    },
@@ -68,7 +68,7 @@ STATIC const mp_rom_map_elem_t battery_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_temperature), MP_ROM_PTR(&battery_temperature_obj) },
     #endif // !PYBRICKS_HUB_MOVEHUB
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
 
 const mp_obj_module_t pb_module_battery = {
     .base = { &mp_type_module },

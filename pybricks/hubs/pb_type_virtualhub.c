@@ -26,7 +26,7 @@ typedef struct _hubs_VirtualHub_obj_t {
     mp_obj_t system;
 } hubs_VirtualHub_obj_t;
 
-STATIC mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_VirtualHub_obj_t *self = mp_obj_malloc(hubs_VirtualHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(pb_type_button_pressed_hub_single_button);
@@ -36,7 +36,7 @@ STATIC mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC const pb_attr_dict_entry_t hubs_VirtualHub_attr_dict[] = {
+static const pb_attr_dict_entry_t hubs_VirtualHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_VirtualHub_obj_t, battery),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_VirtualHub_obj_t, buttons),
     // PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_VirtualHub_obj_t, light),

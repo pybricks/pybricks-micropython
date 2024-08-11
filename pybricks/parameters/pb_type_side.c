@@ -47,7 +47,7 @@ const pb_obj_enum_member_t pb_Side_TOP_obj = {
     .value = PBIO_GEOMETRY_SIDE_TOP
 };
 
-STATIC const mp_rom_map_elem_t pb_enum_Side_table[] = {
+static const mp_rom_map_elem_t pb_enum_Side_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BACK),   MP_ROM_PTR(&pb_Side_BACK_obj)  },
     { MP_ROM_QSTR(MP_QSTR_BOTTOM), MP_ROM_PTR(&pb_Side_BOTTOM_obj)},
     { MP_ROM_QSTR(MP_QSTR_FRONT),  MP_ROM_PTR(&pb_Side_FRONT_obj) },
@@ -55,7 +55,7 @@ STATIC const mp_rom_map_elem_t pb_enum_Side_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RIGHT),  MP_ROM_PTR(&pb_Side_RIGHT_obj) },
     { MP_ROM_QSTR(MP_QSTR_TOP),    MP_ROM_PTR(&pb_Side_TOP_obj)   },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Side_locals_dict, pb_enum_Side_table);
+static MP_DEFINE_CONST_DICT(pb_enum_type_Side_locals_dict, pb_enum_Side_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_enum_type_Side,
     MP_QSTR_Side,

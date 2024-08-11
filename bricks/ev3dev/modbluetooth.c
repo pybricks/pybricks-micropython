@@ -13,7 +13,7 @@
 // Gets the Bluetooth address for a paired device. name_in can be device name
 // or Bluetooth address. This is intended to be somewhat equivelent to
 // socket.gethostbyname() for IPv4 addresses.
-STATIC mp_obj_t ev3dev_bluetooth_resolve(mp_obj_t name_in) {
+static mp_obj_t ev3dev_bluetooth_resolve(mp_obj_t name_in) {
     const char *name_str = mp_obj_str_get_str(name_in);
     GError *error = NULL;
     MP_THREAD_GIL_EXIT();
@@ -65,13 +65,13 @@ STATIC mp_obj_t ev3dev_bluetooth_resolve(mp_obj_t name_in) {
 
     return match;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_bluetooth_resolve_obj, ev3dev_bluetooth_resolve);
+static MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_bluetooth_resolve_obj, ev3dev_bluetooth_resolve);
 
-STATIC const mp_rom_map_elem_t ev3dev_bluetooth_globals_table[] = {
+static const mp_rom_map_elem_t ev3dev_bluetooth_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_bluetooth_c) },
     { MP_ROM_QSTR(MP_QSTR_resolve), MP_ROM_PTR(&ev3dev_bluetooth_resolve_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(ev3dev_bluetooth_globals, ev3dev_bluetooth_globals_table);
+static MP_DEFINE_CONST_DICT(ev3dev_bluetooth_globals, ev3dev_bluetooth_globals_table);
 
 const mp_obj_module_t pb_module_bluetooth = {
     .base = { &mp_type_module },

@@ -43,7 +43,7 @@ struct _pb_type_awaitable_obj_t {
 };
 
 // close() cancels the awaitable.
-STATIC mp_obj_t pb_type_awaitable_close(mp_obj_t self_in) {
+static mp_obj_t pb_type_awaitable_close(mp_obj_t self_in) {
     pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->test_completion = AWAITABLE_FREE;
     // Handle optional clean up/cancelling of hardware operation.
@@ -52,9 +52,9 @@ STATIC mp_obj_t pb_type_awaitable_close(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_awaitable_close_obj, pb_type_awaitable_close);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_awaitable_close_obj, pb_type_awaitable_close);
 
-STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
+static mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // If completed callback was unset, then we completed previously.
@@ -79,7 +79,7 @@ STATIC mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     return mp_make_stop_iteration(self->return_value(self->obj));
 }
 
-STATIC const mp_rom_map_elem_t pb_type_awaitable_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_awaitable_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&pb_type_awaitable_close_obj) },
 };
 MP_DEFINE_CONST_DICT(pb_type_awaitable_locals_dict, pb_type_awaitable_locals_dict_table);
@@ -97,7 +97,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_awaitable,
  *
  * @param [in] awaitables_in        List of awaitables associated with @p obj.
  */
-STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
+static pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
 
     mp_obj_list_t *awaitables = MP_OBJ_TO_PTR(awaitables_in);
 
@@ -127,7 +127,7 @@ STATIC pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
  * checker. This allows MicroPython to handle completion during the next call
  * to iternext.
  */
-STATIC bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
+static bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
     return true;
 }
 

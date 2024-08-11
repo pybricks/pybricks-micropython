@@ -11,7 +11,7 @@
 #include <pybricks/common.h>
 #include <pybricks/pupdevices.h>
 
-STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
+static const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                    },
     #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&pb_type_Motor)                         },
@@ -30,7 +30,7 @@ STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_TiltSensor),          MP_ROM_PTR(&pb_type_pupdevices_TiltSensor)         },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),    MP_ROM_PTR(&pb_type_pupdevices_UltrasonicSensor)   },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_pupdevices_globals, pupdevices_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_pupdevices_globals, pupdevices_globals_table);
 
 const mp_obj_module_t pb_module_pupdevices = {
     .base = { &mp_type_module },

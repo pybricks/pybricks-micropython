@@ -40,7 +40,7 @@ typedef struct _iodevices_PUPDevice_obj_t {
  * @param [in]  port_in     The port.
  * @return                  True if passive device, false otherwise.
  */
-STATIC bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t port_in) {
+static bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t port_in) {
     pb_module_tools_assert_blocking();
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbdrv_legodev_type_id_t candidates[] = {
@@ -57,7 +57,7 @@ STATIC bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t po
 }
 
 // pybricks.iodevices.PUPDevice.__init__
-STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -75,7 +75,7 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 }
 
 // pybricks.iodevices.PUPDevice.info
-STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
+static mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Passive devices only have an ID.
@@ -109,7 +109,7 @@ STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(iodevices_PUPDevice_info_obj, iodevices_PUPDevice_info);
 
-STATIC mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
+static mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     void *data = pb_type_device_get_data(self_in, self->last_mode);
 
@@ -143,7 +143,7 @@ STATIC mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
 }
 
 // pybricks.iodevices.PUPDevice.read
-STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode));
@@ -170,7 +170,7 @@ STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_read_obj, 1, iodevices_PUPDevice_read);
 
 // pybricks.iodevices.PUPDevice.write
-STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode),
@@ -252,12 +252,12 @@ STATIC mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_write_obj, 1, iodevices_PUPDevice_write);
 
 // dir(pybricks.iodevices.PUPDevice)
-STATIC const mp_rom_map_elem_t iodevices_PUPDevice_locals_dict_table[] = {
+static const mp_rom_map_elem_t iodevices_PUPDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_PUPDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_PUPDevice_write_obj)},
     { MP_ROM_QSTR(MP_QSTR_info),       MP_ROM_PTR(&iodevices_PUPDevice_info_obj)},
 };
-STATIC MP_DEFINE_CONST_DICT(iodevices_PUPDevice_locals_dict, iodevices_PUPDevice_locals_dict_table);
+static MP_DEFINE_CONST_DICT(iodevices_PUPDevice_locals_dict, iodevices_PUPDevice_locals_dict_table);
 
 // type(pybricks.iodevices.PUPDevice)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_PUPDevice,

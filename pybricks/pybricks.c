@@ -24,11 +24,11 @@
 
 #include "genhdr/mpversion.h"
 
-STATIC const MP_DEFINE_STR_OBJ(pybricks_info_hub_obj, PYBRICKS_HUB_NAME);
-STATIC const MP_DEFINE_STR_OBJ(pybricks_info_release_obj, PBIO_VERSION_STR);
-STATIC const MP_DEFINE_STR_OBJ(pybricks_info_version_obj, MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE);
+static const MP_DEFINE_STR_OBJ(pybricks_info_hub_obj, PYBRICKS_HUB_NAME);
+static const MP_DEFINE_STR_OBJ(pybricks_info_release_obj, PBIO_VERSION_STR);
+static const MP_DEFINE_STR_OBJ(pybricks_info_version_obj, MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE);
 
-STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
+static const mp_rom_obj_tuple_t pybricks_info_obj = {
     {&mp_type_tuple},
     3,
     {
@@ -39,7 +39,7 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
 };
 
 #if MICROPY_MODULE_ATTR_DELEGATION
-STATIC void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+static void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     // This will get called when external imports tries to store the module
     // as an attribute to this package. This is not currently supported, but
     // it should not cause an exception, so indicate success.
@@ -47,14 +47,14 @@ STATIC void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest
 }
 #endif
 
-STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
+static const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
     #if MICROPY_MODULE_ATTR_DELEGATION
     MP_MODULE_ATTR_DELEGATION_ENTRY(&pb_package_pybricks_attr),
     #endif
 };
-STATIC MP_DEFINE_CONST_DICT(pb_package_pybricks_globals, pybricks_globals_table);
+static MP_DEFINE_CONST_DICT(pb_package_pybricks_globals, pybricks_globals_table);
 
 const mp_obj_module_t pb_package_pybricks = {
     .base = { &mp_type_module },

@@ -8,7 +8,7 @@
 #include <pybricks/common.h>
 #include <pybricks/iodevices.h>
 
-STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
+static const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)                },
     #if PYBRICKS_PY_PUPDEVICES
     { MP_ROM_QSTR(MP_QSTR_PUPDevice),        MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
@@ -30,7 +30,7 @@ STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     #endif
     #endif // PYBRICKS_PY_EV3DEVICES
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
 
 const mp_obj_module_t pb_module_iodevices = {
     .base = { &mp_type_module },

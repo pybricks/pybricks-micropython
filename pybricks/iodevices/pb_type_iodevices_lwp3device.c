@@ -101,10 +101,10 @@ typedef struct {
     char name[LWP3_MAX_HUB_PROPERTY_NAME_SIZE + 1];
 } pb_lwp3device_t;
 
-STATIC pb_lwp3device_t pb_lwp3device_singleton;
+static pb_lwp3device_t pb_lwp3device_singleton;
 
 // Handles LEGO Wireless protocol messages from the LWP3 Device.
-STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
+static pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     #if PYBRICKS_PY_IODEVICES
@@ -136,7 +136,7 @@ STATIC pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t co
     return PBIO_PYBRICKS_ERROR_OK;
 }
 
-STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
 
     // Whether this looks like a LWP3 advertisement of the correct hub kind.
@@ -156,7 +156,7 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_
     return flags;
 }
 
-STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
 
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
@@ -180,13 +180,13 @@ STATIC pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_match
     return flags;
 }
 
-STATIC void pb_lwp3device_assert_connected(void) {
+static void pb_lwp3device_assert_connected(void) {
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         mp_raise_OSError(MP_ENODEV);
     }
 }
 
-STATIC void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_kind_t hub_kind) {
+static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_kind_t hub_kind) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // REVISIT: for now, we only allow a single connection to a LWP3 device.
@@ -224,7 +224,7 @@ STATIC void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
     pb_module_tools_pbio_task_do_blocking(&lwp3device->task, timeout);
 }
 
-STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
+static mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
@@ -263,7 +263,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_col
     return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
 }
 
-STATIC void pb_lwp3device_configure_remote(void) {
+static void pb_lwp3device_configure_remote(void) {
 
     pb_lwp3device_t *remote = &pb_lwp3device_singleton;
 
@@ -375,7 +375,7 @@ typedef struct _pb_type_pupdevices_Remote_obj_t {
     mp_obj_t light;
 } pb_type_pupdevices_Remote_obj_t;
 
-STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000));
@@ -398,7 +398,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
+static mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
@@ -442,27 +442,27 @@ STATIC mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
 
     return mp_obj_new_str(lwp3device->name, strlen(lwp3device->name));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
 
-STATIC mp_obj_t pb_lwp3device_disconnect(mp_obj_t self_in) {
+static mp_obj_t pb_lwp3device_disconnect(mp_obj_t self_in) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
     pb_lwp3device_assert_connected();
     pbdrv_bluetooth_peripheral_disconnect(&lwp3device->task);
     return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_disconnect_obj, pb_lwp3device_disconnect);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_disconnect_obj, pb_lwp3device_disconnect);
 
-STATIC const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
+static const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, pb_type_pupdevices_Remote_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, pb_type_pupdevices_Remote_obj_t, light),
     PB_ATTR_DICT_SENTINEL
 };
 
-STATIC const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_lwp3device_name_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
     MP_QSTR_Remote,
@@ -474,7 +474,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
 
 #if PYBRICKS_PY_IODEVICES
 
-STATIC mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(hub_kind),
         PB_ARG_DEFAULT_NONE(name),
@@ -490,7 +490,7 @@ STATIC mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
+static mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
@@ -517,9 +517,9 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
     pbdrv_bluetooth_peripheral_write(&lwp3device->task, &msg.value);
     return pb_module_tools_pbio_task_wait_or_await(&lwp3device->task);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
+static MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
 
-STATIC mp_obj_t lwp3device_read(mp_obj_t self_in) {
+static mp_obj_t lwp3device_read(mp_obj_t self_in) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // wait until a notification is received
@@ -542,15 +542,15 @@ STATIC mp_obj_t lwp3device_read(mp_obj_t self_in) {
 
     return mp_obj_new_bytes(lwp3device->buffer, len);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
+static MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
 
-STATIC const mp_rom_map_elem_t pb_type_iodevices_LWP3Device_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_iodevices_LWP3Device_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_lwp3device_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&lwp3device_write_obj) },
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&lwp3device_read_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_type_iodevices_LWP3Device_locals_dict, pb_type_iodevices_LWP3Device_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pb_type_iodevices_LWP3Device_locals_dict, pb_type_iodevices_LWP3Device_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_LWP3Device,
     MP_QSTR_LWP3Device,

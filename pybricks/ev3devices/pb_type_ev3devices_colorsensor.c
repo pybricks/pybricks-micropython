@@ -19,7 +19,7 @@ typedef struct _ev3devices_ColorSensor_obj_t {
 } ev3devices_ColorSensor_obj_t;
 
 // pybricks.ev3devices.ColorSensor.__init__
-STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
     ev3devices_ColorSensor_obj_t *self = mp_obj_malloc(ev3devices_ColorSensor_obj_t, type);
@@ -28,7 +28,7 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 }
 
 // pybricks.ev3devices.ColorSensor.color
-STATIC mp_obj_t get_color(mp_obj_t self_in) {
+static mp_obj_t get_color(mp_obj_t self_in) {
     int8_t *color = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__COLOR);
     switch (color[0]) {
         case 1:
@@ -49,24 +49,24 @@ STATIC mp_obj_t get_color(mp_obj_t self_in) {
             return mp_const_none;
     }
 }
-STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__COLOR, get_color);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__COLOR, get_color);
 
 // pybricks.ev3devices.ColorSensor.ambient
-STATIC mp_obj_t get_ambient(mp_obj_t self_in) {
+static mp_obj_t get_ambient(mp_obj_t self_in) {
     int8_t *ambient = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__AMBIENT);
     return mp_obj_new_int(ambient[0]);
 }
-STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__AMBIENT, get_ambient);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__AMBIENT, get_ambient);
 
 // pybricks.ev3devices.ColorSensor.reflection
-STATIC mp_obj_t get_reflection(mp_obj_t self_in) {
+static mp_obj_t get_reflection(mp_obj_t self_in) {
     int8_t *reflection = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__REFLECT);
     return mp_obj_new_int(reflection[0]);
 }
-STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__REFLECT, get_reflection);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__REFLECT, get_reflection);
 
 // pybricks.ev3devices.ColorSensor.rgb
-STATIC mp_obj_t get_rgb(mp_obj_t self_in) {
+static mp_obj_t get_rgb(mp_obj_t self_in) {
     int16_t *rgb = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW);
     mp_obj_t tup[3];
 
@@ -81,16 +81,16 @@ STATIC mp_obj_t get_rgb(mp_obj_t self_in) {
     }
     return mp_obj_new_tuple(3, tup);
 }
-STATIC PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_rgb_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW, get_rgb);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_rgb_obj, PBDRV_LEGODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW, get_rgb);
 
 // dir(pybricks.ev3devices.ColorSensor)
-STATIC const mp_rom_map_elem_t ev3devices_ColorSensor_locals_dict_table[] = {
+static const mp_rom_map_elem_t ev3devices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&get_reflection_obj) },
     { MP_ROM_QSTR(MP_QSTR_ambient), MP_ROM_PTR(&get_ambient_obj) },
     { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&get_color_obj) },
     { MP_ROM_QSTR(MP_QSTR_rgb), MP_ROM_PTR(&get_rgb_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(ev3devices_ColorSensor_locals_dict, ev3devices_ColorSensor_locals_dict_table);
+static MP_DEFINE_CONST_DICT(ev3devices_ColorSensor_locals_dict, ev3devices_ColorSensor_locals_dict_table);
 
 // type(pybricks.ev3devices.ColorSensor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3devices_ColorSensor,

@@ -25,7 +25,7 @@ typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_t system;
 } hubs_NXTBrick_obj_t;
 
-STATIC mp_obj_t pb_type_nxtbrick_button_pressed(void) {
+static mp_obj_t pb_type_nxtbrick_button_pressed(void) {
     pbio_button_flags_t flags;
     pb_assert(pbio_button_is_pressed(&flags));
     mp_obj_t pressed[4];
@@ -45,7 +45,7 @@ STATIC mp_obj_t pb_type_nxtbrick_button_pressed(void) {
     return mp_obj_new_set(num, pressed);
 }
 
-STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_NXTBrick_obj_t *self = mp_obj_malloc(hubs_NXTBrick_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(pb_type_nxtbrick_button_pressed);
@@ -54,7 +54,7 @@ STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC const pb_attr_dict_entry_t hubs_NXTBrick_attr_dict[] = {
+static const pb_attr_dict_entry_t hubs_NXTBrick_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_NXTBrick_obj_t, battery),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_NXTBrick_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_speaker, hubs_NXTBrick_obj_t, speaker),

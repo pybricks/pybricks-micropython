@@ -19,7 +19,7 @@ typedef struct _nxtdevices_SoundSensor_obj_t {
 } nxtdevices_SoundSensor_obj_t;
 
 // pybricks.nxtdevices.SoundSensor.intensity
-STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         nxtdevices_SoundSensor_obj_t, self,
@@ -30,10 +30,10 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
 
     return mp_obj_new_int(analog_scale(analog[0], 650, 4860, true));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_SoundSensor_intensity_obj, 1, nxtdevices_SoundSensor_intensity);
+static MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_SoundSensor_intensity_obj, 1, nxtdevices_SoundSensor_intensity);
 
 // pybricks.nxtdevices.SoundSensor.__init__
-STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -50,10 +50,10 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
 }
 
 // dir(pybricks.ev3devices.SoundSensor)
-STATIC const mp_rom_map_elem_t nxtdevices_SoundSensor_locals_dict_table[] = {
+static const mp_rom_map_elem_t nxtdevices_SoundSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_intensity),  MP_ROM_PTR(&nxtdevices_SoundSensor_intensity_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(nxtdevices_SoundSensor_locals_dict, nxtdevices_SoundSensor_locals_dict_table);
+static MP_DEFINE_CONST_DICT(nxtdevices_SoundSensor_locals_dict, nxtdevices_SoundSensor_locals_dict_table);
 
 // type(pybricks.ev3devices.SoundSensor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_SoundSensor,

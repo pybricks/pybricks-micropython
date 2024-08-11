@@ -90,7 +90,7 @@ typedef enum {
  * @returns                 A pointer to the channel or @c NULL if the channel
  *                          is not allocated in the table.
  */
-STATIC observed_data_t *lookup_observed_data(uint8_t channel) {
+static observed_data_t *lookup_observed_data(uint8_t channel) {
     for (size_t i = 0; i < num_observed_data; i++) {
         observed_data_t *data = &observed_data[i];
 
@@ -113,7 +113,7 @@ STATIC observed_data_t *lookup_observed_data(uint8_t channel) {
  * @param [in]  length          The length of @p data in bytes.
  * @param [in]  rssi            The RSSI of the event in dBm.
  */
-STATIC void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uint8_t *data, uint8_t length, int8_t rssi) {
+static void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uint8_t *data, uint8_t length, int8_t rssi) {
     // NB: ideally we would also be checking `event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND`
     // here but due to a Bluetooth firmware bug on city hub, we have to allow other
     // advertisement types. This would filter out broadcasts from the experimental
@@ -155,7 +155,7 @@ STATIC void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uin
  * @returns             The next free index in @p dst after adding the new data.
  * @throws ValueError   If data exceeds available space remaining in @p dst.
  */
-STATIC size_t pb_module_ble_append(uint8_t *dst, size_t index, const void *src, size_t size, pb_ble_broadcast_data_type_t type) {
+static size_t pb_module_ble_append(uint8_t *dst, size_t index, const void *src, size_t size, pb_ble_broadcast_data_type_t type) {
     size_t next_index = index + size + 1;
 
     if (next_index > OBSERVED_DATA_MAX_SIZE) {
@@ -182,7 +182,7 @@ STATIC size_t pb_module_ble_append(uint8_t *dst, size_t index, const void *src, 
  * @throws ValueError   If data exceeds available space remaining in @p dst.
  * @throws TypeError    If @p arg is not one of the supported types.
  */
-STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
+static size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
 
     if (arg == mp_const_true) {
         return pb_module_ble_append(dst, index, NULL, 0, PB_BLE_BROADCAST_DATA_TYPE_TRUE);
@@ -255,7 +255,7 @@ STATIC size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
  *                       exceed the available space.
  * @throws TypeError     If any of the arguments are of a type that can't be encoded.
  */
-STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_obj_BLE_t, self,
         PB_ARG_REQUIRED(data));
@@ -314,7 +314,7 @@ STATIC mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     pbdrv_bluetooth_start_broadcasting(self->broadcast_task, &value.v);
     return pb_module_tools_pbio_task_wait_or_await(self->broadcast_task);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
 
 /**
  * Decodes data that was received by the Bluetooth radio.
@@ -325,7 +325,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_
  * @returns                 The decoded value as a Python object.
  * @throws RuntimeError     If the data was invalid and could not be decoded.
  */
-STATIC mp_obj_t pb_module_ble_decode(const observed_data_t *data, size_t *index) {
+static mp_obj_t pb_module_ble_decode(const observed_data_t *data, size_t *index) {
     uint8_t size = data->data[*index] & 0x1F;
     pb_ble_broadcast_data_type_t data_type = data->data[*index] >> 5;
 
@@ -405,7 +405,7 @@ STATIC mp_obj_t pb_module_ble_decode(const observed_data_t *data, size_t *index)
  * @throws ValueError       If the channel is out of range.
  * @throws RuntimeError     If the last received data was invalid.
  */
-STATIC const observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
+static const observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in) {
     mp_int_t channel = mp_obj_get_int(channel_in);
 
     observed_data_t *ch_data = lookup_observed_data(channel);
@@ -434,7 +434,7 @@ STATIC const observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in
  * @throws ValueError       If the channel is out of range.
  * @throws RuntimeError     If the last received data was invalid.
  */
-STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
+static mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 
     // BEWARE OF DRAGONS: The data returned by pb_module_ble_get_channel_data()
     // is only valid until the next PBIO event is processed, which can happen
@@ -470,7 +470,7 @@ STATIC mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 
     return mp_obj_new_tuple(i, items);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_obj, pb_module_ble_observe);
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_obj, pb_module_ble_observe);
 
 /**
  * Retrieves the filtered RSSI signal strength of the given channel.
@@ -480,11 +480,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_obj, pb_module_ble_observ
  * @returns                 Python object containing the filtered RSSI.
  * @throws ValueError       If the channel is out of range.
  */
-STATIC mp_obj_t pb_module_ble_signal_strength(mp_obj_t self_in, mp_obj_t channel_in) {
+static mp_obj_t pb_module_ble_signal_strength(mp_obj_t self_in, mp_obj_t channel_in) {
     const observed_data_t *ch_data = pb_module_ble_get_channel_data(channel_in);
     return mp_obj_new_int(ch_data->rssi);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_signal_strength_obj, pb_module_ble_signal_strength);
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_signal_strength_obj, pb_module_ble_signal_strength);
 
 /**
  * Gets the Bluetooth chip frimware version.
@@ -492,21 +492,21 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_signal_strength_obj, pb_module_bl
  * @returns                 MicroPython object containing the firmware version
  *                          as a str.
  */
-STATIC mp_obj_t pb_module_ble_version(mp_obj_t self_in) {
+static mp_obj_t pb_module_ble_version(mp_obj_t self_in) {
     const char *version = pbdrv_bluetooth_get_fw_version();
     return mp_obj_new_str(version, strlen(version));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_version_obj, pb_module_ble_version);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_version_obj, pb_module_ble_version);
 
-STATIC const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
+static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_broadcast), MP_ROM_PTR(&pb_module_ble_broadcast_obj) },
     { MP_ROM_QSTR(MP_QSTR_observe), MP_ROM_PTR(&pb_module_ble_observe_obj) },
     { MP_ROM_QSTR(MP_QSTR_signal_strength), MP_ROM_PTR(&pb_module_ble_signal_strength_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);
+static MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);
 
-STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
     MP_QSTR_BLE,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_BLE_locals_dict);

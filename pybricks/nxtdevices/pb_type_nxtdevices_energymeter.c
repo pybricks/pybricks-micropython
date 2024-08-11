@@ -18,7 +18,7 @@ typedef struct _nxtdevices_EnergyMeter_obj_t {
 } nxtdevices_EnergyMeter_obj_t;
 
 // pybricks.nxtdevices.EnergyMeter.__init__
-STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -32,14 +32,14 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
 }
 
 // pybricks.nxtdevices.EnergyMeter.storage
-STATIC mp_obj_t nxtdevices_EnergyMeter_storage(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_EnergyMeter_storage(mp_obj_t self_in) {
     int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
     return mp_obj_new_int(all[4]);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_EnergyMeter_storage);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_EnergyMeter_storage);
 
 // pybricks.nxtdevices.EnergyMeter.input
-STATIC mp_obj_t nxtdevices_EnergyMeter_input(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_EnergyMeter_input(mp_obj_t self_in) {
     int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[0]);
@@ -47,10 +47,10 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_input(mp_obj_t self_in) {
     dat[2] = mp_obj_new_int(all[5]);
     return mp_obj_new_tuple(3, dat);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_input_obj, nxtdevices_EnergyMeter_input);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_input_obj, nxtdevices_EnergyMeter_input);
 
 // pybricks.nxtdevices.EnergyMeter.output
-STATIC mp_obj_t nxtdevices_EnergyMeter_output(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_EnergyMeter_output(mp_obj_t self_in) {
     int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[2]);
@@ -58,15 +58,15 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_output(mp_obj_t self_in) {
     dat[2] = mp_obj_new_int(all[6]);
     return mp_obj_new_tuple(3, dat);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_output_obj, nxtdevices_EnergyMeter_output);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_output_obj, nxtdevices_EnergyMeter_output);
 
 // dir(pybricks.ev3devices.EnergyMeter)
-STATIC const mp_rom_map_elem_t nxtdevices_EnergyMeter_locals_dict_table[] = {
+static const mp_rom_map_elem_t nxtdevices_EnergyMeter_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_input),      MP_ROM_PTR(&nxtdevices_EnergyMeter_input_obj) },
     { MP_ROM_QSTR(MP_QSTR_output),     MP_ROM_PTR(&nxtdevices_EnergyMeter_output_obj) },
     { MP_ROM_QSTR(MP_QSTR_storage),    MP_ROM_PTR(&nxtdevices_EnergyMeter_storage_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(nxtdevices_EnergyMeter_locals_dict, nxtdevices_EnergyMeter_locals_dict_table);
+static MP_DEFINE_CONST_DICT(nxtdevices_EnergyMeter_locals_dict, nxtdevices_EnergyMeter_locals_dict_table);
 
 // type(pybricks.nxtdevices.EnergyMeter)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_EnergyMeter,

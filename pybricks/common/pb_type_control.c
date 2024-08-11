@@ -81,7 +81,7 @@ mp_obj_t pb_type_Control_obj_make_new(pbio_control_t *control) {
 }
 
 // pybricks._common.Control.limits
-STATIC mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Control_obj_t, self,
@@ -115,10 +115,10 @@ STATIC mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_limits_obj, 1, pb_type_Control_limits);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_limits_obj, 1, pb_type_Control_limits);
 
 // pybricks._common.Control.pid
-STATIC mp_obj_t pb_type_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Control_obj_t, self,
@@ -156,10 +156,10 @@ STATIC mp_obj_t pb_type_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_pid_obj, 1, pb_type_Control_pid);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_pid_obj, 1, pb_type_Control_pid);
 
 // pybricks._common.Control.target_tolerances
-STATIC mp_obj_t pb_type_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Control_obj_t, self,
@@ -186,10 +186,10 @@ STATIC mp_obj_t pb_type_Control_target_tolerances(size_t n_args, const mp_obj_t 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_target_tolerances_obj, 1, pb_type_Control_target_tolerances);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_target_tolerances_obj, 1, pb_type_Control_target_tolerances);
 
 // pybricks._common.Control.stall_tolerances
-STATIC mp_obj_t pb_type_Control_stall_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Control_stall_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Control_obj_t, self,
@@ -217,10 +217,10 @@ STATIC mp_obj_t pb_type_Control_stall_tolerances(size_t n_args, const mp_obj_t *
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_stall_tolerances_obj, 1, pb_type_Control_stall_tolerances);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Control_stall_tolerances_obj, 1, pb_type_Control_stall_tolerances);
 
 // pybricks._common.Control.trajectory
-STATIC mp_obj_t pb_type_Control_trajectory(mp_obj_t self_in) {
+static mp_obj_t pb_type_Control_trajectory(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_trajectory_t *trj = &self->control->trajectory;
 
@@ -249,7 +249,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_trajectory_obj, pb_type_Control_trajec
 // DELETEME: This method should not be used in V3.2 or later. It may be removed
 // in a future version
 // pybricks._common.Control.done
-STATIC mp_obj_t pb_type_Control_done(mp_obj_t self_in) {
+static mp_obj_t pb_type_Control_done(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(pbio_control_is_done(self->control));
 }
@@ -258,7 +258,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_done_obj, pb_type_Control_done);
 // DELETEME: This method should not be used in V3.2 or later. It may be removed
 // in a future version
 // pybricks._common.Control.load
-STATIC mp_obj_t pb_type_Control_load(mp_obj_t self_in) {
+static mp_obj_t pb_type_Control_load(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (!pbio_control_is_active(self->control)) {
@@ -273,14 +273,14 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_load_obj, pb_type_Control_load);
 // DELETEME: This method should not be used in V3.2 or later. It may be removed
 // in a future version
 // pybricks._common.Control.stalled
-STATIC mp_obj_t pb_type_Control_stalled(mp_obj_t self_in) {
+static mp_obj_t pb_type_Control_stalled(mp_obj_t self_in) {
     pb_type_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t stall_duration;
     return mp_obj_new_bool(pbio_control_is_stalled(self->control, &stall_duration));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Control_stalled_obj, pb_type_Control_stalled);
 
-STATIC const pb_attr_dict_entry_t pb_type_Control_attr_dict[] = {
+static const pb_attr_dict_entry_t pb_type_Control_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_scale, pb_type_Control_obj_t, scale),
     #if PYBRICKS_PY_COMMON_LOGGER
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_log, pb_type_Control_obj_t, logger),
@@ -289,7 +289,7 @@ STATIC const pb_attr_dict_entry_t pb_type_Control_attr_dict[] = {
 };
 
 // dir(pybricks.common.Control)
-STATIC const mp_rom_map_elem_t pb_type_Control_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&pb_type_Control_limits_obj) },
     { MP_ROM_QSTR(MP_QSTR_pid), MP_ROM_PTR(&pb_type_Control_pid_obj) },
     { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&pb_type_Control_target_tolerances_obj) },
@@ -299,7 +299,7 @@ STATIC const mp_rom_map_elem_t pb_type_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&pb_type_Control_load_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&pb_type_Control_stalled_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_type_Control_locals_dict, pb_type_Control_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pb_type_Control_locals_dict, pb_type_Control_locals_dict_table);
 
 // type(pybricks.common.Control)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_Control,

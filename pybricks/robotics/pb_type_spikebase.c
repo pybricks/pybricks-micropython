@@ -30,7 +30,7 @@ typedef struct _robotics_SpikeBase_obj_t {
 } robotics_SpikeBase_obj_t;
 
 // pybricks.robotics.SpikeBase.__init__
-STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(left_motor),
@@ -55,7 +55,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
+static void wait_for_completion_drivebase(pbio_drivebase_t *db) {
     while (!pbio_drivebase_is_done(db)) {
         mp_hal_delay_ms(5);
     }
@@ -65,7 +65,7 @@ STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
 }
 
 // pybricks.robotics.SpikeBase.tank_move_for_degrees
-STATIC mp_obj_t robotics_SpikeBase_tank_move_for_degrees(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t robotics_SpikeBase_tank_move_for_degrees(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_SpikeBase_obj_t, self,
         PB_ARG_REQUIRED(speed_left),
@@ -87,10 +87,10 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_degrees(size_t n_args, const mp
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_tank_move_for_degrees_obj, 1, robotics_SpikeBase_tank_move_for_degrees);
+static MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_tank_move_for_degrees_obj, 1, robotics_SpikeBase_tank_move_for_degrees);
 
 // pybricks.robotics.SpikeBase.steering_move_for_degrees
-STATIC mp_obj_t robotics_SpikeBase_steering_move_for_degrees(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t robotics_SpikeBase_steering_move_for_degrees(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_SpikeBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
@@ -117,10 +117,10 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_degrees(size_t n_args, cons
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_for_degrees_obj, 1, robotics_SpikeBase_steering_move_for_degrees);
+static MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_for_degrees_obj, 1, robotics_SpikeBase_steering_move_for_degrees);
 
 // pybricks.robotics.SpikeBase.tank_move_for_time
-STATIC mp_obj_t robotics_SpikeBase_tank_move_for_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t robotics_SpikeBase_tank_move_for_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_SpikeBase_obj_t, self,
         PB_ARG_REQUIRED(speed_left),
@@ -142,10 +142,10 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_for_time(size_t n_args, const mp_ob
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_tank_move_for_time_obj, 1, robotics_SpikeBase_tank_move_for_time);
+static MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_tank_move_for_time_obj, 1, robotics_SpikeBase_tank_move_for_time);
 
 // pybricks.robotics.SpikeBase.steering_move_for_time
-STATIC mp_obj_t robotics_SpikeBase_steering_move_for_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t robotics_SpikeBase_steering_move_for_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_SpikeBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
@@ -172,10 +172,10 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_for_time(size_t n_args, const m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_for_time_obj, 1, robotics_SpikeBase_steering_move_for_time);
+static MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_for_time_obj, 1, robotics_SpikeBase_steering_move_for_time);
 
 // pybricks.robotics.SpikeBase.tank_move_forever
-STATIC mp_obj_t robotics_SpikeBase_tank_move_forever(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t robotics_SpikeBase_tank_move_forever(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_SpikeBase_obj_t, self,
         PB_ARG_REQUIRED(speed_left),
@@ -189,10 +189,10 @@ STATIC mp_obj_t robotics_SpikeBase_tank_move_forever(size_t n_args, const mp_obj
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_tank_move_forever_obj, 1, robotics_SpikeBase_tank_move_forever);
+static MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_tank_move_forever_obj, 1, robotics_SpikeBase_tank_move_forever);
 
 // pybricks.robotics.SpikeBase.steering_move_forever
-STATIC mp_obj_t robotics_SpikeBase_steering_move_forever(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t robotics_SpikeBase_steering_move_forever(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_SpikeBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
@@ -210,17 +210,17 @@ STATIC mp_obj_t robotics_SpikeBase_steering_move_forever(size_t n_args, const mp
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_forever_obj, 1, robotics_SpikeBase_steering_move_forever);
+static MP_DEFINE_CONST_FUN_OBJ_KW(robotics_SpikeBase_steering_move_forever_obj, 1, robotics_SpikeBase_steering_move_forever);
 
 // pybricks.robotics.SpikeBase.stop
-STATIC mp_obj_t robotics_SpikeBase_stop(mp_obj_t self_in) {
+static mp_obj_t robotics_SpikeBase_stop(mp_obj_t self_in) {
     robotics_SpikeBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_SpikeBase_stop_obj, robotics_SpikeBase_stop);
 
-STATIC const pb_attr_dict_entry_t robotics_SpikeBase_attr_dict[] = {
+static const pb_attr_dict_entry_t robotics_SpikeBase_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_left, robotics_SpikeBase_obj_t, left),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_right, robotics_SpikeBase_obj_t, right),
     #if PYBRICKS_PY_COMMON_CONTROL
@@ -231,7 +231,7 @@ STATIC const pb_attr_dict_entry_t robotics_SpikeBase_attr_dict[] = {
 };
 
 // dir(pybricks.robotics.SpikeBase)
-STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
+static const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_degrees),     MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_degrees_obj)     },
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_time),        MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_time_obj)        },
     { MP_ROM_QSTR(MP_QSTR_tank_move_forever),         MP_ROM_PTR(&robotics_SpikeBase_tank_move_forever_obj)             },
@@ -240,7 +240,7 @@ STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_steering_move_forever),     MP_ROM_PTR(&robotics_SpikeBase_steering_move_forever_obj)     },
     { MP_ROM_QSTR(MP_QSTR_stop),                      MP_ROM_PTR(&robotics_SpikeBase_stop_obj)                      },
 };
-STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
+static MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
 
 // type(pybricks.robotics.SpikeBase)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_spikebase,
