@@ -25,7 +25,7 @@ typedef struct _hubs_CityHub_obj_t {
     mp_obj_t system;
 } hubs_CityHub_obj_t;
 
-STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     #if PYBRICKS_PY_COMMON_BLE
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_INT(broadcast_channel, 0),
@@ -43,7 +43,7 @@ STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC const pb_attr_dict_entry_t hubs_CityHub_attr_dict[] = {
+static const pb_attr_dict_entry_t hubs_CityHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_CityHub_obj_t, battery),
     #if PYBRICKS_PY_COMMON_BLE
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_CityHub_obj_t, ble),

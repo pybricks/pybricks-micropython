@@ -44,7 +44,7 @@ typedef struct {
 } pb_type_Task_obj_t;
 
 // Cancel all tasks by calling their close methods.
-STATIC mp_obj_t pb_type_Task_close(mp_obj_t self_in) {
+static mp_obj_t pb_type_Task_close(mp_obj_t self_in) {
     pb_type_Task_obj_t *self = MP_OBJ_TO_PTR(self_in);
     for (size_t i = 0; i < self->num_tasks; i++) {
         pb_type_Task_progress_t *task = &self->tasks[i];
@@ -63,9 +63,9 @@ STATIC mp_obj_t pb_type_Task_close(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Task_close_obj, pb_type_Task_close);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Task_close_obj, pb_type_Task_close);
 
-STATIC mp_obj_t pb_type_Task_iternext(mp_obj_t self_in) {
+static mp_obj_t pb_type_Task_iternext(mp_obj_t self_in) {
     pb_type_Task_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Do one iteration of each task.
@@ -130,12 +130,12 @@ STATIC mp_obj_t pb_type_Task_iternext(mp_obj_t self_in) {
     }
 }
 
-STATIC const mp_rom_map_elem_t pb_type_Task_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_Task_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&pb_type_Task_close_obj) },
 };
 MP_DEFINE_CONST_DICT(pb_type_Task_locals_dict, pb_type_Task_locals_dict_table);
 
-STATIC mp_obj_t pb_type_Task_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_Task_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     // Whether to race until one task is done (True) or wait for all tasks (False).
     bool race = n_kw == 1 && mp_obj_is_true(args[n_args - 1]);

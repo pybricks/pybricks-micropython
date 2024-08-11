@@ -27,7 +27,7 @@ typedef struct _iodevices_Ev3devSensor_obj_t {
 } iodevices_Ev3devSensor_obj_t;
 
 // pybricks.iodevices.Ev3devSensor.__init__
-STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -47,7 +47,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_
 }
 
 // pybricks.iodevices.Ev3devSensor.read
-STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_Ev3devSensor_obj_t, self,
         PB_ARG_REQUIRED(mode));
@@ -92,17 +92,17 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_Ev3devSensor_read_obj, 1, iodevices_Ev3devSensor_read);
 
-STATIC const pb_attr_dict_entry_t iodevices_Ev3devSensor_attr_dict[] = {
+static const pb_attr_dict_entry_t iodevices_Ev3devSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_sensor_index, iodevices_Ev3devSensor_obj_t, sensor_index),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_port_index, iodevices_Ev3devSensor_obj_t, port_index),
     PB_ATTR_DICT_SENTINEL
 };
 
 // dir(pybricks.iodevices.Ev3devSensor)
-STATIC const mp_rom_map_elem_t iodevices_Ev3devSensor_locals_dict_table[] = {
+static const mp_rom_map_elem_t iodevices_Ev3devSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),         MP_ROM_PTR(&iodevices_Ev3devSensor_read_obj)                        },
 };
-STATIC MP_DEFINE_CONST_DICT(iodevices_Ev3devSensor_locals_dict, iodevices_Ev3devSensor_locals_dict_table);
+static MP_DEFINE_CONST_DICT(iodevices_Ev3devSensor_locals_dict, iodevices_Ev3devSensor_locals_dict_table);
 
 // type(pybricks.iodevices.Ev3devSensor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_Ev3devSensor,

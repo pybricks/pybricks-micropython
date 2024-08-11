@@ -17,7 +17,7 @@
 #if MICROPY_PY_BUILTINS_FLOAT
 
 // pybricks.tools.Matrix.__init__
-STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(rows));
 
@@ -178,7 +178,7 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 }
 
 // pybricks.tools.Matrix._add
-STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add) {
+static mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add) {
 
     // Get left and right matrices
     pb_type_Matrix_obj_t *lhs = MP_OBJ_TO_PTR(lhs_obj);
@@ -222,7 +222,7 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
 }
 
 // pybricks.tools.Matrix._mul
-STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
+static mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     // Get left and right matrices
     pb_type_Matrix_obj_t *lhs = MP_OBJ_TO_PTR(lhs_in);
@@ -272,7 +272,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 }
 
 // pybricks.tools.Matrix._scale
-STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
+static mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_Matrix_obj_t *copy = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
@@ -300,7 +300,7 @@ float pb_type_Matrix_get_scalar(mp_obj_t self_in, size_t r, size_t c) {
 }
 
 // pybricks.tools.Matrix._T
-STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
+static mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_Matrix_obj_t *copy = mp_obj_malloc(pb_type_Matrix_obj_t, &pb_type_Matrix);
@@ -315,7 +315,7 @@ STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
     return MP_OBJ_FROM_PTR(copy);
 }
 
-STATIC void pb_type_Matrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+static void pb_type_Matrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     // Read only
     if (dest[0] == MP_OBJ_NULL) {
         // Create and return transpose
@@ -338,7 +338,7 @@ STATIC void pb_type_Matrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     }
 }
 
-STATIC mp_obj_t pb_type_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
+static mp_obj_t pb_type_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
 
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(o_in);
 
@@ -372,7 +372,7 @@ STATIC mp_obj_t pb_type_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
     }
 }
 
-STATIC mp_obj_t pb_type_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
+static mp_obj_t pb_type_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     switch (op) {
         case MP_BINARY_OP_ADD:
@@ -402,7 +402,7 @@ STATIC mp_obj_t pb_type_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_
     }
 }
 
-STATIC mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_obj_t value_in) {
+static mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_obj_t value_in) {
 
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -473,7 +473,7 @@ typedef struct {
 _Static_assert(sizeof(pb_type_Matrix_it_t) <= sizeof(mp_obj_iter_buf_t),
     "pb_type_Matrix_it_t uses memory allocated for mp_obj_iter_buf_t");
 
-STATIC mp_obj_t pb_type_Matrix_it_iternext(mp_obj_t self_in) {
+static mp_obj_t pb_type_Matrix_it_iternext(mp_obj_t self_in) {
     pb_type_Matrix_it_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(self->matrix);
 
@@ -484,7 +484,7 @@ STATIC mp_obj_t pb_type_Matrix_it_iternext(mp_obj_t self_in) {
     return MP_OBJ_STOP_ITERATION;
 }
 
-STATIC mp_obj_t pb_type_Matrix_it_iterprev(mp_obj_t self_in) {
+static mp_obj_t pb_type_Matrix_it_iterprev(mp_obj_t self_in) {
     pb_type_Matrix_it_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(self->matrix);
 
@@ -495,7 +495,7 @@ STATIC mp_obj_t pb_type_Matrix_it_iterprev(mp_obj_t self_in) {
     return MP_OBJ_STOP_ITERATION;
 }
 
-STATIC mp_obj_t pb_type_Matrix_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_buf) {
+static mp_obj_t pb_type_Matrix_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_buf) {
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(o_in);
     pb_type_Matrix_it_t *matrix_it = (pb_type_Matrix_it_t *)iter_buf;
 
@@ -563,7 +563,7 @@ mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t sr
 }
 
 // pybricks.tools.vector
-STATIC mp_obj_t pb_geometry_vector(size_t n_args, const mp_obj_t *args) {
+static mp_obj_t pb_geometry_vector(size_t n_args, const mp_obj_t *args) {
 
     // Convert user object to floats
     float data[3];
@@ -577,7 +577,7 @@ STATIC mp_obj_t pb_geometry_vector(size_t n_args, const mp_obj_t *args) {
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_geometry_vector_obj, 2, 3, pb_geometry_vector);
 
 // pybricks.tools.cross
-STATIC mp_obj_t pb_type_matrix_cross(mp_obj_t a_in, mp_obj_t b_in) {
+static mp_obj_t pb_type_matrix_cross(mp_obj_t a_in, mp_obj_t b_in) {
 
     // Get a and b vectors
     pb_type_Matrix_obj_t *a = MP_OBJ_TO_PTR(a_in);

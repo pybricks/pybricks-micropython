@@ -14,7 +14,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
-STATIC mp_obj_t usignal_pause(void) {
+static mp_obj_t usignal_pause(void) {
 
     MP_THREAD_GIL_EXIT();
     pause();
@@ -22,10 +22,10 @@ STATIC mp_obj_t usignal_pause(void) {
     mp_handle_pending(true);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(usignal_pause_obj, usignal_pause);
+static MP_DEFINE_CONST_FUN_OBJ_0(usignal_pause_obj, usignal_pause);
 
 #if MICROPY_PY_THREAD
-STATIC mp_obj_t usignal_pthread_kill(mp_obj_t thread_id_in, mp_obj_t signalnum_in) {
+static mp_obj_t usignal_pthread_kill(mp_obj_t thread_id_in, mp_obj_t signalnum_in) {
 
     mp_int_t thread_id = mp_obj_int_get_truncated(thread_id_in);
     mp_int_t signalnum = mp_obj_get_int(signalnum_in);
@@ -35,10 +35,10 @@ STATIC mp_obj_t usignal_pthread_kill(mp_obj_t thread_id_in, mp_obj_t signalnum_i
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(usignal_pthread_kill_obj, usignal_pthread_kill);
+static MP_DEFINE_CONST_FUN_OBJ_2(usignal_pthread_kill_obj, usignal_pthread_kill);
 #endif // MICROPY_PY_THREAD
 
-STATIC const mp_rom_map_elem_t usignal_globals_table[] = {
+static const mp_rom_map_elem_t usignal_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_usignal) },
     { MP_ROM_QSTR(MP_QSTR_pause), MP_ROM_PTR(&usignal_pause_obj) },
     #if MICROPY_PY_THREAD
@@ -50,7 +50,7 @@ STATIC const mp_rom_map_elem_t usignal_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SIGUSR1), MP_ROM_INT(SIGUSR1) },
     { MP_ROM_QSTR(MP_QSTR_SIGUSR2), MP_ROM_INT(SIGUSR2) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_usignal_globals, usignal_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_usignal_globals, usignal_globals_table);
 
 const mp_obj_module_t pb_module_usignal = {
     .base = { &mp_type_module },

@@ -30,21 +30,21 @@ typedef struct _nxtdevices_LightSensor_obj_t {
 } nxtdevices_LightSensor_obj_t;
 
 // pybricks.nxtdevices.LightSensor.ambient
-STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT);
     return mp_obj_new_int(analog_scale(analog[0], 1906, 4164, true));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
 // pybricks.nxtdevices.LightSensor.reflection
-STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_LIGHT_SENSOR__REFLECT);
     return mp_obj_new_int(analog_scale(analog[0], 1906, 3000, true));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
 // pybricks.nxtdevices.LightSensor.__init__
-STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -58,11 +58,11 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
 }
 
 // dir(pybricks.ev3devices.LightSensor)
-STATIC const mp_rom_map_elem_t nxtdevices_LightSensor_locals_dict_table[] = {
+static const mp_rom_map_elem_t nxtdevices_LightSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ambient),  MP_ROM_PTR(&nxtdevices_LightSensor_ambient_obj) },
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&nxtdevices_LightSensor_reflection_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(nxtdevices_LightSensor_locals_dict, nxtdevices_LightSensor_locals_dict_table);
+static MP_DEFINE_CONST_DICT(nxtdevices_LightSensor_locals_dict, nxtdevices_LightSensor_locals_dict_table);
 
 // type(pybricks.ev3devices.LightSensor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_LightSensor,

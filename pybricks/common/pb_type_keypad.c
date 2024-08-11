@@ -21,20 +21,20 @@ typedef struct _common_Keypad_obj_t {
 } common_Keypad_obj_t;
 
 // pybricks._common.Keypad.pressed
-STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
+static mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
     common_Keypad_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return self->get_pressed();
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Keypad_pressed_obj, common_Keypad_pressed);
 
 // dir(pybricks.common.Keypad)
-STATIC const mp_rom_map_elem_t common_Keypad_locals_dict_table[] = {
+static const mp_rom_map_elem_t common_Keypad_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&common_Keypad_pressed_obj)     },
 };
-STATIC MP_DEFINE_CONST_DICT(common_Keypad_locals_dict, common_Keypad_locals_dict_table);
+static MP_DEFINE_CONST_DICT(common_Keypad_locals_dict, common_Keypad_locals_dict_table);
 
 // type(pybricks.common.Keypad)
-STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_Keypad,
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_Keypad,
     MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_Keypad_locals_dict);

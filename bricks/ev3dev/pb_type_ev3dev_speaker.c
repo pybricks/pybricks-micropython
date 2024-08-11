@@ -55,10 +55,10 @@ typedef struct _ev3dev_Speaker_obj_t {
     GError *splice_error;
 } ev3dev_Speaker_obj_t;
 
-STATIC ev3dev_Speaker_obj_t ev3dev_speaker_singleton;
+static ev3dev_Speaker_obj_t ev3dev_speaker_singleton;
 
 
-STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     ev3dev_Speaker_obj_t *self = &ev3dev_speaker_singleton;
     if (!self->initialized) {
         self->base.type = &pb_type_ev3dev_Speaker;
@@ -109,7 +109,7 @@ void _pb_ev3dev_speaker_beep_off(void) {
     set_beep_frequency(&ev3dev_speaker_singleton, 0);
 }
 
-STATIC mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_DEFAULT_INT(frequency, 500),
@@ -139,9 +139,9 @@ STATIC mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_beep_obj, 1, ev3dev_Speaker_beep);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_beep_obj, 1, ev3dev_Speaker_beep);
 
-STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, int duration) {
+static void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, int duration) {
     const char *note = mp_obj_str_get_str(obj);
     int pos = 0;
     double freq;
@@ -315,7 +315,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
     }
 }
 
-STATIC mp_obj_t ev3dev_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(notes),
@@ -342,9 +342,9 @@ STATIC mp_obj_t ev3dev_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_arg
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_play_notes_obj, 1, ev3dev_Speaker_play_notes);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_play_notes_obj, 1, ev3dev_Speaker_play_notes);
 
-STATIC void ev3dev_Speaker_aplay_callback(GObject *source_object, GAsyncResult *res, gpointer user_data) {
+static void ev3dev_Speaker_aplay_callback(GObject *source_object, GAsyncResult *res, gpointer user_data) {
     GSubprocess *subprocess = G_SUBPROCESS(source_object);
     ev3dev_Speaker_obj_t *self = user_data;
     g_clear_error(&self->aplay_error);
@@ -352,7 +352,7 @@ STATIC void ev3dev_Speaker_aplay_callback(GObject *source_object, GAsyncResult *
     self->aplay_busy = FALSE;
 }
 
-STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(file));
@@ -423,9 +423,9 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_play_file_obj, 1, ev3dev_Speaker_play_file);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_play_file_obj, 1, ev3dev_Speaker_play_file);
 
-STATIC void ev3dev_Speaker_espeak_callback(GObject *source_object, GAsyncResult *res, gpointer user_data) {
+static void ev3dev_Speaker_espeak_callback(GObject *source_object, GAsyncResult *res, gpointer user_data) {
     GSubprocess *subprocess = G_SUBPROCESS(source_object);
     ev3dev_Speaker_obj_t *self = user_data;
     g_clear_error(&self->espeak_error);
@@ -433,7 +433,7 @@ STATIC void ev3dev_Speaker_espeak_callback(GObject *source_object, GAsyncResult 
     self->espeak_busy = FALSE;
 }
 
-STATIC void ev3dev_Speaker_splice_callback(GObject *source_object, GAsyncResult *res, gpointer user_data) {
+static void ev3dev_Speaker_splice_callback(GObject *source_object, GAsyncResult *res, gpointer user_data) {
     GOutputStream *out_stream = G_OUTPUT_STREAM(source_object);
     ev3dev_Speaker_obj_t *self = user_data;
     g_clear_error(&self->splice_error);
@@ -441,7 +441,7 @@ STATIC void ev3dev_Speaker_splice_callback(GObject *source_object, GAsyncResult 
     self->splice_busy = FALSE;
 }
 
-STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(text));
@@ -558,9 +558,9 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_say_obj, 1, ev3dev_Speaker_say);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_say_obj, 1, ev3dev_Speaker_say);
 
-STATIC mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_DEFAULT_NONE(language),
@@ -585,9 +585,9 @@ STATIC mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_speech_options_obj, 1, ev3dev_Speaker_set_speech_options);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_speech_options_obj, 1, ev3dev_Speaker_set_speech_options);
 
-STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(volume),
@@ -645,9 +645,9 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_volume_obj, 1, ev3dev_Speaker_set_volume);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_volume_obj, 1, ev3dev_Speaker_set_volume);
 
-STATIC const mp_rom_map_elem_t ev3dev_Speaker_locals_dict_table[] = {
+static const mp_rom_map_elem_t ev3dev_Speaker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_beep),                MP_ROM_PTR(&ev3dev_Speaker_beep_obj)                },
     { MP_ROM_QSTR(MP_QSTR_play_notes),          MP_ROM_PTR(&ev3dev_Speaker_play_notes_obj)          },
     { MP_ROM_QSTR(MP_QSTR_play_file),           MP_ROM_PTR(&ev3dev_Speaker_play_file_obj)           },
@@ -655,7 +655,7 @@ STATIC const mp_rom_map_elem_t ev3dev_Speaker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_speech_options),  MP_ROM_PTR(&ev3dev_Speaker_set_speech_options_obj)  },
     { MP_ROM_QSTR(MP_QSTR_set_volume),          MP_ROM_PTR(&ev3dev_Speaker_set_volume_obj)          },
 };
-STATIC MP_DEFINE_CONST_DICT(ev3dev_Speaker_locals_dict, ev3dev_Speaker_locals_dict_table);
+static MP_DEFINE_CONST_DICT(ev3dev_Speaker_locals_dict, ev3dev_Speaker_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3dev_Speaker,
     MP_QSTR_Speaker,

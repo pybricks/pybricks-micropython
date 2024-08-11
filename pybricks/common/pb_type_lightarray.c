@@ -26,7 +26,7 @@ typedef struct _common_LightArray_obj_t {
 } common_LightArray_obj_t;
 
 // pybricks._common.LightArray.on
-STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_LightArray_obj_t, self,
         PB_ARG_DEFAULT_INT(brightness, 100));
@@ -37,25 +37,25 @@ STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp
     // Set the brightness values and wait or await it.
     return pb_type_device_set_data(self->sensor, self->light_mode, brightness_values, self->number_of_lights);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightArray_on_obj, 1, common_LightArray_on);
+static MP_DEFINE_CONST_FUN_OBJ_KW(common_LightArray_on_obj, 1, common_LightArray_on);
 
 // pybricks._common.LightArray.off
-STATIC mp_obj_t common_LightArray_off(mp_obj_t self_in) {
+static mp_obj_t common_LightArray_off(mp_obj_t self_in) {
     common_LightArray_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t brightness_values[4] = { };
     return pb_type_device_set_data(self->sensor, self->light_mode, brightness_values, self->number_of_lights);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_LightArray_off_obj, common_LightArray_off);
+static MP_DEFINE_CONST_FUN_OBJ_1(common_LightArray_off_obj, common_LightArray_off);
 
 // dir(pybricks.builtins.LightArray)
-STATIC const mp_rom_map_elem_t common_LightArray_locals_dict_table[] = {
+static const mp_rom_map_elem_t common_LightArray_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&common_LightArray_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&common_LightArray_off_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(common_LightArray_locals_dict, common_LightArray_locals_dict_table);
+static MP_DEFINE_CONST_DICT(common_LightArray_locals_dict, common_LightArray_locals_dict_table);
 
 // type(pybricks.builtins.LightArray)
-STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightArray,
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_LightArray,
     MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_LightArray_locals_dict);

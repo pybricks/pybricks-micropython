@@ -19,7 +19,7 @@ typedef struct _nxtdevices_TemperatureSensor_obj_t {
 } nxtdevices_TemperatureSensor_obj_t;
 
 // pybricks.nxtdevices.TemperatureSensor.__init__
-STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -29,18 +29,18 @@ STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
 }
 
 // pybricks.nxtdevices.TemperatureSensor.temperature
-STATIC mp_obj_t nxtdevices_TemperatureSensor_temperature(mp_obj_t self_in) {
+static mp_obj_t nxtdevices_TemperatureSensor_temperature(mp_obj_t self_in) {
     int16_t *temperature_scaled = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_TEMPERATURE_SENSOR_CELSIUS);
     // FIXME: ENDIANNESS
     return mp_obj_new_float((temperature_scaled[0] >> 4) / 16.0);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_temperature_obj, nxtdevices_TemperatureSensor_temperature);
+static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_temperature_obj, nxtdevices_TemperatureSensor_temperature);
 
 // dir(pybricks.ev3devices.TemperatureSensor)
-STATIC const mp_rom_map_elem_t nxtdevices_TemperatureSensor_locals_dict_table[] = {
+static const mp_rom_map_elem_t nxtdevices_TemperatureSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_temperature),    MP_ROM_PTR(&nxtdevices_TemperatureSensor_temperature_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(nxtdevices_TemperatureSensor_locals_dict, nxtdevices_TemperatureSensor_locals_dict_table);
+static MP_DEFINE_CONST_DICT(nxtdevices_TemperatureSensor_locals_dict, nxtdevices_TemperatureSensor_locals_dict_table);
 
 // type(pybricks.nxtdevices.TemperatureSensor)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_TemperatureSensor,

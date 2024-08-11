@@ -11,7 +11,7 @@
 #include "py/builtin.h"
 #include "py/runtime.h"
 
-STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
+static const mp_rom_map_elem_t robotics_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics)   },
     #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_Car),         MP_ROM_PTR(&pb_type_car)        },
@@ -21,7 +21,7 @@ STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
     #endif
     #endif
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
 
 const mp_obj_module_t pb_module_robotics = {
     .base = { &mp_type_module },

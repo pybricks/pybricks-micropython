@@ -55,7 +55,7 @@
 #define GEN_ARG_OBJ(IDX, arg_spec) mp_obj_t GET_ARG_NAME arg_spec = parsed_args[IDX].u_obj;
 
 // Create the arguments table, parse it, and declare mp_obj_t's for each one
-#define PB_PARSE_GENERIC(n_args, pos_args, kw_args, n_ignore, ...) STATIC const mp_arg_t allowed_args[] = { \
+#define PB_PARSE_GENERIC(n_args, pos_args, kw_args, n_ignore, ...) static const mp_arg_t allowed_args[] = { \
         FOR_EACH_IDX(PB_ARG_DO, __VA_ARGS__) \
 }; \
     PB_PARSE_ARGS(parsed_args, n_args, pos_args, kw_args, allowed_args, n_ignore); \

@@ -29,7 +29,7 @@ mp_obj_t pb_type_MotorModel_obj_make_new(pbio_observer_t *observer) {
 }
 
 // pybricks._common.MotorModel.settings
-STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_MotorModel_obj_t, self,
@@ -67,10 +67,10 @@ STATIC mp_obj_t pb_type_MotorModel_settings(size_t n_args, const mp_obj_t *pos_a
     self->observer->settings.coulomb_friction_speed_cutoff = mp_obj_get_int(set_values[7]);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_MotorModel_settings_obj, 1, pb_type_MotorModel_settings);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_MotorModel_settings_obj, 1, pb_type_MotorModel_settings);
 
 // pybricks._common.Motor.state
-STATIC mp_obj_t pb_type_MotorModel_state(mp_obj_t self_in) {
+static mp_obj_t pb_type_MotorModel_state(mp_obj_t self_in) {
     pb_type_MotorModel_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pbio_angle_t zero = {.millidegrees = 0, .rotations = 0};
@@ -87,11 +87,11 @@ STATIC mp_obj_t pb_type_MotorModel_state(mp_obj_t self_in) {
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_MotorModel_state_obj, pb_type_MotorModel_state);
 
 // dir(pybricks.common.MotorModel)
-STATIC const mp_rom_map_elem_t pb_type_MotorModel_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_MotorModel_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_state),    MP_ROM_PTR(&pb_type_MotorModel_state_obj) },
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&pb_type_MotorModel_settings_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_type_MotorModel_locals_dict, pb_type_MotorModel_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pb_type_MotorModel_locals_dict, pb_type_MotorModel_locals_dict_table);
 
 // type(pybricks.common.MotorModel)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorModel,

@@ -163,7 +163,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     mp_printf(print, "Color(h=%u, s=%u, v=%d)", self->hsv.h, self->hsv.s, self->hsv.v);
 }
 
-STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t value) {
+static mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t value) {
 
     // If we're a Color instance, there is no subscr
     if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
@@ -179,7 +179,7 @@ STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t 
     return MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, subscr)(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), index, value);
 }
 
-STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
+static mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
 
     // If we're a Color instance, there is no getiter
     if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
@@ -190,7 +190,7 @@ STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_
     return ((mp_getiter_fun_t)MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, iter))(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), iter_buf);
 }
 
-STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+static void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 
     // If we're a Color instance, just check h, s, v attributes
     if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
@@ -232,7 +232,7 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     }
 }
 
-STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
+static mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(lhs_in);
 
@@ -297,7 +297,7 @@ STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
 }
 
 // pybricks.parameters.Color
-STATIC mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(h),

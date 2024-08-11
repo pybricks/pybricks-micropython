@@ -23,11 +23,11 @@ const pb_obj_enum_member_t pb_Direction_COUNTERCLOCKWISE_obj = {
     .value = PBIO_DIRECTION_COUNTERCLOCKWISE
 };
 
-STATIC const mp_rom_map_elem_t pb_enum_Direction_table[] = {
+static const mp_rom_map_elem_t pb_enum_Direction_table[] = {
     { MP_ROM_QSTR(MP_QSTR_CLOCKWISE),         MP_ROM_PTR(&pb_Direction_CLOCKWISE_obj)        },
     { MP_ROM_QSTR(MP_QSTR_COUNTERCLOCKWISE),  MP_ROM_PTR(&pb_Direction_COUNTERCLOCKWISE_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Direction_locals_dict, pb_enum_Direction_table);
+static MP_DEFINE_CONST_DICT(pb_enum_type_Direction_locals_dict, pb_enum_Direction_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_enum_type_Direction,
     MP_QSTR_Direction,

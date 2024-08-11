@@ -32,7 +32,7 @@ typedef struct _common_ColorLight_internal_obj_t {
 } common_ColorLight_internal_obj_t;
 
 // pybricks._common.ColorLight.on
-STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_ColorLight_internal_obj_t, self,
@@ -42,20 +42,20 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_on_obj, 1, common_ColorLight_internal_on);
+static MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_on_obj, 1, common_ColorLight_internal_on);
 
 // pybricks._common.ColorLight.off
-STATIC mp_obj_t common_ColorLight_internal_off(mp_obj_t self_in) {
+static mp_obj_t common_ColorLight_internal_off(mp_obj_t self_in) {
     common_ColorLight_internal_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_assert(pbio_color_light_off(self->light));
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_internal_off_obj, common_ColorLight_internal_off);
+static MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_internal_off_obj, common_ColorLight_internal_off);
 
 // pybricks._common.ColorLight.blink
-STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_ColorLight_internal_obj_t, self,
         PB_ARG_REQUIRED(color),
@@ -89,10 +89,10 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_blink_obj, 1, common_ColorLight_internal_blink);
+static MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_blink_obj, 1, common_ColorLight_internal_blink);
 
 // pybricks._common.ColorLight.animate
-STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_ColorLight_internal_obj_t, self,
         PB_ARG_REQUIRED(colors),
@@ -124,19 +124,19 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_animate_obj, 1, common_ColorLight_internal_animate);
+static MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_animate_obj, 1, common_ColorLight_internal_animate);
 
 // dir(pybricks.builtins.ColorLight)
-STATIC const mp_rom_map_elem_t common_ColorLight_internal_locals_dict_table[] = {
+static const mp_rom_map_elem_t common_ColorLight_internal_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&common_ColorLight_internal_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&common_ColorLight_internal_off_obj) },
     { MP_ROM_QSTR(MP_QSTR_blink), MP_ROM_PTR(&common_ColorLight_internal_blink_obj) },
     { MP_ROM_QSTR(MP_QSTR_animate), MP_ROM_PTR(&common_ColorLight_internal_animate_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(common_ColorLight_internal_locals_dict, common_ColorLight_internal_locals_dict_table);
+static MP_DEFINE_CONST_DICT(common_ColorLight_internal_locals_dict, common_ColorLight_internal_locals_dict_table);
 
 // type(pybricks.builtins.ColorLight)
-STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_ColorLight_internal,
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_ColorLight_internal,
     MP_QSTRnull,
     MP_TYPE_FLAG_NONE,
     locals_dict, &common_ColorLight_internal_locals_dict);

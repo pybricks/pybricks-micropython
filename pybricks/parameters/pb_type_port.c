@@ -93,7 +93,7 @@ const pb_obj_enum_member_t pb_Port_4_obj = {
 };
 #endif
 
-STATIC const mp_rom_map_elem_t pb_enum_Port_table[] = {
+static const mp_rom_map_elem_t pb_enum_Port_table[] = {
     #if PBDRV_CONFIG_HAS_PORT_A
     { MP_ROM_QSTR(MP_QSTR_A),  MP_ROM_PTR(&pb_Port_A_obj)},
     #endif
@@ -125,7 +125,7 @@ STATIC const mp_rom_map_elem_t pb_enum_Port_table[] = {
     { MP_ROM_QSTR(MP_QSTR_S4),  MP_ROM_PTR(&pb_Port_4_obj)},
     #endif
 };
-STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Port_locals_dict, pb_enum_Port_table);
+static MP_DEFINE_CONST_DICT(pb_enum_type_Port_locals_dict, pb_enum_Port_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_enum_type_Port,
     MP_QSTR_Port,

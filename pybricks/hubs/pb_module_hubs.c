@@ -11,7 +11,7 @@
 #include <pbdrv/config.h>
 #include <pybricks/hubs.h>
 
-STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
+static const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),              MP_ROM_QSTR(MP_QSTR_hubs)    },
     { MP_ROM_QSTR(MP_QSTR_ThisHub),               MP_ROM_PTR(&pb_type_ThisHub) },
     { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME),       MP_ROM_PTR(&pb_type_ThisHub) },
@@ -19,7 +19,7 @@ STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME_ALIAS), MP_ROM_PTR(&pb_type_ThisHub) },
     #endif
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_hubs_globals, hubs_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_hubs_globals, hubs_globals_table);
 
 const mp_obj_module_t pb_module_hubs = {
     .base = { &mp_type_module },

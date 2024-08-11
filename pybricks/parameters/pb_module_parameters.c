@@ -8,7 +8,7 @@
 #include <pybricks/parameters.h>
 #include <pybricks/parameters/pb_type_button.h>
 
-STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
+static const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_parameters)     },
     { MP_ROM_QSTR(MP_QSTR_Axis),        MP_ROM_PTR(&pb_enum_type_Axis)      },
     #if PYBRICKS_PY_PARAMETERS_BUTTON
@@ -23,7 +23,7 @@ STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Side),        MP_ROM_PTR(&pb_enum_type_Side)      },
     { MP_ROM_QSTR(MP_QSTR_Stop),        MP_ROM_PTR(&pb_enum_type_Stop)      },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_parameters_globals, parameters_globals_table);
+static MP_DEFINE_CONST_DICT(pb_module_parameters_globals, parameters_globals_table);
 
 const mp_obj_module_t pb_module_parameters = {
     .base = { &mp_type_module },

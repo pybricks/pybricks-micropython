@@ -40,7 +40,7 @@ typedef struct _ev3dev_Image_obj_t {
 } ev3dev_Image_obj_t;
 
 // map Pybricks color type to GRX color value.
-STATIC GrxColor map_color(mp_obj_t obj) {
+static GrxColor map_color(mp_obj_t obj) {
     if (obj == mp_const_none) {
         return GRX_COLOR_NONE;
     }
@@ -50,7 +50,7 @@ STATIC GrxColor map_color(mp_obj_t obj) {
     return grx_color_get(rgb.r, rgb.g, rgb.b);
 }
 
-STATIC mp_obj_t ev3dev_Image_new(GrxContext *context) {
+static mp_obj_t ev3dev_Image_new(GrxContext *context) {
     ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
 
     self->base.type = &pb_type_ev3dev_Image;
@@ -69,7 +69,7 @@ STATIC mp_obj_t ev3dev_Image_new(GrxContext *context) {
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     enum { ARG_source, ARG_sub, ARG_x1, ARG_y1, ARG_x2, ARG_y2 };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_source, MP_ARG_REQUIRED | MP_ARG_OBJ, { } },
@@ -151,7 +151,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
     return ev3dev_Image_new(context);
 }
 
-STATIC mp_obj_t ev3dev_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_width, ARG_height };
     const mp_arg_t allowed_args[] = {
         { MP_QSTR_width, MP_ARG_OBJ, { .u_obj = mp_obj_new_int(grx_get_screen_width())} },
@@ -175,19 +175,19 @@ STATIC mp_obj_t ev3dev_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_m
     grx_context_clear(context, GRX_COLOR_WHITE);
     return ev3dev_Image_new(context);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_empty_fun_obj, 0, ev3dev_Image_empty);
-STATIC MP_DEFINE_CONST_STATICMETHOD_OBJ(ev3dev_Image_empty_obj, MP_ROM_PTR(&ev3dev_Image_empty_fun_obj));
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_empty_fun_obj, 0, ev3dev_Image_empty);
+static MP_DEFINE_CONST_STATICMETHOD_OBJ(ev3dev_Image_empty_obj, MP_ROM_PTR(&ev3dev_Image_empty_fun_obj));
 
-STATIC mp_obj_t ev3dev_Image___del__(mp_obj_t self_in) {
+static mp_obj_t ev3dev_Image___del__(mp_obj_t self_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
     grx_text_options_unref(self->text_options);
     grx_context_unref(self->context);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image___del___obj, ev3dev_Image___del__);
+static MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image___del___obj, ev3dev_Image___del__);
 
 // Ensure that screen has been cleared before we start drawing anything else
-STATIC void clear_once(ev3dev_Image_obj_t *self) {
+static void clear_once(ev3dev_Image_obj_t *self) {
     if (self->cleared) {
         return;
     }
@@ -195,7 +195,7 @@ STATIC void clear_once(ev3dev_Image_obj_t *self) {
     self->cleared = TRUE;
 }
 
-STATIC mp_obj_t ev3dev_Image_clear(mp_obj_t self_in) {
+static mp_obj_t ev3dev_Image_clear(mp_obj_t self_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
     clear_once(self);
     grx_context_clear(self->context, GRX_COLOR_WHITE);
@@ -203,9 +203,9 @@ STATIC mp_obj_t ev3dev_Image_clear(mp_obj_t self_in) {
     self->print_y = 0;
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image_clear_obj, ev3dev_Image_clear);
+static MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image_clear_obj, ev3dev_Image_clear);
 
-STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
@@ -222,9 +222,9 @@ STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args,
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_pixel_obj, 1, ev3dev_Image_draw_pixel);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_pixel_obj, 1, ev3dev_Image_draw_pixel);
 
-STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x1),
@@ -252,9 +252,9 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_line_obj, 1, ev3dev_Image_draw_line);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_line_obj, 1, ev3dev_Image_draw_line);
 
-STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x1),
@@ -290,9 +290,9 @@ STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_box_obj, 1, ev3dev_Image_draw_box);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_box_obj, 1, ev3dev_Image_draw_box);
 
-STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
@@ -317,9 +317,9 @@ STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_circle_obj, 1, ev3dev_Image_draw_circle);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_circle_obj, 1, ev3dev_Image_draw_circle);
 
-STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
@@ -346,9 +346,9 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_image_obj, 1, ev3dev_Image_draw_image);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_image_obj, 1, ev3dev_Image_draw_image);
 
-STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
+static mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (mp_obj_is_str(source_in)) {
@@ -395,9 +395,9 @@ STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_load_image_obj, ev3dev_Image_load_image);
+static MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_load_image_obj, ev3dev_Image_load_image);
 
-STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
@@ -435,9 +435,9 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_text_obj, 1, ev3dev_Image_draw_text);
+static MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_text_obj, 1, ev3dev_Image_draw_text);
 
-STATIC mp_obj_t ev3dev_Image_set_font(mp_obj_t self_in, mp_obj_t font_in) {
+static mp_obj_t ev3dev_Image_set_font(mp_obj_t self_in, mp_obj_t font_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
     GrxFont *font = pb_ev3dev_Font_obj_get_font(font_in);
 
@@ -445,10 +445,10 @@ STATIC mp_obj_t ev3dev_Image_set_font(mp_obj_t self_in, mp_obj_t font_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_set_font_obj, ev3dev_Image_set_font);
+static MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_set_font_obj, ev3dev_Image_set_font);
 
 // copy of mp_builtin_print modified to print to vstr
-STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_sep, ARG_end };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_sep, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR__space_)} },
@@ -524,7 +524,7 @@ STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_print_obj, 1, ev3dev_Image_print);
 
-STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
+static mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
     const char *filename = mp_obj_str_get_str(filename_in);
 
@@ -549,13 +549,13 @@ STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_save_obj, ev3dev_Image_save);
 
-STATIC const pb_attr_dict_entry_t ev3dev_Image_attr_dict[] = {
+static const pb_attr_dict_entry_t ev3dev_Image_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_width, ev3dev_Image_obj_t, width),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_height, ev3dev_Image_obj_t, height),
     PB_ATTR_DICT_SENTINEL
 };
 
-STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
+static const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_empty),       MP_ROM_PTR(&ev3dev_Image_empty_obj)                    },
     { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
     { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Image_clear_obj)                    },
@@ -570,7 +570,7 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },
     { MP_ROM_QSTR(MP_QSTR_save),        MP_ROM_PTR(&ev3dev_Image_save_obj)                     },
 };
-STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
+static MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3dev_Image,
     MP_QSTR_Image,

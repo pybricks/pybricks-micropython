@@ -243,7 +243,7 @@ static uint32_t get_bitmap(qstr attr) {
 // pybricks.parameters.Icon.ARROW_UP
 // pybricks.parameters.Icon.ARROW_LEFT
 // etc.
-STATIC void pb_type_Icon_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+static void pb_type_Icon_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     if (dest[0] == MP_OBJ_NULL) {
         uint32_t bitmap = get_bitmap(attr);
         if (bitmap != UINT32_MAX) {
@@ -253,14 +253,14 @@ STATIC void pb_type_Icon_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 }
 
 // pybricks.parameters.Icon(x)
-STATIC mp_obj_t pb_type_Icon_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_Icon_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     if (n_args != 1) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     return pb_type_Matrix_make_bitmap(5, 5, 100, mp_obj_get_int(args[0]));
 }
 
-STATIC MP_DEFINE_CONST_OBJ_TYPE(pb_type_Icon,
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_Icon,
     MP_QSTR_Icon,
     MP_TYPE_FLAG_NONE,
     call, pb_type_Icon_call,

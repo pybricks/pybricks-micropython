@@ -36,7 +36,7 @@ typedef struct {
     int32_t max_angle;
 } pb_type_Car_obj_t;
 
-STATIC int32_t run_until_stalled_blocking(pbio_servo_t *srv, pbio_direction_t direction, mp_obj_t torque_limit_in) {
+static int32_t run_until_stalled_blocking(pbio_servo_t *srv, pbio_direction_t direction, mp_obj_t torque_limit_in) {
 
     pb_module_tools_assert_blocking();
 
@@ -70,7 +70,7 @@ STATIC int32_t run_until_stalled_blocking(pbio_servo_t *srv, pbio_direction_t di
 }
 
 // pybricks.robotics.Car.__init__
-STATIC mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(steer_motor),
@@ -124,7 +124,7 @@ STATIC mp_obj_t pb_type_Car_make_new(const mp_obj_type_t *type, size_t n_args, s
 }
 
 // pybricks.robotics.Car.drive_power
-STATIC mp_obj_t pb_type_Car_drive_power(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Car_drive_power(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Car_obj_t, self,
         PB_ARG_REQUIRED(power));
@@ -142,10 +142,10 @@ STATIC mp_obj_t pb_type_Car_drive_power(size_t n_args, const mp_obj_t *pos_args,
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Car_drive_power_obj, 1, pb_type_Car_drive_power);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Car_drive_power_obj, 1, pb_type_Car_drive_power);
 
 // pybricks.robotics.Car.drive_speed
-STATIC mp_obj_t pb_type_Car_drive_speed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Car_drive_speed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Car_obj_t, self,
         PB_ARG_REQUIRED(speed));
@@ -158,10 +158,10 @@ STATIC mp_obj_t pb_type_Car_drive_speed(size_t n_args, const mp_obj_t *pos_args,
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Car_drive_speed_obj, 1, pb_type_Car_drive_speed);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Car_drive_speed_obj, 1, pb_type_Car_drive_speed);
 
 // pybricks.robotics.Car.steer
-STATIC mp_obj_t pb_type_Car_steer(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_Car_steer(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Car_obj_t, self,
         PB_ARG_REQUIRED(percentage));
@@ -171,15 +171,15 @@ STATIC mp_obj_t pb_type_Car_steer(size_t n_args, const mp_obj_t *pos_args, mp_ma
     pb_assert(pbio_servo_track_target(self->srv_steer, angle));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Car_steer_obj, 1, pb_type_Car_steer);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Car_steer_obj, 1, pb_type_Car_steer);
 
 // dir(pybricks.robotics.Car)
-STATIC const mp_rom_map_elem_t pb_type_Car_locals_dict_table[] = {
+static const mp_rom_map_elem_t pb_type_Car_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_drive_power),      MP_ROM_PTR(&pb_type_Car_drive_power_obj) },
     { MP_ROM_QSTR(MP_QSTR_drive_speed),      MP_ROM_PTR(&pb_type_Car_drive_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_steer),            MP_ROM_PTR(&pb_type_Car_steer_obj)       },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_type_Car_locals_dict, pb_type_Car_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pb_type_Car_locals_dict, pb_type_Car_locals_dict_table);
 
 // type(pybricks.robotics.Car)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_car,

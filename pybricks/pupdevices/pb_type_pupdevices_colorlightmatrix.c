@@ -20,7 +20,7 @@ typedef struct _pupdevices_ColorLightMatrix_obj_t {
 } pupdevices_ColorLightMatrix_obj_t;
 
 // pybricks.pupdevices.ColorLightMatrix.__init__
-STATIC mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port));
 
@@ -31,7 +31,7 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, 
 }
 
 // pybricks.pupdevices.ColorLightMatrix._get_color_id
-STATIC uint8_t get_color_id(mp_obj_t color_in) {
+static uint8_t get_color_id(mp_obj_t color_in) {
 
     // Assert type and get hsv.
     const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
@@ -58,7 +58,7 @@ STATIC uint8_t get_color_id(mp_obj_t color_in) {
 }
 
 // pybricks.pupdevices.ColorLightMatrix.on
-STATIC mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorLightMatrix_obj_t, self,
         PB_ARG_REQUIRED(colors));
@@ -84,10 +84,10 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     // Activate all colors.
     return pb_type_device_set_data(&self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevices_ColorLightMatrix_on);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevices_ColorLightMatrix_on);
 
 // pybricks.pupdevices.ColorLightMatrix.off
-STATIC mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
+static mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
     pupdevices_ColorLightMatrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t color_ids[9] = { };
     return pb_type_device_set_data(&self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
@@ -95,11 +95,11 @@ STATIC mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorLightMatrix_off_obj, pupdevices_ColorLightMatrix_off);
 
 // dir(pybricks.pupdevices.ColorLightMatrix)
-STATIC const mp_rom_map_elem_t pupdevices_ColorLightMatrix_locals_dict_table[] = {
+static const mp_rom_map_elem_t pupdevices_ColorLightMatrix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on),       MP_ROM_PTR(&pupdevices_ColorLightMatrix_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_off),      MP_ROM_PTR(&pupdevices_ColorLightMatrix_off_obj)},
 };
-STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorLightMatrix_locals_dict, pupdevices_ColorLightMatrix_locals_dict_table);
+static MP_DEFINE_CONST_DICT(pupdevices_ColorLightMatrix_locals_dict, pupdevices_ColorLightMatrix_locals_dict_table);
 
 // type(pybricks.pupdevices.ColorLightMatrix)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_ColorLightMatrix,

@@ -46,7 +46,7 @@ typedef struct _tools_Logger_obj_t {
     uint32_t last_size;
 } tools_Logger_obj_t;
 
-STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_REQUIRED(duration),
@@ -66,9 +66,9 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 1, tools_Logger_start);
+static MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 1, tools_Logger_start);
 
-STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
+static mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Indicates that background control loops log write more data.
@@ -76,9 +76,9 @@ STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
+static MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
 
-STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
@@ -141,18 +141,18 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     pb_assert(err);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 1, tools_Logger_save);
+static MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 1, tools_Logger_save);
 
 // dir(pybricks.tools.Logger)
-STATIC const mp_rom_map_elem_t tools_Logger_locals_dict_table[] = {
+static const mp_rom_map_elem_t tools_Logger_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tools_Logger_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tools_Logger_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_save), MP_ROM_PTR(&tools_Logger_save_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_table);
+static MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_table);
 
 // type(pybricks.tools.Logger)
-STATIC MP_DEFINE_CONST_OBJ_TYPE(tools_Logger_type,
+static MP_DEFINE_CONST_OBJ_TYPE(tools_Logger_type,
     MP_QSTR_Logger,
     MP_TYPE_FLAG_NONE,
     locals_dict, &tools_Logger_locals_dict);
