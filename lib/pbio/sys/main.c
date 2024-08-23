@@ -27,7 +27,7 @@ static pbsys_main_program_t program;
 /**
  * Requests to start the main user application program.
  *
- * @param [in]  type    Chooses to start a builtin program or a user program.
+ * @param [in]  type    Chooses to start a builtin user program or a user program.
  * @param [in]  id      Selects which builtin or user program will run.
  * @returns     ::PBIO_ERROR_BUSY if a user program is already running.
  *              ::PBIO_ERROR_NOT_SUPPORTED if the program is not available.
@@ -43,7 +43,7 @@ pbio_error_t pbsys_main_program_request_start(pbsys_main_program_type_t type, ui
     program.type = type;
     program.id = id;
 
-    // Builtin programs are also allowed to access user program,
+    // Builtin user programs are also allowed to access user program,
     // so load data in all cases.
     pbsys_storage_get_program_data(&program);
 

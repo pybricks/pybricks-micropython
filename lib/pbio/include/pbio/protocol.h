@@ -62,27 +62,27 @@ typedef enum {
      *
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if a program is already running.
-     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the builtin program is not available (Since Pybricks Profile v1.4.0).
+     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the builtin user program is not available (Since Pybricks Profile v1.4.0).
      *
      * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM = 1,
 
     /**
-     * Requests that a specified builtin program should be started.
+     * Requests that a specified builtin user program should be started.
      *
      * Parameters:
-     * - id    (optional): The identifier of the builtin program (32-bit little-endian unsigned integer).
+     * - id    (optional): The identifier of the builtin user program (32-bit little-endian unsigned integer).
      *                     Defaults to 0 if no identifier is provided.
      *                     This optional parameter was introduced in Pybricks Profile v1.4.0
      *
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if a program is already running.
-     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the builtin program is not available (Since Pybricks Profile v1.4.0).
+     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the builtin user program is not available (Since Pybricks Profile v1.4.0).
      *
      * @since Pybricks Profile v1.2.0
      */
-    PBIO_PYBRICKS_COMMAND_START_BUILTIN_PROGRAM = 2,
+    PBIO_PYBRICKS_COMMAND_START_BUILTIN_USER_PROGRAM = 2,
 
     /**
      * Requests to write user program metadata.
@@ -310,14 +310,14 @@ typedef enum {
     // NB: the values are part of the protocol, so don't change the values!
 
     /**
-     * Hub supports builtin programs, such as an interactive REPL or Port View.
+     * Hub supports builtin user programs, such as an interactive REPL or Port View.
      *
      * Prior to version 1.4.0 this flag was exclusively used to indicate REPL
-     * support since there were no other builtin programs.
+     * support since there were no other builtin user programs.
      *
      * @since Pybricks Profile v1.2.0.
      */
-    PBIO_PYBRICKS_FEATURE_BUILTIN_PROGRAMS = 1 << 0,
+    PBIO_PYBRICKS_FEATURE_BUILTIN_USER_PROGRAMS = 1 << 0,
     /**
      * Hub supports user program with multiple MicroPython .mpy files ABI v6
      *
