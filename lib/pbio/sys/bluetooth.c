@@ -23,7 +23,6 @@
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
 
-#include "light.h"
 #include "storage.h"
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
@@ -291,34 +290,23 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    // Ensures Bluetooth preferences are loaded before we read them.
-    #if PBSYS_CONFIG_STORAGE && PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    PROCESS_WAIT_EVENT_UNTIL(pbsys_storage_settings_get_settings() != NULL);
-    #endif // PBSYS_CONFIG_STORAGE && PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
     pbdrv_bluetooth_set_on_event(pbsys_bluetooth_process_poll);
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-
-        // Show inactive status only if user requested Bluetooth as disabled to
-        // avoid always flashing red in between program runs when disconnected.
-        if (!pbsys_storage_settings_bluetooth_enabled()) {
-            pbsys_status_light_bluetooth_set_color(PBIO_COLOR_RED);
-        }
 
         // make sure the Bluetooth chip is in reset long enough to actually reset
         etimer_set(&timer, 150);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
         // Wait until Bluetooth enabled requested by user, but stop waiting on shutdown.
+        // If storage is not yet loaded, this will wait for that too.
         PROCESS_WAIT_UNTIL(pbsys_storage_settings_bluetooth_enabled() || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN));
         if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
             break;
         }
 
-        // Enable Bluetooth, and show on Bluetooth light if available.
-        pbsys_status_light_bluetooth_set_color(PBIO_COLOR_BLUE);
+        // Enable Bluetooth.
         pbdrv_bluetooth_power_on(true);
         PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_ready());
 

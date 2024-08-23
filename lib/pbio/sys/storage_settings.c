@@ -75,7 +75,7 @@ bool pbsys_storage_settings_bluetooth_enabled(void) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
     pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
     if (!settings) {
-        return true;
+        return false;
     }
     return settings->flags & PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #else
