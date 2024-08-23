@@ -29,6 +29,8 @@ typedef enum {
     PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE,
     PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL,
     PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE,
+    PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED_IDLE,
+    PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED_IDLE_AND_LOW_VOLTAGE,
     PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED,
     PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN,
 } pbsys_status_light_indication_t;
@@ -116,6 +118,20 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_WHITE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
+    [PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED_IDLE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
+    },
+    [PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED_IDLE_AND_LOW_VOLTAGE] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        { .color = PBIO_COLOR_ORANGE, .duration = 6 },
+        { .color = PBIO_COLOR_BLUE, .duration = 8 },
+        { .color = PBIO_COLOR_ORANGE, .duration = 6 },
+        { .color = PBIO_COLOR_BLUE, .duration = 4 },
+        { .color = PBIO_COLOR_NONE, .duration = 16 },
+        { .color = PBIO_COLOR_BLUE, .duration = 4 },
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+    },
     [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN_REQUESTED] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_BLACK, .duration = 1 },
@@ -179,6 +195,8 @@ void pbsys_status_light_init(void) {
 static void pbsys_status_light_handle_status_change(void) {
     pbsys_status_light_pattern_state_t *state = &pbsys_status_light_instance.pattern_state;
     pbsys_status_light_indication_t new_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
+    bool ble_connected_idle = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED) &&
+        !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
     bool ble_advertising = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
     bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
     bool low_voltage = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
@@ -201,6 +219,10 @@ static void pbsys_status_light_handle_status_change(void) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE;
     } else if (ble_low_signal) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL;
+    } else if (ble_connected_idle && low_voltage) {
+        new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED_IDLE_AND_LOW_VOLTAGE;
+    } else if (ble_connected_idle) {
+        new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED_IDLE;
     } else if (low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE;
     }
@@ -358,10 +380,6 @@ void pbsys_status_light_poll(void) {
         if (instance->allow_user_update) {
             pbdrv_led_set_hsv(led, &instance->user_color);
         } else {
-            if (new_color == PBIO_COLOR_NONE) {
-                // System ID color
-                new_color = PBIO_COLOR_BLUE;
-            }
             pbio_color_hsv_t hsv;
             pbio_color_to_hsv(new_color, &hsv);
             pbdrv_led_set_hsv(led, &hsv);

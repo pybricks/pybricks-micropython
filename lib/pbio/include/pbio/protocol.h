@@ -323,6 +323,12 @@ typedef enum {
      * @since Pybricks Profile v1.2.0
      */
     PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST = 8,
+    /**
+     * Hub is connected to a host (like Pybricks Code) via BLE.
+     *
+     * @since Pybricks Profile v1.4.0
+     */
+    PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED = 9,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;

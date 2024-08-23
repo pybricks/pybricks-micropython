@@ -340,8 +340,11 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         // If connected, advertising stops automatically. Otherwise manually
         // stop advertising (if the user code started using the button or we
         // are shutting down or or BLE became disabled).
-        if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+        } else {
             pbdrv_bluetooth_stop_advertising();
+            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED); // REVISIT: also via state...
         }
 
         // In all cases, clear the advertising flag to stop blinking.
@@ -387,6 +390,8 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
             PROCESS_WAIT_EVENT();
         }
+
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
 
         reset_all();
         PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
