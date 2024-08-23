@@ -302,24 +302,24 @@ typedef enum {
     /**
      * The MicroPython REPL.
      */
-    PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_REPL = 0,
+    PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_REPL = 0,
     /**
      * Program that detects attached devices, displays sensor values, and
      * relays sensor data to host if connected.
      */
-    PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_PORT_VIEW = 1,
+    PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_PORT_VIEW = 1,
     /**
-     * The number of builtin programs.
+     * The number of builtin user programs.
      */
-    PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_NUMBER_OF_PROGRAMS,
-} pybricks_micropython_builtin_program_id_t;
+    PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_NUMBER_OF_PROGRAMS,
+} pybricks_micropython_builtin_user_program_id_t;
 
 pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
 
-    // Validate builtin programs for existence.
+    // Validate builtin user programs for existence.
     if (program->type == PBSYS_MAIN_PROGRAM_TYPE_BUILTIN) {
-        #if PBSYS_CONFIG_APP_BUILTIN_PROGRAMS
-        if (program->id < PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_NUMBER_OF_PROGRAMS) {
+        #if PBSYS_CONFIG_APP_BUILTIN_USER_PROGRAMS
+        if (program->id < PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_NUMBER_OF_PROGRAMS) {
             return PBIO_SUCCESS;
         }
         #endif
@@ -368,15 +368,15 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         // Run loaded user program.
         run_user_program();
     }
-    #if PBSYS_CONFIG_APP_BUILTIN_PROGRAMS
+    #if PBSYS_CONFIG_APP_BUILTIN_USER_PROGRAMS
     else {
         switch (program->id) {
-            case PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_REPL:
+            case PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_REPL:
                 // Run REPL with everything auto-imported.
                 pb_package_pybricks_init(true);
                 run_repl();
                 break;
-            case PYBRICKS_MICROPYTHON_BUILTIN_PROGRAM_ID_PORT_VIEW:
+            case PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_PORT_VIEW:
                 pyexec_frozen_module("_builtin_port_view.py", false);
                 break;
             default:

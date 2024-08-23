@@ -48,8 +48,8 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             return pbio_pybricks_error_from_pbio_error(
                 pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_USER, id));
         }
-        #if PBSYS_CONFIG_APP_BUILTIN_PROGRAMS
-        case PBIO_PYBRICKS_COMMAND_START_BUILTIN_PROGRAM: {
+        #if PBSYS_CONFIG_APP_BUILTIN_USER_PROGRAMS
+        case PBIO_PYBRICKS_COMMAND_START_BUILTIN_USER_PROGRAM: {
             uint32_t id = 0;
             if (size == (1 + sizeof(uint32_t))) {
                 id = pbio_get_uint32_le(&data[1]);
@@ -57,7 +57,7 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             return pbio_pybricks_error_from_pbio_error(
                 pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_BUILTIN, id));
         }
-        #endif // PBIO_PYBRICKS_FEATURE_TEST(PBIO_PYBRICKS_FEATURE_BUILTIN_PROGRAMS)
+        #endif // PBIO_PYBRICKS_FEATURE_TEST(PBIO_PYBRICKS_FEATURE_BUILTIN_USER_PROGRAMS)
         case PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META:
             return pbio_pybricks_error_from_pbio_error(pbsys_storage_set_program_size(
                 pbio_get_uint32_le(&data[1])));

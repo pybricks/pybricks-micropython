@@ -45,8 +45,8 @@ typedef struct _pbsys_main_program_t {
      */
     uint32_t id;
     /**
-     * Whether to run an application-specific builtin program instead of the
-     * program given by the data. The builtin program may still use the data.
+     * Whether to run an application-specific builtin user program instead of the
+     * program given by the data. The builtin user program may still use the data.
      */
     pbsys_main_program_type_t type;
     /**
