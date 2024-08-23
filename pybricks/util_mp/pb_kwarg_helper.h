@@ -24,7 +24,7 @@
 #define FI_8(WHAT, N, X, ...) WHAT(N - 8, X) FI_7(WHAT, N, __VA_ARGS__)
 #define FI_9(WHAT, N, X, ...) WHAT(N - 9, X) FI_8(WHAT, N, __VA_ARGS__)
 #define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
-#define FOR_EACH_IDX(action, ...) \
+#define PB_FOR_EACH_IDX(action, ...) \
     GET_MACRO(__VA_ARGS__, FI_9, FI_8, FI_7, FI_6, FI_5, FI_4, FI_3, FI_2, FI_1, )(action, NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
 
 // Make a QSTR, even if the name is generated from a macro
@@ -56,10 +56,10 @@
 
 // Create the arguments table, parse it, and declare mp_obj_t's for each one
 #define PB_PARSE_GENERIC(n_args, pos_args, kw_args, n_ignore, ...) static const mp_arg_t allowed_args[] = { \
-        FOR_EACH_IDX(PB_ARG_DO, __VA_ARGS__) \
+        PB_FOR_EACH_IDX(PB_ARG_DO, __VA_ARGS__) \
 }; \
     PB_PARSE_ARGS(parsed_args, n_args, pos_args, kw_args, allowed_args, n_ignore); \
-    FOR_EACH_IDX(GEN_ARG_OBJ, __VA_ARGS__)
+    PB_FOR_EACH_IDX(GEN_ARG_OBJ, __VA_ARGS__)
 
 // Parse the arguments of a function
 #define PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args, ...) \
