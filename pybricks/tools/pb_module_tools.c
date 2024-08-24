@@ -239,8 +239,6 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
 
         while (mp_iternext(iterable) != MP_OBJ_STOP_ITERATION) {
 
-            gc_collect();
-
             if (loop_time == 0) {
                 continue;
             }
