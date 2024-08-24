@@ -54,10 +54,10 @@ typedef struct _pb_type_awaitable_obj_t pb_type_awaitable_obj_t;
  * below, which always stops the relevant hardware (i.e. always coast).
  *
  * @param [in]  obj            The object associated with this awaitable.
- * @param [in]  start_time     The time when the awaitable was created.
+ * @param [in]  end_time       Can be used by the callback for timeouts, etc.
  * @return                     True if operation is complete, False otherwise.
  */
-typedef bool (*pb_type_awaitable_test_completion_t)(mp_obj_t obj, uint32_t end_time);
+typedef bool (*pb_type_awaitable_test_completion_t)(mp_obj_t obj, uint32_t *end_time);
 
 /**
  * Gets the return value of the awaitable. If it always returns None, providing

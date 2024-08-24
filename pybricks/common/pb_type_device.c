@@ -69,7 +69,7 @@ void *pb_type_device_get_data_blocking(mp_obj_t self_in, uint8_t mode) {
  * @return                  True if operation is complete (device ready),
  *                          false otherwise.
  */
-static bool pb_pup_device_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_pup_device_test_completion(mp_obj_t self_in, uint32_t *end_time) {
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbdrv_legodev_is_ready(sensor->legodev);
     if (err == PBIO_ERROR_AGAIN) {

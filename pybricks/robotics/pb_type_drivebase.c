@@ -90,7 +90,7 @@ static mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     return MP_OBJ_FROM_PTR(self);
 }
 
-static bool pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_type_DriveBase_test_completion(mp_obj_t self_in, uint32_t *end_time) {
 
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 

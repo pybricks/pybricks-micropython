@@ -63,7 +63,7 @@ static mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     }
 
     // Keep going if not completed by returning None.
-    if (!self->test_completion(self->obj, self->end_time)) {
+    if (!self->test_completion(self->obj, &self->end_time)) {
         return mp_const_none;
     }
 
@@ -127,7 +127,7 @@ static pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
  * checker. This allows MicroPython to handle completion during the next call
  * to iternext.
  */
-static bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
+static bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t *end_time) {
     return true;
 }
 
@@ -219,7 +219,7 @@ mp_obj_t pb_type_awaitable_await_or_wait(
     }
 
     // Outside run loop, block until the operation is complete.
-    while (test_completion_func && !test_completion_func(obj, end_time)) {
+    while (test_completion_func && !test_completion_func(obj, &end_time)) {
         mp_hal_delay_ms(1);
     }
     if (!return_value_func) {

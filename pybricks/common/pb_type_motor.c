@@ -259,7 +259,7 @@ static mp_obj_t pb_type_Motor_hold(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_hold_obj, pb_type_Motor_hold);
 
-static bool pb_type_Motor_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_type_Motor_test_completion(mp_obj_t self_in, uint32_t *end_time) {
     pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Handle I/O exceptions like port unplugged.
     if (!pbio_servo_update_loop_is_running(self->srv)) {

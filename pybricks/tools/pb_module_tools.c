@@ -48,8 +48,18 @@ void pb_module_tools_assert_blocking(void) {
 // us share the same code with other awaitables. It also minimizes allocation.
 MP_REGISTER_ROOT_POINTER(mp_obj_t wait_awaitables);
 
-static bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t end_time) {
-    return mp_hal_ticks_ms() - end_time < UINT32_MAX / 2;
+static bool pb_module_tools_wait_one(mp_obj_t obj, uint32_t *end_time) {
+    // yield only on the first iteration.
+    if (*end_time == pb_type_awaitable_end_time_none) {
+        (*end_time)++;
+        return false;
+    }
+
+    return true;
+}
+
+static bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t *end_time) {
+    return mp_hal_ticks_ms() - *end_time < UINT32_MAX / 2;
 }
 
 static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -71,8 +81,21 @@ static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
     // test completion state in iteration loop.
     time = pbio_int_math_bind(time, 0, INT32_MAX >> 2);
 
+    // Special case to emulate CPython asyncio.sleep(0) where we ensure that
+    // the task yields exactly once.
+    if (time == 0) {
+        return pb_type_awaitable_await_or_wait(
+            MP_OBJ_NULL,
+            MP_STATE_PORT(wait_awaitables),
+            pb_type_awaitable_end_time_none,
+            pb_module_tools_wait_one,
+            pb_type_awaitable_return_none,
+            pb_type_awaitable_cancel_none,
+            PB_TYPE_AWAITABLE_OPT_NONE);
+    }
+
     return pb_type_awaitable_await_or_wait(
-        NULL, // wait functions are not associated with an object
+        MP_OBJ_NULL, // wait functions are not associated with an object
         MP_STATE_PORT(wait_awaitables),
         mp_hal_ticks_ms() + time,
         pb_module_tools_wait_test_completion,
@@ -133,7 +156,7 @@ void pb_module_tools_pbio_task_do_blocking(pbio_task_t *task, mp_int_t timeout) 
 // here instead of with each Bluetooth-related MicroPython object.
 MP_REGISTER_ROOT_POINTER(mp_obj_t pbio_task_awaitables);
 
-static bool pb_module_tools_pbio_task_test_completion(mp_obj_t obj, uint32_t end_time) {
+static bool pb_module_tools_pbio_task_test_completion(mp_obj_t obj, uint32_t *end_time) {
     pbio_task_t *task = MP_OBJ_TO_PTR(obj);
 
     // Keep going if not done yet.

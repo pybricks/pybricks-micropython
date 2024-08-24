@@ -123,7 +123,7 @@ static mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-static bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t *end_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
         pb_type_Speaker_stop_beep();
@@ -337,7 +337,7 @@ static void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
     self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
 }
 
-static bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t *end_time) {
     pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
