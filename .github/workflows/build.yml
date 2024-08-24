@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir -p ./pr
           echo $PR_NUMBER > ./pr/pr_number
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: pr/
@@ -44,7 +44,7 @@ jobs:
       run: make $MAKEOPTS -C micropython/mpy-cross
     - name: Upload mpy-cross
       if: ${{ success() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build/mpy-cross
@@ -61,7 +61,7 @@ jobs:
       with:
         submodules: true
     - name: Download mpy-cross
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build
@@ -120,7 +120,7 @@ jobs:
       run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
     - name: Upload pybricks-micropython
       if: ${{ success() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pybricks-micropython-build-${{ github.run_number }}-git${{ steps.vars.outputs.short_sha }}
         path: bricks/ev3dev/build-armel/pybricks-micropython
@@ -154,7 +154,7 @@ jobs:
       with:
         submodules: true
     - name: Download mpy-cross
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build
@@ -188,7 +188,7 @@ jobs:
         submodules: true
         fetch-depth: 0
     - name: Download mpy-cross
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build
@@ -222,7 +222,7 @@ jobs:
       run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
     - name: Upload firmware
       if: ${{ success()}}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.hub }}-firmware-build-${{ github.run_number }}-git${{ steps.vars.outputs.short_sha }}
         path: bricks/${{ matrix.hub }}/build/upload/*
@@ -246,7 +246,7 @@ jobs:
         git submodule update --init --depth 0 lib/berkeley-db-1.xx
         git submodule update --init --depth 0 lib/libffi
     - name: Download mpy-cross
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build
@@ -275,7 +275,7 @@ jobs:
         submodules: true
         fetch-depth: 0
     - name: Download mpy-cross
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build
@@ -297,7 +297,7 @@ jobs:
         submodules: true
         fetch-depth: 0
     - name: Download mpy-cross
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: mpy-cross
         path: micropython/mpy-cross/build
