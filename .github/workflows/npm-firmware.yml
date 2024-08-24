@@ -12,7 +12,7 @@ jobs:
       run:
         working-directory: npm/firmware
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - uses: actions/setup-python@v4

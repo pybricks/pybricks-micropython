@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Build mpy-cross
@@ -57,7 +57,7 @@ jobs:
       PYBRICKS_NO_REDIRECT_STDOUT: 1
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Download mpy-cross
@@ -98,7 +98,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install qemu-user-static
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
         fetch-depth: 0
@@ -150,7 +150,7 @@ jobs:
         uthash-dev \
         xfonts-100dpi
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Download mpy-cross
@@ -183,7 +183,7 @@ jobs:
     - name: Install cross-compiler
       run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
         fetch-depth: 0
@@ -235,7 +235,7 @@ jobs:
     - name: Install depedencies
       run: sudo apt-get update && sudo apt-get install lcov python3-numpy --yes
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
         fetch-depth: 0
@@ -270,7 +270,7 @@ jobs:
     - name: Install cross-compiler
       run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi ruby u-boot-tools
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
         fetch-depth: 0
@@ -292,7 +292,7 @@ jobs:
     - name: Install cross-compiler
       run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
         fetch-depth: 0
@@ -317,7 +317,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install --yes doxygen graphviz lcov
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Build
