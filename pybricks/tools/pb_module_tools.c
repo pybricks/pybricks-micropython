@@ -238,6 +238,7 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
     if (nlr_push(&nlr) == 0) {
 
         while (mp_iternext(iterable) != MP_OBJ_STOP_ITERATION) {
+            MICROPY_VM_HOOK_LOOP
 
             if (loop_time == 0) {
                 continue;
