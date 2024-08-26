@@ -82,6 +82,8 @@ typedef void (*pb_type_awaitable_cancel_t)(mp_obj_t obj);
 
 #define pb_type_awaitable_cancel_none (NULL)
 
+bool pb_type_awaitable_test_completion_yield_once(mp_obj_t obj, uint32_t end_time);
+
 void pb_type_awaitable_update_all(mp_obj_t awaitables_in, pb_type_awaitable_opt_t options);
 
 mp_obj_t pb_type_awaitable_await_or_wait(

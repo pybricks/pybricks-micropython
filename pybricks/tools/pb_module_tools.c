@@ -75,7 +75,7 @@ static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         NULL, // wait functions are not associated with an object
         MP_STATE_PORT(wait_awaitables),
         mp_hal_ticks_ms() + time,
-        pb_module_tools_wait_test_completion,
+        time > 0 ? pb_module_tools_wait_test_completion : pb_type_awaitable_test_completion_yield_once,
         pb_type_awaitable_return_none,
         pb_type_awaitable_cancel_none,
         PB_TYPE_AWAITABLE_OPT_NONE);

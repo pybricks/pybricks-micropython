@@ -54,6 +54,27 @@ static mp_obj_t pb_type_awaitable_close(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_awaitable_close_obj, pb_type_awaitable_close);
 
+/**
+ * Completion checker that is always true.
+ *
+ * Linked awaitables are gracefully cancelled by setting this as the completion
+ * checker. This allows MicroPython to handle completion during the next call
+ * to iternext.
+ */
+static bool pb_type_awaitable_test_completion_completed(mp_obj_t self_in, uint32_t start_time) {
+    return true;
+}
+
+/**
+ * Special completion test for awaitable that should yield exactly once.
+ *
+ * It will return false to indicate that it is not done. Then the iternext will
+ * replace this test with one that is always done, thus completing next time.
+ */
+bool pb_type_awaitable_test_completion_yield_once(mp_obj_t obj, uint32_t end_time) {
+    return false;
+}
+
 static mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
     pb_type_awaitable_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -62,8 +83,16 @@ static mp_obj_t pb_type_awaitable_iternext(mp_obj_t self_in) {
         return MP_OBJ_STOP_ITERATION;
     }
 
+    bool complete = self->test_completion(self->obj, self->end_time);
+
+    // If this was a special awaitable that was supposed to yield exactly once,
+    // it will now be yielding by being not complete, but complete the next time.
+    if (self->test_completion == pb_type_awaitable_test_completion_yield_once) {
+        self->test_completion = pb_type_awaitable_test_completion_completed;
+    }
+
     // Keep going if not completed by returning None.
-    if (!self->test_completion(self->obj, self->end_time)) {
+    if (!complete) {
         return mp_const_none;
     }
 
@@ -121,17 +150,6 @@ static pb_type_awaitable_obj_t *pb_type_awaitable_get(mp_obj_t awaitables_in) {
 }
 
 /**
- * Completion checker that is always true.
- *
- * Linked awaitables are gracefully cancelled by setting this as the completion
- * checker. This allows MicroPython to handle completion during the next call
- * to iternext.
- */
-static bool pb_type_awaitable_completed(mp_obj_t self_in, uint32_t start_time) {
-    return true;
-}
-
-/**
  * Checks and updates all awaitables associated with an object.
  *
  * @param [in] awaitables_in         List of awaitables associated with @p obj.
@@ -166,7 +184,7 @@ void pb_type_awaitable_update_all(mp_obj_t awaitables_in, pb_type_awaitable_opt_
         // Set awaitable to done so it gets cancelled it gracefully on the
         // next iteration.
         if (options & PB_TYPE_AWAITABLE_OPT_CANCEL_ALL) {
-            awaitable->test_completion = pb_type_awaitable_completed;
+            awaitable->test_completion = pb_type_awaitable_test_completion_completed;
         }
 
     }

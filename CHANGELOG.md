@@ -28,9 +28,11 @@
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
 - Removed `gc_collect()` from `tools.run_task()` loop to fix unwanted delays.
+- Fixed `await wait(0)` never yielding, so parallel tasks could lock up ([support#1429]).
 
 [pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253
+[support#1429]: https://github.com/pybricks/support/issues/1429
 [support#1615]: https://github.com/pybricks/support/issues/1615
 [support#1622]: https://github.com/pybricks/support/issues/1622
 [support#1678]: https://github.com/pybricks/support/issues/1678
