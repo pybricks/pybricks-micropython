@@ -30,9 +30,16 @@
 - Removed `gc_collect()` from `tools.run_task()` loop to fix unwanted delays.
 - Fixed `await wait(0)` never yielding, so parallel tasks could lock up ([support#1429]).
 
+### Removed
+- Removed `loop_time` argument to `pybricks.tools.run_task` as this wasn't
+  having the desired effect, and would cause loop round trips to take `10 ms`
+  for every `await wait(1)` ([support#1460]). Passing the argument is still
+  allowed for backwards compatibility, but it won't do anything.
+
 [pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253
 [support#1429]: https://github.com/pybricks/support/issues/1429
+[support#1460]: https://github.com/pybricks/support/issues/1460
 [support#1615]: https://github.com/pybricks/support/issues/1615
 [support#1622]: https://github.com/pybricks/support/issues/1622
 [support#1678]: https://github.com/pybricks/support/issues/1678

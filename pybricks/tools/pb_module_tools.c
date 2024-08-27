@@ -213,11 +213,10 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_read_input_byte_obj, 0, pb_mod
 
 static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_NONE(task),
-        PB_ARG_DEFAULT_INT(loop_time, 10));
+        PB_ARG_DEFAULT_NONE(task));
 
     // Without args, this function is used to test if the run loop is active.
-    if (n_args == 0) {
+    if (task_in == mp_const_none) {
         return mp_obj_new_bool(run_loop_is_active);
     }
 
@@ -226,31 +225,15 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Run loop already active."));
     }
 
-    run_loop_is_active = true;
-
-    uint32_t start_time = mp_hal_ticks_ms();
-    uint32_t loop_time = pb_obj_get_positive_int(loop_time_in);
-
     mp_obj_iter_buf_t iter_buf;
-    mp_obj_t iterable = mp_getiter(task_in, &iter_buf);
-
     nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
 
+    if (nlr_push(&nlr) == 0) {
+        run_loop_is_active = true;
+        mp_obj_t iterable = mp_getiter(task_in, &iter_buf);
         while (mp_iternext(iterable) != MP_OBJ_STOP_ITERATION) {
             MICROPY_VM_HOOK_LOOP
-
-            if (loop_time == 0) {
-                continue;
-            }
-
-            uint32_t elapsed = mp_hal_ticks_ms() - start_time;
-            if (elapsed < loop_time) {
-                mp_hal_delay_ms(loop_time - elapsed);
-            }
-            start_time += loop_time;
         }
-
         nlr_pop();
         run_loop_is_active = false;
     } else {

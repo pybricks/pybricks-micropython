@@ -170,5 +170,4 @@ async def main():
     await test_race_2()
 
 
-# run as fast as possible for CI
-run_task(main(), loop_time=0)
+run_task(main())
