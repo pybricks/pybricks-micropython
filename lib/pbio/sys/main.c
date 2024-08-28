@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
         }
 
         // Prepare pbsys for running the program.
+        pbsys_status_set_program_id(program.id);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event);
 

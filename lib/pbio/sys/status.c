@@ -18,6 +18,8 @@ static struct {
     uint32_t flags;
     /** Timestamp of when status last changed */
     uint32_t changed_time[NUM_PBIO_PYBRICKS_STATUS];
+    /** Currently active program identifier, if it is running according to the flags. */
+    pbio_pybricks_user_program_id_t program_id;
 } pbsys_status;
 
 static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
@@ -33,6 +35,30 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
     // REVISIT: this can drop events if event queue is full
     process_post(PROCESS_BROADCAST, set ? PBIO_EVENT_STATUS_SET : PBIO_EVENT_STATUS_CLEARED,
         (process_data_t)status);
+}
+
+/**
+ * Writes Pybricks status report command to @p buf
+ *
+ * @param [in]  buf        The buffer to hold the binary data.
+ * @return                 The number of bytes written to @p buf.
+ */
+uint32_t pbsys_status_write_status_report(uint8_t *buf) {
+    buf[0] = PBIO_PYBRICKS_EVENT_STATUS_REPORT;
+    pbio_set_uint32_le(&buf[1], pbsys_status.flags);
+    buf[5] = pbsys_status.program_id;
+    return 6;
+}
+
+/**
+ * Sets the identifier for the currently active program status information.
+ *
+ * Value only meaningful if ::PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING is set.
+ *
+ * @param [in]  program_id   The identifier to set.
+ */
+void pbsys_status_set_program_id(pbio_pybricks_user_program_id_t program_id) {
+    pbsys_status.program_id = program_id;
 }
 
 /**

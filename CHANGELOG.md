@@ -19,6 +19,7 @@
   backwards compatibility. For now, this is added to start various builtin
   programs, but it prepares for the ability to start different downloaded
   programs too  ([pybricks-micropython#254]).
+- Added program identifier to the hub status report to the host.
 
 ### Changed
 
@@ -42,8 +43,7 @@
 ### Removed
 - Removed `loop_time` argument to `pybricks.tools.run_task` as this wasn't
   having the desired effect, and would cause loop round trips to take `10 ms`
-  for every `await wait(1)` ([support#1460]). Passing the argument is still
-  allowed for backwards compatibility, but it won't do anything.
+  for every `await wait(1)` ([support#1460]). This was an undocumented feature.
 
 [pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253

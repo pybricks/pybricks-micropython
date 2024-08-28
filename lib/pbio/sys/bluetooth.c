@@ -250,7 +250,7 @@ static void reset_all(void) {
 
 static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
     static struct etimer timer;
-    static uint32_t old_status_flags, new_status_flags;
+    static uint32_t old_status_flags;
     static send_msg_t msg;
 
     PT_BEGIN(pt);
@@ -265,16 +265,16 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
 
     for (;;) {
         // wait for status to change or timeout
-        PT_WAIT_UNTIL(pt, (new_status_flags = pbsys_status_get_flags()) != old_status_flags || etimer_expired(&timer));
+        PT_WAIT_UNTIL(pt, pbsys_status_get_flags() != old_status_flags || etimer_expired(&timer));
 
         etimer_restart(&timer);
 
         // send the message
-        msg.context.size = pbio_pybricks_event_status_report(&msg.payload[0], new_status_flags);
+        msg.context.size = pbsys_status_write_status_report(&msg.payload[0]);
         msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
         list_add(send_queue, &msg);
         msg.is_queued = true;
-        old_status_flags = new_status_flags;
+        old_status_flags = pbsys_status_get_flags();
 
         // wait for message to be sent - note: it is possible to miss status changes
         // if the status changes and then changes back to old_status_flags while we
