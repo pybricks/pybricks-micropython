@@ -50,9 +50,10 @@ static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
         PT_WAIT_UNTIL(pt, button_pressed);
         PT_WAIT_UNTIL(pt, !button_pressed);
 
-        // if we made it through a full press and release, without the user
-        // program running, then start the user program
-        pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_USER, 0);
+        // If we made it through a full press and release, without the user
+        // program running, then start the user program. There is no UI for
+        // multiple programs yet, so start the one and only program.
+        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT);
     }
 
     PT_END(pt);

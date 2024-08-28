@@ -37,36 +37,37 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
     pbio_pybricks_command_t cmd = data[0];
 
     switch (cmd) {
+
         case PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM:
             pbsys_program_stop(false);
             return PBIO_PYBRICKS_ERROR_OK;
-        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM: {
-            uint32_t id = 0;
-            if (size == (1 + sizeof(uint32_t))) {
-                id = pbio_get_uint32_le(&data[1]);
-            }
+
+        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM:
+            // Deprecated. For backwards compatibility with Pybricks
+            // Profile < v1.4.0, assume we should start user program 0.
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_USER, id));
-        }
-        #if PBSYS_CONFIG_APP_BUILTIN_USER_PROGRAMS
-        case PBIO_PYBRICKS_COMMAND_START_BUILTIN_USER_PROGRAM: {
-            uint32_t id = 0;
-            if (size == (1 + sizeof(uint32_t))) {
-                id = pbio_get_uint32_le(&data[1]);
-            }
+                pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT));
+
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
+        case PBIO_PYBRICKS_COMMAND_START_REPL:
+            // Deprecated. For backwards compatibility with Pybricks
+            // Profile < v1.4.0, make it work anyway.
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start(PBSYS_MAIN_PROGRAM_TYPE_BUILTIN, id));
-        }
-        #endif // PBIO_PYBRICKS_FEATURE_TEST(PBIO_PYBRICKS_FEATURE_BUILTIN_USER_PROGRAMS)
+                pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL));
+        #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
+
         case PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META:
             return pbio_pybricks_error_from_pbio_error(pbsys_storage_set_program_size(
                 pbio_get_uint32_le(&data[1])));
+
         case PBIO_PYBRICKS_COMMAND_WRITE_USER_RAM:
             return pbio_pybricks_error_from_pbio_error(pbsys_storage_set_program_data(
                 pbio_get_uint32_le(&data[1]), &data[5], size - 5));
+
         case PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE:
             pbdrv_reset(PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE);
             return PBIO_PYBRICKS_ERROR_OK;
+
         case PBIO_PYBRICKS_COMMAND_WRITE_STDIN:
             #if PBSYS_CONFIG_BLUETOOTH
             if (pbsys_bluetooth_rx_get_free() < size - 1) {
@@ -76,6 +77,7 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             #endif
             // If no consumers are configured, goes to "/dev/null" without error
             return PBIO_PYBRICKS_ERROR_OK;
+
         case PBIO_PYBRICKS_COMMAND_WRITE_APP_DATA: {
             if (!write_app_data_callback) {
                 // No errors when no consumer is configured. This avoids errors
@@ -93,6 +95,15 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             const uint8_t *data_to_write = &data[3];
             return pbio_pybricks_error_from_pbio_error(write_app_data_callback(offset, data_size, data_to_write));
         }
+
+        case PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM:
+            // Identifier payload required
+            if (size != 2) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            return pbio_pybricks_error_from_pbio_error(
+                pbsys_main_program_request_start(data[1]));
+
         default:
             return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
     }

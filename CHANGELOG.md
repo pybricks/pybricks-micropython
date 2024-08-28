@@ -13,9 +13,16 @@
   correction of the `hub.imu.heading()` value ([support#1678]).
 - Added `update_heading_correction` to interactively set the heading
   correction value ([support#1678]).
+- Added command to start downloaded or builtin user program with a one byte
+  program identifier. The existing START_PROGRAM and START_REPL are special
+  cases of this new more generic command, but will remain available for
+  backwards compatibility. For now, this is added to start various builtin
+  programs, but it prepares for the ability to start different downloaded
+  programs too  ([pybricks-micropython#254]).
 
 ### Changed
 
+- Changed protocol to Pybricks Profile v1.4.0.
 - When upgrading the firmware to a new version, the user program will now
   be erased. This avoids issues with incompatible program files ([support#1622]).
 - The `angular_velocity_threshold`, and `acceleration_threshold` settings
@@ -40,6 +47,7 @@
 
 [pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253
+[pybricks-micropython#254]: https://github.com/pybricks/pybricks-micropython/pull/254
 [support#1429]: https://github.com/pybricks/support/issues/1429
 [support#1460]: https://github.com/pybricks/support/issues/1460
 [support#1615]: https://github.com/pybricks/support/issues/1615

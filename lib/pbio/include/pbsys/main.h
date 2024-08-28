@@ -17,14 +17,6 @@
 #include <stdint.h>
 
 /**
- * Main program types.
- */
-typedef enum {
-    PBSYS_MAIN_PROGRAM_TYPE_USER,    // User-defined program
-    PBSYS_MAIN_PROGRAM_TYPE_BUILTIN  // Built-in program
-} pbsys_main_program_type_t;
-
-/**
  * Main application program data information.
  */
 typedef struct _pbsys_main_program_t {
@@ -41,14 +33,9 @@ typedef struct _pbsys_main_program_t {
      */
     void *data_end;
     /**
-     * Program identifier (selects one user program or one of the builtins).
+     * User program identifier.
      */
-    uint32_t id;
-    /**
-     * Whether to run an application-specific builtin user program instead of the
-     * program given by the data. The builtin user program may still use the data.
-     */
-    pbsys_main_program_type_t type;
+    pbio_pybricks_user_program_id_t id;
     /**
      * Whether a request was made to start the program.
      */
@@ -57,7 +44,7 @@ typedef struct _pbsys_main_program_t {
 
 #if PBSYS_CONFIG_MAIN
 
-pbio_error_t pbsys_main_program_request_start(pbsys_main_program_type_t type, uint32_t id);
+pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id);
 
 /**
  * Validates the program that is being requested to start.
@@ -101,7 +88,7 @@ bool pbsys_main_stdin_event(uint8_t c);
 
 #else // PBSYS_CONFIG_MAIN
 
-static inline pbio_error_t pbsys_main_program_request_start(pbsys_main_program_type_t type, uint32_t id) {
+static inline pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

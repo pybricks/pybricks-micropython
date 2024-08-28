@@ -33,24 +33,40 @@ static pbsys_main_program_t program;
  *              ::PBIO_ERROR_NOT_SUPPORTED if the program is not available.
  *              Otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_main_program_request_start(pbsys_main_program_type_t type, uint32_t id) {
+pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id) {
 
     // Can't start new program if already running or new requested.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || program.start_requested) {
         return PBIO_ERROR_BUSY;
     }
 
-    program.type = type;
-    program.id = id;
+    // Test if builtin program is supported.
+    #if !PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
+    if (id == PBIO_PYBRICKS_USER_PROGRAM_ID_REPL) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+    #endif
+    #if !PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW
+    if (id == PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+    #endif
+    #if !PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_IMU_CALIBRATION
+    if (id == PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+    #endif
 
-    // Builtin user programs are also allowed to access user program,
-    // so load data in all cases.
-    pbsys_storage_get_program_data(&program);
+    program.id = id;
 
     pbio_error_t err = pbsys_main_program_validate(&program);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Builtin user programs are also allowed to access user program,
+    // so load data in all cases.
+    pbsys_storage_get_program_data(&program);
 
     program.start_requested = true;
 

@@ -39,6 +39,38 @@
     PBIO_XSTR(PBIO_PROTOCOL_VERSION_MINOR) "." \
     PBIO_XSTR(PBIO_PROTOCOL_VERSION_PATCH)
 
+
+/**
+ * User program identifiers.
+ *
+ *   0--127: Downloadabled user programs.
+ * 128--255: Builtin user programs.
+ */
+typedef enum {
+    /**
+     * First possible downloadable user program.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT = 0,
+    /**
+     * Last possible downloadable user program.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_LAST_SLOT = 127,
+    /**
+     * Read-eval-print loop (REPL) interface.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_REPL = 128,
+    /**
+     * Program that detects attached devices, displays sensor values, and
+     * relays sensor data to host if connected.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW = 129,
+    /**
+     * Program that calibrates the internal inertial measurement unit and saves
+     * data persistently on the hub.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION = 130,
+} pbio_pybricks_user_program_id_t;
+
 /**
  * Pybricks command types.
  *
@@ -53,36 +85,28 @@ typedef enum {
     PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM = 0,
 
     /**
-     * Requests that a specified user program should be started.
-     *
-     * Parameters:
-     * - id    (optional): The identifier of the user program (32-bit little-endian unsigned integer).
-     *                     Defaults to 0 if no identifier is provided.
-     *                     This optional parameter was introduced in Pybricks Profile v1.4.0
+     * Requests that the user program should be started.
      *
      * Errors:
-     * - ::PBIO_PYBRICKS_ERROR_BUSY if a program is already running.
-     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the builtin user program is not available (Since Pybricks Profile v1.4.0).
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
      *
      * @since Pybricks Profile v1.2.0
+     * @deprecated in Pybricks Profile v1.4.0.
+     *   Use ::PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM instead.
      */
     PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM = 1,
 
     /**
-     * Requests that a specified builtin user program should be started.
-     *
-     * Parameters:
-     * - id    (optional): The identifier of the builtin user program (32-bit little-endian unsigned integer).
-     *                     Defaults to 0 if no identifier is provided.
-     *                     This optional parameter was introduced in Pybricks Profile v1.4.0
+     * Requests that the REPL should be started.
      *
      * Errors:
-     * - ::PBIO_PYBRICKS_ERROR_BUSY if a program is already running.
-     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the builtin user program is not available (Since Pybricks Profile v1.4.0).
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
      *
      * @since Pybricks Profile v1.2.0
+     * @deprecated in Pybricks Profile v1.4.0.
+     *   Use ::PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM instead.
      */
-    PBIO_PYBRICKS_COMMAND_START_BUILTIN_USER_PROGRAM = 2,
+    PBIO_PYBRICKS_COMMAND_START_REPL = 2,
 
     /**
      * Requests to write user program metadata.
@@ -159,8 +183,24 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_APP_DATA = 7,
-} pbio_pybricks_command_t;
 
+    /**
+     * Requests that a previously downloaded user program or builtin user
+     * program is started.
+     *
+     * Parameters:
+     * - payload: Program identifier (one byte). Slots 0--127 are reserved for
+     *            downloaded user programs. Slots 128--255 are for builtin user
+     *            programs.
+     *
+     * Errors:
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
+     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the requested program is not available.
+     *
+     * @since Pybricks Profile v1.4.0.
+     */
+    PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM = 8,
+} pbio_pybricks_command_t;
 /**
  * Application-specific error codes that are used in ATT_ERROR_RSP.
  */
@@ -310,14 +350,11 @@ typedef enum {
     // NB: the values are part of the protocol, so don't change the values!
 
     /**
-     * Hub supports builtin user programs, such as an interactive REPL or Port View.
-     *
-     * Prior to version 1.4.0 this flag was exclusively used to indicate REPL
-     * support since there were no other builtin user programs.
+     * Hub supports interactive REPL.
      *
      * @since Pybricks Profile v1.2.0.
      */
-    PBIO_PYBRICKS_FEATURE_BUILTIN_USER_PROGRAMS = 1 << 0,
+    PBIO_PYBRICKS_FEATURE_FLAG_BUILTIN_USER_PROGRAM_REPL = 1 << 0,
     /**
      * Hub supports user program with multiple MicroPython .mpy files ABI v6
      *
@@ -326,14 +363,26 @@ typedef enum {
      *
      * @since Pybricks Profile v1.2.0.
      */
-    PBIO_PYBRICKS_FEATURE_USER_PROG_FORMAT_MULTI_MPY_V6 = 1 << 1,
+    PBIO_PYBRICKS_FEATURE_FLAG_USER_PROG_FORMAT_MULTI_MPY_V6 = 1 << 1,
     /**
      * Hub supports user program with multiple MicroPython .mpy files ABI v6.1
      * including native module support.
      *
      * @since Pybricks Profile v1.3.0.
      */
-    PBIO_PYBRICKS_FEATURE_USER_PROG_FORMAT_MULTI_MPY_V6_1_NATIVE = 1 << 2,
+    PBIO_PYBRICKS_FEATURE_FLAG_USER_PROG_FORMAT_MULTI_MPY_V6_1_NATIVE = 1 << 2,
+    /**
+     * Hub supports builtin sensor port view monitoring program.
+     *
+     * @since Pybricks Profile v1.4.0.
+     */
+    PBIO_PYBRICKS_FEATURE_FLAG_BUILTIN_USER_PROGRAM_PORT_VIEW = 1 << 3,
+    /**
+     * Hub supports builtin IMU calibration program.
+     *
+     * @since Pybricks Profile v1.4.0.
+     */
+    PBIO_PYBRICKS_FEATURE_FLAG_BUILTIN_USER_PROGRAM_IMU_CALIBRATION = 1 << 4,
 } pbio_pybricks_feature_flags_t;
 
 void pbio_pybricks_hub_capabilities(uint8_t *buf,
