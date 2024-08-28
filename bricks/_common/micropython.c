@@ -117,7 +117,7 @@ static void print_final_exception(mp_obj_t exc) {
     mp_obj_print_exception(&mp_plat_print, exc);
 }
 
-#if PYBRICKS_OPT_COMPILER
+#if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 static void run_repl(void) {
     readline_init0();
     pyexec_system_exit = 0;
@@ -145,7 +145,7 @@ static void run_repl(void) {
 
     nlr_set_abort(NULL);
 }
-#endif
+#endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 
 // From micropython/py/builtinimport.c, but copied because it is static.
 static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_t *rc, const mp_module_context_t *mc) {
@@ -277,7 +277,7 @@ static void run_user_program(void) {
 
         print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
 
-        #if PYBRICKS_OPT_COMPILER
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
         // On KeyboardInterrupt, drop to REPL for debugging.
         if (mp_obj_exception_match(MP_OBJ_FROM_PTR(nlr.ret_val), MP_OBJ_FROM_PTR(&mp_type_KeyboardInterrupt))) {
 
@@ -289,47 +289,39 @@ static void run_user_program(void) {
             // Enter REPL.
             run_repl();
         }
-        #endif
+        #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
     }
 
     nlr_set_abort(NULL);
 }
 
-/**
- * Builtin Pybricks MicroPython program identifiers.
- */
-typedef enum {
-    /**
-     * The MicroPython REPL.
-     */
-    PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_REPL = 0,
-    /**
-     * Program that detects attached devices, displays sensor values, and
-     * relays sensor data to host if connected.
-     */
-    PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_PORT_VIEW = 1,
-    /**
-     * The number of builtin user programs.
-     */
-    PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_NUMBER_OF_PROGRAMS,
-} pybricks_micropython_builtin_user_program_id_t;
-
 pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
 
-    // Validate builtin user programs for existence.
-    if (program->type == PBSYS_MAIN_PROGRAM_TYPE_BUILTIN) {
-        #if PBSYS_CONFIG_APP_BUILTIN_USER_PROGRAMS
-        if (program->id < PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_NUMBER_OF_PROGRAMS) {
-            return PBIO_SUCCESS;
-        }
-        #endif
+    // For builtin programs, check requested ID against feature flags.
+    #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
+    if (program->id == PBIO_PYBRICKS_USER_PROGRAM_ID_REPL) {
+        return PBIO_SUCCESS;
+    }
+    #endif
+    #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW
+    if (program->id == PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW) {
+        return PBIO_SUCCESS;
+    }
+    #endif
+    #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_IMU_CALIBRATION
+    if (program->id == PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION) {
+        return PBIO_SUCCESS;
+    }
+    #endif
+
+    // Only user program 0 is supported for now.
+    if (program->id != PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
     // If requesting a user program, ensure that it exists and is valid.
-    // Currently, only programs on slot 0 are supported.
     uint32_t program_size = program->code_end - program->code_start;
-    if (program->id != 0 || program_size == 0 || program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
+    if (program_size == 0 || program_size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
@@ -361,31 +353,37 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     // Initialize MicroPython.
     mp_init();
 
-    // Check for run type.
-    if (program->type == PBSYS_MAIN_PROGRAM_TYPE_USER) {
-        // Init Pybricks package without auto-import.
-        pb_package_pybricks_init(false);
-        // Run loaded user program.
-        run_user_program();
+    // Runs the requested downloaded or builtin user program.
+    switch (program->id) {
+
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
+        case PBIO_PYBRICKS_USER_PROGRAM_ID_REPL:
+            // Run REPL with everything auto-imported.
+            pb_package_pybricks_init(true);
+            run_repl();
+            break;
+        #endif
+
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW
+        case PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW:
+            pb_package_pybricks_init(false);
+            pyexec_frozen_module("_builtin_port_view.py", false);
+            break;
+        #endif
+
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_IMU_CALIBRATION
+        case PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION:
+            // Todo
+            break;
+        #endif
+
+        default:
+            // Init Pybricks package without auto-import.
+            pb_package_pybricks_init(false);
+            // Run loaded user program (just slot 0 for now).
+            run_user_program();
+            break;
     }
-    #if PBSYS_CONFIG_APP_BUILTIN_USER_PROGRAMS
-    else {
-        switch (program->id) {
-            case PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_REPL:
-                // Run REPL with everything auto-imported.
-                pb_package_pybricks_init(true);
-                run_repl();
-                break;
-            case PYBRICKS_MICROPYTHON_BUILTIN_USER_PROGRAM_ID_PORT_VIEW:
-                pyexec_frozen_module("_builtin_port_view.py", false);
-                break;
-            default:
-                // Existence was already validated above, so just quietly exit
-                // since we can't get here.
-                break;
-        }
-    }
-    #endif // PYBRICKS_OPT_COMPILER
 
     // De-init bluetooth resources (including flushing stdout) that may use
     // memory allocated by MicroPython before we wipe it.

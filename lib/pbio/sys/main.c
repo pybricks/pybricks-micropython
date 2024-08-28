@@ -22,8 +22,6 @@
 
 static pbsys_main_program_t program;
 
-#include <stdio.h>
-
 /**
  * Requests to start the main user application program.
  *
@@ -33,14 +31,13 @@ static pbsys_main_program_t program;
  *              ::PBIO_ERROR_NOT_SUPPORTED if the program is not available.
  *              Otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_main_program_request_start(pbsys_main_program_type_t type, uint32_t id) {
+pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id) {
 
     // Can't start new program if already running or new requested.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || program.start_requested) {
         return PBIO_ERROR_BUSY;
     }
 
-    program.type = type;
     program.id = id;
 
     // Builtin user programs are also allowed to access user program,
