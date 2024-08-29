@@ -29,13 +29,15 @@
 
 static struct pt update_program_run_button_wait_state_pt;
 
+static uint8_t selected_slot = 0;
+
 /**
  * Protothread to monitor the button state to trigger starting the user program.
  * @param [in]  button_pressed      The current button state.
  */
 static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
     struct pt *pt = &update_program_run_button_wait_state_pt;
-    // HACK: Misuse of protothread to reduce code size. This is the same
+    // Creative use of protothread to reduce code size. This is the same
     // as checking if the user program is running after each PT_WAIT.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
         goto start;
@@ -51,9 +53,8 @@ static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
         PT_WAIT_UNTIL(pt, !button_pressed);
 
         // If we made it through a full press and release, without the user
-        // program running, then start the user program. There is no UI for
-        // multiple programs yet, so start the one and only program.
-        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT);
+        // program running, then start the currently selected user program.
+        pbsys_main_program_request_start(selected_slot);
     }
 
     PT_END(pt);
@@ -69,7 +70,7 @@ static struct pt update_bluetooth_button_wait_state_pt;
  */
 static PT_THREAD(update_bluetooth_button_wait_state(bool button_pressed)) {
     struct pt *pt = &update_bluetooth_button_wait_state_pt;
-    // HACK: Misuse of protothread to reduce code size. This is the same
+    // Creative use of protothread to reduce code size. This is the same
     // as checking if the user program is running after each PT_WAIT.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
         goto start;
@@ -89,6 +90,79 @@ static PT_THREAD(update_bluetooth_button_wait_state(bool button_pressed)) {
 }
 
 #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
+
+#if PBSYS_CONFIG_HMI_NUM_SLOTS
+
+static struct pt update_left_right_button_wait_state_pt;
+
+/**
+ * Gets the currently selected program slot.
+ *
+ * @return The currently selected program slot (zero-indexed).
+ */
+uint8_t pbsys_hmi_get_selected_program_slot(void) {
+    return selected_slot;
+}
+
+/**
+ * Protothread to monitor the left and right button state to select a slot.
+ *
+ * @param [in]  left_button_pressed      The current left button state.
+ * @param [in]  right_button_pressed     The current right button state.
+ */
+static PT_THREAD(update_left_right_button_wait_state(bool left_button_pressed, bool right_button_pressed)) {
+    struct pt *pt = &update_left_right_button_wait_state_pt;
+    // Creative use of protothread to reduce code size. This is the same
+    // as checking if the user program is running after each PT_WAIT.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        goto start;
+    }
+
+    static uint8_t previous_slot;
+    static uint32_t first_press_time;
+
+    PT_BEGIN(pt);
+
+    for (;;) {
+    start:
+        // Buttons may still be pressed during user program
+        PT_WAIT_UNTIL(pt, !left_button_pressed && !right_button_pressed);
+
+        // Wait for either button.
+        PT_WAIT_UNTIL(pt, left_button_pressed || right_button_pressed);
+
+        first_press_time = pbdrv_clock_get_ms();
+
+        // On right, increment slot when possible.
+        if (right_button_pressed && selected_slot < 4) {
+            selected_slot++;
+            pbsys_hub_light_matrix_update_program_slot();
+        }
+        // On left, decrement slot when possible.
+        if (left_button_pressed && selected_slot > 0) {
+            selected_slot--;
+            pbsys_hub_light_matrix_update_program_slot();
+        }
+
+        // Next state could be either both pressed or both released.
+        PT_WAIT_UNTIL(pt, left_button_pressed == right_button_pressed);
+
+        // If both were pressed soon after another, user wanted to start port view,
+        // not switch programs, so revert slot change.
+        if (left_button_pressed && pbdrv_clock_get_ms() - first_press_time < 100) {
+            selected_slot = previous_slot;
+            pbsys_hub_light_matrix_update_program_slot();
+            pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW);
+        } else {
+            // Successful switch. And UI was already updated.
+            previous_slot = selected_slot;
+        }
+    }
+
+    PT_END(pt);
+}
+
+#endif // PBSYS_CONFIG_HMI_NUM_SLOTS
 
 void pbsys_hmi_init(void) {
     pbsys_status_light_init();
@@ -142,6 +216,10 @@ void pbsys_hmi_poll(void) {
         #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
         update_bluetooth_button_wait_state(btn & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON);
         #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
+
+        #if PBSYS_CONFIG_HMI_NUM_SLOTS
+        update_left_right_button_wait_state(btn & PBIO_BUTTON_LEFT, btn & PBIO_BUTTON_RIGHT);
+        #endif // PBSYS_CONFIG_HMI_NUM_SLOTS
     }
 
     pbsys_status_light_poll();

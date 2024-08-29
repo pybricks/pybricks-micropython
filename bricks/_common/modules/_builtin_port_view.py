@@ -1,4 +1,3 @@
-from pybricks.hubs import ThisHub
 from pybricks.pupdevices import (
     DCMotor,
     Motor,
@@ -22,6 +21,21 @@ try:
 except AttributeError:
     pass
 
+try:
+    from pybricks.hubs import PrimeHub
+    from pybricks.parameters import Icon, Button
+
+    hub = PrimeHub()
+    hub.light.off()
+
+    # Create an animation of the heart icon with changing brightness.
+    brightness = list(range(0, 100, 4)) + list(range(100, 0, -4))
+    hub.display.animate([Icon.HEART * i / 100 for i in brightness], 30)
+    while hub.buttons.pressed():
+        wait(10)
+    hub.system.set_stop_button([Button.LEFT, Button.RIGHT])
+except ImportError:
+    pass
 
 # Allocates small buffer so the IDE can send us mode index
 # values for each sensor.
