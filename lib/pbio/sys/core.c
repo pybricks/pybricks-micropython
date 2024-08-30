@@ -59,7 +59,6 @@ void pbsys_init(void) {
 
 void pbsys_deinit(void) {
 
-    pbsys_status_light_bluetooth_deinit();
     pbsys_storage_deinit();
 
     uint32_t start = pbdrv_clock_get_ms();

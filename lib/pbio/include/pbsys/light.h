@@ -13,7 +13,7 @@
 
 #if PBSYS_CONFIG_STATUS_LIGHT
 #include <pbio/light.h>
-extern pbio_color_light_t *pbsys_status_light;
+extern pbio_color_light_t *pbsys_status_light_main;
 #endif
 
 #if PBSYS_CONFIG_HUB_LIGHT_MATRIX
