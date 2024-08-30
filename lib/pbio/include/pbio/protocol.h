@@ -294,7 +294,7 @@ typedef enum {
      */
     PBIO_PYBRICKS_STATUS_BLE_ADVERTISING = 3,
     /**
-     * Bluetooth Low Energy has low signal.
+     * Bluetooth Low Energy has low signal. Not implemented or used anywhere.
      *
      * @since Pybricks Profile v1.0.0
      */
