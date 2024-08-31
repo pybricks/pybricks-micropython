@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include <pbdrv/ioport.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
@@ -111,6 +112,8 @@ int main(int argc, char **argv) {
         // first time, otherwise the city hub turns itself back on sometimes.
         while (pbio_do_one_event()) {
         }
+
+        pbdrv_ioport_power_off();
 
         #if PBSYS_CONFIG_BATTERY_CHARGER
         // On hubs with USB battery chargers, we can't turn off power while

@@ -54,7 +54,7 @@ void pbdrv_ioport_init(void) {
     #endif
 }
 
-void pbdrv_ioport_deinit(void) {
+void pbdrv_ioport_power_off(void) {
     init_ports();
 
     // Turn off power on pin 4 on all ports. This is set to input instead of

@@ -22,9 +22,14 @@
  */
 void pbdrv_ioport_enable_vcc(bool enable);
 
+void pbdrv_ioport_power_off(void);
+
 #else // PBDRV_CONFIG_IOPORT
 
 static inline void pbdrv_ioport_enable_vcc(bool enable) {
+}
+
+static inline void pbdrv_ioport_power_off(void) {
 }
 
 #endif // PBDRV_CONFIG_IOPORT
