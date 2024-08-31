@@ -22,14 +22,24 @@
  */
 void pbdrv_ioport_enable_vcc(bool enable);
 
-void pbdrv_ioport_power_off(void);
+/**
+ * Sets port I/O pins to default state and powers off VCC.
+ *
+ * Some hubs have a quirk where VCC can't be turned off without causing the
+ * hub to immediately power back on. The return value indicates if it is safe
+ * to attempt to power off the hub or not.
+ *
+ * @return true if the hub cannot be powered off, false otherwise.
+ */
+bool pbdrv_ioport_power_off(void);
 
 #else // PBDRV_CONFIG_IOPORT
 
 static inline void pbdrv_ioport_enable_vcc(bool enable) {
 }
 
-static inline void pbdrv_ioport_power_off(void) {
+static inline bool pbdrv_ioport_power_off(void) {
+    return false;
 }
 
 #endif // PBDRV_CONFIG_IOPORT

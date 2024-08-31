@@ -41,6 +41,11 @@ typedef struct {
 
 extern const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data;
 
+#if PBDRV_CONFIG_IOPORT_PUP_QUIRK_SHUTDOWN
+// this function must be defined in platform.c when quirk is enabled
+bool pbdrv_ioport_needs_shutdown_quirk(void);
+#endif
+
 #endif // PBDRV_CONFIG_IOPORT_PUP
 
 #endif // _INTERNAL_PBDRV_IOPORT_PUP_H_

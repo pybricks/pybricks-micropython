@@ -208,6 +208,11 @@ const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data = {
     },
 };
 
+bool pbdrv_ioport_needs_shutdown_quirk(void) {
+    // quirk is not needed when button is pressed - button is active low
+    return !!(GPIOC->IDR & GPIO_IDR_13);
+}
+
 // LED
 
 // The constants below are derived from the SunLED XZM2CRKM2DGFBB45SCCB

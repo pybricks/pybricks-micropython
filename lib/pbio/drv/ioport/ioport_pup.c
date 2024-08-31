@@ -54,13 +54,31 @@ void pbdrv_ioport_init(void) {
     #endif
 }
 
-void pbdrv_ioport_power_off(void) {
+bool pbdrv_ioport_power_off(void) {
     init_ports();
 
-    // Turn off power on pin 4 on all ports. This is set to input instead of
-    // low to avoid city/move hubs turning back on when button released.
-    // as soon as the user releases the power button
-    pbdrv_gpio_input(&pbdrv_ioport_pup_platform_data.port_vcc);
+    // Turn off power on pin 4 on all ports.
+    #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_SHUTDOWN
+    if (pbdrv_ioport_needs_shutdown_quirk()) {
+        // Some hubs will turn themselves back on if VCC is off when power is
+        // turned off, so we have to turn VCC back on as a workaround.
+        pbdrv_ioport_enable_vcc(true);
+
+        return false;
+    }
+
+    // We want VCC off so that lights on sensors turn off while the power
+    // button is held down. But, this would cause the hub to turn back on
+    // immediately. So return true to indicate that it is safe to turn off
+    // power.
+    pbdrv_ioport_enable_vcc(false);
+
+    return true;
+    #else
+    pbdrv_ioport_enable_vcc(false);
+
+    return false;
+    #endif
 }
 
 #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
