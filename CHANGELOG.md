@@ -38,6 +38,7 @@
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
 - Removed `gc_collect()` from `tools.run_task()` loop to fix unwanted delays.
 - Fixed `await wait(0)` never yielding, so parallel tasks could lock up ([support#1429]).
+- Fixed some sensors not powering off when the hub is turned off.
 
 ### Removed
 - Removed `loop_time` argument to `pybricks.tools.run_task` as this wasn't

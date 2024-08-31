@@ -75,6 +75,18 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
  */
 pbio_error_t pbdrv_motor_driver_get_device_type_id(pbio_port_id_t port, pbdrv_legodev_type_id_t *type_id);
 
+/**
+ * Powers off all motor outputs.
+ */
+static inline void pbdrv_motor_driver_power_off(void) {
+    for (uint8_t i = 0; i < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; i++) {
+        pbdrv_motor_driver_dev_t *driver;
+        if (pbdrv_motor_driver_get_dev(i, &driver) == PBIO_SUCCESS) {
+            pbdrv_motor_driver_coast(driver);
+        }
+    }
+}
+
 #else
 
 static inline pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
@@ -92,6 +104,9 @@ static inline pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_
 static inline pbio_error_t pbdrv_motor_driver_get_device_type_id(pbio_port_id_t port, pbdrv_legodev_type_id_t *type_id) {
     *type_id = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_motor_driver_power_off(void) {
 }
 
 #endif
