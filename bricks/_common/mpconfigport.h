@@ -64,7 +64,7 @@
 #endif
 #define MICROPY_ENABLE_SYSTEM_ABORT             (1)
 #define MICROPY_BUILTIN_METHOD_CHECK_SELF_ARG   (1)
-#define MICROPY_PY_ASYNC_AWAIT                  (0)
+#define MICROPY_PY_ASYNC_AWAIT                  (1)
 #define MICROPY_MULTIPLE_INHERITANCE            (0)
 #define MICROPY_PY_ARRAY                        (0)
 #define MICROPY_PY_BUILTINS_BYTEARRAY           (PYBRICKS_OPT_EXTRA_MOD)
