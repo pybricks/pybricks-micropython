@@ -13,10 +13,8 @@
   correction of the `hub.imu.heading()` value ([support#1678]).
 - Added `update_heading_correction` to interactively set the heading
   correction value ([support#1678]).
-- Added command to start downloaded or builtin user program with a one byte
-  program identifier. The existing START_PROGRAM and START_REPL are special
-  cases of this new more generic command, but will remain available for
-  backwards compatibility. For now, this is added to start various builtin
+- Added optional one byte program identifier to program start command.
+  For now, this is added to start various builtin
   programs, but it prepares for the ability to start different downloaded
   programs too  ([pybricks-micropython#254]).
 - Added one byte program identifier to the hub status report to the host.

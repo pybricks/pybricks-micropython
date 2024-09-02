@@ -42,12 +42,17 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             pbsys_program_stop(false);
             return PBIO_PYBRICKS_ERROR_OK;
 
-        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM:
-            // Deprecated. For backwards compatibility with Pybricks
-            // Profile < v1.4.0, assume we should start user program 0.
+        case PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM: {
+            if (size > 2) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            pbio_pybricks_user_program_id_t program_id = PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT;
+            if (size == 2) {
+                program_id = data[1];
+            }
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT));
-
+                pbsys_main_program_request_start(program_id));
+        }
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
         case PBIO_PYBRICKS_COMMAND_START_REPL:
             // Deprecated. For backwards compatibility with Pybricks
@@ -95,15 +100,6 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             const uint8_t *data_to_write = &data[3];
             return pbio_pybricks_error_from_pbio_error(write_app_data_callback(offset, data_size, data_to_write));
         }
-
-        case PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM:
-            // Identifier payload required
-            if (size != 2) {
-                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
-            }
-            return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start(data[1]));
-
         default:
             return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
     }

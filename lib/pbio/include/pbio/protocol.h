@@ -85,26 +85,36 @@ typedef enum {
     PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM = 0,
 
     /**
-     * Requests that the user program should be started.
+     * Requests that a user program should be started.
+     *
+     * The optional payload parameter was added in Pybricks Profile v1.4.0.
+     *
+     * Parameters:
+     * - payload: Optional program identifier (one byte). Slots 0--127 are
+     *            reserved for downloaded user programs. Slots 128--255 are
+     *            for builtin user programs. If no program identifier is
+     *            given, the currently active program slot will be started.
+     *
+     * Errors:
+     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
+     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the requested program is not available (since Pybricks Profile v1.4.0.)
      *
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
      *
      * @since Pybricks Profile v1.2.0
-     * @deprecated in Pybricks Profile v1.4.0.
-     *   Use ::PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM instead.
      */
     PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM = 1,
 
     /**
-     * Requests that the REPL should be started.
+     * Requests that the REPL should be started. This is the same as sending
+     * ::PBIO_PYBRICKS_COMMAND_START_USER_PROGRAM with payload ::PBIO_PYBRICKS_USER_PROGRAM_ID_REPL.
      *
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
+     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the REPL program is not available.
      *
      * @since Pybricks Profile v1.2.0
-     * @deprecated in Pybricks Profile v1.4.0.
-     *   Use ::PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM instead.
      */
     PBIO_PYBRICKS_COMMAND_START_REPL = 2,
 
@@ -183,23 +193,6 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_APP_DATA = 7,
-
-    /**
-     * Requests that a previously downloaded user program or builtin user
-     * program is started.
-     *
-     * Parameters:
-     * - payload: Program identifier (one byte). Slots 0--127 are reserved for
-     *            downloaded user programs. Slots 128--255 are for builtin user
-     *            programs.
-     *
-     * Errors:
-     * - ::PBIO_PYBRICKS_ERROR_BUSY if another program is already running.
-     * - ::PBIO_PYBRICKS_ERROR_INVALID_COMMAND if the requested program is not available.
-     *
-     * @since Pybricks Profile v1.4.0.
-     */
-    PBIO_PYBRICKS_COMMAND_START_USER_OR_BUILTIN_PROGRAM = 8,
 } pbio_pybricks_command_t;
 /**
  * Application-specific error codes that are used in ATT_ERROR_RSP.
