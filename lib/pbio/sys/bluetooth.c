@@ -293,7 +293,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     pbdrv_bluetooth_set_on_event(pbsys_bluetooth_process_poll);
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
-    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
         // make sure the Bluetooth chip is in reset long enough to actually reset
         etimer_set(&timer, 150);
@@ -301,8 +301,8 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         // Wait until Bluetooth enabled requested by user, but stop waiting on shutdown.
         // If storage is not yet loaded, this will wait for that too.
-        PROCESS_WAIT_UNTIL(pbsys_storage_settings_bluetooth_enabled() || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN));
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+        PROCESS_WAIT_UNTIL(pbsys_storage_settings_bluetooth_enabled() || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST));
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
             break;
         }
 
@@ -320,7 +320,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         PROCESS_WAIT_UNTIL(
             pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
             || pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
-            || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)
+            || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)
             || !pbsys_storage_settings_bluetooth_enabled());
 
         // Now change the state depending on which of the above was triggered.
@@ -345,7 +345,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         // Bluetooth loop below and go directly to the disable step below it.
         while (pbsys_storage_settings_bluetooth_enabled()
                && pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
-               && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+               && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
             if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
                 // Since pbsys status events are broadcast to all processes, this
@@ -380,6 +380,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         }
 
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
         reset_all();
         PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));

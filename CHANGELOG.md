@@ -30,6 +30,9 @@
   the hub ([pybricks-micropython#250]).
 - Improved font for the digits ``0--9`` when displaying them
   with `hub.display.char(str(x))` ([pybricks-micropython#253]).
+- On SPIKE Prime Hub and Robot Inventor Hub, moved Bluetooth indications to
+  the Bluetooth light. Only warning lights will be shown on the main button
+  light. See ([support#1716]) and ([pybricks-micropython#261]).
 
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
@@ -44,11 +47,13 @@
 [pybricks-micropython#250]: https://github.com/pybricks/pybricks-micropython/pull/250
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253
 [pybricks-micropython#254]: https://github.com/pybricks/pybricks-micropython/pull/254
+[pybricks-micropython#261]: https://github.com/pybricks/pybricks-micropython/pull/261
 [support#1429]: https://github.com/pybricks/support/issues/1429
 [support#1460]: https://github.com/pybricks/support/issues/1460
 [support#1615]: https://github.com/pybricks/support/issues/1615
 [support#1622]: https://github.com/pybricks/support/issues/1622
 [support#1678]: https://github.com/pybricks/support/issues/1678
+[support#1716]: https://github.com/pybricks/support/issues/1716
 
 ## [3.5.0] - 2024-04-11
 
