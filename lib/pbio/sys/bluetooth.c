@@ -270,7 +270,7 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
         etimer_restart(&timer);
 
         // send the message
-        msg.context.size = pbsys_status_write_status_report(&msg.payload[0]);
+        msg.context.size = pbsys_status_get_status_report(&msg.payload[0]);
         msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
         list_add(send_queue, &msg);
         msg.is_queued = true;

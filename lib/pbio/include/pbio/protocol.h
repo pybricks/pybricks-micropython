@@ -342,6 +342,8 @@ typedef enum {
  */
 #define PBIO_PYBRICKS_STATUS_FLAG(status) (1 << status)
 
+uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id);
+
 /**
  * Application-specific feature flag supported by a hub.
  */

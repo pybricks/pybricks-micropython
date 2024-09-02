@@ -20,7 +20,7 @@ void pbsys_status_clear(pbio_pybricks_status_t status);
 bool pbsys_status_test(pbio_pybricks_status_t status);
 bool pbsys_status_test_debounce(pbio_pybricks_status_t status, bool state, uint32_t ms);
 uint32_t pbsys_status_get_flags(void);
-uint32_t pbsys_status_write_status_report(uint8_t *buf);
+uint32_t pbsys_status_get_status_report(uint8_t *buf);
 
 #endif // _PBSYS_STATUS_H_
 

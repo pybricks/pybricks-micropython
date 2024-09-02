@@ -19,7 +19,7 @@
   backwards compatibility. For now, this is added to start various builtin
   programs, but it prepares for the ability to start different downloaded
   programs too  ([pybricks-micropython#254]).
-- Added program identifier to the hub status report to the host.
+- Added one byte program identifier to the hub status report to the host.
 
 ### Changed
 
@@ -32,8 +32,6 @@
   the hub ([pybricks-micropython#250]).
 - Improved font for the digits ``0--9`` when displaying them
   with `hub.display.char(str(x))` ([pybricks-micropython#253]).
-- Added an optional 32-bit program identifier payload to the protocol commands
-  for starting a builtin or user program.
 
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.

@@ -38,16 +38,13 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
 }
 
 /**
- * Writes Pybricks status report command to @p buf
+ * Gets the Pybricks status report and writes it to @p buf
  *
  * @param [in]  buf        The buffer to hold the binary data.
  * @return                 The number of bytes written to @p buf.
  */
-uint32_t pbsys_status_write_status_report(uint8_t *buf) {
-    buf[0] = PBIO_PYBRICKS_EVENT_STATUS_REPORT;
-    pbio_set_uint32_le(&buf[1], pbsys_status.flags);
-    buf[5] = pbsys_status.program_id;
-    return 6;
+uint32_t pbsys_status_get_status_report(uint8_t *buf) {
+    return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id);
 }
 
 /**
