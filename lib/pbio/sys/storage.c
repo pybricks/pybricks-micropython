@@ -22,14 +22,72 @@
 #include "core.h"
 
 /**
+ * Map of loaded data. All data types are little-endian.
+ */
+typedef struct {
+    /**
+     * How much to write on shutdown (and how much to load on boot). This is
+     * reset to 0 in RAM on load, and should be set whenever any data is
+     * updated. This must always remain the first element of this structure.
+     */
+    uint32_t write_size;
+    #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
+    /**
+     * Checksum complement to satisfy bootloader requirements. This ensures
+     * that words in the scanned area still add up to precisely 0 after user
+     * data was written.
+     */
+    volatile uint32_t checksum_complement;
+    #endif
+    /**
+     * Firmware version used to create the stored data. See pbio/version.
+     * Human-readable when printed as hex. If this value does not match
+     * the version of the running firmware, user data will be reset to 0.
+     */
+    uint32_t stored_firmware_version;
+    /**
+     * End-user read-write accessible data. Everything after this is also
+     * user-readable but not writable.
+     */
+    uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
+    /**
+     * System settings. Settings will be reset to defaults when the firmware
+     * version changes due to an update.
+     */
+    pbsys_storage_settings_t settings;
+    /**
+     * Size of the application program (size of code only).
+     */
+    uint32_t program_size;
+    /**
+     * Data of the application program (code + heap).
+     */
+    uint8_t program_data[] __attribute__((aligned(sizeof(void *))));
+} pbsys_storage_data_map_t;
+
+/**
  * Map of loaded data sits at the start of user RAM.
  */
-union {
+static union {
     pbsys_storage_data_map_t data_map;
     uint8_t data[PBSYS_CONFIG_STORAGE_RAM_SIZE];
 } pbsys_user_ram_data_map __attribute__((section(".noinit"), used));
 
+// Application RAM must enough to load ROM and still do something useful.
+#if PBSYS_CONFIG_STORAGE_RAM_SIZE < PBSYS_CONFIG_STORAGE_ROM_SIZE + 2048
+#error "Application RAM must be at least ROM size + 2K."
+#endif
+
 static pbsys_storage_data_map_t *map = &pbsys_user_ram_data_map.data_map;
+
+/**
+ * Gets the maximum size of a program that can be downloaded to the hub.
+ *
+ * @returns             Maximum program size in bytes.
+ */
+uint32_t pbsys_storage_get_maximum_program_size(void) {
+    return PBSYS_CONFIG_STORAGE_ROM_SIZE - sizeof(pbsys_storage_data_map_t);
+}
 
 static bool data_map_is_loaded = false;
 
@@ -161,7 +219,7 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t size) {
  *                          Otherwise ::PBIO_SUCCESS.
  */
 pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, uint32_t size) {
-    if (offset + size > PBSYS_STORAGE_MAX_PROGRAM_SIZE) {
+    if (offset + size > pbsys_storage_get_maximum_program_size()) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -183,7 +241,7 @@ pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, u
 void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
     program->code_start = map->program_data;
     program->code_end = map->program_data + map->program_size;
-    program->data_end = map->program_data + PBSYS_STORAGE_MAX_PROGRAM_SIZE;
+    program->data_end = map->program_data + pbsys_storage_get_maximum_program_size();
 }
 
 PROCESS(pbsys_storage_process, "storage");
