@@ -31,7 +31,7 @@ for i in range(10):
 
 raise KeyboardInterrupt
  */
-const uint8_t script[] = {
+static const uint8_t _program_data[] = {
     0xAC, 0x00, 0x00, 0x00, 0x5F, 0x5F, 0x6D, 0x61,
     0x69, 0x6E, 0x5F, 0x5F, 0x00, 0x4D, 0x06, 0x00,
     0x1F, 0x0A, 0x01, 0x10, 0x68, 0x65, 0x6C, 0x6C,
@@ -58,17 +58,20 @@ const uint8_t script[] = {
     0x63,
 };
 
-static union {
-    pbsys_storage_data_map_t data_map;
-    uint8_t blockdev[PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE];
-} blockdev = { 0 };
+static struct {
+    uint32_t write_size;
+    uint32_t stored_firmware_version;
+    uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
+    pbsys_storage_settings_t settings;
+    uint32_t program_size;
+    uint8_t program_data[sizeof(_program_data)];
+} blockdev;
 
 void pbdrv_block_device_init(void) {
-    pbsys_storage_data_map_t *map = &blockdev.data_map;
-    map->program_size = sizeof(script);
-    map->stored_firmware_version = PBIO_HEXVERSION;
-    memcpy(&map->program_data, script, sizeof(script));
-    map->write_size = sizeof(pbsys_storage_data_map_t) + map->program_size;
+    blockdev.write_size = sizeof(blockdev) + sizeof(_program_data);
+    blockdev.stored_firmware_version = 0;
+    blockdev.program_size = sizeof(_program_data);
+    memcpy(&blockdev.program_data, _program_data, sizeof(_program_data));
 }
 
 PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
