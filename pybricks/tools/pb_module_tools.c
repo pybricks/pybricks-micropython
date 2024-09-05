@@ -232,7 +232,10 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
         run_loop_is_active = true;
         mp_obj_t iterable = mp_getiter(task_in, &iter_buf);
         while (mp_iternext(iterable) != MP_OBJ_STOP_ITERATION) {
+            // Keep running system processes.
             MICROPY_VM_HOOK_LOOP
+            // Stop on exception such as SystemExit.
+            mp_handle_pending(true);
         }
         nlr_pop();
         run_loop_is_active = false;
