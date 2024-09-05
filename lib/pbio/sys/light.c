@@ -252,13 +252,15 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     if (event == PBIO_EVENT_STATUS_SET || event == PBIO_EVENT_STATUS_CLEARED) {
         pbsys_status_light_handle_status_change();
     }
-    #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
+        #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         animation_progress = 0;
         pbio_light_animation_init(&pbsys_status_light_main->animation, default_user_program_light_animation_next);
         pbio_light_animation_start(&pbsys_status_light_main->animation);
+        #else
+        pbio_color_light_off(pbsys_status_light_main);
+        #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     }
-    #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
 /**
@@ -359,7 +361,7 @@ pbsys_battery_light_state_t pbsys_battery_light_get_state(void) {
 
 #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY
 
-static void pbsys_status_light_set_pattern_or_user_color(pbsys_status_light_t *instance, pbio_color_t new_color) {
+static void pbsys_status_light_set_pattern_or_user_color(pbsys_status_light_t *instance, pbio_color_t pattern_color) {
     if (!instance->led) {
         return;
     }
@@ -367,7 +369,7 @@ static void pbsys_status_light_set_pattern_or_user_color(pbsys_status_light_t *i
         pbdrv_led_set_hsv(instance->led, &instance->user_color);
     } else {
         pbio_color_hsv_t hsv;
-        pbio_color_to_hsv(new_color, &hsv);
+        pbio_color_to_hsv(pattern_color, &hsv);
         pbdrv_led_set_hsv(instance->led, &hsv);
     }
 }
