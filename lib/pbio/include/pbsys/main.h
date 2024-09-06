@@ -25,13 +25,17 @@ typedef struct _pbsys_main_program_t {
      */
     void *code_start;
     /**
-     * Ending address of the user code.
+     * Ending address of the user code (up until this, so excluding this address).
      */
     void *code_end;
     /**
-     * Ending address of user RAM.
+     * Starting address of user RAM.
      */
-    void *data_end;
+    void *user_ram_start;
+    /**
+     * Ending address of user RAM (up until this, so excluding this address).
+     */
+    void *user_ram_end;
     /**
      * User program identifier.
      */

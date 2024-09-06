@@ -18,6 +18,8 @@
   programs, but it prepares for the ability to start different downloaded
   programs too  ([pybricks-micropython#254]).
 - Added one byte program identifier to the hub status report to the host.
+- Added interface and implementation for storing and selecting multiple code
+  slots on the Prime Hub and Inventor Hub.
 
 ### Changed
 

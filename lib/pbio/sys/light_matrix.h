@@ -15,7 +15,7 @@ void pbsys_hub_light_matrix_update_program_slot(void);
 #else
 #define pbsys_hub_light_matrix_init()
 #define pbsys_hub_light_matrix_handle_event(event, data)
-#define pbsys_hub_light_matrix_update_program_slot(void)
+#define pbsys_hub_light_matrix_update_program_slot()
 #endif
 
 #endif // _PBSYS_SYS_LIGHT_MATRIX_H_

@@ -11,6 +11,7 @@
 #include <pbsys/storage.h>
 
 #include "./bluetooth.h"
+#include "./hmi.h"
 #include "./storage.h"
 #include "./program_stop.h"
 
@@ -46,12 +47,9 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             if (size > 2) {
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
-            pbio_pybricks_user_program_id_t program_id = PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT;
-            if (size == 2) {
-                program_id = data[1];
-            }
+            // Use payload as program ID, otherwise use active user slot.
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start(program_id));
+                pbsys_main_program_request_start((size == 2 ? data[1] : pbsys_hmi_get_selected_program_slot())));
         }
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
         case PBIO_PYBRICKS_COMMAND_START_REPL:

@@ -28,7 +28,8 @@ void main_task(intptr_t unused) {
         pbsys_main_program_t program = {
             .id = PBIO_PYBRICKS_USER_PROGRAM_ID_REPL,
             .code_end = heap,
-            .data_end = heap + sizeof(heap),
+            .user_ram_start = heap,
+            .user_ram_end = heap + sizeof(heap),
         };
         pbsys_main_run_program(&program);
     }

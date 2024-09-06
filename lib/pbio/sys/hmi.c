@@ -29,6 +29,9 @@
 
 static struct pt update_program_run_button_wait_state_pt;
 
+// The selected slot is not persistent across reboot, so that the first slot
+// is always active on boot. This allows consistently starting programs without
+// visibility of the display.
 static uint8_t selected_slot = 0;
 
 /**
