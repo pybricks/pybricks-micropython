@@ -63,13 +63,14 @@ static struct {
     uint32_t stored_firmware_version;
     uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
     pbsys_storage_settings_t settings;
+    uint32_t program_offset;
     uint32_t program_size;
     uint8_t program_data[sizeof(_program_data)];
-} blockdev;
+} blockdev = { 0 };
 
 void pbdrv_block_device_init(void) {
     blockdev.write_size = sizeof(blockdev) + sizeof(_program_data);
-    blockdev.stored_firmware_version = 0;
+    blockdev.stored_firmware_version = PBIO_HEXVERSION;
     blockdev.program_size = sizeof(_program_data);
     memcpy(&blockdev.program_data, _program_data, sizeof(_program_data));
 }
