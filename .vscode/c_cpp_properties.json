@@ -429,7 +429,6 @@
         {
             "name": "pbio/test",
             "includePath": [
-                "${workspaceFolder}/micropython/lib/tinytest",
                 "${workspaceFolder}/lib/btstack/chipset/cc256x",
                 "${workspaceFolder}/lib/btstack/platform/posix",
                 "${workspaceFolder}/lib/btstack/src",
@@ -440,7 +439,8 @@
                 "${workspaceFolder}/lib/pbio/include",
                 "${workspaceFolder}/lib/pbio/platform/test",
                 "${workspaceFolder}/lib/pbio/test",
-                "${workspaceFolder}/lib/pbio/test/build"
+                "${workspaceFolder}/lib/pbio/test/build",
+                "${workspaceFolder}/lib/tinytest"
             ],
             "defines": [
                 "UNIX"

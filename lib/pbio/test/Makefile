@@ -34,8 +34,8 @@ endif
 
 all: $(PROG)
 
-# using tinytest from upstream MicroPython
-TINY_TEST_DIR = ../../../micropython/lib/tinytest
+# tinytest dependency
+TINY_TEST_DIR = ../../tinytest
 TINY_TEST_INC = -I$(TINY_TEST_DIR)
 TINY_TEST_SRC = $(TINY_TEST_DIR)/tinytest.c
 
