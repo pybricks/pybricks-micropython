@@ -48,36 +48,18 @@ static const pbio_light_matrix_funcs_t pbsys_hub_light_matrix_funcs = {
 };
 
 /**
- * Clears the idle UI, leaving the selected slot in place.
- */
-static void pbsys_hub_light_matrix_clear_idle_ui(void) {
-
-    uint8_t slot = pbsys_hmi_get_selected_program_slot();
-
-    // turn of all pixels except program slot.
-    for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
-        for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
-            bool on = r == 4 && c == slot;
-            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, on ? 100 : 0);
-        }
-    }
-}
-
-/**
  * Displays the idle UI. Has a square stop sign and selected slot on bottom row.
  *
  * @param brightness   Brightness (0--100%).
  */
 static void pbsys_hub_light_matrix_show_idle_ui(uint8_t brightness) {
-
-    uint8_t slot = pbsys_hmi_get_selected_program_slot();
-
-    // 3x3 "stop sign" at top center of light matrix
     for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
         for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
-            bool in_stop_sign = r < 3 && c > 0 && c < 4;
-            bool in_slot_indicator = r == 4 && c == slot;
-            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, in_stop_sign || in_slot_indicator ? brightness : 0);
+            bool is_on = r < 3 && c > 0 && c < 4;
+            #if PBSYS_CONFIG_HMI_NUM_SLOTS
+            is_on |= (r == 4 && c == pbsys_hmi_get_selected_program_slot());
+            #endif
+            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, is_on ? brightness : 0);
         }
     }
 }
@@ -120,6 +102,17 @@ void pbsys_hub_light_matrix_init(void) {
     pbsys_hub_light_matrix_start_power_animation();
 }
 
+/**
+ * Clears the pixels needed for the run animation
+ */
+static void pbsys_hub_light_matrix_user_program_animation_clear(void) {
+    for (uint8_t r = 0; r < 3; r++) {
+        for (uint8_t c = 1; c < 4; c++) {
+            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, 0);
+        }
+    }
+}
+
 // Animation frame for program running animation.
 static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
     // The indexes of pixels to light up
@@ -153,7 +146,7 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
         if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
             // The user animation updates only a subset of pixels to save time,
             // so the rest must be cleared before it starts.
-            pbsys_hub_light_matrix_clear_idle_ui();
+            pbsys_hub_light_matrix_user_program_animation_clear();
             pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
             pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
         } else if (status == PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST && !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
