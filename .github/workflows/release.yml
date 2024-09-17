@@ -25,6 +25,8 @@ jobs:
           fetch-depth: 0
       - name: Build firmware
         run: |
+          export MICROPY_GIT_TAG=ci-release-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
+          export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
           make $MAKEOPTS -C micropython/mpy-cross
           make $MAKEOPTS -C bricks/movehub
           make $MAKEOPTS -C bricks/cityhub
