@@ -66,11 +66,11 @@ typedef struct {
     volatile uint32_t checksum_complement;
     #endif
     /**
-     * Firmware version used to create the stored data. See pbio/version.
-     * Human-readable when printed as hex. If this value does not match
-     * the version of the running firmware, user data will be reset to 0.
+     * First 8 symbols of the git hash of the firmware version used to create
+     * this data map. If this does not match the version of the running
+     * firmware, user data will be reset to 0.
      */
-    uint32_t stored_firmware_version;
+    char stored_firmware_hash[8];
     /**
      * End-user read-write accessible data. Everything after this is also
      * user-readable but not writable.
@@ -437,15 +437,17 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
     // Read the available data into RAM.
     PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, map->saved_data_size, &err));
 
-    // Test that storage matches current firmware version.
-    if (err != PBIO_SUCCESS || map->stored_firmware_version != PBIO_HEXVERSION) {
+    bool is_bad_version = strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
+
+    // Test that storage successfully loaded and matches current firmware.
+    if (err != PBIO_SUCCESS || is_bad_version) {
         // Reset storage except for program data. It is sufficient to set its
         // size to 0, which is what happens here since it is in the map.
         memset(map, 0, sizeof(pbsys_storage_data_map_t));
         pbsys_storage_settings_set_defaults(&map->settings);
 
         // Set firmware version used to create current storage map.
-        map->stored_firmware_version = PBIO_HEXVERSION;
+        strncpy(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
 
         // Ensure new firmware version and default settings are written.
         pbsys_storage_request_write();

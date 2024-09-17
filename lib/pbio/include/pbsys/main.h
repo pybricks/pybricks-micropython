@@ -90,6 +90,13 @@ void pbsys_main_stop_program(bool force_stop);
  */
 bool pbsys_main_stdin_event(uint8_t c);
 
+/**
+ * Gets the 9-symbol git hash of pybricks.
+ *
+ * @returns             Git hash string.
+ */
+const char *pbsys_main_get_application_version_hash(void);
+
 #else // PBSYS_CONFIG_MAIN
 
 static inline pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id) {
@@ -109,6 +116,11 @@ static inline void pbsys_main_stop_program(bool force_stop) {
 static inline bool pbsys_main_stdin_event(uint8_t c) {
     return false;
 }
+
+static inline const char *pbsys_main_get_application_version_hash(void) {
+    return NULL;
+}
+
 
 #endif // PBSYS_CONFIG_MAIN
 

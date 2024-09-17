@@ -18,6 +18,7 @@
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
+#include "genhdr/mpversion.h"
 #include "shared/readline/readline.h"
 #include "shared/runtime/gchelper.h"
 #include "shared/runtime/interrupt_char.h"
@@ -324,6 +325,12 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
     // application code, we can check that a valid program is in fact
     // present by checking the MicroPython format.
     return PBIO_SUCCESS;
+}
+
+const char *pbsys_main_get_application_version_hash(void) {
+    // This is (somewhat confusingly) passed in as the MICROPY_GIT_HASH.
+    // REVISIT: Make PYBRICKS_GIT_HASH available in a pbio header via a build step.
+    return MICROPY_GIT_HASH;
 }
 
 // Runs MicroPython with the given program data.
