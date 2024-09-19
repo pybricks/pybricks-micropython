@@ -37,6 +37,8 @@
   light. See ([support#1716]) and ([pybricks-micropython#261]).
 - Allow gyro calibration only while all motors are coasting ([support#1840]) to
   prevent recalibration during very steady moves.
+- Reduced default angular velocity stationary threshold from an undocumented
+  5 deg/s to 3 deg/s to reduce unwanted calibration while moving  ([support#1105]). 
 
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
@@ -52,6 +54,7 @@
 [pybricks-micropython#253]: https://github.com/pybricks/pybricks-micropython/pull/253
 [pybricks-micropython#254]: https://github.com/pybricks/pybricks-micropython/pull/254
 [pybricks-micropython#261]: https://github.com/pybricks/pybricks-micropython/pull/261
+[support#1105]: https://github.com/pybricks/support/issues/1105
 [support#1429]: https://github.com/pybricks/support/issues/1429
 [support#1460]: https://github.com/pybricks/support/issues/1460
 [support#1615]: https://github.com/pybricks/support/issues/1615

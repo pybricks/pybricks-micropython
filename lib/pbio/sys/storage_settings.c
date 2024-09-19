@@ -29,8 +29,8 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #endif
     #if PBIO_CONFIG_IMU
-    settings->gyro_stationary_threshold = 5;
-    settings->accel_stationary_threshold = 2500;
+    settings->gyro_stationary_threshold = 3.0f;
+    settings->accel_stationary_threshold = 2500.0f;
     settings->heading_correction = 360.0f;
     #endif // PBIO_CONFIG_IMU
 }
