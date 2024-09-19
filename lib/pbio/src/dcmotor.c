@@ -60,6 +60,20 @@ void pbio_dcmotor_stop_all(bool clear_parents) {
 }
 
 /**
+ * Tests if all dc motors are coasting.
+ *
+ * @return                  @c true if all motors are coasting, @c false otherwise.
+ */
+bool pbio_dcmotor_all_coasting(void) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_DCMOTOR_NUM_DEV; i++) {
+        if (dcmotors[i].actuation_now != PBIO_DCMOTOR_ACTUATION_COAST) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
  * Stops and closes DC motor instance so it can be used in another application.
  *
  * @param [in]  dcmotor     The DC motor instance.

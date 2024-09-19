@@ -71,6 +71,7 @@ typedef struct _pbio_dcmotor_t {
 
 /** @cond INTERNAL */
 void pbio_dcmotor_stop_all(bool clear_parents);
+bool pbio_dcmotor_all_coasting(void);
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
 int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id);
@@ -98,6 +99,10 @@ pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int3
 #else
 
 static inline void pbio_dcmotor_stop_all(bool clear_parents) {
+}
+
+static inline bool pbio_dcmotor_any_active(void) {
+    return false;
 }
 
 static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor) {

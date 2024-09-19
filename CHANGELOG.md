@@ -35,6 +35,8 @@
 - On SPIKE Prime Hub and Robot Inventor Hub, moved Bluetooth indications to
   the Bluetooth light. Only warning lights will be shown on the main button
   light. See ([support#1716]) and ([pybricks-micropython#261]).
+- Allow gyro calibration only while all motors are coasting ([support#1840]) to
+  prevent recalibration during very steady moves.
 
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
@@ -56,6 +58,7 @@
 [support#1622]: https://github.com/pybricks/support/issues/1622
 [support#1678]: https://github.com/pybricks/support/issues/1678
 [support#1716]: https://github.com/pybricks/support/issues/1716
+[support#1840]: https://github.com/pybricks/support/issues/1840
 
 ## [3.5.0] - 2024-04-11
 

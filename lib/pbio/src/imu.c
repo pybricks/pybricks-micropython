@@ -10,6 +10,7 @@
 
 #include <pbio/angle.h>
 #include <pbio/config.h>
+#include <pbio/dcmotor.h>
 #include <pbio/error.h>
 #include <pbio/geometry.h>
 #include <pbio/imu.h>
@@ -59,6 +60,11 @@ bool pbio_imu_is_ready(void) {
 
 // Called by driver to process unfiltered gyro and accelerometer data recorded while stationary.
 static void pbio_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, const int32_t *accel_data_sum, uint32_t num_samples) {
+
+    // Don't update if not stationary
+    if (!pbio_imu_is_stationary()) {
+        return;
+    }
 
     // If the IMU calibration hasn't been updated in a long time, reset the
     // stationary counter so that the calibration values get a large weight.
@@ -126,12 +132,12 @@ pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *front_side_axis,
 }
 
 /**
- * Checks if the IMU is currently stationary.
+ * Checks if the IMU is currently stationary and motors are not moving.
  *
  * @return    True if it has been stationary for about a second, false if moving.
  */
 bool pbio_imu_is_stationary(void) {
-    return pbdrv_imu_is_stationary(imu_dev);
+    return pbdrv_imu_is_stationary(imu_dev) && pbio_dcmotor_all_coasting();
 }
 
 // Measured rotation of the Z axis in the user frame for exactly one rotation
