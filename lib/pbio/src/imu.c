@@ -11,6 +11,7 @@
 #include <pbio/angle.h>
 #include <pbio/config.h>
 #include <pbio/dcmotor.h>
+#include <pbio/drivebase.h>
 #include <pbio/error.h>
 #include <pbio/geometry.h>
 #include <pbio/imu.h>
@@ -267,6 +268,13 @@ float pbio_imu_get_heading(void) {
  */
 void pbio_imu_set_heading(float desired_heading) {
     heading_offset = pbio_imu_get_heading() + heading_offset - desired_heading;
+
+    // Callbacks to other resources to inform that the gyro has been (re)set.
+
+    // REVISIT: At the moment, only drivebases use the gyro. If more resources
+    // need it, we can enable subscribing to the imu and have a callback
+    // called here on resets.
+    pbio_drivebase_stop_all_when_gyro_used();
 }
 
 /**

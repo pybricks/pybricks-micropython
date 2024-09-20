@@ -725,8 +725,8 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
  * If the gyro is being used for control, it will be reset to the same angle.
  *
  * @param [in]  db          The drivebase instance.
- * @param [out] distance    Distance traveled in mm.
- * @param [out] angle       Angle turned in degrees.
+ * @param [in] distance     Distance traveled in mm.
+ * @param [in] angle        Angle turned in degrees.
  * @return                  Error code.
  */
 pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db, int32_t distance, int32_t angle) {
@@ -756,13 +756,28 @@ pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db, int32_t distance, int32_
     pbio_angle_from_low_res(&reported_new, angle, db->control_heading.settings.ctl_steps_per_app_step);
     pbio_angle_diff(&measured_heading.position, &reported_new, &db->heading_offset);
 
-    // Whether or not the gyro is being used, synchronize heading and drivebase
-    // angle state.
-    pbio_imu_set_heading(angle);
+    // Synchronize heading and drivebase angle state if gyro in use.
+    if (db->use_gyro) {
+        pbio_imu_set_heading(angle);
+    }
 
     return PBIO_SUCCESS;
 }
 
+/**
+ * Stops all drivebases that use the gyro. Called by the imu module when the
+ * imu heading is reset. Resetting it would throw off ongoing drivebase
+ * controls, so we should stop them.
+ */
+void pbio_drivebase_stop_all_when_gyro_used(void) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_NUM_DRIVEBASES; i++) {
+        pbio_drivebase_t *db = &drivebases[i];
+        if (pbio_drivebase_update_loop_is_running(db) && db->use_gyro) {
+            // Let errors pass.
+            pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
+        }
+    }
+}
 
 /**
  * Gets the drivebase settings in user units.

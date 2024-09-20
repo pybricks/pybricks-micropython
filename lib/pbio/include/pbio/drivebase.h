@@ -55,6 +55,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
 
 void pbio_drivebase_update_all(void);
 bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db);
+void pbio_drivebase_stop_all_when_gyro_used(void);
 bool pbio_drivebase_is_done(const pbio_drivebase_t *db);
 pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint32_t *stall_duration);
 

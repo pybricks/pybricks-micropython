@@ -20,6 +20,8 @@
 - Added one byte program identifier to the hub status report to the host.
 - Added interface and implementation for storing and selecting multiple code
   slots on the Prime Hub and Inventor Hub.
+- Added ability to set distance and angle in `DriveBase.reset()`. If the
+  DriveBase is using the gyro, it will be set to the same angle. ([support#1617]).
 
 ### Changed
 
@@ -36,9 +38,11 @@
   the Bluetooth light. Only warning lights will be shown on the main button
   light. See ([support#1716]) and ([pybricks-micropython#261]).
 - Allow gyro calibration only while all motors are coasting ([support#1840]) to
-  prevent recalibration during very steady moves.
+  prevent recalibration during very steady moves ([support#1687])
 - Reduced default angular velocity stationary threshold from an undocumented
-  5 deg/s to 3 deg/s to reduce unwanted calibration while moving  ([support#1105]). 
+  5 deg/s to 3 deg/s to reduce unwanted calibration while moving ([support#1105]).
+- If `imu.reset_heading()` is called while a drive base is actively using the
+  gyro, the drive base will stop to avoid confusion  ([support#1818]).
 
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.
@@ -58,9 +62,12 @@
 [support#1429]: https://github.com/pybricks/support/issues/1429
 [support#1460]: https://github.com/pybricks/support/issues/1460
 [support#1615]: https://github.com/pybricks/support/issues/1615
+[support#1617]: https://github.com/pybricks/support/issues/1617
 [support#1622]: https://github.com/pybricks/support/issues/1622
 [support#1678]: https://github.com/pybricks/support/issues/1678
+[support#1687]: https://github.com/pybricks/support/issues/1687
 [support#1716]: https://github.com/pybricks/support/issues/1716
+[support#1818]: https://github.com/pybricks/support/issues/1818
 [support#1840]: https://github.com/pybricks/support/issues/1840
 
 ## [3.5.0] - 2024-04-11
