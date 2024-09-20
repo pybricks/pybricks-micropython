@@ -29,7 +29,23 @@ typedef struct _pbio_drivebase_t {
     bool control_paused;
     pbio_servo_t *left;
     pbio_servo_t *right;
+    /**
+     * Offset of the reported heading angle with respect to the measured value.
+     *
+     * Not used if gyro control is active. Then the gyro module handles offset.
+     */
+    pbio_angle_t heading_offset;
+    /**
+     * Heading controller.
+     */
     pbio_control_t control_heading;
+    /**
+     * Offset of the reported distance with respect to the measured value.
+     */
+    pbio_angle_t distance_offset;
+    /**
+     * Distance controller.
+     */
     pbio_control_t control_distance;
 } pbio_drivebase_t;
 
@@ -56,6 +72,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_control_on_completio
 // Measuring and settings:
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);
+pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db, int32_t distance, int32_t angle);
 pbio_error_t pbio_drivebase_get_drive_settings(const pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *drive_deceleration, int32_t *turn_rate, int32_t *turn_acceleration, int32_t *turn_deceleration);
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t drive_deceleration, int32_t turn_rate, int32_t turn_acceleration, int32_t turn_deceleration);
 pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, bool use_gyro);

@@ -29,8 +29,6 @@ typedef struct _pb_type_DriveBase_obj_t pb_type_DriveBase_obj_t;
 struct _pb_type_DriveBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *db;
-    int32_t initial_distance;
-    int32_t initial_heading;
     #if PYBRICKS_PY_COMMON_CONTROL
     mp_obj_t heading_control;
     mp_obj_t distance_control;
@@ -39,18 +37,18 @@ struct _pb_type_DriveBase_obj_t {
 };
 
 // pybricks.robotics.DriveBase.reset
-static mp_obj_t pb_type_DriveBase_reset(mp_obj_t self_in) {
-    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+static mp_obj_t pb_type_DriveBase_reset(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-    int32_t distance, drive_speed, angle, turn_rate;
-    pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &angle, &turn_rate));
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_DriveBase_obj_t, self,
+        PB_ARG_DEFAULT_INT(distance, 0),
+        PB_ARG_DEFAULT_INT(angle, 0));
 
-    self->initial_distance = distance;
-    self->initial_heading = angle;
+    pb_assert(pbio_drivebase_reset(self->db, pb_obj_get_int(distance_in), pb_obj_get_int(angle_in)));
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_reset_obj, pb_type_DriveBase_reset);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_reset_obj, 1, pb_type_DriveBase_reset);
 
 // pybricks.robotics.DriveBase.__init__
 static mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -79,9 +77,6 @@ static mp_obj_t pb_type_DriveBase_make_new(const mp_obj_type_t *type, size_t n_a
     self->heading_control = pb_type_Control_obj_make_new(&self->db->control_heading);
     self->distance_control = pb_type_Control_obj_make_new(&self->db->control_distance);
     #endif
-
-    // Reset drivebase state
-    pb_type_DriveBase_reset(MP_OBJ_FROM_PTR(self));
 
     // List of awaitables associated with this drivebase. By keeping track,
     // we can cancel them as needed when a new movement is started.
@@ -243,7 +238,7 @@ static mp_obj_t pb_type_DriveBase_distance(mp_obj_t self_in) {
     int32_t distance, _;
     pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &_, &_, &_));
 
-    return mp_obj_new_int(distance - self->initial_distance);
+    return mp_obj_new_int(distance);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_distance_obj, pb_type_DriveBase_distance);
 
@@ -254,7 +249,7 @@ static mp_obj_t pb_type_DriveBase_angle(mp_obj_t self_in) {
     int32_t heading, _;
     pb_assert(pbio_drivebase_get_state_user(self->db, &_, &_, &heading, &_));
 
-    return mp_obj_new_int(heading - self->initial_heading);
+    return mp_obj_new_int(heading);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_angle_obj, pb_type_DriveBase_angle);
 
@@ -266,9 +261,9 @@ static mp_obj_t pb_type_DriveBase_state(mp_obj_t self_in) {
     pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &heading, &turn_rate));
 
     mp_obj_t ret[4];
-    ret[0] = mp_obj_new_int(distance - self->initial_distance);
+    ret[0] = mp_obj_new_int(distance);
     ret[1] = mp_obj_new_int(drive_speed);
-    ret[2] = mp_obj_new_int(heading - self->initial_heading);
+    ret[2] = mp_obj_new_int(heading);
     ret[3] = mp_obj_new_int(turn_rate);
 
     return mp_obj_new_tuple(4, ret);

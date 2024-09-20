@@ -21,7 +21,7 @@ static pbio_drivebase_t drivebases[PBIO_CONFIG_NUM_DRIVEBASES];
 /**
  * Gets the state of the drivebase update loop.
  *
- * This becomes true after a successful call to pbio_drivebase_setup and
+ * This becomes true after a successful call to pbio_drivebase_get_drivebase and
  * becomes false when there is an error. Such as when the cable is unplugged.
  *
  * @param [in]  db          The drivebase instance
@@ -117,11 +117,11 @@ static void drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_c
  * Get the physical and estimated state of a drivebase in units of control.
  *
  * @param [in]  db              The drivebase instance
- * @param [out] state_distance  Physical and estimated state of the distance.
- * @param [out] state_heading   Physical and estimated state of the heading.
+ * @param [out] state_distance  Physical and estimated state of the distance based on motor angles.
+ * @param [out] state_heading   Physical and estimated state of the heading based on motor angles.
  * @return                      Error code.
  */
-static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
+static pbio_error_t pbio_drivebase_get_state_via_motors(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
 
     // Get left servo state
     pbio_control_state_t state_left;
@@ -150,7 +150,35 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     state_heading->speed_estimate = state_distance->speed_estimate - state_right.speed_estimate;
     state_heading->speed = state_distance->speed - state_right.speed;
 
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Get the physical and estimated state of a drivebase in units of control.
+ *
+ * @param [in]  db              The drivebase instance
+ * @param [out] state_distance  Physical and estimated state of the distance.
+ * @param [out] state_heading   Physical and estimated state of the heading.
+ * @return                      Error code.
+ */
+static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
+
+    // Gets the "measured" state according to the driver motors.
+    pbio_error_t err = pbio_drivebase_get_state_via_motors(db, state_distance, state_heading);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Subtract distance offset.
+    pbio_angle_diff(&state_distance->position, &db->distance_offset, &state_distance->position);
+    pbio_angle_diff(&state_distance->position_estimate, &db->distance_offset, &state_distance->position_estimate);
+
+    // Subtract heading offset
+    pbio_angle_diff(&state_heading->position, &db->heading_offset, &state_heading->position);
+    pbio_angle_diff(&state_heading->position_estimate, &db->heading_offset, &state_heading->position_estimate);
+
     // Optionally use gyro to override the heading source for more accuracy.
+    // The gyro manages its own offset, so we don't need to subtract it here.
     if (db->use_gyro) {
         pbio_imu_get_heading_scaled(&state_heading->position, &state_heading->speed, db->control_heading.settings.ctl_steps_per_app_step);
     }
@@ -235,7 +263,7 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
 #define ROT_MDEG_OVER_PI (114592) // 360 000 / pi
 
 /**
- * Gets drivebase instance from two servo instances.
+ * Gets and sets up drivebase instance from two servo instances.
  *
  * @param [out] db_address       Drivebase instance if available.
  * @param [in]  left             Left servo instance.
@@ -328,6 +356,10 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
         db->control_heading.settings.ctl_steps_per_app_step < 1) {
         return PBIO_ERROR_INVALID_ARG;
     }
+
+    // Reset offsets so current distance and angle are 0. This relies on the
+    // geometry, so it is done after the scaling is set.
+    pbio_drivebase_reset(db, 0, 0);
 
     // Finish setup. By default, don't use gyro.
     return pbio_drivebase_set_use_gyro(db, false);
@@ -684,6 +716,50 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
     *drive_speed = pbio_control_settings_ctl_to_app(&db->control_distance.settings, state_distance.speed);
     *angle = pbio_control_settings_ctl_to_app_long(&db->control_heading.settings, &state_heading.position);
     *turn_rate = pbio_control_settings_ctl_to_app(&db->control_heading.settings, state_heading.speed);
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Stops the drivebase and resets the accumulated drivebase state in user units.
+ *
+ * If the gyro is being used for control, it will be reset to the same angle.
+ *
+ * @param [in]  db          The drivebase instance.
+ * @param [out] distance    Distance traveled in mm.
+ * @param [out] angle       Angle turned in degrees.
+ * @return                  Error code.
+ */
+pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db, int32_t distance, int32_t angle) {
+
+    // Physically stops motors and stops the ongoing controllers, simplifying
+    // the state reset since we won't need to restart ongoing motion.
+    pbio_error_t err = pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Get measured state according to motor encoders.
+    pbio_control_state_t measured_distance;
+    pbio_control_state_t measured_heading;
+    err = pbio_drivebase_get_state_via_motors(db, &measured_distance, &measured_heading);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // We want to get: reported_new = measured - offset_new
+    // So we can do:     offset_new = measured - reported_new
+    pbio_angle_t reported_new;
+
+    pbio_angle_from_low_res(&reported_new, distance, db->control_distance.settings.ctl_steps_per_app_step);
+    pbio_angle_diff(&measured_distance.position, &reported_new, &db->distance_offset);
+
+    pbio_angle_from_low_res(&reported_new, angle, db->control_heading.settings.ctl_steps_per_app_step);
+    pbio_angle_diff(&measured_heading.position, &reported_new, &db->heading_offset);
+
+    // Whether or not the gyro is being used, synchronize heading and drivebase
+    // angle state.
+    pbio_imu_set_heading(angle);
+
     return PBIO_SUCCESS;
 }
 

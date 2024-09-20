@@ -105,7 +105,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
-                "${workspaceFolder}/tests/virtualhub/motor/car.py"
+                "${workspaceFolder}/tests/virtualhub/motor/drivebase.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
