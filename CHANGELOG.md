@@ -42,7 +42,7 @@
 - Reduced default angular velocity stationary threshold from an undocumented
   5 deg/s to 3 deg/s to reduce unwanted calibration while moving ([support#1105]).
 - If `imu.reset_heading()` is called while a drive base is actively using the
-  gyro, the drive base will stop to avoid confusion  ([support#1818]).
+  gyro, an exception will be raised ([support#1818]).
 
 ### Fixed
 - Fixed not able to connect to new Technic Move hub with `LWP3Device()`.

@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <pbio/drivebase.h>
 #include <pbio/error.h>
 #include <pbio/geometry.h>
 #include <pbio/imu.h>
@@ -212,6 +213,10 @@ static mp_obj_t pb_type_imu_reset_heading(size_t n_args, const mp_obj_t *pos_arg
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_imu_obj_t, self,
         PB_ARG_REQUIRED(angle));
+
+    if (pbio_drivebase_any_uses_gyro()) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("Can't reset heading while gyro in use. Stop driving first."));
+    }
 
     // Set the new angle
     (void)self;

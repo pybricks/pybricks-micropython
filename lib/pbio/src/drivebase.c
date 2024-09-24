@@ -765,18 +765,25 @@ pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db, int32_t distance, int32_
 }
 
 /**
- * Stops all drivebases that use the gyro. Called by the imu module when the
- * imu heading is reset. Resetting it would throw off ongoing drivebase
- * controls, so we should stop them.
+ * Tests if any drive base is currently actively using the gyro.
+ *
+ * @return @c true if the gyro is being used, else @c false
  */
-void pbio_drivebase_stop_all_when_gyro_used(void) {
+bool pbio_drivebase_any_uses_gyro(void) {
     for (uint8_t i = 0; i < PBIO_CONFIG_NUM_DRIVEBASES; i++) {
         pbio_drivebase_t *db = &drivebases[i];
-        if (pbio_drivebase_update_loop_is_running(db) && db->use_gyro) {
-            // Let errors pass.
-            pbio_drivebase_stop(db, PBIO_CONTROL_ON_COMPLETION_COAST);
+
+        // Only consider activated drive bases that use the gyro.
+        if (!pbio_drivebase_update_loop_is_running(db) || !db->use_gyro) {
+            continue;
+        }
+
+        // Active controller means driving or holding, so gyro is in use.
+        if (pbio_control_is_active(&db->control_distance) || pbio_control_is_active(&db->control_heading)) {
+            return true;
         }
     }
+    return false;
 }
 
 /**
