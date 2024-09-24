@@ -22,6 +22,8 @@
   slots on the Prime Hub and Inventor Hub.
 - Added ability to set distance and angle in `DriveBase.reset()`. If the
   DriveBase is using the gyro, it will be set to the same angle. ([support#1617]).
+- Added `DriveBase.arc` method with more intuitive parameters to drive along
+  an arc, to eventually replace `DriveBase.curve` ([support#1157]).
 
 ### Changed
 
@@ -59,6 +61,7 @@
 [pybricks-micropython#254]: https://github.com/pybricks/pybricks-micropython/pull/254
 [pybricks-micropython#261]: https://github.com/pybricks/pybricks-micropython/pull/261
 [support#1105]: https://github.com/pybricks/support/issues/1105
+[support#1157]: https://github.com/pybricks/support/issues/1157
 [support#1429]: https://github.com/pybricks/support/issues/1429
 [support#1460]: https://github.com/pybricks/support/issues/1460
 [support#1615]: https://github.com/pybricks/support/issues/1615

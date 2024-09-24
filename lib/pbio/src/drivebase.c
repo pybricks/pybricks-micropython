@@ -616,6 +616,9 @@ pbio_error_t pbio_drivebase_drive_straight(pbio_drivebase_t *db, int32_t distanc
 /**
  * Starts the drivebase controllers to run by an arc of given radius and angle.
  *
+ * curve() was originally used as a generalization of turn(), but is now
+ * deprecated in favor of the arc methods, which have more practical arguments.
+ *
  * This will use the default speed.
  *
  * @param [in]  db              The drivebase instance.
@@ -634,6 +637,74 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
 
     // Execute the common drive command at default speed (by passing 0 speed).
     return pbio_drivebase_drive_relative(db, arc_length, 0, arc_angle, 0, on_completion);
+}
+
+/**
+ * Starts the drivebase controllers to run by an arc of given radius and angle.
+ *
+ * With a positive radius, the robot drives along a circle to its right.
+ * With a negative radius, the robot drives along a circle to its left.
+ *
+ * A positive angle means driving forward along the circle, negative is reverse.
+ *
+ * This will use the default speed.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  radius          Radius of the arc in mm.
+ * @param [in]  angle           The angle to drive along the circle in degrees.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
+pbio_error_t pbio_drivebase_drive_arc_angle(pbio_drivebase_t *db, int32_t radius, int32_t angle, pbio_control_on_completion_t on_completion) {
+
+    if (pbio_int_math_abs(radius) < 10) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Arc length is radius * angle, with the user angle parameter governing
+    // the drive direction as positive forward.
+    int32_t drive_distance = (10 * angle * pbio_int_math_abs(radius)) / 573;
+
+    // The user angle is positive for going forward, no matter the radius sign.
+    // The internal functions expect positive to mean clockwise for the robot.
+    int32_t direction = (radius > 0) == (angle > 0) ? 1 : -1;
+    int32_t drive_angle = pbio_int_math_abs(angle) * direction;
+
+    // Execute the common drive command at default speed (by passing 0 speed).
+    return pbio_drivebase_drive_relative(db, drive_distance, 0, drive_angle, 0, on_completion);
+}
+
+/**
+ * Starts the drivebase controllers to run by an arc of given radius and arc length.
+ *
+ * With a positive radius, the robot drives along a circle to its right.
+ * With a negative radius, the robot drives along a circle to its left.
+ *
+ * A positive distance means driving forward along the circle, negative is reverse.
+ *
+ * This will use the default speed.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  radius          Radius of the arc in mm.
+ * @param [in]  distance        The distance to drive (arc length) in mm.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
+pbio_error_t pbio_drivebase_drive_arc_distance(pbio_drivebase_t *db, int32_t radius, int32_t distance, pbio_control_on_completion_t on_completion) {
+
+    if (pbio_int_math_abs(radius) < 10) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // The internal functions expect positive to mean clockwise for the robot
+    // with respect to the ground, not in relation to any particular circle.
+    int32_t angle = pbio_int_math_abs(distance) * 573 / pbio_int_math_abs(radius) / 10;
+    if ((radius < 0) != (distance < 0)) {
+        angle *= -1;
+    }
+
+    // Execute the common drive command at default speed (by passing 0 speed).
+    return pbio_drivebase_drive_relative(db, distance, 0, angle, 0, on_completion);
 }
 
 /**

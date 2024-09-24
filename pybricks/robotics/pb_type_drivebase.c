@@ -184,6 +184,39 @@ static mp_obj_t pb_type_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args,
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_curve_obj, 1, pb_type_DriveBase_curve);
 
+// pybricks.robotics.DriveBase.arc
+static mp_obj_t pb_type_DriveBase_arc(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_DriveBase_obj_t, self,
+        PB_ARG_REQUIRED(radius),
+        PB_ARG_DEFAULT_NONE(distance),
+        PB_ARG_DEFAULT_NONE(angle),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_TRUE(wait));
+
+    // Parse user arguments.
+    mp_int_t radius = pb_obj_get_int(radius_in);
+    if ((distance_in == mp_const_none) == (angle_in == mp_const_none)) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Please specify distance or angle but not both."));
+    }
+
+    pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+
+    if (distance_in != mp_const_none) {
+        pb_assert(pbio_drivebase_drive_arc_distance(self->db, radius, pb_obj_get_int(distance_in), then));
+    } else {
+        pb_assert(pbio_drivebase_drive_arc_angle(self->db, radius, pb_obj_get_int(angle_in), then));
+    }
+
+    // Old way to do parallel movement is to start and not wait on anything.
+    if (!mp_obj_is_true(wait_in)) {
+        return mp_const_none;
+    }
+    // Handle completion by awaiting or blocking.
+    return await_or_wait(self);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_arc_obj, 1, pb_type_DriveBase_arc);
+
 // pybricks.robotics.DriveBase.drive
 static mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -359,6 +392,7 @@ static const pb_attr_dict_entry_t pb_type_DriveBase_attr_dict[] = {
 
 // dir(pybricks.robotics.DriveBase)
 static const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_arc),              MP_ROM_PTR(&pb_type_DriveBase_arc_obj)      },
     { MP_ROM_QSTR(MP_QSTR_curve),            MP_ROM_PTR(&pb_type_DriveBase_curve_obj)    },
     { MP_ROM_QSTR(MP_QSTR_straight),         MP_ROM_PTR(&pb_type_DriveBase_straight_obj) },
     { MP_ROM_QSTR(MP_QSTR_turn),             MP_ROM_PTR(&pb_type_DriveBase_turn_obj)     },
