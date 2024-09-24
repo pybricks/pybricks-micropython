@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.6.0b1] - 2024-09-24
+
 ### Added
 
 - Allow Bluetooth to be toggled off and on with the Bluetooth button on the
@@ -940,7 +942,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...HEAD
+[3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
 [3.5.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...v3.5.0
 [3.5.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...v3.5.0b2
 [3.5.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0...v3.5.0b1
