@@ -970,8 +970,13 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
 }
 
 void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
-    HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
     HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
+
+    // The VBUS IRQ remains enabled so that it can still
+    // be triggered if the device is shut down but left
+    // connected to charge. When the charging cable is
+    // disconnected, the IRQ will trigger and lead to the
+    // device fully powering down.
 }
 
 void OTG_FS_IRQHandler(void) {
