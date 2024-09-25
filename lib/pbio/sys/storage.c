@@ -66,16 +66,16 @@ typedef struct {
     volatile uint32_t checksum_complement;
     #endif
     /**
+     * End-user read-write accessible data. Everything after this is also
+     * user-readable but not writable.
+     */
+    uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
+    /**
      * First 8 symbols of the git hash of the firmware version used to create
      * this data map. If this does not match the version of the running
      * firmware, user data will be reset to 0.
      */
     char stored_firmware_hash[8];
-    /**
-     * End-user read-write accessible data. Everything after this is also
-     * user-readable but not writable.
-     */
-    uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
     /**
      * System settings. Settings will be reset to defaults when the firmware
      * version changes due to an update.

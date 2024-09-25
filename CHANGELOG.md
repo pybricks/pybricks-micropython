@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed persistent data not being deleted when swapping
+  from `3.6.0b1` to `3.5.0` and back to `3.6.0b1` ([support#1846]).
+
+[support#1846]: https://github.com/pybricks/support/issues/1846
+
 ## [3.6.0b1] - 2024-09-24
 
 ### Added
