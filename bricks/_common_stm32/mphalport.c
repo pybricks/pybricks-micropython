@@ -138,13 +138,13 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
             continue;
         }
 
+        MICROPY_EVENT_POLL_HOOK
+
         if (err != PBIO_ERROR_AGAIN) {
             // Ignoring error for now. This means stdout lost if Bluetooth is
             // disconnected.
             return;
         }
-
-        MICROPY_EVENT_POLL_HOOK
     }
 }
 
