@@ -179,6 +179,9 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
 
     // Optionally use gyro to override the heading source for more accuracy.
     // The gyro manages its own offset, so we don't need to subtract it here.
+    // Note that the heading speed estimate (used for derivative control still
+    // uses the motor estimate rather than the gyro speed, to guarantee the
+    // same stability properties to stabilize the motors.)
     if (db->use_gyro) {
         pbio_imu_get_heading_scaled(&state_heading->position, &state_heading->speed, db->control_heading.settings.ctl_steps_per_app_step);
     }
@@ -361,8 +364,10 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     // geometry, so it is done after the scaling is set.
     pbio_drivebase_reset(db, 0, 0);
 
-    // Finish setup. By default, don't use gyro.
-    return pbio_drivebase_set_use_gyro(db, false);
+    // By default, don't use gyro for steering control.
+    db->use_gyro = false;
+
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -375,6 +380,11 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
  * @return                       Error code.
  */
 pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, bool use_gyro) {
+
+    // No need to reset controls if already in correct mode.
+    if (db->use_gyro == use_gyro) {
+        return PBIO_SUCCESS;
+    }
 
     // We stop so that new commands will reinitialize the state using the
     // newly selected input for heading control.
