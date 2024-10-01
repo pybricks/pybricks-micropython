@@ -4,12 +4,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Relaxed speed limit from 1000 deg/s to 1200 deg/s for external Boost
+  motor ([support#1623]).
+
 ### Fixed
 - Fixed persistent data not being deleted when swapping
   from `3.6.0b1` to `3.5.0` and back to `3.6.0b1` ([support#1846]).
 - Fixed controls stopping if `use_gyro` is called again with the same
   argument as already active ([support#1858]).
 
+[support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1846]: https://github.com/pybricks/support/issues/1846
 [support#1858]: https://github.com/pybricks/support/issues/1858
 

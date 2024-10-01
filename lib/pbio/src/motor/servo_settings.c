@@ -241,7 +241,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     {
         .id = PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR,
         .model = &model_interactive,
-        .rated_max_speed = 1000,
+        .rated_max_speed = 1200,
         .feedback_gain_low = 45,
         .precision_profile = 12,
         .pid_kp_low_speed_threshold = 0,
