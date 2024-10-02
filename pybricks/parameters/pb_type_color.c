@@ -163,30 +163,71 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     mp_printf(print, "Color(h=%u, s=%u, v=%d)", self->hsv.h, self->hsv.s, self->hsv.v);
 }
 
+static mp_obj_t pb_type_Color_subscr_index(pb_type_Color_obj_t *self, size_t index) {
+    switch (index) {
+        case 0:
+            return MP_OBJ_NEW_SMALL_INT(self->hsv.h);
+        case 1:
+            return MP_OBJ_NEW_SMALL_INT(self->hsv.s);
+        case 2:
+            return MP_OBJ_NEW_SMALL_INT(self->hsv.v);
+        default:
+            mp_raise_type(&mp_type_IndexError);
+    }
+}
+
 static mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t value) {
 
-    // If we're a Color instance, there is no subscr
+    // For Color instance, use 0, 1, 2 to index h, s, v.
     if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
-        return MP_OBJ_NULL;
+        return pb_type_Color_subscr_index(MP_OBJ_TO_PTR(self_in), mp_obj_get_int(index));
     }
 
-    // If user wants to store, ensure they store color
+    // Otherwise this is the main Color type. Treat it like a dictionary.
+    // If user wants to store, ensure they store color.
     if (value != MP_OBJ_SENTINEL && value != MP_OBJ_NULL) {
         pb_assert_type(value, &pb_type_Color);
     }
-
-    // Treat it like a dictionary
     return MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, subscr)(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), index, value);
+}
+
+typedef struct {
+    mp_obj_base_t base;
+    mp_fun_1_t iternext;
+    mp_obj_t color;
+    size_t cur;
+} pb_type_Color_it_t;
+
+_Static_assert(sizeof(pb_type_Color_it_t) <= sizeof(mp_obj_iter_buf_t),
+    "pb_type_Color_it_t uses memory allocated for mp_obj_iter_buf_t");
+
+static mp_obj_t pb_type_Color_it_iternext(mp_obj_t self_in) {
+    pb_type_Color_it_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Color_obj_t *color = MP_OBJ_TO_PTR(self->color);
+    if (self->cur <= 2) {
+        return pb_type_Color_subscr_index(color, self->cur++);
+    }
+    return MP_OBJ_STOP_ITERATION;
+}
+
+static mp_obj_t pb_type_Color_instance_getiter(mp_obj_t o_in, mp_obj_iter_buf_t *iter_buf) {
+    pb_type_Color_obj_t *color = MP_OBJ_TO_PTR(o_in);
+    pb_type_Color_it_t *color_it = (pb_type_Color_it_t *)iter_buf;
+    color_it->base.type = &mp_type_polymorph_iter;
+    color_it->color = MP_OBJ_FROM_PTR(color);
+    color_it->iternext = pb_type_Color_it_iternext;
+    color_it->cur = 0;
+    return MP_OBJ_FROM_PTR(color_it);
 }
 
 static mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
 
-    // If we're a Color instance, there is no getiter
+    // Iterate color instance as h, s, v.
     if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
-        return MP_OBJ_NULL;
+        return pb_type_Color_instance_getiter(self_in, iter_buf);
     }
 
-    // Treat it like a dictionary
+    // Treat the Color type like a dictionary.
     return ((mp_getiter_fun_t)MP_OBJ_TYPE_GET_SLOT(&mp_type_dict, iter))(MP_OBJ_FROM_PTR(MP_STATE_VM(pb_type_Color_dict)), iter_buf);
 }
 

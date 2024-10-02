@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- Allow color objects to be iterated as h, s, v = color_object or indexed
+  as color_object[0]. This allows access to these properties in block
+  coding ([support#1661]).
+
 ### Changed
 
 - Relaxed speed limit from 1000 deg/s to 1200 deg/s for external Boost
@@ -18,6 +24,7 @@
   loops ([support#1668]).
 
 [support#1623]: https://github.com/pybricks/support/issues/1623
+[support#1661]: https://github.com/pybricks/support/issues/1661
 [support#1668]: https://github.com/pybricks/support/issues/1668
 [support#1846]: https://github.com/pybricks/support/issues/1846
 [support#1858]: https://github.com/pybricks/support/issues/1858
