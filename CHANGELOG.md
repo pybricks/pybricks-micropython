@@ -14,7 +14,8 @@
   from `3.6.0b1` to `3.5.0` and back to `3.6.0b1` ([support#1846]).
 - Fixed controls stopping if `use_gyro` is called again with the same
   argument as already active ([support#1858]).
-- Fixed lockup and reboot with f-strings in tight loops ([support#1668]).
+- Fixed lockup and reboot with f-strings and slice allocations in tight
+  loops ([support#1668]).
 
 [support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1668]: https://github.com/pybricks/support/issues/1668
