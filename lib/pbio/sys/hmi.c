@@ -40,16 +40,15 @@ static uint8_t selected_slot = 0;
  */
 static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
     struct pt *pt = &update_program_run_button_wait_state_pt;
-    // Creative use of protothread to reduce code size. This is the same
-    // as checking if the user program is running after each PT_WAIT.
+
+    // This should not be active while a program is running.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        goto start;
+        PT_EXIT(pt);
     }
 
     PT_BEGIN(pt);
 
     for (;;) {
-    start:
         // button may still be pressed from power on or user program stop
         PT_WAIT_UNTIL(pt, !button_pressed);
         PT_WAIT_UNTIL(pt, button_pressed);
@@ -73,16 +72,15 @@ static struct pt update_bluetooth_button_wait_state_pt;
  */
 static PT_THREAD(update_bluetooth_button_wait_state(bool button_pressed)) {
     struct pt *pt = &update_bluetooth_button_wait_state_pt;
-    // Creative use of protothread to reduce code size. This is the same
-    // as checking if the user program is running after each PT_WAIT.
+
+    // This should not be active while a program is running.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        goto start;
+        PT_EXIT(pt);
     }
 
     PT_BEGIN(pt);
 
     for (;;) {
-    start:
         // button may still be pressed during user program
         PT_WAIT_UNTIL(pt, !button_pressed);
         PT_WAIT_UNTIL(pt, button_pressed);
@@ -115,10 +113,10 @@ uint8_t pbsys_hmi_get_selected_program_slot(void) {
  */
 static PT_THREAD(update_left_right_button_wait_state(bool left_button_pressed, bool right_button_pressed)) {
     struct pt *pt = &update_left_right_button_wait_state_pt;
-    // Creative use of protothread to reduce code size. This is the same
-    // as checking if the user program is running after each PT_WAIT.
+
+    // This should not be active while a program is running.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        goto start;
+        PT_EXIT(pt);
     }
 
     static uint8_t previous_slot;
@@ -127,7 +125,6 @@ static PT_THREAD(update_left_right_button_wait_state(bool left_button_pressed, b
     PT_BEGIN(pt);
 
     for (;;) {
-    start:
         // Buttons may still be pressed during user program
         PT_WAIT_UNTIL(pt, !left_button_pressed && !right_button_pressed);
 

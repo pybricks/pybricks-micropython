@@ -22,12 +22,15 @@
   argument as already active ([support#1858]).
 - Fixed lockup and reboot with f-strings and slice allocations in tight
   loops ([support#1668]).
+- Fixed program restarting if the stop button was held to end the program
+  without an exception ([support#1863]).
 
 [support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1661]: https://github.com/pybricks/support/issues/1661
 [support#1668]: https://github.com/pybricks/support/issues/1668
 [support#1846]: https://github.com/pybricks/support/issues/1846
 [support#1858]: https://github.com/pybricks/support/issues/1858
+[support#1863]: https://github.com/pybricks/support/issues/1863
 
 ## [3.6.0b1] - 2024-09-24
 
