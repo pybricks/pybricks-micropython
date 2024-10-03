@@ -82,9 +82,11 @@ static PT_THREAD(test_light_matrix(struct pt *pt)) {
         IMAGE_DATA(1, 2, 3, 4, 5, 6, 7, 8, 9)), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-    // starting animation should call set_pixel() synchonously with the first cell data
+    // starting animation should schedule timer event at 0 ms to call
+    // set_pixel() after handling pending events.
     test_light_matrix_reset();
     pbio_light_matrix_start_animation(&test_light_matrix, test_animation, 2, INTERVAL);
+    pbio_handle_pending_events();
     tt_want_light_matrix_data(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
     // set_pixel() should not be called again until after a delay and it should

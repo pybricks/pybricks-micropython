@@ -33,10 +33,12 @@ static PT_THREAD(test_light_animation(struct pt *pt)) {
     tt_want(!process_is_running(&pbio_light_animation_process));
     tt_want(!pbio_light_animation_is_started(&test_animation));
 
-    // starting animation should start process and call next() once synchonously
+    // starting animation should start process and set a timer at 0ms to call
+    // next() after handling pending events
     pbio_light_animation_start(&test_animation);
     tt_want(pbio_light_animation_is_started(&test_animation));
     tt_want(process_is_running(&pbio_light_animation_process));
+    pbio_handle_pending_events();
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
 
     // next() should not be called again until after a delay

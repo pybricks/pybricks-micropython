@@ -63,9 +63,10 @@ static PT_THREAD(test_color_light(struct pt *pt)) {
     // reset call count for next series of tests
     test_light_set_hsv_call_count = 0;
 
-    // starting animation should call set_hsv() synchonously
+    // starting animation should call set_hsv() after handling pending events
     static const pbio_color_hsv_t hsv = { .h = PBIO_COLOR_HUE_BLUE, .s = 100, .v = 100 };
     pbio_color_light_start_blink_animation(&test_light, &hsv, test_blink);
+    pbio_handle_pending_events();
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
     // even blink cells turns the light on
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_BLUE);
@@ -92,8 +93,9 @@ static PT_THREAD(test_color_light(struct pt *pt)) {
     // reset call count for next series of tests
     test_light_set_hsv_call_count = 0;
 
-    // starting animation should call set_hsv() synchonously
+    // starting animation should call set_hsv() after handling pending events
     pbio_color_light_start_animation(&test_light, TEST_ANIMATION_TIME, test_animation);
+    pbio_handle_pending_events();
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_CYAN);
 

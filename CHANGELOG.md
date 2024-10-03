@@ -24,7 +24,10 @@
   loops ([support#1668]).
 - Fixed program restarting if the stop button was held to end the program
   without an exception ([support#1863]).
+- Fixed program lockup when restarting a hub light or light matrix animation
+  at exact multiples of its animation interval ([support#1295]).
 
+[support#1295]: https://github.com/pybricks/support/issues/1295
 [support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1661]: https://github.com/pybricks/support/issues/1661
 [support#1668]: https://github.com/pybricks/support/issues/1668

@@ -8,6 +8,7 @@
 
 #include <pbio/button.h>
 #include <pbio/int_math.h>
+#include <pbio/main.h>
 
 // Use this macro to define tests that _don't_ require a Contiki event loop
 #define PBIO_TEST(name) \
@@ -56,6 +57,11 @@ void pbio_test_counter_set_abs_angle(int32_t millidegrees);
         pbio_test_clock_tick(1); \
         PT_YIELD(pt); \
     }
+
+static inline void pbio_handle_pending_events(void) {
+    while (pbio_do_one_event()) {
+    }
+}
 
 #define pbio_test_int_is_close(value, target, tolerance) (pbio_int_math_abs((value) - (target)) <= (tolerance))
 
