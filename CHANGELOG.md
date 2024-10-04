@@ -14,6 +14,7 @@
 
 - Relaxed speed limit from 1000 deg/s to 1200 deg/s for external Boost
   motor ([support#1623]).
+- Make `broadcast_channel` optional instead of defaulting to `0`.
 
 ### Fixed
 - Fixed persistent data not being deleted when swapping

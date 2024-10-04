@@ -32,7 +32,7 @@ static mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_arg
         PB_ARG_DEFAULT_OBJ(top_side, pb_type_Axis_Z_obj),
         PB_ARG_DEFAULT_OBJ(front_side, pb_type_Axis_X_obj)
         #if PYBRICKS_PY_COMMON_BLE
-        , PB_ARG_DEFAULT_INT(broadcast_channel, 0)
+        , PB_ARG_DEFAULT_NONE(broadcast_channel)
         , PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj)
         #endif
         );

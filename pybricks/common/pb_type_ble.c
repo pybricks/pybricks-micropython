@@ -52,7 +52,7 @@ static pbio_task_t broadcast_task;
 
 typedef struct {
     mp_obj_base_t base;
-    uint8_t broadcast_channel;
+    mp_obj_t broadcast_channel;
     pbio_task_t *broadcast_task;
     observed_data_t observed_data[];
 } pb_obj_BLE_t;
@@ -263,14 +263,9 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     // move hub is connected to Pybricks Code. Also, broadcasting interferes
     // with observing even when not connected to Pybricks Code.
 
-    // FIXME: This check is (and should only be) done in the BLE constructor,
-    // but it may still pass there since 0 is a valid broadcast channel. That
-    // should be fixed by defaulting to None if no broadcast channel is provided.
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_storage_settings_bluetooth_enabled()) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
+    if (self->broadcast_channel == mp_const_none) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("no broadcast channel selected"));
     }
-    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     // Stop broadcasting if data is None.
     if (data_in == mp_const_none) {
@@ -309,7 +304,7 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     value.v.data[0] = index + 4; // length
     value.v.data[1] = MFG_SPECIFIC;
     pbio_set_uint16_le(&value.v.data[2], LEGO_CID);
-    value.v.data[4] = self->broadcast_channel;
+    value.v.data[4] = mp_obj_get_int(self->broadcast_channel);
 
     pbdrv_bluetooth_start_broadcasting(self->broadcast_task, &value.v);
     return pb_module_tools_pbio_task_wait_or_await(self->broadcast_task);
@@ -516,7 +511,7 @@ static MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
  *
  * Do not call this function more than once unless pb_type_ble_start_cleanup() is called first.
  *
- * @param [in]  broadcast_channel_in    (int) The channel number to use for broadcasting.
+ * @param [in]  broadcast_channel_in    (int) The channel number to use for broadcasting or None for no broadcasting.
  * @param [in]  observe_channels_in     (list[int]) A list of channels numbers to observe.
  * @returns                             A newly allocated object.
  * @throws ValueError                   If either parameter contains an out of range channel number.
@@ -525,29 +520,27 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     // making the assumption that this is only called once before each pb_type_ble_start_cleanup()
     assert(observed_data == NULL);
 
-    mp_int_t broadcast_channel = mp_obj_get_int(broadcast_channel_in);
-
-    if (broadcast_channel < 0 || broadcast_channel > UINT8_MAX) {
-        mp_raise_ValueError(MP_ERROR_TEXT("broadcast channel must be 0 to 255"));
+    // Validate channel arguments.
+    if (broadcast_channel_in != mp_const_none && (mp_obj_get_int(broadcast_channel_in) < 0 || mp_obj_get_int(broadcast_channel_in) > UINT8_MAX)) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Broadcast channel must be 0 to 255 or None"));
+    }
+    mp_int_t num_observe_channels = mp_obj_get_int(mp_obj_len(observe_channels_in));
+    if (num_observe_channels < 0 || num_observe_channels > UINT8_MAX) {
+        mp_raise_ValueError(MP_ERROR_TEXT("Too many observe channels"));
     }
 
-    mp_int_t num_channels = mp_obj_get_int(mp_obj_len(observe_channels_in));
-
+    // Raise if Bluetooth is attempted to be used while not enabled.
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_storage_settings_bluetooth_enabled() && (num_channels > 0 || broadcast_channel)) {
+    if (!pbsys_storage_settings_bluetooth_enabled() && (num_observe_channels > 0 || broadcast_channel_in != mp_const_none)) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
-    if (num_channels < 0 || num_channels > UINT8_MAX) {
-        mp_raise_ValueError(MP_ERROR_TEXT("len observe channels must be 0 to 255"));
-    }
-
-    pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data_t, num_channels, &pb_type_BLE);
+    pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_BLE);
     self->broadcast_task = &broadcast_task;
-    self->broadcast_channel = broadcast_channel;
+    self->broadcast_channel = broadcast_channel_in;
 
-    for (mp_int_t i = 0; i < num_channels; i++) {
+    for (mp_int_t i = 0; i < num_observe_channels; i++) {
         mp_int_t channel = mp_obj_get_int(mp_obj_subscr(
             observe_channels_in, MP_OBJ_NEW_SMALL_INT(i), MP_OBJ_SENTINEL));
 
@@ -564,10 +557,10 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
 
     // globals for driver callback
     observed_data = self->observed_data;
-    num_observed_data = num_channels;
+    num_observed_data = num_observe_channels;
 
     // Start observing.
-    if (num_channels > 0) {
+    if (num_observe_channels > 0) {
         pbio_task_t task;
         pbdrv_bluetooth_start_observing(&task, handle_observe_event);
         pb_module_tools_pbio_task_do_blocking(&task, -1);
