@@ -49,11 +49,11 @@ static observed_data_t *observed_data;
 static uint8_t num_observed_data;
 
 static pbio_task_t broadcast_task;
+static pbio_task_t toggle_observe_task;
 
 typedef struct {
     mp_obj_base_t base;
     mp_obj_t broadcast_channel;
-    pbio_task_t *broadcast_task;
     observed_data_t observed_data[];
 } pb_obj_BLE_t;
 
@@ -306,8 +306,8 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     pbio_set_uint16_le(&value.v.data[2], LEGO_CID);
     value.v.data[4] = mp_obj_get_int(self->broadcast_channel);
 
-    pbdrv_bluetooth_start_broadcasting(self->broadcast_task, &value.v);
-    return pb_module_tools_pbio_task_wait_or_await(self->broadcast_task);
+    pbdrv_bluetooth_start_broadcasting(&broadcast_task, &value.v);
+    return pb_module_tools_pbio_task_wait_or_await(&broadcast_task);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
 
@@ -406,7 +406,7 @@ static const observed_data_t *pb_module_ble_get_channel_data(mp_obj_t channel_in
     observed_data_t *ch_data = lookup_observed_data(channel);
 
     if (!ch_data) {
-        mp_raise_ValueError(MP_ERROR_TEXT("channel not allocated"));
+        mp_raise_ValueError(MP_ERROR_TEXT("channel not configured"));
     }
 
     // Reset the data if it is too old.
@@ -468,6 +468,28 @@ static mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 static MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_obj, pb_module_ble_observe);
 
 /**
+ * Enables or disable observing
+ *
+ * @param [in]  self_in     The BLE object.
+ * @param [in]  enable_in   Thruthy to enable, falsy to disable.
+ * @returns                 Awaitable.
+ */
+static mp_obj_t pb_module_ble_observe_enable(mp_obj_t self_in, mp_obj_t enable_in) {
+
+    if (num_observed_data == 0) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("channel not configured"));
+    }
+
+    if (mp_obj_is_true(enable_in)) {
+        pbdrv_bluetooth_start_observing(&toggle_observe_task, handle_observe_event);
+    } else {
+        pbdrv_bluetooth_stop_observing(&toggle_observe_task);
+    }
+    return pb_module_tools_pbio_task_wait_or_await(&toggle_observe_task);
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_observe_enable_obj, pb_module_ble_observe_enable);
+
+/**
  * Retrieves the filtered RSSI signal strength of the given channel.
  *
  * @param [in]  self_in     The BLE object.
@@ -496,6 +518,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_version_obj, pb_module_ble_versio
 static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_broadcast), MP_ROM_PTR(&pb_module_ble_broadcast_obj) },
     { MP_ROM_QSTR(MP_QSTR_observe), MP_ROM_PTR(&pb_module_ble_observe_obj) },
+    { MP_ROM_QSTR(MP_QSTR_observe_enable), MP_ROM_PTR(&pb_module_ble_observe_enable_obj) },
     { MP_ROM_QSTR(MP_QSTR_signal_strength), MP_ROM_PTR(&pb_module_ble_signal_strength_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
 };
@@ -519,6 +542,7 @@ static MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
 mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
     // making the assumption that this is only called once before each pb_type_ble_start_cleanup()
     assert(observed_data == NULL);
+    pb_module_tools_assert_blocking();
 
     // Validate channel arguments.
     if (broadcast_channel_in != mp_const_none && (mp_obj_get_int(broadcast_channel_in) < 0 || mp_obj_get_int(broadcast_channel_in) > UINT8_MAX)) {
@@ -537,7 +561,6 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
     pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_BLE);
-    self->broadcast_task = &broadcast_task;
     self->broadcast_channel = broadcast_channel_in;
 
     for (mp_int_t i = 0; i < num_observe_channels; i++) {
@@ -559,11 +582,9 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     observed_data = self->observed_data;
     num_observed_data = num_observe_channels;
 
-    // Start observing.
+    // Start observing right away by default.
     if (num_observe_channels > 0) {
-        pbio_task_t task;
-        pbdrv_bluetooth_start_observing(&task, handle_observe_event);
-        pb_module_tools_pbio_task_do_blocking(&task, -1);
+        pb_module_ble_observe_enable(MP_OBJ_FROM_PTR(self), mp_const_true);
     }
 
     return MP_OBJ_FROM_PTR(self);
@@ -576,7 +597,7 @@ void pb_type_ble_start_cleanup(void) {
     pbdrv_bluetooth_stop_observing(&stop_observing_task);
     observed_data = NULL;
     num_observed_data = 0;
-    // Tasks awaited in pybricks de-init.
+    // The aforementioned tasks started here are awaited in pybricks de-init.
 }
 
 #endif // PYBRICKS_PY_COMMON_BLE

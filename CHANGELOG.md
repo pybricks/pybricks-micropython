@@ -9,6 +9,8 @@
 - Allow color objects to be iterated as h, s, v = color_object or indexed
   as color_object[0]. This allows access to these properties in block
   coding ([support#1661]).
+- Added `observe_enable` to the hub `BLE` class to selectively turn observing
+  on and off, just like you can with broadcasting ([support#1806]).
 
 ### Changed
 
@@ -32,6 +34,7 @@
 [support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1661]: https://github.com/pybricks/support/issues/1661
 [support#1668]: https://github.com/pybricks/support/issues/1668
+[support#1806]: https://github.com/pybricks/support/issues/1806
 [support#1846]: https://github.com/pybricks/support/issues/1846
 [support#1858]: https://github.com/pybricks/support/issues/1858
 [support#1863]: https://github.com/pybricks/support/issues/1863
