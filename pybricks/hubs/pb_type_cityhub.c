@@ -28,7 +28,7 @@ typedef struct _hubs_CityHub_obj_t {
 static mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     #if PYBRICKS_PY_COMMON_BLE
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_INT(broadcast_channel, 0),
+        PB_ARG_DEFAULT_NONE(broadcast_channel),
         PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj));
     #endif
 
