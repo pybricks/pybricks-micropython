@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#include <pbdrv/ioport.h>
+#include <pbdrv/motor_driver.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
@@ -114,6 +116,16 @@ int main(int argc, char **argv) {
         // We must handle all pending events before turning the power off the
         // first time, otherwise the city hub turns itself back on sometimes.
         while (pbio_do_one_event()) {
+        }
+
+        pbdrv_motor_driver_power_off();
+
+        // Some hubs will turn themselves back on if I/O port VCC is off when
+        // we call pbdrv_reset_power_off(). So don't turn off power until the
+        // return value of pbdrv_ioport_power_off() tells us it is safe to do
+        // so.
+        if (pbdrv_ioport_power_off()) {
+            continue;
         }
 
         #if PBSYS_CONFIG_BATTERY_CHARGER

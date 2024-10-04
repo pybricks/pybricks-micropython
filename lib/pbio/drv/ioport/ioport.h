@@ -11,14 +11,9 @@
 
 void pbdrv_ioport_init(void);
 
-void pbdrv_ioport_deinit(void);
-
 #else // PBDRV_CONFIG_IOPORT
 
 static inline void pbdrv_ioport_init(void) {
-}
-
-static inline void pbdrv_ioport_deinit(void) {
 }
 
 #endif // PBDRV_CONFIG_IOPORT
