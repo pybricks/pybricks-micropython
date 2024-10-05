@@ -11,6 +11,7 @@
   coding ([support#1661]).
 - Added `observe_enable` to the hub `BLE` class to selectively turn observing
   on and off, just like you can with broadcasting ([support#1806]).
+- Added `hub.system.info()` method with hub status flags ([support#1496]).
 
 ### Changed
 
@@ -31,6 +32,7 @@
   at exact multiples of its animation interval ([support#1295]).
 
 [support#1295]: https://github.com/pybricks/support/issues/1295
+[support#1496]: https://github.com/pybricks/support/issues/1496
 [support#1623]: https://github.com/pybricks/support/issues/1623
 [support#1661]: https://github.com/pybricks/support/issues/1661
 [support#1668]: https://github.com/pybricks/support/issues/1668

@@ -8,6 +8,9 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/reset.h>
+#include <pbsys/program_stop.h>
+#include <pbsys/status.h>
 #include <pbsys/storage.h>
 
 #include "py/obj.h"
@@ -15,6 +18,7 @@
 #include "py/runtime.h"
 
 #include <pybricks/common.h>
+#include <pybricks/parameters.h>
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -27,8 +31,6 @@ static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_name_obj, pb_type_System_name);
 
 #if PBDRV_CONFIG_RESET
 
-#include <pbdrv/reset.h>
-
 static mp_obj_t pb_type_System_reset_reason(void) {
     pbdrv_reset_reason_t reason = pbdrv_reset_get_reason();
     return MP_OBJ_NEW_SMALL_INT(reason);
@@ -37,12 +39,28 @@ static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System
 
 #endif // PBDRV_CONFIG_RESET
 
+static mp_obj_t pb_type_System_info(void) {
+    const char *hub_name = pbdrv_bluetooth_get_hub_name();
+
+    mp_map_elem_t info[] = {
+        {MP_OBJ_NEW_QSTR(MP_QSTR_name), mp_obj_new_str(hub_name, strlen(hub_name))},
+        #if PBDRV_CONFIG_RESET
+        {MP_OBJ_NEW_QSTR(MP_QSTR_reset_reason), mp_obj_new_int(pbdrv_reset_get_reason())},
+        #endif // PBDRV_CONFIG_RESET
+        {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_ble), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED))},
+    };
+    mp_obj_t info_dict = mp_obj_new_dict(MP_ARRAY_SIZE(info));
+
+    for (size_t i = 0; i < MP_ARRAY_SIZE(info); i++) {
+        mp_map_elem_t *elem = &info[i];
+        mp_obj_dict_store(info_dict, elem->key, elem->value);
+    }
+
+    return info_dict;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_info_obj, pb_type_System_info);
+
 #if PBIO_CONFIG_ENABLE_SYS
-
-#include <pbsys/status.h>
-#include <pbsys/program_stop.h>
-
-#include <pybricks/parameters.h>
 
 static mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
     pbio_button_flags_t buttons = 0;
@@ -127,6 +145,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_System_storage_obj, 0, pb_type_System_
 // dir(pybricks.common.System)
 static const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_System_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_info), MP_ROM_PTR(&pb_type_System_info_obj) },
     #if PBDRV_CONFIG_RESET
     { MP_ROM_QSTR(MP_QSTR_reset_reason), MP_ROM_PTR(&pb_type_System_reset_reason_obj) },
     #endif // PBDRV_CONFIG_RESET
