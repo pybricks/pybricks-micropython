@@ -64,12 +64,12 @@ int main(int argc, char **argv) {
     pbio_init();
     pbsys_init();
 
-    #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
-    pbsys_main_program_request_start(0);
-    #endif
-
     // Keep loading and running user programs until shutdown is requested.
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
+
+        #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
+        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL);
+        #endif
 
         // REVISIT: this can be long waiting, so we could do a more efficient
         // wait (i.e. __WFI() on embedded system)
