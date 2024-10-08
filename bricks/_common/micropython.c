@@ -128,8 +128,18 @@ static void run_repl(void) {
 
     if (nlr_push(&nlr) == 0) {
         nlr_set_abort(&nlr);
-        // Run the REPL.
+        // No need to set interrupt_char here, it is done by pyexec.
+        #if PYBRICKS_OPT_RAW_REPL
+        if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
+            // Compatibility with mpremote.
+            mp_printf(&mp_plat_print, "MPY: soft reboot\n");
+            pyexec_raw_repl();
+        } else {
+            pyexec_friendly_repl();
+        }
+        #else // PYBRICKS_OPT_RAW_REPL
         pyexec_friendly_repl();
+        #endif // PYBRICKS_OPT_RAW_REPL
         nlr_pop();
     } else {
         // if vm abort

@@ -50,6 +50,7 @@
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (1)
+#define PYBRICKS_OPT_RAW_REPL                   (0)
 #define PYBRICKS_OPT_FLOAT                      (1)
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
 #define PYBRICKS_OPT_EXTRA_MOD                  (1)
