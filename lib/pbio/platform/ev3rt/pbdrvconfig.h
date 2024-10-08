@@ -6,6 +6,11 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_EV3RT                    (1)
 
+#define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_TEST              (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE         (8 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER    (512)
+
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
 #define PBDRV_CONFIG_HAS_PORT_C                     (1)
