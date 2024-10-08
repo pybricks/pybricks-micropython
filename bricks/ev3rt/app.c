@@ -27,6 +27,7 @@ void main_task(intptr_t unused) {
     while (true) {
         pbsys_main_program_t program = {
             .id = PBIO_PYBRICKS_USER_PROGRAM_ID_REPL,
+            .code_start = heap,
             .code_end = heap,
             .user_ram_start = heap,
             .user_ram_end = heap + sizeof(heap),
