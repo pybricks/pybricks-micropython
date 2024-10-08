@@ -60,19 +60,25 @@ static const uint8_t _program_data[] = {
 
 static struct {
     uint32_t write_size;
-    uint32_t stored_firmware_version;
     uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
+    char stored_firmware_hash[8];
     pbsys_storage_settings_t settings;
     uint32_t program_offset;
     uint32_t program_size;
     uint8_t program_data[sizeof(_program_data)];
 } blockdev = { 0 };
 
+// Information from MicroPython should not be used in the pbdrv drivers but it
+// is permissible for this test. It ensures we can place the expected git
+// version at the right place. FIXME: Move the git version to pybricks build
+// system, since it isn't actually the micropython git version.
+#include "genhdr/mpversion.h"
+
 void pbdrv_block_device_init(void) {
     blockdev.write_size = sizeof(blockdev) + sizeof(_program_data);
-    blockdev.stored_firmware_version = PBIO_HEXVERSION;
     blockdev.program_size = sizeof(_program_data);
-    memcpy(&blockdev.program_data, _program_data, sizeof(_program_data));
+    memcpy(&blockdev.stored_firmware_hash[0], MICROPY_GIT_HASH, sizeof(blockdev.stored_firmware_hash));
+    memcpy(&blockdev.program_data[0], _program_data, sizeof(_program_data));
 }
 
 PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
