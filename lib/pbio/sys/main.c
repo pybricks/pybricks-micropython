@@ -20,7 +20,28 @@
 #include <pbsys/program_stop.h>
 #include <pbsys/bluetooth.h>
 
+// Singleton with information about the currently (or soon) active program.
 static pbsys_main_program_t program;
+
+/**
+ * Checks if a start request has been made for the main program.
+ *
+ * @param [in]  program A pointer to the main program structure.
+ * @returns     true if a start request has been made, false otherwise.
+ */
+static bool pbsys_main_program_start_requested() {
+    return program.start_request_type != PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
+}
+
+/**
+ * Gets the type of start request for the main program.
+ *
+ * @param [in]  program A pointer to the main program structure.
+ * @returns     The type of start request.
+ */
+pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void) {
+    return program.start_request_type;
+}
 
 /**
  * Requests to start the main user application program.
@@ -31,10 +52,10 @@ static pbsys_main_program_t program;
  *              ::PBIO_ERROR_NOT_SUPPORTED if the program is not available.
  *              Otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id) {
+pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type) {
 
     // Can't start new program if already running or new requested.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || program.start_requested) {
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || pbsys_main_program_start_requested()) {
         return PBIO_ERROR_BUSY;
     }
 
@@ -49,7 +70,7 @@ pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id
         return err;
     }
 
-    program.start_requested = true;
+    program.start_request_type = start_request_type;
 
     return PBIO_SUCCESS;
 }
@@ -68,7 +89,7 @@ int main(int argc, char **argv) {
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
         #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
-        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL);
+        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
         #endif
 
         // REVISIT: this can be long waiting, so we could do a more efficient
@@ -76,7 +97,7 @@ int main(int argc, char **argv) {
         while (pbio_do_one_event()) {
         }
 
-        if (!program.start_requested) {
+        if (!pbsys_main_program_start_requested()) {
             continue;
         }
 
@@ -98,7 +119,7 @@ int main(int argc, char **argv) {
         pbsys_bluetooth_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
         pbio_stop_all(true);
-        program.start_requested = false;
+        program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
     }
 
     // Stop system processes and save user data before we shutdown.

@@ -9,6 +9,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/reset.h>
+#include <pbsys/main.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
@@ -48,6 +49,7 @@ static mp_obj_t pb_type_System_info(void) {
         {MP_OBJ_NEW_QSTR(MP_QSTR_reset_reason), mp_obj_new_int(pbdrv_reset_get_reason())},
         #endif // PBDRV_CONFIG_RESET
         {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_ble), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED))},
+        {MP_OBJ_NEW_QSTR(MP_QSTR_program_start_type), mp_obj_new_int(pbsys_main_program_get_start_request_type())},
     };
     mp_obj_t info_dict = mp_obj_new_dict(MP_ARRAY_SIZE(info));
 

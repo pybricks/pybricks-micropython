@@ -11,7 +11,8 @@
   coding ([support#1661]).
 - Added `observe_enable` to the hub `BLE` class to selectively turn observing
   on and off, just like you can with broadcasting ([support#1806]).
-- Added `hub.system.info()` method with hub status flags ([support#1496]).
+- Added `hub.system.info()` method with hub status flags ([support#1496]) and
+  value representing how the program was started.
 
 ### Changed
 

@@ -17,6 +17,30 @@
 #include <stdint.h>
 
 /**
+ * Whether and how the program was requested to start.
+ *
+ * Values are returned to the user, so the numeric values must not change.
+ */
+typedef enum {
+    /**
+     * The program was not requested to start.
+     */
+    PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE = 0,
+    /**
+     * The program was requested to start automatically on boot.
+     */
+    PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT = 1,
+    /**
+     * The program was requested to start using the hub button/display UI.
+     */
+    PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI = 2,
+    /**
+     * The program was requested to start remotely, such as with an IDE.
+     */
+    PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE = 3,
+} pbsys_main_program_start_request_type_t;
+
+/**
  * Main application program data information.
  */
 typedef struct _pbsys_main_program_t {
@@ -41,14 +65,16 @@ typedef struct _pbsys_main_program_t {
      */
     pbio_pybricks_user_program_id_t id;
     /**
-     * Whether a request was made to start the program.
+     * Whether a request was made to start the program, and how.
      */
-    bool start_requested;
+    pbsys_main_program_start_request_type_t start_request_type;
 } pbsys_main_program_t;
 
 #if PBSYS_CONFIG_MAIN
 
-pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id);
+pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void);
+
+pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type);
 
 /**
  * Validates the program that is being requested to start.
@@ -99,7 +125,11 @@ const char *pbsys_main_get_application_version_hash(void);
 
 #else // PBSYS_CONFIG_MAIN
 
-static inline pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id) {
+static inline pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void) {
+    return PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
+}
+
+static inline pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

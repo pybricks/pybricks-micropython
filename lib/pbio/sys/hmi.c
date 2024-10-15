@@ -56,7 +56,7 @@ static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
 
         // If we made it through a full press and release, without the user
         // program running, then start the currently selected user program.
-        pbsys_main_program_request_start(selected_slot);
+        pbsys_main_program_request_start(selected_slot, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
     }
 
     PT_END(pt);
@@ -152,7 +152,7 @@ static PT_THREAD(update_left_right_button_wait_state(bool left_button_pressed, b
         if (left_button_pressed && pbdrv_clock_get_ms() - first_press_time < 100) {
             selected_slot = previous_slot;
             pbsys_hub_light_matrix_update_program_slot();
-            pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW);
+            pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
         } else {
             // Successful switch. And UI was already updated.
             previous_slot = selected_slot;
