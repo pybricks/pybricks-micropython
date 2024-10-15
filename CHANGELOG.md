@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.6.0b2] - 2024-10-15
+
 ### Added
 
 - Allow color objects to be iterated as h, s, v = color_object or indexed
@@ -980,7 +982,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...HEAD
+[3.6.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...v3.6.0b2
 [3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
 [3.5.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...v3.5.0
 [3.5.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...v3.5.0b2
