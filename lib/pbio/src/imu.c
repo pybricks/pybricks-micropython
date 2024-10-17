@@ -288,11 +288,12 @@ void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, i
     float heading_degrees = pbio_imu_get_heading();
 
     // Number of whole rotations in control units (in terms of wheels, not robot).
-    heading->rotations = heading_degrees / (360000 / ctl_steps_per_degree);
+    heading->rotations = (int32_t)(heading_degrees / (360000.0f / ctl_steps_per_degree));
 
-    // The truncated part represents everything else.
-    float truncated = heading_degrees - heading->rotations * (360000 / ctl_steps_per_degree);
-    heading->millidegrees = truncated * ctl_steps_per_degree;
+    // The truncated part represents everything else. NB: The scaling factor
+    // is a float here to ensure we don't lose precision while scaling.
+    float truncated = heading_degrees - heading->rotations * (360000.0f / ctl_steps_per_degree);
+    heading->millidegrees = (int32_t)(truncated * ctl_steps_per_degree);
 
     // The heading rate can be obtained by a simple scale because it always fits.
     pbio_geometry_xyz_t angular_rate;
