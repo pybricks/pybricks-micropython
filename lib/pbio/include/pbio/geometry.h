@@ -31,15 +31,13 @@ typedef enum {
 /**
  * Coordinate-like type with x, y, and z floating point values.
  */
-typedef struct _pbio_geometry_xyz_t {
-    union {
-        struct {
-            float x; /**< X coordinate.*/
-            float y; /**< Y coordinate.*/
-            float z; /**< Z coordinate.*/
-        };
-        float values[3];
+typedef union {
+    struct {
+        float x; /**< X coordinate.*/
+        float y; /**< Y coordinate.*/
+        float z; /**< Z coordinate.*/
     };
+    float values[3];
 } pbio_geometry_xyz_t;
 
 /**
