@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- The method `DriveBase.angle()` now returns a float ([support#1844]). This
+  makes it properly equivalent to `hub.imu.heading`.
+
+### Fixed
+- Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
+  could cause `turn(360)` to be off by a degree ([support#1844]).
+
+[support#1844]: https://github.com/pybricks/support/issues/1844
+[support#1886]: https://github.com/pybricks/support/issues/1886
+
 ## [3.6.0b2] - 2024-10-15
 
 ### Added

@@ -279,10 +279,15 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_distance_obj, pb_type_DriveBase_dist
 static mp_obj_t pb_type_DriveBase_angle(mp_obj_t self_in) {
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
+    #if MICROPY_PY_BUILTINS_FLOAT
+    float angle;
+    pb_assert(pbio_drivebase_get_state_user_angle(self->db, &angle));
+    return mp_obj_new_float_from_f(angle);
+    #else
     int32_t heading, _;
     pb_assert(pbio_drivebase_get_state_user(self->db, &_, &_, &heading, &_));
-
     return mp_obj_new_int(heading);
+    #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_DriveBase_angle_obj, pb_type_DriveBase_angle);
 

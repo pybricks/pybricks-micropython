@@ -801,6 +801,28 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
 }
 
 /**
+ * Gets the drivebase angle in user units. This is the same as the angle
+ * returned by ::pbio_drivebase_get_state_user, but as a floating point value.
+ *
+ * @param [in]  db          The drivebase instance.
+ * @param [out] angle       Angle turned in degrees, floating point.
+ * @return                  Error code.
+ */
+pbio_error_t pbio_drivebase_get_state_user_angle(pbio_drivebase_t *db, float *angle) {
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state_control(db, &state_distance, &state_heading);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    *angle = pbio_control_settings_ctl_to_app_long_float(&db->control_heading.settings, &state_heading.position);
+    return PBIO_SUCCESS;
+}
+
+/**
  * Stops the drivebase and resets the accumulated drivebase state in user units.
  *
  * If the gyro is being used for control, it will be reset to the same angle.

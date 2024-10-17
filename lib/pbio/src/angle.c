@@ -142,6 +142,22 @@ int32_t pbio_angle_to_low_res(const pbio_angle_t *a, int32_t scale) {
 }
 
 /**
+ * Scales down high resolution angle to floating point value.
+ *
+ * @param [out]  a       Angle a.
+ * @param [in]   scale   Ratio between high resolution angle and input.
+ */
+float pbio_angle_to_low_res_float(const pbio_angle_t *a, float scale) {
+
+    // Fail safely on zero division.
+    if (scale < 1) {
+        return 0;
+    }
+
+    return a->rotations * (MDEG_PER_ROT / scale) + a->millidegrees / scale;
+}
+
+/**
  * Populates object from scaled-up integer value.
  *
  * For example, if @p scale is 1000, this converts the @p input in

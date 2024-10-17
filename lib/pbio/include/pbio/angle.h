@@ -34,6 +34,7 @@ typedef struct _pbio_angle_t {
 // Conversion to and from basic types:
 
 int32_t pbio_angle_to_low_res(const pbio_angle_t *a, int32_t scale);
+float pbio_angle_to_low_res_float(const pbio_angle_t *a, float scale);
 void pbio_angle_from_low_res(pbio_angle_t *a, int32_t input, int32_t scale);
 
 // Inplace operations on an angle:
