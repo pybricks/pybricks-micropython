@@ -257,6 +257,8 @@ int32_t pbio_int_math_atan2(int32_t y, int32_t x) {
  * The product of @p a and @p b must not exceed 2**47, and the result after
  * division must not exceed 2**31. @p c must not exceed 2**16.
  *
+ * Truncates the result as conventional with integer division.
+ *
  * Adapted from https://stackoverflow.com/a/57727180, CC BY-SA 4.0
  *
  * @param [in]  a    Positive or negative number.

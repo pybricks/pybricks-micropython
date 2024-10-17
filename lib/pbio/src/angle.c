@@ -132,7 +132,7 @@ int32_t pbio_angle_to_low_res(const pbio_angle_t *a, int32_t scale) {
         return 0;
     }
 
-    // Scale down rotations component.
+    // Scale down rotations component. NB: Truncates, does not round.
     int32_t rotations_component = pbio_int_math_mult_then_div(a->rotations, MDEG_PER_ROT, scale);
 
     // Scale down millidegree component, rounded to nearest ouput unit.
