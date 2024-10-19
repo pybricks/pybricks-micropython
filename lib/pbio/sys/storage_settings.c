@@ -14,6 +14,7 @@
 #include <pbio/error.h>
 #include <pbio/imu.h>
 #include <pbsys/status.h>
+#include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 
 #include "bluetooth.h"
@@ -29,9 +30,7 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #endif
     #if PBIO_CONFIG_IMU
-    settings->gyro_stationary_threshold = 3.0f;
-    settings->accel_stationary_threshold = 2500.0f;
-    settings->heading_correction = 360.0f;
+    pbio_imu_set_default_settings(&settings->imu_settings);
     #endif // PBIO_CONFIG_IMU
 }
 
@@ -42,32 +41,7 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
  */
 void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings) {
     #if PBIO_CONFIG_IMU
-    // return value not checked, assumed to be set valid previously
-    pbio_imu_set_settings(
-        settings->gyro_stationary_threshold,
-        settings->accel_stationary_threshold,
-        settings->heading_correction
-        );
-    #endif // PBIO_CONFIG_IMU
-}
-
-/**
- * Copies the configured IMU settings to storage and requests them to be saved.
- *
- * @param [in]  settings  Settings to populate.
- */
-void pbsys_storage_settings_save_imu_settings(void) {
-    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
-    if (!settings) {
-        return;
-    }
-    #if PBIO_CONFIG_IMU
-    pbio_imu_get_settings(
-        &settings->gyro_stationary_threshold,
-        &settings->accel_stationary_threshold,
-        &settings->heading_correction
-        );
-    pbsys_storage_request_write();
+    pbio_imu_apply_loaded_settings(&settings->imu_settings);
     #endif // PBIO_CONFIG_IMU
 }
 

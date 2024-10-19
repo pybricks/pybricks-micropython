@@ -18,6 +18,7 @@
 #include <pbio/error.h>
 
 #include <pbio/config.h>
+#include <pbio/imu.h>
 #include <pbsys/config.h>
 
 /**
@@ -37,16 +38,7 @@ typedef struct _pbsys_storage_settings_t {
     /** System setting flags. */
     uint32_t flags;
     #if PBIO_CONFIG_IMU
-    /** Angular velocity threshold below which the IMU is considered stationary, in deg/s. */
-    float gyro_stationary_threshold;
-    /** Acceleration threshold below which the IMU is considered stationary, in mm/s^2. */
-    float accel_stationary_threshold;
-    /**
-     * Number of degrees measured for one full turn along the user Z axis. This
-     * is used to correct the heading value. Other rotation methods are not
-     * affected.
-     */
-    float heading_correction;
+    pbio_imu_persistent_settings_t imu_settings;
     #endif
 } pbsys_storage_settings_t;
 
@@ -60,8 +52,6 @@ bool pbsys_storage_settings_bluetooth_enabled(void);
 
 void pbsys_storage_settings_bluetooth_enabled_request_toggle(void);
 
-void pbsys_storage_settings_save_imu_settings(void);
-
 #else
 
 static inline void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
@@ -72,9 +62,6 @@ static inline bool pbsys_storage_settings_bluetooth_enabled(void) {
     return true;
 }
 static inline void pbsys_storage_settings_bluetooth_enabled_request_toggle(void) {
-}
-
-static inline void pbsys_storage_settings_save_imu_settings(void) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE

@@ -192,11 +192,9 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
     pb_assert(pbio_imu_set_settings(
         angular_velocity_threshold_in == mp_const_none ? NAN : mp_obj_get_float(angular_velocity_threshold_in),
         acceleration_threshold_in == mp_const_none ? NAN : mp_obj_get_float(acceleration_threshold_in),
-        heading_correction_in == mp_const_none ? NAN : mp_obj_get_float(heading_correction_in)
-        ));
+        heading_correction_in == mp_const_none ? NAN : mp_obj_get_float(heading_correction_in),
+        true));
 
-    // Request that changed settings are saved on shutdown.
-    pbsys_storage_settings_save_imu_settings();
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_settings_obj, 1, pb_type_imu_settings);

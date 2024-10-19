@@ -19,7 +19,6 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t size);
 pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, uint32_t size);
 void pbsys_storage_get_program_data(pbsys_main_program_t *program);
 pbsys_storage_settings_t *pbsys_storage_settings_get_settings(void);
-void pbsys_storage_request_write(void);
 
 #else
 static inline void pbsys_storage_init(void) {
@@ -36,8 +35,6 @@ static inline pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
-}
-static inline void pbsys_storage_request_write(void) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE

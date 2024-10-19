@@ -17,7 +17,47 @@
 #include <pbio/int_math.h>
 #include <pbio/util.h>
 
+#include <pbsys/storage.h>
+#include <pbsys/storage_settings.h>
+
 #if PBIO_CONFIG_IMU
+
+// Asynchronously loaded on boot. Cannot be used until loaded.
+pbio_imu_persistent_settings_t *persistent_settings = NULL;
+
+/**
+ * Sets default settings. This is called by the storage module if it has to
+ * erase the settings and reinitialize them, including when a different
+ * firmware version is detected.
+ *
+ * @param [in]  settings  The loaded settings to apply.
+ */
+void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
+    settings->gyro_stationary_threshold = 3.0f;
+    settings->accel_stationary_threshold = 2500.0f;
+    settings->heading_correction = 360.0f;
+}
+
+/**
+ * Applies settings loaded from storage to this imu module.
+ *
+ * @param [in]  settings  The loaded settings to apply.
+ */
+void pbio_imu_apply_loaded_settings(pbio_imu_persistent_settings_t *settings) {
+
+    // Direct reference to the settings so we can update them later, then
+    // request saving on shutdown without another copy.
+    persistent_settings = settings;
+
+    // Apply the settings, just as if being set by user, but don't request
+    // writing, because there are no changes yet.
+    pbio_imu_set_settings(
+        settings->gyro_stationary_threshold,
+        settings->accel_stationary_threshold,
+        settings->heading_correction,
+        false
+        );
+}
 
 static pbdrv_imu_dev_t *imu_dev;
 static pbdrv_imu_config_t *imu_config;
@@ -140,11 +180,6 @@ bool pbio_imu_is_stationary(void) {
     return pbdrv_imu_is_stationary(imu_dev) && pbio_dcmotor_all_coasting();
 }
 
-// Measured rotation of the Z axis in the user frame for exactly one rotation
-// of the hub. This will be used to adjust the heading value, which is slightly
-// different for each hub.
-static float heading_degrees_per_rotation = 360.0f;
-
 /**
  * Sets the IMU settings. This includes the thresholds that define when the hub
  * is stationary. When the measurements are steadily below these levels, the
@@ -156,21 +191,30 @@ static float heading_degrees_per_rotation = 360.0f;
  * @param [in]  angular_velocity    Angular velocity threshold in deg/s.
  * @param [in]  acceleration        Acceleration threshold in mm/s^2
  * @param [in]  heading_correction  Measured degrees per full rotation of the hub.
+ * @param [in]  request_save        Request to save the settings to storage.
  * @returns ::PBIO_ERROR_INVALID_ARG if the heading correction is out of range,
  *          otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction) {
+pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction, bool request_save) {
     if (!isnan(angular_velocity)) {
         imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
     }
     if (!isnan(acceleration)) {
         imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
     }
+
+    if (!persistent_settings) {
+        return PBIO_ERROR_FAILED;
+    }
+
     if (!isnan(heading_correction)) {
         if (heading_correction < 350 || heading_correction > 370) {
             return PBIO_ERROR_INVALID_ARG;
         }
-        heading_degrees_per_rotation = heading_correction;
+        persistent_settings->heading_correction = heading_correction;
+    }
+    if (request_save) {
+        pbsys_storage_request_write();
     }
     return PBIO_SUCCESS;
 }
@@ -183,9 +227,14 @@ pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, f
  * @param [out]  heading_correction  Measured degrees per full rotation of the hub.
  */
 void pbio_imu_get_settings(float *angular_velocity, float *acceleration, float *heading_correction) {
+
+    if (!persistent_settings) {
+        return;
+    }
+
     *angular_velocity = imu_config->gyro_stationary_threshold * imu_config->gyro_scale;
     *acceleration = imu_config->accel_stationary_threshold * imu_config->accel_scale;
-    *heading_correction = heading_degrees_per_rotation;
+    *heading_correction = persistent_settings->heading_correction;
 }
 
 /**
@@ -251,10 +300,11 @@ static float heading_offset = 0;
 float pbio_imu_get_heading(void) {
 
     pbio_geometry_xyz_t heading_mapped;
-
     pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &heading_mapped);
 
-    return -heading_mapped.z * 360.0f / heading_degrees_per_rotation - heading_offset;
+    float correction = persistent_settings ? (360.0f / persistent_settings->heading_correction) : 1.0f;
+
+    return -heading_mapped.z * correction - heading_offset;
 }
 
 /**
