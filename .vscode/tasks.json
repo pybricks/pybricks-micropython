@@ -19,6 +19,34 @@
             "command": "make movehub -j"
         },
         {
+            "label": "build and deploy primehub",
+            "type": "shell",
+            "command": "make",
+            "args": ["-j", "deploy"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/bricks/primehub"
+              },
+            "problemMatcher": [
+                {
+                    "owner": "cpp",
+                    "fileLocation": ["relative", "${workspaceFolder}/bricks/primehub"],
+                    "pattern": {
+                        "regexp": "^(.*?):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                }
+            ],
+            "detail": "Build the PrimeHub project"
+        },
+        {
             "label": "build virtualhub",
             "type": "shell",
             "command": "poetry run make -C bricks/virtualhub DEBUG=1 COPT=-O0 CROSS_COMPILE= -j"
