@@ -10,6 +10,7 @@
 #include <pbio/color.h>
 
 #include "py/obj.h"
+#include "py/runtime.h"
 
 // like mp_obj_get_int() but also allows float
 #if MICROPY_PY_BUILTINS_FLOAT
@@ -67,5 +68,7 @@ typedef struct {
 void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest);
 
 mp_obj_t pb_function_import_helper(qstr module_name, qstr function_name);
+
+bool pb_obj_parsed_args_all_none(mp_arg_val_t *parsed_args, size_t num_parsed_args);
 
 #endif // PYBRICKS_INCLUDED_PBOBJ_H

@@ -244,3 +244,18 @@ mp_obj_t pb_function_import_helper(qstr module_name, qstr function_name) {
     }
     return dest[0];
 }
+
+/**
+ * Tests that all parsed arguments are None.
+ *
+ * @param parsed_args     [in]  The parsed arguments.
+ * @param num_parsed_args [in]  The number of parsed arguments.
+ */
+bool pb_obj_parsed_args_all_none(mp_arg_val_t *parsed_args, size_t num_parsed_args) {
+    for (size_t i = 0; i < num_parsed_args; i++) {
+        if (parsed_args[i].u_obj != mp_const_none) {
+            return false;
+        }
+    }
+    return true;
+}

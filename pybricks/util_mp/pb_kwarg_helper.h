@@ -101,4 +101,7 @@
 // Optional keyword argument with default None value
 #define PB_ARG_DEFAULT_NONE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE})
 
+// Test if all parsed arguments are None.
+#define PB_PARSE_ARGS_METHOD_ALL_NONE() (pb_obj_parsed_args_all_none(parsed_args, MP_ARRAY_SIZE(parsed_args)))
+
 #endif // PYBRICKS_INCLUDED_PBKWARG_H
