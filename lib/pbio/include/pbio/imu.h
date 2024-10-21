@@ -19,9 +19,35 @@
 #include <pbio/geometry.h>
 
 /**
+ * IMU settings flags.
+ *
+ * Note: Add new flags such that false is the default value.
+ */
+typedef enum {
+    /**
+     * The accelerometer stationary threshold has been updated.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET = (1 << 0),
+    /**
+     * The gyro stationary threshold has been updated.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET = (1 << 1),
+    /**
+     * The heading correction has been updated.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET = (1 << 2),
+} pbio_imu_persistent_settings_flags_t;
+
+/**
  * Persistent IMU settings. All data types are little-endian.
  */
 typedef struct {
+    /**
+     * Flags indicating which persistent settings have been updated by
+     * the user or a calibration routine. In settings setter functions, this
+     * flag value is used to indicate which values are being set.
+     */
+    uint32_t flags;
     /** Angular velocity threshold below which the IMU is considered stationary, in deg/s. */
     float gyro_stationary_threshold;
     /** Acceleration threshold below which the IMU is considered stationary, in mm/s^2. */
@@ -48,9 +74,9 @@ bool pbio_imu_is_stationary(void);
 
 bool pbio_imu_is_ready(void);
 
-void pbio_imu_get_settings(float *angular_velocity, float *acceleration, float *heading_correction);
+pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings);
 
-pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction, bool request_save);
+pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings);
 
 void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
 
@@ -85,7 +111,8 @@ static inline bool pbio_imu_is_stationary(void) {
     return false;
 }
 
-static inline void pbio_imu_get_settings(float *angular_velocity, float *acceleration, float *heading_correction) {
+static inline pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction, bool request_save) {

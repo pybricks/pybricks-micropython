@@ -176,24 +176,36 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
     if (angular_velocity_threshold_in == mp_const_none &&
         acceleration_threshold_in == mp_const_none &&
         heading_correction_in == mp_const_none) {
-        float angular_velocity;
-        float acceleration;
-        float heading_correction;
-        pbio_imu_get_settings(&angular_velocity, &acceleration, &heading_correction);
+
+        // Raises if not set, so can safely dereference.
+        pbio_imu_persistent_settings_t *get_settings;
+        pb_assert(pbio_imu_get_settings(&get_settings));
         mp_obj_t ret[] = {
-            mp_obj_new_float_from_f(angular_velocity),
-            mp_obj_new_float_from_f(acceleration),
-            mp_obj_new_float_from_f(heading_correction),
+            mp_obj_new_float_from_f(get_settings->gyro_stationary_threshold),
+            mp_obj_new_float_from_f(get_settings->accel_stationary_threshold),
+            mp_obj_new_float_from_f(get_settings->heading_correction),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
     }
 
-    // Otherwise set new values, only if given.
-    pb_assert(pbio_imu_set_settings(
-        angular_velocity_threshold_in == mp_const_none ? NAN : mp_obj_get_float(angular_velocity_threshold_in),
-        acceleration_threshold_in == mp_const_none ? NAN : mp_obj_get_float(acceleration_threshold_in),
-        heading_correction_in == mp_const_none ? NAN : mp_obj_get_float(heading_correction_in),
-        true));
+    // Apply new settings, using flags to indicate which should be updated.
+    pbio_imu_persistent_settings_t set_settings = { 0 };
+    if (angular_velocity_threshold_in != mp_const_none) {
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET;
+        set_settings.gyro_stationary_threshold = mp_obj_get_float(angular_velocity_threshold_in);
+    }
+
+    if (acceleration_threshold_in != mp_const_none) {
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET;
+        set_settings.accel_stationary_threshold = mp_obj_get_float(acceleration_threshold_in);
+    }
+
+    if (heading_correction_in != mp_const_none) {
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET;
+        set_settings.heading_correction = mp_obj_get_float(heading_correction_in);
+    }
+
+    pb_assert(pbio_imu_set_settings(&set_settings));
 
     return mp_const_none;
 }

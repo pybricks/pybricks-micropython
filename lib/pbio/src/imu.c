@@ -22,8 +22,27 @@
 
 #if PBIO_CONFIG_IMU
 
+static pbdrv_imu_dev_t *imu_dev;
+static pbdrv_imu_config_t *imu_config;
+
 // Asynchronously loaded on boot. Cannot be used until loaded.
-pbio_imu_persistent_settings_t *persistent_settings = NULL;
+static pbio_imu_persistent_settings_t *persistent_settings = NULL;
+
+/**
+ * Applies (newly set) settings to the driver.
+ */
+static void pbio_imu_apply_pbdrv_settings(pbio_imu_persistent_settings_t *settings) {
+
+    // IMU config is loaded set pbio, while this first occurence of applying
+    // settings is only called by pbsys (after pbio init), so this should
+    // never happen.
+    if (!imu_config) {
+        return;
+    }
+
+    imu_config->gyro_stationary_threshold = pbio_int_math_bind(settings->gyro_stationary_threshold / imu_config->gyro_scale, 1, INT16_MAX);
+    imu_config->accel_stationary_threshold = pbio_int_math_bind(settings->accel_stationary_threshold / imu_config->accel_scale, 1, INT16_MAX);
+}
 
 /**
  * Sets default settings. This is called by the storage module if it has to
@@ -36,6 +55,8 @@ void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
     settings->gyro_stationary_threshold = 3.0f;
     settings->accel_stationary_threshold = 2500.0f;
     settings->heading_correction = 360.0f;
+    settings->flags = 0;
+    pbio_imu_apply_pbdrv_settings(settings);
 }
 
 /**
@@ -44,23 +65,10 @@ void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
  * @param [in]  settings  The loaded settings to apply.
  */
 void pbio_imu_apply_loaded_settings(pbio_imu_persistent_settings_t *settings) {
-
-    // Direct reference to the settings so we can update them later, then
-    // request saving on shutdown without another copy.
+    // This is called on load, so we can now access the settings directly.
     persistent_settings = settings;
-
-    // Apply the settings, just as if being set by user, but don't request
-    // writing, because there are no changes yet.
-    pbio_imu_set_settings(
-        settings->gyro_stationary_threshold,
-        settings->accel_stationary_threshold,
-        settings->heading_correction,
-        false
-        );
+    pbio_imu_apply_pbdrv_settings(settings);
 }
-
-static pbdrv_imu_dev_t *imu_dev;
-static pbdrv_imu_config_t *imu_config;
 
 // Cached sensor values that can be read at any time without polling again.
 static pbio_geometry_xyz_t angular_velocity; // deg/s, in hub frame, already adjusted for bias.
@@ -186,36 +194,43 @@ bool pbio_imu_is_stationary(void) {
  * orientation module automatically recalibrates. Also includes the hub-specific
  * correction value to get a more accurate heading value.
  *
- * If a value is nan, it is ignored.
+ * Note: the flags in this setter are not used to reset the flags value in the
+ * persistent settings but to select which settings are being updated here.
  *
- * @param [in]  angular_velocity    Angular velocity threshold in deg/s.
- * @param [in]  acceleration        Acceleration threshold in mm/s^2
- * @param [in]  heading_correction  Measured degrees per full rotation of the hub.
- * @param [in]  request_save        Request to save the settings to storage.
- * @returns ::PBIO_ERROR_INVALID_ARG if the heading correction is out of range,
- *          otherwise ::PBIO_SUCCESS.
+ * @param [in]  new_settings        Incomplete set of new settings to apply according to the flags..
+ * @returns ::PBIO_ERROR_INVALID_ARG if a value is out of range, otherwise ::PBIO_SUCCESS.
  */
-pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction, bool request_save) {
-    if (!isnan(angular_velocity)) {
-        imu_config->gyro_stationary_threshold = pbio_int_math_bind(angular_velocity / imu_config->gyro_scale, 1, INT16_MAX);
-    }
-    if (!isnan(acceleration)) {
-        imu_config->accel_stationary_threshold = pbio_int_math_bind(acceleration / imu_config->accel_scale, 1, INT16_MAX);
-    }
+pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings) {
 
+    // Can't set settings if storage not loaded.
     if (!persistent_settings) {
         return PBIO_ERROR_FAILED;
     }
 
-    if (!isnan(heading_correction)) {
-        if (heading_correction < 350 || heading_correction > 370) {
+    if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET) {
+        persistent_settings->accel_stationary_threshold = new_settings->accel_stationary_threshold;
+    }
+
+    if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET) {
+        persistent_settings->gyro_stationary_threshold = new_settings->gyro_stationary_threshold;
+    }
+
+    if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET) {
+        if (new_settings->heading_correction < 350 || new_settings->heading_correction > 370) {
             return PBIO_ERROR_INVALID_ARG;
         }
-        persistent_settings->heading_correction = heading_correction;
+        persistent_settings->heading_correction = new_settings->heading_correction;
     }
-    if (request_save) {
+
+    // If any settings were changed, request saving.
+    if (new_settings->flags) {
         pbsys_storage_request_write();
     }
+
+    // The persistent settings have now been updated as applicable. Use the
+    // complete set of settings and apply them to the driver.
+    pbio_imu_apply_pbdrv_settings(persistent_settings);
+
     return PBIO_SUCCESS;
 }
 
@@ -226,15 +241,20 @@ pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, f
  * @param [out]  acceleration        Acceleration threshold in mm/s^2
  * @param [out]  heading_correction  Measured degrees per full rotation of the hub.
  */
-void pbio_imu_get_settings(float *angular_velocity, float *acceleration, float *heading_correction) {
 
+/**
+ * Gets the IMU settings
+ *
+ * @param [out]  settings        Complete set of new settings.
+ * @returns                      ::PBIO_ERROR_FAILED if settings not available, otherwise ::PBIO_SUCCESS.
+ */
+pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings) {
+    // Can't set settings if storage not loaded.
     if (!persistent_settings) {
-        return;
+        return PBIO_ERROR_FAILED;
     }
-
-    *angular_velocity = imu_config->gyro_stationary_threshold * imu_config->gyro_scale;
-    *acceleration = imu_config->accel_stationary_threshold * imu_config->accel_scale;
-    *heading_correction = persistent_settings->heading_correction;
+    *settings = persistent_settings;
+    return PBIO_SUCCESS;
 }
 
 /**
