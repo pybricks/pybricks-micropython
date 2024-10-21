@@ -183,11 +183,7 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
     (void)self;
 
     // Return current values if no arguments are given.
-    if (angular_velocity_threshold_in == mp_const_none &&
-        acceleration_threshold_in == mp_const_none &&
-        heading_correction_in == mp_const_none &&
-        acceleration_correction_in == mp_const_none) {
-
+    if (PB_PARSE_ARGS_METHOD_ALL_NONE()) {
         // Raises if not set, so can safely dereference.
         pbio_imu_persistent_settings_t *get_settings;
         pb_assert(pbio_imu_get_settings(&get_settings));

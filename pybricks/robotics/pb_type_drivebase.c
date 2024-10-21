@@ -346,11 +346,7 @@ static mp_obj_t pb_type_DriveBase_settings(size_t n_args, const mp_obj_t *pos_ar
         &turn_rate, &turn_acceleration, &turn_deceleration);
 
     // If all given values are none, return current values
-    if (straight_speed_in == mp_const_none &&
-        straight_acceleration_in == mp_const_none &&
-        turn_rate_in == mp_const_none &&
-        turn_acceleration_in == mp_const_none
-        ) {
+    if (PB_PARSE_ARGS_METHOD_ALL_NONE()) {
         mp_obj_t ret[] = {
             mp_obj_new_int(straight_speed),
             make_acceleration_return_value(straight_acceleration, straight_deceleration),

@@ -95,7 +95,7 @@ static mp_obj_t pb_type_Control_limits(size_t n_args, const mp_obj_t *pos_args, 
     torque = pbio_control_settings_get_actuation_limit(&self->control->settings);
 
     // If all given values are none, return current values
-    if (speed_in == mp_const_none && acceleration_in == mp_const_none && torque_in == mp_const_none) {
+    if (PB_PARSE_ARGS_METHOD_ALL_NONE()) {
         mp_obj_t ret[] = {
             mp_obj_new_int(speed),
             make_acceleration_return_value(acceleration, deceleration),
@@ -134,8 +134,7 @@ static mp_obj_t pb_type_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_
     pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_deadzone, &integral_change_max);
 
     // If all given values are none, return current values
-    if (kp_in == mp_const_none && ki_in == mp_const_none && kd_in == mp_const_none &&
-        integral_rate_in == mp_const_none) {
+    if (PB_PARSE_ARGS_METHOD_ALL_NONE()) {
         mp_obj_t ret[5];
         ret[0] = mp_obj_new_int(kp);
         ret[1] = mp_obj_new_int(ki);
@@ -171,7 +170,7 @@ static mp_obj_t pb_type_Control_target_tolerances(size_t n_args, const mp_obj_t 
     pbio_control_settings_get_target_tolerances(&self->control->settings, &speed, &position);
 
     // If all given values are none, return current values
-    if (speed_in == mp_const_none && position_in == mp_const_none) {
+    if (PB_PARSE_ARGS_METHOD_ALL_NONE()) {
         mp_obj_t ret[2];
         ret[0] = mp_obj_new_int(speed);
         ret[1] = mp_obj_new_int(position);
@@ -202,7 +201,7 @@ static mp_obj_t pb_type_Control_stall_tolerances(size_t n_args, const mp_obj_t *
     pbio_control_settings_get_stall_tolerances(&self->control->settings, &speed, &time);
 
     // If all given values are none, return current values
-    if (speed_in == mp_const_none && time_in == mp_const_none) {
+    if (PB_PARSE_ARGS_METHOD_ALL_NONE()) {
         mp_obj_t ret[2];
         ret[0] = mp_obj_new_int(speed);
         ret[1] = mp_obj_new_int_from_uint(time);
