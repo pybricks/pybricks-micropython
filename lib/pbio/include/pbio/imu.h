@@ -33,13 +33,17 @@ typedef enum {
      */
     PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET = (1 << 1),
     /**
-     * The heading correction has been updated.
+     * The initial values for the gyro bias have been set.
      */
-    PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET = (1 << 2),
+    PBIO_IMU_SETTINGS_FLAGS_GYRO_BIAS_INITIAL_SET = (1 << 3),
+    /**
+     * The per-axis angular velocity scale has been set.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_GYRO_SCALE_SET = (1 << 4),
     /**
      * The accelerometer offsets and scale has been calibrated.
      */
-    PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED = (1 << 3),
+    PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED = (1 << 5),
 } pbio_imu_persistent_settings_flags_t;
 
 /**
@@ -56,17 +60,14 @@ typedef struct {
     float gyro_stationary_threshold;
     /** Acceleration threshold below which the IMU is considered stationary, in mm/s^2. */
     float accel_stationary_threshold;
-    /**
-     * Number of degrees measured for one full turn along the user Z axis. This
-     * is used to correct the heading value. Other rotation methods are not
-     * affected.
-     * FIXME: Deprecate and use 3D correction.
-     */
-    float heading_correction;
     /** Positive acceleration values */
     pbio_geometry_xyz_t gravity_pos;
     /** Negative acceleration values */
     pbio_geometry_xyz_t gravity_neg;
+    /** Angular velocity stationary bias initially used on boot */
+    pbio_geometry_xyz_t angular_velocity_bias_start;
+    /** Angular velocity scale (unadjusted measured degrees per whole rotation) */
+    pbio_geometry_xyz_t angular_velocity_scale;
 } pbio_imu_persistent_settings_t;
 
 #if PBIO_CONFIG_IMU
@@ -87,7 +88,7 @@ pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings);
 
 pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings);
 
-void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
+void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated);
 
 void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated);
 
@@ -128,7 +129,7 @@ static inline pbio_error_t pbio_imu_set_settings(float angular_velocity, float a
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
+static inline void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated) {
 }
 
 static inline void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {

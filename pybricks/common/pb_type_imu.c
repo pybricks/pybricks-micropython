@@ -120,11 +120,12 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_acceleration_obj, 1, pb_type_imu_a
 static mp_obj_t pb_type_imu_angular_velocity(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_imu_obj_t, self,
-        PB_ARG_DEFAULT_NONE(axis));
+        PB_ARG_DEFAULT_NONE(axis),
+        PB_ARG_DEFAULT_TRUE(calibrated));
 
     (void)self;
     pbio_geometry_xyz_t angular_velocity;
-    pbio_imu_get_angular_velocity(&angular_velocity);
+    pbio_imu_get_angular_velocity(&angular_velocity, mp_obj_is_true(calibrated_in));
 
     // If no axis is specified, return a vector of values.
     if (axis_in == mp_const_none) {
@@ -177,7 +178,8 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         pb_type_imu_obj_t, self,
         PB_ARG_DEFAULT_NONE(angular_velocity_threshold),
         PB_ARG_DEFAULT_NONE(acceleration_threshold),
-        PB_ARG_DEFAULT_NONE(heading_correction),
+        PB_ARG_DEFAULT_NONE(angular_velocity_bias),
+        PB_ARG_DEFAULT_NONE(angular_velocity_scale),
         PB_ARG_DEFAULT_NONE(acceleration_correction));
 
     (void)self;
@@ -197,10 +199,23 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
             mp_obj_new_float_from_f(get_settings->gravity_neg.z),
         };
 
+        mp_obj_t angular_velocity_bias[] = {
+            mp_obj_new_float_from_f(get_settings->angular_velocity_bias_start.x),
+            mp_obj_new_float_from_f(get_settings->angular_velocity_bias_start.y),
+            mp_obj_new_float_from_f(get_settings->angular_velocity_bias_start.z),
+        };
+
+        mp_obj_t angular_velocity_scale[] = {
+            mp_obj_new_float_from_f(get_settings->angular_velocity_scale.x),
+            mp_obj_new_float_from_f(get_settings->angular_velocity_scale.y),
+            mp_obj_new_float_from_f(get_settings->angular_velocity_scale.z),
+        };
+
         mp_obj_t ret[] = {
             mp_obj_new_float_from_f(get_settings->gyro_stationary_threshold),
             mp_obj_new_float_from_f(get_settings->accel_stationary_threshold),
-            mp_obj_new_float_from_f(get_settings->heading_correction),
+            mp_obj_new_tuple(MP_ARRAY_SIZE(angular_velocity_bias), angular_velocity_bias),
+            mp_obj_new_tuple(MP_ARRAY_SIZE(angular_velocity_scale), angular_velocity_scale),
             mp_obj_new_tuple(MP_ARRAY_SIZE(acceleration_corrections), acceleration_corrections),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
@@ -218,9 +233,30 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         set_settings.accel_stationary_threshold = mp_obj_get_float(acceleration_threshold_in);
     }
 
-    if (heading_correction_in != mp_const_none) {
-        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET;
-        set_settings.heading_correction = mp_obj_get_float(heading_correction_in);
+    if (angular_velocity_bias_in != mp_const_none) {
+        mp_obj_t *bias;
+        size_t size;
+        mp_obj_get_array(angular_velocity_bias_in, &size, &bias);
+        if (size != 3) {
+            mp_raise_ValueError(MP_ERROR_TEXT("Angular velocity bias must be a 3-element tuple."));
+        }
+        set_settings.angular_velocity_bias_start.x = mp_obj_get_float(bias[0]);
+        set_settings.angular_velocity_bias_start.y = mp_obj_get_float(bias[1]);
+        set_settings.angular_velocity_bias_start.z = mp_obj_get_float(bias[2]);
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_BIAS_INITIAL_SET;
+    }
+
+    if (angular_velocity_scale_in != mp_const_none) {
+        mp_obj_t *scale;
+        size_t size;
+        mp_obj_get_array(angular_velocity_scale_in, &size, &scale);
+        if (size != 3) {
+            mp_raise_ValueError(MP_ERROR_TEXT("Angular velocity scale must be a 3-element tuple."));
+        }
+        set_settings.angular_velocity_scale.x = mp_obj_get_float(scale[0]);
+        set_settings.angular_velocity_scale.y = mp_obj_get_float(scale[1]);
+        set_settings.angular_velocity_scale.z = mp_obj_get_float(scale[2]);
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_SCALE_SET;
     }
 
     if (acceleration_correction_in != mp_const_none) {

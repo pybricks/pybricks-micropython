@@ -25,6 +25,14 @@
 static pbdrv_imu_dev_t *imu_dev;
 static pbdrv_imu_config_t *imu_config;
 
+// Cached sensor values that can be read at any time without polling again.
+static pbio_geometry_xyz_t angular_velocity_uncalibrated; // deg/s, in hub frame
+static pbio_geometry_xyz_t angular_velocity_calibrated; // deg/s, in hub frame, already adjusted for bias and scale.
+static pbio_geometry_xyz_t acceleration_uncalibrated; // mm/s^2, in hub frame
+static pbio_geometry_xyz_t acceleration_calibrated; // mm/s^2, in hub frame
+static pbio_geometry_xyz_t gyro_bias; // Starts at value from settings, then updated when stationary.
+static pbio_geometry_xyz_t single_axis_rotation; // deg, in hub frame
+
 // Asynchronously loaded on boot. Cannot be used until loaded.
 static pbio_imu_persistent_settings_t *persistent_settings = NULL;
 
@@ -57,9 +65,10 @@ void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
     settings->flags = 0;
     settings->gyro_stationary_threshold = 3.0f;
     settings->accel_stationary_threshold = 2500.0f;
-    settings->heading_correction = 360.0f;
     settings->gravity_pos.x = settings->gravity_pos.y = settings->gravity_pos.z = standard_gravity;
     settings->gravity_neg.x = settings->gravity_neg.y = settings->gravity_neg.z = -standard_gravity;
+    settings->angular_velocity_bias_start.x = settings->angular_velocity_bias_start.y = settings->angular_velocity_bias_start.z = 0.0f;
+    settings->angular_velocity_scale.x = settings->angular_velocity_scale.y = settings->angular_velocity_scale.z = 360.0f;
     pbio_imu_apply_pbdrv_settings(settings);
 }
 
@@ -71,21 +80,21 @@ void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
 void pbio_imu_apply_loaded_settings(pbio_imu_persistent_settings_t *settings) {
     // This is called on load, so we can now access the settings directly.
     persistent_settings = settings;
+
+    // The saved angular velocity bias only sets the initial value. We still
+    // update the bias continuously from stationary data.
+    gyro_bias.x = settings->angular_velocity_bias_start.x;
+    gyro_bias.y = settings->angular_velocity_bias_start.y;
+    gyro_bias.z = settings->angular_velocity_bias_start.z;
+
     pbio_imu_apply_pbdrv_settings(settings);
 }
 
-// Cached sensor values that can be read at any time without polling again.
-static pbio_geometry_xyz_t angular_velocity; // deg/s, in hub frame, already adjusted for bias.
-static pbio_geometry_xyz_t acceleration_uncalibrated; // mm/s^2, in hub frame
-static pbio_geometry_xyz_t acceleration_calibrated; // mm/s^2, in hub frame
-static pbio_geometry_xyz_t gyro_bias;
-static pbio_geometry_xyz_t single_axis_rotation; // deg, in hub frame
-
 // Called by driver to process one frame of unfiltered gyro and accelerometer data.
 static void pbio_imu_handle_frame_data_func(int16_t *data) {
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(angular_velocity.values); i++) {
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(angular_velocity_calibrated.values); i++) {
         // Update angular velocity and acceleration cache so user can read them.
-        angular_velocity.values[i] = data[i] * imu_config->gyro_scale - gyro_bias.values[i];
+        angular_velocity_uncalibrated.values[i] = data[i] * imu_config->gyro_scale;
         acceleration_uncalibrated.values[i] = data[i + 3] * imu_config->accel_scale;
 
         // Once settings loaded, maintain calibrated cached values.
@@ -93,8 +102,10 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
             float acceleration_offset = (persistent_settings->gravity_pos.values[i] + persistent_settings->gravity_neg.values[i]) / 2;
             float acceleration_scale = (persistent_settings->gravity_pos.values[i] - persistent_settings->gravity_neg.values[i]) / 2;
             acceleration_calibrated.values[i] = (acceleration_uncalibrated.values[i] - acceleration_offset) * standard_gravity / acceleration_scale;
+            angular_velocity_calibrated.values[i] = (angular_velocity_uncalibrated.values[i] - gyro_bias.values[i]) * 360.0f / persistent_settings->angular_velocity_scale.values[i];
         } else {
             acceleration_calibrated.values[i] = acceleration_uncalibrated.values[i];
+            angular_velocity_calibrated.values[i] = angular_velocity_uncalibrated.values[i];
         }
 
         // Update "heading" on all axes. This is not useful for 3D attitude
@@ -102,7 +113,7 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
         // the hub mounted at an arbitrary orientation. Such a 1D heading
         // is numerically more accurate, which is useful in drive base
         // applications so long as the vehicle drives on a flat surface.
-        single_axis_rotation.values[i] += angular_velocity.values[i] * imu_config->sample_time;
+        single_axis_rotation.values[i] += angular_velocity_calibrated.values[i] * imu_config->sample_time;
     }
 }
 
@@ -235,20 +246,23 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET) {
         persistent_settings->accel_stationary_threshold = new_settings->accel_stationary_threshold;
-        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET;
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET) {
         persistent_settings->gyro_stationary_threshold = new_settings->gyro_stationary_threshold;
-        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET;
     }
 
-    if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET) {
-        if (new_settings->heading_correction < 350 || new_settings->heading_correction > 370) {
-            return PBIO_ERROR_INVALID_ARG;
+    for (uint8_t i = 0; i < 3; i++) {
+        if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_BIAS_INITIAL_SET) {
+            persistent_settings->angular_velocity_bias_start.values[i] = new_settings->angular_velocity_bias_start.values[i];
         }
-        persistent_settings->heading_correction = new_settings->heading_correction;
-        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET;
+
+        if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_SCALE_SET) {
+            if (new_settings->angular_velocity_scale.values[i] < 350 || new_settings->angular_velocity_scale.values[i] > 370) {
+                return PBIO_ERROR_INVALID_ARG;
+            }
+            persistent_settings->angular_velocity_scale.values[i] = new_settings->angular_velocity_scale.values[i];
+        }
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED) {
@@ -260,13 +274,13 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
             pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_neg.z, false)) {
             return PBIO_ERROR_INVALID_ARG;
         }
-        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED;
         persistent_settings->gravity_pos = new_settings->gravity_pos;
         persistent_settings->gravity_neg = new_settings->gravity_neg;
     }
 
     // If any settings were changed, request saving.
     if (new_settings->flags) {
+        persistent_settings->flags |= new_settings->flags;
         pbsys_storage_request_write();
     }
 
@@ -296,9 +310,11 @@ pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings) {
  * Gets the cached IMU angular velocity in deg/s, compensated for gyro bias.
  *
  * @param [out] values      The angular velocity vector.
+ * @param [in]  calibrated  Whether to get calibrated or uncalibrated data.
  */
-void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &angular_velocity, values);
+void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated) {
+    pbio_geometry_xyz_t *angular_velocity = calibrated ? &angular_velocity_calibrated : &angular_velocity_uncalibrated;
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, angular_velocity, values);
 }
 
 /**
@@ -359,13 +375,9 @@ static float heading_offset = 0;
  * @return                  Heading angle in the base frame.
  */
 float pbio_imu_get_heading(void) {
-
     pbio_geometry_xyz_t heading_mapped;
     pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &heading_mapped);
-
-    float correction = persistent_settings ? (360.0f / persistent_settings->heading_correction) : 1.0f;
-
-    return -heading_mapped.z * correction - heading_offset;
+    return -heading_mapped.z - heading_offset;
 }
 
 /**
@@ -408,7 +420,7 @@ void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, i
 
     // The heading rate can be obtained by a simple scale because it always fits.
     pbio_geometry_xyz_t angular_rate;
-    pbio_imu_get_angular_velocity(&angular_rate);
+    pbio_imu_get_angular_velocity(&angular_rate, true);
     *heading_rate = (int32_t)(-angular_rate.z * ctl_steps_per_degree);
 }
 

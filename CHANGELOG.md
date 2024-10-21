@@ -6,8 +6,8 @@
 
 ### Added
 
-- Added optional `calibrated=True` parameter to `acceleration()` and `up()`
-  methods of the IMU ([support#943]).
+- Added optional `calibrated=True` parameter to `acceleration()` and `up()` and
+  `angular_velocity()` methods of the IMU ([support#943]).
 
 ### Changed
 
