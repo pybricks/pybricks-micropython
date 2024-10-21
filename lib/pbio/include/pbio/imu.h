@@ -25,17 +25,21 @@
  */
 typedef enum {
     /**
-     * The accelerometer stationary threshold has been updated.
-     */
-    PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET = (1 << 0),
-    /**
      * The gyro stationary threshold has been updated.
      */
-    PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET = (1 << 1),
+    PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET = (1 << 0),
+    /**
+     * The accelerometer stationary threshold has been updated.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET = (1 << 1),
     /**
      * The heading correction has been updated.
      */
     PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET = (1 << 2),
+    /**
+     * The accelerometer offsets and scale has been calibrated.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED = (1 << 3),
 } pbio_imu_persistent_settings_flags_t;
 
 /**
@@ -56,8 +60,21 @@ typedef struct {
      * Number of degrees measured for one full turn along the user Z axis. This
      * is used to correct the heading value. Other rotation methods are not
      * affected.
+     * FIXME: Deprecate and use 3D correction.
      */
     float heading_correction;
+    /** Positive acceleration value for gravity along the X axis. */
+    float gravity_x_pos;
+    /** Negative acceleration value for gravity along the X axis. */
+    float gravity_x_neg;
+    /** Positive acceleration value for gravity along the Y axis. */
+    float gravity_y_pos;
+    /** Negative acceleration value for gravity along the Y axis. */
+    float gravity_y_neg;
+    /** Positive acceleration value for gravity along the Z axis. */
+    float gravity_z_pos;
+    /** Negative acceleration value for gravity along the Z axis. */
+    float gravity_z_neg;
 } pbio_imu_persistent_settings_t;
 
 #if PBIO_CONFIG_IMU

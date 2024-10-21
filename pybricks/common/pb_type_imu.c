@@ -168,22 +168,35 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         pb_type_imu_obj_t, self,
         PB_ARG_DEFAULT_NONE(angular_velocity_threshold),
         PB_ARG_DEFAULT_NONE(acceleration_threshold),
-        PB_ARG_DEFAULT_NONE(heading_correction));
+        PB_ARG_DEFAULT_NONE(heading_correction),
+        PB_ARG_DEFAULT_NONE(acceleration_correction));
 
     (void)self;
 
     // Return current values if no arguments are given.
     if (angular_velocity_threshold_in == mp_const_none &&
         acceleration_threshold_in == mp_const_none &&
-        heading_correction_in == mp_const_none) {
+        heading_correction_in == mp_const_none &&
+        acceleration_correction_in == mp_const_none) {
 
         // Raises if not set, so can safely dereference.
         pbio_imu_persistent_settings_t *get_settings;
         pb_assert(pbio_imu_get_settings(&get_settings));
+
+        mp_obj_t acceleration_corrections[] = {
+            mp_obj_new_float_from_f(get_settings->gravity_x_pos),
+            mp_obj_new_float_from_f(get_settings->gravity_x_neg),
+            mp_obj_new_float_from_f(get_settings->gravity_y_pos),
+            mp_obj_new_float_from_f(get_settings->gravity_y_neg),
+            mp_obj_new_float_from_f(get_settings->gravity_z_pos),
+            mp_obj_new_float_from_f(get_settings->gravity_z_neg),
+        };
+
         mp_obj_t ret[] = {
             mp_obj_new_float_from_f(get_settings->gyro_stationary_threshold),
             mp_obj_new_float_from_f(get_settings->accel_stationary_threshold),
             mp_obj_new_float_from_f(get_settings->heading_correction),
+            mp_obj_new_tuple(MP_ARRAY_SIZE(acceleration_corrections), acceleration_corrections),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
     }
@@ -203,6 +216,22 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
     if (heading_correction_in != mp_const_none) {
         set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET;
         set_settings.heading_correction = mp_obj_get_float(heading_correction_in);
+    }
+
+    if (acceleration_correction_in != mp_const_none) {
+        mp_obj_t *gravity;
+        size_t size;
+        mp_obj_get_array(acceleration_correction_in, &size, &gravity);
+        if (size != 6) {
+            mp_raise_ValueError(MP_ERROR_TEXT("Acceleration correction must be a 6-element tuple."));
+        }
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED;
+        set_settings.gravity_x_pos = mp_obj_get_float(gravity[0]);
+        set_settings.gravity_x_neg = mp_obj_get_float(gravity[1]);
+        set_settings.gravity_y_pos = mp_obj_get_float(gravity[2]);
+        set_settings.gravity_y_neg = mp_obj_get_float(gravity[3]);
+        set_settings.gravity_z_pos = mp_obj_get_float(gravity[4]);
+        set_settings.gravity_z_neg = mp_obj_get_float(gravity[5]);
     }
 
     pb_assert(pbio_imu_set_settings(&set_settings));

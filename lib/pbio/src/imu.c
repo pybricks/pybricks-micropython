@@ -28,6 +28,8 @@ static pbdrv_imu_config_t *imu_config;
 // Asynchronously loaded on boot. Cannot be used until loaded.
 static pbio_imu_persistent_settings_t *persistent_settings = NULL;
 
+const float standard_gravity = 9806.65f; // mm/s^2
+
 /**
  * Applies (newly set) settings to the driver.
  */
@@ -52,10 +54,16 @@ static void pbio_imu_apply_pbdrv_settings(pbio_imu_persistent_settings_t *settin
  * @param [in]  settings  The loaded settings to apply.
  */
 void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
+    settings->flags = 0;
     settings->gyro_stationary_threshold = 3.0f;
     settings->accel_stationary_threshold = 2500.0f;
     settings->heading_correction = 360.0f;
-    settings->flags = 0;
+    settings->gravity_x_pos = standard_gravity;
+    settings->gravity_x_neg = -standard_gravity;
+    settings->gravity_y_pos = standard_gravity;
+    settings->gravity_y_neg = -standard_gravity;
+    settings->gravity_z_pos = standard_gravity;
+    settings->gravity_z_neg = -standard_gravity;
     pbio_imu_apply_pbdrv_settings(settings);
 }
 
@@ -189,6 +197,18 @@ bool pbio_imu_is_stationary(void) {
 }
 
 /**
+ * Tests if the acceleration value is within a reasonable range for a stationary hub.
+ *
+ * @param [in]  value  The acceleration value to test.
+ * @return             True if the value is within 10% off from standard gravity.
+ */
+static bool pbio_imu_stationary_acceleration_out_of_range(float value, bool expect_positive) {
+    const float expected_value = expect_positive ? standard_gravity : -standard_gravity;
+    const float absolute_error = value > expected_value ? value - expected_value : expected_value - value;
+    return absolute_error > standard_gravity / 15;
+}
+
+/**
  * Sets the IMU settings. This includes the thresholds that define when the hub
  * is stationary. When the measurements are steadily below these levels, the
  * orientation module automatically recalibrates. Also includes the hub-specific
@@ -209,10 +229,12 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET) {
         persistent_settings->accel_stationary_threshold = new_settings->accel_stationary_threshold;
+        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_STATIONARY_THRESHOLD_SET;
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET) {
         persistent_settings->gyro_stationary_threshold = new_settings->gyro_stationary_threshold;
+        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_STATIONARY_THRESHOLD_SET;
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET) {
@@ -220,6 +242,25 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
             return PBIO_ERROR_INVALID_ARG;
         }
         persistent_settings->heading_correction = new_settings->heading_correction;
+        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_HEADING_CORRECTION_SET;
+    }
+
+    if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED) {
+        if (pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_x_pos, true) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_x_neg, false) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_y_pos, true) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_y_neg, false) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_z_pos, true) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_z_neg, false)) {
+            return PBIO_ERROR_INVALID_ARG;
+        }
+        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED;
+        persistent_settings->gravity_x_pos = new_settings->gravity_x_pos;
+        persistent_settings->gravity_x_neg = new_settings->gravity_x_neg;
+        persistent_settings->gravity_y_pos = new_settings->gravity_y_pos;
+        persistent_settings->gravity_y_neg = new_settings->gravity_y_neg;
+        persistent_settings->gravity_z_pos = new_settings->gravity_z_pos;
+        persistent_settings->gravity_z_neg = new_settings->gravity_z_neg;
     }
 
     // If any settings were changed, request saving.
