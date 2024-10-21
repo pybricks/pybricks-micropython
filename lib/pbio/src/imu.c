@@ -58,12 +58,8 @@ void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
     settings->gyro_stationary_threshold = 3.0f;
     settings->accel_stationary_threshold = 2500.0f;
     settings->heading_correction = 360.0f;
-    settings->gravity_x_pos = standard_gravity;
-    settings->gravity_x_neg = -standard_gravity;
-    settings->gravity_y_pos = standard_gravity;
-    settings->gravity_y_neg = -standard_gravity;
-    settings->gravity_z_pos = standard_gravity;
-    settings->gravity_z_neg = -standard_gravity;
+    settings->gravity_pos.x = settings->gravity_pos.y = settings->gravity_pos.z = standard_gravity;
+    settings->gravity_neg.x = settings->gravity_neg.y = settings->gravity_neg.z = -standard_gravity;
     pbio_imu_apply_pbdrv_settings(settings);
 }
 
@@ -80,7 +76,8 @@ void pbio_imu_apply_loaded_settings(pbio_imu_persistent_settings_t *settings) {
 
 // Cached sensor values that can be read at any time without polling again.
 static pbio_geometry_xyz_t angular_velocity; // deg/s, in hub frame, already adjusted for bias.
-static pbio_geometry_xyz_t acceleration; // mm/s^2, in hub frame
+static pbio_geometry_xyz_t acceleration_uncalibrated; // mm/s^2, in hub frame
+static pbio_geometry_xyz_t acceleration_calibrated; // mm/s^2, in hub frame
 static pbio_geometry_xyz_t gyro_bias;
 static pbio_geometry_xyz_t single_axis_rotation; // deg, in hub frame
 
@@ -89,7 +86,16 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(angular_velocity.values); i++) {
         // Update angular velocity and acceleration cache so user can read them.
         angular_velocity.values[i] = data[i] * imu_config->gyro_scale - gyro_bias.values[i];
-        acceleration.values[i] = data[i + 3] * imu_config->accel_scale;
+        acceleration_uncalibrated.values[i] = data[i + 3] * imu_config->accel_scale;
+
+        // Once settings loaded, maintain calibrated cached values.
+        if (persistent_settings) {
+            float acceleration_offset = (persistent_settings->gravity_pos.values[i] + persistent_settings->gravity_neg.values[i]) / 2;
+            float acceleration_scale = (persistent_settings->gravity_pos.values[i] - persistent_settings->gravity_neg.values[i]) / 2;
+            acceleration_calibrated.values[i] = (acceleration_uncalibrated.values[i] - acceleration_offset) * standard_gravity / acceleration_scale;
+        } else {
+            acceleration_calibrated.values[i] = acceleration_uncalibrated.values[i];
+        }
 
         // Update "heading" on all axes. This is not useful for 3D attitude
         // estimation, but it allows the user to get a 1D heading even with
@@ -246,21 +252,17 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED) {
-        if (pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_x_pos, true) ||
-            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_x_neg, false) ||
-            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_y_pos, true) ||
-            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_y_neg, false) ||
-            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_z_pos, true) ||
-            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_z_neg, false)) {
+        if (pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_pos.x, true) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_neg.x, false) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_pos.y, true) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_neg.y, false) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_pos.z, true) ||
+            pbio_imu_stationary_acceleration_out_of_range(new_settings->gravity_neg.z, false)) {
             return PBIO_ERROR_INVALID_ARG;
         }
         persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED;
-        persistent_settings->gravity_x_pos = new_settings->gravity_x_pos;
-        persistent_settings->gravity_x_neg = new_settings->gravity_x_neg;
-        persistent_settings->gravity_y_pos = new_settings->gravity_y_pos;
-        persistent_settings->gravity_y_neg = new_settings->gravity_y_neg;
-        persistent_settings->gravity_z_pos = new_settings->gravity_z_pos;
-        persistent_settings->gravity_z_neg = new_settings->gravity_z_neg;
+        persistent_settings->gravity_pos = new_settings->gravity_pos;
+        persistent_settings->gravity_neg = new_settings->gravity_neg;
     }
 
     // If any settings were changed, request saving.
@@ -274,14 +276,6 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
 
     return PBIO_SUCCESS;
 }
-
-/**
- * Gets the thresholds that define when the hub is stationary.
- *
- * @param [out]  angular_velocity    Angular velocity threshold in deg/s.
- * @param [out]  acceleration        Acceleration threshold in mm/s^2
- * @param [out]  heading_correction  Measured degrees per full rotation of the hub.
- */
 
 /**
  * Gets the IMU settings
@@ -310,10 +304,13 @@ void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
 /**
  * Gets the cached IMU acceleration in mm/s^2.
  *
+ * @param [in]  calibrated  Whether to use calibrated or uncalibrated data.
+ *
  * @param [out] values      The acceleration vector.
  */
-void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values) {
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &acceleration, values);
+void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
+    pbio_geometry_xyz_t *acceleration = calibrated ? &acceleration_calibrated : &acceleration_uncalibrated;
+    pbio_geometry_vector_map(&pbio_orientation_base_orientation, acceleration, values);
 }
 
 /**
@@ -338,14 +335,17 @@ pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float 
 /**
  * Gets which side of a hub points upwards.
  *
+ * @param [in]  calibrated  Whether to use calibrated or uncalibrated data.
+ *
  * @return                  Which side is up.
  */
-pbio_geometry_side_t pbio_imu_get_up_side(void) {
+pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated) {
     // Up is which side of a unit box intersects the +Z vector first.
     // So read +Z vector of the inertial frame, in the body frame.
     // For now, this is the gravity vector. In the future, we can make this
     // slightly more accurate by using the full IMU orientation.
-    return pbio_geometry_side_from_vector(&acceleration);
+    pbio_geometry_xyz_t *acceleration = calibrated ? &acceleration_calibrated : &acceleration_uncalibrated;
+    return pbio_geometry_side_from_vector(acceleration);
 }
 
 static float heading_offset = 0;

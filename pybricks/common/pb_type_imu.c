@@ -31,8 +31,14 @@ typedef struct _pb_type_imu_obj_t {
 } pb_type_imu_obj_t;
 
 // pybricks._common.IMU.up
-static mp_obj_t pb_type_imu_up(mp_obj_t self_in) {
-    switch (pbio_imu_get_up_side()) {
+static mp_obj_t pb_type_imu_up(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_imu_obj_t, self,
+        PB_ARG_DEFAULT_TRUE(calibrated));
+
+    (void)self;
+
+    switch (pbio_imu_get_up_side(mp_obj_is_true(calibrated_in))) {
         default:
         case PBIO_GEOMETRY_SIDE_FRONT:
             return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
@@ -48,14 +54,16 @@ static mp_obj_t pb_type_imu_up(mp_obj_t self_in) {
             return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
     }
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pb_type_imu_up_obj, pb_type_imu_up);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_up_obj, 1, pb_type_imu_up);
 
 // pybricks._common.IMU.tilt
 static mp_obj_t pb_type_imu_tilt(mp_obj_t self_in) {
 
+    // Revisit: optionally use not just calibrated but also IMU.
+
     // Read acceleration in the user frame.
     pbio_geometry_xyz_t accl;
-    pbio_imu_get_acceleration(&accl);
+    pbio_imu_get_acceleration(&accl, false);
 
     mp_obj_t tilt[2];
     // Pitch
@@ -86,11 +94,12 @@ static void pb_type_imu_extract_axis(mp_obj_t obj_in, pbio_geometry_xyz_t *vecto
 static mp_obj_t pb_type_imu_acceleration(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_imu_obj_t, self,
-        PB_ARG_DEFAULT_NONE(axis));
+        PB_ARG_DEFAULT_NONE(axis),
+        PB_ARG_DEFAULT_TRUE(calibrated));
 
     (void)self;
     pbio_geometry_xyz_t acceleration;
-    pbio_imu_get_acceleration(&acceleration);
+    pbio_imu_get_acceleration(&acceleration, mp_obj_is_true(calibrated_in));
 
     // If no axis is specified, return a vector of values.
     if (axis_in == mp_const_none) {
@@ -184,12 +193,12 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         pb_assert(pbio_imu_get_settings(&get_settings));
 
         mp_obj_t acceleration_corrections[] = {
-            mp_obj_new_float_from_f(get_settings->gravity_x_pos),
-            mp_obj_new_float_from_f(get_settings->gravity_x_neg),
-            mp_obj_new_float_from_f(get_settings->gravity_y_pos),
-            mp_obj_new_float_from_f(get_settings->gravity_y_neg),
-            mp_obj_new_float_from_f(get_settings->gravity_z_pos),
-            mp_obj_new_float_from_f(get_settings->gravity_z_neg),
+            mp_obj_new_float_from_f(get_settings->gravity_pos.x),
+            mp_obj_new_float_from_f(get_settings->gravity_neg.x),
+            mp_obj_new_float_from_f(get_settings->gravity_pos.y),
+            mp_obj_new_float_from_f(get_settings->gravity_neg.y),
+            mp_obj_new_float_from_f(get_settings->gravity_pos.z),
+            mp_obj_new_float_from_f(get_settings->gravity_neg.z),
         };
 
         mp_obj_t ret[] = {
@@ -226,12 +235,12 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
             mp_raise_ValueError(MP_ERROR_TEXT("Acceleration correction must be a 6-element tuple."));
         }
         set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED;
-        set_settings.gravity_x_pos = mp_obj_get_float(gravity[0]);
-        set_settings.gravity_x_neg = mp_obj_get_float(gravity[1]);
-        set_settings.gravity_y_pos = mp_obj_get_float(gravity[2]);
-        set_settings.gravity_y_neg = mp_obj_get_float(gravity[3]);
-        set_settings.gravity_z_pos = mp_obj_get_float(gravity[4]);
-        set_settings.gravity_z_neg = mp_obj_get_float(gravity[5]);
+        set_settings.gravity_pos.x = mp_obj_get_float(gravity[0]);
+        set_settings.gravity_neg.x = mp_obj_get_float(gravity[1]);
+        set_settings.gravity_pos.y = mp_obj_get_float(gravity[2]);
+        set_settings.gravity_neg.y = mp_obj_get_float(gravity[3]);
+        set_settings.gravity_pos.z = mp_obj_get_float(gravity[4]);
+        set_settings.gravity_neg.z = mp_obj_get_float(gravity[5]);
     }
 
     pb_assert(pbio_imu_set_settings(&set_settings));

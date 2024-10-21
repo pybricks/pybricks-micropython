@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added optional `calibrated=True` parameter to `acceleration()` and `up()`
+  methods of the IMU ([support#943]).
+
 ### Changed
 
 - The method `DriveBase.angle()` now returns a float ([support#1844]). This
@@ -13,8 +18,9 @@
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
   could cause `turn(360)` to be off by a degree ([support#1844]).
 
-[support#1844]: https://github.com/pybricks/support/issues/1844
+[support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
+[support#1844]: https://github.com/pybricks/support/issues/1844
 
 ## [3.6.0b2] - 2024-10-15
 

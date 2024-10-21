@@ -63,18 +63,10 @@ typedef struct {
      * FIXME: Deprecate and use 3D correction.
      */
     float heading_correction;
-    /** Positive acceleration value for gravity along the X axis. */
-    float gravity_x_pos;
-    /** Negative acceleration value for gravity along the X axis. */
-    float gravity_x_neg;
-    /** Positive acceleration value for gravity along the Y axis. */
-    float gravity_y_pos;
-    /** Negative acceleration value for gravity along the Y axis. */
-    float gravity_y_neg;
-    /** Positive acceleration value for gravity along the Z axis. */
-    float gravity_z_pos;
-    /** Negative acceleration value for gravity along the Z axis. */
-    float gravity_z_neg;
+    /** Positive acceleration values */
+    pbio_geometry_xyz_t gravity_pos;
+    /** Negative acceleration values */
+    pbio_geometry_xyz_t gravity_neg;
 } pbio_imu_persistent_settings_t;
 
 #if PBIO_CONFIG_IMU
@@ -97,11 +89,11 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
 
 void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values);
 
-void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values);
+void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated);
 
 pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle);
 
-pbio_geometry_side_t pbio_imu_get_up_side(void);
+pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated);
 
 float pbio_imu_get_heading(void);
 
@@ -139,10 +131,10 @@ static inline pbio_error_t pbio_imu_set_settings(float angular_velocity, float a
 static inline void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values) {
 }
 
-static inline void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values) {
+static inline void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
 }
 
-static inline pbio_geometry_side_t pbio_imu_get_up_side(void) {
+static inline pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated) {
     return PBIO_GEOMETRY_SIDE_TOP;
 }
 
