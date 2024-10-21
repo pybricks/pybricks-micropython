@@ -331,7 +331,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t hub_in, mp_obj_t top_side_axis_in, mp_obj_
     pbio_geometry_xyz_t top_side_axis;
     pb_type_imu_extract_axis(top_side_axis_in, &top_side_axis);
 
-    pbio_imu_set_base_orientation(&front_side_axis, &top_side_axis);
+    pb_assert(pbio_imu_set_base_orientation(&front_side_axis, &top_side_axis));
 
     // Return singleton instance.
     singleton_imu_obj.hub = hub_in;

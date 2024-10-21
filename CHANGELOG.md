@@ -17,6 +17,7 @@
 ### Fixed
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
   could cause `turn(360)` to be off by a degree ([support#1844]).
+- Fixed `hub` silently ignoring non-orthogonal base axis when it should raise.
 
 [support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
