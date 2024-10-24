@@ -92,6 +92,8 @@ void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated)
 
 void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated);
 
+void pbio_imu_get_tilt_vector(pbio_geometry_xyz_t *values);
+
 pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle);
 
 pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated);
@@ -101,6 +103,8 @@ float pbio_imu_get_heading(void);
 void pbio_imu_set_heading(float desired_heading);
 
 void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree);
+
+void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation);
 
 #else // PBIO_CONFIG_IMU
 
@@ -148,6 +152,10 @@ static inline void pbio_imu_set_heading(float desired_heading) {
 
 static inline void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
 }
+
+static inline void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation) {
+}
+
 
 #endif // PBIO_CONFIG_IMU
 

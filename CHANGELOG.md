@@ -8,11 +8,20 @@
 
 - Added optional `calibrated=True` parameter to `acceleration()` and `up()` and
   `angular_velocity()` methods of the IMU ([support#943]).
+- Implemented `hub.imu.orientation()` to give the rotation matrix of the hub or
+  robot with respect to the inertial frame.
+- Added calibration parameters that can be set for angular velocity offset and
+  scale and acceleration offset and scale.
 
 ### Changed
 
 - The method `DriveBase.angle()` now returns a float ([support#1844]). This
   makes it properly equivalent to `hub.imu.heading`.
+- Re-implemented tilt using the gyro data by default. Pure accelerometer tilt
+  can still be obtained with `hub.imu.tilt(use_gyro=False)`.
+- Re-implemented `hub.imu.heading()` to use projection of 3D orientation to
+  improve performance when the hub is lifted off the ground. If necessary,
+  pure 1D rotation can still be obtained from `hub.imu.rotation()`.
 
 ### Fixed
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which

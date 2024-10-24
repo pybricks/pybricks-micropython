@@ -57,25 +57,33 @@ static mp_obj_t pb_type_imu_up(size_t n_args, const mp_obj_t *pos_args, mp_map_t
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_up_obj, 1, pb_type_imu_up);
 
 // pybricks._common.IMU.tilt
-static mp_obj_t pb_type_imu_tilt(mp_obj_t self_in) {
+static mp_obj_t pb_type_imu_tilt(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_imu_obj_t, self,
+        PB_ARG_DEFAULT_TRUE(use_gyro),
+        PB_ARG_DEFAULT_TRUE(calibrated));
 
-    // Revisit: optionally use not just calibrated but also IMU.
+    (void)self;
 
     // Read acceleration in the user frame.
     pbio_geometry_xyz_t accl;
-    pbio_imu_get_acceleration(&accl, false);
+    if (mp_obj_is_true(use_gyro_in)) {
+        pbio_imu_get_tilt_vector(&accl);
+    } else {
+        pbio_imu_get_acceleration(&accl, mp_obj_is_true(calibrated_in));
+    }
 
     mp_obj_t tilt[2];
     // Pitch
     float pitch = atan2f(-accl.x, sqrtf(accl.z * accl.z + accl.y * accl.y));
-    tilt[0] = mp_obj_new_int_from_float(pitch * 57.296f);
+    tilt[0] = mp_obj_new_float_from_f(pitch * 57.296f);
 
     // Roll
     float roll = atan2f(accl.y, accl.z);
-    tilt[1] = mp_obj_new_int_from_float(roll * 57.296f);
+    tilt[1] = mp_obj_new_float_from_f(roll * 57.296f);
     return mp_obj_new_tuple(2, tilt);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pb_type_imu_tilt_obj, pb_type_imu_tilt);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_tilt_obj, 1, pb_type_imu_tilt);
 
 static void pb_type_imu_extract_axis(mp_obj_t obj_in, pbio_geometry_xyz_t *vector) {
     if (!mp_obj_is_type(obj_in, &pb_type_Matrix)) {
@@ -288,6 +296,21 @@ static mp_obj_t pb_type_imu_heading(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_imu_heading_obj, pb_type_imu_heading);
 
+// pybricks._common.IMU.orientation
+STATIC mp_obj_t common_IMU_orientation(mp_obj_t self_in) {
+
+    // Make matrix. REVISIT: Dedicated call from orientation matrix.
+    pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(pb_type_Matrix_make_bitmap(3, 3, 1.0f, 0));
+
+    pbio_geometry_matrix_3x3_t orientation;
+    pbio_orientation_imu_get_rotation(&orientation);
+
+    memcpy(matrix->data, orientation.values, sizeof(orientation.values));
+
+    return MP_OBJ_FROM_PTR(matrix);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_orientation_obj, common_IMU_orientation);
+
 // pybricks._common.IMU.reset_heading
 static mp_obj_t pb_type_imu_reset_heading(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -339,6 +362,7 @@ static const mp_rom_map_elem_t pb_type_imu_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stationary),       MP_ROM_PTR(&pb_type_imu_stationary_obj)      },
     { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&pb_type_imu_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&pb_type_imu_up_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_orientation),      MP_ROM_PTR(&common_IMU_orientation_obj)     },
     { MP_ROM_QSTR(MP_QSTR_update_heading_correction), MP_ROM_PTR(&pb_type_imu_update_heading_correction_obj)},
 };
 static MP_DEFINE_CONST_DICT(pb_type_imu_locals_dict, pb_type_imu_locals_dict_table);

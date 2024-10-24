@@ -6,6 +6,8 @@
 #include <math.h>
 
 #include <pbdrv/clock.h>
+#include <math.h>
+
 #include <pbdrv/imu.h>
 
 #include <pbio/angle.h>
@@ -22,21 +24,156 @@
 
 #if PBIO_CONFIG_IMU
 
+/**
+ * Driver device.
+ */
 static pbdrv_imu_dev_t *imu_dev;
+
+/**
+ * Driver configuration. Contains settings like gyro and accelerometer scale
+ * from raw units to (uncalibrated) physical units and thresholds that say
+ * when the hub is stationary to be considered ready for calibration.
+ */
 static pbdrv_imu_config_t *imu_config;
 
-// Cached sensor values that can be read at any time without polling again.
-static pbio_geometry_xyz_t angular_velocity_uncalibrated; // deg/s, in hub frame
-static pbio_geometry_xyz_t angular_velocity_calibrated; // deg/s, in hub frame, already adjusted for bias and scale.
-static pbio_geometry_xyz_t acceleration_uncalibrated; // mm/s^2, in hub frame
+/**
+ * Uncalibrated angular velocity in the hub frame.
+ *
+ * These are scaled from raw units to degrees per second using only the
+ * datasheet/hal conversion constant, but otherwise not further adjusted.
+ */
+static pbio_geometry_xyz_t angular_velocity_uncalibrated;
+
+/**
+ * Estimated gyro bias value in degrees per second.
+ *
+ * This is a measure for the uncalibrated angular velocity above, averaged over
+ * time. If specified, the value starts at the last saved user value, then
+ * updates over time.
+ */
+static pbio_geometry_xyz_t gyro_bias;
+
+/**
+ * Calibrated angular velocity in the hub frame degrees per second.
+ *
+ * This takes the uncalibrated value above, subtracts the bias estimate, and
+ * rescales by a user calibration factor to ensure that integrating over one
+ * full rotation adds up to 360 degrees.
+ */
+static pbio_geometry_xyz_t angular_velocity_calibrated;
+
+/**
+ * Uncalibrated acceleration in the hub frame in mm/s^2.
+ *
+ * These are scaled from raw units to mm/s^2 using only the
+ * datasheet/hal conversion constant, but otherwise not further adjusted.
+ */
+static pbio_geometry_xyz_t acceleration_uncalibrated;
+
+/**
+ * Calibrated acceleration in the hub frame mm/s^2.
+ *
+ * This takes the uncalibrated value above, and subtracts a constant user offset
+ * and scales by a previously determined user factor to normalize to gravity magnitude.
+ */
 static pbio_geometry_xyz_t acceleration_calibrated; // mm/s^2, in hub frame
-static pbio_geometry_xyz_t gyro_bias; // Starts at value from settings, then updated when stationary.
+
+/**
+ * 1D integrated angular velocity for each body axis.
+ *
+ * This is based on integrating the calibrated angular velocity over time, so
+ * including its bias and adjustments to achhieve 360 degrees per rotation.
+ *
+ * This is not used for 3D attitude estimation, but serves as a useful way to
+ * estimate 1D rotations without being effected by accelerometer fusion which
+ * may leads to unwanted adjustments in applications like balancing robots.
+ */
 static pbio_geometry_xyz_t single_axis_rotation; // deg, in hub frame
 
-// Asynchronously loaded on boot. Cannot be used until loaded.
+/**
+ * Rotation of the hub with respect to the inertial frame, see R(q) below.
+ *
+ * Initialized as the identity quaternion. Updated on first gravity sample.
+ */
+static pbio_geometry_quaternion_t quaternion = {
+    .q1 = 0.0f,
+    .q2 = 0.0f,
+    .q3 = 0.0f,
+    .q4 = 1.0f,
+};
+
+/**
+ * Flag to indicate if the quaternion has been initialized to the very first
+ * gravity sample.
+ */
+static bool quaternion_initialized = false;
+
+/**
+ * Rotation of the hub with respect to the inertial frame.
+ *
+ * Does *not* use the user application frame.
+ *
+ * The matrix R(q) is defined such that it transforms hub body frame vectors to
+ * vectors in the inertial frame as:
+ *
+ *    v_inertial = R(q) * v_body
+ *
+ * Initialized as the identity matrix. Must match initial value of quaternion.
+ */
+static pbio_geometry_matrix_3x3_t pbio_imu_rotation = {
+    .m11 = 1.0f, .m12 = 0.0f, .m13 = 0.0f,
+    .m21 = 0.0f, .m22 = 1.0f, .m23 = 0.0f,
+    .m31 = 0.0f, .m32 = 0.0f, .m33 = 1.0f,
+};
+
+
+/**
+ * The "neutral" base orientation of the hub, describing how it is mounted
+ * in the robot. All getters (tilt, acceleration, rotation, etc) give results
+ * relative to this base orientation:
+ *
+ * vector_reported = R_base * vector_in_hub_body_frame
+ *
+ * Default orientation is identity, hub flat.
+ */
+static pbio_geometry_matrix_3x3_t pbio_imu_base_orientation = {
+    .m11 = 1.0f, .m12 = 0.0f, .m13 = 0.0f,
+    .m21 = 0.0f, .m22 = 1.0f, .m23 = 0.0f,
+    .m31 = 0.0f, .m32 = 0.0f, .m33 = 1.0f,
+};
+
+/**
+ * The heading is defined as follows.
+ *
+ * Take the x-axis (after transformation to application frame) and project
+ * into the inertial frame. Then project onto the horizontal (X-Y) plane. Then
+ * take the angle between the projection and the x-axis, counterclockwise
+ * positive.
+ *
+ * In practice, this means that when you look at a robot from the top, it is
+ * the angle that its "forward direction vector" makes with respect to the
+ * x-axis, even when the robot isn't perfectly flat.
+ *
+ */
+static float heading_projection;
+
+/**
+ * When the heading_projection flips from 180 to -180 or vice versa, we
+ * increment or decrement the overal rotation counter to maintain a continuous
+ * heading.
+ */
+static int32_t heading_rotations;
+
+
+/**
+ * Hub calibration settings. Cannot be used until loaded.
+ */
 static pbio_imu_persistent_settings_t *persistent_settings = NULL;
 
-const float standard_gravity = 9806.65f; // mm/s^2
+/**
+ * Standard gravity in mm/s^2.
+ */
+const float standard_gravity = 9806.65f;
 
 /**
  * Applies (newly set) settings to the driver.
@@ -90,8 +227,63 @@ void pbio_imu_apply_loaded_settings(pbio_imu_persistent_settings_t *settings) {
     pbio_imu_apply_pbdrv_settings(settings);
 }
 
+/**
+ * Given current orientation matrix, update the heading projection.
+ *
+ * This is called from the update loop so we can catch the projection jumping
+ * across the 180/-180 boundary, and increment or decrement the rotation to
+ * have a continuous heading.
+ *
+ * This is also called when the orientation frame is changed because this sets
+ * the application x-axis used for the heading projection.
+ */
+static void update_heading_projection(void) {
+
+    // Transform application x axis back into the hub frame (R_base^T * x_unit).
+    pbio_geometry_xyz_t x_application = {
+        .x = pbio_imu_base_orientation.m11,
+        .y = pbio_imu_base_orientation.m12,
+        .z = pbio_imu_base_orientation.m13
+    };
+
+    // Transform application x axis into the inertial frame via quaternion matrix.
+    pbio_geometry_xyz_t x_inertial;
+    pbio_geometry_vector_map(&pbio_imu_rotation, &x_application, &x_inertial);
+
+    // Project onto the horizontal plane and use atan2 to get the angle.
+    float heading_now = pbio_geometry_radians_to_degrees(atan2f(-x_inertial.y, x_inertial.x));
+
+    // Update full rotation counter if the projection jumps across the 180/-180 boundary.
+    if (heading_now < -90 && heading_projection > 90) {
+        heading_rotations++;
+    } else if (heading_now > 90 && heading_projection < -90) {
+        heading_rotations--;
+    }
+    heading_projection = heading_now;
+}
+
 // Called by driver to process one frame of unfiltered gyro and accelerometer data.
 static void pbio_imu_handle_frame_data_func(int16_t *data) {
+
+    // Initialize quaternion from first gravity sample as a best-effort estimate.
+    // From here, fusion will gradually converge the quaternion to the true value.
+    if (!quaternion_initialized) {
+        pbio_geometry_xyz_t g = { .x = data[3], .y = data[4], .z = data[5]};
+        pbio_error_t err = pbio_geometry_vector_normalize(&g, &g);
+        if (err != PBIO_SUCCESS) {
+            // First sample not suited, try again on next sample.
+            return;
+        }
+        pbio_geometry_quaternion_from_gravity_unit_vector(&g, &quaternion);
+        quaternion_initialized = true;
+    }
+
+    // Compute current orientation matrix to obtain the current heading.
+    pbio_geometry_quaternion_to_rotation_matrix(&quaternion, &pbio_imu_rotation);
+
+    // Projects application x-axis into the inertial frame to compute the heading.
+    update_heading_projection();
+
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(angular_velocity_calibrated.values); i++) {
         // Update angular velocity and acceleration cache so user can read them.
         angular_velocity_uncalibrated.values[i] = data[i] * imu_config->gyro_scale;
@@ -115,6 +307,55 @@ static void pbio_imu_handle_frame_data_func(int16_t *data) {
         // applications so long as the vehicle drives on a flat surface.
         single_axis_rotation.values[i] += angular_velocity_calibrated.values[i] * imu_config->sample_time;
     }
+
+    // Estimate for gravity vector based on orientation estimate.
+    pbio_geometry_xyz_t s = {
+        .x = pbio_imu_rotation.m31,
+        .y = pbio_imu_rotation.m32,
+        .z = pbio_imu_rotation.m33,
+    };
+
+    // We would like to adjust the attitude such that the gravity estimate
+    // converges to the gravity value in the stationary case. If we subtract
+    // both vectors we get the required direction of changes. This can be
+    // thought of as a virtual spring between both vectors. This produces a
+    // moment about the origin, which ultimately simplies to the following,
+    // which we inject to the attitude integration.
+    pbio_geometry_xyz_t correction;
+    pbio_geometry_vector_cross_product(&s, &acceleration_calibrated, &correction);
+
+    // Qualitative measures for how far the current state is from being stationary.
+    float accl_stationary_error = pbio_geometry_absf(pbio_geometry_vector_norm(&acceleration_calibrated) - standard_gravity);
+    float gyro_stationary_error = pbio_geometry_absf(pbio_geometry_vector_norm(&angular_velocity_calibrated));
+
+    // Cut off value below which value is considered stationary enough for fusion.
+    const float gyro_stationary_min = 10;
+    const float accl_stationary_min = 150;
+
+    // Measure for being statinonary ranging from 0 (moving) to 1 (moving less than above thresholds).
+    float stationary_measure = accl_stationary_min / pbio_geometry_maxf(accl_stationary_error, accl_stationary_min) *
+        gyro_stationary_min / pbio_geometry_maxf(gyro_stationary_error, gyro_stationary_min);
+
+    // The virtual moment would produce motion in that direction, so we can
+    // simulate that effect by injecting it into the attitude integration, the
+    // strength of which is based on the stationary measure. It is scaled down
+    // by the gravity amount since one of the two vectors to produce this has
+    // units of gravity. Hence if the hub is stationary (measure = 1), and the
+    // error is 90 degrees (which is unlikely), the correction is at
+    // most 200 deg/s, but usually much less.
+    float fusion = -stationary_measure / standard_gravity * 200;
+    pbio_geometry_xyz_t adjusted_angular_velocity;
+    adjusted_angular_velocity.x = angular_velocity_calibrated.x + correction.x * fusion;
+    adjusted_angular_velocity.y = angular_velocity_calibrated.y + correction.y * fusion;
+    adjusted_angular_velocity.z = angular_velocity_calibrated.z + correction.z * fusion;
+
+    // Update 3D attitude, basic forward integration.
+    pbio_geometry_quaternion_t dq;
+    pbio_geometry_quaternion_get_rate_of_change(&quaternion, &adjusted_angular_velocity, &dq);
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(dq.values); i++) {
+        quaternion.values[i] += dq.values[i] * imu_config->sample_time;
+    }
+    pbio_geometry_quaternion_normalize(&quaternion);
 }
 
 // This counter is a measure for calibration accuracy, roughly equivalent
@@ -173,17 +414,6 @@ void pbio_imu_init(void) {
 }
 
 /**
- * The "neutral" base orientation of the hub, describing how it is mounted
- * in the robot. All getters (tilt, acceleration, rotation, etc) give results
- * relative to this base orientation. Initial orientation is identity, hub flat.
- */
-static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation = {
-    .m11 = 1.0f, .m12 = 0.0f, .m13 = 0.0f,
-    .m21 = 0.0f, .m22 = 1.0f, .m23 = 0.0f,
-    .m31 = 0.0f, .m32 = 0.0f, .m33 = 1.0f,
-};
-
-/**
  * Sets the hub base orientation.
  *
  * @param [in]  front_side_axis  Which way the hub front side points when it is
@@ -194,13 +424,16 @@ static pbio_geometry_matrix_3x3_t pbio_orientation_base_orientation = {
  */
 pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *front_side_axis, pbio_geometry_xyz_t *top_side_axis) {
 
-    pbio_error_t err = pbio_geometry_map_from_base_axes(front_side_axis, top_side_axis, &pbio_orientation_base_orientation);
+    pbio_error_t err = pbio_geometry_map_from_base_axes(front_side_axis, top_side_axis, &pbio_imu_base_orientation);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    pbio_imu_set_heading(0.0f);
+    // Need to update heading projection since the application axes were changed.
+    update_heading_projection();
 
+    // Reset offsets such that the new frame starts with zero heading.
+    pbio_imu_set_heading(0.0f);
     return PBIO_SUCCESS;
 }
 
@@ -314,7 +547,7 @@ pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t **settings) {
  */
 void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated) {
     pbio_geometry_xyz_t *angular_velocity = calibrated ? &angular_velocity_calibrated : &angular_velocity_uncalibrated;
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, angular_velocity, values);
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, angular_velocity, values);
 }
 
 /**
@@ -326,7 +559,21 @@ void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bool calibrated)
  */
 void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
     pbio_geometry_xyz_t *acceleration = calibrated ? &acceleration_calibrated : &acceleration_uncalibrated;
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, acceleration, values);
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, acceleration, values);
+}
+
+/**
+ * Gets the vector that is parallel to the acceleration measurement of the stationary case.
+ *
+ * @param [out] values      The acceleration vector.
+ */
+void pbio_imu_get_tilt_vector(pbio_geometry_xyz_t *values) {
+    pbio_geometry_xyz_t direction = {
+        .x = pbio_imu_rotation.m31,
+        .y = pbio_imu_rotation.m32,
+        .z = pbio_imu_rotation.m33,
+    };
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, &direction, values);
 }
 
 /**
@@ -342,7 +589,7 @@ pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float 
 
     // Transform the single axis rotations to the robot frame.
     pbio_geometry_xyz_t rotation;
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &rotation);
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, &single_axis_rotation, &rotation);
 
     // Get the requested scalar rotation along the given axis.
     return pbio_geometry_vector_project(axis, &rotation, angle);
@@ -375,9 +622,7 @@ static float heading_offset = 0;
  * @return                  Heading angle in the base frame.
  */
 float pbio_imu_get_heading(void) {
-    pbio_geometry_xyz_t heading_mapped;
-    pbio_geometry_vector_map(&pbio_orientation_base_orientation, &single_axis_rotation, &heading_mapped);
-    return -heading_mapped.z - heading_offset;
+    return heading_rotations * 360.0f + heading_projection - heading_offset;
 }
 
 /**
@@ -389,6 +634,7 @@ float pbio_imu_get_heading(void) {
  * @param [in] desired_heading  The desired heading value.
  */
 void pbio_imu_set_heading(float desired_heading) {
+    heading_rotations = 0;
     heading_offset = pbio_imu_get_heading() + heading_offset - desired_heading;
 }
 
@@ -422,6 +668,15 @@ void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, i
     pbio_geometry_xyz_t angular_rate;
     pbio_imu_get_angular_velocity(&angular_rate, true);
     *heading_rate = (int32_t)(-angular_rate.z * ctl_steps_per_degree);
+}
+
+/**
+ * Reads the current rotation matrix.
+ *
+ * @param [out] rotation      The rotation matrix
+ */
+void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation) {
+    *rotation = pbio_imu_rotation;
 }
 
 #endif // PBIO_CONFIG_IMU

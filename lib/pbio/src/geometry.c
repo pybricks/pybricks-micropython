@@ -105,7 +105,19 @@ pbio_geometry_side_t pbio_geometry_side_from_vector(pbio_geometry_xyz_t *vector)
 }
 
 /**
+ * Gets the norm of a vector.
+ *
+ * @param [in]  input   The vector.
+ * @return              The norm of the vector.
+ */
+float pbio_geometry_vector_norm(pbio_geometry_xyz_t *input) {
+    return sqrtf(input->x * input->x + input->y * input->y + input->z * input->z);
+}
+
+/**
  * Normalizes a vector so it has unit length.
+ *
+ * Output is allowed to be same as input, in which case input is normalized.
  *
  * @param [in]  input   The vector to normalize.
  * @param [out] output  The normalized vector.
@@ -114,7 +126,7 @@ pbio_geometry_side_t pbio_geometry_side_from_vector(pbio_geometry_xyz_t *vector)
 pbio_error_t pbio_geometry_vector_normalize(pbio_geometry_xyz_t *input, pbio_geometry_xyz_t *output) {
 
     // Compute the norm.
-    float norm = sqrtf(input->x * input->x + input->y * input->y + input->z * input->z);
+    float norm = pbio_geometry_vector_norm(input);
 
     // If the vector norm is zero, do nothing.
     if (norm == 0.0f) {
@@ -177,6 +189,25 @@ void pbio_geometry_vector_map(pbio_geometry_matrix_3x3_t *map, pbio_geometry_xyz
 }
 
 /**
+ * Multiplies two 3x3 matrices.
+ *
+ * @param [in]  a       The first 3x3 matrix.
+ * @param [in]  b       The second 3x3 matrix.
+ * @param [out] output  The resulting 3x3 matrix after multiplication.
+ */
+void pbio_geometry_matrix_multiply(pbio_geometry_matrix_3x3_t *a, pbio_geometry_matrix_3x3_t *b, pbio_geometry_matrix_3x3_t *output) {
+    output->m11 = a->m11 * b->m11 + a->m12 * b->m21 + a->m13 * b->m31;
+    output->m12 = a->m11 * b->m12 + a->m12 * b->m22 + a->m13 * b->m32;
+    output->m13 = a->m11 * b->m13 + a->m12 * b->m23 + a->m13 * b->m33;
+    output->m21 = a->m21 * b->m11 + a->m22 * b->m21 + a->m23 * b->m31;
+    output->m22 = a->m21 * b->m12 + a->m22 * b->m22 + a->m23 * b->m32;
+    output->m23 = a->m21 * b->m13 + a->m22 * b->m23 + a->m23 * b->m33;
+    output->m31 = a->m31 * b->m11 + a->m32 * b->m21 + a->m33 * b->m31;
+    output->m32 = a->m31 * b->m12 + a->m32 * b->m22 + a->m33 * b->m32;
+    output->m33 = a->m31 * b->m13 + a->m32 * b->m23 + a->m33 * b->m33;
+}
+
+/**
  * Gets a mapping (a rotation matrix) from two orthogonal base axes.
  *
  * @param [in]  x_axis  The X axis. Need not be normalized.
@@ -215,4 +246,102 @@ pbio_error_t pbio_geometry_map_from_base_axes(pbio_geometry_xyz_t *x_axis, pbio_
     };
 
     return PBIO_SUCCESS;
+}
+
+/**
+ * Computes a rotation matrix for a quaternion.
+ *
+ * @param [in]  q       The quaternion.
+ * @param [out] R       The rotation matrix.
+ */
+void pbio_geometry_quaternion_to_rotation_matrix(pbio_geometry_quaternion_t *q, pbio_geometry_matrix_3x3_t *R) {
+    R->m11 = 1 - 2 * (q->q2 * q->q2 + q->q3 * q->q3);
+    R->m21 = 2 * (q->q1 * q->q2 + q->q3 * q->q4);
+    R->m31 = 2 * (q->q1 * q->q3 - q->q2 * q->q4);
+    R->m12 = 2 * (q->q1 * q->q2 - q->q3 * q->q4);
+    R->m22 = 1 - 2 * (q->q1 * q->q1 + q->q3 * q->q3);
+    R->m32 = 2 * (q->q2 * q->q3 + q->q1 * q->q4);
+    R->m13 = 2 * (q->q1 * q->q3 + q->q2 * q->q4);
+    R->m23 = 2 * (q->q2 * q->q3 - q->q1 * q->q4);
+    R->m33 = 1 - 2 * (q->q1 * q->q1 + q->q2 * q->q2);
+}
+
+/**
+ * Computes a quaternion from a gravity unit vector.
+ *
+ * @param [in]     g  The gravity unit vector.
+ * @param [out]    q  The resulting quaternion.
+ */
+void pbio_geometry_quaternion_from_gravity_unit_vector(pbio_geometry_xyz_t *g, pbio_geometry_quaternion_t *q) {
+    if (g->z >= 0) {
+        q->q4 = sqrtf((g->z + 1) / 2);
+        q->q1 = g->y / sqrtf(2 * (g->z + 1));
+        q->q2 = -g->x / sqrtf(2 * (g->z + 1));
+        q->q3 = 0;
+    } else {
+        q->q4 = -g->y / sqrtf(2 * (1 - g->z));
+        q->q1 = -sqrtf((1 - g->z) / 2);
+        q->q2 = 0;
+        q->q3 = -g->x / sqrtf(2 * (1 - g->z));
+    }
+}
+
+/**
+ * Computes the rate of change of a quaternion given the angular velocity vector.
+ *
+ * @param [in]     q                 Quaternion of the current orientation.
+ * @param [in]     angular_velocity  The angular velocity vector in the body frame.
+ * @param [out]    dq                The rate of change of the quaternion.
+ */
+void pbio_geometry_quaternion_get_rate_of_change(pbio_geometry_quaternion_t *q, pbio_geometry_xyz_t *angular_velocity, pbio_geometry_quaternion_t *dq) {
+
+    pbio_geometry_xyz_t w = {
+        .x = pbio_geometry_degrees_to_radians(angular_velocity->x),
+        .y = pbio_geometry_degrees_to_radians(angular_velocity->y),
+        .z = pbio_geometry_degrees_to_radians(angular_velocity->z),
+    };
+
+    dq->q1 = 0.5f * (w.z * q->q2 - w.y * q->q3 + w.x * q->q4);
+    dq->q2 = 0.5f * (-w.z * q->q1 + w.x * q->q3 + w.y * q->q4);
+    dq->q3 = 0.5f * (w.y * q->q1 - w.x * q->q2 + w.z * q->q4);
+    dq->q4 = 0.5f * (-w.x * q->q1 - w.y * q->q2 - w.z * q->q3);
+}
+
+/**
+ * Normalizes a quaternion so it has unit length.
+ *
+ * @param [inout] q  The quaternion to normalize.
+ */
+void pbio_geometry_quaternion_normalize(pbio_geometry_quaternion_t *q) {
+    float norm = sqrtf(q->q1 * q->q1 + q->q2 * q->q2 + q->q3 * q->q3 + q->q4 * q->q4);
+
+    if (norm < 0.0001f && norm > -0.0001f) {
+        return;
+    }
+
+    q->q1 /= norm;
+    q->q2 /= norm;
+    q->q3 /= norm;
+    q->q4 /= norm;
+}
+
+/**
+ * Returns the maximum of two floating-point numbers.
+ *
+ * @param a The first floating-point number.
+ * @param b The second floating-point number.
+ * @return  The maximum of the two floating-point numbers.
+ */
+float pbio_geometry_maxf(float a, float b) {
+    return a > b ? a : b;
+}
+
+/**
+ * Returns the absolute value of a floating-point number.
+ *
+ * @param a The floating-point number.
+ * @return  The absolute value of the floating-point number.
+ */
+float pbio_geometry_absf(float a) {
+    return a < 0 ? -a : a;
 }
