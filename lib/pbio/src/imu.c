@@ -400,6 +400,16 @@ static void pbio_imu_handle_stationary_data_func(const int32_t *gyro_data_sum, c
         // Update bias at decreasing rate.
         gyro_bias.values[i] = gyro_bias.values[i] * (1.0f - weight) + weight * average_now;
     }
+
+    // If persistent gyro bias has never been set, do so now and request saving.
+    // This ensures a better starting point for the next boot. We do this only
+    // once to avoid unnecessary writes on every shutdown. It can be further
+    // refined with a calibration routine performed by the user.
+    if (persistent_settings && !(persistent_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_BIAS_INITIAL_SET) && stationary_counter > 2) {
+        persistent_settings->angular_velocity_bias_start = gyro_bias;
+        persistent_settings->flags |= PBIO_IMU_SETTINGS_FLAGS_GYRO_BIAS_INITIAL_SET;
+        pbsys_storage_request_write();
+    }
 }
 
 /**
