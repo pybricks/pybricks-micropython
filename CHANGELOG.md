@@ -16,7 +16,7 @@
   state.
 
 ### Changed
-
+- Enabled UTF-8 support for `str` objects.
 - The method `DriveBase.angle()` now returns a float ([support#1844]). This
   makes it properly equivalent to `hub.imu.heading`.
 - Re-implemented tilt using the gyro data by default. Pure accelerometer tilt
