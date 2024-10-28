@@ -30,7 +30,7 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     #endif
     #if PBIO_CONFIG_IMU
     settings->gyro_stationary_threshold = 3.0f;
-    settings->accel_stationary_threshold = 2500.0f;
+    settings->accel_stationary_threshold = 250.0f;
     settings->heading_correction = 360.0f;
     #endif // PBIO_CONFIG_IMU
 }
