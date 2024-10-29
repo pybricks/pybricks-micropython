@@ -47,8 +47,14 @@ struct _pbdrv_imu_dev_t {
     pbdrv_imu_handle_frame_data_func_t handle_frame_data;
     /* Callback to process unfiltered gyro and accelerometer data recorded while stationary. */
     pbdrv_imu_handle_stationary_data_func_t handle_stationary_data;
-    /** Raw data. */
+    /** Latest raw data. */
     int16_t data[6];
+    /** Most recent slow moving average of raw data. */
+    int16_t data_slow[6];
+    /** Sum of raw data for slow moving average. */
+    int32_t data_slow_sum[6];
+    /** Raw data count used for slow moving average. */
+    int32_t data_slow_count;
     /** Start time of window in which stationary samples are recorded (us)*/
     uint32_t stationary_time_start;
     /** Raw data point to which new samples are compared to detect stationary. */
@@ -265,7 +271,24 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_reset_stationary_buffer(pbdrv_imu_dev_t 
     memset(&imu_dev->stationary_gyro_data_sum, 0, sizeof(imu_dev->stationary_gyro_data_sum));
 }
 
+static void pbdrv_imu_lsm6ds3tr_c_stm32_update_slow_moving_average(pbdrv_imu_dev_t *imu_dev) {
+    for (uint32_t i = 0; i < 6; i++) {
+        imu_dev->data_slow_sum[i] += imu_dev->data[i];
+    }
+    imu_dev->data_slow_count++;
+    if (imu_dev->data_slow_count == 125) {
+        for (uint32_t i = 0; i < 6; i++) {
+            imu_dev->data_slow[i] = imu_dev->data_slow_sum[i] / imu_dev->data_slow_count;
+            imu_dev->data_slow_sum[i] = 0;
+        }
+        imu_dev->data_slow_count = 0;
+    }
+}
+
 static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t *imu_dev) {
+
+    // Update slow moving average of raw data, used as starting point for stationary detection.
+    pbdrv_imu_lsm6ds3tr_c_stm32_update_slow_moving_average(imu_dev);
 
     // Check whether still stationary compared to constant start sample.
     if (!is_bounded(imu_dev->data[0] - imu_dev->stationary_data_start[0], imu_dev->config.gyro_stationary_threshold) ||
@@ -277,10 +300,11 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t
         ) {
         // Not stationary anymore, so reset counter and gyro sum data so we can start over.
         imu_dev->stationary_now = false;
-        pbdrv_imu_lsm6ds3tr_c_stm32_reset_stationary_buffer(imu_dev);
 
-        // Current sample becomes new starting value to compare to.
-        memcpy(&imu_dev->stationary_data_start[0], &imu_dev->data[0], NUM_DATA_BYTES);
+        // Slow moving average becomes new starting value to compare to.
+        memcpy(&imu_dev->stationary_data_start[0], &imu_dev->data_slow[0], sizeof(imu_dev->stationary_data_start));
+
+        pbdrv_imu_lsm6ds3tr_c_stm32_reset_stationary_buffer(imu_dev);
         return;
     }
 
