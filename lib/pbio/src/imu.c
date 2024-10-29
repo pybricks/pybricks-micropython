@@ -200,7 +200,7 @@ static void pbio_imu_apply_pbdrv_settings(pbio_imu_persistent_settings_t *settin
  */
 void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
     settings->flags = 0;
-    settings->gyro_stationary_threshold = 3.0f;
+    settings->gyro_stationary_threshold = 2.0f;
     settings->accel_stationary_threshold = 2500.0f;
     settings->gravity_pos.x = settings->gravity_pos.y = settings->gravity_pos.z = standard_gravity;
     settings->gravity_neg.x = settings->gravity_neg.y = settings->gravity_neg.z = -standard_gravity;
