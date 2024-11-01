@@ -64,6 +64,9 @@ INC += -I$(PBTOP)
 INC += -I$(BUILD)
 
 GIT = git
+ZIP = zip
+PYBRICKSDEV = pybricksdev
+METADATA = $(PBTOP)/tools/metadata.py
 
 CFLAGS_MCU =
 CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
@@ -165,13 +168,9 @@ export EV3RT_BRICK_DIR
 export EV3RT_LIB_DIR
 export APPLDIRS
 
-all: uImage firmware.bin
+all: uImage firmware
 
-#TODO: Build our own u-boot image. Use any official firmware for now. u-boot will be extracted from it.
-UBOOT_FILE = $(EV3RT_BRICK_DIR)/officialfw.bin
-
-firmware.bin: uImage
-	python $(EV3RT_BRICK_DIR)/make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware.bin
+firmware: $(BUILD)/firmware.zip
 
 ev3rt-config: $(EV3RT_BRICK_DIR) $(BUILD)/libkernel.a prepare-obj-folder
 	make -C $(BUILD) offset.h kernel_cfg.h
@@ -196,3 +195,25 @@ prepare-obj-folder:
 	mkdir -p $(EV3RT_BRICK_DIR)/build
 	mkdir -p $(EV3RT_BRICK_DIR)/build/objs
 	cp $(EV3RT_BRICK_DIR)/ev3rt.mk $(EV3RT_BRICK_DIR)/build/Makefile
+
+#TODO: Build our own u-boot image. Use any official firmware for now. u-boot will be extracted from it.
+UBOOT_FILE = $(EV3RT_BRICK_DIR)/officialfw.bin
+
+$(BUILD)/firmware-base.bin: uImage
+	python $(EV3RT_BRICK_DIR)/make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
+
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware-base.bin $(METADATA)
+	$(ECHO) "META creating firmware metadata"
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $< $@
+
+ZIP_FILES := \
+	$(BUILD)/firmware-base.bin \
+	$(BUILD)/firmware.metadata.json \
+	ReadMe_OSS.txt \
+
+$(BUILD)/firmware.zip: $(ZIP_FILES)
+	$(ECHO) "ZIP creating firmware package"
+	$(Q)$(ZIP) -j $@ $^
+
+deploy: $(BUILD)/firmware.zip
+	$(Q)$(PYBRICKSDEV) flash $<

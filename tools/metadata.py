@@ -52,7 +52,7 @@ HUB_INFO = {
     "essential_hub": {"device-id": 0x83, "checksum-type": "crc32"},
     "rcx": {"device-id": 0xE0, "checksum-type": "none"},
     "nxt": {"device-id": 0xE1, "checksum-type": "none"},
-    "ev3": {"device-id": 0xE2, "checksum-type": "none"},
+    "ev3rt": {"device-id": 0xE2, "checksum-type": "none"},
 }
 
 
