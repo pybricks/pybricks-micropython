@@ -165,12 +165,18 @@ export EV3RT_BRICK_DIR
 export EV3RT_LIB_DIR
 export APPLDIRS
 
-all: ev3rt
+all: uImage firmware.bin
+
+#TODO: Build our own u-boot image. Use any official firmware for now. u-boot will be extracted from it.
+UBOOT_FILE = $(EV3RT_BRICK_DIR)/officialfw.bin
+
+firmware.bin: uImage
+	python $(EV3RT_BRICK_DIR)/make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware.bin
 
 ev3rt-config: $(EV3RT_BRICK_DIR) $(BUILD)/libkernel.a prepare-obj-folder
 	make -C $(BUILD) offset.h kernel_cfg.h
 
-ev3rt-main: $(OBJ)
+mkimage: $(OBJ)
 	make -C $(BUILD) > /dev/null && \
 	arm-none-eabi-objcopy -O binary $(BUILD)/$(KERNEL) $(BUILD)/$(KERNEL).bin
 	@mkimage -A arm -O linux -T kernel -C none -a 0xc0008000 -e 0xc0008000 \
@@ -178,12 +184,11 @@ ev3rt-main: $(OBJ)
 		-d $(BUILD)/$(KERNEL).bin $(BUILD)/uImage
 	@chmod +x $(BUILD)/uImage
 
-ev3rt:
+uImage:
 	mkdir -p $(EV3RT_BRICK_DIR)/build
 	make $(BUILD)/pybricks.cfg
 	make ev3rt-config
-	make ev3rt-main
-
+	make mkimage
 $(BUILD)/libkernel.a: prepare-obj-folder
 	make -C $(BUILD) libkernel.a
 
