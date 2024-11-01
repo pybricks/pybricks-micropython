@@ -283,6 +283,25 @@ jobs:
       run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/ev3rt
+    - name: Short hash
+      id: vars
+      run: echo "short_sha=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
+    - name: Upload EV3 uImage
+      if: ${{ success() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ev3rt-uImage-build-${{ github.run_number }}-git${{ steps.vars.outputs.short_sha }}
+        path: bricks/ev3rt/build/uImage
+    - name: Extract firmware.zip for upload
+      if: ${{ success() }}
+      working-directory: bricks/ev3rt/build
+      run: unzip firmware.zip -d upload
+    - name: Upload EV3 bootable firmware
+      if: ${{ success() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ev3rt-firmware-build-${{ github.run_number }}-git${{ steps.vars.outputs.short_sha }}
+        path: bricks/ev3rt/build/upload/*
 
   debug:
     name: debug firmware
