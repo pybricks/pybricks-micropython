@@ -196,8 +196,8 @@ prepare-obj-folder:
 	mkdir -p $(EV3RT_BRICK_DIR)/build/objs
 	cp $(EV3RT_BRICK_DIR)/ev3rt.mk $(EV3RT_BRICK_DIR)/build/Makefile
 
-#TODO: Build our own u-boot image. Use any official firmware for now. u-boot will be extracted from it.
-UBOOT_FILE = $(EV3RT_BRICK_DIR)/officialfw.bin
+# Use custom u-boot image, or use any official EV3 firmware. u-boot will be extracted from it.
+UBOOT_FILE = $(EV3RT_BRICK_DIR)/u-boot.bin
 
 $(BUILD)/firmware-base.bin: uImage
 	python $(EV3RT_BRICK_DIR)/make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
