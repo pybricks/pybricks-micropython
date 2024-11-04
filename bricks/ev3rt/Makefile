@@ -197,10 +197,10 @@ prepare-obj-folder:
 	cp $(EV3RT_BRICK_DIR)/ev3rt.mk $(EV3RT_BRICK_DIR)/build/Makefile
 
 # Use custom u-boot image, or use any official EV3 firmware. u-boot will be extracted from it.
-UBOOT_FILE = $(EV3RT_BRICK_DIR)/u-boot.bin
+UBOOT_FILE = $(EV3RT_BRICK_DIR)/../ev3/u-boot.bin
 
 $(BUILD)/firmware-base.bin: uImage
-	python $(EV3RT_BRICK_DIR)/make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
+	python $(EV3RT_BRICK_DIR)/../ev3/make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-base.bin $(METADATA)
 	$(ECHO) "META creating firmware metadata"

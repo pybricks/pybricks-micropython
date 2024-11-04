@@ -525,11 +525,23 @@ $(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) -A $@
 
-# firmware blob without main.mpy or checksum - use as base for appending other .mpy
-$(BUILD)/firmware-base.bin: $(BUILD)/firmware.elf
+# firmware blob without checksum
+$(BUILD)/firmware-obj.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware base file"
 	$(Q)$(OBJCOPY) -O binary $(FW_SECTIONS) $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
+
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+UBOOT_FILE = $(PBTOP)/bricks/ev3/u-boot.bin
+MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
+# For EV3, merge firmware blob with u-boot to create a bootable image.
+$(BUILD)/firmware-base.bin: $(BUILD)/uImage $(BUILD)/firmware-obj.bin
+	python make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
+else
+# For embeded systems, the firmware is just the base file.
+$(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
+	$(Q)cp $< $@
+endif
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
@@ -544,6 +556,10 @@ ZIP_FILES := \
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
+
+# firmware in uImage format (for EV3)
+$(BUILD)/uImage: $(BUILD)/firmware-obj.bin
+	mkimage -C none -A arm -T kernel -O linux -a 0xC0008000 -e 0xC0008000 -d $< $@
 
 # firmware in DFU format
 $(BUILD)/%.dfu: $(BUILD)/%-base.bin
