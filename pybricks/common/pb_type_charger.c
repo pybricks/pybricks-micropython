@@ -32,7 +32,7 @@ static mp_obj_t Charger_status(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(Charger_status_obj, Charger_status);
 
 static mp_obj_t Charger_connected(mp_obj_t self_in) {
-    return mp_obj_new_bool(pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE);
+    return mp_obj_new_int(pbdrv_usb_get_bcd());
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(Charger_connected_obj, Charger_connected);
 
