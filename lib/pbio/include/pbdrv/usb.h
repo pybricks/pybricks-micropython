@@ -15,16 +15,18 @@
  * Indicates battery charging capabilites that were detected on a USB port.
  */
 typedef enum {
+    // NOTE: These values are part of the MicroPython API, don't change the numbers.
+
     /** The USB cable is not connected (no VBUS). */
-    PBDRV_USB_BCD_NONE,
+    PBDRV_USB_BCD_NONE = 0,
     /** The USB cable is connected to a non-standard charger or PS/2 port. */
-    PBDRV_USB_BCD_NONSTANDARD,
+    PBDRV_USB_BCD_NONSTANDARD = 1,
     /** The USB cable is connected to standard downstream port. */
-    PBDRV_USB_BCD_STANDARD_DOWNSTREAM,
+    PBDRV_USB_BCD_STANDARD_DOWNSTREAM = 2,
     /** The USB cable is connected to charging downstream port. */
-    PBDRV_USB_BCD_CHARGING_DOWNSTREAM,
+    PBDRV_USB_BCD_CHARGING_DOWNSTREAM = 3,
     /** The USB cable is connected to dedicated charging port. */
-    PBDRV_USB_BCD_DEDICATED_CHARGING,
+    PBDRV_USB_BCD_DEDICATED_CHARGING = 4,
 } pbdrv_usb_bcd_t;
 
 #if PBDRV_CONFIG_USB

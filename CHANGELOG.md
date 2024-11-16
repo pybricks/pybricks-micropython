@@ -22,12 +22,17 @@
 - Re-implemented `hub.imu.heading()` to use optionally use the projection of 3D
   orientation to improve performance when the hub is lifted off the ground.
   The 1D-based heading remains the default for now.
+- Change return value of connected() property from bool to int using the value
+  of pbdrv_usb_get_bcd(). This will allow pro users to be able to tell if they
+  have a "nonstandard" charger that could prevent proper
+  charging ([pybricks-micropython#274]).
 
 ### Fixed
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
   could cause `turn(360)` to be off by a degree ([support#1844]).
 - Fixed `hub` silently ignoring non-orthogonal base axis when it should raise.
 
+[pybricks-micropython#274]: https://github.com/pybricks/pybricks-micropython/pull/274
 [support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
 [support#1844]: https://github.com/pybricks/support/issues/1844
