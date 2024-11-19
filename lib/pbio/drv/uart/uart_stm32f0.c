@@ -21,7 +21,6 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
-#include "../../src/processes.h"
 #include "../core.h"
 
 #include "stm32f0xx.h"
