@@ -28,9 +28,9 @@ doc:
 clean-doc:
 	@$(MAKE) -C lib/pbio/doc clean
 
-all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3rt doc
+all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3 doc
 
-clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3rt clean-doc
+clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3 clean-doc
 
 ifeq ($(HOST_OS),Linux)
 
@@ -64,11 +64,11 @@ clean-ev3dev-armel:
 		docker exec --tty pybricks-ev3dev_armel make clean; \
 	fi
 
-ev3rt: mpy-cross
-	@$(MAKE) -C bricks/ev3rt
+ev3: mpy-cross
+	@$(MAKE) -C bricks/ev3
 
-clean-ev3rt: clean-mpy-cross
-	@$(MAKE) -C bricks/ev3rt clean
+clean-ev3: clean-mpy-cross
+	@$(MAKE) -C bricks/ev3 clean
 
 movehub: mpy-cross
 	@$(MAKE) -C bricks/movehub

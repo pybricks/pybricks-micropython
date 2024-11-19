@@ -53,7 +53,6 @@ HUB_INFO = {
     "rcx": {"device-id": 0xE0, "checksum-type": "none"},
     "nxt": {"device-id": 0xE1, "checksum-type": "none"},
     "ev3": {"device-id": 0xE2, "checksum-type": "none"},
-    "ev3rt": {"device-id": 0xE2, "checksum-type": "none"},
 }
 
 
