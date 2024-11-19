@@ -20,7 +20,6 @@
 #include <pbio/util.h>
 
 #include "./uart_stm32l4_ll_dma.h"
-#include "../../src/processes.h"
 #include "../core.h"
 
 #include "stm32l4xx_ll_dma.h"

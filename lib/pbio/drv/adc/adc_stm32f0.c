@@ -35,7 +35,7 @@ static void pbdrv_adc_calibrate(void) {
     }
 }
 
-static void pbdrv_adc_init(void) {
+void pbdrv_adc_init(void) {
     // enable power domain
     RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
 
@@ -61,6 +61,8 @@ static void pbdrv_adc_init(void) {
     // TODO: LEGO firmware reads CH 3 during init 10 times and averages it.
     // Not sure what this is measuring or what it would be used for. Perhaps
     // some kind of ID resistor?
+
+    process_start(&pbdrv_adc_process);
 }
 
 // does a single conversion for the specified channel
@@ -90,8 +92,6 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     // PROCESS_POLLHANDLER(pbdrv_adc_poll());
 
     PROCESS_BEGIN();
-
-    pbdrv_adc_init();
 
     while (true) {
         PROCESS_WAIT_EVENT();

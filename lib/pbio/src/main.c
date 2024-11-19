@@ -23,15 +23,6 @@
 #include <pbio/motor_process.h>
 
 #include "light/animation.h"
-#include "processes.h"
-
-// DO NOT ADD NEW PROCESSES HERE!
-// We are trying to remove the use of autostart.
-AUTOSTART_PROCESSES(
-#if PBDRV_CONFIG_ADC
-    &pbdrv_adc_process,
-#endif
-    NULL);
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,
@@ -40,10 +31,6 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     pbdrv_init();
-
-    // TODO: remove autostart - this currently starts legacy drivers like analog
-    // it has to be after pbdrv_init() but before anything else
-    autostart_start(autostart_processes);
 
     #if PBIO_CONFIG_MOTOR_PROCESS_AUTO_START
     pbio_motor_process_start();

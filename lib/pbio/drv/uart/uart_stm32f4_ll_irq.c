@@ -23,7 +23,6 @@
 
 #include "../core.h"
 #include "./uart_stm32f4_ll_irq.h"
-#include "../../src/processes.h"
 
 #define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!
 

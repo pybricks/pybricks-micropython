@@ -81,11 +81,7 @@ static void pbdrv_adc_exit(void) {
     HAL_DMA_DeInit(&pbdrv_adc_hdma);
 }
 
-PROCESS_THREAD(pbdrv_adc_process, ev, data) {
-    PROCESS_POLLHANDLER(pbdrv_adc_poll());
-    PROCESS_EXITHANDLER(pbdrv_adc_exit());
-
-    PROCESS_BEGIN();
+void pbdrv_adc_init(void) {
 
     // Timer to trigger ADC
 
@@ -148,6 +144,15 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     HAL_NVIC_EnableIRQ(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ);
     HAL_ADC_Start_DMA(&pbdrv_adc_hadc, pbdrv_adc_dma_buffer, PBIO_ARRAY_SIZE(pbdrv_adc_dma_buffer));
     HAL_TIM_Base_Start(&pbdrv_adc_htim);
+
+    process_start(&pbdrv_adc_process);
+}
+
+PROCESS_THREAD(pbdrv_adc_process, ev, data) {
+    PROCESS_POLLHANDLER(pbdrv_adc_poll());
+    PROCESS_EXITHANDLER(pbdrv_adc_exit());
+
+    PROCESS_BEGIN();
 
     while (true) {
         PROCESS_WAIT_EVENT();
