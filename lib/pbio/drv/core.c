@@ -39,6 +39,7 @@ void pbdrv_init(void) {
     process_start(&etimer_process);
 
     // the rest of the drivers should be implemented so that init order doesn't matter
+    pbdrv_adc_init();
     pbdrv_battery_init();
     pbdrv_block_device_init();
     pbdrv_bluetooth_init();
@@ -79,8 +80,4 @@ void pbdrv_init(void) {
     // devices behaves the same as if unknown devices are still syncing up after
     // just being plugged in.
     pbdrv_legodev_init();
-
-    // REVISIT: verify that the order does not matter and that we can start this
-    // in the same place as the other drivers above.
-    pbdrv_adc_init();
 }
