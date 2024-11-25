@@ -43,26 +43,22 @@
 
 #include "./bluetooth_stm32_cc2640.h"
 
-#define DEBUG_LL (0x01)
-#define DEBUG_PT (0x02)
+PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-// Choose either/or DEBUG_LL | DEBUG_PT
-#define DEBUG (0)
+#define DEBUG_ON_LAST_UART_PORT (0)
 
-#if DEBUG
+#if DEBUG_ON_LAST_UART_PORT
 #include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
-#endif
-#if (DEBUG & DEBUG_LL)
-#define DBG pbdrv_ioport_debug_uart_printf
+#define DBG(...)
+#define DEBUG_PRINT(...)
+#define DEBUG_PRINT_PT PBDRV_IOPORT_DEBUG_UART_PT_PRINTF
+static void uart_poll_callback(pbdrv_uart_dev_t *uart) {
+    process_poll(&pbdrv_bluetooth_spi_process);
+}
 #else
 #define DBG(...)
-#endif
-#if (DEBUG & DEBUG_PT)
-#define DEBUG_PRINT pbdrv_ioport_debug_uart_printf
-#define DEBUG_PRINT_PT PBDRV_IOPORT_DEBUG_UART_PT_PRINTF
-#else
-#define DEBUG_PRINT_PT(...)
 #define DEBUG_PRINT(...)
+#define DEBUG_PRINT_PT(...)
 #endif
 
 // hub name goes in special section so that it can be modified when flashing firmware
@@ -155,8 +151,6 @@ static bool pybricks_notify_en;
 static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handle, uart_tx_char_handle;
 // Nordic UART tx notifications enabled
 static bool uart_tx_notify_en;
-
-PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
 LIST(task_queue);
 static bool bluetooth_ready;
@@ -2276,6 +2270,14 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     });
 
     PROCESS_BEGIN();
+
+    #if DEBUG_ON_LAST_UART_PORT
+    // Wait for the UART to be ready for debugging.
+    while (pbdrv_ioport_debug_uart_init(uart_poll_callback) != PBIO_SUCCESS) {
+        etimer_set(&timer, 100);
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+    }
+    #endif // DEBUG_ON_LAST_UART_PORT
 
 start:
     // take Bluetooth chip out of reset

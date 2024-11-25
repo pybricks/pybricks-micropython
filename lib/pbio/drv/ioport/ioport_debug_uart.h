@@ -9,28 +9,18 @@
 #include <pbio/error.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/uart.h>
 
 #if PBDRV_CONFIG_IOPORT_DEBUG_UART
 
-extern struct pt printf_thread;
+extern char debug_buffer[];
+extern struct pt debug_printf_thread;
+extern pbdrv_uart_dev_t *debug_uart;
+extern pbio_error_t debug_err;
 
-/**
- * Prints debug information on the last ioport.
- *
- * Will not print anything if the debug uart is already in use by another
- * debug message, to avoid blocking.
- *
- * Useful outside of a protothread or when timing is more critical while
- * complete information is not.
- *
- * @param [in]  format  Format string.
- * @param [in]  ...     Arguments.
- *
- * @return Error code.
- */
-pbio_error_t pbdrv_ioport_debug_uart_printf(const char *format, ...);
+PT_THREAD(pbdrv_ioport_debug_uart_debug_printf_thread(struct pt *pt, const char *format, ...));
 
-PT_THREAD(pbdrv_ioport_debug_uart_printf_thread(struct pt *pt, const char *format, ...));
+void pbdrv_ioport_debug_uart_printf_buffer(const char *format, ...);
 
 /**
  * Spawns a task to print debug information on the last ioport.
@@ -42,13 +32,14 @@ PT_THREAD(pbdrv_ioport_debug_uart_printf_thread(struct pt *pt, const char *forma
  * @param [in]  ...    Format string and arguments.
  */
 #define PBDRV_IOPORT_DEBUG_UART_PT_PRINTF(pt, ...) \
-    PT_SPAWN(pt, &printf_thread, pbdrv_ioport_debug_uart_printf_thread(&printf_thread, __VA_ARGS__))
+    pbdrv_ioport_debug_uart_printf_buffer(__VA_ARGS__); \
+    if (debug_uart) { \
+        PT_SPAWN(pt, &debug_printf_thread, pbdrv_uart_write(&debug_printf_thread, debug_uart, (uint8_t *)debug_buffer, strlen(debug_buffer), 250, &debug_err)); \
+    } \
+
+pbio_error_t pbdrv_ioport_debug_uart_init(pbdrv_uart_poll_callback_t callback);
 
 #else // PBDRV_CONFIG_IOPORT_DEBUG_UART
-
-static inline pbio_error_t pbdrv_ioport_debug_uart_printf(const char *format, ...) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
 
 #define PBDRV_IOPORT_DEBUG_UART_PT_PRINTF(pt, ...)
 
