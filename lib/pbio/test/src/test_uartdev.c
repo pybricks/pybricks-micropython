@@ -1063,68 +1063,58 @@ extern bool pbio_legodev_test_process_auto_start;
 void pbdrv_uart_init(void) {
 }
 
-pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
-    if (test_uart_dev.rx_msg) {
-        return PBIO_ERROR_AGAIN;
-    }
+PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, test_uart_dev.rx_msg);
 
     test_uart_dev.rx_msg = msg;
     test_uart_dev.rx_msg_length = length;
     test_uart_dev.rx_msg_result = PBIO_ERROR_AGAIN;
     etimer_set(&test_uart_dev.rx_timer, timeout);
 
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart) {
-    assert(test_uart_dev.rx_msg);
-
-    if (test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN && etimer_expired(&test_uart_dev.rx_timer)) {
+    // If read_pos is less that read_length then we have not read everything yet
+    PT_WAIT_WHILE(pt, test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart_dev.rx_timer));
+    if (etimer_expired(&test_uart_dev.rx_timer)) {
         test_uart_dev.rx_msg_result = PBIO_ERROR_TIMEDOUT;
+    } else {
+        etimer_stop(&test_uart_dev.rx_timer);
     }
 
     if (test_uart_dev.rx_msg_result != PBIO_ERROR_AGAIN) {
         test_uart_dev.rx_msg = NULL;
     }
 
-    return test_uart_dev.rx_msg_result;
+    *err = test_uart_dev.rx_msg_result;
+
+    PT_END(pt);
 }
 
-void pbdrv_uart_read_cancel(pbdrv_uart_dev_t *uart) {
+PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
-}
+    PT_BEGIN(pt);
 
-pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
-    if (test_uart_dev.tx_msg) {
-        return PBIO_ERROR_AGAIN;
-    }
+    // Wait while other write operation already in progress.
+    PT_WAIT_WHILE(pt, test_uart_dev.tx_msg);
 
     test_uart_dev.tx_msg = msg;
     test_uart_dev.tx_msg_length = length;
     test_uart_dev.tx_msg_result = PBIO_ERROR_AGAIN;
     etimer_set(&test_uart_dev.tx_timer, timeout);
 
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart) {
-    if (!test_uart_dev.tx_msg) {
-        // Write end called without begin
-        // REVISIT: This passes but not very clean.
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    if (test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN && etimer_expired(&test_uart_dev.tx_timer)) {
+    PT_WAIT_WHILE(pt, test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart_dev.tx_timer));
+    if (etimer_expired(&test_uart_dev.tx_timer)) {
         test_uart_dev.tx_msg_result = PBIO_ERROR_TIMEDOUT;
+    } else {
+        etimer_stop(&test_uart_dev.tx_timer);
     }
 
     if (test_uart_dev.tx_msg_result != PBIO_ERROR_AGAIN) {
         test_uart_dev.tx_msg = NULL;
     }
 
-    return test_uart_dev.tx_msg_result;
-}
+    *err = test_uart_dev.tx_msg_result;
 
-void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart) {
-
+    PT_END(pt);
 }

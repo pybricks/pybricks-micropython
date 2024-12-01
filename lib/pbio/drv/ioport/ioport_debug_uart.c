@@ -5,6 +5,8 @@
 
 #if PBDRV_CONFIG_IOPORT_DEBUG_UART
 
+#error "This driver can currently not be used."
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
