@@ -82,7 +82,7 @@ static pbio_geometry_xyz_t acceleration_calibrated; // mm/s^2, in hub frame
  * 1D integrated angular velocity for each body axis.
  *
  * This is based on integrating the calibrated angular velocity over time, so
- * including its bias and adjustments to achhieve 360 degrees per rotation.
+ * including its bias and adjustments to achieve 360 degrees per rotation.
  *
  * This is not used for 3D attitude estimation, but serves as a useful way to
  * estimate 1D rotations without being effected by accelerometer fusion which
@@ -180,9 +180,8 @@ const float standard_gravity = 9806.65f;
  */
 static void pbio_imu_apply_pbdrv_settings(pbio_imu_persistent_settings_t *settings) {
 
-    // IMU config is loaded set pbio, while this first occurence of applying
-    // settings is only called by pbsys (after pbio init), so this should
-    // never happen.
+    // First occurence of this being called is when pbsys loads or resets
+    // the settings, so this should never happen.
     if (!imu_config) {
         return;
     }
@@ -206,6 +205,7 @@ void pbio_imu_set_default_settings(pbio_imu_persistent_settings_t *settings) {
     settings->gravity_neg.x = settings->gravity_neg.y = settings->gravity_neg.z = -standard_gravity;
     settings->angular_velocity_bias_start.x = settings->angular_velocity_bias_start.y = settings->angular_velocity_bias_start.z = 0.0f;
     settings->angular_velocity_scale.x = settings->angular_velocity_scale.y = settings->angular_velocity_scale.z = 360.0f;
+    settings->heading_correction_1d = 360.0f;
     pbio_imu_apply_pbdrv_settings(settings);
 }
 
@@ -521,6 +521,10 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
         persistent_settings->gravity_neg = new_settings->gravity_neg;
     }
 
+    if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET) {
+        persistent_settings->heading_correction_1d = new_settings->heading_correction_1d;
+    }
+
     // If any settings were changed, request saving.
     if (new_settings->flags) {
         persistent_settings->flags |= new_settings->flags;
@@ -621,7 +625,8 @@ pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated) {
     return pbio_geometry_side_from_vector(acceleration);
 }
 
-static float heading_offset = 0;
+static float heading_offset_1d = 0;
+static float heading_offset_3d = 0;
 
 /**
  * Reads the estimated IMU heading in degrees, accounting for user offset and
@@ -629,10 +634,29 @@ static float heading_offset = 0;
  *
  * Heading is defined as clockwise positive.
  *
+ * @param [in]  type        The type of heading to get.
+ *
  * @return                  Heading angle in the base frame.
  */
-float pbio_imu_get_heading(void) {
-    return heading_rotations * 360.0f + heading_projection - heading_offset;
+float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
+
+    // 3D. Mapping into user frame is already accounted for in the projection.
+    if (type == PBIO_IMU_HEADING_TYPE_3D) {
+        return heading_rotations * 360.0f + heading_projection - heading_offset_3d;
+    }
+
+    // 1D. Map the per-axis integrated rotation to the user frame, then take
+    // the negative z component as the heading for positive-clockwise convention.
+    pbio_geometry_xyz_t heading_mapped;
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, &single_axis_rotation, &heading_mapped);
+
+    float correction = (persistent_settings && (persistent_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET)) ?
+        // If set, adjust by the user-specified scaling constant.
+        (360.0f / persistent_settings->heading_correction_1d):
+        // No (additional) correction.
+        1.0f;
+
+    return -heading_mapped.z * correction - heading_offset_1d;
 }
 
 /**
@@ -645,7 +669,8 @@ float pbio_imu_get_heading(void) {
  */
 void pbio_imu_set_heading(float desired_heading) {
     heading_rotations = 0;
-    heading_offset = pbio_imu_get_heading() + heading_offset - desired_heading;
+    heading_offset_3d = pbio_imu_get_heading(PBIO_IMU_HEADING_TYPE_3D) + heading_offset_3d - desired_heading;
+    heading_offset_1d = pbio_imu_get_heading(PBIO_IMU_HEADING_TYPE_1D) + heading_offset_1d - desired_heading;
 }
 
 /**
@@ -657,14 +682,15 @@ void pbio_imu_set_heading(float desired_heading) {
  *
  * Heading is defined as clockwise positive.
  *
+ * @param [in]   type                  Heading type to get.
  * @param [out]  heading               The heading angle in control units.
  * @param [out]  heading_rate          The heading rate in control units.
  * @param [in]   ctl_steps_per_degree  The number of control steps per heading degree.
  */
-void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
+void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
 
     // Heading in degrees of the robot.
-    float heading_degrees = pbio_imu_get_heading();
+    float heading_degrees = pbio_imu_get_heading(type);
 
     // Number of whole rotations in control units (in terms of wheels, not robot).
     heading->rotations = (int32_t)(heading_degrees / (360000.0f / ctl_steps_per_degree));

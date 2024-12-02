@@ -182,8 +182,8 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
     // Note that the heading speed estimate (used for derivative control still
     // uses the motor estimate rather than the gyro speed, to guarantee the
     // same stability properties to stabilize the motors.)
-    if (db->use_gyro) {
-        pbio_imu_get_heading_scaled(&state_heading->position, &state_heading->speed, db->control_heading.settings.ctl_steps_per_app_step);
+    if (db->gyro_heading_type != PBIO_IMU_HEADING_TYPE_NONE) {
+        pbio_imu_get_heading_scaled(db->gyro_heading_type, &state_heading->position, &state_heading->speed, db->control_heading.settings.ctl_steps_per_app_step);
     }
 
     return PBIO_SUCCESS;
@@ -365,7 +365,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     pbio_drivebase_reset(db, 0, 0);
 
     // By default, don't use gyro for steering control.
-    db->use_gyro = false;
+    db->gyro_heading_type = PBIO_IMU_HEADING_TYPE_NONE;
 
     return PBIO_SUCCESS;
 }
@@ -376,13 +376,13 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
  * This function will stop the drivebase if it is running.
  *
  * @param [in]  db               Drivebase instance.
- * @param [in]  use_gyro         Whether to use the gyro for heading control.
+ * @param [in]  heading_type     Whether to use the gyro for heading control, and if so which type.
  * @return                       Error code.
  */
-pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, bool use_gyro) {
+pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, pbio_imu_heading_type_t heading_type) {
 
     // No need to reset controls if already in correct mode.
-    if (db->use_gyro == use_gyro) {
+    if (db->gyro_heading_type == heading_type) {
         return PBIO_SUCCESS;
     }
 
@@ -393,7 +393,7 @@ pbio_error_t pbio_drivebase_set_use_gyro(pbio_drivebase_t *db, bool use_gyro) {
         return err;
     }
 
-    db->use_gyro = use_gyro;
+    db->gyro_heading_type = heading_type;
     return PBIO_SUCCESS;
 }
 
@@ -860,7 +860,7 @@ pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db, int32_t distance, int32_
     pbio_angle_diff(&measured_heading.position, &reported_new, &db->heading_offset);
 
     // Synchronize heading and drivebase angle state if gyro in use.
-    if (db->use_gyro) {
+    if (db->gyro_heading_type != PBIO_IMU_HEADING_TYPE_NONE) {
         pbio_imu_set_heading(angle);
     }
 
@@ -877,7 +877,7 @@ bool pbio_drivebase_any_uses_gyro(void) {
         pbio_drivebase_t *db = &drivebases[i];
 
         // Only consider activated drive bases that use the gyro.
-        if (!pbio_drivebase_update_loop_is_running(db) || !db->use_gyro) {
+        if (!pbio_drivebase_update_loop_is_running(db) || db->gyro_heading_type == PBIO_IMU_HEADING_TYPE_NONE) {
             continue;
         }
 

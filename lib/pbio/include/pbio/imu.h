@@ -19,6 +19,25 @@
 #include <pbio/geometry.h>
 
 /**
+ * Heading type to use, set, or get.
+ */
+typedef enum {
+    /**
+     * Heading should not be used.
+     */
+    PBIO_IMU_HEADING_TYPE_NONE,
+    /**
+     * The heading is the integrated gyro rate along one fixed axis.
+     */
+    PBIO_IMU_HEADING_TYPE_1D,
+    /**
+     * The heading is angle between the projection of the line coming out of
+     * the front of the hub onto the horizontal plane and the x-axis.
+     */
+    PBIO_IMU_HEADING_TYPE_3D,
+} pbio_imu_heading_type_t;
+
+/**
  * IMU settings flags.
  *
  * Note: Add new flags such that false is the default value.
@@ -44,6 +63,10 @@ typedef enum {
      * The accelerometer offsets and scale has been calibrated.
      */
     PBIO_IMU_SETTINGS_FLAGS_ACCEL_CALIBRATED = (1 << 5),
+    /**
+     * The heading correction for 1D rotation has been set.
+     */
+    PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET = (1 << 6),
 } pbio_imu_persistent_settings_flags_t;
 
 /**
@@ -68,6 +91,13 @@ typedef struct {
     pbio_geometry_xyz_t angular_velocity_bias_start;
     /** Angular velocity scale (unadjusted measured degrees per whole rotation) */
     pbio_geometry_xyz_t angular_velocity_scale;
+    /**
+     * Additional correction for 1D rotation in the user frame. Works on top
+     * of other calibration settings and values. Only used for 1D heading.
+     *
+     * This setting may be removed in the future when removing 1D support.
+     */
+    float heading_correction_1d;
 } pbio_imu_persistent_settings_t;
 
 #if PBIO_CONFIG_IMU
@@ -98,11 +128,11 @@ pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float 
 
 pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated);
 
-float pbio_imu_get_heading(void);
+float pbio_imu_get_heading(pbio_imu_heading_type_t type);
 
 void pbio_imu_set_heading(float desired_heading);
 
-void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree);
+void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree);
 
 void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation);
 
@@ -143,14 +173,14 @@ static inline pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated) {
     return PBIO_GEOMETRY_SIDE_TOP;
 }
 
-static inline float pbio_imu_get_heading(void) {
+static inline float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
     return 0.0f;
 }
 
 static inline void pbio_imu_set_heading(float desired_heading) {
 }
 
-static inline void pbio_imu_get_heading_scaled(pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
+static inline void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
 }
 
 static inline void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation) {

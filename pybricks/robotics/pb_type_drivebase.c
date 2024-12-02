@@ -377,7 +377,19 @@ static mp_obj_t pb_type_DriveBase_use_gyro(size_t n_args, const mp_obj_t *pos_ar
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(use_gyro));
-    pb_assert(pbio_drivebase_set_use_gyro(self->db, mp_obj_is_true(use_gyro_in)));
+
+    pbio_imu_heading_type_t type = PBIO_IMU_HEADING_TYPE_NONE;
+    if (mp_obj_is_true(use_gyro_in)) {
+        type = PBIO_IMU_HEADING_TYPE_1D;
+    }
+
+    // Allows testing of 3D heading calculation before it becomes the default
+    // in a future release.
+    if (use_gyro_in == MP_OBJ_NEW_QSTR(MP_QSTR_3D)) {
+        type = PBIO_IMU_HEADING_TYPE_3D;
+    }
+
+    pb_assert(pbio_drivebase_set_use_gyro(self->db, type));
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_use_gyro_obj, 1, pb_type_DriveBase_use_gyro);

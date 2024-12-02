@@ -188,7 +188,8 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         PB_ARG_DEFAULT_NONE(acceleration_threshold),
         PB_ARG_DEFAULT_NONE(angular_velocity_bias),
         PB_ARG_DEFAULT_NONE(angular_velocity_scale),
-        PB_ARG_DEFAULT_NONE(acceleration_correction));
+        PB_ARG_DEFAULT_NONE(acceleration_correction),
+        PB_ARG_DEFAULT_NONE(heading_correction));
 
     (void)self;
 
@@ -225,6 +226,7 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
             mp_obj_new_tuple(MP_ARRAY_SIZE(angular_velocity_bias), angular_velocity_bias),
             mp_obj_new_tuple(MP_ARRAY_SIZE(angular_velocity_scale), angular_velocity_scale),
             mp_obj_new_tuple(MP_ARRAY_SIZE(acceleration_corrections), acceleration_corrections),
+            mp_obj_new_float_from_f(get_settings->heading_correction_1d),
         };
         return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
     }
@@ -283,6 +285,11 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         set_settings.gravity_neg.z = mp_obj_get_float(gravity[5]);
     }
 
+    if (heading_correction_in != mp_const_none) {
+        set_settings.flags |= PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET;
+        set_settings.heading_correction_1d = mp_obj_get_float(heading_correction_in);
+    }
+
     pb_assert(pbio_imu_set_settings(&set_settings));
 
     return mp_const_none;
@@ -290,11 +297,19 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_settings_obj, 1, pb_type_imu_settings);
 
 // pybricks._common.IMU.heading
-static mp_obj_t pb_type_imu_heading(mp_obj_t self_in) {
-    (void)self_in;
-    return mp_obj_new_float(pbio_imu_get_heading());
+static mp_obj_t pb_type_imu_heading(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_imu_obj_t, self,
+        PB_ARG_DEFAULT_NONE(heading_type));
+
+    (void)self;
+    pbio_imu_heading_type_t type = heading_type_in == MP_OBJ_NEW_QSTR(MP_QSTR_3D) ?
+        PBIO_IMU_HEADING_TYPE_3D : PBIO_IMU_HEADING_TYPE_1D;
+
+    return mp_obj_new_float(pbio_imu_get_heading(type));
+    ;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pb_type_imu_heading_obj, pb_type_imu_heading);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_heading_obj, 1, pb_type_imu_heading);
 
 // pybricks._common.IMU.orientation
 STATIC mp_obj_t common_IMU_orientation(mp_obj_t self_in) {
