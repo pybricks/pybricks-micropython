@@ -283,7 +283,7 @@ static mp_obj_t common_LightMatrix_text(size_t n_args, const mp_obj_t *pos_args,
 
     if (pb_module_tools_run_loop_is_active()) {
         if (self->async_text_method == MP_OBJ_NULL) {
-            self->async_text_method = pb_function_import_helper(MP_QSTR__hub_extra, MP_QSTR_light_matrix_text_async);
+            self->async_text_method = pb_function_import_helper(MP_QSTR__light_matrix, MP_QSTR_light_matrix_text_async);
         }
         mp_obj_t args[] = {
             MP_OBJ_FROM_PTR(self),
