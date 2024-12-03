@@ -78,9 +78,7 @@ include $(PBTOP)/micropython/py/mkenv.mk
 
 # Include common frozen modules.
 ifeq ($(PB_FROZEN_MODULES),1)
-ifneq ("$(wildcard $(PBTOP)/bricks/_common/modules/*.py)","")
-FROZEN_MANIFEST ?= ../_common/manifest.py
-endif
+FROZEN_MANIFEST ?= manifest.py
 endif
 
 # qstr definitions (must come before including py.mk)
