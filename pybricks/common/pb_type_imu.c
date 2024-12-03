@@ -154,7 +154,8 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_angular_velocity_obj, 1, pb_type_i
 static mp_obj_t pb_type_imu_rotation(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_imu_obj_t, self,
-        PB_ARG_DEFAULT_NONE(axis));
+        PB_ARG_DEFAULT_NONE(axis),
+        PB_ARG_DEFAULT_TRUE(calibrated));
 
     (void)self;
 
@@ -163,7 +164,7 @@ static mp_obj_t pb_type_imu_rotation(size_t n_args, const mp_obj_t *pos_args, mp
     pb_type_imu_extract_axis(axis_in, &axis);
 
     float rotation_angle;
-    pb_assert(pbio_imu_get_single_axis_rotation(&axis, &rotation_angle));
+    pb_assert(pbio_imu_get_single_axis_rotation(&axis, &rotation_angle, mp_obj_is_true(calibrated_in)));
     return mp_obj_new_float_from_f(rotation_angle);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_rotation_obj, 1, pb_type_imu_rotation);
@@ -318,7 +319,7 @@ STATIC mp_obj_t common_IMU_orientation(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(pb_type_Matrix_make_bitmap(3, 3, 1.0f, 0));
 
     pbio_geometry_matrix_3x3_t orientation;
-    pbio_orientation_imu_get_rotation(&orientation);
+    pbio_orientation_imu_get_orientation(&orientation);
 
     memcpy(matrix->data, orientation.values, sizeof(orientation.values));
 

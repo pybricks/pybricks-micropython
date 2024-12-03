@@ -124,7 +124,7 @@ void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated);
 
 void pbio_imu_get_tilt_vector(pbio_geometry_xyz_t *values);
 
-pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle);
+pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle, bool calibrated);
 
 pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated);
 
@@ -134,7 +134,7 @@ void pbio_imu_set_heading(float desired_heading);
 
 void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree);
 
-void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation);
+void pbio_orientation_imu_get_orientation(pbio_geometry_matrix_3x3_t *rotation);
 
 #else // PBIO_CONFIG_IMU
 
@@ -148,10 +148,14 @@ static inline void pbio_imu_apply_loaded_settings(pbio_imu_persistent_settings_t
 }
 
 static inline pbio_error_t pbio_imu_set_base_orientation(pbio_geometry_xyz_t *x_axis, pbio_geometry_xyz_t *z_axis) {
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline bool pbio_imu_is_stationary(void) {
+    return false;
+}
+
+static inline bool pbio_imu_is_ready(void) {
     return false;
 }
 
@@ -159,7 +163,7 @@ static inline pbio_error_t pbio_imu_get_settings(pbio_imu_persistent_settings_t 
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbio_imu_set_settings(float angular_velocity, float acceleration, float heading_correction, bool request_save) {
+static inline pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
@@ -167,6 +171,13 @@ static inline void pbio_imu_get_angular_velocity(pbio_geometry_xyz_t *values, bo
 }
 
 static inline void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
+}
+
+static inline void pbio_imu_get_tilt_vector(pbio_geometry_xyz_t *values) {
+}
+
+static inline pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle, bool calibrated) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated) {
@@ -183,7 +194,7 @@ static inline void pbio_imu_set_heading(float desired_heading) {
 static inline void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *heading, int32_t *heading_rate, int32_t ctl_steps_per_degree) {
 }
 
-static inline void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation) {
+static inline void pbio_orientation_imu_get_orientation(pbio_geometry_matrix_3x3_t *rotation) {
 }
 
 

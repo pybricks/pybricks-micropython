@@ -522,6 +522,9 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET) {
+        if (new_settings->heading_correction_1d < 350 || new_settings->heading_correction_1d > 370) {
+            return PBIO_ERROR_INVALID_ARG;
+        }
         persistent_settings->heading_correction_1d = new_settings->heading_correction_1d;
     }
 
@@ -597,16 +600,30 @@ void pbio_imu_get_tilt_vector(pbio_geometry_xyz_t *values) {
  *
  * @param [in]  axis        The axis to project the rotation onto.
  * @param [out] angle       The angle of rotation in degrees.
+ * @param [in]  calibrated  Whether to use the adjusted scale (true) or the raw scale (false).
  * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_INVALID_ARG if axis has zero length.
  */
-pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle) {
+pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float *angle, bool calibrated) {
+
+    // Local copy so we can change it in-place.
+    pbio_geometry_xyz_t axis_rotation = single_axis_rotation;
+    if (!calibrated) {
+        // In this context, calibrated means that the angular velocity values
+        // were scaled by the user calibration factors before integrating. This
+        // is done within the update loop since we need it for 3D integration.
+        // Since this method only returns the separate 1D rotations, we can
+        // undo this scaling here to get the "uncalibrated" values.
+        for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(axis_rotation.values); i++) {
+            axis_rotation.values[i] *= persistent_settings->angular_velocity_scale.values[i] / 360.0f;
+        }
+    }
 
     // Transform the single axis rotations to the robot frame.
-    pbio_geometry_xyz_t rotation;
-    pbio_geometry_vector_map(&pbio_imu_base_orientation, &single_axis_rotation, &rotation);
+    pbio_geometry_xyz_t rotation_user;
+    pbio_geometry_vector_map(&pbio_imu_base_orientation, &axis_rotation, &rotation_user);
 
     // Get the requested scalar rotation along the given axis.
-    return pbio_geometry_vector_project(axis, &rotation, angle);
+    return pbio_geometry_vector_project(axis, &rotation_user, angle);
 }
 
 /**
@@ -711,7 +728,7 @@ void pbio_imu_get_heading_scaled(pbio_imu_heading_type_t type, pbio_angle_t *hea
  *
  * @param [out] rotation      The rotation matrix
  */
-void pbio_orientation_imu_get_rotation(pbio_geometry_matrix_3x3_t *rotation) {
+void pbio_orientation_imu_get_orientation(pbio_geometry_matrix_3x3_t *rotation) {
     *rotation = pbio_imu_rotation;
 }
 
