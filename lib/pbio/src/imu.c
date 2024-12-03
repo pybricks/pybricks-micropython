@@ -657,21 +657,21 @@ static float heading_offset_3d = 0;
  */
 float pbio_imu_get_heading(pbio_imu_heading_type_t type) {
 
+    float correction = (persistent_settings && (persistent_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET)) ?
+        // If set, adjust by the user-specified scaling constant.
+        (360.0f / persistent_settings->heading_correction_1d):
+        // No (additional) correction.
+        1.0f;
+
     // 3D. Mapping into user frame is already accounted for in the projection.
     if (type == PBIO_IMU_HEADING_TYPE_3D) {
-        return heading_rotations * 360.0f + heading_projection - heading_offset_3d;
+        return (heading_rotations * 360.0f + heading_projection) * correction - heading_offset_3d;
     }
 
     // 1D. Map the per-axis integrated rotation to the user frame, then take
     // the negative z component as the heading for positive-clockwise convention.
     pbio_geometry_xyz_t heading_mapped;
     pbio_geometry_vector_map(&pbio_imu_base_orientation, &single_axis_rotation, &heading_mapped);
-
-    float correction = (persistent_settings && (persistent_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET)) ?
-        // If set, adjust by the user-specified scaling constant.
-        (360.0f / persistent_settings->heading_correction_1d):
-        // No (additional) correction.
-        1.0f;
 
     return -heading_mapped.z * correction - heading_offset_1d;
 }
