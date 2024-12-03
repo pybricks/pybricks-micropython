@@ -122,7 +122,7 @@ SIDE_COUNT = REPEAT * 2
 def roll_hub(axis, message, start_side, sides):
     print(message)
     wait_for_stationary(start_side)
-    beep()
+    beep(500)
     rotation = 0
     for _ in range(REPEAT):
         for side in sides:
