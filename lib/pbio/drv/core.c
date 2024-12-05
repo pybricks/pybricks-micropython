@@ -6,6 +6,7 @@
 #include <pbdrv/config.h>
 
 #include "core.h"
+#include "adc/adc.h"
 #include "battery/battery.h"
 #include "block_device/block_device.h"
 #include "bluetooth/bluetooth.h"
@@ -38,6 +39,7 @@ void pbdrv_init(void) {
     process_start(&etimer_process);
 
     // the rest of the drivers should be implemented so that init order doesn't matter
+    pbdrv_adc_init();
     pbdrv_battery_init();
     pbdrv_block_device_init();
     pbdrv_bluetooth_init();
