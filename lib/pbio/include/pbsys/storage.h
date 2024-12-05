@@ -21,6 +21,8 @@
 
 uint32_t pbsys_storage_get_maximum_program_size(void);
 
+void pbsys_storage_reset_storage(void);
+
 pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size);
 
 pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32_t size);
@@ -31,6 +33,9 @@ void pbsys_storage_request_write(void);
 
 static inline uint32_t pbsys_storage_get_maximum_program_size(void) {
     return 0;
+}
+
+static inline void pbsys_storage_reset_storage(void) {
 }
 
 static inline pbio_error_t pbsys_storage_set_user_data(uint32_t offset, const uint8_t *data, uint32_t size) {

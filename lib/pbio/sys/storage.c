@@ -175,6 +175,32 @@ void pbsys_storage_request_write(void) {
 }
 
 /**
+ * Erases user data, erases user program meta data and restores user settings
+ * to default.
+ *
+ * This resets the data in RAM, which will be saved during power off just as
+ * with any other storage operations.
+ *
+ * This is called to initialize the data map when there is no data or when the
+ * data was previously written with a different firmware version. It can also
+ * be called by the user to reset the data.
+ */
+void pbsys_storage_reset_storage(void) {
+    // Reset storage except for program data. It is sufficient to set its
+    // size to 0, which is what happens here since it is in the map.
+    memset(map, 0, sizeof(pbsys_storage_data_map_t));
+
+    // Apply default settings.
+    pbsys_storage_settings_set_defaults(&map->settings);
+
+    // Set firmware version used to create current storage map.
+    strncpy(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
+
+    // Ensure new firmware version and default settings are written on poweroff.
+    pbsys_storage_request_write();
+}
+
+/**
  * Sets user data. This will be saved during power off, like program data.
  *
  * @param [in]  offset  Offset from the base address.
@@ -439,18 +465,10 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
 
     bool is_bad_version = strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
 
-    // Test that storage successfully loaded and matches current firmware.
+    // Test that storage successfully loaded and matches current firmware,
+    // otherwise reset storage.
     if (err != PBIO_SUCCESS || is_bad_version) {
-        // Reset storage except for program data. It is sufficient to set its
-        // size to 0, which is what happens here since it is in the map.
-        memset(map, 0, sizeof(pbsys_storage_data_map_t));
-        pbsys_storage_settings_set_defaults(&map->settings);
-
-        // Set firmware version used to create current storage map.
-        strncpy(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
-
-        // Ensure new firmware version and default settings are written.
-        pbsys_storage_request_write();
+        pbsys_storage_reset_storage();
     }
 
     // Apply loaded settings as necesary.
