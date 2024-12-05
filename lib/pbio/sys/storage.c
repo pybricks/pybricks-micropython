@@ -176,7 +176,8 @@ void pbsys_storage_request_write(void) {
 
 /**
  * Erases user data, erases user program meta data and restores user settings
- * to default.
+ * to default. Does not actually erase program data, but it becomes
+ * inaccessible, thus effectively erased.
  *
  * This resets the data in RAM, which will be saved during power off just as
  * with any other storage operations.
@@ -188,6 +189,8 @@ void pbsys_storage_request_write(void) {
 void pbsys_storage_reset_storage(void) {
     // Reset storage except for program data. It is sufficient to set its
     // size to 0, which is what happens here since it is in the map.
+    // The program data itself is not overwritten with zeros because the user
+    // may be calling this while a program using this data is running.
     memset(map, 0, sizeof(pbsys_storage_data_map_t));
 
     // Apply default settings.

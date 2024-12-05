@@ -7,11 +7,13 @@
 ### Added
 
 - Added optional `calibrated=True` parameter to `acceleration()` and `up()` and
-  `angular_velocity()` methods of the IMU ([support#943]).
+  `angular_velocity()` and `rotation` methods of the IMU ([support#943]).
 - Implemented `hub.imu.orientation()` to give the rotation matrix of the hub or
   robot with respect to the inertial frame.
 - Added calibration parameters that can be set for angular velocity offset and
   scale and acceleration offset and scale.
+- Added `hub.system.reset_storage` to restore storage and settings to default
+  state.
 
 ### Changed
 

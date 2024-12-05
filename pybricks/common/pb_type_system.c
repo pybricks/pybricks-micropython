@@ -142,6 +142,12 @@ static mp_obj_t pb_type_System_storage(size_t n_args, const mp_obj_t *pos_args, 
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_System_storage_obj, 0, pb_type_System_storage);
 
+static mp_obj_t pb_type_System_reset_storage(void) {
+    pbsys_storage_reset_storage();
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_storage_obj, pb_type_System_reset_storage);
+
 #endif // PBIO_CONFIG_ENABLE_SYS
 
 // dir(pybricks.common.System)
@@ -153,6 +159,7 @@ static const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     #endif // PBDRV_CONFIG_RESET
     #if PBIO_CONFIG_ENABLE_SYS
     { MP_ROM_QSTR(MP_QSTR_set_stop_button), MP_ROM_PTR(&pb_type_System_set_stop_button_obj) },
+    { MP_ROM_QSTR(MP_QSTR_reset_storage), MP_ROM_PTR(&pb_type_System_reset_storage_obj) },
     { MP_ROM_QSTR(MP_QSTR_shutdown), MP_ROM_PTR(&pb_type_System_shutdown_obj) },
     { MP_ROM_QSTR(MP_QSTR_storage), MP_ROM_PTR(&pb_type_System_storage_obj) },
     #endif
