@@ -52,7 +52,8 @@
 #define PYBRICKS_OPT_RAW_REPL                   (1)
 #define PYBRICKS_OPT_FLOAT                      (1)
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
-#define PYBRICKS_OPT_EXTRA_MOD                  (1)
+#define PYBRICKS_OPT_EXTRA_LEVEL1               (1)
+#define PYBRICKS_OPT_EXTRA_LEVEL2               (0)
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 #define PYBRICKS_OPT_NATIVE_MOD                 (1)
 
