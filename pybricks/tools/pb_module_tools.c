@@ -302,7 +302,13 @@ static mp_obj_t pb_module_tools_hub_menu(size_t n_args, const mp_obj_t *args) {
 
     // Disable stop button and cache original setting to restore later.
     pbio_button_flags_t stop_button = pbsys_program_stop_get_buttons();
-    pbsys_program_stop_set_buttons(0);
+
+    // Disable normal stop behavior since we need the buttons for the menu.
+    // Except if the Bluetooth button is used for stopping, since we don't need
+    // it for the menu.
+    if (stop_button != PBIO_BUTTON_RIGHT_UP) {
+        pbsys_program_stop_set_buttons(0);
+    }
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {

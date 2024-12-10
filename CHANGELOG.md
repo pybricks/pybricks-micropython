@@ -28,6 +28,8 @@
   of pbdrv_usb_get_bcd(). This will allow pro users to be able to tell if they
   have a "nonstandard" charger that could prevent proper
   charging ([pybricks-micropython#274]).
+- When the Bluetooth button is selected to stop the program, don't disable the
+  stop button while the hub menu is active ([support#1975]).
 
 ### Fixed
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
@@ -38,6 +40,7 @@
 [support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
 [support#1844]: https://github.com/pybricks/support/issues/1844
+[support#1875]: https://github.com/pybricks/support/issues/1975
 
 ## [3.6.0b2] - 2024-10-15
 
