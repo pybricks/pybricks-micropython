@@ -15,8 +15,6 @@
 
 #include <contiki.h>
 
-#include "src/processes.h"
-
 #define PBIO_TEST_TIMEOUT 1 // seconds
 
 void pbio_test_run_thread(void *env) {

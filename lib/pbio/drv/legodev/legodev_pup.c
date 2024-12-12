@@ -14,6 +14,7 @@
 #include <contiki.h>
 
 #include <pbdrv/gpio.h>
+#include <pbdrv/uart.h>
 
 #include <pbsys/status.h>
 
@@ -105,6 +106,11 @@ static void legodev_pup_enable_uart(const pbdrv_ioport_pup_pins_t *pins) {
     pbdrv_gpio_alt(&pins->uart_rx, pins->uart_alt);
     pbdrv_gpio_alt(&pins->uart_tx, pins->uart_alt);
     pbdrv_gpio_out_low(&pins->uart_buf);
+}
+
+static void legodev_pup_disable_uart(const pbdrv_ioport_pup_pins_t *pins) {
+    // REVISIT: Move to ioport.
+    pbdrv_gpio_out_high(&pins->uart_buf);
 }
 
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
@@ -343,6 +349,7 @@ static PT_THREAD(pbdrv_legodev_pup_thread(ext_dev_t * dev)) {
     while (true) {
 
         // Initially assume nothing is connected.
+        legodev_pup_disable_uart(dev->pins);
         dev->dcm.connected_type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
         dev->dcm.dev_id_match_count = 0;
 
@@ -369,6 +376,7 @@ static PT_THREAD(pbdrv_legodev_pup_thread(ext_dev_t * dev)) {
         // disconnects, as observed by the UART process not getting valid data.
         legodev_pup_enable_uart(dev->pins);
         PT_SPAWN(&dev->pt, &dev->child, pbdrv_legodev_pup_uart_thread(&dev->child, dev->uart_dev));
+
     }
     PT_END(&dev->pt);
 }
@@ -405,6 +413,14 @@ PROCESS_THREAD(pbio_legodev_pup_process, ev, data) {
     PROCESS_END();
 }
 
+/**
+ * We get notified when the uart driver has completed sending or receiving data.
+ */
+static void uart_poll_callback(pbdrv_uart_dev_t *uart) {
+    // REVISIT: Only need to poll the specified uart device.
+    process_poll(&pbio_legodev_pup_process);
+}
+
 void pbdrv_legodev_init(void) {
     #if PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV > 0
     for (uint8_t i = 0; i < PBDRV_CONFIG_LEGODEV_PUP_NUM_INT_DEV; i++) {
@@ -431,7 +447,15 @@ void pbdrv_legodev_init(void) {
         pbio_dcmotor_get_dcmotor(legodev, &dcmotor);
         legodev->ext_dev->uart_dev = pbdrv_legodev_pup_uart_configure(legodev_data->ioport_index, port_data->uart_driver_index, dcmotor);
 
+        // legodev driver is started after all other drivers, so we
+        // assume that we do not need to wait for this to be ready.
+        pbdrv_uart_dev_t *uart;
+        pbdrv_uart_get(port_data->uart_driver_index, &uart);
+
+        // Set callback for uart driver.
+        pbdrv_uart_set_poll_callback(uart, uart_poll_callback);
     }
+
     process_start(&pbio_legodev_pup_process);
 }
 
