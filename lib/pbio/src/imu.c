@@ -465,7 +465,17 @@ bool pbio_imu_is_stationary(void) {
 static bool pbio_imu_stationary_acceleration_out_of_range(float value, bool expect_positive) {
     const float expected_value = expect_positive ? standard_gravity : -standard_gravity;
     const float absolute_error = value > expected_value ? value - expected_value : expected_value - value;
-    return absolute_error > standard_gravity / 15;
+    return absolute_error > standard_gravity / 10;
+}
+
+/**
+ * Tests if a value is close to 360 degrees.
+ *
+ * @param [in]  value  The value to test.
+ * @return             True if the value is within +/-15 degrees of 360, false otherwise.
+ */
+static bool pbio_imu_setting_close_to_360(float value) {
+    return pbio_geometry_absf(value - 360.0f) < 15.0f;
 }
 
 /**
@@ -501,7 +511,7 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
         }
 
         if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_GYRO_SCALE_SET) {
-            if (new_settings->angular_velocity_scale.values[i] < 350 || new_settings->angular_velocity_scale.values[i] > 370) {
+            if (!pbio_imu_setting_close_to_360(new_settings->angular_velocity_scale.values[i])) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             persistent_settings->angular_velocity_scale.values[i] = new_settings->angular_velocity_scale.values[i];
@@ -522,7 +532,7 @@ pbio_error_t pbio_imu_set_settings(pbio_imu_persistent_settings_t *new_settings)
     }
 
     if (new_settings->flags & PBIO_IMU_SETTINGS_FLAGS_HEADING_CORRECTION_1D_SET) {
-        if (new_settings->heading_correction_1d < 350 || new_settings->heading_correction_1d > 370) {
+        if (!pbio_imu_setting_close_to_360(new_settings->heading_correction_1d)) {
             return PBIO_ERROR_INVALID_ARG;
         }
         persistent_settings->heading_correction_1d = new_settings->heading_correction_1d;
