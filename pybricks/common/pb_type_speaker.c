@@ -152,7 +152,7 @@ static mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
     pb_type_Speaker_start_beep(frequency, self->sample_attenuator);
 
     if (duration < 0) {
-        duration = 0;
+        return mp_const_none;
     }
 
     self->beep_end_time = mp_hal_ticks_ms() + (uint32_t)duration;
