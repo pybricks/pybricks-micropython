@@ -11,6 +11,8 @@
 
 #include <pbdrv/config.h>
 
+#include <stddef.h>
+
 #include <pbio/angle.h>
 #include <pbio/port.h>
 
@@ -615,6 +617,7 @@ static inline bool pbdrv_legodev_needs_permanent_power(pbdrv_legodev_dev_t *lego
 }
 
 static inline pbio_error_t pbdrv_legodev_get_info(pbdrv_legodev_dev_t *legodev, pbdrv_legodev_info_t **info) {
+    *info = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
@@ -631,6 +634,7 @@ static inline pbio_error_t pbdrv_legodev_set_mode_with_data(pbdrv_legodev_dev_t 
 }
 
 static inline pbio_error_t pbdrv_legodev_get_data(pbdrv_legodev_dev_t *legodev, uint8_t mode, void **data) {
+    *data = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
