@@ -55,6 +55,7 @@
 #define PBDRV_CONFIG_IOPORT_PUP                     (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (4)
 #define PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE   (1)
+#define PBDRV_CONFIG_IOPORT_PUP_QUIRK_SHUTDOWN      (0)
 #define PBDRV_CONFIG_IOPORT_DEBUG_UART              (0)
 
 #define PBDRV_CONFIG_LED                            (1)

@@ -12,7 +12,6 @@
 
 #include "core.h"
 #include "hmi.h"
-#include "io_ports.h"
 #include "light.h"
 #include "storage.h"
 #include "supervisor.h"
@@ -36,7 +35,6 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
             etimer_reset(&timer);
             pbsys_battery_poll();
             pbsys_hmi_poll();
-            pbsys_io_ports_poll();
             pbsys_supervisor_poll();
             pbsys_program_stop_poll();
         }
