@@ -77,7 +77,7 @@ static mp_obj_t pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int16_t
     // Send the data to the device. This automatically delays by about 250 ms
     // to ensure the data is properly sent and received. This also ensures that
     // the message will still work if two identical values are sent in a row.
-    return pb_type_device_set_data(self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, sizeof(message));
+    return pb_type_device_set_data(self->device_base, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, sizeof(message));
 }
 
 // pybricks.pupdevices.PFMotor.dc

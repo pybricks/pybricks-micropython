@@ -19,11 +19,9 @@
 
 #include <pbdrv/motor_driver.h>
 #include <pbdrv/counter.h>
-#include <pbdrv/legodev.h>
 
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include <pbdrv/legodev.h>
 #include <pbio/parent.h>
 #include <pbio/port.h>
 
@@ -49,8 +47,6 @@ typedef enum {
  * DC Motor instance.
  */
 typedef struct _pbio_dcmotor_t {
-    /** The associated legodevice instance. */
-    pbdrv_legodev_dev_t *legodev;
     /** Direction for positive speeds. */
     pbio_direction_t direction;
     /** Currently active actuation type. */
@@ -70,17 +66,17 @@ typedef struct _pbio_dcmotor_t {
 #if PBIO_CONFIG_DCMOTOR
 
 /** @cond INTERNAL */
-void pbio_dcmotor_stop_all(bool clear_parents);
 bool pbio_dcmotor_all_coasting(void);
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
-int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id);
+int32_t pbio_dcmotor_get_max_voltage(lego_device_type_id_t id);
 /** @endcond */
 
 /** @name Initialization Functions */
 /**@{*/
-pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor);
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor,  pbdrv_legodev_type_id_t type, pbio_direction_t direction);
+void pbio_dcmotor_reset(pbio_dcmotor_t *dcmotor, bool clear_parent);
+pbio_dcmotor_t *pbio_dcmotor_init_instance(uint8_t index, pbdrv_motor_driver_dev_t *motor_driver);
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, lego_device_type_id_t type, pbio_direction_t direction);
 pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor);
 /**@}*/
 
@@ -105,9 +101,8 @@ static inline bool pbio_dcmotor_any_active(void) {
     return false;
 }
 
-static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor) {
-    *dcmotor = NULL;
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline pbio_dcmotor_t *pbio_dcmotor_init_instance(uint8_t index, pbdrv_motor_driver_dev_t *motor_driver) {
+    return NULL;
 }
 
 static inline pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
@@ -119,7 +114,7 @@ static inline void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dc
     *voltage_now = 0;
 }
 
-static inline int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id) {
+static inline int32_t pbio_dcmotor_get_max_voltage(lego_device_type_id_t id) {
     return 0;
 }
 

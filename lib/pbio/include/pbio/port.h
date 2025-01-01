@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 /**
- * @addtogroup Port pbio/port: I/O port identifiers
+ * @addtogroup Port pbio/port: I/O port interface
  * @{
  */
 
@@ -12,9 +12,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <lego/device.h>
+
 #include <pbdrv/config.h>
+
 #include <pbio/error.h>
 
+typedef struct _pbio_port_t pbio_port_t;
 
 /**
  * I/O port identifier. The meaning and availability of a port is device-specific.
@@ -51,6 +55,74 @@ typedef enum {
     PBIO_PORT_ID_4 = '4', /**< I/O port labeled as "4" */
     #endif
 } pbio_port_id_t;
+
+
+/**
+ * Kind (category) of attached device, if any.
+ */
+typedef enum {
+    /**
+     * No (known) device is connected.
+     */
+    PBIO_PORT_DEVICE_KIND_NONE,
+    /**
+     * Known DC motor or powered device like a light.
+     */
+    PBIO_PORT_DEVICE_KIND_DC_DEVICE,
+    /**
+     * A sensor with the LUMP protocol.
+     */
+    PBIO_PORT_DEVICE_KIND_LUMP_SENSOR,
+    /**
+     * A motor with the LUMP protocol with absolute encoders.
+     */
+    PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE,
+    /**
+     * A motor with the LUMP protocol with relative encoders.
+     */
+    PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE,
+    /**
+     * A motor with quadrature encoders without intermediate processing.
+     */
+    PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR,
+} port_port_device_kind_t;
+
+/**
+ * Power state across the P1P2 pins when full on/off is required. Used for some
+ * sensors that cannot run on the voltage provided by P4 alone.
+ *
+ * On some platforms, one pin may supply a voltage while the other is ground.
+ * On some platforms, the two wires are driven by a motor driver. The effect on
+ * a powered sensor is the same.
+ */
+typedef enum {
+    /* The power is off. Both pins are either floating or both are ground */
+    PBIO_PORT_POWER_REQUIREMENTS_NONE,
+    /* The battery voltage is applied across the pins, with p1 the positive side. */
+    PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS,
+    /* The battery voltage is applied across the pins, with p2 the positive side. */
+    PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS,
+} pbio_port_power_requirements_t;
+
+/**
+ * Known information about the attached device. This is reset at the
+ * start of the port process and may be set when a device is detected.
+ */
+typedef struct {
+    /**
+     * Power requirements for the port.
+     */
+    pbio_port_power_requirements_t power_requirements;
+    /**
+     * The device kind connected to this port, if any.
+     */
+    port_port_device_kind_t kind;
+    /**
+     * Type identifier of the device attached to this port, if any was detected.
+     */
+    lego_device_type_id_t type_id;
+} pbio_port_device_info_t;
+
 
 #endif // _PBIO_PORT_H_
 

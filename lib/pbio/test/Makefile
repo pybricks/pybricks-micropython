@@ -54,7 +54,9 @@ CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
 # pbio dependency
 LEGO_DIR = ../../lego
 LEGO_INC = -I$(LEGO_DIR)
-LEGO_SRC =
+LEGO_SRC = $(addprefix $(LEGO_DIR)/, \
+	device.c \
+	)
 
 # pbio dependency
 LWRB_DIR = ../../lwrb/src

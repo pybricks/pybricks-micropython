@@ -24,13 +24,13 @@ static mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
         PB_ARG_REQUIRED(port));
 
     nxtdevices_TemperatureSensor_obj_t *self = mp_obj_malloc(nxtdevices_TemperatureSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.nxtdevices.TemperatureSensor.temperature
 static mp_obj_t nxtdevices_TemperatureSensor_temperature(mp_obj_t self_in) {
-    int16_t *temperature_scaled = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_TEMPERATURE_SENSOR_CELSIUS);
+    int16_t *temperature_scaled = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_TEMPERATURE_SENSOR_CELSIUS);
     // FIXME: ENDIANNESS
     return mp_obj_new_float((temperature_scaled[0] >> 4) / 16.0);
 }

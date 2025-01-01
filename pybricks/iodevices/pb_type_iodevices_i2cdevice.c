@@ -5,7 +5,6 @@
 
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbdrv/legodev.h>
 
 #include "py/objstr.h"
 
@@ -34,7 +33,7 @@ static mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *type, size_t n
 
     // Get device, which inits I2C port
     iodevices_I2CDevice_obj_t *self = mp_obj_malloc(iodevices_I2CDevice_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_CUSTOM_I2C);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_CUSTOM_I2C);
 
     // Get selected I2C Address
     mp_int_t address = mp_obj_get_int(address_in);

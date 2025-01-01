@@ -10,7 +10,6 @@
 
 #include <pbio/control.h>
 #include <pbio/int_math.h>
-#include <pbdrv/legodev.h>
 #include <pbio/observer.h>
 #include <pbio/servo.h>
 #include <pbio/util.h>
@@ -211,7 +210,7 @@ static const pbio_observer_model_t model_ev3_m = {
 static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     #if PBIO_CONFIG_SERVO_EV3_NXT
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_EV3_MEDIUM_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR,
         .model = &model_ev3_m,
         .rated_max_speed = 1200,
         .feedback_gain_low = 45,
@@ -219,7 +218,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .pid_kp_low_speed_threshold = 0,
     },
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_EV3_LARGE_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR,
         .model = &model_ev3_l,
         .rated_max_speed = 800,
         .feedback_gain_low = 45,
@@ -229,7 +228,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     #endif // PBIO_CONFIG_SERVO_EV3_NXT
     #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_MOVE_HUB_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_MOVE_HUB_MOTOR,
         .model = &model_movehub,
         .rated_max_speed = 1500,
         .feedback_gain_low = 45,
@@ -239,7 +238,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
     #endif // PBIO_CONFIG_SERVO_PUP_MOVE_HUB
     #if PBIO_CONFIG_SERVO_PUP
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR,
         .model = &model_interactive,
         .rated_max_speed = 1200,
         .feedback_gain_low = 45,
@@ -247,7 +246,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .pid_kp_low_speed_threshold = 0,
     },
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_TECHNIC_L_MOTOR,
         .model = &model_technic_l,
         .rated_max_speed = 1500,
         .feedback_gain_low = 45,
@@ -255,7 +254,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .pid_kp_low_speed_threshold = 250,
     },
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_XL_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_TECHNIC_XL_MOTOR,
         .model = &model_technic_xl,
         .rated_max_speed = 1500,
         .feedback_gain_low = 45,
@@ -263,7 +262,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .pid_kp_low_speed_threshold = 250,
     },
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR,
         .model = &model_technic_s_angular,
         .rated_max_speed = 620,
         .feedback_gain_low = 30,
@@ -271,7 +270,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .pid_kp_low_speed_threshold = 150,
     },
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR,
         .model = &model_technic_l_angular,
         .rated_max_speed = 1000,
         .feedback_gain_low = 45,
@@ -279,7 +278,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .pid_kp_low_speed_threshold = 150,
     },
     {
-        .id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR,
+        .id = LEGO_DEVICE_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR,
         .model = &model_technic_m_angular,
         .rated_max_speed = 1000,
         .feedback_gain_low = 45,
@@ -295,8 +294,8 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
  * @param [in]  id          Device type id.
  * @return                  Maximum voltage (mV) for the given motor type.
  */
-int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id) {
-    if (id == PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR) {
+int32_t pbio_dcmotor_get_max_voltage(lego_device_type_id_t id) {
+    if (id == LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR) {
         return 6000;
     }
     return 9000;
@@ -308,14 +307,14 @@ int32_t pbio_dcmotor_get_max_voltage(pbdrv_legodev_type_id_t id) {
  * @param [in]   id            Type identifier for which to look up the settings.
  * @return                     Reduced settings or NULL if motor ID not supported.
  */
-const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(pbdrv_legodev_type_id_t id) {
+const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(lego_device_type_id_t id) {
 
     // Some motor types are identical, so treat them the same.
-    if (id == PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR) {
-        id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR;
+    if (id == LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR) {
+        id = LEGO_DEVICE_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR;
     }
-    if (id == PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR) {
-        id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR;
+    if (id == LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR) {
+        id = LEGO_DEVICE_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR;
     }
 
     // Look up reduced set of settings for this device ID.

@@ -16,6 +16,7 @@ spec.loader.exec_module(codeformat)
 codeformat.PATHS = [
     "bricks/**/*.[ch]",
     "lib/pbio/**/*.[ch]",
+    "lib/lego/**/*.[ch]",
     "py/*.[ch]",
     "pybricks/**/*.[ch]",
     # Python

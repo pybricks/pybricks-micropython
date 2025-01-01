@@ -25,7 +25,7 @@ static mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     ev3devices_UltrasonicSensor_obj_t *self = mp_obj_malloc(ev3devices_UltrasonicSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_EV3_ULTRASONIC_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -36,7 +36,7 @@ static mp_obj_t ev3devices_UltrasonicSensor_distance(size_t n_args, const mp_obj
         ev3devices_UltrasonicSensor_obj_t, self,
         PB_ARG_DEFAULT_FALSE(silent));
 
-    uint8_t mode = mp_obj_is_true(silent_in) ? PBDRV_LEGODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM : PBDRV_LEGODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM;
+    uint8_t mode = mp_obj_is_true(silent_in) ?LEGO_DEVICE_MODE_EV3_ULTRASONIC_SENSOR__SI_CM :LEGO_DEVICE_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM;
     int16_t *distance = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), mode);
     return mp_obj_new_int(distance[0]);
 }
@@ -44,7 +44,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_UltrasonicSensor_distance_obj, 1, e
 
 // pybricks.ev3devices.UltrasonicSensor.presence
 static mp_obj_t ev3devices_UltrasonicSensor_presence(mp_obj_t self_in) {
-    int8_t *presence = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN);
+    int8_t *presence = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_EV3_ULTRASONIC_SENSOR__LISTEN);
     return mp_obj_new_bool(presence[0]);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_UltrasonicSensor_presence_obj, ev3devices_UltrasonicSensor_presence);

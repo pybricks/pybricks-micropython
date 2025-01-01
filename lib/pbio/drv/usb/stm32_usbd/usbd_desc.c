@@ -44,7 +44,7 @@
   */
 /* Includes ------------------------------------------------------------------*/
 
-#include <lego_usb.h>
+#include <lego/usb.h>
 
 #include <pbdrv/config.h>
 #include <pbio/protocol.h>

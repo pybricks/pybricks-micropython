@@ -149,20 +149,15 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
+	drv/gpio/gpio_virtual.c \
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
-	drv/ioport/ioport_pup.c \
+	drv/ioport/ioport.c \
 	drv/led/led_array_pwm.c \
 	drv/led/led_array.c \
 	drv/led/led_core.c \
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
 	drv/led/led_virtual.c \
-	drv/legodev/legodev_nxt.c \
-	drv/legodev/legodev_pup.c \
-	drv/legodev/legodev_pup_uart.c \
-	drv/legodev/legodev_spec.c \
-	drv/legodev/legodev_test.c \
-	drv/legodev/legodev_virtual.c \
 	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/motor_driver/motor_driver_nxt.c \
 	drv/motor_driver/motor_driver_virtual_cpython.c \
@@ -209,6 +204,9 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/motor/servo_settings.c \
 	src/observer.c \
 	src/parent.c \
+	src/port.c \
+	src/port_dcm_pup.c \
+	src/port_lump.c \
 	src/protocol/nus.c \
 	src/protocol/pybricks.c \
 	src/servo.c \
@@ -221,7 +219,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/command.c \
 	sys/core.c \
 	sys/hmi.c \
-	sys/io_ports.c \
 	sys/light_matrix.c \
 	sys/light.c \
 	sys/main.c \
@@ -230,6 +227,12 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/storage.c \
 	sys/storage_settings.c \
 	sys/supervisor.c \
+	)
+
+# LEGO specification library
+
+LEGO_SPEC_SRC_C = $(addprefix lib/lego/,\
+	device.c \
 	)
 
 # MicroPython math library

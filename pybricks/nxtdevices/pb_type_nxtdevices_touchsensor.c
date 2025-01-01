@@ -24,7 +24,7 @@ static mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_TouchSensor_obj_t *self = mp_obj_malloc(nxtdevices_TouchSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_TOUCH_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 

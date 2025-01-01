@@ -23,7 +23,7 @@ typedef struct {
     /** Port identifier. */
     pbio_port_id_t port_id;
     /** Device type ID of the simulated motor. */
-    pbdrv_legodev_type_id_t type_id;
+    lego_device_type_id_t type_id;
     /** Initial angle of the motor (mdeg). */
     double initial_angle;
     /** Initial speed of the motor (mdeg/s). */
@@ -39,9 +39,7 @@ extern const pbdrv_motor_driver_virtual_simulation_platform_data_t
 
 void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
 
-#if !PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
-void pbdrv_motor_driver_init_manual(void);
-#endif
+void pbdrv_motor_driver_disable_process(void);
 
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
 

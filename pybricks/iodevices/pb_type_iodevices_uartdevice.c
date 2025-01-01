@@ -5,7 +5,6 @@
 
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbdrv/legodev.h>
 
 #include "py/mphal.h"
 #include "py/objstr.h"
@@ -38,7 +37,7 @@ static mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *type, size_t 
 
     // Get device, which inits UART port
     iodevices_UARTDevice_obj_t *self = mp_obj_malloc(iodevices_UARTDevice_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_CUSTOM_UART);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_CUSTOM_UART);
 
     // Initialize serial
     self->timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_int(timeout_in);

@@ -13,7 +13,6 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
-#include <pbdrv/legodev.h>
 
 /**
  * The duty cycle value corresponding to 100% duty cycle.
@@ -66,15 +65,6 @@ pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver);
  */
 pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver, int16_t duty_cycle);
 
-/**
- * Gets the device type id of the attached motor or light, or lack thereof.
- * @param [in]  port    The port the motor is attached to.
- * @param [in]  type_id The type id of the device attached to the port.
- * @return              ::PBIO_SUCCESS if a motor, a light, or nothing is attached to this driver
- *                      ::PBIO_ERROR_INVALID_OP if something else is attached
- */
-pbio_error_t pbdrv_motor_driver_get_device_type_id(pbio_port_id_t port, pbdrv_legodev_type_id_t *type_id);
-
 #else
 
 static inline pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
@@ -86,11 +76,6 @@ static inline pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *dr
 }
 
 static inline pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver, int16_t duty_cycle) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbdrv_motor_driver_get_device_type_id(pbio_port_id_t port, pbdrv_legodev_type_id_t *type_id) {
-    *type_id = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

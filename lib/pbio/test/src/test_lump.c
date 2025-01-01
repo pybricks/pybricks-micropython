@@ -7,21 +7,18 @@
 #include <string.h>
 
 #include <contiki.h>
-#include <lego_uart.h>
+#include <lego/lump.h>
+
+#include <pbio/port_interface.h>
+#include <pbio/port_lump.h>
 
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
 #include <pbdrv/uart.h>
-#include <pbdrv/legodev.h>
-#include <pbdrv/legodev.h>
 #include <pbio/main.h>
 #include <pbio/util.h>
 #include <test-pbio.h>
-
-#include "../drv/legodev/legodev.h"
-#include "../drv/legodev/legodev_pup_uart.h"
-#include "../drv/legodev/legodev_test.h"
 
 #include "../drv/clock/clock_test.h"
 
@@ -31,8 +28,8 @@
     tt_assert_test_type(a, b,#a " "#op " "#b, float, (val1_ op val2_), "%f", (void)0)
 #endif
 
-static struct {
-    pbdrv_uart_dev_t dev;
+typedef struct {
+    pbdrv_uart_dev_t uart_dev;
     int baud;
     struct etimer rx_timer;
     uint8_t *rx_msg;
@@ -42,7 +39,30 @@ static struct {
     struct etimer tx_timer;
     uint8_t tx_msg_length;
     pbio_error_t tx_msg_result;
-} test_uart_dev;
+    /** Callback to call on read or write completion events */
+    pbdrv_uart_poll_callback_t poll_callback;
+    /** Context for callback caller */
+    void *poll_callback_context;
+} pbdrv_uart_t;
+
+pbdrv_uart_t test_uart;
+
+void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+    uart->poll_callback = callback;
+    uart->poll_callback_context = context;
+}
+
+/**
+ * RX completion normally creates an IRQ. This mimics such as handler. Since
+ * the buffer is already copied, this just needs to call the callback to inform
+ * the parent process that the buffer is ready to be read.
+ */
+static void simulate_uart_complete_irq(void) {
+    if (test_uart.poll_callback) {
+        test_uart.poll_callback(test_uart.poll_callback_context);
+    }
+}
 
 PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, bool *ok)) {
     PT_BEGIN(pt);
@@ -50,12 +70,13 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     // First uartdev reads one byte header
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN;
+        test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
     }));
-    tt_uint_op(test_uart_dev.rx_msg_length, ==, 1);
-    memcpy(test_uart_dev.rx_msg, msg, 1);
-    test_uart_dev.rx_msg_result = PBIO_SUCCESS;
-    pbdrv_legodev_pup_uart_process_poll();
+    tt_uint_op(test_uart.rx_msg_length, ==, 1);
+    memcpy(test_uart.rx_msg, msg, 1);
+    test_uart.rx_msg_result = PBIO_SUCCESS;
+
+    simulate_uart_complete_irq();
 
     if (length == 1) {
         *ok = true;
@@ -65,12 +86,13 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     // then read rest of message
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN;
+        test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
     }));
-    tt_uint_op(test_uart_dev.rx_msg_length, ==, length - 1);
-    memcpy(test_uart_dev.rx_msg, &msg[1], length - 1);
-    test_uart_dev.rx_msg_result = PBIO_SUCCESS;
-    pbdrv_legodev_pup_uart_process_poll();
+    tt_uint_op(test_uart.rx_msg_length, ==, length - 1);
+    memcpy(test_uart.rx_msg, &msg[1], length - 1);
+    test_uart.rx_msg_result = PBIO_SUCCESS;
+
+    simulate_uart_complete_irq();
 
     *ok = true;
     PT_END(pt);
@@ -85,16 +107,17 @@ PT_THREAD(simulate_tx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
 
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN;
+        test_uart.tx_msg_result == PBIO_ERROR_AGAIN;
     }));
-    tt_uint_op(test_uart_dev.tx_msg_length, ==, length);
+    tt_uint_op(test_uart.tx_msg_length, ==, length);
 
     for (int i = 0; i < length; i++) {
-        tt_uint_op(test_uart_dev.tx_msg[i], ==, msg[i]);
+        tt_uint_op(test_uart.tx_msg[i], ==, msg[i]);
     }
 
-    test_uart_dev.tx_msg_result = PBIO_SUCCESS;
-    pbdrv_legodev_pup_uart_process_poll();
+    test_uart.tx_msg_result = PBIO_SUCCESS;
+
+    simulate_uart_complete_irq();
 
     *ok = true;
     PT_END(pt);
@@ -224,29 +247,30 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
-    static pbdrv_legodev_dev_t *legodev;
-    static pbdrv_legodev_info_t *info;
+    static pbio_port_t *port;
+    static pbio_port_lump_dev_t *lump_dev;
+    static pbio_port_lump_device_info_t *info;
+    static uint8_t current_mode;
     static pbio_error_t err;
 
     PT_BEGIN(pt);
 
-    pbdrv_legodev_test_start_process();
-
-    // Expect no device at first.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+    // Should be able to get port, but device won't be ready yet since it isn't
+    // synched up.
+    static lego_device_type_id_t expected_id = LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 115200;
+        test_uart.baud == 115200;
     }));
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 2400;
+        test_uart.baud == 2400;
     }));
 
     // send BOOST Color and Distance sensor info
@@ -339,7 +363,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 115200;
+        test_uart.baud == 115200;
     }));
 
     PT_YIELD(pt);
@@ -358,91 +382,94 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg86);
     }
 
-
     // Wait for default mode to complete
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbdrv_legodev_is_ready(legodev)) == PBIO_ERROR_AGAIN;
+        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
-    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_COLOR_DIST_SENSOR);
+    tt_uint_op(err, ==, PBIO_SUCCESS);
+
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+
+    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR);
     tt_want_uint_op(info->num_modes, ==, 11);
     // TODO: verify fw/hw versions
 
-    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
+    tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
 
     tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[0].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[1].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
     tt_want_uint_op(info->mode_info[2].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[3].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[4].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[4].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[4].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[5].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[5].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[5].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[6].num_values, ==, 3);
-    tt_want_uint_op(info->mode_info[6].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[6].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[6].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[7].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[7].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[7].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[7].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[8].num_values, ==, 4);
-    tt_want_uint_op(info->mode_info[8].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[8].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[8].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[9].num_values, ==, 2);
-    tt_want_uint_op(info->mode_info[9].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[9].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[9].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[10].num_values, ==, 8);
-    tt_want_uint_op(info->mode_info[10].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[10].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[10].writable, ==, 0);
 
     // test changing the mode
 
-    err = pbdrv_legodev_set_mode(legodev, 1);
+    err = pbio_port_lump_set_mode(lump_dev, 1);
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
     // wait for mode change message to be sent
     SIMULATE_TX_MSG(msg87);
 
     // should be blocked since data with new mode has not been received yet
-    tt_uint_op(pbdrv_legodev_is_ready(legodev), ==, PBIO_ERROR_AGAIN);
+    tt_uint_op(pbio_port_lump_is_ready(lump_dev), ==, PBIO_ERROR_AGAIN);
 
     // data message with new mode
     SIMULATE_RX_MSG(msg88);
 
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbdrv_legodev_is_ready(legodev)) == PBIO_ERROR_AGAIN;
+        (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
-    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
-    tt_uint_op(info->mode, ==, 1);
+
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    tt_uint_op(current_mode, ==, 1);
 
 
     // also do mode 8 since it requires the extended mode flag
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbdrv_legodev_set_mode(legodev, 8)) == PBIO_ERROR_AGAIN;
+        (err = pbio_port_lump_set_mode(lump_dev, 8)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
@@ -450,7 +477,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg89);
 
     // should be blocked since data with new mode has not been received yet
-    tt_uint_op(pbdrv_legodev_is_ready(legodev), ==, PBIO_ERROR_AGAIN);
+    tt_uint_op(pbio_port_lump_is_ready(lump_dev), ==, PBIO_ERROR_AGAIN);
 
     // send data message with new mode
     SIMULATE_RX_MSG(msg90);
@@ -458,11 +485,11 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, ({
         pbio_test_clock_tick(1);
-        (err = pbdrv_legodev_is_ready(legodev)) == PBIO_ERROR_AGAIN;
+        (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
-    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
-    tt_uint_op(info->mode, ==, 8);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    tt_uint_op(current_mode, ==, 8);
 
     PT_YIELD(pt);
 
@@ -520,28 +547,31 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
-    static pbdrv_legodev_dev_t *legodev;
-    static pbdrv_legodev_info_t *info;
+    static pbio_port_t *port;
+    static pbio_port_lump_dev_t *lump_dev;
+    static pbio_port_lump_device_info_t *info;
+    static uint8_t current_mode;
+    static pbio_error_t err;
 
     PT_BEGIN(pt);
 
-    pbdrv_legodev_test_start_process();
 
-    // Expect no device at first.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+    // Should be able to get port, but device won't be ready yet since it isn't
+    // synched up.
+    static lego_device_type_id_t expected_id = LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 115200;
+        test_uart.baud == 115200;
     }));
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 2400;
+        test_uart.baud == 2400;
     }));
 
     // send BOOST Interactive Motor info
@@ -586,7 +616,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 115200;
+        test_uart.baud == 115200;
     }));
 
     PT_YIELD(pt);
@@ -604,26 +634,32 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg36);
     }
 
-    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
+    PT_WAIT_WHILE(pt, ({
+        pbio_test_clock_tick(1);
+        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
+    }));
+    tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_INTERACTIVE_MOTOR);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+
+    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR);
     tt_want_uint_op(info->num_modes, ==, 4);
-    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_REL_MOTOR__POS);
+    tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS);
 
     tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[0].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[1].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
     tt_want_uint_op(info->mode_info[2].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[3].num_values, ==, 5);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[3].writable, ==, 0);
 
     PT_YIELD(pt);
@@ -701,21 +737,23 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
-    static pbdrv_legodev_dev_t *legodev;
-    static pbdrv_legodev_info_t *info;
+    static pbio_port_t *port;
+    static pbio_port_lump_dev_t *lump_dev;
+    static pbio_port_lump_device_info_t *info;
+    static uint8_t current_mode;
+    static pbio_error_t err;
 
     PT_BEGIN(pt);
 
-    pbdrv_legodev_test_start_process();
 
     // Expect no device at first.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+    static lego_device_type_id_t expected_id = LEGO_DEVICE_TYPE_ID_TECHNIC_L_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 115200;
+        test_uart.baud == 115200;
     }));
 
     // this device supports syncing at 115200
@@ -778,7 +816,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg54);
 
     // ensure that baud rate didn't change during sync
-    tt_want_uint_op(test_uart_dev.baud, ==, 115200);
+    tt_want_uint_op(test_uart.baud, ==, 115200);
 
     // wait for ACK
     SIMULATE_TX_MSG(msg55);
@@ -798,34 +836,41 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg57);
     }
 
-    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
+    PT_WAIT_WHILE(pt, ({
+        pbio_test_clock_tick(1);
+        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
+    }));
 
-    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_MOTOR);
+    tt_uint_op(err, ==, PBIO_SUCCESS);
+
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+
+    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_TECHNIC_L_MOTOR);
     tt_want_uint_op(info->num_modes, ==, 6);
-    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_ABS_MOTOR__CALIB);
+    tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB);
 
     tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[0].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[1].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
     tt_want_uint_op(info->mode_info[2].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[3].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[4].num_values, ==, 2);
-    tt_want_uint_op(info->mode_info[4].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[4].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[5].num_values, ==, 14);
-    tt_want_uint_op(info->mode_info[5].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[5].writable, ==, 0);
 
 
@@ -903,21 +948,23 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     static struct pt child;
     static bool ok;
 
-    static pbdrv_legodev_dev_t *legodev;
-    static pbdrv_legodev_info_t *info;
+    static pbio_port_t *port;
+    static pbio_port_lump_dev_t *lump_dev;
+    static pbio_port_lump_device_info_t *info;
+    static uint8_t current_mode;
+    static pbio_error_t err;
 
     PT_BEGIN(pt);
 
-    pbdrv_legodev_test_start_process();
 
     // Expect no device at first.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_NONE;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_D, &id, &legodev), ==, PBIO_SUCCESS);
+    static lego_device_type_id_t expected_id = LEGO_DEVICE_TYPE_ID_TECHNIC_XL_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
-        test_uart_dev.baud == 115200;
+        test_uart.baud == 115200;
     }));
 
     // this device supports syncing at 115200
@@ -980,7 +1027,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg54);
 
     // ensure that baud rate didn't change during sync
-    tt_want_uint_op(test_uart_dev.baud, ==, 115200);
+    tt_want_uint_op(test_uart.baud, ==, 115200);
 
     // wait for ACK
     SIMULATE_TX_MSG(msg55);
@@ -1000,34 +1047,40 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
         SIMULATE_RX_MSG(msg57);
     }
 
-    tt_uint_op(pbdrv_legodev_get_info(legodev, &info), ==, PBIO_SUCCESS);
+    PT_WAIT_WHILE(pt, ({
+        pbio_test_clock_tick(1);
+        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
+    }));
+    tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, PBDRV_LEGODEV_TYPE_ID_TECHNIC_XL_MOTOR);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+
+    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_TECHNIC_XL_MOTOR);
     tt_want_uint_op(info->num_modes, ==, 6);
-    tt_want_uint_op(info->mode, ==, PBDRV_LEGODEV_MODE_PUP_ABS_MOTOR__CALIB);
+    tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB);
 
     tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[0].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
     tt_want_uint_op(info->mode_info[1].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
     tt_want_uint_op(info->mode_info[2].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[3].writable, ==, 1);
 
     tt_want_uint_op(info->mode_info[4].num_values, ==, 2);
-    tt_want_uint_op(info->mode_info[4].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[4].writable, ==, 0);
 
     tt_want_uint_op(info->mode_info[5].num_values, ==, 14);
-    tt_want_uint_op(info->mode_info[5].data_type, ==, PBDRV_LEGODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(info->mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(info->mode_info[5].writable, ==, 0);
 
 
@@ -1037,55 +1090,61 @@ end:
     PT_END(pt);
 }
 
-struct testcase_t pbdrv_legodev_tests[] = {
-    PBIO_PT_THREAD_TEST(test_boost_color_distance_sensor),
-    PBIO_PT_THREAD_TEST(test_boost_interactive_motor),
-    PBIO_PT_THREAD_TEST(test_technic_large_motor),
-    PBIO_PT_THREAD_TEST(test_technic_xl_motor),
+struct testcase_t pbio_port_lump_tests[] = {
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_boost_color_distance_sensor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_boost_interactive_motor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_technic_large_motor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_technic_xl_motor),
     END_OF_TESTCASES
 };
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
-    *uart_dev = &test_uart_dev.dev;
+    if (id != 0) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    *uart_dev = &test_uart.uart_dev;
     return PBIO_SUCCESS;
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
-    test_uart_dev.baud = baud;
+    test_uart.baud = baud;
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
 
-extern bool pbio_legodev_test_process_auto_start;
+extern bool pbio_lump_dev_test_process_auto_start;
 
 void pbdrv_uart_init(void) {
+}
+
+void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
 }
 
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     PT_BEGIN(pt);
 
-    PT_WAIT_WHILE(pt, test_uart_dev.rx_msg);
+    PT_WAIT_WHILE(pt, test_uart.rx_msg);
 
-    test_uart_dev.rx_msg = msg;
-    test_uart_dev.rx_msg_length = length;
-    test_uart_dev.rx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&test_uart_dev.rx_timer, timeout);
+    test_uart.rx_msg = msg;
+    test_uart.rx_msg_length = length;
+    test_uart.rx_msg_result = PBIO_ERROR_AGAIN;
+    etimer_set(&test_uart.rx_timer, timeout);
 
     // If read_pos is less that read_length then we have not read everything yet
-    PT_WAIT_WHILE(pt, test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart_dev.rx_timer));
-    if (etimer_expired(&test_uart_dev.rx_timer)) {
-        test_uart_dev.rx_msg_result = PBIO_ERROR_TIMEDOUT;
+    PT_WAIT_WHILE(pt, test_uart.rx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart.rx_timer));
+    if (etimer_expired(&test_uart.rx_timer)) {
+        test_uart.rx_msg_result = PBIO_ERROR_TIMEDOUT;
     } else {
-        etimer_stop(&test_uart_dev.rx_timer);
+        etimer_stop(&test_uart.rx_timer);
     }
 
-    if (test_uart_dev.rx_msg_result != PBIO_ERROR_AGAIN) {
-        test_uart_dev.rx_msg = NULL;
+    if (test_uart.rx_msg_result != PBIO_ERROR_AGAIN) {
+        test_uart.rx_msg = NULL;
     }
 
-    *err = test_uart_dev.rx_msg_result;
+    *err = test_uart.rx_msg_result;
 
     PT_END(pt);
 }
@@ -1095,25 +1154,25 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
     PT_BEGIN(pt);
 
     // Wait while other write operation already in progress.
-    PT_WAIT_WHILE(pt, test_uart_dev.tx_msg);
+    PT_WAIT_WHILE(pt, test_uart.tx_msg);
 
-    test_uart_dev.tx_msg = msg;
-    test_uart_dev.tx_msg_length = length;
-    test_uart_dev.tx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&test_uart_dev.tx_timer, timeout);
+    test_uart.tx_msg = msg;
+    test_uart.tx_msg_length = length;
+    test_uart.tx_msg_result = PBIO_ERROR_AGAIN;
+    etimer_set(&test_uart.tx_timer, timeout);
 
-    PT_WAIT_WHILE(pt, test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart_dev.tx_timer));
-    if (etimer_expired(&test_uart_dev.tx_timer)) {
-        test_uart_dev.tx_msg_result = PBIO_ERROR_TIMEDOUT;
+    PT_WAIT_WHILE(pt, test_uart.tx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart.tx_timer));
+    if (etimer_expired(&test_uart.tx_timer)) {
+        test_uart.tx_msg_result = PBIO_ERROR_TIMEDOUT;
     } else {
-        etimer_stop(&test_uart_dev.tx_timer);
+        etimer_stop(&test_uart.tx_timer);
     }
 
-    if (test_uart_dev.tx_msg_result != PBIO_ERROR_AGAIN) {
-        test_uart_dev.tx_msg = NULL;
+    if (test_uart.tx_msg_result != PBIO_ERROR_AGAIN) {
+        test_uart.tx_msg = NULL;
     }
 
-    *err = test_uart_dev.tx_msg_result;
+    *err = test_uart.tx_msg_result;
 
     PT_END(pt);
 }

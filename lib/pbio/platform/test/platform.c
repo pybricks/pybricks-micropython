@@ -1,47 +1,58 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 The Pybricks Authors
 
-#include "../../drv/legodev/legodev_test.h"
+#include <pbdrv/ioport.h>
+#include <pbio/port_interface.h>
+
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 
-#include <pbdrv/legodev.h>
+const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+    .bank = NULL,
+    .pin = 0,
+};
 
-const pbdrv_legodev_test_platform_data_t pbdrv_legodev_test_platform_data[PBDRV_CONFIG_LEGODEV_TEST_NUM_DEV] = {
+const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
-        .quadrature_index = 0,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
     {
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
-        .quadrature_index = 1,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
     {
         .port_id = PBIO_PORT_ID_C,
         .motor_driver_index = 2,
-        .quadrature_index = 2,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
     {
         .port_id = PBIO_PORT_ID_D,
         .motor_driver_index = 3,
-        .quadrature_index = 3,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_NONE, // used for hotpluggable device in uart tests
+        .uart_driver_index = 0,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
     },
     {
         .port_id = PBIO_PORT_ID_E,
         .motor_driver_index = 4,
-        .quadrature_index = 4,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
     {
         .port_id = PBIO_PORT_ID_F,
         .motor_driver_index = 5,
-        .quadrature_index = 5,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
 };
 
@@ -51,7 +62,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     pbdrv_motor_driver_virtual_simulation_platform_data[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR,
         .initial_angle = 123456,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
@@ -59,7 +70,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_B,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR,
         .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
@@ -67,7 +78,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_C,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR,
         .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -142000,
@@ -75,7 +86,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_D,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_NONE,
+        .type_id = LEGO_DEVICE_TYPE_ID_NONE,
         .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
@@ -83,7 +94,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_E,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR,
         .initial_angle = 0,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
@@ -91,7 +102,7 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
     {
         .port_id = PBIO_PORT_ID_F,
-        .type_id = PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR,
+        .type_id = LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR,
         .initial_angle = 45000,
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,

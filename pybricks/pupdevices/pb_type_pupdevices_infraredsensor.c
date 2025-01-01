@@ -25,11 +25,11 @@ static mp_obj_t pupdevices_InfraredSensor_make_new(const mp_obj_type_t *type, si
         PB_ARG_REQUIRED(port));
 
     pupdevices_InfraredSensor_obj_t *self = mp_obj_malloc(pupdevices_InfraredSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_WEDO2_MOTION_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR);
 
     // Reset sensor counter and get sensor back in sensing mode
-    self->count_offset = *(int32_t *)pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT);
-    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
+    self->count_offset = *(int32_t *)pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT);
+    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -37,24 +37,24 @@ static mp_obj_t pupdevices_InfraredSensor_make_new(const mp_obj_type_t *type, si
 // pybricks.pupdevices.InfraredSensor.count
 static mp_obj_t get_count(mp_obj_t self_in) {
     pupdevices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t *count = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT);
+    int32_t *count = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT);
     return mp_obj_new_int(count[0] - self->count_offset);
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_count_obj, PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, get_count);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_count_obj, LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, get_count);
 
 // pybricks.pupdevices.InfraredSensor.reflection
 static mp_obj_t get_reflection(mp_obj_t self_in) {
-    int16_t *data = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
+    int16_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
     return pb_obj_new_fraction(data[0], 5);
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, get_reflection);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, get_reflection);
 
 // pybricks.pupdevices.InfraredSensor.distance
 static mp_obj_t get_distance(mp_obj_t self_in) {
-    int16_t *data = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
+    int16_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL);
     return mp_obj_new_int(1100 / (10 + data[0]));
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, PBDRV_LEGODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, get_distance);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, get_distance);
 
 // dir(pybricks.pupdevices.InfraredSensor)
 static const mp_rom_map_elem_t pupdevices_InfraredSensor_locals_dict_table[] = {

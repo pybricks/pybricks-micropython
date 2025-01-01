@@ -11,13 +11,15 @@
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
+#include "../drv/motor_driver/motor_driver_virtual_simulation.h"
+
 #include <pbio/main.h>
 
 #include <contiki.h>
 
 #define PBIO_TEST_TIMEOUT 1 // seconds
 
-void pbio_test_run_thread(void *env) {
+static void pbio_test_run_thread(void *env, bool start_pbio_processes) {
     PT_THREAD((*test_thread)(struct pt *pt)) = env;
     struct pt pt;
     struct timespec start_time, now_time;
@@ -42,7 +44,14 @@ void pbio_test_run_thread(void *env) {
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, 1);
 
-    pbio_init();
+    // Pbdrv doesn't have a hook for enabling processes. The simulation driver
+    // throws off timing for tests that rely on the clock. So we disable it
+    // when not needed.
+    if (!start_pbio_processes) {
+        pbdrv_motor_driver_disable_process();
+    }
+
+    pbio_init(start_pbio_processes);
 
     PT_INIT(&pt);
     clock_gettime(CLOCK_MONOTONIC, &start_time);
@@ -58,6 +67,14 @@ void pbio_test_run_thread(void *env) {
     }
 
 end:;
+}
+
+void pbio_test_run_thread_with_pbio_processes(void *env) {
+    pbio_test_run_thread(env, true);
+}
+
+void pbio_test_run_thread_without_pbio_processes(void *env) {
+    pbio_test_run_thread(env, false);
 }
 
 static void *setup(const struct testcase_t *test_case) {
@@ -84,10 +101,10 @@ extern struct testcase_t pbio_light_animation_tests[];
 extern struct testcase_t pbio_color_light_tests[];
 extern struct testcase_t pbio_light_matrix_tests[];
 extern struct testcase_t pbio_int_math_tests[];
+extern struct testcase_t pbio_port_lump_tests[];
 extern struct testcase_t pbio_servo_tests[];
 extern struct testcase_t pbio_task_tests[];
 extern struct testcase_t pbio_trajectory_tests[];
-extern struct testcase_t pbdrv_legodev_tests[];
 extern struct testcase_t pbio_util_tests[];
 extern struct testcase_t pbsys_bluetooth_tests[];
 extern struct testcase_t pbsys_status_tests[];
@@ -102,10 +119,10 @@ static struct testgroup_t test_groups[] = {
     { "src/light/", pbio_color_light_tests },
     { "src/light/", pbio_light_matrix_tests },
     { "src/math/", pbio_int_math_tests },
+    { "src/port_lump/", pbio_port_lump_tests },
     { "src/servo/", pbio_servo_tests },
     { "src/task/", pbio_task_tests, },
     { "src/trajectory/", pbio_trajectory_tests },
-    { "src/uartdev/", pbdrv_legodev_tests, },
     { "src/util/", pbio_util_tests, },
     { "sys/bluetooth/", pbsys_bluetooth_tests, },
     { "sys/status/", pbsys_status_tests, },

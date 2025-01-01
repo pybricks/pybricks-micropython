@@ -20,7 +20,7 @@ typedef struct {
 
 } pbdrv_uart_dev_t;
 
-typedef void (*pbdrv_uart_poll_callback_t)(pbdrv_uart_dev_t *uart_dev);
+typedef void (*pbdrv_uart_poll_callback_t)(void *context);
 
 #if PBDRV_CONFIG_UART
 

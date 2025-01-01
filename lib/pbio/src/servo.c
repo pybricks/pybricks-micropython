@@ -10,7 +10,6 @@
 
 #include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
-#include <pbdrv/legodev.h>
 
 #include <pbio/angle.h>
 #include <pbio/int_math.h>
@@ -23,32 +22,24 @@
 // Servo motor objects
 static pbio_servo_t servos[PBIO_CONFIG_SERVO_NUM_DEV];
 
+
 /**
- * Gets pointer to static servo instance using port id.
+ * Initializes servo state structure.
  *
- * @param [in]  legodev     The legodev instance.
- * @param [out] srv         Pointer to servo object.
- * @return                  Error code.
+ * @param [in]  index        The index of the servo.
+ * @param [in]  port         The port instance.
+ * @param [in]  dcmotor      The DC motor instance.
  */
-pbio_error_t pbio_servo_get_servo(pbdrv_legodev_dev_t *legodev, pbio_servo_t **srv) {
-
-    uint8_t id;
-    pbio_error_t err = pbdrv_legodev_get_motor_index(legodev, &id);
-    if (err != PBIO_SUCCESS) {
-        return err;
+pbio_servo_t *pbio_servo_init_instance(uint8_t index, pbio_port_t *port, pbio_dcmotor_t *dcmotor) {
+    if (index >= PBIO_CONFIG_SERVO_NUM_DEV) {
+        return NULL;
     }
-
-    // Get address of static servo object.
-    *srv = &servos[id];
-
-    // Get dcmotor object, without additional setup.
-    err = pbio_tacho_get_tacho(legodev, &((*srv)->tacho));
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    // Get tacho object, without additional setup.
-    return pbio_dcmotor_get_dcmotor(legodev, &((*srv)->dcmotor));
+    pbio_servo_t *srv = &servos[index];
+    srv->dcmotor = dcmotor;
+    srv->tacho.port = port;
+    return srv;
 }
+
 
 static void pbio_servo_update_loop_set_state(pbio_servo_t *srv, bool update) {
     srv->run_update_loop = update;
@@ -231,7 +222,7 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
  * @param [in]    precision_profile  Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
  * @return                           Error code.
  */
-static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, pbdrv_legodev_type_id_t type, int32_t gear_ratio, int32_t precision_profile) {
+static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, lego_device_type_id_t type, int32_t gear_ratio, int32_t precision_profile) {
 
     // Gear ratio must be strictly positive.
     if (gear_ratio < 1) {
@@ -328,14 +319,14 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, pbdrv_lego
  * @param [in]  precision_profile Position tolerance around target in degrees. Set to 0 to load default profile for this motor.
  * @return                        Error code.
  */
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbdrv_legodev_type_id_t type, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile) {
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, lego_device_type_id_t type, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile) {
     pbio_error_t err;
 
     // Unregister this servo from control loop updates.
     pbio_servo_update_loop_set_state(srv, false);
 
     // Configure tacho.
-    err = pbio_tacho_setup(srv->tacho, direction, reset_angle);
+    err = pbio_tacho_setup(&srv->tacho, direction, reset_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -359,7 +350,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbdrv_legodev_type_id_t type, p
 
     // Get current angle.
     pbio_angle_t angle;
-    err = pbio_tacho_get_angle(srv->tacho, &angle);
+    err = pbio_tacho_get_angle(&srv->tacho, &angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -412,7 +403,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     // Reset the tacho to the new angle. If reset_to_abs is true, the
     // new_angle will be an output, representing the angle it was set to.
     // This lets us use it again to reset the observer below.
-    err = pbio_tacho_reset_angle(srv->tacho, &new_angle, reset_to_abs);
+    err = pbio_tacho_reset_angle(&srv->tacho, &new_angle, reset_to_abs);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -447,7 +438,7 @@ pbio_error_t pbio_servo_get_state_control(pbio_servo_t *srv, pbio_control_state_
     pbio_error_t err;
 
     // Read physical angle.
-    err = pbio_tacho_get_angle(srv->tacho, &state->position);
+    err = pbio_tacho_get_angle(&srv->tacho, &state->position);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -882,7 +873,7 @@ pbio_error_t pbio_servo_get_load(pbio_servo_t *srv, int32_t *load) {
     } else {
         // Read the angle.
         pbio_angle_t angle;
-        pbio_error_t err = pbio_tacho_get_angle(srv->tacho, &angle);
+        pbio_error_t err = pbio_tacho_get_angle(&srv->tacho, &angle);
         if (err != PBIO_SUCCESS) {
             return err;
         }

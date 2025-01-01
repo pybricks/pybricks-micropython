@@ -21,6 +21,7 @@
 #include <pbio/light.h>
 #include <pbio/main.h>
 #include <pbio/motor_process.h>
+#include <pbio/port_interface.h>
 
 #include "light/animation.h"
 
@@ -28,15 +29,25 @@
  * Initialize the Pybricks I/O Library. This function must be called once,
  * usually at the beginning of a program, before using any other functions in
  * the library.
+ *
+ * @param [in]  start_processes  Whether to start all user-level background
+ *                               processes. This is always enabled, except in
+ *                               tests that test one driver at a time.
  */
-void pbio_init(void) {
+void pbio_init(bool start_processes) {
     pbdrv_init();
 
-    #if PBIO_CONFIG_MOTOR_PROCESS_AUTO_START
-    pbio_motor_process_start();
-    #endif
-
     pbio_imu_init();
+
+    if (!start_processes) {
+        return;
+    }
+
+    // This will also initialize the dcmotor and servo pbio object instances.
+    pbio_port_init();
+
+    // Can the motor process after ports initialized above.
+    pbio_motor_process_start();
 }
 
 /**
@@ -55,7 +66,9 @@ void pbio_stop_all(bool reset) {
         pbio_light_animation_stop_all();
     }
     #endif
-    pbio_dcmotor_stop_all(reset);
+
+    pbio_port_stop_user_actions(reset);
+
     pbdrv_sound_stop();
 }
 

@@ -13,7 +13,6 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/motor_driver.h>
-#include <pbdrv/legodev.h>
 
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
@@ -28,35 +27,37 @@
 static pbio_dcmotor_t dcmotors[PBIO_CONFIG_DCMOTOR_NUM_DEV];
 
 /**
- * Stops all motors and all higher level parent objects that use them.
+ * Initializes DC motor state structure.
  *
- * @param [in]  clear_parents Whether to not only stop the parent object
+ * @param [in]  index       The index of the DC motor.
+ * @param [in]  motor_driver The motor driver instance.
+ */
+pbio_dcmotor_t *pbio_dcmotor_init_instance(uint8_t index, pbdrv_motor_driver_dev_t *motor_driver) {
+    if (index >= PBIO_CONFIG_DCMOTOR_NUM_DEV) {
+        return NULL;
+    }
+    pbio_dcmotor_t *dcmotor = &dcmotors[index];
+    dcmotor->motor_driver = motor_driver;
+    return dcmotor;
+}
+
+/**
+ * Stops a motor and all higher level parent objects that use it.
+ *
+ * @param [in]  dcmotor       The DC motor instance.
+ * @param [in]  clear_parent  Whether to not only stop the parent object
  *                            physically, but also clear the dcmotor's
  *                            knowledge about that object. Choosing true frees
  *                            up all motors to be used again by new parent
  *                            objects.
  */
-void pbio_dcmotor_stop_all(bool clear_parents) {
+void pbio_dcmotor_reset(pbio_dcmotor_t *dcmotor, bool clear_parent) {
+    // Coast the motor and let errors pass.
+    pbio_dcmotor_coast(dcmotor);
 
-    // Go through all ports.
-    for (uint8_t i = 0; i < PBIO_CONFIG_DCMOTOR_NUM_DEV; i++) {
-
-        // HACK: Drop this, but need to ensure dc motors are initialized.
-        pbio_dcmotor_t *dcmotor = &dcmotors[i];
-        pbdrv_motor_driver_get_dev(i, &dcmotor->motor_driver);
-
-        if (pbdrv_legodev_needs_permanent_power(dcmotor->legodev)) {
-            // Don't touch devices that always need power.
-            continue;
-        }
-
-        // Coast the motor and let errors pass.
-        pbio_dcmotor_coast(dcmotor);
-
-        // Stop its parents and let errors pass. Optionally resets parent
-        // objects to free up this motor for use in new objects.
-        pbio_parent_stop(&dcmotor->parent, clear_parents);
-    }
+    // Stop its parents and let errors pass. Optionally resets parent
+    // objects to free up this motor for use in new objects.
+    pbio_parent_stop(&dcmotor->parent, clear_parent);
 }
 
 /**
@@ -104,7 +105,7 @@ pbio_error_t pbio_dcmotor_close(pbio_dcmotor_t *dcmotor) {
  * @param [in]  type        The type of motor.
  * @param [in]  direction   The direction of positive rotation.
  */
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbdrv_legodev_type_id_t type, pbio_direction_t direction) {
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, lego_device_type_id_t type, pbio_direction_t direction) {
 
     // If the device already has a parent, we shouldn't allow this device
     // to be used as a new object.
@@ -126,24 +127,6 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbdrv_legodev_type_id_t
     dcmotor->direction = direction;
 
     return PBIO_SUCCESS;
-}
-
-/**
- * Gets the DC motor instance for the specified port.
- *
- * @param [in]  legodev     The device.
- * @param [out] dcmotor     The motor instance.
- * @return                  Error code.
- */
-pbio_error_t pbio_dcmotor_get_dcmotor(pbdrv_legodev_dev_t *legodev, pbio_dcmotor_t **dcmotor) {
-    uint8_t id;
-    pbio_error_t err = pbdrv_legodev_get_motor_index(legodev, &id);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    *dcmotor = &dcmotors[id];
-    (*dcmotor)->legodev = legodev;
-    return pbdrv_motor_driver_get_dev(id, &(*dcmotor)->motor_driver);
 }
 
 /**

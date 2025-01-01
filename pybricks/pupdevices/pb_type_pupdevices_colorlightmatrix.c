@@ -25,7 +25,7 @@ static mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     pupdevices_ColorLightMatrix_obj_t *self = mp_obj_malloc(pupdevices_ColorLightMatrix_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -82,7 +82,7 @@ static mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     }
 
     // Activate all colors.
-    return pb_type_device_set_data(&self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
+    return pb_type_device_set_data(&self->device_base, LEGO_DEVICE_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevices_ColorLightMatrix_on);
 
@@ -90,7 +90,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorLightMatrix_on_obj, 1, pupdevi
 static mp_obj_t pupdevices_ColorLightMatrix_off(mp_obj_t self_in) {
     pupdevices_ColorLightMatrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t color_ids[9] = { };
-    return pb_type_device_set_data(&self->device_base, PBDRV_LEGODEV_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
+    return pb_type_device_set_data(&self->device_base, LEGO_DEVICE_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, color_ids, sizeof(color_ids));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorLightMatrix_off_obj, pupdevices_ColorLightMatrix_off);
 

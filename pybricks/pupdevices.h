@@ -10,9 +10,7 @@
 
 #include "py/obj.h"
 
-#include <pbdrv/legodev.h>
 
-#include <pbdrv/legodev.h>
 #include <pybricks/common/pb_type_device.h>
 
 extern const mp_obj_type_t pb_type_pupdevices_ColorDistanceSensor;

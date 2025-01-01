@@ -24,19 +24,19 @@ static mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
         PB_ARG_REQUIRED(port));
 
     pupdevices_TiltSensor_obj_t *self = mp_obj_malloc(pupdevices_TiltSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_WEDO2_TILT_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_WEDO2_TILT_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.pupdevices.TiltSensor.tilt
 static mp_obj_t get_tilt(mp_obj_t self_in) {
-    int8_t *tilt = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE);
+    int8_t *tilt = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE);
     mp_obj_t ret[2];
     ret[0] = mp_obj_new_int(tilt[1]);
     ret[1] = mp_obj_new_int(tilt[0]);
     return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_tilt_obj, PBDRV_LEGODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, get_tilt);
+static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_tilt_obj, LEGO_DEVICE_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, get_tilt);
 
 // dir(pybricks.pupdevices.TiltSensor)
 static const mp_rom_map_elem_t pupdevices_TiltSensor_locals_dict_table[] = {

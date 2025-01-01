@@ -15,7 +15,6 @@
 #include <contiki.h>
 
 #include <pbio/main.h>
-#include <pbdrv/legodev.h>
 #include <pbsys/core.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
@@ -68,7 +67,7 @@ bool pbsys_main_stdin_event(uint8_t c) {
 // MICROPY_PORT_INIT_FUNC
 void pb_virtualhub_port_init(void) {
 
-    pbio_init();
+    pbio_init(true);
 
     pbsys_init();
 
@@ -77,6 +76,10 @@ void pb_virtualhub_port_init(void) {
     }
 
     pb_package_pybricks_init(true);
+
+    // HACK: Motor simulation needs some time after pbio init to register
+    // one sample of position data.
+    mp_hal_delay_ms(100);
 }
 
 // MICROPY_PORT_DEINIT_FUNC

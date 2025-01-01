@@ -20,9 +20,6 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
     // Initialize battery voltage.
     pbio_battery_init();
 
-    // Initialize motors in stopped state.
-    pbio_dcmotor_stop_all(true);
-
     etimer_set(&timer, PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
 
     for (;;) {

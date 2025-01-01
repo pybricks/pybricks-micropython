@@ -11,10 +11,10 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE         (8 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER    (512)
 
+#define PBDRV_CONFIG_IOPORT                         (1)
+#define PBDRV_CONFIG_IOPORT_NUM_DEV                 (8)
+
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
 #define PBDRV_CONFIG_HAS_PORT_C                     (1)
 #define PBDRV_CONFIG_HAS_PORT_D                     (1)
-
-#define PBDRV_CONFIG_FIRST_MOTOR_PORT               PBIO_PORT_ID_A
-#define PBDRV_CONFIG_LAST_MOTOR_PORT                PBIO_PORT_ID_D

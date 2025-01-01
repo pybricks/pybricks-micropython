@@ -7,6 +7,7 @@
 
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
+#include <pbio/port_interface.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
@@ -30,14 +31,14 @@ static mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
 
     pupdevices_Light_obj_t *self = mp_obj_malloc(pupdevices_Light_obj_t, type);
 
-    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-    pbdrv_legodev_dev_t *legodev;
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_LPF2_LIGHT;
-    pb_assert(pbdrv_legodev_get_device(port, &id, &legodev));
+    pbio_port_t *port;
+    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pb_assert(pbio_port_get_port(port_id, &port));
 
     // Get and initialize DC Motor
-    pb_assert(pbio_dcmotor_get_dcmotor(legodev, &self->dcmotor));
-    pb_assert(pbio_dcmotor_setup(self->dcmotor, PBDRV_LEGODEV_TYPE_ID_LPF2_LIGHT, PBIO_DIRECTION_CLOCKWISE));
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_LPF2_LIGHT;
+    pb_assert(pbio_port_get_dcmotor(port, &id, &self->dcmotor));
+    pb_assert(pbio_dcmotor_setup(self->dcmotor, id, PBIO_DIRECTION_CLOCKWISE));
 
     return MP_OBJ_FROM_PTR(self);
 }

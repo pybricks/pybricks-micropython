@@ -59,7 +59,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
             "args": [
-                "${workspaceFolder}/tests/virtualhub/motor/drivebase.py"
+                "${workspaceFolder}/tests/virtualhub/motor/test_1.py"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -145,6 +145,10 @@
             "type": "pickString",
             // should match output of `./test-pbio.sh --list-tests`
             "options": [
+                "src/port_lump/test_boost_color_distance_sensor",
+                "src/port_lump/test_boost_interactive_motor",
+                "src/port_lump/test_technic_large_motor",
+                "src/port_lump/test_technic_xl_motor",
                 "drv/bluetooth/test_btstack_run_loop_contiki_timer",
                 "drv/bluetooth/test_btstack_run_loop_contiki_poll",
                 "drv/pwm/test_pwm_get",
@@ -178,10 +182,6 @@
                 "src/trajectory/test_simple_trajectory",
                 "src/trajectory/test_infinite_trajectory",
                 "src/trajectory/test_position_trajectory",
-                "src/uartdev/test_boost_color_distance_sensor",
-                "src/uartdev/test_boost_interactive_motor",
-                "src/uartdev/test_technic_large_motor",
-                "src/uartdev/test_technic_xl_motor",
                 "src/util/test_uuid128_reverse_compare",
                 "src/util/test_uuid128_reverse_copy",
                 "src/util/test_oneshot",
