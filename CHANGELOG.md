@@ -35,12 +35,14 @@
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
   could cause `turn(360)` to be off by a degree ([support#1844]).
 - Fixed `hub` silently ignoring non-orthogonal base axis when it should raise.
+- Fixed not handling negative duration in `Speaker.beep()` ([support#1996]).
 
 [pybricks-micropython#274]: https://github.com/pybricks/pybricks-micropython/pull/274
 [support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
 [support#1844]: https://github.com/pybricks/support/issues/1844
-[support#1875]: https://github.com/pybricks/support/issues/1975
+[support#1975]: https://github.com/pybricks/support/issues/1975
+[support#1996]: https://github.com/pybricks/support/issues/1996
 
 ## [3.6.0b2] - 2024-10-15
 
