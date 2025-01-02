@@ -243,13 +243,10 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
     }
 }
 
-// Currently not used
-void handle_exit(void) {
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART; i++) {
-        const pbdrv_uart_stm32f4_ll_irq_platform_data_t *pdata = &pbdrv_uart_stm32f4_ll_irq_platform_data[i];
-        LL_USART_Disable(pdata->uart);
-        NVIC_DisableIRQ(pdata->irq);
-    }
+void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+    LL_USART_Disable(uart->pdata->uart);
+    NVIC_DisableIRQ(uart->pdata->irq);
 }
 
 void pbdrv_uart_init(void) {

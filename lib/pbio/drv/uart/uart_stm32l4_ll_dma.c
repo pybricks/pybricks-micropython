@@ -369,16 +369,15 @@ void pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(uint8_t id) {
 }
 
 // Currently not used
-void handle_exit(void) {
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART; i++) {
-        const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[i];
-        LL_USART_Disable(pdata->uart);
-        LL_DMA_DisableChannel(pdata->rx_dma, pdata->rx_dma_ch);
-        LL_DMA_DisableChannel(pdata->tx_dma, pdata->tx_dma_ch);
-        NVIC_DisableIRQ(pdata->uart_irq);
-        NVIC_DisableIRQ(pdata->rx_dma_irq);
-        NVIC_DisableIRQ(pdata->tx_dma_irq);
-    }
+void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
+    LL_USART_Disable(pdata->uart);
+    LL_DMA_DisableChannel(pdata->rx_dma, pdata->rx_dma_ch);
+    LL_DMA_DisableChannel(pdata->tx_dma, pdata->tx_dma_ch);
+    NVIC_DisableIRQ(pdata->uart_irq);
+    NVIC_DisableIRQ(pdata->rx_dma_irq);
+    NVIC_DisableIRQ(pdata->tx_dma_irq);
 }
 
 void pbdrv_uart_init(void) {
