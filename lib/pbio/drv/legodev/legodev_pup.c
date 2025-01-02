@@ -453,7 +453,7 @@ void pbdrv_legodev_init(void) {
         pbdrv_uart_get(port_data->uart_driver_index, &uart);
 
         // Set callback for uart driver.
-        pbdrv_uart_set_poll_callback(uart, uart_poll_callback);
+        pbdrv_uart_set_poll_callback(uart, uart_poll_callback, NULL);
     }
 
     process_start(&pbio_legodev_pup_process);

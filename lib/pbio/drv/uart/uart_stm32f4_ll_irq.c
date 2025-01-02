@@ -51,14 +51,17 @@ typedef struct {
     volatile uint8_t write_pos;
     /** Callback to call on read or write completion events */
     pbdrv_uart_poll_callback_t poll_callback;
+    /** Context for callback caller */
+    void *poll_callback_context;
 } pbdrv_uart_t;
 
 static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART];
 static uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART][RX_DATA_SIZE];
 
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback) {
+void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     uart->poll_callback = callback;
+    uart->poll_callback_context = context;
 }
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
@@ -213,7 +216,7 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
         // Poll parent process for each received byte, since the IRQ handler
         // has no awareness of the expected length of the read operation.
         if (uart->poll_callback) {
-            uart->poll_callback(&uart->uart_dev);
+            uart->poll_callback(uart->poll_callback_context);
         }
     }
 
@@ -238,7 +241,7 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
         LL_USART_DisableIT_TC(USARTx);
         // Poll parent process to indicate the write operation is complete.
         if (uart->poll_callback) {
-            uart->poll_callback(&uart->uart_dev);
+            uart->poll_callback(uart->poll_callback_context);
         }
     }
 }
