@@ -70,7 +70,10 @@ PROCESS_THREAD(test_process, ev, data) {
 
         etimer_set(&timer, 1000);
 
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+        // And with this change it still doesn't work after connect, but it
+        // does get going when you kick it with an event like starting REPL.
+
+        PROCESS_WAIT_EVENT_UNTIL(/*ev == PROCESS_EVENT_TIMER &&*/ etimer_expired(&timer));
 
         printf("Hello, world\n");
     }
