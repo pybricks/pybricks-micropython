@@ -45,13 +45,37 @@ void pbdrv_ioport_enable_vcc(bool enable) {
 PROCESS(pbdrv_ioport_pup_process, "ioport_pup");
 #endif
 
+PROCESS(test_process, "testtest");
+
 void pbdrv_ioport_init(void) {
+    process_start(&test_process);
+
     init_ports();
 
     #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
     pbdrv_init_busy_up();
     process_start(&pbdrv_ioport_pup_process);
     #endif
+}
+
+#include <stdio.h>
+
+PROCESS_THREAD(test_process, ev, data) {
+
+    static struct etimer timer;
+    
+    PROCESS_BEGIN();
+
+    for (;;) {
+
+        etimer_set(&timer, 1000);
+
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+
+        printf("Hello, world\n");
+    }
+
+    PROCESS_END();
 }
 
 void pbdrv_ioport_deinit(void) {
