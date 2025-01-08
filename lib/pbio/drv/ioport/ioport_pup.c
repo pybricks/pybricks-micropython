@@ -75,7 +75,7 @@ PROCESS_THREAD(test_process, ev, data) {
 
         PROCESS_WAIT_EVENT_UNTIL(/*ev == PROCESS_EVENT_TIMER &&*/ etimer_expired(&timer));
 
-        printf("Hello, world\n");
+        printf("Hello, world: ev=%d\n", ev);
     }
 
     PROCESS_END();
