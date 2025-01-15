@@ -174,28 +174,6 @@ jobs:
         flag-name: virtualhub
         parallel: true
 
-  debug:
-    name: debug firmware
-    needs: [mpy_cross]
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Install cross-compiler
-      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Download mpy-cross
-      uses: actions/download-artifact@v4
-      with:
-        name: mpy-cross
-        path: micropython/mpy-cross/build
-    - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/build/mpy-cross
-    - name: Build
-      run: make $MAKEOPTS -C bricks/debug build/firmware.dfu
-
   pbio:
     name: pbio tests
     runs-on: ubuntu-22.04
