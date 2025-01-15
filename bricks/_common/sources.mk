@@ -57,7 +57,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	hubs/pb_type_virtualhub.c \
 	iodevices/pb_module_iodevices.c \
 	iodevices/pb_type_iodevices_analogsensor.c \
-	iodevices/pb_type_iodevices_ev3devsensor.c \
 	iodevices/pb_type_iodevices_i2cdevice.c \
 	iodevices/pb_type_iodevices_lwp3device.c \
 	iodevices/pb_type_iodevices_pupdevice.c \
@@ -107,7 +106,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_color_map.c \
 	util_pb/pb_conversions.c \
 	util_pb/pb_error.c \
-	util_pb/pb_serial_ev3dev.c \
 	)
 
 # Pybricks I/O library
@@ -146,7 +144,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/clock/clock_tiam1808.c \
 	drv/clock/clock_virtual.c \
 	drv/core.c \
-	drv/counter/counter_ev3dev_stretch_iio.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/counter/counter_virtual_cpython.c \
 	drv/gpio/gpio_stm32f0.c \
@@ -161,14 +158,12 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
 	drv/led/led_virtual.c \
-	drv/legodev/legodev_ev3dev.c \
 	drv/legodev/legodev_nxt.c \
 	drv/legodev/legodev_pup.c \
 	drv/legodev/legodev_pup_uart.c \
 	drv/legodev/legodev_spec.c \
 	drv/legodev/legodev_test.c \
 	drv/legodev/legodev_virtual.c \
-	drv/motor_driver/motor_driver_ev3dev_stretch.c \
 	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/motor_driver/motor_driver_nxt.c \
 	drv/motor_driver/motor_driver_virtual_cpython.c \

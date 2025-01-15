@@ -30,11 +30,6 @@ const mp_obj_module_t pb_module_nxtdevices = {
     .globals = (mp_obj_dict_t *)&pb_module_nxtdevices_globals,
 };
 
-#if PYBRICKS_RUNS_ON_EV3DEV
-// ev3dev extends the C module in Python
-MP_REGISTER_MODULE(MP_QSTR__nxtdevices, pb_module_nxtdevices);
-#else
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_nxtdevices, pb_module_nxtdevices);
-#endif
 
 #endif // PYBRICKS_PY_NXTDEVICES

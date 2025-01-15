@@ -11,20 +11,10 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-#if PYBRICKS_RUNS_ON_EV3DEV
-#include "pb_ev3dev_types.h"
-
-// defined in pbio/platform/ev3dev_stretch/status_light.c
-extern pbio_color_light_t *ev3dev_status_light;
-#endif // PYBRICKS_RUNS_ON_EV3DEV
-
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
     mp_obj_t buttons;
-    mp_obj_t light;
-    mp_obj_t screen;
-    mp_obj_t speaker;
     mp_obj_t system;
 } hubs_EV3Brick_obj_t;
 
@@ -56,12 +46,6 @@ static mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(pb_type_ev3brick_button_pressed);
-    #if PYBRICKS_RUNS_ON_EV3DEV
-    self->light = common_ColorLight_internal_obj_new(ev3dev_status_light);
-    mp_obj_t screen_args[] = { MP_ROM_QSTR(MP_QSTR__screen_) };
-    self->screen = MP_OBJ_TYPE_GET_SLOT(&pb_type_ev3dev_Image, make_new)(&pb_type_ev3dev_Image, 1, 0, screen_args);
-    self->speaker = MP_OBJ_TYPE_GET_SLOT(&pb_type_ev3dev_Speaker, make_new)(&pb_type_ev3dev_Speaker, 0, 0, NULL);
-    #endif // PYBRICKS_RUNS_ON_EV3DEV
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
 
     return MP_OBJ_FROM_PTR(self);
@@ -70,11 +54,6 @@ static mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 static const pb_attr_dict_entry_t hubs_EV3Brick_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_EV3Brick_obj_t, battery),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_EV3Brick_obj_t, buttons),
-    #if PYBRICKS_RUNS_ON_EV3DEV
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_EV3Brick_obj_t, light),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_EV3Brick_obj_t, screen),
-    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_speaker, hubs_EV3Brick_obj_t, speaker),
-    #endif // PYBRICKS_RUNS_ON_EV3DEV
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_EV3Brick_obj_t, system),
     PB_ATTR_DICT_SENTINEL
 };

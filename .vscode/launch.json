@@ -34,14 +34,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Motor Test EV3",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/tests/motors/run_test.py",
-            "args": ["${file}", "--target", "ev3dev", "--address", "192.168.133.244", "--show"],
-            "console": "integratedTerminal"
-        },
-        {
             "name": "Run via USB REPL",
             "type": "python",
             "request": "launch",
@@ -60,44 +52,6 @@
             "program": "${file}",
             "args": [],
             "console": "integratedTerminal"
-        },
-        {
-            "name": "ev3dev-test",
-            "type": "cppdbg",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/micropython/tests",
-            "program": "${workspaceFolder}/bricks/ev3dev/build-test/pybricks-micropython",
-            "args": [
-                "../../tests/ev3dev/brick/battery.py"
-            ],
-            "stopAtEntry": false,
-            "environment": [
-                {"name": "GRX_PLUGIN_PATH", "value": "../../bricks/ev3dev/build-test"},
-                {"name": "GRX_DRIVER", "value": "test"}
-            ],
-            "externalConsole": true,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "ignore SIGUSR1",
-                    "text": "handle SIGUSR1 noprint pass"
-                },
-                {
-                    "description": "ignore SIGUSR2",
-                    "text": "handle SIGUSR2 noprint pass"
-                },
-                {
-                    "description": "ignore SIGRT39",
-                    "text": "handle SIGUSR2 noprint pass"
-                }
-            ],
-            "logging": { "engineLogging": true, "trace": true, "traceResponse": true },
-            "preLaunchTask": "build ev3dev-test"
         },
         {
             "name": "virtualhub",
@@ -181,21 +135,6 @@
             ],
             "searchDir": [
                 "${workspaceRoot}/bricks/debug"
-            ]
-        },
-        {
-            "name": "(gdb) Attach",
-            "type": "cppdbg",
-            "request": "attach",
-            "program": "${workspaceFolder}/bricks/ev3dev/built-test/pybricks-micropython",
-            "processId": "${command:pickProcess}",
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
             ]
         }
     ],

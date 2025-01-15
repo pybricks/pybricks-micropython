@@ -32,38 +32,6 @@ all: movehub cityhub technichub primehub essentialhub virtualhub nxt debug ev3 d
 
 clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-virtualhub clean-nxt clean-debug clean-ev3 clean-doc
 
-ifeq ($(HOST_OS),Linux)
-
-ev3dev-host: mpy-cross
-	@$(MAKE) -C bricks/ev3dev CROSS_COMPILE=
-
-clean-ev3dev-host: clean-mpy-cross
-	@$(MAKE) -C bricks/ev3dev clean CROSS_COMPILE=
-
-else
-
-ev3dev-host:
-	$(error Building ev3dev for host OS only works on Linux)
-
-clean-ev3dev-host: ev3dev-host
-
-endif
-
-ev3dev-armel:
-	@if [ ! -d bricks/ev3dev/build-armel/ports ]; then \
-		bricks/ev3dev/docker/setup.sh armel; \
-	fi
-	@docker start pybricks-ev3dev_armel
-	@docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross CROSS_COMPILE= -j`nproc`
-	@docker exec --tty pybricks-ev3dev_armel make -j`nproc`
-
-clean-ev3dev-armel:
-	@if [ -d bricks/ev3dev/build-armel/ports ]; then \
-		@docker start pybricks-ev3dev_armel; \
-		docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross clean CROSS_COMPILE=; \
-		docker exec --tty pybricks-ev3dev_armel make clean; \
-	fi
-
 ev3: mpy-cross
 	@$(MAKE) -C bricks/ev3
 

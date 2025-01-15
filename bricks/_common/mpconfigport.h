@@ -5,7 +5,7 @@
 
 // REVISIT: This file is still largely focused on embedded MicroPython ports.
 // Further generalization and possibly a higher option set are needed to use
-// this with unix-based ports like the virtual hub or ev3dev.
+// this with unix-based ports like the virtual hub.
 
 #include <stdint.h>
 #include <pbdrv/config.h>

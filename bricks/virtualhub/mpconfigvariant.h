@@ -27,7 +27,6 @@
 #define PYBRICKS_PY_HUBS                (1)
 #define PYBRICKS_PY_IODEVICES           (1)
 #define PYBRICKS_PY_MEDIA               (1)
-#define PYBRICKS_PY_MEDIA_EV3DEV        (0)
 #define PYBRICKS_PY_NXTDEVICES          (0)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON   (1)
@@ -71,8 +70,7 @@
 #define MICROPY_HELPER_REPL                     (1)
 #define MICROPY_KBD_EXCEPTION                   (1)
 
-// REVISIT: This list currently matches the stm32 builds. We may consider
-// adding more like the ev3dev build.
+// REVISIT: This list currently matches the stm32 builds.
 #define MICROPY_PY_UERRNO_LIST \
     X(EPERM) \
     X(EIO) \
