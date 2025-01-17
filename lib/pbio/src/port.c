@@ -484,22 +484,19 @@ void pbio_port_stop_user_actions(bool reset) {
  * @return  Whether the system is ready to power off.
  */
 
-bool pbio_port_poweroff_is_ready(void) {
+void pbio_port_power_off(void) {
     // Stops motors if active, ignoring sensors that need permanent power.
     pbio_port_stop_user_actions(true);
 
-    // We also want to power off sensors that need power now and stop their
-    // processes from triggering any further actions.
+    // We also want to turn off sensors powered through the motor terminals
+    // and stop their processes from triggering any further actions.
     for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
         pbio_port_t *port = &ports[i];
         pbio_port_set_mode(port, PBIO_PORT_MODE_NONE);
     }
 
-    // Use ioport platform-specific needs for power off.
-    pbdrv_ioport_enable_vcc(PBDRV_IOPORT_VCC_SHUTDOWN);
-
-    // REVISIT: Test button quirk here.
-    return true;
+    // This turns off any sensor lights that run on VCC.
+    pbdrv_ioport_enable_vcc(false);
 }
 
 void pbio_port_process_poll(void *port) {

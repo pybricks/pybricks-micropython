@@ -64,21 +64,11 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_u
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-void pbdrv_ioport_enable_vcc(pbdrv_ioport_vcc_mode_t mode) {
-    switch (mode) {
-        case PBDRV_IOPORT_VCC_OFF:
-            pbdrv_gpio_out_low(&pbdrv_ioport_platform_data_vcc_pin);
-            return;
-        case PBDRV_IOPORT_VCC_ON:
-            pbdrv_gpio_out_high(&pbdrv_ioport_platform_data_vcc_pin);
-            return;
-        default:
-        case PBDRV_IOPORT_VCC_SHUTDOWN:
-            // Turn off power on pin 4 on all ports. This is set to input instead of
-            // low to avoid city/move hubs turning back on when button released.
-            // as soon as the user releases the power button
-            pbdrv_gpio_input(&pbdrv_ioport_platform_data_vcc_pin);
-            return;
+void pbdrv_ioport_enable_vcc(bool enable) {
+    if (enable) {
+        pbdrv_gpio_out_high(&pbdrv_ioport_platform_data_vcc_pin);
+    } else {
+        pbdrv_gpio_out_low(&pbdrv_ioport_platform_data_vcc_pin);
     }
 }
 

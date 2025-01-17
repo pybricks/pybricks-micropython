@@ -293,6 +293,9 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 // RESET
 
 void pbdrv_reset_power_off(void) {
+    // This hub turns itself back on if VCC is off during power off.
+    pbdrv_ioport_enable_vcc(true);
+
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
 }

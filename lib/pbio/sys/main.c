@@ -123,6 +123,10 @@ int main(int argc, char **argv) {
         program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
     }
 
+    // Power off sensors and motors, including the ones that are always powered.
+    // This also makes it easier to see that users can let go of the button.
+    pbio_port_power_off();
+
     // Stop system processes and save user data before we shutdown.
     pbsys_deinit();
 
@@ -132,29 +136,12 @@ int main(int argc, char **argv) {
     // The power could be held on due to someone pressing the center button
     // or USB being plugged in, so we have this loop to keep pumping events
     // to turn off most of the peripherals and keep the battery charger running.
-    for (;;) {
-        // We must handle all pending events before turning the power off the
-        // first time, otherwise the city hub turns itself back on sometimes.
-        while (pbio_do_one_event()) {
-        }
-
-        // Prepare ports for power off but don't turn off power yet if
-        // ports are not ready.
-        if (!pbio_port_poweroff_is_ready()) {
-            continue;
-        }
-
-        #if PBSYS_CONFIG_BATTERY_CHARGER
-        // On hubs with USB battery chargers, we can't turn off power while
-        // USB is connected, otherwise it disables the op-amp that provides
-        // the battery voltage to the ADC.
-        if (pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
-            continue;
-        }
-        #endif
-
-        pbdrv_reset_power_off();
+    while (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED) || pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
+        pbio_do_one_event();
     }
+
+    // Platform-specific power off.
+    pbdrv_reset_power_off();
 }
 
 #endif // PBSYS_CONFIG_MAIN

@@ -57,7 +57,7 @@ typedef enum {
 
 void pbio_port_init(void);
 
-bool pbio_port_poweroff_is_ready(void);
+void pbio_port_power_off(void);
 
 void pbio_port_stop_user_actions(bool reset);
 
@@ -88,8 +88,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode);
 static inline void pbio_port_init(void) {
 }
 
-static inline bool pbio_port_poweroff_is_ready(void) {
-    return true;
+static inline void pbio_port_power_off(void) {
 }
 
 static inline void pbio_port_stop_user_actions(bool reset) {
