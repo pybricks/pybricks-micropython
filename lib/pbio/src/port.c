@@ -478,6 +478,30 @@ void pbio_port_stop_user_actions(bool reset) {
     }
 }
 
+/**
+ * Prepares the system for power off by turning off all sensors and motors.
+ *
+ * @return  Whether the system is ready to power off.
+ */
+
+bool pbio_port_poweroff_is_ready(void) {
+    // Stops motors if active, ignoring sensors that need permanent power.
+    pbio_port_stop_user_actions(true);
+
+    // We also want to power off sensors that need power now and stop their
+    // processes from triggering any further actions.
+    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
+        pbio_port_t *port = &ports[i];
+        pbio_port_set_mode(port, PBIO_PORT_MODE_NONE);
+    }
+
+    // Use ioport platform-specific needs for power off.
+    pbdrv_ioport_enable_vcc(PBDRV_IOPORT_VCC_SHUTDOWN);
+
+    // REVISIT: Test button quirk here.
+    return true;
+}
+
 void pbio_port_process_poll(void *port) {
     if (!port) {
         return;
@@ -512,6 +536,10 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     port->mode = mode;
 
     switch (mode) {
+        case PBIO_PORT_MODE_NONE:
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+            pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
+            return PBIO_SUCCESS;
         case PBIO_PORT_MODE_LEGO_PUP:
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.

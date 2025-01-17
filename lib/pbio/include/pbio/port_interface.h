@@ -31,6 +31,10 @@
  */
 typedef enum {
     /**
+     * No mode specified.
+     */
+    PBIO_PORT_MODE_NONE = 0,
+    /**
      * The port is in LEGO Powered Up mode, auto-detecting official active and
      * passive components. Runs LEGO UART Messaging protocol when a LUMP device
      * is detected.
@@ -52,6 +56,8 @@ typedef enum {
 #if PBIO_CONFIG_PORT
 
 void pbio_port_init(void);
+
+bool pbio_port_poweroff_is_ready(void);
 
 void pbio_port_stop_user_actions(bool reset);
 
@@ -80,6 +86,10 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode);
 #else // PBIO_CONFIG_PORT
 
 static inline void pbio_port_init(void) {
+}
+
+static inline bool pbio_port_poweroff_is_ready(void) {
+    return true;
 }
 
 static inline void pbio_port_stop_user_actions(bool reset) {

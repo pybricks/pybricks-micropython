@@ -7,10 +7,10 @@
 
 #include <stdint.h>
 
-#include <pbdrv/ioport.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
+#include <pbio/port_interface.h>
 #include <pbio/protocol.h>
 #include <pbsys/core.h>
 #include <pbsys/main.h>
@@ -129,8 +129,6 @@ int main(int argc, char **argv) {
     // Now lower-level processes may shutdown and/or power off.
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
-    pbdrv_ioport_enable_vcc(PBDRV_IOPORT_VCC_SHUTDOWN);
-
     // The power could be held on due to someone pressing the center button
     // or USB being plugged in, so we have this loop to keep pumping events
     // to turn off most of the peripherals and keep the battery charger running.
@@ -138,6 +136,12 @@ int main(int argc, char **argv) {
         // We must handle all pending events before turning the power off the
         // first time, otherwise the city hub turns itself back on sometimes.
         while (pbio_do_one_event()) {
+        }
+
+        // Prepare ports for power off but don't turn off power yet if
+        // ports are not ready.
+        if (!pbio_port_poweroff_is_ready()) {
+            continue;
         }
 
         #if PBSYS_CONFIG_BATTERY_CHARGER
