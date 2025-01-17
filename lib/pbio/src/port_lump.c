@@ -19,12 +19,11 @@
 #if DEBUG
 #include <stdio.h>
 #include <inttypes.h>
-#define debug_pr printf
-#define debug_pr_str(str)   printf((str))
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#define debug_pr pbdrv_uart_debug_printf
 #define DBG_ERR(expr) expr
 #else
 #define debug_pr(...)
-#define debug_pr_str(...)
 #define DBG_ERR(expr)
 #endif
 

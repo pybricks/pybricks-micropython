@@ -380,10 +380,10 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
 
 /**
  * Initializes a port instance.
- * 
+ *
  * NB: Errors from this init functions are not checked. This should only use
  * static config information and not rely on runtime capability checks.
- * 
+ *
  * @param [in]  port  The port instance.
  */
 static void pbio_port_init_one_port(pbio_port_t *port) {
@@ -404,11 +404,11 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         // checking for errors.
         port->dcmotor = pbio_dcmotor_init_instance(port->pdata->motor_driver_index, motor_driver);
         port->servo = pbio_servo_init_instance(port->pdata->motor_driver_index, port, port->dcmotor);
-    }   
+    }
 
     // Configure basic quadrature-only ports such as BOOST A&B or NXT A&B&C
     // without device kind and type id detection.
-    if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE_PASSIVE) {      
+    if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE_PASSIVE) {
         port->device_info.kind = PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR;
         port->device_info.type_id = PBIO_CONFIG_PORT_DEFAULT_MOTOR;
         pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE_PASSIVE);
@@ -423,6 +423,11 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         port->connection_manager = pbio_port_dcm_pup_init_instance(port->pdata->uart_driver_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->uart_driver_index, port);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_PUP);
+        return;
+    }
+
+    if (port->uart_dev && (port->pdata->supported_modes & PBIO_PORT_MODE_UART)) {
+        pbio_port_set_mode(port, PBIO_PORT_MODE_UART);
         return;
     }
 }
@@ -492,7 +497,7 @@ void pbio_port_process_poll(void *port) {
  *                      ::PBIO_ERROR_INVALID_OP if the operation is not permitted in the current state.
  */
 pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
-    
+
     // Nothing to do.
     if (port->mode == mode) {
         return PBIO_SUCCESS;
@@ -510,12 +515,17 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_LEGO_PUP:
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.
-            port->process.thread = process_thread_pbio_port_process_pup;            
+            port->process.thread = process_thread_pbio_port_process_pup;
 
             // Returning e-again allows user module to wait for the port to be
             // ready after first entering LEGO mode, avoiding NODEV errors when
             // switching from UART mode to LEGO mode.
             return PBIO_ERROR_AGAIN;
+        case PBIO_PORT_MODE_UART:
+            // Enable UART on the port. No process needed here. User can
+            // access UART from their own event loop.
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
+            return PBIO_SUCCESS;
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }

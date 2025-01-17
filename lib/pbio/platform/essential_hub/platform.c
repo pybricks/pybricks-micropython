@@ -239,7 +239,11 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .uart_tx_alt_uart = GPIO_AF8_UART5,
             .uart_rx_alt_uart = GPIO_AF8_UART5,
         },
+        #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
+        .supported_modes = PBIO_PORT_MODE_UART,
+        #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
         .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
+        #endif
     },
     {
         .port_id = PBIO_PORT_ID_B,
@@ -254,7 +258,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .uart_tx_alt_uart = GPIO_AF7_USART3,
             .uart_rx_alt_uart = GPIO_AF7_USART3,
         },
-                .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
     },
 };
 
