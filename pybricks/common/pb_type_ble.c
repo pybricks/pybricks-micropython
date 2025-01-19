@@ -288,7 +288,7 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
         mp_obj_get_array(data_in, &n_objs, &objs);
     } else {
         // Set first type to indicate single object.
-        value.v.data[5] = PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT << 5;
+        value.d[5] = PB_BLE_BROADCAST_DATA_TYPE_SINGLE_OBJECT << 5;
         // The one and only value is included directly after.
         index = 1;
         n_objs = 1;
@@ -297,14 +297,14 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
 
     // Encode all objects.
     for (size_t i = 0; i < n_objs; i++) {
-        index = pb_module_ble_encode(&value.v.data[5], index, objs[i]);
+        index = pb_module_ble_encode(&value.d[5], index, objs[i]);
     }
 
     value.v.size = index + 5;
-    value.v.data[0] = index + 4; // length
-    value.v.data[1] = MFG_SPECIFIC;
-    pbio_set_uint16_le(&value.v.data[2], LEGO_CID);
-    value.v.data[4] = mp_obj_get_int(self->broadcast_channel);
+    value.d[0] = index + 4; // length
+    value.d[1] = MFG_SPECIFIC;
+    pbio_set_uint16_le(&value.d[2], LEGO_CID);
+    value.d[4] = mp_obj_get_int(self->broadcast_channel);
 
     pbdrv_bluetooth_start_broadcasting(&broadcast_task, &value.v);
     return pb_module_tools_pbio_task_wait_or_await(&broadcast_task);
