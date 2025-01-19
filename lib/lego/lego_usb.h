@@ -18,10 +18,10 @@
 #define LEGO_USB_PID_SPIKE_ESSENTIAL_DFU 0x000C
 /** Official LEGO USB Product ID for SPIKE Essential. */
 #define LEGO_USB_PID_SPIKE_ESSENTIAL 0x000D
-/** Official LEGO USB Product ID for MINDSTORMS Robot Inventor in DFU mode. */
-#define LEGO_USB_PID_ROBOT_INVENTOR_DFU 0x0010
 /** Official LEGO USB Product ID for MINDSTORMS Robot Inventor. */
-#define LEGO_USB_PID_ROBOT_INVENTOR 0x0011
+#define LEGO_USB_PID_ROBOT_INVENTOR 0x0010
+/** Official LEGO USB Product ID for MINDSTORMS Robot Inventor in DFU mode. */
+#define LEGO_USB_PID_ROBOT_INVENTOR_DFU 0x0011
 
 /** Official LEGO USB Manufacturer String. */
 #define LEGO_USB_MFG_STR "LEGO System A/S"
