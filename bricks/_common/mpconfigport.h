@@ -62,7 +62,6 @@
 #define MICROPY_ENABLE_SOURCE_LINE              (1)
 #define MICROPY_ERROR_REPORTING                 (MICROPY_ERROR_REPORTING_DETAILED)
 #endif
-#define MICROPY_ENABLE_SYSTEM_ABORT             (1)
 #define MICROPY_BUILTIN_METHOD_CHECK_SELF_ARG   (1)
 #define MICROPY_PY_ASYNC_AWAIT                  (1)
 #define MICROPY_MULTIPLE_INHERITANCE            (0)
