@@ -14,6 +14,8 @@
 
 #include <pbio/protocol.h>
 
+#define PBSYS_STATUS_REPORT_SIZE 6
+
 void pbsys_status_set_program_id(pbio_pybricks_user_program_id_t program_id);
 void pbsys_status_set(pbio_pybricks_status_t status);
 void pbsys_status_clear(pbio_pybricks_status_t status);
