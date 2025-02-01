@@ -269,6 +269,7 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
         etimer_restart(&timer);
 
         // send the message
+        _Static_assert(sizeof(msg.payload) >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
         msg.context.size = pbsys_status_get_status_report(&msg.payload[0]);
         msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
         list_add(send_queue, &msg);
