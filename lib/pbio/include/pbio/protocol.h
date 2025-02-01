@@ -341,6 +341,9 @@ typedef enum {
  */
 #define PBIO_PYBRICKS_STATUS_FLAG(status) (1 << status)
 
+/** Size of status report event message in bytes. */
+#define PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE 6
+
 uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id);
 
 /**
