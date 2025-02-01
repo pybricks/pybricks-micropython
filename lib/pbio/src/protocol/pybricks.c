@@ -13,7 +13,9 @@ _Static_assert(NUM_PBIO_PYBRICKS_STATUS <= sizeof(uint32_t) * 8,
     "oh no, we added too many status flags");
 
 /**
- * Writes Pybricks status report command to @p buf
+ * Writes Pybricks status report command to @p buf.
+ *
+ * The buffer must be at least ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE bytes.
  *
  * @param [in]  buf         The buffer to hold the binary data.
  * @param [in]  flags       The status flags.
@@ -24,7 +26,7 @@ uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_py
     buf[0] = PBIO_PYBRICKS_EVENT_STATUS_REPORT;
     pbio_set_uint32_le(&buf[1], flags);
     buf[5] = program_id;
-    return 6;
+    return PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
 }
 
 /**
