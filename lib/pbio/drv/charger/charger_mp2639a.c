@@ -164,6 +164,24 @@ static bool read_chg(void) {
     #endif
 }
 
+// Sample CHG signal at 4Hz to capture transitions to detect fault condition.
+#define PBDRV_CHARGER_MP2639A_STATUS_SAMPLE_TIME (250)
+
+// After charging for a long time, we disable charging for some time. This
+// matches observed behavior with the LEGO Education SPIKE V3.x firmware.
+//
+// Why? Due to the way the hardware works, the hub cannot be truly turned off
+// while USB is plugged in. As a result, the charger is always on. For some
+// battery-charger pairs, this causes the battery to stop charging normally in
+// hardware when full as intended, automatically starting a new cycle after
+// some time. But in some battery-charger pairs, the charger will reach a
+// timeout state and not restart charging. When leaving such a combination
+// plugged in overnight, it will time out and not be charged in the morning,
+// which is not desirable. For this reason, we pause and restart charging
+// manually if it has been plugged in for a long time.
+#define PBDRV_CHARGER_MP2639A_CHARGE_TIMEOUT_MS (60 * 60 * 1000)
+#define PBDRV_CHARGER_MP2639A_CHARGE_PAUSE_MS (30 * 1000)
+
 PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
     PROCESS_BEGIN();
 
@@ -195,13 +213,11 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
     static bool chg_samples[7];
     static uint8_t chg_index = 0;
     static struct etimer timer;
-
-    // sample at 4Hz
-    etimer_set(&timer, 250);
+    static uint32_t charge_count = 0;
 
     for (;;) {
+        etimer_set(&timer, PBDRV_CHARGER_MP2639A_STATUS_SAMPLE_TIME);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-        etimer_restart(&timer);
 
         // Enable charger chip based on USB state. We don't need to disable it
         // on charger fault since the chip will automatically disable itself.
@@ -211,6 +227,10 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
         chg_samples[chg_index] = read_chg();
 
         if (mode_pin_is_low) {
+
+            // Keep track of how long we have been charging.
+            charge_count++;
+
             // Count number of transitions seen during sampling window.
             int transitions = chg_samples[0] != chg_samples[PBIO_ARRAY_SIZE(chg_samples) - 1];
             for (size_t i = 1; i < PBIO_ARRAY_SIZE(chg_samples); i++) {
@@ -239,11 +259,21 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
             // devices) requires a momentary pulse on the /PB pin, which is
             // not wired up.
             pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
+            charge_count = 0;
         }
 
         // Increment sampling index with wrap around.
         if (++chg_index >= PBIO_ARRAY_SIZE(chg_samples)) {
             chg_index = 0;
+        }
+
+        // If we have been charging for a long time, pause charging for a while.
+        if (charge_count > (PBDRV_CHARGER_MP2639A_CHARGE_TIMEOUT_MS / PBDRV_CHARGER_MP2639A_STATUS_SAMPLE_TIME)) {
+            pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
+            pbdrv_charger_enable(false, PBDRV_CHARGER_LIMIT_NONE);
+            etimer_set(&timer, PBDRV_CHARGER_MP2639A_CHARGE_PAUSE_MS);
+            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+            charge_count = 0;
         }
     }
 
