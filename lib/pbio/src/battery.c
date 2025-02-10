@@ -14,6 +14,10 @@
 #include <pbio/battery.h>
 #include <pbio/int_math.h>
 
+#if !PBIO_CONFIG_MOTOR_PROCESS
+#error "PBIO_CONFIG_MOTOR_PROCESS must be enabled to continously update battery voltage."
+#endif
+
 // Slow moving average battery voltage.
 static int32_t battery_voltage_avg_scaled;
 

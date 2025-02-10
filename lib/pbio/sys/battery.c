@@ -7,14 +7,12 @@
 // TODO: need to handle battery pack switch and Li-ion batteries for Technic Hub and NXT
 
 #include <pbdrv/battery.h>
+#include <pbio/battery.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/config.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/usb.h>
 #include <pbsys/status.h>
-
-// period over which the battery voltage is averaged (in milliseconds)
-#define BATTERY_PERIOD_MS       2500
 
 // These values are for Alkaline (AA/AAA) batteries
 #define BATTERY_OK_MV           6000    // 1.0V per cell
@@ -27,46 +25,7 @@
 #define LIION_LOW_MV            6800    // 3.4V per cell
 #define LIION_CRITICAL_MV       6000    // 3.0V per cell
 
-static uint32_t prev_poll_time;
-static uint16_t avg_battery_voltage;
-
-#if PBDRV_CONFIG_BATTERY_ADC_TYPE == 1
-// special case to reduce code size on Move hub
-#define battery_critical_mv BATTERY_CRITICAL_MV
-#define battery_low_mv BATTERY_LOW_MV
-#define battery_ok_mv BATTERY_OK_MV
-#else
-static uint16_t battery_critical_mv;
-static uint16_t battery_low_mv;
-static uint16_t battery_ok_mv;
-#endif
-
-/**
- * Initializes the system battery monitor.
- */
 void pbsys_battery_init(void) {
-    #if PBDRV_CONFIG_BATTERY_ADC_TYPE != 1
-    pbdrv_battery_type_t type;
-    if (pbdrv_battery_get_type(&type) == PBIO_SUCCESS && type == PBDRV_BATTERY_TYPE_LIION) {
-        battery_critical_mv = LIION_CRITICAL_MV;
-        battery_low_mv = LIION_LOW_MV;
-        battery_ok_mv = LIION_OK_MV;
-    } else {
-        battery_critical_mv = BATTERY_CRITICAL_MV;
-        battery_low_mv = BATTERY_LOW_MV;
-        battery_ok_mv = BATTERY_OK_MV;
-    }
-    #endif
-
-    pbdrv_battery_get_voltage_now(&avg_battery_voltage);
-    // This is mainly for the Technic Hub. It seems that the first battery voltage
-    // read is always low and causes the hub to shut down because of low battery
-    // voltage even though the battery isn't that low.
-    if (avg_battery_voltage < battery_critical_mv) {
-        avg_battery_voltage = battery_ok_mv;
-    }
-
-    prev_poll_time = pbdrv_clock_get_ms();
 }
 
 /**
@@ -75,18 +34,15 @@ void pbsys_battery_init(void) {
  * This is called periodically to update the current battery state.
  */
 void pbsys_battery_poll(void) {
-    uint32_t now;
-    uint32_t poll_interval;
-    uint16_t battery_voltage;
 
-    now = pbdrv_clock_get_ms();
-    poll_interval = now - prev_poll_time;
-    prev_poll_time = now;
+    pbdrv_battery_type_t type;
+    bool is_liion = pbdrv_battery_get_type(&type) == PBIO_SUCCESS && type == PBDRV_BATTERY_TYPE_LIION;
 
-    pbdrv_battery_get_voltage_now(&battery_voltage);
+    uint32_t battery_critical_mv = is_liion ? LIION_CRITICAL_MV : BATTERY_CRITICAL_MV;
+    uint32_t battery_low_mv = is_liion ? LIION_LOW_MV : BATTERY_LOW_MV;
+    uint32_t battery_ok_mv = is_liion ? LIION_OK_MV : BATTERY_OK_MV;
 
-    avg_battery_voltage = (avg_battery_voltage * (BATTERY_PERIOD_MS - poll_interval)
-        + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;
+    uint32_t avg_battery_voltage = pbio_battery_get_average_voltage();
 
     if (avg_battery_voltage <= battery_critical_mv) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
@@ -107,5 +63,5 @@ void pbsys_battery_poll(void) {
  * This is only valid on hubs with a built-in battery charger.
  */
 bool pbsys_battery_is_full(void) {
-    return avg_battery_voltage >= LIION_FULL_MV;
+    return pbio_battery_get_average_voltage() >= LIION_FULL_MV;
 }
