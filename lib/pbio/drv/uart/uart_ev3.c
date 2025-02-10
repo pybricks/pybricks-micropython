@@ -136,56 +136,40 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
     PT_END(pt);
 }
 
-/**
- * Helper function to write one byte in the write protothread.
- *
- * @param [in]    uart    The UART device.
- * @param [in]    byte    The byte to write.
- * @return                True if the byte was written, false otherwise.
- */
-static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_dev_t *uart, uint8_t byte) {
-    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+static PT_THREAD(pbdrv_uart_ev3_hw_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+    PT_BEGIN(pt);
 
-    // Attempt to write one byte with the hardware UART.
-    if (pdata->uart_kind == EV3_UART_HW) {
-        return UARTCharPutNonBlocking(pdata->base_address, byte);
+    // Can only write one thing at once.
+    if (uart->write_buf) {
+        *err = PBIO_ERROR_BUSY;
+        PT_EXIT(pt);
     }
 
-    // Otherwise, attempt to write one byte with the PRU UART.
-    // We could be sending more than one byte at a time, but we keep it
-    // consistent with the hardware UART limitations for simplicity, since
-    // EV3 sensors typically don't send much data anyway.
-    return pbdrv_uart_ev3_pru_write_bytes(pdata->peripheral_id, &byte, 1);
-}
+    uart->write_buf = msg;
+    uart->write_length = length;
+    uart->write_pos = 0;
 
-/**
- * Helper function to check if the UART is ready to write.
- *
- * @param [in]    uart    The UART device.
- * @return                True if the UART is ready to write, false otherwise.
- */
-static bool pbdrv_uart_can_write(pbdrv_uart_dev_t *uart) {
-    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+    etimer_set(&uart->write_timer, timeout);
 
-    // Check UART_LSR for THR_EMPTY
-    if (pdata->uart_kind == EV3_UART_HW) {
-        // Always call back after this. This creates a (yielding) poll loop for
-        // writing. This works around the unreliable TX_EMPTY interrupt when
-        // reading and writing simultaneously: Reading the status during an RX
-        // interrupt clears the TX_EMPTY interrupt, which is not re-triggered.
-        // Since UART writes on EV3 are limited to small messages like sensor
-        // mode changes, this is acceptable.
-        process_poll(uart->parent_process);
-        return UARTSpaceAvail(pdata->base_address);
+    UARTIntEnable(uart->pdata->base_address, UART_INT_TX_EMPTY);
+
+    // Await completion or timeout.
+    PT_WAIT_UNTIL(pt, uart->write_pos == uart->write_length || etimer_expired(&uart->write_timer));
+
+    uart->write_buf = NULL;
+
+    if (etimer_expired(&uart->write_timer)) {
+        UARTIntDisable(uart->pdata->base_address, UART_INT_TX_EMPTY);
+        *err = PBIO_ERROR_TIMEDOUT;
+    } else {
+        etimer_stop(&uart->write_timer);
+        *err = PBIO_SUCCESS;
     }
 
-    // For PRU UART, we rely on the flag set by its IRQ handler.
-    // So no need to poll here.
-    return pbdrv_uart_ev3_pru_can_write(pdata->peripheral_id);
+    PT_END(pt);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
-
+static PT_THREAD(pbdrv_uart_ev3_pru_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
     PT_BEGIN(pt);
 
     // Can only write one thing at once.
@@ -203,18 +187,19 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     }
 
     // Write one byte at a time until all bytes are written.
+    // REVISIT: The PRU API supports sending longer messages. Need to figure
+    // out how to set up completion interrupts for longer messages.
     PT_WAIT_UNTIL(pt, ({
         // Try to write one byte if any are remaining.
         if (uart->write_pos < uart->write_length) {
-            if (pbdrv_uart_try_to_write_byte(uart, uart->write_buf[uart->write_pos])) {
+            if (pbdrv_uart_ev3_pru_write_bytes(uart->pdata->peripheral_id, &uart->write_buf[uart->write_pos], 1)) {
                 uart->write_pos++;
             }
         }
 
         // Completion on transmission of whole message and finishing writing or timeout.
-        (pbdrv_uart_can_write(uart) && uart->write_pos == uart->write_length) || (timeout && etimer_expired(&uart->write_timer));
+        (pbdrv_uart_ev3_pru_can_write(uart->pdata->peripheral_id) && uart->write_pos == uart->write_length) || (timeout && etimer_expired(&uart->write_timer));
     }));
-
     uart->write_buf = NULL;
 
     if ((timeout && etimer_expired(&uart->write_timer))) {
@@ -225,6 +210,14 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     }
 
     PT_END(pt);
+}
+
+PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+    if (uart->pdata->uart_kind == EV3_UART_HW) {
+        return pbdrv_uart_ev3_hw_write(pt, uart, msg, length, timeout, err);
+    } else {
+        return pbdrv_uart_ev3_pru_write(pt, uart, msg, length, timeout, err);
+    }
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
@@ -252,36 +245,47 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     }
 }
 
+/**
+ * Handle an interrupt from the hardware UART.
+ */
 void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_dev_t *uart) {
 
-    /* This determines the cause of UART0 interrupt.*/
+    // This determines the cause of UART0 interrupt.
     unsigned int int_id = UARTIntStatus(uart->pdata->base_address);
 
-    /* Clears the system interrupt status of UART in AINTC. */
+    // Clears the system interrupt status of UART in AINTC.
     IntSystemStatusClear(uart->pdata->sys_int_uart_int_id);
 
-    /* Check if the cause is receiver data condition.*/
+    // Check if the cause is receiver data condition.
     if (UART_INTID_RX_DATA == (int_id & UART_INTID_RX_DATA) || (UART_INTID_CTI == (int_id & UART_INTID_CTI))) {
         int c = UARTCharGetNonBlocking(uart->pdata->base_address);
         if (c != -1) {
             ringbuf_put(&uart->rx_buf, c);
         }
+        // Poll parent process for each received byte, since the IRQ handler
+        // has no awareness of the expected length of the read operation.
+        process_poll(uart->parent_process);
     }
 
-    /* Check if the cause is receiver line error condition.*/
+    // Check if the cause is receiver line error condition.
     if (UART_INTID_RX_LINE_STAT == (int_id & UART_INTID_RX_LINE_STAT)) {
         while (UARTRxErrorGet(uart->pdata->base_address)) {
             /* Read a byte from the RBR if RBR has data.*/
             UARTCharGetNonBlocking(uart->pdata->base_address);
         }
+        process_poll(uart->parent_process);
     }
 
-    // Poll parent process for each received byte, since the IRQ handler
-    // has no awareness of the expected length of the read operation. This is
-    // done outside of the if statements above. We can do that since write IRQs
-    // are not handled here.
-    process_poll(uart->parent_process);
-
+    // Check if the cause is transmitter empty condition.
+    if (UART_INTID_TX_EMPTY == (int_id & UART_INTID_TX_EMPTY) && uart->write_buf) {
+        // Write the next byte.
+        HWREG(uart->pdata->base_address + UART_THR) = uart->write_buf[uart->write_pos++];
+        // No need to poll on each byte; only on completion.
+        if (uart->write_pos == uart->write_length) {
+            UARTIntDisable(uart->pdata->base_address, UART_INT_TX_EMPTY);
+            process_poll(uart->parent_process);
+        }
+    }
 }
 
 void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_dev_t *uart) {
