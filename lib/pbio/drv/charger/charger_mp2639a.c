@@ -22,12 +22,9 @@
 #include <pbdrv/adc.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/gpio.h>
-#if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM | PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
 #include <pbdrv/pwm.h>
-#endif
-#if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
 #include <pbdrv/resistor_ladder.h>
-#endif
+#include <pbdrv/usb.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 
@@ -70,7 +67,13 @@ pbdrv_charger_status_t pbdrv_charger_get_status(void) {
     return pbdrv_charger_status;
 }
 
-void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
+/**
+ * Enables or disables the charger.
+ *
+ * @param enable    True to enable the charger, false to disable.
+ * @param limit     The current limit to set. Only used on some platforms.
+ */
+static void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
     #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
 
     // Set the current limit (ISET) based on the type of charger attached.
@@ -114,6 +117,32 @@ void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
     // Need to keep track of MODE pin state for charging logic since /ACOK pin
     // is not wired up.
     mode_pin_is_low = enable;
+}
+
+/**
+ * Enables the charger if USB is connected, otherwise disables charger.
+ */
+static void pbdrv_charger_enable_if_usb_connected(void) {
+    pbdrv_usb_bcd_t bcd = pbdrv_usb_get_bcd();
+    bool enable = bcd != PBDRV_USB_BCD_NONE;
+    pbdrv_charger_limit_t limit;
+
+    // This battery charger chip will automatically monitor VBUS and
+    // limit the current if the VBUS voltage starts to drop, so these limits
+    // are a bit looser than they could be.
+    switch (bcd) {
+        case PBDRV_USB_BCD_NONE:
+            limit = PBDRV_CHARGER_LIMIT_NONE;
+            break;
+        case PBDRV_USB_BCD_STANDARD_DOWNSTREAM:
+            limit = PBDRV_CHARGER_LIMIT_STD_MAX;
+            break;
+        default:
+            limit = PBDRV_CHARGER_LIMIT_CHARGING;
+            break;
+    }
+
+    pbdrv_charger_enable(enable, limit);
 }
 
 /**
@@ -173,6 +202,11 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_restart(&timer);
+
+        // Enable charger chip based on USB state. We don't need to disable it
+        // on charger fault since the chip will automatically disable itself.
+        // If we disable it here we can't detect the fault condition.
+        pbdrv_charger_enable_if_usb_connected();
 
         chg_samples[chg_index] = read_chg();
 

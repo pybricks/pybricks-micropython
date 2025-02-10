@@ -99,32 +99,6 @@ void pbsys_battery_poll(void) {
     } else if (avg_battery_voltage >= battery_ok_mv) {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     }
-
-    // REVISIT: we should be able to make this event driven rather than polled
-    #if PBDRV_CONFIG_CHARGER
-
-    pbdrv_usb_bcd_t bcd = pbdrv_usb_get_bcd();
-    bool enable = bcd != PBDRV_USB_BCD_NONE;
-    pbdrv_charger_limit_t limit;
-
-    // REVISIT: The only current battery charger chip will automatically monitor
-    // VBUS and limit the current if the VBUS voltage starts to drop, so these
-    // limits are a bit looser than they could be.
-    switch (bcd) {
-        case PBDRV_USB_BCD_NONE:
-            limit = PBDRV_CHARGER_LIMIT_NONE;
-            break;
-        case PBDRV_USB_BCD_STANDARD_DOWNSTREAM:
-            limit = PBDRV_CHARGER_LIMIT_STD_MAX;
-            break;
-        default:
-            limit = PBDRV_CHARGER_LIMIT_CHARGING;
-            break;
-    }
-
-    pbdrv_charger_enable(enable, limit);
-
-    #endif // PBDRV_CONFIG_CHARGER
 }
 
 /**

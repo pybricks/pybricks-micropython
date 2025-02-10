@@ -72,13 +72,6 @@ pbio_error_t pbdrv_charger_get_current_now(uint16_t *current);
  */
 pbdrv_charger_status_t pbdrv_charger_get_status(void);
 
-/**
- * Enables or disables charging.
- * @param [in]  enable  True to enable charging or false for discharging.
- * @param [in]  limit   The current limit for the charging rate.
- */
-void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit);
-
 #else
 
 static inline pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
@@ -88,9 +81,6 @@ static inline pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
 
 static inline pbdrv_charger_status_t pbdrv_charger_get_status(void) {
     return PBDRV_CHARGER_STATUS_FAULT;
-}
-
-static inline void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
 }
 
 #endif
