@@ -249,8 +249,12 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
                     // CHG signal is on (/CHG pin is logic low).
                     pbdrv_charger_status = PBDRV_CHARGER_STATUS_CHARGE;
                 } else {
-                    // CHG signal is off (/CHG pin is logic high).
-                    pbdrv_charger_status = PBDRV_CHARGER_STATUS_COMPLETE;
+                    // CHG signal is off (/CHG pin is logic high). This is only
+                    // valid after a few cycles. Otherwise it always briefly
+                    // appears as if it is full when just plugged in.
+                    pbdrv_charger_status = charge_count > 2 ?
+                        PBDRV_CHARGER_STATUS_COMPLETE :
+                        PBDRV_CHARGER_STATUS_DISCHARGE;
                 }
             }
         } else {

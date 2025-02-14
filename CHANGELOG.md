@@ -7,6 +7,9 @@
 ### Fixed
 - Fixed low-battery warning on boot ([pybricks-micropython#292]) when the
   voltage is not actually low.
+- Fixed light indidicator always briefly showing green when just plugged in
+  or after rebooting ([pybricks-micropython#292]) even if battery is not
+  actually full.
 
 ## [3.6.0b3] - 2025-02-14
 
