@@ -43,6 +43,7 @@
 
 #include <pbdrv/adc.h>
 #include <pbdrv/battery.h>
+#include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 
@@ -52,6 +53,8 @@
 static pbdrv_battery_type_t pbdrv_battery_type;
 #endif
 
+static uint32_t pbdrv_battery_start_time;
+
 void pbdrv_battery_init(void) {
     #if PBDRV_CONFIG_BATTERY_ADC_TYPE == 3
     const pbdrv_battery_adc_platform_data_t *pdata = &pbdrv_battery_adc_platform_data;
@@ -59,6 +62,7 @@ void pbdrv_battery_init(void) {
     pbdrv_battery_type = pbdrv_gpio_input(&pdata->gpio) ?
         PBDRV_BATTERY_TYPE_ALKALINE : PBDRV_BATTERY_TYPE_LIION;
     #endif
+    pbdrv_battery_start_time = pbdrv_clock_get_ms();
 }
 
 pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
@@ -89,6 +93,17 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
 }
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
+
+    if (pbdrv_clock_get_ms() - pbdrv_battery_start_time < 100) {
+        // The battery voltage is not reliable when the hub is just powered on.
+        // This suppresses immediate low-battery warnings when the hub is
+        // powered on. REVISIT: This can be integrated in the ADC driver to
+        // hold the pbdrv init busy flag after currently pending driver changes
+        // are merged.
+        *value = 7500;
+        return PBIO_SUCCESS;
+    }
+
     uint16_t raw;
     pbio_error_t err;
 

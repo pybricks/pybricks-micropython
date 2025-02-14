@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed low-battery warning on boot ([pybricks-micropython#292]) when the
+  voltage is not actually low.
+
 ## [3.6.0b3] - 2025-02-14
 
 ### Added
