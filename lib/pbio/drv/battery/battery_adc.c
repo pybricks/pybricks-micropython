@@ -94,16 +94,6 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
 
-    if (pbdrv_clock_get_ms() - pbdrv_battery_start_time < 100) {
-        // The battery voltage is not reliable when the hub is just powered on.
-        // This suppresses immediate low-battery warnings when the hub is
-        // powered on. REVISIT: This can be integrated in the ADC driver to
-        // hold the pbdrv init busy flag after currently pending driver changes
-        // are merged.
-        *value = 7500;
-        return PBIO_SUCCESS;
-    }
-
     uint16_t raw;
     pbio_error_t err;
 
@@ -133,6 +123,15 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     *value = raw * PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_SCALED_MAX /
         PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_RAW_MAX + current *
         PBDRV_CONFIG_BATTERY_ADC_CURRENT_CORRECTION / 16;
+
+    if (*value < 7000 && (pbdrv_clock_get_ms() - pbdrv_battery_start_time) < 1000) {
+        // The battery voltage is not reliable when the hub is just powered on.
+        // This suppresses immediate low-battery warnings when the hub is
+        // powered on. REVISIT: This can be integrated in the ADC driver to
+        // hold the pbdrv init busy flag after currently pending driver changes
+        // are merged.
+        *value = 7000;
+    }
 
     return PBIO_SUCCESS;
 }
