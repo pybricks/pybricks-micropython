@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.6.0b4] - 2025-02-14
+
 ### Fixed
 - Fixed low-battery warning on boot ([pybricks-micropython#292]) when the
   voltage is not actually low.
@@ -1041,7 +1043,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b3...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b4...HEAD
+[3.6.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b3...v3.6.0b4
 [3.6.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...v3.6.0b3
 [3.6.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...v3.6.0b2
 [3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
