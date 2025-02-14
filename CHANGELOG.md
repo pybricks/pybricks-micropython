@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.6.0b3] - 2025-02-14
+
 ### Added
 
 - Added optional `calibrated=True` parameter to `acceleration()` and `up()` and
@@ -32,17 +34,27 @@
   stop button while the hub menu is active ([support#1975]).
 
 ### Fixed
+- Fixed battery charging timeout if it didn't reach 100% after about 6 hours.
+  This is same behavior observed in official firmware. ([pybricks-micropython#292]).
+- Fixed inconsistent battery level reported to user. Now it uses the same value
+  as used by the light indicator ([support#2055]). 
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
   could cause `turn(360)` to be off by a degree ([support#1844]).
 - Fixed `hub` silently ignoring non-orthogonal base axis when it should raise.
 - Fixed not handling negative duration in `Speaker.beep()` ([support#1996]).
 
+### Removed
+- Removed ev3dev and ev3rt-based CI builds. Pybricks 2.0 on ev3dev will
+  continue to be available as a separate download.
+
 [pybricks-micropython#274]: https://github.com/pybricks/pybricks-micropython/pull/274
+[pybricks-micropython#292]: https://github.com/pybricks/pybricks-micropython/pull/292
 [support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
 [support#1844]: https://github.com/pybricks/support/issues/1844
 [support#1975]: https://github.com/pybricks/support/issues/1975
 [support#1996]: https://github.com/pybricks/support/issues/1996
+[support#2055]: https://github.com/pybricks/support/issues/2055
 
 ## [3.6.0b2] - 2024-10-15
 
@@ -1022,7 +1034,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b3...HEAD
+[3.6.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...v3.6.0b3
 [3.6.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...v3.6.0b2
 [3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
 [3.5.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...v3.5.0
