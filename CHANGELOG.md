@@ -7,6 +7,8 @@
 ### Changed
 - Changed order of the `DriveBase.arc` method. This method has not yet been
   released or documented, so this is not a breaking change ([support#1157]).
+- Reduced voltage threshold at which the charging light goes from red to green
+  to indicate that the battery is full from 8300 to 8190 mV ([pybricks-micropython#292]).
 
 ## [3.6.0b4] - 2025-02-14
 
