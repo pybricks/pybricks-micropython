@@ -189,8 +189,8 @@ static mp_obj_t pb_type_DriveBase_arc(size_t n_args, const mp_obj_t *pos_args, m
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(radius),
-        PB_ARG_DEFAULT_NONE(distance),
         PB_ARG_DEFAULT_NONE(angle),
+        PB_ARG_DEFAULT_NONE(distance),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait));
 

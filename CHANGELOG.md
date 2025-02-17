@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+- Changed order of the `DriveBase.arc` method. This method has not yet been
+  released or documented, so this is not a breaking change ([support#1157]).
+
 ## [3.6.0b4] - 2025-02-14
 
 ### Fixed
