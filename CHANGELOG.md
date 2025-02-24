@@ -5,10 +5,13 @@
 ## [Unreleased]
 
 ### Changed
-- Changed order of the `DriveBase.arc` method. This method has not yet been
-  released or documented, so this is not a breaking change ([support#1157]).
+- Changed order of the `DriveBase.arc` method parameters. This method has not
+  yet been released or documented, so this is not a breaking change ([support#1157]).
 - Reduced voltage threshold at which the charging light goes from red to green
   to indicate that the battery is full from 8300 to 8190 mV ([pybricks-micropython#292]).
+- Simplified API for `hub.imu.up()` and `hub.imu.tilt()` to only use a single
+  `calibrated` keyword argument instead of separate `use_gyro` options. This
+  had not been released yet so is not a breaking change.
 
 ## [3.6.0b4] - 2025-02-14
 
@@ -31,13 +34,15 @@
   scale and acceleration offset and scale.
 - Added `hub.system.reset_storage` to restore storage and settings to default
   state.
+- Replaced `update_heading_correction` with `_imu_calibrate.py` for 3D
+  calibration ([support#1907]).
 
 ### Changed
 - Enabled UTF-8 support for `str` objects.
 - The method `DriveBase.angle()` now returns a float ([support#1844]). This
   makes it properly equivalent to `hub.imu.heading`.
 - Re-implemented tilt using the gyro data by default. Pure accelerometer tilt
-  can still be obtained with `hub.imu.tilt(use_gyro=False)`.
+  can still be obtained with `hub.imu.tilt(calibrated=False)`.
 - Re-implemented `hub.imu.heading()` to use optionally use the projection of 3D
   orientation to improve performance when the hub is lifted off the ground.
   The 1D-based heading remains the default for now.
@@ -67,6 +72,7 @@
 [support#943]: https://github.com/pybricks/support/issues/943
 [support#1886]: https://github.com/pybricks/support/issues/1886
 [support#1844]: https://github.com/pybricks/support/issues/1844
+[support#1907]: https://github.com/pybricks/support/issues/1907
 [support#1975]: https://github.com/pybricks/support/issues/1975
 [support#1996]: https://github.com/pybricks/support/issues/1996
 [support#2055]: https://github.com/pybricks/support/issues/2055
@@ -151,7 +157,7 @@
 - Allow gyro calibration only while all motors are coasting ([support#1840]) to
   prevent recalibration during very steady moves ([support#1687])
 - Reduced default angular velocity stationary threshold from an undocumented
-  5 deg/s to 3 deg/s to reduce unwanted calibration while moving ([support#1105]).
+  5 deg/s to 2 deg/s to reduce unwanted calibration while moving ([support#1105]).
 - If `imu.reset_heading()` is called while a drive base is actively using the
   gyro, an exception will be raised ([support#1818]).
 

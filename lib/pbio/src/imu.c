@@ -590,7 +590,8 @@ void pbio_imu_get_acceleration(pbio_geometry_xyz_t *values, bool calibrated) {
 }
 
 /**
- * Gets the vector that is parallel to the acceleration measurement of the stationary case.
+ * Gets the tilt-based vector that is parallel to the acceleration measurement
+ * if we were stationary.
  *
  * @param [out] values      The acceleration vector.
  */
@@ -639,17 +640,25 @@ pbio_error_t pbio_imu_get_single_axis_rotation(pbio_geometry_xyz_t *axis, float 
 /**
  * Gets which side of a hub points upwards.
  *
- * @param [in]  calibrated  Whether to use calibrated or uncalibrated data.
+ * @param [in]  calibrated  Whether to use calibrated/fused (true) or raw data (false).
  *
  * @return                  Which side is up.
  */
 pbio_geometry_side_t pbio_imu_get_up_side(bool calibrated) {
     // Up is which side of a unit box intersects the +Z vector first.
     // So read +Z vector of the inertial frame, in the body frame.
-    // For now, this is the gravity vector. In the future, we can make this
-    // slightly more accurate by using the full IMU orientation.
-    pbio_geometry_xyz_t *acceleration = calibrated ? &acceleration_calibrated : &acceleration_uncalibrated;
-    return pbio_geometry_side_from_vector(acceleration);
+    // This is either the raw acceleration or the third row of the fused
+    // rotation matrix.
+
+    pbio_geometry_xyz_t *vector = &acceleration_uncalibrated;
+    if (calibrated) {
+        // This is similar to pbio_imu_get_tilt_vector, but this should stay
+        // in the hub frame rather than projected into user frame.
+        vector->x = pbio_imu_rotation.m31;
+        vector->y = pbio_imu_rotation.m32;
+        vector->z = pbio_imu_rotation.m33;
+    }
+    return pbio_geometry_side_from_vector(vector);
 }
 
 static float heading_offset_1d = 0;

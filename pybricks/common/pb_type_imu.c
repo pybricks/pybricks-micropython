@@ -60,17 +60,16 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_up_obj, 1, pb_type_imu_up);
 static mp_obj_t pb_type_imu_tilt(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_imu_obj_t, self,
-        PB_ARG_DEFAULT_TRUE(use_gyro),
         PB_ARG_DEFAULT_TRUE(calibrated));
 
     (void)self;
 
     // Read acceleration in the user frame.
     pbio_geometry_xyz_t accl;
-    if (mp_obj_is_true(use_gyro_in)) {
+    if (mp_obj_is_true(calibrated_in)) {
         pbio_imu_get_tilt_vector(&accl);
     } else {
-        pbio_imu_get_acceleration(&accl, mp_obj_is_true(calibrated_in));
+        pbio_imu_get_acceleration(&accl, false);
     }
 
     mp_obj_t tilt[2];
@@ -187,10 +186,10 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
         pb_type_imu_obj_t, self,
         PB_ARG_DEFAULT_NONE(angular_velocity_threshold),
         PB_ARG_DEFAULT_NONE(acceleration_threshold),
+        PB_ARG_DEFAULT_NONE(heading_correction),
         PB_ARG_DEFAULT_NONE(angular_velocity_bias),
         PB_ARG_DEFAULT_NONE(angular_velocity_scale),
-        PB_ARG_DEFAULT_NONE(acceleration_correction),
-        PB_ARG_DEFAULT_NONE(heading_correction));
+        PB_ARG_DEFAULT_NONE(acceleration_correction));
 
     (void)self;
 
@@ -308,7 +307,6 @@ static mp_obj_t pb_type_imu_heading(size_t n_args, const mp_obj_t *pos_args, mp_
         PBIO_IMU_HEADING_TYPE_3D : PBIO_IMU_HEADING_TYPE_1D;
 
     return mp_obj_new_float(pbio_imu_get_heading(type));
-    ;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_heading_obj, 1, pb_type_imu_heading);
 

@@ -16,7 +16,7 @@ def beep(freq):
 
 
 def wait_for_stationary(side):
-    while not hub.imu.stationary() or hub.imu.up() != side:
+    while not hub.imu.stationary() or hub.imu.up(calibrated=False) != side:
         wait(10)
 
 
@@ -42,7 +42,7 @@ def roll_over_axis(axis, new_side):
     print("Roll it towards you, without lifting the hub up!")
 
     angle_start = hub.imu.rotation(axis, calibrated=False)
-    while hub.imu.up() != new_side or not hub.imu.stationary():
+    while hub.imu.up(calibrated=False) != new_side or not hub.imu.stationary():
 
         _, _, z = hub.imu.orientation() * axis
         if abs(z) > 0.07:
