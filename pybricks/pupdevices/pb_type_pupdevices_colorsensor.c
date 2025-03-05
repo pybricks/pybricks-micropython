@@ -7,6 +7,8 @@
 
 #include "py/mphal.h"
 
+#include <pbio/int_math.h>
+
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
@@ -76,14 +78,8 @@ static void get_hsv_reflected(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
 static void get_hsv_ambient(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
     int16_t *data = pb_type_device_get_data(self_in, PBDRV_LEGODEV_MODE_PUP_COLOR_SENSOR__SHSV);
     hsv->h = data[0];
-    hsv->s = data[1] / 10;
-    if (hsv->s > 100) {
-        hsv->s = 100;
-    }
-    hsv->v = data[2] / 10;
-    if (hsv->v > 100) {
-        hsv->v = 100;
-    }
+    hsv->s = pbio_int_math_min(data[1] / 10, 100);
+    hsv->v = pbio_int_math_min(data[2] / 10, 100);
 }
 
 // pybricks.pupdevices.ColorSensor.hsv(surface=True)

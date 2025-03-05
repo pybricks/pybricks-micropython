@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed overflow in saturation and value for ambient color measurement. This
+  can occur with very bright screens.
+
 ## [3.6.0] - 2024-03-02
 
 ### Changed
