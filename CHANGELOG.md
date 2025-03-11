@@ -7,7 +7,12 @@
 ### Fixed
 
 - Fixed overflow in saturation and value for ambient color measurement. This
-  can occur with very bright screens.
+  can occur with very bright screens ([pybricks-micropython#295]).
+- Fixed drive base stall condition not being raised if the right motor is
+  individually controlled and then stalled ([pybricks-micropython#294]).
+
+[pybricks-micropython#294]: https://github.com/pybricks/pybricks-micropython/pull/294
+[pybricks-micropython#295]: https://github.com/pybricks/pybricks-micropython/pull/295
 
 ## [3.6.0] - 2024-03-02
 
