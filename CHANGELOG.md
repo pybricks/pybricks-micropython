@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.6.1] - 2025-03-11
+
 ### Fixed
 
 - Fixed overflow in saturation and value for ambient color measurement. This
@@ -14,7 +16,7 @@
 [pybricks-micropython#294]: https://github.com/pybricks/pybricks-micropython/pull/294
 [pybricks-micropython#295]: https://github.com/pybricks/pybricks-micropython/pull/295
 
-## [3.6.0] - 2024-03-02
+## [3.6.0] - 2025-03-02
 
 ### Changed
 - Bump version from beta to 3.6.0 without additional changes.
@@ -1072,7 +1074,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...HEAD
+[3.6.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b5...v3.6.0
 [3.6.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b4...v3.6.0b5
 [3.6.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b3...v3.6.0b4
