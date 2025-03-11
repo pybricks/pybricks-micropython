@@ -1011,7 +1011,7 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_servo_is_stalled(db->left, &stalled_right, &stall_duration_right);
+    err = pbio_servo_is_stalled(db->right, &stalled_right, &stall_duration_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
