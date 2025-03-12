@@ -49,7 +49,7 @@
 extern "C" {
 #endif
 
-#define AM33XX
+// #define AM33XX
 
 //***********************************************************************
 //  PRUSS Register Offsets for AM33X SOC

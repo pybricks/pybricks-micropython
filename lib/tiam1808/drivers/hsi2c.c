@@ -972,15 +972,16 @@ void I2COwnAddressSet(unsigned int baseAdd, unsigned int slaveAdd,
     {
          case 0 : 
                HWREG(baseAdd + I2C_OA) = slaveAdd;
-
+               return;
          case 1 : 
                HWREG(baseAdd + I2C_OAn(0)) = slaveAdd;
-
+               return;
          case 2 : 
                HWREG(baseAdd + I2C_OAn(1)) = slaveAdd;
-
+               return;
          case 3 :
                HWREG(baseAdd + I2C_OAn(2)) = slaveAdd;
+               return;
     }
 }
 

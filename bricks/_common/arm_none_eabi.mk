@@ -275,6 +275,8 @@ EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
 	os/OSEK.c \
 	)
 
+# Skipping uart_irda_cir.c, gpio_v2.c, and hsi2c.c usbphyGS70.c, which
+# partially overlap with uart.c, gpio.c, and i2c.c, usbphyGS70.c
 TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
 	cppi41dma.c \
 	cpsw.c \
@@ -287,11 +289,9 @@ TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
 	elm.c \
 	emac.c \
 	emifa.c \
-	gpio_v2.c \
 	gpio.c \
 	gpmc.c \
 	hs_mmcsd.c \
-	hsi2c.c \
 	i2c.c \
 	interrupt.c \
 	lan8710a.c \
@@ -309,26 +309,11 @@ TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
 	syscfg.c \
 	timer.c \
 	tsc_adc.c \
-	uart_irda_cir.c \
 	uart.c \
 	usb.c \
 	usbphyGS60.c \
-	usbphyGS70.c \
 	vpif.c \
 	watchdog.c \
-	)
-
-# FIXME: Compile everything above instead of this subset
-TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
-	cpu.c \
-	ecap.c \
-	ehrpwm.c \
-	gpio.c \
-	interrupt.c \
-	psc.c \
-	spi.c \
-	syscfg.c \
-	timer.c \
 	)
 
 EV3_OSEK_SRC_S = $(addprefix lib/pbio/platform/ev3/osek/,\

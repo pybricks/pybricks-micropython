@@ -746,8 +746,10 @@ void VPIFCaptureModeConfig(unsigned int baseAddr, unsigned int mode, unsigned in
     if(mode==VPIF_NONSTANDARD)
     {
         /* TBD */
-        if(sdChannel==VPIF_CHANNEL_0);
-        if(sdChannel==VPIF_CHANNEL_1);
+        if(sdChannel==VPIF_CHANNEL_0) {
+        }
+        if(sdChannel==VPIF_CHANNEL_1) {
+        }
     }
     
     /* TBD */
@@ -1578,8 +1580,10 @@ void VPIFDisplayModeConfig(unsigned int baseAddr, unsigned int mode, unsigned in
     if(mode==VPIF_NONSTANDARD)
     {
         //TBD
-        if(sdChannel==VPIF_CHANNEL_2);
-        if(sdChannel==VPIF_CHANNEL_3);
+        if(sdChannel==VPIF_CHANNEL_2) {
+        }
+        if(sdChannel==VPIF_CHANNEL_3) {
+        }
     }
 }
 /**

@@ -75,6 +75,7 @@
                 "${workspaceFolder}/lib/tiam1808/tiam1808/armv5/am1808",
             ],
             "defines": [
+                "am1808",
                 "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
             ],

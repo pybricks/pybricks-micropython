@@ -1538,7 +1538,7 @@ unsigned int * cppiDmaAllocnBuffer(unsigned int numOfBlocks)
 
 void cppiDmaFreenBuffer(unsigned int *dataBuffer)
 {
-	int i,j;
+	unsigned int i,j;
 	unsigned int nBlocks = 0;
 	
 	for(i=0;i<CPDMA_NUMOF_BUFFERS;i++)
