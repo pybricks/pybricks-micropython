@@ -217,17 +217,39 @@ typedef struct {
 
 // Device connection manager state for each port
 struct _pbio_port_dcm_t {
+    struct pt child;
     uint32_t count;
     bool connected;
     pbio_port_dcm_category_t category;
     pbio_port_dcm_analog_values_t nxt_analog_buf;
 };
 
-pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
+static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
 
 #define DCM_LOOP_TIME_MS (10)
 #define DCM_LOOP_STEADY_STATE_COUNT (20)
 #define DCM_LOOP_DISCONNECT_COUNT (5)
+
+PT_THREAD(pbio_port_dcm_await_new_nxt_analog_sample(pbio_port_dcm_t * dcm, struct etimer *etimer, const pbdrv_ioport_pins_t *pins, uint32_t *value)) {
+    struct pt *pt = &dcm->child;
+
+    PT_BEGIN(pt);
+
+    // Wait for LED to settle.
+    etimer_set(etimer, 1);
+    PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+
+    // Request a new ADC sample. Revisit: Call back on completion instead of time.
+    pbdrv_adc_update_soon();
+    etimer_set(etimer, 4);
+    PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+
+    // Get the value.
+    uint8_t pin = dcm->category == DCM_CATEGORY_NXT_COLOR ? 6 : 1;
+    *value = pbio_port_dcm_get_mv(pins, pin);
+
+    PT_END(pt);
+}
 
 /**
  * Thread that detects the device type. It monitors the ID1 and ID2 pins
@@ -292,17 +314,11 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             while (!pbdrv_gpio_input(&pins->p2)) {
                 // Get ambient light.
                 pbdrv_gpio_out_low(&pins->p5);
-                pbdrv_adc_update_soon();
-                etimer_set(etimer, 4);
-                PT_WAIT_UNTIL(pt, etimer_expired(etimer));
-                dcm->nxt_analog_buf.a = pbio_port_dcm_get_mv(pins, 1);
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.a));
 
                 // Get reflected light compensated for ambient light.
                 pbdrv_gpio_out_high(&pins->p5);
-                pbdrv_adc_update_soon();
-                etimer_set(etimer, 4);
-                PT_WAIT_UNTIL(pt, etimer_expired(etimer));
-                dcm->nxt_analog_buf.r = pbio_port_dcm_get_mv(pins, 1);
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.r));
             }
             pbdrv_gpio_out_low(&pins->p5);
             continue;
