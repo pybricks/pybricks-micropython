@@ -68,6 +68,7 @@
 #define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (1)
 
 #define PBDRV_CONFIG_UART                           (1)
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
 #define PBDRV_CONFIG_UART_STM32F0                   (1)
 #define PBDRV_CONFIG_UART_STM32F0_NUM_UART          (2)
 

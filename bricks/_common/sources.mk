@@ -174,6 +174,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/resistor_ladder/resistor_ladder.c \
 	drv/sound/sound_nxt.c \
 	drv/sound/sound_stm32_hal_dac.c \
+	drv/uart/uart_debug_first_port.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \

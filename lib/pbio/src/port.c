@@ -425,6 +425,11 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_PUP);
         return;
     }
+
+    if (port->uart_dev && (port->pdata->supported_modes & PBIO_PORT_MODE_UART)) {
+        pbio_port_set_mode(port, PBIO_PORT_MODE_UART);
+        return;
+    }
 }
 
 void pbio_port_init(void) {
@@ -516,6 +521,11 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
             // ready after first entering LEGO mode, avoiding NODEV errors when
             // switching from UART mode to LEGO mode.
             return PBIO_ERROR_AGAIN;
+        case PBIO_PORT_MODE_UART:
+            // Enable UART on the port. No process needed here. User can
+            // access UART from their own event loop.
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
+            return PBIO_SUCCESS;
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
