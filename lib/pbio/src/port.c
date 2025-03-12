@@ -221,6 +221,8 @@ pbio_error_t pbio_port_get_lump_device(pbio_port_t *port, lego_device_type_id_t 
         return PBIO_ERROR_INVALID_OP;
     }
 
+    // REVISIT: Check for LUMP presence from DCM.
+
     pbio_error_t err = pbio_port_lump_is_ready(port->lump_dev);
     if (err != PBIO_SUCCESS) {
         return err;

@@ -13,12 +13,16 @@
 /** The number of consecutive repeated detections needed for an affirmative ID. */
 #define AFFIRMATIVE_MATCH_COUNT 20
 
-#define DEBUG (0)
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
-#define DEBUG_PRINTF(...) printf(__VA_ARGS__)
+#include <inttypes.h>
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#define debug_pr pbdrv_uart_debug_printf
+#define DBG_ERR(expr) expr
 #else
-#define DEBUG_PRINTF(...)
+#define debug_pr(...)
+#define DBG_ERR(expr)
 #endif
 
 typedef enum {
@@ -286,7 +290,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // Log changes in detected ID. Guess port ID for debugging only.
             for (uint8_t c = 0; c < PBIO_CONFIG_PORT_DCM_NUM_DEV; c++) {
                 if (&dcm_state[c] == dcm && device_info->type_id != dcm->type_id) {
-                    DEBUG_PRINTF("Port %c: Detected ID: %d\n", c + 'A', dcm->type_id);
+                    debug_pr("Port %c: Detected ID: %d\n", c + 'A', dcm->type_id);
                 }
             }
             #endif

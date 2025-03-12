@@ -64,6 +64,8 @@ pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_t *lump_dev, u
 
 pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode);
 
+pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev);
+
 pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle);
 
 #else // PBIO_CONFIG_PORT_LUMP
@@ -90,6 +92,10 @@ static inline pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_
 
 static inline pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode) {
     *info = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

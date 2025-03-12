@@ -261,11 +261,26 @@ static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_write_obj, 1, iodevices_PUPDevice_write);
 
+// pybricks.iodevices.PUPDevice.reset
+static mp_obj_t iodevices_PUPDevice_reset(mp_obj_t self_in) {
+    iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Passive devices don't do any reset.
+    if (self->passive_id != LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART) {
+        pb_assert(PBIO_ERROR_INVALID_OP);
+    }
+
+    pb_assert(pbio_port_lump_request_reset(self->device_base.lump_dev));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(iodevices_PUPDevice_reset_obj, iodevices_PUPDevice_reset);
+
 // dir(pybricks.iodevices.PUPDevice)
 static const mp_rom_map_elem_t iodevices_PUPDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_PUPDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_PUPDevice_write_obj)},
     { MP_ROM_QSTR(MP_QSTR_info),       MP_ROM_PTR(&iodevices_PUPDevice_info_obj)},
+    { MP_ROM_QSTR(MP_QSTR_reset),      MP_ROM_PTR(&iodevices_PUPDevice_reset_obj)},
 };
 static MP_DEFINE_CONST_DICT(iodevices_PUPDevice_locals_dict, iodevices_PUPDevice_locals_dict_table);
 

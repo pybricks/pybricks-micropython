@@ -371,15 +371,16 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // Simulate setting default mode
     SIMULATE_TX_MSG(msg83b);
 
-    // should be synced now are receive regular pings
+    // should be synced now and receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
-        // Send nack (keep alive)
-        SIMULATE_TX_MSG(msg84);
 
         // receive data
         SIMULATE_RX_MSG(msg85);
         SIMULATE_RX_MSG(msg86);
+
+        // Send nack (keep alive)
+        SIMULATE_TX_MSG(msg84);
     }
 
     // Wait for default mode to complete
@@ -627,11 +628,11 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
+        // receive data
+        SIMULATE_RX_MSG(msg36);
+
         // wait for NACK
         SIMULATE_TX_MSG(msg37);
-
-        // reply with data
-        SIMULATE_RX_MSG(msg36);
     }
 
     PT_WAIT_WHILE(pt, ({
@@ -829,11 +830,11 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
+        // receive with data
+        SIMULATE_RX_MSG(msg57);
+
         // wait for NACK
         SIMULATE_TX_MSG(msg58);
-
-        // reply with data
-        SIMULATE_RX_MSG(msg57);
     }
 
     PT_WAIT_WHILE(pt, ({
@@ -1040,11 +1041,11 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
+        // receive data
+        SIMULATE_RX_MSG(msg57);
+
         // wait for NACK
         SIMULATE_TX_MSG(msg58);
-
-        // reply with data
-        SIMULATE_RX_MSG(msg57);
     }
 
     PT_WAIT_WHILE(pt, ({

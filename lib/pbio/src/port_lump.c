@@ -171,8 +171,6 @@ struct _pbio_port_lump_dev_t {
     uint8_t rx_msg_size;
     /** Total number of errors that have occurred. */
     uint32_t err_count;
-    /** Number of bad reads when receiving DATA lump_dev->msgs. */
-    uint32_t num_data_err;
     /** Flag that indicates that good DATA lump_dev->msg has been received since last watchdog timeout. */
     bool data_rec;
     /** Return value for synchronization thread. */
@@ -219,6 +217,7 @@ pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, pbio_po
 }
 
 static void pbio_port_lump_request_mode(pbio_port_lump_dev_t *lump_dev, uint8_t mode) {
+    debug_pr("req mode: %d (was: %d desired: %d)\n", mode, lump_dev->mode, lump_dev->mode_switch.desired_mode);
     lump_dev->mode_switch.desired_mode = mode;
     lump_dev->mode_switch.time = pbdrv_clock_get_ms();
     lump_dev->mode_switch.requested = true;
@@ -633,9 +632,6 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
             pbio_port_lump_handle_known_data(lump_dev);
 
             lump_dev->data_rec = true;
-            if (lump_dev->num_data_err) {
-                lump_dev->num_data_err--;
-            }
             break;
     }
 
@@ -719,6 +715,8 @@ PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_d
     PT_BEGIN(pt);
 
     // Reset state for new device
+    lump_dev->mode = 0;
+    lump_dev->mode_switch = (pbdrv_legodev_lump_mode_switch_t) {0};
     lump_dev->ext_mode = 0;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
     lump_dev->parsed_info = (pbio_port_lump_device_info_t) {0};
@@ -797,7 +795,6 @@ sync:
     // if all was good, we are ready to start receiving the mode info
     lump_dev->parsed_info.type_id = lump_dev->rx_msg[1];
     lump_dev->data_rec = false;
-    lump_dev->num_data_err = 0;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_INFO;
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     lump_dev->info_flags = EV3_UART_INFO_FLAG_CMD_TYPE;
@@ -869,7 +866,7 @@ sync:
         device_info->power_requirements = PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS;
     }
 
-    // Request switch to default mode for this device.
+    // Request switch to default mode for this device if any.
     uint8_t default_mode = 0;
     if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
         default_mode = LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB;
@@ -878,7 +875,9 @@ sync:
     } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
     }
-    pbio_port_lump_request_mode(lump_dev, default_mode);
+    if (default_mode) {
+        pbio_port_lump_request_mode(lump_dev, default_mode);
+    }
 
     // Reset other timers
     etimer_reset_with_new_interval(&lump_dev->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
@@ -901,10 +900,14 @@ sync:
  * @param [in]  etimer         The timer for the protothread.
  */
 PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
+
+    if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
+        PT_EXIT(pt);
+    }
+
     PT_BEGIN(pt);
 
-
-    while (lump_dev->status == PBDRV_LEGODEV_LUMP_STATUS_DATA) {
+    for (;;) {
 
         PT_WAIT_UNTIL(pt, etimer_expired(&lump_dev->timer) || lump_dev->mode_switch.requested || lump_dev->data_set->size > 0);
 
@@ -912,12 +915,9 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
         if (etimer_expired(&lump_dev->timer)) {
             // make sure we are receiving data
             if (!lump_dev->data_rec) {
-                lump_dev->num_data_err++;
                 debug_pr("No data since last keepalive\n");
-                if (lump_dev->num_data_err > 6) {
-                    lump_dev->err = PBIO_ERROR_IO;
-                    PT_EXIT(pt);
-                }
+                lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
+                PT_EXIT(pt);
             }
             lump_dev->data_rec = false;
             lump_dev->tx_msg[0] = LUMP_SYS_NACK;
@@ -928,11 +928,6 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
                 PT_EXIT(pt);
             }
             etimer_reset_with_new_interval(&lump_dev->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
-
-            // Retry mode switch if it hasn't been handled or failed.
-            if (lump_dev->mode != lump_dev->mode_switch.desired_mode && pbdrv_clock_get_ms() - lump_dev->mode_switch.time > EV3_UART_IO_TIMEOUT) {
-                lump_dev->mode_switch.requested = true;
-            }
         }
 
         // Handle requested mode change
@@ -983,6 +978,10 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
  * @param [in]  uart_dev       The UART device instance.
  */
 PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev)) {
+
+    if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
+        PT_EXIT(pt);
+    }
 
     // REVISIT: This is not the greatest. We can easily get a buffer overrun and
     // loose data. For now, the retry after bad message size helps get back into
@@ -1200,6 +1199,31 @@ pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_l
     *info = &lump_dev->parsed_info;
     *current_mode = lump_dev->mode;
     return pbio_port_lump_is_ready(lump_dev);
+}
+
+/**
+ * Requests the LUMP device to reset by exiting and re-syncing.
+ *
+ * This is useful for certain legacy sensors like some gyro sensors that will
+ * only re-calibrate during reset.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance.
+ * @return                  ::PBIO_SUCCESS on success, else see ::pbio_port_lump_is_ready.
+ */
+pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
+
+    // This is only useful if there is a device in the first place.
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Forces data threads to exit, and therefore port thread will eventually
+    // call sync thread again.
+    lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
+    pbio_port_process_poll(lump_dev->port);
+
+    return PBIO_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_PORT_LUMP
