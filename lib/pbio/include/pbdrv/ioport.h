@@ -18,24 +18,6 @@
 #include <stdbool.h>
 
 /**
- * Modes of the common vcc for the I/O port.
- */
-typedef enum {
-    /**
-     * Power to the ports is off.
-     */
-    PBDRV_IOPORT_VCC_OFF,
-    /**
-     * Power to the ports is on.
-     */
-    PBDRV_IOPORT_VCC_ON,
-    /**
-     * Power is set to the platform-specific needs during shutdown.
-     */
-    PBDRV_IOPORT_VCC_SHUTDOWN,
-} pbdrv_ioport_vcc_mode_t;
-
-/**
  * Modes of one I/O port. Governs the behavior of the P5 and P6 pins.
  */
 typedef enum {
@@ -115,9 +97,9 @@ typedef struct {
 /**
  * Enables or disables VCC on pin 4 of all ioports.
  *
- * @param [in]  mode        The power state to set.
+ * @param [in]  enable        Choose true to enable VCC, false to disable.
  */
-void pbdrv_ioport_enable_vcc(pbdrv_ioport_vcc_mode_t mode);
+void pbdrv_ioport_enable_vcc(bool enable);
 
 /**
  * Sets the mode of the P5P6 pins on this port.
