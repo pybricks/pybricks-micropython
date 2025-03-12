@@ -205,6 +205,26 @@ static const pbio_observer_model_t model_ev3_m = {
     .torque_friction = 18317,
 };
 
+static const pbio_observer_model_t model_nxt = {
+    .d_angle_d_speed = 88366,
+    .d_speed_d_speed = 923,
+    .d_current_d_speed = -60070,
+    .d_angle_d_current = 5754836,
+    .d_speed_d_current = 44630,
+    .d_current_d_current = 27887153,
+    .d_angle_d_voltage = 5236928,
+    .d_speed_d_voltage = 21581,
+    .d_current_d_voltage = 106485,
+    .d_angle_d_torque = -2338784,
+    .d_speed_d_torque = -11845,
+    .d_current_d_torque = 1038248,
+    .d_voltage_d_torque = 132663,
+    .d_torque_d_voltage = 2896,
+    .d_torque_d_speed = 1634,
+    .d_torque_d_acceleration = 1587,
+    .torque_friction = 20449,
+};
+
 #endif // PBIO_CONFIG_SERVO_EV3_NXT
 
 static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
@@ -223,6 +243,14 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 800,
         .feedback_gain_low = 45,
         .precision_profile = 10,
+        .pid_kp_low_speed_threshold = 0,
+    },
+    {
+        .id = LEGO_DEVICE_TYPE_ID_NXT_MOTOR,
+        .model = &model_nxt,
+        .rated_max_speed = 800,
+        .feedback_gain_low = 90,
+        .precision_profile = 5,
         .pid_kp_low_speed_threshold = 0,
     },
     #endif // PBIO_CONFIG_SERVO_EV3_NXT

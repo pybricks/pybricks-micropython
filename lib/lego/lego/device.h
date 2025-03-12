@@ -123,6 +123,7 @@ typedef enum {
     LEGO_DEVICE_TYPE_ID_NXT_ULTRASONIC_SENSOR,           /**< MINDSTORMS NXT Ultrasonic Sensor */
     LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR,          /**< MINDSTORMS NXT Ultrasonic Sensor */
     LEGO_DEVICE_TYPE_ID_NXT_ENERGY_METER,                /**< MINDSTORMS NXT Energy Meter */
+    LEGO_DEVICE_TYPE_ID_NXT_MOTOR,                       /**< MINDSTORMS NXT Motor */
 
     // EV3 Devices
     LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR,                /**< MINDSTORMS EV3 Touch Sensor */

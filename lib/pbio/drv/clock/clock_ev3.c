@@ -112,8 +112,8 @@ uint32_t pbdrv_clock_get_ms(void) {
 }
 
 uint32_t pbdrv_clock_get_100us(void) {
-    // TODO: TIAM1808 implementation (1 count = 100us, so 10 counts per millisecond.)
-    return 0;
+    // REVISIT: Use actual time since this isn't providing better resolution.
+    return pbdrv_clock_get_ms() * 10;
 }
 
 #endif // PBDRV_CONFIG_CLOCK_TIAM1808

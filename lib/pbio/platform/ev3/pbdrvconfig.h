@@ -10,6 +10,9 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_TIAM1808                 (1)
 
+#define PBDRV_CONFIG_COUNTER                        (1)
+#define PBDRV_CONFIG_COUNTER_EV3                    (1)
+
 #define PBDRV_CONFIG_BATTERY                        (1)
 #define PBDRV_CONFIG_BATTERY_EV3                    (1)
 
