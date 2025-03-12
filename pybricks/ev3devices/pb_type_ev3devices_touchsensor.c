@@ -7,6 +7,7 @@
 #if PYBRICKS_PY_EV3DEVICES
 
 #include <pbio/port_interface.h>
+#include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
@@ -18,7 +19,7 @@
 
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {
-    pb_type_device_obj_base_t device_base;
+    mp_obj_base_t base;
     pbio_port_t *port;
 } ev3devices_TouchSensor_obj_t;
 
@@ -26,7 +27,7 @@ typedef struct _ev3devices_TouchSensor_obj_t {
 static mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t analog;
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR, &analog));
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR, &analog, PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE));
     return mp_obj_new_bool(analog > 2120);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);

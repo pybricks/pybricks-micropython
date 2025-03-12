@@ -11,12 +11,12 @@
 #include "py/obj.h"
 
 extern const mp_obj_type_t pb_type_nxtdevices_TouchSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_LightSensor;
 
 #if PYBRICKS_PY_EV3DEVDEVICES
 
 extern const mp_obj_type_t pb_type_nxtdevices_ColorSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_EnergyMeter;
-extern const mp_obj_type_t pb_type_nxtdevices_LightSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_SoundSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_TemperatureSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;

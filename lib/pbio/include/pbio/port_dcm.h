@@ -11,6 +11,16 @@
 
 typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 
+/**
+ * Light state when measuring analog values.
+ */
+typedef enum {
+    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE,
+    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_RED,
+    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_GREEN,
+    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_BLUE,
+} pbio_port_dcm_analog_light_type_t;
+
 #if PBIO_CONFIG_PORT_DCM
 
 PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins));
@@ -36,7 +46,7 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
 /**
  * Gets the analog value of the device connected to the port.
  */
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins);
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_dcm_analog_light_type_t light_type);
 
 #else // PBIO_CONFIG_PORT_DCM
 
@@ -48,7 +58,7 @@ static inline pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, le
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_dcm_analog_light_type_t light_type) {
     return 0;
 }
 

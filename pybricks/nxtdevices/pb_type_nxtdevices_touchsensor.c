@@ -7,6 +7,7 @@
 #if PYBRICKS_PY_NXTDEVICES
 
 #include <pbio/port_interface.h>
+#include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>
 #include <pybricks/nxtdevices.h>
@@ -18,7 +19,7 @@
 
 // pybricks.nxtdevices.TouchSensor class object
 typedef struct _nxtdevices_TouchSensor_obj_t {
-    pb_type_device_obj_base_t device_base;
+    mp_obj_base_t base;
     pbio_port_t *port;
 } nxtdevices_TouchSensor_obj_t;
 
@@ -26,7 +27,7 @@ typedef struct _nxtdevices_TouchSensor_obj_t {
 static mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t analog;
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR, &analog));
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR, &analog, PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE));
     return mp_obj_new_bool(analog < 3000);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);

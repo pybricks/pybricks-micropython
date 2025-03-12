@@ -204,11 +204,23 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
     return state;
 }
 
+typedef struct {
+    /** Ambient analog value. */
+    uint32_t a;
+    /** Red analog value. */
+    uint32_t r;
+    /** Green analog value. */
+    uint32_t g;
+    /** Blue analog value. */
+    uint32_t b;
+} pbio_port_dcm_analog_values_t;
+
 // Device connection manager state for each port
 struct _pbio_port_dcm_t {
     uint32_t count;
     bool connected;
     pbio_port_dcm_category_t category;
+    pbio_port_dcm_analog_values_t nxt_analog_buf;
 };
 
 pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -230,9 +242,9 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
 
     PT_BEGIN(pt);
 
-    etimer_set(etimer, DCM_LOOP_TIME_MS);
-
     for (;;) {
+
+        etimer_set(etimer, DCM_LOOP_TIME_MS);
 
         debug_pr("Start device scan\n");
         dcm->category = DCM_CATEGORY_NONE;
@@ -269,6 +281,30 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // TODO.
             debug_pr("Stopped NXT temperature sensor process.\n");
             // On disconnect, continue monitoring new connections.
+            continue;
+        }
+
+        if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+            debug_pr("Starting NXT Light Sensor process.\n");
+            // While plugged in, alternate between ambient and reflected light.
+            // in order to cancel out ambient light and provide both values
+            // without mode switching.
+            while (!pbdrv_gpio_input(&pins->p2)) {
+                // Get ambient light.
+                pbdrv_gpio_out_low(&pins->p5);
+                pbdrv_adc_update_soon();
+                etimer_set(etimer, 4);
+                PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+                dcm->nxt_analog_buf.a = pbio_port_dcm_get_mv(pins, 1);
+
+                // Get reflected light compensated for ambient light.
+                pbdrv_gpio_out_high(&pins->p5);
+                pbdrv_adc_update_soon();
+                etimer_set(etimer, 4);
+                PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+                dcm->nxt_analog_buf.r = pbio_port_dcm_get_mv(pins, 1);
+            }
+            pbdrv_gpio_out_low(&pins->p5);
             continue;
         }
 
@@ -363,9 +399,31 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 }
 
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
-    uint8_t channel = dcm->category == DCM_CATEGORY_EV3_ANALOG ? 6 : 1;
-    return pbio_port_dcm_get_mv(pins, channel);
+// add arg for color mode, none, red, green, blue.
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_dcm_analog_light_type_t light_type) {
+
+    // This category measures analog on pin 6.
+    if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
+        return pbio_port_dcm_get_mv(pins, 6);
+    }
+
+    // Return buffered values in case of NXT light sensor.
+    if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+        switch (light_type) {
+            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE:
+                return dcm->nxt_analog_buf.a;
+            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_RED:
+                return dcm->nxt_analog_buf.r;
+            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_GREEN:
+            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_BLUE:
+            default:
+                return 0;
+        }
+    }
+
+    // Everything else measures analog on pin 1.
+    return pbio_port_dcm_get_mv(pins, 1);
+
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_EV3
