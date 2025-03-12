@@ -14,6 +14,6 @@ void pb_color_map_save_default(mp_obj_t *color_map);
 
 mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv);
 
-MP_DECLARE_CONST_FUN_OBJ_KW(pb_ColorSensor_detectable_colors_obj);
+mp_obj_t pb_color_map_detectable_colors_method(mp_obj_t *self_color_map, mp_obj_t colors_in);
 
 #endif // _PBHSV_H_

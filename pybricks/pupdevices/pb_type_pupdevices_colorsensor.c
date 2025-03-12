@@ -144,6 +144,15 @@ static mp_obj_t get_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(get_color_obj, 1, get_color);
 
+// pybricks.pupdevices.ColorSensor.detectable_colors
+static mp_obj_t detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pupdevices_ColorSensor_obj_t, self,
+        PB_ARG_DEFAULT_NONE(colors));
+    return pb_color_map_detectable_colors_method(&self->color_map, colors_in);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(detectable_colors_obj, 1, detectable_colors);
+
 static const pb_attr_dict_entry_t pupdevices_ColorSensor_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_lights, pupdevices_ColorSensor_obj_t, lights),
     PB_ATTR_DICT_SENTINEL
@@ -155,7 +164,7 @@ static const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_color),       MP_ROM_PTR(&get_color_obj)                },
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&get_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&get_ambient_obj)              },
-    { MP_ROM_QSTR(MP_QSTR_detectable_colors),   MP_ROM_PTR(&pb_ColorSensor_detectable_colors_obj)                    },
+    { MP_ROM_QSTR(MP_QSTR_detectable_colors),   MP_ROM_PTR(&detectable_colors_obj)},
 };
 static MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
