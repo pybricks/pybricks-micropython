@@ -15,6 +15,7 @@
 #include <pbio/port_interface.h>
 
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/gpio/gpio_tiam1808.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
 #include "../../drv/led/led_pwm.h"
@@ -85,50 +86,140 @@ const pbdrv_pwm_tiam1808_platform_data_t
     pbdrv_pwm_tiam1808_platform_data[PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV] = {
     {
         .id = PWM_DEV_0_TODO,
-        .gpio_red = { .bank = (void *)6, .pin = 13 },
-        .gpio_green = { .bank = (void *)6, .pin = 7 },
+        .gpio_red = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 13,
+                .mux_mask = SYSCFG_PINMUX13_PINMUX13_11_8,
+                .mux_shift = SYSCFG_PINMUX13_PINMUX13_11_8_SHIFT,
+                .gpio_bank_id = 6,
+                .gpio_mode = SYSCFG_PINMUX13_PINMUX13_11_8_GPIO6_13,
+            },
+            .pin = 13
+        },
+        .gpio_green = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 14,
+                .mux_mask = SYSCFG_PINMUX14_PINMUX14_3_0,
+                .mux_shift = SYSCFG_PINMUX14_PINMUX14_3_0_SHIFT,
+                .gpio_bank_id = 6,
+                .gpio_mode = SYSCFG_PINMUX14_PINMUX14_3_0_GPIO6_7,
+            },
+            .pin = 7
+        },
 
     },
     {
         .id = PWM_DEV_1_TODO,
-        .gpio_red = { .bank = (void *)6, .pin = 12 },
-        .gpio_green = { .bank = (void *)6, .pin = 14 },
+        .gpio_red = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 13,
+                .mux_mask = SYSCFG_PINMUX13_PINMUX13_15_12,
+                .mux_shift = SYSCFG_PINMUX13_PINMUX13_15_12_SHIFT,
+                .gpio_bank_id = 6,
+                .gpio_mode = SYSCFG_PINMUX13_PINMUX13_15_12_GPIO6_12,
+            },
+            .pin = 12
+        },
+        .gpio_green = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 13,
+                .mux_mask = SYSCFG_PINMUX13_PINMUX13_7_4,
+                .mux_shift = SYSCFG_PINMUX13_PINMUX13_7_4_SHIFT,
+                .gpio_bank_id = 6,
+                .gpio_mode = SYSCFG_PINMUX13_PINMUX13_7_4_GPIO6_14,
+            },
+            .pin = 14
+        },
     },
 };
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
-        .gpio = { .bank = (void *)6, .pin = 6 },
+        .gpio = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 14,
+                .mux_mask = SYSCFG_PINMUX14_PINMUX14_7_4,
+                .mux_shift = SYSCFG_PINMUX14_PINMUX14_7_4_SHIFT,
+                .gpio_bank_id = 6,
+                .gpio_mode = SYSCFG_PINMUX14_PINMUX14_7_4_GPIO6_6,
+            },
+            .pin = 6
+        },
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_LEFT,
         .active_low = false,
     },
     [1] = {
-        .gpio = { .bank = (void *)7, .pin = 12 },
+        .gpio = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 16,
+                .mux_mask = SYSCFG_PINMUX16_PINMUX16_23_20,
+                .mux_shift = SYSCFG_PINMUX16_PINMUX16_23_20_SHIFT,
+                .gpio_bank_id = 7,
+                .gpio_mode = SYSCFG_PINMUX16_PINMUX16_23_20_GPIO7_12,
+            },
+            .pin = 12
+        },
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_RIGHT,
         .active_low = false,
     },
     [2] = {
-        .gpio = { .bank = (void *)7, .pin = 15 },
+        .gpio = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 16,
+                .mux_mask = SYSCFG_PINMUX16_PINMUX16_11_8,
+                .mux_shift = SYSCFG_PINMUX16_PINMUX16_11_8_SHIFT,
+                .gpio_bank_id = 7,
+                .gpio_mode = SYSCFG_PINMUX16_PINMUX16_11_8_GPIO7_15,
+            },
+            .pin = 15
+        },
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_UP,
         .active_low = false,
     },
     [3] = {
-        .gpio = { .bank = (void *)7, .pin = 14 },
+        .gpio = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 16,
+                .mux_mask = SYSCFG_PINMUX16_PINMUX16_15_12,
+                .mux_shift = SYSCFG_PINMUX16_PINMUX16_15_12_SHIFT,
+                .gpio_bank_id = 7,
+                .gpio_mode = SYSCFG_PINMUX16_PINMUX16_15_12_GPIO7_14,
+            },
+            .pin = 14
+        },
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_DOWN,
         .active_low = false,
     },
     [4] = {
-        .gpio = { .bank = (void *)1, .pin = 13 },
+        .gpio = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 2,
+                .mux_mask = SYSCFG_PINMUX2_PINMUX2_11_8,
+                .mux_shift = SYSCFG_PINMUX2_PINMUX2_11_8_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX2_PINMUX2_11_8_GPIO1_13,
+            },
+            .pin = 13
+        },
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_CENTER,
         .active_low = false,
     },
     [5] = {
-        .gpio = { .bank = (void *)6, .pin = 10 },
+        .gpio = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 13,
+                .mux_mask = SYSCFG_PINMUX13_PINMUX13_23_20,
+                .mux_shift = SYSCFG_PINMUX13_PINMUX13_23_20_SHIFT,
+                .gpio_bank_id = 6,
+                .gpio_mode = SYSCFG_PINMUX13_PINMUX13_23_20_GPIO6_10,
+            },
+            .pin = 10
+        },
         .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_LEFT_UP,
         .active_low = false,
@@ -163,21 +254,58 @@ const pbdrv_uart_ev3_platform_data_t
         .psc_peripheral_id = HW_PSC_UART1,
         .sys_int_uart_int_id = SYS_INT_UARTINT1,
         .isr_handler = pbdrv_uart_ev3_handle_irq_s1,
+        .pin_rx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 4,
+                .mux_mask = SYSCFG_PINMUX4_PINMUX4_27_24,
+                .mux_shift = SYSCFG_PINMUX4_PINMUX4_27_24_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX4_PINMUX4_27_24_GPIO1_1,
+            },
+            .pin = 1,
+        },
+        .pin_rx_mux = SYSCFG_PINMUX4_PINMUX4_27_24_UART1_RXD,
+        .pin_tx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 4,
+                .mux_mask = SYSCFG_PINMUX4_PINMUX4_31_28,
+                .mux_shift = SYSCFG_PINMUX4_PINMUX4_31_28_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX4_PINMUX4_31_28_GPIO1_0,
+            },
+            .pin = 0,
+        },
+        .pin_tx_mux = SYSCFG_PINMUX4_PINMUX4_31_28_UART1_TXD,
     },
     [UART_PORT_S2] = {
         .base_address = SOC_UART_0_REGS,
         .psc_peripheral_id = HW_PSC_UART0,
         .sys_int_uart_int_id = SYS_INT_UARTINT0,
         .isr_handler = pbdrv_uart_ev3_handle_irq_s2,
+        .pin_rx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 14,
+                .mux_mask = SYSCFG_PINMUX3_PINMUX3_19_16,
+                .mux_shift = SYSCFG_PINMUX3_PINMUX3_19_16_SHIFT,
+                .gpio_bank_id = 8,
+                .gpio_mode = SYSCFG_PINMUX3_PINMUX3_19_16_GPIO8_4,
+            },
+            .pin = 4,
+        },
+        .pin_rx_mux = SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD,
+        .pin_tx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 3,
+                .mux_mask = SYSCFG_PINMUX3_PINMUX3_23_20,
+                .mux_shift = SYSCFG_PINMUX3_PINMUX3_23_20_SHIFT,
+                .gpio_bank_id = 8,
+                .gpio_mode = SYSCFG_PINMUX3_PINMUX3_23_20_GPIO8_3,
+            },
+            .pin = 3,
+        },
+        .pin_tx_mux = SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD,
     },
 };
-
-static void set_gpio_mux(uint32_t id, uint32_t mask, uint32_t shift, uint32_t value) {
-    // Generalized from GPIOBank4Pin0PinMuxSetup in TI evmAM1808 platform example.
-    uint32_t mux = value << shift;
-    uint32_t keep = HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(id)) & ~(mask);
-    HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(id)) = (mux | keep);
-}
 
 // See exceptionhandler.S
 extern void ExceptionHandler(void);
@@ -191,6 +319,30 @@ void copy_vector_table(void) {
         dest[i] = addrExceptionHandler[i];
     }
 }
+
+// port S1 buffer enable. Revisit: Move to legodev/ioport driver.
+static const pbdrv_gpio_t pin_port_s1_buffer_enable = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 18,
+        .mux_mask = SYSCFG_PINMUX18_PINMUX18_27_24,
+        .mux_shift = SYSCFG_PINMUX18_PINMUX18_27_24_SHIFT,
+        .gpio_bank_id = 8,
+        .gpio_mode = SYSCFG_PINMUX18_PINMUX18_27_24_GPIO8_11,
+    },
+    .pin = 11,
+};
+
+// port S2 buffer enable. Revisit: Move to legodev/ioport driver.
+static const pbdrv_gpio_t pin_port_s2_buffer_enable = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 18,
+        .mux_mask = SYSCFG_PINMUX18_PINMUX18_15_12,
+        .mux_shift = SYSCFG_PINMUX18_PINMUX18_15_12_SHIFT,
+        .gpio_bank_id = 8,
+        .gpio_mode = SYSCFG_PINMUX18_PINMUX18_15_12_GPIO8_14,
+    },
+    .pin = 14,
+};
 
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
@@ -219,71 +371,18 @@ void SystemInit(void) {
 
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
-    // Button GPIO.
-    set_gpio_mux(14, SYSCFG_PINMUX14_PINMUX14_7_4,   SYSCFG_PINMUX14_PINMUX14_7_4_SHIFT,   SYSCFG_PINMUX14_PINMUX14_7_4_GPIO6_6);
-    set_gpio_mux(16, SYSCFG_PINMUX16_PINMUX16_23_20, SYSCFG_PINMUX16_PINMUX16_23_20_SHIFT, SYSCFG_PINMUX16_PINMUX16_23_20_GPIO7_12);
-    set_gpio_mux(16, SYSCFG_PINMUX16_PINMUX16_11_8,  SYSCFG_PINMUX16_PINMUX16_11_8_SHIFT,  SYSCFG_PINMUX16_PINMUX16_11_8_GPIO7_15);
-    set_gpio_mux(16, SYSCFG_PINMUX16_PINMUX16_15_12, SYSCFG_PINMUX16_PINMUX16_15_12_SHIFT, SYSCFG_PINMUX16_PINMUX16_15_12_GPIO7_14);
-    set_gpio_mux(2,  SYSCFG_PINMUX2_PINMUX2_11_8,    SYSCFG_PINMUX2_PINMUX2_11_8_SHIFT,    SYSCFG_PINMUX2_PINMUX2_11_8_GPIO1_13);
-    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_23_20, SYSCFG_PINMUX13_PINMUX13_23_20_SHIFT, SYSCFG_PINMUX13_PINMUX13_23_20_GPIO6_10);
+    // Initialize button GPIO mode. Button gpio driver does not have a hook for this.
+    for (int i = 0; i < PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON; i++) {
+        const pbdrv_gpio_t *gpio = &pbdrv_button_gpio_platform[i].gpio;
+        const pbdrv_gpio_tiam1808_mux_t *mux_info = gpio->bank;
+        pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
+    }
 
-    // Status Light LED. TODO: Set as PWM
-    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_11_8,  SYSCFG_PINMUX13_PINMUX13_11_8_SHIFT,  SYSCFG_PINMUX13_PINMUX13_11_8_GPIO6_13);
-    set_gpio_mux(14, SYSCFG_PINMUX14_PINMUX14_3_0,   SYSCFG_PINMUX14_PINMUX14_3_0_SHIFT,   SYSCFG_PINMUX14_PINMUX14_3_0_GPIO6_7);
-    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_15_12, SYSCFG_PINMUX13_PINMUX13_15_12_SHIFT, SYSCFG_PINMUX13_PINMUX13_15_12_GPIO6_12);
-    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_7_4,   SYSCFG_PINMUX13_PINMUX13_7_4_SHIFT,   SYSCFG_PINMUX13_PINMUX13_7_4_GPIO6_14);
-
-    // Poweroff pin.
-    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_19_16, SYSCFG_PINMUX13_PINMUX13_19_16_SHIFT, SYSCFG_PINMUX13_PINMUX13_19_16_GPIO6_11);
-
-    // LCD SPI1 data MOSI (MISO not used, so not reading from display)
-    set_gpio_mux(5, SYSCFG_PINMUX5_PINMUX5_23_20, SYSCFG_PINMUX5_PINMUX5_23_20_SHIFT, SYSCFG_PINMUX5_PINMUX5_23_20_SPI1_SIMO0);
-
-    // LCD SPI1 Clock
-    set_gpio_mux(5, SYSCFG_PINMUX5_PINMUX5_11_8, SYSCFG_PINMUX5_PINMUX5_11_8_SHIFT, SYSCFG_PINMUX5_PINMUX5_11_8_SPI1_CLK);
-
-    // LCD A0 display data/command selector.
-    set_gpio_mux(5, SYSCFG_PINMUX5_PINMUX5_19_16, SYSCFG_PINMUX5_PINMUX5_19_16_SHIFT, SYSCFG_PINMUX5_PINMUX5_19_16_GPIO2_11);
-
-    // LCD chip select (active low).
-    set_gpio_mux(5, SYSCFG_PINMUX5_PINMUX5_15_12, SYSCFG_PINMUX5_PINMUX5_15_12_SHIFT, SYSCFG_PINMUX5_PINMUX5_15_12_GPIO2_12);
-
-    // LCD reset (active low)
-    set_gpio_mux(12, SYSCFG_PINMUX12_PINMUX12_31_28, SYSCFG_PINMUX12_PINMUX12_31_28_SHIFT, SYSCFG_PINMUX12_PINMUX12_31_28_GPIO5_0);
-
-    // ADC / Flash SPI0 data MOSI
-    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_15_12, SYSCFG_PINMUX3_PINMUX3_15_12_SHIFT, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
-
-    // ADC / Flash SPI0 data MISO
-    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_11_8, SYSCFG_PINMUX3_PINMUX3_11_8_SHIFT, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
-
-    // LCD SPI0 Clock
-    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_3_0, SYSCFG_PINMUX3_PINMUX3_3_0_SHIFT, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
-
-    // ADC / Flash SPI0 chip select (active low).
-    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_27_24, SYSCFG_PINMUX3_PINMUX3_27_24_SHIFT, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
-
-    // ADCACK PIN
-    set_gpio_mux(19, SYSCFG_PINMUX19_PINMUX19_19_16, SYSCFG_PINMUX19_PINMUX19_19_16_SHIFT, SYSCFG_PINMUX19_PINMUX19_19_16_GPIO6_2);
-
-    // ADCBATEN
-    set_gpio_mux(1, SYSCFG_PINMUX1_PINMUX1_7_4, SYSCFG_PINMUX1_PINMUX1_7_4_SHIFT, SYSCFG_PINMUX1_PINMUX1_7_4_GPIO0_6);
-    pbdrv_gpio_t adc_battery_enable = { .bank = (void *)0, .pin = 6 };
-    pbdrv_gpio_out_high(&adc_battery_enable);
-
-    // UART0 TX
-    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_23_20, SYSCFG_PINMUX3_PINMUX3_23_20_SHIFT, SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD);
-    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_19_16, SYSCFG_PINMUX3_PINMUX3_19_16_SHIFT, SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD);
-
-    // port S1 buffer enable
-    set_gpio_mux(18, SYSCFG_PINMUX18_PINMUX18_27_24, SYSCFG_PINMUX18_PINMUX18_27_24_SHIFT, SYSCFG_PINMUX18_PINMUX18_27_24_GPIO8_11);
-    pbdrv_gpio_t port_s1_buffer_enable = { .bank = (void *)8, .pin = 11 };
-    pbdrv_gpio_out_low(&port_s1_buffer_enable);
-
-    // port S2 buffer enable
-    set_gpio_mux(18, SYSCFG_PINMUX18_PINMUX18_15_12, SYSCFG_PINMUX18_PINMUX18_15_12_SHIFT, SYSCFG_PINMUX18_PINMUX18_15_12_GPIO8_14);
-    pbdrv_gpio_t port_s2_buffer_enable = { .bank = (void *)8, .pin = 14 };
-    pbdrv_gpio_out_low(&port_s2_buffer_enable);
+    // Allow port buffers to use UART. Revisit: Move to legodev/ioport driver.
+    pbdrv_gpio_alt(&pin_port_s1_buffer_enable, ((pbdrv_gpio_tiam1808_mux_t *)pin_port_s1_buffer_enable.bank)->gpio_mode);
+    pbdrv_gpio_out_low(&pin_port_s1_buffer_enable);
+    pbdrv_gpio_alt(&pin_port_s2_buffer_enable, ((pbdrv_gpio_tiam1808_mux_t *)pin_port_s2_buffer_enable.bank)->gpio_mode);
+    pbdrv_gpio_out_low(&pin_port_s2_buffer_enable);
 }
 
 

@@ -28,6 +28,9 @@
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
+#include "../drv/gpio/gpio_tiam1808.h"
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+
 /* ST7586 Commands */
 #define ST7586_NOP      (0x00)
 #define ST7586_SWRESET  (0x01)
@@ -93,15 +96,60 @@ typedef enum {
     SPI_STATUS_ERROR,
 } spi_status_t;
 
-/**
- * Chip select (active low).
- */
-static pbdrv_gpio_t gpio_cs = { .bank = (void *)2, .pin = 12 };
+static const pbdrv_gpio_t pin_spi1_mosi = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 5,
+        .mux_mask = SYSCFG_PINMUX5_PINMUX5_23_20,
+        .mux_shift = SYSCFG_PINMUX5_PINMUX5_23_20_SHIFT,
+        .gpio_bank_id = 2,
+        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_23_20_GPIO2_10,
+    },
+    .pin = 10,
+};
 
-/**
- * Data mode (1) or command mode (0).
- */
-static pbdrv_gpio_t gpio_a0 = { .bank = (void *)2, .pin = 11 };
+static const pbdrv_gpio_t pin_spi1_clk = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 5,
+        .mux_mask = SYSCFG_PINMUX5_PINMUX5_11_8,
+        .mux_shift = SYSCFG_PINMUX5_PINMUX5_11_8_SHIFT,
+        .gpio_bank_id = 2,
+        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_11_8_GPIO2_13,
+    },
+    .pin = 13,
+};
+
+static const pbdrv_gpio_t pin_lcd_a0 = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 5,
+        .mux_mask = SYSCFG_PINMUX5_PINMUX5_19_16,
+        .mux_shift = SYSCFG_PINMUX5_PINMUX5_19_16_SHIFT,
+        .gpio_bank_id = 2,
+        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_19_16_GPIO2_11,
+    },
+    .pin = 11,
+};
+
+static const pbdrv_gpio_t pin_lcd_cs = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 5,
+        .mux_mask = SYSCFG_PINMUX5_PINMUX5_15_12,
+        .mux_shift = SYSCFG_PINMUX5_PINMUX5_15_12_SHIFT,
+        .gpio_bank_id = 2,
+        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_15_12_GPIO2_12,
+    },
+    .pin = 12,
+};
+
+static const pbdrv_gpio_t pin_lcd_reset = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 12,
+        .mux_mask = SYSCFG_PINMUX12_PINMUX12_31_28,
+        .mux_shift = SYSCFG_PINMUX12_PINMUX12_31_28_SHIFT,
+        .gpio_bank_id = 5,
+        .gpio_mode = SYSCFG_PINMUX12_PINMUX12_31_28_GPIO5_0,
+    },
+    .pin = 0,
+};
 
 static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
 
@@ -372,7 +420,7 @@ void pbdrv_display_st7586s_write_data_begin(uint8_t *data, uint32_t size) {
     tx_size = size;
     tx_progress = 0;
     spi_status = SPI_STATUS_WAIT;
-    pbdrv_gpio_out_low(&gpio_cs);
+    pbdrv_gpio_out_low(&pin_lcd_cs);
     SPIEnable(SOC_SPI_1_REGS);
     SPIIntEnable(SOC_SPI_1_REGS, SPI_TRANSMIT_INT);
 }
@@ -381,6 +429,13 @@ void pbdrv_display_st7586s_write_data_begin(uint8_t *data, uint32_t size) {
  * Initialize the display SPI driver. Pinmux is already set up in platform.c.
  */
 void pbdrv_display_init(void) {
+
+    // GPIO Mux. CS is in GPIO mode (manual control).
+    pbdrv_gpio_alt(&pin_spi1_mosi, SYSCFG_PINMUX5_PINMUX5_23_20_SPI1_SIMO0);
+    pbdrv_gpio_alt(&pin_spi1_clk, SYSCFG_PINMUX5_PINMUX5_11_8_SPI1_CLK);
+    pbdrv_gpio_alt(&pin_lcd_a0, ((pbdrv_gpio_tiam1808_mux_t *)pin_lcd_a0.bank)->gpio_mode);
+    pbdrv_gpio_alt(&pin_lcd_cs, ((pbdrv_gpio_tiam1808_mux_t *)pin_lcd_cs.bank)->gpio_mode);
+    pbdrv_gpio_alt(&pin_lcd_reset, ((pbdrv_gpio_tiam1808_mux_t *)pin_lcd_reset.bank)->gpio_mode);
 
     // Waking up the SPI1 instance.
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_SPI1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
@@ -430,11 +485,10 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
     pbdrv_init_busy_down();
 
     #if ST7586S_DO_RESET_AND_INIT
-    static pbdrv_gpio_t gpio_reset = { .bank = (void *)5, .pin = 0 };
-    pbdrv_gpio_out_low(&gpio_reset);
+    pbdrv_gpio_out_low(&pin_lcd_reset);
     etimer_set(&etimer, 10);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
-    pbdrv_gpio_out_high(&gpio_reset);
+    pbdrv_gpio_out_high(&pin_lcd_reset);
     etimer_set(&etimer, 120);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
     #endif // ST7586S_DO_RESET_AND_INIT
@@ -452,18 +506,18 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
             // Send command or data.
             payload = action->payload;
             if (action->type == ST7586S_ACTION_WRITE_DATA) {
-                pbdrv_gpio_out_high(&gpio_a0);
+                pbdrv_gpio_out_high(&pin_lcd_a0);
             } else {
-                pbdrv_gpio_out_low(&gpio_a0);
+                pbdrv_gpio_out_low(&pin_lcd_a0);
             }
             pbdrv_display_st7586s_write_data_begin(&payload, sizeof(payload));
             PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && spi_status == SPI_STATUS_COMPLETE);
-            pbdrv_gpio_out_high(&gpio_cs);
+            pbdrv_gpio_out_high(&pin_lcd_cs);
         }
     }
 
     // Staying in data mode from here.
-    pbdrv_gpio_out_high(&gpio_a0);
+    pbdrv_gpio_out_high(&pin_lcd_a0);
 
     // Regularly update the display with the user frame buffer, if changed.
     etimer_set(&etimer, 40);
@@ -474,7 +528,7 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
             pbdrv_display_st7586s_encode_user_frame();
             pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
             PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && spi_status == SPI_STATUS_COMPLETE);
-            pbdrv_gpio_out_high(&gpio_cs);
+            pbdrv_gpio_out_high(&pin_lcd_cs);
         }
         etimer_reset(&etimer);
     }

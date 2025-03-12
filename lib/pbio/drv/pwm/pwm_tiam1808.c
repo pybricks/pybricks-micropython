@@ -13,6 +13,7 @@
 
 #include "../drv/pwm/pwm.h"
 #include "../../drv/pwm/pwm_tiam1808.h"
+#include "../../drv/gpio/gpio_tiam1808.h"
 
 static pbio_error_t pbdrv_pwm_tiam1808_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t value) {
     // Blue not available.
@@ -40,8 +41,14 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
         devs[i].funcs = &pbdrv_pwm_tiam1808_funcs;
         devs[i].priv = (pbdrv_pwm_tiam1808_platform_data_t *)&pbdrv_pwm_tiam1808_platform_data[i];
 
-        // Turn on green LED on boot until we have a dedicated HMI UI.
-        // pbdrv_pwm_tiam1808_set_duty(&devs[i], 0, 1);
+        // Set pins in GPIO mode.
+        const pbdrv_gpio_t *gpio_red = &pbdrv_pwm_tiam1808_platform_data[i].gpio_red;
+        const pbdrv_gpio_tiam1808_mux_t *mux_red = gpio_red->bank;
+        pbdrv_gpio_alt(gpio_red, mux_red->gpio_mode);
+
+        const pbdrv_gpio_t *gpio_green = &pbdrv_pwm_tiam1808_platform_data[i].gpio_green;
+        const pbdrv_gpio_tiam1808_mux_t *mux_green = gpio_green->bank;
+        pbdrv_gpio_alt(gpio_green, mux_green->gpio_mode);
     }
 }
 

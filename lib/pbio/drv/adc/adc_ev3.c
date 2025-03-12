@@ -24,6 +24,8 @@
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
+#include "../drv/gpio/gpio_tiam1808.h"
+
 PROCESS(pbdrv_adc_process, "ADC");
 
 #define PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES (4)
@@ -65,7 +67,90 @@ static void pbdrv_adc_exit(void) {
     SPIIntDisable(SOC_SPI_0_REGS, SPI_RECV_INT | SPI_TRANSMIT_INT);
 }
 
+// ADC / Flash SPI0 data MOSI
+static const pbdrv_gpio_t pin_spi0_mosi = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 3,
+        .mux_mask = SYSCFG_PINMUX3_PINMUX3_15_12,
+        .mux_shift = SYSCFG_PINMUX3_PINMUX3_15_12_SHIFT,
+        .gpio_bank_id = 8,
+        .gpio_mode = SYSCFG_PINMUX3_PINMUX3_15_12_GPIO8_5,
+    },
+    .pin = 5,
+};
+
+// ADC / Flash SPI0 data MISO
+static const pbdrv_gpio_t pin_spi0_miso = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 3,
+        .mux_mask = SYSCFG_PINMUX3_PINMUX3_11_8,
+        .mux_shift = SYSCFG_PINMUX3_PINMUX3_11_8_SHIFT,
+        .gpio_bank_id = 8,
+        .gpio_mode = SYSCFG_PINMUX3_PINMUX3_11_8_GPIO8_6,
+    },
+    .pin = 6,
+};
+
+// LCD SPI0 Clock
+static const pbdrv_gpio_t pin_spi0_clk = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 3,
+        .mux_mask = SYSCFG_PINMUX3_PINMUX3_3_0,
+        .mux_shift = SYSCFG_PINMUX3_PINMUX3_3_0_SHIFT,
+        .gpio_bank_id = 1,
+        .gpio_mode = SYSCFG_PINMUX3_PINMUX3_3_0_GPIO1_8,
+    },
+    .pin = 8,
+};
+
+// ADC / Flash SPI0 chip select (active low).
+static const pbdrv_gpio_t pin_spi0_cs = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 3,
+        .mux_mask = SYSCFG_PINMUX3_PINMUX3_27_24,
+        .mux_shift = SYSCFG_PINMUX3_PINMUX3_27_24_SHIFT,
+        .gpio_bank_id = 8,
+        .gpio_mode = SYSCFG_PINMUX3_PINMUX3_27_24_GPIO8_2,
+    },
+    .pin = 2,
+};
+
+// ADCACK PIN
+static const pbdrv_gpio_t pin_adc_ack = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 19,
+        .mux_mask = SYSCFG_PINMUX19_PINMUX19_19_16,
+        .mux_shift = SYSCFG_PINMUX19_PINMUX19_19_16_SHIFT,
+        .gpio_bank_id = 6,
+        .gpio_mode = SYSCFG_PINMUX19_PINMUX19_19_16_GPIO6_2,
+    },
+    .pin = 2,
+};
+
+// ADCBATEN
+static const pbdrv_gpio_t pin_adc_bat_en = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 1,
+        .mux_mask = SYSCFG_PINMUX1_PINMUX1_7_4,
+        .mux_shift = SYSCFG_PINMUX1_PINMUX1_7_4_SHIFT,
+        .gpio_bank_id = 0,
+        .gpio_mode = SYSCFG_PINMUX1_PINMUX1_7_4_GPIO0_6,
+    },
+    .pin = 6,
+};
+
 void pbdrv_adc_init(void) {
+
+    // Configure the GPIO pins.
+    pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
+    pbdrv_gpio_alt(&pin_spi0_miso, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
+    pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
+    pbdrv_gpio_alt(&pin_spi0_cs, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
+
+    pbdrv_gpio_alt(&pin_adc_ack, ((pbdrv_gpio_tiam1808_mux_t *)pin_adc_ack.bank)->gpio_mode);
+
+    pbdrv_gpio_alt(&pin_adc_bat_en, ((pbdrv_gpio_tiam1808_mux_t *)pin_adc_bat_en.bank)->gpio_mode);
+    pbdrv_gpio_out_high(&pin_adc_bat_en);
 
     // Waking up the SPI1 instance.
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_SPI0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);

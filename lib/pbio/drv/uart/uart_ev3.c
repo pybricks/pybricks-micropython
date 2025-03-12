@@ -249,6 +249,10 @@ void pbdrv_uart_init(void) {
         /* Enabling the PSC for given UART.*/
         PSCModuleControl(SOC_PSC_1_REGS, pdata->psc_peripheral_id, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
+        // Set the GPIO pins to UART mode.
+        pbdrv_gpio_alt(&pdata->pin_rx, pdata->pin_rx_mux);
+        pbdrv_gpio_alt(&pdata->pin_tx, pdata->pin_tx_mux);
+
         /* Enabling the transmitter and receiver*/
         UARTEnable(pdata->base_address);
 

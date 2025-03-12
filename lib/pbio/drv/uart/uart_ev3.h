@@ -10,6 +10,8 @@
 
 #include "pbdrvconfig.h"
 
+#include <pbdrv/gpio.h>
+
 /** Platform-specific information for UART peripheral. */
 typedef struct {
     /** The UART base register address. */
@@ -18,7 +20,15 @@ typedef struct {
     uint32_t psc_peripheral_id;
     /** The UART interrupt number. */
     uint32_t sys_int_uart_int_id;
-    /** void(void) callback */
+    /** TX Pin */
+    pbdrv_gpio_t pin_tx;
+    /** TX Pin Mux */
+    uint32_t pin_tx_mux;
+    /** RX Pin */
+    pbdrv_gpio_t pin_rx;
+    /** RX Pin Mux */
+    uint32_t pin_rx_mux;
+    /** Interrupt handler for this peripheral. */
     void (*isr_handler)(void);
 } pbdrv_uart_ev3_platform_data_t;
 
