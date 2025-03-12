@@ -31,7 +31,7 @@
 #define PYBRICKS_PY_IODEVICES                   (1)
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
 #define PYBRICKS_PY_MEDIA                       (0)
-#define PYBRICKS_PY_NXTDEVICES                  (0)
+#define PYBRICKS_PY_NXTDEVICES                  (1)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
 #define PYBRICKS_PY_PARAMETERS_ICON             (1)

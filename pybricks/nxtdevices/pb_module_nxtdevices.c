@@ -10,7 +10,7 @@
 
 static const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),          MP_ROM_QSTR(MP_QSTR_nxtdevices)                  },
-    #if PYBRICKS_PY_COMMON_MOTORS && !PYBRICKS_PY_EV3DEVICES
+    #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_Motor),             MP_ROM_PTR(&pb_type_Motor)                       },
     #endif
     #if PYBRICKS_PY_EV3DEVDEVICES

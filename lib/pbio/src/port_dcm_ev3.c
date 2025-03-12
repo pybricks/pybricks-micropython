@@ -56,17 +56,13 @@ typedef enum {
      */
     PIN_STATE_P6_HIGH = 1 << 6,
     /**
-     * Pin 6 ADC is near 3V3.
-     */
-    PIN_STATE_P6_ADC_3V3 = 1 << 7,
-    /**
      * Pin 1 state is irrelevant for the device.
      */
     PIN_STATE_MASK_P1 = PIN_STATE_ADC1_0_TO_100 | PIN_STATE_ADC1_100_to_3100 | PIN_STATE_ADC1_3100_to_4800 | PIN_STATE_ADC1_4800_to_5000,
     /**
      * Pin 6 state is irrelevant for the device.
      */
-    PIN_STATE_MASK_P6 = PIN_STATE_P6_HIGH | PIN_STATE_P6_ADC_3V3,
+    PIN_STATE_MASK_P6 = PIN_STATE_P6_HIGH,
 } pbio_port_dcm_pin_state_t;
 
 /**
@@ -92,7 +88,7 @@ typedef enum {
     /**
      * Candidate device is NXT I2C.
      */
-    DCM_CANDIDATE_NXT_I2C = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P5_HIGH | PIN_STATE_P6_HIGH | PIN_STATE_P6_ADC_3V3,
+    DCM_CANDIDATE_NXT_I2C = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
     /**
      * Candidate device is NXT Temperature sensor (special case of I2C).
      */
@@ -194,11 +190,15 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
         state |= PIN_STATE_P6_HIGH;
     }
 
-    // Get the ADC value state for pin 6.
-    uint32_t adc6 = pbio_port_dcm_get_mv(pins, 6);
-    if (adc6 > 3000 && adc6 < 3600) {
-        state |= PIN_STATE_P6_ADC_3V3;
-    }
+    #if DEBUG == 2
+    debug_pr("%d::: p1: %dmv p2:%d p5:%d p6:%d (%d mv)\n",
+        pbio_port_dcm_get_candidate(state),
+        adc1,
+        (bool)(state & PIN_STATE_P2_HIGH),
+        (bool)(state & PIN_STATE_P5_HIGH),
+        (bool)(state & PIN_STATE_P6_HIGH),
+        pbio_port_dcm_get_mv(pins, 6));
+    #endif
 
     return state;
 }
@@ -213,7 +213,7 @@ struct _pbio_port_dcm_t {
 pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
 
 #define DCM_LOOP_TIME_MS (10)
-#define DCM_LOOP_STEADY_STATE_COUNT (15)
+#define DCM_LOOP_STEADY_STATE_COUNT (20)
 #define DCM_LOOP_DISCONNECT_COUNT (5)
 
 /**
