@@ -213,9 +213,47 @@ const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
 
 const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
     {
+        .port_id = PBIO_PORT_ID_A,
+        .motor_driver_index = 0,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 0,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_B,
+        .motor_driver_index = 1,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 1,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_C,
+        .motor_driver_index = 2,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 2,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_D,
+        .motor_driver_index = 3,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 3,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
         .port_id = PBIO_PORT_ID_1,
         .motor_driver_index = 4,
         .uart_driver_index = UART1,
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = NULL, // todo
             .p6 = NULL, // todo
@@ -235,6 +273,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_2,
         .motor_driver_index = 5,
         .uart_driver_index = UART0,
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = NULL, // todo
             .p6 = NULL, // todo
@@ -250,6 +290,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_3,
         .motor_driver_index = 6,
         .uart_driver_index = PRU0_LINE1,
+        .external_port_index = 2,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = NULL, // todo
             .p6 = NULL, // todo
@@ -265,6 +307,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_4,
         .motor_driver_index = 7,
         .uart_driver_index = PRU0_LINE0,
+        .external_port_index = 3,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = NULL, // todo
             .p6 = NULL, // todo
@@ -275,34 +319,6 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .uart_rx_alt_uart = SYSCFG_PINMUX2_PINMUX2_27_24_AXR0_1,
         },
         .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
-    },
-    {
-        .port_id = PBIO_PORT_ID_A,
-        .motor_driver_index = 0,
-        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
-    },
-    {
-        .port_id = PBIO_PORT_ID_B,
-        .motor_driver_index = 1,
-        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
-    },
-    {
-        .port_id = PBIO_PORT_ID_C,
-        .motor_driver_index = 2,
-        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
-    },
-    {
-        .port_id = PBIO_PORT_ID_D,
-        .motor_driver_index = 3,
-        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
 };
 

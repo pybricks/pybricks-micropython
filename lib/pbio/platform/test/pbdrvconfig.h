@@ -14,6 +14,8 @@
 #define PBDRV_CONFIG_CLOCK                                  (1)
 #define PBDRV_CONFIG_CLOCK_TEST                             (1)
 
+#define PBDRV_CONFIG_COUNTER                                (1)
+
 #define PBDRV_CONFIG_GPIO                                   (1)
 #define PBDRV_CONFIG_GPIO_VIRTUAL                           (1)
 

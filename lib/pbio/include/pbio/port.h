@@ -72,15 +72,7 @@ typedef enum {
     /**
      * A sensor with the LUMP protocol.
      */
-    PBIO_PORT_DEVICE_KIND_LUMP_SENSOR,
-    /**
-     * A motor with the LUMP protocol with absolute encoders.
-     */
-    PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE,
-    /**
-     * A motor with the LUMP protocol with relative encoders.
-     */
-    PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE,
+    PBIO_PORT_DEVICE_KIND_LUMP,
     /**
      * A motor with quadrature encoders without intermediate processing.
      */

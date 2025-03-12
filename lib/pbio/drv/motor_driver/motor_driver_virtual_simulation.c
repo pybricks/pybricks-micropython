@@ -15,11 +15,13 @@
 
 #include "../core.h"
 #include <pbdrv/clock.h>
+#include <pbdrv/counter.h>
 #include <pbdrv/motor_driver.h>
 
 #include <pbio/battery.h>
 #include <pbio/observer.h>
 #include <pbio/port_interface.h>
+#include <pbio/util.h>
 
 #include "motor_driver_virtual_simulation.h"
 
@@ -39,6 +41,11 @@ typedef struct _pbio_simulation_model_t {
     double torque_friction;
 } pbio_simulation_model_t;
 
+// This motor driver also implements the counter driver.
+struct _pbdrv_counter_dev_t {
+    pbdrv_motor_driver_dev_t *motor_driver;
+};
+
 struct _pbdrv_motor_driver_dev_t {
     double angle;
     double current;
@@ -47,7 +54,7 @@ struct _pbdrv_motor_driver_dev_t {
     double torque;
     const pbio_simulation_model_t *model;
     const pbdrv_motor_driver_virtual_simulation_platform_data_t *pdata;
-    pbio_port_t *port;
+    pbdrv_counter_dev_t counter;
 };
 
 static const pbio_simulation_model_t model_technic_m_angular = {
@@ -68,6 +75,31 @@ static const pbio_simulation_model_t model_technic_m_angular = {
 
 static pbdrv_motor_driver_dev_t motor_driver_devs[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
 
+pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
+    if (id >= PBIO_ARRAY_SIZE(motor_driver_devs)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    *dev = &motor_driver_devs[id].counter;
+    (*dev)->motor_driver = &motor_driver_devs[id];
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+    *rotations = (int32_t)(dev->motor_driver->angle / 360000);
+    *millidegrees = (int32_t)(dev->motor_driver->angle) % 360000;
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
+    *millidegrees = ((int32_t)dev->motor_driver->angle) % 360000;
+    if (*millidegrees > 180000) {
+        *millidegrees -= 360000;
+    } else if (*millidegrees < -180000) {
+        *millidegrees += 360000;
+    }
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **driver) {
     if (id >= PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV) {
         return PBIO_ERROR_INVALID_ARG;
@@ -75,12 +107,11 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
 
     *driver = &motor_driver_devs[id];
 
-    // In the simulation, the motor driver is also responsible for providing
-    // encoder data. This is normally a separate interface on the port, but
-    // we allow access to the port in this simulated case.
-    pbio_port_get_port(motor_driver_devs[id].pdata->port_id, &motor_driver_devs[id].port);
-
     return PBIO_SUCCESS;
+}
+
+void pbdrv_counter_init(void) {
+    // No init needed. Motor driver init does all we need.
 }
 
 pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver) {
@@ -192,15 +223,6 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
             driver->angle = angle_next;
             driver->speed = speed_next;
             driver->current = current_next;
-
-            // Allow port driver to read simulated angle.
-            int32_t mdeg = ((int32_t)driver->angle) % 360000;
-            if (mdeg < 0) {
-                mdeg += 360000;
-            }
-            if (driver->port) {
-                pbio_port_update_angle_abs_mdeg(driver->port, mdeg);
-            }
         }
 
         etimer_reset(&tick_timer);

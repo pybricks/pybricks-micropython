@@ -185,6 +185,8 @@ struct _pbio_port_lump_dev_t {
     /** Flags indicating what information has already been read from the data. */
     uint32_t info_flags;
     #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    /** Angle reported by the device. */
+    pbio_angle_t angle;
 };
 
 pbio_port_lump_dev_t lump_devices[PBIO_CONFIG_PORT_NUM_LUMP];
@@ -253,26 +255,82 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
     return size;
 }
 
+
+static bool pbio_port_lump_is_relative_motor(pbio_port_lump_dev_t *lump_dev) {
+    return (lump_dev->parsed_info.type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) &&
+           (lump_dev->mode == LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS);
+}
+
+static bool pbio_port_lump_is_absolute_motor(pbio_port_lump_dev_t *lump_dev) {
+    return (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) &&
+           (lump_dev->mode == LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB);
+}
+
 /**
  * Handles incoming motor position data.
  *
  * @param [in] lump_dev The lump device with new data.
  */
 static void pbio_port_lump_handle_known_data(pbio_port_lump_dev_t *lump_dev) {
-    if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS &&
-        lump_dev->mode == LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB) {
-        int32_t deci_deg = (int16_t)pbio_get_uint16_le(lump_dev->bin_data + 2);
-        pbio_port_update_angle_abs_mdeg(lump_dev->port, deci_deg * 100);
-        return;
+
+    // Handles LUMP motors in a mode that reports an absolute angle in decidegrees (0--3600).
+    if (pbio_port_lump_is_absolute_motor(lump_dev)) {
+
+        int32_t abs_mdeg = ((int16_t)pbio_get_uint16_le(lump_dev->bin_data + 2)) * 100;
+
+        // Store measured millidegree state value as-is but keep old value.
+        int32_t abs_prev = lump_dev->angle.millidegrees;
+        lump_dev->angle.millidegrees = abs_mdeg;
+
+        // Update rotation counter as encoder passes through multiples of 360.
+        if (abs_prev > 270000 && abs_mdeg < 90000) {
+            lump_dev->angle.rotations += 1;
+        }
+        if (abs_prev < 90000 && abs_mdeg > 270000) {
+            lump_dev->angle.rotations -= 1;
+        }
     }
 
-    if (lump_dev->parsed_info.type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR &&
-        lump_dev->mode == LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS) {
+    // Handles only known LUMP motor that reports incremental angle in degrees.
+    if (pbio_port_lump_is_relative_motor(lump_dev)) {
         int32_t degrees = pbio_get_uint32_le(lump_dev->bin_data);
-        pbio_port_update_angle_rel_deg(lump_dev->port, degrees);
+        lump_dev->angle.millidegrees = (degrees % 360) * 1000;
+        lump_dev->angle.rotations = degrees / 360;
     }
 }
 
+pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle) {
+
+    // Need to be up and running so we don't return stale data.
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Only motors have angles.
+    if (!pbio_port_lump_is_relative_motor(lump_dev) && !pbio_port_lump_is_absolute_motor(lump_dev)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    // Handle request for absolute angle.
+    if (get_abs_angle) {
+        if (!pbio_port_lump_is_absolute_motor(lump_dev)) {
+            return PBIO_ERROR_NOT_SUPPORTED;
+        }
+
+        // Mod the angle to be in the range [-180, 180).
+        angle->rotations = 0;
+        angle->millidegrees = lump_dev->angle.millidegrees;
+        if (angle->millidegrees >= 180000) {
+            angle->millidegrees -= 360000;
+        }
+        return PBIO_SUCCESS;
+    }
+
+    // Otherwise return angle as-is.
+    *angle = lump_dev->angle;
+    return PBIO_SUCCESS;
+}
 
 static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
     uint32_t speed;
@@ -663,6 +721,7 @@ PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_d
     // Reset state for new device
     lump_dev->ext_mode = 0;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
+    lump_dev->parsed_info = (pbio_port_lump_device_info_t) {0};
 
     // Send SPEED command at 115200 baud
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
@@ -800,13 +859,9 @@ sync:
     // Map device capabilities and power requirements to practically useful
     // device categories for use in Pybricks.
     device_info->type_id = lump_dev->parsed_info.type_id;
-    if (device_info->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) {
-        // Only this device is a relative motor, and it does not send flags.
-        device_info->kind = PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE;
-    }
-    if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
-        device_info->kind = PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE;
-    }
+    device_info->kind = PBIO_PORT_DEVICE_KIND_LUMP;
+
+    // Get power requirements from capabilities.
     if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN1) {
         device_info->power_requirements = PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS;
     }
@@ -816,9 +871,9 @@ sync:
 
     // Request switch to default mode for this device.
     uint8_t default_mode = 0;
-    if (device_info->kind == PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE) {
+    if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
         default_mode = LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB;
-    } else if (device_info->kind == PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE) {
+    } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS;
     } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;

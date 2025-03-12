@@ -76,10 +76,6 @@ void pb_virtualhub_port_init(void) {
     }
 
     pb_package_pybricks_init(true);
-
-    // HACK: Motor simulation needs some time after pbio init to register
-    // one sample of position data.
-    mp_hal_delay_ms(100);
 }
 
 // MICROPY_PORT_DEINIT_FUNC

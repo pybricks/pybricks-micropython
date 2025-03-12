@@ -73,10 +73,6 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle);
 
 pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle);
 
-void pbio_port_update_angle_abs_mdeg(pbio_port_t *port, int32_t abs_mdeg);
-
-void pbio_port_update_angle_rel_deg(pbio_port_t *port, int32_t rel_deg);
-
 pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement);
 
 void pbio_port_process_poll(void *port);
@@ -116,12 +112,6 @@ static inline pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *
 
 static inline pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbio_port_update_angle_abs_mdeg(pbio_port_t *port, int32_t abs_mdeg) {
-}
-
-static inline void pbio_port_update_angle_rel_deg(pbio_port_t *port, int32_t rel_deg) {
 }
 
 static inline pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement) {

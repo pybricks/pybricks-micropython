@@ -31,15 +31,6 @@
 #include "../../drv/usb/usb_stm32.h"
 
 enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-    COUNTER_PORT_C,
-    COUNTER_PORT_D,
-    COUNTER_PORT_E,
-    COUNTER_PORT_F,
-};
-
-enum {
     LED_DEV_0_STATUS,
     LED_DEV_1_BATTERY,
     LED_DEV_2_BLUETOOTH,
@@ -226,6 +217,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
         .uart_driver_index = UART_PORT_A,
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOD, .pin = 7  },
             .p6 = { .bank = GPIOD, .pin = 8  },
@@ -245,6 +238,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
         .uart_driver_index = UART_PORT_B,
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOD, .pin = 9  },
             .p6 = { .bank = GPIOD, .pin = 10 },
@@ -260,6 +255,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_C,
         .motor_driver_index = 2,
         .uart_driver_index = UART_PORT_C,
+        .external_port_index = 2,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOD, .pin = 11 },
             .p6 = { .bank = GPIOE, .pin = 4  },
@@ -275,6 +272,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_D,
         .motor_driver_index = 3,
         .uart_driver_index = UART_PORT_D,
+        .external_port_index = 3,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 15 },
             .p6 = { .bank = GPIOC, .pin = 14 },
@@ -290,6 +289,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_E,
         .motor_driver_index = 4,
         .uart_driver_index = UART_PORT_E,
+        .external_port_index = 4,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 13 },
             .p6 = { .bank = GPIOE, .pin = 12 },
@@ -305,6 +306,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_F,
         .motor_driver_index = 5,
         .uart_driver_index = UART_PORT_F,
+        .external_port_index = 5,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 11 },
             .p6 = { .bank = GPIOE, .pin = 6  },

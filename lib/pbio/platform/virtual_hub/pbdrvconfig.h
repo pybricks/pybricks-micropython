@@ -11,6 +11,8 @@
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 #define PBDRV_CONFIG_CLOCK_LINUX_SIGNAL                     (1)
 
+#define PBDRV_CONFIG_COUNTER                                (1)
+
 #define PBDRV_CONFIG_GPIO                                   (1)
 #define PBDRV_CONFIG_GPIO_VIRTUAL                           (1)
 

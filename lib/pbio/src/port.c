@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2025 The Pybricks Authors
 
-
+#include <pbdrv/counter.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 #include <pbdrv/motor_driver.h>
@@ -51,6 +51,10 @@ struct _pbio_port_t {
      */
     pbio_servo_t *servo;
     /**
+     * Position counter device driver.
+     */
+    pbdrv_counter_dev_t *counter;
+    /**
      * UART device driver.
      */
     pbdrv_uart_dev_t *uart_dev;
@@ -79,10 +83,6 @@ struct _pbio_port_t {
      * LEGO UART Messaging Protocol device instance.
      */
     pbio_port_lump_dev_t *lump_dev;
-    /**
-     * The angle reported by the device attached to this port, if any.
-     */
-    pbio_angle_t angle;
     /**
      * Information about the attached device.
      */
@@ -151,13 +151,15 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
  *                        angles is attached.
  */
 pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
-    if (port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE &&
-        port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE &&
-        port->device_info.kind != PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR) {
-        return PBIO_ERROR_NO_DEV;
+    if (port->lump_dev) {
+        return pbio_port_lump_get_angle(port->lump_dev, angle, false);
     }
-    *angle = port->angle;
-    return PBIO_SUCCESS;
+
+    // REVISIT: In LEGO mode, we also require being connected.
+    if (port->counter) {
+        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees);
+    }
+    return PBIO_ERROR_NO_DEV;
 }
 
 /**
@@ -172,79 +174,15 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
  *                          support absolute angles.
  */
 pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
-    // Relative motors do not support absolute angles.
-    if (port->device_info.kind == PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE ||
-        port->device_info.kind == PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR) {
-        return PBIO_ERROR_NOT_SUPPORTED;
+    if (port->lump_dev) {
+        return pbio_port_lump_get_angle(port->lump_dev, angle, false);
     }
 
-    // Only pass absolute motor.
-    if (port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE) {
-        return PBIO_ERROR_NO_DEV;
+    // REVISIT: In LEGO mode, we also require being connected.
+    if (port->counter) {
+        return pbdrv_counter_get_abs_angle(port->counter, &angle->millidegrees);
     }
-
-    // Mod the angle to be in the range [-180, 180).
-    angle->rotations = 0;
-    angle->millidegrees = port->angle.millidegrees;
-    if (angle->millidegrees >= 180000) {
-        angle->millidegrees -= 360000;
-    }
-    return PBIO_SUCCESS;
-}
-
-/**
- * Sets the reported absolute angle of a port. Also used to increment overall
- * angle. Can be called by other processes that receive angle data, in order to
- * make it available to other drivers.
- *
- * @param [in]  ioport    The ioport instance.
- * @param [in]  angle     The absolute angle in millidegrees.
- */
-void pbio_port_update_angle_abs_mdeg(pbio_port_t *port, int32_t abs_mdeg) {
-
-    int32_t abs_prev = port->angle.millidegrees;
-
-    // Store measured millidegree state value.
-    port->angle.millidegrees = abs_mdeg;
-
-    // Update rotation counter as encoder passes through +/- 180.
-    if (abs_prev > 270000 && abs_mdeg < 90000) {
-        port->angle.rotations += 1;
-    }
-    if (abs_prev < 90000 && abs_mdeg > 270000) {
-        port->angle.rotations -= 1;
-    }
-
-    // Reporting absolute angle, so we know the kind even if it did not
-    // identify itself.
-    port->device_info.kind = PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE;
-}
-
-/**
- * Sets the reported incremental angle of a port. Can be called by other
- * processes that receive angle data, in order to make it available to other
- * drivers.
- *
- * @param [in]  ioport    The ioport instance.
- * @param [in]  angle     The angle in degrees.
- */
-void pbio_port_update_angle_rel_deg(pbio_port_t *port, int32_t rel_deg) {
-    port->angle.millidegrees = (rel_deg % 360) * 1000;
-    port->angle.rotations = rel_deg / 360;
-}
-
-/**
- * Increments the angle of a port by a given amount. Can be called by other
- * level processes that receive angle data to make it available to other
- * drivers. This may be called from an IRQ context so it should be short.
- *
- * @param [in]  index     The counter index.
- * @param [in]  angle     The absolute angle in millidegrees.
- */
-void pbio_port_increment_angle(uint8_t index, int32_t increment_mdeg) {
-    // Revisit: need to get counter index instead.
-    pbio_port_t *port = &ports[index];
-    pbio_angle_add_mdeg(&port->angle, increment_mdeg);
+    return PBIO_ERROR_NO_DEV;
 }
 
 /**
@@ -354,12 +292,11 @@ pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expec
         return PBIO_ERROR_NO_DEV;
     }
 
-    // In LEGO mode, we require that something valid is indeed attached.
-    if (port->mode == PBIO_PORT_MODE_LEGO_PUP &&
-        port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_ABSOLUTE &&
-        port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP_MOTOR_RELATIVE &&
-        port->device_info.kind != PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR) {
-        return PBIO_ERROR_NO_DEV;
+    // Port must be ready to report angles.
+    pbio_angle_t angle;
+    pbio_error_t err = pbio_port_get_angle(port, &angle);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // If expected type specified, require exact match.
@@ -418,6 +355,9 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         port->servo = pbio_servo_init_instance(port->pdata->motor_driver_index, port, port->dcmotor);
     }
 
+    // Optionally used by some ports to get angle information.
+    pbdrv_counter_get_dev(port->pdata->counter_driver_index, &port->counter);
+
     // Configure basic quadrature-only ports such as BOOST A&B or NXT A&B&C
     // without device kind and type id detection.
     if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE_PASSIVE) {
@@ -430,10 +370,10 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     // If uart and gpio available, initialize device manager and uart devices.
     pbdrv_uart_get(port->pdata->uart_driver_index, &port->uart_dev);
 
-    if (port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_PUP) {
+    if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_PUP) {
         // Initialize passive device connection manager and LEGO UART device.
-        port->connection_manager = pbio_port_dcm_pup_init_instance(port->pdata->uart_driver_index);
-        port->lump_dev = pbio_port_lump_init_instance(port->pdata->uart_driver_index, port);
+        port->connection_manager = pbio_port_dcm_pup_init_instance(port->pdata->external_port_index);
+        port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index, port);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_PUP);
         return;
     }
@@ -445,9 +385,6 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
 }
 
 void pbio_port_init(void) {
-
-    // Common callback for all quadrature ports.
-    pbdrv_ioport_set_quadrature_increment_callback(pbio_port_increment_angle);
 
     for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
         pbio_port_t *port = &ports[i];

@@ -5,6 +5,7 @@
 #define _PBIO_PORT_LUMP_H_
 
 #include <contiki.h>
+#include <pbio/angle.h>
 #include <pbio/port.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
@@ -63,6 +64,8 @@ pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_t *lump_dev, u
 
 pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode);
 
+pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle);
+
 #else // PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_NUM_LUMP > 0
 
 static inline pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, pbio_port_t *port) {
@@ -87,6 +90,10 @@ static inline pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_
 
 static inline pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode) {
     *info = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

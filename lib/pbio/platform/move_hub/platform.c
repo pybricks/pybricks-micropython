@@ -18,13 +18,6 @@
 #include "stm32f070xb.h"
 
 enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-    COUNTER_PORT_C,
-    COUNTER_PORT_D,
-};
-
-enum {
     LED_DEV_0,
 };
 
@@ -58,12 +51,10 @@ const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
     [0] = {
         .gpio_int = { .bank = GPIOB, .pin = 1},
         .gpio_dir = { .bank = GPIOB, .pin = 9},
-        .counter_id = COUNTER_PORT_A,
     },
     [1] = {
         .gpio_int = { .bank = GPIOA, .pin = 0},
         .gpio_dir = { .bank = GPIOA, .pin = 1},
-        .counter_id = COUNTER_PORT_B,
     },
 };
 
@@ -76,6 +67,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
+        .counter_driver_index = 0,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
         .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
@@ -83,6 +76,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
+        .counter_driver_index = 1,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
         .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
@@ -90,7 +85,9 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_C,
         .motor_driver_index = 2,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = UART_ID_0,
+        .external_port_index = 0,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOB, .pin = 7  },
             .p6 = { .bank = GPIOC, .pin = 15 },
@@ -109,7 +106,9 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_D,
         .motor_driver_index = 3,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = UART_ID_1,
+        .external_port_index = 1,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOB, .pin = 10 },
             .p6 = { .bank = GPIOA, .pin = 12 },

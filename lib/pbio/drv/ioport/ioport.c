@@ -79,10 +79,4 @@ void pbdrv_ioport_enable_vcc(bool enable) {
     }
 }
 
-pbdrv_ioport_quadrature_increment_callback_t pbdrv_ioport_quadrature_increment_callback;
-
-void pbdrv_ioport_set_quadrature_increment_callback(pbdrv_ioport_quadrature_increment_callback_t callback) {
-    pbdrv_ioport_quadrature_increment_callback = callback;
-}
-
 #endif // PBDRV_CONFIG_IOPORT

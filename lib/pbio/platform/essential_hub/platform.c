@@ -53,11 +53,6 @@ const lego_fw_info_t __attribute__((section(".fw_info"), used)) fw_info = {
 };
 
 enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-};
-
-enum {
     LED_DEV_0_STATUS,
     LED_DEV_1_BATTERY,
 };
@@ -230,6 +225,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
         .uart_driver_index = UART_PORT_A,
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 1 },
             .p6 = { .bank = GPIOC, .pin = 0 },
@@ -249,6 +246,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_B,
         .uart_driver_index = UART_PORT_B,
         .motor_driver_index = 1,
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 5 },
             .p6 = { .bank = GPIOA, .pin = 4 },

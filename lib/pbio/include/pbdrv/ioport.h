@@ -88,6 +88,10 @@ typedef struct {
     pbio_port_id_t port_id;
     /** Index of associated motor driver. */
     uint8_t motor_driver_index;
+    /** Index of external port */
+    uint8_t external_port_index;
+    /** Counter driver index */
+    uint8_t counter_driver_index;
     /** Index of associated UART driver. */
     uint8_t uart_driver_index;
     /** Supported high level modes */
@@ -116,23 +120,6 @@ void pbdrv_ioport_enable_vcc(bool enable);
  *                            ::PBIO_ERROR_INVALID_OP if changing the mode is not permitted in the current state.
  */
 pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_uart_dev_t *uart_dev, pbdrv_ioport_p5p6_mode_t mode);
-
-/**
- * Callback for quadrature encoder position counting.
- *
- * @param [in]  index       The index of the quadrature counter.
- * @param [in]  increment   The change in position in millidegrees
- */
-typedef void (*pbdrv_ioport_quadrature_increment_callback_t)(uint8_t index, int32_t increment);
-
-extern pbdrv_ioport_quadrature_increment_callback_t pbdrv_ioport_quadrature_increment_callback;
-
-/**
- * Sets the callback for quadrature encoder position counting.
- *
- * @param [in]  callback    The callback function.
- */
-void pbdrv_ioport_set_quadrature_increment_callback(pbdrv_ioport_quadrature_increment_callback_t callback);
 
 extern const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV];
 

@@ -22,13 +22,6 @@
 #include "stm32l4xx_ll_rcc.h"
 
 enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-    COUNTER_PORT_C,
-    COUNTER_PORT_D,
-};
-
-enum {
     LED_DEV_0,
 };
 
@@ -259,6 +252,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
         .uart_driver_index = UART_PORT_A,
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 5  },
             .p6 = { .bank = GPIOB, .pin = 2  },
@@ -278,6 +273,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
         .uart_driver_index = UART_PORT_B,
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 3  },
             .p6 = { .bank = GPIOC, .pin = 0  },
@@ -293,6 +290,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_C,
         .motor_driver_index = 2,
         .uart_driver_index = UART_PORT_C,
+        .external_port_index = 2,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 4  },
             .p6 = { .bank = GPIOA, .pin = 7  },
@@ -308,6 +307,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_D,
         .motor_driver_index = 3,
         .uart_driver_index = UART_PORT_D,
+        .external_port_index = 3,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 4  },
             .p6 = { .bank = GPIOA, .pin = 5  },

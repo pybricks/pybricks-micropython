@@ -18,11 +18,6 @@
 #include "stm32f030xc.h"
 
 enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-};
-
-enum {
     LED_DEV_0,
 };
 
@@ -171,6 +166,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
         .uart_driver_index = UART_ID_0,
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 1  },
             .p6 = { .bank = GPIOA, .pin = 3  },
@@ -190,6 +187,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
         .uart_driver_index = UART_ID_1,
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 0  },
             .p6 = { .bank = GPIOA, .pin = 2  },
