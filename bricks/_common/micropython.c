@@ -352,8 +352,13 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     char *sstack;
     char *estack;
     pb_stack_get_info(&sstack, &estack);
+    #if PYBRICKS_OPT_USE_ESTACK
     mp_stack_set_top(estack);
-    mp_stack_set_limit(estack - sstack - 1024);
+    #else
+    // Sets the top to current stack pointer.
+    mp_stack_ctrl_init();
+    #endif
+    mp_stack_set_limit(MP_STATE_THREAD(stack_top) - sstack - 1024);
 
     // MicroPython heap is the free RAM after program data.
     gc_init(program->user_ram_start, program->user_ram_end);
