@@ -15,8 +15,8 @@
 #include "ninja/led.h"
 #include "ninja/motor.h"
 #include "ninja/button.h"
-#include "include/hw/soc_AM1808.h"
-#include "interrupt.h"
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/armv5/am1808/interrupt.h>
 #include "stdio.h"
 
 /* Global variable declaration */

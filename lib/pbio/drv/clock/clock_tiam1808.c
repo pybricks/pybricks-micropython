@@ -13,13 +13,11 @@
 
 #include <contiki.h>
 
-#include "soc_AM1808.h"
-#include "hw_syscfg0_AM1808.h"
-#include "timer.h"
-#include "evmAM1808.h"
-#include "cpu.h"
-#include "interrupt.h"
-#include "stdio.h"
+#include <tiam1808/armv5/am1808/interrupt.h>
+#include <tiam1808/armv5/cpu.h>
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/timer.h>
 
 /**
  * The compare value to set for the 16 least significant bits of the hardware timer

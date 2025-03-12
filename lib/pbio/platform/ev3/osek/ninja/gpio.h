@@ -35,7 +35,7 @@
 #define GPIO_MASK(N)      (1 << (N & 0x1F))
 
 // prevent compiler warnings because GPIO_DIR gets redefined
-#include "../include/hw/hw_gpio.h" 
+#include <tiam1808/hw/hw_gpio.h>
 #undef GPIO_DIR
 
 /**

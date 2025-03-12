@@ -9,10 +9,9 @@
 
 #include "pbdrv/gpio.h"
 
-#include "soc_AM1808.h"
-#include "include/gpio.h"
-#include "include/psc.h"
-
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/gpio.h>
+#include <tiam1808/psc.h>
 
 static uint32_t get_pin_index(const pbdrv_gpio_t *gpio) {
     // TI API indexes pins from 1 to 144, so need to add 1.

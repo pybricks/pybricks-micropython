@@ -22,7 +22,7 @@
 #include "stdio.h"
 #include "psc.h"
 #include "hw_gpio.h"
-#include "../include/gpio.h"
+#include <tiam1808/gpio.h>
 #include "hw_ecap.h"
 #include "hw_tmr.h"
 

@@ -130,11 +130,11 @@ INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
 endif
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
 INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek
-INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/ninja
-INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include
-INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include/hw
-INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include/armv5
-INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include/armv5/am1808
+INC += -I$(PBTOP)/lib/tiam1808
+INC += -I$(PBTOP)/lib/tiam1808/tiam1808
+INC += -I$(PBTOP)/lib/tiam1808/tiam1808/hw
+INC += -I$(PBTOP)/lib/tiam1808/tiam1808/armv5
+INC += -I$(PBTOP)/lib/tiam1808/tiam1808/armv5/am1808
 endif
 INC += -I$(PBTOP)
 INC += -I$(BUILD)
@@ -265,15 +265,6 @@ EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
 	i2c.c \
 	init.c \
 	power.c \
-	drivers/cpu.c \
-	drivers/gpio.c \
-	drivers/spi.c \
-	drivers/ecap.c \
-	drivers/interrupt.c \
-	drivers/syscfg.c \
-	drivers/ehrpwm.c \
-	drivers/psc.c \
-	drivers/timer.c \
 	ninja/adc.c \
 	ninja/gpio.c \
 	ninja/motor.c \
@@ -282,6 +273,62 @@ EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
 	ninja/led.c \
 	ninja/pininfo.c \
 	os/OSEK.c \
+	)
+
+TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
+	cppi41dma.c \
+	cpsw.c \
+	cpu.c \
+	dcan.c \
+	dmtimer.c \
+	ecap.c \
+	edma.c \
+	ehrpwm.c \
+	elm.c \
+	emac.c \
+	emifa.c \
+	gpio_v2.c \
+	gpio.c \
+	gpmc.c \
+	hs_mmcsd.c \
+	hsi2c.c \
+	i2c.c \
+	interrupt.c \
+	lan8710a.c \
+	lidd.c \
+	mailbox.c \
+	mcasp.c \
+	mcspi.c \
+	mdio.c \
+	phy.c \
+	pruss.c \
+	psc.c \
+	raster.c \
+	rtc.c \
+	spi.c \
+	syscfg.c \
+	timer.c \
+	tsc_adc.c \
+	uart_irda_cir.c \
+	uart.c \
+	usb.c \
+	usbphyGS60.c \
+	usbphyGS70.c \
+	vpif.c \
+	watchdog.c \
+	)
+
+# FIXME: Compile everything above instead of this subset
+TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
+	cpu.c \
+	ecap.c \
+	ehrpwm.c \
+	gpio.c \
+	interrupt.c \
+	psc.c \
+	spi.c \
+	syscfg.c \
+	timer.c \
 	)
 
 EV3_OSEK_SRC_S = $(addprefix lib/pbio/platform/ev3/osek/,\
@@ -514,6 +561,7 @@ OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_S:.s=.o))
 endif
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
+OBJ += $(addprefix $(BUILD)/, $(TI_AM1808_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_S:.S=.o))
 $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__

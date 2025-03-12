@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2024 The Pybricks Authors
 
-#include "soc_AM1808.h"
-#include "include/psc.h"
-#include "include/hw/hw_types.h"
-#include "include/hw/hw_syscfg0_AM1808.h"
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/psc.h>
+#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
 
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
