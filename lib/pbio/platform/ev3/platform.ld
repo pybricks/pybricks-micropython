@@ -42,6 +42,15 @@ SECTIONS
         _bss_end = .;
     } > DDR
 
+    .pru :
+    {
+        . = ALIGN(4);
+        _pru0_start = .;
+        KEEP(*(.pru0));
+        . = ALIGN(4);
+        _pru0_end = .;
+    } >DDR
+
     .display_frames (NOLOAD) :
     {
         . = ALIGN(4);

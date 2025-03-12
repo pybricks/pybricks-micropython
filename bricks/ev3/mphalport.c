@@ -61,7 +61,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
-#define PBDRV_UART_DEV_ID (0)
+#define PBDRV_UART_DEV_ID (1)
 
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     return 0;

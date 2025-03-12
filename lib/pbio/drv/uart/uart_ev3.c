@@ -20,6 +20,7 @@
 
 #include "../core.h"
 #include "./uart_ev3.h"
+#include "./uart_ev3_pru.h"
 
 #include <tiam1808/uart.h>
 #include <tiam1808/psc.h>
@@ -28,6 +29,14 @@
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
+/**
+ * This file contains two almost entirely separate implementations of UART
+ * drivers. These could in principle be split into separate modules with
+ * appropriate priv_data structures, but this requires generalizing the UART
+ * drivers on all platforms as well. For now, we keep them in the same file
+ * and use the "type" field in pdata to distinguish which read/write/init/irq
+ * functions to use.
+ */
 
 #define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!
 
@@ -131,10 +140,62 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *ms
     PT_END(pt);
 }
 
+/**
+ * Helper function to write one byte in the write protothread.
+ *
+ * @param [in]    uart    The UART device.
+ * @param [in]    byte    The byte to write.
+ * @return                True if the byte was written, false otherwise.
+ */
+static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_t *uart, uint8_t byte) {
+    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+
+    // Attempt to write one byte with the hardware UART.
+    if (pdata->uart_kind == EV3_UART_HW) {
+        // Always call back after attempting to write. This creates a
+        // (yielding) poll loop for writing. This works around the unreliable
+        // TX_EMPTY interrupt when reading and writing simultaneously: Reading
+        // the status during an RX interrupt clears the TX_EMPTY interrupt,
+        // which is not re-triggered. Since UART writes on EV3 are limited to
+        // small messages like sensor mode changes, this is acceptable.
+        if (uart->poll_callback) {
+            uart->poll_callback(&uart->uart_dev);
+        }
+        return UARTCharPutNonBlocking(pdata->base_address, byte);
+    }
+
+    // Otherwise, attempt to write one byte with the PRU UART.
+    //
+    // The IRQ handler sets the flag when the PRU has finished writing so no
+    // need to request polling here, avoiding a continuous yielding poll loop.
+    //
+    // We could be sending more than one byte at a time, but we keep it
+    // consistent with the hardware UART limitations for simplicity, since
+    // EV3 sensors typically don't send much data anyway.
+    return pbdrv_uart_ev3_pru_write_bytes(pdata->peripheral_id, &byte, 1);
+}
+
+/**
+ * Helper function to check if the UART is ready to write.
+ *
+ * @param [in]    uart    The UART device.
+ * @return                True if the UART is ready to write, false otherwise.
+ */
+static bool pbdrv_uart_can_write(pbdrv_uart_t *uart) {
+    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+
+    // Check UART_LSR for THR_EMPTY
+    if (pdata->uart_kind == EV3_UART_HW) {
+        return UARTSpaceAvail(pdata->base_address);
+    }
+
+    // For PRU UART, we rely on the flag set by its IRQ handler.
+    return pbdrv_uart_ev3_pru_can_write(pdata->peripheral_id);
+}
+
 PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
     PT_BEGIN(pt);
 
@@ -150,25 +211,17 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
 
     etimer_set(&uart->write_timer, timeout);
 
+    // Write one byte at a time until all bytes are written.
     PT_WAIT_UNTIL(pt, ({
-        // Try to write a byte if any remain.
-        if (uart->write_pos != uart->write_length &&
-            UARTCharPutNonBlocking(pdata->base_address, uart->write_buf[uart->write_pos])) {
-            uart->write_pos++;
+        // Try to write one byte if any are remaining.
+        if (uart->write_pos < uart->write_length) {
+            if (pbdrv_uart_try_to_write_byte(uart, uart->write_buf[uart->write_pos])) {
+                uart->write_pos++;
+            }
         }
-        // Always call back, which effectively enforces a (yielding) poll loop
-        // for writing. This works around the unreliable TX_EMPTY interrupt
-        // when reading and writing simultaneously (reading the status during
-        // an RX interrupt clears the TX_EMPTY interrupt, which is not
-        // re-triggered). Since UART writes on EV3 are limited to small
-        // messages like sensor mode changes, this is acceptable.
-        if (uart->poll_callback && uart->write_pos < uart->write_length) {
-            uart->poll_callback(&uart->uart_dev);
-        }
-        // Completion condition. The space available check ensures we await
-        // writing the final byte before considering it complete, since we are
-        // not getting the TX_EMPTY interrupt.
-        uart->write_pos == uart->write_length && UARTSpaceAvail(pdata->base_address);
+
+        // Completion on transmission of whole message and finishing writing.
+        uart->write_pos == uart->write_length && pbdrv_uart_can_write(uart);
     }));
 
     uart->write_buf = NULL;
@@ -185,8 +238,14 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    UARTConfigSetExpClk(uart->pdata->base_address, SOC_UART_0_MODULE_FREQ, baud, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_16);
+
+    if (uart->pdata->uart_kind == EV3_UART_HW) {
+        UARTConfigSetExpClk(uart->pdata->base_address, SOC_UART_0_MODULE_FREQ, baud, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_16);
+    } else {
+        pbdrv_uart_ev3_pru_set_baudrate(uart->pdata->peripheral_id, baud);
+    }
 }
+
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
@@ -205,19 +264,17 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
     }
 }
 
-void pbdrv_uart_ev3_handle_irq(uint8_t id) {
-    pbdrv_uart_t *uart = &pbdrv_uart[id];
-    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_t *uart) {
 
     /* This determines the cause of UART0 interrupt.*/
-    unsigned int int_id = UARTIntStatus(pdata->base_address);
+    unsigned int int_id = UARTIntStatus(uart->pdata->base_address);
 
-    /* Clears the system interupt status of UART0 in AINTC. */
-    IntSystemStatusClear(pdata->sys_int_uart_int_id);
+    /* Clears the system interrupt status of UART in AINTC. */
+    IntSystemStatusClear(uart->pdata->sys_int_uart_int_id);
 
     /* Check if the cause is receiver data condition.*/
     if (UART_INTID_RX_DATA == (int_id & UART_INTID_RX_DATA) || (UART_INTID_CTI == (int_id & UART_INTID_CTI))) {
-        int c = UARTCharGetNonBlocking(pdata->base_address);
+        int c = UARTCharGetNonBlocking(uart->pdata->base_address);
         if (c != -1) {
             ringbuf_put(&uart->rx_buf, c);
         }
@@ -225,9 +282,9 @@ void pbdrv_uart_ev3_handle_irq(uint8_t id) {
 
     /* Check if the cause is receiver line error condition.*/
     if (UART_INTID_RX_LINE_STAT == (int_id & UART_INTID_RX_LINE_STAT)) {
-        while (UARTRxErrorGet(pdata->base_address)) {
+        while (UARTRxErrorGet(uart->pdata->base_address)) {
             /* Read a byte from the RBR if RBR has data.*/
-            UARTCharGetNonBlocking(pdata->base_address);
+            UARTCharGetNonBlocking(uart->pdata->base_address);
         }
     }
 
@@ -241,7 +298,88 @@ void pbdrv_uart_ev3_handle_irq(uint8_t id) {
 
 }
 
+void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_t *uart) {
+
+    IntSystemStatusClear(uart->pdata->sys_int_uart_int_id);
+
+    // This calls what is mostly equivalent the original LEGO/ev3dev IRQ
+    // handler. This is using its own ring buffer that we pull data from below.
+    // REVISIT: Pass in our ringbuffer so it can be filled directly.
+    pbdrv_uart_ev3_pru_handle_irq_data(uart->pdata->peripheral_id);
+
+    uint8_t rx;
+    while (pbdrv_uart_ev3_pru_read_bytes(uart->pdata->peripheral_id, &rx, 1)) {
+        ringbuf_put(&uart->rx_buf, rx);
+    }
+    if (uart->poll_callback) {
+        uart->poll_callback(&uart->uart_dev);
+    }
+}
+
+void pbdrv_uart_ev3_handle_irq(uint8_t id) {
+    pbdrv_uart_t *uart = &pbdrv_uart[id];
+    if (uart->pdata->uart_kind == EV3_UART_HW) {
+        pbdrv_uart_ev3_hw_handle_irq(uart);
+    } else {
+        pbdrv_uart_ev3_pru_handle_irq(uart);
+    }
+}
+
+static void pbdrv_uart_init_hw(pbdrv_uart_t *uart) {
+    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+
+    /* Enabling the PSC for given UART.*/
+    PSCModuleControl(SOC_PSC_1_REGS, pdata->peripheral_id, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
+    /* Enabling the transmitter and receiver*/
+    UARTEnable(pdata->base_address);
+
+    /* Configuring the UART clock and baud parameters*/
+    pbdrv_uart_set_baud_rate(&uart->uart_dev, BAUD_115200);
+
+    /* Enabling the FIFO and flushing the Tx and Rx FIFOs.*/
+    UARTFIFOEnable(pdata->base_address);
+
+    /* Setting the UART Receiver Trigger Level*/
+    UARTFIFOLevelSet(pdata->base_address, UART_RX_TRIG_LEVEL_1);
+
+    /* Registers the UARTIsr in the Interrupt Vector Table of AINTC. */
+    IntRegister(pdata->sys_int_uart_int_id, pdata->isr_handler);
+
+    /* Map the channel number 2 of AINTC to UART system interrupt. */
+    IntChannelSet(pdata->sys_int_uart_int_id, 2);
+
+    IntSystemEnable(pdata->sys_int_uart_int_id);
+
+    /* Enable the Interrupts in UART.*/
+    UARTIntEnable(pdata->base_address, UART_INT_LINE_STAT | UART_INT_RXDATA_CTI);
+}
+
+
+void pbdrv_uart_init_pru(pbdrv_uart_t *uart) {
+    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+
+    pbdrv_uart_ev3_pru_activate(pdata->peripheral_id);
+    pbdrv_uart_set_baud_rate(&uart->uart_dev, BAUD_115200);
+
+    // Registers the UARTIsr in the Interrupt Vector Table of AINTC.
+    IntRegister(pdata->sys_int_uart_int_id, pdata->isr_handler);
+
+    // Map the channel number 2 of AINTC to UART system interrupt.
+    IntChannelSet(pdata->sys_int_uart_int_id, 2);
+
+    IntSystemEnable(pdata->sys_int_uart_int_id);
+}
+
 void pbdrv_uart_init(void) {
+
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
+    extern uint8_t _pru0_start;
+    extern uint8_t _pru0_end;
+    uint32_t fw_size = &_pru0_end - &_pru0_start;
+    uint8_t *fw_data = &_pru0_start;
+    pbdrv_uart_ev3_pru_load_firmware(fw_data, fw_size);
 
     for (int i = 0; i < PBDRV_CONFIG_UART_EV3_NUM_UART; i++) {
         const pbdrv_uart_ev3_platform_data_t *pdata = &pbdrv_uart_ev3_platform_data[i];
@@ -250,38 +388,17 @@ void pbdrv_uart_init(void) {
         uart->pdata = pdata;
         ringbuf_init(&uart->rx_buf, rx_data, RX_DATA_SIZE);
 
-        /* Enabling the PSC for given UART.*/
-        PSCModuleControl(SOC_PSC_1_REGS, pdata->psc_peripheral_id, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-
-        // Set the GPIO pins to UART mode.
+        // Set the GPIO pins to required alt mode.
         pbdrv_gpio_alt(&pdata->pin_rx, pdata->pin_rx_mux);
         pbdrv_gpio_alt(&pdata->pin_tx, pdata->pin_tx_mux);
 
-        /* Enabling the transmitter and receiver*/
-        UARTEnable(pdata->base_address);
-
-        /* Configuring the UART clock and baud parameters*/
-        pbdrv_uart_set_baud_rate(&uart->uart_dev, BAUD_115200);
-
-        /* Enabling the FIFO and flushing the Tx and Rx FIFOs.*/
-        UARTFIFOEnable(pdata->base_address);
-
-        /* Setting the UART Receiver Trigger Level*/
-        UARTFIFOLevelSet(pdata->base_address, UART_RX_TRIG_LEVEL_1);
-
-        /* Registers the UARTIsr in the Interrupt Vector Table of AINTC. */
-        IntRegister(pdata->sys_int_uart_int_id, pdata->isr_handler);
-
-        /* Map the channel number 2 of AINTC to UART0 system interrupt. */
-        IntChannelSet(pdata->sys_int_uart_int_id, 2);
-
-        IntSystemEnable(pdata->sys_int_uart_int_id);
-
-        /* Enable the Interrupts in UART.*/
-        UARTIntEnable(pdata->base_address, UART_INT_LINE_STAT | UART_INT_RXDATA_CTI);
+        // Initialize the peripheral depending on the uart kind.
+        if (pdata->uart_kind == EV3_UART_HW) {
+            pbdrv_uart_init_hw(uart);
+        } else if (pdata->uart_kind == EV3_UART_PRU) {
+            pbdrv_uart_init_pru(uart);
+        }
     }
 }
-
-
 
 #endif // PBDRV_CONFIG_UART_EV3

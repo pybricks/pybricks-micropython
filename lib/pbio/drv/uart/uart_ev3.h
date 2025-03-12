@@ -12,12 +12,21 @@
 
 #include <pbdrv/gpio.h>
 
+typedef enum {
+    /** Hardware UART. */
+    EV3_UART_HW,
+    /** PRU Software UART. */
+    EV3_UART_PRU,
+} pbdrv_uart_ev3_uart_kind_t;
+
 /** Platform-specific information for UART peripheral. */
 typedef struct {
-    /** The UART base register address. */
+    /** UART Kind. */
+    pbdrv_uart_ev3_uart_kind_t uart_kind;
+    /** The UART base register address (only applicable in hardware mode). */
     uint32_t base_address;
-    /** PSC peripheral ID */
-    uint32_t psc_peripheral_id;
+    /** Peripheral ID (PSC id in case of hardware, PRU UART line ID in case of PRU) */
+    uint32_t peripheral_id;
     /** The UART interrupt number. */
     uint32_t sys_int_uart_int_id;
     /** TX Pin */
@@ -39,7 +48,11 @@ extern const pbdrv_uart_ev3_platform_data_t
     pbdrv_uart_ev3_platform_data[PBDRV_CONFIG_UART_EV3_NUM_UART];
 
 /**
- * Callback to be called by the UART IRQ handler.
+ * Callback to be called by the hardware UART IRQ handler.
+ *
+ * The driver will forward this call to the relevant hardware or PRU UART
+ * IRQ handler.
+ *
  * @param id [in]   The UART instance ID.
  */
 void pbdrv_uart_ev3_handle_irq(uint8_t id);

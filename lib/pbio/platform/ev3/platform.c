@@ -234,26 +234,74 @@ const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
 
 // UART
 
+// This order is arbitrary. It is the order of the internal state structures
+// in the uart driver. When getting a uart driver handle, these indexes are
+// used, but only within this platform file.
 enum {
-    UART_PORT_S1,
-    UART_PORT_S2,
+    UART0, // sensor 2
+    UART1, // sensor 1
+    UART2, // Bluetooth
+    PRU0_LINE0, // sensor 4
+    PRU0_LINE1, // sensor 3
 };
 
-static void pbdrv_uart_ev3_handle_irq_s1(void) {
-    pbdrv_uart_ev3_handle_irq(UART_PORT_S1);
+static void pbdrv_uart_ev3_handle_irq_uart0(void) {
+    pbdrv_uart_ev3_handle_irq(UART0);
 }
 
-static void pbdrv_uart_ev3_handle_irq_s2(void) {
-    pbdrv_uart_ev3_handle_irq(UART_PORT_S2);
+static void pbdrv_uart_ev3_handle_irq_uart1(void) {
+    pbdrv_uart_ev3_handle_irq(UART1);
+}
+
+static void pbdrv_uart_ev3_handle_irq_uart2(void) {
+    pbdrv_uart_ev3_handle_irq(UART2);
+}
+
+static void pbdrv_uart_ev3_handle_irq_pru0_line0(void) {
+    pbdrv_uart_ev3_handle_irq(PRU0_LINE0);
+}
+
+static void pbdrv_uart_ev3_handle_irq_pru0_line1(void) {
+    pbdrv_uart_ev3_handle_irq(PRU0_LINE1);
 }
 
 const pbdrv_uart_ev3_platform_data_t
     pbdrv_uart_ev3_platform_data[PBDRV_CONFIG_UART_EV3_NUM_UART] = {
-    [UART_PORT_S1] = {
+    [UART0] = {
+        .uart_kind = EV3_UART_HW,
+        .base_address = SOC_UART_0_REGS,
+        .peripheral_id = HW_PSC_UART0,
+        .sys_int_uart_int_id = SYS_INT_UARTINT0,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_uart0,
+        .pin_rx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 14,
+                .mux_mask = SYSCFG_PINMUX3_PINMUX3_19_16,
+                .mux_shift = SYSCFG_PINMUX3_PINMUX3_19_16_SHIFT,
+                .gpio_bank_id = 8,
+                .gpio_mode = SYSCFG_PINMUX3_PINMUX3_19_16_GPIO8_4,
+            },
+            .pin = 4,
+        },
+        .pin_rx_mux = SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD,
+        .pin_tx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 3,
+                .mux_mask = SYSCFG_PINMUX3_PINMUX3_23_20,
+                .mux_shift = SYSCFG_PINMUX3_PINMUX3_23_20_SHIFT,
+                .gpio_bank_id = 8,
+                .gpio_mode = SYSCFG_PINMUX3_PINMUX3_23_20_GPIO8_3,
+            },
+            .pin = 3,
+        },
+        .pin_tx_mux = SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD,
+    },
+    [UART1] = {
+        .uart_kind = EV3_UART_HW,
         .base_address = SOC_UART_1_REGS,
-        .psc_peripheral_id = HW_PSC_UART1,
+        .peripheral_id = HW_PSC_UART1,
         .sys_int_uart_int_id = SYS_INT_UARTINT1,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_s1,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_uart1,
         .pin_rx = {
             .bank = &(pbdrv_gpio_tiam1808_mux_t) {
                 .mux_id = 4,
@@ -277,33 +325,93 @@ const pbdrv_uart_ev3_platform_data_t
         },
         .pin_tx_mux = SYSCFG_PINMUX4_PINMUX4_31_28_UART1_TXD,
     },
-    [UART_PORT_S2] = {
-        .base_address = SOC_UART_0_REGS,
-        .psc_peripheral_id = HW_PSC_UART0,
-        .sys_int_uart_int_id = SYS_INT_UARTINT0,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_s2,
+    [UART2] = {
+        // TODO: Add CTS/RTS pins.
+        .uart_kind = EV3_UART_HW,
+        .base_address = SOC_UART_2_REGS,
+        .peripheral_id = HW_PSC_UART2,
+        .sys_int_uart_int_id = SYS_INT_UARTINT2,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_uart2,
         .pin_rx = {
             .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-                .mux_id = 14,
-                .mux_mask = SYSCFG_PINMUX3_PINMUX3_19_16,
-                .mux_shift = SYSCFG_PINMUX3_PINMUX3_19_16_SHIFT,
-                .gpio_bank_id = 8,
-                .gpio_mode = SYSCFG_PINMUX3_PINMUX3_19_16_GPIO8_4,
-            },
-            .pin = 4,
-        },
-        .pin_rx_mux = SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD,
-        .pin_tx = {
-            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-                .mux_id = 3,
-                .mux_mask = SYSCFG_PINMUX3_PINMUX3_23_20,
-                .mux_shift = SYSCFG_PINMUX3_PINMUX3_23_20_SHIFT,
-                .gpio_bank_id = 8,
-                .gpio_mode = SYSCFG_PINMUX3_PINMUX3_23_20_GPIO8_3,
+                .mux_id = 4,
+                .mux_mask = SYSCFG_PINMUX4_PINMUX4_19_16,
+                .mux_shift = SYSCFG_PINMUX4_PINMUX4_19_16_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX4_PINMUX4_19_16_GPIO1_3,
             },
             .pin = 3,
         },
-        .pin_tx_mux = SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD,
+        .pin_rx_mux = SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD,
+        .pin_tx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 4,
+                .mux_mask = SYSCFG_PINMUX4_PINMUX4_23_20,
+                .mux_shift = SYSCFG_PINMUX4_PINMUX4_23_20_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX4_PINMUX4_23_20_GPIO1_2,
+            },
+            .pin = 2,
+        },
+        .pin_tx_mux = SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD,
+    },
+    [PRU0_LINE0] = {
+        .uart_kind = EV3_UART_PRU,
+        .base_address = 0, // Not used.
+        .peripheral_id = 0, // Soft UART line 0.
+        .sys_int_uart_int_id = SYS_INT_EVTOUT0,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line0,
+        .pin_rx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 2,
+                .mux_mask = SYSCFG_PINMUX2_PINMUX2_27_24,
+                .mux_shift = SYSCFG_PINMUX2_PINMUX2_27_24_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX2_PINMUX2_27_24_GPIO1_9,
+            },
+            .pin = 9,
+        },
+        .pin_rx_mux = SYSCFG_PINMUX2_PINMUX2_27_24_AXR0_1,
+        .pin_tx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 2,
+                .mux_mask = SYSCFG_PINMUX2_PINMUX2_19_16,
+                .mux_shift = SYSCFG_PINMUX2_PINMUX2_19_16_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX2_PINMUX2_19_16_GPIO1_11,
+            },
+            .pin = 11,
+        },
+        .pin_tx_mux = SYSCFG_PINMUX2_PINMUX2_19_16_AXR0_3,
+    },
+    [PRU0_LINE1] = {
+        .uart_kind = EV3_UART_PRU,
+        .base_address = 0, // Not used.
+        .peripheral_id = 1, // Soft UART line 1.
+        .sys_int_uart_int_id = SYS_INT_EVTOUT1,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line1,
+        .pin_rx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 2,
+                .mux_mask = SYSCFG_PINMUX2_PINMUX2_23_20,
+                .mux_shift = SYSCFG_PINMUX2_PINMUX2_23_20_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX2_PINMUX2_23_20_GPIO1_10,
+            },
+            .pin = 10,
+        },
+        .pin_rx_mux = SYSCFG_PINMUX2_PINMUX2_23_20_AXR0_2,
+        .pin_tx = {
+            .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+                .mux_id = 2,
+                .mux_mask = SYSCFG_PINMUX2_PINMUX2_15_12,
+                .mux_shift = SYSCFG_PINMUX2_PINMUX2_15_12_SHIFT,
+                .gpio_bank_id = 1,
+                .gpio_mode = SYSCFG_PINMUX2_PINMUX2_15_12_GPIO1_12,
+            },
+            .pin = 12,
+        },
+        .pin_tx_mux = SYSCFG_PINMUX2_PINMUX2_15_12_AXR0_4,
     },
 };
 
@@ -342,6 +450,30 @@ static const pbdrv_gpio_t pin_port_s2_buffer_enable = {
         .gpio_mode = SYSCFG_PINMUX18_PINMUX18_15_12_GPIO8_14,
     },
     .pin = 14,
+};
+
+// port S3 buffer enable. Revisit: Move to legodev/ioport driver.
+static const pbdrv_gpio_t pin_port_s3_buffer_enable = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 17,
+        .mux_mask = SYSCFG_PINMUX17_PINMUX17_3_0,
+        .mux_shift = SYSCFG_PINMUX17_PINMUX17_3_0_SHIFT,
+        .gpio_bank_id = 7,
+        .gpio_mode = SYSCFG_PINMUX17_PINMUX17_3_0_GPIO7_9,
+    },
+    .pin = 9,
+};
+
+// port S4 buffer enable. Revisit: Move to legodev/ioport driver.
+static const pbdrv_gpio_t pin_port_s4_buffer_enable = {
+    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
+        .mux_id = 16,
+        .mux_mask = SYSCFG_PINMUX16_PINMUX16_31_28,
+        .mux_shift = SYSCFG_PINMUX16_PINMUX16_31_28_SHIFT,
+        .gpio_bank_id = 7,
+        .gpio_mode = SYSCFG_PINMUX16_PINMUX16_31_28_GPIO7_10,
+    },
+    .pin = 10,
 };
 
 // Called from assembly code in startup.s. After this, the "main" function in
@@ -383,6 +515,10 @@ void SystemInit(void) {
     pbdrv_gpio_out_low(&pin_port_s1_buffer_enable);
     pbdrv_gpio_alt(&pin_port_s2_buffer_enable, ((pbdrv_gpio_tiam1808_mux_t *)pin_port_s2_buffer_enable.bank)->gpio_mode);
     pbdrv_gpio_out_low(&pin_port_s2_buffer_enable);
+    pbdrv_gpio_alt(&pin_port_s3_buffer_enable, ((pbdrv_gpio_tiam1808_mux_t *)pin_port_s3_buffer_enable.bank)->gpio_mode);
+    pbdrv_gpio_out_low(&pin_port_s3_buffer_enable);
+    pbdrv_gpio_alt(&pin_port_s4_buffer_enable, ((pbdrv_gpio_tiam1808_mux_t *)pin_port_s4_buffer_enable.bank)->gpio_mode);
+    pbdrv_gpio_out_low(&pin_port_s4_buffer_enable);
 }
 
 

@@ -300,6 +300,12 @@ TI_AM1808_SRC_C = $(addprefix lib/tiam1808/,\
 	system_config/armv5/am1808/interrupt.c \
 	)
 
+TI_AM1808_SRC_C += $(addprefix lib/pbio/drv/uart/uart_ev3_pru_lib/,\
+	pru.c \
+	suart_api.c \
+	suart_utils.c \
+	)
+
 EV3_SRC_S = $(addprefix lib/pbio/platform/ev3/,\
 	exceptionhandler.S \
 	start.S \
@@ -533,6 +539,7 @@ ifeq ($(PB_MCU_FAMILY),TIAM1808)
 OBJ += $(addprefix $(BUILD)/, $(TI_AM1808_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o))
 $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
+OBJ += $(BUILD)/pru_suart.bin.o
 endif
 
 # List of sources for qstr extraction
@@ -599,7 +606,7 @@ UBOOT_FILE = $(PBTOP)/bricks/ev3/u-boot.bin
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 # For EV3, merge firmware blob with u-boot to create a bootable image.
 $(BUILD)/firmware-base.bin: $(BUILD)/uImage
-	python make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
+	python $(MAKE_BOOTABLE_IMAGE) $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
 else
 # For embeded systems, the firmware is just the base file.
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
@@ -623,6 +630,11 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 # firmware in uImage format (for EV3)
 $(BUILD)/uImage: $(BUILD)/firmware-obj.bin
 	mkimage -C none -A arm -T kernel -O linux -a 0xC0008000 -e 0xC0008000 -d $< $@
+
+# PRU firmware
+$(BUILD)/pru_suart.bin.o: $(PBTOP)/lib/pbio/drv/uart/uart_ev3_pru_lib/pru_suart.bin
+	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
+		--rename-section .data=.pru0,alloc,load,readonly,data,contents $^ $@
 
 # firmware in DFU format
 $(BUILD)/%.dfu: $(BUILD)/%-base.bin
