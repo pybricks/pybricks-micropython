@@ -45,21 +45,9 @@
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-#define DEBUG_ON_LAST_UART_PORT (0)
-
-#if DEBUG_ON_LAST_UART_PORT
-#include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
-#define DBG(...)
-#define DEBUG_PRINT(...)
-#define DEBUG_PRINT_PT PBDRV_IOPORT_DEBUG_UART_PT_PRINTF
-static void uart_poll_callback(pbdrv_uart_dev_t *uart) {
-    process_poll(&pbdrv_bluetooth_spi_process);
-}
-#else
 #define DBG(...)
 #define DEBUG_PRINT(...)
 #define DEBUG_PRINT_PT(...)
-#endif
 
 // hub name goes in special section so that it can be modified when flashing firmware
 __attribute__((section(".name")))
@@ -2270,14 +2258,6 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     });
 
     PROCESS_BEGIN();
-
-    #if DEBUG_ON_LAST_UART_PORT
-    // Wait for the UART to be ready for debugging.
-    while (pbdrv_ioport_debug_uart_init(uart_poll_callback) != PBIO_SUCCESS) {
-        etimer_set(&timer, 100);
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-    }
-    #endif // DEBUG_ON_LAST_UART_PORT
 
 start:
     // take Bluetooth chip out of reset
