@@ -23,7 +23,6 @@
 #include "../drv/legodev/legodev_pup_uart.h"
 #include "../drv/legodev/legodev_test.h"
 
-#include "../src/processes.h"
 #include "../drv/clock/clock_test.h"
 
 // TODO: submit this upstream

@@ -6,6 +6,7 @@
 #include <pbdrv/config.h>
 
 #include "core.h"
+#include "adc/adc.h"
 #include "battery/battery.h"
 #include "block_device/block_device.h"
 #include "bluetooth/bluetooth.h"
@@ -78,4 +79,8 @@ void pbdrv_init(void) {
     // devices behaves the same as if unknown devices are still syncing up after
     // just being plugged in.
     pbdrv_legodev_init();
+
+    // REVISIT: verify that the order does not matter and that we can start this
+    // in the same place as the other drivers above.
+    pbdrv_adc_init();
 }
