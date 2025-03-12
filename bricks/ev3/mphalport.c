@@ -61,56 +61,39 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
-
-extern int32_t pbdrv_uart_char_get(pbdrv_uart_dev_t *uart_dev);
-
-extern uint32_t pbdrv_uart_char_available(pbdrv_uart_dev_t *uart_dev);
+#define PBDRV_UART_DEV_ID (0)
 
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
-
-    pbdrv_uart_dev_t *uart_dev;
-    pbio_error_t err = pbdrv_uart_get(1, &uart_dev);
-    if (err != PBIO_SUCCESS) {
-        return 0;
-    }
-
-    uintptr_t ret = 0;
-
-    if ((poll_flags & MP_STREAM_POLL_RD) && pbdrv_uart_char_available(uart_dev)) {
-        ret |= MP_STREAM_POLL_RD;
-    }
-
-    return ret;
+    return 0;
 }
 
 int mp_hal_stdin_rx_chr(void) {
 
     pbdrv_uart_dev_t *uart_dev;
-    pbio_error_t err = pbdrv_uart_get(0, &uart_dev);
+    pbio_error_t err = pbdrv_uart_get(PBDRV_UART_DEV_ID, &uart_dev);
     if (err != PBIO_SUCCESS) {
-        return 0;
+        return -1;
     }
 
-    int val;
-    while ((val = pbdrv_uart_char_get(uart_dev)) < 0) {
-        MICROPY_EVENT_POLL_HOOK;
+    uint8_t buf[1];
+    static struct pt pt;
+    PT_INIT(&pt);
+    while (PT_SCHEDULE(pbdrv_uart_read(&pt, uart_dev, buf, sizeof(buf), 250, &err))) {
+        MICROPY_VM_HOOK_LOOP;
     }
 
-    return val;
+    return err == PBIO_SUCCESS ? buf[0] : -1;
 }
 
-typedef struct {
-    volatile uint8_t *thr;
-    volatile uint8_t *lsr;
-} pb_hal_uart_t;
-
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+
+    pbdrv_uart_dev_t *uart_dev;
+    pbio_error_t err = pbdrv_uart_get(PBDRV_UART_DEV_ID, &uart_dev);
+    if (err != PBIO_SUCCESS) {
+        return;
+    }
+
     static struct pt pt;
-    static pbio_error_t err;
-
-    static pbdrv_uart_dev_t *uart_dev;
-    pbdrv_uart_get(0, &uart_dev);
-
     PT_INIT(&pt);
     while (PT_SCHEDULE(pbdrv_uart_write(&pt, uart_dev, (uint8_t *)str, len, 250, &err))) {
         MICROPY_VM_HOOK_LOOP;
@@ -118,4 +101,12 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
 }
 
 void mp_hal_stdout_tx_flush(void) {
+
+    pbdrv_uart_dev_t *uart_dev;
+    pbio_error_t err = pbdrv_uart_get(PBDRV_UART_DEV_ID, &uart_dev);
+    if (err != PBIO_SUCCESS) {
+        return;
+    }
+
+    pbdrv_uart_flush(uart_dev);
 }

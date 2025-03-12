@@ -54,7 +54,7 @@ typedef struct {
     uint8_t write_length;
     /** The current position in write_buf. */
     volatile uint8_t write_pos;
-    /** Callback to call on read or write completion events */
+    /** Callback to call on read or write completion events. */
     pbdrv_uart_poll_callback_t poll_callback;
     /** Context for callback caller */
     void *poll_callback_context;
@@ -68,6 +68,7 @@ void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_ca
     uart->poll_callback = callback;
     uart->poll_callback_context = context;
 }
+
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_EV3_NUM_UART) {
@@ -84,42 +85,48 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
-// Revisit: Following two functions not currently part of public API, but
-// would be useful addition to async read.
-int32_t pbdrv_uart_char_get(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    return ringbuf_get(&uart->rx_buf);
-}
-
-int32_t pbdrv_uart_char_available(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    return ringbuf_elements(&uart->rx_buf);
-}
-
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     PT_BEGIN(pt);
 
-    // Wait while other read operation already in progress.
-    PT_WAIT_WHILE(pt, uart->read_buf);
+    if (uart->read_buf) {
+        *err = PBIO_ERROR_BUSY;
+        PT_EXIT(pt);
+    }
 
     uart->read_buf = msg;
     uart->read_length = length;
     uart->read_pos = 0;
 
-    // etimer_set(&uart->read_timer, timeout);
+    etimer_set(&uart->read_timer, timeout);
 
-    // If read_pos is less that read_length then we have not read everything yet
-    PT_WAIT_WHILE(pt, uart->read_pos < uart->read_length /*&& !etimer_expired(&uart->read_timer)*/);
-    if (0 /*etimer_expired(&uart->read_timer)*/) {
-        uart->read_buf = NULL;
+    // Await completion or timeout.
+    PT_WAIT_UNTIL(pt, ({
+        // On every re-entry to the async read, drain the ring buffer
+        // into the current read buffer. This ensures that we use
+        // all available data if there have been multiple polls since our last
+        // re-entry. If there is already enough data in the buffer, this
+        // protothread completes right away without yielding once first.
+        while (uart->read_pos < uart->read_length) {
+            int c = ringbuf_get(&uart->rx_buf);
+            if (c == -1) {
+                break;
+            }
+            uart->read_buf[uart->read_pos++] = c;
+        }
+        uart->read_pos == uart->read_length || etimer_expired(&uart->read_timer);
+    }));
+
+    // Set exit status based on completion condition.
+    if (etimer_expired(&uart->read_timer)) {
         *err = PBIO_ERROR_TIMEDOUT;
     } else {
-        // etimer_stop(&uart->read_timer);
+        etimer_stop(&uart->read_timer);
         *err = PBIO_SUCCESS;
     }
+    uart->read_buf = NULL;
 
     PT_END(pt);
 }
@@ -137,11 +144,6 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
         PT_EXIT(pt);
     }
 
-    if (length == 0) {
-        *err = PBIO_SUCCESS;
-        PT_EXIT(pt);
-    }
-
     uart->write_buf = msg;
     uart->write_length = length;
     uart->write_pos = 0;
@@ -149,19 +151,24 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
     etimer_set(&uart->write_timer, timeout);
 
     PT_WAIT_UNTIL(pt, ({
-        // Try to write a byte.
-        if (UARTCharPutNonBlocking(pdata->base_address, uart->write_buf[uart->write_pos])) {
+        // Try to write a byte if any remain.
+        if (uart->write_pos != uart->write_length &&
+            UARTCharPutNonBlocking(pdata->base_address, uart->write_buf[uart->write_pos])) {
             uart->write_pos++;
         }
-        // Always callback, which effectively enforces a poll loop for writing.
-        // This works around the unreliable TX_EMPTY interrupt. Since UART writes
-        // on EV3 are limited to small messages like sensor mode changes, this
-        // is acceptable.
+        // Always call back, which effectively enforces a (yielding) poll loop
+        // for writing. This works around the unreliable TX_EMPTY interrupt
+        // when reading and writing simultaneously (reading the status during
+        // an RX interrupt clears the TX_EMPTY interrupt, which is not
+        // re-triggered). Since UART writes on EV3 are limited to small
+        // messages like sensor mode changes, this is acceptable.
         if (uart->poll_callback && uart->write_pos < uart->write_length) {
-            uart->poll_callback(uart->poll_callback_context);
+            uart->poll_callback(&uart->uart_dev);
         }
-        // Completion condition.
-        uart->write_pos == uart->write_length;
+        // Completion condition. The space available check ensures we await
+        // writing the final byte before considering it complete, since we are
+        // not getting the TX_EMPTY interrupt.
+        uart->write_pos == uart->write_length && UARTSpaceAvail(pdata->base_address);
     }));
 
     uart->write_buf = NULL;
@@ -182,29 +189,19 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
-}
-
-/**
- * Updates the state of the awaitable read operation when a new byte is received.
- */
-static void pbdrv_uart_ev3_update_read_status(pbdrv_uart_t *uart) {
-    // if receive is pending and we have not received all bytes yet
-    while (uart->read_buf && uart->read_pos < uart->read_length) {
-        int c = ringbuf_get(&uart->rx_buf);
-        if (c == -1) {
-            break;
-        }
-        uart->read_buf[uart->read_pos++] = c;
-    }
-
-    // poll callback when read_buf is full
-    if (uart->read_buf && uart->read_pos == uart->read_length) {
-        // clearing read_buf to prevent multiple polls
-        uart->read_buf = NULL;
-        if (uart->poll_callback) {
-            uart->poll_callback(uart->poll_callback_context);
-            ;
-        }
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+    // If a process was exited while an operation was in progress this is
+    // normally an error, and the process may call flush when it is restarted
+    // to clear the state.
+    uart->write_buf = NULL;
+    uart->write_length = 0;
+    uart->write_pos = 0;
+    uart->read_buf = NULL;
+    uart->read_length = 0;
+    uart->read_pos = 0;
+    // Discard all received bytes.
+    while (ringbuf_get(&uart->rx_buf) != -1) {
+        ;
     }
 }
 
@@ -223,7 +220,6 @@ void pbdrv_uart_ev3_handle_irq(uint8_t id) {
         int c = UARTCharGetNonBlocking(pdata->base_address);
         if (c != -1) {
             ringbuf_put(&uart->rx_buf, c);
-            pbdrv_uart_ev3_update_read_status(uart);
         }
     }
 
@@ -233,6 +229,14 @@ void pbdrv_uart_ev3_handle_irq(uint8_t id) {
             /* Read a byte from the RBR if RBR has data.*/
             UARTCharGetNonBlocking(pdata->base_address);
         }
+    }
+
+    // Poll parent process for each received byte, since the IRQ handler
+    // has no awareness of the expected length of the read operation. This is
+    // done outside of the if statements above. We can do that since write IRQs
+    // are not handled here.
+    if (uart->poll_callback) {
+        uart->poll_callback(&uart->uart_dev);
     }
 
 }
