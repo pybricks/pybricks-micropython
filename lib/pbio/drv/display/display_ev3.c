@@ -96,17 +96,12 @@ typedef enum {
 /**
  * Chip select (active low).
  */
-pbdrv_gpio_t gpio_cs = { .bank = (void *)2, .pin = 12 };
+static pbdrv_gpio_t gpio_cs = { .bank = (void *)2, .pin = 12 };
 
 /**
  * Data mode (1) or command mode (0).
  */
-pbdrv_gpio_t gpio_a0 = { .bank = (void *)2, .pin = 11 };
-
-/**
- * Reset (active low).
- */
-pbdrv_gpio_t gpio_reset = { .bank = (void *)5, .pin = 0 };
+static pbdrv_gpio_t gpio_a0 = { .bank = (void *)2, .pin = 11 };
 
 static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
 
@@ -435,6 +430,7 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
     pbdrv_init_busy_down();
 
     #if ST7586S_DO_RESET_AND_INIT
+    static pbdrv_gpio_t gpio_reset = { .bank = (void *)5, .pin = 0 };
     pbdrv_gpio_out_low(&gpio_reset);
     etimer_set(&etimer, 10);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));

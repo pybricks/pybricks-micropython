@@ -111,6 +111,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 # Pybricks I/O library
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
+	drv/adc/adc_ev3.c \
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
