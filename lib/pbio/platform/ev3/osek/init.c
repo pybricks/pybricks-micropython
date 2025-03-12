@@ -12,9 +12,7 @@
 #include "ninja/spi.h"
 #include "ninja/adc.h"
 #include "ninja/gpio.h"
-#include "ninja/led.h"
 #include "ninja/motor.h"
-#include "ninja/button.h"
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 #include "stdio.h"
@@ -100,8 +98,4 @@ void leJOS_init(void) {
     spi_init();
     adc_init();
     motor_init();
-    led_init();
-    button_init();
-	// Confirm that the initialization was successful by setting the LEDs to green
-    led_set(LED_BOTH, LED_GREEN);
 }

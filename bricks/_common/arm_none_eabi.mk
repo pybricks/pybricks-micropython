@@ -269,8 +269,6 @@ EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
 	ninja/gpio.c \
 	ninja/motor.c \
 	ninja/spi.c \
-	ninja/button.c \
-	ninja/led.c \
 	ninja/pininfo.c \
 	os/OSEK.c \
 	)

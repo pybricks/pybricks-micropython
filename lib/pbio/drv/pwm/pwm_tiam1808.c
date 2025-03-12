@@ -39,6 +39,9 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     for (int i = 0; i < PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV; i++) {
         devs[i].funcs = &pbdrv_pwm_tiam1808_funcs;
         devs[i].priv = (pbdrv_pwm_tiam1808_platform_data_t *)&pbdrv_pwm_tiam1808_platform_data[i];
+
+        // Turn on green LED on boot until we have a dedicated HMI UI.
+        // pbdrv_pwm_tiam1808_set_duty(&devs[i], 0, 1);
     }
 }
 

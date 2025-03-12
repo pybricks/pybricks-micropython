@@ -1,7 +1,6 @@
 #include "stdio.h"
 #include "hw_syscfg0_AM1808.h"
 #include "evmAM1808.h"
-#include "ninja/button.h"
 #include "power.h"
 #include "armv5/am1808/interrupt.h"
 #include "soc_AM1808.h"
