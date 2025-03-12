@@ -22,13 +22,13 @@
 #include <pbio/logger.h>
 #include <pbio/int_math.h>
 #include <pbio/motor_process.h>
+#include <pbio/port_interface.h>
 #include <pbio/servo.h>
 #include <test-pbio.h>
 
 #include "../drv/core.h"
 #include "../drv/clock/clock_test.h"
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
-#include "../drv/legodev/legodev_virtual.h"
 
 static PT_THREAD(test_servo_basics(struct pt *pt)) {
 
@@ -39,29 +39,22 @@ static PT_THREAD(test_servo_basics(struct pt *pt)) {
     static int32_t speed;
 
     static pbio_servo_t *srv;
-    static pbdrv_legodev_dev_t *legodev;
+    static pbio_port_t *port;
 
-    // Start motor driver simulation process.
-    pbdrv_motor_driver_init_manual();
+    static uint32_t delay;
 
     PT_BEGIN(pt);
 
-    // Wait for motor simulation process to be ready.
-    while (pbdrv_init_busy()) {
+    // Give simulator some time to start reporting data.
+    for (delay = 0; delay < 100; delay++) {
+        pbio_test_clock_tick(1);
         PT_YIELD(pt);
     }
 
-    // Start motor control process manually.
-    pbio_motor_process_start();
-
-    // Get legodev.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_A, &id, &legodev), ==, PBIO_SUCCESS);
-    tt_uint_op(id, ==, pbdrv_motor_driver_virtual_simulation_platform_data[0].type_id);
-
-    // Set up servo with given id.
-    tt_uint_op(pbio_servo_get_servo(legodev, &srv), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_A, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv, LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
 
     // Assert not moving to begin with.
     tt_uint_op(pbio_servo_get_state_user(srv, &start_angle, &speed), ==, PBIO_SUCCESS);
@@ -99,31 +92,27 @@ static PT_THREAD(test_servo_stall(struct pt *pt)) {
 
     static struct timer timer;
     static pbio_servo_t *srv;
-    static pbdrv_legodev_dev_t *legodev;
+    static pbio_port_t *port;
 
     static bool stalled;
     static uint32_t stall_duration;
 
-    // Start motor driver simulation process.
-    pbdrv_motor_driver_init_manual();
+    static uint32_t delay;
 
     PT_BEGIN(pt);
 
-    // Wait for motor simulation process to be ready.
-    while (pbdrv_init_busy()) {
+    // Give simulator some time to start reporting data.
+    for (delay = 0; delay < 100; delay++) {
+        pbio_test_clock_tick(1);
         PT_YIELD(pt);
     }
-
-    // Start motor control process manually.
-    pbio_motor_process_start();
-
     // Get legodev.
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_C, &id, &legodev), ==, PBIO_SUCCESS);
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_C, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv), ==, PBIO_SUCCESS);
 
     // Set up servo with given id.
-    tt_uint_op(pbio_servo_get_servo(legodev, &srv), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(srv, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(srv, LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
 
     // Start moving forever.
     tt_uint_op(pbio_servo_run_forever(srv, -500), ==, PBIO_SUCCESS);
@@ -159,36 +148,31 @@ static PT_THREAD(test_servo_gearing(struct pt *pt)) {
     static struct timer timer;
     static pbio_servo_t *srv_basic;
     static pbio_servo_t *srv_geared;
-    static pbdrv_legodev_dev_t *legodev_basic;
-    static pbdrv_legodev_dev_t *legodev_geared;
+    static pbio_port_t *port;
     static int32_t angle;
     static int32_t speed;
     static const int32_t geared_target = 90;
-
-    // Start motor driver simulation process.
-    pbdrv_motor_driver_init_manual();
+    static uint32_t delay;
 
     PT_BEGIN(pt);
 
-    // Wait for motor simulation process to be ready.
-    while (pbdrv_init_busy()) {
+    // Give simulator some time to start reporting data.
+    for (delay = 0; delay < 100; delay++) {
+        pbio_test_clock_tick(1);
         PT_YIELD(pt);
     }
 
-    // Start motor control process manually.
-    pbio_motor_process_start();
-
     // Initialize a servo without gears (1000 mdeg rotation per 1 deg output)
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_E, &id, &legodev_basic), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(legodev_basic, &srv_basic), ==, PBIO_SUCCESS);
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_E, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv_basic), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(srv_basic, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_reset_angle(srv_basic, 0, false), ==, PBIO_SUCCESS);
 
     // Initialize a servo with 12:36 gears (3000 mdeg rotation per 1 deg output)
-    id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_F, &id, &legodev_geared), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(legodev_geared, &srv_geared), ==, PBIO_SUCCESS);
+    id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_F, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv_geared), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(srv_geared, id, PBIO_DIRECTION_CLOCKWISE, 3000, true, 0), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_reset_angle(srv_geared, 0, false), ==, PBIO_SUCCESS);
 
@@ -219,8 +203,8 @@ end:
 }
 
 struct testcase_t pbio_servo_tests[] = {
-    PBIO_PT_THREAD_TEST(test_servo_basics),
-    PBIO_PT_THREAD_TEST(test_servo_stall),
-    PBIO_PT_THREAD_TEST(test_servo_gearing),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_servo_basics),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_servo_stall),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_servo_gearing),
     END_OF_TESTCASES
 };

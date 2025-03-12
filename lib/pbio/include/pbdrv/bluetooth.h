@@ -17,7 +17,7 @@
 #include <pbio/protocol.h>
 #include <pbio/task.h>
 
-#include <lego_lwp3.h>
+#include <lego/lwp3.h>
 
 /**
  * BLE characteristic connection identifiers.

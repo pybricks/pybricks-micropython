@@ -25,7 +25,7 @@ static mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
         nxtdevices_SoundSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(audible_only));
 
-    uint8_t mode = mp_obj_is_true(audible_only_in) ? PBDRV_LEGODEV_MODE_NXT_ANALOG__ACTIVE : PBDRV_LEGODEV_MODE_NXT_ANALOG__PASSIVE;
+    uint8_t mode = mp_obj_is_true(audible_only_in) ?LEGO_DEVICE_MODE_NXT_ANALOG__ACTIVE :LEGO_DEVICE_MODE_NXT_ANALOG__PASSIVE;
     int32_t *analog = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), mode);
 
     return mp_obj_new_int(analog_scale(analog[0], 650, 4860, true));
@@ -38,7 +38,7 @@ static mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_SoundSensor_obj_t *self = mp_obj_malloc(nxtdevices_SoundSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_SOUND_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR);
 
     // Do one reading for consistent initial mode
     mp_obj_t pos_args[1] = { self };

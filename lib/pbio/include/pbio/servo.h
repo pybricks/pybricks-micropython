@@ -26,7 +26,6 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/counter.h>
-#include <pbdrv/legodev.h>
 
 #include <pbio/error.h>
 #include <pbio/port.h>
@@ -37,7 +36,6 @@
 #include <pbio/observer.h>
 #include <pbio/logger.h>
 
-#include <pbdrv/legodev.h>
 
 /** Number of values per row when servo data logger is active. */
 #define PBIO_SERVO_LOGGER_NUM_COLS (10)
@@ -60,9 +58,9 @@ typedef struct _pbio_servo_t {
      */
     pbio_dcmotor_t *dcmotor;
     /**
-     * The tacho device that measures the motor angle.
+     * The tacho abstraction around the reported motor angle.
      */
-    pbio_tacho_t *tacho;
+    pbio_tacho_t tacho;
     /**
      * The controller for this servo.
      */
@@ -107,7 +105,7 @@ typedef struct _pbio_servo_settings_reduced_t {
     /**
      * Type identifier indicating which motor it is.
      */
-    pbdrv_legodev_type_id_t id;
+    lego_device_type_id_t id;
     /**
      * Physical model parameter for this type of motor
      */
@@ -136,13 +134,13 @@ typedef struct _pbio_servo_settings_reduced_t {
 
 /** @name Initialization Functions */
 /**@{*/
-pbio_error_t pbio_servo_get_servo(pbdrv_legodev_dev_t *legodev, pbio_servo_t **srv);
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbdrv_legodev_type_id_t type, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile);
+pbio_servo_t *pbio_servo_init_instance(uint8_t index, pbio_port_t *port, pbio_dcmotor_t *dcmotor);
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, lego_device_type_id_t type, pbio_direction_t direction, int32_t gear_ratio, bool reset_angle, int32_t precision_profile);
 /**@}*/
 
 /** @cond INTERNAL */
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
-const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(pbdrv_legodev_type_id_t id);
+const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(lego_device_type_id_t id);
 void pbio_servo_update_all(void);
 /** @endcond */
 

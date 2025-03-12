@@ -23,6 +23,7 @@
 #include <pbio/logger.h>
 #include <pbio/int_math.h>
 #include <pbio/motor_process.h>
+#include <pbio/port_interface.h>
 #include <pbio/servo.h>
 #include <test-pbio.h>
 
@@ -36,9 +37,8 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
 
     static pbio_servo_t *srv_left;
     static pbio_servo_t *srv_right;
-    static pbdrv_legodev_dev_t *legodev_left;
-    static pbdrv_legodev_dev_t *legodev_right;
     static pbio_drivebase_t *db;
+    static pbio_port_t *port;
 
     static int32_t drive_distance;
     static int32_t drive_speed;
@@ -56,28 +56,25 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     static pbio_dcmotor_actuation_t actuation;
     static int32_t voltage;
 
-    // Start motor driver simulation process.
-    pbdrv_motor_driver_init_manual();
+    static uint32_t delay;
 
     PT_BEGIN(pt);
 
-    // Wait for motor simulation process to be ready.
-    while (pbdrv_init_busy()) {
+    // Give simulator some time to start reporting data.
+    for (delay = 0; delay < 100; delay++) {
+        pbio_test_clock_tick(1);
         PT_YIELD(pt);
     }
 
-    // Start motor control process manually.
-    pbio_motor_process_start();
-
     // Initialize the servos.
 
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_A, &id, &legodev_left), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(legodev_left, &srv_left), ==, PBIO_SUCCESS);
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_A, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv_left), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(srv_left, id, PBIO_DIRECTION_COUNTERCLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
-    id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_B, &id, &legodev_right), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(legodev_right, &srv_right), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_B, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv_right), ==, PBIO_SUCCESS);
+
     tt_uint_op(pbio_servo_setup(srv_right, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
 
     // Set up the drivebase.
@@ -192,9 +189,8 @@ static PT_THREAD(test_drivebase_stalling(struct pt *pt)) {
 
     static pbio_servo_t *srv_free;
     static pbio_servo_t *srv_blocked;
-    static pbdrv_legodev_dev_t *legodev_left;
-    static pbdrv_legodev_dev_t *legodev_right;
     static pbio_drivebase_t *db;
+    static pbio_port_t *port;
 
     static int32_t drive_distance;
     static int32_t drive_speed;
@@ -204,28 +200,24 @@ static PT_THREAD(test_drivebase_stalling(struct pt *pt)) {
     static bool stalled;
     static uint32_t stall_duration;
 
-    // Start motor driver simulation process.
-    pbdrv_motor_driver_init_manual();
+    static uint32_t delay;
 
     PT_BEGIN(pt);
 
-    // Wait for motor simulation process to be ready.
-    while (pbdrv_init_busy()) {
+    // Give simulator some time to start reporting data.
+    for (delay = 0; delay < 100; delay++) {
+        pbio_test_clock_tick(1);
         PT_YIELD(pt);
     }
 
-    // Start motor control process manually.
-    pbio_motor_process_start();
-
     // Initialize the servos.
 
-    pbdrv_legodev_type_id_t id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_F, &id, &legodev_left), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(legodev_left, &srv_free), ==, PBIO_SUCCESS);
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_F, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv_free), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(srv_free, id, PBIO_DIRECTION_COUNTERCLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
-    id = PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR;
-    tt_uint_op(pbdrv_legodev_get_device(PBIO_PORT_ID_C, &id, &legodev_right), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_get_servo(legodev_right, &srv_blocked), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_C, &port), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_get_servo(port, &id, &srv_blocked), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(srv_blocked, id, PBIO_DIRECTION_CLOCKWISE, 1000, true, 0), ==, PBIO_SUCCESS);
 
     // Set up the drivebase.
@@ -267,7 +259,7 @@ end:
 }
 
 struct testcase_t pbio_drivebase_tests[] = {
-    PBIO_PT_THREAD_TEST(test_drivebase_basics),
-    PBIO_PT_THREAD_TEST(test_drivebase_stalling),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_drivebase_basics),
+    PBIO_PT_THREAD_TEST_WITH_PBIO(test_drivebase_stalling),
     END_OF_TESTCASES
 };

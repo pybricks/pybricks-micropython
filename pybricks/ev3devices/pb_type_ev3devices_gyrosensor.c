@@ -23,7 +23,7 @@ typedef struct _ev3devices_GyroSensor_obj_t {
 // pybricks.ev3devices.GyroSensor (internal) Get new offset  for new reset angle
 static mp_int_t ev3devices_GyroSensor_get_angle_offset(mp_obj_t self_in, pbio_direction_t direction, mp_int_t new_angle) {
     // Read raw sensor values
-    int32_t raw_angle = *(int16_t *)pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_GYRO_SENSOR__ANG);
+    int32_t raw_angle = *(int16_t *)pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__ANG);
 
     // Get new offset using arguments and raw values
     if (direction == PBIO_DIRECTION_CLOCKWISE) {
@@ -40,7 +40,7 @@ static mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
         PB_ARG_DEFAULT_OBJ(direction, pb_Direction_CLOCKWISE_obj));
 
     ev3devices_GyroSensor_obj_t *self = mp_obj_malloc(ev3devices_GyroSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3_GYRO_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_EV3_GYRO_SENSOR);
     self->direction = pb_type_enum_get_value(direction_in, &pb_enum_type_Direction);
 
     // Read initial angle to as offset.
@@ -51,7 +51,7 @@ static mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
 // pybricks.ev3devices.GyroSensor.speed
 static mp_obj_t ev3devices_GyroSensor_speed(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t raw_speed = *(int16_t *)pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_GYRO_SENSOR__RATE);
+    int32_t raw_speed = *(int16_t *)pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__RATE);
 
     // changing modes resets angle to 0
     self->offset = 0;
@@ -67,7 +67,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_GyroSensor_speed_obj, ev3devices_Gyr
 // pybricks.ev3devices.GyroSensor.angle
 static mp_obj_t ev3devices_GyroSensor_angle(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t raw_angle = *(int16_t *)pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_GYRO_SENSOR__ANG);
+    int32_t raw_angle = *(int16_t *)pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__ANG);
 
     if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_angle - self->offset);

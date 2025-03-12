@@ -24,13 +24,13 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_ULTRASONIC_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 static mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
-    int8_t *distance = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM);
+    int8_t *distance = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM);
     return mp_obj_new_int(distance[0] * 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_distance_obj, nxtdevices_UltrasonicSensor_distance);

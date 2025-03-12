@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2021 The Pybricks Authors
+// Copyright (c) 2019-2025 The Pybricks Authors
 
 // GPIO Quadrature Encoder Counter driver
 //
@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include <pbdrv/gpio.h>
+#include <pbdrv/ioport.h>
 #include <pbio/util.h>
 
 #include "stm32f0xx.h"
@@ -25,35 +26,22 @@
 #include "counter_stm32f0_gpio_quad_enc.h"
 
 struct _pbdrv_counter_dev_t {
-    int32_t count;
     const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata;
 };
 
 static pbdrv_counter_dev_t counters[PBDRV_CONFIG_COUNTER_NUM_DEV];
 
-pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
-    if (id >= PBIO_ARRAY_SIZE(counters)) {
-        return PBIO_ERROR_NO_DEV;
-    }
-    *dev = &counters[id];
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
-    *millidegrees = (dev->count % 360) * 1000;
-    *rotations = dev->count / 360;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
 static void pbdrv_counter_update_count(pbdrv_counter_dev_t *dev, bool int_pin_state, bool dir_pin_state) {
+    // Callback not configured yet.
+    if (!pbdrv_ioport_quadrature_increment_callback) {
+        return;
+    }
+
     if (int_pin_state ^ dir_pin_state) {
-        dev->count--;
+        pbdrv_ioport_quadrature_increment_callback(dev->pdata->counter_id, -1000);
+
     } else {
-        dev->count++;
+        pbdrv_ioport_quadrature_increment_callback(dev->pdata->counter_id, 1000);
     }
 }
 
