@@ -20,6 +20,18 @@
 
 #include <contiki.h>
 
+#define DEBUG 0
+#if DEBUG
+#include <stdio.h>
+#include <inttypes.h>
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#define debug_pr pbdrv_uart_debug_printf
+#define DBG_ERR(expr) expr
+#else
+#define debug_pr(...)
+#define DBG_ERR(expr)
+#endif
+
 #if PBIO_CONFIG_PORT
 
 /**

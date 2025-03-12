@@ -47,6 +47,8 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
+
 /* TB Period load */
 #define EHRPWM_PRD_LOAD_SHADOW_MASK		EHRPWM_TBCTL_PRDLD
 
@@ -159,10 +161,6 @@ extern "C" {
 #define  ECAP   0x01
 #define  EPWM   0x02
 #define  EQEP   0x03
-
-
-
-typedef char bool;
 
 //**********************************************************************
 //  API FUNCTION PROTOTYPES

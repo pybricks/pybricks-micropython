@@ -163,6 +163,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_pwm.c \
 	drv/led/led_virtual.c \
 	drv/motor_driver/motor_driver_hbridge_pwm.c \
+	drv/motor_driver/motor_driver_ev3.c \
 	drv/motor_driver/motor_driver_nxt.c \
 	drv/motor_driver/motor_driver_virtual_cpython.c \
 	drv/motor_driver/motor_driver_virtual_simulation.c \

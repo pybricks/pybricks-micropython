@@ -49,6 +49,10 @@
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (2)
 
+#define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_EV3               (1)
+#define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (8)
+
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (2)
 #define PBDRV_CONFIG_PWM_TIAM1808                   (1)
