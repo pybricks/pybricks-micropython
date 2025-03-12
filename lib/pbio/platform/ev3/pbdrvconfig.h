@@ -14,6 +14,13 @@
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (8)
 
+#define PBDRV_CONFIG_BUTTON                         (1)
+#define PBDRV_CONFIG_BUTTON_GPIO                    (1)
+#define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (6)
+
+#define PBDRV_CONFIG_GPIO                           (1)
+#define PBDRV_CONFIG_GPIO_TIAM1808                  (1)
+
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
 #define PBDRV_CONFIG_HAS_PORT_C                     (1)
