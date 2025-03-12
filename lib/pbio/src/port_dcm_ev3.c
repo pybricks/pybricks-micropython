@@ -6,6 +6,7 @@
 
 #include <pbio/port_interface.h>
 #include <pbio/port_dcm.h>
+#include <pbio/int_math.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/adc.h>
 
@@ -114,6 +115,16 @@ typedef enum {
 } pbio_port_dcm_category_t;
 
 /**
+ * Converts a 10-bit ADC value to millivolts.
+ *
+ * @param [in]  adc_10bit   The 10-bit ADC value.
+ * @return                  The voltage in mV.
+ */
+static uint32_t pbio_port_dcm_adc_to_mv(uint32_t adc_10bit) {
+    return adc_10bit * 4888 / 1000;
+}
+
+/**
  * Gets the voltage on a pin.
  *
  * @param [in]  pins        The ioport pins.
@@ -124,7 +135,7 @@ static uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pi
     uint16_t adc;
     pbdrv_adc_get_ch(pin == 1 ? pins->adc_p1 : pins->adc_p6, &adc);
     // ADC returns a 10-bit value. Convert to 0--5000mV.
-    return adc * 4888 / 1000;
+    return pbio_port_dcm_adc_to_mv(adc);
 }
 
 /**
@@ -206,7 +217,8 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
 
 typedef struct __attribute__((__packed__)) {
     uint32_t calibration[3][4];
-    uint16_t threshold[2];
+    uint16_t threshold_high;
+    uint16_t threshold_low;
     uint16_t crc;
 } pbio_port_dcm_nxt_color_sensor_data_t;
 
@@ -300,6 +312,7 @@ struct _pbio_port_dcm_t {
     bool connected;
     pbio_port_dcm_category_t category;
     pbio_port_dcm_analog_rgba_t nxt_rgba;
+    pbio_port_dcm_analog_rgba_t nxt_rgba_calibrated;
     pbio_port_dcm_nxt_color_sensor_state_t nxt_color_state;
 };
 
@@ -541,8 +554,81 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return pbio_port_dcm_get_mv(pins, 1);
 }
 
+/**
+ * Scales an RGB value based on ambient light and calibration data.
+ *
+ * Clamps the output to 0--1000.
+ *
+ * @param [in]  value       The raw value.
+ * @param [in]  ambient     The ambient light value.
+ * @param [in]  scale       The calibration scale.
+ */
+static uint32_t scale_rgb(uint32_t value, uint32_t ambient, uint32_t scale) {
+    return value <= ambient ? 0 : pbio_int_math_clamp((value - ambient) * scale / 57000, 1000);
+}
+
+enum {
+    NXT_COLOR_CALIBRATION_HIGH_AMBIENT = 0,
+    NXT_COLOR_CALIBRATION_MEDIUM_AMBIENT = 1,
+    NXT_COLOR_CALIBRATION_LOW_AMBIENT = 2,
+};
+
 pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm) {
-    return &dcm->nxt_rgba;
+
+    pbio_port_dcm_analog_rgba_t *rgba = &dcm->nxt_rgba;
+    pbio_port_dcm_analog_rgba_t *calibrated = &dcm->nxt_rgba_calibrated;
+
+    if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+        // Intensity is inverted.
+        uint32_t ambient = 5000 - rgba->a;
+        uint32_t reflection = 5000 - rgba->r;
+        uint32_t difference = reflection <= ambient ? 0 : reflection - ambient;
+
+        // With higher ambient light, contrast is less pronounced due to the
+        // nonlinearity of the sensor. Scale up the difference to compensate.
+        // Also normalize to approximately 0--1000.
+        uint32_t scale = ambient <= 825 ? 0: ambient - 825;
+        calibrated->r = pbio_int_math_clamp(difference * scale / 1200, 1000);
+        calibrated->g = 0;
+        calibrated->b = 0;
+        calibrated->a = pbio_int_math_bind((ambient - 1200) / 4, 0, 1000);
+        return calibrated;
+    }
+
+    if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
+        pbio_port_dcm_nxt_color_sensor_data_t *data = &dcm->nxt_color_state.data;
+
+        // Select calibration row based on ambient light, similar to NXT firmware.
+        uint8_t row = NXT_COLOR_CALIBRATION_HIGH_AMBIENT;
+        if (rgba->a < pbio_port_dcm_adc_to_mv(data->threshold_low)) {
+            row = NXT_COLOR_CALIBRATION_LOW_AMBIENT;
+        } else if (rgba->a < pbio_port_dcm_adc_to_mv(data->threshold_high)) {
+            row = NXT_COLOR_CALIBRATION_MEDIUM_AMBIENT;
+        }
+
+        // Take difference between reflection and ambient, then scale by
+        // calibration value, similar to NXT firmware.
+        calibrated->r = scale_rgb(rgba->r, rgba->a, data->calibration[row][0]);
+        calibrated->g = scale_rgb(rgba->g, rgba->a, data->calibration[row][1]);
+        calibrated->b = scale_rgb(rgba->b, rgba->a, data->calibration[row][2]);
+        calibrated->a = scale_rgb(rgba->a, 220, data->calibration[row][3] / 4);
+
+        debug_pr("Calibration row: %d because tr0: %d tr1: %d a: %d\n", row,
+            pbio_port_dcm_adc_to_mv(data->threshold_high),
+            pbio_port_dcm_adc_to_mv(data->threshold_low),
+            rgba->a);
+        debug_pr("Calibration: %d %d %d %d\n",
+            data->calibration[row][0],
+            data->calibration[row][1],
+            data->calibration[row][2],
+            data->calibration[row][3]);
+        debug_pr("old: r: %d, g: %d, b: %d, a: %d\n", rgba->r, rgba->g, rgba->b, rgba->a);
+        debug_pr("new: r: %d, g: %d, b: %d, a: %d\n", calibrated->r, calibrated->g, calibrated->b, calibrated->a);
+
+        return calibrated;
+    }
+
+    return NULL;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_EV3

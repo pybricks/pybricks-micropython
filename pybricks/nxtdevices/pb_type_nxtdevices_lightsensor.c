@@ -22,25 +22,14 @@ typedef struct _nxtdevices_LightSensor_obj_t {
     pbio_port_t *port;
 } nxtdevices_LightSensor_obj_t;
 
-static const pbio_int_math_point_t ambient_slope[] = {
-    { .x = 500, .y = 1000 },
-    { .x = 4000, .y = 0 },
-};
-
 // pybricks.nxtdevices.LightSensor.ambient
 static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_port_dcm_analog_rgba_t *rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-    return pb_obj_new_fraction(pbio_int_math_interpolate(ambient_slope, MP_ARRAY_SIZE(ambient_slope), rgba->a), 10);
+    return mp_obj_new_int(rgba->a);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
-
-static const pbio_int_math_point_t reflection_slope[] = {
-    { .x = 400, .y = 0 },
-    { .x = 900, .y = 900 },
-    { .x = 1300, .y = 1000 },
-};
 
 // pybricks.nxtdevices.LightSensor.reflection
 static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
@@ -48,11 +37,7 @@ static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
 
     pbio_port_dcm_analog_rgba_t *rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-
-    // Both values are inverted, so this really computes reflected - ambient.
-    uint32_t offset = rgba->r <= rgba->a ? rgba->a - rgba->r : 0;
-
-    return pb_obj_new_fraction(pbio_int_math_interpolate(reflection_slope, MP_ARRAY_SIZE(reflection_slope), offset), 10);
+    return mp_obj_new_int(rgba->r);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
