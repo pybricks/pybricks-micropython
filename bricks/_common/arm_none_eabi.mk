@@ -128,6 +128,14 @@ endif
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
 endif
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek
+INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/ninja
+INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include
+INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include/hw
+INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include/armv5
+INC += -I$(PBTOP)/lib/pbio/platform/ev3/osek/include/armv5/am1808
+endif
 INC += -I$(PBTOP)
 INC += -I$(BUILD)
 
@@ -151,7 +159,7 @@ ifeq ($(PB_MCU_FAMILY),AT91SAM7)
 CFLAGS_MCU = -mthumb -mthumb-interwork -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 else
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
-CFLAGS_MCU =
+CFLAGS_MCU = -mcpu=arm926ej-s -Dgcc -Dam1808 # -c -g -fdata-sections -ffunction-sections -Wall -Dgcc -Dam1808 -O0
 else
 $(error unsupported PB_MCU_FAMILY)
 endif
@@ -249,6 +257,38 @@ PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
 
 SRC_S += shared/runtime/gchelper_thumb1.s
 endif
+
+EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
+	adc_sensors.c \
+	digi_sensors.c \
+	ev3_motors.c \
+	i2c.c \
+	init.c \
+	power.c \
+	systick.c \
+	drivers/cpu.c \
+	drivers/gpio.c \
+	drivers/spi.c \
+	drivers/ecap.c \
+	drivers/interrupt.c \
+	drivers/syscfg.c \
+	drivers/ehrpwm.c \
+	drivers/psc.c \
+	drivers/timer.c \
+	ninja/adc.c \
+	ninja/gpio.c \
+	ninja/motor.c \
+	ninja/spi.c \
+	ninja/button.c \
+	ninja/led.c \
+	ninja/pininfo.c \
+	os/OSEK.c \
+	)
+
+EV3_OSEK_SRC_S = $(addprefix lib/pbio/platform/ev3/osek/,\
+	os/exceptionhandler.S \
+	os/startup.S \
+	)
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
 PY_EXTRA_SRC_C += $(addprefix bricks/ev3/,\
@@ -472,6 +512,12 @@ endif
 ifeq ($(PBIO_PLATFORM),nxt)
 OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(NXOS_SRC_S:.s=.o))
+endif
+
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+OBJ += $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_S:.S=.o))
+$(addprefix $(BUILD)/, $(EV3_OSEK_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
 endif
 
 # List of sources for qstr extraction

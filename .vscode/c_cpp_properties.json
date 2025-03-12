@@ -67,6 +67,12 @@
                 "${workspaceFolder}/bricks/ev3",
                 "${workspaceFolder}/bricks/ev3/build",
                 "${workspaceFolder}/micropython",
+                "${workspaceFolder}/lib/pbio/platform/ev3/osek",
+                "${workspaceFolder}/lib/pbio/platform/ev3/osek/ninja",
+                "${workspaceFolder}/lib/pbio/platform/ev3/osek/include",
+                "${workspaceFolder}/lib/pbio/platform/ev3/osek/include/hw",
+                "${workspaceFolder}/lib/pbio/platform/ev3/osek/include/armv5",
+                "${workspaceFolder}/lib/pbio/platform/ev3/osek/include/armv5/am1808",
             ],
             "defines": [
                 "MICROPY_MODULE_FROZEN_MPY",

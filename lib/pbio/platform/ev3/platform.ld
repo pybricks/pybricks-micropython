@@ -1,47 +1,37 @@
-/* The bootloader will look at this image and start execution at the symbol
-   designated as the entry point. */
-ENTRY(_start)
+OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
 
-/* Tell where the various sections of the object files will be put in the final
-   kernel image. */
 SECTIONS
 {
-	/* Begin putting sections at this number, taken from U-boot env */
-	. = 0xC0008000;
-	/* Begin putting sections at this number, for use with qemu */
-	/*. = 0x00010000;*/
+    . = 0xC1000000;
+    . = ALIGN(4);
+    .startcode :
+    {
+            *startup.o (.text)
+    }
+    . = ALIGN(4);
+    .text :
+    {
+            *(.text)
+    }
+    . = ALIGN(4);
+    .data : 
+    { 
+            *(.data) 
+    }
+    . = ALIGN(4);
+    _bss_start = .;
+    .bss : 
+    { 
+            *(.bss) 
+    }
+    . = ALIGN(4);
+    _bss_end = .;
+    . = ALIGN(8);
+    heap_low = .; /* for _sbrk */
+    . = . + 0x10000; /* 64 KB of heap memory */
+    heap_top = .; /* for _sbrk */
 
-	/* First put the multiboot header, as it is required to be put very early
-	   early in the image or the bootloader won't recognize the file format.
-	   Next we'll put the .text section. */
-	.text BLOCK(4K) : ALIGN(4K)
-	{
-    KEEP(*(.text.boot))
-		*(.text)
-	}
-
-	/* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
-
-	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
-
-	/* Read-write data (uninitialized) and stack */
-  __bss_start = .;
-	.bss BLOCK(4K) : ALIGN(4K)
-	{
-		*(COMMON)
-		*(.bss)
-    . += 8K;
-	}
-  __bss_end = .;
-
-	/* The compiler may produce other sections, by default it will put them in
-	   a segment with the same name. Simply add stuff here as needed. */
+    _stack = 0xC2000000; /* For initialization */
+    __system_stack__ = 0xC3000000;
 }

@@ -30,6 +30,7 @@ codeformat.EXCLUSIONS = [
     "bricks/**/build*/**",
     "lib/pbio/platform/nxt/at91sam7s256.h",
     "lib/pbio/platform/nxt/nxos/**",
+    "lib/pbio/platform/ev3/osek/**",
     "micropython/**",
     "tests/**/build/**",
 ]
