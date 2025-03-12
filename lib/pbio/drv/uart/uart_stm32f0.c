@@ -205,12 +205,9 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     }
 }
 
-// Currently not used
-void handle_exit(void) {
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32F0_NUM_UART; i++) {
-        pbdrv_uart_t *uart = &pbdrv_uart[i];
-        NVIC_DisableIRQ(uart->irq);
-    }
+void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+    NVIC_DisableIRQ(uart->irq);
 }
 
 void pbdrv_uart_init(void) {
