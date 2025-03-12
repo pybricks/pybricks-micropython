@@ -260,43 +260,44 @@ endif
 
 # Skipping uart_irda_cir.c, gpio_v2.c, and hsi2c.c usbphyGS70.c, which
 # partially overlap with uart.c, gpio.c, and i2c.c, usbphyGS70.c
-TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
-	cppi41dma.c \
-	cpsw.c \
-	cpu.c \
-	dcan.c \
-	dmtimer.c \
-	ecap.c \
-	edma.c \
-	ehrpwm.c \
-	elm.c \
-	emac.c \
-	emifa.c \
-	gpio.c \
-	gpmc.c \
-	hs_mmcsd.c \
-	i2c.c \
-	interrupt.c \
-	lan8710a.c \
-	lidd.c \
-	mailbox.c \
-	mcasp.c \
-	mcspi.c \
-	mdio.c \
-	phy.c \
-	pruss.c \
-	psc.c \
-	raster.c \
-	rtc.c \
-	spi.c \
-	syscfg.c \
-	timer.c \
-	tsc_adc.c \
-	uart.c \
-	usb.c \
-	usbphyGS60.c \
-	vpif.c \
-	watchdog.c \
+TI_AM1808_SRC_C = $(addprefix lib/tiam1808/,\
+	drivers/cppi41dma.c \
+	drivers/cpsw.c \
+	drivers/dcan.c \
+	drivers/dmtimer.c \
+	drivers/ecap.c \
+	drivers/edma.c \
+	drivers/ehrpwm.c \
+	drivers/elm.c \
+	drivers/emac.c \
+	drivers/emifa.c \
+	drivers/gpio.c \
+	drivers/gpmc.c \
+	drivers/hs_mmcsd.c \
+	drivers/i2c.c \
+	drivers/lan8710a.c \
+	drivers/lidd.c \
+	drivers/mailbox.c \
+	drivers/mcasp.c \
+	drivers/mcspi.c \
+	drivers/mdio.c \
+	drivers/phy.c \
+	drivers/pruss.c \
+	drivers/psc.c \
+	drivers/raster.c \
+	drivers/rtc.c \
+	drivers/spi.c \
+	drivers/syscfg.c \
+	drivers/timer.c \
+	drivers/tsc_adc.c \
+	drivers/uart.c \
+	drivers/usb.c \
+	drivers/usbphyGS60.c \
+	drivers/vpif.c \
+	drivers/watchdog.c \
+	system_config/armv5/gcc/cp15.c \
+	system_config/armv5/gcc/cpu.c \
+	system_config/armv5/am1808/interrupt.c \
 	)
 
 EV3_SRC_S = $(addprefix lib/pbio/platform/ev3/,\

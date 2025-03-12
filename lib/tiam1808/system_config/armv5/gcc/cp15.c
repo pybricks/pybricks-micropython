@@ -50,9 +50,9 @@
 **/
 void CP15ICacheDisable(void)
 {
-    asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
-        "    bic     r0,  r0, #0x00001000\n\t"
-        "    mcr     p15, #0, r0, c1, c0, #0");
+    __asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
+          "    bic     r0,  r0, #0x00001000\n\t"
+          "    mcr     p15, #0, r0, c1, c0, #0");
 }
 
 /**
@@ -65,9 +65,9 @@ void CP15ICacheDisable(void)
 **/
 void CP15DCacheDisable(void)
 {
-    asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
-        "    bic     r0,  r0, #0x00000004\n\t"
-        "    mcr     p15, #0, r0, c1, c0, #0");
+    __asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
+          "    bic     r0,  r0, #0x00000004\n\t"
+          "    mcr     p15, #0, r0, c1, c0, #0");
 }
 
 /**
@@ -80,9 +80,9 @@ void CP15DCacheDisable(void)
 **/
 void CP15ICacheEnable(void)
 {
-    asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
-        "    orr     r0,  r0, #0x00001000 \n\t"
-        "    mcr     p15, #0, r0, c1, c0, #0 \n\t");
+    __asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
+          "    orr     r0,  r0, #0x00001000 \n\t"
+          "    mcr     p15, #0, r0, c1, c0, #0 \n\t");
 }
 
 /**
@@ -96,9 +96,9 @@ void CP15ICacheEnable(void)
 **/
 void CP15DCacheEnable(void)
 {
-    asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
-        "    orr     r0,  r0, #0x00000004\n\t"
-        "    mcr     p15, #0, r0, c1, c0, #0");
+    __asm("    mrc     p15, #0, r0, c1, c0, #0\n\t"
+          "    orr     r0,  r0, #0x00000004\n\t"
+          "    mcr     p15, #0, r0, c1, c0, #0");
 }
 
 /**
@@ -111,8 +111,8 @@ void CP15DCacheEnable(void)
 **/
 void CP15DCacheFlush(void)
 {
-    asm( "   mov     r0, #0\n\t"   
-         "   mcr     p15, #0, r0, c7, c6, #0\n\t");
+    __asm( "   mov     r0, #0\n\t"   
+           "   mcr     p15, #0, r0, c7, c6, #0\n\t");
 }
 
 /**
@@ -126,8 +126,8 @@ void CP15DCacheFlush(void)
 **/
 void CP15DCacheClean(void)
 {
-    asm( "   clean: mrc    p15, 0, r15, c7, c10, 3\n\t"
-         "   bne clean\n\t");
+    __asm( "   clean: mrc    p15, 0, r15, c7, c10, 3\n\t"
+           "   bne clean\n\t");
 }
 /**
 * \brief      This API cleans and flushes the D-Cache. This is done  using the
@@ -140,8 +140,8 @@ void CP15DCacheClean(void)
 **/
 void CP15DCacheCleanFlush(void)
 {
-    asm( "   cleanflush: mrc    p15, 0, r15, c7, c14, 3\n\t"
-         "   bne cleanflush\n\t");
+    __asm( "   cleanflush: mrc    p15, 0, r15, c7, c14, 3\n\t"
+           "   bne cleanflush\n\t");
 }
 
 /**
@@ -154,8 +154,8 @@ void CP15DCacheCleanFlush(void)
 **/
 void CP15ICacheFlush(void)
 {
-    asm("    mov     r0, #0\n\t" 
-        "    mcr     p15, #0, r0, c7, c5, #0\n\t");
+    __asm("    mov     r0, #0\n\t" 
+          "    mcr     p15, #0, r0, c7, c5, #0\n\t");
 }
 
 /**
@@ -176,7 +176,7 @@ void CP15ICacheFlushBuff(unsigned int bufPtr, unsigned int size)
   
     while(ptr < bufPtr + size) 
     { 
-        asm("    mcr p15, #0, %[value], c7, c6, #1":: [value] "r" (ptr));
+        __asm("    mcr p15, #0, %[value], c7, c6, #1":: [value] "r" (ptr));
 
         ptr += 32;
     } 
@@ -200,7 +200,7 @@ void CP15DCacheCleanBuff(unsigned int bufPtr, unsigned int size)
 
     while(ptr < bufPtr + size)
     {
-        asm("    mcr p15, #0, %[value], c7, c10, #1":: [value] "r" (ptr));
+        __asm("    mcr p15, #0, %[value], c7, c10, #1":: [value] "r" (ptr));
 
         ptr += 32;
     }
@@ -223,15 +223,15 @@ void CP15TtbSet(unsigned int ttb)
     * in that case access controlled by permission value
     * set by page table entry
     */  
-    asm("   mov r1, #0\n\t"
-        "   mcr p15, #0, r1, c8, c7, #0\n\t"
-        "   ldr r1, =0x55555555\n\t"
-        "   mcr p15, #0, r1, c3, c0, #0\n\t");
+    __asm("   mov r1, #0\n\t"
+          "   mcr p15, #0, r1, c8, c7, #0\n\t"
+          "   ldr r1, =0x55555555\n\t"
+          "   mcr p15, #0, r1, c3, c0, #0\n\t");
   
    /* sets translation table base resgister with page table 
     * starting address.
     */ 
-    asm("   mcr p15, #0, %[value], c2, c0, 0":: [value] "r" (ttb));
+    __asm("   mcr p15, #0, %[value], c2, c0, 0":: [value] "r" (ttb));
 
 }
 
@@ -245,12 +245,12 @@ void CP15TtbSet(unsigned int ttb)
  **/
 void CP15MMUDisable(void)
 {
-    asm("    mov r0, #0\n\t"
-        "    mcr p15, #0, r0, c8, c7, #0\n\t"
-        "    mrc p15, #0, r0, c1, c0, #0\n\t"
-        "    mov r1, #0x1\n\t"       
-        "    bic r0, r0, r1\n\t"        
-        "    mcr p15, #0, r0, c1, c0, #0\n\t");
+    __asm("    mov r0, #0\n\t"
+          "    mcr p15, #0, r0, c8, c7, #0\n\t"
+          "    mrc p15, #0, r0, c1, c0, #0\n\t"
+          "    mov r1, #0x1\n\t"       
+          "    bic r0, r0, r1\n\t"        
+          "    mcr p15, #0, r0, c1, c0, #0\n\t");
 }
 
 /**
@@ -263,9 +263,9 @@ void CP15MMUDisable(void)
  **/
 void CP15MMUEnable(void)
 {
-    asm("    mrc p15, #0, r0, c1, c0, #0\n\t"
-        "    orr r0, r0, #0x00000001\n\t"
-        "    mcr p15, #0, r0, c1, c0, #0\n\t");
+    __asm("    mrc p15, #0, r0, c1, c0, #0\n\t"
+          "    orr r0, r0, #0x00000001\n\t"
+          "    mcr p15, #0, r0, c1, c0, #0\n\t");
 }
 
 /********************************* End Of File *******************************/
