@@ -10,6 +10,10 @@
 
 /** Official LEGO USB Vendor ID. */
 #define LEGO_USB_VID 0x0694
+/** Official LEGO USB Product ID for MINDSTORMS EV3. */
+#define LEGO_USB_PID_EV3 0x0005
+/** Official LEGO USB Product ID for MINDSTORMS EV3. */
+#define LEGO_USB_PID_EV3_UPDATE 0x0006
 /** Official LEGO USB Product ID for SPIKE Prime in DFU mode. */
 #define LEGO_USB_PID_SPIKE_PRIME_DFU 0x0008
 /** Official LEGO USB Product ID for SPIKE Prime. */
@@ -25,6 +29,8 @@
 
 /** Official LEGO USB Manufacturer String. */
 #define LEGO_USB_MFG_STR "LEGO System A/S"
+/** Official LEGO USB Product String for MINDSTORMS EV3. */
+#define LEGO_USB_PROD_STR_EV3 "LEGO MINDSTORMS EV3"
 /** Official LEGO USB Product String for SPIKE Prime and MINDSTORMS Robot Inventor. */
 #define LEGO_USB_PROD_STR_TECHNIC_LARGE_HUB "LEGO Technic Large Hub"
 /** Official LEGO USB Product String for SPIKE Essential. */

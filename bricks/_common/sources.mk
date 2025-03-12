@@ -188,6 +188,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/usb_stm32.c \
+	drv/usb/usb_ev3.c \
 	drv/virtual.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \

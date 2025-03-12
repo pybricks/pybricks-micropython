@@ -69,3 +69,10 @@
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)
+
+#define PBDRV_CONFIG_USB                            (1)
+#define PBDRV_CONFIG_USB_EV3                        (1)
+#define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
+#define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_EV3
+#define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
+#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_EV3 " + Pybricks"
