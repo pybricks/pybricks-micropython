@@ -31,7 +31,7 @@ button_info buttons[] = {
 * \return The state of the button (BUTTON_DOWN = 0x01 if the button is pressed, BUTTON_UP = 0x00 otherwise)
 **/
 button_state button_get_state (button_id button) {
-    if (button >= BUTTON_LEFT && button <= BUTTON_BACK)
+    if (/*button >= BUTTON_LEFT &&*/ button <= BUTTON_BACK)
         return gpio_get(buttons[button].pin);
     else
         return BUTTON_UP;

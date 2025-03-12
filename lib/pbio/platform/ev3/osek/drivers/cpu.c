@@ -55,7 +55,7 @@
  **/
 void CPUSwitchToPrivilegedMode(void)
 {
-    asm("    SWI   458752");
+    __asm("    SWI   458752");
 }
 
 /**
@@ -74,10 +74,10 @@ void CPUSwitchToPrivilegedMode(void)
  **/
 void CPUSwitchToUserMode(void)
 {
-    asm("    mrs     r0, CPSR\n\t"
-        "    bic     r0, #0x0F\n\t"
-        "    orr     r0, #0x10\n\t "
-        "    msr     CPSR, r0");
+    __asm("    mrs     r0, CPSR\n\t"
+          "    bic     r0, #0x0F\n\t"
+          "    orr     r0, #0x10\n\t "
+          "    msr     CPSR, r0");
 }
 
 /**
@@ -107,8 +107,8 @@ unsigned int CPUIntStatus(void)
     unsigned int stat;
 
     /* IRQ and FIQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    and     %[result], r0, #0xC0" : [result] "=r" (stat));
+    __asm("    mrs     r0, CPSR\n\t"
+          "    and     %[result], r0, #0xC0" : [result] "=r" (stat));
     
     return stat;
 }
@@ -121,9 +121,9 @@ unsigned int CPUIntStatus(void)
 void CPUirqd(void)
 {
     /* Disable IRQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    orr     r0, #0x80\n\t"
-        "    msr     CPSR, r0");
+    __asm("    mrs     r0, CPSR\n\t"
+          "    orr     r0, #0x80\n\t"
+          "    msr     CPSR, r0");
 }
 
 /*
@@ -134,9 +134,9 @@ void CPUirqd(void)
 void CPUirqe(void)
 {
     /* Enable IRQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    bic     r0, #0x80\n\t"
-        "    msr     CPSR, r0");
+    __asm("    mrs     r0, CPSR\n\t"
+          "    bic     r0, #0x80\n\t"
+          "    msr     CPSR, r0");
 }
 
 /*
@@ -147,9 +147,9 @@ void CPUirqe(void)
 void CPUfiqd(void)
 {
     /* Disable FIQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    orr     r0, #0x40\n\t"
-        "    msr     CPSR, r0");
+    __asm("    mrs     r0, CPSR\n\t"
+          "    orr     r0, #0x40\n\t"
+          "    msr     CPSR, r0");
 }
 
 /*
@@ -160,9 +160,9 @@ void CPUfiqd(void)
 void CPUfiqe(void)
 {
     /* Enable FIQ in CPSR */
-    asm("    mrs     r0, CPSR\n\t"
-        "    bic     r0, #0x40\n\t"
-        "    msr     CPSR, r0");
+    __asm("    mrs     r0, CPSR\n\t"
+          "    bic     r0, #0x40\n\t"
+          "    msr     CPSR, r0");
 }
 
 /**************************** End Of File ************************************/

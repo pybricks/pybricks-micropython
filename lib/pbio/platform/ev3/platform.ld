@@ -1,9 +1,11 @@
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 
+ENTRY(Entry)
+
 SECTIONS
 {
-    . = 0xC1000000;
+	. = 0xC0008000;
     . = ALIGN(4);
     .startcode :
     {

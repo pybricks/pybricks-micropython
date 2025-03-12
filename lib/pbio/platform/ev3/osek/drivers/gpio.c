@@ -40,7 +40,7 @@
 
 
 /* Driver APIs */
-#include "gpio.h"
+#include "../include/gpio.h"
 #include "hw_types.h"
 
 

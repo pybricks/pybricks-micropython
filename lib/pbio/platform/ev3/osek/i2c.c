@@ -597,14 +597,14 @@ int i2c_start_transaction(int port, U32 address, int internal_address, int n_int
                     continue;
             }
             
-            for (int i = 0; i < nbytes; ++i) {
+            for (U32 i = 0; i < nbytes; ++i) {
                 // Read 1 Byte
                 U8 byte = i2c_read_byte(p);
                 *(data + i) = byte;
             }
         }
         else { // Write to the slave
-            for (int i = 0; i < nbytes; ++i) {
+            for (U32 i = 0; i < nbytes; ++i) {
                 // Write one byte
                 ack = i2c_write_byte(p, *(data + i));
                 if (ack == 1) {

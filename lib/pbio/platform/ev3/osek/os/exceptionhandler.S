@@ -118,7 +118,7 @@ IRQHandler:
         
         LDMFD    r13!, {r0-r12}                 @ Restore registers from IRQ stack
         
-        LDR      lr, =dispatch_irq
+@* //      LDR      lr, =dispatch_irq
         MOVS     pc, lr                         @ MOVS = Return from exception (i.e. change back to system mode)
         
 SkipButtons:
