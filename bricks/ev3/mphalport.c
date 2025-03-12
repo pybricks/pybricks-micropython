@@ -17,12 +17,10 @@
 #include "py/stream.h"
 
 void pb_stack_get_info(char **sstack, char **estack) {
-
-    volatile int stack_dummy;
-    // extern uint32_t _estack;
-    // extern uint32_t _sstack;
-    *sstack = (char *)&stack_dummy;
-    *estack = *sstack + 1024 * 64;
+    extern uint32_t _estack;
+    extern uint32_t _sstack;
+    *sstack = (char *)&_sstack;
+    *estack = (char *)&_estack;
 }
 
 static inline int arm_wfi(void) {
