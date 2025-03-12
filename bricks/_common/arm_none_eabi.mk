@@ -259,17 +259,7 @@ SRC_S += shared/runtime/gchelper_thumb1.s
 endif
 
 EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
-	adc_sensors.c \
-	digi_sensors.c \
-	ev3_motors.c \
-	i2c.c \
 	init.c \
-	power.c \
-	ninja/adc.c \
-	ninja/gpio.c \
-	ninja/motor.c \
-	ninja/spi.c \
-	ninja/pininfo.c \
 	os/OSEK.c \
 	)
 
