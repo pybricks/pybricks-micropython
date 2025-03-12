@@ -71,8 +71,8 @@
  * \internal Structure used for holding an argument buffer.
  */
 struct argbuf {
-  char buf[128];
-  char used;
+    char buf[128];
+    char used;
 };
 
 static struct argbuf bufs[1];
@@ -83,9 +83,8 @@ static struct argbuf bufs[1];
  */
 /*-----------------------------------------------------------------------------------*/
 void
-arg_init(void)
-{
-  bufs[0].used = 0;
+arg_init(void) {
+    bufs[0].used = 0;
 }
 /*-----------------------------------------------------------------------------------*/
 /**
@@ -102,13 +101,12 @@ arg_init(void)
  */
 /*-----------------------------------------------------------------------------------*/
 char *
-arg_alloc(char size)
-{
-  if(bufs[0].used == 0) {
-    bufs[0].used = 1;
-    return bufs[0].buf;
-  }
-  return 0;
+arg_alloc(char size) {
+    if (bufs[0].used == 0) {
+        bufs[0].used = 1;
+        return bufs[0].buf;
+    }
+    return 0;
 }
 /*-----------------------------------------------------------------------------------*/
 /**
@@ -123,11 +121,10 @@ arg_alloc(char size)
  */
 /*-----------------------------------------------------------------------------------*/
 void
-arg_free(char *arg)
-{
-  if(arg == bufs[0].buf) {
-    bufs[0].used = 0;
-  }
+arg_free(char *arg) {
+    if (arg == bufs[0].buf) {
+        bufs[0].used = 0;
+    }
 }
 /*-----------------------------------------------------------------------------------*/
 /** @} */

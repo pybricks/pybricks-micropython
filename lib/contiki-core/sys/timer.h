@@ -85,8 +85,8 @@
  * \hideinitializer
  */
 struct timer {
-  clock_time_t start;
-  clock_time_t interval;
+    clock_time_t start;
+    clock_time_t interval;
 };
 
 CCIF void timer_set(struct timer *t, clock_time_t interval);

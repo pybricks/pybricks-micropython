@@ -213,7 +213,7 @@
 /**
  * \brief cross-platform method to get the maximum clock_time_t value
  */
-#define TRICKLE_TIMER_CLOCK_MAX ((clock_time_t)~0)
+#define TRICKLE_TIMER_CLOCK_MAX ((clock_time_t) ~0)
 
 
 /**
@@ -225,7 +225,7 @@
  * \retval 0 Suppression is disabled
  */
 #define TRICKLE_TIMER_SUPPRESSION_ENABLED(tt) \
-  ((tt)->k != TRICKLE_TIMER_INFINITE_REDUNDANCY)
+    ((tt)->k != TRICKLE_TIMER_INFINITE_REDUNDANCY)
 
 /**
  * \brief Checks if the trickle timer's suppression feature is disabled
@@ -236,7 +236,7 @@
  * \retval 0 Suppression is enabled
  */
 #define TRICKLE_TIMER_SUPPRESSION_DISABLED(tt) \
-  ((tt)->k == TRICKLE_TIMER_INFINITE_REDUNDANCY)
+    ((tt)->k == TRICKLE_TIMER_INFINITE_REDUNDANCY)
 
 /**
  * \brief Determines whether the protocol must go ahead with a transmission
@@ -247,7 +247,7 @@
  * \retval 0 Suppress
  */
 #define TRICKLE_TIMER_PROTO_TX_ALLOW(tt) \
-  (TRICKLE_TIMER_SUPPRESSION_DISABLED(tt) || ((tt)->c < (tt)->k))
+    (TRICKLE_TIMER_SUPPRESSION_DISABLED(tt) || ((tt)->c < (tt)->k))
 
 /**
  * \brief Determines whether the protocol must suppress a transmission
@@ -258,7 +258,7 @@
  * \retval 0 Go ahead with TX
  */
 #define TRICKLE_TIMER_PROTO_TX_SUPPRESS(tt) \
-  (TRICKLE_TIMER_SUPPRESSION_ENABLED(tt) && ((tt)->c >= (tt)->k))
+    (TRICKLE_TIMER_SUPPRESSION_ENABLED(tt) && ((tt)->c >= (tt)->k))
 
 /**
  * \brief Returns a timer's maximum interval size (Imin << Imax) as a number of
@@ -290,7 +290,7 @@
  * \retval 0 The Imin value is invalid
  */
 #define TRICKLE_TIMER_IMIN_IS_OK(imin) \
-  ((imin > 1) && (i_min <= (TRICKLE_TIMER_CLOCK_MAX >> 1)))
+    ((imin > 1) && (i_min <= (TRICKLE_TIMER_CLOCK_MAX >> 1)))
 
 /**
  * \brief Checks whether an Imin value is invalid considering the various
@@ -302,7 +302,7 @@
  * \retval 0 The Imin value is valid
  */
 #define TRICKLE_TIMER_IMIN_IS_BAD(imin) \
-  ((imin < 2) || (i_min > (TRICKLE_TIMER_CLOCK_MAX >> 1)))
+    ((imin < 2) || (i_min > (TRICKLE_TIMER_CLOCK_MAX >> 1)))
 
 /**
  * \brief Checks whether Imin << Imax is unsuitable considering the boundaries
@@ -319,7 +319,7 @@
  * Thus, we limit Imin << Imax to be LEQ(TRICKLE_TIMER_CLOCK_MAX >> 1) + 1
  */
 #define TRICKLE_TIMER_IPAIR_IS_BAD(i_min, i_max) \
-  ((TRICKLE_TIMER_CLOCK_MAX >> (i_max + 1)) < i_min - 1)
+    ((TRICKLE_TIMER_CLOCK_MAX >> (i_max + 1)) < i_min - 1)
 /** @} */
 /*---------------------------------------------------------------------------*/
 /* Trickle Timer Library Data Representation */
@@ -344,7 +344,7 @@
  * The \e suppress argument is used so that the library can signal the protocol
  * whether it should TX or suppress
  */
-typedef void (* trickle_timer_cb_t)(void *ptr, uint8_t suppress);
+typedef void (*trickle_timer_cb_t)(void *ptr, uint8_t suppress);
 
 /**
  * \struct trickle_timer
@@ -361,22 +361,22 @@ typedef void (* trickle_timer_cb_t)(void *ptr, uint8_t suppress);
  * boundaries of clock_time_t
  */
 struct trickle_timer {
-  clock_time_t i_min;     /**< Imin: Clock ticks */
-  clock_time_t i_cur;     /**< I: Current interval in clock_ticks */
-  clock_time_t i_start;   /**< Start of this interval (absolute clock_time) */
-  clock_time_t i_max_abs; /**< Maximum interval size in clock ticks (and not in
+    clock_time_t i_min;   /**< Imin: Clock ticks */
+    clock_time_t i_cur;   /**< I: Current interval in clock_ticks */
+    clock_time_t i_start; /**< Start of this interval (absolute clock_time) */
+    clock_time_t i_max_abs; /**< Maximum interval size in clock ticks (and not in
                                number of doublings). This is a cached value of
                                Imin << Imax used internally, so that we can
                                have direct access to the maximum interval size
                                without having to calculate it all the time */
-  struct ctimer ct;       /**< A \ref ctimer used internally */
-  trickle_timer_cb_t cb;  /**< Protocol's own callback, invoked at time t
+    struct ctimer ct;     /**< A \ref ctimer used internally */
+    trickle_timer_cb_t cb; /**< Protocol's own callback, invoked at time t
                                within the current interval */
-  void *cb_arg;           /**< Opaque pointer to be used as the argument of the
+    void *cb_arg;         /**< Opaque pointer to be used as the argument of the
                                protocol's callback */
-  uint8_t i_max;          /**< Imax: Max number of doublings */
-  uint8_t k;              /**< k: Redundancy Constant */
-  uint8_t c;              /**< c: Consistency Counter */
+    uint8_t i_max;        /**< Imax: Max number of doublings */
+    uint8_t k;            /**< k: Redundancy Constant */
+    uint8_t c;            /**< c: Consistency Counter */
 };
 /** @} */
 /*---------------------------------------------------------------------------*/
@@ -411,7 +411,7 @@ struct trickle_timer {
  * consequences of this situation
  */
 uint8_t trickle_timer_config(struct trickle_timer *tt, clock_time_t i_min,
-                             uint8_t i_max, uint8_t k);
+    uint8_t i_max, uint8_t k);
 
 /**
  * \brief           Start a previously configured trickle timer
@@ -431,7 +431,7 @@ uint8_t trickle_timer_config(struct trickle_timer *tt, clock_time_t i_min,
  * trickle_timer_config() before calling this function.
  */
 uint8_t trickle_timer_set(struct trickle_timer *tt,
-                          trickle_timer_cb_t proto_cb, void *ptr);
+    trickle_timer_cb_t proto_cb, void *ptr);
 
 /**
  * \brief      Stop a running trickle timer.
@@ -448,9 +448,9 @@ uint8_t trickle_timer_set(struct trickle_timer *tt,
  * the corresponding functions must be used
  */
 #define trickle_timer_stop(tt) do { \
-  ctimer_stop(&((tt)->ct)); \
-  (tt)->i_cur = TRICKLE_TIMER_IS_STOPPED; \
-} while(0)
+        ctimer_stop(&((tt)->ct)); \
+        (tt)->i_cur = TRICKLE_TIMER_IS_STOPPED; \
+} while (0)
 
 /**
  * \brief      To be called by the protocol when it hears a consistent

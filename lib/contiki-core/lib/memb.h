@@ -87,17 +87,17 @@ MEMB(connections, struct connection, 16);
  *
  */
 #define MEMB(name, structure, num) \
-        static char CC_CONCAT(name,_memb_count)[num]; \
-        static structure CC_CONCAT(name,_memb_mem)[num]; \
-        static struct memb name = {sizeof(structure), num, \
-                                          CC_CONCAT(name,_memb_count), \
-                                          (void *)CC_CONCAT(name,_memb_mem)}
+    static char CC_CONCAT(name, _memb_count)[num]; \
+    static structure CC_CONCAT(name, _memb_mem)[num]; \
+    static struct memb name = {sizeof(structure), num, \
+                               CC_CONCAT(name, _memb_count), \
+                               (void *)CC_CONCAT(name, _memb_mem)}
 
 struct memb {
-  unsigned short size;
-  unsigned short num;
-  char *count;
-  void *mem;
+    unsigned short size;
+    unsigned short num;
+    char *count;
+    void *mem;
 };
 
 /**

@@ -58,70 +58,70 @@ static const unsigned char GCR_decode[32] = {
     0xff, 0x0f, 0x06, 0x07, // 14 invalid...
     0xff, 0x09, 0x0a, 0x0b, // 18 invalid...
     0xff, 0x0d, 0x0e, 0xff, // 1c, 1f invalid...
-  };
+};
 
 static unsigned char gcr_bits = 0;
 static unsigned short gcr_val = 0;
 
 /* Call before starting encoding or decoding */
 void gcr_init(void) {
-  gcr_val = 0;
-  gcr_bits = 0;
+    gcr_val = 0;
+    gcr_bits = 0;
 }
 
 /* Use this to check if encoding / decoding is complete for now */
 unsigned char gcr_finished(void) {
-  return gcr_bits == 0;
+    return gcr_bits == 0;
 }
 
 /* Encode one character - and store in bits - get encoded with get_encoded */
 void gcr_encode(unsigned char raw_data) {
-  gcr_val |=
-    ((GCR_encode[raw_data >> 4u] << 5u ) |
-     GCR_encode[raw_data & 0xf]) << gcr_bits;
-  gcr_bits += 10;
+    gcr_val |=
+        ((GCR_encode[raw_data >> 4u] << 5u) |
+            GCR_encode[raw_data & 0xf]) << gcr_bits;
+    gcr_bits += 10;
 }
 
 /* Gets the current char of the encoded stream */
 unsigned char gcr_get_encoded(unsigned char *raw_data) {
-  if (gcr_bits >= 8) {
-    *raw_data = (unsigned char) (gcr_val & 0xff);
-    gcr_val = gcr_val >> 8u;
-    gcr_bits = gcr_bits - 8;
-    return 1;
-  }
-  return 0;
+    if (gcr_bits >= 8) {
+        *raw_data = (unsigned char)(gcr_val & 0xff);
+        gcr_val = gcr_val >> 8u;
+        gcr_bits = gcr_bits - 8;
+        return 1;
+    }
+    return 0;
 }
 
 /* Decode one char - result can be get from get_decoded */
 void gcr_decode(unsigned char gcr_data) {
-  gcr_val |= gcr_data << gcr_bits;
-  gcr_bits += 8;
+    gcr_val |= gcr_data << gcr_bits;
+    gcr_bits += 8;
 }
 
 /* check if the current decoded stream is correct */
 unsigned char gcr_valid(void) {
-  if (gcr_bits >= 10) {
-    unsigned short val = gcr_val & 0x3ff;
-    if ((GCR_decode[val >> 5u] << 4u) == 0xff ||
-	(GCR_decode[val & 0x1f]) == 0xff) {
-      return 0;
+    if (gcr_bits >= 10) {
+        unsigned short val = gcr_val & 0x3ff;
+        if ((GCR_decode[val >> 5u] << 4u) == 0xff ||
+            (GCR_decode[val & 0x1f]) == 0xff) {
+            return 0;
+        }
     }
-  }
-  return 1;
+    return 1;
 }
 
 /* gets the decoded stream - if any char is available */
 unsigned char gcr_get_decoded(unsigned char *raw_data) {
-  if (gcr_bits >= 10) {
-    unsigned short val = gcr_val & 0x3ff;
-    *raw_data = (unsigned char) ((GCR_decode[val >> 5] << 4) |
-				 (GCR_decode[val & 0x1f]));
-    gcr_val = gcr_val >> 10;
-    gcr_bits = gcr_bits - 10;
-    return 1;
-  }
-  return 0;
+    if (gcr_bits >= 10) {
+        unsigned short val = gcr_val & 0x3ff;
+        *raw_data = (unsigned char)((GCR_decode[val >> 5] << 4) |
+            (GCR_decode[val & 0x1f]));
+        gcr_val = gcr_val >> 10;
+        gcr_bits = gcr_bits - 10;
+        return 1;
+    }
+    return 0;
 }
 
 /*

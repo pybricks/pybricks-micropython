@@ -66,11 +66,11 @@
  *
  */
 struct ringbuf {
-  uint8_t *data;
-  uint8_t mask;
+    uint8_t *data;
+    uint8_t mask;
 
-  /* XXX these must be 8-bit quantities to avoid race conditions. */
-  uint8_t put_ptr, get_ptr;
+    /* XXX these must be 8-bit quantities to avoid race conditions. */
+    uint8_t put_ptr, get_ptr;
 };
 
 /**
@@ -87,7 +87,7 @@ struct ringbuf {
  *
  */
 void    ringbuf_init(struct ringbuf *r, uint8_t *a,
-		     uint8_t size_power_of_two);
+    uint8_t size_power_of_two);
 
 /**
  * \brief      Insert a byte into the ring buffer

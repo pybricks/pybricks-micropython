@@ -58,7 +58,7 @@
 #include "sys/cc.h"
 
 typedef unsigned char process_event_t;
-typedef void *        process_data_t;
+typedef void *process_data_t;
 typedef unsigned char process_num_events_t;
 
 /**
@@ -219,10 +219,10 @@ typedef unsigned char process_num_events_t;
  *
  * \hideinitializer
  */
-#define PROCESS_PAUSE()             do {				\
-  process_post(PROCESS_CURRENT(), PROCESS_EVENT_CONTINUE, NULL);	\
-  PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);               \
-} while(0)
+#define PROCESS_PAUSE()             do {                                \
+        process_post(PROCESS_CURRENT(), PROCESS_EVENT_CONTINUE, NULL);        \
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);               \
+} while (0)
 
 /** @} end of protothread functions */
 
@@ -240,7 +240,7 @@ typedef unsigned char process_num_events_t;
  *
  * \hideinitializer
  */
-#define PROCESS_POLLHANDLER(handler) if(ev == PROCESS_EVENT_POLL) { handler; }
+#define PROCESS_POLLHANDLER(handler) if (ev == PROCESS_EVENT_POLL) { handler; }
 
 /**
  * Specify an action when a process exits.
@@ -252,7 +252,7 @@ typedef unsigned char process_num_events_t;
  *
  * \hideinitializer
  */
-#define PROCESS_EXITHANDLER(handler) if(ev == PROCESS_EVENT_EXIT) { handler; }
+#define PROCESS_EXITHANDLER(handler) if (ev == PROCESS_EVENT_EXIT) { handler; }
 
 /** @} */
 
@@ -271,10 +271,10 @@ typedef unsigned char process_num_events_t;
  *
  * \hideinitializer
  */
-#define PROCESS_THREAD(name, ev, data) 				\
-static PT_THREAD(process_thread_##name(struct pt *process_pt,	\
-				       process_event_t ev,	\
-				       process_data_t data))
+#define PROCESS_THREAD(name, ev, data)                          \
+    static PT_THREAD(process_thread_##name(struct pt *process_pt,   \
+    process_event_t ev,      \
+    process_data_t data))
 
 /**
  * Declare the name of a process.
@@ -300,32 +300,32 @@ static PT_THREAD(process_thread_##name(struct pt *process_pt,	\
  * \hideinitializer
  */
 #if PROCESS_CONF_NO_PROCESS_NAMES
-#define PROCESS(name, strname)				\
-  PROCESS_THREAD(name, ev, data);			\
-  struct process name = { NULL,		        \
-                          process_thread_##name, \
-                          { }, 0, 0 }
+#define PROCESS(name, strname)                          \
+    PROCESS_THREAD(name, ev, data);                       \
+    struct process name = { NULL,                 \
+                            process_thread_##name, \
+                            { }, 0, 0 }
 #else
-#define PROCESS(name, strname)				\
-  PROCESS_THREAD(name, ev, data);			\
-  struct process name = { NULL, strname,		\
-                          process_thread_##name, \
-                          { }, 0, 0 }
+#define PROCESS(name, strname)                          \
+    PROCESS_THREAD(name, ev, data);                       \
+    struct process name = { NULL, strname,                \
+                            process_thread_##name, \
+                            { }, 0, 0 }
 #endif
 
 /** @} */
 
 struct process {
-  struct process *next;
-#if PROCESS_CONF_NO_PROCESS_NAMES
+    struct process *next;
+    #if PROCESS_CONF_NO_PROCESS_NAMES
 #define PROCESS_NAME_STRING(process) ""
-#else
-  const char *name;
+    #else
+    const char *name;
 #define PROCESS_NAME_STRING(process) (process)->name
-#endif
-  PT_THREAD((* thread)(struct pt *, process_event_t, process_data_t));
-  struct pt pt;
-  unsigned char state, needspoll;
+    #endif
+    PT_THREAD((*thread)(struct pt *, process_event_t, process_data_t));
+    struct pt pt;
+    unsigned char state, needspoll;
 };
 
 /**
@@ -374,7 +374,7 @@ CCIF int process_post(struct process *p, process_event_t ev, process_data_t data
  * with the event.
  */
 CCIF void process_post_synch(struct process *p,
-			     process_event_t ev, process_data_t data);
+    process_event_t ev, process_data_t data);
 
 /**
  * \brief      Cause a process to exit
@@ -422,9 +422,9 @@ CCIF extern struct process *process_current;
  * \sa PROCESS_CONTEXT_END()
  * \sa PROCESS_CURRENT()
  */
-#define PROCESS_CONTEXT_BEGIN(p) {\
-struct process *tmp_current = PROCESS_CURRENT();\
-process_current = p
+#define PROCESS_CONTEXT_BEGIN(p) { \
+        struct process *tmp_current = PROCESS_CURRENT(); \
+        process_current = p
 
 /**
  * End a context switch

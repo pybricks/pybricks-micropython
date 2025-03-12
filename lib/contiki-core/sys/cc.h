@@ -110,9 +110,9 @@
  * Configure if the C compiler supports the assignment of struct value.
  */
 #ifdef CC_CONF_ASSIGN_AGGREGATE
-#define CC_ASSIGN_AGGREGATE(dest, src)	CC_CONF_ASSIGN_AGGREGATE(dest, src)
+#define CC_ASSIGN_AGGREGATE(dest, src)  CC_CONF_ASSIGN_AGGREGATE(dest, src)
 #else /* CC_CONF_ASSIGN_AGGREGATE */
-#define CC_ASSIGN_AGGREGATE(dest, src)	*dest = *src
+#define CC_ASSIGN_AGGREGATE(dest, src)  *dest = *src
 #endif /* CC_CONF_ASSIGN_AGGREGATE */
 
 #if CC_CONF_NO_VA_ARGS

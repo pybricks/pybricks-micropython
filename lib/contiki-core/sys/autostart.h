@@ -43,16 +43,16 @@
 
 #include "sys/process.h"
 
-#if ! CC_NO_VA_ARGS
+#if !CC_NO_VA_ARGS
 #if AUTOSTART_ENABLE
 
-CLIF extern struct process * const autostart_processes[];
+CLIF extern struct process *const autostart_processes[];
 
-#define AUTOSTART_PROCESSES(...)					\
-struct process * const autostart_processes[] = {__VA_ARGS__, NULL}
+#define AUTOSTART_PROCESSES(...)                                        \
+    struct process *const autostart_processes[] = {__VA_ARGS__, NULL}
 
-void autostart_start(struct process * const processes[]);
-void autostart_exit(struct process * const processes[]);
+void autostart_start(struct process *const processes[]);
+void autostart_exit(struct process *const processes[]);
 
 #else /* AUTOSTART_ENABLE */
 

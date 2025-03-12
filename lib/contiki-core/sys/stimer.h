@@ -80,8 +80,8 @@
  * \hideinitializer
  */
 struct stimer {
-  unsigned long start;
-  unsigned long interval;
+    unsigned long start;
+    unsigned long interval;
 };
 
 void stimer_set(struct stimer *t, unsigned long interval);

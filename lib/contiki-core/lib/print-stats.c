@@ -46,42 +46,41 @@
 
 #ifdef __AVR__
 #include <avr/pgmspace.h>
-#define PRINTA(FORMAT,args...) printf_P(PSTR(FORMAT),##args)
+#define PRINTA(FORMAT, args ...) printf_P(PSTR(FORMAT),##args)
 #else
 #define PRINTA(...) printf(__VA_ARGS__)
 #endif
 
 /*---------------------------------------------------------------------------*/
 void
-print_stats(void)
-{
-#if RIMESTATS_CONF_ENABLED
-  PRINTA("S %d.%d clock %lu tx %lu rx %lu rtx %lu rrx %lu rexmit %lu acktx %lu noacktx %lu ackrx %lu timedout %lu badackrx %lu toolong %lu tooshort %lu badsynch %lu badcrc %lu contentiondrop %lu sendingdrop %lu lltx %lu llrx %lu\n",
-	 linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1],
-	 clock_seconds(),
-	 RIMESTATS_GET(tx), RIMESTATS_GET(rx),
-	 RIMESTATS_GET(reliabletx), RIMESTATS_GET(reliablerx),
-	 RIMESTATS_GET(rexmit), RIMESTATS_GET(acktx), RIMESTATS_GET(noacktx),
-	 RIMESTATS_GET(ackrx), RIMESTATS_GET(timedout), RIMESTATS_GET(badackrx),
-	 RIMESTATS_GET(toolong), RIMESTATS_GET(tooshort),
-	 RIMESTATS_GET(badsynch), RIMESTATS_GET(badcrc),
-	 RIMESTATS_GET(contentiondrop), RIMESTATS_GET(sendingdrop),
-	 RIMESTATS_GET(lltx), RIMESTATS_GET(llrx));
-#endif /* RIMESTATS_CONF_ENABLED */
-#if ENERGEST_CONF_ON
-  PRINTA("E %d.%d clock %lu cpu %lu lpm %lu irq %lu gled %lu yled %lu rled %lu tx %lu listen %lu sensors %lu serial %lu\n",
-	 linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1],
-	 clock_seconds(),
-	 energest_total_time[ENERGEST_TYPE_CPU].current,
-	 energest_total_time[ENERGEST_TYPE_LPM].current,
-	 energest_total_time[ENERGEST_TYPE_IRQ].current,
-	 energest_total_time[ENERGEST_TYPE_LED_GREEN].current,
-	 energest_total_time[ENERGEST_TYPE_LED_YELLOW].current,
-	 energest_total_time[ENERGEST_TYPE_LED_RED].current,
-	 energest_total_time[ENERGEST_TYPE_TRANSMIT].current,
-	 energest_total_time[ENERGEST_TYPE_LISTEN].current,
-	 energest_total_time[ENERGEST_TYPE_SENSORS].current,
-	 energest_total_time[ENERGEST_TYPE_SERIAL].current);
-#endif /* ENERGEST_CONF_ON */
+print_stats(void) {
+    #if RIMESTATS_CONF_ENABLED
+    PRINTA("S %d.%d clock %lu tx %lu rx %lu rtx %lu rrx %lu rexmit %lu acktx %lu noacktx %lu ackrx %lu timedout %lu badackrx %lu toolong %lu tooshort %lu badsynch %lu badcrc %lu contentiondrop %lu sendingdrop %lu lltx %lu llrx %lu\n",
+        linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1],
+        clock_seconds(),
+        RIMESTATS_GET(tx), RIMESTATS_GET(rx),
+        RIMESTATS_GET(reliabletx), RIMESTATS_GET(reliablerx),
+        RIMESTATS_GET(rexmit), RIMESTATS_GET(acktx), RIMESTATS_GET(noacktx),
+        RIMESTATS_GET(ackrx), RIMESTATS_GET(timedout), RIMESTATS_GET(badackrx),
+        RIMESTATS_GET(toolong), RIMESTATS_GET(tooshort),
+        RIMESTATS_GET(badsynch), RIMESTATS_GET(badcrc),
+        RIMESTATS_GET(contentiondrop), RIMESTATS_GET(sendingdrop),
+        RIMESTATS_GET(lltx), RIMESTATS_GET(llrx));
+    #endif /* RIMESTATS_CONF_ENABLED */
+    #if ENERGEST_CONF_ON
+    PRINTA("E %d.%d clock %lu cpu %lu lpm %lu irq %lu gled %lu yled %lu rled %lu tx %lu listen %lu sensors %lu serial %lu\n",
+        linkaddr_node_addr.u8[0], linkaddr_node_addr.u8[1],
+        clock_seconds(),
+        energest_total_time[ENERGEST_TYPE_CPU].current,
+        energest_total_time[ENERGEST_TYPE_LPM].current,
+        energest_total_time[ENERGEST_TYPE_IRQ].current,
+        energest_total_time[ENERGEST_TYPE_LED_GREEN].current,
+        energest_total_time[ENERGEST_TYPE_LED_YELLOW].current,
+        energest_total_time[ENERGEST_TYPE_LED_RED].current,
+        energest_total_time[ENERGEST_TYPE_TRANSMIT].current,
+        energest_total_time[ENERGEST_TYPE_LISTEN].current,
+        energest_total_time[ENERGEST_TYPE_SENSORS].current,
+        energest_total_time[ENERGEST_TYPE_SERIAL].current);
+    #endif /* ENERGEST_CONF_ON */
 }
 /*---------------------------------------------------------------------------*/

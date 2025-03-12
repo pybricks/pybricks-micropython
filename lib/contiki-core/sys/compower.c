@@ -52,48 +52,43 @@ struct compower_activity compower_idle_activity;
 
 /*---------------------------------------------------------------------------*/
 void
-compower_init(void)
-{
-  compower_clear(&compower_idle_activity);
+compower_init(void) {
+    compower_clear(&compower_idle_activity);
 }
 /*---------------------------------------------------------------------------*/
 void
-compower_accumulate(struct compower_activity *e)
-{
-  static uint32_t last_listen, last_transmit;
-  uint32_t listen, transmit;
+compower_accumulate(struct compower_activity *e) {
+    static uint32_t last_listen, last_transmit;
+    uint32_t listen, transmit;
 
-  energest_flush();
+    energest_flush();
 
-  listen = energest_type_time(ENERGEST_TYPE_LISTEN);
-  e->listen += listen - last_listen;
-  last_listen = listen;
+    listen = energest_type_time(ENERGEST_TYPE_LISTEN);
+    e->listen += listen - last_listen;
+    last_listen = listen;
 
-  transmit = energest_type_time(ENERGEST_TYPE_TRANSMIT);
-  e->transmit += transmit - last_transmit;
-  last_transmit = transmit;
+    transmit = energest_type_time(ENERGEST_TYPE_TRANSMIT);
+    e->transmit += transmit - last_transmit;
+    last_transmit = transmit;
 }
 /*---------------------------------------------------------------------------*/
 void
-compower_clear(struct compower_activity *e)
-{
-  e->listen = e->transmit = 0;
+compower_clear(struct compower_activity *e) {
+    e->listen = e->transmit = 0;
 }
 /*---------------------------------------------------------------------------*/
 void
-compower_attrconv(struct compower_activity *e)
-{
-  packetbuf_set_attr(PACKETBUF_ATTR_LISTEN_TIME,
-                     packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME) + e->listen);
-  packetbuf_set_attr(PACKETBUF_ATTR_TRANSMIT_TIME,
-                     packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME) + e->transmit);
+compower_attrconv(struct compower_activity *e) {
+    packetbuf_set_attr(PACKETBUF_ATTR_LISTEN_TIME,
+        packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME) + e->listen);
+    packetbuf_set_attr(PACKETBUF_ATTR_TRANSMIT_TIME,
+        packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME) + e->transmit);
 }
 /*---------------------------------------------------------------------------*/
 void
-compower_accumulate_attrs(struct compower_activity *e)
-{
-  e->listen += packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME);
-  e->transmit += packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME);
+compower_accumulate_attrs(struct compower_activity *e) {
+    e->listen += packetbuf_attr(PACKETBUF_ATTR_LISTEN_TIME);
+    e->transmit += packetbuf_attr(PACKETBUF_ATTR_TRANSMIT_TIME);
 }
 /*---------------------------------------------------------------------------*/
 /** @} */

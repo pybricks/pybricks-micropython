@@ -51,60 +51,53 @@ static struct mt_thread *current;
 
 /*--------------------------------------------------------------------------*/
 void
-mt_init(void)
-{
-  mtarch_init();
+mt_init(void) {
+    mtarch_init();
 }
 /*--------------------------------------------------------------------------*/
 void
-mt_remove(void)
-{
-  mtarch_remove();
+mt_remove(void) {
+    mtarch_remove();
 }
 /*--------------------------------------------------------------------------*/
 void
-mt_start(struct mt_thread *thread, void (* function)(void *), void *data)
-{
-  /* Call the architecture dependant function to set up the processor
-     stack with the correct parameters. */
-  mtarch_start(&thread->thread, function, data);
+mt_start(struct mt_thread *thread, void (*function)(void *), void *data) {
+    /* Call the architecture dependant function to set up the processor
+       stack with the correct parameters. */
+    mtarch_start(&thread->thread, function, data);
 
-  thread->state = MT_STATE_STARTED;
+    thread->state = MT_STATE_STARTED;
 }
 /*--------------------------------------------------------------------------*/
 void
-mt_exec(struct mt_thread *thread)
-{
-  if(thread->state == MT_STATE_STARTED) {
-    current = thread;
-    /* Switch context to the thread. The function call will not return
-       until the the thread has yielded, or is preempted. */
-    mtarch_exec(&thread->thread);
-  }
+mt_exec(struct mt_thread *thread) {
+    if (thread->state == MT_STATE_STARTED) {
+        current = thread;
+        /* Switch context to the thread. The function call will not return
+           until the the thread has yielded, or is preempted. */
+        mtarch_exec(&thread->thread);
+    }
 }
 /*--------------------------------------------------------------------------*/
 void
-mt_yield(void)
-{
-  mtarch_pstop();
-  /* This function is called from the running thread, and we call the
-     switch function in order to switch the thread to the main Contiki
-     program instead. For us, the switch function will not return
-     until the next time we are scheduled to run. */
-  mtarch_yield();
+mt_yield(void) {
+    mtarch_pstop();
+    /* This function is called from the running thread, and we call the
+       switch function in order to switch the thread to the main Contiki
+       program instead. For us, the switch function will not return
+       until the next time we are scheduled to run. */
+    mtarch_yield();
 }
 /*--------------------------------------------------------------------------*/
 void
-mt_exit(void)
-{
-  mtarch_pstop();
-  current->state = MT_STATE_EXITED;
-  mtarch_yield();
+mt_exit(void) {
+    mtarch_pstop();
+    current->state = MT_STATE_EXITED;
+    mtarch_yield();
 }
 /*--------------------------------------------------------------------------*/
 void
-mt_stop(struct mt_thread *thread)
-{
-  mtarch_stop(&thread->thread);
+mt_stop(struct mt_thread *thread) {
+    mtarch_stop(&thread->thread);
 }
 /*--------------------------------------------------------------------------*/

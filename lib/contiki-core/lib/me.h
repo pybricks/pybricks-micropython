@@ -32,7 +32,7 @@
 
 /** \addtogroup lib
     @{ */
- 
+
 /**
  * \defgroup me Table-driven Manchester encoding and decoding
  *

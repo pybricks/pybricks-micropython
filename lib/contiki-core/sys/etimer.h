@@ -75,9 +75,9 @@
  * \hideinitializer
  */
 struct etimer {
-  struct timer timer;
-  struct etimer *next;
-  struct process *p;
+    struct timer timer;
+    struct etimer *next;
+    struct process *p;
 };
 
 /**

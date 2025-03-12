@@ -131,8 +131,8 @@ void mtarch_remove(void);
  * passed.
  */
 void mtarch_start(struct mtarch_thread *thread,
-		  void (* function)(void *data),
-		  void *data);
+    void (*function)(void *data),
+    void *data);
 
 /**
  * Start executing a thread.
@@ -182,8 +182,8 @@ void mtarch_pstop(void);
 #include "mtarch.h"
 
 struct mt_thread {
-  int state;
-  struct mtarch_thread thread;
+    int state;
+    struct mtarch_thread thread;
 };
 
 /**
@@ -211,7 +211,7 @@ void mt_remove(void);
  * \param data A pointer that will be passed to the entry function.
  *
  */
-void mt_start(struct mt_thread *thread, void (* function)(void *), void *data);
+void mt_start(struct mt_thread *thread, void (*function)(void *), void *data);
 
 /**
  * Execute parts of a thread.

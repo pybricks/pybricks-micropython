@@ -44,19 +44,19 @@
 #define SENSORS_DEACTIVATE(sensor) (sensor).configure(SENSORS_ACTIVE, 0)
 
 #define SENSORS_SENSOR(name, type, value, configure, status)        \
-const struct sensors_sensor name = { type, value, configure, status }
+    const struct sensors_sensor name = { type, value, configure, status }
 
 #define SENSORS_NUM (sizeof(sensors) / sizeof(struct sensors_sensor *))
 
 #define SENSORS(...) \
-const struct sensors_sensor *sensors[] = {__VA_ARGS__, NULL};       \
-unsigned char sensors_flags[SENSORS_NUM]
+    const struct sensors_sensor *sensors[] = {__VA_ARGS__, NULL};       \
+    unsigned char sensors_flags[SENSORS_NUM]
 
 struct sensors_sensor {
-  char *       type;
-  int          (* value)     (int type);
-  int          (* configure) (int type, int value);
-  int          (* status)    (int type);
+    char *type;
+    int (*value)(int type);
+    int (*configure)(int type, int value);
+    int (*status)(int type);
 };
 
 const struct sensors_sensor *sensors_find(const char *type);

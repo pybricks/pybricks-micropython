@@ -79,13 +79,13 @@
  *
  * The list variable is declared as static to make it easy to use in a
  * single C module without unnecessarily exporting the name to other
- * modules. 
+ * modules.
  *
  * \param name The name of the list.
  */
 #define LIST(name) \
-         static void *LIST_CONCAT(name,_list) = NULL; \
-         static list_t name = (list_t)&LIST_CONCAT(name,_list)
+    static void *LIST_CONCAT(name, _list) = NULL; \
+    static list_t name = (list_t)&LIST_CONCAT(name, _list)
 
 /**
  * Declare a linked list inside a structure declaraction.
@@ -106,8 +106,8 @@
  * \param name The name of the list.
  */
 #define LIST_STRUCT(name) \
-         void *LIST_CONCAT(name,_list); \
-         list_t name
+    void *LIST_CONCAT(name, _list); \
+    list_t name
 
 /**
  * Initialize a linked list that is part of a structure.
@@ -121,24 +121,24 @@
  */
 #define LIST_STRUCT_INIT(struct_ptr, name)                              \
     do {                                                                \
-       (struct_ptr)->name = &((struct_ptr)->LIST_CONCAT(name,_list));   \
-       (struct_ptr)->LIST_CONCAT(name,_list) = NULL;                    \
-       list_init((struct_ptr)->name);                                   \
-    } while(0)
+        (struct_ptr)->name = &((struct_ptr)->LIST_CONCAT(name, _list));   \
+        (struct_ptr)->LIST_CONCAT(name, _list) = NULL;                    \
+        list_init((struct_ptr)->name);                                   \
+    } while (0)
 
 /**
  * The linked list type.
  *
  */
-typedef void ** list_t;
+typedef void **list_t;
 
 void   list_init(list_t list);
-void * list_head(list_t list);
-void * list_tail(list_t list);
-void * list_pop (list_t list);
+void *list_head(list_t list);
+void *list_tail(list_t list);
+void *list_pop(list_t list);
 void   list_push(list_t list, void *item);
 
-void * list_chop(list_t list);
+void *list_chop(list_t list);
 
 void   list_add(list_t list, void *item);
 void   list_remove(list_t list, void *item);
@@ -149,7 +149,7 @@ void   list_copy(list_t dest, list_t src);
 
 void   list_insert(list_t list, void *previtem, void *newitem);
 
-void * list_item_next(void *item);
+void *list_item_next(void *item);
 
 #endif /* LIST_H_ */
 

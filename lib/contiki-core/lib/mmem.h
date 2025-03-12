@@ -53,7 +53,7 @@
  *         Header file for the managed memory allocator
  * \author
  *         Adam Dunkels <adam@sics.se>
- * 
+ *
  */
 
 #ifndef MMEM_H_
@@ -62,9 +62,9 @@
 /*---------------------------------------------------------------------------*/
 /**
  * \brief      Get a pointer to the managed memory
- * \param m    A pointer to the struct mmem 
+ * \param m    A pointer to the struct mmem
  * \return     A pointer to the memory block, or NULL if memory could
- *             not be allocated. 
+ *             not be allocated.
  * \author     Adam Dunkels
  *
  *             This macro is used to get a pointer to a memory block
@@ -75,12 +75,12 @@
 #define MMEM_PTR(m) (struct mmem *)(m)->ptr
 
 struct mmem {
-  struct mmem *next;
-  unsigned int size;
-  void *ptr;
+    struct mmem *next;
+    unsigned int size;
+    void *ptr;
 };
 
-/* XXX: tagga minne med "interrupt usage", vilke gör att man är
+/* XXX: tagga minne med "interrupt usage", vilke gï¿½r att man ï¿½r
    speciellt varsam under free(). */
 
 int  mmem_alloc(struct mmem *m, unsigned int size);

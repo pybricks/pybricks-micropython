@@ -43,9 +43,9 @@
 #include "contiki-conf.h"
 
 struct ringbufindex {
-  uint8_t mask;
-  /* These must be 8-bit quantities to avoid race conditions. */
-  uint8_t put_ptr, get_ptr;
+    uint8_t mask;
+    /* These must be 8-bit quantities to avoid race conditions. */
+    uint8_t put_ptr, get_ptr;
 };
 
 /**

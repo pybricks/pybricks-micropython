@@ -163,7 +163,7 @@ PT_THREAD(driver_thread(struct pt *pt))
 #include "sys/pt.h"
 
 struct pt_sem {
-  unsigned int head, tail;
+    unsigned int head, tail;
 };
 
 #define PT_SEM_COUNT(s) ((s)->head - (s)->tail)
@@ -182,11 +182,11 @@ struct pt_sem {
  * \param c (unsigned int) The initial count of the semaphore.
  * \hideinitializer
  */
-#define PT_SEM_INIT(s, c)			\
-  do {						\
-    (s)->tail = 0;				\
-    (s)->head = (c);				\
-  } while(0)
+#define PT_SEM_INIT(s, c)                       \
+    do {                                          \
+        (s)->tail = 0;                              \
+        (s)->head = (c);                            \
+    } while (0)
 
 /**
  * Wait for a semaphore
@@ -204,11 +204,11 @@ struct pt_sem {
  *
  * \hideinitializer
  */
-#define PT_SEM_WAIT(pt, s)	\
-  do {						\
-    PT_WAIT_UNTIL(pt, PT_SEM_COUNT(s) > 0);	\
-    ++(s)->tail;				\
-  } while(0)
+#define PT_SEM_WAIT(pt, s)      \
+    do {                                          \
+        PT_WAIT_UNTIL(pt, PT_SEM_COUNT(s) > 0);     \
+        ++(s)->tail;                                \
+    } while (0)
 
 /**
  * Signal a semaphore
@@ -231,4 +231,3 @@ struct pt_sem {
 
 /** @} */
 /** @} */
-

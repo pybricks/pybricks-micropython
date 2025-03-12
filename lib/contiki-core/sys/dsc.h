@@ -74,26 +74,26 @@
  * and an icon for the program.
  */
 struct dsc {
-  char *description; /**< A text string containing a one-line
-			description of the program */
+    char *description; /**< A text string containing a one-line
+                        description of the program */
 
-#if WITH_LOADER_ARCH
-  char *prgname;     /**< The name of the program on disk. */
-#else /* WITH_LOADER_ARCH */
-  struct process *process; /**< A pointer to the program's process. */
-#endif /* WITH_LOADER_ARCH */
+    #if WITH_LOADER_ARCH
+    char *prgname;   /**< The name of the program on disk. */
+    #else /* WITH_LOADER_ARCH */
+    struct process *process; /**< A pointer to the program's process. */
+    #endif /* WITH_LOADER_ARCH */
 
-#if CTK_CONF_ICONS
-  struct ctk_icon *icon;  /**< A pointer to the ctk_icon structure for
-			     the DSC. */
-#endif /* CTK_CONF_ICONS */
+    #if CTK_CONF_ICONS
+    struct ctk_icon *icon; /**< A pointer to the ctk_icon structure for
+                             the DSC. */
+    #endif /* CTK_CONF_ICONS */
 
-#if WITH_LOADER_ARCH
-  void *loadaddr;         /**< The loading address of the DSC. Used by
-			     the LOADER_UNLOAD() function when
-			     deallocating the memory allocated for the
-			     DSC when loading it. */
-#endif /* WITH_LOADER_ARCH */
+    #if WITH_LOADER_ARCH
+    void *loadaddr;       /**< The loading address of the DSC. Used by
+                             the LOADER_UNLOAD() function when
+                             deallocating the memory allocated for the
+                             DSC when loading it. */
+    #endif /* WITH_LOADER_ARCH */
 };
 
 /**
@@ -114,10 +114,10 @@ struct dsc {
 #if WITH_LOADER_ARCH
 #if CTK_CONF_ICONS
 #define DSC(dscname, description, prgname, process, icon) \
-        CLIF const struct dsc dscname = {description, prgname, icon}
+    CLIF const struct dsc dscname = {description, prgname, icon}
 #else /* CTK_CONF_ICONS */
 #define DSC(dscname, description, prgname, process, icon) \
-        CLIF const struct dsc dscname = {description, prgname}
+    CLIF const struct dsc dscname = {description, prgname}
 #endif /* CTK_CONF_ICONS */
 #else /* WITH_LOADER_ARCH */
 #if CTK_CONF_ICONS
