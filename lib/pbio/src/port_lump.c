@@ -874,6 +874,8 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS;
     } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
+    } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+        default_mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;
     }
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);
@@ -998,7 +1000,7 @@ PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port_lump_dev_t *l
 
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
         if (lump_dev->rx_msg_size < 3 || lump_dev->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
-            debug_pr("Bad data message size\n");
+            debug_pr("Bad data message size %d\n", lump_dev->rx_msg_size);
             continue;
         }
 
