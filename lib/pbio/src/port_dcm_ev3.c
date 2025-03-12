@@ -204,17 +204,6 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
     return state;
 }
 
-typedef struct {
-    /** Ambient analog value. */
-    uint32_t a;
-    /** Red analog value. */
-    uint32_t r;
-    /** Green analog value. */
-    uint32_t g;
-    /** Blue analog value. */
-    uint32_t b;
-} pbio_port_dcm_analog_values_t;
-
 typedef struct __attribute__((__packed__)) {
     uint32_t calibration[3][4];
     uint16_t threshold[2];
@@ -310,8 +299,8 @@ struct _pbio_port_dcm_t {
     uint32_t count;
     bool connected;
     pbio_port_dcm_category_t category;
-    pbio_port_dcm_analog_values_t nxt_analog_buf;
-    pbio_port_dcm_nxt_color_sensor_state_t nxt_color;
+    pbio_port_dcm_analog_rgba_t nxt_rgba;
+    pbio_port_dcm_nxt_color_sensor_state_t nxt_color_state;
 };
 
 static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -401,17 +390,17 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // The original firmware has a reset sequence where p6 is high and
             // then p5 is toggled twice. It also works with 8 toggles, we can
             // just use the send function with 0xff to achieve the same effect.
-            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color, pins, etimer, 0xff));
+            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, etimer, 0xff));
             etimer_set(etimer, 100);
             PT_WAIT_UNTIL(pt, etimer_expired(etimer));
 
             // Set to full color mode.
-            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color, pins, etimer, 13));
+            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, etimer, 13));
 
             // Receive all calibration info.
             for (dcm->count = 0; dcm->count < sizeof(pbio_port_dcm_nxt_color_sensor_data_t); dcm->count++) {
                 PT_SPAWN(pt, &dcm->child,
-                    pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color, pins, etimer, (uint8_t *)&dcm->nxt_color.data + dcm->count));
+                    pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color_state, pins, etimer, (uint8_t *)&dcm->nxt_color_state.data + dcm->count));
             }
 
             // Checksum and continue on failure.
@@ -424,9 +413,9 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             while (!pbdrv_gpio_input(&pins->p2)) {
 
                 pbdrv_gpio_out_low(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.a));
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.a));
                 pbdrv_gpio_out_high(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.r));
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.r));
 
                 if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
                     // Light sensor doesn't have green and blue.
@@ -434,9 +423,9 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
                 }
 
                 pbdrv_gpio_out_low(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.g));
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.g));
                 pbdrv_gpio_out_high(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.b));
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.b));
 
             }
             pbdrv_gpio_out_low(&pins->p5);
@@ -534,33 +523,26 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 }
 
-// add arg for color mode, none, red, green, blue.
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_dcm_analog_light_type_t light_type) {
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
 
     // This category measures analog on pin 6.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
         return pbio_port_dcm_get_mv(pins, 6);
     }
 
-    // Return buffered values in case of NXT light and color sensor.
-    if (dcm->category == DCM_CATEGORY_NXT_LIGHT || dcm->category == DCM_CATEGORY_NXT_COLOR) {
-        switch (light_type) {
-            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE:
-                return dcm->nxt_analog_buf.a;
-            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_RED:
-                return dcm->nxt_analog_buf.r;
-            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_GREEN:
-                return dcm->nxt_analog_buf.g;
-            case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_BLUE:
-                return dcm->nxt_analog_buf.b;
-            default:
-                return 0;
-        }
+    // Some NXT sensors have an active mode by setting P5 high.
+    if (active) {
+        pbdrv_gpio_out_high(&pins->p5);
+    } else {
+        pbdrv_gpio_out_low(&pins->p5);
     }
 
     // Everything else measures analog on pin 1.
     return pbio_port_dcm_get_mv(pins, 1);
+}
 
+pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm) {
+    return &dcm->nxt_rgba;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_EV3

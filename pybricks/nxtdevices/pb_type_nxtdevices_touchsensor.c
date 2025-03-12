@@ -27,7 +27,7 @@ typedef struct _nxtdevices_TouchSensor_obj_t {
 static mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint32_t analog;
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR, &analog, PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE));
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR, false, &analog));
     return mp_obj_new_bool(analog < 3000);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);

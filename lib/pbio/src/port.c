@@ -289,7 +289,16 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
     return pbdrv_motor_driver_coast(motor_driver);
 }
 
-pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, uint32_t *value, pbio_port_dcm_analog_light_type_t light_type) {
+/**
+ * Gets the analog value of the LEGO device.
+ *
+ * @param [in]  port        The port instance.
+ * @param [in]  type_id     The expected type identifier.
+ * @param [in]  active      Whether to get activate active mode.
+ * @param [out] value       The analog value.
+ * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
+ */
+pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, bool active, uint32_t *value) {
     if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
@@ -298,8 +307,27 @@ pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *value = pbio_port_dcm_get_analog_value(port->connection_manager, port->pdata->pins, light_type);
+    *value = pbio_port_dcm_get_analog_value(port->connection_manager, port->pdata->pins, active);
     return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the analog color values of the LEGO device.
+ *
+ * @param [in]  port        The port instance.
+ * @param [in]  type_id     The expected type identifier.
+ * @param [out] rgba        The analog color values.
+ * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
+ */
+pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t **rgba) {
+
+    *rgba = pbio_port_dcm_get_analog_rgba(port->connection_manager);
+    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM || !*rgba) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    lego_device_type_id_t expected_type_id = type_id;
+    return pbio_port_dcm_assert_type_id(port->connection_manager, &expected_type_id);
 }
 
 /**

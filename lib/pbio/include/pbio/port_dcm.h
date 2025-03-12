@@ -12,14 +12,18 @@
 typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 
 /**
- * Light state when measuring analog values.
+ * Cached analog values when a particular light color is active.
  */
-typedef enum {
-    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE,
-    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_RED,
-    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_GREEN,
-    PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_BLUE,
-} pbio_port_dcm_analog_light_type_t;
+typedef struct {
+    /** Red analog value. */
+    uint32_t r;
+    /** Green analog value. */
+    uint32_t g;
+    /** Blue analog value. */
+    uint32_t b;
+    /** Ambient analog value. */
+    uint32_t a;
+} pbio_port_dcm_analog_rgba_t;
 
 #if PBIO_CONFIG_PORT_DCM
 
@@ -45,8 +49,20 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
 
 /**
  * Gets the analog value of the device connected to the port.
+ *
+ * @param [in]  dcm         The device connection manager.
+ * @param [in]  pins        The ioport pins.
+ * @param [in]  active      Whether to get activate active mode.
  */
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_dcm_analog_light_type_t light_type);
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active);
+
+/**
+ * Gets the analog color values of the device connected to the port.
+ *
+ * @param [in]  dcm         The device connection manager.
+ * @return                  The analog color values.
+ */
+pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm);
 
 #else // PBIO_CONFIG_PORT_DCM
 
@@ -58,8 +74,12 @@ static inline pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, le
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_dcm_analog_light_type_t light_type) {
+static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
     return 0;
+}
+
+static inline pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm) {
+    return NULL;
 }
 
 static inline PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {

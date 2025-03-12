@@ -7,7 +7,6 @@
 
 #include <pbio/int_math.h>
 #include <pbio/port_interface.h>
-#include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>
 #include <pybricks/nxtdevices.h>
@@ -31,9 +30,9 @@ static const pbio_int_math_point_t ambient_slope[] = {
 // pybricks.nxtdevices.LightSensor.ambient
 static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint32_t analog;
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &analog, PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE));
-    return pb_obj_new_fraction(pbio_int_math_interpolate(ambient_slope, MP_ARRAY_SIZE(ambient_slope), analog), 10);
+    pbio_port_dcm_analog_rgba_t *rgba;
+    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
+    return pb_obj_new_fraction(pbio_int_math_interpolate(ambient_slope, MP_ARRAY_SIZE(ambient_slope), rgba->a), 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
@@ -47,13 +46,11 @@ static const pbio_int_math_point_t reflection_slope[] = {
 static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    uint32_t ambient;
-    uint32_t reflected;
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &ambient, PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE));
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &reflected, PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_RED));
+    pbio_port_dcm_analog_rgba_t *rgba;
+    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
 
     // Both values are inverted, so this really computes reflected - ambient.
-    uint32_t offset = reflected <= ambient ? ambient - reflected : 0;
+    uint32_t offset = rgba->r <= rgba->a ? rgba->a - rgba->r : 0;
 
     return pb_obj_new_fraction(pbio_int_math_interpolate(reflection_slope, MP_ARRAY_SIZE(reflection_slope), offset), 10);
 }
