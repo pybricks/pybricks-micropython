@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added
+- Experimental support for USB connectivity on SPIKE Prime ([pybricks-micropython#208]).
+
+### Changed
+- Extensive overhaul of UART and port drivers on all hubs. This affects all
+  official LEGO sensors on all hubs.
+
+[pybricks-micropython#208]: https://github.com/pybricks/pybricks-micropython/pull/208
+
 ## [3.6.1] - 2025-03-11
 
 ### Fixed
