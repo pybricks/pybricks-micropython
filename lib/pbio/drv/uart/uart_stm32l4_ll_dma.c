@@ -29,8 +29,7 @@
 
 #define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!
 
-typedef struct {
-    pbdrv_uart_dev_t uart_dev;
+struct _pbdrv_uart_dev_t {
     const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata;
     struct etimer rx_timer;
     struct etimer tx_timer;
@@ -44,26 +43,24 @@ typedef struct {
      * All protothreads in this module run within that process.
      */
     struct process *parent_process;
-} pbdrv_uart_t;
+};
 
-static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART];
+static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART];
 static volatile uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART][RX_DATA_SIZE];
 
 pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
-
-    if (!pbdrv_uart[id].pdata) {
+    pbdrv_uart_dev_t *dev = &uart_devs[id];
+    if (!dev->pdata) {
         // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
-    pbdrv_uart[id].parent_process = parent_process;
-    *uart_dev = &pbdrv_uart[id].uart_dev;
-
+    dev->parent_process = parent_process;
+    *uart_dev = dev;
     return PBIO_SUCCESS;
 }
-
 static void volatile_copy(volatile uint8_t *src, uint8_t *dst, uint8_t size) {
     for (int i = 0; i < size; i++) {
         dst[i] = src[i];
@@ -190,15 +187,13 @@ static bool dma_is_ht(DMA_TypeDef *DMAx, uint32_t channel) {
     }
 }
 
-static uint32_t pbdrv_uart_get_num_available(pbdrv_uart_t *uart) {
+static uint32_t pbdrv_uart_get_num_available(pbdrv_uart_dev_t *uart) {
     // Head is the last position that DMA wrote to.
     uint32_t rx_head = RX_DATA_SIZE - LL_DMA_GetDataLength(uart->pdata->rx_dma, uart->pdata->rx_dma_ch);
     return (rx_head - uart->rx_tail) & (RX_DATA_SIZE - 1);
 }
 
-PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
-
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     PT_BEGIN(pt);
 
@@ -241,9 +236,8 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *ms
     PT_END(pt);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
 
     PT_BEGIN(pt);
@@ -277,8 +271,8 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
     PT_END(pt);
 }
 
-void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
+
     USART_TypeDef *USARTx = uart->pdata->uart;
     uint32_t periphclk = LL_RCC_PERIPH_FREQUENCY_NO;
 
@@ -314,8 +308,7 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
     }
 }
 
-void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     uart->read_buf = NULL;
     uart->read_length = 0;
     // Clears the ring buffer by setting tail equal to head.
@@ -323,7 +316,7 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
 
 static void poll_process_by_id(uint8_t id) {
-    pbdrv_uart_t *uart = &pbdrv_uart[id];
+    pbdrv_uart_dev_t *uart = &uart_devs[id];
     process_poll(uart->parent_process);
 }
 
@@ -366,8 +359,7 @@ void pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(uint8_t id) {
 }
 
 // Currently not used
-void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_stop(pbdrv_uart_dev_t *uart) {
     const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
     LL_USART_Disable(pdata->uart);
     LL_DMA_DisableChannel(pdata->rx_dma, pdata->rx_dma_ch);
@@ -381,7 +373,7 @@ void pbdrv_uart_init(void) {
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART; i++) {
         const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[i];
         volatile uint8_t *rx_data = pbdrv_uart_rx_data[i];
-        pbdrv_uart_t *uart = &pbdrv_uart[i];
+        pbdrv_uart_dev_t *uart = &uart_devs[i];
         uart->pdata = pdata;
         uart->rx_data = rx_data;
 

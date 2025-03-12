@@ -16,9 +16,7 @@
 #include <pbio/port.h>
 #include <contiki.h>
 
-typedef struct {
-
-} pbdrv_uart_dev_t;
+typedef struct _pbdrv_uart_dev_t pbdrv_uart_dev_t;
 
 typedef void (*pbdrv_uart_poll_callback_t)(void *context);
 

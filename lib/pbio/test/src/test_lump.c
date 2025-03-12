@@ -28,8 +28,7 @@
     tt_assert_test_type(a, b,#a " "#op " "#b, float, (val1_ op val2_), "%f", (void)0)
 #endif
 
-typedef struct {
-    pbdrv_uart_dev_t uart_dev;
+struct _pbdrv_uart_dev_t {
     int baud;
     struct etimer rx_timer;
     uint8_t *rx_msg;
@@ -40,9 +39,9 @@ typedef struct {
     uint8_t tx_msg_length;
     pbio_error_t tx_msg_result;
     struct process *parent_process;
-} pbdrv_uart_t;
+};
 
-pbdrv_uart_t test_uart;
+pbdrv_uart_dev_t test_uart;
 
 /**
  * RX completion normally creates an IRQ. This mimics such as handler. Since
@@ -1093,12 +1092,12 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process,
         return PBIO_ERROR_NO_DEV;
     }
     test_uart.parent_process = parent_process;
-    *uart_dev = &test_uart.uart_dev;
+    *uart_dev = &test_uart;
     return PBIO_SUCCESS;
 }
 
-void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
-    test_uart.baud = baud;
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
+    uart_dev->baud = baud;
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
@@ -1116,26 +1115,26 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *ms
 
     PT_BEGIN(pt);
 
-    PT_WAIT_WHILE(pt, test_uart.rx_msg);
+    PT_WAIT_WHILE(pt, uart_dev->rx_msg);
 
-    test_uart.rx_msg = msg;
-    test_uart.rx_msg_length = length;
-    test_uart.rx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&test_uart.rx_timer, timeout);
+    uart_dev->rx_msg = msg;
+    uart_dev->rx_msg_length = length;
+    uart_dev->rx_msg_result = PBIO_ERROR_AGAIN;
+    etimer_set(&uart_dev->rx_timer, timeout);
 
     // If read_pos is less that read_length then we have not read everything yet
-    PT_WAIT_WHILE(pt, test_uart.rx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart.rx_timer));
-    if (etimer_expired(&test_uart.rx_timer)) {
-        test_uart.rx_msg_result = PBIO_ERROR_TIMEDOUT;
+    PT_WAIT_WHILE(pt, uart_dev->rx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&uart_dev->rx_timer));
+    if (etimer_expired(&uart_dev->rx_timer)) {
+        uart_dev->rx_msg_result = PBIO_ERROR_TIMEDOUT;
     } else {
-        etimer_stop(&test_uart.rx_timer);
+        etimer_stop(&uart_dev->rx_timer);
     }
 
-    if (test_uart.rx_msg_result != PBIO_ERROR_AGAIN) {
-        test_uart.rx_msg = NULL;
+    if (uart_dev->rx_msg_result != PBIO_ERROR_AGAIN) {
+        uart_dev->rx_msg = NULL;
     }
 
-    *err = test_uart.rx_msg_result;
+    *err = uart_dev->rx_msg_result;
 
     PT_END(pt);
 }
@@ -1145,25 +1144,25 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
     PT_BEGIN(pt);
 
     // Wait while other write operation already in progress.
-    PT_WAIT_WHILE(pt, test_uart.tx_msg);
+    PT_WAIT_WHILE(pt, uart_dev->tx_msg);
 
-    test_uart.tx_msg = msg;
-    test_uart.tx_msg_length = length;
-    test_uart.tx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&test_uart.tx_timer, timeout);
+    uart_dev->tx_msg = msg;
+    uart_dev->tx_msg_length = length;
+    uart_dev->tx_msg_result = PBIO_ERROR_AGAIN;
+    etimer_set(&uart_dev->tx_timer, timeout);
 
-    PT_WAIT_WHILE(pt, test_uart.tx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&test_uart.tx_timer));
-    if (etimer_expired(&test_uart.tx_timer)) {
-        test_uart.tx_msg_result = PBIO_ERROR_TIMEDOUT;
+    PT_WAIT_WHILE(pt, uart_dev->tx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&uart_dev->tx_timer));
+    if (etimer_expired(&uart_dev->tx_timer)) {
+        uart_dev->tx_msg_result = PBIO_ERROR_TIMEDOUT;
     } else {
-        etimer_stop(&test_uart.tx_timer);
+        etimer_stop(&uart_dev->tx_timer);
     }
 
-    if (test_uart.tx_msg_result != PBIO_ERROR_AGAIN) {
-        test_uart.tx_msg = NULL;
+    if (uart_dev->tx_msg_result != PBIO_ERROR_AGAIN) {
+        uart_dev->tx_msg = NULL;
     }
 
-    *err = test_uart.tx_msg_result;
+    *err = uart_dev->tx_msg_result;
 
     PT_END(pt);
 }

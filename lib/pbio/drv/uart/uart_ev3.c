@@ -40,9 +40,7 @@
 
 #define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!
 
-typedef struct {
-    /** Public UART device handle. */
-    pbdrv_uart_dev_t uart_dev;
+struct _pbdrv_uart_dev_t {
     /** Platform-specific data */
     const pbdrv_uart_ev3_platform_data_t *pdata;
     /** Circular buffer for caching received bytes. */
@@ -69,35 +67,30 @@ typedef struct {
      * All protothreads in this module run within that process.
      */
     struct process *parent_process;
-} pbdrv_uart_t;
+};
 
-static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_EV3_NUM_UART];
+static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_EV3_NUM_UART];
 static uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_EV3_NUM_UART][RX_DATA_SIZE];
 
 pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_EV3_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
-
-    if (!pbdrv_uart[id].pdata) {
+    pbdrv_uart_dev_t *dev = &uart_devs[id];
+    if (!dev->pdata) {
         // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
-
-    pbdrv_uart[id].parent_process = parent_process;
-    *uart_dev = &pbdrv_uart[id].uart_dev;
-
+    dev->parent_process = parent_process;
+    *uart_dev = dev;
     return PBIO_SUCCESS;
 }
 
-int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart) {
     return ringbuf_get(&uart->rx_buf);
 }
 
-PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
-
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     PT_BEGIN(pt);
 
@@ -148,7 +141,7 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *ms
  * @param [in]    byte    The byte to write.
  * @return                True if the byte was written, false otherwise.
  */
-static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_t *uart, uint8_t byte) {
+static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_dev_t *uart, uint8_t byte) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
     // Attempt to write one byte with the hardware UART.
@@ -169,7 +162,7 @@ static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_t *uart, uint8_t byte) {
  * @param [in]    uart    The UART device.
  * @return                True if the UART is ready to write, false otherwise.
  */
-static bool pbdrv_uart_can_write(pbdrv_uart_t *uart) {
+static bool pbdrv_uart_can_write(pbdrv_uart_dev_t *uart) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
     // Check UART_LSR for THR_EMPTY
@@ -189,9 +182,7 @@ static bool pbdrv_uart_can_write(pbdrv_uart_t *uart) {
     return pbdrv_uart_ev3_pru_can_write(pdata->peripheral_id);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
-
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     PT_BEGIN(pt);
 
@@ -232,9 +223,7 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
     PT_END(pt);
 }
 
-void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
     if (uart->pdata->uart_kind == EV3_UART_HW) {
         UARTConfigSetExpClk(uart->pdata->base_address, SOC_UART_0_MODULE_FREQ, baud, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_16);
     } else {
@@ -243,8 +232,7 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
 }
 
 
-void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     // If a process was exited while an operation was in progress this is
     // normally an error, and the process may call flush when it is restarted
     // to clear the state.
@@ -260,7 +248,7 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
     }
 }
 
-void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_t *uart) {
+void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_dev_t *uart) {
 
     /* This determines the cause of UART0 interrupt.*/
     unsigned int int_id = UARTIntStatus(uart->pdata->base_address);
@@ -292,7 +280,7 @@ void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_t *uart) {
 
 }
 
-void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_t *uart) {
+void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_dev_t *uart) {
 
     IntSystemStatusClear(uart->pdata->sys_int_uart_int_id);
 
@@ -309,7 +297,7 @@ void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_t *uart) {
 }
 
 void pbdrv_uart_ev3_handle_irq(uint8_t id) {
-    pbdrv_uart_t *uart = &pbdrv_uart[id];
+    pbdrv_uart_dev_t *uart = &uart_devs[id];
     if (uart->pdata->uart_kind == EV3_UART_HW) {
         pbdrv_uart_ev3_hw_handle_irq(uart);
     } else {
@@ -317,7 +305,7 @@ void pbdrv_uart_ev3_handle_irq(uint8_t id) {
     }
 }
 
-static void pbdrv_uart_init_hw(pbdrv_uart_t *uart) {
+static void pbdrv_uart_init_hw(pbdrv_uart_dev_t *uart) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
     /* Enabling the PSC for given UART.*/
@@ -327,7 +315,7 @@ static void pbdrv_uart_init_hw(pbdrv_uart_t *uart) {
     UARTEnable(pdata->base_address);
 
     /* Configuring the UART clock and baud parameters*/
-    pbdrv_uart_set_baud_rate(&uart->uart_dev, BAUD_115200);
+    pbdrv_uart_set_baud_rate(uart, BAUD_115200);
 
     /* Enabling the FIFO and flushing the Tx and Rx FIFOs.*/
     UARTFIFOEnable(pdata->base_address);
@@ -348,11 +336,11 @@ static void pbdrv_uart_init_hw(pbdrv_uart_t *uart) {
 }
 
 
-void pbdrv_uart_init_pru(pbdrv_uart_t *uart) {
+void pbdrv_uart_init_pru(pbdrv_uart_dev_t *uart) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
     pbdrv_uart_ev3_pru_activate(pdata->peripheral_id);
-    pbdrv_uart_set_baud_rate(&uart->uart_dev, BAUD_115200);
+    pbdrv_uart_set_baud_rate(uart, BAUD_115200);
 
     // Registers the UARTIsr in the Interrupt Vector Table of AINTC.
     IntRegister(pdata->sys_int_uart_int_id, pdata->isr_handler);
@@ -376,7 +364,7 @@ void pbdrv_uart_init(void) {
     for (int i = 0; i < PBDRV_CONFIG_UART_EV3_NUM_UART; i++) {
         const pbdrv_uart_ev3_platform_data_t *pdata = &pbdrv_uart_ev3_platform_data[i];
         uint8_t *rx_data = pbdrv_uart_rx_data[i];
-        pbdrv_uart_t *uart = &pbdrv_uart[i];
+        pbdrv_uart_dev_t *uart = &uart_devs[i];
         uart->pdata = pdata;
         ringbuf_init(&uart->rx_buf, rx_data, RX_DATA_SIZE);
 

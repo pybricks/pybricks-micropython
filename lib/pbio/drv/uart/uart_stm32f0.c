@@ -28,8 +28,7 @@
 
 #define UART_RING_BUF_SIZE 32   // must be a power of 2!
 
-typedef struct {
-    pbdrv_uart_dev_t uart_dev;
+struct _pbdrv_uart_dev_t {
     USART_TypeDef *USART;
     uint8_t rx_ring_buf[UART_RING_BUF_SIZE];
     volatile uint8_t rx_ring_buf_head;
@@ -50,28 +49,25 @@ typedef struct {
      * All protothreads in this module run within that process.
      */
     struct process *parent_process;
-} pbdrv_uart_t;
+};
 
-static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32F0_NUM_UART];
+static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32F0_NUM_UART];
 
 pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_STM32F0_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    if (!pbdrv_uart[id].initialized) {
+    pbdrv_uart_dev_t *dev = &uart_devs[id];
+    if (!dev->initialized) {
         return PBIO_ERROR_AGAIN;
     }
-
-    pbdrv_uart[id].parent_process = parent_process;
-    *uart_dev = &pbdrv_uart[id].uart_dev;
-
+    dev->parent_process = parent_process;
+    *uart_dev = dev;
     return PBIO_SUCCESS;
 }
 
-PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
-
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     PT_BEGIN(pt);
     if (!msg || !length) {
@@ -115,9 +111,7 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *ms
     PT_END(pt);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
-
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
 
     PT_BEGIN(pt);
 
@@ -154,13 +148,11 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
     PT_END(pt);
 }
 
-void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
     uart->USART->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / baud;
 }
 
-void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     uart->rx_buf = NULL;
     uart->tx_buf = NULL;
     uart->rx_ring_buf_head = 0;
@@ -170,7 +162,7 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
 
 void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
-    pbdrv_uart_t *uart = &pbdrv_uart[id];
+    pbdrv_uart_dev_t *uart = &uart_devs[id];
     uint32_t isr = uart->USART->ISR;
 
     // receive next byte
@@ -201,15 +193,14 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     }
 }
 
-void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
+void pbdrv_uart_stop(pbdrv_uart_dev_t *uart) {
     NVIC_DisableIRQ(uart->irq);
 }
 
 void pbdrv_uart_init(void) {
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32F0_NUM_UART; i++) {
         const pbdrv_uart_stm32f0_platform_data_t *pdata = &pbdrv_uart_stm32f0_platform_data[i];
-        pbdrv_uart_t *uart = &pbdrv_uart[i];
+        pbdrv_uart_dev_t *uart = &uart_devs[i];
 
         uart->USART = pdata->uart,
         uart->irq = pdata->irq,
