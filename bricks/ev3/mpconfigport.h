@@ -72,16 +72,19 @@ typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-#include <am1808/interrupt.h>
+#define CPSR_IRQ_MASK (1 << 7)  // IRQ disable
+#define CPSR_FIQ_MASK (1 << 6)  // FIQ disable
 
-// REVISIT. Do both IRQ and FIQ?
-
-static inline void enable_irq(mp_uint_t state) {
-    IntEnable(state);
+static inline void enable_irq(uint32_t cpsr) {
+    __asm__ __volatile__ ("msr cpsr_c, %0" : : "r" (cpsr));
 }
 
-static inline mp_uint_t disable_irq(void) {
-    return IntDisable();
+static inline mp_uint_t  disable_irq(void) {
+    uint32_t cpsr;
+    __asm__ __volatile__ ("mrs %0, cpsr" : "=r" (cpsr));
+    // REVISIT: FIQ necessary?
+    enable_irq(cpsr | CPSR_IRQ_MASK | CPSR_FIQ_MASK);
+    return cpsr;
 }
 
 #define MICROPY_BEGIN_ATOMIC_SECTION()     disable_irq()
