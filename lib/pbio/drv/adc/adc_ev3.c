@@ -140,6 +140,10 @@ void pbdrv_adc_init(void) {
     process_start(&pbdrv_adc_process);
 }
 
+void pbdrv_adc_update_soon(void) {
+    process_poll(&pbdrv_adc_process);
+}
+
 PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     PROCESS_EXITHANDLER(pbdrv_adc_exit());
 
@@ -149,7 +153,7 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
 
     etimer_set(&etimer, 10);
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
+        PROCESS_WAIT_EVENT_UNTIL((ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer)) || ev == PROCESS_EVENT_POLL);
 
         channel_data_index = 0;
         adc_busy = true;

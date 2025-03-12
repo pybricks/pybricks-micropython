@@ -69,6 +69,9 @@ void pbdrv_adc_init(void) {
 void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
+void pbdrv_adc_update_soon(void) {
+}
+
 // does a single conversion for the specified channel
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch > ADC_CHSELR_CHSEL18_Pos) {
