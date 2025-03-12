@@ -11,6 +11,7 @@
 #include "py/obj.h"
 
 extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
+extern const mp_obj_type_t pb_type_uart_device;
 
 #if PYBRICKS_PY_PUPDEVICES
 
@@ -24,7 +25,6 @@ extern const mp_obj_type_t pb_type_iodevices_XboxController;
 extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
 extern const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
 extern const mp_obj_type_t pb_type_iodevices_I2CDevice;
-extern const mp_obj_type_t pb_type_iodevices_UARTDevice;
 
 #endif // PYBRICKS_PY_EV3DEVICES
 
