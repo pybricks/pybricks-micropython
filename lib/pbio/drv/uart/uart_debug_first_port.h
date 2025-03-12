@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+#include <pbdrv/config.h>
+
 #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
 
 void pbdrv_uart_debug_printf(const char *format, ...);

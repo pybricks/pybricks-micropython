@@ -32,11 +32,6 @@ static pbdrv_uart_dev_t *debug_uart = NULL;
  */
 void pbdrv_uart_debug_printf(const char *format, ...) {
 
-    if (!debug_uart) {
-        // Not initialized yet.
-        return;
-    }
-
     char buf[BUF_SIZE];
     va_list args;
     va_start(args, format);
@@ -47,6 +42,11 @@ void pbdrv_uart_debug_printf(const char *format, ...) {
     for (size_t i = 0; i < len; i++) {
         ring_buf[ring_head] = buf[i];
         ring_head = (ring_head + 1) % BUF_SIZE;
+    }
+
+    if (!debug_uart) {
+        // Not initialized yet, so just buffer for now.
+        return;
     }
 
     // Request print process to write out new data.
