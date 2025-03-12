@@ -300,7 +300,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .adc_p1 = 8,
             .adc_p6 = 7,
         },
-        .supported_modes = PBIO_PORT_MODE_UART,// | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_3,
@@ -344,7 +344,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .adc_p1 = 12,
             .adc_p6 = 11,
         },
-        .supported_modes = PBIO_PORT_MODE_UART, // | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_DCM,
     },
 };
 
