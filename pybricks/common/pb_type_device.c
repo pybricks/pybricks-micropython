@@ -144,6 +144,19 @@ mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode
         PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
 }
 
+void pb_device_set_lego_mode(pbio_port_t *port) {
+    // Set the port mode to LEGO DCM if it is not already set.
+    pbio_error_t err = pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
+    if (err == PBIO_ERROR_AGAIN) {
+        // If coming from a different mode, give port some time to get started.
+        // This happens when the user has a custom device and decides to switch
+        // back to LEGO mode. This should be rare, so we can afford to wait.
+        mp_hal_delay_ms(1000);
+        err = pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
+    }
+    pb_assert(err);
+}
+
 lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self, mp_obj_t port_in, lego_device_type_id_t valid_id) {
 
     pb_module_tools_assert_blocking();
@@ -153,6 +166,9 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
     // Get the port instance.
     pbio_port_t *port;
     pb_assert(pbio_port_get_port(port_id, &port));
+
+    // Set the port mode to LEGO if it is not already set.
+    pb_device_set_lego_mode(port);
 
     pbio_error_t err;
     lego_device_type_id_t actual_id = valid_id;

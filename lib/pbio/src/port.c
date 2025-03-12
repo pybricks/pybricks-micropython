@@ -100,6 +100,24 @@ PROCESS_THREAD(pbio_port_process_none, ev, data) {
     PROCESS_END();
 }
 
+/**
+ * Sets the current process to that of the selected port.
+ *
+ * When user level code (outside the pbio event loop) calls protothreads that
+ * contain etimers (then merely used as regular timers), the contiki still
+ * associates them with the then-current process. Outside the event loop
+ * though, this has no meaning and it so it associates the etimer arbitrarily
+ * with the last handled. To avoid this, we set the current process to that of
+ * the selected port.
+ *
+ * NB: Must only be called from *outside* the event loop.
+ *
+ * @param [in] port The port instance.
+ */
+void pbio_port_select_process(pbio_port_t *port) {
+    process_current = &port->process;
+}
+
 PROCESS_THREAD(pbio_port_process_pup, ev, data) {
 
     struct process *proc = PBIO_CONTAINER_OF(process_pt, struct process, pt);
@@ -480,7 +498,7 @@ void pbio_port_power_off(void) {
  * Sets the mode of the port.
  *
  * Should not be called before port process is started.
- * 
+ *
  * The return value is not checked for the initial mode, which is assumed to
  * be allowed and properly configured in constant platform data.
  *

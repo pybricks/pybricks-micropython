@@ -70,6 +70,8 @@ void pbio_port_stop_user_actions(bool reset);
 
 pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port);
 
+void pbio_port_select_process(pbio_port_t *port);
+
 pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_dcmotor_t **dcmotor);
 
 pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_servo_t **servo);
@@ -136,6 +138,10 @@ static inline pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_dev
 }
 
 static inline pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

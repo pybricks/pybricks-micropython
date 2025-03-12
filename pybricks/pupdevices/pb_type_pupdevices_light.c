@@ -35,6 +35,8 @@ static mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(pbio_port_get_port(port_id, &port));
 
+    pb_device_set_lego_mode(port);
+
     // Get and initialize DC Motor
     lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_LPF2_LIGHT;
     pb_assert(pbio_port_get_dcmotor(port, &id, &self->dcmotor));
