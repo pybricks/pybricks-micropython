@@ -103,6 +103,17 @@ int32_t pbio_int_math_bind(int32_t value, int32_t min, int32_t max) {
 }
 
 /**
+ * Tests whether a value is close to a reference value within a range.
+ *
+ * @param [in]  value   The value to test.
+ * @param [in]  ref     The reference value.
+ * @param [in]  range   The one-sided range. If exactly on range, it is considered close.
+ */
+bool pbio_int_math_is_close(int32_t value, int32_t ref, int32_t range) {
+    return pbio_int_math_abs(value - ref) <= range;
+}
+
+/**
  * Clamps a value to a +/- limit.
  *
  * If @p value is greater than positive @p abs_max, then positive @p abs_max is
