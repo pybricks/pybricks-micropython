@@ -28,20 +28,6 @@ typedef struct {
     char name[LUMP_MAX_NAME_SIZE + 1];
 } pbio_port_lump_mode_info_t;
 
-/**
- * Structure containing information about a legodev device.
- */
-typedef struct {
-    /**< The type identifier of the device. */
-    lego_device_type_id_t type_id;
-    #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
-    /**< The number of modes */
-    uint8_t num_modes;
-    /**< Information about the current mode. */
-    pbio_port_lump_mode_info_t mode_info[(LUMP_MAX_EXT_MODE + 1)];
-    #endif
-} pbio_port_lump_device_info_t;
-
 #if PBIO_CONFIG_PORT_LUMP
 
 pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, struct process *parent_process);
@@ -60,7 +46,9 @@ pbio_error_t pbio_port_lump_get_data(pbio_port_lump_dev_t *lump_dev, uint8_t mod
 
 pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_t *lump_dev, uint8_t mode, const void *data, uint8_t size);
 
-pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode);
+pbio_error_t pbio_port_lump_assert_type_id(pbio_port_lump_dev_t *lump_dev, lego_device_type_id_t *type_id);
+
+pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, uint8_t *num_modes, uint8_t *current_mode, pbio_port_lump_mode_info_t **mode_info);
 
 pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev);
 
@@ -90,8 +78,14 @@ static inline pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode) {
-    *info = NULL;
+static inline pbio_error_t pbio_port_lump_assert_type_id(pbio_port_lump_dev_t *lump_dev, lego_device_type_id_t *type_id) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, uint8_t *num_modes, uint8_t *current_mode, pbio_port_lump_mode_info_t **mode_info) {
+    *mode_info = NULL;
+    *current_mode = 0;
+    *num_modes = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

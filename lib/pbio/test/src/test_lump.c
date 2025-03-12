@@ -228,7 +228,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     static const uint8_t msg88[] = { 0xC1, 0x00, 0x3E }; // mode 1 data
 
     static const uint8_t msg89[] = { 0x43, 0x08, 0xB4 }; // set mode 8
-    static const uint8_t msg90[] = { 0x46, 0x08, 0xB1 }; // extened mode info
+    static const uint8_t msg90[] = { 0x46, 0x08, 0xB1 }; // extended mode info
     static const uint8_t msg91[] = { 0xD0, 0x00, 0x00, 0x00, 0x00, 0x2F }; // mode 8 data
 
     // used in SIMULATE_RX/TX_MSG macros
@@ -237,8 +237,10 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
-    static pbio_port_lump_device_info_t *info;
+    static lego_device_type_id_t type_id;
+    static pbio_port_lump_mode_info_t *mode_info;
     static uint8_t current_mode;
+    static uint8_t num_modes;
     static pbio_error_t err;
 
     PT_BEGIN(pt);
@@ -379,57 +381,59 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
+    tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR);
-    tt_want_uint_op(info->num_modes, ==, 11);
+    tt_want_uint_op(type_id, ==, LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR);
+    tt_want_uint_op(num_modes, ==, 11);
     // TODO: verify fw/hw versions
 
     tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
 
-    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[0].writable, ==, 0);
+    tt_want_uint_op(mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[0].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[1].writable, ==, 0);
+    tt_want_uint_op(mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[1].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
-    tt_want_uint_op(info->mode_info[2].writable, ==, 0);
+    tt_want_uint_op(mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
+    tt_want_uint_op(mode_info[2].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[3].writable, ==, 0);
+    tt_want_uint_op(mode_info[3].num_values, ==, 1);
+    tt_want_uint_op(mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[3].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[4].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[4].writable, ==, 0);
+    tt_want_uint_op(mode_info[4].num_values, ==, 1);
+    tt_want_uint_op(mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[4].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[5].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[5].writable, ==, 1);
+    tt_want_uint_op(mode_info[5].num_values, ==, 1);
+    tt_want_uint_op(mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[5].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[6].num_values, ==, 3);
-    tt_want_uint_op(info->mode_info[6].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[6].writable, ==, 0);
+    tt_want_uint_op(mode_info[6].num_values, ==, 3);
+    tt_want_uint_op(mode_info[6].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[6].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[7].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[7].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[7].writable, ==, 1);
+    tt_want_uint_op(mode_info[7].num_values, ==, 1);
+    tt_want_uint_op(mode_info[7].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[7].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[8].num_values, ==, 4);
-    tt_want_uint_op(info->mode_info[8].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[8].writable, ==, 0);
+    tt_want_uint_op(mode_info[8].num_values, ==, 4);
+    tt_want_uint_op(mode_info[8].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[8].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[9].num_values, ==, 2);
-    tt_want_uint_op(info->mode_info[9].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[9].writable, ==, 0);
+    tt_want_uint_op(mode_info[9].num_values, ==, 2);
+    tt_want_uint_op(mode_info[9].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[9].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[10].num_values, ==, 8);
-    tt_want_uint_op(info->mode_info[10].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[10].writable, ==, 0);
+    tt_want_uint_op(mode_info[10].num_values, ==, 8);
+    tt_want_uint_op(mode_info[10].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[10].writable, ==, 0);
 
     // test changing the mode
 
@@ -451,7 +455,9 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
+    tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
     tt_uint_op(current_mode, ==, 1);
 
 
@@ -477,7 +483,9 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
         (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
+    tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
     tt_uint_op(current_mode, ==, 8);
 
     PT_YIELD(pt);
@@ -538,8 +546,10 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
-    static pbio_port_lump_device_info_t *info;
+    static lego_device_type_id_t type_id;
+    static pbio_port_lump_mode_info_t *mode_info;
     static uint8_t current_mode;
+    static uint8_t num_modes;
     static pbio_error_t err;
 
     PT_BEGIN(pt);
@@ -629,27 +639,29 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
+    tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR);
-    tt_want_uint_op(info->num_modes, ==, 4);
+    tt_want_uint_op(type_id, ==, LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR);
+    tt_want_uint_op(num_modes, ==, 4);
     tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS);
 
-    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[0].writable, ==, 1);
+    tt_want_uint_op(mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[0].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[1].writable, ==, 0);
+    tt_want_uint_op(mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[1].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
-    tt_want_uint_op(info->mode_info[2].writable, ==, 0);
+    tt_want_uint_op(mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
+    tt_want_uint_op(mode_info[2].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[3].num_values, ==, 5);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[3].writable, ==, 0);
+    tt_want_uint_op(mode_info[3].num_values, ==, 5);
+    tt_want_uint_op(mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[3].writable, ==, 0);
 
     PT_YIELD(pt);
 
@@ -728,8 +740,10 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
-    static pbio_port_lump_device_info_t *info;
+    static lego_device_type_id_t type_id;
+    static pbio_port_lump_mode_info_t *mode_info;
     static uint8_t current_mode;
+    static uint8_t num_modes;
     static pbio_error_t err;
 
     PT_BEGIN(pt);
@@ -832,35 +846,37 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
+    tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_TECHNIC_L_MOTOR);
-    tt_want_uint_op(info->num_modes, ==, 6);
+    tt_want_uint_op(type_id, ==, LEGO_DEVICE_TYPE_ID_TECHNIC_L_MOTOR);
+    tt_want_uint_op(num_modes, ==, 6);
     tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB);
 
-    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[0].writable, ==, 1);
+    tt_want_uint_op(mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[0].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[1].writable, ==, 1);
+    tt_want_uint_op(mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[1].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
-    tt_want_uint_op(info->mode_info[2].writable, ==, 1);
+    tt_want_uint_op(mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
+    tt_want_uint_op(mode_info[2].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[3].writable, ==, 1);
+    tt_want_uint_op(mode_info[3].num_values, ==, 1);
+    tt_want_uint_op(mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[3].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[4].num_values, ==, 2);
-    tt_want_uint_op(info->mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[4].writable, ==, 0);
+    tt_want_uint_op(mode_info[4].num_values, ==, 2);
+    tt_want_uint_op(mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[4].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[5].num_values, ==, 14);
-    tt_want_uint_op(info->mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[5].writable, ==, 0);
+    tt_want_uint_op(mode_info[5].num_values, ==, 14);
+    tt_want_uint_op(mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[5].writable, ==, 0);
 
 
     PT_YIELD(pt);
@@ -939,8 +955,10 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
-    static pbio_port_lump_device_info_t *info;
+    static lego_device_type_id_t type_id;
+    static pbio_port_lump_mode_info_t *mode_info;
     static uint8_t current_mode;
+    static uint8_t num_modes;
     static pbio_error_t err;
 
     PT_BEGIN(pt);
@@ -1042,35 +1060,37 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     }));
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
-    tt_uint_op(pbio_port_lump_get_info(lump_dev, &info, &current_mode), ==, PBIO_SUCCESS);
+    type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
+    tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
 
-    tt_want_uint_op(info->type_id, ==, LEGO_DEVICE_TYPE_ID_TECHNIC_XL_MOTOR);
-    tt_want_uint_op(info->num_modes, ==, 6);
+    tt_want_uint_op(type_id, ==, LEGO_DEVICE_TYPE_ID_TECHNIC_XL_MOTOR);
+    tt_want_uint_op(num_modes, ==, 6);
     tt_want_uint_op(current_mode, ==, LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB);
 
-    tt_want_uint_op(info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[0].writable, ==, 1);
+    tt_want_uint_op(mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(mode_info[0].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[0].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
-    tt_want_uint_op(info->mode_info[1].writable, ==, 1);
+    tt_want_uint_op(mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(mode_info[1].data_type, ==, LUMP_DATA_TYPE_DATA8);
+    tt_want_uint_op(mode_info[1].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
-    tt_want_uint_op(info->mode_info[2].writable, ==, 1);
+    tt_want_uint_op(mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(mode_info[2].data_type, ==, LUMP_DATA_TYPE_DATA32);
+    tt_want_uint_op(mode_info[2].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(info->mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[3].writable, ==, 1);
+    tt_want_uint_op(mode_info[3].num_values, ==, 1);
+    tt_want_uint_op(mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[3].writable, ==, 1);
 
-    tt_want_uint_op(info->mode_info[4].num_values, ==, 2);
-    tt_want_uint_op(info->mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[4].writable, ==, 0);
+    tt_want_uint_op(mode_info[4].num_values, ==, 2);
+    tt_want_uint_op(mode_info[4].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[4].writable, ==, 0);
 
-    tt_want_uint_op(info->mode_info[5].num_values, ==, 14);
-    tt_want_uint_op(info->mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA16);
-    tt_want_uint_op(info->mode_info[5].writable, ==, 0);
+    tt_want_uint_op(mode_info[5].num_values, ==, 14);
+    tt_want_uint_op(mode_info[5].data_type, ==, LUMP_DATA_TYPE_DATA16);
+    tt_want_uint_op(mode_info[5].writable, ==, 0);
 
 
     PT_YIELD(pt);

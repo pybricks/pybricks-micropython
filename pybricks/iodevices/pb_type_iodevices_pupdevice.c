@@ -92,26 +92,29 @@ static mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
         return info_dict;
     }
 
-    pbio_port_lump_device_info_t *info;
+    pbio_port_lump_mode_info_t *mode_info;
     uint8_t current_mode;
-    pb_assert(pbio_port_lump_get_info(self->device_base.lump_dev, &info, &current_mode));
+    uint8_t num_modes;
+    lego_device_type_id_t type_id;
+    pb_assert(pbio_port_lump_assert_type_id(self->device_base.lump_dev, &type_id));
+    pb_assert(pbio_port_lump_get_info(self->device_base.lump_dev, &num_modes, &current_mode, &mode_info));
 
     mp_obj_t info_dict = mp_obj_new_dict(2);
 
     // Store device ID.
-    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(info->type_id));
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(type_id));
 
     // Store mode info.
     mp_obj_t modes[(LUMP_MAX_EXT_MODE + 1)];
-    for (uint8_t m = 0; m < info->num_modes; m++) {
+    for (uint8_t m = 0; m < num_modes; m++) {
         mp_obj_t values[] = {
-            mp_obj_new_str(info->mode_info[m].name, strlen(info->mode_info[m].name)),
-            mp_obj_new_int(info->mode_info[m].num_values),
-            mp_obj_new_int(info->mode_info[m].data_type),
+            mp_obj_new_str(mode_info[m].name, strlen(mode_info[m].name)),
+            mp_obj_new_int(mode_info[m].num_values),
+            mp_obj_new_int(mode_info[m].data_type),
         };
         modes[m] = mp_obj_new_tuple(MP_ARRAY_SIZE(values), values);
     }
-    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_modes), mp_obj_new_tuple(info->num_modes, modes));
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_modes), mp_obj_new_tuple(num_modes, modes));
 
     return info_dict;
 }
@@ -121,14 +124,18 @@ static mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     void *data = pb_type_device_get_data(self_in, self->last_mode);
 
-    pbio_port_lump_device_info_t *info;
+    pbio_port_lump_mode_info_t *mode_info;
     uint8_t current_mode;
-    pb_assert(pbio_port_lump_get_info(self->device_base.lump_dev, &info, &current_mode));
+    uint8_t num_modes;
+    lego_device_type_id_t type_id;
+    pb_assert(pbio_port_lump_assert_type_id(self->device_base.lump_dev, &type_id));
+    pb_assert(pbio_port_lump_get_info(self->device_base.lump_dev, &num_modes, &current_mode, &mode_info));
+
 
     mp_obj_t values[LUMP_MAX_MSG_SIZE];
 
-    for (uint8_t i = 0; i < info->mode_info[current_mode].num_values; i++) {
-        switch (info->mode_info[current_mode].data_type) {
+    for (uint8_t i = 0; i < mode_info[current_mode].num_values; i++) {
+        switch (mode_info[current_mode].data_type) {
             case LUMP_DATA_TYPE_DATA8:
                 values[i] = mp_obj_new_int(((int8_t *)data)[i]);
                 break;
@@ -148,7 +155,7 @@ static mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
         }
     }
 
-    return mp_obj_new_tuple(info->mode_info[current_mode].num_values, values);
+    return mp_obj_new_tuple(mode_info[current_mode].num_values, values);
 }
 
 // pybricks.iodevices.PUPDevice.read
@@ -193,17 +200,20 @@ static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
     // Get requested mode.
     uint8_t mode = mp_obj_get_int(mode_in);
 
+    pbio_port_lump_mode_info_t *mode_info;
+    uint8_t current_mode;
+    uint8_t num_modes;
+    lego_device_type_id_t type_id;
+    pb_assert(pbio_port_lump_assert_type_id(self->device_base.lump_dev, &type_id));
+    pb_assert(pbio_port_lump_get_info(self->device_base.lump_dev, &num_modes, &current_mode, &mode_info));
+
     // Gets expected format for currently connected device.
     uint8_t data[LUMP_MAX_MSG_SIZE];
-    pbio_port_lump_device_info_t *info;
-    uint8_t current_mode;
-    pb_assert(pbio_port_lump_get_info(self->device_base.lump_dev, &info, &current_mode));
-    if (mode >= info->num_modes) {
+    if (mode >= num_modes) {
         mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Invalid mode"));
     }
 
-    pbio_port_lump_mode_info_t *mode_info = &info->mode_info[mode];
-    if (!mode_info->writable) {
+    if (!mode_info[mode].writable) {
         mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Mode not writable"));
     }
 
@@ -211,21 +221,21 @@ static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
     mp_obj_t *values;
     size_t num_values_given;
     mp_obj_get_array(data_in, &num_values_given, &values);
-    if (num_values_given == 0 || num_values_given != mode_info->num_values) {
-        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Expected %d values"), mode_info->num_values);
+    if (num_values_given == 0 || num_values_given != mode_info[mode].num_values) {
+        mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("Expected %d values"), mode_info[mode].num_values);
     }
 
     uint8_t size = 0;
 
-    for (uint8_t i = 0; i < mode_info->num_values; i++) {
-        switch (mode_info->data_type) {
+    for (uint8_t i = 0; i < mode_info[mode].num_values; i++) {
+        switch (mode_info[mode].data_type) {
             case LUMP_DATA_TYPE_DATA8: {
                 mp_int_t value = mp_obj_get_int(values[i]);
                 if (value > INT8_MAX || value < INT8_MIN) {
                     mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Value out of range for int8"));
                 }
                 *(int8_t *)(data + i) = value;
-                size = sizeof(int8_t) * mode_info->num_values;
+                size = sizeof(int8_t) * mode_info[mode].num_values;
                 break;
             }
             case LUMP_DATA_TYPE_DATA16: {
@@ -234,7 +244,7 @@ static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
                     mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Value out of range for int16"));
                 }
                 *(int16_t *)(data + i * 2) = value;
-                size = sizeof(int16_t) * mode_info->num_values;
+                size = sizeof(int16_t) * mode_info[mode].num_values;
                 break;
             }
             case LUMP_DATA_TYPE_DATA32: {
@@ -243,13 +253,13 @@ static mp_obj_t iodevices_PUPDevice_write(size_t n_args, const mp_obj_t *pos_arg
                     mp_raise_msg(&mp_type_ValueError, MP_ERROR_TEXT("Value out of range for int32"));
                 }
                 *(int32_t *)(data + i * 4) = value;
-                size = sizeof(int32_t) * mode_info->num_values;
+                size = sizeof(int32_t) * mode_info[mode].num_values;
                 break;
             }
             #if MICROPY_PY_BUILTINS_FLOAT
             case LUMP_DATA_TYPE_DATAF:
                 *(float *)(data + i * 4) = mp_obj_get_float_to_f(values[i]);
-                size = sizeof(float) * mode_info->num_values;
+                size = sizeof(float) * mode_info[mode].num_values;
                 break;
             #endif
             default:

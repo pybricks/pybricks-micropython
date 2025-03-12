@@ -141,12 +141,12 @@ struct _pbio_port_lump_dev_t {
     struct pt read_pt;
     /** Child protothread of the main protothread used for writing data */
     struct pt write_pt;
-    /** The current mode of the device */
-    uint8_t mode;
-    /** Parsed device information, including mode info */
-    pbio_port_lump_device_info_t parsed_info;
-    /**< The capabilities and requirements of the device. */
-    uint8_t capabilities;
+    /** Buffer to hold messages received from the device. */
+    uint8_t *rx_msg;
+    /** Buffer to hold messages transmitted to the device. */
+    uint8_t *tx_msg;
+    /** Data set buffer and status. */
+    pbdrv_legodev_lump_data_set_t *data_set;
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_port_lump_mode_info_t info associated with the current
@@ -154,22 +154,26 @@ struct _pbio_port_lump_dev_t {
      * the values could be foreign-endian.
      */
     uint8_t *bin_data;
+    /**
+     * NB: Everything below is reset to 0 when synchronizing with a new device.
+     *     type_id field should remain first.
+     */
+    /**< The type identifier of the device. */
+    lego_device_type_id_t type_id;
+    /** The current mode of the device */
+    uint8_t mode;
+    /**< The capabilities and requirements of the device. */
+    uint8_t capabilities;
     /** The current device connection state. */
     pbdrv_legodev_lump_status_t status;
     /** Mode switch status. */
     pbdrv_legodev_lump_mode_switch_t mode_switch;
-    /** Data set buffer and status. */
-    pbdrv_legodev_lump_data_set_t *data_set;
     /** Extra mode adder for Powered Up devices (for modes > LUMP_MAX_MODE). */
     uint8_t ext_mode;
     /** New baud rate that will be set with ev3_uart_change_bitrate. */
     uint32_t new_baud_rate;
-    /** Buffer to hold messages transmitted to the device. */
-    uint8_t *tx_msg;
     /** Size of the current message being transmitted. */
     uint8_t tx_msg_size;
-    /** Buffer to hold messages received from the device. */
-    uint8_t *rx_msg;
     /** Size of the current message being received. */
     uint8_t rx_msg_size;
     /** Total number of errors that have occurred. */
@@ -178,16 +182,18 @@ struct _pbio_port_lump_dev_t {
     bool data_rec;
     /** Return value for uart operations. */
     pbio_error_t err;
-    /** lump_dev->msg to be printed in case of an error. */
-    DBG_ERR(const char *last_err);
+    /** Angle reported by the device. */
+    pbio_angle_t angle;
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     /** Mode value used to keep track of mode in INFO messages while syncing. */
     uint8_t new_mode;
     /** Flags indicating what information has already been read from the data. */
     uint32_t info_flags;
+    /**< The number of modes */
+    uint8_t num_modes;
+    /**< Information about the current mode. */
+    pbio_port_lump_mode_info_t mode_info[(LUMP_MAX_EXT_MODE + 1)];
     #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
-    /** Angle reported by the device. */
-    pbio_angle_t angle;
 };
 
 pbio_port_lump_dev_t lump_devices[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
@@ -259,7 +265,7 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
 
 
 static bool pbio_port_lump_is_relative_motor(pbio_port_lump_dev_t *lump_dev) {
-    return (lump_dev->parsed_info.type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) &&
+    return (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) &&
            (lump_dev->mode == LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS);
 }
 
@@ -388,7 +394,7 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                 // The LEGO EV3 color sensor sends bad checksums
                 // for RGB-RAW data (mode 4). The check here could be
                 // improved if someone can find a pattern.
-                if (lump_dev->parsed_info.type_id != LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR
+                if (lump_dev->type_id != LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR
                     || lump_dev->rx_msg[0] != (LUMP_MSG_TYPE_DATA | LUMP_MSG_SIZE_8 | 4)) {
                     return;
                 }
@@ -409,7 +415,7 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                     break;
                 case LUMP_SYS_ACK:
                     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
-                    if (!lump_dev->parsed_info.num_modes) {
+                    if (!lump_dev->num_modes) {
                         debug_pr("Received ACK before all mode INFO\n");
                         goto err;
                     }
@@ -437,14 +443,14 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                         debug_pr("Number of modes is out of range\n");
                         goto err;
                     }
-                    lump_dev->parsed_info.num_modes = cmd2 + 1;
+                    lump_dev->num_modes = cmd2 + 1;
                     if (msg_size > 5) {
                         // Powered Up devices can have an extended mode message that
                         // includes modes > LUMP_MAX_MODE
-                        lump_dev->parsed_info.num_modes = lump_dev->rx_msg[3] + 1;
+                        lump_dev->num_modes = lump_dev->rx_msg[3] + 1;
                     }
 
-                    debug_pr("num_modes: %d\n", lump_dev->parsed_info.num_modes);
+                    debug_pr("num_modes: %d\n", lump_dev->num_modes);
                     #endif
                     break;
                 case LUMP_CMD_SPEED:
@@ -515,7 +521,7 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
 
                     lump_dev->new_mode = mode;
                     lump_dev->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
-                    strncpy(lump_dev->parsed_info.mode_info[mode].name, name, name_len);
+                    strncpy(lump_dev->mode_info[mode].name, name, name_len);
 
                     debug_pr("new_mode: %d\n", lump_dev->new_mode);
                     debug_pr("flags: %02X %02X %02X %02X %02X %02X\n",
@@ -547,11 +553,11 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                     }
 
                     // Mode supports writing if rx_msg[3] is nonzero.
-                    lump_dev->parsed_info.mode_info[mode].writable = lump_dev->rx_msg[3] != 0;
+                    lump_dev->mode_info[mode].writable = lump_dev->rx_msg[3] != 0;
 
                     debug_pr("mapping: in %02x out %02x\n", lump_dev->rx_msg[2], lump_dev->rx_msg[3]);
                     debug_pr("mapping: in %02x out %02x\n", lump_dev->rx_msg[2], lump_dev->rx_msg[3]);
-                    debug_pr("Writable: %d\n", lump_dev->parsed_info.mode_info[mode].writable);
+                    debug_pr("Writable: %d\n", lump_dev->mode_info[mode].writable);
 
                     break;
                 case LUMP_INFO_MODE_COMBOS:
@@ -603,8 +609,8 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                         debug_pr("Received duplicate format INFO\n");
                         goto err;
                     }
-                    lump_dev->parsed_info.mode_info[mode].num_values = lump_dev->rx_msg[2];
-                    if (!lump_dev->parsed_info.mode_info[mode].num_values) {
+                    lump_dev->mode_info[mode].num_values = lump_dev->rx_msg[2];
+                    if (!lump_dev->mode_info[mode].num_values) {
                         debug_pr("Invalid number of data sets\n");
                         goto err;
                     }
@@ -616,13 +622,13 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                         debug_pr("Did not receive all required INFO\n");
                         goto err;
                     }
-                    lump_dev->parsed_info.mode_info[mode].data_type = lump_dev->rx_msg[3];
+                    lump_dev->mode_info[mode].data_type = lump_dev->rx_msg[3];
                     if (lump_dev->new_mode) {
                         lump_dev->new_mode--;
                     }
 
-                    debug_pr("num_values: %d\n", lump_dev->parsed_info.mode_info[mode].num_values);
-                    debug_pr("data_type: %d\n", lump_dev->parsed_info.mode_info[mode].data_type);
+                    debug_pr("num_values: %d\n", lump_dev->mode_info[mode].num_values);
+                    debug_pr("data_type: %d\n", lump_dev->mode_info[mode].data_type);
 
                     break;
                 #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
@@ -635,7 +641,7 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
             }
 
             #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
-            if (mode >= lump_dev->parsed_info.num_modes) {
+            if (mode >= lump_dev->num_modes) {
                 debug_pr("Invalid mode received\n");
                 goto err;
             }
@@ -661,7 +667,6 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
 
 err:
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
-    debug_pr("Data error: %s\n", lump_dev->last_err);
 }
 
 static uint8_t ev3_uart_set_msg_hdr(lump_msg_type_t type, lump_msg_size_t size, lump_cmd_t cmd) {
@@ -721,6 +726,8 @@ static void ev3_uart_prepare_tx_msg(pbio_port_lump_dev_t *lump_dev, lump_msg_typ
     lump_dev->tx_msg_size = offset + i + 2;
 }
 
+#include <stdio.h>
+
 /**
  * The synchronization thread for the LEGO UART device.
  *
@@ -731,19 +738,16 @@ static void ev3_uart_prepare_tx_msg(pbio_port_lump_dev_t *lump_dev, lump_msg_typ
  * @param [in]  lump_dev       The LEGO UART device instance.
  * @param [in]  uart_dev       The UART device instance.
  * @param [in]  etimer         The timer for the protothread.
- * @param [out] parsed_info    The device information.
+ * @param [out] device_info    The device information.
  */
 PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer, pbio_port_device_info_t *device_info)) {
     PT_BEGIN(pt);
 
-    // Reset state for new device
-    lump_dev->mode = 0;
-    lump_dev->mode_switch = (pbdrv_legodev_lump_mode_switch_t) {0};
-    lump_dev->ext_mode = 0;
-    lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
-    lump_dev->parsed_info = (pbio_port_lump_device_info_t) {0};
-    lump_dev->capabilities = 0;
+    // Reset whole state except references to static buffers
+    memset((uint8_t *)lump_dev + offsetof(pbio_port_lump_dev_t, type_id), 0, sizeof(pbio_port_lump_dev_t) - offsetof(pbio_port_lump_dev_t, type_id));
+
     device_info->kind = PBIO_PORT_DEVICE_KIND_NONE;
+    lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
 
     // Send SPEED command at 115200 baud
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
@@ -816,14 +820,14 @@ sync:
     }
 
     // if all was good, we are ready to start receiving the mode info
-    lump_dev->parsed_info.type_id = lump_dev->rx_msg[1];
+    lump_dev->type_id = lump_dev->rx_msg[1];
     lump_dev->data_rec = false;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_INFO;
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     lump_dev->info_flags = EV3_UART_INFO_FLAG_CMD_TYPE;
-    lump_dev->parsed_info.num_modes = 1;
+    lump_dev->num_modes = 1;
     #endif
-    debug_pr("type id: %d\n", lump_dev->parsed_info.type_id);
+    debug_pr("type id: %d\n", lump_dev->type_id);
 
     while (lump_dev->status == PBDRV_LEGODEV_LUMP_STATUS_INFO) {
         // read the message header
@@ -836,7 +840,7 @@ sync:
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
         if (lump_dev->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
             debug_pr("Bad message size during info %d\n", lump_dev->rx_msg_size);
-            if (lump_dev->parsed_info.type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR) {
+            if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR) {
                 // This sensor sends bad info messages.
                 continue;
             }
@@ -880,7 +884,7 @@ sync:
 
     // Map device capabilities and power requirements to practically useful
     // device categories for use in Pybricks.
-    device_info->type_id = lump_dev->parsed_info.type_id;
+    device_info->type_id = lump_dev->type_id;
     device_info->kind = PBIO_PORT_DEVICE_KIND_LUMP;
 
     // Request switch to default mode for this device if any.
@@ -1087,12 +1091,12 @@ pbio_error_t pbio_port_lump_is_ready(pbio_port_lump_dev_t *lump_dev) {
     }
 
     // Not ready if waiting for stale data to be discarded.
-    if (time - lump_dev->mode_switch.time <= lego_device_stale_data_delay(lump_dev->parsed_info.type_id, lump_dev->mode)) {
+    if (time - lump_dev->mode_switch.time <= lego_device_stale_data_delay(lump_dev->type_id, lump_dev->mode)) {
         return PBIO_ERROR_AGAIN;
     }
 
     // Not ready if just recently set new data.
-    if (lump_dev->data_set->size > 0 || time - lump_dev->data_set->time <= lego_device_data_set_delay(lump_dev->parsed_info.type_id, lump_dev->mode)) {
+    if (lump_dev->data_set->size > 0 || time - lump_dev->data_set->time <= lego_device_data_set_delay(lump_dev->type_id, lump_dev->mode)) {
         return PBIO_ERROR_AGAIN;
     }
 
@@ -1129,13 +1133,43 @@ pbio_error_t pbio_port_lump_set_mode(pbio_port_lump_dev_t *lump_dev, uint8_t mod
 
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     // Can only set available modes.
-    if (mode >= lump_dev->parsed_info.num_modes) {
+    if (mode >= lump_dev->num_modes) {
         return PBIO_ERROR_INVALID_ARG;
     }
     #endif
 
     // Request mode switch.
     pbio_port_lump_request_mode(lump_dev, mode);
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Asserts or gets the device id of a LEGO UART device.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance.
+ * @param [out] type_id     The device id.
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached or not of the expected type.
+ *                          ::PBIO_ERROR_AGAIN if the device is not ready for this operation.
+ */
+pbio_error_t pbio_port_lump_assert_type_id(pbio_port_lump_dev_t *lump_dev, lego_device_type_id_t *type_id) {
+
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // If any LUMP allowed, proceed and return the detected type.
+    if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) {
+        *type_id = lump_dev->type_id;
+        return PBIO_SUCCESS;
+    }
+
+    // Otherwise require exact match.
+    if (*type_id != lump_dev->type_id) {
+        return PBIO_ERROR_NO_DEV;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -1183,7 +1217,7 @@ pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_t *lump_dev, u
     }
 
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
-    const pbio_port_lump_mode_info_t *mode_info = &lump_dev->parsed_info.mode_info[mode];
+    const pbio_port_lump_mode_info_t *mode_info = &lump_dev->mode_info[mode];
     // Not all modes support setting data and data must be of expected size.
     if (!mode_info->writable || size != mode_info->num_values * pbio_port_lump_data_size(mode_info->data_type)) {
         return PBIO_ERROR_INVALID_OP;
@@ -1204,20 +1238,24 @@ pbio_error_t pbio_port_lump_set_mode_with_data(pbio_port_lump_dev_t *lump_dev, u
 /**
  * Get the LEGO UART device information.
  *
- * @param [in]  lump_dev    The LEGO UART device instance.
- * @param [out] info        The device information.
- * @return                  Error code.
+ * @param [in]  lump_dev     The LEGO UART device instance.
+ * @param [out] num_modes    The number of modes.
+ * @param [out] current_mode The current mode.
+ * @param [out] mode_info    The mode information array.
+ * @return                   Error code.
  */
-pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_lump_device_info_t **info, uint8_t *current_mode) {
+pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, uint8_t *num_modes, uint8_t *current_mode, pbio_port_lump_mode_info_t **mode_info) {
 
-    if (!lump_dev) {
-        return PBIO_ERROR_NO_DEV;
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
-    // Info is set even in case of error. Caller can decide what values apply
-    // based on the error code.
-    *info = &lump_dev->parsed_info;
+    #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     *current_mode = lump_dev->mode;
-    return pbio_port_lump_is_ready(lump_dev);
+    *num_modes = lump_dev->num_modes;
+    *mode_info = lump_dev->mode_info;
+    #endif
+    return PBIO_SUCCESS;
 }
 
 /**

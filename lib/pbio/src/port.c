@@ -217,32 +217,18 @@ pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_d
  */
 pbio_error_t pbio_port_get_lump_device(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_port_lump_dev_t **lump_dev) {
 
-    if (!port->lump_dev) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
     if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
 
     // REVISIT: Check for LUMP presence from DCM.
 
-    pbio_error_t err = pbio_port_lump_is_ready(port->lump_dev);
+    pbio_error_t err = pbio_port_lump_assert_type_id(port->lump_dev, expected_type_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // If expected type specified, require exact match.
-    if (*expected_type_id != LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART && *expected_type_id != port->device_info.type_id) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    // Allows generic callers to know what is connected.
-    *expected_type_id = port->device_info.type_id;
-
-    // Return the device instance.
     *lump_dev = port->lump_dev;
-
     return PBIO_SUCCESS;
 }
 

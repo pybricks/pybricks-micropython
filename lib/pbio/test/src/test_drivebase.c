@@ -56,18 +56,9 @@ static PT_THREAD(test_drivebase_basics(struct pt *pt)) {
     static pbio_dcmotor_actuation_t actuation;
     static int32_t voltage;
 
-    static uint32_t delay;
-
     PT_BEGIN(pt);
 
-    // Give simulator some time to start reporting data.
-    for (delay = 0; delay < 100; delay++) {
-        pbio_test_clock_tick(1);
-        PT_YIELD(pt);
-    }
-
     // Initialize the servos.
-
     lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_A, &port), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_port_get_servo(port, &id, &srv_left), ==, PBIO_SUCCESS);
