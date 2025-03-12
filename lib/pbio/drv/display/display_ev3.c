@@ -388,9 +388,9 @@ void pbdrv_display_init(void) {
     // GPIO Mux. CS is in GPIO mode (manual control).
     pbdrv_gpio_alt(&pin_spi1_mosi, SYSCFG_PINMUX5_PINMUX5_23_20_SPI1_SIMO0);
     pbdrv_gpio_alt(&pin_spi1_clk, SYSCFG_PINMUX5_PINMUX5_11_8_SPI1_CLK);
-    pbdrv_gpio_alt_gpio(&pin_lcd_a0);
-    pbdrv_gpio_alt_gpio(&pin_lcd_cs);
-    pbdrv_gpio_alt_gpio(&pin_lcd_reset);
+    pbdrv_gpio_input(&pin_lcd_a0);
+    pbdrv_gpio_input(&pin_lcd_cs);
+    pbdrv_gpio_input(&pin_lcd_reset);
 
     // Waking up the SPI1 instance.
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_SPI1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);

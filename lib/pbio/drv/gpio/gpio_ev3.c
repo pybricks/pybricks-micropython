@@ -23,10 +23,19 @@ static uint32_t get_pin_index(const pbdrv_gpio_t *gpio) {
     return mux_info->gpio_bank_id * 0x10 + gpio->pin + 1;
 }
 
+static void pbdrv_gpio_alt_gpio(const pbdrv_gpio_t *gpio) {
+    if (!gpio) {
+        return;
+    }
+    pbdrv_gpio_ev3_mux_t *mux_info = (pbdrv_gpio_ev3_mux_t *)gpio->bank;
+    pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
+}
+
 static void gpio_write(const pbdrv_gpio_t *gpio, uint8_t value) {
     if (!gpio) {
         return;
     }
+    pbdrv_gpio_alt_gpio(gpio);
     uint32_t pin_index = get_pin_index(gpio);
     GPIODirModeSet(SOC_GPIO_0_REGS, pin_index, GPIO_DIR_OUTPUT);
     GPIOPinWrite(SOC_GPIO_0_REGS, pin_index, value);
@@ -44,6 +53,7 @@ uint8_t pbdrv_gpio_input(const pbdrv_gpio_t *gpio) {
     if (!gpio) {
         return 0;
     }
+    pbdrv_gpio_alt_gpio(gpio);
     uint32_t pin_index = get_pin_index(gpio);
     GPIODirModeSet(SOC_GPIO_0_REGS, pin_index, GPIO_DIR_INPUT);
     return GPIOPinRead(SOC_GPIO_0_REGS, pin_index) == GPIO_PIN_HIGH;
@@ -57,14 +67,6 @@ void pbdrv_gpio_alt(const pbdrv_gpio_t *gpio, uint8_t alt) {
     uint32_t mux = alt << mux_info->mux_shift;
     uint32_t keep = HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(mux_info->mux_id)) & ~(mux_info->mux_mask);
     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(mux_info->mux_id)) = (mux | keep);
-}
-
-void pbdrv_gpio_alt_gpio(const pbdrv_gpio_t *gpio) {
-    if (!gpio) {
-        return;
-    }
-    pbdrv_gpio_ev3_mux_t *mux_info = (pbdrv_gpio_ev3_mux_t *)gpio->bank;
-    pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
 }
 
 void pbdrv_gpio_set_pull(const pbdrv_gpio_t *gpio, pbdrv_gpio_pull_t pull) {

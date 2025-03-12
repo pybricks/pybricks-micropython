@@ -362,11 +362,6 @@ void SystemInit(void) {
 
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
-    // Initialize button GPIO mode. Button gpio driver does not have a hook for this.
-    for (int i = 0; i < PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON; i++) {
-        pbdrv_gpio_alt_gpio(&pbdrv_button_gpio_platform[i].gpio);
-    }
-
     // UART for Bluetooth. Other UARTS are configured by port module.
     // TODO: Add CTS/RTS pins.
     const pbdrv_gpio_t bluetooth_uart_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3);

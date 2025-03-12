@@ -299,23 +299,13 @@ void pbdrv_motor_driver_init(void) {
 
     for (int i = 0; i < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; i++) {
         pbdrv_motor_driver_dev_t *dev = &motor_drivers[i];
-
-        if (!dev->supports_pwm) {
-            pbdrv_gpio_alt_gpio(&dev->sensor.enable);
-        } else {
-            pbdrv_gpio_alt_gpio(&dev->pwm.pin1);
-            pbdrv_gpio_alt_gpio(&dev->pwm.pin2);
-        }
-
-        // Start as coasting.
+        // Init as coasting. This also initializes the GPIO pins.
         pbdrv_motor_driver_coast(dev);
     }
 
     // Activate PWM after above pins are safely set to coast.
     pbdrv_motor_driver_init_ehrpwm();
     pbdrv_motor_driver_init_ecap();
-
-
 }
 
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_EV3

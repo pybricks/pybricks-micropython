@@ -178,11 +178,8 @@ void pbdrv_counter_init(void) {
 
     for (size_t i = 0; i < PBIO_ARRAY_SIZE(counters); i++) {
         pbdrv_counter_dev_t *dev = &counters[i];
-        pbdrv_gpio_alt_gpio(&dev->gpio_dir);
-        pbdrv_gpio_alt_gpio(&dev->gpio_dir);
         pbdrv_gpio_input(&dev->gpio_int);
         pbdrv_gpio_input(&dev->gpio_dir);
-        pbdrv_gpio_alt_gpio(&dev->gpio_det);
         pbdrv_gpio_out_low(&dev->gpio_det);
     }
 

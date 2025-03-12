@@ -35,10 +35,6 @@ void pbdrv_gpio_alt(const pbdrv_gpio_t *gpio, uint8_t alt) {
     bank->MODER = (bank->MODER & ~(3 << (gpio->pin * 2))) | (2 << (gpio->pin * 2));
 }
 
-void pbdrv_gpio_alt_gpio(const pbdrv_gpio_t *gpio) {
-    // noop
-}
-
 void pbdrv_gpio_set_pull(const pbdrv_gpio_t *gpio, pbdrv_gpio_pull_t pull) {
     GPIO_TypeDef *bank = gpio->bank;
     bank->PUPDR = (bank->PUPDR & ~(3 << (gpio->pin * 2))) | (pull << (gpio->pin * 2));

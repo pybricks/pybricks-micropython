@@ -41,9 +41,8 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
         devs[i].funcs = &pbdrv_pwm_tiam1808_funcs;
         devs[i].priv = (pbdrv_pwm_tiam1808_platform_data_t *)&pbdrv_pwm_tiam1808_platform_data[i];
 
-        // Set pins in GPIO mode.
-        pbdrv_gpio_alt_gpio(&pbdrv_pwm_tiam1808_platform_data[i].gpio_red);
-        pbdrv_gpio_alt_gpio(&pbdrv_pwm_tiam1808_platform_data[i].gpio_green);
+        pbdrv_gpio_out_low(&pbdrv_pwm_tiam1808_platform_data[i].gpio_red);
+        pbdrv_gpio_out_low(&pbdrv_pwm_tiam1808_platform_data[i].gpio_green);
     }
 }
 
