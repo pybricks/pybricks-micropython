@@ -40,14 +40,17 @@ typedef struct {
     uint8_t read_length;
     /** Callback to call on read or write completion events */
     pbdrv_uart_poll_callback_t poll_callback;
+    /** Context for callback caller */
+    void *poll_callback_context;
 } pbdrv_uart_t;
 
 static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART];
 static volatile uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART][RX_DATA_SIZE];
 
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback) {
+void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     uart->poll_callback = callback;
+    uart->poll_callback_context = context;
 }
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
@@ -326,7 +329,7 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 static void poll_process_by_id(uint8_t id) {
     pbdrv_uart_t *uart = &pbdrv_uart[id];
     if (uart->poll_callback) {
-        uart->poll_callback(&uart->uart_dev);
+        uart->poll_callback(uart->poll_callback_context);
     }
 }
 

@@ -29,7 +29,7 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev);
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud);
 void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev);
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback);
+void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context);
 
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
 PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
@@ -60,7 +60,7 @@ static inline void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
 }
 static inline void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
-static inline void pbdrv_uart_set_poll_callback(pbdrv_uart_poll_callback_t callback) {
+static inline void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
 }
 
 static inline PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {

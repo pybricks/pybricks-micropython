@@ -46,6 +46,8 @@ typedef struct {
     bool initialized;
     /** Callback to call on read or write completion events */
     pbdrv_uart_poll_callback_t poll_callback;
+    /** Context for callback caller */
+    void *poll_callback_context;
 } pbdrv_uart_t;
 
 static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32F0_NUM_UART];
@@ -64,9 +66,10 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback) {
+void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     uart->poll_callback = callback;
+    uart->poll_callback_context = context;
 }
 
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
@@ -179,7 +182,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
         uart->rx_ring_buf[uart->rx_ring_buf_head] = uart->USART->RDR;
         uart->rx_ring_buf_head = (uart->rx_ring_buf_head + 1) & (UART_RING_BUF_SIZE - 1);
         if (uart->poll_callback) {
-            uart->poll_callback(&uart->uart_dev);
+            uart->poll_callback(uart->poll_callback_context);
         }
     }
 
@@ -200,7 +203,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     if (uart->USART->CR1 & USART_CR1_TCIE && isr & USART_ISR_TC) {
         uart->USART->CR1 &= ~USART_CR1_TCIE;
         if (uart->poll_callback) {
-            uart->poll_callback(&uart->uart_dev);
+            uart->poll_callback(uart->poll_callback_context);
         }
     }
 }
