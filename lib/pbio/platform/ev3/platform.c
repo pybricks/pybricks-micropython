@@ -222,7 +222,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 0,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_B,
@@ -232,7 +232,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 1,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_C,
@@ -242,7 +242,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 2,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_D,
@@ -252,7 +252,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 3,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_1,

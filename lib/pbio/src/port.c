@@ -386,8 +386,8 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
 
     // Configure basic quadrature-only ports such as BOOST A&B or NXT A&B&C
     // without device kind and type id detection.
-    if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE_PASSIVE) {
-        pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE_PASSIVE);
+    if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE) {
+        pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE);
         return;
     }
 
@@ -403,6 +403,9 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         return;
     }
 
+    // If uart is available but LEGO mode was not selected, initialize UART
+    // mode. In practice, this initialization step is only used in debug mode
+    // where the LEGO mode is disabled on one port.
     if (port->uart_dev && (port->pdata->supported_modes & PBIO_PORT_MODE_UART)) {
         pbio_port_set_mode(port, PBIO_PORT_MODE_UART);
         return;
@@ -477,6 +480,11 @@ void pbio_port_power_off(void) {
  * Sets the mode of the port.
  *
  * Should not be called before port process is started.
+ * 
+ * The return value is not checked for the initial mode, which is assumed to
+ * be allowed and properly configured in constant platform data.
+ *
+ * The return value can be used instead when switching mode at runtime.
  *
  * @param [in]  port    The port instance.
  * @param [in]  mode    The mode to set.
@@ -507,10 +515,9 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.
             port->process.thread = process_thread_pbio_port_process_pup;
-
             // Returning e-again allows user module to wait for the port to be
             // ready after first entering LEGO mode, avoiding NODEV errors when
-            // switching from UART mode to LEGO mode.
+            // switching from direct access modes back to LEGO mode.
             return PBIO_ERROR_AGAIN;
         case PBIO_PORT_MODE_UART:
             // Enable UART on the port. No process needed here. User can

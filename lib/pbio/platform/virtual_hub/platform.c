@@ -21,7 +21,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_B,
@@ -31,7 +31,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_C,
@@ -41,7 +41,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_D,
@@ -51,7 +51,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_E,
@@ -61,7 +61,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
     {
         .port_id = PBIO_PORT_ID_F,
@@ -71,7 +71,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
     },
 };
 
