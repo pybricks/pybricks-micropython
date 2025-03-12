@@ -77,20 +77,10 @@ typedef long mp_off_t;
 #define CPSR_IRQ_MASK (1 << 7)  // IRQ disable
 #define CPSR_FIQ_MASK (1 << 6)  // FIQ disable
 
-static inline void enable_irq(uint32_t cpsr) {
-    __asm__ __volatile__ ("msr cpsr_c, %0" : : "r" (cpsr));
-}
+#include <tiam1808/armv5/am1808/interrupt.h>
 
-static inline mp_uint_t  disable_irq(void) {
-    uint32_t cpsr;
-    __asm__ __volatile__ ("mrs %0, cpsr" : "=r" (cpsr));
-    // REVISIT: FIQ necessary?
-    enable_irq(cpsr | CPSR_IRQ_MASK | CPSR_FIQ_MASK);
-    return cpsr;
-}
-
-#define MICROPY_BEGIN_ATOMIC_SECTION()     disable_irq()
-#define MICROPY_END_ATOMIC_SECTION(state)  enable_irq(state)
+#define MICROPY_BEGIN_ATOMIC_SECTION()     IntDisable()
+#define MICROPY_END_ATOMIC_SECTION(state)  IntEnable(state)
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \

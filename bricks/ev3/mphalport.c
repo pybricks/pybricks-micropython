@@ -40,11 +40,11 @@ void pb_event_poll_hook_leave(void) {
     // have a critical section where we disable interrupts and check see if there
     // are any last second events. If not, we can call __WFI(), which still wakes
     // up the CPU on interrupt even though interrupts are otherwise disabled.
-    mp_uint_t state = disable_irq();
+    mp_uint_t state = MICROPY_BEGIN_ATOMIC_SECTION();
     if (!process_nevents()) {
         arm_wfi();
     }
-    enable_irq(state);
+    MICROPY_END_ATOMIC_SECTION(state);
 }
 
 // Core delay function that does an efficient sleep and may switch thread context.

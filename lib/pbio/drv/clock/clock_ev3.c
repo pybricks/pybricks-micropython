@@ -90,7 +90,7 @@ void pbdrv_clock_init(void) {
     IntRegister(SYS_INT_TINT34_0, systick_isr_C);
 
     /* Set the channel number for Timer interrupt, it will map to IRQ */
-    IntChannelSet(SYS_INT_TINT34_0, 2);
+    IntChannelSet(SYS_INT_TINT34_0, 3);
 
     /* Enable timer interrupts in AINTC */
     IntSystemEnable(SYS_INT_TINT34_0);

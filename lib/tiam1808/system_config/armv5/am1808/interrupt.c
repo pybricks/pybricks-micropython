@@ -36,6 +36,8 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdint.h>
+
 #include "hw_aintc.h"
 #include "interrupt.h"
 #include "hw_types.h"
@@ -508,9 +510,6 @@ unsigned int IntMasterStatusGet(void)
     return CPUIntStatus();
 }
 
-
-
-
 /**
  * \brief Read and save the stasus and Disables the processor IRQ .
  *         Prevents the processor to respond to IRQs.  
@@ -522,18 +521,28 @@ unsigned int IntMasterStatusGet(void)
  *  Note: This function call shall be done only in previleged mode of ARM
  **/
 
+#define CPSR_IRQ_MASK (1 << 7)  // IRQ disable
+#define CPSR_FIQ_MASK (1 << 6)  // FIQ disable
 
 unsigned char IntDisable(void)
 {
-	unsigned char status;
+    // unsigned char status;
 
-	/* Reads the current status.*/
-	status = (IntMasterStatusGet() & 0xFF);
+	// /* Reads the current status.*/
+	// status = (IntMasterStatusGet() & 0xFF);
 
-	/* Disable the Interrupts.*/
-	IntMasterIRQDisable();
+	// /* Disable the Interrupts.*/
+	// IntMasterIRQDisable();
 
-	return status;
+	// return status;
+
+    // REVISIT: Why does original library version (above) not work?
+
+    uint32_t cpsr;
+    __asm__ __volatile__ ("mrs %0, cpsr" : "=r" (cpsr));
+    // REVISIT: FIQ necessary?
+    IntEnable(cpsr | CPSR_IRQ_MASK | CPSR_FIQ_MASK);
+    return cpsr;
 }
 
 /**
@@ -550,11 +559,13 @@ unsigned char IntDisable(void)
 
 void IntEnable(unsigned char  status)
 {
-  
-	if((status & 0x80) == 0) 
-	{
-		IntMasterIRQEnable();
-	} 
+    // REVISIT: Why does original library version (above) not work?
+
+	// if((status & 0x80) == 0) 
+	// {
+	// 	IntMasterIRQEnable();
+	// } 
+    __asm__ __volatile__ ("msr cpsr_c, %0" : : "r" (status));
 }
 
 
