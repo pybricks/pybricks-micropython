@@ -84,10 +84,30 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
+pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id) {
+    lego_device_type_id_t id = dev->motor_driver->pdata->type_id;
+
+    // There is no counter here.
+    if (id == LEGO_DEVICE_TYPE_ID_NONE) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    // All motors in this simulation driver have encodeders.
+    if (*expected_type_id == LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR) {
+        *expected_type_id = id;
+        return PBIO_SUCCESS;
+    }
+
+    // Otherwise require exact match.
+    if (*expected_type_id == id) {
+        return PBIO_SUCCESS;
+    }
+    return PBIO_ERROR_NO_DEV;
+}
+
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     *rotations = (int32_t)(dev->motor_driver->angle / 360000);
     *millidegrees = (int32_t)(dev->motor_driver->angle) % 360000;
-    *type_id = dev->motor_driver->pdata->type_id;
     return PBIO_SUCCESS;
 }
 

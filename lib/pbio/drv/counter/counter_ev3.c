@@ -127,7 +127,7 @@ static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
     return LEGO_DEVICE_TYPE_ID_NONE;
 }
 
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
+pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id) {
 
     uint16_t adc = 0;
     pbio_error_t err = pbdrv_adc_get_ch(dev->adc_channel, &adc);
@@ -135,11 +135,29 @@ pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotation
         return err;
     }
 
-    *type_id = pbdrv_counter_ev3_get_type(adc);
+    lego_device_type_id_t detected_id = pbdrv_counter_ev3_get_type(adc);
     debug_pr("ADC: %d, type: %d\n", adc, *type_id);
 
-    if (*type_id == LEGO_DEVICE_TYPE_ID_NONE) {
+    if (detected_id == LEGO_DEVICE_TYPE_ID_NONE) {
         return PBIO_ERROR_NO_DEV;
+    }
+
+    // Success if any encoded motor is allowed or if the detected type matches.
+    if (*expected_type_id == LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR || *expected_type_id == detected_id) {
+        *expected_type_id = detected_id;
+        return PBIO_SUCCESS;
+    }
+
+    return PBIO_ERROR_NO_DEV;
+}
+
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+
+    // Ensures this method raises on becoming disconnected.
+    lego_device_type_id_t expected_type_id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    pbio_error_t err = pbdrv_counter_assert_type(dev, &expected_type_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     *millidegrees = (dev->count % 360) * 1000;

@@ -148,10 +148,8 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
         return pbio_port_lump_get_angle(port->lump_dev, angle, false);
     }
 
-    // Fetches the angle as well as the currently attached device type.
     if (port->counter) {
-        lego_device_type_id_t type_id;
-        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees, &type_id);
+        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees);
     }
     return PBIO_ERROR_NO_DEV;
 }
@@ -211,8 +209,6 @@ pbio_error_t pbio_port_get_lump_device(pbio_port_t *port, lego_device_type_id_t 
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // REVISIT: Check for LUMP presence from DCM.
-
     pbio_error_t err = pbio_port_lump_assert_type_id(port->lump_dev, expected_type_id);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -267,21 +263,12 @@ pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expec
     // Return requested device.
     *servo = port->servo;
 
-    // Port must be ready to report angles.
-    pbio_angle_t angle;
-    pbio_error_t err = pbio_port_get_angle(port, &angle);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     if (port->mode == PBIO_PORT_MODE_LEGO_DCM && port->lump_dev) {
         return pbio_port_lump_assert_type_id(port->lump_dev, expected_type_id);
     }
 
     if (port->counter) {
-        // Getting the counter angle also asserts the device type.
-        pbio_angle_t angle;
-        return pbdrv_counter_get_angle(port->counter, &angle.rotations, &angle.millidegrees, expected_type_id);
+        return pbdrv_counter_assert_type(port->counter, expected_type_id);
     }
 
     return PBIO_ERROR_NO_DEV;

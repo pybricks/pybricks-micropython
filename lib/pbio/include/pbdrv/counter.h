@@ -22,8 +22,9 @@ typedef struct _pbdrv_counter_dev_t pbdrv_counter_dev_t;
 #if PBDRV_CONFIG_COUNTER
 
 pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev);
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id);
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
 pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees);
+pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id);
 
 #else // PBDRV_CONFIG_COUNTER
 
@@ -31,10 +32,13 @@ static inline pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t
     *dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
+static inline pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *millidegrees) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
