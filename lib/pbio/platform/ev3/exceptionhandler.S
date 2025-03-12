@@ -20,7 +20,7 @@
 
         .code 32
 
-@ Default entry for all vecotrs except Reset is "B ExceptionHandler" so each interrupt would cause a reset
+@ Default entry for all vectors except Reset is "B ExceptionHandler" so each interrupt would cause a reset
 @ Since I can only say that the IRQ Handler works, we leave the remaining ones as they are
 ExceptionHandler:
         B Entry
@@ -84,46 +84,12 @@ IRQHandler:
         LDR      r1, [r0]
         LDR      r2, =systick_isr_C
         CMP      r1, r2
-        BNE      SkipButtons                    @ If not we can return from IRQ-Handler
+        BNE      LeaveIRQ                       @ If not we can return from IRQ-Handler
         
         MOV      lr, pc                         @ Otherwise check if any button was pressed
-        LDR      pc, =check_EV3_buttons           
-        LDR	 r0, =callevel                      @ Set callevel to TCL_ISR2 (2) and call user_1ms_isr_type2
-        LDRB     r2, [r0]
-        PUSH     {r2}                           @ Save the current callevel to restore it afterwards
-	MOV	 r1, #2
-	STRB	 r1, [r0]
-        MOV      lr, pc
-        LDR      pc, =user_1ms_isr_type2
-        MOV      lr, pc
-        LDR      pc, =SetDispatch
-        LDR	 r0, =callevel                      @ Restore previous callevel
-        POP      {r2}                           
-        STRB     r2, [r0]
+        LDR      pc, =lazy_poweroff_hook           
         
-        LDR      r0, =addrShouldDispatch        @ Check if we need to dispatch tasks (double dererencation necessary since it does not work otherwise)
-        LDR      r2, [r0]
-        LDR      r3, [r2]
-        CMP      r3, #0
-        BEQ      SkipButtons
-        MOV      r1, #0                         @ Reset the shouldDispatch-flag
-        STR      r1, [r2]
-
-        
-        LDMFD    r13!, {r0}                     @restore spsr
-        MSRNE    spsr_cxsf, r0
-        LDMFD    r13!, {r2}                     @ pop lr from IRQ stack to r2
-        MSR      cpsr_c, #MODE_SYS|I_F_BIT      @ Change to System MOde
-        STMFD    r13!, {r2}                     @ push lr from r2 to User/System stack
-        MSR      cpsr_c, #MODE_IRQ|I_F_BIT      @ change to IRQ mode
- 
-        
-        LDMFD    r13!, {r0-r12}                 @ Restore registers from IRQ stack
-        
-@* //      LDR      lr, =dispatch_irq
-        MOVS     pc, lr                         @ MOVS = Return from exception (i.e. change back to system mode)
-        
-SkipButtons:
+LeaveIRQ:
         LDMFD    r13!, {r0}                     @restore spsr
         MSRNE    spsr_cxsf, r0
         LDMFD    r13!, {lr}                     @ Restore lr from IRQ stack

@@ -2,7 +2,7 @@
 // Copyright (c) 2024 The Pybricks Authors
 //
 // SPDX-License-Identifier: MPL-1.0
-// Copyright (c) 2016 Tobias Schießl (System Init / pinmux / boot order)
+// Copyright (c) 2016 Tobias Schießl (System Init / partial pinmux / boot order / exceptionhandler)
 
 #include <tiam1808/psc.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
@@ -147,15 +147,7 @@ static void set_gpio_mux(uint32_t id, uint32_t mask, uint32_t shift, uint32_t va
     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(id)) = (mux | keep);
 }
 
-
-// Legacy hooks from EV3OSEK. Todo: remove callees from exceptionhandler.S
-void user_1ms_isr_type2(void) {
-}
-uint8_t callevel;
-static volatile unsigned long shouldDispatch = 0;
-volatile unsigned int addrShouldDispatch = (unsigned int)&shouldDispatch;
-void SetDispatch(void) {
-}
+// See exceptionhandler.S
 extern void ExceptionHandler(void);
 
 void copy_vector_table(void) {
@@ -222,7 +214,7 @@ void SystemInit(void) {
  * removed when the final user interface is implemented. For now this serves
  * as a very convenient way to power off the EV3 for fast iteration.
  */
-void check_EV3_buttons(void) {
+void lazy_poweroff_hook(void) {
     pbio_button_flags_t flags;
     pbio_error_t err = pbio_button_is_pressed(&flags);
     if (err == PBIO_SUCCESS && (flags & PBIO_BUTTON_LEFT_UP)) {
