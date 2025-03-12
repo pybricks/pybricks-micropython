@@ -29,14 +29,6 @@ typedef struct {
     uint32_t peripheral_id;
     /** The UART interrupt number. */
     uint32_t sys_int_uart_int_id;
-    /** TX Pin */
-    pbdrv_gpio_t pin_tx;
-    /** TX Pin Mux */
-    uint32_t pin_tx_mux;
-    /** RX Pin */
-    pbdrv_gpio_t pin_rx;
-    /** RX Pin Mux */
-    uint32_t pin_rx_mux;
     /** Interrupt handler for this peripheral. */
     void (*isr_handler)(void);
 } pbdrv_uart_ev3_platform_data_t;

@@ -135,23 +135,14 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
     },
 };
 
-// TODO.
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
-    .bank = NULL,
-    .pin = 0,
-};
+// UART.
 
-// UART
-
-// This order is arbitrary. It is the order of the internal state structures
-// in the uart driver. When getting a uart driver handle, these indexes are
-// used, but only within this platform file.
 enum {
-    UART0, // sensor 2
     UART1, // sensor 1
-    UART2, // Bluetooth
-    PRU0_LINE0, // sensor 4
+    UART0, // sensor 2
     PRU0_LINE1, // sensor 3
+    PRU0_LINE0, // sensor 4
+    UART2, // Bluetooth
 };
 
 static void pbdrv_uart_ev3_handle_irq_uart0(void) {
@@ -176,27 +167,33 @@ static void pbdrv_uart_ev3_handle_irq_pru0_line1(void) {
 
 const pbdrv_uart_ev3_platform_data_t
     pbdrv_uart_ev3_platform_data[PBDRV_CONFIG_UART_EV3_NUM_UART] = {
-    [UART0] = {
-        .uart_kind = EV3_UART_HW,
-        .base_address = SOC_UART_0_REGS,
-        .peripheral_id = HW_PSC_UART0,
-        .sys_int_uart_int_id = SYS_INT_UARTINT0,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_uart0,
-        .pin_rx = PBDRV_GPIO_EV3_PIN(3, 19, 16, 8, 4),
-        .pin_rx_mux = SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD,
-        .pin_tx = PBDRV_GPIO_EV3_PIN(3, 23, 20, 8, 3),
-        .pin_tx_mux = SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD,
-    },
     [UART1] = {
         .uart_kind = EV3_UART_HW,
         .base_address = SOC_UART_1_REGS,
         .peripheral_id = HW_PSC_UART1,
         .sys_int_uart_int_id = SYS_INT_UARTINT1,
         .isr_handler = pbdrv_uart_ev3_handle_irq_uart1,
-        .pin_rx = PBDRV_GPIO_EV3_PIN(4, 27, 24, 1, 1),
-        .pin_rx_mux = SYSCFG_PINMUX4_PINMUX4_27_24_UART1_RXD,
-        .pin_tx = PBDRV_GPIO_EV3_PIN(4, 31, 28, 1, 0),
-        .pin_tx_mux = SYSCFG_PINMUX4_PINMUX4_31_28_UART1_TXD,
+    },
+    [UART0] = {
+        .uart_kind = EV3_UART_HW,
+        .base_address = SOC_UART_0_REGS,
+        .peripheral_id = HW_PSC_UART0,
+        .sys_int_uart_int_id = SYS_INT_UARTINT0,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_uart0,
+    },
+    [PRU0_LINE1] = {
+        .uart_kind = EV3_UART_PRU,
+        .base_address = 0, // Not used.
+        .peripheral_id = 1, // Soft UART line 1.
+        .sys_int_uart_int_id = SYS_INT_EVTOUT1,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line1,
+    },
+    [PRU0_LINE0] = {
+        .uart_kind = EV3_UART_PRU,
+        .base_address = 0, // Not used.
+        .peripheral_id = 0, // Soft UART line 0.
+        .sys_int_uart_int_id = SYS_INT_EVTOUT0,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line0,
     },
     [UART2] = {
         // TODO: Add CTS/RTS pins.
@@ -205,32 +202,107 @@ const pbdrv_uart_ev3_platform_data_t
         .peripheral_id = HW_PSC_UART2,
         .sys_int_uart_int_id = SYS_INT_UARTINT2,
         .isr_handler = pbdrv_uart_ev3_handle_irq_uart2,
-        .pin_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3),
-        .pin_rx_mux = SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD,
-        .pin_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2),
-        .pin_tx_mux = SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD,
     },
-    [PRU0_LINE0] = {
-        .uart_kind = EV3_UART_PRU,
-        .base_address = 0, // Not used.
-        .peripheral_id = 0, // Soft UART line 0.
-        .sys_int_uart_int_id = SYS_INT_EVTOUT0,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line0,
-        .pin_rx = PBDRV_GPIO_EV3_PIN(2, 27, 24, 1, 9),
-        .pin_rx_mux = SYSCFG_PINMUX2_PINMUX2_27_24_AXR0_1,
-        .pin_tx = PBDRV_GPIO_EV3_PIN(2, 19, 16, 1, 11),
-        .pin_tx_mux = SYSCFG_PINMUX2_PINMUX2_19_16_AXR0_3,
+};
+
+// TODO.
+const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+    .bank = NULL,
+    .pin = 0,
+};
+
+const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+    {
+        .port_id = PBIO_PORT_ID_1,
+        .motor_driver_index = 4,
+        .uart_driver_index = UART1,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = NULL, // todo
+            .p6 = NULL, // todo
+            .uart_buf = PBDRV_GPIO_EV3_PIN(18, 27, 24, 8, 11),
+            .uart_tx = PBDRV_GPIO_EV3_PIN(4, 31, 28, 1, 0),
+            .uart_rx = PBDRV_GPIO_EV3_PIN(4, 27, 24, 1, 1),
+            .uart_tx_alt_uart = SYSCFG_PINMUX4_PINMUX4_31_28_UART1_TXD,
+            .uart_rx_alt_uart = SYSCFG_PINMUX4_PINMUX4_27_24_UART1_RXD,
+        },
+        #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
+        .supported_modes = PBIO_PORT_MODE_UART,
+        #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+        #endif
     },
-    [PRU0_LINE1] = {
-        .uart_kind = EV3_UART_PRU,
-        .base_address = 0, // Not used.
-        .peripheral_id = 1, // Soft UART line 1.
-        .sys_int_uart_int_id = SYS_INT_EVTOUT1,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line1,
-        .pin_rx = PBDRV_GPIO_EV3_PIN(2, 23, 20, 1, 10),
-        .pin_rx_mux = SYSCFG_PINMUX2_PINMUX2_23_20_AXR0_2,
-        .pin_tx = PBDRV_GPIO_EV3_PIN(2, 15, 12, 1, 12),
-        .pin_tx_mux = SYSCFG_PINMUX2_PINMUX2_15_12_AXR0_4,
+    {
+        .port_id = PBIO_PORT_ID_2,
+        .motor_driver_index = 5,
+        .uart_driver_index = UART0,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = NULL, // todo
+            .p6 = NULL, // todo
+            .uart_buf = PBDRV_GPIO_EV3_PIN(18, 15, 12, 8, 14),
+            .uart_tx = PBDRV_GPIO_EV3_PIN(3, 23, 20, 8, 3),
+            .uart_rx = PBDRV_GPIO_EV3_PIN(3, 19, 16, 8, 4),
+            .uart_tx_alt_uart = SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD,
+            .uart_rx_alt_uart = SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD,
+        },
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+    },
+    {
+        .port_id = PBIO_PORT_ID_3,
+        .motor_driver_index = 6,
+        .uart_driver_index = PRU0_LINE1,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = NULL, // todo
+            .p6 = NULL, // todo
+            .uart_buf = PBDRV_GPIO_EV3_PIN(17, 3, 0, 7, 9),
+            .uart_tx = PBDRV_GPIO_EV3_PIN(2, 15, 12, 1, 12),
+            .uart_rx = PBDRV_GPIO_EV3_PIN(2, 23, 20, 1, 10),
+            .uart_tx_alt_uart = SYSCFG_PINMUX2_PINMUX2_15_12_AXR0_4,
+            .uart_rx_alt_uart = SYSCFG_PINMUX2_PINMUX2_23_20_AXR0_2,
+        },
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+    },
+    {
+        .port_id = PBIO_PORT_ID_4,
+        .motor_driver_index = 7,
+        .uart_driver_index = PRU0_LINE0,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = NULL, // todo
+            .p6 = NULL, // todo
+            .uart_buf = PBDRV_GPIO_EV3_PIN(16, 31, 28, 7, 10),
+            .uart_tx = PBDRV_GPIO_EV3_PIN(2, 19, 16, 1, 11),
+            .uart_rx = PBDRV_GPIO_EV3_PIN(2, 27, 24, 1, 9),
+            .uart_tx_alt_uart = SYSCFG_PINMUX2_PINMUX2_19_16_AXR0_3,
+            .uart_rx_alt_uart = SYSCFG_PINMUX2_PINMUX2_27_24_AXR0_1,
+        },
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+    },
+    {
+        .port_id = PBIO_PORT_ID_A,
+        .motor_driver_index = 0,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_B,
+        .motor_driver_index = 1,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_C,
+        .motor_driver_index = 2,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_D,
+        .motor_driver_index = 3,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE_PASSIVE,
     },
 };
 
@@ -246,18 +318,6 @@ void copy_vector_table(void) {
         dest[i] = addrExceptionHandler[i];
     }
 }
-
-// port S1 buffer enable. Revisit: Move to legodev/ioport driver.
-static const pbdrv_gpio_t pin_port_s1_buffer_enable = PBDRV_GPIO_EV3_PIN(18, 27, 24, 8, 11);
-
-// port S2 buffer enable. Revisit: Move to legodev/ioport driver.
-static const pbdrv_gpio_t pin_port_s2_buffer_enable = PBDRV_GPIO_EV3_PIN(18, 15, 12, 8, 14);
-
-// port S3 buffer enable. Revisit: Move to legodev/ioport driver.
-static const pbdrv_gpio_t pin_port_s3_buffer_enable = PBDRV_GPIO_EV3_PIN(17, 3, 0, 7, 9);
-
-// port S4 buffer enable. Revisit: Move to legodev/ioport driver.
-static const pbdrv_gpio_t pin_port_s4_buffer_enable = PBDRV_GPIO_EV3_PIN(16, 31, 28, 7, 10);
 
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
@@ -291,18 +351,12 @@ void SystemInit(void) {
         pbdrv_gpio_alt_gpio(&pbdrv_button_gpio_platform[i].gpio);
     }
 
-    // Allow port buffers to use UART. Revisit: Move to legodev/ioport driver.
-    pbdrv_gpio_alt_gpio(&pin_port_s1_buffer_enable);
-    pbdrv_gpio_out_low(&pin_port_s1_buffer_enable);
-
-    pbdrv_gpio_alt_gpio(&pin_port_s2_buffer_enable);
-    pbdrv_gpio_out_low(&pin_port_s2_buffer_enable);
-
-    pbdrv_gpio_alt_gpio(&pin_port_s3_buffer_enable);
-    pbdrv_gpio_out_low(&pin_port_s3_buffer_enable);
-
-    pbdrv_gpio_alt_gpio(&pin_port_s4_buffer_enable);
-    pbdrv_gpio_out_low(&pin_port_s4_buffer_enable);
+    // UART for Bluetooth. Other UARTS are configured by port module.
+    // TODO: Add CTS/RTS pins.
+    const pbdrv_gpio_t bluetooth_uart_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3);
+    const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
+    pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
+    pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
 }
 
 

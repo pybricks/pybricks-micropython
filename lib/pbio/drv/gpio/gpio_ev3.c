@@ -50,6 +50,9 @@ uint8_t pbdrv_gpio_input(const pbdrv_gpio_t *gpio) {
 }
 
 void pbdrv_gpio_alt(const pbdrv_gpio_t *gpio, uint8_t alt) {
+    if (!gpio) {
+        return;
+    }
     pbdrv_gpio_ev3_mux_t *mux_info = (pbdrv_gpio_ev3_mux_t *)gpio->bank;
     uint32_t mux = alt << mux_info->mux_shift;
     uint32_t keep = HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(mux_info->mux_id)) & ~(mux_info->mux_mask);
@@ -57,6 +60,9 @@ void pbdrv_gpio_alt(const pbdrv_gpio_t *gpio, uint8_t alt) {
 }
 
 void pbdrv_gpio_alt_gpio(const pbdrv_gpio_t *gpio) {
+    if (!gpio) {
+        return;
+    }
     pbdrv_gpio_ev3_mux_t *mux_info = (pbdrv_gpio_ev3_mux_t *)gpio->bank;
     pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
 }

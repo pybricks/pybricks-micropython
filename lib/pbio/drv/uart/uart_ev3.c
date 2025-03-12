@@ -157,23 +157,10 @@ static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_t *uart, uint8_t byte) {
 
     // Attempt to write one byte with the hardware UART.
     if (pdata->uart_kind == EV3_UART_HW) {
-        // Always call back after attempting to write. This creates a
-        // (yielding) poll loop for writing. This works around the unreliable
-        // TX_EMPTY interrupt when reading and writing simultaneously: Reading
-        // the status during an RX interrupt clears the TX_EMPTY interrupt,
-        // which is not re-triggered. Since UART writes on EV3 are limited to
-        // small messages like sensor mode changes, this is acceptable.
-        if (uart->poll_callback) {
-            uart->poll_callback(&uart->uart_dev);
-        }
         return UARTCharPutNonBlocking(pdata->base_address, byte);
     }
 
     // Otherwise, attempt to write one byte with the PRU UART.
-    //
-    // The IRQ handler sets the flag when the PRU has finished writing so no
-    // need to request polling here, avoiding a continuous yielding poll loop.
-    //
     // We could be sending more than one byte at a time, but we keep it
     // consistent with the hardware UART limitations for simplicity, since
     // EV3 sensors typically don't send much data anyway.
@@ -191,10 +178,20 @@ static bool pbdrv_uart_can_write(pbdrv_uart_t *uart) {
 
     // Check UART_LSR for THR_EMPTY
     if (pdata->uart_kind == EV3_UART_HW) {
+        // Always call back after this. This creates a (yielding) poll loop for
+        // writing. This works around the unreliable TX_EMPTY interrupt when
+        // reading and writing simultaneously: Reading the status during an RX
+        // interrupt clears the TX_EMPTY interrupt, which is not re-triggered.
+        // Since UART writes on EV3 are limited to small messages like sensor
+        // mode changes, this is acceptable.
+        if (uart->poll_callback) {
+            uart->poll_callback(uart->poll_callback_context);
+        }
         return UARTSpaceAvail(pdata->base_address);
     }
 
     // For PRU UART, we rely on the flag set by its IRQ handler.
+    // So no need to poll here.
     return pbdrv_uart_ev3_pru_can_write(pdata->peripheral_id);
 }
 
@@ -225,8 +222,8 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
             }
         }
 
-        // Completion on transmission of whole message and finishing writing.
-        uart->write_pos == uart->write_length && pbdrv_uart_can_write(uart);
+        // Completion on transmission of whole message and finishing writing or timeout.
+        (pbdrv_uart_can_write(uart) && uart->write_pos == uart->write_length) || etimer_expired(&uart->write_timer);
     }));
 
     uart->write_buf = NULL;
@@ -298,7 +295,7 @@ void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_t *uart) {
     // done outside of the if statements above. We can do that since write IRQs
     // are not handled here.
     if (uart->poll_callback) {
-        uart->poll_callback(&uart->uart_dev);
+        uart->poll_callback(uart->poll_callback_context);
     }
 
 }
@@ -317,7 +314,7 @@ void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_t *uart) {
         ringbuf_put(&uart->rx_buf, rx);
     }
     if (uart->poll_callback) {
-        uart->poll_callback(&uart->uart_dev);
+        uart->poll_callback(uart->poll_callback_context);
     }
 }
 
@@ -392,10 +389,6 @@ void pbdrv_uart_init(void) {
         pbdrv_uart_t *uart = &pbdrv_uart[i];
         uart->pdata = pdata;
         ringbuf_init(&uart->rx_buf, rx_data, RX_DATA_SIZE);
-
-        // Set the GPIO pins to required alt mode.
-        pbdrv_gpio_alt(&pdata->pin_rx, pdata->pin_rx_mux);
-        pbdrv_gpio_alt(&pdata->pin_tx, pdata->pin_tx_mux);
 
         // Initialize the peripheral depending on the uart kind.
         if (pdata->uart_kind == EV3_UART_HW) {

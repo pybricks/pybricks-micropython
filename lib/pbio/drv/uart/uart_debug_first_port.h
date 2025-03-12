@@ -18,6 +18,8 @@ void pbdrv_uart_debug_init(void);
 
 #define pbdrv_uart_debug_printf(...)
 
+#define pbdrv_uart_debug_get_char() (-1)
+
 #define pbdrv_uart_debug_init()
 
 #endif // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT

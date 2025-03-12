@@ -25,6 +25,13 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_u
         if (!pins) {
             return PBIO_ERROR_NOT_SUPPORTED;
         }
+
+        pbdrv_gpio_alt_gpio(&pins->p5);
+        pbdrv_gpio_alt_gpio(&pins->p6);
+        pbdrv_gpio_alt_gpio(&pins->uart_buf);
+        pbdrv_gpio_alt_gpio(&pins->uart_rx);
+        pbdrv_gpio_alt_gpio(&pins->uart_tx);
+
         pbdrv_gpio_input(&pins->p5);
         pbdrv_gpio_input(&pins->p6);
         pbdrv_gpio_input(&pins->uart_buf);

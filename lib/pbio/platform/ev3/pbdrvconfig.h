@@ -37,6 +37,10 @@
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
 #define PBDRV_CONFIG_HAS_PORT_C                     (1)
 #define PBDRV_CONFIG_HAS_PORT_D                     (1)
+#define PBDRV_CONFIG_HAS_PORT_1                     (1)
+#define PBDRV_CONFIG_HAS_PORT_2                     (1)
+#define PBDRV_CONFIG_HAS_PORT_3                     (1)
+#define PBDRV_CONFIG_HAS_PORT_4                     (1)
 
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (3)
@@ -55,7 +59,6 @@
 
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (1)
-#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT_ID       (1) // UART 1 is Sensor 1
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)
