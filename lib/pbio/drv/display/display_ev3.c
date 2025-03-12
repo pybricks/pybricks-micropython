@@ -461,10 +461,6 @@ void pbdrv_display_init(void) {
     SPIDelayConfigure(SOC_SPI_1_REGS, 0, 0, 10, 10);
     SPIIntLevelSet(SOC_SPI_1_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
 
-    // Initial splash screen.
-    pbdrv_display_load_indexed_bitmap(pbdrv_display_pybricks_logo);
-    pbdrv_display_user_frame_update_requested = true;
-
     pbdrv_init_busy_up();
     process_start(&pbdrv_display_ev3_init_process);
 }
@@ -481,8 +477,6 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
     static uint8_t payload;
 
     PROCESS_BEGIN();
-
-    pbdrv_init_busy_down();
 
     #if ST7586S_DO_RESET_AND_INIT
     pbdrv_gpio_out_low(&pin_lcd_reset);
@@ -518,6 +512,16 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
 
     // Staying in data mode from here.
     pbdrv_gpio_out_high(&pin_lcd_a0);
+
+    // Initial splash screen.
+    pbdrv_display_load_indexed_bitmap(pbdrv_display_pybricks_logo);
+    pbdrv_display_st7586s_encode_user_frame();
+    pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
+    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && spi_status == SPI_STATUS_COMPLETE);
+    pbdrv_gpio_out_high(&pin_lcd_cs);
+
+    // Done initializing.
+    pbdrv_init_busy_down();
 
     // Regularly update the display with the user frame buffer, if changed.
     etimer_set(&etimer, 40);
