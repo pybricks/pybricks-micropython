@@ -12,7 +12,7 @@
 
 #if PBIO_CONFIG_PORT_DCM_EV3
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #include <inttypes.h>

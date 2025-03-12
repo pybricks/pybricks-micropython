@@ -6,7 +6,7 @@
 #if PYBRICKS_PY_NXTDEVICES
 
 #include <pybricks/common.h>
-#include <pybricks/nxtdevices.h>
+#include <pybricks/nxtdevices/nxtdevices.h>
 
 static const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),          MP_ROM_QSTR(MP_QSTR_nxtdevices)                  },

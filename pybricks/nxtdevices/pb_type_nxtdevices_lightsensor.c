@@ -9,7 +9,6 @@
 #include <pbio/port_interface.h>
 
 #include <pybricks/common.h>
-#include <pybricks/nxtdevices.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>

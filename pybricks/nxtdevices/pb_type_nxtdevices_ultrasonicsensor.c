@@ -6,7 +6,6 @@
 #if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES
 
 #include <pybricks/common.h>
-#include <pybricks/nxtdevices.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
