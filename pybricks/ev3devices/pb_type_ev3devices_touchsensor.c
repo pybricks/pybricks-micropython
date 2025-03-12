@@ -22,17 +22,6 @@ typedef struct _ev3devices_TouchSensor_obj_t {
     pbio_port_t *port;
 } ev3devices_TouchSensor_obj_t;
 
-// pybricks.ev3devices.TouchSensor.__init__
-static mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    ev3devices_TouchSensor_obj_t *self = mp_obj_malloc(ev3devices_TouchSensor_obj_t, type);
-    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
-    pb_assert(pbio_port_get_port(port_id, &self->port));
-    return MP_OBJ_FROM_PTR(self);
-}
-
 // pybricks.ev3devices.TouchSensor.pressed
 static mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -41,6 +30,21 @@ static mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     return mp_obj_new_bool(analog > 2120);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
+
+// pybricks.ev3devices.TouchSensor.__init__
+static mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port));
+
+    ev3devices_TouchSensor_obj_t *self = mp_obj_malloc(ev3devices_TouchSensor_obj_t, type);
+    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pb_assert(pbio_port_get_port(port_id, &self->port));
+
+    // Measure once. This will assert that the device is there.
+    mp_obj_t self_obj = MP_OBJ_FROM_PTR(self);
+    ev3devices_TouchSensor_pressed(self_obj);
+    return self_obj;
+}
 
 // dir(pybricks.ev3devices.TouchSensor)
 static const mp_rom_map_elem_t ev3devices_TouchSensor_locals_dict_table[] = {
