@@ -155,9 +155,9 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
         return pbio_port_lump_get_angle(port->lump_dev, angle, false);
     }
 
-    // REVISIT: In LEGO mode, we also require being connected.
+    // Fetches the angle as well as the currently attached device type.
     if (port->counter) {
-        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees);
+        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees, &port->device_info.type_id);
     }
     return PBIO_ERROR_NO_DEV;
 }
@@ -178,7 +178,6 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
         return pbio_port_lump_get_angle(port->lump_dev, angle, false);
     }
 
-    // REVISIT: In LEGO mode, we also require being connected.
     if (port->counter) {
         return pbdrv_counter_get_abs_angle(port->counter, &angle->millidegrees);
     }
@@ -362,7 +361,6 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     // without device kind and type id detection.
     if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE_PASSIVE) {
         port->device_info.kind = PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR;
-        port->device_info.type_id = PBIO_CONFIG_PORT_DEFAULT_MOTOR;
         pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE_PASSIVE);
         return;
     }

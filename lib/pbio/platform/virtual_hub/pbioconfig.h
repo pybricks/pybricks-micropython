@@ -14,7 +14,6 @@
 #define PBIO_CONFIG_PORT_NUM_PORTS          (6)
 #define PBIO_CONFIG_PORT_NUM_DCM_PUP        (0)
 #define PBIO_CONFIG_PORT_NUM_LUMP           (0)
-#define PBIO_CONFIG_PORT_DEFAULT_MOTOR      (LEGO_DEVICE_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (6)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (1)

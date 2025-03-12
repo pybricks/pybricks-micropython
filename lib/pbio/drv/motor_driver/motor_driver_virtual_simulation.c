@@ -84,9 +84,10 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
     *rotations = (int32_t)(dev->motor_driver->angle / 360000);
     *millidegrees = (int32_t)(dev->motor_driver->angle) % 360000;
+    *type_id = dev->motor_driver->pdata->type_id;
     return PBIO_SUCCESS;
 }
 

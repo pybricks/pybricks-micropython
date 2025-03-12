@@ -14,8 +14,12 @@
 
 #include "../gpio/gpio_ev3.h"
 
+#include <lego/device.h>
+
+#include <pbdrv/adc.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/gpio.h>
+#include <pbio/int_math.h>
 #include <pbio/util.h>
 
 #include <tiam1808/gpio.h>
@@ -27,9 +31,10 @@
 
 struct _pbdrv_counter_dev_t {
     int32_t count;
-    pbdrv_gpio_t gpio_int; // p5r
-    pbdrv_gpio_t gpio_dir; // p6
+    pbdrv_gpio_t gpio_int;
+    pbdrv_gpio_t gpio_dir;
     pbdrv_gpio_t gpio_det;
+    uint8_t adc_channel;
 };
 
 static pbdrv_counter_dev_t counters[] = {
@@ -38,24 +43,28 @@ static pbdrv_counter_dev_t counters[] = {
         .gpio_int = PBDRV_GPIO_EV3_PIN(11, 19, 16, 5, 11),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(1, 15, 12, 0, 4),
         .gpio_det = PBDRV_GPIO_EV3_PIN(12, 15, 12, 5, 4),
+        .adc_channel = 1,
     },
     {
         .count = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(11, 31, 28, 5, 8),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(5, 27, 24, 2, 9),
         .gpio_det = PBDRV_GPIO_EV3_PIN(6, 11, 8, 2, 5),
+        .adc_channel = 0,
     },
     {
         .count = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(11, 11, 8, 5, 13),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(7, 7, 4, 3, 14),
         .gpio_det = PBDRV_GPIO_EV3_PIN(7, 31, 28, 3, 8),
+        .adc_channel = 13,
     },
     {
         .count = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(13, 27, 24, 6, 9),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(5, 31, 28, 2, 8),
         .gpio_det = PBDRV_GPIO_EV3_PIN(11, 3, 0, 5, 15),
+        .adc_channel = 14,
     },
 };
 
@@ -67,7 +76,59 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+#define ADC_EV3_NONE (2014)
+#define ADC_EV3_MEDIUM_LOW (290)
+#define ADC_EV3_MEDIUM_HIGH (3451)
+#define ADC_EV3_LARGE_LOW (120)
+#define ADC_EV3_LARGE_HIGH (3666)
+
+#define ADC_EV3_THRESHOLD_LOW ((ADC_EV3_MEDIUM_LOW + ADC_EV3_LARGE_LOW) / 2)
+#define ADC_EV3_THRESHOLD_HIGH ((ADC_EV3_MEDIUM_HIGH + ADC_EV3_LARGE_HIGH) / 2)
+
+/**
+ * Gets the LEGO device type ID for an EV3 motor based on the ADC value.
+ *
+ * Each motor has two values (low and high) depending on the quadrature encoder
+ * state. The large motor is 4000 in the high state but in the low state it
+ * is indistinguishable from the EV3 large motor.
+ *
+ * The original firmware uses a dynamic process to distinguish other non-motor
+ * devices. This is not implemented here. It does not appear necessary for
+ * motors.
+ *
+ * If we find that we occasionally get "in-between" values, we can have the
+ * adc process poll us to maintain a minium count of unchanged states.
+ */
+static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
+
+    if (pbio_int_math_is_close(adc, ADC_EV3_NONE, 750)) {
+        return LEGO_DEVICE_TYPE_ID_NONE;
+    }
+
+    if (adc < ADC_EV3_NONE) {
+        return adc > ADC_EV3_THRESHOLD_LOW ?
+               LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR:
+               LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR;
+    }
+
+    return adc > ADC_EV3_THRESHOLD_HIGH ?
+           LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR:
+           LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR;
+}
+
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
+
+    uint16_t adc = 0;
+    pbio_error_t err = pbdrv_adc_get_ch(dev->adc_channel, &adc);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    *type_id = pbdrv_counter_ev3_get_type(adc);
+    if (*type_id == LEGO_DEVICE_TYPE_ID_NONE) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
     *millidegrees = (dev->count % 360) * 1000;
     *rotations = dev->count / 360;
     return PBIO_SUCCESS;

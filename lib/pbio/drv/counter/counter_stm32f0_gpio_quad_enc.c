@@ -17,6 +17,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <lego/device.h>
+
 #include <pbdrv/gpio.h>
 #include <pbio/util.h>
 
@@ -39,9 +41,10 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
+pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
     *millidegrees = (dev->count % 360) * 1000;
     *rotations = dev->count / 360;
+    *type_id = LEGO_DEVICE_TYPE_ID_MOVE_HUB_MOTOR;
     return PBIO_SUCCESS;
 }
 

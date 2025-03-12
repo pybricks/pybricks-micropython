@@ -10,7 +10,6 @@
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (1)
-#define PBIO_CONFIG_PORT_DEFAULT_MOTOR      (LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (3)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (1)
