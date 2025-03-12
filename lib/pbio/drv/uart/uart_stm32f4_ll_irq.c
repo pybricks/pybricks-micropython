@@ -49,22 +49,18 @@ typedef struct {
     uint8_t write_length;
     /** The current position in write_buf. */
     volatile uint8_t write_pos;
-    /** Callback to call on read or write completion events */
-    pbdrv_uart_poll_callback_t poll_callback;
-    /** Context for callback caller */
-    void *poll_callback_context;
+    /**
+     * Parent process that handles incoming data.
+     *
+     * All protothreads in this module run within that process.
+     */
+    struct process *parent_process;
 } pbdrv_uart_t;
 
 static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART];
 static uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART][RX_DATA_SIZE];
 
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    uart->poll_callback = callback;
-    uart->poll_callback_context = context;
-}
-
-pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
+pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -73,9 +69,8 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
         // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
-
+    pbdrv_uart[id].parent_process = parent_process;
     *uart_dev = &pbdrv_uart[id].uart_dev;
-
     return PBIO_SUCCESS;
 }
 
@@ -215,9 +210,7 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
         ringbuf_put(&uart->rx_buf, LL_USART_ReceiveData8(USARTx));
         // Poll parent process for each received byte, since the IRQ handler
         // has no awareness of the expected length of the read operation.
-        if (uart->poll_callback) {
-            uart->poll_callback(uart->poll_callback_context);
-        }
+        process_poll(uart->parent_process);
     }
 
     if (sr & USART_SR_ORE) {
@@ -240,9 +233,7 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
     if (USARTx->CR1 & USART_CR1_TCIE && sr & USART_SR_TC) {
         LL_USART_DisableIT_TC(USARTx);
         // Poll parent process to indicate the write operation is complete.
-        if (uart->poll_callback) {
-            uart->poll_callback(uart->poll_callback_context);
-        }
+        process_poll(uart->parent_process);
     }
 }
 

@@ -75,8 +75,6 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle);
 
 pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement);
 
-void pbio_port_process_poll(void *port);
-
 pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode);
 
 #else // PBIO_CONFIG_PORT
@@ -116,9 +114,6 @@ static inline pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle
 
 static inline pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement) {
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbio_port_process_poll(void *port) {
 }
 
 #endif // PBIO_CONFIG_PORT

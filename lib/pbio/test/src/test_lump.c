@@ -39,19 +39,10 @@ typedef struct {
     struct etimer tx_timer;
     uint8_t tx_msg_length;
     pbio_error_t tx_msg_result;
-    /** Callback to call on read or write completion events */
-    pbdrv_uart_poll_callback_t poll_callback;
-    /** Context for callback caller */
-    void *poll_callback_context;
+    struct process *parent_process;
 } pbdrv_uart_t;
 
 pbdrv_uart_t test_uart;
-
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
-    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    uart->poll_callback = callback;
-    uart->poll_callback_context = context;
-}
 
 /**
  * RX completion normally creates an IRQ. This mimics such as handler. Since
@@ -59,9 +50,7 @@ void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_ca
  * the parent process that the buffer is ready to be read.
  */
 static void simulate_uart_complete_irq(void) {
-    if (test_uart.poll_callback) {
-        test_uart.poll_callback(test_uart.poll_callback_context);
-    }
+    process_poll(test_uart.parent_process);
 }
 
 PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, bool *ok)) {
@@ -1099,10 +1088,11 @@ struct testcase_t pbio_port_lump_tests[] = {
     END_OF_TESTCASES
 };
 
-pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
+pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
     if (id != 0) {
         return PBIO_ERROR_NO_DEV;
     }
+    test_uart.parent_process = parent_process;
     *uart_dev = &test_uart.uart_dev;
     return PBIO_SUCCESS;
 }

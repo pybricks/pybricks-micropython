@@ -132,8 +132,11 @@ typedef struct {
 
 // LUMP state for each port.
 struct _pbio_port_lump_dev_t {
-    /** Parent port instance. */
-    pbio_port_t *port;
+    /**
+     * Parent port process that all protothreads here run within.
+     * Needed here to request polling after user requests like mode switches.
+     */
+    struct process *parent_process;
     /** Child protothread of the main protothread used for reading data */
     struct pt read_pt;
     /** Child protothread of the main protothread used for writing data */
@@ -201,12 +204,12 @@ static uint8_t bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV][NUM_BUF][EV3_UART_MAX_MESSAGE
 static uint8_t data_read_bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV][LUMP_MAX_MSG_SIZE] __attribute__((aligned(4)));
 static pbdrv_legodev_lump_data_set_t data_set_bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
 
-pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, pbio_port_t *port) {
+pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, struct process *parent_process) {
     if (device_index >= PBIO_CONFIG_PORT_LUMP_NUM_DEV) {
         return NULL;
     }
     pbio_port_lump_dev_t *lump_dev = &lump_devices[device_index];
-    lump_dev->port = port;
+    lump_dev->parent_process = parent_process;
     lump_dev->tx_msg = &bufs[device_index][BUF_TX_MSG][0];
     lump_dev->rx_msg = &bufs[device_index][BUF_RX_MSG][0];
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
@@ -221,7 +224,7 @@ static void pbio_port_lump_request_mode(pbio_port_lump_dev_t *lump_dev, uint8_t 
     lump_dev->mode_switch.desired_mode = mode;
     lump_dev->mode_switch.time = pbdrv_clock_get_ms();
     lump_dev->mode_switch.requested = true;
-    pbio_port_process_poll(lump_dev->port);
+    process_poll(lump_dev->parent_process);
 }
 
 static void pbio_port_lump_request_data_set(pbio_port_lump_dev_t *lump_dev, uint8_t mode, const uint8_t *data, uint8_t size) {
@@ -229,7 +232,7 @@ static void pbio_port_lump_request_data_set(pbio_port_lump_dev_t *lump_dev, uint
     lump_dev->data_set->desired_mode = mode;
     lump_dev->data_set->time = pbdrv_clock_get_ms();
     memcpy(lump_dev->data_set->bin_data, data, size);
-    pbio_port_process_poll(lump_dev->port);
+    process_poll(lump_dev->parent_process);
 }
 
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
@@ -962,7 +965,7 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
                 lump_dev->data_set->time = pbdrv_clock_get_ms();
             } else if (pbdrv_clock_get_ms() - lump_dev->data_set->time < 500) {
                 // Not in the right mode yet, try again later for a reasonable amount of time.
-                pbio_port_process_poll(lump_dev->port);
+                process_poll(lump_dev->parent_process);
                 PT_YIELD(pt);
             } else {
                 // Give up setting data.
@@ -1227,7 +1230,7 @@ pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
     // Forces data threads to exit, and therefore port thread will eventually
     // call sync thread again.
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
-    pbio_port_process_poll(lump_dev->port);
+    process_poll(lump_dev->parent_process);
 
     return PBIO_SUCCESS;
 }

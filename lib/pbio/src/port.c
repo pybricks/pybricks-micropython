@@ -123,7 +123,6 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
 
         // Synchronize with LUMP data stream from sensor and parse device info.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
-        pbdrv_uart_set_poll_callback(port->uart_dev, pbio_port_process_poll, port);
         PROCESS_PT_SPAWN(&port->child1, pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->etimer, &port->device_info));
         pbio_port_p1p2_set_power(port, port->device_info.power_requirements);
 
@@ -368,12 +367,12 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     }
 
     // If uart and gpio available, initialize device manager and uart devices.
-    pbdrv_uart_get(port->pdata->uart_driver_index, &port->uart_dev);
+    pbdrv_uart_get_instance(port->pdata->uart_driver_index, &port->process, &port->uart_dev);
 
     if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_DCM) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
-        port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index, port);
+        port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index, &port->process);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
         return;
     }
@@ -446,14 +445,6 @@ void pbio_port_power_off(void) {
 
     // This turns off any sensor lights that run on VCC.
     pbdrv_ioport_enable_vcc(false);
-}
-
-void pbio_port_process_poll(void *port) {
-    if (!port) {
-        return;
-    }
-    pbio_port_t *p = port;
-    process_poll(&p->process);
 }
 
 /**

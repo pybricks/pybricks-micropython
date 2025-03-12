@@ -24,12 +24,18 @@ typedef void (*pbdrv_uart_poll_callback_t)(void *context);
 
 #if PBDRV_CONFIG_UART
 
-pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev);
+/**
+ * Get an instance of the UART driver.
+ *
+ * @param [in]  id              The ID of the UART device.
+ * @param [in]  parent_process  The parent process. Allows UART to poll process on IRQ events.
+ * @param [out] uart_dev        The UART device.
+ */
+pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev);
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud);
 void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev);
-void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context);
 
 int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev);
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
@@ -37,7 +43,7 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *m
 
 #else // PBDRV_CONFIG_UART
 
-static inline pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
+static inline pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
     *uart_dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -60,8 +66,6 @@ static inline pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
 static inline void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
 }
 static inline void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
-}
-static inline void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
 }
 
 /**

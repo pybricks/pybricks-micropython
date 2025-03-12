@@ -69,11 +69,6 @@ void pbdrv_uart_debug_init(void) {
     process_start(&pbdrv_uart_debug_process);
 }
 
-static void pbdrv_uart_debug_process_poll(void *port) {
-    // Ticks process along in between writing bytes.
-    process_poll(&pbdrv_uart_debug_process);
-}
-
 PROCESS_THREAD(pbdrv_uart_debug_process, ev, data) {
 
     static struct pt child;
@@ -84,11 +79,10 @@ PROCESS_THREAD(pbdrv_uart_debug_process, ev, data) {
 
     PROCESS_WAIT_EVENT_UNTIL({
         process_poll(&pbdrv_uart_debug_process);
-        pbdrv_uart_get(0, &debug_uart) == PBIO_SUCCESS;
+        pbdrv_uart_get_instance(0, &pbdrv_uart_debug_process, &debug_uart) == PBIO_SUCCESS;
     });
 
     pbdrv_uart_set_baud_rate(debug_uart, 115200);
-    pbdrv_uart_set_poll_callback(debug_uart, pbdrv_uart_debug_process_poll, NULL);
 
     for (;;) {
 
