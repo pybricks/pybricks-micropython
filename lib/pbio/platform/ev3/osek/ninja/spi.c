@@ -10,7 +10,6 @@
 #include "spi.h"
 #include "gpio.h"
 #include "pininfo.h"
-#include "systick.h"
 
 /* Macro defintions */
 /**

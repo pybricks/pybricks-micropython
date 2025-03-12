@@ -11,7 +11,6 @@
 /* Include statements */
 #include "i2c.h"
 #include "soc_AM1808.h"
-#include "systick.h"
 #include "hw_syscfg0_AM1808.h"
 #include "hw_gpio.h"
 #include "digi_sensors.h"
@@ -463,6 +462,17 @@ void i2c_send_stop(I2C_PORT port) {
     DELAY;
 }
 
+extern uint32_t pbdrv_clock_get_ms(void);
+
+// Placeholder needed to continue building this without clock driver.
+// This whole module should be made non-blocking.
+static void systick_wait_ms(uint32_t delay) {
+    uint32_t start = pbdrv_clock_get_ms();
+    while (pbdrv_clock_get_ms() - start < delay) {
+        //  NB: Make non-blocking
+    }
+}
+
 /**
 * \brief Check if an I2C device with the given address is available at the specified with port
 *
@@ -480,6 +490,7 @@ int i2c_available(int port, U32 address) {
 	
 	// Send stop in order for transaction to work as expected - otherwise, the Lego ultrasonic sensor will not answer
     i2c_send_stop(p);
+
     systick_wait_ms(100);
     
     i2c_send_start(p);

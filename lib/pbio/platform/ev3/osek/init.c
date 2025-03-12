@@ -8,7 +8,6 @@
 
 /* Include statements */
 #include "init.h"
-#include "systick.h"
 #include "i2c.h"
 #include "ninja/spi.h"
 #include "ninja/adc.h"
@@ -94,7 +93,7 @@ void leJOS_init(void) {
     if (!is_AINTC_initialized) {
         // This should be done only once per application - if we use OSEK, leJOS_init will be called at least 2 times
         interrupt_init();
-        systick_init();
+        // systick_init();
         is_AINTC_initialized = 1;
     }
     sensor_init();

@@ -72,23 +72,16 @@ typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-// We have inlined IRQ functions for efficiency (they are generally
-// 1 machine instruction).
-//
-// Note on IRQ state: you should not need to know the specific
-// value of the state variable, but rather just pass the return
-// value from disable_irq back to enable_irq.  If you really need
-// to know the machine-specific values, see irq.h.
+#include <am1808/interrupt.h>
+
+// REVISIT. Do both IRQ and FIQ?
 
 static inline void enable_irq(mp_uint_t state) {
-    // __set_PRIMASK(state);
+    IntEnable(state);
 }
 
 static inline mp_uint_t disable_irq(void) {
-    // mp_uint_t state = __get_PRIMASK();
-    // __disable_irq();
-    // return state;
-    return 0;
+    return IntDisable();
 }
 
 #define MICROPY_BEGIN_ATOMIC_SECTION()     disable_irq()

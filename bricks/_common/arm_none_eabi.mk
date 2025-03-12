@@ -265,7 +265,6 @@ EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
 	i2c.c \
 	init.c \
 	power.c \
-	systick.c \
 	drivers/cpu.c \
 	drivers/gpio.c \
 	drivers/spi.c \

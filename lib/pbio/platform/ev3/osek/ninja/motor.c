@@ -23,7 +23,6 @@
 #include "psc.h"
 #include "hw_gpio.h"
 #include "../include/gpio.h"
-#include "systick.h"
 #include "hw_ecap.h"
 #include "hw_tmr.h"
 
