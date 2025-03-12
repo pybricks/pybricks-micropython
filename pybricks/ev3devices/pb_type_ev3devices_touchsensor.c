@@ -4,7 +4,9 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_EV3DEVDEVICES
+#if PYBRICKS_PY_EV3DEVICES
+
+#include <pbio/port_interface.h>
 
 #include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
@@ -12,11 +14,12 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/common/pb_type_device.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {
     pb_type_device_obj_base_t device_base;
+    pbio_port_t *port;
 } ev3devices_TouchSensor_obj_t;
 
 // pybricks.ev3devices.TouchSensor.__init__
@@ -25,17 +28,19 @@ static mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     ev3devices_TouchSensor_obj_t *self = mp_obj_malloc(ev3devices_TouchSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR);
+    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pb_assert(pbio_port_get_port(port_id, &self->port));
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.ev3devices.TouchSensor.pressed
 static mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
-    int32_t *analog = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_EV3_TOUCH_SENSOR__TOUCH);
-    return mp_obj_new_bool(analog[0] > 250);
+    ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    uint32_t analog;
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR, &analog));
+    return mp_obj_new_bool(analog > 2120);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
-
 
 // dir(pybricks.ev3devices.TouchSensor)
 static const mp_rom_map_elem_t ev3devices_TouchSensor_locals_dict_table[] = {
@@ -50,4 +55,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3devices_TouchSensor,
     make_new, ev3devices_TouchSensor_make_new,
     locals_dict, &ev3devices_TouchSensor_locals_dict);
 
-#endif // PYBRICKS_PY_EV3DEVDEVICES
+#endif // PYBRICKS_PY_EV3DEVICES

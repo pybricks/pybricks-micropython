@@ -66,51 +66,52 @@ typedef enum {
 } pbio_port_dcm_pin_state_t;
 
 /**
- * Device candidate types.
+ * Device category types that can be distinguished. Some categories contain
+ * only one known device.
  */
 typedef enum {
     /**
-     * Candidate device is EV3 UART sensor. P6 and ADC6 are arbitrary (can be set by sensor TX).
+     * Device category is EV3 UART sensor. P6 and ADC6 are arbitrary (can be set by sensor TX).
      */
-    DCM_CANDIDATE_LUMP = PIN_STATE_ADC1_0_TO_100 | PIN_STATE_P2_HIGH | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
+    DCM_CATEGORY_LUMP = PIN_STATE_ADC1_0_TO_100 | PIN_STATE_P2_HIGH | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
     /**
-     * Candidate device is EV3 analog sensor.
+     * Device category is EV3 analog sensor.
      */
-    DCM_CANDIDATE_EV3_ANALOG = PIN_STATE_ADC1_100_to_3100 | PIN_STATE_P2_HIGH,
+    DCM_CATEGORY_EV3_ANALOG = PIN_STATE_ADC1_100_to_3100 | PIN_STATE_P2_HIGH,
     /**
-     * No candidate device is connected.
+     * No device is connected.
      */
-    DCM_CANDIDATE_NONE = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P2_HIGH | PIN_STATE_P5_HIGH,
+    DCM_CATEGORY_NONE = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P2_HIGH | PIN_STATE_P5_HIGH,
     /**
-     * Candidate device is NXT Color sensor. P6 and ADC6 are arbitrary (can be set by sensor TX).
+     * Device is NXT Color sensor. P6 and ADC6 are arbitrary (can be set by sensor TX).
      */
-    DCM_CANDIDATE_NXT_COLOR = PIN_STATE_ADC1_0_TO_100 | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
+    DCM_CATEGORY_NXT_COLOR = PIN_STATE_ADC1_0_TO_100 | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
     /**
-     * Candidate device is NXT I2C.
+     * Device category is NXT I2C.
      */
-    DCM_CANDIDATE_NXT_I2C = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
+    DCM_CATEGORY_NXT_I2C = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
     /**
-     * Candidate device is NXT Temperature sensor (special case of I2C).
+     * Device is NXT Temperature sensor (special case of I2C).
      */
-    DCM_CANDIDATE_NXT_TEMPERATURE = DCM_CANDIDATE_NXT_I2C | PIN_STATE_P2_HIGH,
+    DCM_CATEGORY_NXT_TEMPERATURE = DCM_CATEGORY_NXT_I2C | PIN_STATE_P2_HIGH,
     /**
-     * Candidate device is an NXT light sensor.
+     * Device is an NXT light sensor.
      */
-    DCM_CANDIDATE_NXT_LIGHT = PIN_STATE_MASK_P1,
+    DCM_CATEGORY_NXT_LIGHT = PIN_STATE_MASK_P1,
     /**
-     * Candidate device is first-iteration NXT touch sensor without auto-id.
-     * Can only detect pressed. Released appears as None.
+     * Device is a first-iteration NXT touch sensor without auto-id.
+     * Can only detect pressed state. Released appears as None.
      *
      * The NXT Touch sensor class allows for both variants by allowing this
      * state, the NXT_ANALOG state, as well as the none state. This means you
      * will not get an error if something is missing.
      */
-    DCM_CANDIDATE_NXT_TOUCH1_PRESSED = PIN_STATE_ADC1_100_to_3100 | PIN_STATE_P2_HIGH | PIN_STATE_P5_HIGH,
+    DCM_CATEGORY_NXT_TOUCH1_PRESSED = PIN_STATE_ADC1_100_to_3100 | PIN_STATE_P2_HIGH | PIN_STATE_P5_HIGH,
     /**
-     * Candidate device is NXT analog sensor (sound sensor or second iteration touch sensor with auto-ID).
+     * Device category is NXT analog sensor (sound sensor or second iteration touch sensor with auto-ID).
      */
-    DCM_CANDIDATE_NXT_ANALOG = PIN_STATE_MASK_P1 | PIN_STATE_P5_HIGH,
-} pbio_port_dcm_candidate_t;
+    DCM_CATEGORY_NXT_ANALOG_OTHER = PIN_STATE_MASK_P1 | PIN_STATE_P5_HIGH,
+} pbio_port_dcm_category_t;
 
 /**
  * Gets the voltage on a pin.
@@ -127,34 +128,34 @@ static uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pi
 }
 
 /**
- * Maps the passive port state to candidate device kind.
+ * Maps the passive port state to device category.
  *
  * Most states are exact matches, while some combinations allow some pins to
  * be in any state.
  *
  * @param [in]  state       The state.
- * @return                  The candidate type.
+ * @return                  The category type.
  */
-static pbio_port_dcm_candidate_t pbio_port_dcm_get_candidate(pbio_port_dcm_pin_state_t state) {
+static pbio_port_dcm_category_t pbio_port_dcm_get_category(pbio_port_dcm_pin_state_t state) {
 
-    if ((state | PIN_STATE_MASK_P6) == DCM_CANDIDATE_LUMP) {
-        return DCM_CANDIDATE_LUMP;
+    if ((state | PIN_STATE_MASK_P6) == DCM_CATEGORY_LUMP) {
+        return DCM_CATEGORY_LUMP;
     }
 
-    if ((state | PIN_STATE_MASK_P6) == DCM_CANDIDATE_NXT_COLOR) {
-        return DCM_CANDIDATE_NXT_COLOR;
+    if ((state | PIN_STATE_MASK_P6) == DCM_CATEGORY_NXT_COLOR) {
+        return DCM_CATEGORY_NXT_COLOR;
     }
 
-    if ((state | PIN_STATE_MASK_P1) == DCM_CANDIDATE_NXT_ANALOG) {
-        return DCM_CANDIDATE_NXT_ANALOG;
+    if ((state | PIN_STATE_MASK_P1) == DCM_CATEGORY_NXT_ANALOG_OTHER) {
+        return DCM_CATEGORY_NXT_ANALOG_OTHER;
     }
 
-    if ((state | PIN_STATE_MASK_P1) == DCM_CANDIDATE_NXT_LIGHT) {
-        return DCM_CANDIDATE_NXT_LIGHT;
+    if ((state | PIN_STATE_MASK_P1) == DCM_CATEGORY_NXT_LIGHT) {
+        return DCM_CATEGORY_NXT_LIGHT;
     }
 
     // All other can be tested for equality.
-    return (pbio_port_dcm_candidate_t)state;
+    return (pbio_port_dcm_category_t)state;
 }
 
 /**
@@ -192,7 +193,7 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
 
     #if DEBUG == 2
     debug_pr("%d::: p1: %dmv p2:%d p5:%d p6:%d (%d mv)\n",
-        pbio_port_dcm_get_candidate(state),
+        pbio_port_dcm_get_category(state),
         adc1,
         (bool)(state & PIN_STATE_P2_HIGH),
         (bool)(state & PIN_STATE_P5_HIGH),
@@ -207,7 +208,7 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
 struct _pbio_port_dcm_t {
     uint32_t count;
     bool connected;
-    pbio_port_dcm_candidate_t candidate;
+    pbio_port_dcm_category_t category;
 };
 
 pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -234,33 +235,34 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
     for (;;) {
 
         debug_pr("Start device scan\n");
+        dcm->category = DCM_CATEGORY_NONE;
         dcm->connected = false;
 
         // Wait for any device to be connected.
         for (dcm->count = 0; dcm->count < DCM_LOOP_STEADY_STATE_COUNT; dcm->count++) {
             pbio_port_dcm_pin_state_t state = pbio_port_dcm_get_state(pins);
-            pbio_port_dcm_candidate_t candidate = pbio_port_dcm_get_candidate(state);
-            if (candidate != dcm->candidate || candidate == DCM_CANDIDATE_NONE) {
+            pbio_port_dcm_category_t category = pbio_port_dcm_get_category(state);
+            if (category != dcm->category || category == DCM_CATEGORY_NONE) {
                 dcm->count = 0;
-                dcm->candidate = candidate;
+                dcm->category = category;
             }
             PT_WAIT_UNTIL(pt, etimer_expired(etimer));
             etimer_reset(etimer);
         }
-        debug_pr("Device kind detected: %d\n", dcm->candidate);
+        debug_pr("Device kind detected: %d\n", dcm->category);
         dcm->connected = true;
 
         // Now run processes for devices that require a process, and otherwise
         // wait for disconnection.
 
-        if (dcm->candidate == DCM_CANDIDATE_LUMP) {
+        if (dcm->category == DCM_CATEGORY_LUMP) {
             debug_pr("Continue as LUMP process\n");
             // Exit EV3 device manager, letting LUMP manager take over.
             // That process runs until the device no longer reports data.
             PT_EXIT(pt);
         }
 
-        if (dcm->candidate == DCM_CANDIDATE_NXT_TEMPERATURE) {
+        if (dcm->category == DCM_CATEGORY_NXT_TEMPERATURE) {
             // This device has no way to passively detect disconnection, so
             // we need to monitor I2C transactions to see if it is still there.
             debug_pr("Starting NXT temperature sensor process.\n");
@@ -276,7 +278,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
         // operation.
         for (dcm->count = 0; dcm->count < DCM_LOOP_DISCONNECT_COUNT; dcm->count++) {
             // Monitor P5 for EV3 analog, P2 for all NXT sensors.
-            const pbdrv_gpio_t *gpio = dcm->candidate == DCM_CANDIDATE_EV3_ANALOG ? &pins->p5 : &pins->p2;
+            const pbdrv_gpio_t *gpio = dcm->category == DCM_CATEGORY_EV3_ANALOG ? &pins->p5 : &pins->p2;
             if (!pbdrv_gpio_input(gpio)) {
                 dcm->count = 0;
             }
@@ -297,9 +299,73 @@ pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     return dcm;
 }
 
-pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {
-    // TODO
-    return PBIO_ERROR_NO_DEV;
+static pbio_error_t must_equal(lego_device_type_id_t candidate, lego_device_type_id_t expected) {
+    return candidate == expected ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
+}
+
+pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *expected_type_id) {
+
+    // NXT Touch sensors can't be detected definitively, so allow passing none
+    // state also. Raise only if something *else* is definitively connected.
+    if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR) {
+        switch (dcm->category) {
+            case DCM_CATEGORY_NONE:
+            case DCM_CATEGORY_NXT_TOUCH1_PRESSED:
+            case DCM_CATEGORY_NXT_ANALOG_OTHER:
+                return PBIO_SUCCESS;
+            default:
+                return PBIO_ERROR_NO_DEV;
+        }
+    }
+
+    // Still busy detecting.
+    if (!dcm->connected) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    switch (dcm->category) {
+        case DCM_CATEGORY_NONE:
+            return PBIO_ERROR_NO_DEV;
+        case DCM_CATEGORY_EV3_ANALOG:
+            // This is the only known EV3 analog sensor.
+            return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR);
+        case DCM_CATEGORY_NXT_COLOR:
+            // Only one sensor in this category.
+            return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR);
+        case DCM_CATEGORY_NXT_TEMPERATURE:
+            // Only one sensor in this category.
+            return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR);
+        case DCM_CATEGORY_NXT_LIGHT:
+            // For legacy compatibility, allow anything wired like a NXT light
+            // sensor to be detected and used as a generic analog sensor.
+            if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_ANALOG) {
+                *expected_type_id = LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR;
+                return PBIO_SUCCESS;
+            } else {
+                // If a specific type is requested, it must be the light sensor.
+                return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR);
+            }
+        case DCM_CATEGORY_NXT_ANALOG_OTHER:
+            // In principle, the sound sensor can be distinguished using ADCP6,
+            // but we pass both here for simplicity.
+            if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_ANALOG ||
+                *expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR ||
+                *expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR) {
+                return PBIO_SUCCESS;
+            } else {
+                return PBIO_ERROR_NO_DEV;
+            }
+        case DCM_CATEGORY_NXT_I2C:
+            // TODO: Check standard LEGO I2C device ID.
+            return PBIO_ERROR_NO_DEV;
+        default:
+            return PBIO_ERROR_NO_DEV;
+    }
+}
+
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+    uint8_t channel = dcm->category == DCM_CATEGORY_EV3_ANALOG ? 6 : 1;
+    return pbio_port_dcm_get_mv(pins, channel);
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_EV3

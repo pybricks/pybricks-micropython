@@ -13,8 +13,8 @@ static const mp_rom_map_elem_t ev3devices_globals_table[] = {
     #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&pb_type_Motor)                   },
     #endif
-    #if PYBRICKS_PY_EV3DEVDEVICES
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&pb_type_ev3devices_TouchSensor)     },
+    #if PYBRICKS_PY_EV3DEVDEVICES
     { MP_ROM_QSTR(MP_QSTR_InfraredSensor),   MP_ROM_PTR(&pb_type_ev3devices_InfraredSensor)  },
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&pb_type_ev3devices_ColorSensor)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&pb_type_ev3devices_UltrasonicSensor)},

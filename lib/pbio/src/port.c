@@ -289,6 +289,19 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
     return pbdrv_motor_driver_coast(motor_driver);
 }
 
+pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, uint32_t *value) {
+    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    lego_device_type_id_t expected_type_id = type_id;
+    pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &expected_type_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    *value = pbio_port_dcm_get_analog_value(port->connection_manager, port->pdata->pins);
+    return PBIO_SUCCESS;
+}
+
 /**
  * Initializes a port instance.
  *

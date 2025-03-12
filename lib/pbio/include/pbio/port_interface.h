@@ -73,6 +73,8 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle);
 
 pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle);
 
+pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, uint32_t *value);
+
 pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement);
 
 pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode);
@@ -109,6 +111,10 @@ static inline pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *
 }
 
 static inline pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, uint32_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

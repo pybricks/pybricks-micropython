@@ -33,6 +33,11 @@ pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index);
  */
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id);
 
+/**
+ * Gets the analog value of the device connected to the port.
+ */
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins);
+
 #else // PBIO_CONFIG_PORT_DCM
 
 static inline pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
@@ -41,6 +46,10 @@ static inline pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
 
 static inline pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+    return 0;
 }
 
 static inline PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {
