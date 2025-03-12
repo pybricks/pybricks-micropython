@@ -11,7 +11,7 @@
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_PORT                    (1)
 #define PBIO_CONFIG_PORT_NUM_DEV            (8)
-#define PBIO_CONFIG_PORT_DCM                (0)
+#define PBIO_CONFIG_PORT_DCM                (1)
 #define PBIO_CONFIG_PORT_DCM_PUP            (0)
 #define PBIO_CONFIG_PORT_DCM_EV3            (1)
 #define PBIO_CONFIG_PORT_DCM_NUM_DEV        (4)

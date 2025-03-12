@@ -255,8 +255,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
-            .p5 = NULL, // todo
-            .p6 = NULL, // todo
+            .p5 = PBDRV_GPIO_EV3_PIN(1, 23, 20, 0, 2),
+            .p6 = PBDRV_GPIO_EV3_PIN(0, 3, 0, 0, 15),
             .uart_buf = PBDRV_GPIO_EV3_PIN(18, 27, 24, 8, 11),
             .uart_tx = PBDRV_GPIO_EV3_PIN(4, 31, 28, 1, 0),
             .uart_rx = PBDRV_GPIO_EV3_PIN(4, 27, 24, 1, 1),
@@ -276,8 +276,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
-            .p5 = NULL, // todo
-            .p6 = NULL, // todo
+            .p5 = PBDRV_GPIO_EV3_PIN(0, 7, 4, 0, 14),
+            .p6 = PBDRV_GPIO_EV3_PIN(0, 11, 8, 0, 13),
             .uart_buf = PBDRV_GPIO_EV3_PIN(18, 15, 12, 8, 14),
             .uart_tx = PBDRV_GPIO_EV3_PIN(3, 23, 20, 8, 3),
             .uart_rx = PBDRV_GPIO_EV3_PIN(3, 19, 16, 8, 4),
@@ -293,8 +293,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
-            .p5 = NULL, // todo
-            .p6 = NULL, // todo
+            .p5 = PBDRV_GPIO_EV3_PIN(0, 15, 12, 0, 12),
+            .p6 = PBDRV_GPIO_EV3_PIN(2, 7, 4, 1, 14),
             .uart_buf = PBDRV_GPIO_EV3_PIN(17, 3, 0, 7, 9),
             .uart_tx = PBDRV_GPIO_EV3_PIN(2, 15, 12, 1, 12),
             .uart_rx = PBDRV_GPIO_EV3_PIN(2, 23, 20, 1, 10),
@@ -310,8 +310,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
-            .p5 = NULL, // todo
-            .p6 = NULL, // todo
+            .p5 = PBDRV_GPIO_EV3_PIN(1, 27, 24, 0, 1),
+            .p6 = PBDRV_GPIO_EV3_PIN(2, 3, 0, 1, 15),
             .uart_buf = PBDRV_GPIO_EV3_PIN(16, 31, 28, 7, 10),
             .uart_tx = PBDRV_GPIO_EV3_PIN(2, 19, 16, 1, 11),
             .uart_rx = PBDRV_GPIO_EV3_PIN(2, 27, 24, 1, 9),

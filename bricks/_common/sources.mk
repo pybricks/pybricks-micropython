@@ -217,6 +217,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/parent.c \
 	src/port.c \
 	src/port_dcm_pup.c \
+	src/port_dcm_ev3.c \
 	src/port_lump.c \
 	src/protocol/nus.c \
 	src/protocol/pybricks.c \
