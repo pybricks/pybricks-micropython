@@ -15,7 +15,7 @@
 #include "pwm_test.h"
 #include "pwm_lp50xx_stm32.h"
 #include "pwm_tlc5955_stm32.h"
-#include "pwm_tiam1808.h"
+#include "pwm_ev3.h"
 #include "pwm.h"
 
 

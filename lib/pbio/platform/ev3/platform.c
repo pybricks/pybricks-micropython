@@ -15,11 +15,11 @@
 #include <pbio/port_interface.h>
 
 #include "../../drv/button/button_gpio.h"
-#include "../../drv/gpio/gpio_tiam1808.h"
+#include "../../drv/gpio/gpio_ev3.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
 #include "../../drv/led/led_pwm.h"
-#include "../../drv/pwm/pwm_tiam1808.h"
+#include "../../drv/pwm/pwm_ev3.h"
 #include "../../drv/uart/uart_ev3.h"
 
 enum {

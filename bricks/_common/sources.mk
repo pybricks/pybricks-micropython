@@ -143,7 +143,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/clock/clock_nxt.c \
 	drv/clock/clock_stm32.c \
 	drv/clock/clock_test.c \
-	drv/clock/clock_tiam1808.c \
+	drv/clock/clock_ev3.c \
 	drv/clock/clock_virtual.c \
 	drv/core.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
@@ -152,7 +152,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
-	drv/gpio/gpio_tiam1808.c \
+	drv/gpio/gpio_ev3.c \
 	drv/gpio/gpio_virtual.c \
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
 	drv/ioport/ioport.c \
@@ -170,7 +170,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_test.c \
-	drv/pwm/pwm_tiam1808.c \
+	drv/pwm/pwm_ev3.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/random/random_adc.c \
 	drv/random/random_stm32_hal.c \

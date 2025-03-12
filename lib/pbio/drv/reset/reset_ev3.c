@@ -10,7 +10,7 @@
 #include <pbdrv/reset.h>
 #include <pbdrv/gpio.h>
 
-#include "../drv/gpio/gpio_tiam1808.h"
+#include "../drv/gpio/gpio_ev3.h"
 
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 

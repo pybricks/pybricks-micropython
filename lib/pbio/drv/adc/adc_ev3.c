@@ -24,7 +24,7 @@
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
-#include "../drv/gpio/gpio_tiam1808.h"
+#include "../drv/gpio/gpio_ev3.h"
 
 PROCESS(pbdrv_adc_process, "ADC");
 

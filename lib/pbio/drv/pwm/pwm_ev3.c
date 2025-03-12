@@ -12,8 +12,8 @@
 #include <pbio/error.h>
 
 #include "../drv/pwm/pwm.h"
-#include "../../drv/pwm/pwm_tiam1808.h"
-#include "../../drv/gpio/gpio_tiam1808.h"
+#include "../../drv/pwm/pwm_ev3.h"
+#include "../../drv/gpio/gpio_ev3.h"
 
 static pbio_error_t pbdrv_pwm_tiam1808_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t value) {
     // Blue not available.
