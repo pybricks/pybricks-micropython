@@ -14,19 +14,10 @@
 
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 
-static const pbdrv_gpio_t poweroff_pin = {
-    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-        .mux_id = 13,
-        .mux_mask = SYSCFG_PINMUX13_PINMUX13_19_16,
-        .mux_shift = SYSCFG_PINMUX13_PINMUX13_19_16_SHIFT,
-        .gpio_bank_id = 6,
-        .gpio_mode = SYSCFG_PINMUX13_PINMUX13_19_16_GPIO6_11,
-    },
-    .pin = 11
-};
+static const pbdrv_gpio_t poweroff_pin = PBDRV_GPIO_EV3_PIN(13, 19, 16, 6, 11);
 
 void pbdrv_reset_init(void) {
-    pbdrv_gpio_alt(&poweroff_pin, ((pbdrv_gpio_tiam1808_mux_t *)poweroff_pin.bank)->gpio_mode);
+    pbdrv_gpio_alt(&poweroff_pin, ((pbdrv_gpio_ev3_mux_t *)poweroff_pin.bank)->gpio_mode);
 }
 
 void pbdrv_reset(pbdrv_reset_action_t action) {

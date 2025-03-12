@@ -67,7 +67,6 @@
                 "${workspaceFolder}/bricks/ev3",
                 "${workspaceFolder}/bricks/ev3/build",
                 "${workspaceFolder}/micropython",
-                "${workspaceFolder}/lib/pbio/platform/ev3/osek",
                 "${workspaceFolder}/lib/tiam1808",
                 "${workspaceFolder}/lib/tiam1808/tiam1808",
                 "${workspaceFolder}/lib/tiam1808/tiam1808/hw",

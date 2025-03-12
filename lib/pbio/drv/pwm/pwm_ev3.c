@@ -43,11 +43,11 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
 
         // Set pins in GPIO mode.
         const pbdrv_gpio_t *gpio_red = &pbdrv_pwm_tiam1808_platform_data[i].gpio_red;
-        const pbdrv_gpio_tiam1808_mux_t *mux_red = gpio_red->bank;
+        const pbdrv_gpio_ev3_mux_t *mux_red = gpio_red->bank;
         pbdrv_gpio_alt(gpio_red, mux_red->gpio_mode);
 
         const pbdrv_gpio_t *gpio_green = &pbdrv_pwm_tiam1808_platform_data[i].gpio_green;
-        const pbdrv_gpio_tiam1808_mux_t *mux_green = gpio_green->bank;
+        const pbdrv_gpio_ev3_mux_t *mux_green = gpio_green->bank;
         pbdrv_gpio_alt(gpio_green, mux_green->gpio_mode);
     }
 }

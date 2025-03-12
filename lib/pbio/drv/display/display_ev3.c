@@ -96,60 +96,15 @@ typedef enum {
     SPI_STATUS_ERROR,
 } spi_status_t;
 
-static const pbdrv_gpio_t pin_spi1_mosi = {
-    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-        .mux_id = 5,
-        .mux_mask = SYSCFG_PINMUX5_PINMUX5_23_20,
-        .mux_shift = SYSCFG_PINMUX5_PINMUX5_23_20_SHIFT,
-        .gpio_bank_id = 2,
-        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_23_20_GPIO2_10,
-    },
-    .pin = 10,
-};
+static const pbdrv_gpio_t pin_spi1_mosi = PBDRV_GPIO_EV3_PIN(5, 23, 20, 2, 10);
 
-static const pbdrv_gpio_t pin_spi1_clk = {
-    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-        .mux_id = 5,
-        .mux_mask = SYSCFG_PINMUX5_PINMUX5_11_8,
-        .mux_shift = SYSCFG_PINMUX5_PINMUX5_11_8_SHIFT,
-        .gpio_bank_id = 2,
-        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_11_8_GPIO2_13,
-    },
-    .pin = 13,
-};
+static const pbdrv_gpio_t pin_spi1_clk = PBDRV_GPIO_EV3_PIN(5, 11, 8, 2, 13);
 
-static const pbdrv_gpio_t pin_lcd_a0 = {
-    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-        .mux_id = 5,
-        .mux_mask = SYSCFG_PINMUX5_PINMUX5_19_16,
-        .mux_shift = SYSCFG_PINMUX5_PINMUX5_19_16_SHIFT,
-        .gpio_bank_id = 2,
-        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_19_16_GPIO2_11,
-    },
-    .pin = 11,
-};
+static const pbdrv_gpio_t pin_lcd_a0 = PBDRV_GPIO_EV3_PIN(5, 19, 16, 2, 11);
 
-static const pbdrv_gpio_t pin_lcd_cs = {
-    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-        .mux_id = 5,
-        .mux_mask = SYSCFG_PINMUX5_PINMUX5_15_12,
-        .mux_shift = SYSCFG_PINMUX5_PINMUX5_15_12_SHIFT,
-        .gpio_bank_id = 2,
-        .gpio_mode = SYSCFG_PINMUX5_PINMUX5_15_12_GPIO2_12,
-    },
-    .pin = 12,
-};
+static const pbdrv_gpio_t pin_lcd_cs = PBDRV_GPIO_EV3_PIN(5, 15, 12, 2, 12);
 
-static const pbdrv_gpio_t pin_lcd_reset = {
-    .bank = &(pbdrv_gpio_tiam1808_mux_t) {
-        .mux_id = 12,
-        .mux_mask = SYSCFG_PINMUX12_PINMUX12_31_28,
-        .mux_shift = SYSCFG_PINMUX12_PINMUX12_31_28_SHIFT,
-        .gpio_bank_id = 5,
-        .gpio_mode = SYSCFG_PINMUX12_PINMUX12_31_28_GPIO5_0,
-    },
-    .pin = 0,
-};
+static const pbdrv_gpio_t pin_lcd_reset = PBDRV_GPIO_EV3_PIN(12, 31, 28, 5, 0);
 
 static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
 
@@ -433,9 +388,9 @@ void pbdrv_display_init(void) {
     // GPIO Mux. CS is in GPIO mode (manual control).
     pbdrv_gpio_alt(&pin_spi1_mosi, SYSCFG_PINMUX5_PINMUX5_23_20_SPI1_SIMO0);
     pbdrv_gpio_alt(&pin_spi1_clk, SYSCFG_PINMUX5_PINMUX5_11_8_SPI1_CLK);
-    pbdrv_gpio_alt(&pin_lcd_a0, ((pbdrv_gpio_tiam1808_mux_t *)pin_lcd_a0.bank)->gpio_mode);
-    pbdrv_gpio_alt(&pin_lcd_cs, ((pbdrv_gpio_tiam1808_mux_t *)pin_lcd_cs.bank)->gpio_mode);
-    pbdrv_gpio_alt(&pin_lcd_reset, ((pbdrv_gpio_tiam1808_mux_t *)pin_lcd_reset.bank)->gpio_mode);
+    pbdrv_gpio_alt(&pin_lcd_a0, ((pbdrv_gpio_ev3_mux_t *)pin_lcd_a0.bank)->gpio_mode);
+    pbdrv_gpio_alt(&pin_lcd_cs, ((pbdrv_gpio_ev3_mux_t *)pin_lcd_cs.bank)->gpio_mode);
+    pbdrv_gpio_alt(&pin_lcd_reset, ((pbdrv_gpio_ev3_mux_t *)pin_lcd_reset.bank)->gpio_mode);
 
     // Waking up the SPI1 instance.
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_SPI1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
