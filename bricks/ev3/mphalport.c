@@ -11,7 +11,7 @@
 #include <pbdrv/uart.h>
 
 #include <pbio/main.h>
-#include <pbsys/bluetooth.h>
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -61,52 +61,21 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
-#define PBDRV_UART_DEV_ID (1)
-
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     return 0;
 }
 
 int mp_hal_stdin_rx_chr(void) {
-
-    pbdrv_uart_dev_t *uart_dev;
-    pbio_error_t err = pbdrv_uart_get(PBDRV_UART_DEV_ID, &uart_dev);
-    if (err != PBIO_SUCCESS) {
-        return -1;
+    int c;
+    while ((c = pbdrv_uart_debug_get_char()) == -1) {
+        MICROPY_EVENT_POLL_HOOK;
     }
-
-    uint8_t buf[1];
-    static struct pt pt;
-    PT_INIT(&pt);
-    while (PT_SCHEDULE(pbdrv_uart_read(&pt, uart_dev, buf, sizeof(buf), 250, &err))) {
-        MICROPY_VM_HOOK_LOOP;
-    }
-
-    return err == PBIO_SUCCESS ? buf[0] : -1;
+    return c;
 }
 
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-
-    pbdrv_uart_dev_t *uart_dev;
-    pbio_error_t err = pbdrv_uart_get(PBDRV_UART_DEV_ID, &uart_dev);
-    if (err != PBIO_SUCCESS) {
-        return;
-    }
-
-    static struct pt pt;
-    PT_INIT(&pt);
-    while (PT_SCHEDULE(pbdrv_uart_write(&pt, uart_dev, (uint8_t *)str, len, 250, &err))) {
-        MICROPY_VM_HOOK_LOOP;
-    }
+    pbdrv_uart_debug_printf("%.*s", len, str);
 }
 
 void mp_hal_stdout_tx_flush(void) {
-
-    pbdrv_uart_dev_t *uart_dev;
-    pbio_error_t err = pbdrv_uart_get(PBDRV_UART_DEV_ID, &uart_dev);
-    if (err != PBIO_SUCCESS) {
-        return;
-    }
-
-    pbdrv_uart_flush(uart_dev);
 }

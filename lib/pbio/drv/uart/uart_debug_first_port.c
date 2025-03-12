@@ -53,6 +53,18 @@ void pbdrv_uart_debug_printf(const char *format, ...) {
     process_poll(&pbdrv_uart_debug_process);
 }
 
+/**
+ * Gets a character from the UART debug port.
+ *
+ * @return The character received or -1 if no character is available.
+ */
+int32_t pbdrv_uart_debug_get_char(void) {
+    if (!debug_uart) {
+        return -1;
+    }
+    return pbdrv_uart_get_char(debug_uart);
+}
+
 void pbdrv_uart_debug_init(void) {
     process_start(&pbdrv_uart_debug_process);
 }
@@ -61,6 +73,10 @@ static void pbdrv_uart_debug_process_poll(void *port) {
     // Ticks process along in between writing bytes.
     process_poll(&pbdrv_uart_debug_process);
 }
+
+#ifndef PBDRV_CONFIG_UART_DEBUG_FIRST_PORT_ID
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT_ID 0
+#endif
 
 PROCESS_THREAD(pbdrv_uart_debug_process, ev, data) {
 
@@ -72,7 +88,7 @@ PROCESS_THREAD(pbdrv_uart_debug_process, ev, data) {
 
     PROCESS_WAIT_EVENT_UNTIL({
         process_poll(&pbdrv_uart_debug_process);
-        pbdrv_uart_get(0, &debug_uart) == PBIO_SUCCESS;
+        pbdrv_uart_get(PBDRV_CONFIG_UART_DEBUG_FIRST_PORT_ID, &debug_uart) == PBIO_SUCCESS;
     });
 
     pbdrv_uart_set_baud_rate(debug_uart, 115200);

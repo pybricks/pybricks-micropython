@@ -31,6 +31,7 @@ void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context);
 
+int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev);
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
 PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
 
@@ -61,6 +62,16 @@ static inline void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
 static inline void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
 static inline void pbdrv_uart_set_poll_callback(pbdrv_uart_dev_t *uart_dev, pbdrv_uart_poll_callback_t callback, void *context) {
+}
+
+/**
+ * Get a character from the UART.
+ *
+ * @param uart_dev The UART device
+ * @return The character read, or -1 if no character is available
+ */
+static inline int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev) {
+    return -1;
 }
 
 static inline PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {

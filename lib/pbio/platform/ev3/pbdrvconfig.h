@@ -54,6 +54,8 @@
 #define PBDRV_CONFIG_RESET_EV3                      (1)
 
 #define PBDRV_CONFIG_UART                           (1)
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (1)
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT_ID       (1) // UART 1 is Sensor 1
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)

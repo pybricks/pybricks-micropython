@@ -10,6 +10,8 @@
 
 void pbdrv_uart_debug_printf(const char *format, ...);
 
+int32_t pbdrv_uart_debug_get_char(void);
+
 void pbdrv_uart_debug_init(void);
 
 #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
