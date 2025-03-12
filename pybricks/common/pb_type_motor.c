@@ -95,8 +95,10 @@ static mp_obj_t pb_type_Motor_make_new(const mp_obj_type_t *type, size_t n_args,
     pbio_port_t *port;
     pb_assert(pbio_port_get_port(port_id, &port));
 
-    // Activate LEGO mode.
-    pb_device_set_lego_mode(port);
+    // Activate motor or LEGO mode.
+    if (pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE) != PBIO_SUCCESS) {
+        pb_device_set_lego_mode(port);
+    }
 
     pb_type_Motor_obj_t *self = mp_obj_malloc(pb_type_Motor_obj_t, type);
     self->port_id = port_id;

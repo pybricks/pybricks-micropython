@@ -524,6 +524,11 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     process_poll(&port->process);
     port->mode = mode;
 
+    // Check if the mode is supported by the port.
+    if (!(port->pdata->supported_modes & mode)) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
     switch (mode) {
         case PBIO_PORT_MODE_NONE:
             pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
@@ -541,6 +546,8 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
             // Enable UART on the port. No process needed here. User can
             // access UART from their own event loop.
             pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
+            return PBIO_SUCCESS;
+        case PBIO_PORT_MODE_QUADRATURE:
             return PBIO_SUCCESS;
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
