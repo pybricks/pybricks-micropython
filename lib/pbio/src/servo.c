@@ -308,12 +308,10 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, lego_devic
     // HACK: The general purpose minimized settings don't capture the stronger
     // motors very well. Generalize settings profile.
     #if PBIO_CONFIG_SERVO_EV3_NXT
-    if (type == LEGO_DEVICE_TYPE_ID_NXT_MOTOR) {
-        // REVISIT: Unify across all three motors since we can't have auto ID on nxt
-        srv->control.settings.pid_kp = 50000;
-        srv->control.settings.pid_ki = 18000;
-        srv->control.settings.pid_kd = 2000;
-    }
+    // REVISIT: Unify across all three motors since we can't have auto ID on nxt
+    srv->control.settings.pid_kp = 50000;
+    srv->control.settings.pid_ki = 18000;
+    srv->control.settings.pid_kd = 2000;
     #endif
 
     return PBIO_SUCCESS;
