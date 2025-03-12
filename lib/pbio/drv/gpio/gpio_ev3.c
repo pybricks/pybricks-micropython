@@ -56,6 +56,11 @@ void pbdrv_gpio_alt(const pbdrv_gpio_t *gpio, uint8_t alt) {
     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(mux_info->mux_id)) = (mux | keep);
 }
 
+void pbdrv_gpio_alt_gpio(const pbdrv_gpio_t *gpio) {
+    pbdrv_gpio_ev3_mux_t *mux_info = (pbdrv_gpio_ev3_mux_t *)gpio->bank;
+    pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
+}
+
 void pbdrv_gpio_set_pull(const pbdrv_gpio_t *gpio, pbdrv_gpio_pull_t pull) {
     // Not implemented for TI AM1808 since EV3 does not use software pull-up/pull-down.
 }

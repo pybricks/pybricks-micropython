@@ -93,9 +93,9 @@ void pbdrv_adc_init(void) {
     pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
     pbdrv_gpio_alt(&pin_spi0_cs, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
 
-    pbdrv_gpio_alt(&pin_adc_ack, ((pbdrv_gpio_ev3_mux_t *)pin_adc_ack.bank)->gpio_mode);
+    pbdrv_gpio_alt_gpio(&pin_adc_ack);
 
-    pbdrv_gpio_alt(&pin_adc_bat_en, ((pbdrv_gpio_ev3_mux_t *)pin_adc_bat_en.bank)->gpio_mode);
+    pbdrv_gpio_alt_gpio(&pin_adc_bat_en);
     pbdrv_gpio_out_high(&pin_adc_bat_en);
 
     // Waking up the SPI1 instance.

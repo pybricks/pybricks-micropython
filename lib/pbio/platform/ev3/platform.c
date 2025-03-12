@@ -288,19 +288,20 @@ void SystemInit(void) {
 
     // Initialize button GPIO mode. Button gpio driver does not have a hook for this.
     for (int i = 0; i < PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON; i++) {
-        const pbdrv_gpio_t *gpio = &pbdrv_button_gpio_platform[i].gpio;
-        const pbdrv_gpio_ev3_mux_t *mux_info = gpio->bank;
-        pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
+        pbdrv_gpio_alt_gpio(&pbdrv_button_gpio_platform[i].gpio);
     }
 
     // Allow port buffers to use UART. Revisit: Move to legodev/ioport driver.
-    pbdrv_gpio_alt(&pin_port_s1_buffer_enable, ((pbdrv_gpio_ev3_mux_t *)pin_port_s1_buffer_enable.bank)->gpio_mode);
+    pbdrv_gpio_alt_gpio(&pin_port_s1_buffer_enable);
     pbdrv_gpio_out_low(&pin_port_s1_buffer_enable);
-    pbdrv_gpio_alt(&pin_port_s2_buffer_enable, ((pbdrv_gpio_ev3_mux_t *)pin_port_s2_buffer_enable.bank)->gpio_mode);
+
+    pbdrv_gpio_alt_gpio(&pin_port_s2_buffer_enable);
     pbdrv_gpio_out_low(&pin_port_s2_buffer_enable);
-    pbdrv_gpio_alt(&pin_port_s3_buffer_enable, ((pbdrv_gpio_ev3_mux_t *)pin_port_s3_buffer_enable.bank)->gpio_mode);
+
+    pbdrv_gpio_alt_gpio(&pin_port_s3_buffer_enable);
     pbdrv_gpio_out_low(&pin_port_s3_buffer_enable);
-    pbdrv_gpio_alt(&pin_port_s4_buffer_enable, ((pbdrv_gpio_ev3_mux_t *)pin_port_s4_buffer_enable.bank)->gpio_mode);
+
+    pbdrv_gpio_alt_gpio(&pin_port_s4_buffer_enable);
     pbdrv_gpio_out_low(&pin_port_s4_buffer_enable);
 }
 
