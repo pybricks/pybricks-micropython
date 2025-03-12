@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
+#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVDEVICES
 
 
 #include "py/mphal.h"
@@ -183,4 +183,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_UARTDevice,
     make_new, iodevices_UARTDevice_make_new,
     locals_dict, &iodevices_UARTDevice_locals_dict);
 
-#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
+#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVDEVICES

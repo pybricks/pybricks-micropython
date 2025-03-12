@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES
+#if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES
 
 #include <pybricks/common.h>
 #include <pybricks/nxtdevices.h>
@@ -48,4 +48,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_UltrasonicSensor,
     make_new, nxtdevices_UltrasonicSensor_make_new,
     locals_dict, &nxtdevices_UltrasonicSensor_locals_dict);
 
-#endif // PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES
+#endif // PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES

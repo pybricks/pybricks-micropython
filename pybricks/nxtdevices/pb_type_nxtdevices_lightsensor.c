@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES
+#if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES
 
 #include <pbio/int_math.h>
 
@@ -71,4 +71,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_LightSensor,
     make_new, nxtdevices_LightSensor_make_new,
     locals_dict, &nxtdevices_LightSensor_locals_dict);
 
-#endif // PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES
+#endif // PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES

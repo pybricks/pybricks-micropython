@@ -10,16 +10,16 @@
 
 static const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)                },
-    #if PYBRICKS_PY_PUPDEVICES
+    #if PYBRICKS_PY_PUPDEVICES || PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_PUPDevice),        MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
-    #if PYBRICKS_PY_PUPDEVICES_REMOTE
-    { MP_ROM_QSTR(MP_QSTR_LWP3Device),       MP_ROM_PTR(&pb_type_iodevices_LWP3Device)     },
     #endif
+    #if PYBRICKS_PY_PUPDEVICES && PYBRICKS_PY_PUPDEVICES_REMOTE
+    { MP_ROM_QSTR(MP_QSTR_LWP3Device),       MP_ROM_PTR(&pb_type_iodevices_LWP3Device)     },
     #endif
     #if PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
     { MP_ROM_QSTR(MP_QSTR_XboxController),   MP_ROM_PTR(&pb_type_iodevices_XboxController) },
     #endif
-    #if PYBRICKS_PY_EV3DEVICES
+    #if PYBRICKS_PY_EV3DEVDEVICES
     { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&pb_type_iodevices_AnalogSensor)   },
     { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&pb_type_iodevices_Ev3devSensor)   },
@@ -28,7 +28,7 @@ static const mp_rom_map_elem_t iodevices_globals_table[] = {
     #if PYBRICKS_PY_COMMON_MOTORS
     { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&pb_type_DCMotor)                  },
     #endif
-    #endif // PYBRICKS_PY_EV3DEVICES
+    #endif // PYBRICKS_PY_EV3DEVDEVICES
 };
 static MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
 

@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
+#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVDEVICES
 
 #include "py/obj.h"
 #include "py/smallint.h"
@@ -96,4 +96,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_AnalogSensor,
     make_new, iodevices_AnalogSensor_make_new,
     locals_dict, &iodevices_AnalogSensor_locals_dict);
 
-#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
+#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVDEVICES

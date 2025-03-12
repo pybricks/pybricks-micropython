@@ -13,7 +13,7 @@ static const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     #if PYBRICKS_PY_COMMON_MOTORS && !PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_Motor),             MP_ROM_PTR(&pb_type_Motor)                       },
     #endif
-    #if PYBRICKS_PY_EV3DEVICES
+    #if PYBRICKS_PY_EV3DEVDEVICES
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),       MP_ROM_PTR(&pb_type_nxtdevices_ColorSensor)      },
     { MP_ROM_QSTR(MP_QSTR_EnergyMeter),       MP_ROM_PTR(&pb_type_nxtdevices_EnergyMeter)      },
     { MP_ROM_QSTR(MP_QSTR_LightSensor),       MP_ROM_PTR(&pb_type_nxtdevices_LightSensor)      },
