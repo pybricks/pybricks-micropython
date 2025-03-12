@@ -5,10 +5,10 @@
 #include <pbio/config.h>
 
 #include <pbio/port_interface.h>
-#include <pbio/port_dcm_pup.h>
+#include <pbio/port_dcm.h>
 #include <pbdrv/ioport.h>
 
-#if PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_NUM_DCM_PUP > 0
+#if PBIO_CONFIG_PORT_DCM_PUP
 
 /** The number of consecutive repeated detections needed for an affirmative ID. */
 #define AFFIRMATIVE_MATCH_COUNT 20
@@ -29,7 +29,7 @@ typedef enum {
 } dev_id_group_t;
 
 // Device connection manager state for each port
-struct _pbio_port_dcm_pup_t {
+struct _pbio_port_dcm_t {
     /** Most recent one-off device ID candidate. */
     lego_device_type_id_t type_id;
     /** Previous one-off device ID candidate. */
@@ -42,7 +42,7 @@ struct _pbio_port_dcm_pup_t {
     uint8_t prev_gpio_value;
 };
 
-pbio_port_dcm_pup_t dcm_state[PBIO_CONFIG_PORT_NUM_DCM_PUP];
+pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
 
 static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
     /* ID1 */ [DEV_ID_GROUP_GND] = {
@@ -71,7 +71,7 @@ static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-PT_THREAD(pbio_port_dcm_pup_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_pup_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_device_info_t *device_info)) {
+PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_device_info_t *device_info)) {
 
     PT_BEGIN(pt);
 
@@ -284,7 +284,7 @@ PT_THREAD(pbio_port_dcm_pup_thread(struct pt *pt, struct etimer *etimer, pbio_po
 
             #if DEBUG
             // Log changes in detected ID. Guess port ID for debugging only.
-            for (uint8_t c = 0; c < PBIO_CONFIG_PORT_NUM_DCM_PUP; c++) {
+            for (uint8_t c = 0; c < PBIO_CONFIG_PORT_DCM_NUM_DEV; c++) {
                 if (&dcm_state[c] == dcm && device_info->type_id != dcm->type_id) {
                     DEBUG_PRINTF("Port %c: Detected ID: %d\n", c + 'A', dcm->type_id);
                 }
@@ -312,12 +312,12 @@ PT_THREAD(pbio_port_dcm_pup_thread(struct pt *pt, struct etimer *etimer, pbio_po
  * @param [in]  index       The index of the DC motor.
  * @return                  The dcmotor instance.
  */
-pbio_port_dcm_pup_t *pbio_port_dcm_pup_init_instance(uint8_t index) {
-    if (index >= PBIO_CONFIG_PORT_NUM_DCM_PUP) {
+pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
+    if (index >= PBIO_CONFIG_PORT_DCM_NUM_DEV) {
         return NULL;
     }
-    pbio_port_dcm_pup_t *dcm = &dcm_state[index];
+    pbio_port_dcm_t *dcm = &dcm_state[index];
     return dcm;
 }
 
-#endif // PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_DCM_PUP_NUM > 0
+#endif // PBIO_CONFIG_PORT_DCM_PUP

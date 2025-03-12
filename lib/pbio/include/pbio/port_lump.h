@@ -44,7 +44,7 @@ typedef struct {
     #endif
 } pbio_port_lump_device_info_t;
 
-#if PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_NUM_LUMP > 0
+#if PBIO_CONFIG_PORT_LUMP
 
 pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, pbio_port_t *port);
 
@@ -66,7 +66,7 @@ pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_l
 
 pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle);
 
-#else // PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_NUM_LUMP > 0
+#else // PBIO_CONFIG_PORT_LUMP
 
 static inline pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, pbio_port_t *port) {
     return NULL;
@@ -113,6 +113,6 @@ static inline PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port
 }
 
 
-#endif // PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_NUM_LUMP > 0
+#endif // PBIO_CONFIG_PORT_LUMP
 
 #endif // _PBIO_PORT_LUMP_H_

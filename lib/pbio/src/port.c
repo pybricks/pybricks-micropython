@@ -15,7 +15,7 @@
 #include <pbio/util.h>
 
 #include <pbio/port_interface.h>
-#include <pbio/port_dcm_pup.h>
+#include <pbio/port_dcm.h>
 #include <pbio/port_lump.h>
 
 #include <contiki.h>
@@ -78,7 +78,7 @@ struct _pbio_port_t {
     /**
      * Device connection manager that detects passive devices in LEGO mode.
      */
-    pbio_port_dcm_pup_t *connection_manager;
+    pbio_port_dcm_t *connection_manager;
     /**
      * LEGO UART Messaging Protocol device instance.
      */
@@ -89,7 +89,7 @@ struct _pbio_port_t {
     pbio_port_device_info_t device_info;
 };
 
-static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_PORTS];
+static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
 
 PROCESS_THREAD(pbio_port_process_none, ev, data) {
     PROCESS_BEGIN();
@@ -119,7 +119,7 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
 
         // Run passive device connection manager until UART device is detected.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
-        PROCESS_PT_SPAWN(&port->child1, pbio_port_dcm_pup_thread(&port->child1, &port->etimer, port->connection_manager, port->pdata->pins, &port->device_info));
+        PROCESS_PT_SPAWN(&port->child1, pbio_port_dcm_thread(&port->child1, &port->etimer, port->connection_manager, port->pdata->pins, &port->device_info));
 
         // Synchronize with LUMP data stream from sensor and parse device info.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
@@ -370,7 +370,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
 
     if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_PUP) {
         // Initialize passive device connection manager and LEGO UART device.
-        port->connection_manager = pbio_port_dcm_pup_init_instance(port->pdata->external_port_index);
+        port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index, port);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_PUP);
         return;
@@ -384,7 +384,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
 
 void pbio_port_init(void) {
 
-    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
         pbio_port_t *port = &ports[i];
         port->pdata = &pbdrv_ioport_platform_data[i];
         pbio_port_init_one_port(port);
@@ -392,7 +392,7 @@ void pbio_port_init(void) {
 }
 
 pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
-    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
         pbio_port_t *p = &ports[i];
         if (p->pdata->port_id == id) {
             *port = p;
@@ -412,7 +412,7 @@ pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
  *                     movement getting in the way, or out of control.
  */
 void pbio_port_stop_user_actions(bool reset) {
-    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
         pbio_port_t *port = &ports[i];
 
         // Don't reset devices that always need power like powered sensors.
@@ -437,7 +437,7 @@ void pbio_port_power_off(void) {
 
     // We also want to turn off sensors powered through the motor terminals
     // and stop their processes from triggering any further actions.
-    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_PORTS; i++) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
         pbio_port_t *port = &ports[i];
         pbio_port_set_mode(port, PBIO_PORT_MODE_NONE);
     }

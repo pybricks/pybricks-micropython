@@ -3,7 +3,7 @@
 
 #include <pbio/config.h>
 
-#if PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_NUM_LUMP > 0
+#if PBIO_CONFIG_PORT_LUMP
 
 #include <string.h>
 
@@ -189,7 +189,7 @@ struct _pbio_port_lump_dev_t {
     pbio_angle_t angle;
 };
 
-pbio_port_lump_dev_t lump_devices[PBIO_CONFIG_PORT_NUM_LUMP];
+pbio_port_lump_dev_t lump_devices[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
 
 enum {
     BUF_TX_MSG,
@@ -197,14 +197,14 @@ enum {
     NUM_BUF
 };
 
-static uint8_t bufs[PBIO_CONFIG_PORT_NUM_LUMP][NUM_BUF][EV3_UART_MAX_MESSAGE_SIZE];
+static uint8_t bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV][NUM_BUF][EV3_UART_MAX_MESSAGE_SIZE];
 
 // The following data is really just part of lump_devices, but separate allocation reduces overal code size
-static uint8_t data_read_bufs[PBIO_CONFIG_PORT_NUM_LUMP][LUMP_MAX_MSG_SIZE] __attribute__((aligned(4)));
-static pbdrv_legodev_lump_data_set_t data_set_bufs[PBIO_CONFIG_PORT_NUM_LUMP];
+static uint8_t data_read_bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV][LUMP_MAX_MSG_SIZE] __attribute__((aligned(4)));
+static pbdrv_legodev_lump_data_set_t data_set_bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
 
 pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, pbio_port_t *port) {
-    if (device_index >= PBIO_CONFIG_PORT_NUM_LUMP) {
+    if (device_index >= PBIO_CONFIG_PORT_LUMP_NUM_DEV) {
         return NULL;
     }
     pbio_port_lump_dev_t *lump_dev = &lump_devices[device_index];
@@ -1202,4 +1202,4 @@ pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_l
     return pbio_port_lump_is_ready(lump_dev);
 }
 
-#endif // PBIO_CONFIG_PORT && PBIO_CONFIG_PORT_LUMP_NUM > 0
+#endif // PBIO_CONFIG_PORT_LUMP
