@@ -348,7 +348,8 @@ tDeviceInfo g_sHIDDeviceInfo =
     g_pHIDConfigDescriptors,
     0,                         // Will be completed during USBDHIDInit().
     0,                         // Will be completed during USBDHIDInit().
-    &g_sUSBDefaultFIFOConfig
+    &g_sUSBDefaultFIFOConfig,
+    NULL,
 };
 
 //*****************************************************************************

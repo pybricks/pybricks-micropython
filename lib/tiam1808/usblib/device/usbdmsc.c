@@ -445,7 +445,8 @@ tDeviceInfo g_sMSCDeviceInfo =
     g_pMSCConfigDescriptors,
     0,
     0,
-	&g_sUSBDefaultFIFOConfig
+	&g_sUSBDefaultFIFOConfig,
+    NULL,
 
 		//&g_sUSBMSCFIFOConfig
 };
@@ -1332,7 +1333,7 @@ HandleRequests(void *pvInstance, tUSBRequest *pUSBRequest)
     //
     // This class only support a single LUN.
     //
-    const static unsigned char ucMaxLun = 0;
+    static const unsigned char ucMaxLun = 0;
 
     ASSERT(pvInstance != 0);
 
@@ -1422,7 +1423,7 @@ USBDSCSIInquiry(const tUSBDMSCDevice *psDevice)
     //
     // Copy the Version string.
     //
-    for(iIdx = 0; iIdx < 16; iIdx++)
+    for(iIdx = 0; iIdx < 4; iIdx++)
     {
         g_pucCommand[iIdx + 32] = psDevice->pucVersion[iIdx];
     }

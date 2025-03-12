@@ -241,13 +241,17 @@ tDeviceInfo g_sCompositeDeviceInfo =
         //
         // EndpointHandler
         //
-        HandleEndpoints
+        HandleEndpoints,
+
+        // Unused
+        NULL,
     },
     g_pCompDeviceDescriptor,
     (const tConfigHeader **)g_pCompConfigDescriptors,
     0,
     0,
-    &g_sUSBCompositeFIFOConfig
+    &g_sUSBCompositeFIFOConfig,
+    NULL,
 };
 
 //****************************************************************************

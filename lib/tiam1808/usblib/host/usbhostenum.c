@@ -1760,7 +1760,7 @@ USBHCDInitInternal(unsigned int ulIndex, void *pvPool,
         //
         // Enable the USB interrupt.
         //
-        //IntEnable(INT_USB0);
+        //IntSystemEnable(INT_USB0);
 #ifdef _TMS320C6X
         /* No DSP API to enable USB0 event */
 #else
@@ -2000,7 +2000,7 @@ USBHCDPowerAutomatic(unsigned int ulIndex)
 void
 USBHCDInit(unsigned int ulIndex, void *pvPool, unsigned int ulPoolSize)
 {
-    int iDriver;
+    unsigned int iDriver;
 
     //
     // Check the arguments.
@@ -3216,11 +3216,12 @@ void
 USB0HostIntHandler(void)
 {
     unsigned int ulStatus = 0;
-	unsigned int epStatus = 0;	
-
 	
 #if defined(am335x) || defined(c6a811x) || defined(am386x) || \
     defined(c6741x)
+
+    unsigned int epStatus = 0;	
+
 	ulStatus = HWREG(USB_0_OTGBASE + USB_0_IRQ_STATUS_1);
 	epStatus = HWREG(USB_0_OTGBASE + USB_0_IRQ_STATUS_0);
 	HWREG(USB_0_OTGBASE + USB_0_IRQ_STATUS_1) = ulStatus;
@@ -3245,7 +3246,6 @@ USB0HostIntHandler(void)
     //
     
 	ulStatus = HWREG(USB_0_OTGBASE + USB_0_INTR_SRC);
-	epStatus = 0;
   
 	// Clear the Interrupts
 	HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = ulStatus;
@@ -3283,7 +3283,7 @@ USB0HostIntHandler(void)
 static int
 USBHCDOpenDriver(unsigned int ulIndex, unsigned int ulDeviceNum)
 {
-    int iDriver;
+    unsigned int iDriver;
     unsigned int ulClass;
     tInterfaceDescriptor *pInterface;
 

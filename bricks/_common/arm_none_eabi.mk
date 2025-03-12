@@ -135,6 +135,7 @@ INC += -I$(PBTOP)/lib/tiam1808/tiam1808
 INC += -I$(PBTOP)/lib/tiam1808/tiam1808/hw
 INC += -I$(PBTOP)/lib/tiam1808/tiam1808/armv5
 INC += -I$(PBTOP)/lib/tiam1808/tiam1808/armv5/am1808
+INC += -I$(PBTOP)/lib/tiam1808/tiam1808/usblib
 endif
 INC += -I$(PBTOP)
 INC += -I$(BUILD)
@@ -304,6 +305,30 @@ TI_AM1808_SRC_C += $(addprefix lib/pbio/drv/uart/uart_ev3_pru_lib/,\
 	pru.c \
 	suart_api.c \
 	suart_utils.c \
+	)
+
+TI_AM1808_USB_SRC_C = $(addprefix lib/tiam1808/usblib/,\
+	device/usbdbulk.c \
+	device/usbdcdc.c \
+	device/usbdcdesc.c \
+	device/usbdcomp.c \
+	device/usbdconfig.c \
+	device/usbdenum.c \
+	device/usbdhandler.c \
+	device/usbdhid.c \
+	device/usbdhidmouse.c \
+	device/usbdmsc.c \
+	host/usbhhid.c \
+	host/usbhhidkeyboard.c \
+	host/usbhhidmouse.c \
+	host/usbhmsc.c \
+	host/usbhostenum.c \
+	host/usbhscsi.c \
+	usbbuffer.c \
+	usbdesc.c \
+	usbkeyboardmap.c \
+	usbringbuf.c \
+	usbtick.c \
 	)
 
 EV3_SRC_S = $(addprefix lib/pbio/platform/ev3/,\
@@ -537,6 +562,7 @@ endif
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
 OBJ += $(addprefix $(BUILD)/, $(TI_AM1808_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(TI_AM1808_USB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o))
 $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
 OBJ += $(BUILD)/pru_suart.bin.o

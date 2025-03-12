@@ -803,7 +803,7 @@ USBIntRegister(unsigned int ulBase, void(*pfnHandler)(void))
     IntRegister(INT_USB0, pfnHandler);
     
     /* Enable the USB interrupt. */
-    IntEnable(INT_USB0);
+    IntSystemEnable(INT_USB0);
 #endif
 }
 

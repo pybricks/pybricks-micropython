@@ -62,10 +62,12 @@ void
 USB0DeviceIntHandler(void)
 {
     unsigned int ulStatus = 0;
-	unsigned int epStatus = 0;	
 
 #if defined(am335x) || defined(c6a811x) || defined(am386x) || \
     defined(c6741x)
+
+	unsigned int epStatus = 0;
+
 	//
 	// Get the controller interrupt status.
 	//
@@ -105,7 +107,7 @@ USB0DeviceIntHandler(void)
 	// Get the controller interrupt status.
 	//
 	ulStatus = HWREG(USB_0_OTGBASE + USB_0_INTR_SRC);
-	epStatus = 0;
+
 	// Clear the Interrupts
 	HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = ulStatus;
 #ifdef _TMS320C6X

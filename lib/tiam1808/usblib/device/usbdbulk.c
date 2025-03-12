@@ -289,7 +289,8 @@ tDeviceInfo g_sBulkDeviceInfo =
     g_pBulkConfigDescriptors,
     0,                         // Will be completed during USBDBulkInit().
     0,                         // Will be completed during USBDBulkInit().
-    &g_sUSBDefaultFIFOConfig
+    &g_sUSBDefaultFIFOConfig,
+    NULL,
 };
 
 //*****************************************************************************

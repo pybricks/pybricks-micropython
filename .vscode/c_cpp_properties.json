@@ -72,9 +72,11 @@
                 "${workspaceFolder}/lib/tiam1808/tiam1808/hw",
                 "${workspaceFolder}/lib/tiam1808/tiam1808/armv5",
                 "${workspaceFolder}/lib/tiam1808/tiam1808/armv5/am1808",
+                "${workspaceFolder}/lib/tiam1808/tiam1808/usblib",
             ],
             "defines": [
                 "am1808",
+                "gcc",
                 "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
             ],

@@ -96,7 +96,7 @@ typedef struct
     //
     // This holds the keyboard usage codes for keys that are being held down.
     //
-    unsigned char pucKeyState[6];
+    unsigned char pucKeyState[8];
 
     //
     // This is a local buffer to hold the current HID report that comes up
