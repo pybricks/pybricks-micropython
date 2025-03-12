@@ -257,6 +257,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
+            .p1 = PBDRV_GPIO_EV3_PIN(18, 31, 28, 8, 10),
+            .p2 = PBDRV_GPIO_EV3_PIN(6, 23, 20, 2, 2),
             .p5 = PBDRV_GPIO_EV3_PIN(1, 23, 20, 0, 2),
             .p6 = PBDRV_GPIO_EV3_PIN(0, 3, 0, 0, 15),
             .uart_buf = PBDRV_GPIO_EV3_PIN(18, 27, 24, 8, 11),
@@ -264,11 +266,13 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .uart_rx = PBDRV_GPIO_EV3_PIN(4, 27, 24, 1, 1),
             .uart_tx_alt_uart = SYSCFG_PINMUX4_PINMUX4_31_28_UART1_TXD,
             .uart_rx_alt_uart = SYSCFG_PINMUX4_PINMUX4_27_24_UART1_RXD,
+            .adc_p1 = 6,
+            .adc_p6 = 5,
         },
         #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
         .supported_modes = PBIO_PORT_MODE_UART,
         #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_DCM,
         #endif
     },
     {
@@ -278,15 +282,19 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
+            .p1 = PBDRV_GPIO_EV3_PIN(18, 23, 20, 8, 12),
+            .p2 = PBDRV_GPIO_EV3_PIN(18, 11, 8, 8, 15),
             .p5 = PBDRV_GPIO_EV3_PIN(0, 7, 4, 0, 14),
-            .p6 = PBDRV_GPIO_EV3_PIN(0, 11, 8, 0, 13),
+            .p6 = PBDRV_GPIO_EV3_PIN(0, 11, 8, 0, 13), // DIGI
             .uart_buf = PBDRV_GPIO_EV3_PIN(18, 15, 12, 8, 14),
             .uart_tx = PBDRV_GPIO_EV3_PIN(3, 23, 20, 8, 3),
             .uart_rx = PBDRV_GPIO_EV3_PIN(3, 19, 16, 8, 4),
             .uart_tx_alt_uart = SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD,
             .uart_rx_alt_uart = SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD,
+            .adc_p1 = 8,
+            .adc_p6 = 7,
         },
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+        .supported_modes = PBIO_PORT_MODE_UART,// | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_3,
@@ -295,6 +303,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
+            .p1 = PBDRV_GPIO_EV3_PIN(19, 3, 0, 8, 9),
+            .p2 = PBDRV_GPIO_EV3_PIN(16, 27, 24, 7, 11),
             .p5 = PBDRV_GPIO_EV3_PIN(0, 15, 12, 0, 12),
             .p6 = PBDRV_GPIO_EV3_PIN(2, 7, 4, 1, 14),
             .uart_buf = PBDRV_GPIO_EV3_PIN(17, 3, 0, 7, 9),
@@ -302,8 +312,10 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .uart_rx = PBDRV_GPIO_EV3_PIN(2, 23, 20, 1, 10),
             .uart_tx_alt_uart = SYSCFG_PINMUX2_PINMUX2_15_12_AXR0_4,
             .uart_rx_alt_uart = SYSCFG_PINMUX2_PINMUX2_23_20_AXR0_2,
+            .adc_p1 = 10,
+            .adc_p6 = 9,
         },
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_4,
@@ -312,6 +324,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = &(pbdrv_ioport_pins_t) {
+            .p1 = PBDRV_GPIO_EV3_PIN(19, 11, 8, 6, 4),
+            .p2 = PBDRV_GPIO_EV3_PIN(17, 7, 4, 7, 8),
             .p5 = PBDRV_GPIO_EV3_PIN(1, 27, 24, 0, 1),
             .p6 = PBDRV_GPIO_EV3_PIN(2, 3, 0, 1, 15),
             .uart_buf = PBDRV_GPIO_EV3_PIN(16, 31, 28, 7, 10),
@@ -319,8 +333,10 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
             .uart_rx = PBDRV_GPIO_EV3_PIN(2, 27, 24, 1, 9),
             .uart_tx_alt_uart = SYSCFG_PINMUX2_PINMUX2_19_16_AXR0_3,
             .uart_rx_alt_uart = SYSCFG_PINMUX2_PINMUX2_27_24_AXR0_1,
+            .adc_p1 = 12,
+            .adc_p6 = 11,
         },
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_LEGO_PUP,
+        .supported_modes = PBIO_PORT_MODE_UART, // | PBIO_PORT_MODE_LEGO_DCM,
     },
 };
 

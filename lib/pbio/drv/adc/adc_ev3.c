@@ -39,7 +39,8 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
         return PBIO_ERROR_INVALID_ARG;
     }
     // Values for the requested channel are received several samples later.
-    *value = channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] - 4096 * ch;
+    // The data only appears 12-bit but the last 2 bits are always zero.
+    *value = (channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] - 4096 * ch) >> 2;
     return PBIO_SUCCESS;
 }
 
@@ -51,8 +52,10 @@ static void spi0_isr(void) {
         if (intCode != SPI_TX_BUF_EMPTY) {
             continue;
         }
+        // Payload encoding comes from the original EV3 sources, but we
+        // use the hardware SPI peripheral instead of bit-banging.
         uint16_t payload = 0x1840 | (((channel_data_index % PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) & 0x000F) << 7);
-        (*((volatile unsigned int *)(SOC_SPI_0_REGS + SPI_SPIDAT0))) = payload;
+        HWREG(SOC_SPI_0_REGS + SPI_SPIDAT0) = payload;
         channel_data[channel_data_index] = SPIDataReceive(SOC_SPI_0_REGS);
 
         if (++channel_data_index == PBIO_ARRAY_SIZE(channel_data)) {

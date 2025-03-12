@@ -35,11 +35,11 @@ typedef enum {
      */
     PBIO_PORT_MODE_NONE = 0,
     /**
-     * The port is in LEGO Powered Up mode, auto-detecting official active and
-     * passive components. Runs LEGO UART Messaging protocol when a LUMP device
-     * is detected.
+     * The port is in LEGO mode, auto-detecting official active and passive
+     * components. Runs LEGO UART Messaging protocol when a LUMP device is
+     * detected.
      */
-    PBIO_PORT_MODE_LEGO_PUP = 1 << 0,
+    PBIO_PORT_MODE_LEGO_DCM = 1 << 0,
     /**
      * The port acts as a quadrature encoder, counting position changes without
      * any device presence or type detection. Provides access to the counter

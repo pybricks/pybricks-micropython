@@ -217,7 +217,7 @@ pbio_error_t pbio_port_get_lump_device(pbio_port_t *port, lego_device_type_id_t 
         return PBIO_ERROR_NO_DEV;
     }
 
-    if (port->mode != PBIO_PORT_MODE_LEGO_PUP) {
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -259,7 +259,7 @@ pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *exp
     }
 
     // In LEGO mode, we require that something valid is indeed attached.
-    if ((port->mode == PBIO_PORT_MODE_LEGO_PUP || port->mode == PBIO_PORT_MODE_QUADRATURE_PASSIVE) &&
+    if ((port->mode == PBIO_PORT_MODE_LEGO_DCM || port->mode == PBIO_PORT_MODE_QUADRATURE_PASSIVE) &&
         port->device_info.kind != PBIO_PORT_DEVICE_KIND_DC_DEVICE) {
         return PBIO_ERROR_NO_DEV;
     }
@@ -370,11 +370,11 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     // If uart and gpio available, initialize device manager and uart devices.
     pbdrv_uart_get(port->pdata->uart_driver_index, &port->uart_dev);
 
-    if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_PUP) {
+    if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_DCM) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index, port);
-        pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_PUP);
+        pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
         return;
     }
 
@@ -486,7 +486,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
             pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
             pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
             return PBIO_SUCCESS;
-        case PBIO_PORT_MODE_LEGO_PUP:
+        case PBIO_PORT_MODE_LEGO_DCM:
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.
             port->process.thread = process_thread_pbio_port_process_pup;

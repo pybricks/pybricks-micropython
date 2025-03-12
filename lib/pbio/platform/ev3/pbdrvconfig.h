@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2024 The Pybricks Authors
+// Copyright (c) 2024-2025 The Pybricks Authors
 
 // platform-specific configuration for LEGO MINDSTORMS EV3
 
@@ -22,6 +22,7 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER    (512)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
+#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (8)
 
 #define PBDRV_CONFIG_BUTTON                         (1)

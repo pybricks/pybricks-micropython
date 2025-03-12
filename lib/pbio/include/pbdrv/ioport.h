@@ -77,6 +77,24 @@ typedef struct {
      * Pin 6 alt mode index for UART usage.
      */
     uint8_t uart_rx_alt_uart;
+    #if PBDRV_CONFIG_IOPORT_HAS_ADC
+    /**
+     * ADC channel for pin 1.
+     */
+    uint8_t adc_p1;
+    /**
+     * ADC channel for pin 6,
+     */
+    uint8_t adc_p6;
+    /**
+     * Pin 1 I/O,
+     */
+    pbdrv_gpio_t p1;
+    /**
+     * Pin 2 I/O.
+     */
+    pbdrv_gpio_t p2;
+    #endif // PBDRV_CONFIG_IOPORT_HAS_ADC
 } pbdrv_ioport_pins_t;
 
 #define PBDRV_IOPORT_INDEX_NOT_AVAILABLE (0xFF)

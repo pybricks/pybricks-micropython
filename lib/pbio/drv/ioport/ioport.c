@@ -28,9 +28,9 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_u
 
         pbdrv_gpio_input(&pins->p5);
         pbdrv_gpio_input(&pins->p6);
-        pbdrv_gpio_input(&pins->uart_buf);
         pbdrv_gpio_input(&pins->uart_tx);
         pbdrv_gpio_input(&pins->uart_rx);
+        pbdrv_gpio_out_high(&pins->uart_buf);
 
         // These should be set by default already, but it seems that the
         // bootloader on the Technic hub changes these and causes wrong

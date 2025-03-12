@@ -66,6 +66,7 @@
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z    (-1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
+#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (2)
 #define PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE   (0)
 

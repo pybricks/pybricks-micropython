@@ -29,6 +29,18 @@
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
+#define DEBUG 0
+#if DEBUG
+#include <stdio.h>
+#include <inttypes.h>
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#define debug_pr pbdrv_uart_debug_printf
+#define DBG_ERR(expr) expr
+#else
+#define debug_pr(...)
+#define DBG_ERR(expr)
+#endif
+
 struct _pbdrv_counter_dev_t {
     int32_t count;
     pbdrv_gpio_t gpio_int;
@@ -76,14 +88,17 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
     return PBIO_SUCCESS;
 }
 
-#define ADC_EV3_NONE (2014)
-#define ADC_EV3_MEDIUM_LOW (290)
-#define ADC_EV3_MEDIUM_HIGH (3451)
-#define ADC_EV3_LARGE_LOW (120)
-#define ADC_EV3_LARGE_HIGH (3666)
+#define ADC_EV3_NONE (505)
+#define ADC_EV3_MEDIUM_0 (74)
+#define ADC_EV3_MEDIUM_1 (862)
+#define ADC_EV3_LARGE_0 (32)
+#define ADC_EV3_LARGE_1 (917)
+#define ADC_NXT_LARGE_1 (1014)
 
-#define ADC_EV3_THRESHOLD_LOW ((ADC_EV3_MEDIUM_LOW + ADC_EV3_LARGE_LOW) / 2)
-#define ADC_EV3_THRESHOLD_HIGH ((ADC_EV3_MEDIUM_HIGH + ADC_EV3_LARGE_HIGH) / 2)
+static bool adc_is_close(uint32_t adc, uint32_t reference) {
+    uint32_t error = adc > reference ? adc - reference : reference - adc;
+    return error <= 21;
+}
 
 /**
  * Gets the LEGO device type ID for an EV3 motor based on the ADC value.
@@ -101,19 +116,15 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
  */
 static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
 
-    if (pbio_int_math_is_close(adc, ADC_EV3_NONE, 750)) {
-        return LEGO_DEVICE_TYPE_ID_NONE;
+    if (adc_is_close(adc, ADC_EV3_MEDIUM_0) || adc_is_close(adc, ADC_EV3_MEDIUM_1)) {
+        return LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR;
     }
 
-    if (adc < ADC_EV3_NONE) {
-        return adc > ADC_EV3_THRESHOLD_LOW ?
-               LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR:
-               LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR;
+    if (adc_is_close(adc, ADC_EV3_LARGE_0) || adc_is_close(adc, ADC_EV3_LARGE_1) || adc_is_close(adc, ADC_NXT_LARGE_1)) {
+        return LEGO_DEVICE_TYPE_ID_NXT_MOTOR;
     }
 
-    return adc > ADC_EV3_THRESHOLD_HIGH ?
-           LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR:
-           LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR;
+    return LEGO_DEVICE_TYPE_ID_NONE;
 }
 
 pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotations, int32_t *millidegrees, lego_device_type_id_t *type_id) {
@@ -125,6 +136,8 @@ pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotation
     }
 
     *type_id = pbdrv_counter_ev3_get_type(adc);
+    debug_pr("ADC: %d, type: %d\n", adc, *type_id);
+
     if (*type_id == LEGO_DEVICE_TYPE_ID_NONE) {
         return PBIO_ERROR_NO_DEV;
     }

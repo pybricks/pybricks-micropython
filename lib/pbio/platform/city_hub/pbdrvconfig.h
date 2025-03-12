@@ -42,6 +42,7 @@
 #define PBDRV_CONFIG_GPIO_STM32F0                   (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
+#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (2)
 #define PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE   (1)
 
