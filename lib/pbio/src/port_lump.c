@@ -174,7 +174,7 @@ struct _pbio_port_lump_dev_t {
     uint32_t err_count;
     /** Flag that indicates that good DATA lump_dev->msg has been received since last watchdog timeout. */
     bool data_rec;
-    /** Return value for synchronization thread. */
+    /** Return value for uart operations. */
     pbio_error_t err;
     /** lump_dev->msg to be printed in case of an error. */
     DBG_ERR(const char *last_err);
@@ -721,6 +721,7 @@ PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_d
     lump_dev->ext_mode = 0;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
     lump_dev->parsed_info = (pbio_port_lump_device_info_t) {0};
+    device_info->kind = PBIO_PORT_DEVICE_KIND_NONE;
 
     // Send SPEED command at 115200 baud
     debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
@@ -786,7 +787,6 @@ sync:
         debug_pr("Bad device type id or checksum\n");
         if (lump_dev->err_count > 10) {
             lump_dev->err_count = 0;
-            lump_dev->err = PBIO_ERROR_IO;
             PT_EXIT(pt);
         }
         lump_dev->err_count++;
@@ -818,7 +818,6 @@ sync:
                 // This sensor sends bad info messages.
                 continue;
             }
-            lump_dev->err = PBIO_ERROR_IO;
             PT_EXIT(pt);
         }
 
@@ -837,7 +836,6 @@ sync:
 
     // at this point we should have read all of the mode info
     if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_ACK) {
-        lump_dev->err = PBIO_ERROR_IO;
         PT_EXIT(pt);
     }
 

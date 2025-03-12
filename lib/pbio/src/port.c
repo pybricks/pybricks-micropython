@@ -126,6 +126,11 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
         PROCESS_PT_SPAWN(&port->child1, pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->etimer, &port->device_info));
         pbio_port_p1p2_set_power(port, port->device_info.power_requirements);
 
+        if (port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP) {
+            // Did not find a LUMP device, so synchronization failed.
+            continue;
+        }
+
         // Exchange sensor data with the LUMP device until it is disconnected.
         // The send thread detects this when the keep alive messages time out.
         PT_INIT(&port->child1);
