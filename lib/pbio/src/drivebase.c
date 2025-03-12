@@ -179,9 +179,10 @@ static pbio_error_t pbio_drivebase_get_state_control(pbio_drivebase_t *db, pbio_
 
     // Optionally use gyro to override the heading source for more accuracy.
     // The gyro manages its own offset, so we don't need to subtract it here.
-    // Note that the heading speed estimate (used for derivative control still
-    // uses the motor estimate rather than the gyro speed, to guarantee the
-    // same stability properties to stabilize the motors.)
+    // Note that the heading speed *estimate* is not set here. This value, used
+    // for derivative control, still uses the motor estimate rather than the
+    // gyro speed, to guarantee the same stability properties to stabilize the
+    // motors.
     if (db->gyro_heading_type != PBIO_IMU_HEADING_TYPE_NONE) {
         pbio_imu_get_heading_scaled(db->gyro_heading_type, &state_heading->position, &state_heading->speed, db->control_heading.settings.ctl_steps_per_app_step);
     }
