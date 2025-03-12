@@ -40,8 +40,7 @@
 #endif
 
 #if 0
-#include <pbdrv/../../drv/ioport/ioport_debug_uart.h>
-#define DEBUG_PRINT pbdrv_ioport_debug_uart_printf
+#define DEBUG_PRINT(...)
 #else
 #define DEBUG_PRINT(...)
 #endif
