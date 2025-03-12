@@ -26,14 +26,26 @@
 #include <pbio/dcmotor.h>
 #include <pbio/port.h>
 
-/** A rotation sensor object. */
-typedef struct _pbio_tacho_t pbio_tacho_t;
+/**
+ * The tacho module is a wrapper around a counter driver to provide rotation
+ * sensing with a configurable positive direction and zero point, without
+ * poking at hardware to reset it. The output angle is defined as:
+ *
+ *     angle = (raw_angle - zero_angle) * direction.
+ *
+ * Here direction is +1 if the tacho should increase for increasing raw angles
+ * or -1 if it should decrease for increasing raw angles.
+ */
+typedef struct {;
+                pbio_direction_t direction; /**< Direction of tacho for increasing raw driver counts. */
+                pbio_angle_t zero_angle; /**< Raw angle where tacho output angle reads zero. */
+                pbio_port_t *port;
+} pbio_tacho_t;
 
 #if PBIO_CONFIG_TACHO
 
 /** @name Initialization Functions */
 /**@{*/
-pbio_error_t pbio_tacho_get_tacho(pbdrv_legodev_dev_t *legodev, pbio_tacho_t **tacho);
 pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, pbio_direction_t direction, bool reset_angle);
 /**@}*/
 
@@ -48,10 +60,6 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, pbio_angle_t *reset_ang
 /**@}*/
 
 #else
-
-pbio_error_t pbio_tacho_get_tacho(pbdrv_legodev_dev_t *legodev, pbio_tacho_t **tacho) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
 
 static inline pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, pbio_direction_t direction, bool reset_angle) {
     return PBIO_ERROR_NOT_SUPPORTED;

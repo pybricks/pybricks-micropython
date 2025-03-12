@@ -45,7 +45,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 
-#include <lego_usb.h>
+#include <lego/usb.h>
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/config.h>

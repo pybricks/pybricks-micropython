@@ -4,15 +4,15 @@
 #include <stdbool.h>
 
 #include <pbdrv/clock.h>
+#include <pbdrv/ioport.h>
+#include <pbio/port_interface.h>
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/battery/battery_adc.h"
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
-#include "../../drv/ioport/ioport_pup.h"
 #include "../../drv/led/led_pwm.h"
-#include "../../drv/legodev/legodev_pup.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32l4_ll_dma.h"
@@ -249,82 +249,71 @@ void EXTI9_5_IRQHandler(void) {
 
 // I/O ports
 
-const pbdrv_legodev_pup_ext_platform_data_t pbdrv_legodev_pup_ext_platform_data[PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV] = {
+const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+    .bank = GPIOB,
+    .pin = 12
+};
+
+const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
-        .ioport_index = 0,
+        .motor_driver_index = 0,
+        .uart_driver_index = UART_PORT_A,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = { .bank = GPIOC, .pin = 5  },
+            .p6 = { .bank = GPIOB, .pin = 2  },
+            .uart_buf = { .bank = GPIOH, .pin = 0  },
+            .uart_tx = { .bank = GPIOB, .pin = 6  },
+            .uart_rx = { .bank = GPIOB, .pin = 7  },
+            .uart_tx_alt_uart = GPIO_AF7_USART1,
+            .uart_rx_alt_uart = GPIO_AF7_USART1,
+        },
+        .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
     },
     {
         .port_id = PBIO_PORT_ID_B,
-        .ioport_index = 1,
+        .motor_driver_index = 1,
+        .uart_driver_index = UART_PORT_B,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = { .bank = GPIOC, .pin = 3  },
+            .p6 = { .bank = GPIOC, .pin = 0  },
+            .uart_buf = { .bank = GPIOH, .pin = 1  },
+            .uart_tx = { .bank = GPIOA, .pin = 2  },
+            .uart_rx = { .bank = GPIOA, .pin = 3  },
+            .uart_tx_alt_uart = GPIO_AF7_USART2,
+            .uart_rx_alt_uart = GPIO_AF7_USART2,
+        },
+        .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
     },
     {
         .port_id = PBIO_PORT_ID_C,
-        .ioport_index = 2,
+        .motor_driver_index = 2,
+        .uart_driver_index = UART_PORT_C,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = { .bank = GPIOC, .pin = 4  },
+            .p6 = { .bank = GPIOA, .pin = 7  },
+            .uart_buf = { .bank = GPIOC, .pin = 8  },
+            .uart_tx = { .bank = GPIOC, .pin = 10 },
+            .uart_rx = { .bank = GPIOC, .pin = 11 },
+            .uart_tx_alt_uart = GPIO_AF7_USART3,
+            .uart_rx_alt_uart = GPIO_AF7_USART3,
+        },
+        .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
     },
-    #if PBDRV_CONFIG_LEGODEV_PUP_NUM_EXT_DEV == PBDRV_CONFIG_IOPORT_NUM_DEV
     {
         .port_id = PBIO_PORT_ID_D,
-        .ioport_index = 3,
-    },
-    #endif
-};
-
-const pbdrv_ioport_pup_platform_data_t pbdrv_ioport_pup_platform_data = {
-    .port_vcc = { .bank = GPIOB, .pin = 12 },
-    .ports = {
-        {
-            .port_id = PBIO_PORT_ID_A,
-            .motor_driver_index = 0,
-            .uart_driver_index = UART_PORT_A,
-            .pins = {
-                .gpio1 = { .bank = GPIOC, .pin = 5  },
-                .gpio2 = { .bank = GPIOB, .pin = 2  },
-                .uart_buf = { .bank = GPIOH, .pin = 0  },
-                .uart_tx = { .bank = GPIOB, .pin = 6  },
-                .uart_rx = { .bank = GPIOB, .pin = 7  },
-                .uart_alt = GPIO_AF7_USART1,
-            },
+        .motor_driver_index = 3,
+        .uart_driver_index = UART_PORT_D,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = { .bank = GPIOA, .pin = 4  },
+            .p6 = { .bank = GPIOA, .pin = 5  },
+            .uart_buf = { .bank = GPIOC, .pin = 7  },
+            .uart_tx = { .bank = GPIOB, .pin = 11 },
+            .uart_rx = { .bank = GPIOB, .pin = 10  },
+            .uart_tx_alt_uart = GPIO_AF8_LPUART1,
+            .uart_rx_alt_uart = GPIO_AF8_LPUART1,
         },
-        {
-            .port_id = PBIO_PORT_ID_B,
-            .motor_driver_index = 1,
-            .uart_driver_index = UART_PORT_B,
-            .pins = {
-                .gpio1 = { .bank = GPIOC, .pin = 3  },
-                .gpio2 = { .bank = GPIOC, .pin = 0  },
-                .uart_buf = { .bank = GPIOH, .pin = 1  },
-                .uart_tx = { .bank = GPIOA, .pin = 2  },
-                .uart_rx = { .bank = GPIOA, .pin = 3  },
-                .uart_alt = GPIO_AF7_USART2,
-            },
-        },
-        {
-            .port_id = PBIO_PORT_ID_C,
-            .motor_driver_index = 2,
-            .uart_driver_index = UART_PORT_C,
-            .pins = {
-                .gpio1 = { .bank = GPIOC, .pin = 4  },
-                .gpio2 = { .bank = GPIOA, .pin = 7  },
-                .uart_buf = { .bank = GPIOC, .pin = 8  },
-                .uart_tx = { .bank = GPIOC, .pin = 10 },
-                .uart_rx = { .bank = GPIOC, .pin = 11 },
-                .uart_alt = GPIO_AF7_USART3,
-            },
-        },
-        {
-            .port_id = PBIO_PORT_ID_D,
-            .motor_driver_index = 3,
-            .uart_driver_index = UART_PORT_D,
-            .pins = {
-                .gpio1 = { .bank = GPIOA, .pin = 4  },
-                .gpio2 = { .bank = GPIOA, .pin = 5  },
-                .uart_buf = { .bank = GPIOC, .pin = 7  },
-                .uart_tx = { .bank = GPIOB, .pin = 11 },
-                .uart_rx = { .bank = GPIOB, .pin = 10  },
-                .uart_alt = GPIO_AF8_LPUART1,
-            },
-        },
+        .supported_modes = PBIO_PORT_MODE_LEGO_PUP | PBIO_PORT_MODE_UART,
     },
 };
 

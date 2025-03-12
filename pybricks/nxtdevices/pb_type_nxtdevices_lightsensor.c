@@ -31,14 +31,14 @@ typedef struct _nxtdevices_LightSensor_obj_t {
 
 // pybricks.nxtdevices.LightSensor.ambient
 static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
-    int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT);
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_LIGHT_SENSOR__AMBIENT);
     return mp_obj_new_int(analog_scale(analog[0], 1906, 4164, true));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
 // pybricks.nxtdevices.LightSensor.reflection
 static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
-    int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_LIGHT_SENSOR__REFLECT);
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_LIGHT_SENSOR__REFLECT);
     return mp_obj_new_int(analog_scale(analog[0], 1906, 3000, true));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
@@ -49,7 +49,7 @@ static mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_LightSensor_obj_t *self = mp_obj_malloc(nxtdevices_LightSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_LIGHT_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR);
 
     // Read one value to ensure a consistent initial mode
     nxtdevices_LightSensor_reflection(MP_OBJ_FROM_PTR(self));

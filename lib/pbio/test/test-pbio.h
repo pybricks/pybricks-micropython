@@ -16,9 +16,16 @@
 
 // Use this macro to define tests that _do_ require a Contiki event loop
 #define PBIO_PT_THREAD_TEST(name) \
-    { #name, pbio_test_run_thread, TT_FORK, &pbio_test_setup, name }
+    { #name, pbio_test_run_thread_without_pbio_processes, TT_FORK, &pbio_test_setup, name }
 
-void pbio_test_run_thread(void *env);
+// Use this macro to define tests that _do_ require a Contiki event loop
+// with pbio processes enabled
+#define PBIO_PT_THREAD_TEST_WITH_PBIO(name) \
+    { #name, pbio_test_run_thread_with_pbio_processes, TT_FORK, &pbio_test_setup, name }
+
+void pbio_test_run_thread_with_pbio_processes(void *env);
+void pbio_test_run_thread_without_pbio_processes(void *env);
+
 extern struct testcase_setup_t pbio_test_setup;
 
 // these can be used by tests that use the bluetooth driver

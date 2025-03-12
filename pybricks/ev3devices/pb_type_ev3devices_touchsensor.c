@@ -25,13 +25,13 @@ static mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     ev3devices_TouchSensor_obj_t *self = mp_obj_malloc(ev3devices_TouchSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_EV3_TOUCH_SENSOR);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR);
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.ev3devices.TouchSensor.pressed
 static mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
-    int32_t *analog = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_EV3_TOUCH_SENSOR__TOUCH);
+    int32_t *analog = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_EV3_TOUCH_SENSOR__TOUCH);
     return mp_obj_new_bool(analog[0] > 250);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);

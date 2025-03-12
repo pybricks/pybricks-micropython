@@ -23,24 +23,24 @@ static mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_EnergyMeter_obj_t *self = mp_obj_malloc(nxtdevices_EnergyMeter_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, PBDRV_LEGODEV_TYPE_ID_NXT_ENERGY_METER);
+    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_ENERGY_METER);
 
     // Read once so we are in the mode we'll be using for all methods, to avoid mode switch delays later
-    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
+    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_NXT_ENERGY_METER_ALL);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
 // pybricks.nxtdevices.EnergyMeter.storage
 static mp_obj_t nxtdevices_EnergyMeter_storage(mp_obj_t self_in) {
-    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ENERGY_METER_ALL);
     return mp_obj_new_int(all[4]);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_EnergyMeter_storage);
 
 // pybricks.nxtdevices.EnergyMeter.input
 static mp_obj_t nxtdevices_EnergyMeter_input(mp_obj_t self_in) {
-    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ENERGY_METER_ALL);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[0]);
     dat[1] = mp_obj_new_int(all[1]);
@@ -51,7 +51,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_input_obj, nxtdevices_En
 
 // pybricks.nxtdevices.EnergyMeter.output
 static mp_obj_t nxtdevices_EnergyMeter_output(mp_obj_t self_in) {
-    int32_t *all = pb_type_device_get_data_blocking(self_in, PBDRV_LEGODEV_MODE_NXT_ENERGY_METER_ALL);
+    int32_t *all = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ENERGY_METER_ALL);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[2]);
     dat[1] = mp_obj_new_int(all[3]);

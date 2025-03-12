@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include <pbdrv/ioport.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
@@ -82,7 +83,7 @@ pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id
  */
 int main(int argc, char **argv) {
 
-    pbio_init();
+    pbio_init(true);
     pbsys_init();
 
     // Keep loading and running user programs until shutdown is requested.
@@ -127,6 +128,8 @@ int main(int argc, char **argv) {
 
     // Now lower-level processes may shutdown and/or power off.
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
+
+    pbdrv_ioport_enable_vcc(PBDRV_IOPORT_VCC_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button
     // or USB being plugged in, so we have this loop to keep pumping events

@@ -21,13 +21,8 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_NXT                      (1)
 
-#define PBDRV_CONFIG_IOPORT                         (0)
+#define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (7)
-
-#define PBDRV_CONFIG_LEGODEV                        (1)
-#define PBDRV_CONFIG_LEGODEV_NXT                    (1)
-#define PBDRV_CONFIG_LEGODEV_NXT_NUM_MOTOR          (3)
-#define PBDRV_CONFIG_LEGODEV_NXT_NUM_SENSOR         (4)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (3)
@@ -40,9 +35,6 @@
 #define PBDRV_CONFIG_HAS_PORT_2                     (1)
 #define PBDRV_CONFIG_HAS_PORT_3                     (1)
 #define PBDRV_CONFIG_HAS_PORT_4                     (1)
-
-#define PBDRV_CONFIG_FIRST_MOTOR_PORT       PBIO_PORT_ID_A
-#define PBDRV_CONFIG_LAST_MOTOR_PORT        PBIO_PORT_ID_C
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_NXT                      (1)

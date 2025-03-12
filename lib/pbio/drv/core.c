@@ -4,6 +4,7 @@
 #include <contiki.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/ioport.h>
 
 #include "core.h"
 #include "adc/adc.h"
@@ -15,10 +16,8 @@
 #include "clock/clock.h"
 #include "counter/counter.h"
 #include "imu/imu.h"
-#include "ioport/ioport.h"
 #include "led/led_array.h"
 #include "led/led.h"
-#include "legodev/legodev.h"
 #include "motor_driver/motor_driver.h"
 #include "pwm/pwm.h"
 #include "random/random.h"
@@ -47,7 +46,6 @@ void pbdrv_init(void) {
     pbdrv_charger_init();
     pbdrv_counter_init();
     pbdrv_imu_init();
-    pbdrv_ioport_init();
     pbdrv_led_array_init();
     pbdrv_led_init();
     pbdrv_motor_driver_init();
@@ -66,18 +64,24 @@ void pbdrv_init(void) {
     __asm volatile ("cpsie i" : : : "memory");
     #endif
 
+    // Some hubs turn on power to the I/O ports in the bootloader. This causes
+    // us to miss the initial synchronization window, so we lose more time.
+    // This is fixed by power cycling them here and allowing some reset time.
+    #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
+    pbdrv_ioport_enable_vcc(false);
+    uint32_t ioport_reset_time = pbdrv_clock_get_ms();
+    #endif
+
     // Wait for all async pbdrv drivers to initialize before starting
     // higher level system processes.
     while (pbdrv_init_busy()) {
         process_run();
     }
 
-    // The driver for external LEGO devices (legodev) is somewhere in between
-    // a low-level driver (it does have platform-specific implementations) and
-    // a high-level process (it relies on lower-level drivers to poke hardware).
-    // We start it after low-level code is initialized so we can safely access
-    // the ioports. It is not necessary to wait on this driver: requesting
-    // devices behaves the same as if unknown devices are still syncing up after
-    // just being plugged in.
-    pbdrv_legodev_init();
+    #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
+    while (pbdrv_clock_get_ms() - ioport_reset_time < 500) {
+        process_run();
+    }
+    #endif
+    pbdrv_ioport_enable_vcc(true);
 }

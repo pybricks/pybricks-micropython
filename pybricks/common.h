@@ -13,7 +13,6 @@
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/light.h>
-#include <pbdrv/legodev.h>
 
 #include "py/obj.h"
 
@@ -107,7 +106,8 @@ mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values);
 typedef struct {
     pb_type_device_obj_base_t device_base;
     pbio_servo_t *srv;
-    pbio_port_id_t port;
+    pbio_dcmotor_t *dcmotor;
+    pbio_port_id_t port_id;
     #if PYBRICKS_PY_COMMON_MOTOR_MODEL
     mp_obj_t model;
     #endif

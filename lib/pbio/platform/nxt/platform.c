@@ -27,40 +27,6 @@
 #include <nxos/drivers/systick.h>
 #include <nxos/interrupts.h>
 
-#include "../../drv/legodev/legodev_nxt.h"
-
-const pbdrv_legodev_nxt_motor_platform_data_t pbdrv_legodev_nxt_motor_platform_data[PBDRV_CONFIG_LEGODEV_NXT_NUM_MOTOR] = {
-    {
-        .port_id = PBIO_PORT_ID_A,
-        .motor_driver_index = 0,
-    },
-    {
-        .port_id = PBIO_PORT_ID_B,
-        .motor_driver_index = 1,
-    },
-    {
-        .port_id = PBIO_PORT_ID_C,
-        .motor_driver_index = 2,
-    },
-};
-
-const pbdrv_legodev_nxt_sensor_platform_data_t pbdrv_legodev_nxt_sensor_platform_data[PBDRV_CONFIG_LEGODEV_NXT_NUM_SENSOR] = {
-    {
-        .port_id = PBIO_PORT_ID_1,
-    },
-    {
-        .port_id = PBIO_PORT_ID_2,
-    },
-    {
-        .port_id = PBIO_PORT_ID_3,
-    },
-    {
-        .port_id = PBIO_PORT_ID_4,
-    },
-};
-
-
-
 // FIXME: Needs to use a process very similar to pbsys/bluetooth
 static bool bluetooth_connect(void) {
 

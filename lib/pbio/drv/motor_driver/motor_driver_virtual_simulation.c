@@ -19,6 +19,7 @@
 
 #include <pbio/battery.h>
 #include <pbio/observer.h>
+#include <pbio/port_interface.h>
 
 #include "motor_driver_virtual_simulation.h"
 
@@ -46,6 +47,7 @@ struct _pbdrv_motor_driver_dev_t {
     double torque;
     const pbio_simulation_model_t *model;
     const pbdrv_motor_driver_virtual_simulation_platform_data_t *pdata;
+    pbio_port_t *port;
 };
 
 static const pbio_simulation_model_t model_technic_m_angular = {
@@ -73,6 +75,11 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
 
     *driver = &motor_driver_devs[id];
 
+    // In the simulation, the motor driver is also responsible for providing
+    // encoder data. This is normally a separate interface on the port, but
+    // we allow access to the port in this simulated case.
+    pbio_port_get_port(motor_driver_devs[id].pdata->port_id, &motor_driver_devs[id].port);
+
     return PBIO_SUCCESS;
 }
 
@@ -99,38 +106,6 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
     static pbdrv_motor_driver_dev_t *driver;
 
     PROCESS_BEGIN();
-
-    // Initialize driver from platform data.
-    for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
-        // Get driver and platform data.
-        driver = &motor_driver_devs[dev_index];
-        driver->pdata = &pbdrv_motor_driver_virtual_simulation_platform_data[dev_index];
-        driver->angle = driver->pdata->initial_angle;
-        driver->speed = driver->pdata->initial_speed;
-        driver->current = 0;
-        driver->torque = 0;
-        driver->voltage = 0;
-
-        // Select model corresponding to device ID.
-        switch (driver->pdata->type_id) {
-            case PBDRV_LEGODEV_TYPE_ID_SPIKE_S_MOTOR:
-                driver->model = &model_technic_m_angular; // TODO
-                break;
-            case PBDRV_LEGODEV_TYPE_ID_SPIKE_M_MOTOR:
-                driver->model = &model_technic_m_angular;
-                break;
-            case PBDRV_LEGODEV_TYPE_ID_SPIKE_L_MOTOR:
-                driver->model = &model_technic_m_angular; // TODO
-                break;
-            case PBDRV_LEGODEV_TYPE_ID_NONE:
-                driver->model = NULL;
-                break;
-            default:
-                PROCESS_EXIT();
-        }
-    }
-
-    pbdrv_init_busy_down();
 
     etimer_set(&tick_timer, 1);
     timer_set(&frame_timer, 40);
@@ -217,6 +192,15 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
             driver->angle = angle_next;
             driver->speed = speed_next;
             driver->current = current_next;
+
+            // Allow port driver to read simulated angle.
+            int32_t mdeg = ((int32_t)driver->angle) % 360000;
+            if (mdeg < 0) {
+                mdeg += 360000;
+            }
+            if (driver->port) {
+                pbio_port_update_angle_abs_mdeg(driver->port, mdeg);
+            }
         }
 
         etimer_reset(&tick_timer);
@@ -270,28 +254,48 @@ static void pbdrv_motor_driver_virtual_simulation_prepare_parser(void) {
     }
 }
 
-static void pbdrv_motor_driver_start_simulation(void) {
-    pbdrv_init_busy_up();
-    process_start(&pbdrv_motor_driver_virtual_simulation_process);
+static bool simulation_enabled = true;
+
+void pbdrv_motor_driver_disable_process(void) {
+    simulation_enabled = false;
 }
 
 void pbdrv_motor_driver_init(void) {
+
+    // Initialize driver from platform data.
+    for (uint32_t dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
+        // Get driver and platform data.
+        pbdrv_motor_driver_dev_t *driver = &motor_driver_devs[dev_index];
+        driver->pdata = &pbdrv_motor_driver_virtual_simulation_platform_data[dev_index];
+        driver->angle = driver->pdata->initial_angle;
+        driver->speed = driver->pdata->initial_speed;
+        driver->current = 0;
+        driver->torque = 0;
+        driver->voltage = 0;
+
+        // Select model corresponding to device ID.
+        switch (driver->pdata->type_id) {
+            case LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR:
+                driver->model = &model_technic_m_angular; // TODO
+                break;
+            case LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR:
+                driver->model = &model_technic_m_angular;
+                break;
+            case LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR:
+                driver->model = &model_technic_m_angular; // TODO
+                break;
+            default:
+            case LEGO_DEVICE_TYPE_ID_NONE:
+                driver->model = NULL;
+                break;
+        }
+    }
+
+
     pbdrv_motor_driver_virtual_simulation_prepare_parser();
-    #if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
-    pbdrv_motor_driver_start_simulation();
-    #endif
-}
-
-#if !PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
-void pbdrv_motor_driver_init_manual(void) {
-    // Motor tests can start the simulation as needed.
-    pbdrv_motor_driver_start_simulation();
-}
-#endif // !PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION_AUTO_START
-
-void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees) {
-    *rotations = (int64_t)dev->angle / 360000;
-    *millidegrees = (int64_t)dev->angle - *rotations * 360000;
+    if (simulation_enabled) {
+        process_start(&pbdrv_motor_driver_virtual_simulation_process);
+    }
 }
 
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION

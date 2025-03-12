@@ -10,6 +10,12 @@
 #define PBIO_CONFIG_LIGHT                   (1)
 #define PBIO_CONFIG_LOGGER                  (0)
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
+#define PBIO_CONFIG_PORT                    (1)
+#define PBIO_CONFIG_PORT_NUM_PORTS          (4)
+#define PBIO_CONFIG_PORT_NUM_DCM_PUP        (2)
+#define PBIO_CONFIG_PORT_NUM_LUMP           (2)
+#define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (0)
+#define PBIO_CONFIG_PORT_DEFAULT_MOTOR      (LEGO_DEVICE_TYPE_ID_MOVE_HUB_MOTOR)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (4)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (0)
@@ -18,8 +24,5 @@
 #define PBIO_CONFIG_TACHO                   (1)
 #define PBIO_CONFIG_CONTROL_MINIMAL         (1)
 
-#define PBIO_CONFIG_UARTDEV                 (0)
-#define PBIO_CONFIG_UARTDEV_NUM_DEV         (2)
-#define PBIO_CONFIG_UARTDEV_FIRST_PORT      PBIO_PORT_ID_C
 
 #define PBIO_CONFIG_ENABLE_SYS              (1)
