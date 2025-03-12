@@ -10,9 +10,8 @@ MEMORY
     DDR        (rwx) : ORIGIN = 0xC0008000, LENGTH = (64M - 0x8000)
 }
 
-_stack = 0xC2000000;
-_minimal_stack_size = 4K;
-_estack = ORIGIN(DDR) + LENGTH(DDR);
+_minimal_stack_size = 64K;
+_estack = ORIGIN(DDR) + LENGTH(DDR) - 4;
 
 SECTIONS
 {

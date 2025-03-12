@@ -6,7 +6,7 @@
 #include "soc_AM1808.h"
 
         .global Entry
-        .global _stack                  
+        .global _estack                  
         .global _bss_start
         .global _bss_end
 
@@ -57,7 +57,7 @@ Entry:
 @
 @ Set up the Stack for Undefined mode
 @
-         LDR   r0, =_stack                     @ Read the stack address
+         LDR   r0, =_estack                    @ Read the stack address
          MSR   cpsr_c, #MODE_UND|I_F_BIT       @ switch to undef  mode
          MOV   sp,r0                           @ write the stack pointer
          SUB   r0, r0, #UND_STACK_SIZE         @ give stack space
