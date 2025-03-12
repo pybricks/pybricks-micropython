@@ -225,7 +225,7 @@ pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_device_info_t *device_info)) {
+PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {
 
     PT_BEGIN(pt);
 
@@ -289,18 +289,17 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
     PT_END(pt);
 }
 
-/**
- * Gets device connection manager state.
- *
- * @param [in]  index       The index of the DC motor.
- * @return                  The dcmotor instance.
- */
 pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     if (index >= PBIO_CONFIG_PORT_DCM_NUM_DEV) {
         return NULL;
     }
     pbio_port_dcm_t *dcm = &dcm_state[index];
     return dcm;
+}
+
+pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {
+    // TODO
+    return PBIO_ERROR_NO_DEV;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_EV3

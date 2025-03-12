@@ -83,10 +83,6 @@ struct _pbio_port_t {
      * LEGO UART Messaging Protocol device instance.
      */
     pbio_port_lump_dev_t *lump_dev;
-    /**
-     * Information about the attached device.
-     */
-    pbio_port_device_info_t device_info;
 };
 
 static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
@@ -115,20 +111,13 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
 
     for (;;) {
 
-        port->device_info = (pbio_port_device_info_t) { 0 };
-
         // Run passive device connection manager until UART device is detected.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
-        PROCESS_PT_SPAWN(&port->child1, pbio_port_dcm_thread(&port->child1, &port->etimer, port->connection_manager, port->pdata->pins, &port->device_info));
+        PROCESS_PT_SPAWN(&port->child1, pbio_port_dcm_thread(&port->child1, &port->etimer, port->connection_manager, port->pdata->pins));
 
         // Synchronize with LUMP data stream from sensor and parse device info.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
-        PROCESS_PT_SPAWN(&port->child1, pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->etimer, &port->device_info));
-
-        if (port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP) {
-            // Did not find a LUMP device, so synchronization failed.
-            continue;
-        }
+        PROCESS_PT_SPAWN(&port->child1, pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->etimer));
 
         // Exchange sensor data with the LUMP device until it is disconnected.
         // The send thread detects this when the keep alive messages time out.
@@ -161,7 +150,8 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
 
     // Fetches the angle as well as the currently attached device type.
     if (port->counter) {
-        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees, &port->device_info.type_id);
+        lego_device_type_id_t type_id;
+        return pbdrv_counter_get_angle(port->counter, &angle->rotations, &angle->millidegrees, &type_id);
     }
     return PBIO_ERROR_NO_DEV;
 }
@@ -248,22 +238,13 @@ pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *exp
         return PBIO_ERROR_NO_DEV;
     }
 
-    // In LEGO mode, we require that something valid is indeed attached.
-    if ((port->mode == PBIO_PORT_MODE_LEGO_DCM || port->mode == PBIO_PORT_MODE_QUADRATURE_PASSIVE) &&
-        port->device_info.kind != PBIO_PORT_DEVICE_KIND_DC_DEVICE) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    // If expected type specified, require exact match.
-    if (*expected_type_id != LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR && *expected_type_id != port->device_info.type_id) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    // Allows generic callers to know what is connected.
-    *expected_type_id = port->device_info.type_id;
-
-    // Return the motor instance.
+    // Return requested device.
     *dcmotor = port->dcmotor;
+
+    // In LEGO mode, we require that something valid is indeed attached.
+    if (port->mode == PBIO_PORT_MODE_LEGO_DCM && port->connection_manager) {
+        return pbio_port_dcm_assert_type_id(port->connection_manager, expected_type_id);
+    }
     return PBIO_SUCCESS;
 }
 
@@ -283,6 +264,9 @@ pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expec
         return PBIO_ERROR_NO_DEV;
     }
 
+    // Return requested device.
+    *servo = port->servo;
+
     // Port must be ready to report angles.
     pbio_angle_t angle;
     pbio_error_t err = pbio_port_get_angle(port, &angle);
@@ -290,17 +274,17 @@ pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expec
         return err;
     }
 
-    // If expected type specified, require exact match.
-    if (*expected_type_id != LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR && *expected_type_id != port->device_info.type_id) {
-        return PBIO_ERROR_NO_DEV;
+    if (port->mode == PBIO_PORT_MODE_LEGO_DCM && port->lump_dev) {
+        return pbio_port_lump_assert_type_id(port->lump_dev, expected_type_id);
     }
 
-    // Allows generic callers to know what is connected.
-    *expected_type_id = port->device_info.type_id;
+    if (port->counter) {
+        // Getting the counter angle also asserts the device type.
+        pbio_angle_t angle;
+        return pbdrv_counter_get_angle(port->counter, &angle.rotations, &angle.millidegrees, expected_type_id);
+    }
 
-    // Return the motor instance.
-    *servo = port->servo;
-    return PBIO_SUCCESS;
+    return PBIO_ERROR_NO_DEV;
 }
 
 pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement) {
@@ -352,7 +336,6 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     // Configure basic quadrature-only ports such as BOOST A&B or NXT A&B&C
     // without device kind and type id detection.
     if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE_PASSIVE) {
-        port->device_info.kind = PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR;
         pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE_PASSIVE);
         return;
     }

@@ -738,15 +738,13 @@ static void ev3_uart_prepare_tx_msg(pbio_port_lump_dev_t *lump_dev, lump_msg_typ
  * @param [in]  lump_dev       The LEGO UART device instance.
  * @param [in]  uart_dev       The UART device instance.
  * @param [in]  etimer         The timer for the protothread.
- * @param [out] device_info    The device information.
  */
-PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer, pbio_port_device_info_t *device_info)) {
+PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
     PT_BEGIN(pt);
 
     // Reset whole state except references to static buffers
     memset((uint8_t *)lump_dev + offsetof(pbio_port_lump_dev_t, type_id), 0, sizeof(pbio_port_lump_dev_t) - offsetof(pbio_port_lump_dev_t, type_id));
 
-    device_info->kind = PBIO_PORT_DEVICE_KIND_NONE;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
 
     // Send SPEED command at 115200 baud
@@ -882,20 +880,15 @@ sync:
     pbdrv_uart_set_baud_rate(uart_dev, lump_dev->new_baud_rate);
     debug_pr("set baud: %" PRIu32 "\n", lump_dev->new_baud_rate);
 
-    // Map device capabilities and power requirements to practically useful
-    // device categories for use in Pybricks.
-    device_info->type_id = lump_dev->type_id;
-    device_info->kind = PBIO_PORT_DEVICE_KIND_LUMP;
-
     // Request switch to default mode for this device if any.
     uint8_t default_mode = 0;
     if (lump_dev->capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
         default_mode = LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB;
-    } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) {
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS;
-    } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
-    } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;
     }
     if (default_mode) {
@@ -1162,6 +1155,13 @@ pbio_error_t pbio_port_lump_assert_type_id(pbio_port_lump_dev_t *lump_dev, lego_
 
     // If any LUMP allowed, proceed and return the detected type.
     if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) {
+        *type_id = lump_dev->type_id;
+        return PBIO_SUCCESS;
+    }
+
+    // If any encoded motor allowed, proceed if attached and return the detected type.
+    if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR &&
+        (pbio_port_lump_is_relative_motor(lump_dev) || pbio_port_lump_is_absolute_motor(lump_dev))) {
         *type_id = lump_dev->type_id;
         return PBIO_SUCCESS;
     }

@@ -96,22 +96,6 @@ typedef enum {
     PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS,
 } pbio_port_power_requirements_t;
 
-/**
- * Known information about the attached device. This is reset at the
- * start of the port process and may be set when a device is detected.
- */
-typedef struct {
-    /**
-     * The device kind connected to this port, if any.
-     */
-    port_port_device_kind_t kind;
-    /**
-     * Type identifier of the device attached to this port, if any was detected.
-     */
-    lego_device_type_id_t type_id;
-} pbio_port_device_info_t;
-
-
 #endif // _PBIO_PORT_H_
 
 /** @} */

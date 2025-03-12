@@ -32,7 +32,7 @@ typedef struct {
 
 pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, struct process *parent_process);
 
-PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer, pbio_port_device_info_t *device_info));
+PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer));
 
 PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer));
 
@@ -101,7 +101,7 @@ static inline pbio_port_power_requirements_t pbio_port_lump_get_power_requiremen
     return PBIO_PORT_POWER_REQUIREMENTS_NONE;
 }
 
-static inline PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer, pbio_port_device_info_t *device_info)) {
+static inline PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
     PT_BEGIN(pt);
     PT_END(pt);
 }

@@ -75,16 +75,12 @@ static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbio_port_device_info_t *device_info)) {
+PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {
 
     PT_BEGIN(pt);
 
     dcm->prev_type_id = LEGO_DEVICE_TYPE_ID_NONE;
     dcm->dev_id_match_count = 0;
-
-    // Reset device info in host process.
-    device_info->type_id = LEGO_DEVICE_TYPE_ID_NONE;
-    device_info->kind = PBIO_PORT_DEVICE_KIND_NONE;
 
     // This process needs 2ms between each yield point, giving the gpio tests
     // enough time to settle.
@@ -283,29 +279,23 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             dcm->prev_type_id = dcm->type_id;
         }
 
+        #if DEBUG
         // If definitive result found, set the device info.
         if (dcm->dev_id_match_count == AFFIRMATIVE_MATCH_COUNT) {
-
-            #if DEBUG
             // Log changes in detected ID. Guess port ID for debugging only.
             for (uint8_t c = 0; c < PBIO_CONFIG_PORT_DCM_NUM_DEV; c++) {
                 if (&dcm_state[c] == dcm && device_info->type_id != dcm->type_id) {
                     debug_pr("Port %c: Detected ID: %d\n", c + 'A', dcm->type_id);
                 }
             }
-            #endif
-
-            // ID may now be read by higher level processes.
-            device_info->type_id = dcm->type_id;
-
-            // Some known PUP devices are DC devices
-            device_info->kind = (
-                dcm->type_id == LEGO_DEVICE_TYPE_ID_LPF2_MMOTOR ||
-                dcm->type_id == LEGO_DEVICE_TYPE_ID_LPF2_TRAIN ||
-                dcm->type_id == LEGO_DEVICE_TYPE_ID_LPF2_LIGHT
-                ) ? PBIO_PORT_DEVICE_KIND_DC_DEVICE : PBIO_PORT_DEVICE_KIND_NONE;
         }
+        #endif
     }
+
+    // When DCM completes and proceeds to UART in a separate process, disallow
+    // getting any devices from here. This will cause the device assertion to
+    // raise.
+    dcm->dev_id_match_count = 0;
 
     PT_END(pt);
 }
@@ -322,6 +312,31 @@ pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     }
     pbio_port_dcm_t *dcm = &dcm_state[index];
     return dcm;
+}
+
+pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {
+
+    // Require definitive detection before returning the device type.
+    if (!dcm || dcm->dev_id_match_count < AFFIRMATIVE_MATCH_COUNT) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    // Need use prev_type_id as it has always gone through a full cycle. The
+    // type_id may be a partial match and constantly changes.
+    switch (dcm->prev_type_id) {
+        case LEGO_DEVICE_TYPE_ID_LPF2_MMOTOR:
+        case LEGO_DEVICE_TYPE_ID_LPF2_TRAIN:
+        case LEGO_DEVICE_TYPE_ID_LPF2_LIGHT:
+            // On Powered Up, the only known existing passive devices are DC
+            // devices. Pass if requesting a specific match or any DC device.
+            if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR || *type_id == dcm->prev_type_id) {
+                *type_id = dcm->prev_type_id;
+                return PBIO_SUCCESS;
+            }
+        // fallthrough
+        default:
+            return PBIO_ERROR_NO_DEV;
+    }
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_PUP
