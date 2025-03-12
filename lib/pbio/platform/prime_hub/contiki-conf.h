@@ -8,7 +8,6 @@
 
 #define CCIF
 #define CLIF
-#define AUTOSTART_ENABLE 1
 
 typedef uint32_t clock_time_t;
 #define CLOCK_CONF_SECOND 1000
