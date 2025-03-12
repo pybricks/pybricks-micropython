@@ -145,6 +145,8 @@ struct _pbio_port_lump_dev_t {
     uint8_t mode;
     /** Parsed device information, including mode info */
     pbio_port_lump_device_info_t parsed_info;
+    /**< The capabilities and requirements of the device. */
+    uint8_t capabilities;
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_port_lump_mode_info_t info associated with the current
@@ -262,7 +264,7 @@ static bool pbio_port_lump_is_relative_motor(pbio_port_lump_dev_t *lump_dev) {
 }
 
 static bool pbio_port_lump_is_absolute_motor(pbio_port_lump_dev_t *lump_dev) {
-    return (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) &&
+    return (lump_dev->capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) &&
            (lump_dev->mode == LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB);
 }
 
@@ -330,6 +332,25 @@ pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle
     // Otherwise return angle as-is.
     *angle = lump_dev->angle;
     return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the power requirements of the device.
+ *
+ * @param [in] lump_dev The lump device or NULL.
+ * @return The power requirements of the device.
+ */
+pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev) {
+    if (!lump_dev || lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
+        return PBIO_PORT_POWER_REQUIREMENTS_NONE;
+    }
+    if (lump_dev->capabilities & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN1) {
+        return PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS;
+    }
+    if (lump_dev->capabilities & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN2) {
+        return PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS;
+    }
+    return PBIO_PORT_POWER_REQUIREMENTS_NONE;
 }
 
 static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
@@ -505,7 +526,7 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
                     // newer LEGO UART devices send additional 6 mode capability flags
                     if (name_len <= LUMP_MAX_SHORT_NAME_SIZE && msg_size > LUMP_MAX_NAME_SIZE) {
                         // Only the first is used in practice.
-                        lump_dev->parsed_info.capabilities |= lump_dev->rx_msg[8];
+                        lump_dev->capabilities |= lump_dev->rx_msg[8];
                     }
                     break;
                 }
@@ -721,6 +742,7 @@ PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_d
     lump_dev->ext_mode = 0;
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_SYNCING;
     lump_dev->parsed_info = (pbio_port_lump_device_info_t) {0};
+    lump_dev->capabilities = 0;
     device_info->kind = PBIO_PORT_DEVICE_KIND_NONE;
 
     // Send SPEED command at 115200 baud
@@ -861,17 +883,9 @@ sync:
     device_info->type_id = lump_dev->parsed_info.type_id;
     device_info->kind = PBIO_PORT_DEVICE_KIND_LUMP;
 
-    // Get power requirements from capabilities.
-    if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN1) {
-        device_info->power_requirements = PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS;
-    }
-    if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN2) {
-        device_info->power_requirements = PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS;
-    }
-
     // Request switch to default mode for this device if any.
     uint8_t default_mode = 0;
-    if (lump_dev->parsed_info.capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
+    if (lump_dev->capabilities & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
         default_mode = LEGO_DEVICE_MODE_PUP_ABS_MOTOR__CALIB;
     } else if (device_info->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS;
@@ -886,7 +900,7 @@ sync:
 
     // Reset other timers
     etimer_reset_with_new_interval(etimer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
-    lump_dev->data_set->time = pbdrv_clock_get_ms();
+    lump_dev->data_set->time = pbdrv_clock_get_ms() - 1000; // i.e. no data set
     lump_dev->data_set->size = 0;
 
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_DATA;

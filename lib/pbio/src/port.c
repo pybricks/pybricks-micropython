@@ -124,7 +124,6 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
         // Synchronize with LUMP data stream from sensor and parse device info.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
         PROCESS_PT_SPAWN(&port->child1, pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->etimer, &port->device_info));
-        pbio_port_p1p2_set_power(port, port->device_info.power_requirements);
 
         if (port->device_info.kind != PBIO_PORT_DEVICE_KIND_LUMP) {
             // Did not find a LUMP device, so synchronization failed.
@@ -133,6 +132,7 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
 
         // Exchange sensor data with the LUMP device until it is disconnected.
         // The send thread detects this when the keep alive messages time out.
+        pbio_port_p1p2_set_power(port, pbio_port_lump_get_power_requirements(port->lump_dev));
         PT_INIT(&port->child1);
         PT_INIT(&port->child2);
         PROCESS_WAIT_WHILE(
@@ -422,7 +422,7 @@ void pbio_port_stop_user_actions(bool reset) {
         pbio_port_t *port = &ports[i];
 
         // Don't reset devices that always need power like powered sensors.
-        if (!port->dcmotor || port->device_info.power_requirements != PBIO_PORT_POWER_REQUIREMENTS_NONE) {
+        if (port->lump_dev && pbio_port_lump_get_power_requirements(port->lump_dev) != PBIO_PORT_POWER_REQUIREMENTS_NONE) {
             continue;
         }
 

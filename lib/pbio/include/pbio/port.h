@@ -102,10 +102,6 @@ typedef enum {
  */
 typedef struct {
     /**
-     * Power requirements for the port.
-     */
-    pbio_port_power_requirements_t power_requirements;
-    /**
      * The device kind connected to this port, if any.
      */
     port_port_device_kind_t kind;

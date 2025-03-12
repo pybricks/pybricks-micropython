@@ -34,8 +34,6 @@ typedef struct {
 typedef struct {
     /**< The type identifier of the device. */
     lego_device_type_id_t type_id;
-    /**< The capabilities and requirements of the device. */
-    uint8_t capabilities;
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     /**< The number of modes */
     uint8_t num_modes;
@@ -67,6 +65,8 @@ pbio_error_t pbio_port_lump_get_info(pbio_port_lump_dev_t *lump_dev, pbio_port_l
 pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev);
 
 pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle);
+
+pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev);
 
 #else // PBIO_CONFIG_PORT_LUMP
 
@@ -101,6 +101,10 @@ static inline pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lu
 
 static inline pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev) {
+    return PBIO_PORT_POWER_REQUIREMENTS_NONE;
 }
 
 static inline PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer, pbio_port_device_info_t *device_info)) {
