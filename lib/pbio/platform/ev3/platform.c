@@ -230,10 +230,3 @@ void check_EV3_buttons(void) {
         return;
     }
 }
-
-extern int main(int argc, char **argv);
-
-void start_boot(void) {
-    SystemInit();
-    main(0, NULL);
-}

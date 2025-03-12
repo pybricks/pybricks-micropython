@@ -9,7 +9,6 @@
         .global _stack                  
         .global _bss_start
         .global _bss_end
-        .global start_boot
 
 @************************ Internal Definitions ********************************
 @
@@ -110,10 +109,17 @@ Loop:
 @ Enter the start_boot function. The execution still happens in system mode
 @
 Enter_main:
-         LDR   r10,=start_boot                 @ Get the address of start_boot
-         MOV   lr,pc                           @ Dummy return 
-         BX    r10                             @ Branch to start_boot
-         SUB   pc, pc, #0x08                   @ looping  
+         LDR   r10, =SystemInit                @ Get the address of SystemInit
+         MOV   lr, pc                          @ Dummy return
+         BLX   r10                             @ Branch to SystemInit
+
+         LDR   r10, =main                      @ Get the address of main
+         MOV   r0, #0                          @ Set the first argument to 0
+         MOV   r1, #0                          @ Set the second argument to NULL (0)
+         MOV   lr, pc                          @ Dummy return
+         BLX   r10                             @ Branch to main
+
+         SUB   pc, pc, #0x08                   @ looping
         
 @*****************************************************************************
 @
