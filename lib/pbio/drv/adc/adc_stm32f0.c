@@ -10,6 +10,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/adc.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 
@@ -63,6 +64,9 @@ void pbdrv_adc_init(void) {
     // some kind of ID resistor?
 
     process_start(&pbdrv_adc_process);
+}
+
+void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
 // does a single conversion for the specified channel

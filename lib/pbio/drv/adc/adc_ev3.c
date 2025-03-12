@@ -11,6 +11,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/adc.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
 
@@ -33,6 +34,15 @@ PROCESS(pbdrv_adc_process, "ADC");
 static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] = {0};
 static volatile uint8_t channel_data_index = 0;
 static volatile bool adc_busy = false;
+
+static pbdrv_adc_callback_t pbdrv_adc_callbacks[1];
+static uint32_t pbdrv_adc_callback_count = 0;
+
+void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
+    if (pbdrv_adc_callback_count < PBIO_ARRAY_SIZE(pbdrv_adc_callbacks)) {
+        pbdrv_adc_callbacks[pbdrv_adc_callback_count++] = callback;
+    }
+}
 
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch >= PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) {
@@ -146,6 +156,10 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
         SPIEnable(SOC_SPI_0_REGS);
         SPIIntEnable(SOC_SPI_0_REGS, SPI_TRANSMIT_INT);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && !adc_busy);
+
+        for (uint32_t i = 0; i < pbdrv_adc_callback_count; i++) {
+            pbdrv_adc_callbacks[i]();
+        }
 
         etimer_reset(&etimer);
     }

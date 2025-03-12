@@ -47,6 +47,9 @@ struct _pbdrv_counter_dev_t {
     pbdrv_gpio_t gpio_dir;
     pbdrv_gpio_t gpio_det;
     uint8_t adc_channel;
+    lego_device_type_id_t last_type_id;
+    lego_device_type_id_t stable_type_id;
+    uint32_t type_id_count;
 };
 
 static pbdrv_counter_dev_t counters[] = {
@@ -127,24 +130,46 @@ static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
     return LEGO_DEVICE_TYPE_ID_NONE;
 }
 
+/**
+ * Updates the type of all EV3 motors based on the current ADC values.
+ *
+ * This is called periodically by the ADC process.
+ */
+static void pbdrv_counter_ev3_update_type(void) {
+
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(counters); i++) {
+
+        // Get type detected now.
+        pbdrv_counter_dev_t *dev = &counters[i];
+        uint16_t adc = 0;
+        pbdrv_adc_get_ch(dev->adc_channel, &adc);
+        lego_device_type_id_t type_id = pbdrv_counter_ev3_get_type(adc);
+
+        // Update number of consecutive identical detections.
+        if (dev->last_type_id == type_id) {
+            dev->type_id_count++;
+        } else {
+            dev->last_type_id = type_id;
+            dev->type_id_count = 1;
+        }
+
+        // Update stable type if we have seen enough identical detections,
+        // including none detections.
+        if (dev->type_id_count >= 20) {
+            dev->stable_type_id = type_id;
+        }
+    }
+}
+
 pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id) {
 
-    uint16_t adc = 0;
-    pbio_error_t err = pbdrv_adc_get_ch(dev->adc_channel, &adc);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    lego_device_type_id_t detected_id = pbdrv_counter_ev3_get_type(adc);
-    debug_pr("ADC: %d, type: %d\n", adc, *type_id);
-
-    if (detected_id == LEGO_DEVICE_TYPE_ID_NONE) {
+    if (dev->stable_type_id == LEGO_DEVICE_TYPE_ID_NONE) {
         return PBIO_ERROR_NO_DEV;
     }
 
     // Success if any encoded motor is allowed or if the detected type matches.
-    if (*expected_type_id == LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR || *expected_type_id == detected_id) {
-        *expected_type_id = detected_id;
+    if (*expected_type_id == LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR || *expected_type_id == dev->stable_type_id) {
+        *expected_type_id = dev->stable_type_id;
         return PBIO_SUCCESS;
     }
 
@@ -230,6 +255,8 @@ void pbdrv_counter_init(void) {
     // For bank 6
     HWREG(baseAddr + GPIO_SET_RIS_TRIG(3)) = HWREG(baseAddr + GPIO_SET_RIS_TRIG(3)) | 0x00000200;
     HWREG(baseAddr + GPIO_SET_FAL_TRIG(3)) = HWREG(baseAddr + GPIO_SET_FAL_TRIG(3)) | 0x00000200;
+
+    pbdrv_adc_set_callback(pbdrv_counter_ev3_update_type);
 }
 
 #endif // PBDRV_CONFIG_COUNTER_EV3

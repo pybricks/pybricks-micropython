@@ -31,6 +31,8 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
+#include <pbdrv/adc.h>
+
 #include STM32_HAL_H
 
 #define PBDRV_ADC_PERIOD_MS 10  // polling period in milliseconds
@@ -44,6 +46,9 @@ static uint32_t pbdrv_adc_error_count;
 static uint32_t pbdrv_adc_last_error;
 
 PROCESS(pbdrv_adc_process, "ADC");
+
+void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
+}
 
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch >= PBDRV_CONFIG_ADC_STM32_HAL_ADC_NUM_CHANNELS) {

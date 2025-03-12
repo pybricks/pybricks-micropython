@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 /**
  * @addtogroup AnalogDriver Driver: Analog/digital converter (ADC)
@@ -14,6 +14,8 @@
 #include <pbdrv/config.h>
 #include <pbio/error.h>
 
+typedef void (*pbdrv_adc_callback_t)(void);
+
 #if PBDRV_CONFIG_ADC
 
 /**
@@ -26,11 +28,21 @@
  */
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
 
+/**
+ * Sets a callback to be called when the ADC has new data.
+ *
+ * @param [in] callback The callback function.
+ */
+void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback);
+
 #else
 
 static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
 #endif
