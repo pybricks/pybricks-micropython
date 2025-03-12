@@ -112,6 +112,8 @@ typedef struct {
     uint8_t counter_driver_index;
     /** Index of associated UART driver. */
     uint8_t uart_driver_index;
+    /** Index of associated I2C driver. */
+    uint8_t i2c_driver_index;
     /** Supported high level modes */
     uint32_t supported_modes;
 } pbdrv_ioport_platform_data_t;

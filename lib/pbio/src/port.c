@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2025 The Pybricks Authors
 
 #include <pbdrv/counter.h>
+#include <pbdrv/i2c.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 #include <pbdrv/motor_driver.h>
@@ -58,6 +59,10 @@ struct _pbio_port_t {
      * UART device driver.
      */
     pbdrv_uart_dev_t *uart_dev;
+    /**
+     * I2C device driver.
+     */
+    pbdrv_i2c_dev_t *i2c_dev;
     /**
      * The currently active port mode.
      */
@@ -185,10 +190,28 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
  *                          ::PBIO_ERROR_NOT_SUPPORTED if this port does not support UART.
  */
 pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_dev) {
+    // User access to UART device is only allowed in direct UART mode.
     if (port->mode != PBIO_PORT_MODE_UART) {
         return PBIO_ERROR_INVALID_OP;
     }
     *uart_dev = port->uart_dev;
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the I2C interface of the port.
+ *
+ * @param [in]  port        The port instance.
+ * @param [out] i2c_dev     The I2C device.
+ * @return                  ::PBIO_SUCCESS on success, otherwise
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if this port does not support I2C.
+ */
+pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev) {
+    // User access to I2C device is only allowed in direct I2C mode.
+    if (port->mode != PBIO_PORT_MODE_I2C) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    *i2c_dev = port->i2c_dev;
     return PBIO_SUCCESS;
 }
 
@@ -370,6 +393,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
 
     // If uart and gpio available, initialize device manager and uart devices.
     pbdrv_uart_get_instance(port->pdata->uart_driver_index, &port->process, &port->uart_dev);
+    pbdrv_i2c_get_instance(port->pdata->i2c_driver_index, &port->process, &port->i2c_dev);
 
     if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_DCM) {
         // Initialize passive device connection manager and LEGO UART device.

@@ -217,6 +217,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 0,
@@ -226,6 +227,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 1,
@@ -235,6 +237,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_C,
         .motor_driver_index = 2,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 2,
@@ -244,6 +247,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_D,
         .motor_driver_index = 3,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .counter_driver_index = 3,
@@ -253,6 +257,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_1,
         .motor_driver_index = 4,
+        .i2c_driver_index = 0,
         .uart_driver_index = UART1,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -278,6 +283,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_2,
         .motor_driver_index = 5,
+        .i2c_driver_index = 1,
         .uart_driver_index = UART0,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -299,6 +305,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_3,
         .motor_driver_index = 6,
+        .i2c_driver_index = 2,
         .uart_driver_index = PRU0_LINE1,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -320,6 +327,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     {
         .port_id = PBIO_PORT_ID_4,
         .motor_driver_index = 7,
+        .i2c_driver_index = 3,
         .uart_driver_index = PRU0_LINE0,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,

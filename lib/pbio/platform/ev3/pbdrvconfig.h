@@ -25,6 +25,10 @@
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (8)
 
+#define PBDRV_CONFIG_I2C                            (1)
+#define PBDRV_CONFIG_I2C_EV3                        (1)
+#define PBDRV_CONFIG_I2C_EV3_NUM_DEV                (4)
+
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (6)

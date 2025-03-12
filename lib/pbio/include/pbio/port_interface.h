@@ -15,6 +15,8 @@
 #include <stdint.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/uart.h>
+#include <pbdrv/i2c.h>
 
 #include <pbio/error.h>
 
@@ -52,6 +54,11 @@ typedef enum {
      * code may access the UART device directly.
      */
     PBIO_PORT_MODE_UART = 1 << 2,
+    /**
+     * The port is in I2C mode. No port process is running. User code may access
+     * the I2C device directly.
+     */
+    PBIO_PORT_MODE_I2C = 1 << 3,
 } pbio_port_mode_t;
 
 #if PBIO_CONFIG_PORT
@@ -81,6 +88,10 @@ pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t 
 pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement);
 
 pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode);
+
+pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_dev);
+
+pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev);
 
 #else // PBIO_CONFIG_PORT
 
@@ -128,6 +139,15 @@ static inline pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_dev
 static inline pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+
+static inline pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_dev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 
 #endif // PBIO_CONFIG_PORT
 
