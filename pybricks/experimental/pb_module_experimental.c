@@ -20,40 +20,6 @@
 
 #include <pybricks/robotics.h>
 
-#if PYBRICKS_HUB_EV3BRICK
-#if !MICROPY_MODULE_BUILTIN_INIT
-#error "pybricks.experimental module requires that MICROPY_MODULE_BUILTIN_INIT is enabled"
-#endif
-
-#include <signal.h>
-
-#include "py/mpthread.h"
-
-static void sighandler(int signum) {
-    // we just want the signal to interrupt system calls
-}
-
-static mp_obj_t mod_experimental___init__(void) {
-    struct sigaction sa;
-    sa.sa_flags = 0;
-    sa.sa_handler = sighandler;
-    sigemptyset(&sa.sa_mask);
-    sigaction(SIGUSR2, &sa, NULL);
-
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_0(mod_experimental___init___obj, mod_experimental___init__);
-
-static mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t ex_in) {
-    mp_uint_t thread_id = mp_obj_int_get_truncated(thread_id_in);
-    if (ex_in != mp_const_none && !mp_obj_is_exception_instance(ex_in)) {
-        mp_raise_TypeError(MP_ERROR_TEXT("must be an exception or None"));
-    }
-    return mp_obj_new_int(mp_thread_schedule_exception(thread_id, ex_in));
-}
-static MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
-#endif // PYBRICKS_HUB_EV3BRICK
-
 // pybricks.experimental.hello_world
 static mp_obj_t experimental_hello_world(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
@@ -94,10 +60,6 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(experimental_hello_world_obj, 0, experimental_
 
 static const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
-    #if PYBRICKS_HUB_EV3BRICK
-    { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&mod_experimental___init___obj) },
-    { MP_ROM_QSTR(MP_QSTR_pthread_raise), MP_ROM_PTR(&mod_experimental_pthread_raise_obj) },
-    #endif // PYBRICKS_HUB_EV3BRICK
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);
