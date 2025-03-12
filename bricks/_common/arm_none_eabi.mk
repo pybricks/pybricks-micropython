@@ -598,7 +598,7 @@ ifeq ($(PB_MCU_FAMILY),TIAM1808)
 UBOOT_FILE = $(PBTOP)/bricks/ev3/u-boot.bin
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 # For EV3, merge firmware blob with u-boot to create a bootable image.
-$(BUILD)/firmware-base.bin: $(BUILD)/uImage $(BUILD)/firmware-obj.bin
+$(BUILD)/firmware-base.bin: $(BUILD)/uImage
 	python make_bootable_image.py $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
 else
 # For embeded systems, the firmware is just the base file.
