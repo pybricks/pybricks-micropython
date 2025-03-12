@@ -9,6 +9,7 @@
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/hw_syscfg1_AM1808.h>
 #include <tiam1808/armv5/am1808/evmAM1808.h>
 
 #include <pbdrv/ioport.h>
@@ -21,6 +22,7 @@
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_ev3.h"
 #include "../../drv/uart/uart_ev3.h"
+#include "../../drv/reset/reset.h"
 
 enum {
     LED_DEV_0_STATUS,
@@ -361,6 +363,13 @@ void SystemInit(void) {
     IntFIQEnable();
 
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
+    // Must set the power enable bin before disabling the pull up on the power
+    // pin below, otherwise the hub will power off.
+    pbdrv_reset_init();
+
+    // Disable all pull-up/pull-down groups.
+    HWREG(SOC_SYSCFG_1_REGS + SYSCFG1_PUPD_ENA) &= ~0xFFFFFFFF;
 
     // UART for Bluetooth. Other UARTS are configured by port module.
     // TODO: Add CTS/RTS pins.

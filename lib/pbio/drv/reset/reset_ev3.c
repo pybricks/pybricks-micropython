@@ -17,7 +17,7 @@
 static const pbdrv_gpio_t poweroff_pin = PBDRV_GPIO_EV3_PIN(13, 19, 16, 6, 11);
 
 void pbdrv_reset_init(void) {
-    pbdrv_gpio_input(&poweroff_pin);
+    pbdrv_gpio_out_high(&poweroff_pin);
 }
 
 void pbdrv_reset(pbdrv_reset_action_t action) {

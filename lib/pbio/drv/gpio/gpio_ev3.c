@@ -73,8 +73,4 @@ void pbdrv_gpio_set_pull(const pbdrv_gpio_t *gpio, pbdrv_gpio_pull_t pull) {
     // Not implemented for TI AM1808 since EV3 does not use software pull-up/pull-down.
 }
 
-void pbdrv_gpio_init(void) {
-
-}
-
 #endif // PBDRV_CONFIG_GPIO_TIAM1808
