@@ -8,6 +8,8 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/clock.h>
+#include <pbdrv/uart.h>
+
 #include <pbio/main.h>
 #include <pbsys/bluetooth.h>
 
@@ -59,14 +61,42 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
+
+extern int32_t pbdrv_uart_char_get(pbdrv_uart_dev_t *uart_dev);
+
+extern uint32_t pbdrv_uart_char_available(pbdrv_uart_dev_t *uart_dev);
+
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
+
+    pbdrv_uart_dev_t *uart_dev;
+    pbio_error_t err = pbdrv_uart_get(1, &uart_dev);
+    if (err != PBIO_SUCCESS) {
+        return 0;
+    }
+
     uintptr_t ret = 0;
+
+    if ((poll_flags & MP_STREAM_POLL_RD) && pbdrv_uart_char_available(uart_dev)) {
+        ret |= MP_STREAM_POLL_RD;
+    }
+
     return ret;
 }
 
 int mp_hal_stdin_rx_chr(void) {
-    uint8_t c = 0;
-    return c;
+
+    pbdrv_uart_dev_t *uart_dev;
+    pbio_error_t err = pbdrv_uart_get(0, &uart_dev);
+    if (err != PBIO_SUCCESS) {
+        return 0;
+    }
+
+    int val;
+    while ((val = pbdrv_uart_char_get(uart_dev)) < 0) {
+        MICROPY_EVENT_POLL_HOOK;
+    }
+
+    return val;
 }
 
 typedef struct {
@@ -74,20 +104,17 @@ typedef struct {
     volatile uint8_t *lsr;
 } pb_hal_uart_t;
 
-// Sensor port 1
-static pb_hal_uart_t UART0 = { .thr = (volatile uint8_t *)0x01D0C000, .lsr = (volatile uint8_t *)0x01D0C014 };
-
-static void debug(pb_hal_uart_t *uart, const char *s) {
-    while (*s) {
-        while ((*uart->lsr & (1 << 5)) == 0) {
-        }
-        *uart->thr = *s++;
-    }
-}
-
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    debug(&UART0, str);
-    // MICROPY_EVENT_POLL_HOOK
+    static struct pt pt;
+    static pbio_error_t err;
+
+    static pbdrv_uart_dev_t *uart_dev;
+    pbdrv_uart_get(0, &uart_dev);
+
+    PT_INIT(&pt);
+    while (PT_SCHEDULE(pbdrv_uart_write(&pt, uart_dev, (uint8_t *)str, len, 250, &err))) {
+        MICROPY_VM_HOOK_LOOP;
+    }
 }
 
 void mp_hal_stdout_tx_flush(void) {

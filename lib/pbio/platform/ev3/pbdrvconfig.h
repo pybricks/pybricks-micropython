@@ -52,3 +52,7 @@
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_EV3                      (1)
+
+#define PBDRV_CONFIG_UART                           (1)
+#define PBDRV_CONFIG_UART_EV3                       (1)
+#define PBDRV_CONFIG_UART_EV3_NUM_UART              (2)

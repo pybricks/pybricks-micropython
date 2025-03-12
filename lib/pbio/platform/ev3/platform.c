@@ -19,6 +19,7 @@
 #include "../../drv/led/led_dual.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_tiam1808.h"
+#include "../../drv/uart/uart_ev3.h"
 
 enum {
     LED_DEV_0_STATUS,
@@ -140,6 +141,37 @@ const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
     .pin = 0,
 };
 
+// UART
+
+enum {
+    UART_PORT_S1,
+    UART_PORT_S2,
+};
+
+static void pbdrv_uart_ev3_handle_irq_s1(void) {
+    pbdrv_uart_ev3_handle_irq(UART_PORT_S1);
+}
+
+static void pbdrv_uart_ev3_handle_irq_s2(void) {
+    pbdrv_uart_ev3_handle_irq(UART_PORT_S2);
+}
+
+const pbdrv_uart_ev3_platform_data_t
+    pbdrv_uart_ev3_platform_data[PBDRV_CONFIG_UART_EV3_NUM_UART] = {
+    [UART_PORT_S1] = {
+        .base_address = SOC_UART_1_REGS,
+        .psc_peripheral_id = HW_PSC_UART1,
+        .sys_int_uart_int_id = SYS_INT_UARTINT1,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_s1,
+    },
+    [UART_PORT_S2] = {
+        .base_address = SOC_UART_0_REGS,
+        .psc_peripheral_id = HW_PSC_UART0,
+        .sys_int_uart_int_id = SYS_INT_UARTINT0,
+        .isr_handler = pbdrv_uart_ev3_handle_irq_s2,
+    },
+};
+
 static void set_gpio_mux(uint32_t id, uint32_t mask, uint32_t shift, uint32_t value) {
     // Generalized from GPIOBank4Pin0PinMuxSetup in TI evmAM1808 platform example.
     uint32_t mux = value << shift;
@@ -239,6 +271,19 @@ void SystemInit(void) {
     pbdrv_gpio_t adc_battery_enable = { .bank = (void *)0, .pin = 6 };
     pbdrv_gpio_out_high(&adc_battery_enable);
 
+    // UART0 TX
+    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_23_20, SYSCFG_PINMUX3_PINMUX3_23_20_SHIFT, SYSCFG_PINMUX3_PINMUX3_23_20_UART0_TXD);
+    set_gpio_mux(3, SYSCFG_PINMUX3_PINMUX3_19_16, SYSCFG_PINMUX3_PINMUX3_19_16_SHIFT, SYSCFG_PINMUX3_PINMUX3_19_16_UART0_RXD);
+
+    // port S1 buffer enable
+    set_gpio_mux(18, SYSCFG_PINMUX18_PINMUX18_27_24, SYSCFG_PINMUX18_PINMUX18_27_24_SHIFT, SYSCFG_PINMUX18_PINMUX18_27_24_GPIO8_11);
+    pbdrv_gpio_t port_s1_buffer_enable = { .bank = (void *)8, .pin = 11 };
+    pbdrv_gpio_out_low(&port_s1_buffer_enable);
+
+    // port S2 buffer enable
+    set_gpio_mux(18, SYSCFG_PINMUX18_PINMUX18_15_12, SYSCFG_PINMUX18_PINMUX18_15_12_SHIFT, SYSCFG_PINMUX18_PINMUX18_15_12_GPIO8_14);
+    pbdrv_gpio_t port_s2_buffer_enable = { .bank = (void *)8, .pin = 14 };
+    pbdrv_gpio_out_low(&port_s2_buffer_enable);
 }
 
 
