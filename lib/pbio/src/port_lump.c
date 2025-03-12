@@ -141,8 +141,6 @@ struct _pbio_port_lump_dev_t {
     struct pt read_pt;
     /** Child protothread of the main protothread used for writing data */
     struct pt write_pt;
-    /** Timer for sending keepalive messages and other delays. */
-    struct etimer timer;
     /** The current mode of the device */
     uint8_t mode;
     /** Parsed device information, including mode info */
@@ -853,8 +851,8 @@ sync:
     }
 
     // schedule baud rate change
-    etimer_set(&lump_dev->timer, 10);
-    PT_WAIT_UNTIL(pt, etimer_expired(&lump_dev->timer));
+    etimer_set(etimer, 10);
+    PT_WAIT_UNTIL(pt, etimer_expired(etimer));
 
     // change the baud rate
     pbdrv_uart_set_baud_rate(uart_dev, lump_dev->new_baud_rate);
@@ -889,7 +887,7 @@ sync:
     }
 
     // Reset other timers
-    etimer_reset_with_new_interval(&lump_dev->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
+    etimer_reset_with_new_interval(etimer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
     lump_dev->data_set->time = pbdrv_clock_get_ms();
     lump_dev->data_set->size = 0;
 
@@ -918,10 +916,10 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
 
     for (;;) {
 
-        PT_WAIT_UNTIL(pt, etimer_expired(&lump_dev->timer) || lump_dev->mode_switch.requested || lump_dev->data_set->size > 0);
+        PT_WAIT_UNTIL(pt, etimer_expired(etimer) || lump_dev->mode_switch.requested || lump_dev->data_set->size > 0);
 
         // Handle keep alive timeout
-        if (etimer_expired(&lump_dev->timer)) {
+        if (etimer_expired(etimer)) {
             // make sure we are receiving data
             if (!lump_dev->data_rec) {
                 debug_pr("No data since last keepalive\n");
@@ -936,7 +934,7 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
                 debug_pr("Error during keepalive.\n");
                 PT_EXIT(pt);
             }
-            etimer_reset_with_new_interval(&lump_dev->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
+            etimer_reset_with_new_interval(etimer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
         }
 
         // Handle requested mode change
