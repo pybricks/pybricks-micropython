@@ -168,6 +168,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_test.c \
+	drv/pwm/pwm_tiam1808.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/random/random_adc.c \
 	drv/random/random_stm32_hal.c \

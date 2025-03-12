@@ -6,7 +6,7 @@
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (4)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (0)
 #define PBIO_CONFIG_IMU                     (0)
-#define PBIO_CONFIG_LIGHT                   (0)
+#define PBIO_CONFIG_LIGHT                   (1)
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (1)

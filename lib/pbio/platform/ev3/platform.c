@@ -10,7 +10,85 @@
 #include <pbio/port_interface.h>
 
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/led/led_array_pwm.h"
+#include "../../drv/led/led_dual.h"
+#include "../../drv/led/led_pwm.h"
+#include "../../drv/pwm/pwm_tiam1808.h"
 
+enum {
+    LED_DEV_0_STATUS,
+    LED_DEV_1_STATUS_LEFT,
+    LED_DEV_2_STATUS_RIGHT,
+};
+
+enum {
+    PWM_DEV_0_TODO,
+    PWM_DEV_1_TODO,
+};
+
+// LED
+
+const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_LED_DUAL_NUM_DEV] = {
+    {
+        .id = LED_DEV_0_STATUS,
+        .id1 = LED_DEV_1_STATUS_LEFT,
+        .id2 = LED_DEV_2_STATUS_RIGHT,
+    },
+};
+
+static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
+    // TODO: PWM not yet implemented, so these values not used.
+    .r_factor = 1000,
+    .g_factor = 170,
+    .b_factor = 200,
+    .r_brightness = 174,
+    .g_brightness = 1590,
+    .b_brightness = 327,
+};
+
+const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
+    {
+        .color = &pbdrv_led_pwm_color,
+        .id = LED_DEV_1_STATUS_LEFT,
+        .r_id = PWM_DEV_0_TODO,
+        .r_ch = 0,
+        .g_id = PWM_DEV_0_TODO,
+        .g_ch = 1,
+        // Blue not available.
+        .b_id = PWM_DEV_0_TODO,
+        .b_ch = 2,
+        // TODO: PWM not yet implemented, so these values not used.
+        .scale_factor = 35,
+    },
+    {
+        .color = &pbdrv_led_pwm_color,
+        .id = LED_DEV_2_STATUS_RIGHT,
+        .r_id = PWM_DEV_1_TODO,
+        .r_ch = 0,
+        .g_id = PWM_DEV_1_TODO,
+        .g_ch = 1,
+        // Blue not available.
+        .b_id = PWM_DEV_1_TODO,
+        .b_ch = 2,
+        // TODO: PWM not yet implemented, so these values not used.
+        .scale_factor = 35,
+    },
+};
+
+const pbdrv_pwm_tiam1808_platform_data_t
+    pbdrv_pwm_tiam1808_platform_data[PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV] = {
+    {
+        .id = PWM_DEV_0_TODO,
+        .gpio_red = { .bank = (void *)6, .pin = 13 },
+        .gpio_green = { .bank = (void *)6, .pin = 7 },
+
+    },
+    {
+        .id = PWM_DEV_1_TODO,
+        .gpio_red = { .bank = (void *)6, .pin = 12 },
+        .gpio_green = { .bank = (void *)6, .pin = 14 },
+    },
+};
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
@@ -78,6 +156,12 @@ void SystemInit(void) {
     set_gpio_mux(16, SYSCFG_PINMUX16_PINMUX16_15_12, SYSCFG_PINMUX16_PINMUX16_15_12_SHIFT, SYSCFG_PINMUX16_PINMUX16_15_12_GPIO7_14);
     set_gpio_mux(2,  SYSCFG_PINMUX2_PINMUX2_11_8,    SYSCFG_PINMUX2_PINMUX2_11_8_SHIFT,    SYSCFG_PINMUX2_PINMUX2_11_8_GPIO1_13);
     set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_23_20, SYSCFG_PINMUX13_PINMUX13_23_20_SHIFT, SYSCFG_PINMUX13_PINMUX13_23_20_GPIO6_10);
+
+    // Status Light LED. TODO: Set as PWM
+    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_11_8,  SYSCFG_PINMUX13_PINMUX13_11_8_SHIFT,  SYSCFG_PINMUX13_PINMUX13_11_8_GPIO6_13);
+    set_gpio_mux(14, SYSCFG_PINMUX14_PINMUX14_3_0,   SYSCFG_PINMUX14_PINMUX14_3_0_SHIFT,   SYSCFG_PINMUX14_PINMUX14_3_0_GPIO6_7);
+    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_15_12, SYSCFG_PINMUX13_PINMUX13_15_12_SHIFT, SYSCFG_PINMUX13_PINMUX13_15_12_GPIO6_12);
+    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_7_4,   SYSCFG_PINMUX13_PINMUX13_7_4_SHIFT,   SYSCFG_PINMUX13_PINMUX13_7_4_GPIO6_14);
 
     // Poweroff pin.
     set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_19_16, SYSCFG_PINMUX13_PINMUX13_19_16_SHIFT, SYSCFG_PINMUX13_PINMUX13_19_16_GPIO6_11);

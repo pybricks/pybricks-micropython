@@ -29,5 +29,17 @@
 #define PBDRV_CONFIG_HAS_PORT_C                     (1)
 #define PBDRV_CONFIG_HAS_PORT_D                     (1)
 
+#define PBDRV_CONFIG_LED                            (1)
+#define PBDRV_CONFIG_LED_NUM_DEV                    (3)
+#define PBDRV_CONFIG_LED_DUAL                       (1)
+#define PBDRV_CONFIG_LED_DUAL_NUM_DEV               (1)
+#define PBDRV_CONFIG_LED_PWM                        (1)
+#define PBDRV_CONFIG_LED_PWM_NUM_DEV                (2)
+
+#define PBDRV_CONFIG_PWM                            (1)
+#define PBDRV_CONFIG_PWM_NUM_DEV                    (2)
+#define PBDRV_CONFIG_PWM_TIAM1808                   (1)
+#define PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV           (2)
+
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_EV3                      (1)
