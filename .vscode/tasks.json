@@ -50,6 +50,19 @@
             "label": "build debug",
             "type": "shell",
             "command": "poetry run make -C bricks/debug DEBUG=1 build/firmware-base.bin -j"
+        },
+        {
+            "label": "Run with mpremote",
+            "type": "shell",
+            "command": "mpremote run tests/ev3/basics.py",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
         }
     ]
 }
