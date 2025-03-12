@@ -57,6 +57,10 @@
 // Start with config shared by all Pybricks ports.
 #include "../_common/mpconfigport.h"
 
+// Reduced from 256 for better raw paste stability.
+// FIXME: USB driver limitation -- should allow higher.
+#define MICROPY_REPL_STDIN_BUFFER_MAX (64)
+
 #define MICROPY_MPHALPORT_H "../_common/mphalport.h"
 
 // type definitions for the specific machine
