@@ -205,12 +205,14 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
     uart->read_buf = msg;
     uart->read_length = length;
 
-    etimer_set(&uart->rx_timer, timeout);
+    if (timeout) {
+        etimer_set(&uart->rx_timer, timeout);
+    }
 
     // Wait until we have enough data or timeout. If there is enough data
     // already, this completes right away without yielding once first.
-    PT_WAIT_UNTIL(pt, pbdrv_uart_get_num_available(uart) >= uart->read_length || etimer_expired(&uart->rx_timer));
-    if (etimer_expired(&uart->rx_timer)) {
+    PT_WAIT_UNTIL(pt, pbdrv_uart_get_num_available(uart) >= uart->read_length || (timeout && etimer_expired(&uart->rx_timer)));
+    if (timeout && etimer_expired(&uart->rx_timer)) {
         uart->read_buf = NULL;
         uart->read_length = 0;
         *err = PBIO_ERROR_TIMEDOUT;
@@ -257,10 +259,12 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     LL_USART_ClearFlag_TC(pdata->uart);
     LL_USART_EnableDMAReq_TX(pdata->uart);
 
-    etimer_set(&uart->tx_timer, timeout);
+    if (timeout) {
+        etimer_set(&uart->tx_timer, timeout);
+    }
 
-    PT_WAIT_WHILE(pt, LL_USART_IsEnabledDMAReq_TX(pdata->uart) && !etimer_expired(&uart->tx_timer));
-    if (etimer_expired(&uart->tx_timer)) {
+    PT_WAIT_WHILE(pt, LL_USART_IsEnabledDMAReq_TX(pdata->uart) && !(timeout && etimer_expired(&uart->tx_timer)));
+    if ((timeout && etimer_expired(&uart->tx_timer))) {
         LL_USART_DisableDMAReq_TX(pdata->uart);
         *err = PBIO_ERROR_TIMEDOUT;
     } else {

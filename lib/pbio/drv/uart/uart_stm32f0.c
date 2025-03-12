@@ -84,7 +84,9 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
     uart->rx_buf_size = length;
     uart->rx_buf_index = 0;
 
-    etimer_set(&uart->rx_timer, timeout);
+    if (timeout) {
+        etimer_set(&uart->rx_timer, timeout);
+    }
 
     // Await completion or timeout.
     PT_WAIT_UNTIL(pt, ({
@@ -97,10 +99,10 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
             uart->rx_buf[uart->rx_buf_index++] = uart->rx_ring_buf[uart->rx_ring_buf_tail];
             uart->rx_ring_buf_tail = (uart->rx_ring_buf_tail + 1) & (UART_RING_BUF_SIZE - 1);
         }
-        uart->rx_buf_index == uart->rx_buf_size || etimer_expired(&uart->rx_timer);
+        uart->rx_buf_index == uart->rx_buf_size || (timeout && etimer_expired(&uart->rx_timer));
     }));
 
-    if (etimer_expired(&uart->rx_timer)) {
+    if (timeout && etimer_expired(&uart->rx_timer)) {
         *err = PBIO_ERROR_TIMEDOUT;
     } else {
         etimer_stop(&uart->rx_timer);
@@ -129,14 +131,16 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     uart->tx_buf_size = length;
     uart->tx_buf_index = 0;
 
-    etimer_set(&uart->tx_timer, timeout);
+    if (timeout) {
+        etimer_set(&uart->tx_timer, timeout);
+    }
 
     uart->USART->CR1 |= USART_CR1_TXEIE;
 
     // Await completion or timeout.
-    PT_WAIT_UNTIL(pt, uart->tx_buf_index == uart->tx_buf_size || etimer_expired(&uart->tx_timer));
+    PT_WAIT_UNTIL(pt, uart->tx_buf_index == uart->tx_buf_size || (timeout && etimer_expired(&uart->tx_timer)));
 
-    if (etimer_expired(&uart->tx_timer)) {
+    if (timeout && etimer_expired(&uart->tx_timer)) {
         uart->USART->CR1 &= ~(USART_CR1_TXEIE | USART_CR1_TCIE);
         *err = PBIO_ERROR_TIMEDOUT;
     } else {

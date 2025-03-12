@@ -86,7 +86,9 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
     uart->read_length = length;
     uart->read_pos = 0;
 
-    etimer_set(&uart->read_timer, timeout);
+    if (timeout) {
+        etimer_set(&uart->read_timer, timeout);
+    }
 
     // Await completion or timeout.
     PT_WAIT_UNTIL(pt, ({
@@ -102,11 +104,11 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
             }
             uart->read_buf[uart->read_pos++] = c;
         }
-        uart->read_pos == uart->read_length || etimer_expired(&uart->read_timer);
+        uart->read_pos == uart->read_length || (timeout && etimer_expired(&uart->read_timer));
     }));
 
     // Set exit status based on completion condition.
-    if (etimer_expired(&uart->read_timer)) {
+    if (timeout && etimer_expired(&uart->read_timer)) {
         *err = PBIO_ERROR_TIMEDOUT;
     } else {
         etimer_stop(&uart->read_timer);
@@ -130,15 +132,17 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     uart->write_length = length;
     uart->write_pos = 0;
 
-    etimer_set(&uart->write_timer, timeout);
+    if (timeout) {
+        etimer_set(&uart->write_timer, timeout);
+    }
 
     LL_USART_EnableIT_TXE(uart->pdata->uart);
 
     // Await completion or timeout.
-    PT_WAIT_UNTIL(pt, uart->write_pos == uart->write_length || etimer_expired(&uart->write_timer));
+    PT_WAIT_UNTIL(pt, uart->write_pos == uart->write_length || (timeout && etimer_expired(&uart->write_timer)));
 
     // Set exit status based on completion condition.
-    if (etimer_expired(&uart->write_timer)) {
+    if ((timeout && etimer_expired(&uart->write_timer))) {
         LL_USART_DisableIT_TXE(uart->pdata->uart);
         LL_USART_DisableIT_TC(uart->pdata->uart);
         *err = PBIO_ERROR_TIMEDOUT;

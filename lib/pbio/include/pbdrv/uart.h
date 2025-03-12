@@ -36,7 +36,29 @@ void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev);
 
 int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev);
+
+/**
+ * Asynchronously read from the UART.
+ *
+ * @param [in]  pt        The protothread.
+ * @param [in]  uart_dev  The UART device.
+ * @param [out] msg       The buffer to store the received message.
+ * @param [in]  length    The length of the expected message.
+ * @param [in]  timeout   The timeout in milliseconds or 0 for no timeout.
+ * @param [out] err       The error code.
+ */
 PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
+
+/**
+ * Asynchronously write to the UART.
+ *
+ * @param [in]  pt        The protothread.
+ * @param [in]  uart_dev  The UART device.
+ * @param [in]  msg       The message to send.
+ * @param [in]  length    The length of the message.
+ * @param [in]  timeout   The timeout in milliseconds or 0 for no timeout.
+ * @param [out] err       The error code.
+ */
 PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err));
 
 #else // PBDRV_CONFIG_UART
