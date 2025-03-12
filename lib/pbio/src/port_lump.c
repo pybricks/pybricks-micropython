@@ -812,7 +812,11 @@ sync:
 
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
         if (lump_dev->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
-            debug_pr("Bad message size during info\n");
+            debug_pr("Bad message size during info %d\n", lump_dev->rx_msg_size);
+            if (lump_dev->parsed_info.type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR) {
+                // This sensor sends bad info messages.
+                continue;
+            }
             lump_dev->err = PBIO_ERROR_IO;
             PT_EXIT(pt);
         }
