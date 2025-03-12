@@ -60,34 +60,4 @@ void copy_vector_table(void) {
     }
 }
 
-void check_EV3_buttons(void) {
-    /* Fallback code
-    button_id b = button_get_pressed();
-    switch (b) {
-        case BUTTON_BACK:
-            power_off();
-            break;
-        default:
-            // Nothing to do
-            break;
-    } 
-    */
-    
-    // The following code used to crash the program - I could identify incrementing the variable as the problem source
-    // For now it seems to work (maybe the problem was also stack related) - if we get problems again, use the fallback code above
-    button_counter = (button_counter + 1) % 50; // We check the buttons every 50 ms
-    if (!button_counter) {
-        button_id button = button_get_pressed();
-        switch (button) {
-            case BUTTON_BACK:
-                power_off();
-                break;
-            default:
-                // Nothing to do
-                break;
-        }
-    }
-    
-}
-
 

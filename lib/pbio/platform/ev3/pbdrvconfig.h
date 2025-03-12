@@ -6,6 +6,9 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_TIAM1808                 (1)
 
+#define PBDRV_CONFIG_BATTERY                        (1)
+#define PBDRV_CONFIG_BATTERY_EV3                    (1)
+
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST              (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE         (8 * 1024)
@@ -25,3 +28,6 @@
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
 #define PBDRV_CONFIG_HAS_PORT_C                     (1)
 #define PBDRV_CONFIG_HAS_PORT_D                     (1)
+
+#define PBDRV_CONFIG_RESET                          (1)
+#define PBDRV_CONFIG_RESET_EV3                      (1)

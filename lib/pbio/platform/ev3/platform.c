@@ -78,4 +78,25 @@ void SystemInit(void) {
     set_gpio_mux(16, SYSCFG_PINMUX16_PINMUX16_15_12, SYSCFG_PINMUX16_PINMUX16_15_12_SHIFT, SYSCFG_PINMUX16_PINMUX16_15_12_GPIO7_14);
     set_gpio_mux(2,  SYSCFG_PINMUX2_PINMUX2_11_8,    SYSCFG_PINMUX2_PINMUX2_11_8_SHIFT,    SYSCFG_PINMUX2_PINMUX2_11_8_GPIO1_13);
     set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_23_20, SYSCFG_PINMUX13_PINMUX13_23_20_SHIFT, SYSCFG_PINMUX13_PINMUX13_23_20_GPIO6_10);
+
+    // Poweroff pin.
+    set_gpio_mux(13, SYSCFG_PINMUX13_PINMUX13_19_16, SYSCFG_PINMUX13_PINMUX13_19_16_SHIFT, SYSCFG_PINMUX13_PINMUX13_19_16_GPIO6_11);
+}
+
+
+#include <pbio/button.h>
+#include <pbdrv/reset.h>
+
+/*
+ * This is called from the IRQ handler after every systick. This should be
+ * removed when the final user interface is implemented. For now this serves
+ * as a very convenient way to power off the EV3 for fast iteration.
+ */
+void check_EV3_buttons(void) {
+    pbio_button_flags_t flags;
+    pbio_error_t err = pbio_button_is_pressed(&flags);
+    if (err == PBIO_SUCCESS && (flags & PBIO_BUTTON_LEFT_UP)) {
+        pbdrv_reset_power_off();
+        return;
+    }
 }
