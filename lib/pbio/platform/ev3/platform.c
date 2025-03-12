@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2024 The Pybricks Authors
+//
+// SPDX-License-Identifier: MPL-1.0
+// Copyright (c) 2016 Tobias Schießl (System Init / pinmux / boot order)
 
-#include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/psc.h>
+#include <tiam1808/armv5/am1808/interrupt.h>
+#include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/armv5/am1808/evmAM1808.h>
 
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
@@ -142,11 +147,52 @@ static void set_gpio_mux(uint32_t id, uint32_t mask, uint32_t shift, uint32_t va
     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_PINMUX(id)) = (mux | keep);
 }
 
+
+// Legacy hooks from EV3OSEK. Todo: remove callees from exceptionhandler.S
+void user_1ms_isr_type2(void) {
+}
+uint8_t callevel;
+static volatile unsigned long shouldDispatch = 0;
+volatile unsigned int addrShouldDispatch = (unsigned int)&shouldDispatch;
+void SetDispatch(void) {
+}
+extern void ExceptionHandler(void);
+
+void copy_vector_table(void) {
+    unsigned int *dest = (unsigned int *)0xFFFF0000;
+    unsigned int *addrExceptionHandler = (unsigned int *)ExceptionHandler;
+    int i = 1;
+
+    for (; i < 8 + 2048; ++i) {
+        dest[i] = addrExceptionHandler[i];
+    }
+}
+
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
 // initialization (low level in pbdrv, high level in pbio), and system level
 // functions for running user code (currently a hardcoded MicroPython script).
 void SystemInit(void) {
+
+    SysCfgRegistersUnlock();
+
+    copy_vector_table();
+
+    /* Initialize AINTC */
+    IntAINTCInit();
+
+    /* Enable IRQ for ARM (in CPSR)*/
+    IntMasterIRQEnable();
+
+    /* Enable AINTC interrupts in GER */
+    IntGlobalEnable();
+
+    /* Enable IRQ in AINTC */
+    IntIRQEnable();
+
+    IntMasterFIQEnable();
+    IntFIQEnable();
+
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
     // Button GPIO.
@@ -183,4 +229,11 @@ void check_EV3_buttons(void) {
         pbdrv_reset_power_off();
         return;
     }
+}
+
+extern int main(int argc, char **argv);
+
+void start_boot(void) {
+    SystemInit();
+    main(0, NULL);
 }

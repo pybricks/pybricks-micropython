@@ -1,4 +1,6 @@
 @ Code kombiniert aus init.S (TI/system_config/armv5/gcc) und ExceptionHandler.S (TI/system_config/armv5/am1808/gcc)
+@ SPDX-License-Identifier: MPL-1.0
+@ Copyright (c) 2016 Tobias Schießl
 
 #include "hw_aintc.h"
 #include "soc_AM1808.h"

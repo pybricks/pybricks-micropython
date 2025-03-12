@@ -1,3 +1,5 @@
+@ SPDX-License-Identifier: MPL-1.0
+@ Copyright (c) 2016 Tobias Schießl
         .global ExceptionHandler
         .global IRQHandler
         .global SWIHandler

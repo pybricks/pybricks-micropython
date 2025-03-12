@@ -258,11 +258,6 @@ PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
 SRC_S += shared/runtime/gchelper_thumb1.s
 endif
 
-EV3_OSEK_SRC_C = $(addprefix lib/pbio/platform/ev3/osek/,\
-	init.c \
-	os/OSEK.c \
-	)
-
 # Skipping uart_irda_cir.c, gpio_v2.c, and hsi2c.c usbphyGS70.c, which
 # partially overlap with uart.c, gpio.c, and i2c.c, usbphyGS70.c
 TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
@@ -304,9 +299,9 @@ TI_AM1808_SRC_C = $(addprefix lib/tiam1808/drivers/,\
 	watchdog.c \
 	)
 
-EV3_OSEK_SRC_S = $(addprefix lib/pbio/platform/ev3/osek/,\
-	os/exceptionhandler.S \
-	os/startup.S \
+EV3_SRC_S = $(addprefix lib/pbio/platform/ev3/,\
+	exceptionhandler.S \
+	start.S \
 	)
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
@@ -535,9 +530,8 @@ endif
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
 OBJ += $(addprefix $(BUILD)/, $(TI_AM1808_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(EV3_OSEK_SRC_S:.S=.o))
-$(addprefix $(BUILD)/, $(EV3_OSEK_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
+OBJ += $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o))
+$(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
 endif
 
 # List of sources for qstr extraction
