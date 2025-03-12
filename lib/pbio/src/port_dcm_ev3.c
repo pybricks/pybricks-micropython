@@ -11,7 +11,7 @@
 
 #if PBIO_CONFIG_PORT_DCM_EV3
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #include <stdio.h>
 #include <inttypes.h>
@@ -215,6 +215,95 @@ typedef struct {
     uint32_t b;
 } pbio_port_dcm_analog_values_t;
 
+typedef struct __attribute__((__packed__)) {
+    uint32_t calibration[3][4];
+    uint16_t threshold[2];
+    uint16_t crc;
+} pbio_port_dcm_nxt_color_sensor_data_t;
+
+typedef struct {
+    uint8_t bit;
+    pbio_port_dcm_nxt_color_sensor_data_t data;
+} pbio_port_dcm_nxt_color_sensor_state_t;
+
+/**
+ * Thread that reads one color sensor calibration data byte.
+ *
+ * This is slower than it needs to be since 1ms is the lowest etimer resolution.
+ * In total we read 54 bytes * 8 bits * 2 cycles = 864 cycles = 864ms.
+ * Since this is only used during the initial sensor setup, this is not worth
+ * optimizing with a dedicated timer.
+ *
+ * @param [in]  pt          The process thread.
+ * @param [in]  state       The sensor state.
+ * @param [in]  pins        The ioport pins.
+ * @param [in]  etimer      The etimer to use for timing.
+ * @param [out] msg         The message byte.
+ */
+PT_THREAD(pbio_port_dcm_nxt_color_rx_msg(struct pt *pt, pbio_port_dcm_nxt_color_sensor_state_t *state, const pbdrv_ioport_pins_t *pins, struct etimer *etimer, uint8_t *msg)) {
+
+    PT_BEGIN(pt);
+
+    *msg = 0;
+    pbdrv_gpio_input(&pins->p6);
+
+    // Read 8 bits while toggling the "clock".
+    for (state->bit = 0; state->bit < 8; state->bit++) {
+
+        // Clock high and wait for the data bit to settle.
+        pbdrv_gpio_out_high(&pins->p5);
+        etimer_set(etimer, 1);
+        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+
+        *msg |= pbdrv_gpio_input(&pins->p6) << state->bit;
+
+        // Clock low and wait for sensor to prepare next bit.
+        pbdrv_gpio_out_low(&pins->p5);
+        etimer_set(etimer, 1);
+        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+    }
+
+    PT_END(pt);
+}
+
+/**
+ * Thread that writes one color sensor data byte.
+ *
+ * @param [in]  pt          The process thread.
+ * @param [in]  state       The sensor state.
+ * @param [in]  pins        The ioport pins.
+ * @param [in]  etimer      The etimer to use for timing.
+ * @param [in]  msg         The message byte.
+ */
+PT_THREAD(pbio_port_dcm_nxt_color_tx_msg(struct pt *pt, pbio_port_dcm_nxt_color_sensor_state_t *state, const pbdrv_ioport_pins_t *pins, struct etimer *etimer, uint8_t msg)) {
+
+    PT_BEGIN(pt);
+
+    pbdrv_gpio_out_low(&pins->p5);
+    pbdrv_gpio_out_low(&pins->p6);
+
+    // Send 8 bits while toggling the "clock".
+    for (state->bit = 0; state->bit < 8; state->bit++) {
+
+        // Set the data bit.
+        if (msg & (1 << state->bit)) {
+            pbdrv_gpio_out_high(&pins->p6);
+        } else {
+            pbdrv_gpio_out_low(&pins->p6);
+        }
+
+        // Toggle the clock high and low, giving sensor time to register bit.
+        pbdrv_gpio_out_high(&pins->p5);
+        etimer_set(etimer, 1);
+        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+        pbdrv_gpio_out_low(&pins->p5);
+        etimer_set(etimer, 1);
+        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+    }
+
+    PT_END(pt);
+}
+
 // Device connection manager state for each port
 struct _pbio_port_dcm_t {
     struct pt child;
@@ -222,6 +311,7 @@ struct _pbio_port_dcm_t {
     bool connected;
     pbio_port_dcm_category_t category;
     pbio_port_dcm_analog_values_t nxt_analog_buf;
+    pbio_port_dcm_nxt_color_sensor_state_t nxt_color;
 };
 
 static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -302,32 +392,61 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             debug_pr("Starting NXT temperature sensor process.\n");
             // TODO.
             debug_pr("Stopped NXT temperature sensor process.\n");
-            // On disconnect, continue monitoring new connections.
             continue;
         }
 
-        if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
-            debug_pr("Starting NXT Light Sensor process.\n");
-            // While plugged in, alternate between ambient and reflected light.
-            // in order to cancel out ambient light and provide both values
-            // without mode switching.
+        if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
+            debug_pr("Initializing NXT Color Sensor.\n");
+
+            // The original firmware has a reset sequence where p6 is high and
+            // then p5 is toggled twice. It also works with 8 toggles, we can
+            // just use the send function with 0xff to achieve the same effect.
+            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color, pins, etimer, 0xff));
+            etimer_set(etimer, 100);
+            PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+
+            // Set to full color mode.
+            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color, pins, etimer, 13));
+
+            // Receive all calibration info.
+            for (dcm->count = 0; dcm->count < sizeof(pbio_port_dcm_nxt_color_sensor_data_t); dcm->count++) {
+                PT_SPAWN(pt, &dcm->child,
+                    pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color, pins, etimer, (uint8_t *)&dcm->nxt_color.data + dcm->count));
+            }
+
+            // Checksum and continue on failure.
+            debug_pr("Finished initializing NXT Color Sensor.\n");
+        }
+
+        if (dcm->category == DCM_CATEGORY_NXT_LIGHT || dcm->category == DCM_CATEGORY_NXT_COLOR) {
+            debug_pr("Reading NXT Light/Color Sensor until disconnected.\n");
+            // While plugged in, toggle through available colors.
             while (!pbdrv_gpio_input(&pins->p2)) {
-                // Get ambient light.
+
                 pbdrv_gpio_out_low(&pins->p5);
                 PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.a));
-
-                // Get reflected light compensated for ambient light.
                 pbdrv_gpio_out_high(&pins->p5);
                 PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.r));
+
+                if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+                    // Light sensor doesn't have green and blue.
+                    continue;
+                }
+
+                pbdrv_gpio_out_low(&pins->p5);
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.g));
+                pbdrv_gpio_out_high(&pins->p5);
+                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_analog_buf.b));
+
             }
             pbdrv_gpio_out_low(&pins->p5);
             continue;
         }
 
-        // Disconnection is detected by just one pin going high rather than all
-        // pins going back to the none state. This is because other pins are
-        // used for data transfer and may vary between high/low during normal
-        // operation.
+        // For everything else, disconnection is detected by just one pin going
+        // high rather than all pins going back to the none state. This is
+        // because other pins are used for data transfer and may vary between
+        // high/low during normal operation.
         for (dcm->count = 0; dcm->count < DCM_LOOP_DISCONNECT_COUNT; dcm->count++) {
             // Monitor P5 for EV3 analog, P2 for all NXT sensors.
             const pbdrv_gpio_t *gpio = dcm->category == DCM_CATEGORY_EV3_ANALOG ? &pins->p5 : &pins->p2;
@@ -423,15 +542,17 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
         return pbio_port_dcm_get_mv(pins, 6);
     }
 
-    // Return buffered values in case of NXT light sensor.
-    if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+    // Return buffered values in case of NXT light and color sensor.
+    if (dcm->category == DCM_CATEGORY_NXT_LIGHT || dcm->category == DCM_CATEGORY_NXT_COLOR) {
         switch (light_type) {
             case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_NONE:
                 return dcm->nxt_analog_buf.a;
             case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_RED:
                 return dcm->nxt_analog_buf.r;
             case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_GREEN:
+                return dcm->nxt_analog_buf.g;
             case PBIO_PORT_DCM_ANALOG_LIGHT_TYPE_BLUE:
+                return dcm->nxt_analog_buf.b;
             default:
                 return 0;
         }
