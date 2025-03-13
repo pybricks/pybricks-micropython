@@ -27,13 +27,12 @@
 #include <pbdrv/usb.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
+#include <pbio/os.h>
 
 #include "../core.h"
 #include "charger_mp2639a.h"
 
 #define platform pbdrv_charger_mp2639a_platform_data
-
-PROCESS(pbdrv_charger_mp2639a_process, "MP2639A");
 
 #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 static pbdrv_pwm_dev_t *mode_pwm;
@@ -44,11 +43,6 @@ static pbdrv_pwm_dev_t *iset_pwm;
 
 static pbdrv_charger_status_t pbdrv_charger_status;
 static bool mode_pin_is_low;
-
-void pbdrv_charger_init(void) {
-    pbdrv_init_busy_up();
-    process_start(&pbdrv_charger_mp2639a_process);
-}
 
 pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
     pbio_error_t err = pbdrv_adc_get_ch(platform.ib_adc_ch, current);
@@ -182,18 +176,23 @@ static bool read_chg(void) {
 #define PBDRV_CHARGER_MP2639A_CHARGE_TIMEOUT_MS (60 * 60 * 1000)
 #define PBDRV_CHARGER_MP2639A_CHARGE_PAUSE_MS (30 * 1000)
 
-PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
-    PROCESS_BEGIN();
+static pbio_os_process_t pbdrv_charger_mp2639a_process;
+
+pbio_error_t pbdrv_charger_mp2639a_process_thread(pbio_os_state_t *state) {
+
+    static pbio_os_timer_t timer;
+
+    ASYNC_BEGIN(state);
 
     #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
     while (pbdrv_pwm_get_dev(platform.mode_pwm_id, &mode_pwm) != PBIO_SUCCESS) {
-        PROCESS_PAUSE();
+        AWAIT_MS(state, &timer, 1);
     }
     #endif
 
     #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
     while (pbdrv_pwm_get_dev(platform.iset_pwm_id, &iset_pwm) != PBIO_SUCCESS) {
-        PROCESS_PAUSE();
+        AWAIT_MS(state, &timer, 1);
     }
     #endif
 
@@ -212,12 +211,10 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
 
     static bool chg_samples[7];
     static uint8_t chg_index = 0;
-    static struct etimer timer;
     static uint32_t charge_count = 0;
 
     for (;;) {
-        etimer_set(&timer, PBDRV_CHARGER_MP2639A_STATUS_SAMPLE_TIME);
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+        AWAIT_MS(state, &timer, PBDRV_CHARGER_MP2639A_STATUS_SAMPLE_TIME);
 
         // Enable charger chip based on USB state. We don't need to disable it
         // on charger fault since the chip will automatically disable itself.
@@ -275,13 +272,17 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
         if (charge_count > (PBDRV_CHARGER_MP2639A_CHARGE_TIMEOUT_MS / PBDRV_CHARGER_MP2639A_STATUS_SAMPLE_TIME)) {
             pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
             pbdrv_charger_enable(false, PBDRV_CHARGER_LIMIT_NONE);
-            etimer_set(&timer, PBDRV_CHARGER_MP2639A_CHARGE_PAUSE_MS);
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
+            AWAIT_MS(state, &timer, PBDRV_CHARGER_MP2639A_CHARGE_PAUSE_MS);
             charge_count = 0;
         }
     }
 
-    PROCESS_END();
+    ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbdrv_charger_init(void) {
+    pbdrv_init_busy_up();
+    pbio_os_start_process(&pbdrv_charger_mp2639a_process, pbdrv_charger_mp2639a_process_thread);
 }
 
 #endif // PBDRV_CONFIG_CHARGER_MP2639A
