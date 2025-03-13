@@ -9,6 +9,7 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 #include <pbio/protocol.h>
 #include <pbsys/main.h>
@@ -39,14 +40,9 @@
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_event_poll_hook(void) {
 
-    // Drive pbio event loop.
-    while (pbio_do_one_event()) {
-    }
-
     mp_handle_pending(true);
 
-    // Platform-specific code to run on completing the poll hook.
-    pb_event_poll_hook_leave();
+    pbio_os_run_while_idle();
 }
 
 // callback for when stop button is pressed in IDE or on hub

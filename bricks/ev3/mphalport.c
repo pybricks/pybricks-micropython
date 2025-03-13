@@ -18,6 +18,8 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
+#include <tiam1808/armv5/am1808/interrupt.h>
+
 void pb_stack_get_info(char **sstack, char **estack) {
     extern uint32_t _estack;
     extern uint32_t _sstack;
@@ -25,26 +27,20 @@ void pb_stack_get_info(char **sstack, char **estack) {
     *estack = (char *)&_estack;
 }
 
-static inline int arm_wfi(void) {
+uint32_t pbio_os_hook_disable_irq(void) {
+    return IntDisable();
+}
+
+void pbio_os_hook_enable_irq(uint32_t flags) {
+    IntEnable(flags);
+}
+
+void pbio_os_hook_wait_for_interrupt(void) {
     __asm volatile (
         "mov	r0, #0\n"
         "mcr	p15, 0, r0, c7, c0, 4\n"        /* wait for interrupt */
         ::: "r0"
         );
-    return 0;
-}
-
-void pb_event_poll_hook_leave(void) {
-    // There is a possible race condition where an interrupt occurs and sets the
-    // Contiki poll_requested flag after all events have been processed. So we
-    // have a critical section where we disable interrupts and check see if there
-    // are any last second events. If not, we can call __WFI(), which still wakes
-    // up the CPU on interrupt even though interrupts are otherwise disabled.
-    mp_uint_t state = MICROPY_BEGIN_ATOMIC_SECTION();
-    if (!process_nevents()) {
-        arm_wfi();
-    }
-    MICROPY_END_ATOMIC_SECTION(state);
 }
 
 // Core delay function that does an efficient sleep and may switch thread context.

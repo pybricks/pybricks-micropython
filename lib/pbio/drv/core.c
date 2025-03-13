@@ -5,6 +5,7 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
+#include <pbio/os.h>
 
 #include "core.h"
 #include "adc/adc.h"
@@ -79,12 +80,12 @@ void pbdrv_init(void) {
     // Wait for all async pbdrv drivers to initialize before starting
     // higher level system processes.
     while (pbdrv_init_busy()) {
-        process_run();
+        pbio_os_run_processes_once();
     }
 
     #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
     while (pbdrv_clock_get_ms() - ioport_reset_time < 500) {
-        process_run();
+        pbio_os_run_processes_once();
     }
     #endif
     pbdrv_ioport_enable_vcc(true);

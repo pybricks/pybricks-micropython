@@ -5,6 +5,8 @@
 
 #if PBDRV_CONFIG_CLOCK_TEST
 
+#include <pbio/os.h>
+
 // Clock implementation for tests. This allows tests to exactly control the
 // clock ticks to get repeatable tests rather than relying on a system clock.
 
@@ -21,6 +23,7 @@ static uint32_t clock_ticks;
 void pbio_test_clock_tick(uint32_t ticks) {
     clock_ticks += ticks;
     etimer_request_poll();
+    pbio_os_request_poll();
 }
 
 void pbdrv_clock_init(void) {

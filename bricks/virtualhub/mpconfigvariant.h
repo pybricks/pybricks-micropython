@@ -97,8 +97,8 @@
 } while (0)
 
 #define MICROPY_VM_HOOK_LOOP do { \
-        extern void pb_virtualhub_poll(void); \
-        pb_virtualhub_poll(); \
+        extern bool pbio_os_run_processes_once(void); \
+        pbio_os_run_processes_once(); \
 } while (0);
 
 #define MICROPY_GC_HOOK_LOOP(i) do { \
@@ -108,6 +108,6 @@
 } while (0)
 
 #define MICROPY_EVENT_POLL_HOOK do { \
-        extern void pb_virtualhub_event_poll(void); \
-        pb_virtualhub_event_poll(); \
+        extern void pb_event_poll_hook(void); \
+        pb_event_poll_hook(); \
 } while (0);
