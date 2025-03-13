@@ -79,18 +79,15 @@ typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-#define CPSR_IRQ_MASK (1 << 7)  // IRQ disable
-#define CPSR_FIQ_MASK (1 << 6)  // FIQ disable
+#include <pbio/os.h>
 
-#include <tiam1808/armv5/am1808/interrupt.h>
-
-#define MICROPY_BEGIN_ATOMIC_SECTION()     IntDisable()
-#define MICROPY_END_ATOMIC_SECTION(state)  IntEnable(state)
+#define MICROPY_BEGIN_ATOMIC_SECTION()     pbio_os_hook_disable_irq()
+#define MICROPY_END_ATOMIC_SECTION(state)  pbio_os_hook_enable_irq(state)
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \
-        extern int pbio_do_one_event(void); \
-        pbio_do_one_event(); \
+        extern bool pbio_os_run_processes_once(void); \
+        pbio_os_run_processes_once(); \
     } while (0);
 
 #define MICROPY_GC_HOOK_LOOP(i) do { \
