@@ -516,6 +516,11 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         return PBIO_SUCCESS;
     }
 
+    // Check if the mode is supported by the port.
+    if (!(port->pdata->supported_modes & mode)) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
     // One port process is always running since initialization. Here we can
     // reset the LC state and change the thread as relevant. Also poll to
     // kick the process into action, similar to a normal process start.
@@ -523,11 +528,6 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     PT_INIT(&port->process.pt);
     process_poll(&port->process);
     port->mode = mode;
-
-    // Check if the mode is supported by the port.
-    if (!(port->pdata->supported_modes & mode)) {
-        return PBIO_ERROR_NOT_SUPPORTED;
-    }
 
     switch (mode) {
         case PBIO_PORT_MODE_NONE:
