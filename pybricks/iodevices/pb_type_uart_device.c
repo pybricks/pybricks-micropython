@@ -40,17 +40,21 @@ typedef struct _pb_type_uart_device_obj_t {
 static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_REQUIRED(baudrate),
         PB_ARG_DEFAULT_NONE(timeout));
 
     // Get device, which inits UART port
     pb_type_uart_device_obj_t *self = mp_obj_malloc(pb_type_uart_device_obj_t, type);
 
-    (void)baudrate_in;
-
-    if (timeout_in == mp_const_none || pb_obj_get_int(timeout_in) < 0) {
+    if (timeout_in == mp_const_none) {
+        // In the uart driver implementation, 0 means no timeout.
         self->timeout = 0;
     } else {
+        // Timeout of 0 is often perceived as partial read if the requested
+        // number of bytes is not available. This is not supported, so don't
+        // make it appear that way.
+        if (pb_obj_get_int(timeout_in) < 1) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
         self->timeout = pb_obj_get_int(timeout_in);
     }
 
@@ -156,6 +160,17 @@ static mp_obj_t pb_type_uart_device_read_return_value(mp_obj_t self_in) {
     return ret;
 }
 
+// pybricks.iodevices.UARTDevice.set_baudrate
+static mp_obj_t pb_type_uart_device_set_baudrate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_uart_device_obj_t, self,
+        PB_ARG_REQUIRED(baudrate));
+
+    pbdrv_uart_set_baud_rate(self->uart_dev, pb_obj_get_int(baudrate_in));
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_set_baudrate_obj, 1, pb_type_uart_device_set_baudrate);
+
 // pybricks.iodevices.UARTDevice.read
 static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
@@ -188,10 +203,11 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_uart_device_flush_obj, pb_type_uart_dev
 
 // dir(pybricks.iodevices.uart_device)
 static const mp_rom_map_elem_t pb_type_uart_device_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&pb_type_uart_device_read_obj)       },
-    { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&pb_type_uart_device_write_obj)      },
-    { MP_ROM_QSTR(MP_QSTR_in_waiting), MP_ROM_PTR(&pb_type_uart_device_in_waiting_obj) },
-    { MP_ROM_QSTR(MP_QSTR_flush),      MP_ROM_PTR(&pb_type_uart_device_flush_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_read),         MP_ROM_PTR(&pb_type_uart_device_read_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_write),        MP_ROM_PTR(&pb_type_uart_device_write_obj)        },
+    { MP_ROM_QSTR(MP_QSTR_in_waiting),   MP_ROM_PTR(&pb_type_uart_device_in_waiting_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_set_baudrate), MP_ROM_PTR(&pb_type_uart_device_set_baudrate_obj) },
+    { MP_ROM_QSTR(MP_QSTR_flush),        MP_ROM_PTR(&pb_type_uart_device_flush_obj)        },
 };
 static MP_DEFINE_CONST_DICT(pb_type_uart_device_locals_dict, pb_type_uart_device_locals_dict_table);
 
