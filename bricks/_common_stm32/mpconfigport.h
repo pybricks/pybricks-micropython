@@ -24,31 +24,15 @@ typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-// We have inlined IRQ functions for efficiency (they are generally
-// 1 machine instruction).
-//
-// Note on IRQ state: you should not need to know the specific
-// value of the state variable, but rather just pass the return
-// value from disable_irq back to enable_irq.  If you really need
-// to know the machine-specific values, see irq.h.
+#include <pbio/os.h>
 
-static inline void enable_irq(mp_uint_t state) {
-    __set_PRIMASK(state);
-}
-
-static inline mp_uint_t disable_irq(void) {
-    mp_uint_t state = __get_PRIMASK();
-    __disable_irq();
-    return state;
-}
-
-#define MICROPY_BEGIN_ATOMIC_SECTION()     disable_irq()
-#define MICROPY_END_ATOMIC_SECTION(state)  enable_irq(state)
+#define MICROPY_BEGIN_ATOMIC_SECTION()     pbio_os_hook_disable_irq()
+#define MICROPY_END_ATOMIC_SECTION(state)  pbio_os_hook_enable_irq(state)
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \
-        extern int pbio_do_one_event(void); \
-        pbio_do_one_event(); \
+        extern bool pbio_os_run_processes_once(void); \
+        pbio_os_run_processes_once(); \
     } while (0);
 
 #define MICROPY_GC_HOOK_LOOP(i) do { \

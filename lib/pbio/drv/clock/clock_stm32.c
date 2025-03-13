@@ -8,6 +8,8 @@
 
 #if PBDRV_CONFIG_CLOCK_STM32
 
+#include <pbio/os.h>
+
 #include STM32_H
 
 // NB: pbdrv_clock_ticks is intended to be private, but making it static
@@ -80,6 +82,7 @@ void SysTick_Handler(void) {
     SysTick->CTRL;
 
     etimer_request_poll();
+    pbio_os_request_poll();
 }
 
 uint32_t HAL_GetTick(void) {

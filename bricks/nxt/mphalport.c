@@ -20,21 +20,17 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
-void pb_event_poll_hook_leave(void) {
-    // There is a possible race condition where an interrupt occurs and sets
-    // the Contiki poll_requested flag after all events have been processed. So
-    // we have a critical section where we disable interrupts and check see if
-    // there are any last second events. If not, we can enter Idle Mode, which
-    // still wakes up the CPU on interrupt even though interrupts are otherwise
-    // disabled.
-    uint32_t state = nx_interrupts_disable();
+uint32_t pbio_os_hook_disable_irq(void) {
+    return nx_interrupts_disable();
+}
 
-    if (!process_nevents()) {
-        // disable the processor clock which puts it in Idle Mode.
-        AT91C_BASE_PMC->PMC_SCDR = AT91C_PMC_PCK;
-    }
+void pbio_os_hook_enable_irq(uint32_t flags) {
+    nx_interrupts_enable(flags);
+}
 
-    nx_interrupts_enable(state);
+void pbio_os_hook_wait_for_interrupt(void) {
+    // disable the processor clock which puts it in Idle Mode.
+    AT91C_BASE_PMC->PMC_SCDR = AT91C_PMC_PCK;
 }
 
 void pb_stack_get_info(char **sstack, char **estack) {
