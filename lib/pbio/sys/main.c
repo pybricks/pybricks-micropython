@@ -10,6 +10,7 @@
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
+#include <pbio/os.h>
 #include <pbio/port_interface.h>
 #include <pbio/protocol.h>
 #include <pbsys/core.h>
@@ -93,10 +94,8 @@ int main(int argc, char **argv) {
         pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
         #endif
 
-        // REVISIT: this can be long waiting, so we could do a more efficient
-        // wait (i.e. __WFI() on embedded system)
-        while (pbio_do_one_event()) {
-        }
+        // Drives all processes while we wait for user input.
+        pbio_os_run_while_idle();
 
         if (!pbsys_main_program_start_requested()) {
             continue;
@@ -109,7 +108,7 @@ int main(int argc, char **argv) {
 
         // Handle pending events triggered by the status change, such as
         // starting status light animation.
-        while (pbio_do_one_event()) {
+        while (pbio_os_run_processes_once()) {
         }
 
         // Run the main application.
