@@ -6,11 +6,12 @@
 #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
 
 #include <pbdrv/uart.h>
+
+#include <pbio/os.h>
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-
-PROCESS(pbdrv_uart_debug_process, "UART Debug");
 
 #define BUF_SIZE (256)
 
@@ -50,7 +51,7 @@ void pbdrv_uart_debug_printf(const char *format, ...) {
     }
 
     // Request print process to write out new data.
-    process_poll(&pbdrv_uart_debug_process);
+    pbio_os_request_poll();
 }
 
 /**
@@ -65,36 +66,29 @@ int32_t pbdrv_uart_debug_get_char(void) {
     return pbdrv_uart_get_char(debug_uart);
 }
 
-void pbdrv_uart_debug_init(void) {
-    process_start(&pbdrv_uart_debug_process);
-}
+static pbio_os_process_t pbdrv_uart_debug_process;
 
-PROCESS_THREAD(pbdrv_uart_debug_process, ev, data) {
+static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void *context) {
 
-    static struct pt child;
+    static pbio_os_state_t child;
     static pbio_error_t err;
     static size_t write_size;
 
-    PROCESS_BEGIN();
+    ASYNC_BEGIN(state);
 
-    PROCESS_WAIT_EVENT_UNTIL({
-        process_poll(&pbdrv_uart_debug_process);
-        pbdrv_uart_get_instance(0, &pbdrv_uart_debug_process, &debug_uart) == PBIO_SUCCESS;
-    });
+    while (pbdrv_uart_get_instance(0, &debug_uart) != PBIO_SUCCESS) {
+        AWAIT_ONCE(state);
+    }
 
     pbdrv_uart_set_baud_rate(debug_uart, 115200);
 
     for (;;) {
-
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
-        if (ring_head == ring_tail) {
-            continue;
-        }
+        AWAIT_UNTIL(state, ring_head != ring_tail);
 
         // Write up to the end of the buffer without wrapping.
         size_t end = ring_head > ring_tail ? ring_head: BUF_SIZE;
         write_size = end - ring_tail;
-        PROCESS_PT_SPAWN(&child, pbdrv_uart_write(&child, debug_uart, &ring_buf[ring_tail], write_size, 100, &err));
+        AWAIT(state, &child, pbdrv_uart_write(&child, debug_uart, &ring_buf[ring_tail], write_size, 100));
         ring_tail = (ring_tail + write_size) % BUF_SIZE;
 
         // Reset on failure.
@@ -106,11 +100,16 @@ PROCESS_THREAD(pbdrv_uart_debug_process, ev, data) {
 
         // Poll to write again if not fully finished, i.e. when wrapping.
         if (ring_head != ring_tail) {
-            process_poll(&pbdrv_uart_debug_process);
+            pbio_os_request_poll();
         }
     }
 
-    PROCESS_END();
+    // Unreachable.
+    ASYNC_END(PBIO_ERROR_FAILED);
+}
+
+void pbdrv_uart_debug_init(void) {
+    pbio_os_process_start(&pbdrv_uart_debug_process, pbdrv_uart_debug_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT

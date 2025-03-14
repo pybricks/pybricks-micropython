@@ -4,9 +4,9 @@
 #ifndef _PBIO_PORT_DCM_H_
 #define _PBIO_PORT_DCM_H_
 
-#include <contiki.h>
 #include <pbio/config.h>
 #include <pbio/port.h>
+#include <pbio/os.h>
 #include <pbdrv/ioport.h>
 
 typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
@@ -27,7 +27,7 @@ typedef struct {
 
 #if PBIO_CONFIG_PORT_DCM
 
-PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins));
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins);
 
 /**
  * Gets device connection manager state.
@@ -82,9 +82,8 @@ static inline pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_po
     return NULL;
 }
 
-static inline PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {
-    PT_BEGIN(pt);
-    PT_END(pt);
+static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM

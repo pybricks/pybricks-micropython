@@ -23,7 +23,13 @@
 #define PBIO_PT_THREAD_TEST_WITH_PBIO(name) \
     { #name, pbio_test_run_thread_with_pbio_processes, TT_FORK, &pbio_test_setup, name }
 
-void pbio_test_run_thread_with_pbio_processes(void *env);
+// Use this macro to define tests that _do_ require a pbio os event loop
+// with pbio processes enabled
+#define PBIO_PT_THREAD_TEST_WITH_PBIO_OS(name) \
+    { #name, pbio_test_run_thread_with_pbio_os_processes, TT_FORK, &pbio_test_setup, name }
+
+void pbio_test_run_thread_with_pbio_os_processes(void *env); // new thread format
+void pbio_test_run_thread_with_pbio_processes(void *env); // legacy thread format
 void pbio_test_run_thread_without_pbio_processes(void *env);
 
 extern struct testcase_setup_t pbio_test_setup;

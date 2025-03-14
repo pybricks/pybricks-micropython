@@ -4,9 +4,10 @@
 #ifndef _PBIO_PORT_LUMP_H_
 #define _PBIO_PORT_LUMP_H_
 
-#include <contiki.h>
 #include <pbio/angle.h>
 #include <pbio/port.h>
+#include <pbio/os.h>
+
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 
@@ -30,13 +31,13 @@ typedef struct {
 
 #if PBIO_CONFIG_PORT_LUMP
 
-pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, struct process *parent_process);
+pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index);
 
-PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer));
+pbio_error_t pbio_port_lump_sync_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer);
 
-PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer));
+pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer);
 
-PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev));
+pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev);
 
 pbio_error_t pbio_port_lump_is_ready(pbio_port_lump_dev_t *lump_dev);
 
@@ -58,7 +59,7 @@ pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_l
 
 #else // PBIO_CONFIG_PORT_LUMP
 
-static inline pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, struct process *parent_process) {
+static inline pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index) {
     return NULL;
 }
 
@@ -101,21 +102,17 @@ static inline pbio_port_power_requirements_t pbio_port_lump_get_power_requiremen
     return PBIO_PORT_POWER_REQUIREMENTS_NONE;
 }
 
-static inline PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
-    PT_BEGIN(pt);
-    PT_END(pt);
+static inline pbio_error_t pbio_port_lump_sync_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
-    PT_BEGIN(pt);
-    PT_END(pt);
+static inline pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev)) {
-    PT_BEGIN(pt);
-    PT_END(pt);
+static inline pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
-
 
 #endif // PBIO_CONFIG_PORT_LUMP
 

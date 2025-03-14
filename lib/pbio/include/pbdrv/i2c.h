@@ -27,7 +27,7 @@ typedef struct _pbdrv_i2c_dev_t pbdrv_i2c_dev_t;
  * @param [in]  parent_process  The parent process. Allows I2C to poll process on IRQ events.
  * @param [out] i2c_dev         The I2C device.
  */
-pbio_error_t pbdrv_i2c_get_instance(uint8_t id, struct process *parent_process, pbdrv_i2c_dev_t **i2c_dev);
+pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev);
 
 /**
  * Does an I2C operation. To be replaced.
@@ -45,7 +45,7 @@ pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const cha
 
 #else // PBDRV_CONFIG_I2C
 
-static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, struct process *parent_process, pbdrv_i2c_dev_t **i2c_dev) {
+static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
     *i2c_dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }

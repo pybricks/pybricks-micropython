@@ -33,12 +33,6 @@
 struct _pbdrv_i2c_dev_t {
     /** Platform-specific data */
     const pbdrv_i2c_ev3_platform_data_t *pdata;
-    /**
-     * Parent process that handles incoming data.
-     *
-     * All protothreads in this module run within that process.
-     */
-    struct process *parent_process;
     //
     // TODO: i2c state goes here.
     //
@@ -46,7 +40,7 @@ struct _pbdrv_i2c_dev_t {
 
 static pbdrv_i2c_dev_t i2c_devs[PBDRV_CONFIG_I2C_EV3_NUM_DEV];
 
-pbio_error_t pbdrv_i2c_get_instance(uint8_t id, struct process *parent_process, pbdrv_i2c_dev_t **i2c_dev) {
+pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
     if (id >= PBDRV_CONFIG_I2C_EV3_NUM_DEV) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -56,7 +50,6 @@ pbio_error_t pbdrv_i2c_get_instance(uint8_t id, struct process *parent_process, 
         return PBIO_ERROR_AGAIN;
     }
     *i2c_dev = dev;
-    (*i2c_dev)->parent_process = parent_process;
     return PBIO_SUCCESS;
 }
 
