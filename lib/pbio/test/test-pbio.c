@@ -16,6 +16,7 @@
 #include <pbio/main.h>
 
 #include <contiki.h>
+#include <pbio/os.h>
 
 #define PBIO_TEST_TIMEOUT 1 // seconds
 
@@ -76,6 +77,57 @@ void pbio_test_run_thread_with_pbio_processes(void *env) {
 void pbio_test_run_thread_without_pbio_processes(void *env) {
     pbio_test_run_thread(env, false);
 }
+
+void pbio_test_run_thread_with_pbio_os_processes(void *env) {
+
+    pbio_os_process_func_t test_thread = env;
+
+    pbio_os_state_t state = 0;
+
+    struct timespec start_time, now_time;
+    int timeout = PBIO_TEST_TIMEOUT;
+
+    const char *pbio_test_timeout = getenv("PBIO_TEST_TIMEOUT");
+    if (pbio_test_timeout) {
+        timeout = atoi(pbio_test_timeout);
+    }
+
+    // REVISIT: we may also want to enable debug logging in non-thread tests
+    int debug = 0;
+    const char *pbio_test_debug = getenv("PBIO_TEST_DEBUG");
+    if (pbio_test_debug) {
+        debug = atoi(pbio_test_debug);
+    }
+
+    if (debug) {
+        hci_dump_init(hci_dump_posix_stdout_get_instance());
+    }
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, debug);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, 1);
+
+    // Pbdrv doesn't have a hook for enabling processes. The simulation driver
+    // throws off timing for tests that rely on the clock. So we disable it
+    // when not needed.
+    pbdrv_motor_driver_disable_process();
+
+    pbio_init(true);
+
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+    while ((test_thread(&state, NULL)) == PBIO_ERROR_AGAIN) {
+        pbio_os_run_processes_once();
+        if (timeout > 0) {
+            clock_gettime(CLOCK_MONOTONIC, &now_time);
+            if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {
+                tt_abort_printf(("Test timed out on line %d", state));
+            }
+        }
+    }
+
+end:;
+}
+
 
 static void *setup(const struct testcase_t *test_case) {
     // just passing through the protothread

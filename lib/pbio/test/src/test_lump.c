@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <contiki.h>
 #include <lego/lump.h>
 
 #include <pbio/port_interface.h>
@@ -17,6 +16,7 @@
 
 #include <pbdrv/uart.h>
 #include <pbio/main.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 #include <test-pbio.h>
 
@@ -30,12 +30,12 @@
 
 struct _pbdrv_uart_dev_t {
     int baud;
-    struct etimer rx_timer;
+    pbio_os_timer_t rx_timer;
     uint8_t *rx_msg;
     uint8_t rx_msg_length;
     pbio_error_t rx_msg_result;
     uint8_t *tx_msg;
-    struct etimer tx_timer;
+    pbio_os_timer_t tx_timer;
     uint8_t tx_msg_length;
     pbio_error_t tx_msg_result;
     struct process *parent_process;
@@ -52,11 +52,11 @@ static void simulate_uart_complete_irq(void) {
     process_poll(test_uart.parent_process);
 }
 
-PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, bool *ok)) {
-    PT_BEGIN(pt);
+pbio_error_t simulate_rx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t length) {
+    ASYNC_BEGIN(state);
 
     // First uartdev reads one byte header
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
     }));
@@ -67,12 +67,11 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     simulate_uart_complete_irq();
 
     if (length == 1) {
-        *ok = true;
-        PT_EXIT(pt);
+        return PBIO_SUCCESS;
     }
 
     // then read rest of message
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
     }));
@@ -82,18 +81,14 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
 
     simulate_uart_complete_irq();
 
-    *ok = true;
-    PT_END(pt);
-
 end:
-    *ok = false;
-    PT_EXIT(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
-PT_THREAD(simulate_tx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, bool *ok)) {
-    PT_BEGIN(pt);
+pbio_error_t simulate_tx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t length) {
+    ASYNC_BEGIN(state);
 
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.tx_msg_result == PBIO_ERROR_AGAIN;
     }));
@@ -107,28 +102,25 @@ PT_THREAD(simulate_tx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
 
     simulate_uart_complete_irq();
 
-    *ok = true;
-    PT_END(pt);
-
 end:
-    *ok = false;
-    PT_EXIT(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 #define SIMULATE_RX_MSG(msg) do { \
-        PT_SPAWN(pt, &child, simulate_rx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
-        tt_assert_msg(ok, #msg); \
+        AWAIT(state, &child, err = simulate_rx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg))); \
+        tt_assert_msg(err == PBIO_SUCCESS, #msg); \
 } while (0)
 
 #define SIMULATE_TX_MSG(msg) do { \
-        PT_SPAWN(pt, &child, simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
-        tt_assert_msg(ok, #msg); \
+        AWAIT(state, &child, err = simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg))); \
+        tt_assert_msg(err == PBIO_SUCCESS, #msg); \
 } while (0)
 
 static const uint8_t msg_speed_115200[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }; // SPEED 115200
 static const uint8_t msg_ack[] = { 0x04 }; // ACK
 
-static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
+static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, void *context) {
+
     // info messages captured from BOOST Color Distance Sensor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x25, 0x9A };
     static const uint8_t msg1[] = { 0x51, 0x07, 0x07, 0x0A, 0x07, 0xA3 };
@@ -232,8 +224,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     static const uint8_t msg91[] = { 0xD0, 0x00, 0x00, 0x00, 0x00, 0x2F }; // mode 8 data
 
     // used in SIMULATE_RX/TX_MSG macros
-    static struct pt child;
-    static bool ok;
+    static pbio_os_state_t child;
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
@@ -241,9 +232,10 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     static pbio_port_lump_mode_info_t *mode_info;
     static uint8_t current_mode;
     static uint8_t num_modes;
-    static pbio_error_t err;
 
-    PT_BEGIN(pt);
+    pbio_error_t err;
+
+    ASYNC_BEGIN(state);
 
     // Should be able to get port, but device won't be ready yet since it isn't
     // synched up.
@@ -251,14 +243,14 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 2400;
     }));
@@ -351,12 +343,10 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg83);
 
     // wait for baud rate change
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
-
-    PT_YIELD(pt);
 
     // Simulate setting default mode
     SIMULATE_TX_MSG(msg83b);
@@ -374,7 +364,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     }
 
     // Wait for default mode to complete
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -449,7 +439,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // data message with new mode
     SIMULATE_RX_MSG(msg88);
 
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -462,7 +452,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
 
     // also do mode 8 since it requires the extended mode flag
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_lump_set_mode(lump_dev, 8)) == PBIO_ERROR_AGAIN;
     }));
@@ -478,7 +468,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg90);
     SIMULATE_RX_MSG(msg91);
 
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -488,14 +478,13 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_uint_op(pbio_port_lump_get_info(lump_dev, &num_modes, &current_mode, &mode_info), ==, PBIO_SUCCESS);
     tt_uint_op(current_mode, ==, 8);
 
-    PT_YIELD(pt);
 
 end:
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
-static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
+static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *context) {
     // info messages captured from BOOST Interactive Motor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x26, 0x99 };
     static const uint8_t msg1[] = { 0x49, 0x03, 0x02, 0xB7 };
@@ -541,8 +530,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     static const uint8_t msg37[] = { 0x02 }; // NACK
 
     // used in SIMULATE_RX/TX_MSG macros
-    static struct pt child;
-    static bool ok;
+    static pbio_os_state_t child;
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
@@ -552,7 +540,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     static uint8_t num_modes;
     static pbio_error_t err;
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
 
     // Should be able to get port, but device won't be ready yet since it isn't
@@ -561,14 +549,14 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 2400;
     }));
@@ -613,12 +601,11 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg34);
 
     // wait for baud rate change
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
 
-    PT_YIELD(pt);
 
     // Simulate setting default mode
     SIMULATE_TX_MSG(msg35);
@@ -633,7 +620,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
         SIMULATE_TX_MSG(msg37);
     }
 
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -663,14 +650,13 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(mode_info[3].data_type, ==, LUMP_DATA_TYPE_DATA16);
     tt_want_uint_op(mode_info[3].writable, ==, 0);
 
-    PT_YIELD(pt);
 
 end:
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
-static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
+static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *context) {
     // info messages captured from Technic Large Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2E, 0x91 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -735,8 +721,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     static const uint8_t msg58[] = { 0x02 }; // NACK
 
     // used in SIMULATE_RX/TX_MSG macros
-    static struct pt child;
-    static bool ok;
+    static pbio_os_state_t child;
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
@@ -746,7 +731,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     static uint8_t num_modes;
     static pbio_error_t err;
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
 
     // Expect no device at first.
@@ -754,7 +739,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
@@ -824,7 +809,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     // wait for ACK
     SIMULATE_TX_MSG(msg55);
 
-    PT_YIELD(pt);
 
     // Simulate setting default mode
     SIMULATE_TX_MSG(msg56);
@@ -839,7 +823,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
         SIMULATE_TX_MSG(msg58);
     }
 
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -879,13 +863,12 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(mode_info[5].writable, ==, 0);
 
 
-    PT_YIELD(pt);
 
 end:
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
-static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
+static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context) {
     // info messages captured from Technic XL Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2F, 0x90 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -950,8 +933,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     static const uint8_t msg58[] = { 0x02 }; // NACK
 
     // used in SIMULATE_RX/TX_MSG macros
-    static struct pt child;
-    static bool ok;
+    static pbio_os_state_t child;
 
     static pbio_port_t *port;
     static pbio_port_lump_dev_t *lump_dev;
@@ -961,7 +943,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     static uint8_t num_modes;
     static pbio_error_t err;
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
 
     // Expect no device at first.
@@ -969,7 +951,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
@@ -1039,7 +1021,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     // wait for ACK
     SIMULATE_TX_MSG(msg55);
 
-    PT_YIELD(pt);
 
     // Simulate setting default mode
     SIMULATE_TX_MSG(msg56);
@@ -1054,7 +1035,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
         SIMULATE_TX_MSG(msg58);
     }
 
-    PT_WAIT_WHILE(pt, ({
+    AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -1093,25 +1074,23 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(mode_info[5].writable, ==, 0);
 
 
-    PT_YIELD(pt);
 
 end:
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 struct testcase_t pbio_port_lump_tests[] = {
-    PBIO_PT_THREAD_TEST_WITH_PBIO(test_boost_color_distance_sensor),
-    PBIO_PT_THREAD_TEST_WITH_PBIO(test_boost_interactive_motor),
-    PBIO_PT_THREAD_TEST_WITH_PBIO(test_technic_large_motor),
-    PBIO_PT_THREAD_TEST_WITH_PBIO(test_technic_xl_motor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_boost_color_distance_sensor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_boost_interactive_motor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_technic_large_motor),
+    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_technic_xl_motor),
     END_OF_TESTCASES
 };
 
-pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
+pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     if (id != 0) {
         return PBIO_ERROR_NO_DEV;
     }
-    test_uart.parent_process = parent_process;
     *uart_dev = &test_uart;
     return PBIO_SUCCESS;
 }
@@ -1131,58 +1110,50 @@ void pbdrv_uart_init(void) {
 void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
 }
 
-PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
-    PT_WAIT_WHILE(pt, uart_dev->rx_msg);
+    AWAIT_WHILE(state, uart_dev->rx_msg);
 
     uart_dev->rx_msg = msg;
     uart_dev->rx_msg_length = length;
     uart_dev->rx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&uart_dev->rx_timer, timeout);
+    pbio_os_timer_set(&uart_dev->rx_timer, timeout);
 
     // If read_pos is less that read_length then we have not read everything yet
-    PT_WAIT_WHILE(pt, uart_dev->rx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&uart_dev->rx_timer));
-    if (etimer_expired(&uart_dev->rx_timer)) {
+    AWAIT_WHILE(state, uart_dev->rx_msg_result == PBIO_ERROR_AGAIN && !pbio_os_timer_is_expired(&uart_dev->rx_timer));
+    if (pbio_os_timer_is_expired(&uart_dev->rx_timer)) {
         uart_dev->rx_msg_result = PBIO_ERROR_TIMEDOUT;
-    } else {
-        etimer_stop(&uart_dev->rx_timer);
     }
 
     if (uart_dev->rx_msg_result != PBIO_ERROR_AGAIN) {
         uart_dev->rx_msg = NULL;
     }
 
-    *err = uart_dev->rx_msg_result;
-
-    PT_END(pt);
+    ASYNC_END(uart_dev->rx_msg_result);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     // Wait while other write operation already in progress.
-    PT_WAIT_WHILE(pt, uart_dev->tx_msg);
+    AWAIT_WHILE(state, uart_dev->tx_msg);
 
     uart_dev->tx_msg = msg;
     uart_dev->tx_msg_length = length;
     uart_dev->tx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&uart_dev->tx_timer, timeout);
+    pbio_os_timer_set(&uart_dev->tx_timer, timeout);
 
-    PT_WAIT_WHILE(pt, uart_dev->tx_msg_result == PBIO_ERROR_AGAIN && !etimer_expired(&uart_dev->tx_timer));
-    if (etimer_expired(&uart_dev->tx_timer)) {
+    AWAIT_WHILE(state, uart_dev->tx_msg_result == PBIO_ERROR_AGAIN && !pbio_os_timer_is_expired(&uart_dev->tx_timer));
+    if (pbio_os_timer_is_expired(&uart_dev->tx_timer)) {
         uart_dev->tx_msg_result = PBIO_ERROR_TIMEDOUT;
-    } else {
-        etimer_stop(&uart_dev->tx_timer);
     }
 
     if (uart_dev->tx_msg_result != PBIO_ERROR_AGAIN) {
         uart_dev->tx_msg = NULL;
     }
 
-    *err = uart_dev->tx_msg_result;
-
-    PT_END(pt);
+    ASYNC_END(uart_dev->tx_msg_result);
 }
