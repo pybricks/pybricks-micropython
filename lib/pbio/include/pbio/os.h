@@ -87,7 +87,7 @@ bool pbio_os_timer_is_expired(pbio_os_timer_t *timer);
  */
 typedef uint32_t pbio_os_state_t;
 
-typedef pbio_error_t (*pbio_os_process_func_t)(pbio_os_state_t *state);
+typedef pbio_error_t (*pbio_os_process_func_t)(pbio_os_state_t *state, void *context);
 
 typedef struct _pbio_os_process_t pbio_os_process_t;
 
@@ -107,6 +107,10 @@ struct _pbio_os_process_t {
      * The protothread.
      */
     pbio_os_process_func_t func;
+    /**
+     * Context passed on each call to the protothread.
+     */
+    void *context;
     /**
      * Most recent result of running one iteration of the protothread.
      */
@@ -187,7 +191,7 @@ void pbio_os_run_while_idle(void);
 
 void pbio_os_request_poll(void);
 
-void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t func);
+void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t func, void *context);
 
 /**
  * Disables interrupts and returns the previous interrupt state.
