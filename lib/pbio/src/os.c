@@ -53,8 +53,9 @@ static pbio_os_process_t *process_list = NULL;
  *
  * @param process   The process to start.
  * @param func      The process thread function.
+ * @param context   The context to pass to the process.
  */
-void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t func) {
+void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t func, void *context) {
 
     // Add the new process to the end of the list.
     pbio_os_process_t *last = process_list;
@@ -69,6 +70,7 @@ void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t fu
 
     // Initialize the process.
     process->func = func;
+    process->context = context;
     process->next = NULL;
     process->err = PBIO_ERROR_AGAIN;
     process->state = 0;
@@ -103,7 +105,7 @@ bool pbio_os_run_processes_once(void) {
     while (process) {
         // Run one iteration of the process if not yet completed or errored.
         if (process->err == PBIO_ERROR_AGAIN) {
-            process->err = process->func(&process->state);
+            process->err = process->func(&process->state, process->context);
         }
         process = process->next;
     }
