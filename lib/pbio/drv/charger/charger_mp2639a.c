@@ -282,7 +282,7 @@ pbio_error_t pbdrv_charger_mp2639a_process_thread(pbio_os_state_t *state, void *
 
 void pbdrv_charger_init(void) {
     pbdrv_init_busy_up();
-    pbio_os_start_process(&pbdrv_charger_mp2639a_process, pbdrv_charger_mp2639a_process_thread, NULL);
+    pbio_os_process_start(&pbdrv_charger_mp2639a_process, pbdrv_charger_mp2639a_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_CHARGER_MP2639A

@@ -166,6 +166,19 @@ struct _pbio_os_process_t {
         }                                        \
     } while (0)
 
+/**
+ * Yields the protothread until the specified condition is true.
+ *
+ * @param [in]  state     Protothread state.
+ * @param [in]  condition The condition.
+ */
+#define AWAIT_UNTIL(state, condition)            \
+    do {                                         \
+        PB_LC_SET(state);                        \
+        if (!(condition)) {                      \
+            return PBIO_ERROR_AGAIN;             \
+        }                                        \
+    } while (0)
 
 #define AWAIT(state, child, statement)          \
     do {                                        \
@@ -174,6 +187,16 @@ struct _pbio_os_process_t {
         if ((statement) == PBIO_ERROR_AGAIN) {  \
             return PBIO_ERROR_AGAIN;            \
         }                                       \
+    } while (0)
+
+#define AWAIT_RACE(state, child1, child2, statement1, statement2)                    \
+    do {                                                                             \
+        ASYNC_INIT((child1));                                                        \
+        ASYNC_INIT((child2));                                                        \
+        PB_LC_SET(state);                                                            \
+        if ((statement1) == PBIO_ERROR_AGAIN && (statement2) == PBIO_ERROR_AGAIN) {  \
+            return PBIO_ERROR_AGAIN;                                                 \
+        }                                                                            \
     } while (0)
 
 #define AWAIT_MS(state, timer, duration)        \
@@ -191,7 +214,11 @@ void pbio_os_run_while_idle(void);
 
 void pbio_os_request_poll(void);
 
-void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t func, void *context);
+pbio_error_t pbio_port_process_none_thread(pbio_os_state_t *state, void *context);
+
+void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t func, void *context);
+
+void pbio_os_process_reset(pbio_os_process_t *process, pbio_os_process_func_t func);
 
 /**
  * Disables interrupts and returns the previous interrupt state.
