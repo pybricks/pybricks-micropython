@@ -47,15 +47,23 @@ void pbio_os_request_poll(void) {
 static pbio_os_process_t *process_list = NULL;
 
 /**
- * Starts a process.
+ * Placeholder thread that does nothing.
  *
- * NB: Processes can be started only once. They cannot be restarted.
+ * @param [in] state The protothread state.
+ * @param [in] context The context.
+ */
+pbio_error_t pbio_port_process_none_thread(pbio_os_state_t *state, void *context) {
+    return PBIO_ERROR_AGAIN;
+}
+
+/**
+ * Adds a process to the list of processes to run and starts it soon.
  *
  * @param process   The process to start.
  * @param func      The process thread function.
  * @param context   The context to pass to the process.
  */
-void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t func, void *context) {
+void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t func, void *context) {
 
     // Add the new process to the end of the list.
     pbio_os_process_t *last = process_list;
@@ -69,11 +77,27 @@ void pbio_os_start_process(pbio_os_process_t *process, pbio_os_process_func_t fu
     }
 
     // Initialize the process.
-    process->func = func;
-    process->context = context;
     process->next = NULL;
+    process->context = context;
+
+    pbio_os_process_reset(process, func);
+}
+
+/**
+ * Resets an existing process to the initial state with a new function and context.
+ *
+ * @param process   The process to start.
+ * @param func      The process thread function. Choose NULL if it does not need changing.
+ */
+void pbio_os_process_reset(pbio_os_process_t *process, pbio_os_process_func_t func) {
     process->err = PBIO_ERROR_AGAIN;
     process->state = 0;
+    if (func) {
+        process->func = func;
+    }
+
+    // Request a poll to start the process soon, running to its first yield.
+    pbio_os_request_poll();
 }
 
 /**
