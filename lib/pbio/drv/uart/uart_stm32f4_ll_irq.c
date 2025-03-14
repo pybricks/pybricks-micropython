@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 // UART driver for STM32F4x using IRQ.
 
@@ -19,6 +19,7 @@
 
 #include <pbdrv/uart.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 
 #include "../core.h"
@@ -32,9 +33,9 @@ struct _pbdrv_uart_dev_t {
     /** Circular buffer for caching received bytes. */
     struct ringbuf rx_buf;
     /** Timer for read timeout. */
-    struct etimer read_timer;
+    pbio_os_timer_t read_timer;
     /** Timer for write timeout. */
-    struct etimer write_timer;
+    pbio_os_timer_t write_timer;
     /** The buffer of the ongoing async read function. */
     uint8_t *read_buf;
     /** The length of read_buf in bytes. */
@@ -47,18 +48,12 @@ struct _pbdrv_uart_dev_t {
     uint8_t write_length;
     /** The current position in write_buf. */
     volatile uint8_t write_pos;
-    /**
-     * Parent process that handles incoming data.
-     *
-     * All protothreads in this module run within that process.
-     */
-    struct process *parent_process;
 };
 
 static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART];
 static uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART][RX_DATA_SIZE];
 
-pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
+pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -67,19 +62,16 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process,
         // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
-    dev->parent_process = parent_process;
     *uart_dev = dev;
     return PBIO_SUCCESS;
 }
 
-PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    // Actual protothread starts here.
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     if (uart->read_buf) {
-        *err = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
+        return PBIO_ERROR_BUSY;
     }
 
     uart->read_buf = msg;
@@ -87,11 +79,11 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
     uart->read_pos = 0;
 
     if (timeout) {
-        etimer_set(&uart->read_timer, timeout);
+        pbio_os_timer_set(&uart->read_timer, timeout);
     }
 
     // Await completion or timeout.
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         // On every re-entry to the async read, drain the ring buffer
         // into the current read buffer. This ensures that we use
         // all available data if there have been multiple polls since our last
@@ -104,28 +96,24 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
             }
             uart->read_buf[uart->read_pos++] = c;
         }
-        uart->read_pos == uart->read_length || (timeout && etimer_expired(&uart->read_timer));
+        uart->read_pos == uart->read_length || (timeout && pbio_os_timer_is_expired(&uart->read_timer));
     }));
 
-    // Set exit status based on completion condition.
-    if (timeout && etimer_expired(&uart->read_timer)) {
-        *err = PBIO_ERROR_TIMEDOUT;
-    } else {
-        etimer_stop(&uart->read_timer);
-        *err = PBIO_SUCCESS;
-    }
     uart->read_buf = NULL;
 
-    PT_END(pt);
+    if (timeout && pbio_os_timer_is_expired(&uart->read_timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    ASYNC_END(PBIO_SUCCESS);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     if (uart->write_buf) {
-        *err = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
+        return PBIO_ERROR_BUSY;
     }
 
     uart->write_buf = msg;
@@ -133,27 +121,24 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     uart->write_pos = 0;
 
     if (timeout) {
-        etimer_set(&uart->write_timer, timeout);
+        pbio_os_timer_set(&uart->write_timer, timeout);
     }
 
     LL_USART_EnableIT_TXE(uart->pdata->uart);
 
     // Await completion or timeout.
-    PT_WAIT_UNTIL(pt, uart->write_pos == uart->write_length || (timeout && etimer_expired(&uart->write_timer)));
-
-    // Set exit status based on completion condition.
-    if ((timeout && etimer_expired(&uart->write_timer))) {
-        LL_USART_DisableIT_TXE(uart->pdata->uart);
-        LL_USART_DisableIT_TC(uart->pdata->uart);
-        *err = PBIO_ERROR_TIMEDOUT;
-    } else {
-        etimer_stop(&uart->write_timer);
-        *err = PBIO_SUCCESS;
-    }
+    AWAIT_UNTIL(state, uart->write_pos == uart->write_length || (timeout && pbio_os_timer_is_expired(&uart->write_timer)));
 
     uart->write_buf = NULL;
 
-    PT_END(pt);
+    // Set exit status based on completion condition.
+    if ((timeout && pbio_os_timer_is_expired(&uart->write_timer))) {
+        LL_USART_DisableIT_TXE(uart->pdata->uart);
+        LL_USART_DisableIT_TC(uart->pdata->uart);
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
@@ -207,7 +192,8 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
         ringbuf_put(&uart->rx_buf, LL_USART_ReceiveData8(USARTx));
         // Poll parent process for each received byte, since the IRQ handler
         // has no awareness of the expected length of the read operation.
-        process_poll(uart->parent_process);
+        pbio_os_request_poll();
+
     }
 
     if (sr & USART_SR_ORE) {
@@ -230,7 +216,7 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
     if (USARTx->CR1 & USART_CR1_TCIE && sr & USART_SR_TC) {
         LL_USART_DisableIT_TC(USARTx);
         // Poll parent process to indicate the write operation is complete.
-        process_poll(uart->parent_process);
+        pbio_os_request_poll();
     }
 }
 

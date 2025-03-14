@@ -15,11 +15,11 @@
 #include <pbio/servo.h>
 #include <pbio/util.h>
 
+#include <pbio/os.h>
 #include <pbio/port_interface.h>
 #include <pbio/port_dcm.h>
 #include <pbio/port_lump.h>
 
-#include <contiki.h>
 
 #define DEBUG 0
 #if DEBUG
@@ -70,16 +70,16 @@ struct _pbio_port_t {
     /**
      * Process for this port.
      */
-    struct process process;
+    pbio_os_process_t process;
     /**
      * Timer for this port process.
      */
-    struct etimer etimer;
+    pbio_os_timer_t timer;
     /**
      * Parallel child protothreads used for spawning async functions such as
      * the device connection manager and the uart device process. */
-    struct pt child1;
-    struct pt child2;
+    pbio_os_state_t child1;
+    pbio_os_state_t child2;
     /**
      * Device connection manager that detects passive devices in LEGO mode.
      */
@@ -92,42 +92,17 @@ struct _pbio_port_t {
 
 static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
 
-PROCESS_THREAD(pbio_port_process_none, ev, data) {
-    PROCESS_BEGIN();
-    for (;;) {
-        PROCESS_WAIT_EVENT();
-    }
-    PROCESS_END();
-}
+pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context) {
 
-/**
- * Sets the current process to that of the selected port.
- *
- * When user level code (outside the pbio event loop) calls protothreads that
- * contain etimers (then merely used as regular timers), the contiki still
- * associates them with the then-current process. Outside the event loop
- * though, this has no meaning and it so it associates the etimer arbitrarily
- * with the last handled. To avoid this, we set the current process to that of
- * the selected port.
- *
- * NB: Must only be called from *outside* the event loop.
- *
- * @param [in] port The port instance.
- */
-void pbio_port_select_process(pbio_port_t *port) {
-    process_current = &port->process;
-}
-
-PROCESS_THREAD(pbio_port_process_pup, ev, data) {
-
-    struct process *proc = PBIO_CONTAINER_OF(process_pt, struct process, pt);
-    pbio_port_t *port = PBIO_CONTAINER_OF(proc, pbio_port_t, process);
+    pbio_port_t *port = context;
 
     // NB: This same process thread definition is shared for all ports, so we
     // cannot use static variables across yields as is normally done in these
     // processes. Use the port state variables instead.
 
-    PROCESS_BEGIN();
+    pbio_error_t err;
+
+    ASYNC_BEGIN(state);
 
     // NB: Currently only implements LEGO mode and assumes that all PUP
     // peripherals are available and initialized.
@@ -136,25 +111,29 @@ PROCESS_THREAD(pbio_port_process_pup, ev, data) {
 
         // Run passive device connection manager until UART device is detected.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
-        PROCESS_PT_SPAWN(&port->child1, pbio_port_dcm_thread(&port->child1, &port->etimer, port->connection_manager, port->pdata->pins));
+        AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
         // Synchronize with LUMP data stream from sensor and parse device info.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
-        PROCESS_PT_SPAWN(&port->child1, pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->etimer));
+        AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
+        if (err != PBIO_SUCCESS) {
+            // Synchronization failed. Retry.
+            continue;
+        }
 
         // Exchange sensor data with the LUMP device until it is disconnected.
         // The send thread detects this when the keep alive messages time out.
         pbio_port_p1p2_set_power(port, pbio_port_lump_get_power_requirements(port->lump_dev));
-        PT_INIT(&port->child1);
-        PT_INIT(&port->child2);
-        PROCESS_WAIT_WHILE(
-            PT_SCHEDULE(pbio_port_lump_data_recv_thread(&port->child1, port->lump_dev, port->uart_dev)) &&
-            PT_SCHEDULE(pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->etimer))
+        AWAIT_RACE(state, &port->child1, &port->child2,
+            pbio_port_lump_data_recv_thread(&port->child1, port->lump_dev, port->uart_dev),
+            pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->timer)
             );
+
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
     }
 
-    PROCESS_END();
+    // Unreachable.
+    ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 /**
@@ -382,8 +361,7 @@ pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t 
 static void pbio_port_init_one_port(pbio_port_t *port) {
 
     // Initialize all ports with the none process.
-    port->process.thread = process_thread_pbio_port_process_none;
-    process_start(&port->process);
+    pbio_os_process_start(&port->process, pbio_port_process_none_thread, port);
 
     // Configure motor instances if this port has them. This assumes that
     // all motor ports have a way to get angle information. We can add
@@ -410,13 +388,13 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     }
 
     // If uart and gpio available, initialize device manager and uart devices.
-    pbdrv_uart_get_instance(port->pdata->uart_driver_index, &port->process, &port->uart_dev);
-    pbdrv_i2c_get_instance(port->pdata->i2c_driver_index, &port->process, &port->i2c_dev);
+    pbdrv_uart_get_instance(port->pdata->uart_driver_index, &port->uart_dev);
+    pbdrv_i2c_get_instance(port->pdata->i2c_driver_index, &port->i2c_dev);
 
     if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_DCM) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
-        port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index, &port->process);
+        port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
         return;
     }
@@ -521,12 +499,8 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    // One port process is always running since initialization. Here we can
-    // reset the LC state and change the thread as relevant. Also poll to
-    // kick the process into action, similar to a normal process start.
-    port->process.thread = process_thread_pbio_port_process_none;
-    PT_INIT(&port->process.pt);
-    process_poll(&port->process);
+    // Disable thread activity by attaching a thread that does nothing.
+    pbio_os_process_reset(&port->process, pbio_port_process_none_thread);
     port->mode = mode;
 
     switch (mode) {
@@ -537,7 +511,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_LEGO_DCM:
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.
-            port->process.thread = process_thread_pbio_port_process_pup;
+            pbio_os_process_reset(&port->process, pbio_port_process_pup_thread);
             // Returning e-again allows user module to wait for the port to be
             // ready after first entering LEGO mode, avoiding NODEV errors when
             // switching from direct access modes back to LEGO mode.

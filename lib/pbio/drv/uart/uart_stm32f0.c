@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 // This driver is for UARTs on STM32F0 MCUs. It provides async read and write
 // functions for sending and receive data and allows changing the baud rate.
@@ -19,6 +19,7 @@
 
 #include <pbdrv/uart.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 
 #include "../core.h"
@@ -39,21 +40,15 @@ struct _pbdrv_uart_dev_t {
     uint8_t *tx_buf;
     uint8_t tx_buf_size;
     uint8_t tx_buf_index;
-    struct etimer rx_timer;
-    struct etimer tx_timer;
+    pbio_os_timer_t rx_timer;
+    pbio_os_timer_t tx_timer;
     uint8_t irq;
     bool initialized;
-    /**
-     * Parent process that handles incoming data.
-     *
-     * All protothreads in this module run within that process.
-     */
-    struct process *parent_process;
 };
 
 static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32F0_NUM_UART];
 
-pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process, pbdrv_uart_dev_t **uart_dev) {
+pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     if (id >= PBDRV_CONFIG_UART_STM32F0_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -62,22 +57,20 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, struct process *parent_process,
     if (!dev->initialized) {
         return PBIO_ERROR_AGAIN;
     }
-    dev->parent_process = parent_process;
     *uart_dev = dev;
     return PBIO_SUCCESS;
 }
 
-PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
+
     if (!msg || !length) {
-        *err = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     if (uart->rx_buf) {
-        *err = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
+        return PBIO_ERROR_BUSY;
     }
 
     uart->rx_buf = msg;
@@ -85,11 +78,11 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
     uart->rx_buf_index = 0;
 
     if (timeout) {
-        etimer_set(&uart->rx_timer, timeout);
+        pbio_os_timer_set(&uart->rx_timer, timeout);
     }
 
     // Await completion or timeout.
-    PT_WAIT_UNTIL(pt, ({
+    AWAIT_UNTIL(state, ({
         // On every re-entry to the async read, drain the ring buffer
         // into the current read buffer. This ensures that we use
         // all available data if there have been multiple polls since our last
@@ -99,32 +92,28 @@ PT_THREAD(pbdrv_uart_read(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, u
             uart->rx_buf[uart->rx_buf_index++] = uart->rx_ring_buf[uart->rx_ring_buf_tail];
             uart->rx_ring_buf_tail = (uart->rx_ring_buf_tail + 1) & (UART_RING_BUF_SIZE - 1);
         }
-        uart->rx_buf_index == uart->rx_buf_size || (timeout && etimer_expired(&uart->rx_timer));
+        uart->rx_buf_index == uart->rx_buf_size || (timeout && pbio_os_timer_is_expired(&uart->rx_timer));
     }));
 
-    if (timeout && etimer_expired(&uart->rx_timer)) {
-        *err = PBIO_ERROR_TIMEDOUT;
-    } else {
-        etimer_stop(&uart->rx_timer);
-        *err = PBIO_SUCCESS;
-    }
     uart->rx_buf = NULL;
 
-    PT_END(pt);
+    if (timeout && pbio_os_timer_is_expired(&uart->rx_timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    ASYNC_END(PBIO_SUCCESS);
 }
 
-PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout, pbio_error_t *err)) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     if (!msg || !length) {
-        *err = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     if (uart->tx_buf) {
-        *err = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
+        return PBIO_ERROR_BUSY;
     }
 
     uart->tx_buf = msg;
@@ -132,24 +121,22 @@ PT_THREAD(pbdrv_uart_write(struct pt *pt, pbdrv_uart_dev_t *uart, uint8_t *msg, 
     uart->tx_buf_index = 0;
 
     if (timeout) {
-        etimer_set(&uart->tx_timer, timeout);
+        pbio_os_timer_set(&uart->tx_timer, timeout);
     }
 
     uart->USART->CR1 |= USART_CR1_TXEIE;
 
     // Await completion or timeout.
-    PT_WAIT_UNTIL(pt, uart->tx_buf_index == uart->tx_buf_size || (timeout && etimer_expired(&uart->tx_timer)));
+    AWAIT_UNTIL(state, uart->tx_buf_index == uart->tx_buf_size || (timeout && pbio_os_timer_is_expired(&uart->tx_timer)));
 
-    if (timeout && etimer_expired(&uart->tx_timer)) {
-        uart->USART->CR1 &= ~(USART_CR1_TXEIE | USART_CR1_TCIE);
-        *err = PBIO_ERROR_TIMEDOUT;
-    } else {
-        etimer_stop(&uart->tx_timer);
-        *err = PBIO_SUCCESS;
-    }
     uart->tx_buf = NULL;
 
-    PT_END(pt);
+    if (timeout && pbio_os_timer_is_expired(&uart->tx_timer)) {
+        uart->USART->CR1 &= ~(USART_CR1_TXEIE | USART_CR1_TCIE);
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
@@ -174,7 +161,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
         // REVISIT: Do we need to have an overrun error when the ring buffer gets full?
         uart->rx_ring_buf[uart->rx_ring_buf_head] = uart->USART->RDR;
         uart->rx_ring_buf_head = (uart->rx_ring_buf_head + 1) & (UART_RING_BUF_SIZE - 1);
-        process_poll(uart->parent_process);
+        pbio_os_request_poll();
     }
 
     // transmit next byte
@@ -193,7 +180,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     // transmission complete
     if (uart->USART->CR1 & USART_CR1_TCIE && isr & USART_ISR_TC) {
         uart->USART->CR1 &= ~USART_CR1_TCIE;
-        process_poll(uart->parent_process);
+        pbio_os_request_poll();
     }
 }
 

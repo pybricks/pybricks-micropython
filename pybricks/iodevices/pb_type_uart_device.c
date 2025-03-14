@@ -28,10 +28,10 @@ typedef struct _pb_type_uart_device_obj_t {
     pbio_port_t *port;
     pbdrv_uart_dev_t *uart_dev;
     uint32_t timeout;
-    struct pt write_pt;
+    pbio_os_state_t write_pt;
     mp_obj_t write_obj;
     mp_obj_t write_awaitables;
-    struct pt read_pt;
+    pbio_os_state_t read_pt;
     mp_obj_t read_obj;
     mp_obj_t read_awaitables;
 } pb_type_uart_device_obj_t;
@@ -74,15 +74,10 @@ static bool pb_type_uart_device_write_test_completion(mp_obj_t self_in, uint32_t
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
     GET_STR_DATA_LEN(self->write_obj, data, data_len);
 
-    // Set current process to port process even though user code does not deal
-    // with any processes. This ensures that any references set on etimer don't
-    // accidentally touch other processes.
-    pbio_port_select_process(self->port);
-
     // Runs one iteration of the write protothread.
-    pbio_error_t err;
-    bool awaiting = PT_SCHEDULE(pbdrv_uart_write(&self->read_pt, self->uart_dev, (uint8_t *)data, data_len, self->timeout, &err));
-    if (awaiting) {
+    pbio_error_t err = pbdrv_uart_write(&self->read_pt, self->uart_dev, (uint8_t *)data, data_len, self->timeout);
+    if (err == PBIO_ERROR_AGAIN) {
+        // Not done yet, so return false.
         return false;
     }
 
@@ -106,7 +101,8 @@ static mp_obj_t pb_type_uart_device_write(size_t n_args, const mp_obj_t *pos_arg
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    PT_INIT(&self->write_pt);
+    // Reset protothread state.
+    self->write_pt = 0;
 
     // Prevents this object from being garbage collected while the write is in progress.
     self->write_obj = data_in;
@@ -134,17 +130,12 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_uart_device_in_waiting_obj, pb_type_uar
 static bool pb_type_uart_device_read_test_completion(mp_obj_t self_in, uint32_t end_time) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Set current process to port process even though user code does not deal
-    // with any processes. This ensures that any references set on etimer don't
-    // accidentally touch other processes.
-    pbio_port_select_process(self->port);
-
     mp_obj_str_t *str = MP_OBJ_TO_PTR(self->read_obj);
 
     // Runs one iteration of the read protothread.
-    pbio_error_t err;
-    bool awaiting = PT_SCHEDULE(pbdrv_uart_read(&self->write_pt, self->uart_dev, (uint8_t *)str->data, str->len, self->timeout, &err));
-    if (awaiting) {
+    pbio_error_t err = pbdrv_uart_read(&self->read_pt, self->uart_dev, (uint8_t *)str->data, str->len, self->timeout);
+    if (err == PBIO_ERROR_AGAIN) {
+        // Not done yet, so return false.
         return false;
     }
 
@@ -160,17 +151,6 @@ static mp_obj_t pb_type_uart_device_read_return_value(mp_obj_t self_in) {
     return ret;
 }
 
-// pybricks.iodevices.UARTDevice.set_baudrate
-static mp_obj_t pb_type_uart_device_set_baudrate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pb_type_uart_device_obj_t, self,
-        PB_ARG_REQUIRED(baudrate));
-
-    pbdrv_uart_set_baud_rate(self->uart_dev, pb_obj_get_int(baudrate_in));
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_set_baudrate_obj, 1, pb_type_uart_device_set_baudrate);
-
 // pybricks.iodevices.UARTDevice.read
 static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
@@ -182,6 +162,9 @@ static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args
     mp_obj_t args[] = { length_in };
     self->read_obj = MP_OBJ_TYPE_GET_SLOT(&mp_type_bytes, make_new)((mp_obj_t)&mp_type_bytes, MP_ARRAY_SIZE(args), 0, args);
 
+    // Reset protothread state.
+    self->read_pt = 0;
+
     return pb_type_awaitable_await_or_wait(
         MP_OBJ_FROM_PTR(self),
         self->read_awaitables,
@@ -192,6 +175,17 @@ static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args
         PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_read_obj, 1, pb_type_uart_device_read);
+
+// pybricks.iodevices.UARTDevice.set_baudrate
+static mp_obj_t pb_type_uart_device_set_baudrate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_uart_device_obj_t, self,
+        PB_ARG_REQUIRED(baudrate));
+
+    pbdrv_uart_set_baud_rate(self->uart_dev, pb_obj_get_int(baudrate_in));
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_set_baudrate_obj, 1, pb_type_uart_device_set_baudrate);
 
 // pybricks.iodevices.UARTDevice.flush
 static mp_obj_t pb_type_uart_device_flush(mp_obj_t self_in) {

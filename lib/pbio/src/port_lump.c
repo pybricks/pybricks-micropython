@@ -9,6 +9,7 @@
 
 #include <contiki.h>
 
+#include <pbio/os.h>
 #include <pbio/util.h>
 
 #include <pbio/port_interface.h>
@@ -132,15 +133,10 @@ typedef struct {
 
 // LUMP state for each port.
 struct _pbio_port_lump_dev_t {
-    /**
-     * Parent port process that all protothreads here run within.
-     * Needed here to request polling after user requests like mode switches.
-     */
-    struct process *parent_process;
     /** Child protothread of the main protothread used for reading data */
-    struct pt read_pt;
+    pbio_os_state_t read_pt;
     /** Child protothread of the main protothread used for writing data */
-    struct pt write_pt;
+    pbio_os_state_t write_pt;
     /** Buffer to hold messages received from the device. */
     uint8_t *rx_msg;
     /** Buffer to hold messages transmitted to the device. */
@@ -180,8 +176,6 @@ struct _pbio_port_lump_dev_t {
     uint32_t err_count;
     /** Flag that indicates that good DATA lump_dev->msg has been received since last watchdog timeout. */
     bool data_rec;
-    /** Return value for uart operations. */
-    pbio_error_t err;
     /** Angle reported by the device. */
     pbio_angle_t angle;
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
@@ -210,12 +204,11 @@ static uint8_t bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV][NUM_BUF][EV3_UART_MAX_MESSAGE
 static uint8_t data_read_bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV][LUMP_MAX_MSG_SIZE] __attribute__((aligned(4)));
 static pbdrv_legodev_lump_data_set_t data_set_bufs[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
 
-pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index, struct process *parent_process) {
+pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index) {
     if (device_index >= PBIO_CONFIG_PORT_LUMP_NUM_DEV) {
         return NULL;
     }
     pbio_port_lump_dev_t *lump_dev = &lump_devices[device_index];
-    lump_dev->parent_process = parent_process;
     lump_dev->tx_msg = &bufs[device_index][BUF_TX_MSG][0];
     lump_dev->rx_msg = &bufs[device_index][BUF_RX_MSG][0];
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
@@ -230,7 +223,7 @@ static void pbio_port_lump_request_mode(pbio_port_lump_dev_t *lump_dev, uint8_t 
     lump_dev->mode_switch.desired_mode = mode;
     lump_dev->mode_switch.time = pbdrv_clock_get_ms();
     lump_dev->mode_switch.requested = true;
-    process_poll(lump_dev->parent_process);
+    pbio_os_request_poll();
 }
 
 static void pbio_port_lump_request_data_set(pbio_port_lump_dev_t *lump_dev, uint8_t mode, const uint8_t *data, uint8_t size) {
@@ -238,7 +231,7 @@ static void pbio_port_lump_request_data_set(pbio_port_lump_dev_t *lump_dev, uint
     lump_dev->data_set->desired_mode = mode;
     lump_dev->data_set->time = pbdrv_clock_get_ms();
     memcpy(lump_dev->data_set->bin_data, data, size);
-    process_poll(lump_dev->parent_process);
+    pbio_os_request_poll();
 }
 
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
@@ -726,21 +719,22 @@ static void ev3_uart_prepare_tx_msg(pbio_port_lump_dev_t *lump_dev, lump_msg_typ
     lump_dev->tx_msg_size = offset + i + 2;
 }
 
-#include <stdio.h>
-
 /**
  * The synchronization thread for the LEGO UART device.
  *
  * This thread receives and parses incoming messages sent by LEGO UART devices
  * when they are plugged in. It populates the device state accordingly.
  *
- * @param [in]  pt             The protothread.
+ * @param [in]  state          The protothread state.
  * @param [in]  lump_dev       The LEGO UART device instance.
  * @param [in]  uart_dev       The UART device instance.
  * @param [in]  etimer         The timer for the protothread.
  */
-PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
-    PT_BEGIN(pt);
+pbio_error_t pbio_port_lump_sync_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer) {
+
+    pbio_error_t err;
+
+    ASYNC_BEGIN(state);
 
     // Reset whole state except references to static buffers
     memset((uint8_t *)lump_dev + offsetof(pbio_port_lump_dev_t, type_id), 0, sizeof(pbio_port_lump_dev_t) - offsetof(pbio_port_lump_dev_t, type_id));
@@ -756,39 +750,39 @@ PT_THREAD(pbio_port_lump_sync_thread(struct pt *pt, pbio_port_lump_dev_t *lump_d
 
     pbdrv_uart_flush(uart_dev);
 
-    PT_SPAWN(pt, &lump_dev->write_pt, pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-    if (lump_dev->err != PBIO_SUCCESS) {
-        debug_pr("Sp tx fail %d\n", lump_dev->err);
-        PT_EXIT(pt);
+    AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
+    if (err != PBIO_SUCCESS) {
+        debug_pr("Sp tx fail %d\n", err);
+        return err;
     }
 
     pbdrv_uart_flush(uart_dev);
 
     // read one byte to check for ACK
-    PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, 10, &lump_dev->err));
+    AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, 10));
 
-    if ((lump_dev->err == PBIO_SUCCESS && lump_dev->rx_msg[0] != LUMP_SYS_ACK) || lump_dev->err == PBIO_ERROR_TIMEDOUT) {
+    if ((err == PBIO_SUCCESS && lump_dev->rx_msg[0] != LUMP_SYS_ACK) || err == PBIO_ERROR_TIMEDOUT) {
         // if we did not get ACK within 100ms, then switch to slow baud rate for sync
         pbdrv_uart_set_baud_rate(uart_dev, EV3_UART_SPEED_MIN);
         debug_pr("set baud: %d\n", EV3_UART_SPEED_MIN);
-    } else if (lump_dev->err != PBIO_SUCCESS) {
+    } else if (err != PBIO_SUCCESS) {
         debug_pr("UART Rx error during baud\n");
-        PT_EXIT(pt);
+        return err;
     }
-sync:
 
+sync:
     // To get in sync with the data stream from the sensor, we look for a valid TYPE command.
     for (;;) {
         // If there are multiple bytes waiting to be read, this drains them one
         // by one without requiring additional polls. This means we won't need
         // exact timing to get in sync.
-        PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-        if (lump_dev->err == PBIO_ERROR_TIMEDOUT) {
+        AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        if (err == PBIO_ERROR_TIMEDOUT) {
             continue;
         }
-        if (lump_dev->err != PBIO_SUCCESS) {
+        if (err != PBIO_SUCCESS) {
             debug_pr("UART Rx error during sync\n");
-            PT_EXIT(pt);
+            return err;
         }
 
         if (lump_dev->rx_msg[0] == (LUMP_MSG_TYPE_CMD | LUMP_CMD_TYPE)) {
@@ -796,11 +790,11 @@ sync:
         }
     }
 
-    // then read the rest of the message
-    PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, 2, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-    if (lump_dev->err != PBIO_SUCCESS) {
+    // Then read the rest of the message.
+    AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, 2, EV3_UART_IO_TIMEOUT));
+    if (err != PBIO_SUCCESS) {
         debug_pr("UART Rx error while reading type\n");
-        PT_EXIT(pt);
+        return err;
     }
 
     bool bad_id = lump_dev->rx_msg[1] < EV3_UART_TYPE_MIN || lump_dev->rx_msg[1] > EV3_UART_TYPE_MAX;
@@ -811,7 +805,7 @@ sync:
         debug_pr("Bad device type id or checksum\n");
         if (lump_dev->err_count > 10) {
             lump_dev->err_count = 0;
-            PT_EXIT(pt);
+            return PBIO_ERROR_FAILED;
         }
         lump_dev->err_count++;
         goto sync;
@@ -829,28 +823,28 @@ sync:
 
     while (lump_dev->status == PBDRV_LEGODEV_LUMP_STATUS_INFO) {
         // read the message header
-        PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-        if (lump_dev->err != PBIO_SUCCESS) {
+        AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        if (err != PBIO_SUCCESS) {
             debug_pr("UART Rx end error during info header\n");
-            PT_EXIT(pt);
+            return err;
         }
 
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
         if (lump_dev->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
             debug_pr("Bad message size during info %d\n", lump_dev->rx_msg_size);
             if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR) {
-                // This sensor sends bad info messages.
+                // This sensor sends bad info messages, but we'll let it pass.
                 continue;
             }
-            PT_EXIT(pt);
+            return err;
         }
 
-        // read the rest of the message
+        // Read the rest of the message.
         if (lump_dev->rx_msg_size > 1) {
-            PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-            if (lump_dev->err != PBIO_SUCCESS) {
+            AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
+            if (err != PBIO_SUCCESS) {
                 debug_pr("UART Rx end error during info\n");
-                PT_EXIT(pt);
+                return err;
             }
         }
 
@@ -860,23 +854,22 @@ sync:
 
     // at this point we should have read all of the mode info
     if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_ACK) {
-        PT_EXIT(pt);
+        return PBIO_ERROR_FAILED;
     }
 
     // reply with ACK
     lump_dev->tx_msg[0] = LUMP_SYS_ACK;
     lump_dev->tx_msg_size = 1;
-    PT_SPAWN(pt, &lump_dev->write_pt, pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-    if (lump_dev->err != PBIO_SUCCESS) {
+    AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
+    if (err != PBIO_SUCCESS) {
         debug_pr("UART Tx error during ack.\n");
-        PT_EXIT(pt);
+        return err;
     }
 
-    // schedule baud rate change
-    etimer_set(etimer, 10);
-    PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+    // Schedule baud rate change.
+    AWAIT_MS(state, timer, 10);
 
-    // change the baud rate
+    // Change the baud rate.
     pbdrv_uart_set_baud_rate(uart_dev, lump_dev->new_baud_rate);
     debug_pr("set baud: %" PRIu32 "\n", lump_dev->new_baud_rate);
 
@@ -896,13 +889,12 @@ sync:
     }
 
     // Reset other timers
-    etimer_reset_with_new_interval(etimer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
     lump_dev->data_set->time = pbdrv_clock_get_ms() - 1000; // i.e. no data set
     lump_dev->data_set->size = 0;
 
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_DATA;
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -910,50 +902,54 @@ sync:
  *
  * Responsible for sending keep alive messages and scheduled mode changes.
  *
- * @param [in]  pt             The protothread.
+ * @param [in]  state          The protothread state.
  * @param [in]  lump_dev       The LEGO UART device instance.
  * @param [in]  uart_dev       The UART device instance.
  * @param [in]  etimer         The timer for the protothread.
  */
-PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, struct etimer *etimer)) {
+pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer) {
 
     if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_OP;
     }
 
-    PT_BEGIN(pt);
+    pbio_error_t err;
+
+    ASYNC_BEGIN(state);
+
+    pbio_os_timer_set(timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
 
     for (;;) {
 
-        PT_WAIT_UNTIL(pt, etimer_expired(etimer) || lump_dev->mode_switch.requested || lump_dev->data_set->size > 0);
+        AWAIT_UNTIL(state, pbio_os_timer_is_expired(timer) || lump_dev->mode_switch.requested || lump_dev->data_set->size > 0);
 
         // Handle keep alive timeout
-        if (etimer_expired(etimer)) {
+        if (pbio_os_timer_is_expired(timer)) {
             // make sure we are receiving data
             if (!lump_dev->data_rec) {
                 debug_pr("No data since last keepalive\n");
                 lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
-                PT_EXIT(pt);
+                return PBIO_ERROR_TIMEDOUT;
             }
             lump_dev->data_rec = false;
             lump_dev->tx_msg[0] = LUMP_SYS_NACK;
             lump_dev->tx_msg_size = 1;
-            PT_SPAWN(pt, &lump_dev->write_pt, pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-            if (lump_dev->err != PBIO_SUCCESS) {
+            AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
+            if (err != PBIO_SUCCESS) {
                 debug_pr("Error during keepalive.\n");
-                PT_EXIT(pt);
+                return err;
             }
-            etimer_reset_with_new_interval(etimer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
+            pbio_os_timer_set(timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
         }
 
         // Handle requested mode change
         if (lump_dev->mode_switch.requested) {
             lump_dev->mode_switch.requested = false;
             ev3_uart_prepare_tx_msg(lump_dev, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &lump_dev->mode_switch.desired_mode, 1);
-            PT_SPAWN(pt, &lump_dev->write_pt, pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-            if (lump_dev->err != PBIO_SUCCESS) {
+            AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
+            if (err != PBIO_SUCCESS) {
                 debug_pr("Setting requested mode failed.\n");
-                PT_EXIT(pt);
+                return err;
             }
         }
 
@@ -964,16 +960,15 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
                 ev3_uart_prepare_tx_msg(lump_dev, LUMP_MSG_TYPE_DATA, lump_dev->data_set->desired_mode, lump_dev->data_set->bin_data, lump_dev->data_set->size);
                 lump_dev->data_set->size = 0;
                 lump_dev->data_set->time = pbdrv_clock_get_ms();
-                PT_SPAWN(pt, &lump_dev->write_pt, pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-                if (lump_dev->err != PBIO_SUCCESS) {
+                AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
+                if (err != PBIO_SUCCESS) {
                     debug_pr("Setting requested data failed.\n");
-                    PT_EXIT(pt);
+                    return err;
                 }
                 lump_dev->data_set->time = pbdrv_clock_get_ms();
             } else if (pbdrv_clock_get_ms() - lump_dev->data_set->time < 500) {
                 // Not in the right mode yet, try again later for a reasonable amount of time.
-                process_poll(lump_dev->parent_process);
-                PT_YIELD(pt);
+                AWAIT_MS(state, timer, 1);
             } else {
                 // Give up setting data.
                 lump_dev->data_set->size = 0;
@@ -981,7 +976,7 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
         }
     }
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -989,27 +984,29 @@ PT_THREAD(pbio_port_lump_data_send_thread(struct pt *pt, pbio_port_lump_dev_t *l
  *
  * Responsible for receiving data messages and updating mode switch completion state.
  *
- * @param [in]  pt             The protothread.
+ * @param [in]  state          The protothread state.
  * @param [in]  lump_dev       The LEGO UART device instance.
  * @param [in]  uart_dev       The UART device instance.
  */
-PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev)) {
+pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev) {
 
     if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_OP;
     }
+
+    pbio_error_t err;
 
     // REVISIT: This is not the greatest. We can easily get a buffer overrun and
     // loose data. For now, the retry after bad message size helps get back into
     // sync with the data stream.
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     while (true) {
-        PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-        if (lump_dev->err != PBIO_SUCCESS) {
+        AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        if (err != PBIO_SUCCESS) {
             debug_pr("UART Rx data header end error\n");
-            break;
+            return err;
         }
 
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
@@ -1026,17 +1023,18 @@ PT_THREAD(pbio_port_lump_data_recv_thread(struct pt *pt, pbio_port_lump_dev_t *l
             continue;
         }
 
-        PT_SPAWN(pt, &lump_dev->read_pt, pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT, &lump_dev->err));
-        if (lump_dev->err != PBIO_SUCCESS) {
+        AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
+        if (err != PBIO_SUCCESS) {
             debug_pr("UART Rx data end error\n");
-            break;
+            return err;
         }
 
         // at this point, we have a full lump_dev->msg that can be parsed
         pbio_port_lump_lump_parse_msg(lump_dev);
     }
 
-    PT_END(pt);
+    // Unreachable.
+    ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 /**
@@ -1278,7 +1276,7 @@ pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
     // Forces data threads to exit, and therefore port thread will eventually
     // call sync thread again.
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
-    process_poll(lump_dev->parent_process);
+    pbio_os_request_poll();
 
     return PBIO_SUCCESS;
 }

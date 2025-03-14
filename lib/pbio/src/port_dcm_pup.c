@@ -66,25 +66,25 @@ static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
     },
 };
 
+// This process needs 2ms between each yield point, giving the gpio tests
+// enough time to settle.
+#define DCM_AWAIT_MS (2)
+
 /**
  * Thread that detects the device type. It monitors the ID1 and ID2 pins
  * on the port to see when devices are connected or disconnected.
  *
- * @param [in]  pt          The process thread.
- * @param [in]  etimer      The etimer to use for timing.
+ * @param [in]  state       The process thread state.
+ * @param [in]  timer       The timer to use for timing.
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     dcm->prev_type_id = LEGO_DEVICE_TYPE_ID_NONE;
     dcm->dev_id_match_count = 0;
-
-    // This process needs 2ms between each yield point, giving the gpio tests
-    // enough time to settle.
-    etimer_set(etimer, 2);
 
     // Keep running until a UART device is definitively found.
     while (dcm->dev_id_match_count < AFFIRMATIVE_MATCH_COUNT || dcm->prev_type_id != LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART) {
@@ -99,8 +99,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
         // set ID2 as input
         pbdrv_gpio_input(&pins->p6);
 
-        etimer_restart(etimer);
-        PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
         // save current ID2 value
         dcm->prev_gpio_value = pbdrv_gpio_input(&pins->p6);
@@ -108,8 +107,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
         // set ID1 low
         pbdrv_gpio_out_low(&pins->uart_tx);
 
-        etimer_restart(etimer);
-        PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
         // read ID2
         dcm->gpio_value = pbdrv_gpio_input(&pins->p6);
@@ -123,8 +121,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             pbdrv_gpio_out_high(&pins->uart_buf);
             pbdrv_gpio_input(&pins->uart_tx);
 
-            etimer_restart(etimer);
-            PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+            AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // ID1 is inverse of touch sensor value
             // TODO: save this value to sensor dcm
@@ -140,8 +137,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // set ID1 high
             pbdrv_gpio_out_high(&pins->uart_tx);
 
-            etimer_restart(etimer);
-            PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+            AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // read ID1
             dcm->gpio_value = pbdrv_gpio_input(&pins->p5);
@@ -160,8 +156,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
                 pbdrv_gpio_out_high(&pins->uart_buf);
                 pbdrv_gpio_input(&pins->uart_tx);
 
-                etimer_restart(etimer);
-                PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+                AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
                 // read ID1
                 if (pbdrv_gpio_input(&pins->p5) == 1) {
@@ -173,8 +168,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
                 }
             }
 
-            etimer_restart(etimer);
-            PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+            AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // set ID1 as input
             pbdrv_gpio_out_high(&pins->uart_buf);
@@ -183,8 +177,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // set ID2 high
             pbdrv_gpio_out_high(&pins->p6);
 
-            etimer_restart(etimer);
-            PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+            AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // read ID1
             dcm->prev_gpio_value = pbdrv_gpio_input(&pins->p5);
@@ -192,8 +185,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // set ID2 low
             pbdrv_gpio_out_low(&pins->p6);
 
-            etimer_restart(etimer);
-            PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+            AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // read ID1
             dcm->gpio_value = pbdrv_gpio_input(&pins->p5);
@@ -218,8 +210,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
                 // set ID2 high
                 pbdrv_gpio_out_high(&pins->p6);
 
-                etimer_restart(etimer);
-                PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+                AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
                 // if ID2 is high
                 if (pbdrv_gpio_input(&pins->uart_rx) == 1) {
@@ -233,8 +224,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
                     // detection.
                     pbdrv_gpio_out_low(&pins->uart_rx);
 
-                    etimer_restart(etimer);
-                    PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+                    AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
                     // if ID2 is low
                     if (pbdrv_gpio_input(&pins->uart_rx) == 0) {
@@ -257,8 +247,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             }
         }
 
-        etimer_restart(etimer);
-        PT_YIELD_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
         // set ID2 as input
         pbdrv_gpio_input(&pins->p6);
@@ -297,7 +286,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
     // raise.
     dcm->dev_id_match_count = 0;
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 /**

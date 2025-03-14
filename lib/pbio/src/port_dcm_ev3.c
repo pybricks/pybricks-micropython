@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 The Pybricks Authors
 
-#include <contiki.h>
 #include <pbio/config.h>
 
 #include <pbio/port_interface.h>
@@ -230,64 +229,62 @@ typedef struct {
 /**
  * Thread that reads one color sensor calibration data byte.
  *
- * This is slower than it needs to be since 1ms is the lowest etimer resolution.
+ * This is slower than it needs to be since 1ms is the lowest timer resolution.
  * In total we read 54 bytes * 8 bits * 2 cycles = 864 cycles = 864ms.
  * Since this is only used during the initial sensor setup, this is not worth
  * optimizing with a dedicated timer.
  *
- * @param [in]  pt          The process thread.
- * @param [in]  state       The sensor state.
- * @param [in]  pins        The ioport pins.
- * @param [in]  etimer      The etimer to use for timing.
- * @param [out] msg         The message byte.
+ * @param [in]  state         The thread state.
+ * @param [in]  sensor_state  The sensor state.
+ * @param [in]  pins          The ioport pins.
+ * @param [in]  timer        The timer to use for timing.
+ * @param [out] msg           The message byte.
  */
-PT_THREAD(pbio_port_dcm_nxt_color_rx_msg(struct pt *pt, pbio_port_dcm_nxt_color_sensor_state_t *state, const pbdrv_ioport_pins_t *pins, struct etimer *etimer, uint8_t *msg)) {
+static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_color_sensor_state_t *sensor_state, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t *msg) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     *msg = 0;
     pbdrv_gpio_input(&pins->p6);
 
     // Read 8 bits while toggling the "clock".
-    for (state->bit = 0; state->bit < 8; state->bit++) {
+    for (sensor_state->bit = 0; sensor_state->bit < 8; sensor_state->bit++) {
 
         // Clock high and wait for the data bit to settle.
         pbdrv_gpio_out_high(&pins->p5);
-        etimer_set(etimer, 1);
-        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, 1);
 
-        *msg |= pbdrv_gpio_input(&pins->p6) << state->bit;
+        *msg |= pbdrv_gpio_input(&pins->p6) << sensor_state->bit;
 
         // Clock low and wait for sensor to prepare next bit.
         pbdrv_gpio_out_low(&pins->p5);
-        etimer_set(etimer, 1);
-        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, 1);
     }
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
  * Thread that writes one color sensor data byte.
  *
- * @param [in]  pt          The process thread.
- * @param [in]  state       The sensor state.
- * @param [in]  pins        The ioport pins.
- * @param [in]  etimer      The etimer to use for timing.
- * @param [in]  msg         The message byte.
+ * @param [in]  state         The thread state.
+ * @param [in]  sensor_state  The sensor state.
+ * @param [in]  pins          The ioport pins.
+ * @param [in]  timer        The timer to use for timing.
+ * @param [in]  msg           The message byte.
  */
-PT_THREAD(pbio_port_dcm_nxt_color_tx_msg(struct pt *pt, pbio_port_dcm_nxt_color_sensor_state_t *state, const pbdrv_ioport_pins_t *pins, struct etimer *etimer, uint8_t msg)) {
+static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_color_sensor_state_t *sensor_state, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t msg) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     pbdrv_gpio_out_low(&pins->p5);
     pbdrv_gpio_out_low(&pins->p6);
 
     // Send 8 bits while toggling the "clock".
-    for (state->bit = 0; state->bit < 8; state->bit++) {
+    for (sensor_state->bit = 0; sensor_state->bit < 8; sensor_state->bit++) {
 
         // Set the data bit.
-        if (msg & (1 << state->bit)) {
+        if (msg & (1 << sensor_state->bit)) {
             pbdrv_gpio_out_high(&pins->p6);
         } else {
             pbdrv_gpio_out_low(&pins->p6);
@@ -295,19 +292,17 @@ PT_THREAD(pbio_port_dcm_nxt_color_tx_msg(struct pt *pt, pbio_port_dcm_nxt_color_
 
         // Toggle the clock high and low, giving sensor time to register bit.
         pbdrv_gpio_out_high(&pins->p5);
-        etimer_set(etimer, 1);
-        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, 1);
         pbdrv_gpio_out_low(&pins->p5);
-        etimer_set(etimer, 1);
-        PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+        AWAIT_MS(state, timer, 1);
     }
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 // Device connection manager state for each port
 struct _pbio_port_dcm_t {
-    struct pt child;
+    pbio_os_state_t child;
     uint32_t count;
     bool connected;
     pbio_port_dcm_category_t category;
@@ -322,43 +317,39 @@ static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
 #define DCM_LOOP_STEADY_STATE_COUNT (20)
 #define DCM_LOOP_DISCONNECT_COUNT (5)
 
-PT_THREAD(pbio_port_dcm_await_new_nxt_analog_sample(pbio_port_dcm_t * dcm, struct etimer *etimer, const pbdrv_ioport_pins_t *pins, uint32_t *value)) {
-    struct pt *pt = &dcm->child;
+pbio_error_t pbio_port_dcm_await_new_nxt_analog_sample(pbio_port_dcm_t *dcm, pbio_os_timer_t *timer, const pbdrv_ioport_pins_t *pins, uint32_t *value) {
+    pbio_os_state_t *state = &dcm->child;
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     // Wait for LED to settle.
-    etimer_set(etimer, 1);
-    PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+    AWAIT_MS(state, timer, 1);
 
     // Request a new ADC sample. Revisit: Call back on completion instead of time.
     pbdrv_adc_update_soon();
-    etimer_set(etimer, 4);
-    PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+    AWAIT_MS(state, timer, 4);
 
     // Get the value.
     uint8_t pin = dcm->category == DCM_CATEGORY_NXT_COLOR ? 6 : 1;
     *value = pbio_port_dcm_get_mv(pins, pin);
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
  * Thread that detects the device type. It monitors the ID1 and ID2 pins
  * on the port to see when devices are connected or disconnected.
  *
- * @param [in]  pt          The process thread.
- * @param [in]  etimer      The etimer to use for timing.
+ * @param [in]  state       The protothread state.
+ * @param [in]  timer       The timer to use for timing.
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins)) {
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
-    PT_BEGIN(pt);
+    ASYNC_BEGIN(state);
 
     for (;;) {
-
-        etimer_set(etimer, DCM_LOOP_TIME_MS);
 
         debug_pr("Start device scan\n");
         dcm->category = DCM_CATEGORY_NONE;
@@ -366,14 +357,13 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
 
         // Wait for any device to be connected.
         for (dcm->count = 0; dcm->count < DCM_LOOP_STEADY_STATE_COUNT; dcm->count++) {
-            pbio_port_dcm_pin_state_t state = pbio_port_dcm_get_state(pins);
-            pbio_port_dcm_category_t category = pbio_port_dcm_get_category(state);
+            pbio_port_dcm_pin_state_t pin_state = pbio_port_dcm_get_state(pins);
+            pbio_port_dcm_category_t category = pbio_port_dcm_get_category(pin_state);
             if (category != dcm->category || category == DCM_CATEGORY_NONE) {
                 dcm->count = 0;
                 dcm->category = category;
             }
-            PT_WAIT_UNTIL(pt, etimer_expired(etimer));
-            etimer_reset(etimer);
+            AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
         }
         debug_pr("Device kind detected: %d\n", dcm->category);
         dcm->connected = true;
@@ -385,7 +375,7 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             debug_pr("Continue as LUMP process\n");
             // Exit EV3 device manager, letting LUMP manager take over.
             // That process runs until the device no longer reports data.
-            PT_EXIT(pt);
+            return PBIO_SUCCESS;
         }
 
         if (dcm->category == DCM_CATEGORY_NXT_TEMPERATURE) {
@@ -403,17 +393,16 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             // The original firmware has a reset sequence where p6 is high and
             // then p5 is toggled twice. It also works with 8 toggles, we can
             // just use the send function with 0xff to achieve the same effect.
-            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, etimer, 0xff));
-            etimer_set(etimer, 100);
-            PT_WAIT_UNTIL(pt, etimer_expired(etimer));
+            AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 0xff));
+            AWAIT_MS(state, timer, 100);
 
             // Set to full color mode.
-            PT_SPAWN(pt, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, etimer, 13));
+            AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 13));
 
             // Receive all calibration info.
             for (dcm->count = 0; dcm->count < sizeof(pbio_port_dcm_nxt_color_sensor_data_t); dcm->count++) {
-                PT_SPAWN(pt, &dcm->child,
-                    pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color_state, pins, etimer, (uint8_t *)&dcm->nxt_color_state.data + dcm->count));
+                AWAIT(state, &dcm->child,
+                    pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, (uint8_t *)&dcm->nxt_color_state.data + dcm->count));
             }
 
             // Checksum and continue on failure.
@@ -426,9 +415,9 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             while (!pbdrv_gpio_input(&pins->p2)) {
 
                 pbdrv_gpio_out_low(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.a));
+                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.a));
                 pbdrv_gpio_out_high(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.r));
+                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.r));
 
                 if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
                     // Light sensor doesn't have green and blue.
@@ -436,9 +425,9 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
                 }
 
                 pbdrv_gpio_out_low(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.g));
+                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.g));
                 pbdrv_gpio_out_high(&pins->p5);
-                PT_SPAWN(pt, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, etimer, pins, &dcm->nxt_rgba.b));
+                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.b));
 
             }
             pbdrv_gpio_out_low(&pins->p5);
@@ -455,13 +444,12 @@ PT_THREAD(pbio_port_dcm_thread(struct pt *pt, struct etimer *etimer, pbio_port_d
             if (!pbdrv_gpio_input(gpio)) {
                 dcm->count = 0;
             }
-            PT_WAIT_UNTIL(pt, etimer_expired(etimer));
-            etimer_reset(etimer);
+            AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
         }
         debug_pr("Device disconnected\n");
     }
 
-    PT_END(pt);
+    ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
