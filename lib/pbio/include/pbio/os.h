@@ -138,7 +138,7 @@ struct _pbio_os_process_t {
  *
  * @param [in]  state    Protothread state.
  */
-#define ASYNC_BEGIN(state) { PB_LC_RESUME(state)
+#define ASYNC_BEGIN(state) { char do_yield_now = 0; if (do_yield_now) {;} PB_LC_RESUME(state)
 
 /**
  * Declare the end of a protothread and returns with given code.
@@ -180,6 +180,13 @@ struct _pbio_os_process_t {
         }                                        \
     } while (0)
 
+/**
+ * Awaits a protothread until it is done.
+ *
+ * @param [in]  state      Protothread state.
+ * @param [in]  child      Protothread state of the child.
+ * @param [in]  statement  The statement to await.
+ */
 #define AWAIT(state, child, statement)          \
     do {                                        \
         ASYNC_INIT((child));                    \
@@ -189,6 +196,15 @@ struct _pbio_os_process_t {
         }                                       \
     } while (0)
 
+/**
+ * Awaits two protothreads until one of them is done.
+ *
+ * @param [in]  state       Protothread state.
+ * @param [in]  child1      Protothread state of the first child.
+ * @param [in]  child2      Protothread state of the second child.
+ * @param [in]  statement1  The first statement to await.
+ * @param [in]  statement2  The second statement to await.
+ */
 #define AWAIT_RACE(state, child1, child2, statement1, statement2)                    \
     do {                                                                             \
         ASYNC_INIT((child1));                                                        \
@@ -197,6 +213,24 @@ struct _pbio_os_process_t {
         if ((statement1) == PBIO_ERROR_AGAIN && (statement2) == PBIO_ERROR_AGAIN) {  \
             return PBIO_ERROR_AGAIN;                                                 \
         }                                                                            \
+    } while (0)
+
+/**
+ * Yields the protothread once and polls to request handling again immediately.
+ *
+ * Should be used sparingly as it can cause busy waiting. Processes will keep
+ * running, but there is always another event pending.
+ *
+ * @param [in]  state     Protothread state.
+ */
+#define AWAIT_ONCE(state)                       \
+    do {                                        \
+        do_yield_now = 1;                       \
+        PB_LC_SET(state);                       \
+        if (do_yield_now) {                     \
+            pbio_os_request_poll();             \
+            return PBIO_ERROR_AGAIN;            \
+        }                                       \
     } while (0)
 
 #define AWAIT_MS(state, timer, duration)        \
