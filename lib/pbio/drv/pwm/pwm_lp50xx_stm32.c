@@ -12,11 +12,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <contiki.h>
 #include STM32_HAL_H
 
 #include <pbdrv/pwm.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 
 #include "../core.h"
@@ -84,8 +84,8 @@ typedef struct {
     DMA_HandleTypeDef hdma_rx;
     /** HAL Tx DMA data */
     DMA_HandleTypeDef hdma_tx;
-    /** Protothread */
-    struct pt pt;
+    /** Process for this device */
+    pbio_os_process_t process;
     /** Pointer to generic PWM device instance */
     pbdrv_pwm_dev_t *pwm;
     /** PWM values */
@@ -94,7 +94,6 @@ typedef struct {
     bool changed;
 } pbdrv_pwm_lp50xx_stm32_priv_t;
 
-PROCESS(pwm_lp50xx_stm32, "pwm_lp50xx_stm32");
 static pbdrv_pwm_lp50xx_stm32_priv_t dev_priv[PBDRV_CONFIG_PWM_LP50XX_STM32_NUM_DEV];
 
 static pbio_error_t pbdrv_pwm_lp50xx_stm32_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t value) {
@@ -107,7 +106,7 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_set_duty(pbdrv_pwm_dev_t *dev, uint32
     // (the data sheet says 12-bit PWM but the I2C registers are only 8-bit).
     priv->values[ch] = value >> 8;
     priv->changed = true;
-    process_poll(&pwm_lp50xx_stm32);
+    pbio_os_request_poll();
 
     return PBIO_SUCCESS;
 }
@@ -115,6 +114,66 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_set_duty(pbdrv_pwm_dev_t *dev, uint32
 static const pbdrv_pwm_driver_funcs_t pbdrv_pwm_lp50xx_stm32_funcs = {
     .set_duty = pbdrv_pwm_lp50xx_stm32_set_duty,
 };
+
+static pbio_error_t pbdrv_pwm_lp50xx_stm32_process_thread(pbio_os_state_t *state, void *context) {
+
+    pbdrv_pwm_lp50xx_stm32_priv_t *priv = context;
+
+    ASYNC_BEGIN(state);
+
+    // Need to allow all drivers to init first.
+    AWAIT_ONCE(state);
+
+    static const struct {
+        uint8_t reg;
+        uint8_t values[11];
+    } __attribute__((packed)) init_data = {
+        .reg = DEVICE_CONFIG0,
+        .values = {
+            [DEVICE_CONFIG0] = DEVICE_CONFIG0_CHIP_EN,
+            [DEVICE_CONFIG1] = DEVICE_CONFIG1_POWER_SAVE_EN | DEVICE_CONFIG1_PWM_DITHERING_EN | DEVICE_CONFIG1_AUTO_INCR_EN,
+            [LED_CONFIG0] = 0,
+            [BANK_BRIGHTNESS] = 0,
+            [BANK_A_COLOR] = 0,
+            [BANK_B_COLOR] = 0,
+            [BANK_C_COLOR] = 0,
+            // Official LEGO firmware has LED0_BRIGHTNESS set to 255 and LED1_BRIGHTNESS
+            // set to 190 but then divides the incoming PWM duty cycle by 5. By doing
+            // the divide by 5 here, we end up with the same max brightness while
+            // allowing full dynamic range of the PWM duty cycle.
+            [LED0_BRIGHTNESS] = 51,
+            [LED1_BRIGHTNESS] = 38,
+            [LED2_BRIGHTNESS] = 0,
+            [LED3_BRIGHTNESS] = 0,
+        }
+    };
+
+    HAL_FMPI2C_Master_Transmit_DMA(&priv->hfmpi2c, I2C_ADDR, (void *)&init_data, sizeof(init_data));
+    AWAIT_UNTIL(state, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
+
+    // initialization is finished so consumers can use this PWM device now.
+    priv->pwm->funcs = &pbdrv_pwm_lp50xx_stm32_funcs;
+    pbdrv_init_busy_down();
+
+    for (;;) {
+        AWAIT_UNTIL(state, priv->changed);
+
+        static struct {
+            uint8_t reg;
+            uint8_t values[LP50XX_NUM_CH];
+        } __attribute__((packed)) color_data = {
+            .reg = OUT0_COLOR,
+        };
+
+        memcpy(color_data.values, priv->values, LP50XX_NUM_CH);
+        HAL_FMPI2C_Master_Transmit_DMA(&priv->hfmpi2c, I2C_ADDR, (void *)&color_data, sizeof(color_data));
+        priv->changed = false;
+        AWAIT_UNTIL(state, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
+    }
+
+    // Unreachable.
+    ASYNC_END(PBIO_ERROR_FAILED);
+}
 
 void pbdrv_pwm_lp50xx_stm32_init(pbdrv_pwm_dev_t *devs) {
     for (int i = 0; i < PBDRV_CONFIG_PWM_LP50XX_STM32_NUM_DEV; i++) {
@@ -186,68 +245,14 @@ void pbdrv_pwm_lp50xx_stm32_init(pbdrv_pwm_dev_t *devs) {
         HAL_NVIC_SetPriority(pdata->i2c_er_irq, 7, 3);
         HAL_NVIC_EnableIRQ(pdata->i2c_er_irq);
 
-        PT_INIT(&priv->pt);
         priv->pwm = pwm;
         pwm->pdata = pdata;
         pwm->priv = priv;
+        pbio_os_process_start(&priv->process, pbdrv_pwm_lp50xx_stm32_process_thread, priv);
+
         // don't set funcs yet since we are not fully initialized
         pbdrv_init_busy_up();
     }
-
-    process_start(&pwm_lp50xx_stm32);
-}
-
-static PT_THREAD(pbdrv_pwm_lp50xx_stm32_handle_event(pbdrv_pwm_lp50xx_stm32_priv_t * priv, process_event_t ev)) {
-    PT_BEGIN(&priv->pt);
-
-    static const struct {
-        uint8_t reg;
-        uint8_t values[11];
-    } __attribute__((packed)) init_data = {
-        .reg = DEVICE_CONFIG0,
-        .values = {
-            [DEVICE_CONFIG0] = DEVICE_CONFIG0_CHIP_EN,
-            [DEVICE_CONFIG1] = DEVICE_CONFIG1_POWER_SAVE_EN | DEVICE_CONFIG1_PWM_DITHERING_EN | DEVICE_CONFIG1_AUTO_INCR_EN,
-            [LED_CONFIG0] = 0,
-            [BANK_BRIGHTNESS] = 0,
-            [BANK_A_COLOR] = 0,
-            [BANK_B_COLOR] = 0,
-            [BANK_C_COLOR] = 0,
-            // Official LEGO firmware has LED0_BRIGHTNESS set to 255 and LED1_BRIGHTNESS
-            // set to 190 but then divides the incoming PWM duty cycle by 5. By doing
-            // the divide by 5 here, we end up with the same max brightness while
-            // allowing full dynamic range of the PWM duty cycle.
-            [LED0_BRIGHTNESS] = 51,
-            [LED1_BRIGHTNESS] = 38,
-            [LED2_BRIGHTNESS] = 0,
-            [LED3_BRIGHTNESS] = 0,
-        }
-    };
-
-    HAL_FMPI2C_Master_Transmit_DMA(&priv->hfmpi2c, I2C_ADDR, (void *)&init_data, sizeof(init_data));
-    PT_WAIT_UNTIL(&priv->pt, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
-
-    // initialization is finished so consumers can use this PWM device now.
-    priv->pwm->funcs = &pbdrv_pwm_lp50xx_stm32_funcs;
-    pbdrv_init_busy_down();
-
-    for (;;) {
-        PT_WAIT_UNTIL(&priv->pt, priv->changed);
-
-        static struct {
-            uint8_t reg;
-            uint8_t values[LP50XX_NUM_CH];
-        } __attribute__((packed)) color_data = {
-            .reg = OUT0_COLOR,
-        };
-
-        memcpy(color_data.values, priv->values, LP50XX_NUM_CH);
-        HAL_FMPI2C_Master_Transmit_DMA(&priv->hfmpi2c, I2C_ADDR, (void *)&color_data, sizeof(color_data));
-        priv->changed = false;
-        PT_WAIT_UNTIL(&priv->pt, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
-    }
-
-    PT_END(&priv->pt);
 }
 
 /**
@@ -287,24 +292,7 @@ void pbdrv_pwm_lp50xx_stm32_i2c_er_irq(uint8_t index) {
 }
 
 void HAL_FMPI2C_MasterTxCpltCallback(FMPI2C_HandleTypeDef *hfmpi2c) {
-    process_poll(&pwm_lp50xx_stm32);
-}
-
-PROCESS_THREAD(pwm_lp50xx_stm32, ev, data) {
-    PROCESS_BEGIN();
-
-    // need to allow all drivers to init first
-    PROCESS_PAUSE();
-
-    for (;;) {
-        for (int i = 0; i < PBDRV_CONFIG_PWM_LP50XX_STM32_NUM_DEV; i++) {
-            pbdrv_pwm_lp50xx_stm32_priv_t *priv = &dev_priv[i];
-            pbdrv_pwm_lp50xx_stm32_handle_event(priv, ev);
-        }
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
+    pbio_os_request_poll();
 }
 
 #endif // PBDRV_CONFIG_PWM_LP50XX_STM32
