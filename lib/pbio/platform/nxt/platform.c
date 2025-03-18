@@ -9,6 +9,8 @@
 #include <pbdrv/reset.h>
 #include <pbio/button.h>
 #include <pbio/main.h>
+#include <pbio/os.h>
+
 #include <pbsys/core.h>
 #include <pbsys/main.h>
 #include <pbsys/program_stop.h>
@@ -75,13 +77,13 @@ static bool bluetooth_connect(void) {
                     return false;
                 }
 
-                pbio_do_one_event();
+                pbio_os_run_processes_once();
             }
 
             nx_bt_stream_open(connection_handle);
         }
 
-        pbio_do_one_event();
+        pbio_os_run_processes_once();
     }
 
     nx_display_clear();
@@ -131,7 +133,7 @@ void SystemInit(void) {
                 goto out;
             }
 
-            pbio_do_one_event();
+            pbio_os_run_processes_once();
         }
 
         nx_display_string("Connected. REPL.\n");
