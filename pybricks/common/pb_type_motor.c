@@ -119,7 +119,11 @@ static mp_obj_t pb_type_Motor_make_new(const mp_obj_type_t *type, size_t n_args,
 
     // Get and initialize servo
     type_id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
-    pb_assert(pbio_port_get_servo(port, &type_id, &self->srv));
+    pbio_error_t err;
+    while ((err = pbio_port_get_servo(port, &type_id, &self->srv)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1);
+    }
+    pb_assert(err);
     self->dcmotor = self->srv->dcmotor;
 
     bool reset_angle = mp_obj_is_true(reset_angle_in);
