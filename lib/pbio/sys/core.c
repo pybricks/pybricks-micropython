@@ -30,7 +30,7 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
 
     for (;;) {
         PROCESS_WAIT_EVENT();
-        pbsys_hmi_handle_status_change((pbsys_status_change_t)ev, (pbio_pybricks_status_t)data);
+
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_battery_poll();

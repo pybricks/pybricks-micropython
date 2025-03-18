@@ -12,6 +12,8 @@
 #include <pbdrv/clock.h>
 #include <pbsys/status.h>
 
+#include "hmi.h"
+
 static struct {
     /** Status indications as bit flags */
     uint32_t flags;
@@ -31,9 +33,11 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
 
     pbsys_status.flags = new_flags;
     pbsys_status.changed_time[status] = pbdrv_clock_get_ms();
-    // REVISIT: this can drop events if event queue is full
-    process_post(PROCESS_BROADCAST, set ? PBSYS_STATUS_CHANGE_SET : PBSYS_STATUS_CHANGE_CLEARED,
-        (process_data_t)status);
+
+    // hmi is the only subscriber to status changes, so call its handler
+    // directly. All other processes just poll the status as needed. If we ever
+    // need more subscribers, we could register callbacks and call them here.
+    pbsys_hmi_handle_status_change(set ? PBSYS_STATUS_CHANGE_SET : PBSYS_STATUS_CHANGE_CLEARED, status);
 }
 
 /**
