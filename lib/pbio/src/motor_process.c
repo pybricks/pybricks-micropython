@@ -1,30 +1,32 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2023 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
+
+#include <pbdrv/clock.h>
 
 #include <pbio/battery.h>
 #include <pbio/control.h>
 #include <pbio/drivebase.h>
 #include <pbio/servo.h>
 
-#include <contiki.h>
+#include <pbio/os.h>
 
 #if PBIO_CONFIG_MOTOR_PROCESS != 0
 
-PROCESS(pbio_motor_process, "servo");
+static pbio_os_process_t pbio_motor_process;
 
-PROCESS_THREAD(pbio_motor_process, ev, data) {
-    static struct etimer timer;
+static pbio_error_t pbio_motor_process_thread(pbio_os_state_t *state, void *context) {
 
-    PROCESS_BEGIN();
+    static pbio_os_timer_t timer;
+
+    ASYNC_BEGIN(state);
+
+    timer.start = pbdrv_clock_get_ms() - PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
+    timer.duration = PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
 
     // Initialize battery voltage.
     pbio_battery_init();
 
-    etimer_set(&timer, PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
-
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-
         // Update battery voltage.
         pbio_battery_update();
 
@@ -34,27 +36,26 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         // Update servos
         pbio_servo_update_all();
 
-        clock_time_t now = clock_time();
+        // Increment start time instead waiting from here, making the
+        // loop time closer to the target on average.
+        timer.start += PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
 
-        // If polling was delayed too long, we need to ensure that the next
-        // poll is a minimum of 1ms in the future. If we don't, the poll loop
-        // will not yield until and the next update will be called with a 0 time
-        // diff which causes issues.
-        if (now - etimer_start_time(&timer) >= 2 * PBIO_CONFIG_CONTROL_LOOP_TIME_MS) {
-            timer.timer.start = now - (PBIO_CONFIG_CONTROL_LOOP_TIME_MS - 1);
+        // In the rare case that polling was delayed too long, we need to
+        // ensure that the next poll is a minimum of 1ms in the future so we
+        // don't have 0 time deltas in the control code.
+        while (pbio_os_timer_is_expired(&timer)) {
+            timer.start++;
         }
 
-        // Reset timer to wait for next update. Using etimer_reset() instead
-        // of etimer_restart() makes average update period closer to the expected
-        // PBIO_CONFIG_CONTROL_LOOP_TIME_MS when occasional delays occur.
-        etimer_reset(&timer);
+        AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
     }
 
-    PROCESS_END();
+    // Unreachable.
+    ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbio_motor_process_start(void) {
-    process_start(&pbio_motor_process);
+    pbio_os_process_start(&pbio_motor_process, pbio_motor_process_thread, NULL);
 }
 
 #endif // PBIO_CONFIG_MOTOR_PROCESS

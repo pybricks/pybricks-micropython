@@ -58,7 +58,7 @@ static void pbio_test_run_thread(void *env, bool start_pbio_processes) {
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while (PT_SCHEDULE(test_thread(&pt))) {
-        pbio_do_one_event();
+        pbio_os_run_processes_once();
         if (timeout > 0) {
             clock_gettime(CLOCK_MONOTONIC, &now_time);
             if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {
