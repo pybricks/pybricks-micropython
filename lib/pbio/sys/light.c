@@ -11,7 +11,6 @@
 #include <pbdrv/led.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
-#include <pbio/event.h>
 #include <pbio/light.h>
 #include <pbio/util.h>
 #include <pbsys/config.h>
@@ -183,7 +182,7 @@ void pbsys_status_light_init(void) {
     #endif
 }
 
-static void pbsys_status_light_handle_status_change(void) {
+static void pbsys_status_light_update_patterns(void) {
 
     // Warning pattern precedence.
     pbsys_status_light_indication_warning_t warning_indication = PBSYS_STATUS_LIGHT_INDICATION_WARNING_NONE;
@@ -248,11 +247,11 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
 }
 #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 
-void pbsys_status_light_handle_event(process_event_t event, process_data_t data) {
-    if (event == PBIO_EVENT_STATUS_SET || event == PBIO_EVENT_STATUS_CLEARED) {
-        pbsys_status_light_handle_status_change();
+void pbsys_status_light_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
+    if (event == PBSYS_STATUS_CHANGE_SET || event == PBSYS_STATUS_CHANGE_CLEARED) {
+        pbsys_status_light_update_patterns();
     }
-    if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
+    if (event == PBSYS_STATUS_CHANGE_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         animation_progress = 0;
         pbio_light_animation_init(&pbsys_status_light_main->animation, default_user_program_light_animation_next);

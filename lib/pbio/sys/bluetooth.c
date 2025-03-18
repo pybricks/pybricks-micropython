@@ -15,7 +15,6 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbio/error.h>
-#include <pbio/event.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbsys/host.h>

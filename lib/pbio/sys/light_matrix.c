@@ -11,7 +11,6 @@
 
 #include <pbdrv/led.h>
 #include <pbio/error.h>
-#include <pbio/event.h>
 #include <pbio/light_matrix.h>
 #include <pbio/util.h>
 #include <pbsys/config.h>
@@ -139,8 +138,8 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
     return 40;
 }
 
-void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t data) {
-    if (event == PBIO_EVENT_STATUS_SET) {
+void pbsys_hub_light_matrix_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
+    if (event == PBSYS_STATUS_CHANGE_SET) {
         pbio_pybricks_status_t status = (intptr_t)data;
 
         if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
@@ -156,7 +155,7 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
             // first, which is handled below to avoid a race condition.
             pbsys_hub_light_matrix_start_power_animation();
         }
-    } else if (event == PBIO_EVENT_STATUS_CLEARED) {
+    } else if (event == PBSYS_STATUS_CHANGE_CLEARED) {
         pbio_pybricks_status_t status = (intptr_t)data;
 
         // The user program has ended.
