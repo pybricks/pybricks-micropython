@@ -10,7 +10,6 @@
 #include <contiki.h>
 
 #include <pbdrv/clock.h>
-#include <pbio/event.h>
 #include <pbsys/status.h>
 
 static struct {
@@ -33,7 +32,7 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
     pbsys_status.flags = new_flags;
     pbsys_status.changed_time[status] = pbdrv_clock_get_ms();
     // REVISIT: this can drop events if event queue is full
-    process_post(PROCESS_BROADCAST, set ? PBIO_EVENT_STATUS_SET : PBIO_EVENT_STATUS_CLEARED,
+    process_post(PROCESS_BROADCAST, set ? PBSYS_STATUS_CHANGE_SET : PBSYS_STATUS_CHANGE_CLEARED,
         (process_data_t)status);
 }
 

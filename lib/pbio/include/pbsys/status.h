@@ -16,6 +16,16 @@
 
 #define PBSYS_STATUS_REPORT_SIZE 6
 
+/**
+ * Status flag change.
+ */
+typedef enum {
+    /** System status indicator was set. */
+    PBSYS_STATUS_CHANGE_SET,
+    /** System status indicator was cleared. */
+    PBSYS_STATUS_CHANGE_CLEARED,
+} pbsys_status_change_t;
+
 void pbsys_status_set_program_id(pbio_pybricks_user_program_id_t program_id);
 void pbsys_status_set(pbio_pybricks_status_t status);
 void pbsys_status_clear(pbio_pybricks_status_t status);
