@@ -13,6 +13,8 @@
 
 #include <contiki.h>
 
+#include <pbio/os.h>
+
 #include <tiam1808/armv5/am1808/interrupt.h>
 #include <tiam1808/armv5/cpu.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
@@ -49,6 +51,7 @@ void systick_isr_C(void) {
     ++systick_ms;
 
     etimer_request_poll();
+    pbio_os_request_poll();
 
     /* Enable the timer interrupt */
     TimerIntEnable(SOC_TMR_0_REGS, TMR_INT_TMR34_NON_CAPT_MODE);

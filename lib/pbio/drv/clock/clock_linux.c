@@ -9,6 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <pbio/os.h>
+
 // The SIGNAL option adds a timer that acts as the 1ms tick on embedded systems.
 
 #if PBDRV_CONFIG_CLOCK_LINUX_SIGNAL
@@ -34,6 +36,7 @@ static void handle_signal(int sig) {
     // main thread is interrupted and the event poll hook runs.
     if (pthread_self() == main_thread) {
         etimer_request_poll();
+        pbio_os_request_poll();
     } else {
         pthread_kill(main_thread, TIMER_SIGNAL);
     }

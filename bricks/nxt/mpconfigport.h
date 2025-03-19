@@ -79,17 +79,22 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-uint32_t nx_interrupts_disable(void);
-void nx_interrupts_enable(uint32_t);
+#include <pbio/os.h>
 
-#define MICROPY_BEGIN_ATOMIC_SECTION()     nx_interrupts_disable()
-#define MICROPY_END_ATOMIC_SECTION(state)  nx_interrupts_enable(state)
+#define MICROPY_BEGIN_ATOMIC_SECTION()     pbio_os_hook_disable_irq()
+#define MICROPY_END_ATOMIC_SECTION(state)  pbio_os_hook_enable_irq(state)
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \
-        extern int pbio_do_one_event(void); \
-        pbio_do_one_event(); \
+        extern bool pbio_os_run_processes_once(void); \
+        pbio_os_run_processes_once(); \
     } while (0);
+
+#define MICROPY_GC_HOOK_LOOP(i) do { \
+        if (((i) & 0xf) == 0) { \
+            MICROPY_VM_HOOK_LOOP \
+        } \
+} while (0)
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
