@@ -8,7 +8,6 @@
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
-#include <pbio/event.h>
 #include <pbsys/status.h>
 #include <test-pbio.h>
 
@@ -48,12 +47,6 @@ static PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
-    // ensure that event was broadcast
-    last_event = PROCESS_EVENT_NONE;
-    PT_YIELD(pt);
-    tt_want_uint_op(last_event, ==, PBIO_EVENT_STATUS_SET);
-    tt_want_uint_op(last_data, ==, test_flag);
-
     // ensure that debounce works
     pbio_test_clock_tick(9);
     PT_YIELD(pt);
@@ -78,12 +71,6 @@ static PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test(test_flag));
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
-
-    // ensure that event was broadcast
-    last_event = PROCESS_EVENT_NONE;
-    PT_YIELD(pt);
-    tt_want_uint_op(last_event, ==, PBIO_EVENT_STATUS_CLEARED);
-    tt_want_uint_op(last_data, ==, test_flag);
 
     // ensure that debounce works
     last_event = PROCESS_EVENT_NONE;

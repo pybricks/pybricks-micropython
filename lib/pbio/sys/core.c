@@ -9,6 +9,7 @@
 
 #include <pbsys/battery.h>
 #include <pbsys/bluetooth.h>
+#include <pbsys/status.h>
 
 #include "core.h"
 #include "hmi.h"
@@ -30,7 +31,7 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
 
     for (;;) {
         PROCESS_WAIT_EVENT();
-        pbsys_hmi_handle_event(ev, data);
+
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_battery_poll();

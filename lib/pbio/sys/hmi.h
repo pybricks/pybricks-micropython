@@ -6,9 +6,10 @@
 
 #include <contiki.h>
 #include <pbsys/config.h>
+#include <pbsys/status.h>
 
 void pbsys_hmi_init(void);
-void pbsys_hmi_handle_event(process_event_t event, process_data_t data);
+void pbsys_hmi_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data);
 void pbsys_hmi_poll(void);
 
 #if PBSYS_CONFIG_HMI_NUM_SLOTS
