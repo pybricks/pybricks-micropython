@@ -69,6 +69,8 @@ export const zipFileNameMap: ReadonlyMap<HubType, string> = new Map([
     [HubType.TechnicHub, 'technichub.zip'],
     [HubType.PrimeHub, 'primehub.zip'],
     [HubType.EssentialHub, 'essentialhub.zip'],
+    [HubType.NXT, 'nxt.zip'],
+    [HubType.EV3, 'ev3.zip'],
 ]);
 
 /**

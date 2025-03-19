@@ -88,12 +88,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub]
+        hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub, ev3]
     needs: [mpy_cross]
     runs-on: ubuntu-22.04
     steps:
     - name: Install cross-compiler
-      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
+      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi u-boot-tools
     - name: Checkout repo
       uses: actions/checkout@v4
       with:

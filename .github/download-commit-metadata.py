@@ -27,6 +27,7 @@ HUBS = [
     "primehub",
     "essentialhub",
     "nxt",
+    "ev3",
 ]
 
 QUERY = """query {

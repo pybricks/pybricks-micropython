@@ -57,7 +57,7 @@ for commit in pybricks.iter_commits(
 
     # update only required submodules
     pybricks.git.submodule("update", "--init", "micropython")
-    if args.hub in ["cityhub", "movehub", "technichub", "primehub", "essentialhub"]:
+    if args.hub in ["cityhub", "movehub", "technichub", "primehub", "essentialhub", "nxt", "ev3"]:
         pybricks.submodule("micropython").module().git.submodule(
             "update", "--init", "lib/micropython-lib"
         )
@@ -77,6 +77,7 @@ for commit in pybricks.iter_commits(
             "clean",
             "build/firmware-base.bin",
             "all",
+            "-j"
         ]
     )
 

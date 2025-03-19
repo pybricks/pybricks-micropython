@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Install cross-compiler
-        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
+        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi u-boot-tools
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -33,6 +33,8 @@ jobs:
           make $MAKEOPTS -C bricks/technichub
           make $MAKEOPTS -C bricks/primehub
           make $MAKEOPTS -C bricks/essentialhub
+          make $MAKEOPTS -C bricks/nxt
+          make $MAKEOPTS -C bricks/ev3
       - name: Get tag
         run: echo "GITHUB_TAG=${GITHUB_REF#*refs/tags/}" >> $GITHUB_ENV
       - name: Create Release and Upload Assets
@@ -45,7 +47,7 @@ jobs:
           else
             PRERELEASE_FLAG=""
           fi
-          HUBS="movehub cityhub technichub primehub essentialhub"
+          HUBS="movehub cityhub technichub primehub essentialhub nxt ev3"
           for HUB in $HUBS; do
             NEW_FILENAME="./bricks/$HUB/build/pybricks-$HUB-${{ env.GITHUB_TAG }}.zip"
             mv "./bricks/$HUB/build/firmware.zip" "$NEW_FILENAME"

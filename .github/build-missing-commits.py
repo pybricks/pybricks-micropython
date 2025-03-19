@@ -20,7 +20,7 @@ PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
 PYBRICKS_BRANCH = "origin/master"
 
-HUBS = ["movehub", "cityhub", "technichub", "primehub", "essentialhub", "nxt"]
+HUBS = ["movehub", "cityhub", "technichub", "primehub", "essentialhub", "nxt", "ev3"]
 
 GITHUB_RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER")
 
@@ -114,6 +114,7 @@ for commit in pybricks.iter_commits(
                 os.path.join(PYBRICKS_PATH, "bricks", target),
                 "clean",
                 "build/firmware-base.bin",
+                "-j"
             ]
         )
         for target in hubs
