@@ -114,7 +114,6 @@ for commit in pybricks.iter_commits(
                 os.path.join(PYBRICKS_PATH, "bricks", target),
                 "clean",
                 "build/firmware-base.bin",
-                "-j"
             ]
         )
         for target in hubs

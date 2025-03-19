@@ -77,7 +77,6 @@ for commit in pybricks.iter_commits(
             "clean",
             "build/firmware-base.bin",
             "all",
-            "-j"
         ]
     )
 
