@@ -2,11 +2,11 @@
 // Copyright (c) 2025 The Pybricks Authors
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include <pbio/os.h>
 #include <pbio/util.h>
 
-#include <stdio.h>
 #include <pbdrv/clock.h>
 
 /**
@@ -35,7 +35,7 @@ bool pbio_os_timer_is_expired(pbio_os_timer_t *timer) {
 /**
  * Whether a poll request is pending.
  */
-static bool poll_request_is_pending = false;
+static volatile bool poll_request_is_pending = false;
 
 /**
  * Request that the event loop polls all processes.
