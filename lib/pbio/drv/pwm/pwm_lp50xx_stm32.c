@@ -119,10 +119,10 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_process_thread(pbio_os_state_t *state
 
     pbdrv_pwm_lp50xx_stm32_priv_t *priv = context;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Need to allow all drivers to init first.
-    AWAIT_ONCE(state);
+    PBIO_OS_AWAIT_ONCE_AND_POLL(state);
 
     static const struct {
         uint8_t reg;
@@ -149,14 +149,14 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_process_thread(pbio_os_state_t *state
     };
 
     HAL_FMPI2C_Master_Transmit_DMA(&priv->hfmpi2c, I2C_ADDR, (void *)&init_data, sizeof(init_data));
-    AWAIT_UNTIL(state, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
+    PBIO_OS_AWAIT_UNTIL(state, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
 
     // initialization is finished so consumers can use this PWM device now.
     priv->pwm->funcs = &pbdrv_pwm_lp50xx_stm32_funcs;
     pbdrv_init_busy_down();
 
     for (;;) {
-        AWAIT_UNTIL(state, priv->changed);
+        PBIO_OS_AWAIT_UNTIL(state, priv->changed);
 
         static struct {
             uint8_t reg;
@@ -168,11 +168,11 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_process_thread(pbio_os_state_t *state
         memcpy(color_data.values, priv->values, LP50XX_NUM_CH);
         HAL_FMPI2C_Master_Transmit_DMA(&priv->hfmpi2c, I2C_ADDR, (void *)&color_data, sizeof(color_data));
         priv->changed = false;
-        AWAIT_UNTIL(state, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
+        PBIO_OS_AWAIT_UNTIL(state, HAL_FMPI2C_GetState(&priv->hfmpi2c) == HAL_FMPI2C_STATE_READY);
     }
 
     // Unreachable.
-    ASYNC_END(PBIO_ERROR_FAILED);
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbdrv_pwm_lp50xx_stm32_init(pbdrv_pwm_dev_t *devs) {

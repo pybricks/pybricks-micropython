@@ -190,7 +190,7 @@ static uint32_t pbdrv_uart_get_num_available(pbdrv_uart_dev_t *uart) {
 
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     if (uart->read_buf) {
         return PBIO_ERROR_BUSY;
@@ -205,7 +205,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
 
     // Wait until we have enough data or timeout. If there is enough data
     // already, this completes right away without yielding once first.
-    AWAIT_UNTIL(state, pbdrv_uart_get_num_available(uart) >= uart->read_length || (timeout && pbio_os_timer_is_expired(&uart->rx_timer)));
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_uart_get_num_available(uart) >= uart->read_length || (timeout && pbio_os_timer_is_expired(&uart->rx_timer)));
     if (timeout && pbio_os_timer_is_expired(&uart->rx_timer)) {
         uart->read_buf = NULL;
         uart->read_length = 0;
@@ -225,14 +225,14 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     uart->read_buf = NULL;
     uart->read_length = 0;
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
     const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     if (LL_USART_IsEnabledDMAReq_TX(pdata->uart)) {
         return PBIO_ERROR_BUSY;
@@ -252,13 +252,13 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
         pbio_os_timer_set(&uart->tx_timer, timeout);
     }
 
-    AWAIT_WHILE(state, LL_USART_IsEnabledDMAReq_TX(pdata->uart) && !(timeout && pbio_os_timer_is_expired(&uart->tx_timer)));
+    PBIO_OS_AWAIT_WHILE(state, LL_USART_IsEnabledDMAReq_TX(pdata->uart) && !(timeout && pbio_os_timer_is_expired(&uart->tx_timer)));
     if ((timeout && pbio_os_timer_is_expired(&uart->tx_timer))) {
         LL_USART_DisableDMAReq_TX(pdata->uart);
         return PBIO_ERROR_TIMEDOUT;
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {

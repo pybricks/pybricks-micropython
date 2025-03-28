@@ -242,7 +242,7 @@ typedef struct {
  */
 static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_color_sensor_state_t *sensor_state, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t *msg) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     *msg = 0;
     pbdrv_gpio_input(&pins->p6);
@@ -252,16 +252,16 @@ static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_
 
         // Clock high and wait for the data bit to settle.
         pbdrv_gpio_out_high(&pins->p5);
-        AWAIT_MS(state, timer, 1);
+        PBIO_OS_AWAIT_MS(state, timer, 1);
 
         *msg |= pbdrv_gpio_input(&pins->p6) << sensor_state->bit;
 
         // Clock low and wait for sensor to prepare next bit.
         pbdrv_gpio_out_low(&pins->p5);
-        AWAIT_MS(state, timer, 1);
+        PBIO_OS_AWAIT_MS(state, timer, 1);
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -275,7 +275,7 @@ static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_
  */
 static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_color_sensor_state_t *sensor_state, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t msg) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     pbdrv_gpio_out_low(&pins->p5);
     pbdrv_gpio_out_low(&pins->p6);
@@ -292,12 +292,12 @@ static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_
 
         // Toggle the clock high and low, giving sensor time to register bit.
         pbdrv_gpio_out_high(&pins->p5);
-        AWAIT_MS(state, timer, 1);
+        PBIO_OS_AWAIT_MS(state, timer, 1);
         pbdrv_gpio_out_low(&pins->p5);
-        AWAIT_MS(state, timer, 1);
+        PBIO_OS_AWAIT_MS(state, timer, 1);
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // Device connection manager state for each port
@@ -320,20 +320,20 @@ static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
 pbio_error_t pbio_port_dcm_await_new_nxt_analog_sample(pbio_port_dcm_t *dcm, pbio_os_timer_t *timer, const pbdrv_ioport_pins_t *pins, uint32_t *value) {
     pbio_os_state_t *state = &dcm->child;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Wait for LED to settle.
-    AWAIT_MS(state, timer, 1);
+    PBIO_OS_AWAIT_MS(state, timer, 1);
 
     // Request a new ADC sample. Revisit: Call back on completion instead of time.
     pbdrv_adc_update_soon();
-    AWAIT_MS(state, timer, 4);
+    PBIO_OS_AWAIT_MS(state, timer, 4);
 
     // Get the value.
     uint8_t pin = dcm->category == DCM_CATEGORY_NXT_COLOR ? 6 : 1;
     *value = pbio_port_dcm_get_mv(pins, pin);
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -347,7 +347,7 @@ pbio_error_t pbio_port_dcm_await_new_nxt_analog_sample(pbio_port_dcm_t *dcm, pbi
  */
 pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
 
@@ -363,7 +363,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                 dcm->count = 0;
                 dcm->category = category;
             }
-            AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
         }
         debug_pr("Device kind detected: %d\n", dcm->category);
         dcm->connected = true;
@@ -393,15 +393,15 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             // The original firmware has a reset sequence where p6 is high and
             // then p5 is toggled twice. It also works with 8 toggles, we can
             // just use the send function with 0xff to achieve the same effect.
-            AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 0xff));
-            AWAIT_MS(state, timer, 100);
+            PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 0xff));
+            PBIO_OS_AWAIT_MS(state, timer, 100);
 
             // Set to full color mode.
-            AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 13));
+            PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 13));
 
             // Receive all calibration info.
             for (dcm->count = 0; dcm->count < sizeof(pbio_port_dcm_nxt_color_sensor_data_t); dcm->count++) {
-                AWAIT(state, &dcm->child,
+                PBIO_OS_AWAIT(state, &dcm->child,
                     pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, (uint8_t *)&dcm->nxt_color_state.data + dcm->count));
             }
 
@@ -415,9 +415,9 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             while (!pbdrv_gpio_input(&pins->p2)) {
 
                 pbdrv_gpio_out_low(&pins->p5);
-                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.a));
+                PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.a));
                 pbdrv_gpio_out_high(&pins->p5);
-                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.r));
+                PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.r));
 
                 if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
                     // Light sensor doesn't have green and blue.
@@ -425,9 +425,9 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                 }
 
                 pbdrv_gpio_out_low(&pins->p5);
-                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.g));
+                PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.g));
                 pbdrv_gpio_out_high(&pins->p5);
-                AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.b));
+                PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_await_new_nxt_analog_sample(dcm, timer, pins, &dcm->nxt_rgba.b));
 
             }
             pbdrv_gpio_out_low(&pins->p5);
@@ -444,12 +444,12 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             if (!pbdrv_gpio_input(gpio)) {
                 dcm->count = 0;
             }
-            AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
         }
         debug_pr("Device disconnected\n");
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {

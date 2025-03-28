@@ -74,21 +74,21 @@ static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void
     static pbio_error_t err;
     static size_t write_size;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     while (pbdrv_uart_get_instance(0, &debug_uart) != PBIO_SUCCESS) {
-        AWAIT_ONCE(state);
+        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
     }
 
     pbdrv_uart_set_baud_rate(debug_uart, 115200);
 
     for (;;) {
-        AWAIT_UNTIL(state, ring_head != ring_tail);
+        PBIO_OS_AWAIT_UNTIL(state, ring_head != ring_tail);
 
         // Write up to the end of the buffer without wrapping.
         size_t end = ring_head > ring_tail ? ring_head: BUF_SIZE;
         write_size = end - ring_tail;
-        AWAIT(state, &child, pbdrv_uart_write(&child, debug_uart, &ring_buf[ring_tail], write_size, 100));
+        PBIO_OS_AWAIT(state, &child, pbdrv_uart_write(&child, debug_uart, &ring_buf[ring_tail], write_size, 100));
         ring_tail = (ring_tail + write_size) % BUF_SIZE;
 
         // Reset on failure.
@@ -105,7 +105,7 @@ static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void
     }
 
     // Unreachable.
-    ASYNC_END(PBIO_ERROR_FAILED);
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbdrv_uart_debug_init(void) {

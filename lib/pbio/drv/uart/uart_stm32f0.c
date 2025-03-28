@@ -63,7 +63,7 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
 
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     if (!msg || !length) {
         return PBIO_ERROR_INVALID_ARG;
@@ -82,7 +82,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     }
 
     // Await completion or timeout.
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         // On every re-entry to the async read, drain the ring buffer
         // into the current read buffer. This ensures that we use
         // all available data if there have been multiple polls since our last
@@ -101,12 +101,12 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
         return PBIO_ERROR_TIMEDOUT;
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     if (!msg || !length) {
         return PBIO_ERROR_INVALID_ARG;
@@ -127,7 +127,7 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
     uart->USART->CR1 |= USART_CR1_TXEIE;
 
     // Await completion or timeout.
-    AWAIT_UNTIL(state, uart->tx_buf_index == uart->tx_buf_size || (timeout && pbio_os_timer_is_expired(&uart->tx_timer)));
+    PBIO_OS_AWAIT_UNTIL(state, uart->tx_buf_index == uart->tx_buf_size || (timeout && pbio_os_timer_is_expired(&uart->tx_timer)));
 
     uart->tx_buf = NULL;
 
@@ -136,7 +136,7 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
         return PBIO_ERROR_TIMEDOUT;
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {

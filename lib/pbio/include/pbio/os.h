@@ -72,21 +72,9 @@ void pbio_os_timer_set(pbio_os_timer_t *timer, uint32_t duration);
 
 bool pbio_os_timer_is_expired(pbio_os_timer_t *timer);
 
-
 /**
- * WARNING! LC implementation using switch() does not work if an
- * PB_LC_SET() is done within another switch() statement!
- */
-
-#define PB_LC_FALLTHROUGH __attribute__((fallthrough));
-#define PB_LC_INIT(state) *state = 0;
-#define PB_LC_RESUME(state) switch (*state) { case 0:
-#define PB_LC_SET(state) *state = __LINE__; PB_LC_FALLTHROUGH; case __LINE__:
-#define PB_LC_END() }
-
-/**
- * Protothread state. Effectively the line number in the current file where it
- * yields so it can jump there to resume later.
+ * Protothread state. Effectively the checkpoint (line number) in the current
+ * file where it yields so it can jump there to resume later.
  */
 typedef uint32_t pbio_os_state_t;
 
@@ -107,7 +95,7 @@ struct _pbio_os_process_t {
      */
     pbio_os_state_t state;
     /**
-     * The protothread.
+     * The protothread function.
      */
     pbio_os_process_func_t func;
     /**
@@ -121,50 +109,67 @@ struct _pbio_os_process_t {
 };
 
 /**
- * Initialize a protothread.
+ * Reset a protothread state back to the start.
  *
- * Initializes a protothread. Initialization must be done prior to
- * starting to execute the protothread.
+ * Must be done prior to starting to execute the protothread.
  *
  * @param [in]  state    Protothread state.
  */
-#define ASYNC_INIT(state)   PB_LC_INIT(state)
+#define PBIO_OS_ASYNC_RESET(state) *state = 0;
 
 /**
- * Declare the start of a protothread inside the C function
- * implementing the protothread.
+ * Declare the start of a protothread inside the C function implementing the
+ * protothread.
  *
- * This macro is used to declare the starting point of a
- * protothread. It should be placed at the start of the function in
- * which the protothread runs. All C statements above the ASYNC_BEGIN()
- * invocation will be executed each time the protothread is scheduled.
+ * This macro is used to declare the starting point of a protothread. It should
+ * be placed at the start of the function in which the protothread runs. All C
+ * statements above this macro will be executed each time the protothread is
+ * scheduled.
+ *
+ * This macro has the effect of resuming (jumping to) the most recently set
+ * checkpoint in the protothread and executing the code from there until the
+ * next yield or return statement.
  *
  * The do_yield_now variable is used only to facilitate the AWAIT_ONCE macro.
  * It shouldn't take any space if unused and optimizations are enabled.
  *
  * @param [in]  state    Protothread state.
  */
-#define ASYNC_BEGIN(state) { char do_yield_now = 0; (void)do_yield_now; PB_LC_RESUME(state)
+#define PBIO_OS_ASYNC_BEGIN(state) { char do_yield_now = 0; (void)do_yield_now; switch (*state) { case 0:
+
+/**
+ * Sets a protothread checkpoint state to the current line number so we can
+ * continue from (jump) here later if we yield.
+ *
+ * This is used as part of several other yield-like macros such as yielding
+ * until a condition is true. This macro is not typically used directly in user
+ * code.
+ *
+ * NB: Do not use within another switch() statement!
+ *
+ * @param [in]  state    Protothread state.
+ */
+#define PBIO_OS_ASYNC_SET_CHECKPOINT(state) *state = __LINE__; __attribute__((fallthrough)); case __LINE__:
 
 /**
  * Declare the end of a protothread and returns with given code.
  *
  * This macro is used for declaring that a protothread ends. It must
- * always be used together with a matching ASYNC_BEGIN() macro.
+ * always be used together with a matching PBIO_OS_ASYNC_BEGIN() macro.
  *
  * @param [in]  err    Error code to return.
  */
-#define ASYNC_END(err) PB_LC_END(); return err; }
+#define PBIO_OS_ASYNC_END(err) }; return err; }
 
 /**
  * Yields the protothread while the specified condition is true.
  *
- * @param [in]  state     Protothread state.
- * @param [in]  condition The condition.
+ * @param [in]  state       Protothread state.
+ * @param [in]  condition   The condition (or statement expression) to check.
  */
-#define AWAIT_WHILE(state, condition)            \
+#define PBIO_OS_AWAIT_WHILE(state, condition)    \
     do {                                         \
-        PB_LC_SET(state);                        \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);     \
         if (condition) {                         \
             return PBIO_ERROR_AGAIN;             \
         }                                        \
@@ -174,77 +179,85 @@ struct _pbio_os_process_t {
  * Yields the protothread until the specified condition is true.
  *
  * @param [in]  state     Protothread state.
- * @param [in]  condition The condition.
+ * @param [in]  condition The condition (or statement expression) to check.
  */
-#define AWAIT_UNTIL(state, condition)            \
+#define PBIO_OS_AWAIT_UNTIL(state, condition)    \
     do {                                         \
-        PB_LC_SET(state);                        \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);     \
         if (!(condition)) {                      \
             return PBIO_ERROR_AGAIN;             \
         }                                        \
     } while (0)
 
 /**
- * Awaits a protothread until it is done.
+ * Awaits another (sub) protothread within the current (host) protothread until
+ * it completes successfully or returns an error.
  *
- * @param [in]  state      Protothread state.
- * @param [in]  child      Protothread state of the child.
- * @param [in]  statement  The statement to await.
+ * @param [in]  host_state         State of host protothread in which this macro is used.
+ * @param [in]  sub_state          State of the sub protothread.
+ * @param [in]  calling_statement  The statement to await.
  */
-#define AWAIT(state, child, statement)          \
-    do {                                        \
-        ASYNC_INIT((child));                    \
-        PB_LC_SET(state);                       \
-        if ((statement) == PBIO_ERROR_AGAIN) {  \
-            return PBIO_ERROR_AGAIN;            \
-        }                                       \
+#define PBIO_OS_AWAIT(host_state, sub_state, calling_statement)  \
+    do {                                                         \
+        PBIO_OS_ASYNC_RESET((sub_state));                        \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(host_state);                \
+        if ((calling_statement) == PBIO_ERROR_AGAIN) {           \
+            return PBIO_ERROR_AGAIN;                             \
+        }                                                        \
     } while (0)
 
 /**
- * Awaits two protothreads until one of them is done.
+ * Awaits two protothreads until one of them completes successfully or returns
+ * an error.
  *
- * @param [in]  state       Protothread state.
- * @param [in]  child1      Protothread state of the first child.
- * @param [in]  child2      Protothread state of the second child.
- * @param [in]  statement1  The first statement to await.
- * @param [in]  statement2  The second statement to await.
+ * @param [in]  host_state             State of the host protothread in which this macro is used.
+ * @param [in]  sub_state_1            State of the first sub protothread.
+ * @param [in]  sub_state_2            State of the second sub protothread.
+ * @param [in]  calling_statement_1    (Error-assigning) calling statement of the first sub protothread.
+ * @param [in]  calling_statement_2    (Error-assigning) calling statement of the second sub protothread.
  */
-#define AWAIT_RACE(state, child1, child2, statement1, statement2)                    \
-    do {                                                                             \
-        ASYNC_INIT((child1));                                                        \
-        ASYNC_INIT((child2));                                                        \
-        PB_LC_SET(state);                                                            \
-        if ((statement1) == PBIO_ERROR_AGAIN && (statement2) == PBIO_ERROR_AGAIN) {  \
-            return PBIO_ERROR_AGAIN;                                                 \
-        }                                                                            \
+#define PBIO_OS_AWAIT_RACE(host_state, sub_state_1, sub_state_2, calling_statement_1, calling_statement_2) \
+    do {                                                                                                   \
+        PBIO_OS_ASYNC_RESET((sub_state_1));                                                                \
+        PBIO_OS_ASYNC_RESET((sub_state_2));                                                                \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(host_state);                                                          \
+        if ((calling_statement_1) == PBIO_ERROR_AGAIN && (calling_statement_2) == PBIO_ERROR_AGAIN) {      \
+            return PBIO_ERROR_AGAIN;                                                                       \
+        }                                                                                                  \
     } while (0)
 
 /**
- * Yields the protothread once and polls to request handling again immediately.
+ * Yields the protothread here once and polls to request handling again
+ * immediately.
+ *
+ * Can be useful if several protothreads are started at the same time but not
+ * in any particular order. PBIO_OS_AWAIT_ONCE_AND_POLL can be used in a loop
+ * until the other protothreads have finished initializing as defined by
+ * mutually defined state variables.
  *
  * Should be used sparingly as it can cause busy waiting. Processes will keep
- * running, but there is always another event pending.
+ * running, but there will always be another event pending after this is used.
  *
  * @param [in]  state     Protothread state.
  */
-#define AWAIT_ONCE(state)                       \
+#define PBIO_OS_AWAIT_ONCE_AND_POLL(state)      \
     do {                                        \
         do_yield_now = 1;                       \
-        PB_LC_SET(state);                       \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);    \
         if (do_yield_now) {                     \
             pbio_os_request_poll();             \
             return PBIO_ERROR_AGAIN;            \
         }                                       \
     } while (0)
 
-#define AWAIT_MS(state, timer, duration)        \
-    do {                                        \
-        pbio_os_timer_set(timer, duration);     \
-        PB_LC_SET(state);                       \
-        if (!pbio_os_timer_is_expired(timer)) { \
-            return PBIO_ERROR_AGAIN;            \
-        }                                       \
-    } while (0)                                 \
+#define PBIO_OS_AWAIT_MS(state, timer, duration)      \
+    do {                                              \
+        pbio_os_timer_set(timer, duration);           \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);          \
+        if (!pbio_os_timer_is_expired(timer)) {       \
+            return PBIO_ERROR_AGAIN;                  \
+        }                                             \
+    } while (0)                                       \
 
 bool pbio_os_run_processes_once(void);
 

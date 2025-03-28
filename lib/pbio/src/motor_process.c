@@ -18,7 +18,7 @@ static pbio_error_t pbio_motor_process_thread(pbio_os_state_t *state, void *cont
 
     static pbio_os_timer_t timer;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     timer.start = pbdrv_clock_get_ms() - PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
     timer.duration = PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
@@ -47,11 +47,11 @@ static pbio_error_t pbio_motor_process_thread(pbio_os_state_t *state, void *cont
             timer.start++;
         }
 
-        AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
     }
 
     // Unreachable.
-    ASYNC_END(PBIO_ERROR_FAILED);
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbio_motor_process_start(void) {

@@ -53,10 +53,10 @@ static void simulate_uart_complete_irq(void) {
 }
 
 pbio_error_t simulate_rx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t length) {
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // First uartdev reads one byte header
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
     }));
@@ -71,7 +71,7 @@ pbio_error_t simulate_rx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t
     }
 
     // then read rest of message
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
     }));
@@ -82,13 +82,13 @@ pbio_error_t simulate_rx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t
     simulate_uart_complete_irq();
 
 end:
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t simulate_tx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t length) {
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.tx_msg_result == PBIO_ERROR_AGAIN;
     }));
@@ -103,16 +103,16 @@ pbio_error_t simulate_tx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t
     simulate_uart_complete_irq();
 
 end:
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 #define SIMULATE_RX_MSG(msg) do { \
-        AWAIT(state, &child, err = simulate_rx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg))); \
+        PBIO_OS_AWAIT(state, &child, err = simulate_rx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg))); \
         tt_assert_msg(err == PBIO_SUCCESS, #msg); \
 } while (0)
 
 #define SIMULATE_TX_MSG(msg) do { \
-        AWAIT(state, &child, err = simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg))); \
+        PBIO_OS_AWAIT(state, &child, err = simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg))); \
         tt_assert_msg(err == PBIO_SUCCESS, #msg); \
 } while (0)
 
@@ -235,7 +235,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
 
     pbio_error_t err;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Should be able to get port, but device won't be ready yet since it isn't
     // synched up.
@@ -243,14 +243,14 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 2400;
     }));
@@ -343,7 +343,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     SIMULATE_TX_MSG(msg83);
 
     // wait for baud rate change
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
@@ -364,7 +364,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     }
 
     // Wait for default mode to complete
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -439,7 +439,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     // data message with new mode
     SIMULATE_RX_MSG(msg88);
 
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -452,7 +452,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
 
 
     // also do mode 8 since it requires the extended mode flag
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_lump_set_mode(lump_dev, 8)) == PBIO_ERROR_AGAIN;
     }));
@@ -468,7 +468,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     SIMULATE_RX_MSG(msg90);
     SIMULATE_RX_MSG(msg91);
 
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -481,7 +481,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
 
 end:
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *context) {
@@ -540,7 +540,7 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
     static uint8_t num_modes;
     static pbio_error_t err;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
 
     // Should be able to get port, but device won't be ready yet since it isn't
@@ -549,14 +549,14 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 2400;
     }));
@@ -601,7 +601,7 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
     SIMULATE_TX_MSG(msg34);
 
     // wait for baud rate change
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
@@ -620,7 +620,7 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
         SIMULATE_TX_MSG(msg37);
     }
 
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -653,7 +653,7 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
 
 end:
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *context) {
@@ -731,7 +731,7 @@ static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *conte
     static uint8_t num_modes;
     static pbio_error_t err;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
 
     // Expect no device at first.
@@ -739,7 +739,7 @@ static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *conte
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
@@ -823,7 +823,7 @@ static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *conte
         SIMULATE_TX_MSG(msg58);
     }
 
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -865,7 +865,7 @@ static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *conte
 
 
 end:
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context) {
@@ -943,7 +943,7 @@ static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context)
     static uint8_t num_modes;
     static pbio_error_t err;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
 
     // Expect no device at first.
@@ -951,7 +951,7 @@ static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context)
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_clock_tick(1);
         test_uart.baud == 115200;
     }));
@@ -1035,7 +1035,7 @@ static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context)
         SIMULATE_TX_MSG(msg58);
     }
 
-    AWAIT_WHILE(state, ({
+    PBIO_OS_AWAIT_WHILE(state, ({
         pbio_test_clock_tick(1);
         (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
     }));
@@ -1076,7 +1076,7 @@ static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context)
 
 
 end:
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 struct testcase_t pbio_port_lump_tests[] = {
@@ -1112,9 +1112,9 @@ void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
 
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    AWAIT_WHILE(state, uart_dev->rx_msg);
+    PBIO_OS_AWAIT_WHILE(state, uart_dev->rx_msg);
 
     uart_dev->rx_msg = msg;
     uart_dev->rx_msg_length = length;
@@ -1122,7 +1122,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev,
     pbio_os_timer_set(&uart_dev->rx_timer, timeout);
 
     // If read_pos is less that read_length then we have not read everything yet
-    AWAIT_WHILE(state, uart_dev->rx_msg_result == PBIO_ERROR_AGAIN && !pbio_os_timer_is_expired(&uart_dev->rx_timer));
+    PBIO_OS_AWAIT_WHILE(state, uart_dev->rx_msg_result == PBIO_ERROR_AGAIN && !pbio_os_timer_is_expired(&uart_dev->rx_timer));
     if (pbio_os_timer_is_expired(&uart_dev->rx_timer)) {
         uart_dev->rx_msg_result = PBIO_ERROR_TIMEDOUT;
     }
@@ -1131,22 +1131,22 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev,
         uart_dev->rx_msg = NULL;
     }
 
-    ASYNC_END(uart_dev->rx_msg_result);
+    PBIO_OS_ASYNC_END(uart_dev->rx_msg_result);
 }
 
 pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Wait while other write operation already in progress.
-    AWAIT_WHILE(state, uart_dev->tx_msg);
+    PBIO_OS_AWAIT_WHILE(state, uart_dev->tx_msg);
 
     uart_dev->tx_msg = msg;
     uart_dev->tx_msg_length = length;
     uart_dev->tx_msg_result = PBIO_ERROR_AGAIN;
     pbio_os_timer_set(&uart_dev->tx_timer, timeout);
 
-    AWAIT_WHILE(state, uart_dev->tx_msg_result == PBIO_ERROR_AGAIN && !pbio_os_timer_is_expired(&uart_dev->tx_timer));
+    PBIO_OS_AWAIT_WHILE(state, uart_dev->tx_msg_result == PBIO_ERROR_AGAIN && !pbio_os_timer_is_expired(&uart_dev->tx_timer));
     if (pbio_os_timer_is_expired(&uart_dev->tx_timer)) {
         uart_dev->tx_msg_result = PBIO_ERROR_TIMEDOUT;
     }
@@ -1155,5 +1155,5 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev
         uart_dev->tx_msg = NULL;
     }
 
-    ASYNC_END(uart_dev->tx_msg_result);
+    PBIO_OS_ASYNC_END(uart_dev->tx_msg_result);
 }

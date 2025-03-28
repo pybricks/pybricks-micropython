@@ -102,7 +102,7 @@ pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context)
 
     pbio_error_t err;
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // NB: Currently only implements LEGO mode and assumes that all PUP
     // peripherals are available and initialized.
@@ -111,11 +111,11 @@ pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context)
 
         // Run passive device connection manager until UART device is detected.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
-        AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
+        PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
         // Synchronize with LUMP data stream from sensor and parse device info.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
-        AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
+        PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
         if (err != PBIO_SUCCESS) {
             // Synchronization failed. Retry.
             continue;
@@ -124,7 +124,7 @@ pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context)
         // Exchange sensor data with the LUMP device until it is disconnected.
         // The send thread detects this when the keep alive messages time out.
         pbio_port_p1p2_set_power(port, pbio_port_lump_get_power_requirements(port->lump_dev));
-        AWAIT_RACE(state, &port->child1, &port->child2,
+        PBIO_OS_AWAIT_RACE(state, &port->child1, &port->child2,
             pbio_port_lump_data_recv_thread(&port->child1, port->lump_dev, port->uart_dev),
             pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->timer)
             );
@@ -133,7 +133,7 @@ pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context)
     }
 
     // Unreachable.
-    ASYNC_END(PBIO_ERROR_FAILED);
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 /**

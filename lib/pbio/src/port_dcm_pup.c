@@ -81,7 +81,7 @@ static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
  */
 pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     dcm->prev_type_id = LEGO_DEVICE_TYPE_ID_NONE;
     dcm->dev_id_match_count = 0;
@@ -99,7 +99,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         // set ID2 as input
         pbdrv_gpio_input(&pins->p6);
 
-        AWAIT_MS(state, timer, DCM_AWAIT_MS);
+        PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
         // save current ID2 value
         dcm->prev_gpio_value = pbdrv_gpio_input(&pins->p6);
@@ -107,7 +107,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         // set ID1 low
         pbdrv_gpio_out_low(&pins->uart_tx);
 
-        AWAIT_MS(state, timer, DCM_AWAIT_MS);
+        PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
         // read ID2
         dcm->gpio_value = pbdrv_gpio_input(&pins->p6);
@@ -121,7 +121,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             pbdrv_gpio_out_high(&pins->uart_buf);
             pbdrv_gpio_input(&pins->uart_tx);
 
-            AWAIT_MS(state, timer, DCM_AWAIT_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // ID1 is inverse of touch sensor value
             // TODO: save this value to sensor dcm
@@ -137,7 +137,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             // set ID1 high
             pbdrv_gpio_out_high(&pins->uart_tx);
 
-            AWAIT_MS(state, timer, DCM_AWAIT_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // read ID1
             dcm->gpio_value = pbdrv_gpio_input(&pins->p5);
@@ -156,7 +156,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                 pbdrv_gpio_out_high(&pins->uart_buf);
                 pbdrv_gpio_input(&pins->uart_tx);
 
-                AWAIT_MS(state, timer, DCM_AWAIT_MS);
+                PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
                 // read ID1
                 if (pbdrv_gpio_input(&pins->p5) == 1) {
@@ -168,7 +168,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                 }
             }
 
-            AWAIT_MS(state, timer, DCM_AWAIT_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // set ID1 as input
             pbdrv_gpio_out_high(&pins->uart_buf);
@@ -177,7 +177,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             // set ID2 high
             pbdrv_gpio_out_high(&pins->p6);
 
-            AWAIT_MS(state, timer, DCM_AWAIT_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // read ID1
             dcm->prev_gpio_value = pbdrv_gpio_input(&pins->p5);
@@ -185,7 +185,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             // set ID2 low
             pbdrv_gpio_out_low(&pins->p6);
 
-            AWAIT_MS(state, timer, DCM_AWAIT_MS);
+            PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // read ID1
             dcm->gpio_value = pbdrv_gpio_input(&pins->p5);
@@ -210,7 +210,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                 // set ID2 high
                 pbdrv_gpio_out_high(&pins->p6);
 
-                AWAIT_MS(state, timer, DCM_AWAIT_MS);
+                PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
                 // if ID2 is high
                 if (pbdrv_gpio_input(&pins->uart_rx) == 1) {
@@ -224,7 +224,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                     // detection.
                     pbdrv_gpio_out_low(&pins->uart_rx);
 
-                    AWAIT_MS(state, timer, DCM_AWAIT_MS);
+                    PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
                     // if ID2 is low
                     if (pbdrv_gpio_input(&pins->uart_rx) == 0) {
@@ -247,7 +247,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             }
         }
 
-        AWAIT_MS(state, timer, DCM_AWAIT_MS);
+        PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
         // set ID2 as input
         pbdrv_gpio_input(&pins->p6);
@@ -286,7 +286,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     // raise.
     dcm->dev_id_match_count = 0;
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**

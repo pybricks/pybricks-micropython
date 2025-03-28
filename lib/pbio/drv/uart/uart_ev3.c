@@ -86,7 +86,7 @@ int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart) {
 
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     if (uart->read_buf) {
         return PBIO_ERROR_BUSY;
@@ -101,7 +101,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     }
 
     // Await completion or timeout.
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         // On every re-entry to the async read, drain the ring buffer
         // into the current read buffer. This ensures that we use
         // all available data if there have been multiple polls since our last
@@ -123,7 +123,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
         return PBIO_ERROR_TIMEDOUT;
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -176,7 +176,7 @@ static bool pbdrv_uart_can_write(pbdrv_uart_dev_t *uart) {
 
 pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
-    ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Can only write one thing at once.
     if (uart->write_buf) {
@@ -192,7 +192,7 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
     }
 
     // Write one byte at a time until all bytes are written.
-    AWAIT_UNTIL(state, ({
+    PBIO_OS_AWAIT_UNTIL(state, ({
         // Try to write one byte if any are remaining.
         if (uart->write_pos < uart->write_length) {
             if (pbdrv_uart_try_to_write_byte(uart, uart->write_buf[uart->write_pos])) {
@@ -210,7 +210,7 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
         return PBIO_ERROR_TIMEDOUT;
     }
 
-    ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
