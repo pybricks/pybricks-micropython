@@ -48,6 +48,9 @@
  *
  * The code in this file stems from Contiki's implementation of protothreads as
  * listed above. This adaptation changes the API to work better with Pybricks.
+ *
+ * Caution: it is conceptually very similar to Contiki but it cannot be used as
+ * a drop-in replacement.
  */
 
 #ifndef _PBIO_OS_H_
@@ -148,8 +151,6 @@ struct _pbio_os_process_t {
  *
  * This macro is used for declaring that a protothread ends. It must
  * always be used together with a matching ASYNC_BEGIN() macro.
- *
- * NB: In contrast to Contiki, this does not call ASYNC_INIT() before exiting.
  *
  * @param [in]  err    Error code to return.
  */
