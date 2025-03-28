@@ -208,7 +208,7 @@ struct _pbio_os_process_t {
 
 /**
  * Awaits two protothreads until one of them completes successfully or returns
- * an error.
+ * an error. There is no cleanup of the other protothread.
  *
  * @param [in]  host_state             State of the host protothread in which this macro is used.
  * @param [in]  sub_state_1            State of the first sub protothread.
@@ -250,6 +250,13 @@ struct _pbio_os_process_t {
         }                                       \
     } while (0)
 
+/**
+ * Yields the protothread until the specified timer expires.
+ * 
+ * @param [in]  state     Protothread state.
+ * @param [in]  timer     The timer to check.
+ * @param [in]  duration  The duration to wait for in milliseconds.
+ */
 #define PBIO_OS_AWAIT_MS(state, timer, duration)      \
     do {                                              \
         pbio_os_timer_set(timer, duration);           \
@@ -269,7 +276,7 @@ pbio_error_t pbio_port_process_none_thread(pbio_os_state_t *state, void *context
 
 void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t func, void *context);
 
-void pbio_os_process_reset(pbio_os_process_t *process, pbio_os_process_func_t func);
+void pbio_os_process_init(pbio_os_process_t *process, pbio_os_process_func_t func);
 
 /**
  * Disables interrupts and returns the previous interrupt state.

@@ -500,7 +500,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     }
 
     // Disable thread activity by attaching a thread that does nothing.
-    pbio_os_process_reset(&port->process, pbio_port_process_none_thread);
+    pbio_os_process_init(&port->process, pbio_port_process_none_thread);
     port->mode = mode;
 
     switch (mode) {
@@ -511,7 +511,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_LEGO_DCM:
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.
-            pbio_os_process_reset(&port->process, pbio_port_process_pup_thread);
+            pbio_os_process_init(&port->process, pbio_port_process_pup_thread);
             // Returning e-again allows user module to wait for the port to be
             // ready after first entering LEGO mode, avoiding NODEV errors when
             // switching from direct access modes back to LEGO mode.

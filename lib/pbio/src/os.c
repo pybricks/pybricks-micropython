@@ -80,16 +80,20 @@ void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t fu
     process->next = NULL;
     process->context = context;
 
-    pbio_os_process_reset(process, func);
+    pbio_os_process_init(process, func);
 }
 
 /**
- * Resets an existing process to the initial state with a new function and context.
+ * Initializes a process to the initial state with a protothread function to run.
+ *
+ * Can also be used to reset a process to the initial state or to change the
+ * protothread function. Doing so should be done with caution, but can be useful
+ * to make a process behave in distinct operation modes.
  *
  * @param process   The process to start.
  * @param func      The process thread function. Choose NULL if it does not need changing.
  */
-void pbio_os_process_reset(pbio_os_process_t *process, pbio_os_process_func_t func) {
+void pbio_os_process_init(pbio_os_process_t *process, pbio_os_process_func_t func) {
     process->err = PBIO_ERROR_AGAIN;
     process->state = 0;
     if (func) {
