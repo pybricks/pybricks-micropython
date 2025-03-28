@@ -136,9 +136,12 @@ struct _pbio_os_process_t {
  * which the protothread runs. All C statements above the ASYNC_BEGIN()
  * invocation will be executed each time the protothread is scheduled.
  *
+ * The do_yield_now variable is used only to facilitate the AWAIT_ONCE macro.
+ * It shouldn't take any space if unused and optimizations are enabled.
+ *
  * @param [in]  state    Protothread state.
  */
-#define ASYNC_BEGIN(state) { char do_yield_now = 0; if (do_yield_now) {;} PB_LC_RESUME(state)
+#define ASYNC_BEGIN(state) { char do_yield_now = 0; (void)do_yield_now; PB_LC_RESUME(state)
 
 /**
  * Declare the end of a protothread and returns with given code.
