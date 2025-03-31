@@ -24,17 +24,17 @@ void pb_stack_get_info(char **sstack, char **estack) {
     *estack = (char *)&_estack;
 }
 
-uint32_t pbio_os_hook_disable_irq(void) {
+pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
     mp_uint_t flags = __get_PRIMASK();
     __disable_irq();
     return flags;
 }
 
-void pbio_os_hook_enable_irq(uint32_t flags) {
+void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
     __set_PRIMASK(flags);
 }
 
-void pbio_os_hook_wait_for_interrupt(void) {
+void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
     __WFI();
 }
 

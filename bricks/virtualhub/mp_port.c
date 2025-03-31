@@ -94,28 +94,29 @@ void pb_event_poll_hook(void) {
     pbio_os_run_while_idle();
 }
 
-// This is used instead of the uint32_t flags used in embedded builds.
-static sigset_t global_origmask;
-
-uint32_t pbio_os_hook_disable_irq(void) {
+pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
     sigset_t sigmask;
     sigfillset(&sigmask);
-    pthread_sigmask(SIG_SETMASK, &sigmask, &global_origmask);
-    return 0;
+
+    sigset_t origmask;
+    pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
+    return origmask;
 }
 
-void pbio_os_hook_enable_irq(uint32_t flags) {
-    pthread_sigmask(SIG_SETMASK, &global_origmask, NULL);
+void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
+    sigset_t origmask = (sigset_t)flags;
+    pthread_sigmask(SIG_SETMASK, &origmask, NULL);
 }
 
-void pbio_os_hook_wait_for_interrupt(void) {
+void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
     struct timespec timeout = {
         .tv_sec = 0,
         .tv_nsec = 100000,
     };
     // "sleep" with "interrupts" enabled
+    sigset_t origmask = flags;
     MP_THREAD_GIL_EXIT();
-    pselect(0, NULL, NULL, NULL, &timeout, &global_origmask);
+    pselect(0, NULL, NULL, NULL, &timeout, &origmask);
     MP_THREAD_GIL_ENTER();
 }
 

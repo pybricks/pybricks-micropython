@@ -30,4 +30,11 @@
 
 #define PBIO_CONFIG_NUM_DRIVEBASES (PBIO_CONFIG_SERVO_NUM_DEV / 2)
 
+#ifndef PBIO_CONFIG_OS_IRQ_FLAGS_TYPE
+#include <stdint.h>
+#define PBIO_CONFIG_OS_IRQ_FLAGS_TYPE uint32_t
+#endif
+
+typedef PBIO_CONFIG_OS_IRQ_FLAGS_TYPE pbio_os_irq_flags_t;
+
 #endif // _PBIO_CONFIG_H_

@@ -20,15 +20,15 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
-uint32_t pbio_os_hook_disable_irq(void) {
+pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
     return nx_interrupts_disable();
 }
 
-void pbio_os_hook_enable_irq(uint32_t flags) {
+void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
     nx_interrupts_enable(flags);
 }
 
-void pbio_os_hook_wait_for_interrupt(void) {
+void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
     // disable the processor clock which puts it in Idle Mode.
     AT91C_BASE_PMC->PMC_SCDR = AT91C_PMC_PCK;
 }

@@ -160,7 +160,7 @@ void pbio_os_run_while_idle(void) {
     // poll_request_is_pending flag. If not, we can call wait_for_interrupt(),
     // which still wakes up the CPU on interrupt even though interrupts are
     // otherwise disabled.
-    uint32_t irq_flags = pbio_os_hook_disable_irq();
+    pbio_os_irq_flags_t irq_flags = pbio_os_hook_disable_irq();
 
     // DELETEME: Legacy hook for pbio event loop that plays the same role as
     // the pending flag. Here it ensures we don't enter sleep if there are
@@ -171,7 +171,7 @@ void pbio_os_run_while_idle(void) {
     }
 
     if (!poll_request_is_pending) {
-        pbio_os_hook_wait_for_interrupt();
+        pbio_os_hook_wait_for_interrupt(irq_flags);
     }
     pbio_os_hook_enable_irq(irq_flags);
 
