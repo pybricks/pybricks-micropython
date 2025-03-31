@@ -40,9 +40,12 @@
 // Implementation for MICROPY_EVENT_POLL_HOOK
 void pb_event_poll_hook(void) {
 
+    while (pbio_os_run_processes_once()) {
+    }
+
     mp_handle_pending(true);
 
-    pbio_os_run_while_idle();
+    pbio_os_run_processes_and_wait_for_event();
 }
 
 // callback for when stop button is pressed in IDE or on hub

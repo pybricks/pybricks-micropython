@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
         #endif
 
         // Drives all processes while we wait for user input.
-        pbio_os_run_while_idle();
+        pbio_os_run_processes_and_wait_for_event();
 
         if (!pbsys_main_program_start_requested()) {
             continue;

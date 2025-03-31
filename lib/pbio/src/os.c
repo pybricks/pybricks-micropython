@@ -149,7 +149,7 @@ bool pbio_os_run_processes_once(void) {
  * enter a low power mode when possible. It will sleep for at most one
  * millisecond.
  */
-void pbio_os_run_while_idle(void) {
+void pbio_os_run_processes_and_wait_for_event(void) {
 
     // Run the event loop until there is no more pending poll request.
     while (pbio_os_run_processes_once()) {

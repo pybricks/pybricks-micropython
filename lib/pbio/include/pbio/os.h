@@ -269,7 +269,7 @@ struct _pbio_os_process_t {
 
 bool pbio_os_run_processes_once(void);
 
-void pbio_os_run_while_idle(void);
+void pbio_os_run_processes_and_wait_for_event(void);
 
 void pbio_os_request_poll(void);
 
