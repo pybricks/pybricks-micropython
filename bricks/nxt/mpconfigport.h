@@ -79,7 +79,7 @@ typedef long mp_off_t;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#include <pbio/os.h>
+#include "pbio_os_config.h"
 
 #define MICROPY_BEGIN_ATOMIC_SECTION()     pbio_os_hook_disable_irq()
 #define MICROPY_END_ATOMIC_SECTION(state)  pbio_os_hook_enable_irq(state)

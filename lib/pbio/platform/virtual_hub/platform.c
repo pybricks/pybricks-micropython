@@ -3,6 +3,8 @@
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 
+#include "pbio_os_config.h"
+
 #include <pbio/port_interface.h>
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>

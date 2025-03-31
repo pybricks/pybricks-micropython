@@ -4,10 +4,8 @@
 
 #include <stdint.h>
 
-#include <at91sam7s256.h>
 #include <contiki.h>
 
-#include <nxos/interrupts.h>
 #include <nxos/drivers/systick.h>
 #include <nxos/drivers/bt.h>
 
@@ -19,19 +17,6 @@
 #include "py/mphal.h"
 #include "py/mpconfig.h"
 #include "py/stream.h"
-
-pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
-    return nx_interrupts_disable();
-}
-
-void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
-    nx_interrupts_enable(flags);
-}
-
-void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
-    // disable the processor clock which puts it in Idle Mode.
-    AT91C_BASE_PMC->PMC_SCDR = AT91C_PMC_PCK;
-}
 
 void pb_stack_get_info(char **sstack, char **estack) {
     extern uint32_t __stack_start__;

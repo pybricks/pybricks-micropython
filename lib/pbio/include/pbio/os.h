@@ -279,29 +279,4 @@ void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t fu
 
 void pbio_os_process_init(pbio_os_process_t *process, pbio_os_process_func_t func);
 
-/**
- * Disables interrupts and returns the previous interrupt state.
- *
- * Must be implemented by the platform.
- *
- * @return  The previous interrupt state.
- */
-pbio_os_irq_flags_t pbio_os_hook_disable_irq(void);
-
-/**
- * Enables interrupts.
- *
- * Must be implemented by the platform.
- *
- * @param [in]  flags  The previous interrupt state.
- */
-void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags);
-
-/**
- * Waits for an interrupt.
- *
- * Must be implemented by the platform.
- */
-void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags);
-
 #endif // _PBIO_OS_H_

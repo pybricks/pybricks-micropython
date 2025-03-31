@@ -5,6 +5,8 @@
 #include <stdio.h>
 
 #include <pbio/os.h>
+#include "pbio_os_config.h"
+
 #include <pbio/util.h>
 
 #include <pbdrv/clock.h>

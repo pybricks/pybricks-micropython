@@ -143,16 +143,6 @@ struct testcase_setup_t pbio_test_setup = {
     .cleanup_fn = cleanup,
 };
 
-pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
-    return 0;
-}
-
-void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
-}
-
-void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
-}
-
 extern struct testcase_t pbdrv_bluetooth_tests[];
 extern struct testcase_t pbdrv_pwm_tests[];
 extern struct testcase_t pbio_angle_tests[];

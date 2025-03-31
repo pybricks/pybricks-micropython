@@ -14,6 +14,8 @@
 
 #include <contiki.h>
 
+#include "pbio_os_config.h"
+
 #include <pbio/main.h>
 #include <pbio/os.h>
 #include <pbsys/core.h>
