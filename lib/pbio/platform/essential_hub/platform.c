@@ -170,9 +170,9 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
 
         for (int i = 0; i < 10; i++) {
             HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
-            pbdrv_clock_delay_us(1);
+            pbdrv_clock_busy_delay_us(1);
             HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_RESET);
-            pbdrv_clock_delay_us(1);
+            pbdrv_clock_busy_delay_us(1);
         }
 
         // then configure for normal use
@@ -437,9 +437,9 @@ void HAL_FMPI2C_MspInit(FMPI2C_HandleTypeDef *hfmpi2c) {
 
     for (int i = 0; i < 10; i++) {
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
-        pbdrv_clock_delay_us(1);
+        pbdrv_clock_busy_delay_us(1);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
-        pbdrv_clock_delay_us(1);
+        pbdrv_clock_busy_delay_us(1);
     }
 
     // then configure for normal use

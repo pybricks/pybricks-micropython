@@ -34,7 +34,7 @@ uint32_t pbdrv_clock_get_us(void);
  *
  * @param [in]  us  The number of microseconds to delay.
  */
-void pbdrv_clock_delay_us(uint32_t us);
+void pbdrv_clock_busy_delay_us(uint32_t us);
 
 #endif /* _PBDRV_CLOCK_H_ */
 
