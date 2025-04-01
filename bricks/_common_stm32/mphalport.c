@@ -40,45 +40,6 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     }
 }
 
-#if PYBRICKS_HUB_DEBUG
-
-#include "stm32f4xx.h"
-
-uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
-    uintptr_t ret = 0;
-
-    if ((poll_flags & MP_STREAM_POLL_RD) && USART6->SR & USART_SR_RXNE) {
-        ret |= MP_STREAM_POLL_RD;
-    }
-
-    return ret;
-}
-
-// Receive single character
-int mp_hal_stdin_rx_chr(void) {
-    while (!(USART6->SR & USART_SR_RXNE)) {
-        MICROPY_VM_HOOK_LOOP
-    }
-
-    return USART6->DR;
-}
-
-// Send string of given length
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    while (len--) {
-        while (!(USART6->SR & USART_SR_TXE)) {
-            MICROPY_VM_HOOK_LOOP
-        }
-        USART6->DR = *str++;
-    }
-}
-
-void mp_hal_stdout_tx_flush(void) {
-    // currently not buffered
-}
-
-#else // !PYBRICKS_HUB_DEBUG
-
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     uintptr_t ret = 0;
 
@@ -129,5 +90,3 @@ void mp_hal_stdout_tx_flush(void) {
         MICROPY_EVENT_POLL_HOOK
     }
 }
-
-#endif // PYBRICKS_HUB_DEBUG
