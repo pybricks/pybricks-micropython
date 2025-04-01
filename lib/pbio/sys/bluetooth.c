@@ -18,7 +18,7 @@
 #include <pbio/event.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
-#include <pbsys/bluetooth.h>
+#include <pbsys/host.h>
 #include <pbsys/command.h>
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
@@ -29,7 +29,7 @@
 #define MAX_CHAR_SIZE 20
 
 // REVISIT: this needs to be moved to a common place where it can be shared with USB
-static pbsys_bluetooth_stdin_event_callback_t stdin_event_callback;
+static pbsys_host_stdin_event_callback_t stdin_event_callback;
 static lwrb_t stdout_ring_buf;
 static lwrb_t stdin_ring_buf;
 
@@ -103,7 +103,7 @@ void pbsys_bluetooth_rx_write(const uint8_t *data, uint32_t size) {
  * Sets the UART Rx callback function.
  * @param callback  [in]    The callback or NULL.
  */
-void pbsys_bluetooth_rx_set_callback(pbsys_bluetooth_stdin_event_callback_t callback) {
+void pbsys_bluetooth_rx_set_callback(pbsys_host_stdin_event_callback_t callback) {
     stdin_event_callback = callback;
 }
 

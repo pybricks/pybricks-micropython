@@ -8,11 +8,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <pbdrv/bluetooth.h>
 #include <pbio/button.h>
 #include <pbio/main.h>
 
-#include <pbsys/bluetooth.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/program_stop.h>

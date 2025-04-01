@@ -7,7 +7,7 @@
 #include <pbio/os.h>
 
 #include <pbsys/battery.h>
-#include <pbsys/bluetooth.h>
+#include <pbsys/host.h>
 
 #include "core.h"
 #include "hmi.h"
@@ -44,7 +44,7 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
 
 void pbsys_init(void) {
     pbsys_battery_init();
-    pbsys_bluetooth_init();
+    pbsys_host_init();
     pbsys_hmi_init();
     pbsys_storage_init();
     process_start(&pbsys_system_process);

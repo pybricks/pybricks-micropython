@@ -8,9 +8,9 @@
 #include <pbio/protocol.h>
 #include <pbsys/command.h>
 #include <pbsys/config.h>
+#include <pbsys/host.h>
 #include <pbsys/storage.h>
 
-#include "./bluetooth.h"
 #include "./hmi.h"
 #include "./storage.h"
 #include "./program_stop.h"
@@ -72,11 +72,11 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             return PBIO_PYBRICKS_ERROR_OK;
 
         case PBIO_PYBRICKS_COMMAND_WRITE_STDIN:
-            #if PBSYS_CONFIG_BLUETOOTH
-            if (pbsys_bluetooth_rx_get_free() < size - 1) {
+            #if PBSYS_CONFIG_HOST
+            if (pbsys_host_rx_get_free() < size - 1) {
                 return PBIO_PYBRICKS_ERROR_BUSY;
             }
-            pbsys_bluetooth_rx_write(&data[1], size - 1);
+            pbsys_host_rx_write(&data[1], size - 1);
             #endif
             // If no consumers are configured, goes to "/dev/null" without error
             return PBIO_PYBRICKS_ERROR_OK;

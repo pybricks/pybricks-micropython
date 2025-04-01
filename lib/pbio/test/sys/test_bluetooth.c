@@ -10,12 +10,12 @@
 #include <tinytest.h>
 
 #include <pbio/util.h>
-#include <pbsys/bluetooth.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <test-pbio.h>
 
 #include "../drv/clock/clock_test.h"
+#include "../../sys/bluetooth.h"
 
 static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_BEGIN(pt);
