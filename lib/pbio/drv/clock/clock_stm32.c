@@ -112,4 +112,14 @@ void HAL_Delay(uint32_t Delay) {
     }
 }
 
+void pbdrv_clock_busy_delay_ms(uint32_t ms) {
+    HAL_Delay(ms);
+}
+
+bool pbdrv_clock_is_ticking(void) {
+    // Init already completed in SystemInit(), so we just need to check if
+    // interrupts are enabled.
+    return __get_PRIMASK() == 0;
+}
+
 #endif // PBDRV_CONFIG_CLOCK_STM32

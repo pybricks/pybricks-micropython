@@ -8,6 +8,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/clock.h>
 #include <pbdrv/config.h>
 #include <pbio/main.h>
 #include <pbsys/bluetooth.h>
@@ -23,7 +24,7 @@ extern volatile uint32_t pbdrv_clock_ticks;
 // Core delay function that does an efficient sleep and may switch thread context.
 // If IRQs are enabled then we must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {
-    if (__get_PRIMASK() == 0) {
+    if (pbdrv_clock_is_ticking()) {
         // IRQs enabled, so can use systick counter to do the delay
         uint32_t start = pbdrv_clock_ticks;
         // Wraparound of tick is taken care of by 2's complement arithmetic.
@@ -35,12 +36,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         } while (pbdrv_clock_ticks - start < Delay);
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
-        // To prevent possible overflow of the counter we use a double loop.
-        const uint32_t count_1ms = PBDRV_CONFIG_SYS_CLOCK_RATE / 4000;
-        for (mp_uint_t i = 0; i < Delay; i++) {
-            for (uint32_t count = 0; ++count <= count_1ms;) {
-            }
-        }
+        pbdrv_clock_busy_delay_ms(Delay);
     }
 }
 

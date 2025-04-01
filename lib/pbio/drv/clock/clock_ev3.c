@@ -119,4 +119,13 @@ uint32_t pbdrv_clock_get_100us(void) {
     return pbdrv_clock_get_ms() * 10;
 }
 
+void pbdrv_clock_busy_delay_ms(uint32_t ms) {
+    // TODO
+}
+
+bool pbdrv_clock_is_ticking(void) {
+    // TODO
+    return true;
+}
+
 #endif // PBDRV_CONFIG_CLOCK_TIAM1808

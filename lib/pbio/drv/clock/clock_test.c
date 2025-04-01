@@ -41,5 +41,12 @@ uint32_t pbdrv_clock_get_us(void) {
     return clock_ticks * 1000;
 }
 
+void pbdrv_clock_busy_delay_ms(uint32_t ms) {
+}
+
+bool pbdrv_clock_is_ticking(void) {
+    return true;
+}
+
 
 #endif // PBDRV_CONFIG_CLOCK_TEST

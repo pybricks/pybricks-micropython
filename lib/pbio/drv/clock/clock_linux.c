@@ -112,4 +112,14 @@ uint32_t pbdrv_clock_get_us(void) {
     return time_val.tv_sec * 1000000 + time_val.tv_nsec / 1000;
 }
 
+void pbdrv_clock_busy_delay_ms(uint32_t ms) {
+    uint32_t start = pbdrv_clock_get_ms();
+    while (pbdrv_clock_get_ms() - start < ms) {
+    }
+}
+
+bool pbdrv_clock_is_ticking(void) {
+    return true;
+}
+
 #endif // PBDRV_CONFIG_CLOCK_LINUX
