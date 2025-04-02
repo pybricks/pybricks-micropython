@@ -5,7 +5,7 @@
 /* Shared linker script for Arm-based bare-metal platforms. */
 
 /* top end of the stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM);
+pbdrv_stack_end = ORIGIN(RAM) + LENGTH(RAM);
 
 /* define output sections */
 SECTIONS
@@ -82,7 +82,7 @@ SECTIONS
     .stack :
     {
         . = ALIGN(4);
-        _sstack = .;
+        pbdrv_stack_start = .;
         . = . + _minimal_stack_size; /* will cause linker error if there is not enough space for stack. */
         . = ALIGN(4);
     } >RAM

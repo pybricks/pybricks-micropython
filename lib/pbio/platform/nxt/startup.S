@@ -193,7 +193,7 @@ wait_mclk_3:
         mem_copy __data_load_start__, __data_load_end__, __data_ram_start__
         mem_copy __ramtext_load_start__, __ramtext_load_end__, __ramtext_ram_start__
         mem_initialise __bss_start__, __bss_end__, 0
-        mem_initialise __stack_start__, __stack_end__, 0
+        mem_initialise pbdrv_stack_start, pbdrv_stack_end, 0
 
 
         /* Set up stacks for the modes we're going to use.

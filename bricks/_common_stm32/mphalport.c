@@ -17,13 +17,6 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
-void pb_stack_get_info(char **sstack, char **estack) {
-    extern uint32_t _estack;
-    extern uint32_t _sstack;
-    *sstack = (char *)&_sstack;
-    *estack = (char *)&_estack;
-}
-
 // using "internal" pbdrv variable
 extern volatile uint32_t pbdrv_clock_ticks;
 

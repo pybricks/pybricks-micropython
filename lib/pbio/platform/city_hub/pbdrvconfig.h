@@ -73,6 +73,9 @@
 #define PBDRV_CONFIG_UART_STM32F0                   (1)
 #define PBDRV_CONFIG_UART_STM32F0_NUM_UART          (2)
 
+#define PBDRV_CONFIG_STACK                          (1)
+#define PBDRV_CONFIG_STACK_EMBEDDED                 (1)
+
 #define PBDRV_CONFIG_WATCHDOG                       (1)
 #define PBDRV_CONFIG_WATCHDOG_STM32                 (1)
 

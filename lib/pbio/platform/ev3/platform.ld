@@ -11,7 +11,7 @@ MEMORY
 }
 
 _minimal_stack_size = 64K;
-_estack = ORIGIN(DDR) + LENGTH(DDR) - 4;
+pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 4;
 
 SECTIONS
 {
@@ -70,7 +70,7 @@ SECTIONS
     .stack :
     {
         . = ALIGN(4);
-        _sstack = .;
+        pbdrv_stack_start = .;
         . = . + _minimal_stack_size; /* will cause linker error if there is not enough space for stack. */
         . = ALIGN(4);
     } > DDR

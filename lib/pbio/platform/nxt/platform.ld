@@ -169,14 +169,14 @@ SECTIONS {
   __bss_start__ = ADDR(.bss);
   __bss_end__   = (ADDR(.bss) + SIZEOF(.bss));
 
-  __stack_start__ = ADDR(.stack);
-  __stack_end__ = (ADDR(.stack) + SIZEOF(.stack));
+  pbdrv_stack_start = ADDR(.stack);
+  pbdrv_stack_end = (ADDR(.stack) + SIZEOF(.stack));
 
   __boot_from_samba__ = 0;
 
   __rom_userspace_start__ = ADDR(.text) + SIZEOF(.text);
   __rom_userspace_end__ = (ROM_BASE + ROM_SIZE);
 
-  __ram_userspace_start__ = __stack_end__;
+  __ram_userspace_start__ = pbdrv_stack_end;
   __ram_userspace_end__ = (RAM_BASE + RAM_SIZE);
 }

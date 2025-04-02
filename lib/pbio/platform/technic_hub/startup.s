@@ -77,7 +77,7 @@ defined in linker script */
 	.type	Reset_Handler, %function
 Reset_Handler:
   cpsid i   /* Disable interrupts because LEGO bootloader leaves them enabled before handover. */
-  ldr   sp, =_estack    /* Atollic update: set stack pointer */
+  ldr   sp, =pbdrv_stack_end    /* Atollic update: set stack pointer */
 
 /* Copy the data segment initializers from flash to SRAM */
   movs	r1, #0
@@ -145,7 +145,7 @@ Infinite_Loop:
 
 
 g_pfnVectors:
-	.word	_estack
+	.word	pbdrv_stack_end
 	.word	Reset_Handler
 	.word	NMI_Handler
 	.word	HardFault_Handler

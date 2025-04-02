@@ -81,3 +81,6 @@
 #define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_EV3
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
 #define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_EV3 " + Pybricks"
+
+#define PBDRV_CONFIG_STACK                          (1)
+#define PBDRV_CONFIG_STACK_EMBEDDED                 (1)

@@ -18,13 +18,6 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
-void pb_stack_get_info(char **sstack, char **estack) {
-    extern uint32_t _estack;
-    extern uint32_t _sstack;
-    *sstack = (char *)&_sstack;
-    *estack = (char *)&_estack;
-}
-
 // Core delay function that does an efficient sleep and may switch thread context.
 // If IRQs are enabled then we must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {

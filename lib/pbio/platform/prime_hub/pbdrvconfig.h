@@ -120,6 +120,9 @@
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 #define PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR   0x08007d80
 
+#define PBDRV_CONFIG_STACK                          (1)
+#define PBDRV_CONFIG_STACK_EMBEDDED                 (1)
+
 #define PBDRV_CONFIG_WATCHDOG                       (1)
 #define PBDRV_CONFIG_WATCHDOG_STM32                 (1)
 

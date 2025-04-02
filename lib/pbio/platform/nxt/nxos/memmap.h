@@ -56,8 +56,8 @@ extern uint8_t __data_ram_end__;
 extern uint8_t __bss_start__;
 extern uint8_t __bss_end__;
 
-extern uint8_t __stack_start__;
-extern uint8_t __stack_end__;
+extern uint8_t pbdrv_stack_start;
+extern uint8_t pbdrv_stack_end;
 
 extern uint8_t __rom_end__;
 
@@ -140,8 +140,8 @@ extern uint8_t __boot_from_samba__;
  * startup.
  */
 /*@{*/
-#define NX_STACK_START SYMADDR(__stack_start__)
-#define NX_STACK_END SYMADDR(__stack_end__)
+#define NX_STACK_START SYMADDR(pbdrv_stack_start)
+#define NX_STACK_END SYMADDR(pbdrv_stack_end)
 #define NX_STACK_SIZE SECSIZE(NX_STACK_START, NX_STACK_END)
 /*@}*/
 

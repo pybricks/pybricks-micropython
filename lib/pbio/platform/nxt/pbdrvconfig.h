@@ -42,3 +42,6 @@
 
 #define PBDRV_CONFIG_SOUND                          (1)
 #define PBDRV_CONFIG_SOUND_NXT                      (1)
+
+#define PBDRV_CONFIG_STACK                          (1)
+#define PBDRV_CONFIG_STACK_EMBEDDED                 (1)

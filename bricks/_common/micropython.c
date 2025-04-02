@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbdrv/stack.h>
+
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
@@ -348,16 +350,16 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
     // Note: stack control relies on main thread being initialised above
-    char *sstack;
-    char *estack;
-    pb_stack_get_info(&sstack, &estack);
-    #if PYBRICKS_OPT_USE_ESTACK
-    mp_stack_set_top(estack);
+    char *stack_start;
+    char *stack_end;
+    pbdrv_stack_get_info(&stack_start, &stack_end);
+    #if PYBRICKS_OPT_USE_STACK_END_AS_TOP
+    mp_stack_set_top(stack_end);
     #else
     // Sets the top to current stack pointer.
     mp_stack_ctrl_init();
     #endif
-    mp_stack_set_limit(MP_STATE_THREAD(stack_top) - sstack - 1024);
+    mp_stack_set_limit(MP_STATE_THREAD(stack_top) - stack_start - 1024);
 
     // MicroPython heap is the free RAM after program data.
     gc_init(program->user_ram_start, program->user_ram_end);

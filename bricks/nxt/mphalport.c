@@ -18,13 +18,6 @@
 #include "py/mpconfig.h"
 #include "py/stream.h"
 
-void pb_stack_get_info(char **sstack, char **estack) {
-    extern uint32_t __stack_start__;
-    extern uint32_t __stack_end__;
-    *sstack = (char *)&__stack_start__;
-    *estack = (char *)&__stack_end__;
-}
-
 // TODO
 static bool interrupts_get(void) {
     return true;
