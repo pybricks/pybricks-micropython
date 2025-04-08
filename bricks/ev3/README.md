@@ -17,137 +17,68 @@ Since it won't have Linux, it won't have certain features like Wi-Fi or support
 for advanced accessories. For those uses cases, Pybricks 2.0 on ev3dev will
 remain available.
 
-## Requirements
-
-Since USB communication is not yet implemented, you need the following hardware
-to use this:
-
-- A USB serial adapter to connect to sensor port 1 on the EV3 brick. You could
-use [this one](http://www.mindsensors.com/ev3-and-nxt/40-console-adapter-for-ev3).
-Or make your own using a standard USB to serial adapter and connecting it to the
-data wires of an EV3 cable.
-- A microSD card (32 GB or less) to store the firmware image.
-
 ## Prerequisites
 
 Before attempting to build this, please follow the instructions to build the
 firmware for one of the other targets, such as the SPIKE Prime Hub, as
-explained [here](../../CONTRIBUTING.md).
+explained [here](../../CONTRIBUTING.md). Make sure that `pybricksdev` is
+installed.
 
-Then, install the following additional tools:
+Install the following additional tools:
 
 ```
 sudo apt install u-boot-tools
 ```
 
-Prepare a microSD card (32 GB or less) and format it as a single FAT32
-partition. It is not necessary needed to set any boot flags.
+Unlike most other alternative EV3 firmware solutions, Pybricks does not require
+using a microSD card. Instead, Pybricks is installed as a firmware update.
 
-In the following examples, we assume that the formatted volume is called
-`ev3`.
 
-## Building the firmware
+## Put EV3 into update mode
 
+- Attach the USB cable (you can leave it plugged in all the time).
+- Make sure the EV3 is off.
+- Hold right button and start the EV3 with the center button.
+- The display should now say "Updating.."
+
+## Building and deploying the firmware
 
 ```bash
 # Navigate to the repository.
 cd pybricks-micropython
 
-# Build the uImage.
+# Optional: clean.
 make -C bricks/ev3 clean
-make -C bricks/ev3 uImage -j
 
-# Copy the result and resources to the root of microSD card, e.g:
-cp bricks/ev3/build/uImage /media/user_name/ev3/uImage
-
+# Build firmware and deploy with Pybricksdev.
+make -C bricks/ev3 -j deploy
 ```
 
-Note: This should not be confused with other existing or outdated EV3 builds in the `bricks` folder such as the `ev3dev` or `ev3rt` builds. They can serve as inspiration, but are completely separate from this build. From a code point of view, this new `bricks/ev3` build will be a lot more like `bricks/primehub`.
+Instead, you can download the [latest nightly build](https://nightly.link/pybricks/pybricks-micropython/workflows/build/master). Install it as follows:
+
+```
+pybricksdev flash ~/Downloads/ev3-firmware-build-3782-git1bcea603.zip
+```
 
 ## Operating the brick
 
-- Connect your serial adapter to sensor port 1 on the EV3 brick.
-- Start a terminal emulator such as `screen` or `picocom`.
-- Insert the microSD card into the EV3 brick.
-- Press the center button to boot.
+Press the center button to turn on the EV3. Press the back button to turn it
+off.
 
-You should see something like the following output:
+If the hub freezes, press and hold the back and center buttons for several seconds to
+reboot.
 
-```
-EV3 initialization passed!
-Booting EV3 EEprom Boot Loader
+## Interfacing with the EV3
 
-	EEprom Version:   0.60
-	EV3 Flashtype:    N25Q128A13B
+The data wires on sensor port 1 are set up as a UART for debugging. This
+provides the MicroPython REPL. All other ports can be used normally.
 
-EV3 Booting system 
-
-Jumping to entry point at: 0xC1080000
-
-
-U-Boot 2009.11 (Oct 26 2012 - 10:30:38)
-
-I2C:   ready
-DRAM:  64 MB
-MMC:   davinci: 0
-In:    serial
-Out:   serial
-Err:   serial
-ARM Clock : 300000000 Hz
-DDR Clock : 132000000 Hz
-Invalid MAC address read.
-Hit 'l' to stop autoboot:  0 
-reading boot.scr
-
-** Unable to read "boot.scr" from mmc 0:1 **
-reading uImage
-
-209016 bytes read
-## Booting kernel from Legacy Image at c0007fc0 ...
-   Image Name:   
-   Image Type:   ARM Linux Kernel Image (uncompressed)
-   Data Size:    208952 Bytes = 204.1 kB
-   Load Address: c0008000
-   Entry Point:  c0008000
-   Loading Kernel Image ... OK
-OK
-
-Starting kernel ...
-
-System init in platform.c called from startup.s
-
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Hello, world at time (ms): 0
-Traceback (most recent call last):
-
-  File "%q", line %dhello.py", line %d9���D�, in %q
-<module>
-KeyboardInterrupt:
-Pybricks MicroPython v1.20.0-23-g6c633a8dd on 2024-06-08; MINDSTORMS EV3 Brick with TI Sitara AM1808
-Type "help()" for more information.
->>> 
-```
-
-You can remove the microSD card after booting. After updating the uImage, you
-can try out your new build by rebooting: Press and hold the center and back
-buttons for 4 seconds.
-
-For now, there is just the REPL and several builtin MicroPython modules.
-Sensors and motors are not yet enabled.
+A REPL is also available as a USB serial device
+after you reboot the brick at least once. This feature may go away when we enable a proper USB driver for downloading and running programs.
 
 ## Development status
 
-This is a highly experimental development. Pretty much nothing is enabled yet.
-The intention is to prepare a minimal build where we can add drivers one by
-one, with help from experts in the community.
+This is a highly experimental development. Sensors, motors, and some EV3 peripherals [are working](https://www.youtube.com/watch?v=9Iu6YpFLwKo). Please refer to our discussion forums for a status or to help with ongoing developments.
 
 Inspiration for future hardware implementation:
 - [ev3dev](https://www.ev3dev.org/docs/kernel-hackers-notebook/ev3dev-linux-kernel/): Well documented resources for EV3 on debian Linux.
