@@ -9,6 +9,8 @@
 
 #include <contiki.h>
 
+#include <pbio/os.h>
+
 #include <pbdrv/clock.h>
 #include <pbsys/status.h>
 
@@ -38,6 +40,14 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
     // directly. All other processes just poll the status as needed. If we ever
     // need more subscribers, we could register callbacks and call them here.
     pbsys_hmi_handle_status_change(set ? PBSYS_STATUS_CHANGE_SET : PBSYS_STATUS_CHANGE_CLEARED, status);
+
+    // Other processes may be awaiting status changes, so poll.
+    pbio_os_request_poll();
+
+    // REVISIT: Can be deleted once all processes that poll the status are
+    // updated to use the new pbio os event loop.
+    process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
+
 }
 
 /**
