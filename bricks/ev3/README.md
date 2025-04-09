@@ -76,6 +76,8 @@ provides the MicroPython REPL. All other ports can be used normally.
 A REPL is also available as a USB serial device
 after you reboot the brick at least once. This feature may go away when we enable a proper USB driver for downloading and running programs.
 
+**Note:** After establishing a connection with the EV3, press Enter to activate the REPL.
+
 ## Development status
 
 This is a highly experimental development. Sensors, motors, and some EV3 peripherals [are working](https://www.youtube.com/watch?v=9Iu6YpFLwKo). Please refer to our discussion forums for a status or to help with ongoing developments.
