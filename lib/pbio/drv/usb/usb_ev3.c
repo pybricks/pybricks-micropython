@@ -165,6 +165,7 @@ extern const tUSBBuffer g_sRxBuffer;
 
 // Global flag indicating that a USB configuration has been set.
 static volatile bool g_bUSBConfigured = false;
+static bool g_bUSBSerialConfigured = false;
 
 static void GetLineCoding(tLineCoding *psLineCoding) {
     //
@@ -328,6 +329,7 @@ unsigned int ControlHandler(void *pvCBData, unsigned int ulEvent, unsigned int u
         //
         case USB_EVENT_DISCONNECTED:
             g_bUSBConfigured = false;
+            g_bUSBSerialConfigured = false;
             process_poll(&pbdrv_usb_process);
             break;
 
@@ -348,6 +350,8 @@ unsigned int ControlHandler(void *pvCBData, unsigned int ulEvent, unsigned int u
         // Set the current serial communication parameters.
         //
         case USBD_CDC_EVENT_SET_CONTROL_LINE_STATE:
+            g_bUSBSerialConfigured = true;
+            process_poll(&pbdrv_usb_process);
             //
             // TODO: If configured with GPIOs controlling the handshake lines,
             // set them appropriately depending upon the flags passed in the wValue
@@ -502,7 +506,16 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
 }
 
 uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size) {
-    return USBBufferWrite((tUSBBuffer *)&g_sTxBuffer, data, size);
+    // Attempt to write to the USB buffer.
+    uint32_t written = USBBufferWrite((tUSBBuffer *)&g_sTxBuffer, data, size);
+
+    // If configured, return the number of bytes written so we can await completion.
+    if (g_bUSBSerialConfigured) {
+        return written;
+    }
+
+    // If not configured, return the size requested so that caller doesn't block.
+    return size;
 }
 
 uint32_t pbdrv_usb_rx_data_available(void) {
