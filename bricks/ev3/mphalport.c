@@ -59,10 +59,15 @@ extern uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size);
 
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     pbdrv_uart_debug_printf("%.*s", len, str);
+
     uint32_t done = 0;
     while (done < len) {
         done += pbdrv_usb_write((uint8_t *)str + done, len - done);
-        MICROPY_EVENT_POLL_HOOK;
+        MICROPY_VM_HOOK_LOOP;
+    }
+
+    while (!pbdrv_uart_debug_is_done()) {
+        MICROPY_VM_HOOK_LOOP;
     }
 }
 

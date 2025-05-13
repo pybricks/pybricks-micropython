@@ -108,6 +108,13 @@ static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void
     PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
+/**
+ * Checks if the UART debug is done writing.
+ */
+bool pbdrv_uart_debug_is_done(void) {
+    return debug_uart != NULL && ring_head == ring_tail;
+}
+
 void pbdrv_uart_debug_init(void) {
     pbio_os_process_start(&pbdrv_uart_debug_process, pbdrv_uart_debug_process_thread, NULL);
 }
