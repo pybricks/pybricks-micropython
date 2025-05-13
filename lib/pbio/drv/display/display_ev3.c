@@ -21,11 +21,14 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
+#include <tiam1808/edma.h>
 #include <tiam1808/spi.h>
 #include <tiam1808/psc.h>
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/hw_edma3cc.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
 #include "../drv/gpio/gpio_ev3.h"
@@ -338,50 +341,75 @@ static pbdrv_display_st7586s_action_t init_script[] = {
     { ST7586S_ACTION_WRITE_COMMAND, ST7586_RAMWR},
 };
 
-static uint32_t tx_size;
-static uint32_t tx_progress;
-static uint8_t *tx_data;
-
 /**
- * SPI interrupt service routine for transmitting data.
+ * Called on SPI1 DMA transfer completion.
+ *
+ * @param [in] status Status of the transfer.
  */
-void SPIIsr(void) {
-    uint32_t intCode = 0;
-    IntSystemStatusClear(SYS_INT_SPINT1);
-
-    while ((intCode = SPIInterruptVectorGet(SOC_SPI_1_REGS))) {
-        if (intCode != SPI_TX_BUF_EMPTY) {
-            continue;
-        }
-
-        SPITransmitData1(SOC_SPI_1_REGS, *tx_data++);
-
-        if (++tx_progress == tx_size) {
-            SPIIntDisable(SOC_SPI_1_REGS, SPI_TRANSMIT_INT);
-            spi_status = SPI_STATUS_COMPLETE;
-            process_poll(&pbdrv_display_ev3_init_process);
-        }
-    }
+void pbdrv_display_ev3_spi1_tx_complete(uint32_t status) {
+    SPIIntDisable(SOC_SPI_1_REGS, SPI_DMA_REQUEST_ENA_INT);
+    spi_status = SPI_STATUS_COMPLETE;
+    process_poll(&pbdrv_display_ev3_init_process);
 }
 
 /**
- * Begin writing data to the display.
+ * Begin writing data to the display via DMA.
  *
- * @param data Data to write.
- * @param size Size of the data.
+ * @param [in] data Data to write.
+ * @param [in] size Size of the data.
  */
 void pbdrv_display_st7586s_write_data_begin(uint8_t *data, uint32_t size) {
-    tx_data = data;
-    tx_size = size;
-    tx_progress = 0;
     spi_status = SPI_STATUS_WAIT;
     pbdrv_gpio_out_low(&pin_lcd_cs);
-    SPIEnable(SOC_SPI_1_REGS);
-    SPIIntEnable(SOC_SPI_1_REGS, SPI_TRANSMIT_INT);
+
+    // Parameter object must be volatile since it is copied byte-by-byte in the
+    // TI API, causing it to be optimized out.
+    volatile EDMA3CCPaRAMEntry paramSet = {
+        // Address of the data to be sent.
+        .srcAddr = (uint32_t)data,
+        // Address of the destination register.
+        .destAddr = SOC_SPI_1_REGS + SPI_SPIDAT1,
+        // Number of bytes in an array.
+        .aCnt = 1,
+        // Number of such arrays to be transferred.
+        .bCnt = size,
+        // Number of frames of aCnt*bBcnt bytes to be transferred.
+        .cCnt = 1,
+        // The srcBidx should be incremented by aCnt number of bytes since the
+        // source used here is memory.
+        .srcBIdx = 1,
+        // A sync Transfer Mode is set in OPT. srCIdx and destCIdx set to
+        // zero since ASYNC Mode is used.
+        .srcCIdx = 0,
+        // Linking transfers in EDMA3 are not used.
+        .linkAddr = 0xFFFF,
+        // bCntReload is not used.
+        .bCntReload = 0,
+        // Options for the transfer. SAM field in OPT is set to zero since
+        // source is memory and memory pointer needs to be incremented. DAM
+        // field in OPT is set to zero since destination is not a FIFO.
+        .opt = (
+            // Transfer completion code.
+            ((EDMA3_CHA_SPI1_TX << EDMA3CC_OPT_TCC_SHIFT) & EDMA3CC_OPT_TCC) |
+            // EDMA3 Interrupt is enabled and Intermediate Interrupt Disabled.
+            (1 << EDMA3CC_OPT_TCINTEN_SHIFT)
+            ),
+    };
+
+    // Now write the PaRam Set to EDMA3.
+    EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI1_TX, (EDMA3CCPaRAMEntry *)&paramSet);
+
+    // EDMA3 Transfer is Enabled.
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI1_TX, EDMA3_TRIG_MODE_EVENT);
+
+    // Enable SPI controller to generate DMA events.
+    SPIIntEnable(SOC_SPI_1_REGS, SPI_DMA_REQUEST_ENA_INT);
 }
 
 /**
- * Initialize the display SPI driver. Pinmux is already set up in platform.c.
+ * Initialize the display SPI driver.
+ *
+ * Pinmux and common EDMA handlers are already set up in platform.c.
  */
 void pbdrv_display_init(void) {
 
@@ -394,11 +422,6 @@ void pbdrv_display_init(void) {
 
     // Waking up the SPI1 instance.
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_SPI1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-
-    // Register the ISR in the Interrupt Vector Table.
-    IntRegister(SYS_INT_SPINT1, SPIIsr);
-    IntChannelSet(SYS_INT_SPINT1, 2);
-    IntSystemEnable(SYS_INT_SPINT1);
 
     // Reset.
     SPIReset(SOC_SPI_1_REGS);
@@ -416,6 +439,13 @@ void pbdrv_display_init(void) {
     SPIDelayConfigure(SOC_SPI_1_REGS, 0, 0, 10, 10);
     SPIIntLevelSet(SOC_SPI_1_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
 
+    // Request DMA Channel and TCC for SPI Transmit with queue number 0.
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI1_TX, EDMA3_CHA_SPI1_TX, 0);
+
+    // Enable the SPI controller.
+    SPIEnable(SOC_SPI_1_REGS);
+
+    // Start SPI process and ask pbdrv to wait until it is initialized.
     pbdrv_init_busy_up();
     process_start(&pbdrv_display_ev3_init_process);
 }

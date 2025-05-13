@@ -3,19 +3,55 @@
 //
 // SPDX-License-Identifier: MPL-1.0
 // Copyright (c) 2016 Tobias Schießl (System Init / partial pinmux / boot order / exceptionhandler)
+//
+/*
+* Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*    Redistributions of source code must retain the above copyright
+*    notice, this list of conditions and the following disclaimer.
+*
+*    Redistributions in binary form must reproduce the above copyright
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the
+*    distribution.
+*
+*    Neither the name of Texas Instruments Incorporated nor the names of
+*    its contributors may be used to endorse or promote products derived
+*    from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+*  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+*  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+*  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+*  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+*  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+*  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
-#include <tiam1808/psc.h>
+#include <tiam1808/armv5/am1808/edma_event.h>
+#include <tiam1808/armv5/am1808/evmAM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
-#include <tiam1808/hw/soc_AM1808.h>
-#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/edma.h>
+#include <tiam1808/hw/hw_edma3cc.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/hw/hw_syscfg1_AM1808.h>
-#include <tiam1808/armv5/am1808/evmAM1808.h>
+#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/psc.h>
 
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
 
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/display/display_ev3.h"
 #include "../../drv/gpio/gpio_ev3.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -361,6 +397,127 @@ void copy_vector_table(void) {
     }
 }
 
+unsigned int EDMAVersionGet(void) {
+    return 1;
+}
+
+/**
+ * Callback for completion of all EDMA3 transfers on this platform.
+ *
+ * @param tccNum [in]   Transfer completion code number.
+ * @param status [in]   Status of the transfer. Currently only EDMA3_XFER_COMPLETE.
+ */
+static void Edma3CompleteCallback(unsigned int tccNum, unsigned int status) {
+    if (tccNum == EDMA3_CHA_SPI1_TX) {
+        pbdrv_display_ev3_spi1_tx_complete(status);
+    }
+    // Add other callbacks here as needed.
+}
+
+/**
+ * ISR for completion of all EDMA3 transfers on this platform.
+ *
+ * This is unchanged from the TI StarterWare example.
+ */
+static void Edma3ComplHandlerIsr(void) {
+    volatile unsigned int pendingIrqs;
+    volatile unsigned int isIPR = 0;
+
+    volatile unsigned int indexl;
+    volatile unsigned int Cnt = 0;
+    indexl = 1;
+    IntSystemStatusClear(SYS_INT_CCINT0);
+    isIPR = EDMA3GetIntrStatus(SOC_EDMA30CC_0_REGS);
+    if (isIPR) {
+        while ((Cnt < EDMA3CC_COMPL_HANDLER_RETRY_COUNT) && (indexl != 0)) {
+            indexl = 0;
+            pendingIrqs = EDMA3GetIntrStatus(SOC_EDMA30CC_0_REGS);
+            while (pendingIrqs) {
+                if ((pendingIrqs & 1) == TRUE) {
+                    // Here write to ICR to clear the corresponding IPR bits.
+                    EDMA3ClrIntr(SOC_EDMA30CC_0_REGS, indexl);
+                    Edma3CompleteCallback(indexl, EDMA3_XFER_COMPLETE);
+                }
+                ++indexl;
+                pendingIrqs >>= 1;
+            }
+            Cnt++;
+        }
+    }
+
+}
+
+/**
+ * ISR for error handling of all EDMA3 transfers on this platform.
+ *
+ * This is unchanged from the TI StarterWare example.
+ */
+static void Edma3CCErrHandlerIsr(void) {
+    volatile unsigned int pendingIrqs = 0;
+    unsigned int Cnt = 0;
+    unsigned int index = 1;
+    unsigned int regionNum = 0;
+    unsigned int evtqueNum = 0;
+
+    IntSystemStatusClear(SYS_INT_CCERRINT);
+
+    if ((HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_EMR) != 0)
+        || (HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_QEMR) != 0)
+        || (HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_CCERR) != 0)) {
+        // Loop for EDMA3CC_ERR_HANDLER_RETRY_COUNT number of time, breaks
+        // when no pending interrupt is found.
+        while ((Cnt < EDMA3CC_ERR_HANDLER_RETRY_COUNT) && (index != 0)) {
+            index = 0;
+            pendingIrqs = HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_EMR);
+            while (pendingIrqs) {
+                // Process all the pending interrupts.
+                if ((pendingIrqs & 1) == TRUE) {
+                    // Write to EMCR to clear the corresponding EMR bits.
+                    HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_EMCR) = (1 << index);
+                    // Clear any SER
+                    HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_S_SECR(regionNum)) = (1 << index);
+                }
+                ++index;
+                pendingIrqs >>= 1;
+            }
+            index = 0;
+            pendingIrqs = HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_QEMR);
+            while (pendingIrqs) {
+                // Process all the pending interrupts.
+                if ((pendingIrqs & 1) == TRUE) {
+                    // Here write to QEMCR to clear the corresponding QEMR bits.
+                    HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_QEMCR) = (1 << index);
+                    // Clear any QSER
+                    HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_S_QSECR(0)) = (1 << index);
+                }
+                ++index;
+                pendingIrqs >>= 1;
+            }
+            index = 0;
+            pendingIrqs = HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_CCERR);
+            if (pendingIrqs != 0) {
+                // Process all the pending CC error interrupts.
+                // Queue threshold error for different event queues.
+                for (evtqueNum = 0; evtqueNum < EDMA3_0_NUM_EVTQUE; evtqueNum++)
+                {
+                    if ((pendingIrqs & (1 << evtqueNum)) != 0) {
+                        // Clear the error interrupt.
+                        HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_CCERRCLR) = (1 << evtqueNum);
+                    }
+                }
+
+                // Transfer completion code error.
+                if ((pendingIrqs & (1 << EDMA3CC_CCERR_TCCERR_SHIFT)) != 0) {
+                    HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_CCERRCLR) = \
+                        (0x01 << EDMA3CC_CCERR_TCCERR_SHIFT);
+                }
+                ++index;
+            }
+            Cnt++;
+        }
+    }
+}
+
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
 // initialization (low level in pbdrv, high level in pbio), and system level
@@ -371,20 +528,25 @@ void SystemInit(void) {
 
     copy_vector_table();
 
-    /* Initialize AINTC */
+    // Initialize advanced interrupt controller (AINTC)
     IntAINTCInit();
-
-    /* Enable IRQ for ARM (in CPSR)*/
     IntMasterIRQEnable();
-
-    /* Enable AINTC interrupts in GER */
     IntGlobalEnable();
-
-    /* Enable IRQ in AINTC */
     IntIRQEnable();
-
     IntMasterFIQEnable();
     IntFIQEnable();
+
+    // Initialization of EDMA3
+    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_CC0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_TC0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    EDMA3Init(SOC_EDMA30CC_0_REGS, 0); // Que num 0
+    IntRegister(SYS_INT_CCINT0, Edma3ComplHandlerIsr);
+    IntChannelSet(SYS_INT_CCINT0, 2);
+    IntSystemEnable(SYS_INT_CCINT0);
+    IntRegister(SYS_INT_CCERRINT, Edma3CCErrHandlerIsr);
+    IntChannelSet(SYS_INT_CCERRINT, 2);
+    IntSystemEnable(SYS_INT_CCERRINT);
+
 
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
