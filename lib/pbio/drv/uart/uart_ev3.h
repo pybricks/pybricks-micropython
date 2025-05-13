@@ -27,8 +27,10 @@ typedef struct {
     uint32_t base_address;
     /** Peripheral ID (PSC id in case of hardware, PRU UART line ID in case of PRU) */
     uint32_t peripheral_id;
-    /** The UART interrupt number. */
-    uint32_t sys_int_uart_int_id;
+    /** The UART TX interrupt number. */
+    uint32_t sys_int_uart_tx_int_id;
+    /** The UART RX interrupt number. */
+    uint32_t sys_int_uart_rx_int_id;
     /** Interrupt handler for this peripheral. */
     void (*isr_handler)(void);
 } pbdrv_uart_ev3_platform_data_t;
@@ -48,5 +50,15 @@ extern const pbdrv_uart_ev3_platform_data_t
  * @param id [in]   The UART instance ID.
  */
 void pbdrv_uart_ev3_handle_irq(uint8_t id);
+
+/**
+ * Callback to be called by the hardware UART TX complete handler.
+ *
+ * The driver will forward this call to the relevant hardware or PRU UART
+ * TX complete handler, if applicable.
+ *
+ * @param id [in]   The UART instance ID.
+ */
+void pbdrv_uart_ev3_handle_tx_complete(uint8_t id);
 
 #endif // _INTERNAL_PBDRV_UART_EV3_H_

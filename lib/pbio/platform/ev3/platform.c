@@ -209,28 +209,32 @@ const pbdrv_uart_ev3_platform_data_t
         .uart_kind = EV3_UART_HW,
         .base_address = SOC_UART_1_REGS,
         .peripheral_id = HW_PSC_UART1,
-        .sys_int_uart_int_id = SYS_INT_UARTINT1,
+        .sys_int_uart_tx_int_id = EDMA3_CHA_UART1_TX,
+        .sys_int_uart_rx_int_id = SYS_INT_UARTINT1,
         .isr_handler = pbdrv_uart_ev3_handle_irq_uart1,
     },
     [UART0] = {
         .uart_kind = EV3_UART_HW,
         .base_address = SOC_UART_0_REGS,
         .peripheral_id = HW_PSC_UART0,
-        .sys_int_uart_int_id = SYS_INT_UARTINT0,
+        .sys_int_uart_tx_int_id = EDMA3_CHA_UART0_TX,
+        .sys_int_uart_rx_int_id = SYS_INT_UARTINT0,
         .isr_handler = pbdrv_uart_ev3_handle_irq_uart0,
     },
     [PRU0_LINE1] = {
         .uart_kind = EV3_UART_PRU,
         .base_address = 0, // Not used.
         .peripheral_id = 1, // Soft UART line 1.
-        .sys_int_uart_int_id = SYS_INT_EVTOUT1,
+        .sys_int_uart_tx_int_id = SYS_INT_EVTOUT1, // One common IRQ handler
+        .sys_int_uart_rx_int_id = SYS_INT_EVTOUT1,
         .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line1,
     },
     [PRU0_LINE0] = {
         .uart_kind = EV3_UART_PRU,
         .base_address = 0, // Not used.
         .peripheral_id = 0, // Soft UART line 0.
-        .sys_int_uart_int_id = SYS_INT_EVTOUT0,
+        .sys_int_uart_tx_int_id = SYS_INT_EVTOUT0, // One common IRQ handler
+        .sys_int_uart_rx_int_id = SYS_INT_EVTOUT0,
         .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line0,
     },
     [UART2] = {
@@ -238,7 +242,8 @@ const pbdrv_uart_ev3_platform_data_t
         .uart_kind = EV3_UART_HW,
         .base_address = SOC_UART_2_REGS,
         .peripheral_id = HW_PSC_UART2,
-        .sys_int_uart_int_id = SYS_INT_UARTINT2,
+        .sys_int_uart_tx_int_id = EDMA3_CHA_UART2_TX,
+        .sys_int_uart_rx_int_id = SYS_INT_UARTINT2,
         .isr_handler = pbdrv_uart_ev3_handle_irq_uart2,
     },
 };
@@ -408,10 +413,22 @@ unsigned int EDMAVersionGet(void) {
  * @param status [in]   Status of the transfer. Currently only EDMA3_XFER_COMPLETE.
  */
 static void Edma3CompleteCallback(unsigned int tccNum, unsigned int status) {
-    if (tccNum == EDMA3_CHA_SPI1_TX) {
-        pbdrv_display_ev3_spi1_tx_complete(status);
+    switch (tccNum) {
+        case EDMA3_CHA_SPI1_TX:
+            pbdrv_display_ev3_spi1_tx_complete(status);
+            return;
+        case EDMA3_CHA_UART0_TX:
+            pbdrv_uart_ev3_handle_tx_complete(UART0);
+            return;
+        case EDMA3_CHA_UART1_TX:
+            pbdrv_uart_ev3_handle_tx_complete(UART1);
+            return;
+        case EDMA3_CHA_UART2_TX:
+            pbdrv_uart_ev3_handle_tx_complete(UART2);
+            return;
+        default:
+            return;
     }
-    // Add other callbacks here as needed.
 }
 
 /**

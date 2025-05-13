@@ -23,12 +23,15 @@
 #include "./uart_ev3.h"
 #include "./uart_ev3_pru.h"
 
-#include <tiam1808/uart.h>
-#include <tiam1808/psc.h>
-#include <tiam1808/hw/soc_AM1808.h>
-#include <tiam1808/hw/hw_types.h>
-#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
+#include <tiam1808/edma.h>
+#include <tiam1808/hw/hw_edma3cc.h>
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/psc.h>
+#include <tiam1808/uart.h>
 
 /**
  * This file contains two almost entirely separate implementations of UART
@@ -126,55 +129,9 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-/**
- * Helper function to write one byte in the write protothread.
- *
- * @param [in]    uart    The UART device.
- * @param [in]    byte    The byte to write.
- * @return                True if the byte was written, false otherwise.
- */
-static bool pbdrv_uart_try_to_write_byte(pbdrv_uart_dev_t *uart, uint8_t byte) {
+static pbio_error_t pbdrv_uart_write_pru(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
-
-    // Attempt to write one byte with the hardware UART.
-    if (pdata->uart_kind == EV3_UART_HW) {
-        return UARTCharPutNonBlocking(pdata->base_address, byte);
-    }
-
-    // Otherwise, attempt to write one byte with the PRU UART.
-    // We could be sending more than one byte at a time, but we keep it
-    // consistent with the hardware UART limitations for simplicity, since
-    // EV3 sensors typically don't send much data anyway.
-    return pbdrv_uart_ev3_pru_write_bytes(pdata->peripheral_id, &byte, 1);
-}
-
-/**
- * Helper function to check if the UART is ready to write.
- *
- * @param [in]    uart    The UART device.
- * @return                True if the UART is ready to write, false otherwise.
- */
-static bool pbdrv_uart_can_write(pbdrv_uart_dev_t *uart) {
-    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
-
-    // Check UART_LSR for THR_EMPTY
-    if (pdata->uart_kind == EV3_UART_HW) {
-        // Always call back after this. This creates a (yielding) poll loop for
-        // writing. This works around the unreliable TX_EMPTY interrupt when
-        // reading and writing simultaneously: Reading the status during an RX
-        // interrupt clears the TX_EMPTY interrupt, which is not re-triggered.
-        // Since UART writes on EV3 are limited to small messages like sensor
-        // mode changes, this is acceptable.
-        pbio_os_request_poll();
-        return UARTSpaceAvail(pdata->base_address);
-    }
-
-    // For PRU UART, we rely on the flag set by its IRQ handler.
-    // So no need to poll here.
-    return pbdrv_uart_ev3_pru_can_write(pdata->peripheral_id);
-}
-
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -195,13 +152,19 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
     PBIO_OS_AWAIT_UNTIL(state, ({
         // Try to write one byte if any are remaining.
         if (uart->write_pos < uart->write_length) {
-            if (pbdrv_uart_try_to_write_byte(uart, uart->write_buf[uart->write_pos])) {
+            // Attempt to write one byte with the PRU UART. We could be sending
+            // more than one byte at a time, but we keep it consistent with the
+            // current PRU API. EV3 sensors don't send much data anyway.
+            if (pbdrv_uart_ev3_pru_write_bytes(pdata->peripheral_id, &uart->write_buf[uart->write_pos], 1)) {
                 uart->write_pos++;
             }
         }
+        // Completion on transmission of whole message and finishing writing, or timeout.
+        bool complete = pbdrv_uart_ev3_pru_can_write(pdata->peripheral_id) && uart->write_pos == uart->write_length;
+        bool expired = timeout && pbio_os_timer_is_expired(&uart->write_timer);
 
-        // Completion on transmission of whole message and finishing writing or timeout.
-        (pbdrv_uart_can_write(uart) && uart->write_pos == uart->write_length) || (timeout && pbio_os_timer_is_expired(&uart->write_timer));
+        // Await until complete or timed out.
+        complete || expired;
     }));
 
     uart->write_buf = NULL;
@@ -211,6 +174,76 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, ui
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_uart_write_hw(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+
+    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Can only write one thing at once.
+    if (uart->write_buf) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    uart->write_buf = msg;
+
+    // Write length and pos properties not used in this implementation.
+    uart->write_length = 0;
+    uart->write_pos = 0;
+
+    if (timeout) {
+        pbio_os_timer_set(&uart->write_timer, timeout);
+    }
+
+    volatile EDMA3CCPaRAMEntry paramSet = {
+        .srcAddr = (uint32_t)uart->write_buf,
+        // UART transmit register address.
+        .destAddr = pdata->base_address + UART_THR,
+        // Number of bytes in an array.
+        .aCnt = 1,
+        // Number of such arrays to be transferred.
+        .bCnt = length,
+        // Number of frames of aCnt*bBcnt bytes to be transferred.
+        .cCnt = 1,
+        // The src index should increment for every byte being transferred.
+        .srcBIdx = 1,
+        // The dst index should not increment since it is a h/w register.
+        .destBIdx = 0,
+        // Transfer mode.
+        .srcCIdx = 0,
+        .destCIdx = 0,
+        .linkAddr = 0xFFFF,
+        .bCntReload = 0,
+        .opt = EDMA3CC_OPT_DAM | ((pdata->sys_int_uart_tx_int_id << EDMA3CC_OPT_TCC_SHIFT) & EDMA3CC_OPT_TCC) | (1 << EDMA3CC_OPT_TCINTEN_SHIFT),
+    };
+
+    // Save configuration and start transfer.
+    EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, pdata->sys_int_uart_tx_int_id, (EDMA3CCPaRAMEntry *)&paramSet);
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, pdata->sys_int_uart_tx_int_id, EDMA3_TRIG_MODE_EVENT);
+    UARTDMAEnable(pdata->base_address, UART_RX_TRIG_LEVEL_1 | UART_DMAMODE | UART_FIFO_MODE);
+
+    // Await until all bytes are written or timeout reached.
+    PBIO_OS_AWAIT_UNTIL(state, !uart->write_buf || (timeout && pbio_os_timer_is_expired(&uart->write_timer)));
+
+    uart->write_buf = NULL;
+
+    if (timeout && pbio_os_timer_is_expired(&uart->write_timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+    const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
+
+    if (pdata->uart_kind == EV3_UART_HW) {
+        return pbdrv_uart_write_hw(state, uart, msg, length, timeout);
+    } else {
+        return pbdrv_uart_write_pru(state, uart, msg, length, timeout);
+    }
 }
 
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
@@ -238,13 +271,18 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     }
 }
 
+/**
+ * Handles RX interrupts for the hardware UART.
+ *
+ * @param [in] uart The UART device.
+ */
 void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_dev_t *uart) {
 
     /* This determines the cause of UART0 interrupt.*/
     unsigned int int_id = UARTIntStatus(uart->pdata->base_address);
 
     /* Clears the system interrupt status of UART in AINTC. */
-    IntSystemStatusClear(uart->pdata->sys_int_uart_int_id);
+    IntSystemStatusClear(uart->pdata->sys_int_uart_rx_int_id);
 
     /* Check if the cause is receiver data condition.*/
     if (UART_INTID_RX_DATA == (int_id & UART_INTID_RX_DATA) || (UART_INTID_CTI == (int_id & UART_INTID_CTI))) {
@@ -272,7 +310,8 @@ void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_dev_t *uart) {
 
 void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_dev_t *uart) {
 
-    IntSystemStatusClear(uart->pdata->sys_int_uart_int_id);
+    // rx and tx have the same interrupt ID.
+    IntSystemStatusClear(uart->pdata->sys_int_uart_rx_int_id);
 
     // This calls what is mostly equivalent the original LEGO/ev3dev IRQ
     // handler. This is using its own ring buffer that we pull data from below.
@@ -295,34 +334,41 @@ void pbdrv_uart_ev3_handle_irq(uint8_t id) {
     }
 }
 
+void pbdrv_uart_ev3_handle_tx_complete(uint8_t id) {
+    pbdrv_uart_dev_t *uart = &uart_devs[id];
+    UARTDMADisable(uart->pdata->base_address, (UART_RX_TRIG_LEVEL_1 | UART_FIFO_MODE));
+    uart->write_buf = NULL;
+    pbio_os_request_poll();
+}
+
 static void pbdrv_uart_init_hw(pbdrv_uart_dev_t *uart) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
-    /* Enabling the PSC for given UART.*/
+    // Enabling the PSC for given UART.
     PSCModuleControl(SOC_PSC_1_REGS, pdata->peripheral_id, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
-    /* Enabling the transmitter and receiver*/
+    // Enabling the transmitter and receiver.
     UARTEnable(pdata->base_address);
 
-    /* Configuring the UART clock and baud parameters*/
+    // Configuring the UART clock and baud parameters.
     pbdrv_uart_set_baud_rate(uart, BAUD_115200);
 
-    /* Enabling the FIFO and flushing the Tx and Rx FIFOs.*/
+    // Enabling the FIFO and flushing the Tx and Rx FIFOs.
     UARTFIFOEnable(pdata->base_address);
 
-    /* Setting the UART Receiver Trigger Level*/
+    // Setting the UART Receiver Trigger Level.
     UARTFIFOLevelSet(pdata->base_address, UART_RX_TRIG_LEVEL_1);
 
-    /* Registers the UARTIsr in the Interrupt Vector Table of AINTC. */
-    IntRegister(pdata->sys_int_uart_int_id, pdata->isr_handler);
-
-    /* Map the channel number 2 of AINTC to UART system interrupt. */
-    IntChannelSet(pdata->sys_int_uart_int_id, 2);
-
-    IntSystemEnable(pdata->sys_int_uart_int_id);
-
-    /* Enable the Interrupts in UART.*/
+    // Registers the UARTIsr for reading in the Interrupt Vector Table of AINTC.
+    // Map the channel number 2 of AINTC to UART system interrupt.
+    // Interrupts for reading stay enabled, unlike writing.
+    IntRegister(pdata->sys_int_uart_rx_int_id, pdata->isr_handler);
+    IntChannelSet(pdata->sys_int_uart_rx_int_id, 2);
+    IntSystemEnable(pdata->sys_int_uart_rx_int_id);
     UARTIntEnable(pdata->base_address, UART_INT_LINE_STAT | UART_INT_RXDATA_CTI);
+
+    // Request DMA Channel for UART Transmit at event queue 0.
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, pdata->sys_int_uart_tx_int_id, pdata->sys_int_uart_tx_int_id, 0);
 }
 
 
@@ -333,12 +379,11 @@ void pbdrv_uart_init_pru(pbdrv_uart_dev_t *uart) {
     pbdrv_uart_set_baud_rate(uart, BAUD_115200);
 
     // Registers the UARTIsr in the Interrupt Vector Table of AINTC.
-    IntRegister(pdata->sys_int_uart_int_id, pdata->isr_handler);
-
     // Map the channel number 2 of AINTC to UART system interrupt.
-    IntChannelSet(pdata->sys_int_uart_int_id, 2);
-
-    IntSystemEnable(pdata->sys_int_uart_int_id);
+    // One handler for both RX and TX interrupts with same ID.
+    IntRegister(pdata->sys_int_uart_tx_int_id, pdata->isr_handler);
+    IntChannelSet(pdata->sys_int_uart_tx_int_id, 2);
+    IntSystemEnable(pdata->sys_int_uart_tx_int_id);
 }
 
 void pbdrv_uart_init(void) {
