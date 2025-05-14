@@ -88,7 +88,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub]
+        #hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub]
+        hub: [technichub]
     needs: [mpy_cross]
     runs-on: ubuntu-22.04
     steps:
@@ -111,16 +112,8 @@ jobs:
     - name: Build firmware (pull request)
       if: ${{ github.base_ref != null }}
       run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
-    - name: Build firmware (non-master branch)
-      if: ${{ github.base_ref == null && github.ref != 'refs/heads/master' }}
-      env:
-        STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
-        STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
-        STORAGE_URL: ${{ secrets.STORAGE_URL }}
-        FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-      run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.ref_name }}
     - name: Build firmware (master branch)
-      if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
+      if: ${{ github.base_ref == null && github.ref == 'refs/heads/main' }}
       run: |
         export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
         export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
@@ -166,13 +159,6 @@ jobs:
       run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build and test
       run: COVERAGE=1 ./test-virtualhub.sh
-    - name: Coveralls
-      uses: coverallsapp/github-action@v2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        file: bricks/virtualhub/build-coverage/lcov.info
-        flag-name: virtualhub
-        parallel: true
 
   pbio:
     name: pbio tests
@@ -197,21 +183,3 @@ jobs:
     - name: Build coverage
       run: |
         make $MAKEOPTS -C lib/pbio/test build-coverage/lcov.info
-    - name: Coveralls
-      uses: coverallsapp/github-action@v2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        file: lib/pbio/test/build-coverage/lcov.info
-        flag-name: PBIO
-        parallel: true
-
-  finish:
-    needs: [virtualhub, pbio]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Coveralls
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
-
