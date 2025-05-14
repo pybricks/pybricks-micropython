@@ -17,6 +17,7 @@
 
 #include <pbsys/config.h>
 #include <pbsys/storage_settings.h>
+#include <pbsys/storage.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
@@ -84,6 +85,13 @@ typedef struct {
 
 static pb_xbox_t pb_xbox_singleton;
 
+// Added by Grant Imahara STEAM Foundation
+// Static variables to hold the MAC address of the controller being targeted or successfully connected.
+// Used by xbox_advertisement_matches and the connection logic in pb_type_xbox_make_new.
+static uint8_t s_target_or_connected_addr[6];
+static bool s_target_addr_valid = false;
+static bool s_connected_addr_valid = false;
+
 // Handles LEGO Wireless protocol messages from the XBOX Device.
 static pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_xbox_t *xbox = &pb_xbox_singleton;
@@ -132,12 +140,17 @@ static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_
     // Exit if neither of the expected values match.
     if (memcmp(data, advertising_data1, sizeof(advertising_data1)) &&
         memcmp(data, advertising_data2, sizeof(advertising_data2)) &&
-        memcmp(data, advertising_data3, sizeof(advertising_data3))) {
+        // Additional check to require match for last stored address
+        (memcmp(data, advertising_data3, sizeof(advertising_data3)) || !s_target_addr_valid || memcmp(addr, s_target_or_connected_addr, 6) != 0)) {
         return PBDRV_BLUETOOTH_AD_MATCH_NONE;
     }
 
     // Expected value matches at this point.
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_VALUE;
+
+    // Remember address
+    memcpy(s_target_or_connected_addr, addr, 6);
+    s_connected_addr_valid = true;
 
     // Compare address in advertisement to previously scanned address.
     if (memcmp(addr, match_addr, 6) == 0) {
@@ -153,11 +166,15 @@ static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_response_match
     // This is currently the only requirement.
     if (event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP) {
         flags |= PBDRV_BLUETOOTH_AD_MATCH_VALUE;
+        // Remember address
+        memcpy(s_target_or_connected_addr, addr, 6);
+        s_connected_addr_valid = true;
     }
 
     // Compare address in response to previously scanned address.
     if (memcmp(addr, match_addr, 6) == 0) {
         flags |= PBDRV_BLUETOOTH_AD_MATCH_ADDRESS;
+        // Not necessary to remember address here, since it will have been committed earlier
     }
 
     return flags;
@@ -326,6 +343,23 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
+    //Get stored address of controller to connect to
+    uint8_t initial_stored_addr[6] = {0};
+    uint8_t *stored_addr_ptr;
+
+    // Read from user_data at offset 0, for 6 bytes.
+    if (pbsys_storage_get_user_data(0, &stored_addr_ptr, 6) == PBIO_SUCCESS) {
+        memcpy(initial_stored_addr, stored_addr_ptr, 6);
+        for (int i = 0; i < 6; i++) { // Check if the loaded address is non-zero
+            if (initial_stored_addr[i] != 0) {
+                // Prime s_target_or_connected_addr with the stored one
+                memcpy(s_target_or_connected_addr, initial_stored_addr, 6);
+                s_target_addr_valid = true;
+                break;
+            }
+        }
+    }
+
     // Connect with bonding enabled. On some computers, the pairing step will
     // fail if the hub is still connected to Pybricks Code. Since it is unclear
     // which computer will have this problem, recommend to disconnect the hub
@@ -376,6 +410,22 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
                 ));
         }
         nlr_jump(nlr.ret_val);
+    }
+
+    // Store the address of the successfully connected controller
+    if (s_connected_addr_valid) { // Ensure we have a valid address from the current connection
+        // Check if we should write:
+        // 1. No address was previously stored (s_target_addr_valid was false before connection logic,
+        //    and initial_stored_addr would be all zeros or uninitialized).
+        // 2. Or, the newly connected address is different from the initially stored one.
+        bool should_write = !s_target_addr_valid || memcmp(s_target_or_connected_addr, initial_stored_addr, 6) != 0;
+
+        if (should_write) {
+            if (pbsys_storage_set_user_data(0, s_target_or_connected_addr, 6) == PBIO_SUCCESS) {
+            } else {
+                DEBUG_PRINT("Error storing Xbox controller address to user_data.\n");
+            }
+        }
     }
 
     self->buttons = pb_type_Keypad_obj_new(pb_xbox_button_pressed);
