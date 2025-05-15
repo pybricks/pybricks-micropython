@@ -112,8 +112,8 @@ jobs:
     - name: Build firmware (pull request)
       if: ${{ github.base_ref != null }}
       run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
-    - name: Build firmware (master branch)
-      if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
+    - name: Build firmware
+      if: ${{ github.base_ref == null }}
       run: |
         export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
         export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
