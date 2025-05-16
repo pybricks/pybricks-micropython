@@ -104,50 +104,59 @@ typedef struct {
 
 // Define color configurations based on hub names
 static const hub_color_config_t hub_color_configs[] = {
-    {"blue", PBIO_COLOR_BLUE},    // Default to blue if name tests fail
-    {"pink", PBIO_COLOR_MAGENTA}, // "pink" will use PBIO_COLOR_MAGENTA
+    {"blue", PBIO_COLOR_BLUE},
+    {"pink", PBIO_COLOR_MAGENTA},
     {"red", PBIO_COLOR_RED},
     {"yellow", PBIO_COLOR_YELLOW},
+    {"orange", PBIO_COLOR_ORANGE},
     {"green", PBIO_COLOR_GREEN},
     {"cyan", PBIO_COLOR_CYAN},
     {"purple", PBIO_COLOR_VIOLET}, // Using VIOLET for purple
     {"white", PBIO_COLOR_WHITE},
-    {"black", PBIO_COLOR_BLACK}, // Could be used for "off" state in pulse
     // Add more named pbio_color_t configurations here
 };
 static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
+
+// Mutable pattern array for BLE advertising, to be populated at runtime.
+static pbsys_status_light_indication_pattern_element_t
+    pbsys_ble_advertising_pattern_elements[] = {
+    { .color = PBIO_COLOR_BLACK, .duration = 2 }, // Placeholder for first color
+    { .color = PBIO_COLOR_BLACK, .duration = 2 },
+    { .color = PBIO_COLOR_BLACK, .duration = 2 }, // Placeholder for first color
+    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    { .color = PBIO_COLOR_BLACK, .duration = 2 }, // Placeholder for second color
+    { .color = PBIO_COLOR_BLACK, .duration = 2 },
+    { .color = PBIO_COLOR_BLACK, .duration = 2 }, // Placeholder for second color
+    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+};
 #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 
-static const pbsys_status_light_indication_pattern_element_t *const
+// Array of pointers to pattern elements. Pointers are const, but data can be mutable
+// for the BLE advertising case to allow runtime color updates.
+static pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern_ble[] = {
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_NONE] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
+        (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
     },
-    // Two blue blinks, pause, then repeat.
+    // Two blinks with hub-specific colors, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
-        (pbsys_status_light_indication_pattern_element_t[]) {
         #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-        { .color = hub_color_configs[0].color, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = hub_color_configs[0].color, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 12 },
-        { .color = hub_color_configs[1].color, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = hub_color_configs[1].color, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 12 },
+        pbsys_ble_advertising_pattern_elements, // Points to our mutable array, updated at runtime
         #else // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         // Default to blue blinks if animations are not enabled
+        (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_BLUE, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = PBIO_COLOR_BLUE, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 22 }, // Matches pattern of other warnings like LOW_VOLTAGE
-        #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
+        #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     // Blue, always on.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
+        (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
     },
 };
@@ -233,6 +242,16 @@ void pbsys_status_light_init(void) {
     #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     // Initialize cached color indices based on hub name
     pbsys_user_program_light_colors_init();
+
+    // Update the BLE advertising pattern with dynamically selected colors
+    pbsys_ble_advertising_pattern_elements[0].color = hub_color_configs[selected_hub_color_index_1].color;
+    // pbsys_ble_advertising_pattern_elements[1] is PBIO_COLOR_BLACK (off)
+    pbsys_ble_advertising_pattern_elements[2].color = hub_color_configs[selected_hub_color_index_1].color;
+    // pbsys_ble_advertising_pattern_elements[3] is PBIO_COLOR_BLACK (off)
+    pbsys_ble_advertising_pattern_elements[4].color = hub_color_configs[selected_hub_color_index_2].color;
+    // pbsys_ble_advertising_pattern_elements[5] is PBIO_COLOR_BLACK (off)
+    pbsys_ble_advertising_pattern_elements[6].color = hub_color_configs[selected_hub_color_index_2].color;
+    // pbsys_ble_advertising_pattern_elements[7] is PBIO_COLOR_BLACK (off)
     #endif
 }
 
@@ -498,7 +517,7 @@ void pbsys_status_light_poll(void) {
         warning_pattern_state, pbsys_status_light_indication_pattern_warning);
 
     pbio_color_t new_ble_color = pbsys_status_light_pattern_next(
-        ble_pattern_state, pbsys_status_light_indication_pattern_ble);
+        ble_pattern_state, (const pbsys_status_light_indication_pattern_element_t *const *)pbsys_status_light_indication_pattern_ble);
 
 
     pbio_color_t new_main_color = new_warning_color;
