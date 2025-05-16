@@ -105,14 +105,14 @@ pbsys_status_light_indication_pattern_ble[] = {
     // Two blue blinks, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLUE, .duration = 2 },
+        { .color = hub_color_configs[0].color, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_BLUE, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        { .color = PBIO_COLOR_RED, .duration = 2 },
+        { .color = hub_color_configs[0].color, .duration = 2 },
+        { .color = PBIO_COLOR_BLACK, .duration = 12 },
+        { .color = hub_color_configs[1].color, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_RED, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
+        { .color = hub_color_configs[1].color, .duration = 2 },
+        { .color = PBIO_COLOR_BLACK, .duration = 12 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Blue, always on.
@@ -293,8 +293,7 @@ typedef struct {
 
 // Define color configurations based on hub names
 static const hub_color_config_t hub_color_configs[] = {
-    {"", PBIO_COLOR_BLUE},        // Default: empty name, maps to PBIO_COLOR_BLUE
-    {"blue", PBIO_COLOR_BLUE},
+    {"blue", PBIO_COLOR_BLUE},    // Default to blue if name tests fail
     {"pink", PBIO_COLOR_MAGENTA}, // "pink" will use PBIO_COLOR_MAGENTA
     {"red", PBIO_COLOR_RED},
     {"yellow", PBIO_COLOR_YELLOW},
@@ -309,19 +308,18 @@ static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(
 
 // Helper function to find the index of a color name in the config array
 static uint8_t find_color_index(const char *name_to_find) {
-    if (name_to_find == NULL || name_to_find[0] == '\0') {
-        return 0; // Default to first entry for empty or null name
-    }
-    for (uint8_t i = 0; i < num_hub_color_configs; i++) {
-        // Skip default entry (empty name) unless name_to_find is also empty (which is handled by the check above)
-        if (hub_color_configs[i].name[0] == '\0' && i == 0) {
-            continue;
-        }
-        if (strcmp(name_to_find, hub_color_configs[i].name) == 0) {
-            return i;
+    // Attempt to find the provided name first
+    if (name_to_find != NULL && name_to_find[0] != '\0') {
+        for (uint8_t i = 0; i < num_hub_color_configs; i++) {
+            if (strcmp(name_to_find, hub_color_configs[i].name) == 0) {
+                return i; // Found the name
+            }
         }
     }
-    return 0; // Default to first entry if name not found
+
+    // If name_to_find is NULL, empty, or not found, default to "blue".
+    // Assumes "blue" is the first entry (index 0) in the hub_color_configs array.
+    return 0;
 }
 
 
