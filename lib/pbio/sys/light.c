@@ -207,11 +207,16 @@ void pbsys_status_light_init(void) {
 }
 
 static void pbsys_user_program_light_colors_init(void) {
-    /*#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+
+    // This block enables parsing the hub name to set colors.
     const char *full_hub_name_const = pbdrv_bluetooth_get_hub_name();
-    // pbdrv_bluetooth_hub_name is char[16], so 16 is enough for copy including null.
+
+    // Assuming pbdrv_bluetooth_get_hub_name() is robust as per user feedback.
+    // A NULL check could be added here if issues persist: if (full_hub_name_const != NULL)
     char hub_name_copy[16];
-    strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy));
+    // Ensure space for null terminator by copying at most sizeof-1 characters
+    strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy) - 1);
     hub_name_copy[sizeof(hub_name_copy) - 1] = '\0'; // Ensure null termination
 
     char *name1_str = hub_name_copy;
@@ -221,29 +226,22 @@ static void pbsys_user_program_light_colors_init(void) {
     if (space_ptr != NULL) {
         *space_ptr = '\0'; // Terminate name1_str
         name2_str = space_ptr + 1;
-        // Skip any leading spaces for name2_str, in case of multiple spaces
-        while (*name2_str == ' ') {
+        // Skip any leading spaces for name2_str, ensuring not to read past buffer
+        while (*name2_str == ' ' && *name2_str != '\0') {
             name2_str++;
         }
         if (*name2_str == '\0') { // If only spaces followed name1, or name2 is empty
             name2_str = NULL;
         }
     }
-    // At this point, name1_str points to the first token (or the whole string if no space).
-    // name2_str points to the second token, or is NULL if no second token.
 
     selected_hub_color_index_1 = find_color_index(name1_str);
-
     if (name2_str != NULL && name2_str[0] != '\0') {
         selected_hub_color_index_2 = find_color_index(name2_str);
     } else {
-        // If no second name, or second name is empty, default index2 to index1
         selected_hub_color_index_2 = selected_hub_color_index_1;
-    }*/
-
-    selected_hub_color_index_1 = 1; // Using parsed names instead
-    selected_hub_color_index_2 = 3; // Using parsed names instead
-    //#endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    }
+    #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
 static void pbsys_status_light_handle_status_change(void) {
