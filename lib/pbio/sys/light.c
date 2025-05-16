@@ -126,7 +126,7 @@ pbsys_status_light_indication_pattern_ble[] = {
     },
     // Two blue blinks, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
+        (pbsys_status_light_indication_pattern_element_t[]) {
         #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         { .color = hub_color_configs[0].color, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
