@@ -207,7 +207,7 @@ void pbsys_status_light_init(void) {
 }
 
 static void pbsys_user_program_light_colors_init(void) {
-    #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    /*#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     const char *full_hub_name_const = pbdrv_bluetooth_get_hub_name();
     // pbdrv_bluetooth_hub_name is char[16], so 16 is enough for copy including null.
     char hub_name_copy[16];
@@ -239,7 +239,7 @@ static void pbsys_user_program_light_colors_init(void) {
     } else {
         // If no second name, or second name is empty, default index2 to index1
         selected_hub_color_index_2 = selected_hub_color_index_1;
-    }
+    }*/
 
     selected_hub_color_index_1 = 1; // Using parsed names instead
     selected_hub_color_index_2 = 3; // Using parsed names instead
