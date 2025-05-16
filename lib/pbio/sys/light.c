@@ -228,28 +228,36 @@ static void pbsys_status_light_handle_status_change(void) {
 #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 static uint8_t animation_progress;
 
+typedef struct {
+    const char *name;
+    int32_t hue;        // Hue as an integer (0-359)
+    uint8_t saturation; // Saturation as an integer (0-100)
+} hub_color_config_t;
+
+// Define color configurations based on hub names
+// The first entry is the default if no specific name matches.
+static const hub_color_config_t hub_color_configs[] = {
+    {"", 240, 100},      // Default: Blue (empty name for fallback)
+    {"pink", 300, 50},  // Pink/Magenta
+    {"lime", 120, 100},   // Lime Green with 80% saturation
+    // Add up to ~30 color configurations here
+    // e.g. {"orange", 30, 90}, // Orange (Hue 30, Sat 90)
+};
+static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
+static uint8_t selected_hub_color_index = 0; // Default to the first configuration
+
 static uint32_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
     // The brightness pattern has the form /\ through which we cycle in N steps.
     // It is reset back to the start when the user program starts.
     const uint8_t animation_progress_max = 200;
     pbio_color_hsv_t hsv;
 
-    const char *hub_name = pbdrv_bluetooth_get_hub_name();
-
-    if (strcmp(hub_name, "pink") == 0) {
-        hsv.h = PBIO_COLOR_HUE_MAGENTA; // A pinkish hue
-        hsv.s = 100; // Full saturation
-        // Keep the brightness animation
-        hsv.v = animation_progress < animation_progress_max / 2 ?
-            animation_progress :
-            animation_progress_max - animation_progress;
-    } else {
-        hsv.h = PBIO_COLOR_HUE_BLUE;
-        hsv.s = 100;
-        hsv.v = animation_progress < animation_progress_max / 2 ?
-            animation_progress :
-            animation_progress_max - animation_progress;
-    }
+    hsv.h = hub_color_configs[selected_hub_color_index].hue;
+    hsv.s = hub_color_configs[selected_hub_color_index].saturation;
+    // Keep the brightness animation
+    hsv.v = animation_progress < animation_progress_max / 2 ?
+        animation_progress :
+        animation_progress_max - animation_progress;
 
     pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
 
@@ -266,6 +274,22 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     }
     if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+        // Determine selected_hub_color_index once when program starts
+        const char *hub_name = pbdrv_bluetooth_get_hub_name();
+        selected_hub_color_index = 0; // Default to first configuration
+
+        for (uint8_t i = 0; i < num_hub_color_configs; i++) {
+            // Skip default entry if it's meant as a fallback only (empty name)
+            // and we are not checking the first entry specifically for an empty name match.
+            if (hub_color_configs[i].name[0] == '\0' && i == 0 && hub_name[0] != '\0') {
+                continue;
+            }
+            if (strcmp(hub_name, hub_color_configs[i].name) == 0) {
+                selected_hub_color_index = i;
+                break;
+            }
+        }
+
         animation_progress = 0;
         pbio_light_animation_init(&pbsys_status_light_main->animation, default_user_program_light_animation_next);
         pbio_light_animation_start(&pbsys_status_light_main->animation);
