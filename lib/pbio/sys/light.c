@@ -96,6 +96,28 @@ pbsys_status_light_indication_pattern_warning[] = {
     },
 };
 
+#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+typedef struct {
+    const char *name;
+    pbio_color_t color; // Use pbio_color_t enum for configuration
+} hub_color_config_t;
+
+// Define color configurations based on hub names
+static const hub_color_config_t hub_color_configs[] = {
+    {"blue", PBIO_COLOR_BLUE},    // Default to blue if name tests fail
+    {"pink", PBIO_COLOR_MAGENTA}, // "pink" will use PBIO_COLOR_MAGENTA
+    {"red", PBIO_COLOR_RED},
+    {"yellow", PBIO_COLOR_YELLOW},
+    {"green", PBIO_COLOR_GREEN},
+    {"cyan", PBIO_COLOR_CYAN},
+    {"purple", PBIO_COLOR_VIOLET}, // Using VIOLET for purple
+    {"white", PBIO_COLOR_WHITE},
+    {"black", PBIO_COLOR_BLACK}, // Could be used for "off" state in pulse
+    // Add more named pbio_color_t configurations here
+};
+static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
+#endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern_ble[] = {
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_NONE] =
@@ -105,6 +127,7 @@ pbsys_status_light_indication_pattern_ble[] = {
     // Two blue blinks, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
+        #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         { .color = hub_color_configs[0].color, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = hub_color_configs[0].color, .duration = 2 },
@@ -113,6 +136,13 @@ pbsys_status_light_indication_pattern_ble[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = hub_color_configs[1].color, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 12 },
+        #else // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+        // Default to blue blinks if animations are not enabled
+        { .color = PBIO_COLOR_BLUE, .duration = 2 },
+        { .color = PBIO_COLOR_BLACK, .duration = 2 },
+        { .color = PBIO_COLOR_BLUE, .duration = 2 },
+        { .color = PBIO_COLOR_BLACK, .duration = 22 }, // Matches pattern of other warnings like LOW_VOLTAGE
+        #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Blue, always on.
@@ -285,26 +315,6 @@ static void pbsys_status_light_handle_status_change(void) {
 }
 
 #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-
-typedef struct {
-    const char *name;
-    pbio_color_t color; // Use pbio_color_t enum for configuration
-} hub_color_config_t;
-
-// Define color configurations based on hub names
-static const hub_color_config_t hub_color_configs[] = {
-    {"blue", PBIO_COLOR_BLUE},    // Default to blue if name tests fail
-    {"pink", PBIO_COLOR_MAGENTA}, // "pink" will use PBIO_COLOR_MAGENTA
-    {"red", PBIO_COLOR_RED},
-    {"yellow", PBIO_COLOR_YELLOW},
-    {"green", PBIO_COLOR_GREEN},
-    {"cyan", PBIO_COLOR_CYAN},
-    {"purple", PBIO_COLOR_VIOLET}, // Using VIOLET for purple
-    {"white", PBIO_COLOR_WHITE},
-    {"black", PBIO_COLOR_BLACK}, // Could be used for "off" state in pulse
-    // Add more named pbio_color_t configurations here
-};
-static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
 
 // Helper function to find the index of a color name in the config array
 static uint8_t find_color_index(const char *name_to_find) {
