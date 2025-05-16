@@ -235,14 +235,14 @@ static void pbsys_user_program_light_colors_init(void) {
     selected_hub_color_index_1 = 1; // Using parsed names instead
     selected_hub_color_index_2 = 3; // Using parsed names instead
 
-    selected_hub_color_index_1 = find_color_index(name1_str);
+    /*selected_hub_color_index_1 = find_color_index(name1_str);
 
     if (name2_str != NULL && name2_str[0] != '\0') {
         selected_hub_color_index_2 = find_color_index(name2_str);
     } else {
         // If no second name, or second name is empty, default index2 to index1
         selected_hub_color_index_2 = selected_hub_color_index_1;
-    }
+    }*/
     #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
@@ -294,8 +294,6 @@ typedef struct {
 } hub_color_config_t;
 
 // Define color configurations based on hub names
-// The first entry is the default if no specific name matches.
-// Using pbio_color_t enum values now.
 static const hub_color_config_t hub_color_configs[] = {
     {"", PBIO_COLOR_BLUE},        // Default: empty name, maps to PBIO_COLOR_BLUE
     {"blue", PBIO_COLOR_BLUE},
