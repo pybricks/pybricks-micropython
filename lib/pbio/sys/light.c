@@ -232,17 +232,17 @@ static void pbsys_user_program_light_colors_init(void) {
     // At this point, name1_str points to the first token (or the whole string if no space).
     // name2_str points to the second token, or is NULL if no second token.
 
-    selected_hub_color_index_1 = 1; // Using parsed names instead
-    selected_hub_color_index_2 = 3; // Using parsed names instead
-
-    /*selected_hub_color_index_1 = find_color_index(name1_str);
+    selected_hub_color_index_1 = find_color_index(name1_str);
 
     if (name2_str != NULL && name2_str[0] != '\0') {
         selected_hub_color_index_2 = find_color_index(name2_str);
     } else {
         // If no second name, or second name is empty, default index2 to index1
         selected_hub_color_index_2 = selected_hub_color_index_1;
-    }*/
+    }
+
+    selected_hub_color_index_1 = 1; // Using parsed names instead
+    selected_hub_color_index_2 = 3; // Using parsed names instead
     #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
