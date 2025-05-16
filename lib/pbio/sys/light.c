@@ -243,7 +243,7 @@ static void pbsys_user_program_light_colors_init(void) {
 
     selected_hub_color_index_1 = 1; // Using parsed names instead
     selected_hub_color_index_2 = 3; // Using parsed names instead
-    #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    //#endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
 static void pbsys_status_light_handle_status_change(void) {
