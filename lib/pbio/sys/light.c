@@ -206,8 +206,8 @@ void pbsys_status_light_init(void) {
     #endif
 }
 
+#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 static void pbsys_user_program_light_colors_init(void) {
-    #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 
     // This block enables parsing the hub name to set colors.
     const char *full_hub_name_const = pbdrv_bluetooth_get_hub_name();
@@ -241,8 +241,8 @@ static void pbsys_user_program_light_colors_init(void) {
     } else {
         selected_hub_color_index_2 = selected_hub_color_index_1;
     }
-    #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
+#endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 
 static void pbsys_status_light_handle_status_change(void) {
 
