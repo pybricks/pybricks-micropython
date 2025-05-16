@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h> // For strcmp
+#include <string.h>
 
 #include <contiki.h>
 #include <pbdrv/bluetooth.h> // For pbdrv_bluetooth_get_hub_name
@@ -105,13 +105,13 @@ pbsys_status_light_indication_pattern_ble[] = {
     // Two blue blinks, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-            { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_1].hue, hub_color_configs[selected_hub_color_index_1].saturation, 100), .duration = 2 },
+        { .color = PBIO_COLOR_BLUE, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_1].hue, hub_color_configs[selected_hub_color_index_1].saturation, 100), .duration = 2 },
+        { .color = PBIO_COLOR_BLUE, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_2].hue, hub_color_configs[selected_hub_color_index_2].saturation, 100), .duration = 2 },
+        { .color = PBIO_COLOR_RED, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_2].hue, hub_color_configs[selected_hub_color_index_2].saturation, 100), .duration = 2 },
+        { .color = PBIO_COLOR_RED, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
@@ -179,6 +179,18 @@ static const pbio_color_light_funcs_t pbsys_status_light_funcs = {
     .set_hsv = pbsys_status_light_set_hsv,
 };
 
+#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+// Forward declarations
+static uint8_t find_color_index(const char *name_to_find);
+static void pbsys_user_program_light_colors_init(void);
+
+// Static variables for hub color animations
+static uint8_t selected_hub_color_index_1 = 0; // Default to the first configuration
+static uint8_t selected_hub_color_index_2 = 0; // Default to the first configuration
+static uint8_t animation_progress;
+static bool use_first_color_in_pulse = true;
+#endif
+
 void pbsys_status_light_init(void) {
     // REVISIT: Light ids currently hard-coded.
     pbdrv_led_get_dev(0, &pbsys_status_light_instance_main.led);
@@ -194,35 +206,43 @@ void pbsys_status_light_init(void) {
     #endif
 }
 
-#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-// Forward declaration for pbsys_user_program_light_colors_init
-static uint8_t find_color_index(const char *name_to_find);
-#endif
-
 static void pbsys_user_program_light_colors_init(void) {
     #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     const char *full_hub_name_const = pbdrv_bluetooth_get_hub_name();
-    // Max length of hub name is 15 + null terminator. Max for two color names + dash + null is 7+1+7+1 = 16.
-    // Use a slightly larger buffer to be safe with potential longer individual names if parsing changes.
-    char hub_name_copy[PBDRV_BLUETOOTH_MAX_HUB_NAME_SIZE];
-    strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy) - 1);
-    hub_name_copy[sizeof(hub_name_copy) - 1] = '\0';
+    // pbdrv_bluetooth_hub_name is char[16], so 16 is enough for copy including null.
+    char hub_name_copy[16];
+    strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy));
+    hub_name_copy[sizeof(hub_name_copy) - 1] = '\0'; // Ensure null termination
 
-    char *saveptr;
-    char *name1_str = strtok_r(hub_name_copy, " ", &saveptr);
-    char *name2_str = strtok_r(NULL, " ", &saveptr);
+    char *name1_str = hub_name_copy;
+    char *name2_str = NULL;
+    char *space_ptr = strchr(hub_name_copy, ' ');
 
-    selected_hub_color_index_1 = 0;
-    selected_hub_color_index_2 = 3;
+    if (space_ptr != NULL) {
+        *space_ptr = '\0'; // Terminate name1_str
+        name2_str = space_ptr + 1;
+        // Skip any leading spaces for name2_str, in case of multiple spaces
+        while (*name2_str == ' ') {
+            name2_str++;
+        }
+        if (*name2_str == '\0') { // If only spaces followed name1, or name2 is empty
+            name2_str = NULL;
+        }
+    }
+    // At this point, name1_str points to the first token (or the whole string if no space).
+    // name2_str points to the second token, or is NULL if no second token.
 
-    /*selected_hub_color_index_1 = find_color_index(name1_str);
+    selected_hub_color_index_1 = 1; // Using parsed names instead
+    selected_hub_color_index_2 = 3; // Using parsed names instead
+
+    selected_hub_color_index_1 = find_color_index(name1_str);
 
     if (name2_str != NULL && name2_str[0] != '\0') {
         selected_hub_color_index_2 = find_color_index(name2_str);
     } else {
         // If no second name, or second name is empty, default index2 to index1
         selected_hub_color_index_2 = selected_hub_color_index_1;
-    }*/
+    }
     #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
@@ -267,31 +287,29 @@ static void pbsys_status_light_handle_status_change(void) {
 }
 
 #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-static uint8_t animation_progress;
-static bool use_first_color_in_pulse = true;
 
 typedef struct {
     const char *name;
-    int32_t hue;        // Hue as an integer (0-359)
-    uint8_t saturation; // Saturation as an integer (0-100)
+    pbio_color_t color; // Use pbio_color_t enum for configuration
 } hub_color_config_t;
 
 // Define color configurations based on hub names
 // The first entry is the default if no specific name matches.
+// Using pbio_color_t enum values now.
 static const hub_color_config_t hub_color_configs[] = {
-    {"", 240, 100},      // Default: Blue (empty name for fallback)
-    {"pink", 300, 100},  // Changed pink saturation to 100 from 50 for example
-    {"lime", 120, 80},
-    {"red", 0, 100},
-    {"green", 120, 100}, // Same hue as lime, but full saturation
-    {"yellow", 60, 100},
-    {"cyan", 180, 100},
-    {"purple", 270, 100},
-    // Add up to ~30 color configurations here
+    {"", PBIO_COLOR_BLUE},        // Default: empty name, maps to PBIO_COLOR_BLUE
+    {"blue", PBIO_COLOR_BLUE},
+    {"pink", PBIO_COLOR_MAGENTA}, // "pink" will use PBIO_COLOR_MAGENTA
+    {"red", PBIO_COLOR_RED},
+    {"yellow", PBIO_COLOR_YELLOW},
+    {"green", PBIO_COLOR_GREEN},
+    {"cyan", PBIO_COLOR_CYAN},
+    {"purple", PBIO_COLOR_VIOLET}, // Using VIOLET for purple
+    {"white", PBIO_COLOR_WHITE},
+    {"black", PBIO_COLOR_BLACK}, // Could be used for "off" state in pulse
+    // Add more named pbio_color_t configurations here
 };
 static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
-static uint8_t selected_hub_color_index_1 = 0; // Default to the first configuration
-static uint8_t selected_hub_color_index_2 = 0; // Default to the first configuration
 
 // Helper function to find the index of a color name in the config array
 static uint8_t find_color_index(const char *name_to_find) {
@@ -315,13 +333,15 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
     // The brightness pattern has the form /\ through which we cycle in N steps.
     // It is reset back to the start when the user program starts.
     const uint8_t animation_progress_max = 200;
-    pbio_color_hsv_t hsv;
+    pbio_color_hsv_t hsv; // Target HSV for the LED driver
 
     uint8_t current_color_index = use_first_color_in_pulse ? selected_hub_color_index_1 : selected_hub_color_index_2;
+    pbio_color_t current_pb_color = hub_color_configs[current_color_index].color;
 
-    hsv.h = hub_color_configs[current_color_index].hue;
-    hsv.s = hub_color_configs[current_color_index].saturation;
-    // Keep the brightness animation
+    // Convert the configured pbio_color_t to HSV
+    pbio_color_to_hsv(current_pb_color, &hsv);
+
+    // Override the V (brightness) component with the animation
     hsv.v = animation_progress < animation_progress_max / 2 ?
         animation_progress :
         animation_progress_max - animation_progress;
