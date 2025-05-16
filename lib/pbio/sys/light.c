@@ -105,9 +105,13 @@ pbsys_status_light_indication_pattern_ble[] = {
     // Two blue blinks, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLUE, .duration = 2 },
+            { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_1].hue, hub_color_configs[selected_hub_color_index_1].saturation, 100), .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_BLUE, .duration = 2 },
+        { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_1].hue, hub_color_configs[selected_hub_color_index_1].saturation, 100), .duration = 2 },
+        { .color = PBIO_COLOR_BLACK, .duration = 22 },
+        { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_2].hue, hub_color_configs[selected_hub_color_index_2].saturation, 100), .duration = 2 },
+        { .color = PBIO_COLOR_BLACK, .duration = 2 },
+        { .color = PBIO_COLOR_ENCODE(hub_color_configs[selected_hub_color_index_2].hue, hub_color_configs[selected_hub_color_index_2].saturation, 100), .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
@@ -183,6 +187,43 @@ void pbsys_status_light_init(void) {
     pbdrv_led_get_dev(2, &pbsys_status_light_instance_ble.led);
     pbio_color_light_init(&pbsys_status_light_instance_ble.color_light, &pbsys_status_light_funcs);
     #endif
+
+    #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    // Initialize cached color indices based on hub name
+    pbsys_user_program_light_colors_init();
+    #endif
+}
+
+#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+// Forward declaration for pbsys_user_program_light_colors_init
+static uint8_t find_color_index(const char *name_to_find);
+#endif
+
+static void pbsys_user_program_light_colors_init(void) {
+    #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    const char *full_hub_name_const = pbdrv_bluetooth_get_hub_name();
+    // Max length of hub name is 15 + null terminator. Max for two color names + dash + null is 7+1+7+1 = 16.
+    // Use a slightly larger buffer to be safe with potential longer individual names if parsing changes.
+    char hub_name_copy[PBDRV_BLUETOOTH_MAX_HUB_NAME_SIZE];
+    strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy) - 1);
+    hub_name_copy[sizeof(hub_name_copy) - 1] = '\0';
+
+    char *saveptr;
+    char *name1_str = strtok_r(hub_name_copy, " ", &saveptr);
+    char *name2_str = strtok_r(NULL, " ", &saveptr);
+
+    selected_hub_color_index_1 = 0;
+    selected_hub_color_index_2 = 3;
+
+    /*selected_hub_color_index_1 = find_color_index(name1_str);
+
+    if (name2_str != NULL && name2_str[0] != '\0') {
+        selected_hub_color_index_2 = find_color_index(name2_str);
+    } else {
+        // If no second name, or second name is empty, default index2 to index1
+        selected_hub_color_index_2 = selected_hub_color_index_1;
+    }*/
+    #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 }
 
 static void pbsys_status_light_handle_status_change(void) {
@@ -227,6 +268,7 @@ static void pbsys_status_light_handle_status_change(void) {
 
 #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 static uint8_t animation_progress;
+static bool use_first_color_in_pulse = true;
 
 typedef struct {
     const char *name;
@@ -238,13 +280,36 @@ typedef struct {
 // The first entry is the default if no specific name matches.
 static const hub_color_config_t hub_color_configs[] = {
     {"", 240, 100},      // Default: Blue (empty name for fallback)
-    {"pink", 300, 50},  // Pink/Magenta
-    {"lime", 120, 100},   // Lime Green with 80% saturation
+    {"pink", 300, 100},  // Changed pink saturation to 100 from 50 for example
+    {"lime", 120, 80},
+    {"red", 0, 100},
+    {"green", 120, 100}, // Same hue as lime, but full saturation
+    {"yellow", 60, 100},
+    {"cyan", 180, 100},
+    {"purple", 270, 100},
     // Add up to ~30 color configurations here
-    // e.g. {"orange", 30, 90}, // Orange (Hue 30, Sat 90)
 };
 static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
-static uint8_t selected_hub_color_index = 0; // Default to the first configuration
+static uint8_t selected_hub_color_index_1 = 0; // Default to the first configuration
+static uint8_t selected_hub_color_index_2 = 0; // Default to the first configuration
+
+// Helper function to find the index of a color name in the config array
+static uint8_t find_color_index(const char *name_to_find) {
+    if (name_to_find == NULL || name_to_find[0] == '\0') {
+        return 0; // Default to first entry for empty or null name
+    }
+    for (uint8_t i = 0; i < num_hub_color_configs; i++) {
+        // Skip default entry (empty name) unless name_to_find is also empty (which is handled by the check above)
+        if (hub_color_configs[i].name[0] == '\0' && i == 0) {
+            continue;
+        }
+        if (strcmp(name_to_find, hub_color_configs[i].name) == 0) {
+            return i;
+        }
+    }
+    return 0; // Default to first entry if name not found
+}
+
 
 static uint32_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
     // The brightness pattern has the form /\ through which we cycle in N steps.
@@ -252,8 +317,10 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
     const uint8_t animation_progress_max = 200;
     pbio_color_hsv_t hsv;
 
-    hsv.h = hub_color_configs[selected_hub_color_index].hue;
-    hsv.s = hub_color_configs[selected_hub_color_index].saturation;
+    uint8_t current_color_index = use_first_color_in_pulse ? selected_hub_color_index_1 : selected_hub_color_index_2;
+
+    hsv.h = hub_color_configs[current_color_index].hue;
+    hsv.s = hub_color_configs[current_color_index].saturation;
     // Keep the brightness animation
     hsv.v = animation_progress < animation_progress_max / 2 ?
         animation_progress :
@@ -262,7 +329,13 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
     pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
 
     // This increment controls the speed of the pattern and wraps on completion
-    animation_progress = (animation_progress + 4) % animation_progress_max;
+    uint8_t next_animation_progress = (animation_progress + 4) % animation_progress_max;
+
+    // If animation wrapped around, toggle the color
+    if (next_animation_progress < animation_progress) { // Check for wrap-around
+        use_first_color_in_pulse = !use_first_color_in_pulse;
+    }
+    animation_progress = next_animation_progress;
 
     return 40;
 }
@@ -274,23 +347,8 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     }
     if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-        // Determine selected_hub_color_index once when program starts
-        const char *hub_name = pbdrv_bluetooth_get_hub_name();
-        selected_hub_color_index = 0; // Default to first configuration
-
-        for (uint8_t i = 0; i < num_hub_color_configs; i++) {
-            // Skip default entry if it's meant as a fallback only (empty name)
-            // and we are not checking the first entry specifically for an empty name match.
-            if (hub_color_configs[i].name[0] == '\0' && i == 0 && hub_name[0] != '\0') {
-                continue;
-            }
-            if (strcmp(hub_name, hub_color_configs[i].name) == 0) {
-                selected_hub_color_index = i;
-                break;
-            }
-        }
-
         animation_progress = 0;
+        use_first_color_in_pulse = true; // Reset to first color at program start
         pbio_light_animation_init(&pbsys_status_light_main->animation, default_user_program_light_animation_next);
         pbio_light_animation_start(&pbsys_status_light_main->animation);
         #else
