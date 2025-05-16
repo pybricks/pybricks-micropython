@@ -4,8 +4,10 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h> // For strcmp
 
 #include <contiki.h>
+#include <pbdrv/bluetooth.h> // For pbdrv_bluetooth_get_hub_name
 
 #include <pbdrv/charger.h>
 #include <pbdrv/led.h>
@@ -230,14 +232,24 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
     // The brightness pattern has the form /\ through which we cycle in N steps.
     // It is reset back to the start when the user program starts.
     const uint8_t animation_progress_max = 200;
+    pbio_color_hsv_t hsv;
 
-    pbio_color_hsv_t hsv = {
-        .h = PBIO_COLOR_HUE_BLUE,
-        .s = 100,
-        .v = animation_progress < animation_progress_max / 2 ?
+    const char *hub_name = pbdrv_bluetooth_get_hub_name();
+
+    if (strcmp(hub_name, "pink") == 0) {
+        hsv.h = PBIO_COLOR_HUE_MAGENTA; // A pinkish hue
+        hsv.s = 100; // Full saturation
+        // Keep the brightness animation
+        hsv.v = animation_progress < animation_progress_max / 2 ?
             animation_progress :
-            animation_progress_max - animation_progress,
-    };
+            animation_progress_max - animation_progress;
+    } else {
+        hsv.h = PBIO_COLOR_HUE_BLUE;
+        hsv.s = 100;
+        hsv.v = animation_progress < animation_progress_max / 2 ?
+            animation_progress :
+            animation_progress_max - animation_progress;
+    }
 
     pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
 
