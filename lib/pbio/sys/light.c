@@ -370,7 +370,7 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
         animation_progress_max - animation_progress;
 
     // At low brightness some colors look like others
-    if (hsv.v < 5) {
+    if (hsv.v < 15) {
         hsv.v = 0;
     }
 
