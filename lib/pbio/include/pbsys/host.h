@@ -32,7 +32,7 @@ uint32_t pbsys_host_rx_get_available(void);
 uint32_t pbsys_host_rx_get_free(void);
 void pbsys_host_rx_write(const uint8_t *data, uint32_t size);
 pbio_error_t pbsys_host_rx(uint8_t *data, uint32_t *size);
-pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t *size);
+pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t size);
 bool pbsys_host_tx_is_idle(void);
 
 #else // PBSYS_CONFIG_HOST
@@ -47,7 +47,7 @@ bool pbsys_host_tx_is_idle(void);
 static inline pbio_error_t pbsys_host_rx(uint8_t *data, uint32_t *size) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t *size) {
+static inline pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t size) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline bool pbsys_host_tx_is_idle(void) {

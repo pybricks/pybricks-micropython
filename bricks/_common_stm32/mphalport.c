@@ -65,24 +65,10 @@ int mp_hal_stdin_rx_chr(void) {
 
 // Send string of given length
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
-    while (len) {
-        uint32_t size = len;
-        pbio_error_t err = pbsys_host_tx((const uint8_t *)str, &size);
-
-        if (err == PBIO_SUCCESS) {
-            str += size;
-            len -= size;
-            continue;
-        }
-
+    while (pbsys_host_tx((const uint8_t *)str, len) == PBIO_ERROR_AGAIN) {
         MICROPY_EVENT_POLL_HOOK
-
-        if (err != PBIO_ERROR_AGAIN) {
-            // Ignoring error for now. This means stdout lost if Bluetooth is
-            // disconnected.
-            return;
-        }
     }
+    // Not raising the error. This means stdout lost if host is not connected.
 }
 
 void mp_hal_stdout_tx_flush(void) {
