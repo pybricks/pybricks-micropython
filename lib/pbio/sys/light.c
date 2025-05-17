@@ -107,7 +107,6 @@ static const hub_color_config_t hub_color_configs[] = {
     {"blue", PBIO_COLOR_BLUE},
     {"pink", PBIO_COLOR_MAGENTA},
     {"red", PBIO_COLOR_RED},
-    {"brown", PBIO_COLOR_BROWN},
     {"yellow", PBIO_COLOR_YELLOW},
     {"orange", PBIO_COLOR_ORANGE},
     {"green", PBIO_COLOR_GREEN},
@@ -370,7 +369,7 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
         animation_progress :
         animation_progress_max - animation_progress;
 
-    hsv.v += 10;    
+    //hsv.v += 10;    
 
     pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
 
