@@ -108,9 +108,8 @@ static const hub_color_config_t hub_color_configs[] = {
     {"pink", PBIO_COLOR_MAGENTA},
     {"red", PBIO_COLOR_RED},
     {"yellw", PBIO_COLOR_YELLOW},
-    {"ornge", PBIO_COLOR_ORANGE},
+    {"orang", PBIO_COLOR_ORANGE},
     {"green", PBIO_COLOR_GREEN},
-    {"purpl", PBIO_COLOR_VIOLET},
     {"white", PBIO_COLOR_WHITE},
     // Add more named pbio_color_t configurations here
 };
@@ -267,21 +266,31 @@ static void pbsys_user_program_light_colors_init(void) {
     strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy) - 1);
     hub_name_copy[sizeof(hub_name_copy) - 1] = '\0'; // Ensure null termination
 
-    char *name1_str = hub_name_copy;
+    char *current_pos = hub_name_copy;
+    char *name1_str = NULL;
     char *name2_str = NULL;
-    char *space_ptr = strchr(hub_name_copy, ' ');
+
+    // Expecting "hub color1 color2" format. Skip "hub " prefix.
+    if (strncmp(current_pos, "hub ", 4) == 0) {
+        current_pos += 4; // Move pointer past "hub "
+    }
+    // After skipping "hub ", current_pos points to the start of "color1" or an empty string.
+
+    name1_str = current_pos; // Assume color1 starts here
+    char *space_ptr = strchr(current_pos, ' ');
 
     if (space_ptr != NULL) {
-        *space_ptr = '\0'; // Terminate name1_str
-        name2_str = space_ptr + 1;
+        *space_ptr = '\0'; // Terminate name1_str at the space
+        name2_str = space_ptr + 1; // name2_str starts after the space
         // Skip any leading spaces for name2_str, ensuring not to read past buffer
         while (*name2_str == ' ' && *name2_str != '\0') {
             name2_str++;
         }
-        if (*name2_str == '\0') { // If only spaces followed name1, or name2 is empty
+        if (*name2_str == '\0') { // If name2_str is empty or only spaces
             name2_str = NULL;
         }
     }
+    // If space_ptr is NULL, name1_str is the rest of current_pos, and name2_str remains NULL.
 
     selected_hub_color_index_1 = find_color_index(name1_str);
     if (name2_str != NULL && name2_str[0] != '\0') {
