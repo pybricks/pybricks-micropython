@@ -45,7 +45,7 @@ typedef enum {
     PBIO_COLOR_SPRING_GREEN = PBIO_COLOR_ENCODE(150, 100, 100), /**< spring green */
     PBIO_COLOR_CYAN = PBIO_COLOR_ENCODE(180, 100, 100), /**< cyan */
     PBIO_COLOR_BLUE = PBIO_COLOR_ENCODE(240, 100, 100), /**< blue */
-    PBIO_COLOR_VIOLET = PBIO_COLOR_ENCODE(270, 100, 100), /**< violet */
+    PBIO_COLOR_VIOLET = PBIO_COLOR_ENCODE(285, 100, 100), /**< violet */
     PBIO_COLOR_MAGENTA = PBIO_COLOR_ENCODE(300, 100, 100), /**< magenta */
 } pbio_color_t;
 
