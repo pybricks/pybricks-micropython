@@ -153,13 +153,17 @@ void pbsys_bluetooth_rx_flush(void) {
  * @param data  [in]        The data to be sent.
  * @param size  [in, out]   The size of @p data in bytes. After return, @p size
  *                          contains the number of bytes actually written.
- * @return                  ::PBIO_SUCCESS if @p data was queued, ::PBIO_ERROR_AGAIN
- *                          if @p data could not be queued at this time (e.g. buffer
- *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
+ * @return                  ::PBIO_SUCCESS if all @p data was queued,
+ *                          ::PBIO_ERROR_AGAIN if not all @p data could not be
+ *                          queued at this time (e.g. buffer is full),
+ *                          ::PBIO_ERROR_INVALID_OP if there is not an
  *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
  *                          if this platform does not support Bluetooth.
  */
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
+
+    uint32_t full_size = *size;
+
     // make sure we have a Bluetooth connection
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
         return PBIO_ERROR_INVALID_OP;
@@ -176,7 +180,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
         stdout_msg.is_queued = true;
     }
 
-    if ((*size = lwrb_write(&stdout_ring_buf, data, *size)) == 0) {
+    if ((*size = lwrb_write(&stdout_ring_buf, data, full_size)) == 0) {
         return PBIO_ERROR_AGAIN;
     }
 
@@ -184,7 +188,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     // MAX_CHAR_SIZE bytes before actually transmitting
     pbsys_bluetooth_process_poll();
 
-    return PBIO_SUCCESS;
+    return *size == full_size ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 /**

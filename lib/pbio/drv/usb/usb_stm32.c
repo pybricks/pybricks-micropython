@@ -145,8 +145,8 @@ void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
  * @param data  [in]        The data to be sent.
  * @param size  [in, out]   The size of @p data in bytes. After return, @p size
  *                          contains the number of bytes actually written.
- * @return                  ::PBIO_SUCCESS if @p data was queued, ::PBIO_ERROR_AGAIN
- *                          if @p data could not be queued at this time (e.g. buffer
+ * @return                  ::PBIO_SUCCESS if all @p data was queued, ::PBIO_ERROR_AGAIN
+ *                          if not all @p data could not be queued at this time (e.g. buffer
  *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
  *                          active USB connection or ::PBIO_ERROR_NOT_SUPPORTED
  *                          if this platform does not support USB.
@@ -158,11 +158,13 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
 
     uint8_t *ptr = usb_stdout_buf;
     uint32_t ptr_len = sizeof(usb_stdout_buf);
+    uint32_t full_size = *size;
 
     // TODO: return PBIO_ERROR_INVALID_OP if app flag is not set. Also need a
     // timeout in case the app crashes and doesn't clear the flag on exit.
 
     if (usb_stdout_sz) {
+        *size = 0;
         return PBIO_ERROR_AGAIN;
     }
 
@@ -172,14 +174,14 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
     *ptr++ = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
     ptr_len--;
 
-    *size = MIN(*size, ptr_len);
+    *size = MIN(full_size, ptr_len);
     memcpy(ptr, data, *size);
 
     usb_stdout_sz = 1 + 1 + *size;
 
     process_poll(&pbdrv_usb_process);
 
-    return PBIO_SUCCESS;
+    return *size == full_size ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 /**
