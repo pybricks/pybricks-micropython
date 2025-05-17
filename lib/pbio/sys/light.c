@@ -107,11 +107,10 @@ static const hub_color_config_t hub_color_configs[] = {
     {"blue", PBIO_COLOR_BLUE},
     {"pink", PBIO_COLOR_MAGENTA},
     {"red", PBIO_COLOR_RED},
-    {"yellow", PBIO_COLOR_YELLOW},
-    {"orange", PBIO_COLOR_ORANGE},
+    {"yellw", PBIO_COLOR_YELLOW},
+    {"ornge", PBIO_COLOR_ORANGE},
     {"green", PBIO_COLOR_GREEN},
-    {"cyan", PBIO_COLOR_CYAN},
-    {"purple", PBIO_COLOR_VIOLET}, // Using VIOLET for purple
+    {"purpl", PBIO_COLOR_VIOLET},
     {"white", PBIO_COLOR_WHITE},
     // Add more named pbio_color_t configurations here
 };
