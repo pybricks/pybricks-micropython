@@ -369,7 +369,10 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
         animation_progress :
         animation_progress_max - animation_progress;
 
-    //hsv.v += 10;    
+    // At low brightness some colors look like others
+    if (hsv.v < 5) {
+        hsv.v = 0;
+    }
 
     pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
 
