@@ -17,6 +17,7 @@
 #include <usbd_desc.h>
 #include <usbd_pybricks.h>
 
+#include <pbdrv/clock.h>
 #include <pbdrv/usb.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
@@ -39,12 +40,57 @@ static volatile uint32_t usb_response_sz;
 static volatile uint32_t usb_status_sz;
 static volatile uint32_t usb_stdout_sz;
 static volatile bool transmitting;
+static volatile uint32_t transmission_start_time;
 
 static USBD_HandleTypeDef husbd;
 static PCD_HandleTypeDef hpcd;
 
 static volatile bool vbus_active;
 static pbdrv_usb_bcd_t pbdrv_usb_bcd;
+
+/**
+ * Set the USB transmit state.
+ *
+ * @param [in]  active  True indicates that USB is currently transmitting data,
+ *                      otherwise false.
+ */
+static void pbdrv_usb_stm32_tx_active_set(bool active) {
+    if (active) {
+        transmitting = true;
+        transmission_start_time = pbdrv_clock_get_ms();
+    } else {
+        transmitting = false;
+    }
+}
+
+/**
+ * Checks if the USB interface can be used for stdout.
+ *
+ * Essentially tests for being connected and not being stalled. Can be used by
+ * applications to test if it should wait or skip waiting on transmission.
+ *
+ * This relies on the status message that is periodically sent to the host but
+ * stalls if not read by the host application.
+ *
+ * REVISIT: It would be better to update the protocol to expect periodic status
+ *          messages from the host rather than making it implicit.
+ *
+ * @return  true if the USB interface is ready to send stdout data, otherwise false.
+ */
+static bool pbdrv_usb_stdout_is_awaitable(void) {
+    // Not physically connected to a host.
+    if (pbdrv_usb_get_bcd() == PBDRV_USB_BCD_NONE) {
+        return false;
+    }
+
+    if (!transmitting) {
+        // Ready to send, so can send stdout data in principle.
+        return true;
+    }
+
+    // Currently transmitting data. Don't await if stalled.
+    return pbdrv_clock_get_ms() - transmission_start_time < 600;
+}
 
 /**
  * Battery charger detection task.
@@ -160,9 +206,9 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
     uint32_t ptr_len = sizeof(usb_stdout_buf);
     uint32_t full_size = *size;
 
-    // TODO: return PBIO_ERROR_INVALID_OP if app flag is not set. Also need a
-    // timeout in case the app crashes and doesn't clear the flag on exit.
-
+    if (!pbdrv_usb_stdout_is_awaitable()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
     if (usb_stdout_sz) {
         *size = 0;
         return PBIO_ERROR_AGAIN;
@@ -204,7 +250,7 @@ static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
     usb_response_sz = 0;
     usb_status_sz = 0;
     usb_stdout_sz = 0;
-    transmitting = false;
+    pbdrv_usb_stm32_tx_active_set(false);
 
     return USBD_OK;
 }
@@ -259,7 +305,7 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
         ret = USBD_FAIL;
     }
 
-    transmitting = false;
+    pbdrv_usb_stm32_tx_active_set(false);
     process_poll(&pbdrv_usb_process);
     return ret;
 }
@@ -383,7 +429,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
         // Transmit. Give priority to response, then status updates, then stdout.
         if (usb_response_sz) {
-            transmitting = true;
+            pbdrv_usb_stm32_tx_active_set(true);
             USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
         } else if ((new_status_flags != prev_status_flags) || etimer_expired(&timer)) {
             usb_status_buf[0] = USBD_PYBRICKS_IN_EP_MSG_EVENT;
@@ -394,10 +440,10 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
             etimer_restart(&timer);
             prev_status_flags = new_status_flags;
 
-            transmitting = true;
+            pbdrv_usb_stm32_tx_active_set(true);
             USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
         } else if (usb_stdout_sz) {
-            transmitting = true;
+            pbdrv_usb_stm32_tx_active_set(true);
             USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
         }
     }
