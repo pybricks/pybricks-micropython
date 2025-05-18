@@ -151,7 +151,7 @@ pbsys_status_light_indication_pattern_ble[] = {
         { .color = PBIO_COLOR_BLACK, .duration = 22 }, // Matches pattern of other warnings like LOW_VOLTAGE
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
-        #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
+    #endif     // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     // Blue, always on.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE] =
         (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {

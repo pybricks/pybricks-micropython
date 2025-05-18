@@ -343,7 +343,7 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
-    //Get stored address of controller to connect to
+    // Get stored address of controller to connect to
     uint8_t initial_stored_addr[6] = {0};
     uint8_t *stored_addr_ptr;
 
