@@ -88,7 +88,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub]
+        hub: [essentialhub, primehub, technichub]
     needs: [mpy_cross]
     runs-on: ubuntu-22.04
     steps:
