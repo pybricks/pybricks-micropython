@@ -4,8 +4,10 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <contiki.h>
+#include <pbdrv/bluetooth.h>
 
 #include <pbdrv/charger.h>
 #include <pbdrv/led.h>
@@ -94,24 +96,52 @@ pbsys_status_light_indication_pattern_warning[] = {
     },
 };
 
-static const pbsys_status_light_indication_pattern_element_t *const
+typedef struct {
+    const char *name;
+    pbio_color_t color; // Use pbio_color_t enum for configuration
+} hub_color_config_t;
+
+// Define color configurations based on hub names
+static const hub_color_config_t hub_color_configs[] = {
+    {"Blue", PBIO_COLOR_BLUE},
+    {"Pink", PBIO_COLOR_MAGENTA},
+    {"Red", PBIO_COLOR_RED},
+    {"Yellw", PBIO_COLOR_YELLOW},
+    {"Orang", PBIO_COLOR_ORANGE},
+    {"Green", PBIO_COLOR_GREEN},
+    {"White", PBIO_COLOR_WHITE},
+    // Add more named pbio_color_t configurations here
+};
+static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(hub_color_configs[0]);
+
+// Mutable pattern array for BLE advertising, to be populated at runtime.
+static pbsys_status_light_indication_pattern_element_t
+    pbsys_ble_advertising_pattern_elements[] = {
+    { .color = PBIO_COLOR_BLUE, .duration = 2 },
+    { .color = PBIO_COLOR_BLACK, .duration = 2 },
+    { .color = PBIO_COLOR_BLUE, .duration = 2 },
+    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    { .color = PBIO_COLOR_BLUE, .duration = 2 },
+    { .color = PBIO_COLOR_BLACK, .duration = 2 },
+    { .color = PBIO_COLOR_BLUE, .duration = 2 },
+    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+};
+
+// Array of pointers to pattern elements. Pointers are const, but data can be mutable
+// for the BLE advertising case to allow runtime color updates.
+static pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern_ble[] = {
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_NONE] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
+        (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
     },
-    // Two blue blinks, pause, then repeat.
+    // Two blinks with hub-specific colors, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLUE, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 2 },
-        { .color = PBIO_COLOR_BLUE, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
-    },
+        pbsys_ble_advertising_pattern_elements, // Points to our mutable array, updated at runtime
     // Blue, always on.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE] =
-        (const pbsys_status_light_indication_pattern_element_t[]) {
+        (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
     },
 };
@@ -173,6 +203,14 @@ static const pbio_color_light_funcs_t pbsys_status_light_funcs = {
     .set_hsv = pbsys_status_light_set_hsv,
 };
 
+// Forward declarations
+static uint8_t find_color_index(const char *name_to_find);
+static void pbsys_user_program_light_colors_init(void);
+
+// Static variables for hub color animations
+static uint8_t selected_hub_color_index_1 = 0; // Default to the first configuration
+static uint8_t selected_hub_color_index_2 = 0; // Default to the first configuration
+
 void pbsys_status_light_init(void) {
     // REVISIT: Light ids currently hard-coded.
     pbdrv_led_get_dev(0, &pbsys_status_light_instance_main.led);
@@ -181,6 +219,61 @@ void pbsys_status_light_init(void) {
     pbdrv_led_get_dev(2, &pbsys_status_light_instance_ble.led);
     pbio_color_light_init(&pbsys_status_light_instance_ble.color_light, &pbsys_status_light_funcs);
     #endif
+
+    // Initialize cached color indices based on hub name
+    pbsys_user_program_light_colors_init();
+
+    // Update the BLE advertising pattern with dynamically selected colors
+    pbsys_ble_advertising_pattern_elements[0].color = hub_color_configs[selected_hub_color_index_1].color;
+    pbsys_ble_advertising_pattern_elements[2].color = hub_color_configs[selected_hub_color_index_1].color;
+    pbsys_ble_advertising_pattern_elements[4].color = hub_color_configs[selected_hub_color_index_2].color;
+    pbsys_ble_advertising_pattern_elements[6].color = hub_color_configs[selected_hub_color_index_2].color;
+}
+
+static void pbsys_user_program_light_colors_init(void) {
+
+    // This block enables parsing the hub name to set colors.
+    const char *full_hub_name_const = pbdrv_bluetooth_get_hub_name();
+
+    // Assuming pbdrv_bluetooth_get_hub_name() is robust as per user feedback.
+    // A NULL check could be added here if issues persist: if (full_hub_name_const != NULL)
+    char hub_name_copy[16];
+    // Ensure space for null terminator by copying at most sizeof-1 characters
+    strncpy(hub_name_copy, full_hub_name_const, sizeof(hub_name_copy) - 1);
+    hub_name_copy[sizeof(hub_name_copy) - 1] = '\0'; // Ensure null termination
+
+    char *current_pos = hub_name_copy;
+    char *name1_str = NULL;
+    char *name2_str = NULL;
+
+    // Expecting "Hub Color1/Color2" format. Skip "Hub " prefix.
+    if (strncmp(current_pos, "Hub ", 4) == 0) {
+        current_pos += 4; // Move pointer past "Hub "
+    }
+    // After skipping "Hub ", current_pos points to the start of "Color1" or an empty string.
+
+    name1_str = current_pos; // Assume Color1 starts here
+    char *slash_ptr = strchr(current_pos, '/');
+
+    if (slash_ptr != NULL) {
+        *slash_ptr = '\0'; // Terminate name1_str at the slash
+        name2_str = slash_ptr + 1; // name2_str starts after the slash
+        // Skip any leading spaces for name2_str, ensuring not to read past buffer
+        while (*name2_str == ' ' && *name2_str != '\0') {
+            name2_str++;
+        }
+        if (*name2_str == '\0') { // If name2_str is empty or only spaces
+            name2_str = NULL;
+        }
+    }
+    // If slash_ptr is NULL, name1_str is the rest of current_pos, and name2_str remains NULL.
+
+    selected_hub_color_index_1 = find_color_index(name1_str);
+    if (name2_str != NULL && name2_str[0] != '\0') {
+        selected_hub_color_index_2 = find_color_index(name2_str);
+    } else {
+        selected_hub_color_index_2 = selected_hub_color_index_1;
+    }
 }
 
 static void pbsys_status_light_handle_status_change(void) {
@@ -223,26 +316,58 @@ static void pbsys_status_light_handle_status_change(void) {
     }
 }
 
+// Helper function to find the index of a color name in the config array
+static uint8_t find_color_index(const char *name_to_find) {
+    // Attempt to find the provided name first
+    if (name_to_find != NULL && name_to_find[0] != '\0') {
+        for (uint8_t i = 0; i < num_hub_color_configs; i++) {
+            if (strcmp(name_to_find, hub_color_configs[i].name) == 0) {
+                return i; // Found the name
+            }
+        }
+    }
+
+    // If name_to_find is NULL, empty, or not found, default to "blue".
+    // Assumes "blue" is the first entry (index 0) in the hub_color_configs array.
+    return 0;
+}
+
 #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
 static uint8_t animation_progress;
+static bool use_first_color_in_pulse = true;
 
 static uint32_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
     // The brightness pattern has the form /\ through which we cycle in N steps.
     // It is reset back to the start when the user program starts.
     const uint8_t animation_progress_max = 200;
+    pbio_color_hsv_t hsv; // Target HSV for the LED driver
 
-    pbio_color_hsv_t hsv = {
-        .h = PBIO_COLOR_HUE_BLUE,
-        .s = 100,
-        .v = animation_progress < animation_progress_max / 2 ?
-            animation_progress :
-            animation_progress_max - animation_progress,
-    };
+    uint8_t current_color_index = use_first_color_in_pulse ? selected_hub_color_index_1 : selected_hub_color_index_2;
+    pbio_color_t current_pb_color = hub_color_configs[current_color_index].color;
+
+    // Convert the configured pbio_color_t to HSV
+    pbio_color_to_hsv(current_pb_color, &hsv);
+
+    // Override the V (brightness) component with the animation
+    hsv.v = animation_progress < animation_progress_max / 2 ?
+        animation_progress :
+        animation_progress_max - animation_progress;
+
+    // At low brightness some colors look like others
+    if (hsv.v < 20) {
+        hsv.v = 0;
+    }
 
     pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
 
     // This increment controls the speed of the pattern and wraps on completion
-    animation_progress = (animation_progress + 4) % animation_progress_max;
+    uint8_t next_animation_progress = (animation_progress + 4) % animation_progress_max;
+
+    // If animation wrapped around, toggle the color
+    if (next_animation_progress < animation_progress) { // Check for wrap-around
+        use_first_color_in_pulse = !use_first_color_in_pulse;
+    }
+    animation_progress = next_animation_progress;
 
     return 40;
 }
@@ -255,6 +380,7 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
         animation_progress = 0;
+        use_first_color_in_pulse = true; // Reset to first color at program start
         pbio_light_animation_init(&pbsys_status_light_main->animation, default_user_program_light_animation_next);
         pbio_light_animation_start(&pbsys_status_light_main->animation);
         #else
@@ -380,7 +506,7 @@ void pbsys_status_light_poll(void) {
         warning_pattern_state, pbsys_status_light_indication_pattern_warning);
 
     pbio_color_t new_ble_color = pbsys_status_light_pattern_next(
-        ble_pattern_state, pbsys_status_light_indication_pattern_ble);
+        ble_pattern_state, (const pbsys_status_light_indication_pattern_element_t *const *)pbsys_status_light_indication_pattern_ble);
 
 
     pbio_color_t new_main_color = new_warning_color;
