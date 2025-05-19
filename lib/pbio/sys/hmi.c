@@ -250,7 +250,7 @@ void pbsys_hmi_poll(void) {
         } else {
             pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
             update_program_run_button_wait_state(false);
-            #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+            #if !PBSYS_CONFIG_BLUETOOTH_TOGGLE
             long_pressed = false;
             #endif
         }
