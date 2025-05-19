@@ -152,6 +152,10 @@ void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
  *                          if this platform does not support USB.
  */
 pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
+    #if PBDRV_CONFIG_USB_CHARGE_ONLY
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+    #endif
+
     uint8_t *ptr = usb_stdout_buf;
     uint32_t ptr_len = sizeof(usb_stdout_buf);
 
@@ -258,7 +262,7 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
     return ret;
 }
 
-static USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
+USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
     .Init = Pybricks_Itf_Init,
     .DeInit = Pybricks_Itf_DeInit,
     .Receive = Pybricks_Itf_Receive,
@@ -272,11 +276,15 @@ void pbdrv_usb_init(void) {
     husbd.pData = &hpcd;
     hpcd.pData = &husbd;
 
+    #if PBDRV_CONFIG_USB_CHARGE_ONLY
+    USBD_Init(&husbd, NULL, 0);
+    #else
     USBD_Pybricks_Desc_Init();
     USBD_Init(&husbd, &USBD_Pybricks_Desc, 0);
     USBD_RegisterClass(&husbd, &USBD_Pybricks_ClassDriver);
     USBD_Pybricks_RegisterInterface(&husbd, &USBD_Pybricks_fops);
     USBD_Start(&husbd);
+    #endif
 
     process_start(&pbdrv_usb_process);
 
@@ -331,6 +339,11 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
                 continue;
             }
         }
+
+        #if PBDRV_CONFIG_USB_CHARGE_ONLY
+        // Communication logic skipped when charging only.
+        continue;
+        #endif
 
         if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
             if (pbio_oneshot(true, &pwrdn_oneshot)) {
