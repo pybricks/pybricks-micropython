@@ -117,14 +117,24 @@ static const uint8_t num_hub_color_configs = sizeof(hub_color_configs) / sizeof(
 // Mutable pattern array for BLE advertising, to be populated at runtime.
 static pbsys_status_light_indication_pattern_element_t
     pbsys_ble_advertising_pattern_elements[] = {
+    { .color = PBIO_COLOR_BLUE, .duration = 3 },
+    { .color = PBIO_COLOR_BLACK, .duration = 5 },
+    { .color = PBIO_COLOR_BLUE, .duration = 3 },
+    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
+};
+
+// Mutable pattern array for BLE connected, to be populated at runtime.
+static pbsys_status_light_indication_pattern_element_t
+    pbsys_ble_connected_pattern_elements[] = {
     { .color = PBIO_COLOR_BLUE, .duration = 2 },
     { .color = PBIO_COLOR_BLACK, .duration = 2 },
     { .color = PBIO_COLOR_BLUE, .duration = 2 },
-    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    { .color = PBIO_COLOR_BLACK, .duration = 8 },
     { .color = PBIO_COLOR_BLUE, .duration = 2 },
     { .color = PBIO_COLOR_BLACK, .duration = 2 },
     { .color = PBIO_COLOR_BLUE, .duration = 2 },
-    { .color = PBIO_COLOR_BLACK, .duration = 12 },
+    { .color = PBIO_COLOR_BLACK, .duration = 8 },
     PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
 };
 
@@ -138,12 +148,10 @@ pbsys_status_light_indication_pattern_ble[] = {
     },
     // Two blinks with hub-specific colors, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
-        pbsys_ble_advertising_pattern_elements, // Points to our mutable array, updated at runtime
+        pbsys_ble_advertising_pattern_elements,
     // Blue, always on.
     [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE] =
-        (pbsys_status_light_indication_pattern_element_t *)(const pbsys_status_light_indication_pattern_element_t[]) {
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
-    },
+        pbsys_ble_connected_pattern_elements
 };
 
 typedef struct {
@@ -225,9 +233,13 @@ void pbsys_status_light_init(void) {
 
     // Update the BLE advertising pattern with dynamically selected colors
     pbsys_ble_advertising_pattern_elements[0].color = hub_color_configs[selected_hub_color_index_1].color;
-    pbsys_ble_advertising_pattern_elements[2].color = hub_color_configs[selected_hub_color_index_1].color;
-    pbsys_ble_advertising_pattern_elements[4].color = hub_color_configs[selected_hub_color_index_2].color;
-    pbsys_ble_advertising_pattern_elements[6].color = hub_color_configs[selected_hub_color_index_2].color;
+    pbsys_ble_advertising_pattern_elements[2].color = hub_color_configs[selected_hub_color_index_2].color;
+
+    // Update the BLE connected pattern with dynamically selected colors
+    pbsys_ble_connected_pattern_elements[0].color = hub_color_configs[selected_hub_color_index_1].color;
+    pbsys_ble_connected_pattern_elements[2].color = hub_color_configs[selected_hub_color_index_1].color;
+    pbsys_ble_connected_pattern_elements[4].color = hub_color_configs[selected_hub_color_index_2].color;
+    pbsys_ble_connected_pattern_elements[6].color = hub_color_configs[selected_hub_color_index_2].color;
 }
 
 static void pbsys_user_program_light_colors_init(void) {
