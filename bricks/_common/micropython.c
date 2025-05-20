@@ -390,8 +390,8 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         #endif
 
         default:
-            // Init Pybricks package without auto-import.
-            pb_package_pybricks_init(false);
+            // Init Pybricks package with auto-import.
+            pb_package_pybricks_init(true);
             // Run loaded user program (just slot 0 for now).
             run_user_program();
             break;
