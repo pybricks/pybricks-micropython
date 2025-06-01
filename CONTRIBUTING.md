@@ -93,8 +93,9 @@ $env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 
 
 #### macOS
 
-    brew instal libusb
+    brew install libusb
     brew install --cask gcc-arm-embedded
+    brew info gcc-arm-embedded # you will need the install path later 
 
 ### Get the code
 
@@ -127,6 +128,15 @@ checkout out on-demand when running `make`.
     cd pybricks-micropython
     code . # Opens the project in VS Code
 
+### Installing Python 3.10.x
+
+macOS:
+    brew install python3.10
+
+Note: On MacOS you will need to add a symlink for the build process to work
+    ln -s `which python3.10` python
+    export PATH=".:$PATH"
+
 ### Set up the Python environment
 
 There are a few special Python packages needed by the build system and other
@@ -153,10 +163,17 @@ To activate the environment, run:
 
     poetry shell
 
+On poetry version 2.1.3, run:
+    poetry env activate
+
+
 The command prompt will now start with `(.venv)` to remind you that you are
 working in the virtual environment. You should run `poetry shell` any time you
 open a new terminal window while working on `pybricks-micropython`.
 
+### Installing mkimage tools
+macOS
+    brew install u-boot-tools # this install mkimage capabilities on MacOS
 
 Building the code
 -----------------
@@ -188,6 +205,7 @@ Where `<target>` is one of the bricks listed in the `bricks/` directory, e.g.
 Hopefully all goes well and the firmware builds. The results of the build can
 be found in `bricks/<target>/build/`.
 
+Note: You will get make errors, you will need to make the target a few times.
 
 Submitting changes
 ------------------
