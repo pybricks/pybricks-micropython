@@ -45,10 +45,18 @@
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
+#define DEBUG 0
+
+#if DEBUG
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+// You can selectively enable these as relevant for the debug session.
+// Remember to set PBDRV_CONFIG_UART_DEBUG_FIRST_PORT in pbdrvconfig.
+#define DBG pbdrv_uart_debug_printf
+#define DEBUG_PRINT pbdrv_uart_debug_printf
+#else
 #define DBG(...)
 #define DEBUG_PRINT(...)
-#define DEBUG_PRINT_PT(...)
-
+#endif
 // hub name goes in special section so that it can be modified when flashing firmware
 __attribute__((section(".name")))
 char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
@@ -506,7 +514,7 @@ static PT_THREAD(peripheral_scan_and_connect_task(struct pt *pt, pbio_task_t *ta
     // Optionally, disconnect from host (usually Pybricks Code).
     if (conn_handle != NO_CONNECTION &&
         (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
-        DEBUG_PRINT_PT(pt, "Disconnect from Pybricks code (%d).\n", conn_handle);
+        DEBUG_PRINT("Disconnect from Pybricks code (%d).\n", conn_handle);
         // Guard used in pbdrv_bluetooth_is_connected so higher level processes
         // won't try to send anything while we are disconnecting.
         busy_disconnecting = true;
@@ -523,7 +531,7 @@ restart_scan:
     PROCESS_CONTEXT_END(&pbdrv_bluetooth_spi_process);
 
     // start scanning
-    DEBUG_PRINT_PT(pt, "Start scanning.\n");
+    DEBUG_PRINT("Start scanning.\n");
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -555,7 +563,7 @@ try_again:
             GAP_DeviceDiscoveryCancel();
             PT_WAIT_UNTIL(pt, hci_command_status);
             PT_WAIT_UNTIL(pt, device_discovery_done);
-            DEBUG_PRINT_PT(pt, "Sub-scan interval timed out.\n");
+            DEBUG_PRINT("Sub-scan interval timed out.\n");
             goto restart_scan;
         }
 
@@ -597,7 +605,7 @@ try_again:
             GAP_DeviceDiscoveryCancel();
             PT_WAIT_UNTIL(pt, hci_command_status);
             PT_WAIT_UNTIL(pt, device_discovery_done);
-            DEBUG_PRINT_PT(pt, "Scan response timed out.\n");
+            DEBUG_PRINT("Scan response timed out.\n");
             goto restart_scan;
         }
 
@@ -630,7 +638,7 @@ try_again:
     assert(peri->con_handle == NO_CONNECTION);
     bond_auth_err = NO_AUTH;
     connection_error = PBIO_SUCCESS;
-    DEBUG_PRINT_PT(pt, "Found %s. Going to connect.\n", peri->name);
+    DEBUG_PRINT("Found %s. Going to connect.\n", peri->name);
 
     // Configure to initiate pairing right after connect if bonding required.
     // NB: We must unset "initiate" before we allow a new connection to
@@ -658,7 +666,7 @@ try_again:
         peri->con_handle != NO_CONNECTION;
     }));
 
-    DEBUG_PRINT_PT(pt, "Connected.\n");
+    DEBUG_PRINT("Connected.\n");
 
     if (peri->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) {
         PT_WAIT_UNTIL(pt, ({
@@ -668,7 +676,7 @@ try_again:
             }
             bond_auth_err != NO_AUTH;
         }));
-        DEBUG_PRINT_PT(pt, "Auth complete: 0x%02x\n", bond_auth_err);
+        DEBUG_PRINT("Auth complete: 0x%02x\n", bond_auth_err);
 
         if (bond_auth_err != 0) {
             if (bond_auth_err == bleInvalidEventId) {
@@ -694,14 +702,14 @@ try_again:
 
 cancel_auth_then_disconnect:
 
-    DEBUG_PRINT_PT(pt, "Cancel auth.\n");
+    DEBUG_PRINT("Cancel auth.\n");
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_TerminateAuth(peri->con_handle, 0x13);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
 disconnect:
 
-    DEBUG_PRINT_PT(pt, "Disconnect due to %s.\n", task->cancel ? "cancel" : "error");
+    DEBUG_PRINT("Disconnect due to %s.\n", task->cancel ? "cancel" : "error");
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_TerminateLinkReq(peri->con_handle, 0x13);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -893,7 +901,7 @@ static PT_THREAD(periperal_read_characteristic_task(struct pt *pt, pbio_task_t *
     static uint8_t status;
 
 retry:
-    DEBUG_PRINT_PT(pt, "going to read %04x:\n", peri->char_now->handle);
+    DEBUG_PRINT("going to read %04x:\n", peri->char_now->handle);
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
         attReadReq_t req = {
@@ -943,7 +951,7 @@ retry:
         });
     }));
 
-    DEBUG_PRINT_PT(pt, "Read %04x with status %d\n", peri->char_now->handle, status);
+    DEBUG_PRINT("Read %04x with status %d\n", peri->char_now->handle, status);
 
 exit:
     task->status = ble_error_to_pbio_error(status);
@@ -1854,7 +1862,7 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     // random address used by Pybricks. Bonding takes only a few seconds, so we
     // just always clear the bond information if there is any, and start over.
     if (read_buf[12] > 0) {
-        DEBUG_PRINT_PT(pt, "Old bond count: %d\n", read_buf[12]);
+        DEBUG_PRINT("Old bond count: %d\n", read_buf[12]);
 
         // Erase all bonds stored on Bluetooth chip. We can also erase local
         // info, but this does not appear to be necessary.
@@ -1866,7 +1874,7 @@ static PT_THREAD(gap_init(struct pt *pt)) {
         PT_WAIT_WHILE(pt, write_xfer_size);
         GAP_BondMgrGetParameter(GAPBOND_BOND_COUNT);
         PT_WAIT_UNTIL(pt, hci_command_status);
-        DEBUG_PRINT_PT(pt, "New bond count: %d\n", read_buf[12]);
+        DEBUG_PRINT("New bond count: %d\n", read_buf[12]);
     }
 
     PT_WAIT_WHILE(pt, write_xfer_size);
