@@ -440,6 +440,12 @@ static mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
 
     // Have not received data yet or timed out.
     if (ch_data.rssi == INT8_MIN) {
+
+        #if PBDRV_CONFIG_BLUETOOTH_STM32_CC2640
+        extern void pbdrv_bluetooth_restart_observing_request(void);
+        pbdrv_bluetooth_restart_observing_request();
+        #endif
+
         return mp_const_none;
     }
 

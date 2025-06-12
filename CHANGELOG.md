@@ -12,7 +12,12 @@
 - Extensive overhaul of UART and port drivers on all hubs. This affects all
   official LEGO sensors on all hubs.
 
+### Fixed
+- Reduced hanging when broadcasting and observing at the same time with Technic
+  Hub ([support#2206]).
+
 [support#220]: https://github.com/pybricks/support/issues/220
+[support#2206]: https://github.com/pybricks/support/issues/2206
 [pybricks-micropython#208]: https://github.com/pybricks/pybricks-micropython/pull/208
 
 ## [3.6.1] - 2025-03-11
