@@ -1070,12 +1070,25 @@ void pbdrv_bluetooth_peripheral_disconnect(pbio_task_t *task) {
 static PT_THREAD(broadcast_task(struct pt *pt, pbio_task_t *task)) {
     pbdrv_bluetooth_value_t *value = task->context;
 
+    static struct {
+        pbdrv_bluetooth_value_t v;
+        uint8_t d[31];
+    } previous_value;
+
     PT_BEGIN(pt);
 
     if (value->size > B_MAX_ADV_LEN) {
         task->status = PBIO_ERROR_INVALID_ARG;
         PT_EXIT(pt);
     }
+
+    // Avoid I/O operations if the user tries to broadcast the same data
+    // over and over in a tight loop.
+    if (is_broadcasting && !memcmp((void *)&previous_value, (void *)value, sizeof(pbdrv_bluetooth_value_t) + value->size)) {
+        task->status = PBIO_SUCCESS;
+        PT_EXIT(pt);
+    }
+    memcpy((void *)&previous_value, (void *)value, sizeof(pbdrv_bluetooth_value_t) + value->size);
 
     // HACK: calling GAP_updateAdvertisingData() repeatedly will cause the
     // Bluetooth chips on Technic and City hubs to eventually lock up. So we
