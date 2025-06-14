@@ -11,6 +11,8 @@
 ### Changed
 - Extensive overhaul of UART and port drivers on all hubs. This affects all
   official LEGO sensors on all hubs.
+- LWP3Device.read() now gives buffered notification values instead of blocking
+  until a value arrives.
 
 [support#220]: https://github.com/pybricks/support/issues/220
 [pybricks-micropython#208]: https://github.com/pybricks/pybricks-micropython/pull/208
