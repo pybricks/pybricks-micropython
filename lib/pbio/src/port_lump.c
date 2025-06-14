@@ -917,7 +917,9 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbio_os_timer_set(timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
+    // Some devices need the NACK keep-alive signal before doing anything, so
+    // initially set the timer to expire soon.
+    pbio_os_timer_set(timer, 1);
 
     for (;;) {
 
@@ -925,8 +927,9 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
 
         // Handle keep alive timeout
         if (pbio_os_timer_is_expired(timer)) {
-            // make sure we are receiving data
-            if (!lump_dev->data_rec) {
+            // Make sure we are receiving data. The first time around, we allow
+            // not having any data yet.
+            if (!lump_dev->data_rec && timer->duration == EV3_UART_DATA_KEEP_ALIVE_TIMEOUT) {
                 debug_pr("No data since last keepalive\n");
                 lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
                 return PBIO_ERROR_TIMEDOUT;
