@@ -89,10 +89,6 @@ typedef struct {
     pbio_task_t task;
     #if PYBRICKS_PY_IODEVICES
     /**
-     * Buffer of incoming notifications.
-     */
-    uint8_t *noti_data;
-    /**
      * Maximum number of stored notifications.
      */
     uint8_t noti_num;
@@ -116,8 +112,6 @@ typedef struct {
 } pb_lwp3device_t;
 
 static pb_lwp3device_t pb_lwp3device_singleton;
-void *pb_lwp3device_root_pointer = &pb_lwp3device_singleton;
-MP_REGISTER_ROOT_POINTER(void *pb_lwp3device_root_pointer);
 
 // Handles LEGO Wireless protocol messages from the Powered Up Remote.
 static pbio_pybricks_error_t handle_remote_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
@@ -337,6 +331,11 @@ static void pb_lwp3device_configure_remote(void) {
 }
 
 void pb_type_lwp3device_start_cleanup(void) {
+
+    #if PYBRICKS_PY_IODEVICES
+    MP_STATE_PORT(notification_buffer) = NULL;
+    #endif
+
     static pbio_task_t disconnect_task;
     pbdrv_bluetooth_peripheral_disconnect(&disconnect_task);
     // Task awaited in pybricks de-init.
@@ -487,12 +486,12 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
 static pbio_pybricks_error_t handle_lwp3_generic_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
     pb_lwp3device_t *self = &pb_lwp3device_singleton;
 
-    if (!self->noti_data || !self->noti_num) {
+    if (!MP_STATE_PORT(notification_buffer) || !self->noti_num) {
         // Allocated data not ready, but no error.
         return PBIO_PYBRICKS_ERROR_OK;
     }
 
-    memcpy(&self->noti_data[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
+    memcpy(&MP_STATE_PORT(notification_buffer)[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
     self->noti_idx_write = (self->noti_idx_write + 1) % self->noti_num;
     return PBIO_PYBRICKS_ERROR_OK;
 }
@@ -515,7 +514,12 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
 
     self->noti_num = mp_obj_get_int(num_notifications_in);
     self->noti_num = self->noti_num ? self->noti_num : 1;
-    self->noti_data = m_malloc0(LWP3_MAX_MESSAGE_SIZE * self->noti_num);
+
+    if (MP_STATE_PORT(notification_buffer)) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Can use only one LWP3Device"));
+    }
+
+    MP_STATE_PORT(notification_buffer) = m_malloc0(LWP3_MAX_MESSAGE_SIZE * self->noti_num);
     self->noti_idx_read = 0;
     self->noti_idx_write = 0;
 
@@ -558,7 +562,7 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
 
     pb_lwp3device_assert_connected();
 
-    if (self->noti_idx_read == self->noti_idx_write || !self->noti_num || !self->noti_data) {
+    if (self->noti_idx_read == self->noti_idx_write || !self->noti_num || !MP_STATE_PORT(notification_buffer)) {
         return mp_const_none;
     }
 
@@ -567,7 +571,7 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
     self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
 
     // First byte is the size.
-    uint8_t len = self->noti_data[index * LWP3_MAX_MESSAGE_SIZE];
+    uint8_t len = MP_STATE_PORT(notification_buffer)[index * LWP3_MAX_MESSAGE_SIZE];
     if (len < LWP3_HEADER_SIZE || len > LWP3_MAX_MESSAGE_SIZE) {
         // This is rare but it can happen sometimes. It is better to just
         // ignore it rather than raise and crash the user application.
@@ -577,7 +581,7 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
     // Allocation of the return object may drive the runloop and process
     // new incoming messages, so copy data atomically before that happens.
     uint8_t message[LWP3_MAX_MESSAGE_SIZE];
-    memcpy(message, &self->noti_data[index * LWP3_MAX_MESSAGE_SIZE], len);
+    memcpy(message, &MP_STATE_PORT(notification_buffer)[index * LWP3_MAX_MESSAGE_SIZE], len);
     return mp_obj_new_bytes(message, len);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
@@ -595,6 +599,8 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_LWP3Device,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_iodevices_LWP3Device_make_new,
     locals_dict, &pb_type_iodevices_LWP3Device_locals_dict);
+
+MP_REGISTER_ROOT_POINTER(uint8_t * notification_buffer);
 
 #endif // PYBRICKS_PY_IODEVICES
 
