@@ -105,7 +105,7 @@ typedef struct {
     uint8_t right[3];
     uint8_t center;
     lwp3_hub_kind_t hub_kind;
-    // Name used to filter advertisements and responses.
+    // Null-terminated name used to filter advertisements and responses.
     // Also used as the name of the device when setting the name, since this
     // is not updated in the driver until the next time it connects.
     char name[LWP3_MAX_HUB_PROPERTY_NAME_SIZE + 1];
@@ -168,8 +168,9 @@ static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_match
         flags |= PBDRV_BLUETOOTH_AD_MATCH_ADDRESS;
     }
 
-    // Compare name to user-provided name if given.
-    if (lwp3device->name[0] != '\0' && strncmp(name, lwp3device->name, 20) != 0) {
+    // Compare name to user-provided name if given, checking only up to the
+    // user provided name length.
+    if (lwp3device->name[0] != '\0' && strncmp(name, lwp3device->name, strlen(lwp3device->name)) != 0) {
         flags |= PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED;
     }
 
@@ -182,7 +183,7 @@ static void pb_lwp3device_assert_connected(void) {
     }
 }
 
-static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_kind_t hub_kind, pbdrv_bluetooth_receive_handler_t notification_handler, bool pair) {
+static void pb_lwp3device_connect(mp_obj_t name_in, mp_obj_t timeout_in, lwp3_hub_kind_t hub_kind, pbdrv_bluetooth_receive_handler_t notification_handler, bool pair) {
     pb_lwp3device_t *lwp3device = &pb_lwp3device_singleton;
 
     // REVISIT: for now, we only allow a single connection to a LWP3 device.
@@ -203,7 +204,15 @@ static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
 
     // Hub kind and name are set to filter advertisements and responses.
     lwp3device->hub_kind = hub_kind;
-    if (name) {
+    if (name_in == mp_const_none) {
+        lwp3device->name[0] = '\0';
+    } else {
+        // Guaranteed to be zero-terminated when using this getter.
+        const char *name = mp_obj_str_get_str(name_in);
+        size_t len = strlen(name);
+        if (len > sizeof(lwp3device->name) - 1) {
+            mp_raise_ValueError(MP_ERROR_TEXT("Name too long"));
+        }
         strncpy(lwp3device->name, name, sizeof(lwp3device->name));
     }
 
@@ -212,6 +221,8 @@ static void pb_lwp3device_connect(const char *name, mp_int_t timeout, lwp3_hub_k
     if (pair) {
         options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
     }
+
+    mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
 
     pbdrv_bluetooth_peripheral_scan_and_connect(&lwp3device->task,
         lwp3_advertisement_matches,
@@ -397,9 +408,7 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
 
     pb_type_pupdevices_Remote_obj_t *self = mp_obj_malloc(pb_type_pupdevices_Remote_obj_t, type);
 
-    const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
-    mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
-    pb_lwp3device_connect(name, timeout, LWP3_HUB_KIND_HANDSET, handle_remote_notification, false);
+    pb_lwp3device_connect(name_in, timeout_in, LWP3_HUB_KIND_HANDSET, handle_remote_notification, false);
     pb_lwp3device_configure_remote();
 
     self->buttons = pb_type_Keypad_obj_new(pb_type_remote_button_pressed);
@@ -507,8 +516,6 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     mp_obj_base_t *obj = mp_obj_malloc(mp_obj_base_t, type);
     pb_lwp3device_t *self = &pb_lwp3device_singleton;
 
-    const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
-    mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
     uint8_t hub_kind = pb_obj_get_positive_int(hub_kind_in);
     bool pair = mp_obj_is_true(pair_in);
 
@@ -523,7 +530,7 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     self->noti_idx_read = 0;
     self->noti_idx_write = 0;
 
-    pb_lwp3device_connect(name, timeout, hub_kind, handle_lwp3_generic_notification, pair);
+    pb_lwp3device_connect(name_in, timeout_in, hub_kind, handle_lwp3_generic_notification, pair);
 
     return MP_OBJ_FROM_PTR(obj);
 }
