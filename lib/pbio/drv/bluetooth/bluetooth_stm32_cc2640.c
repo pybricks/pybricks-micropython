@@ -2350,6 +2350,13 @@ start:
                 break;
             }
 
+            // - spi_srdy is set by the interrupt handler when there is new
+            //   data to be processed, which also polls this process in order
+            //   to push PROCESS_WAIT_UNTIL to evaluate this condition again.
+            // - write_xfer_size is set by HCI_sendHCICommand when the current
+            //   task driven by pbio_task_run_once above wants to send
+            //   something. This doesn't poll the process because we
+            //   are already here.
             spi_srdy || write_xfer_size;
         });
 
@@ -2421,7 +2428,10 @@ start:
     PROCESS_END();
 }
 
-// implements function for bt5stack library
+// Implements function for bt5stack library. Doesn't send right away, but gets
+// data ready and sets write_xfer_size so that bluetooth driver process can
+// send it. It is only ever called from within the bluetooth process, so this
+// doesn't need to poll the process to push it along.
 HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *pData, uint8_t dataLength) {
     assert(write_xfer_size == 0);
 
