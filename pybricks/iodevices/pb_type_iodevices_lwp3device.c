@@ -93,13 +93,17 @@ typedef struct {
      */
     uint8_t noti_num;
     /**
-     * Index to read (the oldest data)
+     * Index to read (the oldest data).
      */
     uint8_t noti_idx_read;
     /**
-     * Index to write (next free slot)
+     * Index to write (next free slot).
      */
     uint8_t noti_idx_write;
+    /**
+     * The buffer is full, next write will override oldest data.
+     */
+    bool noti_data_full;
     #endif // PYBRICKS_PY_IODEVICES
     uint8_t left[3];
     uint8_t right[3];
@@ -500,8 +504,18 @@ static pbio_pybricks_error_t handle_lwp3_generic_notification(pbdrv_bluetooth_co
         return PBIO_PYBRICKS_ERROR_OK;
     }
 
+    // Buffer is full, so drop oldest sample by advancing read index.
+    if (self->noti_data_full) {
+        self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
+    }
+
     memcpy(&MP_STATE_PORT(notification_buffer)[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
     self->noti_idx_write = (self->noti_idx_write + 1) % self->noti_num;
+
+    // After writing it is full if the _next_ write will override the
+    // to-be-read data. If it was already full when we started writing, both
+    // indexes have now advanced so it is still full now.
+    self->noti_data_full = self->noti_idx_read == self->noti_idx_write;
     return PBIO_PYBRICKS_ERROR_OK;
 }
 
@@ -520,7 +534,7 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     bool pair = mp_obj_is_true(pair_in);
 
     self->noti_num = mp_obj_get_int(num_notifications_in);
-    self->noti_num = self->noti_num ? self->noti_num : 1;
+    self->noti_num = self->noti_num > 0 ? self->noti_num : 1;
 
     if (MP_STATE_PORT(notification_buffer)) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Can use only one LWP3Device"));
@@ -529,6 +543,7 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     MP_STATE_PORT(notification_buffer) = m_malloc0(LWP3_MAX_MESSAGE_SIZE * self->noti_num);
     self->noti_idx_read = 0;
     self->noti_idx_write = 0;
+    self->noti_data_full = false;
 
     pb_lwp3device_connect(name_in, timeout_in, hub_kind, handle_lwp3_generic_notification, pair);
 
@@ -569,12 +584,17 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
 
     pb_lwp3device_assert_connected();
 
-    if (self->noti_idx_read == self->noti_idx_write || !self->noti_num || !MP_STATE_PORT(notification_buffer)) {
+    if (!self->noti_num || !MP_STATE_PORT(notification_buffer)) {
+        pb_assert(PBIO_ERROR_FAILED);
+    }
+
+    if (!self->noti_data_full && self->noti_idx_write == self->noti_idx_read) {
         return mp_const_none;
     }
 
     // Update index before returning, else bad values would not be cleared.
     uint8_t index = self->noti_idx_read;
+    self->noti_data_full = false;
     self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
 
     // First byte is the size.
