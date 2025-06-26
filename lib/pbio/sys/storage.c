@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <contiki.h>
+#include <pbio/os.h>
 
 #include <pbdrv/block_device.h>
 #include <pbio/main.h>
@@ -432,39 +432,25 @@ void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
     program->user_ram_end = ((void *)&pbsys_user_ram_data_map) + sizeof(pbsys_user_ram_data_map);
 }
 
-PROCESS(pbsys_storage_process, "storage");
-
 /**
- * Starts loading the user data from storage to RAM.
+ * This process loads data from storage on boot.
  */
-void pbsys_storage_init(void) {
-    pbsys_init_busy_up();
-    process_start(&pbsys_storage_process);
-}
+static pbio_error_t pbsys_storage_init_process_thread(pbio_os_state_t *state, void *context) {
 
-/**
- * Starts saving the user data from RAM to storage.
- */
-void pbsys_storage_deinit(void) {
-    pbsys_init_busy_up();
-    process_post(&pbsys_storage_process, PROCESS_EVENT_CONTINUE, NULL);
-}
+    pbio_error_t err;
 
-/**
- * This process loads data from storage on boot, and saves it on shutdown.
- */
-PROCESS_THREAD(pbsys_storage_process, ev, data) {
+    static pbio_os_state_t sub;
 
-    static pbio_error_t err;
-    static struct pt pt;
-
-    PROCESS_BEGIN();
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Read size of stored data.
-    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, sizeof(map->saved_data_size), &err));
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)map, sizeof(map->saved_data_size)));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Read the available data into RAM.
-    PROCESS_PT_SPAWN(&pt, pbdrv_block_device_read(&pt, 0, (uint8_t *)map, map->saved_data_size, &err));
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)map, map->saved_data_size));
 
     bool is_bad_version = strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
 
@@ -476,34 +462,69 @@ PROCESS_THREAD(pbsys_storage_process, ev, data) {
 
     // Apply loaded settings as necesary.
     pbsys_storage_settings_apply_loaded_settings(&map->settings);
+    data_map_is_loaded = true;
 
     // Poke processes that await on system settings to become available.
-    data_map_is_loaded = true;
-    process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
+    pbio_os_request_poll();
 
     // Initialization done.
     pbsys_init_busy_down();
 
-    // Wait for signal on signal.
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_CONTINUE);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
 
-    // Write data to storage if it was updated.
-    if (data_map_write_on_shutdown) {
+/**
+ * This process saves data on shutdown.
+ */
+static pbio_error_t pbsys_storage_deinit_process_thread(pbio_os_state_t *state, void *context) {
 
-        map->saved_data_size = sizeof(pbsys_storage_data_map_t) + pbsys_storage_get_used_program_data_size();
+    pbio_error_t err;
 
-        #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
-        pbsys_storage_update_checksum();
-        #endif
+    static pbio_os_state_t sub;
 
-        // Write the data.
-        PROCESS_PT_SPAWN(&pt, pbdrv_block_device_store(&pt, (uint8_t *)map, map->saved_data_size, &err));
-    }
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    map->saved_data_size = sizeof(pbsys_storage_data_map_t) + pbsys_storage_get_used_program_data_size();
+
+    #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
+    pbsys_storage_update_checksum();
+    #endif
+
+    // Write the data.
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_store(&sub, (uint8_t *)map, map->saved_data_size));
+
 
     // Deinitialization done.
     pbsys_init_busy_down();
 
-    PROCESS_END();
+    PBIO_OS_ASYNC_END(err);
+}
+
+
+static pbio_os_process_t pbsys_storage_init_process;
+
+/**
+ * Starts loading the user data from storage to RAM.
+ */
+void pbsys_storage_init(void) {
+    pbsys_init_busy_up();
+    pbio_os_process_start(&pbsys_storage_init_process, pbsys_storage_init_process_thread, NULL);
+}
+
+static pbio_os_process_t pbsys_storage_deinit_process;
+
+/**
+ * Starts saving the user data from RAM to storage.
+ */
+void pbsys_storage_deinit(void) {
+
+    // If loading failed or writing not requested, don't write.
+    if (pbsys_storage_init_process.err != PBIO_SUCCESS || !data_map_write_on_shutdown) {
+        return;
+    }
+
+    pbsys_init_busy_up();
+    pbio_os_process_start(&pbsys_storage_deinit_process, pbsys_storage_deinit_process_thread, NULL);
 }
 
 #endif // PBSYS_CONFIG_STORAGE

@@ -81,28 +81,21 @@ void pbdrv_block_device_init(void) {
     memcpy(&blockdev.program_data[0], _program_data, sizeof(_program_data));
 }
 
-PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
-
-    PT_BEGIN(pt);
+pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
     // Exit on invalid size.
     if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE) {
-        *err = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Copy requested data to RAM.
     memcpy(buffer, (uint8_t *)&blockdev + offset, size);
-    *err = PBIO_SUCCESS;
-
-    PT_END(pt);
+    return PBIO_SUCCESS;
 }
 
 // Don't store any data in this implementation.
-PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
-    PT_BEGIN(pt);
-    *err = PBIO_SUCCESS;
-    PT_END(pt);
+pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-#endif // PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32
+#endif // PBDRV_CONFIG_BLOCK_DEVICE_TEST

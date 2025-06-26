@@ -26,21 +26,21 @@ void pbdrv_block_device_init(void) {
 
 extern uint8_t _pbdrv_block_device_storage_start[];
 
-PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
+pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
-    PT_BEGIN(pt);
+    // NB: This function is called as an awaitable for compatibility with other
+    // external storage mediums. It blocks during the memcpy, but we only use
+    // this at boot.
 
     // Exit on invalid size.
     if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE) {
-        *err = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     // Copy requested data to RAM.
     memcpy(buffer, _pbdrv_block_device_storage_start + offset, size);
-    *err = PBIO_SUCCESS;
 
-    PT_END(pt);
+    return PBIO_SUCCESS;
 }
 
 typedef union _double_word_t {
@@ -48,7 +48,11 @@ typedef union _double_word_t {
     uint64_t dword;
 } double_word_t;
 
-static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size) {
+pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
+
+    // NB: This function is called as an awaitable for compatibility with other
+    // external storage mediums. This implementation is blocking, but we only
+    // use it during shutdown so this is acceptable.
 
     static const uint32_t base_address = (uint32_t)(&_pbdrv_block_device_storage_start[0]);
 
@@ -78,13 +82,13 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
     };
 
     // Disable interrupts to avoid crash if reading while writing/erasing.
-    uint32_t state = __get_PRIMASK();
+    uint32_t irq = __get_PRIMASK();
     __disable_irq();
 
     // Erase and re-enable interrupts.
     uint32_t page_error;
     hal_err = HAL_FLASHEx_Erase(&erase_init, &page_error);
-    __set_PRIMASK(state);
+    __set_PRIMASK(irq);
     if (hal_err != HAL_OK || page_error != 0xFFFFFFFFU) {
         HAL_FLASH_Lock();
         return PBIO_ERROR_IO;
@@ -95,12 +99,12 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
     while (done < size) {
 
         // Disable interrupts while writing as above.
-        state = __get_PRIMASK();
+        irq = __get_PRIMASK();
         __disable_irq();
 
         // Write the data and re-enable interrupts.
         hal_err = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, base_address + done, *(uint64_t *)(buffer + done));
-        __set_PRIMASK(state);
+        __set_PRIMASK(irq);
         if (hal_err != HAL_OK) {
             HAL_FLASH_Lock();
             return PBIO_ERROR_IO;
@@ -114,12 +118,6 @@ static pbio_error_t block_device_erase_and_write(uint8_t *buffer, uint32_t size)
     HAL_FLASH_Lock();
 
     return PBIO_SUCCESS;
-}
-
-PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
-    PT_BEGIN(pt);
-    *err = block_device_erase_and_write(buffer, size);
-    PT_END(pt);
 }
 
 #endif // PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32
