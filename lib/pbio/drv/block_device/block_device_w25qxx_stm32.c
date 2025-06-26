@@ -60,28 +60,20 @@ typedef struct {
 } spi_command_t;
 
 /**
- * The private block device driver structure.
+ * The block device driver state.
  */
-typedef struct {
+static struct {
     /** Platform-specific data */
     const pbdrv_block_device_w25qxx_stm32_platform_data_t *pdata;
     /** HAL SPI data */
     SPI_HandleTypeDef hspi;
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
-    /** The calling contiki process for polling. Also serves as "busy" flag. */
-    struct process *process;
     /** DMA for sending SPI commands and data */
     DMA_HandleTypeDef tx_dma;
     /** DMA for receiving SPI data */
     DMA_HandleTypeDef rx_dma;
-} pbdrv_block_device_drv_t;
-
-/** The block device instance. */
-static pbdrv_block_device_drv_t bdev = {
-    .pdata = &pbdrv_block_device_w25qxx_stm32_platform_data,
-    .spi_status = SPI_STATUS_COMPLETE,
-};
+} bdev;
 
 /**
  * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
@@ -109,10 +101,7 @@ void pbdrv_block_device_w25qxx_stm32_spi_irq(void) {
  */
 void pbdrv_block_device_w25qxx_stm32_spi_tx_complete(void) {
     bdev.spi_status = SPI_STATUS_COMPLETE;
-
-    if (bdev.process) {
-        process_poll(bdev.process);
-    }
+    pbio_os_request_poll();
 }
 
 /**
@@ -120,10 +109,7 @@ void pbdrv_block_device_w25qxx_stm32_spi_tx_complete(void) {
  */
 void pbdrv_block_device_w25qxx_stm32_spi_rx_complete(void) {
     bdev.spi_status = SPI_STATUS_COMPLETE;
-
-    if (bdev.process) {
-        process_poll(bdev.process);
-    }
+    pbio_os_request_poll();
 }
 
 /**
@@ -131,10 +117,7 @@ void pbdrv_block_device_w25qxx_stm32_spi_rx_complete(void) {
  */
 void pbdrv_block_device_w25qxx_stm32_spi_error(void) {
     bdev.spi_status = SPI_STATUS_ERROR;
-
-    if (bdev.process) {
-        process_poll(bdev.process);
-    }
+    pbio_os_request_poll();
 }
 
 /**
@@ -198,29 +181,31 @@ static pbio_error_t spi_begin(const spi_command_t *cmd) {
 /**
  * Starts and awaits an SPI transfer.
  */
-static PT_THREAD(spi_command_thread(struct pt *pt, const spi_command_t *cmd, pbio_error_t *err)) {
+static pbio_error_t spi_command_thread(pbio_os_state_t *state, const spi_command_t *cmd) {
 
-    PT_BEGIN(pt);
+    pbio_error_t err;
+
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Select peripheral.
     spi_chip_select(true);
 
     // Start SPI operation.
-    *err = spi_begin(cmd);
-    if (*err != PBIO_SUCCESS) {
+    err = spi_begin(cmd);
+    if (err != PBIO_SUCCESS) {
         spi_chip_select(false);
-        PT_EXIT(pt);
+        return err;
     }
 
     // Wait until SPI operation completes.
-    PT_WAIT_UNTIL(pt, bdev.spi_status == SPI_STATUS_COMPLETE);
+    PBIO_OS_AWAIT_UNTIL(state, bdev.spi_status == SPI_STATUS_COMPLETE);
 
     // Turn off peripheral if requested.
     if (!(cmd->operation & SPI_CS_KEEP_ENABLED)) {
         spi_chip_select(false);
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // Select constant values based on flash device type.
@@ -351,26 +336,19 @@ static spi_command_t cmd_data_read = {
     .operation = SPI_RECV,
 };
 
-PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
+pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
-    static struct pt child;
+    static pbio_os_state_t sub;
     static uint32_t size_done;
     static uint32_t size_now;
+    pbio_error_t err;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Exit on invalid size.
     if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE) {
-        *err = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_ARG;
     }
-
-    if (bdev.process) {
-        *err = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
-    }
-
-    bdev.process = PROCESS_CURRENT();
 
     // Split up reads to maximum chunk size.
     for (size_done = 0; size_done < size; size_done += size_now) {
@@ -378,24 +356,21 @@ PT_THREAD(pbdrv_block_device_read(struct pt *pt, uint32_t offset, uint8_t *buffe
 
         // Set address for this read request and send it.
         set_address_be(&cmd_request_read.buffer[1], PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset + size_done);
-        PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_request_read, err));
-        if (*err != PBIO_SUCCESS) {
-            goto out;
+        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_request_read));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
 
         // Receive the data.
         cmd_data_read.buffer = buffer + size_done;
         cmd_data_read.size = size_now;
-        PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_data_read, err));
-        if (*err != PBIO_SUCCESS) {
-            goto out;
+        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_read));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
     }
 
-out:
-    bdev.process = NULL;
-
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -405,17 +380,18 @@ out:
  *
  * In case of erase (indicated by size = 0), address must be aligned with a sector.
  */
-static PT_THREAD(flash_erase_or_write(struct pt *pt, uint32_t address, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
+static pbio_error_t flash_erase_or_write(pbio_os_state_t *state, uint32_t address, uint8_t *buffer, uint32_t size) {
 
-    static struct pt child;
+    static pbio_os_state_t sub;
     static const spi_command_t *cmd;
+    pbio_error_t err;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Enable write mode.
-    PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_write_enable, err));
-    if (*err != PBIO_SUCCESS) {
-        PT_EXIT(pt);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_write_enable));
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Select either write or erase request.
@@ -423,91 +399,114 @@ static PT_THREAD(flash_erase_or_write(struct pt *pt, uint32_t address, uint8_t *
 
     // Set address and send the request.
     set_address_be(&cmd->buffer[1], address);
-    PT_SPAWN(pt, &child, spi_command_thread(&child, cmd, err));
-    if (*err != PBIO_SUCCESS) {
-        PT_EXIT(pt);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, cmd));
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Write the data, or skip in case of erase.
     if (size != 0) {
         cmd_data_write.buffer = buffer;
         cmd_data_write.size = size;
-        PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_data_write, err));
-        if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_write));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
     }
 
     // Wait for busy flag to clear.
     do {
         // Send command to read status.
-        PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_status_tx, err));
-        if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_tx));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
 
         // Read the status.
-        PT_SPAWN(pt, &child, spi_command_thread(&child, &cmd_status_rx, err));
-        if (*err != PBIO_SUCCESS) {
-            PT_EXIT(pt);
+        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_rx));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
     } while (status & (FLASH_STATUS_BUSY | FLASH_STATUS_WRITE_ENABLED));
 
     // The task is ready.
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-PT_THREAD(pbdrv_block_device_store(struct pt *pt, uint8_t *buffer, uint32_t size, pbio_error_t *err)) {
+pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
 
-    static struct pt child;
+    static pbio_os_state_t sub;
     static uint32_t offset;
     static uint32_t size_now;
     static uint32_t size_done;
+    pbio_error_t err;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Exit on invalid size.
     if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE) {
-        *err = PBIO_ERROR_INVALID_ARG;
-        PT_EXIT(pt);
+        return PBIO_ERROR_INVALID_ARG;
     }
-
-    if (bdev.process) {
-        *err = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
-    }
-
-    bdev.process = PROCESS_CURRENT();
 
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
         // Writing size 0 means erase.
-        PT_SPAWN(pt, &child, flash_erase_or_write(&child,
-            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset, NULL, 0, err));
-        if (*err != PBIO_SUCCESS) {
-            goto out;
+        PBIO_OS_AWAIT(state, &sub, err = flash_erase_or_write(&sub,
+            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset, NULL, 0));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
     }
 
     // Write page by page.
     for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_WRITE);
-        PT_SPAWN(pt, &child, flash_erase_or_write(&child,
-            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + size_done, buffer + size_done, size_now, err));
-        if (*err != PBIO_SUCCESS) {
-            goto out;
+        PBIO_OS_AWAIT(state, &sub, err = flash_erase_or_write(&sub,
+            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + size_done, buffer + size_done, size_now));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
     }
 
-out:
-    bdev.process = NULL;
-
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-PROCESS(pbdrv_block_device_w25qxx_stm32_init_process, "w25qxx");
+static pbio_os_process_t pbdrv_block_device_w25qxx_stm32_init_process;
+
+pbio_error_t pbdrv_block_device_w25qxx_stm32_init_process_thread(pbio_os_state_t *state, void *context) {
+
+    pbio_error_t err;
+    static pbio_os_state_t sub;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Write the ID getter command
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Get ID command reply
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_rx));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Verify flash device ID
+    if (memcmp(device_id, id_data, sizeof(id_data))) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // Initialization done.
+    pbdrv_init_busy_down();
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
 
 void pbdrv_block_device_init(void) {
+
+    bdev.pdata = &pbdrv_block_device_w25qxx_stm32_platform_data;
+    bdev.spi_status = SPI_STATUS_COMPLETE;
 
     bdev.tx_dma.Instance = bdev.pdata->tx_dma;
     bdev.tx_dma.Init.Channel = bdev.pdata->tx_dma_ch;
@@ -557,41 +556,7 @@ void pbdrv_block_device_init(void) {
     HAL_NVIC_EnableIRQ(bdev.pdata->irq);
 
     pbdrv_init_busy_up();
-    process_start(&pbdrv_block_device_w25qxx_stm32_init_process);
-}
-
-PROCESS_THREAD(pbdrv_block_device_w25qxx_stm32_init_process, ev, data) {
-
-    static pbio_error_t err;
-    static struct pt child;
-
-    PROCESS_BEGIN();
-
-    bdev.process = &pbdrv_block_device_w25qxx_stm32_init_process;
-
-    // Write the ID getter command
-    PROCESS_PT_SPAWN(&child, spi_command_thread(&child, &cmd_id_tx, &err));
-    if (err != PBIO_SUCCESS) {
-        PROCESS_EXIT();
-    }
-
-    // Get ID command reply
-    PROCESS_PT_SPAWN(&child, spi_command_thread(&child, &cmd_id_rx, &err));
-    if (err != PBIO_SUCCESS) {
-        PROCESS_EXIT();
-    }
-
-    // Verify flash device ID
-    if (memcmp(device_id, id_data, sizeof(id_data))) {
-        PROCESS_EXIT();
-    }
-
-    bdev.process = NULL;
-
-    // Deinitialization done.
-    pbdrv_init_busy_down();
-
-    PROCESS_END();
+    pbio_os_process_start(&pbdrv_block_device_w25qxx_stm32_init_process, pbdrv_block_device_w25qxx_stm32_init_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32
