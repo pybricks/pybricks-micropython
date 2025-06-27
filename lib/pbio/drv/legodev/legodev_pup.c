@@ -553,6 +553,12 @@ static bool type_id_matches(pbdrv_legodev_type_id_t *type, pbdrv_legodev_type_id
     return desired == actual_type;
 }
 
+// Setup dummy motor info
+static void pbdrv_legodev_pup_set_dummy_motor_info(ext_dev_t *dev, pbdrv_legodev_type_id_t type_id) {
+    pbdrv_legodev_pup_uart_set_dummy_info(dev->uart_dev, type_id);
+    dev->dcm.connected_type_id = PBDRV_LEGODEV_TYPE_ID_LPF2_UNKNOWN_UART;
+}
+
 pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type_id_t *type_id, pbdrv_legodev_dev_t **legodev) {
 
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(devs); i++) {
@@ -572,6 +578,16 @@ pbio_error_t pbdrv_legodev_get_device(pbio_port_id_t port_id, pbdrv_legodev_type
         // Otherwise handle external devices. Skip if not matching port.
         if (candidate->ext_dev->pdata->port_id != port_id) {
             continue;
+        }
+
+        // Script is initializing an encoded motor, but no motor is plugged in to the port
+        if (candidate->ext_dev->dcm.connected_type_id == PBDRV_LEGODEV_TYPE_ID_NONE && *type_id == PBDRV_LEGODEV_TYPE_ID_ANY_ENCODED_MOTOR) {
+            // Force type to Technic Large Motor. This is the most common RoboBattles motor and it
+            // shares many values with Technic Medium and Spike motors, so they're mostly interchangeable.
+            *type_id = PBDRV_LEGODEV_TYPE_ID_TECHNIC_L_MOTOR;
+            pbdrv_legodev_pup_set_dummy_motor_info(candidate->ext_dev, *type_id);
+            *legodev = candidate;
+            return PBIO_SUCCESS;
         }
 
         // Found device instance object, now test if device is ready.

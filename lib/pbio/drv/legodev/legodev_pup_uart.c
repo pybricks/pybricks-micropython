@@ -179,6 +179,8 @@ struct _pbdrv_legodev_pup_uart_dev_t {
     uint8_t *bin_data;
     /** The current device connection state. */
     pbdrv_legodev_pup_uart_status_t status;
+    /** True if this is a dummy device. */
+    bool is_dummy;
     /** Mode switch status. */
     pbdrv_legodev_pup_uart_mode_switch_t mode_switch;
     /** Data set buffer and status. */
@@ -231,12 +233,44 @@ static pbdrv_legodev_pup_uart_data_set_t data_set_bufs[PBDRV_CONFIG_LEGODEV_PUP_
 
 #define PBIO_PT_WAIT_READY(pt, expr) PT_WAIT_UNTIL((pt), (expr) != PBIO_ERROR_AGAIN)
 
+// Set up dummy motor info
+void pbdrv_legodev_pup_uart_set_dummy_info(pbdrv_legodev_pup_uart_dev_t *ludev, pbdrv_legodev_type_id_t type_id) {
+    ludev->is_dummy = true;
+    ludev->device_info.type_id = type_id;
+    ludev->device_info.flags = pbdrv_legodev_spec_basic_flags(type_id);
+
+    uint8_t mode = pbdrv_legodev_spec_default_mode(type_id);
+    ludev->device_info.mode = mode;
+    ludev->mode_switch.desired_mode = mode;
+    ludev->status = PBDRV_LEGODEV_PUP_UART_STATUS_DATA;
+    ludev->mode_switch.time = 0;
+    ludev->data_set->time = 0;
+    ludev->data_set->size = 0;
+    ludev->device_info.num_modes = 3;
+    ludev->device_info.mode_info[0] = (pbdrv_legodev_mode_info_t) {
+        .num_values = 1,
+        .data_type = PBDRV_LEGODEV_DATA_TYPE_INT8,
+        .writable = true,
+    };
+    ludev->device_info.mode_info[1] = (pbdrv_legodev_mode_info_t) {
+        .num_values = 1,
+        .data_type = PBDRV_LEGODEV_DATA_TYPE_INT8,
+        .writable = true,
+    };
+    ludev->device_info.mode_info[2] = (pbdrv_legodev_mode_info_t) {
+        .num_values = 1,
+        .data_type = PBDRV_LEGODEV_DATA_TYPE_INT32,
+        .writable = false,
+    };
+}
+
 pbdrv_legodev_pup_uart_dev_t *pbdrv_legodev_pup_uart_configure(uint8_t device_index, uint8_t uart_driver_index, pbio_dcmotor_t *dcmotor) {
     pbdrv_legodev_pup_uart_dev_t *ludev = &ludevs[device_index];
     ludev->dcmotor = dcmotor;
     ludev->tx_msg = &bufs[device_index][BUF_TX_MSG][0];
     ludev->rx_msg = &bufs[device_index][BUF_RX_MSG][0];
     ludev->status = PBDRV_LEGODEV_PUP_UART_STATUS_ERR;
+    ludev->is_dummy = false; // AI added this. Theoretically happens when a motor is plugged in after a program has already been running with a dummy motor initialized. Untested.
     ludev->err_count = 0;
     ludev->data_set = &data_set_bufs[device_index];
     ludev->bin_data = data_read_bufs[device_index];
@@ -717,6 +751,7 @@ static PT_THREAD(pbdrv_legodev_pup_uart_synchronize_thread(pbdrv_legodev_pup_uar
     PT_BEGIN(&ludev->pt);
 
     // reset state for new device
+    ludev->is_dummy = false; // AI added this. Theoretically happens when a motor is plugged in after a program has already been running with a dummy motor initialized. Untested.
     ludev->device_info.type_id = PBDRV_LEGODEV_TYPE_ID_NONE;
     ludev->device_info.mode = 0;
     ludev->ext_mode = 0;
@@ -1120,6 +1155,11 @@ pbio_error_t pbdrv_legodev_is_ready(pbdrv_legodev_dev_t *legodev) {
         return PBIO_ERROR_NO_DEV;
     }
 
+    // For dummy devices, skip the rest of the checks
+    if (ludev->is_dummy) {
+        return PBIO_SUCCESS;
+    }
+
     if (ludev->status != PBDRV_LEGODEV_PUP_UART_STATUS_DATA) {
         return PBIO_ERROR_AGAIN;
     }
@@ -1162,6 +1202,13 @@ pbio_error_t pbdrv_legodev_set_mode(pbdrv_legodev_dev_t *legodev, uint8_t mode) 
         return PBIO_ERROR_NO_DEV;
     }
 
+    // For dummy devices, set the mode directly.
+    if (ludev->is_dummy) {
+        ludev->device_info.mode = mode;
+        ludev->mode_switch.desired_mode = mode;
+        return PBIO_SUCCESS;
+    }
+
     // Mode already set or being set, so return success.
     if (ludev->mode_switch.desired_mode == mode || ludev->device_info.mode == mode) {
         return PBIO_SUCCESS;
@@ -1202,6 +1249,11 @@ pbio_error_t pbdrv_legodev_get_data(pbdrv_legodev_dev_t *legodev, uint8_t mode, 
     pbdrv_legodev_pup_uart_dev_t *ludev = pbdrv_legodev_get_uart_dev(legodev);
     if (!ludev) {
         return PBIO_ERROR_NO_DEV;
+    }
+
+    // For dummy devices, get the mode directly.
+    if (ludev->is_dummy) {
+        ludev->device_info.mode = mode;
     }
 
     // Can only request data for mode that is set.
