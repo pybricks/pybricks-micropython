@@ -151,10 +151,10 @@ Then run the following to set up the Python environment:
 
 To activate the environment, run:
 
-    poetry shell
+    eval $(poetry env activate)
 
 The command prompt will now start with `(.venv)` to remind you that you are
-working in the virtual environment. You should run `poetry shell` any time you
+working in the virtual environment. You should run `eval $(poetry env activate)` any time you
 open a new terminal window while working on `pybricks-micropython`.
 
 
@@ -299,7 +299,7 @@ Build and deploy firmware
 
 Pick your Hub from the `bricks` sub-directory you want to compile.
 
-    poetry shell
+    eval $(poetry env activate)
     make mpy-cross -j8
     make -C bricks/primehub -j8
 
