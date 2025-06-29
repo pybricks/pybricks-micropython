@@ -76,6 +76,7 @@ jobs:
     - name: Test
       if: ${{ success() }}
       run: |
+        ulimit -n 1024 # needed for micropython/tests/extmod/select_poll_fd.py
         cd micropython
         make -C ports/unix VARIANT=coverage test_full
         (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-coverage/micropython ./run-multitests.py multi_net/*.py)

@@ -39,7 +39,7 @@ static const mp_rom_obj_tuple_t pybricks_info_obj = {
 };
 
 #if MICROPY_MODULE_ATTR_DELEGATION
-static void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     // This will get called when external imports tries to store the module
     // as an attribute to this package. This is not currently supported, but
     // it should not cause an exception, so indicate success.
@@ -50,8 +50,37 @@ static void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest
 static const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
-    #if MICROPY_MODULE_ATTR_DELEGATION
-    MP_MODULE_ATTR_DELEGATION_ENTRY(&pb_package_pybricks_attr),
+    #if MICROPY_MODULE_BUILTIN_SUBPACKAGES
+    #if PYBRICKS_PY_EXPERIMENTAL
+    { MP_ROM_QSTR(MP_QSTR_experimental), MP_ROM_PTR(&pb_module_experimental) },
+    #endif
+    #if PYBRICKS_PY_HUBS
+    { MP_ROM_QSTR(MP_QSTR_hubs), MP_ROM_PTR(&pb_module_hubs) },
+    #endif
+    #if PYBRICKS_PY_NXTDEVICES
+    { MP_ROM_QSTR(MP_QSTR_nxtdevices), MP_ROM_PTR(&pb_module_nxtdevices) },
+    #endif
+    #if PYBRICKS_PY_EV3DEVICES
+    { MP_ROM_QSTR(MP_QSTR_ev3devices), MP_ROM_PTR(&pb_module_ev3devices) },
+    #endif
+    #if PYBRICKS_PY_PUPDEVICES
+    { MP_ROM_QSTR(MP_QSTR_pupdevices), MP_ROM_PTR(&pb_module_pupdevices) },
+    #endif
+    #if PYBRICKS_PY_IODEVICES
+    { MP_ROM_QSTR(MP_QSTR_iodevices), MP_ROM_PTR(&pb_module_iodevices) },
+    #endif
+    #if PYBRICKS_PY_MEDIA
+    { MP_ROM_QSTR(MP_QSTR_media), MP_ROM_PTR(&pb_module_media) },
+    #endif
+    #if PYBRICKS_PY_PARAMETERS
+    { MP_ROM_QSTR(MP_QSTR_parameters), MP_ROM_PTR(&pb_module_parameters) },
+    #endif
+    #if PYBRICKS_PY_TOOLS
+    { MP_ROM_QSTR(MP_QSTR_tools), MP_ROM_PTR(&pb_module_tools) },
+    #endif
+    #if PYBRICKS_PY_ROBOTICS
+    { MP_ROM_QSTR(MP_QSTR_robotics), MP_ROM_PTR(&pb_module_robotics) },
+    #endif
     #endif
 };
 static MP_DEFINE_CONST_DICT(pb_package_pybricks_globals, pybricks_globals_table);
@@ -62,6 +91,7 @@ const mp_obj_module_t pb_package_pybricks = {
 };
 
 MP_REGISTER_MODULE(MP_QSTR_pybricks, pb_package_pybricks);
+MP_REGISTER_MODULE_DELEGATION(pb_package_pybricks, pb_package_pybricks_attr);
 
 #if PYBRICKS_OPT_COMPILER
 /**

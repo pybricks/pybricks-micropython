@@ -57,7 +57,7 @@ int mp_hal_stdin_rx_chr(void) {
 
 extern uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size);
 
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
     pbdrv_uart_debug_printf("%.*s", len, str);
 
     uint32_t done = 0;
@@ -69,6 +69,8 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     while (!pbdrv_uart_debug_is_done()) {
         MICROPY_VM_HOOK_LOOP;
     }
+
+    return len;
 }
 
 extern void pbdrv_usb_tx_flush(void);
