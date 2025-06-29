@@ -64,11 +64,13 @@ int mp_hal_stdin_rx_chr(void) {
 }
 
 // Send string of given length
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
     while (pbsys_host_tx((const uint8_t *)str, len) == PBIO_ERROR_AGAIN) {
         MICROPY_EVENT_POLL_HOOK
     }
     // Not raising the error. This means stdout lost if host is not connected.
+
+    return len;
 }
 
 void mp_hal_stdout_tx_flush(void) {

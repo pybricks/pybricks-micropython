@@ -55,8 +55,6 @@ void pbsys_main_stop_program(bool force_stop) {
     if (force_stop) {
         mp_sched_vm_abort();
     } else {
-        pyexec_system_exit = PYEXEC_FORCED_EXIT;
-
         static mp_obj_exception_t system_exit;
         system_exit.base.type = &mp_type_SystemExit;
         system_exit.traceback_alloc = system_exit.traceback_len = 0;
@@ -106,9 +104,9 @@ static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minima
 }
 
 // Prints the exception that ended the program.
-static void print_final_exception(mp_obj_t exc) {
+static void print_final_exception(mp_obj_t exc, int ret) {
     // Handle graceful stop with button.
-    if (pyexec_system_exit == PYEXEC_FORCED_EXIT &&
+    if ((ret & PYEXEC_FORCED_EXIT) &&
         mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
         mp_printf(&mp_plat_print, "The program was stopped (%q).\n",
             ((mp_obj_exception_t *)MP_OBJ_TO_PTR(exc))->base.type->name);
@@ -121,8 +119,9 @@ static void print_final_exception(mp_obj_t exc) {
 
 #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 static void run_repl(void) {
+    int ret = 0;
+
     readline_init0();
-    pyexec_system_exit = 0;
 
     nlr_buf_t nlr;
     nlr.ret_val = NULL;
@@ -134,12 +133,12 @@ static void run_repl(void) {
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
             // Compatibility with mpremote.
             mp_printf(&mp_plat_print, "MPY: soft reboot\n");
-            pyexec_raw_repl();
+            ret = pyexec_raw_repl();
         } else {
-            pyexec_friendly_repl();
+            ret = pyexec_friendly_repl();
         }
         #else // PYBRICKS_OPT_RAW_REPL
-        pyexec_friendly_repl();
+        ret = pyexec_friendly_repl();
         #endif // PYBRICKS_OPT_RAW_REPL
         nlr_pop();
     } else {
@@ -152,7 +151,7 @@ static void run_repl(void) {
         // clear any pending exceptions (and run any callbacks).
         mp_handle_pending(false);
         // Print which exception triggered this.
-        print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
+        print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val), ret);
     }
 
     nlr_set_abort(NULL);
@@ -175,7 +174,7 @@ static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        mp_obj_t module_fun = mp_make_function_from_raw_code(rc, mc, NULL);
+        mp_obj_t module_fun = mp_make_function_from_proto_fun(rc, mc, NULL);
         mp_call_function_0(module_fun);
 
         // finish nlr block, restore context
@@ -241,7 +240,7 @@ static mpy_info_t *mpy_data_find(qstr name) {
  * Runs the __main__ module from user RAM.
  */
 static void run_user_program(void) {
-    pyexec_system_exit = 0;
+    int ret = 0;
 
     nlr_buf_t nlr;
     nlr.ret_val = NULL;
@@ -264,7 +263,7 @@ static void run_user_program(void) {
         mp_compiled_module_t compiled_module;
         compiled_module.context = context;
         mp_raw_code_load(&reader, &compiled_module);
-        mp_obj_t module_fun = mp_make_function_from_raw_code(compiled_module.rc, context, NULL);
+        mp_obj_t module_fun = mp_make_function_from_proto_fun(compiled_module.rc, context, NULL);
 
         // Run the script while letting CTRL-C interrupt it.
         mp_hal_set_interrupt_char(CHAR_CTRL_C);
@@ -287,7 +286,12 @@ static void run_user_program(void) {
         // Clear any pending exceptions (and run any callbacks).
         mp_handle_pending(false);
 
-        print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
+        if (mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(((mp_obj_base_t *)nlr.ret_val)->type), MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
+            // at the moment, the value of SystemExit is unused
+            ret = PYEXEC_FORCED_EXIT;
+        }
+
+        print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val), ret);
 
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
         // On KeyboardInterrupt, drop to REPL for debugging.
@@ -430,9 +434,21 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
         mp_raise_NotImplementedError(MP_ERROR_TEXT("relative import"));
     }
 
-    // Check if module already exists, and return it if it does
+    // Check if the module is already loaded.
+    mp_map_elem_t *elem = mp_map_lookup(&MP_STATE_VM(mp_loaded_modules_dict).map, args[0], MP_MAP_LOOKUP);
+    if (elem) {
+        return elem->value;
+    }
+
+    // Try the name directly as a non-extensible built-in (e.g. `micropython`).
     qstr module_name_qstr = mp_obj_str_get_qstr(args[0]);
-    mp_obj_t module_obj = mp_module_get_loaded_or_builtin(module_name_qstr);
+    mp_obj_t module_obj = mp_module_get_builtin(module_name_qstr, false);
+    if (module_obj != MP_OBJ_NULL) {
+        return module_obj;
+    }
+
+    // Now try as an extensible built-in (e.g. `struct`/`ustruct`).
+    module_obj = mp_module_get_builtin(module_name_qstr, true);
     if (module_obj != MP_OBJ_NULL) {
         return module_obj;
     }
@@ -473,7 +489,7 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
         mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
         const mp_frozen_module_t *frozen = modref;
         context->constants = frozen->constants;
-        do_execute_raw_code(context, frozen->rc, context);
+        do_execute_raw_code(context, frozen->proto_fun, context);
         return module_obj;
     }
     #endif
@@ -486,7 +502,7 @@ mp_import_stat_t mp_import_stat(const char *path) {
     return MP_IMPORT_STAT_NO_EXIST;
 }
 
-mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
+mp_lexer_t *mp_lexer_new_from_file(qstr filename) {
     mp_raise_OSError(MP_ENOENT);
 }
 

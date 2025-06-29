@@ -117,9 +117,7 @@ mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw
  */
 MP_DEFINE_CONST_OBJ_TYPE(
     pb_type_device_method, MP_QSTR_function, MP_TYPE_FLAG_BINDS_SELF | MP_TYPE_FLAG_BUILTIN_FUN,
-    call, pb_type_device_method_call,
-    unary_op, mp_generic_unary_op
-    );
+    call, pb_type_device_method_call);
 
 /**
  * Set data for a Powered Up device, such as the brightness of multiple external
