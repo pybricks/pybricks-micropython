@@ -17,15 +17,22 @@ _Static_assert(NUM_PBIO_PYBRICKS_STATUS <= sizeof(uint32_t) * 8,
  *
  * The buffer must be at least ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE bytes.
  *
+ * @since Pybricks Profile v1.0.0
+ *
+ * Program ID parameter was added in Pybricks Profile v1.4.0.
+ * Slot parameter was added in Pybricks Profile v1.5.0.
+ *
  * @param [in]  buf         The buffer to hold the binary data.
  * @param [in]  flags       The status flags.
- * @param [in]  program_id  Program identifier.
+ * @param [in]  program_id  Program identifier of currently running program.
+ * @param [in]  slot        The currently selected program slot.
  * @return                  The number of bytes written to @p buf.
  */
-uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id) {
+uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id, uint8_t slot) {
     buf[0] = PBIO_PYBRICKS_EVENT_STATUS_REPORT;
     pbio_set_uint32_le(&buf[1], flags);
     buf[5] = program_id;
+    buf[6] = slot;
     return PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
 }
 
@@ -37,15 +44,22 @@ uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_py
  * @param [in]  max_char_size       The maximum characteristic value size (negotiated MTU - 3).
  * @param [in]  feature_flags       The feature flags.
  * @param [in]  max_user_prog_size  The maximum allowable size for the user program.
+ * @param [in]  num_slots           The number of program slots available on the hub.
+ *
+ * @since Pybricks Profile v1.2.0
+ *
+ * num_slots was added in Pybricks Profile v1.5.0.
  */
 void pbio_pybricks_hub_capabilities(uint8_t *buf,
     uint16_t max_char_size,
     pbio_pybricks_feature_flags_t feature_flags,
-    uint32_t max_user_prog_size) {
+    uint32_t max_user_prog_size,
+    uint8_t num_slots) {
 
     pbio_set_uint16_le(&buf[0], max_char_size);
     pbio_set_uint32_le(&buf[2], feature_flags);
     pbio_set_uint32_le(&buf[6], max_user_prog_size);
+    buf[10] = num_slots;
 }
 
 /**

@@ -1078,7 +1078,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
-        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size());
+        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), 0);
         aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_hub_capabilities_char_handle,
             0, PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, buf);
     }
