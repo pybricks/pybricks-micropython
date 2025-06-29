@@ -311,7 +311,7 @@ static mp_obj_t pb_type_imu_heading(size_t n_args, const mp_obj_t *pos_args, mp_
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_heading_obj, 1, pb_type_imu_heading);
 
 // pybricks._common.IMU.orientation
-STATIC mp_obj_t common_IMU_orientation(mp_obj_t self_in) {
+static mp_obj_t common_IMU_orientation(mp_obj_t self_in) {
 
     // Make matrix. REVISIT: Dedicated call from orientation matrix.
     pb_type_Matrix_obj_t *matrix = MP_OBJ_TO_PTR(pb_type_Matrix_make_bitmap(3, 3, 1.0f, 0));
