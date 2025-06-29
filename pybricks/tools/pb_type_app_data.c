@@ -101,8 +101,7 @@ static mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_ar
     }
 
     // Use finalizer so we can deactivate the data callback when rx_buffer is garbage collected.
-    app_data_instance = m_new_obj_var_with_finaliser(pb_type_app_data_obj_t, uint8_t, size);
-    app_data_instance->base.type = type;
+    app_data_instance = mp_obj_malloc_var_with_finaliser(pb_type_app_data_obj_t, uint8_t, size, type);
     app_data_instance->rx_format = rx_format_in;
 
     // Keep rx_buffer in bytes object rx_format for compatibility with unpack.

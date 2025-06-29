@@ -354,7 +354,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_Color,
     call, pb_type_Color_call,
     attr, pb_type_Color_attr,
     print, pb_type_Color_print,
-    unary_op, mp_generic_unary_op,
     binary_op, pb_type_Color_binary_op,
     subscr, pb_type_Color_subscr,
     iter, pb_type_Color_getiter);
