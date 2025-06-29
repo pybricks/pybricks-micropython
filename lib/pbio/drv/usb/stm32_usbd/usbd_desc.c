@@ -536,7 +536,8 @@ void USBD_Pybricks_Desc_Init(void) {
     pbio_pybricks_hub_capabilities(ptr,
         USBD_PYBRICKS_MAX_PACKET_SIZE - 1,
         PBSYS_CONFIG_APP_FEATURE_FLAGS,
-        pbsys_storage_get_maximum_program_size());
+        pbsys_storage_get_maximum_program_size(),
+        PBSYS_CONFIG_HMI_NUM_SLOTS);
     ptr += PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
 
     /* Update wTotalLength field in BOS Descriptor */

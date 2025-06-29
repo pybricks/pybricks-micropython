@@ -1483,7 +1483,7 @@ static void handle_event(uint8_t *packet) {
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
                         // REVISIT: this assumes connection_handle == conn_handle
-                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size());
+                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), 0);
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);

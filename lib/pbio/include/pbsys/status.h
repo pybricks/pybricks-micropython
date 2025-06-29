@@ -14,7 +14,7 @@
 
 #include <pbio/protocol.h>
 
-#define PBSYS_STATUS_REPORT_SIZE 6
+#define PBSYS_STATUS_REPORT_SIZE 7
 
 /**
  * Status flag change.

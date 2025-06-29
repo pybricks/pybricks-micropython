@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 4
+#define PBIO_PROTOCOL_VERSION_MINOR 5
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -342,9 +342,9 @@ typedef enum {
 #define PBIO_PYBRICKS_STATUS_FLAG(status) (1 << status)
 
 /** Size of status report event message in bytes. */
-#define PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE 6
+#define PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE 7
 
-uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id);
+uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id, uint8_t slot);
 
 /**
  * Application-specific feature flag supported by a hub.
@@ -391,12 +391,13 @@ typedef enum {
 void pbio_pybricks_hub_capabilities(uint8_t *buf,
     uint16_t max_char_size,
     pbio_pybricks_feature_flags_t feature_flags,
-    uint32_t max_user_prog_size);
+    uint32_t max_user_prog_size,
+    uint8_t num_slots);
 
 /**
  * Number of bytes in the Pybricks hub capabilities characteristic value.
  */
-#define PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE 10
+#define PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE 11
 
 extern const uint8_t pbio_pybricks_service_uuid[];
 extern const uint8_t pbio_pybricks_command_event_char_uuid[];

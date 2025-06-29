@@ -22,6 +22,7 @@
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
 
+#include "hmi.h"
 #include "storage.h"
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
@@ -254,6 +255,9 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
     static struct etimer timer;
     static uint32_t old_status_flags;
     static send_msg_t msg;
+    #if PBSYS_CONFIG_HMI_NUM_SLOTS
+    static uint8_t old_program_slot;
+    #endif
 
     PT_BEGIN(pt);
 
@@ -267,7 +271,11 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
 
     for (;;) {
         // wait for status to change or timeout
-        PT_WAIT_UNTIL(pt, pbsys_status_get_flags() != old_status_flags || etimer_expired(&timer));
+        PT_WAIT_UNTIL(pt, pbsys_status_get_flags() != old_status_flags ||
+            #if PBSYS_CONFIG_HMI_NUM_SLOTS
+            pbsys_hmi_get_selected_program_slot() != old_program_slot ||
+            #endif
+            etimer_expired(&timer));
 
         etimer_restart(&timer);
 

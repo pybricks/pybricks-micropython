@@ -7,6 +7,9 @@
 ### Added
 - Experimental support for USB connectivity on SPIKE Prime ([pybricks-micropython#208]).
 - Initial support for `pybricks.iodevices.UARTDevice` ([support#220]). 
+- Enabled previously hidden support for multiple code
+  slots ([pybricks-micropython#264], [pybricks-micropython#312]). A new
+  (unreleased) version of Pybricks Code is needed to use this.
 
 ### Changed
 - Extensive overhaul of UART and port drivers on all hubs. This affects all
@@ -21,6 +24,8 @@
 [support#220]: https://github.com/pybricks/support/issues/220
 [support#2206]: https://github.com/pybricks/support/issues/2206
 [pybricks-micropython#208]: https://github.com/pybricks/pybricks-micropython/pull/208
+[pybricks-micropython#264]: https://github.com/pybricks/pybricks-micropython/pull/264
+[pybricks-micropython#312]: https://github.com/pybricks/pybricks-micropython/pull/312
 
 ## [3.6.1] - 2025-03-11
 

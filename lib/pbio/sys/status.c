@@ -59,9 +59,16 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
  * @return                 The number of bytes written to @p buf.
  */
 uint32_t pbsys_status_get_status_report(uint8_t *buf) {
+    #if PBSYS_CONFIG_HMI_NUM_SLOTS
+    uint8_t slot = pbsys_hmi_get_selected_program_slot();
+    #else
+    uint8_t slot = 0;
+    #endif
+
     _Static_assert(PBSYS_STATUS_REPORT_SIZE == PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
         "size of status report does not match size of event");
-    return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id);
+
+    return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, slot);
 }
 
 /**
