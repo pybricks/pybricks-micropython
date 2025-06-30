@@ -495,7 +495,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     }
 
     // Check if the mode is supported by the port.
-    if (!(port->pdata->supported_modes & mode)) {
+    if (mode && !(port->pdata->supported_modes & mode)) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
