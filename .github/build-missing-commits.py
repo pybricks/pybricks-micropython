@@ -97,7 +97,9 @@ for commit in pybricks.iter_commits(
         "update", "--init", "lib/stm32lib"
     )
     pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
-    pybricks.git.submodule("update", "--init", "--checkout", "lib/STM32_USB_Device_Library")
+    pybricks.git.submodule(
+        "update", "--init", "--checkout", "lib/STM32_USB_Device_Library"
+    )
 
     # Make mpy-cross once
     print("Building mpy-cross")

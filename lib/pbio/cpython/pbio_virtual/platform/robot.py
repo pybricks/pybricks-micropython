@@ -116,7 +116,6 @@ class VirtualCounter:
 
 
 class Platform:
-
     # Ports and attached devices.
     PORTS = {
         PortId.A: IODeviceTypeId.TECHNIC_L_ANGULAR_MOTOR,
@@ -132,7 +131,6 @@ class Platform:
         self.clock[-1].tick()
 
     def __init__(self):
-
         # Initialize devices internal to the hub.
         self.battery = {-1: VirtualBattery()}
         self.button = {-1: VirtualButtons()}
@@ -157,7 +155,6 @@ class Platform:
             # Initialize motor simulation model.
             self.sim_motor[i] = None
             if type_id != IODeviceTypeId.NONE:
-
                 # Get current time.
                 initial_time = self.clock[-1].microseconds / 1000000
 

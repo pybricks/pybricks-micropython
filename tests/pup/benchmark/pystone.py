@@ -48,7 +48,9 @@ class Record:
         self.StringComp = StringComp
 
     def copy(self):
-        return Record(self.PtrComp, self.Discr, self.EnumComp, self.IntComp, self.StringComp)
+        return Record(
+            self.PtrComp, self.Discr, self.EnumComp, self.IntComp, self.StringComp
+        )
 
 
 TRUE = 1

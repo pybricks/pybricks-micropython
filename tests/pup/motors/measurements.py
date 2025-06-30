@@ -60,7 +60,6 @@ for reset_target in (0, 360, 90, None):
 
 # Test DC positive direction signs.
 for direction in (Direction.CLOCKWISE, Direction.COUNTERCLOCKWISE, "default"):
-
     # Initialize the motor with given sign.
     motor.close()
     if direction == "default":
@@ -94,7 +93,6 @@ wait(500)
 # Test reported speed value.
 watch = StopWatch()
 for dc in (-100, 50, 0, 50, 100):
-
     # Get the motor going at steady speed.
     motor.dc(dc)
     wait(500)

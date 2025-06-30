@@ -171,20 +171,31 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     speed_ax.plot(time, rate, drawstyle="steps-post", label="Reported rate")
     speed_ax.plot(time, rate_est, drawstyle="steps-post", label="Observer")
     speed_ax.plot(
-        time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
+        time,
+        gradient(count, time / 1000),
+        drawstyle="steps-post",
+        label="Future count derivative",
     )
     speed_ax.set_ylabel("speed (deg/s)")
 
     torque_ax.plot(time, torque_feedback, label="Feedback", drawstyle="steps-post")
-    torque_ax.plot(time, torque_feedforward, label="Feedforward", drawstyle="steps-post")
+    torque_ax.plot(
+        time, torque_feedforward, label="Feedforward", drawstyle="steps-post"
+    )
     torque_ax.set_ylabel("Torque")
 
     duty_ax.plot(time, voltage, label="Motor", drawstyle="steps-post")
     duty_ax.plot(
-        time, observer_feedback_voltage, label="Observer Feedback", drawstyle="steps-post"
+        time,
+        observer_feedback_voltage,
+        label="Observer Feedback",
+        drawstyle="steps-post",
     )
     duty_ax.plot(
-        time, voltage + observer_feedback_voltage, label="Model voltage", drawstyle="steps-post"
+        time,
+        voltage + observer_feedback_voltage,
+        label="Model voltage",
+        drawstyle="steps-post",
     )
     duty_ax.set_ylabel("Voltage (mV)")
     duty_ax.set_ylim([-10000, 10000])
@@ -195,7 +206,9 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     loop_time_max = math.ceil((numpy.max(loop_time) + 1) / 5) * 5
     time_ax.set_ylim(0, loop_time_max)
 
-    plot_status(actuate_ax, actuation_type, {0: "Coast", 1: "N/A", 2: "Voltage"}, "Act.")
+    plot_status(
+        actuate_ax, actuation_type, {0: "Coast", 1: "N/A", 2: "Voltage"}, "Act."
+    )
     plot_status(stall_ax, stalled, {0: "No", 1: "Yes"}, "Stall.")
 
     for axis in axes:
@@ -230,11 +243,23 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     title = "control" if subtitle is None else "control_" + subtitle
 
     figure, axes = matplotlib.pyplot.subplots(
-        nrows=8, ncols=1, figsize=(15, 15), height_ratios=[1, 1, 1, 1, 0.05, 0.05, 0.05, 0.5]
+        nrows=8,
+        ncols=1,
+        figsize=(15, 15),
+        height_ratios=[1, 1, 1, 1, 0.05, 0.05, 0.05, 0.5],
     )
     figure.suptitle(title, fontsize=20)
 
-    (position_ax, error_ax, speed_ax, torque_ax, actuate_ax, stall_ax, done_ax, time_ax) = axes
+    (
+        position_ax,
+        error_ax,
+        speed_ax,
+        torque_ax,
+        actuate_ax,
+        stall_ax,
+        done_ax,
+        time_ax,
+    ) = axes
     status_axes = (actuate_ax, stall_ax, done_ax)
 
     position_ax.plot(time, count, drawstyle="steps-post", label="Reported count")
@@ -242,15 +267,24 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     position_ax.plot(time, count_ref, drawstyle="steps-post", label="Reference")
     position_ax.set_ylabel("angle (deg)")
 
-    error_ax.plot(time, count_ref - count, drawstyle="steps-post", label="Reported error")
-    error_ax.plot(time, count_ref - count_est, drawstyle="steps-post", label="Estimated error")
-    error_ax.plot(time, count_est - count, drawstyle="steps-post", label="Estimation error")
+    error_ax.plot(
+        time, count_ref - count, drawstyle="steps-post", label="Reported error"
+    )
+    error_ax.plot(
+        time, count_ref - count_est, drawstyle="steps-post", label="Estimated error"
+    )
+    error_ax.plot(
+        time, count_est - count, drawstyle="steps-post", label="Estimation error"
+    )
     error_ax.set_ylabel("angle error (deg)")
 
     speed_ax.plot(time, rate, drawstyle="steps-post", label="Reported rate")
     speed_ax.plot(time, rate_est, drawstyle="steps-post", label="Observer")
     speed_ax.plot(
-        time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
+        time,
+        gradient(count, time / 1000),
+        drawstyle="steps-post",
+        label="Future count derivative",
     )
     speed_ax.plot(time, rate_ref, drawstyle="steps-post", label="Reference")
     speed_ax.set_ylabel("speed (deg/s)")
@@ -370,7 +404,9 @@ else:
     if "PBIO_VIRTUAL_PLATFORM_MODULE" not in os.environ:
         os.environ["PBIO_VIRTUAL_PLATFORM_MODULE"] = "pbio_virtual.platform.turtle"
     result = subprocess.run(
-        [bin_path, script_archive.absolute()], capture_output=True, cwd=build_dir.absolute()
+        [bin_path, script_archive.absolute()],
+        capture_output=True,
+        cwd=build_dir.absolute(),
     )
     hub_output = (result.stdout or result.stderr).split(b"\n")
     for line in hub_output:
