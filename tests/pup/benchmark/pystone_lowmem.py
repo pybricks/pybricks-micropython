@@ -41,7 +41,9 @@ class Record:
         self.StringComp = StringComp
 
     def copy(self):
-        return Record(self.PtrComp, self.Discr, self.EnumComp, self.IntComp, self.StringComp)
+        return Record(
+            self.PtrComp, self.Discr, self.EnumComp, self.IntComp, self.StringComp
+        )
 
 
 TRUE = 1
@@ -218,7 +220,9 @@ def Proc8(Array1Par, Array2Par, IntParI1, IntParI2):
     Array1Par[(IntLoc + 30) // 2] = IntLoc
     for IntIndex in range(IntLoc, IntLoc + 2):
         Array2Par[IntLoc // 2][IntIndex // 2] = IntLoc
-    Array2Par[IntLoc // 2][(IntLoc - 1) // 2] = Array2Par[IntLoc // 2][(IntLoc - 1) // 2] + 1
+    Array2Par[IntLoc // 2][(IntLoc - 1) // 2] = (
+        Array2Par[IntLoc // 2][(IntLoc - 1) // 2] + 1
+    )
     Array2Par[(IntLoc + 20) // 2][IntLoc // 2] = Array1Par[IntLoc // 2]
     IntGlob = 5
 

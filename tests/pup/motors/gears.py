@@ -64,6 +64,6 @@ for gears in test_args:
 
     # Allow at most one degree of error, or up to 1/ratio when speeding up.
     tolerance = 1 if ratio >= 1 else 1 / ratio
-    assert abs(motor.angle() - expected) <= tolerance, "{0} != {1} for ratio: {2}".format(
-        expected, measured, gears
+    assert abs(motor.angle() - expected) <= tolerance, (
+        "{0} != {1} for ratio: {2}".format(expected, measured, gears)
     )

@@ -26,7 +26,9 @@ def expect_state(
         or abs(expected_angle - angle) > 10
         or abs(expected_angular_velocity - angular_velocity) > 30
     ):
-        raise ValueError("Expected {0} but got {1}".format(expected_state, drive_base.state()))
+        raise ValueError(
+            "Expected {0} but got {1}".format(expected_state, drive_base.state())
+        )
 
 
 # Expect zeroed state on startup.
@@ -63,6 +65,9 @@ expect_state(drive_base.distance(), 0, drive_base.angle(), 0)
 
 # Drive fast.
 drive_base.settings(
-    straight_speed=500, straight_acceleration=1000, turn_rate=500, turn_acceleration=2000
+    straight_speed=500,
+    straight_acceleration=1000,
+    turn_rate=500,
+    turn_acceleration=2000,
 )
 drive_base.straight(500)

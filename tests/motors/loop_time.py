@@ -20,7 +20,6 @@ motor.control.log.start(DURATION)
 watch = StopWatch()
 
 while watch.time() < DURATION + 500:
-
     # Compute sine angle.
     phase = watch.time() / DURATION * 2 * pi
     speed = sin(phase) * 750

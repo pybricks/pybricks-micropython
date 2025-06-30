@@ -23,7 +23,6 @@ FIRMWARE_ROUND_SIZE = 256 * 1024
 
 
 def make_firmware(uboot_blob: bytes, uimage_blob: bytes) -> bytes:
-
     if len(uboot_blob) > UBOOT_MAX_SIZE:
         print(
             f"u-boot file is bigger than 256KiB ({len(uboot_blob)} bytes), it is not safe to use.",
@@ -32,13 +31,18 @@ def make_firmware(uboot_blob: bytes, uimage_blob: bytes) -> bytes:
         exit(1)
 
     if len(uimage_blob) > UIMAGE_MAX_SIZE:
-        print(f"uImage file is too big ({len(uimage_blob)} > {UIMAGE_MAX_SIZE}).", file=sys.stderr)
+        print(
+            f"uImage file is too big ({len(uimage_blob)} > {UIMAGE_MAX_SIZE}).",
+            file=sys.stderr,
+        )
         exit(1)
 
     # Gets combined size, rounded to nearest expected size.
     combined_size = UIMAGE_OFFSET + len(uimage_blob)
     combined_size = (
-        (combined_size + FIRMWARE_ROUND_SIZE) // FIRMWARE_ROUND_SIZE * FIRMWARE_ROUND_SIZE
+        (combined_size + FIRMWARE_ROUND_SIZE)
+        // FIRMWARE_ROUND_SIZE
+        * FIRMWARE_ROUND_SIZE
     )
 
     # Put it all together.
@@ -59,9 +63,11 @@ if __name__ == "__main__":
     parser.add_argument("output", help="The output file")
     args = parser.parse_args()
 
-    with open(args.uboot, "rb") as uboot_file, open(args.uimage, "rb") as uimage_file, open(
-        args.output, "wb"
-    ) as output_file:
+    with (
+        open(args.uboot, "rb") as uboot_file,
+        open(args.uimage, "rb") as uimage_file,
+        open(args.output, "wb") as output_file,
+    ):
         combined = make_firmware(uboot_file.read(), uimage_file.read())
         output_file.write(combined)
         print(f"Created {args.output} with size {len(combined) // 1024} KB.")
