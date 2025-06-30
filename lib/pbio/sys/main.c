@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     // or USB being plugged in, so we have this loop to keep pumping events
     // to turn off most of the peripherals and keep the battery charger running.
     while (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED) || pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
-        pbio_do_one_event();
+        pbio_os_run_processes_and_wait_for_event();
     }
 
     // Platform-specific power off.
