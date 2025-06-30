@@ -7,6 +7,7 @@ Hardware Module: 1
 Description: Verifies that the Ultrasonic Sensor does not sense ultrasonic
 interference by default.
 """
+
 from pybricks.pupdevices import UltrasonicSensor
 from pybricks.parameters import Port
 

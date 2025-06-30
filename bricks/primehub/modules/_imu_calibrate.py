@@ -36,21 +36,21 @@ STATIONARY_COUNT = 1000
 
 
 def roll_over_axis(axis, new_side):
-
     global bias, bias_count
 
     print("Roll it towards you, without lifting the hub up!")
 
     angle_start = hub.imu.rotation(axis, calibrated=False)
     while hub.imu.up(calibrated=False) != new_side or not hub.imu.stationary():
-
         _, _, z = hub.imu.orientation() * axis
         if abs(z) > 0.07:
             print(hub.imu.orientation() * axis)
             raise RuntimeError("Lifted it!")
         wait(100)
 
-    uncalibrated_90_deg_rotation = abs(hub.imu.rotation(axis, calibrated=False) - angle_start)
+    uncalibrated_90_deg_rotation = abs(
+        hub.imu.rotation(axis, calibrated=False) - angle_start
+    )
     if abs(uncalibrated_90_deg_rotation - 90) > 10:
         raise RuntimeError("Not 90 deg!")
 

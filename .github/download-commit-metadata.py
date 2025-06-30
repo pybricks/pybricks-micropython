@@ -65,7 +65,9 @@ def main():
     )
     sizes = {
         item["RowKey"]: {
-            k: v.value if isinstance(v, EntityProperty) else v for k, v in item.items() if k in HUBS
+            k: v.value if isinstance(v, EntityProperty) else v
+            for k, v in item.items()
+            if k in HUBS
         }
         for item in firmware_size_table.query_entities(
             "PartitionKey eq 'size'",

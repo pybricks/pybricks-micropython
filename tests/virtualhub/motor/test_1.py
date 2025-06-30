@@ -23,7 +23,6 @@ watch = StopWatch()
 motor.run_target(speed=SPEED, target_angle=TARGET_ANGLE, wait=False)
 
 while not motor.done():
-
     if watch.time() > TIMEOUT:
         raise OSError(ETIMEDOUT)
 

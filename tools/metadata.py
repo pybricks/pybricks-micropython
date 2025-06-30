@@ -83,7 +83,9 @@ def generate(
 
         flash_origin = None  # Starting address of firmware area in flash memory
         flash_firmware_size = None  # Size of flash memory allocated to firmware
-        flash_user_0_size = 0  # Size of flash memory within checksum area allocated to user
+        flash_user_0_size = (
+            0  # Size of flash memory within checksum area allocated to user
+        )
         name_start = None  # Starting address of custom hub name
         name_size = None  # Size reserved for custom hub name
         user_start = None  # Starting address of user .mpy file
@@ -104,7 +106,9 @@ def generate(
                 flash_user_0_size = int(match[2], base=0)
                 continue
 
-            match = re.match(r"^\.name\s+(0x[0-9A-Fa-f]{8,16})\s+(0x[0-9A-Fa-f]+)", line)
+            match = re.match(
+                r"^\.name\s+(0x[0-9A-Fa-f]{8,16})\s+(0x[0-9A-Fa-f]+)", line
+            )
             if match:
                 name_start = int(match[1], base=0)
                 name_size = int(match[2], base=0)
