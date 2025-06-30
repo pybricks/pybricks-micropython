@@ -49,7 +49,7 @@ void pbio_os_request_poll(void) {
 static pbio_os_process_t *process_list = NULL;
 
 /**
- * Placeholder thread that does nothing.
+ * Placeholder thread that does nothing and never completes.
  *
  * @param [in] state The protothread state.
  * @param [in] context The context.
@@ -98,11 +98,26 @@ void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t fu
 void pbio_os_process_init(pbio_os_process_t *process, pbio_os_process_func_t func) {
     process->err = PBIO_ERROR_AGAIN;
     process->state = 0;
+    process->request = PBIO_OS_PROCESS_REQUEST_TYPE_NONE;
     if (func) {
         process->func = func;
     }
 
     // Request a poll to start the process soon, running to its first yield.
+    pbio_os_request_poll();
+}
+
+/**
+ * Makes a request to a process.
+ *
+ * It is like sending a signal to the process. It is up to the process to
+ * respond or ignore it.
+ *
+ * @param process   The process.
+ * @param request   The request to make.
+ */
+void pbio_os_process_make_request(pbio_os_process_t *process, pbio_os_process_request_type_t request) {
+    process->request = request;
     pbio_os_request_poll();
 }
 

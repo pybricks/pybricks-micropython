@@ -84,6 +84,24 @@ typedef pbio_error_t (*pbio_os_process_func_t)(pbio_os_state_t *state, void *con
 typedef struct _pbio_os_process_t pbio_os_process_t;
 
 /**
+ * Requests that can be made to a process.
+ *
+ * The event loop will not enforce any particular response. It is up to the
+ * thread to handle (or ignore) the request and exit with some return code when
+ * it sees fit, not necessarily immediately.
+ */
+typedef enum {
+    /**
+     * No requests.
+     */
+    PBIO_OS_PROCESS_REQUEST_TYPE_NONE = 0,
+    /**
+     * Ask the process to cancel/exit.
+     */
+    PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL = 1 << 1,
+} pbio_os_process_request_type_t;
+
+/**
  * A process.
  */
 struct _pbio_os_process_t {
@@ -107,6 +125,11 @@ struct _pbio_os_process_t {
      * Most recent result of running one iteration of the protothread.
      */
     pbio_error_t err;
+    /**
+     * Request made to the process such as cancellation. It is up to the
+     * thread function to implement how to respond, if at all.
+     */
+    pbio_os_process_request_type_t request;
 };
 
 /**
