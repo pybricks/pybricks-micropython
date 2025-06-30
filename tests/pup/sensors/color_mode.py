@@ -44,4 +44,6 @@ motor.run_target(SPEED, angles["RED"])
 detected = color_sensor.color()
 
 # With the built-in delay, the stale blue value should be gone, now giving red.
-assert detected == Color["RED"], "Expected {0} but got {1}".format(Color["RED"], detected)
+assert detected == Color["RED"], "Expected {0} but got {1}".format(
+    Color["RED"], detected
+)

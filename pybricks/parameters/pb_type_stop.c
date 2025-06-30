@@ -61,7 +61,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_enum_type_Stop,
     MP_QSTR_Stop,
     MP_TYPE_FLAG_NONE,
     print, pb_type_enum_print,
-    unary_op, mp_generic_unary_op,
     locals_dict, &(pb_enum_type_Stop_locals_dict));
 
 #endif // PYBRICKS_PY_PARAMETERS

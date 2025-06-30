@@ -74,17 +74,19 @@ int mp_hal_stdin_rx_chr(void) {
 }
 
 // Send string of given length
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
 
     // Nothing to do if disconnected or empty data
     if (!nx_bt_stream_opened() || len == 0) {
-        return;
+        return len;
     }
 
     nx_bt_stream_write((uint8_t *)str, len);
     while (!nx_bt_stream_data_written()) {
         MICROPY_EVENT_POLL_HOOK;
     }
+
+    return len;
 }
 
 void mp_hal_stdout_tx_flush(void) {

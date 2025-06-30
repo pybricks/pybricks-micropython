@@ -30,8 +30,8 @@ MICROPY_PY_SOCKET = 1
 # ffi module requires libffi (libffi-dev Debian package)
 MICROPY_PY_FFI = 1
 
-# ussl module requires one of the TLS libraries below
-MICROPY_PY_USSL = 0
+# ssl module requires one of the TLS libraries below
+MICROPY_PY_SSL = 0
 # axTLS has minimal size but implements only a subset of modern TLS
 # functionality, so may have problems with some servers.
 MICROPY_SSL_AXTLS = 0
