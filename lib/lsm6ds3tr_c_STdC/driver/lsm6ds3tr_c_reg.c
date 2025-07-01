@@ -23,7 +23,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
+#include <pbio/os.h>
 
 #include "lsm6ds3tr_c_reg.h"
 
@@ -155,20 +155,20 @@ static uint8_t lsm6ds3tr_data_buffer[8];
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fs_xl in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t val))
+pbio_error_t lsm6ds3tr_c_xl_full_scale_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl1_xl->fs_xl = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -177,14 +177,14 @@ PT_THREAD(lsm6ds3tr_c_xl_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of fs_xl in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t *val))
+pbio_error_t lsm6ds3tr_c_xl_full_scale_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t *val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl1_xl->fs_xl) {
         case LSM6DS3TR_C_2g:
@@ -204,7 +204,7 @@ PT_THREAD(lsm6ds3tr_c_xl_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -213,20 +213,20 @@ PT_THREAD(lsm6ds3tr_c_xl_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of odr_xl in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t val))
+pbio_error_t lsm6ds3tr_c_xl_data_rate_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl1_xl->odr_xl = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -235,14 +235,14 @@ PT_THREAD(lsm6ds3tr_c_xl_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of odr_xl in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t *val))
+pbio_error_t lsm6ds3tr_c_xl_data_rate_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t *val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl1_xl->odr_xl) {
         case LSM6DS3TR_C_XL_ODR_OFF:
@@ -286,7 +286,7 @@ PT_THREAD(lsm6ds3tr_c_xl_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -295,20 +295,20 @@ PT_THREAD(lsm6ds3tr_c_xl_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fs_g in reg CTRL2_G
   */
-PT_THREAD(lsm6ds3tr_c_gy_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t val))
+pbio_error_t lsm6ds3tr_c_gy_full_scale_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t val)
 {
     lsm6ds3tr_c_ctrl2_g_t *ctrl2_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL2_G, (uint8_t *)ctrl2_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl2_g->fs_g = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL2_G, (uint8_t *)ctrl2_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -317,14 +317,14 @@ PT_THREAD(lsm6ds3tr_c_gy_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of fs_g in reg CTRL2_G
   */
-PT_THREAD(lsm6ds3tr_c_gy_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t *val))
+pbio_error_t lsm6ds3tr_c_gy_full_scale_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t *val)
 {
     lsm6ds3tr_c_ctrl2_g_t *ctrl2_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL2_G, (uint8_t *)ctrl2_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl2_g->fs_g) {
         case LSM6DS3TR_C_250dps:
@@ -347,7 +347,7 @@ PT_THREAD(lsm6ds3tr_c_gy_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -356,20 +356,20 @@ PT_THREAD(lsm6ds3tr_c_gy_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of odr_g in reg CTRL2_G
   */
-PT_THREAD(lsm6ds3tr_c_gy_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t val))
+pbio_error_t lsm6ds3tr_c_gy_data_rate_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t val)
 {
     lsm6ds3tr_c_ctrl2_g_t *ctrl2_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL2_G, (uint8_t *)ctrl2_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl2_g->odr_g = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL2_G, (uint8_t *)ctrl2_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -378,14 +378,14 @@ PT_THREAD(lsm6ds3tr_c_gy_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of odr_g in reg CTRL2_G
   */
-PT_THREAD(lsm6ds3tr_c_gy_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t *val))
+pbio_error_t lsm6ds3tr_c_gy_data_rate_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t *val)
 {
     lsm6ds3tr_c_ctrl2_g_t *ctrl2_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL2_G, (uint8_t *)ctrl2_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl2_g->odr_g) {
         case LSM6DS3TR_C_GY_ODR_OFF:
@@ -426,7 +426,7 @@ PT_THREAD(lsm6ds3tr_c_gy_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -435,20 +435,20 @@ PT_THREAD(lsm6ds3tr_c_gy_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of bdu in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_block_data_update_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_block_data_update_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->bdu = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -457,18 +457,18 @@ PT_THREAD(lsm6ds3tr_c_block_data_update_set(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of bdu in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_block_data_update_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_block_data_update_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl3_c->bdu;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -478,21 +478,21 @@ PT_THREAD(lsm6ds3tr_c_block_data_update_get(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of usr_off_w in reg CTRL6_C
   */
-PT_THREAD(lsm6ds3tr_c_xl_offset_weight_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_usr_off_w_t val))
+pbio_error_t lsm6ds3tr_c_xl_offset_weight_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_usr_off_w_t val)
 {
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl6_c->usr_off_w = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -502,15 +502,15 @@ PT_THREAD(lsm6ds3tr_c_xl_offset_weight_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of usr_off_w in reg CTRL6_C
   */
-PT_THREAD(lsm6ds3tr_c_xl_offset_weight_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_usr_off_w_t *val))
+pbio_error_t lsm6ds3tr_c_xl_offset_weight_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_usr_off_w_t *val)
 {
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl6_c->usr_off_w) {
         case LSM6DS3TR_C_LSb_1mg:
@@ -524,7 +524,7 @@ PT_THREAD(lsm6ds3tr_c_xl_offset_weight_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -533,21 +533,21 @@ PT_THREAD(lsm6ds3tr_c_xl_offset_weight_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of xl_hm_mode in reg CTRL6_C
   */
-PT_THREAD(lsm6ds3tr_c_xl_power_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_xl_hm_mode_t val))
+pbio_error_t lsm6ds3tr_c_xl_power_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_xl_hm_mode_t val)
 {
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl6_c->xl_hm_mode = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -556,15 +556,15 @@ PT_THREAD(lsm6ds3tr_c_xl_power_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of xl_hm_mode in reg CTRL6_C
   */
-PT_THREAD(lsm6ds3tr_c_xl_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_xl_hm_mode_t *val))
+pbio_error_t lsm6ds3tr_c_xl_power_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_xl_hm_mode_t *val)
 {
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl6_c->xl_hm_mode) {
         case LSM6DS3TR_C_XL_HIGH_PERFORMANCE:
@@ -578,7 +578,7 @@ PT_THREAD(lsm6ds3tr_c_xl_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -589,21 +589,21 @@ PT_THREAD(lsm6ds3tr_c_xl_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of rounding_status in reg CTRL7_G
   */
-PT_THREAD(lsm6ds3tr_c_rounding_on_status_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_rounding_status_t val))
+pbio_error_t lsm6ds3tr_c_rounding_on_status_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_rounding_status_t val)
 {
     lsm6ds3tr_c_ctrl7_g_t *ctrl7_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl7_g->rounding_status = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -614,15 +614,15 @@ PT_THREAD(lsm6ds3tr_c_rounding_on_status_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of rounding_status in reg CTRL7_G
   */
-PT_THREAD(lsm6ds3tr_c_rounding_on_status_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_rounding_status_t *val))
+pbio_error_t lsm6ds3tr_c_rounding_on_status_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_rounding_status_t *val)
 {
     lsm6ds3tr_c_ctrl7_g_t *ctrl7_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl7_g->rounding_status) {
         case LSM6DS3TR_C_STAT_RND_DISABLE:
@@ -636,7 +636,7 @@ PT_THREAD(lsm6ds3tr_c_rounding_on_status_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -645,20 +645,20 @@ PT_THREAD(lsm6ds3tr_c_rounding_on_status_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of g_hm_mode in reg CTRL7_G
   */
-PT_THREAD(lsm6ds3tr_c_gy_power_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_g_hm_mode_t val))
+pbio_error_t lsm6ds3tr_c_gy_power_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_g_hm_mode_t val)
 {
     lsm6ds3tr_c_ctrl7_g_t *ctrl7_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl7_g->g_hm_mode = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -667,14 +667,14 @@ PT_THREAD(lsm6ds3tr_c_gy_power_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of g_hm_mode in reg CTRL7_G
   */
-PT_THREAD(lsm6ds3tr_c_gy_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_g_hm_mode_t *val))
+pbio_error_t lsm6ds3tr_c_gy_power_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_g_hm_mode_t *val)
 {
     lsm6ds3tr_c_ctrl7_g_t *ctrl7_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl7_g->g_hm_mode) {
         case LSM6DS3TR_C_GY_HIGH_PERFORMANCE:
@@ -688,7 +688,7 @@ PT_THREAD(lsm6ds3tr_c_gy_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -698,42 +698,42 @@ PT_THREAD(lsm6ds3tr_c_gy_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  val    WAKE_UP_SRC, TAP_SRC, D6D_SRC, STATUS_REG,
   *                FUNC_SRC1, FUNC_SRC2, WRIST_TILT_IA, A_WRIST_TILT_Mask
   */
-PT_THREAD(lsm6ds3tr_c_all_sources_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_all_sources_t *val))
+pbio_error_t lsm6ds3tr_c_all_sources_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_all_sources_t *val)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_SRC, (uint8_t *)&(val->wake_up_src), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_SRC, (uint8_t *)&(val->tap_src), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_D6D_SRC, (uint8_t *)&(val->d6d_src), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_STATUS_REG, (uint8_t *)&(val->status_reg), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FUNC_SRC1, (uint8_t *)&(val->func_src1), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FUNC_SRC2, (uint8_t *)&(val->func_src2), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WRIST_TILT_IA, (uint8_t *)&(val->wrist_tilt_ia), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_MASK, (uint8_t *)&(val->a_wrist_tilt_mask), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 /**
   * @brief  The STATUS_REG register is read by the primary interface[get]
@@ -741,14 +741,14 @@ PT_THREAD(lsm6ds3tr_c_all_sources_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Registers STATUS_REG
   */
-PT_THREAD(lsm6ds3tr_c_status_reg_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_status_reg_t *val))
+pbio_error_t lsm6ds3tr_c_status_reg_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_status_reg_t *val)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_STATUS_REG, (uint8_t *)val, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -757,17 +757,17 @@ PT_THREAD(lsm6ds3tr_c_status_reg_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of xlda in reg STATUS_REG
   */
-PT_THREAD(lsm6ds3tr_c_xl_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_xl_flag_data_ready_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_status_reg_t *status_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_STATUS_REG, (uint8_t *)status_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
     *val = status_reg->xlda;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -776,17 +776,17 @@ PT_THREAD(lsm6ds3tr_c_xl_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of gda in reg STATUS_REG
   */
-PT_THREAD(lsm6ds3tr_c_gy_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_gy_flag_data_ready_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_status_reg_t *status_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_STATUS_REG, (uint8_t *)status_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
     *val = status_reg->gda;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -795,17 +795,17 @@ PT_THREAD(lsm6ds3tr_c_gy_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tda in reg STATUS_REG
   */
-PT_THREAD(lsm6ds3tr_c_temp_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_temp_flag_data_ready_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_status_reg_t *status_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_STATUS_REG, (uint8_t *)status_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
     *val = status_reg->tda;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -816,14 +816,14 @@ PT_THREAD(lsm6ds3tr_c_temp_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that contains data to write
   */
-PT_THREAD(lsm6ds3tr_c_xl_usr_offset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_xl_usr_offset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_X_OFS_USR, buff, 3);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -834,14 +834,14 @@ PT_THREAD(lsm6ds3tr_c_xl_usr_offset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_xl_usr_offset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_xl_usr_offset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_X_OFS_USR, buff, 3);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -864,23 +864,23 @@ PT_THREAD(lsm6ds3tr_c_xl_usr_offset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of timer_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_timestamp_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_timestamp_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->timer_en = val;
     if (val != 0x00U) {
         ctrl10_c->func_en = val;
         lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-        PT_WAIT_UNTIL(pt, ctx->read_write_done);
+        PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -890,18 +890,18 @@ PT_THREAD(lsm6ds3tr_c_timestamp_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of timer_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_timestamp_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_timestamp_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl10_c->timer_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -915,20 +915,20 @@ PT_THREAD(lsm6ds3tr_c_timestamp_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *v
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of timer_hr in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_timestamp_res_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t val))
+pbio_error_t lsm6ds3tr_c_timestamp_res_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     wake_up_dur->timer_hr = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -942,14 +942,14 @@ PT_THREAD(lsm6ds3tr_c_timestamp_res_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of timer_hr in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_timestamp_res_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t *val))
+pbio_error_t lsm6ds3tr_c_timestamp_res_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t *val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (wake_up_dur->timer_hr) {
         case LSM6DS3TR_C_LSB_6ms4:
@@ -963,7 +963,7 @@ PT_THREAD(lsm6ds3tr_c_timestamp_res_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -985,20 +985,20 @@ PT_THREAD(lsm6ds3tr_c_timestamp_res_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of rounding in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_rounding_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t val))
+pbio_error_t lsm6ds3tr_c_rounding_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl5_c->rounding = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1008,14 +1008,14 @@ PT_THREAD(lsm6ds3tr_c_rounding_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of rounding in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_rounding_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t *val))
+pbio_error_t lsm6ds3tr_c_rounding_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t *val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl5_c->rounding) {
         case LSM6DS3TR_C_ROUND_DISABLE:
@@ -1047,7 +1047,7 @@ PT_THREAD(lsm6ds3tr_c_rounding_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1057,14 +1057,14 @@ PT_THREAD(lsm6ds3tr_c_rounding_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_temperature_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_temperature_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_OUT_TEMP_L, buff, 2);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1074,14 +1074,14 @@ PT_THREAD(lsm6ds3tr_c_temperature_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_angular_rate_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_angular_rate_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_OUTX_L_G, buff, 6);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1091,14 +1091,14 @@ PT_THREAD(lsm6ds3tr_c_angular_rate_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_acceleration_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_acceleration_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_OUTX_L_XL, buff, 6);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1107,14 +1107,14 @@ PT_THREAD(lsm6ds3tr_c_acceleration_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_mag_calibrated_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_mag_calibrated_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_OUT_MAG_RAW_X_L, buff, 6);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1124,15 +1124,14 @@ PT_THREAD(lsm6ds3tr_c_mag_calibrated_raw_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  buffer Data buffer to store FIFO data.
   * @param  len    Number of data to read from FIFO.
   */
-PT_THREAD(lsm6ds3tr_c_fifo_raw_data_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buffer,
-    uint8_t len))
+pbio_error_t lsm6ds3tr_c_fifo_raw_data_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buffer, uint8_t len)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_DATA_OUT_L, buffer, len);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1154,20 +1153,20 @@ PT_THREAD(lsm6ds3tr_c_fifo_raw_data_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of func_cfg_en in reg FUNC_CFG_ACCESS
   */
-PT_THREAD(lsm6ds3tr_c_mem_bank_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t val))
+pbio_error_t lsm6ds3tr_c_mem_bank_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t val)
 {
     lsm6ds3tr_c_func_cfg_access_t *func_cfg_access = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FUNC_CFG_ACCESS, (uint8_t *)func_cfg_access, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     func_cfg_access->func_cfg_en = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FUNC_CFG_ACCESS, (uint8_t *)func_cfg_access, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1177,14 +1176,14 @@ PT_THREAD(lsm6ds3tr_c_mem_bank_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of func_cfg_en in reg FUNC_CFG_ACCESS
   */
-PT_THREAD(lsm6ds3tr_c_mem_bank_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t *val))
+pbio_error_t lsm6ds3tr_c_mem_bank_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t *val)
 {
     lsm6ds3tr_c_func_cfg_access_t *func_cfg_access = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FUNC_CFG_ACCESS,(uint8_t *)func_cfg_access, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (func_cfg_access->func_cfg_en) {
         case LSM6DS3TR_C_USER_BANK:
@@ -1198,7 +1197,7 @@ PT_THREAD(lsm6ds3tr_c_mem_bank_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1207,21 +1206,21 @@ PT_THREAD(lsm6ds3tr_c_mem_bank_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of drdy_pulsed in reg DRDY_PULSE_CFG
   */
-PT_THREAD(lsm6ds3tr_c_data_ready_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_drdy_pulsed_g_t val))
+pbio_error_t lsm6ds3tr_c_data_ready_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_drdy_pulsed_g_t val)
 {
     lsm6ds3tr_c_drdy_pulse_cfg_g_t *drdy_pulse_cfg_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_DRDY_PULSE_CFG_G,(uint8_t *)drdy_pulse_cfg_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     drdy_pulse_cfg_g->drdy_pulsed = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_DRDY_PULSE_CFG_G, (uint8_t *)drdy_pulse_cfg_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1230,15 +1229,15 @@ PT_THREAD(lsm6ds3tr_c_data_ready_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of drdy_pulsed in reg DRDY_PULSE_CFG
   */
-PT_THREAD(lsm6ds3tr_c_data_ready_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_drdy_pulsed_g_t *val))
+pbio_error_t lsm6ds3tr_c_data_ready_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_drdy_pulsed_g_t *val)
 {
     lsm6ds3tr_c_drdy_pulse_cfg_g_t *drdy_pulse_cfg_g = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_DRDY_PULSE_CFG_G, (uint8_t *)drdy_pulse_cfg_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (drdy_pulse_cfg_g->drdy_pulsed) {
         case LSM6DS3TR_C_DRDY_LATCHED:
@@ -1252,7 +1251,7 @@ PT_THREAD(lsm6ds3tr_c_data_ready_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1261,14 +1260,14 @@ PT_THREAD(lsm6ds3tr_c_data_ready_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_device_id_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_device_id_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WHO_AM_I, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1277,20 +1276,20 @@ PT_THREAD(lsm6ds3tr_c_device_id_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *b
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sw_reset in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_reset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_reset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->sw_reset = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1299,18 +1298,18 @@ PT_THREAD(lsm6ds3tr_c_reset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sw_reset in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_reset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_reset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl3_c->sw_reset;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1319,20 +1318,20 @@ PT_THREAD(lsm6ds3tr_c_reset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of ble in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_data_format_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t val))
+pbio_error_t lsm6ds3tr_c_data_format_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->ble = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1341,14 +1340,14 @@ PT_THREAD(lsm6ds3tr_c_data_format_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3t
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of ble in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_data_format_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t *val))
+pbio_error_t lsm6ds3tr_c_data_format_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl3_c->ble) {
         case LSM6DS3TR_C_LSB_AT_LOW_ADD:
@@ -1362,7 +1361,7 @@ PT_THREAD(lsm6ds3tr_c_data_format_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3t
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1372,20 +1371,20 @@ PT_THREAD(lsm6ds3tr_c_data_format_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3t
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of if_inc in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_auto_increment_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_auto_increment_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->if_inc = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1395,18 +1394,18 @@ PT_THREAD(lsm6ds3tr_c_auto_increment_set(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of if_inc in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_auto_increment_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_auto_increment_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl3_c->if_inc;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1415,20 +1414,20 @@ PT_THREAD(lsm6ds3tr_c_auto_increment_get(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of boot in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_boot_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_boot_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->boot = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1437,18 +1436,18 @@ PT_THREAD(lsm6ds3tr_c_boot_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of boot in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_boot_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_boot_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl3_c->boot;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1457,20 +1456,20 @@ PT_THREAD(lsm6ds3tr_c_boot_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of st_xl in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_xl_self_test_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t val))
+pbio_error_t lsm6ds3tr_c_xl_self_test_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl5_c->st_xl = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1479,14 +1478,14 @@ PT_THREAD(lsm6ds3tr_c_xl_self_test_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of st_xl in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_xl_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t *val))
+pbio_error_t lsm6ds3tr_c_xl_self_test_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t *val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl5_c->st_xl) {
         case LSM6DS3TR_C_XL_ST_DISABLE:
@@ -1502,7 +1501,7 @@ PT_THREAD(lsm6ds3tr_c_xl_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             *val = LSM6DS3TR_C_XL_ST_ND;
             break;
     }
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1511,20 +1510,20 @@ PT_THREAD(lsm6ds3tr_c_xl_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of st_g in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_gy_self_test_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t val))
+pbio_error_t lsm6ds3tr_c_gy_self_test_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl5_c->st_g = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1533,14 +1532,14 @@ PT_THREAD(lsm6ds3tr_c_gy_self_test_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of st_g in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_gy_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t *val))
+pbio_error_t lsm6ds3tr_c_gy_self_test_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t *val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl5_c->st_g) {
         case LSM6DS3TR_C_GY_ST_DISABLE:
@@ -1557,7 +1556,7 @@ PT_THREAD(lsm6ds3tr_c_gy_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1580,20 +1579,20 @@ PT_THREAD(lsm6ds3tr_c_gy_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of drdy_mask in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_filter_settling_mask_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_filter_settling_mask_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->drdy_mask = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1603,18 +1602,18 @@ PT_THREAD(lsm6ds3tr_c_filter_settling_mask_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of drdy_mask in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_filter_settling_mask_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_filter_settling_mask_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl4_c->drdy_mask;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1624,21 +1623,21 @@ PT_THREAD(lsm6ds3tr_c_filter_settling_mask_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of slope_fds in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slope_fds_t val))
+pbio_error_t lsm6ds3tr_c_xl_hp_path_internal_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slope_fds_t val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_cfg->slope_fds = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1648,15 +1647,15 @@ PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of slope_fds in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slope_fds_t *val))
+pbio_error_t lsm6ds3tr_c_xl_hp_path_internal_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slope_fds_t *val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (tap_cfg->slope_fds) {
         case LSM6DS3TR_C_USE_SLOPE:
@@ -1670,7 +1669,7 @@ PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1693,20 +1692,20 @@ PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of bw0_xl in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_filter_analog_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_bw0_xl_t val))
+pbio_error_t lsm6ds3tr_c_xl_filter_analog_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_bw0_xl_t val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl1_xl->bw0_xl = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1716,15 +1715,15 @@ PT_THREAD(lsm6ds3tr_c_xl_filter_analog_set(struct pt *pt, stmdev_ctx_t *ctx, lsm
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of bw0_xl in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_filter_analog_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_bw0_xl_t *val))
+pbio_error_t lsm6ds3tr_c_xl_filter_analog_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_bw0_xl_t *val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl1_xl->bw0_xl) {
         case LSM6DS3TR_C_XL_ANA_BW_1k5Hz:
@@ -1738,7 +1737,7 @@ PT_THREAD(lsm6ds3tr_c_xl_filter_analog_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1761,30 +1760,30 @@ PT_THREAD(lsm6ds3tr_c_xl_filter_analog_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of lpf1_bw_sel in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_lpf1_bw_sel_t val))
+pbio_error_t lsm6ds3tr_c_xl_lp1_bandwidth_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_lpf1_bw_sel_t val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl1_xl->lpf1_bw_sel = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl8_xl->lpf2_xl_en = 0;
     ctrl8_xl->hp_slope_xl_en = 0;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1794,22 +1793,22 @@ PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of lpf1_bw_sel in reg CTRL1_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_lpf1_bw_sel_t *val))
+pbio_error_t lsm6ds3tr_c_xl_lp1_bandwidth_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_lpf1_bw_sel_t *val)
 {
     lsm6ds3tr_c_ctrl1_xl_t *ctrl1_xl = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     if ((ctrl8_xl->lpf2_xl_en != 0x00U) || (ctrl8_xl->hp_slope_xl_en != 0x00U)) {
         *val = LSM6DS3TR_C_XL_LP1_NA;
     } else {
         lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL1_XL, (uint8_t *)ctrl1_xl, 1);
-        PT_WAIT_UNTIL(pt, ctx->read_write_done);
+        PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
         switch (ctrl1_xl->lpf1_bw_sel) {
             case LSM6DS3TR_C_XL_LP1_ODR_DIV_2:
@@ -1824,7 +1823,7 @@ PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
         }
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1833,24 +1832,24 @@ PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of input_composite in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_input_composite_t val))
+pbio_error_t lsm6ds3tr_c_xl_lp2_bandwidth_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_input_composite_t val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl8_xl->input_composite = ((uint8_t)val & 0x10U) >> 4;
     ctrl8_xl->hpcf_xl = (uint8_t)val & 0x03U;
     ctrl8_xl->lpf2_xl_en = 1;
     ctrl8_xl->hp_slope_xl_en = 0;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1859,15 +1858,15 @@ PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of input_composite in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_input_composite_t *val))
+pbio_error_t lsm6ds3tr_c_xl_lp2_bandwidth_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_input_composite_t *val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     if ((ctrl8_xl->lpf2_xl_en == 0x00U) || (ctrl8_xl->hp_slope_xl_en != 0x00U)) {
         *val = LSM6DS3TR_C_XL_LP_NA;
@@ -1903,7 +1902,7 @@ PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
         }
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1912,20 +1911,20 @@ PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of hp_ref_mode in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_reference_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_xl_reference_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl8_xl->hp_ref_mode = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1934,18 +1933,18 @@ PT_THREAD(lsm6ds3tr_c_xl_reference_mode_set(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of hp_ref_mode in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_reference_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_xl_reference_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl8_xl->hp_ref_mode;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1954,22 +1953,22 @@ PT_THREAD(lsm6ds3tr_c_xl_reference_mode_get(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of hpcf_xl in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t val))
+pbio_error_t lsm6ds3tr_c_xl_hp_bandwidth_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl8_xl->input_composite = 0;
     ctrl8_xl->hpcf_xl = (uint8_t)val & 0x03U;
     ctrl8_xl->hp_slope_xl_en = 1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -1978,14 +1977,14 @@ PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of hpcf_xl in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t *val))
+pbio_error_t lsm6ds3tr_c_xl_hp_bandwidth_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t *val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     if (ctrl8_xl->hp_slope_xl_en == 0x00U) {
         *val = LSM6DS3TR_C_XL_HP_NA;
@@ -2008,7 +2007,7 @@ PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2030,37 +2029,37 @@ PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6
   * @param  ctx    Read / write interface definitions
   * @param  val    gyroscope filtering chain configuration.
   */
-PT_THREAD(lsm6ds3tr_c_gy_band_pass_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lpf1_sel_g_t val))
+pbio_error_t lsm6ds3tr_c_gy_band_pass_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lpf1_sel_g_t val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[1];
     lsm6ds3tr_c_ctrl7_g_t *ctrl7_g = (void *)&lsm6ds3tr_data_buffer[2];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl7_g->hpm_g = ((uint8_t)val & 0x30U) >> 4;
     ctrl7_g->hp_en_g = ((uint8_t)val & 0x80U) >> 7;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl6_c->ftype = (uint8_t)val & 0x03U;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->lpf1_sel_g = ((uint8_t)val & 0x08U) >> 3;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2069,22 +2068,22 @@ PT_THREAD(lsm6ds3tr_c_gy_band_pass_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    gyroscope filtering chain
   */
-PT_THREAD(lsm6ds3tr_c_gy_band_pass_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lpf1_sel_g_t *val))
+pbio_error_t lsm6ds3tr_c_gy_band_pass_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lpf1_sel_g_t *val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[1];
     lsm6ds3tr_c_ctrl7_g_t *ctrl7_g = (void *)&lsm6ds3tr_data_buffer[2];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL7_G, (uint8_t *)ctrl7_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch ((ctrl7_g->hp_en_g << 7) + (ctrl7_g->hpm_g << 4) +
             (ctrl4_c->lpf1_sel_g << 3) + ctrl6_c->ftype) {
@@ -2129,7 +2128,7 @@ PT_THREAD(lsm6ds3tr_c_gy_band_pass_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2151,20 +2150,20 @@ PT_THREAD(lsm6ds3tr_c_gy_band_pass_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sim in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_spi_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t val))
+pbio_error_t lsm6ds3tr_c_spi_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->sim = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2173,14 +2172,14 @@ PT_THREAD(lsm6ds3tr_c_spi_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of sim in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_spi_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t *val))
+pbio_error_t lsm6ds3tr_c_spi_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl3_c->sim) {
         case LSM6DS3TR_C_SPI_4_WIRE:
@@ -2194,7 +2193,7 @@ PT_THREAD(lsm6ds3tr_c_spi_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2203,21 +2202,21 @@ PT_THREAD(lsm6ds3tr_c_spi_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of i2c_disable in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_i2c_interface_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_i2c_disable_t val))
+pbio_error_t lsm6ds3tr_c_i2c_interface_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_i2c_disable_t val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->i2c_disable = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2226,15 +2225,15 @@ PT_THREAD(lsm6ds3tr_c_i2c_interface_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of i2c_disable in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_i2c_interface_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_i2c_disable_t *val))
+pbio_error_t lsm6ds3tr_c_i2c_interface_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_i2c_disable_t *val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl4_c->i2c_disable) {
         case LSM6DS3TR_C_I2C_ENABLE:
@@ -2248,7 +2247,7 @@ PT_THREAD(lsm6ds3tr_c_i2c_interface_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2271,8 +2270,8 @@ PT_THREAD(lsm6ds3tr_c_i2c_interface_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  val    configure INT1_CTRL, MD1_CFG, CTRL4_C(den_drdy_int1),
   *                MASTER_CONFIG(drdy_on_int1)
   */
-PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int1_route_t val))
+pbio_error_t lsm6ds3tr_c_pin_int1_route_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int1_route_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_int1_ctrl_t *int1_ctrl = (void *)&lsm6ds3tr_data_buffer[1];
@@ -2281,10 +2280,10 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[4];
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[5];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT1_CTRL, (uint8_t *)int1_ctrl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     int1_ctrl->int1_drdy_xl = val.int1_drdy_xl;
     int1_ctrl->int1_drdy_g = val.int1_drdy_g;
@@ -2295,13 +2294,13 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     int1_ctrl->int1_sign_mot = val.int1_sign_mot;
     int1_ctrl->int1_step_detector = val.int1_step_detector;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_INT1_CTRL, (uint8_t *)int1_ctrl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MD1_CFG, (uint8_t *)md1_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MD2_CFG, (uint8_t *)md2_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     md1_cfg->int1_timer = val.int1_timer;
     md1_cfg->int1_tilt = val.int1_tilt;
@@ -2312,24 +2311,24 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     md1_cfg->int1_single_tap = val.int1_single_tap;
     md1_cfg->int1_inact_state = val.int1_inact_state;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MD1_CFG, (uint8_t *)md1_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->den_drdy_int1 = val.den_drdy_int1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->drdy_on_int1 = val.den_drdy_int1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     if ((val.int1_6d != 0x00U) ||
         (val.int1_ff != 0x00U) ||
@@ -2349,9 +2348,9 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     }
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2361,18 +2360,18 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  val    read INT1_CTRL, MD1_CFG, CTRL4_C(den_drdy_int1),
   *                MASTER_CONFIG(drdy_on_int1)
   */
-PT_THREAD(lsm6ds3tr_c_pin_int1_route_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int1_route_t *val))
+pbio_error_t lsm6ds3tr_c_pin_int1_route_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int1_route_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_int1_ctrl_t *int1_ctrl = (void *)&lsm6ds3tr_data_buffer[1];
     lsm6ds3tr_c_md1_cfg_t *md1_cfg = (void *)&lsm6ds3tr_data_buffer[2];
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[3];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT1_CTRL, (uint8_t *)int1_ctrl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->int1_drdy_xl = int1_ctrl->int1_drdy_xl;
     val->int1_drdy_g = int1_ctrl->int1_drdy_g;
@@ -2384,7 +2383,7 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_get(struct pt *pt, stmdev_ctx_t *ctx,
     val->int1_step_detector = int1_ctrl->int1_step_detector;
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MD1_CFG, (uint8_t *)md1_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->int1_timer = md1_cfg->int1_timer;
     val->int1_tilt = md1_cfg->int1_tilt;
@@ -2396,15 +2395,15 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_get(struct pt *pt, stmdev_ctx_t *ctx,
     val->int1_inact_state = md1_cfg->int1_inact_state;
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->den_drdy_int1 = ctrl4_c->den_drdy_int1;
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG,(uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->den_drdy_int1 = master_config->drdy_on_int1;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2413,8 +2412,8 @@ PT_THREAD(lsm6ds3tr_c_pin_int1_route_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    INT2_CTRL, DRDY_PULSE_CFG(int2_wrist_tilt), MD2_CFG
   */
-PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int2_route_t val))
+pbio_error_t lsm6ds3tr_c_pin_int2_route_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int2_route_t val)
 {
     lsm6ds3tr_c_int2_ctrl_t *int2_ctrl = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_md1_cfg_t *md1_cfg = (void *)&lsm6ds3tr_data_buffer[1];
@@ -2422,10 +2421,10 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     lsm6ds3tr_c_drdy_pulse_cfg_g_t *drdy_pulse_cfg_g = (void *)&lsm6ds3tr_data_buffer[3];
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[4];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT2_CTRL, (uint8_t *)int2_ctrl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     int2_ctrl->int2_drdy_xl = val.int2_drdy_xl;
     int2_ctrl->int2_drdy_g = val.int2_drdy_g;
@@ -2436,13 +2435,13 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     int2_ctrl->int2_step_count_ov = val.int2_step_count_ov;
     int2_ctrl->int2_step_delta = val.int2_step_delta;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_INT2_CTRL, (uint8_t *)int2_ctrl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MD1_CFG, (uint8_t *)md1_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MD2_CFG, (uint8_t *)md2_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     md2_cfg->int2_iron = val.int2_iron;
     md2_cfg->int2_tilt = val.int2_tilt;
@@ -2453,17 +2452,17 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     md2_cfg->int2_single_tap = val.int2_single_tap;
     md2_cfg->int2_inact_state = val.int2_inact_state;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MD2_CFG, (uint8_t *)md2_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_DRDY_PULSE_CFG_G, (uint8_t *)drdy_pulse_cfg_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     drdy_pulse_cfg_g->int2_wrist_tilt = val.int2_wrist_tilt;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_DRDY_PULSE_CFG_G, (uint8_t *)drdy_pulse_cfg_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     if ((md1_cfg->int1_6d != 0x00U) ||
         (md1_cfg->int1_ff != 0x00U) ||
@@ -2483,9 +2482,9 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
     }
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2494,17 +2493,17 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    INT2_CTRL, DRDY_PULSE_CFG(int2_wrist_tilt), MD2_CFG
   */
-PT_THREAD(lsm6ds3tr_c_pin_int2_route_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int2_route_t *val))
+pbio_error_t lsm6ds3tr_c_pin_int2_route_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int2_route_t *val)
 {
     lsm6ds3tr_c_int2_ctrl_t *int2_ctrl = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_md2_cfg_t *md2_cfg = (void *)&lsm6ds3tr_data_buffer[1];
     lsm6ds3tr_c_drdy_pulse_cfg_g_t *drdy_pulse_cfg_g = (void *)&lsm6ds3tr_data_buffer[2];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT2_CTRL, (uint8_t *)int2_ctrl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->int2_drdy_xl = int2_ctrl->int2_drdy_xl;
     val->int2_drdy_g = int2_ctrl->int2_drdy_g;
@@ -2516,7 +2515,7 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_get(struct pt *pt, stmdev_ctx_t *ctx,
     val->int2_step_delta = int2_ctrl->int2_step_delta;
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MD2_CFG, (uint8_t *)md2_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->int2_iron = md2_cfg->int2_iron;
     val->int2_tilt = md2_cfg->int2_tilt;
@@ -2528,11 +2527,11 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_get(struct pt *pt, stmdev_ctx_t *ctx,
     val->int2_inact_state = md2_cfg->int2_inact_state;
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_DRDY_PULSE_CFG_G, (uint8_t *)drdy_pulse_cfg_g, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     val->int2_wrist_tilt = drdy_pulse_cfg_g->int2_wrist_tilt;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2541,20 +2540,20 @@ PT_THREAD(lsm6ds3tr_c_pin_int2_route_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pp_od in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_pin_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t val))
+pbio_error_t lsm6ds3tr_c_pin_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->pp_od = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2563,14 +2562,14 @@ PT_THREAD(lsm6ds3tr_c_pin_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of pp_od in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t *val))
+pbio_error_t lsm6ds3tr_c_pin_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl3_c->pp_od) {
         case LSM6DS3TR_C_PUSH_PULL:
@@ -2584,7 +2583,7 @@ PT_THREAD(lsm6ds3tr_c_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2593,20 +2592,20 @@ PT_THREAD(lsm6ds3tr_c_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of h_lactive in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_pin_polarity_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t val))
+pbio_error_t lsm6ds3tr_c_pin_polarity_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl3_c->h_lactive = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2615,14 +2614,14 @@ PT_THREAD(lsm6ds3tr_c_pin_polarity_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of h_lactive in reg CTRL3_C
   */
-PT_THREAD(lsm6ds3tr_c_pin_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t *val))
+pbio_error_t lsm6ds3tr_c_pin_polarity_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t *val)
 {
     lsm6ds3tr_c_ctrl3_c_t *ctrl3_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL3_C, (uint8_t *)ctrl3_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl3_c->h_lactive) {
         case LSM6DS3TR_C_ACTIVE_HIGH:
@@ -2636,7 +2635,7 @@ PT_THREAD(lsm6ds3tr_c_pin_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2645,20 +2644,20 @@ PT_THREAD(lsm6ds3tr_c_pin_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of int2_on_int1 in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_all_on_int1_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_all_on_int1_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->int2_on_int1 = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2667,18 +2666,18 @@ PT_THREAD(lsm6ds3tr_c_all_on_int1_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t 
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of int2_on_int1 in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_all_on_int1_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_all_on_int1_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl4_c->int2_on_int1;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2687,20 +2686,20 @@ PT_THREAD(lsm6ds3tr_c_all_on_int1_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t 
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of lir in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_int_notification_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t val))
+pbio_error_t lsm6ds3tr_c_int_notification_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_cfg->lir = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2709,14 +2708,14 @@ PT_THREAD(lsm6ds3tr_c_int_notification_set(struct pt *pt, stmdev_ctx_t *ctx, lsm
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of lir in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_int_notification_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t *val))
+pbio_error_t lsm6ds3tr_c_int_notification_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t *val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (tap_cfg->lir) {
         case LSM6DS3TR_C_INT_PULSED:
@@ -2730,7 +2729,7 @@ PT_THREAD(lsm6ds3tr_c_int_notification_get(struct pt *pt, stmdev_ctx_t *ctx, lsm
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2752,20 +2751,20 @@ PT_THREAD(lsm6ds3tr_c_int_notification_get(struct pt *pt, stmdev_ctx_t *ctx, lsm
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of wk_ths in reg WAKE_UP_THS
   */
-PT_THREAD(lsm6ds3tr_c_wkup_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_wkup_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_wake_up_ths_t *wake_up_ths = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_THS, (uint8_t *)wake_up_ths, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     wake_up_ths->wk_ths = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_WAKE_UP_THS, (uint8_t *)wake_up_ths, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2774,18 +2773,18 @@ PT_THREAD(lsm6ds3tr_c_wkup_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of wk_ths in reg WAKE_UP_THS
   */
-PT_THREAD(lsm6ds3tr_c_wkup_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_wkup_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_wake_up_ths_t *wake_up_ths = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_THS, (uint8_t *)wake_up_ths, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = wake_up_ths->wk_ths;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2794,20 +2793,20 @@ PT_THREAD(lsm6ds3tr_c_wkup_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of wake_dur in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_wkup_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_wkup_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     wake_up_dur->wake_dur = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2816,18 +2815,18 @@ PT_THREAD(lsm6ds3tr_c_wkup_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of wake_dur in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_wkup_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_wkup_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = wake_up_dur->wake_dur;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2849,20 +2848,20 @@ PT_THREAD(lsm6ds3tr_c_wkup_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sleep in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_gy_sleep_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_gy_sleep_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->sleep = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2871,18 +2870,18 @@ PT_THREAD(lsm6ds3tr_c_gy_sleep_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sleep in reg CTRL4_C
   */
-PT_THREAD(lsm6ds3tr_c_gy_sleep_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_gy_sleep_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl4_c->sleep;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2891,20 +2890,20 @@ PT_THREAD(lsm6ds3tr_c_gy_sleep_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of inact_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_act_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t val))
+pbio_error_t lsm6ds3tr_c_act_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_cfg->inact_en = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2913,14 +2912,14 @@ PT_THREAD(lsm6ds3tr_c_act_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of inact_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_act_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t *val))
+pbio_error_t lsm6ds3tr_c_act_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t *val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (tap_cfg->inact_en) {
         case LSM6DS3TR_C_PROPERTY_DISABLE:
@@ -2940,7 +2939,7 @@ PT_THREAD(lsm6ds3tr_c_act_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2949,20 +2948,20 @@ PT_THREAD(lsm6ds3tr_c_act_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sleep_dur in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_act_sleep_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_act_sleep_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     wake_up_dur->sleep_dur = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -2971,18 +2970,18 @@ PT_THREAD(lsm6ds3tr_c_act_sleep_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sleep_dur in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_act_sleep_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_act_sleep_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = wake_up_dur->sleep_dur;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3004,14 +3003,14 @@ PT_THREAD(lsm6ds3tr_c_act_sleep_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Structure of registers from TAP_SRC
   */
-PT_THREAD(lsm6ds3tr_c_tap_src_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_tap_src_t *val))
+pbio_error_t lsm6ds3tr_c_tap_src_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_tap_src_t *val)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_SRC, (uint8_t *)val, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3021,20 +3020,20 @@ PT_THREAD(lsm6ds3tr_c_tap_src_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_
   * @param  val    Change the values of tap_z_en in reg TAP_CFG
   *
   */
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_z_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_detection_on_z_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_cfg->tap_z_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3043,18 +3042,18 @@ PT_THREAD(lsm6ds3tr_c_tap_detection_on_z_set(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_z_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_z_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_detection_on_z_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = tap_cfg->tap_z_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3063,20 +3062,20 @@ PT_THREAD(lsm6ds3tr_c_tap_detection_on_z_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_y_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_y_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_detection_on_y_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_cfg->tap_y_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3085,18 +3084,18 @@ PT_THREAD(lsm6ds3tr_c_tap_detection_on_y_set(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_y_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_y_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_detection_on_y_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = tap_cfg->tap_y_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3105,20 +3104,20 @@ PT_THREAD(lsm6ds3tr_c_tap_detection_on_y_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_x_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_detection_on_x_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_cfg->tap_x_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3127,18 +3126,18 @@ PT_THREAD(lsm6ds3tr_c_tap_detection_on_x_set(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_x_en in reg TAP_CFG
   */
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_detection_on_x_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_tap_cfg_t *tap_cfg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_CFG, (uint8_t *)tap_cfg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = tap_cfg->tap_x_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3147,20 +3146,20 @@ PT_THREAD(lsm6ds3tr_c_tap_detection_on_x_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_ths in reg TAP_THS_6D
   */
-PT_THREAD(lsm6ds3tr_c_tap_threshold_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_threshold_x_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_tap_ths_6d_t *tap_ths_6d = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_ths_6d->tap_ths = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3169,18 +3168,18 @@ PT_THREAD(lsm6ds3tr_c_tap_threshold_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tap_ths in reg TAP_THS_6D
   */
-PT_THREAD(lsm6ds3tr_c_tap_threshold_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_threshold_x_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_tap_ths_6d_t *tap_ths_6d = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = tap_ths_6d->tap_ths;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3194,20 +3193,20 @@ PT_THREAD(lsm6ds3tr_c_tap_threshold_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of shock in reg INT_DUR2
   */
-PT_THREAD(lsm6ds3tr_c_tap_shock_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_shock_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_int_dur2_t *int_dur2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     int_dur2->shock = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3221,18 +3220,18 @@ PT_THREAD(lsm6ds3tr_c_tap_shock_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of shock in reg INT_DUR2
   */
-PT_THREAD(lsm6ds3tr_c_tap_shock_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_shock_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_int_dur2_t *int_dur2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = int_dur2->shock;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3246,20 +3245,20 @@ PT_THREAD(lsm6ds3tr_c_tap_shock_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *v
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of quiet in reg INT_DUR2
   */
-PT_THREAD(lsm6ds3tr_c_tap_quiet_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_quiet_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_int_dur2_t *int_dur2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     int_dur2->quiet = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3273,18 +3272,18 @@ PT_THREAD(lsm6ds3tr_c_tap_quiet_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of quiet in reg INT_DUR2
   */
-PT_THREAD(lsm6ds3tr_c_tap_quiet_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_quiet_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_int_dur2_t *int_dur2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = int_dur2->quiet;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3299,20 +3298,20 @@ PT_THREAD(lsm6ds3tr_c_tap_quiet_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *v
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of dur in reg INT_DUR2
   */
-PT_THREAD(lsm6ds3tr_c_tap_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tap_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_int_dur2_t *int_dur2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     int_dur2->dur = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3327,18 +3326,18 @@ PT_THREAD(lsm6ds3tr_c_tap_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val)
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of dur in reg INT_DUR2
   */
-PT_THREAD(lsm6ds3tr_c_tap_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tap_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_int_dur2_t *int_dur2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_INT_DUR2, (uint8_t *)int_dur2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = int_dur2->dur;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3348,21 +3347,21 @@ PT_THREAD(lsm6ds3tr_c_tap_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val
   * @param  val    Change the values of
   *                                      single_double_tap in reg WAKE_UP_THS
   */
-PT_THREAD(lsm6ds3tr_c_tap_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_single_double_tap_t val))
+pbio_error_t lsm6ds3tr_c_tap_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_single_double_tap_t val)
 {
     lsm6ds3tr_c_wake_up_ths_t *wake_up_ths = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_THS, (uint8_t *)wake_up_ths, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     wake_up_ths->single_double_tap = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_WAKE_UP_THS, (uint8_t *)wake_up_ths, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3372,15 +3371,15 @@ PT_THREAD(lsm6ds3tr_c_tap_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  val    Get the values of single_double_tap
   *                                      in reg WAKE_UP_THS
   */
-PT_THREAD(lsm6ds3tr_c_tap_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_single_double_tap_t *val))
+pbio_error_t lsm6ds3tr_c_tap_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_single_double_tap_t *val)
 {
     lsm6ds3tr_c_wake_up_ths_t *wake_up_ths = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_THS, (uint8_t *)wake_up_ths, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (wake_up_ths->single_double_tap) {
         case LSM6DS3TR_C_ONLY_SINGLE:
@@ -3394,7 +3393,7 @@ PT_THREAD(lsm6ds3tr_c_tap_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3417,21 +3416,21 @@ PT_THREAD(lsm6ds3tr_c_tap_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  val    Change the values of low_pass_on_6d in
   *                                   reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_6d_feed_data_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_low_pass_on_6d_t val))
+pbio_error_t lsm6ds3tr_c_6d_feed_data_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_low_pass_on_6d_t val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl8_xl->low_pass_on_6d = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3440,15 +3439,15 @@ PT_THREAD(lsm6ds3tr_c_6d_feed_data_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of low_pass_on_6d in reg CTRL8_XL
   */
-PT_THREAD(lsm6ds3tr_c_6d_feed_data_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_low_pass_on_6d_t *val))
+pbio_error_t lsm6ds3tr_c_6d_feed_data_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_low_pass_on_6d_t *val)
 {
     lsm6ds3tr_c_ctrl8_xl_t *ctrl8_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL8_XL, (uint8_t *)ctrl8_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl8_xl->low_pass_on_6d) {
         case LSM6DS3TR_C_ODR_DIV_2_FEED:
@@ -3462,7 +3461,7 @@ PT_THREAD(lsm6ds3tr_c_6d_feed_data_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3471,20 +3470,20 @@ PT_THREAD(lsm6ds3tr_c_6d_feed_data_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sixd_ths in reg TAP_THS_6D
   */
-PT_THREAD(lsm6ds3tr_c_6d_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t val))
+pbio_error_t lsm6ds3tr_c_6d_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t val)
 {
     lsm6ds3tr_c_tap_ths_6d_t *tap_ths_6d = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_ths_6d->sixd_ths = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3493,14 +3492,14 @@ PT_THREAD(lsm6ds3tr_c_6d_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of sixd_ths in reg TAP_THS_6D
   */
-PT_THREAD(lsm6ds3tr_c_6d_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t *val))
+pbio_error_t lsm6ds3tr_c_6d_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t *val)
 {
     lsm6ds3tr_c_tap_ths_6d_t *tap_ths_6d = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (tap_ths_6d->sixd_ths) {
         case LSM6DS3TR_C_DEG_80:
@@ -3520,7 +3519,7 @@ PT_THREAD(lsm6ds3tr_c_6d_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3529,20 +3528,20 @@ PT_THREAD(lsm6ds3tr_c_6d_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of d4d_en in reg TAP_THS_6D
   */
-PT_THREAD(lsm6ds3tr_c_4d_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_4d_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_tap_ths_6d_t *tap_ths_6d = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     tap_ths_6d->d4d_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3551,18 +3550,18 @@ PT_THREAD(lsm6ds3tr_c_4d_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val)
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of d4d_en in reg TAP_THS_6D
   */
-PT_THREAD(lsm6ds3tr_c_4d_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_4d_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_tap_ths_6d_t *tap_ths_6d = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_TAP_THS_6D, (uint8_t *)tap_ths_6d, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = tap_ths_6d->d4d_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3584,28 +3583,28 @@ PT_THREAD(lsm6ds3tr_c_4d_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of ff_dur in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_ff_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_ff_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_free_fall_t *free_fall = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FREE_FALL, (uint8_t *)free_fall, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     free_fall->ff_dur = (val & 0x1FU);
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FREE_FALL, (uint8_t *)free_fall, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     wake_up_dur->ff_dur = (val & 0x20U) >> 5;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3614,22 +3613,22 @@ PT_THREAD(lsm6ds3tr_c_ff_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of ff_dur in reg WAKE_UP_DUR
   */
-PT_THREAD(lsm6ds3tr_c_ff_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_ff_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_wake_up_dur_t *wake_up_dur = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_free_fall_t *free_fall = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_WAKE_UP_DUR, (uint8_t *)wake_up_dur, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FREE_FALL, (uint8_t *)free_fall, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = (wake_up_dur->ff_dur << 5) + free_fall->ff_dur;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3638,20 +3637,20 @@ PT_THREAD(lsm6ds3tr_c_ff_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val)
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of ff_ths in reg FREE_FALL
   */
-PT_THREAD(lsm6ds3tr_c_ff_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t val))
+pbio_error_t lsm6ds3tr_c_ff_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t val)
 {
     lsm6ds3tr_c_free_fall_t *free_fall = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FREE_FALL, (uint8_t *)free_fall, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     free_fall->ff_ths = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FREE_FALL, (uint8_t *)free_fall, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3660,14 +3659,14 @@ PT_THREAD(lsm6ds3tr_c_ff_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of ff_ths in reg FREE_FALL
   */
-PT_THREAD(lsm6ds3tr_c_ff_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t *val))
+pbio_error_t lsm6ds3tr_c_ff_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t *val)
 {
     lsm6ds3tr_c_free_fall_t *free_fall = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FREE_FALL, (uint8_t *)free_fall, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (free_fall->ff_ths) {
         case LSM6DS3TR_C_FF_TSH_156mg:
@@ -3699,7 +3698,7 @@ PT_THREAD(lsm6ds3tr_c_ff_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3721,25 +3720,25 @@ PT_THREAD(lsm6ds3tr_c_ff_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fth in reg FIFO_CTRL1
   */
-PT_THREAD(lsm6ds3tr_c_fifo_watermark_set(struct pt *pt, stmdev_ctx_t *ctx, uint16_t val))
+pbio_error_t lsm6ds3tr_c_fifo_watermark_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t val)
 {
     lsm6ds3tr_c_fifo_ctrl1_t *fifo_ctrl1 = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl1->fth = (uint8_t)(0x00FFU & val);
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL1, (uint8_t *)fifo_ctrl1, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl2->fth = (uint8_t)((0x0700U & val) >> 8);
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3748,22 +3747,22 @@ PT_THREAD(lsm6ds3tr_c_fifo_watermark_set(struct pt *pt, stmdev_ctx_t *ctx, uint1
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fth in reg FIFO_CTRL1
   */
-PT_THREAD(lsm6ds3tr_c_fifo_watermark_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_watermark_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl1_t *fifo_ctrl1 = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL1, (uint8_t *)fifo_ctrl1, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ((uint16_t)fifo_ctrl2->fth << 8) + (uint16_t)fifo_ctrl1->fth;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3774,23 +3773,23 @@ PT_THREAD(lsm6ds3tr_c_fifo_watermark_get(struct pt *pt, stmdev_ctx_t *ctx, uint1
   *                FIFO_STATUS2(diff_fifo), it is recommended to set the
   *                BDU bit.
   */
-PT_THREAD(lsm6ds3tr_c_fifo_data_level_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_data_level_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t *val)
 {
     lsm6ds3tr_c_fifo_status1_t *fifo_status1 = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_fifo_status2_t *fifo_status2 = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_STATUS1, (uint8_t *)fifo_status1, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_STATUS2, (uint8_t *)fifo_status2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ((uint16_t)fifo_status2->diff_fifo << 8) +
         (uint16_t)fifo_status1->diff_fifo;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3799,18 +3798,18 @@ PT_THREAD(lsm6ds3tr_c_fifo_data_level_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    get the values of watermark in reg  FIFO_STATUS2 and
   */
-PT_THREAD(lsm6ds3tr_c_fifo_wtm_flag_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_wtm_flag_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_fifo_status2_t *fifo_status2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_STATUS2, (uint8_t *)fifo_status2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = fifo_status2->waterm;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3820,23 +3819,23 @@ PT_THREAD(lsm6ds3tr_c_fifo_wtm_flag_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  val    get the values of fifo_pattern in reg  FIFO_STATUS3 and
   *                FIFO_STATUS4, it is recommended to set the BDU bit
   */
-PT_THREAD(lsm6ds3tr_c_fifo_pattern_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_pattern_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t *val)
 {
     lsm6ds3tr_c_fifo_status3_t *fifo_status3 = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_fifo_status4_t *fifo_status4 = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_STATUS3, (uint8_t *)fifo_status3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_STATUS4, (uint8_t *)fifo_status4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ((uint16_t)fifo_status4->fifo_pattern << 8) +
         fifo_status3->fifo_pattern;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3845,21 +3844,21 @@ PT_THREAD(lsm6ds3tr_c_fifo_pattern_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fifo_temp_en in reg FIFO_CTRL2
   */
-PT_THREAD(lsm6ds3tr_c_fifo_temp_batch_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_fifo_temp_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl2->fifo_temp_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3868,18 +3867,18 @@ PT_THREAD(lsm6ds3tr_c_fifo_temp_batch_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fifo_temp_en in reg FIFO_CTRL2
   */
-PT_THREAD(lsm6ds3tr_c_fifo_temp_batch_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_temp_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = fifo_ctrl2->fifo_temp_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3889,30 +3888,30 @@ PT_THREAD(lsm6ds3tr_c_fifo_temp_batch_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  val    act on FIFO_CTRL2(timer_pedo_fifo_drdy)
   *                and MASTER_CONFIG(data_valid_sel_fifo)
   */
-PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_trigger_fifo_t val))
+pbio_error_t lsm6ds3tr_c_fifo_write_trigger_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_trigger_fifo_t val)
 {
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl2->timer_pedo_fifo_drdy = (uint8_t)val & 0x01U;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->data_valid_sel_fifo = (((uint8_t)val & 0x02U) >> 1);
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3922,19 +3921,19 @@ PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  val    act on FIFO_CTRL2(timer_pedo_fifo_drdy)
   *                and MASTER_CONFIG(data_valid_sel_fifo)
   */
-PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_trigger_fifo_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_write_trigger_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_trigger_fifo_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
 
     switch ((fifo_ctrl2->timer_pedo_fifo_drdy << 1) +
@@ -3953,7 +3952,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3963,21 +3962,21 @@ PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of timer_pedo_fifo_en in reg FIFO_CTRL2
   */
-PT_THREAD(lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    uint8_t val))
+pbio_error_t lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    uint8_t val)
 {
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl2->timer_pedo_fifo_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -3987,19 +3986,19 @@ PT_THREAD(lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_set(struct pt *pt, stmdev_ct
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of timer_pedo_fifo_en in reg FIFO_CTRL2
   */
-PT_THREAD(lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    uint8_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    uint8_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl2_t *fifo_ctrl2 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL2, (uint8_t *)fifo_ctrl2, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = fifo_ctrl2->timer_pedo_fifo_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4009,21 +4008,21 @@ PT_THREAD(lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_get(struct pt *pt, stmdev_ct
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of dec_fifo_xl in reg FIFO_CTRL3
   */
-PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_xl_t val))
+pbio_error_t lsm6ds3tr_c_fifo_xl_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_xl_t val)
 {
     lsm6ds3tr_c_fifo_ctrl3_t *fifo_ctrl3 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL3, (uint8_t *)fifo_ctrl3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl3->dec_fifo_xl = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL3, (uint8_t *)fifo_ctrl3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4033,15 +4032,15 @@ PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of dec_fifo_xl in reg FIFO_CTRL3
   */
-PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_xl_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_xl_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_xl_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl3_t *fifo_ctrl3 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL3, (uint8_t *)fifo_ctrl3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (fifo_ctrl3->dec_fifo_xl) {
         case LSM6DS3TR_C_FIFO_XL_DISABLE:
@@ -4073,7 +4072,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4083,21 +4082,21 @@ PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of dec_fifo_gyro in reg FIFO_CTRL3
   */
-PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_gyro_t val))
+pbio_error_t lsm6ds3tr_c_fifo_gy_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_gyro_t val)
 {
     lsm6ds3tr_c_fifo_ctrl3_t *fifo_ctrl3 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL3, (uint8_t *)fifo_ctrl3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl3->dec_fifo_gyro = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL3, (uint8_t *)fifo_ctrl3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4107,15 +4106,15 @@ PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of dec_fifo_gyro in reg FIFO_CTRL3
   */
-PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_gyro_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_gy_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_gyro_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl3_t *fifo_ctrl3 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL3, (uint8_t *)fifo_ctrl3, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (fifo_ctrl3->dec_fifo_gyro) {
         case LSM6DS3TR_C_FIFO_GY_DISABLE:
@@ -4147,7 +4146,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4157,21 +4156,21 @@ PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of dec_ds3_fifo in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds3_fifo_t val))
+pbio_error_t lsm6ds3tr_c_fifo_dataset_3_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds3_fifo_t val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl4->dec_ds3_fifo = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4181,15 +4180,15 @@ PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of dec_ds3_fifo in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds3_fifo_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_dataset_3_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds3_fifo_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (fifo_ctrl4->dec_ds3_fifo) {
         case LSM6DS3TR_C_FIFO_DS3_DISABLE:
@@ -4221,7 +4220,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4231,21 +4230,21 @@ PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of dec_ds4_fifo in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds4_fifo_t val))
+pbio_error_t lsm6ds3tr_c_fifo_dataset_4_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds4_fifo_t val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl4->dec_ds4_fifo = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4255,15 +4254,15 @@ PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of dec_ds4_fifo in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds4_fifo_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_dataset_4_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds4_fifo_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (fifo_ctrl4->dec_ds4_fifo) {
         case LSM6DS3TR_C_FIFO_DS4_DISABLE:
@@ -4295,7 +4294,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4304,20 +4303,20 @@ PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of only_high_data in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_xl_gy_8bit_format_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_fifo_xl_gy_8bit_format_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl4->only_high_data = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4326,18 +4325,18 @@ PT_THREAD(lsm6ds3tr_c_fifo_xl_gy_8bit_format_set(struct pt *pt, stmdev_ctx_t *ct
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of only_high_data in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_xl_gy_8bit_format_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_xl_gy_8bit_format_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = fifo_ctrl4->only_high_data;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4347,20 +4346,20 @@ PT_THREAD(lsm6ds3tr_c_fifo_xl_gy_8bit_format_get(struct pt *pt, stmdev_ctx_t *ct
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of stop_on_fth in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_stop_on_wtm_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_fifo_stop_on_wtm_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl4->stop_on_fth = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4370,18 +4369,18 @@ PT_THREAD(lsm6ds3tr_c_fifo_stop_on_wtm_set(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of stop_on_fth in reg FIFO_CTRL4
   */
-PT_THREAD(lsm6ds3tr_c_fifo_stop_on_wtm_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_stop_on_wtm_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl4_t *fifo_ctrl4 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL4, (uint8_t *)fifo_ctrl4, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = fifo_ctrl4->stop_on_fth;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4390,20 +4389,20 @@ PT_THREAD(lsm6ds3tr_c_fifo_stop_on_wtm_get(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of fifo_mode in reg FIFO_CTRL5
   */
-PT_THREAD(lsm6ds3tr_c_fifo_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t val))
+pbio_error_t lsm6ds3tr_c_fifo_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t val)
 {
     lsm6ds3tr_c_fifo_ctrl5_t *fifo_ctrl5 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL5, (uint8_t *)fifo_ctrl5, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl5->fifo_mode = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL5, (uint8_t *)fifo_ctrl5, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4412,14 +4411,14 @@ PT_THREAD(lsm6ds3tr_c_fifo_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of fifo_mode in reg FIFO_CTRL5
   */
-PT_THREAD(lsm6ds3tr_c_fifo_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl5_t *fifo_ctrl5 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL5, (uint8_t *)fifo_ctrl5, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (fifo_ctrl5->fifo_mode) {
         case LSM6DS3TR_C_BYPASS_MODE:
@@ -4442,7 +4441,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4451,20 +4450,20 @@ PT_THREAD(lsm6ds3tr_c_fifo_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of odr_fifo in reg FIFO_CTRL5
   */
-PT_THREAD(lsm6ds3tr_c_fifo_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_fifo_t val))
+pbio_error_t lsm6ds3tr_c_fifo_data_rate_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_fifo_t val)
 {
     lsm6ds3tr_c_fifo_ctrl5_t *fifo_ctrl5 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL5, (uint8_t *)fifo_ctrl5, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     fifo_ctrl5->odr_fifo = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_FIFO_CTRL5, (uint8_t *)fifo_ctrl5, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4473,14 +4472,14 @@ PT_THREAD(lsm6ds3tr_c_fifo_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6d
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of odr_fifo in reg FIFO_CTRL5
   */
-PT_THREAD(lsm6ds3tr_c_fifo_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_fifo_t *val))
+pbio_error_t lsm6ds3tr_c_fifo_data_rate_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_fifo_t *val)
 {
     lsm6ds3tr_c_fifo_ctrl5_t *fifo_ctrl5 = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_FIFO_CTRL5, (uint8_t *)fifo_ctrl5, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (fifo_ctrl5->odr_fifo) {
         case LSM6DS3TR_C_FIFO_DISABLE:
@@ -4521,7 +4520,7 @@ PT_THREAD(lsm6ds3tr_c_fifo_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6d
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4543,20 +4542,20 @@ PT_THREAD(lsm6ds3tr_c_fifo_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6d
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_lh in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_den_polarity_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t val))
+pbio_error_t lsm6ds3tr_c_den_polarity_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl5_c->den_lh = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4565,14 +4564,14 @@ PT_THREAD(lsm6ds3tr_c_den_polarity_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of den_lh in reg CTRL5_C
   */
-PT_THREAD(lsm6ds3tr_c_den_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t *val))
+pbio_error_t lsm6ds3tr_c_den_polarity_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t *val)
 {
     lsm6ds3tr_c_ctrl5_c_t *ctrl5_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL5_C, (uint8_t *)ctrl5_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl5_c->den_lh) {
         case LSM6DS3TR_C_DEN_ACT_LOW:
@@ -4586,7 +4585,7 @@ PT_THREAD(lsm6ds3tr_c_den_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4595,20 +4594,20 @@ PT_THREAD(lsm6ds3tr_c_den_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_mode in reg CTRL6_C
   */
-PT_THREAD(lsm6ds3tr_c_den_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t val))
+pbio_error_t lsm6ds3tr_c_den_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t val)
 {
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl6_c->den_mode = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4617,14 +4616,14 @@ PT_THREAD(lsm6ds3tr_c_den_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_mode in reg CTRL6_C
   */
-PT_THREAD(lsm6ds3tr_c_den_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t *val))
+pbio_error_t lsm6ds3tr_c_den_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t *val)
 {
     lsm6ds3tr_c_ctrl6_c_t *ctrl6_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL6_C, (uint8_t *)ctrl6_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (ctrl6_c->den_mode) {
         case LSM6DS3TR_C_DEN_DISABLE:
@@ -4644,7 +4643,7 @@ PT_THREAD(lsm6ds3tr_c_den_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4654,28 +4653,28 @@ PT_THREAD(lsm6ds3tr_c_den_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   * @param  val    Change the values of den_xl_g in reg CTRL9_XL
   *                             and den_xl_en in CTRL4_C.
   */
-PT_THREAD(lsm6ds3tr_c_den_enable_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t val))
+pbio_error_t lsm6ds3tr_c_den_enable_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl9_xl->den_xl_g = (uint8_t)val & 0x01U;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl4_c->den_xl_en = (uint8_t)val & 0x02U;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4685,18 +4684,18 @@ PT_THREAD(lsm6ds3tr_c_den_enable_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr
   * @param  val    Get the values of den_xl_g in reg CTRL9_XL
   *                             and den_xl_en in CTRL4_C.
   */
-PT_THREAD(lsm6ds3tr_c_den_enable_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t *val))
+pbio_error_t lsm6ds3tr_c_den_enable_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t *val)
 {
     lsm6ds3tr_c_ctrl4_c_t *ctrl4_c = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL4_C, (uint8_t *)ctrl4_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch ((ctrl4_c->den_xl_en << 1) + ctrl9_xl->den_xl_g) {
         case LSM6DS3TR_C_STAMP_IN_GY_DATA:
@@ -4713,7 +4712,7 @@ PT_THREAD(lsm6ds3tr_c_den_enable_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4722,20 +4721,20 @@ PT_THREAD(lsm6ds3tr_c_den_enable_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_z in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_z_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_den_mark_axis_z_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl9_xl->den_z = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4744,18 +4743,18 @@ PT_THREAD(lsm6ds3tr_c_den_mark_axis_z_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_z in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_z_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_den_mark_axis_z_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl9_xl->den_z;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4764,20 +4763,20 @@ PT_THREAD(lsm6ds3tr_c_den_mark_axis_z_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_y in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_y_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_den_mark_axis_y_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl9_xl->den_y = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4786,18 +4785,18 @@ PT_THREAD(lsm6ds3tr_c_den_mark_axis_y_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_y in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_y_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_den_mark_axis_y_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl9_xl->den_y;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4806,20 +4805,20 @@ PT_THREAD(lsm6ds3tr_c_den_mark_axis_y_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_x in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_den_mark_axis_x_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl9_xl->den_x = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4828,18 +4827,18 @@ PT_THREAD(lsm6ds3tr_c_den_mark_axis_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of den_x in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_den_mark_axis_x_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl9_xl->den_x;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4860,20 +4859,20 @@ PT_THREAD(lsm6ds3tr_c_den_mark_axis_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pedo_rst_step in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_pedo_step_reset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_pedo_step_reset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->pedo_rst_step = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4882,18 +4881,18 @@ PT_THREAD(lsm6ds3tr_c_pedo_step_reset_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pedo_rst_step in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_pedo_step_reset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_pedo_step_reset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl10_c->pedo_rst_step;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4902,24 +4901,24 @@ PT_THREAD(lsm6ds3tr_c_pedo_step_reset_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pedo_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_pedo_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_pedo_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->pedo_en = val;
     if (val != 0x00U) {
         ctrl10_c->func_en = val;
     }
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4928,18 +4927,18 @@ PT_THREAD(lsm6ds3tr_c_pedo_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pedo_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_pedo_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_pedo_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl10_c->pedo_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4949,26 +4948,26 @@ PT_THREAD(lsm6ds3tr_c_pedo_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *v
   * @param  val    Change the values of ths_min in reg
   *                      CONFIG_PEDO_THS_MIN
   */
-PT_THREAD(lsm6ds3tr_c_pedo_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_pedo_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_config_pedo_ths_min_t *config_pedo_ths_min = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CONFIG_PEDO_THS_MIN, (uint8_t *)config_pedo_ths_min, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     config_pedo_ths_min->ths_min = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CONFIG_PEDO_THS_MIN, (uint8_t *)config_pedo_ths_min, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -4977,23 +4976,23 @@ PT_THREAD(lsm6ds3tr_c_pedo_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of ths_min in reg  CONFIG_PEDO_THS_MIN
   */
-PT_THREAD(lsm6ds3tr_c_pedo_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_pedo_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_config_pedo_ths_min_t *config_pedo_ths_min = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CONFIG_PEDO_THS_MIN, (uint8_t *)config_pedo_ths_min, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = config_pedo_ths_min->ths_min;
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5003,26 +5002,26 @@ PT_THREAD(lsm6ds3tr_c_pedo_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  val    Change the values of pedo_fs in
   *                            reg CONFIG_PEDO_THS_MIN
   */
-PT_THREAD(lsm6ds3tr_c_pedo_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pedo_fs_t val))
+pbio_error_t lsm6ds3tr_c_pedo_full_scale_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pedo_fs_t val)
 {
     lsm6ds3tr_c_config_pedo_ths_min_t *config_pedo_ths_min = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CONFIG_PEDO_THS_MIN, (uint8_t *)config_pedo_ths_min, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     config_pedo_ths_min->pedo_fs = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CONFIG_PEDO_THS_MIN, (uint8_t *)config_pedo_ths_min, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5032,18 +5031,18 @@ PT_THREAD(lsm6ds3tr_c_pedo_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6
   * @param  val    Get the values of pedo_fs in
   *                            reg CONFIG_PEDO_THS_MIN
   */
-PT_THREAD(lsm6ds3tr_c_pedo_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pedo_fs_t *val))
+pbio_error_t lsm6ds3tr_c_pedo_full_scale_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pedo_fs_t *val)
 {
     lsm6ds3tr_c_config_pedo_ths_min_t *config_pedo_ths_min = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CONFIG_PEDO_THS_MIN, (uint8_t *)config_pedo_ths_min, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (config_pedo_ths_min->pedo_fs) {
         case LSM6DS3TR_C_PEDO_AT_2g:
@@ -5056,9 +5055,9 @@ PT_THREAD(lsm6ds3tr_c_pedo_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6
             *val = LSM6DS3TR_C_PEDO_FS_ND;
             break;
     }
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5067,26 +5066,26 @@ PT_THREAD(lsm6ds3tr_c_pedo_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of deb_step in reg PEDO_DEB_REG
   */
-PT_THREAD(lsm6ds3tr_c_pedo_debounce_steps_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_pedo_debounce_steps_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_pedo_deb_reg_t *pedo_deb_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_PEDO_DEB_REG, (uint8_t *)pedo_deb_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     pedo_deb_reg->deb_step = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_PEDO_DEB_REG, (uint8_t *)pedo_deb_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5095,23 +5094,23 @@ PT_THREAD(lsm6ds3tr_c_pedo_debounce_steps_set(struct pt *pt, stmdev_ctx_t *ctx, 
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of deb_step in reg PEDO_DEB_REG
   */
-PT_THREAD(lsm6ds3tr_c_pedo_debounce_steps_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_pedo_debounce_steps_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_pedo_deb_reg_t *pedo_deb_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_PEDO_DEB_REG, (uint8_t *)pedo_deb_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = pedo_deb_reg->deb_step;
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5122,25 +5121,25 @@ PT_THREAD(lsm6ds3tr_c_pedo_debounce_steps_get(struct pt *pt, stmdev_ctx_t *ctx, 
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of deb_time in reg PEDO_DEB_REG
   */
-PT_THREAD(lsm6ds3tr_c_pedo_timeout_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_pedo_timeout_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_pedo_deb_reg_t *pedo_deb_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_PEDO_DEB_REG, (uint8_t *)pedo_deb_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     pedo_deb_reg->deb_time = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_PEDO_DEB_REG, (uint8_t *)pedo_deb_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
-    PT_END(pt);
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5151,23 +5150,23 @@ PT_THREAD(lsm6ds3tr_c_pedo_timeout_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of deb_time in reg PEDO_DEB_REG
   */
-PT_THREAD(lsm6ds3tr_c_pedo_timeout_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_pedo_timeout_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_pedo_deb_reg_t *pedo_deb_reg = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_PEDO_DEB_REG, (uint8_t *)pedo_deb_reg, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = pedo_deb_reg->deb_time;
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5176,20 +5175,20 @@ PT_THREAD(lsm6ds3tr_c_pedo_timeout_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that contains data to write
   */
-PT_THREAD(lsm6ds3tr_c_pedo_steps_period_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_pedo_steps_period_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_STEP_COUNT_DELTA, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5198,20 +5197,20 @@ PT_THREAD(lsm6ds3tr_c_pedo_steps_period_set(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_pedo_steps_period_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_pedo_steps_period_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_STEP_COUNT_DELTA, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5233,23 +5232,23 @@ PT_THREAD(lsm6ds3tr_c_pedo_steps_period_get(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sign_motion_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_motion_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_motion_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->sign_motion_en = val;
     if (val != 0x00U) {
         ctrl10_c->func_en = val;
         lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-        PT_WAIT_UNTIL(pt, ctx->read_write_done);
+        PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5258,18 +5257,18 @@ PT_THREAD(lsm6ds3tr_c_motion_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t 
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of sign_motion_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_motion_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_motion_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl10_c->sign_motion_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5278,20 +5277,20 @@ PT_THREAD(lsm6ds3tr_c_motion_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t 
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that store significant motion threshold.
   */
-PT_THREAD(lsm6ds3tr_c_motion_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_motion_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SM_THS, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5300,20 +5299,20 @@ PT_THREAD(lsm6ds3tr_c_motion_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that store significant motion threshold.
   */
-PT_THREAD(lsm6ds3tr_c_motion_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_motion_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SM_THS, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5335,23 +5334,23 @@ PT_THREAD(lsm6ds3tr_c_motion_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tilt_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_tilt_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->tilt_en = val;
     if (val != 0x00U) {
         ctrl10_c->func_en = val;
     }
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5360,18 +5359,18 @@ PT_THREAD(lsm6ds3tr_c_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tilt_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_tilt_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_tilt_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl10_c->tilt_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5380,14 +5379,14 @@ PT_THREAD(lsm6ds3tr_c_tilt_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *v
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tilt_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_wrist_tilt_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->wrist_tilt_en = val;
     if (val != 0x00U) {
@@ -5395,9 +5394,9 @@ PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint
     }
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5406,18 +5405,18 @@ PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tilt_en in reg CTRL10_C
   */
-PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_wrist_tilt_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl10_c->wrist_tilt_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5428,20 +5427,20 @@ PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that contains data to write
   */
-PT_THREAD(lsm6ds3tr_c_tilt_latency_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_tilt_latency_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_LAT, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5452,20 +5451,20 @@ PT_THREAD(lsm6ds3tr_c_tilt_latency_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_tilt_latency_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_tilt_latency_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_LAT, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5476,20 +5475,20 @@ PT_THREAD(lsm6ds3tr_c_tilt_latency_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that contains data to write
   */
-PT_THREAD(lsm6ds3tr_c_tilt_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_tilt_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_THS, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5500,20 +5499,20 @@ PT_THREAD(lsm6ds3tr_c_tilt_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_tilt_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_tilt_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_THS, buff, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5522,21 +5521,21 @@ PT_THREAD(lsm6ds3tr_c_tilt_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8
   * @param  ctx    Read / write interface definitions
   * @param  val    Registers A_WRIST_TILT_MASK
   */
-PT_THREAD(lsm6ds3tr_c_tilt_src_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_a_wrist_tilt_mask_t *val))
+pbio_error_t lsm6ds3tr_c_tilt_src_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_a_wrist_tilt_mask_t *val)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_MASK, (uint8_t *)val, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5545,21 +5544,21 @@ PT_THREAD(lsm6ds3tr_c_tilt_src_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Registers A_WRIST_TILT_MASK
   */
-PT_THREAD(lsm6ds3tr_c_tilt_src_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_a_wrist_tilt_mask_t *val))
+pbio_error_t lsm6ds3tr_c_tilt_src_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_a_wrist_tilt_mask_t *val)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_B));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_B));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_A_WRIST_TILT_MASK, (uint8_t *)val, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 
 }
 
@@ -5582,20 +5581,20 @@ PT_THREAD(lsm6ds3tr_c_tilt_src_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of soft_en in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl9_xl->soft_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5604,18 +5603,18 @@ PT_THREAD(lsm6ds3tr_c_mag_soft_iron_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of soft_en in reg CTRL9_XL
   */
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_ctrl9_xl_t *ctrl9_xl = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL9_XL, (uint8_t *)ctrl9_xl, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = ctrl9_xl->soft_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5624,30 +5623,30 @@ PT_THREAD(lsm6ds3tr_c_mag_soft_iron_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of iron_en in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_mag_hard_iron_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_mag_hard_iron_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[1];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->iron_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     if (val != 0x00U) {
         ctrl10_c->func_en = val;
     }
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5656,18 +5655,18 @@ PT_THREAD(lsm6ds3tr_c_mag_hard_iron_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of iron_en in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_mag_hard_iron_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_mag_hard_iron_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = master_config->iron_en;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5677,20 +5676,20 @@ PT_THREAD(lsm6ds3tr_c_mag_hard_iron_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that contains data to write
   */
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_mat_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_mat_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MAG_SI_XX, buff, 9);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5700,20 +5699,20 @@ PT_THREAD(lsm6ds3tr_c_mag_soft_iron_mat_set(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_mat_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_mat_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MAG_SI_XX, buff, 9);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5723,20 +5722,20 @@ PT_THREAD(lsm6ds3tr_c_mag_soft_iron_mat_get(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that contains data to write
   */
-PT_THREAD(lsm6ds3tr_c_mag_offset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_mag_offset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MAG_OFFX_L, buff, 6);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5746,20 +5745,20 @@ PT_THREAD(lsm6ds3tr_c_mag_offset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *
   * @param  ctx    Read / write interface definitions
   * @param  buff   Buffer that stores data read
   */
-PT_THREAD(lsm6ds3tr_c_mag_offset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff))
+pbio_error_t lsm6ds3tr_c_mag_offset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff)
 {
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MAG_OFFX_L, buff, 6);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5781,20 +5780,20 @@ PT_THREAD(lsm6ds3tr_c_mag_offset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values func_en
   */
-PT_THREAD(lsm6ds3tr_c_func_en_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_func_en_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_ctrl10_c_t *ctrl10_c = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     ctrl10_c->func_en = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_CTRL10_C, (uint8_t *)ctrl10_c, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5804,20 +5803,20 @@ PT_THREAD(lsm6ds3tr_c_func_en_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val)
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tph in reg SENSOR_SYNC_TIME_FRAME
   */
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_frame_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_frame_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_sensor_sync_time_frame_t *sensor_sync_time_frame = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENSOR_SYNC_TIME_FRAME, (uint8_t *)sensor_sync_time_frame, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     sensor_sync_time_frame->tph = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SENSOR_SYNC_TIME_FRAME, (uint8_t *)sensor_sync_time_frame, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5827,18 +5826,18 @@ PT_THREAD(lsm6ds3tr_c_sh_sync_sens_frame_set(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of tph in reg  SENSOR_SYNC_TIME_FRAME
   */
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_frame_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_frame_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_sensor_sync_time_frame_t *sensor_sync_time_frame = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENSOR_SYNC_TIME_FRAME, (uint8_t *)sensor_sync_time_frame, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = sensor_sync_time_frame->tph;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5847,20 +5846,20 @@ PT_THREAD(lsm6ds3tr_c_sh_sync_sens_frame_get(struct pt *pt, stmdev_ctx_t *ctx, u
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of rr in reg  SENSOR_SYNC_RES_RATIO
   */
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t val))
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_ratio_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t val)
 {
     lsm6ds3tr_c_sensor_sync_res_ratio_t *sensor_sync_res_ratio = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENSOR_SYNC_RES_RATIO, (uint8_t *)sensor_sync_res_ratio, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     sensor_sync_res_ratio->rr = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SENSOR_SYNC_RES_RATIO, (uint8_t *)sensor_sync_res_ratio, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5869,14 +5868,14 @@ PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_set(struct pt *pt, stmdev_ctx_t *ctx, l
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of rr in reg  SENSOR_SYNC_RES_RATIO
   */
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t *val))
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_ratio_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t *val)
 {
     lsm6ds3tr_c_sensor_sync_res_ratio_t *sensor_sync_res_ratio = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENSOR_SYNC_RES_RATIO, (uint8_t *)sensor_sync_res_ratio, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
 
     switch (sensor_sync_res_ratio->rr) {
@@ -5897,7 +5896,7 @@ PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_get(struct pt *pt, stmdev_ctx_t *ctx, l
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5906,20 +5905,20 @@ PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_get(struct pt *pt, stmdev_ctx_t *ctx, l
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of master_on in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_master_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_sh_master_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->master_on = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5928,18 +5927,18 @@ PT_THREAD(lsm6ds3tr_c_sh_master_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t va
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of master_on in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_master_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_sh_master_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = master_config->master_on;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5948,20 +5947,20 @@ PT_THREAD(lsm6ds3tr_c_sh_master_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *v
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pass_through_mode in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_pass_through_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_sh_pass_through_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->pass_through_mode = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5970,18 +5969,18 @@ PT_THREAD(lsm6ds3tr_c_sh_pass_through_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pass_through_mode in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_pass_through_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_sh_pass_through_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = master_config->pass_through_mode;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -5990,20 +5989,20 @@ PT_THREAD(lsm6ds3tr_c_sh_pass_through_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of pull_up_en in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_pin_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t val))
+pbio_error_t lsm6ds3tr_c_sh_pin_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->pull_up_en = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6012,14 +6011,14 @@ PT_THREAD(lsm6ds3tr_c_sh_pin_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3t
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of pull_up_en in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t *val))
+pbio_error_t lsm6ds3tr_c_sh_pin_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (master_config->pull_up_en) {
         case LSM6DS3TR_C_EXT_PULL_UP:
@@ -6033,7 +6032,7 @@ PT_THREAD(lsm6ds3tr_c_sh_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3t
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6042,21 +6041,21 @@ PT_THREAD(lsm6ds3tr_c_sh_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3t
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of start_config in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_start_config_t val))
+pbio_error_t lsm6ds3tr_c_sh_syncro_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_start_config_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->start_config = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6065,15 +6064,15 @@ PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of start_config in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_start_config_t *val))
+pbio_error_t lsm6ds3tr_c_sh_syncro_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_start_config_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (master_config->start_config) {
         case LSM6DS3TR_C_XL_GY_DRDY:
@@ -6087,7 +6086,7 @@ PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6096,20 +6095,20 @@ PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of drdy_on_int1 in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_drdy_on_int1_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_sh_drdy_on_int1_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_config->drdy_on_int1 = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6118,18 +6117,18 @@ PT_THREAD(lsm6ds3tr_c_sh_drdy_on_int1_set(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of drdy_on_int1 in reg MASTER_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_drdy_on_int1_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_sh_drdy_on_int1_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_master_config_t *master_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CONFIG, (uint8_t *)master_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = master_config->drdy_on_int1;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6138,17 +6137,17 @@ PT_THREAD(lsm6ds3tr_c_sh_drdy_on_int1_get(struct pt *pt, stmdev_ctx_t *ctx, uint
   * @param  ctx    Read / write interface definitions
   * @param  val    Structure of registers from SENSORHUB1_REG
   */
-PT_THREAD(lsm6ds3tr_c_sh_read_data_raw_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_emb_sh_read_t *val))
+pbio_error_t lsm6ds3tr_c_sh_read_data_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_emb_sh_read_t *val)
 {
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENSORHUB1_REG, (uint8_t *)&(val->sh_byte_1), 12);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENSORHUB13_REG, (uint8_t *)&(val->sh_byte_13), 6);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6158,20 +6157,20 @@ PT_THREAD(lsm6ds3tr_c_sh_read_data_raw_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  val    Change the values of master_cmd_code in
   *                reg MASTER_CMD_CODE
   */
-PT_THREAD(lsm6ds3tr_c_sh_cmd_sens_sync_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_sh_cmd_sens_sync_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_master_cmd_code_t *master_cmd_code = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CMD_CODE, (uint8_t *)master_cmd_code, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     master_cmd_code->master_cmd_code = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_MASTER_CMD_CODE, (uint8_t *)master_cmd_code, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6181,18 +6180,18 @@ PT_THREAD(lsm6ds3tr_c_sh_cmd_sens_sync_set(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  val    Change the values of master_cmd_code in
   *                reg MASTER_CMD_CODE
   */
-PT_THREAD(lsm6ds3tr_c_sh_cmd_sens_sync_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_sh_cmd_sens_sync_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_master_cmd_code_t *master_cmd_code = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_MASTER_CMD_CODE, (uint8_t *)master_cmd_code, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = master_cmd_code->master_cmd_code;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6202,20 +6201,20 @@ PT_THREAD(lsm6ds3tr_c_sh_cmd_sens_sync_get(struct pt *pt, stmdev_ctx_t *ctx, uin
   * @param  val    Change the values of error_code in
   *                reg sens_sync_spi_error_code->
   */
-PT_THREAD(lsm6ds3tr_c_sh_spi_sync_error_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val))
+pbio_error_t lsm6ds3tr_c_sh_spi_sync_error_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6ds3tr_c_sens_sync_spi_error_code_t *sens_sync_spi_error_code = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENS_SYNC_SPI_ERROR_CODE, (uint8_t *)sens_sync_spi_error_code, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     sens_sync_spi_error_code->error_code = val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SENS_SYNC_SPI_ERROR_CODE, (uint8_t *)sens_sync_spi_error_code, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6225,18 +6224,18 @@ PT_THREAD(lsm6ds3tr_c_sh_spi_sync_error_set(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  val    Change the values of error_code in
   *                reg sens_sync_spi_error_code->
   */
-PT_THREAD(lsm6ds3tr_c_sh_spi_sync_error_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val))
+pbio_error_t lsm6ds3tr_c_sh_spi_sync_error_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6ds3tr_c_sens_sync_spi_error_code_t *sens_sync_spi_error_code = (void *)&lsm6ds3tr_data_buffer[0];
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SENS_SYNC_SPI_ERROR_CODE, (uint8_t *)sens_sync_spi_error_code, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     *val = sens_sync_spi_error_code->error_code;
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6245,27 +6244,27 @@ PT_THREAD(lsm6ds3tr_c_sh_spi_sync_error_get(struct pt *pt, stmdev_ctx_t *ctx, ui
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of aux_sens_on in reg slave0_config->
   */
-PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_aux_sens_on_t val))
+pbio_error_t lsm6ds3tr_c_sh_num_of_dev_connected_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_aux_sens_on_t val)
 {
     lsm6ds3tr_c_slave0_config_t *slave0_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave0_config->aux_sens_on = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6274,19 +6273,19 @@ PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_set(struct pt *pt, stmdev_ctx_t *c
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of aux_sens_on in reg slave0_config->
   */
-PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_aux_sens_on_t *val))
+pbio_error_t lsm6ds3tr_c_sh_num_of_dev_connected_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_aux_sens_on_t *val)
 {
     lsm6ds3tr_c_slave0_config_t *slave0_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (slave0_config->aux_sens_on) {
         case LSM6DS3TR_C_SLV_0:
@@ -6306,9 +6305,9 @@ PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_get(struct pt *pt, stmdev_ctx_t *c
             break;
     }
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6320,30 +6319,30 @@ PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_get(struct pt *pt, stmdev_ctx_t *c
   *                  - uint8_t slv_subadd; 8 bit register device address
   *                  - uint8_t slv_data;   8 bit data to write
   */
-PT_THREAD(lsm6ds3tr_c_sh_cfg_write(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sh_cfg_write_t *val))
+pbio_error_t lsm6ds3tr_c_sh_cfg_write(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sh_cfg_write_t *val)
 {
     lsm6ds3tr_c_slv0_add_t *slv0_add = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     slv0_add->slave0_add = val->slv0_add;
     slv0_add->rw_0 = 0;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV0_ADD, (uint8_t *)slv0_add, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV0_SUBADD, &(val->slv0_subadd), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_DATAWRITE_SRC_MODE_SUB_SLV0, &(val->slv0_data), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6355,36 +6354,36 @@ PT_THREAD(lsm6ds3tr_c_sh_cfg_write(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c
   *                  - uint8_t slv_subadd; 8 bit register device address
   *                  - uint8_t slv_len;    num of bit to read
   */
-PT_THREAD(lsm6ds3tr_c_sh_slv0_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slv0_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val)
 {
     lsm6ds3tr_c_slave0_config_t *slave0_config = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_slv0_add_t *slv0_add = (void *)&lsm6ds3tr_data_buffer[1];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     slv0_add->slave0_add = val->slv_add;
     slv0_add->rw_0 = 1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV0_ADD, (uint8_t *)slv0_add, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV0_SUBADD, &(val->slv_subadd), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave0_config->slave0_numop = val->slv_len;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6396,36 +6395,36 @@ PT_THREAD(lsm6ds3tr_c_sh_slv0_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
   *                  - uint8_t slv_subadd; 8 bit register device address
   *                  - uint8_t slv_len;    num of bit to read
   */
-PT_THREAD(lsm6ds3tr_c_sh_slv1_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slv1_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val)
 {
     lsm6ds3tr_c_slave1_config_t *slave1_config = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_slv1_add_t *slv1_add = (void *)&lsm6ds3tr_data_buffer[1];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     slv1_add->slave1_add = val->slv_add;
     slv1_add->r_1 = 1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV1_ADD, (uint8_t *)slv1_add, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV1_SUBADD, &(val->slv_subadd), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave1_config->slave1_numop = val->slv_len;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6437,36 +6436,36 @@ PT_THREAD(lsm6ds3tr_c_sh_slv1_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
   *                  - uint8_t slv_subadd; 8 bit register device address
   *                  - uint8_t slv_len;    num of bit to read
   */
-PT_THREAD(lsm6ds3tr_c_sh_slv2_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slv2_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val)
 {
     lsm6ds3tr_c_slv2_add_t *slv2_add = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_slave2_config_t *slave2_config = (void *)&lsm6ds3tr_data_buffer[1];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     slv2_add->slave2_add = val->slv_add;
     slv2_add->r_2 = 1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV2_ADD, (uint8_t *)slv2_add, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV2_SUBADD, &(val->slv_subadd), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE2_CONFIG, (uint8_t *)slave2_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave2_config->slave2_numop = val->slv_len;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE2_CONFIG, (uint8_t *)slave2_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6478,36 +6477,36 @@ PT_THREAD(lsm6ds3tr_c_sh_slv2_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
   *                  - uint8_t slv_subadd; 8 bit register device address
   *                  - uint8_t slv_len;    num of bit to read
   */
-PT_THREAD(lsm6ds3tr_c_sh_slv3_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slv3_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val)
 {
     lsm6ds3tr_c_slave3_config_t *slave3_config = (void *)&lsm6ds3tr_data_buffer[0];
     lsm6ds3tr_c_slv3_add_t *slv3_add = (void *)&lsm6ds3tr_data_buffer[1];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     slv3_add->slave3_add = val->slv_add;
     slv3_add->r_3 = 1;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV3_ADD, (uint8_t *)slv3_add, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLV3_SUBADD, (uint8_t *)&(val->slv_subadd), 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE3_CONFIG, (uint8_t *)slave3_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave3_config->slave3_numop = val->slv_len;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE3_CONFIG, (uint8_t *)slave3_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6517,27 +6516,27 @@ PT_THREAD(lsm6ds3tr_c_sh_slv3_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of slave0_rate in reg SLAVE0_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave0_rate_t val))
+pbio_error_t lsm6ds3tr_c_sh_slave_0_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave0_rate_t val)
 {
     lsm6ds3tr_c_slave0_config_t *slave0_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave0_config->slave0_rate = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6547,19 +6546,19 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of slave0_rate in reg SLAVE0_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave0_rate_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slave_0_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave0_rate_t *val)
 {
     lsm6ds3tr_c_slave0_config_t *slave0_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE0_CONFIG, (uint8_t *)slave0_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (slave0_config->slave0_rate) {
         case LSM6DS3TR_C_SL0_NO_DEC:
@@ -6579,9 +6578,9 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6593,26 +6592,26 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of write_once in reg SLAVE1_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_write_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_write_once_t val))
+pbio_error_t lsm6ds3tr_c_sh_write_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_write_once_t val)
 {
     lsm6ds3tr_c_slave1_config_t *slave1_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave1_config->write_once = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6624,19 +6623,19 @@ PT_THREAD(lsm6ds3tr_c_sh_write_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of write_once in reg SLAVE1_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_write_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_write_once_t *val))
+pbio_error_t lsm6ds3tr_c_sh_write_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_write_once_t *val)
 {
     lsm6ds3tr_c_slave1_config_t *slave1_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (slave1_config->write_once) {
         case LSM6DS3TR_C_EACH_SH_CYCLE:
@@ -6650,9 +6649,9 @@ PT_THREAD(lsm6ds3tr_c_sh_write_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6662,27 +6661,27 @@ PT_THREAD(lsm6ds3tr_c_sh_write_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of slave1_rate in reg SLAVE1_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave1_rate_t val))
+pbio_error_t lsm6ds3tr_c_sh_slave_1_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave1_rate_t val)
 {
     lsm6ds3tr_c_slave1_config_t *slave1_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave1_config->slave1_rate = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6691,19 +6690,19 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
   *
   * @param  ctx    Read / write interface definitions reg SLAVE1_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave1_rate_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slave_1_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave1_rate_t *val)
 {
     lsm6ds3tr_c_slave1_config_t *slave1_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE1_CONFIG, (uint8_t *)slave1_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (slave1_config->slave1_rate) {
         case LSM6DS3TR_C_SL1_NO_DEC:
@@ -6723,9 +6722,9 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6735,27 +6734,27 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of slave2_rate in reg SLAVE2_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave2_rate_t val))
+pbio_error_t lsm6ds3tr_c_sh_slave_2_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave2_rate_t val)
 {
     lsm6ds3tr_c_slave2_config_t *slave2_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE2_CONFIG, (uint8_t *)slave2_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave2_config->slave2_rate = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE2_CONFIG, (uint8_t *)slave2_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6765,19 +6764,19 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of slave2_rate in reg SLAVE2_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave2_rate_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slave_2_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave2_rate_t *val)
 {
     lsm6ds3tr_c_slave2_config_t *slave2_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE2_CONFIG, (uint8_t *)slave2_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (slave2_config->slave2_rate) {
         case LSM6DS3TR_C_SL2_NO_DEC:
@@ -6797,9 +6796,9 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6809,27 +6808,27 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Change the values of slave3_rate in reg SLAVE3_CONFIG
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_3_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave3_rate_t val))
+pbio_error_t lsm6ds3tr_c_sh_slave_3_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave3_rate_t val)
 {
     lsm6ds3tr_c_slave3_config_t *slave3_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE3_CONFIG, (uint8_t *)slave3_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     slave3_config->slave3_rate = (uint8_t)val;
     lsm6ds3tr_c_write_reg(ctx, LSM6DS3TR_C_SLAVE3_CONFIG, (uint8_t *)slave3_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**
@@ -6839,19 +6838,19 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_3_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
   * @param  ctx    Read / write interface definitions
   * @param  val    Get the values of slave3_rate in reg slave3_config->
   */
-PT_THREAD(lsm6ds3tr_c_sh_slave_3_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave3_rate_t *val))
+pbio_error_t lsm6ds3tr_c_sh_slave_3_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave3_rate_t *val)
 {
     lsm6ds3tr_c_slave3_config_t *slave3_config = (void *)&lsm6ds3tr_data_buffer[0];
 
-    static struct pt child;
+    static pbio_os_state_t sub;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_BANK_A));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_BANK_A));
 
     lsm6ds3tr_c_read_reg(ctx, LSM6DS3TR_C_SLAVE3_CONFIG, (uint8_t *)slave3_config, 1);
-    PT_WAIT_UNTIL(pt, ctx->read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, ctx->read_write_done);
 
     switch (slave3_config->slave3_rate) {
         case LSM6DS3TR_C_SL3_NO_DEC:
@@ -6871,9 +6870,9 @@ PT_THREAD(lsm6ds3tr_c_sh_slave_3_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
             break;
     }
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_mem_bank_set(&child, ctx, LSM6DS3TR_C_USER_BANK));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_mem_bank_set(&sub, ctx, LSM6DS3TR_C_USER_BANK));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**

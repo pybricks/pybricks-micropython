@@ -34,7 +34,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
+#include <pbio/error.h>
+#include <pbio/os.h>
 
 /** @addtogroup LSM6DS3TR_C
   * @{
@@ -1013,8 +1014,8 @@ typedef enum {
   LSM6DS3TR_C_8g       = 3,
   LSM6DS3TR_C_XL_FS_ND = 4,  /* ERROR CODE */
 } lsm6ds3tr_c_fs_xl_t;
-PT_THREAD(lsm6ds3tr_c_xl_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t val));
-PT_THREAD(lsm6ds3tr_c_xl_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t *val));
+pbio_error_t lsm6ds3tr_c_xl_full_scale_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t val);
+pbio_error_t lsm6ds3tr_c_xl_full_scale_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_xl_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_ODR_OFF      =  0,
@@ -1031,8 +1032,8 @@ typedef enum {
   LSM6DS3TR_C_XL_ODR_1Hz6     = 11,
   LSM6DS3TR_C_XL_ODR_ND       = 12,  /* ERROR CODE */
 } lsm6ds3tr_c_odr_xl_t;
-PT_THREAD(lsm6ds3tr_c_xl_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t val));
-PT_THREAD(lsm6ds3tr_c_xl_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t *val));
+pbio_error_t lsm6ds3tr_c_xl_data_rate_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t val);
+pbio_error_t lsm6ds3tr_c_xl_data_rate_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_xl_t *val);
 
 typedef enum {
   LSM6DS3TR_C_250dps     = 0,
@@ -1042,8 +1043,8 @@ typedef enum {
   LSM6DS3TR_C_2000dps    = 6,
   LSM6DS3TR_C_GY_FS_ND   = 7,    /* ERROR CODE */
 } lsm6ds3tr_c_fs_g_t;
-PT_THREAD(lsm6ds3tr_c_gy_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t val));
-PT_THREAD(lsm6ds3tr_c_gy_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t *val));
+pbio_error_t lsm6ds3tr_c_gy_full_scale_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t val);
+pbio_error_t lsm6ds3tr_c_gy_full_scale_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fs_g_t *val);
 
 typedef enum {
   LSM6DS3TR_C_GY_ODR_OFF    =  0,
@@ -1059,51 +1060,51 @@ typedef enum {
   LSM6DS3TR_C_GY_ODR_6k66Hz = 10,
   LSM6DS3TR_C_GY_ODR_ND     = 11,    /* ERROR CODE */
 } lsm6ds3tr_c_odr_g_t;
-PT_THREAD(lsm6ds3tr_c_gy_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t val));
-PT_THREAD(lsm6ds3tr_c_gy_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t *val));
+pbio_error_t lsm6ds3tr_c_gy_data_rate_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t val);
+pbio_error_t lsm6ds3tr_c_gy_data_rate_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_odr_g_t *val);
 
-PT_THREAD(lsm6ds3tr_c_block_data_update_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_block_data_update_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_block_data_update_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_block_data_update_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_LSb_1mg   = 0,
   LSM6DS3TR_C_LSb_16mg  = 1,
   LSM6DS3TR_C_WEIGHT_ND = 2,
 } lsm6ds3tr_c_usr_off_w_t;
-PT_THREAD(lsm6ds3tr_c_xl_offset_weight_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_usr_off_w_t val));
-PT_THREAD(lsm6ds3tr_c_xl_offset_weight_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_usr_off_w_t *val));
+pbio_error_t lsm6ds3tr_c_xl_offset_weight_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_usr_off_w_t val);
+pbio_error_t lsm6ds3tr_c_xl_offset_weight_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_usr_off_w_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_HIGH_PERFORMANCE  = 0,
   LSM6DS3TR_C_XL_NORMAL            = 1,
   LSM6DS3TR_C_XL_PW_MODE_ND        = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_xl_hm_mode_t;
-PT_THREAD(lsm6ds3tr_c_xl_power_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_xl_hm_mode_t val));
-PT_THREAD(lsm6ds3tr_c_xl_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_xl_hm_mode_t *val));
+pbio_error_t lsm6ds3tr_c_xl_power_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_xl_hm_mode_t val);
+pbio_error_t lsm6ds3tr_c_xl_power_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_xl_hm_mode_t *val);
 
 typedef enum {
   LSM6DS3TR_C_STAT_RND_DISABLE  = 0,
   LSM6DS3TR_C_STAT_RND_ENABLE   = 1,
   LSM6DS3TR_C_STAT_RND_ND       = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_rounding_status_t;
-PT_THREAD(lsm6ds3tr_c_rounding_on_status_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_rounding_status_t val));
-PT_THREAD(lsm6ds3tr_c_rounding_on_status_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_rounding_status_t *val));
+pbio_error_t lsm6ds3tr_c_rounding_on_status_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_rounding_status_t val);
+pbio_error_t lsm6ds3tr_c_rounding_on_status_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_rounding_status_t *val);
 
 typedef enum {
   LSM6DS3TR_C_GY_HIGH_PERFORMANCE  = 0,
   LSM6DS3TR_C_GY_NORMAL            = 1,
   LSM6DS3TR_C_GY_PW_MODE_ND        = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_g_hm_mode_t;
-PT_THREAD(lsm6ds3tr_c_gy_power_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_g_hm_mode_t val));
-PT_THREAD(lsm6ds3tr_c_gy_power_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_g_hm_mode_t *val));
+pbio_error_t lsm6ds3tr_c_gy_power_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_g_hm_mode_t val);
+pbio_error_t lsm6ds3tr_c_gy_power_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_g_hm_mode_t *val);
 
 typedef struct {
   lsm6ds3tr_c_wake_up_src_t        wake_up_src;
@@ -1115,28 +1116,28 @@ typedef struct {
   lsm6ds3tr_c_wrist_tilt_ia_t      wrist_tilt_ia;
   lsm6ds3tr_c_a_wrist_tilt_mask_t  a_wrist_tilt_mask;
 } lsm6ds3tr_c_all_sources_t;
-PT_THREAD(lsm6ds3tr_c_all_sources_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_all_sources_t *val));
+pbio_error_t lsm6ds3tr_c_all_sources_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_all_sources_t *val);
 
-PT_THREAD(lsm6ds3tr_c_status_reg_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_status_reg_t *val));
+pbio_error_t lsm6ds3tr_c_status_reg_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_status_reg_t *val);
 
-PT_THREAD(lsm6ds3tr_c_xl_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_xl_flag_data_ready_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_gy_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_gy_flag_data_ready_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_temp_flag_data_ready_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_temp_flag_data_ready_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_xl_usr_offset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_xl_usr_offset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_timestamp_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_timestamp_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_xl_usr_offset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_xl_usr_offset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_timestamp_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_timestamp_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_LSB_6ms4    = 0,
   LSM6DS3TR_C_LSB_25us    = 1,
   LSM6DS3TR_C_TS_RES_ND   = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_timer_hr_t;
-PT_THREAD(lsm6ds3tr_c_timestamp_res_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t val));
-PT_THREAD(lsm6ds3tr_c_timestamp_res_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t *val));
+pbio_error_t lsm6ds3tr_c_timestamp_res_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t val);
+pbio_error_t lsm6ds3tr_c_timestamp_res_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_timer_hr_t *val);
 
 typedef enum {
   LSM6DS3TR_C_ROUND_DISABLE            = 0,
@@ -1149,17 +1150,16 @@ typedef enum {
   LSM6DS3TR_C_ROUND_GY_XL_SH1_TO_SH6   = 7,
   LSM6DS3TR_C_ROUND_OUT_ND             = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_rounding_t;
-PT_THREAD(lsm6ds3tr_c_rounding_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t val));
-PT_THREAD(lsm6ds3tr_c_rounding_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t *val));
+pbio_error_t lsm6ds3tr_c_rounding_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t val);
+pbio_error_t lsm6ds3tr_c_rounding_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rounding_t *val);
 
-PT_THREAD(lsm6ds3tr_c_temperature_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_angular_rate_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_acceleration_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_temperature_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_angular_rate_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_acceleration_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_mag_calibrated_raw_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_mag_calibrated_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_fifo_raw_data_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buffer,
-    uint8_t len));
+pbio_error_t lsm6ds3tr_c_fifo_raw_data_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buffer, uint8_t len);
 
 typedef enum {
   LSM6DS3TR_C_USER_BANK   = 0,
@@ -1167,36 +1167,36 @@ typedef enum {
   LSM6DS3TR_C_BANK_B      = 5,
   LSM6DS3TR_C_BANK_ND     = 6,    /* ERROR CODE */
 } lsm6ds3tr_c_func_cfg_en_t;
-PT_THREAD(lsm6ds3tr_c_mem_bank_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t val));
-PT_THREAD(lsm6ds3tr_c_mem_bank_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t *val));
+pbio_error_t lsm6ds3tr_c_mem_bank_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t val);
+pbio_error_t lsm6ds3tr_c_mem_bank_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_func_cfg_en_t *val);
 
 typedef enum {
   LSM6DS3TR_C_DRDY_LATCHED    = 0,
   LSM6DS3TR_C_DRDY_PULSED     = 1,
   LSM6DS3TR_C_DRDY_ND         = 2,  /* ERROR CODE */
 } lsm6ds3tr_c_drdy_pulsed_g_t;
-PT_THREAD(lsm6ds3tr_c_data_ready_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_drdy_pulsed_g_t val));
-PT_THREAD(lsm6ds3tr_c_data_ready_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_drdy_pulsed_g_t *val));
+pbio_error_t lsm6ds3tr_c_data_ready_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_drdy_pulsed_g_t val);
+pbio_error_t lsm6ds3tr_c_data_ready_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_drdy_pulsed_g_t *val);
 
-PT_THREAD(lsm6ds3tr_c_device_id_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_reset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_reset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_device_id_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_reset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_reset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_LSB_AT_LOW_ADD  = 0,
   LSM6DS3TR_C_MSB_AT_LOW_ADD  = 1,
   LSM6DS3TR_C_DATA_FMT_ND     = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_ble_t;
-PT_THREAD(lsm6ds3tr_c_data_format_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t val));
-PT_THREAD(lsm6ds3tr_c_data_format_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t *val));
+pbio_error_t lsm6ds3tr_c_data_format_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t val);
+pbio_error_t lsm6ds3tr_c_data_format_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ble_t *val);
 
-PT_THREAD(lsm6ds3tr_c_auto_increment_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_auto_increment_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_auto_increment_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_auto_increment_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_boot_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_boot_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_boot_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_boot_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_ST_DISABLE    = 0,
@@ -1204,8 +1204,8 @@ typedef enum {
   LSM6DS3TR_C_XL_ST_NEGATIVE   = 2,
   LSM6DS3TR_C_XL_ST_ND         = 3,    /* ERROR CODE */
 } lsm6ds3tr_c_st_xl_t;
-PT_THREAD(lsm6ds3tr_c_xl_self_test_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t val));
-PT_THREAD(lsm6ds3tr_c_xl_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t *val));
+pbio_error_t lsm6ds3tr_c_xl_self_test_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t val);
+pbio_error_t lsm6ds3tr_c_xl_self_test_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_xl_t *val);
 
 typedef enum {
   LSM6DS3TR_C_GY_ST_DISABLE    = 0,
@@ -1213,41 +1213,41 @@ typedef enum {
   LSM6DS3TR_C_GY_ST_NEGATIVE   = 3,
   LSM6DS3TR_C_GY_ST_ND         = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_st_g_t;
-PT_THREAD(lsm6ds3tr_c_gy_self_test_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t val));
-PT_THREAD(lsm6ds3tr_c_gy_self_test_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t *val));
+pbio_error_t lsm6ds3tr_c_gy_self_test_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t val);
+pbio_error_t lsm6ds3tr_c_gy_self_test_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_st_g_t *val);
 
-PT_THREAD(lsm6ds3tr_c_filter_settling_mask_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_filter_settling_mask_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_filter_settling_mask_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_filter_settling_mask_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_USE_SLOPE    = 0,
   LSM6DS3TR_C_USE_HPF      = 1,
   LSM6DS3TR_C_HP_PATH_ND   = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_slope_fds_t;
-PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slope_fds_t val));
-PT_THREAD(lsm6ds3tr_c_xl_hp_path_internal_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slope_fds_t *val));
+pbio_error_t lsm6ds3tr_c_xl_hp_path_internal_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slope_fds_t val);
+pbio_error_t lsm6ds3tr_c_xl_hp_path_internal_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slope_fds_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_ANA_BW_1k5Hz = 0,
   LSM6DS3TR_C_XL_ANA_BW_400Hz = 1,
   LSM6DS3TR_C_XL_ANA_BW_ND    = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_bw0_xl_t;
-PT_THREAD(lsm6ds3tr_c_xl_filter_analog_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_bw0_xl_t val));
-PT_THREAD(lsm6ds3tr_c_xl_filter_analog_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_bw0_xl_t *val));
+pbio_error_t lsm6ds3tr_c_xl_filter_analog_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_bw0_xl_t val);
+pbio_error_t lsm6ds3tr_c_xl_filter_analog_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_bw0_xl_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_LP1_ODR_DIV_2 = 0,
   LSM6DS3TR_C_XL_LP1_ODR_DIV_4 = 1,
   LSM6DS3TR_C_XL_LP1_NA        = 2,  /* ERROR CODE */
 } lsm6ds3tr_c_lpf1_bw_sel_t;
-PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_lpf1_bw_sel_t val));
-PT_THREAD(lsm6ds3tr_c_xl_lp1_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_lpf1_bw_sel_t *val));
+pbio_error_t lsm6ds3tr_c_xl_lp1_bandwidth_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_lpf1_bw_sel_t val);
+pbio_error_t lsm6ds3tr_c_xl_lp1_bandwidth_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_lpf1_bw_sel_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_LOW_LAT_LP_ODR_DIV_50     = 0x00,
@@ -1260,13 +1260,13 @@ typedef enum {
   LSM6DS3TR_C_XL_LOW_NOISE_LP_ODR_DIV_400  = 0x13,
   LSM6DS3TR_C_XL_LP_NA                     = 0x20, /* ERROR CODE */
 } lsm6ds3tr_c_input_composite_t;
-PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_input_composite_t val));
-PT_THREAD(lsm6ds3tr_c_xl_lp2_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_input_composite_t *val));
+pbio_error_t lsm6ds3tr_c_xl_lp2_bandwidth_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_input_composite_t val);
+pbio_error_t lsm6ds3tr_c_xl_lp2_bandwidth_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_input_composite_t *val);
 
-PT_THREAD(lsm6ds3tr_c_xl_reference_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_xl_reference_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_xl_reference_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_xl_reference_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_HP_ODR_DIV_4      = 0x00, /* Slope filter */
@@ -1275,8 +1275,8 @@ typedef enum {
   LSM6DS3TR_C_XL_HP_ODR_DIV_400    = 0x03,
   LSM6DS3TR_C_XL_HP_NA             = 0x10, /* ERROR CODE */
 } lsm6ds3tr_c_hpcf_xl_t;
-PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t val));
-PT_THREAD(lsm6ds3tr_c_xl_hp_bandwidth_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t *val));
+pbio_error_t lsm6ds3tr_c_xl_hp_bandwidth_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t val);
+pbio_error_t lsm6ds3tr_c_xl_hp_bandwidth_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_hpcf_xl_t *val);
 
 typedef enum {
   LSM6DS3TR_C_LP2_ONLY                    = 0x00,
@@ -1298,26 +1298,26 @@ typedef enum {
 
   LSM6DS3TR_C_HP_GY_BAND_NA               = 0xFF,    /* ERROR CODE */
 } lsm6ds3tr_c_lpf1_sel_g_t;
-PT_THREAD(lsm6ds3tr_c_gy_band_pass_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lpf1_sel_g_t val));
-PT_THREAD(lsm6ds3tr_c_gy_band_pass_get(struct pt *pt, stmdev_ctx_t *ctx,  lsm6ds3tr_c_lpf1_sel_g_t *val));
+pbio_error_t lsm6ds3tr_c_gy_band_pass_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lpf1_sel_g_t val);
+pbio_error_t lsm6ds3tr_c_gy_band_pass_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,  lsm6ds3tr_c_lpf1_sel_g_t *val);
 
 typedef enum {
   LSM6DS3TR_C_SPI_4_WIRE  = 0,
   LSM6DS3TR_C_SPI_3_WIRE  = 1,
   LSM6DS3TR_C_SPI_MODE_ND = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_sim_t;
-PT_THREAD(lsm6ds3tr_c_spi_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t val));
-PT_THREAD(lsm6ds3tr_c_spi_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t *val));
+pbio_error_t lsm6ds3tr_c_spi_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t val);
+pbio_error_t lsm6ds3tr_c_spi_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sim_t *val);
 
 typedef enum {
   LSM6DS3TR_C_I2C_ENABLE   = 0,
   LSM6DS3TR_C_I2C_DISABLE  = 1,
   LSM6DS3TR_C_I2C_MODE_ND  = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_i2c_disable_t;
-PT_THREAD(lsm6ds3tr_c_i2c_interface_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_i2c_disable_t val));
-PT_THREAD(lsm6ds3tr_c_i2c_interface_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_i2c_disable_t *val));
+pbio_error_t lsm6ds3tr_c_i2c_interface_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_i2c_disable_t val);
+pbio_error_t lsm6ds3tr_c_i2c_interface_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_i2c_disable_t *val);
 
 typedef struct {
   uint8_t int1_drdy_xl             : 1;
@@ -1339,10 +1339,10 @@ typedef struct {
   uint8_t den_drdy_int1            : 1;
   uint8_t drdy_on_int1             : 1;
 } lsm6ds3tr_c_int1_route_t;
-PT_THREAD(lsm6ds3tr_c_pin_int1_route_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int1_route_t val));
-PT_THREAD(lsm6ds3tr_c_pin_int1_route_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int1_route_t *val));
+pbio_error_t lsm6ds3tr_c_pin_int1_route_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int1_route_t val);
+pbio_error_t lsm6ds3tr_c_pin_int1_route_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int1_route_t *val);
 
 typedef struct{
   uint8_t int2_drdy_xl             : 1;
@@ -1363,46 +1363,46 @@ typedef struct{
   uint8_t int2_inact_state         : 1;
   uint8_t int2_wrist_tilt          : 1;
 } lsm6ds3tr_c_int2_route_t;
-PT_THREAD(lsm6ds3tr_c_pin_int2_route_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int2_route_t val));
-PT_THREAD(lsm6ds3tr_c_pin_int2_route_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_int2_route_t *val));
+pbio_error_t lsm6ds3tr_c_pin_int2_route_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int2_route_t val);
+pbio_error_t lsm6ds3tr_c_pin_int2_route_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_int2_route_t *val);
 
 typedef enum {
   LSM6DS3TR_C_PUSH_PULL   = 0,
   LSM6DS3TR_C_OPEN_DRAIN  = 1,
   LSM6DS3TR_C_PIN_MODE_ND = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_pp_od_t;
-PT_THREAD(lsm6ds3tr_c_pin_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t val));
-PT_THREAD(lsm6ds3tr_c_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t *val));
+pbio_error_t lsm6ds3tr_c_pin_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t val);
+pbio_error_t lsm6ds3tr_c_pin_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pp_od_t *val);
 
 typedef enum {
   LSM6DS3TR_C_ACTIVE_HIGH   = 0,
   LSM6DS3TR_C_ACTIVE_LOW    = 1,
   LSM6DS3TR_C_POLARITY_ND   = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_h_lactive_t;
-PT_THREAD(lsm6ds3tr_c_pin_polarity_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t val));
-PT_THREAD(lsm6ds3tr_c_pin_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t *val));
+pbio_error_t lsm6ds3tr_c_pin_polarity_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t val);
+pbio_error_t lsm6ds3tr_c_pin_polarity_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_h_lactive_t *val);
 
-PT_THREAD(lsm6ds3tr_c_all_on_int1_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_all_on_int1_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_all_on_int1_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_all_on_int1_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_INT_PULSED   = 0,
   LSM6DS3TR_C_INT_LATCHED  = 1,
   LSM6DS3TR_C_INT_MODE     = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_lir_t;
-PT_THREAD(lsm6ds3tr_c_int_notification_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t val));
-PT_THREAD(lsm6ds3tr_c_int_notification_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t *val));
+pbio_error_t lsm6ds3tr_c_int_notification_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t val);
+pbio_error_t lsm6ds3tr_c_int_notification_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_lir_t *val);
 
-PT_THREAD(lsm6ds3tr_c_wkup_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_wkup_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_wkup_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_wkup_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_wkup_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_wkup_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_wkup_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_wkup_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_gy_sleep_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_gy_sleep_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_gy_sleep_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_gy_sleep_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_PROPERTY_DISABLE          = 0,
@@ -1411,54 +1411,54 @@ typedef enum {
   LSM6DS3TR_C_XL_12Hz5_GY_PD            = 3,
   LSM6DS3TR_C_ACT_MODE_ND               = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_inact_en_t;
-PT_THREAD(lsm6ds3tr_c_act_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t val));
-PT_THREAD(lsm6ds3tr_c_act_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t *val));
+pbio_error_t lsm6ds3tr_c_act_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t val);
+pbio_error_t lsm6ds3tr_c_act_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_inact_en_t *val);
 
-PT_THREAD(lsm6ds3tr_c_act_sleep_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_act_sleep_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_act_sleep_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_act_sleep_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_src_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_tap_src_t *val));
+pbio_error_t lsm6ds3tr_c_tap_src_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_tap_src_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_z_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_z_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_detection_on_z_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_detection_on_z_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_y_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_y_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_detection_on_y_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_detection_on_y_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_detection_on_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_detection_on_x_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_detection_on_x_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_threshold_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_threshold_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_threshold_x_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_threshold_x_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_shock_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_shock_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_shock_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_shock_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_quiet_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_quiet_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_quiet_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_quiet_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tap_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tap_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tap_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tap_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_ONLY_SINGLE          = 0,
   LSM6DS3TR_C_BOTH_SINGLE_DOUBLE   = 1,
   LSM6DS3TR_C_TAP_MODE_ND          = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_single_double_tap_t;
-PT_THREAD(lsm6ds3tr_c_tap_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_single_double_tap_t val));
-PT_THREAD(lsm6ds3tr_c_tap_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_single_double_tap_t *val));
+pbio_error_t lsm6ds3tr_c_tap_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_single_double_tap_t val);
+pbio_error_t lsm6ds3tr_c_tap_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_single_double_tap_t *val);
 
 typedef enum {
   LSM6DS3TR_C_ODR_DIV_2_FEED      = 0,
   LSM6DS3TR_C_LPF2_FEED           = 1,
   LSM6DS3TR_C_6D_FEED_ND          = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_low_pass_on_6d_t;
-PT_THREAD(lsm6ds3tr_c_6d_feed_data_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_low_pass_on_6d_t val));
-PT_THREAD(lsm6ds3tr_c_6d_feed_data_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_low_pass_on_6d_t *val));
+pbio_error_t lsm6ds3tr_c_6d_feed_data_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_low_pass_on_6d_t val);
+pbio_error_t lsm6ds3tr_c_6d_feed_data_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_low_pass_on_6d_t *val);
 
 typedef enum {
   LSM6DS3TR_C_DEG_80      = 0,
@@ -1467,14 +1467,14 @@ typedef enum {
   LSM6DS3TR_C_DEG_50      = 3,
   LSM6DS3TR_C_6D_TH_ND    = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_sixd_ths_t;
-PT_THREAD(lsm6ds3tr_c_6d_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t val));
-PT_THREAD(lsm6ds3tr_c_6d_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t *val));
+pbio_error_t lsm6ds3tr_c_6d_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t val);
+pbio_error_t lsm6ds3tr_c_6d_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sixd_ths_t *val);
 
-PT_THREAD(lsm6ds3tr_c_4d_mode_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_4d_mode_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_4d_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_4d_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_ff_dur_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_ff_dur_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_ff_dur_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_ff_dur_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_FF_TSH_156mg = 0,
@@ -1487,20 +1487,20 @@ typedef enum {
   LSM6DS3TR_C_FF_TSH_500mg = 7,
   LSM6DS3TR_C_FF_TSH_ND    = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_ff_ths_t;
-PT_THREAD(lsm6ds3tr_c_ff_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t val));
-PT_THREAD(lsm6ds3tr_c_ff_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t *val));
+pbio_error_t lsm6ds3tr_c_ff_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t val);
+pbio_error_t lsm6ds3tr_c_ff_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_ff_ths_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_watermark_set(struct pt *pt, stmdev_ctx_t *ctx, uint16_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_watermark_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_watermark_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t val);
+pbio_error_t lsm6ds3tr_c_fifo_watermark_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_data_level_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_data_level_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_wtm_flag_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_wtm_flag_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_pattern_get(struct pt *pt, stmdev_ctx_t *ctx, uint16_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_pattern_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint16_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_temp_batch_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_temp_batch_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_temp_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_fifo_temp_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_TRG_XL_GY_DRDY     = 0,
@@ -1508,15 +1508,15 @@ typedef enum {
   LSM6DS3TR_C_TRG_SH_DRDY        = 2,
   LSM6DS3TR_C_TRG_SH_ND          = 3,    /* ERROR CODE */
 } lsm6ds3tr_c_trigger_fifo_t;
-PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_trigger_fifo_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_write_trigger_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_trigger_fifo_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_write_trigger_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_trigger_fifo_t val);
+pbio_error_t lsm6ds3tr_c_fifo_write_trigger_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_trigger_fifo_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    uint8_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    uint8_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    uint8_t val);
+pbio_error_t lsm6ds3tr_c_fifo_pedo_and_timestamp_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_FIFO_XL_DISABLE  = 0,
@@ -1529,10 +1529,10 @@ typedef enum {
   LSM6DS3TR_C_FIFO_XL_DEC_32   = 7,
   LSM6DS3TR_C_FIFO_XL_DEC_ND   = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_dec_fifo_xl_t;
-PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_xl_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_xl_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_xl_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_xl_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_xl_t val);
+pbio_error_t lsm6ds3tr_c_fifo_xl_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_xl_t *val);
 
 typedef enum {
   LSM6DS3TR_C_FIFO_GY_DISABLE = 0,
@@ -1545,10 +1545,10 @@ typedef enum {
   LSM6DS3TR_C_FIFO_GY_DEC_32  = 7,
   LSM6DS3TR_C_FIFO_GY_DEC_ND  = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_dec_fifo_gyro_t;
-PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_gyro_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_gy_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_fifo_gyro_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_gy_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_gyro_t val);
+pbio_error_t lsm6ds3tr_c_fifo_gy_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_fifo_gyro_t *val);
 
 typedef enum {
   LSM6DS3TR_C_FIFO_DS3_DISABLE   = 0,
@@ -1561,10 +1561,10 @@ typedef enum {
   LSM6DS3TR_C_FIFO_DS3_DEC_32    = 7,
   LSM6DS3TR_C_FIFO_DS3_DEC_ND    = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_dec_ds3_fifo_t;
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds3_fifo_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_3_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds3_fifo_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_dataset_3_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds3_fifo_t val);
+pbio_error_t lsm6ds3tr_c_fifo_dataset_3_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds3_fifo_t *val);
 
 typedef enum {
   LSM6DS3TR_C_FIFO_DS4_DISABLE  = 0,
@@ -1577,16 +1577,16 @@ typedef enum {
   LSM6DS3TR_C_FIFO_DS4_DEC_32   = 7,
   LSM6DS3TR_C_FIFO_DS4_DEC_ND   = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_dec_ds4_fifo_t;
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds4_fifo_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_dataset_4_batch_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_dec_ds4_fifo_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_dataset_4_batch_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds4_fifo_t val);
+pbio_error_t lsm6ds3tr_c_fifo_dataset_4_batch_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_dec_ds4_fifo_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_xl_gy_8bit_format_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_xl_gy_8bit_format_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_xl_gy_8bit_format_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_fifo_xl_gy_8bit_format_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_fifo_stop_on_wtm_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_stop_on_wtm_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_stop_on_wtm_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_fifo_stop_on_wtm_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_BYPASS_MODE           = 0,
@@ -1596,8 +1596,8 @@ typedef enum {
   LSM6DS3TR_C_STREAM_MODE           = 6,
   LSM6DS3TR_C_FIFO_MODE_ND          = 8,    /* ERROR CODE */
 } lsm6ds3tr_c_fifo_mode_t;
-PT_THREAD(lsm6ds3tr_c_fifo_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t val);
+pbio_error_t lsm6ds3tr_c_fifo_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_fifo_mode_t *val);
 
 typedef enum {
   LSM6DS3TR_C_FIFO_DISABLE   =  0,
@@ -1613,18 +1613,18 @@ typedef enum {
   LSM6DS3TR_C_FIFO_6k66Hz    = 10,
   LSM6DS3TR_C_FIFO_RATE_ND   = 11,    /* ERROR CODE */
 } lsm6ds3tr_c_odr_fifo_t;
-PT_THREAD(lsm6ds3tr_c_fifo_data_rate_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_odr_fifo_t val));
-PT_THREAD(lsm6ds3tr_c_fifo_data_rate_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_odr_fifo_t *val));
+pbio_error_t lsm6ds3tr_c_fifo_data_rate_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_odr_fifo_t val);
+pbio_error_t lsm6ds3tr_c_fifo_data_rate_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_odr_fifo_t *val);
 
 typedef enum {
   LSM6DS3TR_C_DEN_ACT_LOW    = 0,
   LSM6DS3TR_C_DEN_ACT_HIGH   = 1,
   LSM6DS3TR_C_DEN_POL_ND     = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_den_lh_t;
-PT_THREAD(lsm6ds3tr_c_den_polarity_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t val));
-PT_THREAD(lsm6ds3tr_c_den_polarity_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t *val));
+pbio_error_t lsm6ds3tr_c_den_polarity_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t val);
+pbio_error_t lsm6ds3tr_c_den_polarity_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_lh_t *val);
 
 typedef enum {
   LSM6DS3TR_C_DEN_DISABLE    = 0,
@@ -1634,8 +1634,8 @@ typedef enum {
   LSM6DS3TR_C_EDGE_TRIGGER   = 4,
   LSM6DS3TR_C_DEN_MODE_ND    = 5,    /* ERROR CODE */
 } lsm6ds3tr_c_den_mode_t;
-PT_THREAD(lsm6ds3tr_c_den_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t val));
-PT_THREAD(lsm6ds3tr_c_den_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t *val));
+pbio_error_t lsm6ds3tr_c_den_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t val);
+pbio_error_t lsm6ds3tr_c_den_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_mode_t *val);
 
 typedef enum {
   LSM6DS3TR_C_STAMP_IN_GY_DATA     = 0,
@@ -1643,83 +1643,83 @@ typedef enum {
   LSM6DS3TR_C_STAMP_IN_GY_XL_DATA  = 2,
   LSM6DS3TR_C_DEN_STAMP_ND         = 3,    /* ERROR CODE */
 } lsm6ds3tr_c_den_xl_en_t;
-PT_THREAD(lsm6ds3tr_c_den_enable_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t val));
-PT_THREAD(lsm6ds3tr_c_den_enable_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t *val));
+pbio_error_t lsm6ds3tr_c_den_enable_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t val);
+pbio_error_t lsm6ds3tr_c_den_enable_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_den_xl_en_t *val);
 
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_z_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_z_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_den_mark_axis_z_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_den_mark_axis_z_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_y_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_y_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_den_mark_axis_y_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_den_mark_axis_y_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_x_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_den_mark_axis_x_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_den_mark_axis_x_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_den_mark_axis_x_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_pedo_step_reset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_pedo_step_reset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_pedo_step_reset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_pedo_step_reset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_pedo_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_pedo_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_pedo_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_pedo_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_pedo_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_pedo_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_pedo_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_pedo_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_PEDO_AT_2g = 0,
   LSM6DS3TR_C_PEDO_AT_4g = 1,
   LSM6DS3TR_C_PEDO_FS_ND = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_pedo_fs_t;
-PT_THREAD(lsm6ds3tr_c_pedo_full_scale_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_pedo_fs_t val));
-PT_THREAD(lsm6ds3tr_c_pedo_full_scale_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_pedo_fs_t *val));
+pbio_error_t lsm6ds3tr_c_pedo_full_scale_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_pedo_fs_t val);
+pbio_error_t lsm6ds3tr_c_pedo_full_scale_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_pedo_fs_t *val);
 
-PT_THREAD(lsm6ds3tr_c_pedo_debounce_steps_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_pedo_debounce_steps_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_pedo_debounce_steps_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_pedo_debounce_steps_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_pedo_timeout_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_pedo_timeout_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_pedo_timeout_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_pedo_timeout_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_pedo_steps_period_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_pedo_steps_period_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_pedo_steps_period_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_pedo_steps_period_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_motion_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_motion_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_motion_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_motion_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_motion_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_motion_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_motion_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_motion_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_tilt_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_tilt_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_tilt_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_wrist_tilt_sens_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_wrist_tilt_sens_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_wrist_tilt_sens_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_tilt_latency_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_tilt_latency_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_tilt_latency_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_tilt_latency_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_tilt_threshold_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_tilt_threshold_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_tilt_threshold_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_tilt_threshold_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_tilt_src_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_a_wrist_tilt_mask_t *val));
-PT_THREAD(lsm6ds3tr_c_tilt_src_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_a_wrist_tilt_mask_t *val));
+pbio_error_t lsm6ds3tr_c_tilt_src_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_a_wrist_tilt_mask_t *val);
+pbio_error_t lsm6ds3tr_c_tilt_src_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_a_wrist_tilt_mask_t *val);
 
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_mag_hard_iron_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_mag_hard_iron_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_mag_hard_iron_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_mag_hard_iron_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_mat_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_mag_soft_iron_mat_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_mat_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_mag_soft_iron_mat_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_mag_offset_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
-PT_THREAD(lsm6ds3tr_c_mag_offset_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *buff));
+pbio_error_t lsm6ds3tr_c_mag_offset_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
+pbio_error_t lsm6ds3tr_c_mag_offset_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *buff);
 
-PT_THREAD(lsm6ds3tr_c_func_en_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
+pbio_error_t lsm6ds3tr_c_func_en_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
 
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_frame_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_frame_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_frame_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_frame_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_RES_RATIO_2_11  = 0,
@@ -1728,35 +1728,35 @@ typedef enum {
   LSM6DS3TR_C_RES_RATIO_2_14  = 3,
   LSM6DS3TR_C_RES_RATIO_ND    = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_rr_t;
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t val));
-PT_THREAD(lsm6ds3tr_c_sh_sync_sens_ratio_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t *val));
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_ratio_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t val);
+pbio_error_t lsm6ds3tr_c_sh_sync_sens_ratio_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_rr_t *val);
 
-PT_THREAD(lsm6ds3tr_c_sh_master_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_sh_master_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_sh_master_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_sh_master_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_sh_pass_through_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_sh_pass_through_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_sh_pass_through_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_sh_pass_through_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_EXT_PULL_UP       = 0,
   LSM6DS3TR_C_INTERNAL_PULL_UP  = 1,
   LSM6DS3TR_C_SH_PIN_MODE       = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_pull_up_en_t;
-PT_THREAD(lsm6ds3tr_c_sh_pin_mode_set(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t val));
-PT_THREAD(lsm6ds3tr_c_sh_pin_mode_get(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t *val));
+pbio_error_t lsm6ds3tr_c_sh_pin_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t val);
+pbio_error_t lsm6ds3tr_c_sh_pin_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_pull_up_en_t *val);
 
 typedef enum {
   LSM6DS3TR_C_XL_GY_DRDY        = 0,
   LSM6DS3TR_C_EXT_ON_INT2_PIN   = 1,
   LSM6DS3TR_C_SH_SYNCRO_ND      = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_start_config_t;
-PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_start_config_t val));
-PT_THREAD(lsm6ds3tr_c_sh_syncro_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_start_config_t *val));
+pbio_error_t lsm6ds3tr_c_sh_syncro_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_start_config_t val);
+pbio_error_t lsm6ds3tr_c_sh_syncro_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_start_config_t *val);
 
-PT_THREAD(lsm6ds3tr_c_sh_drdy_on_int1_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_sh_drdy_on_int1_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_sh_drdy_on_int1_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_sh_drdy_on_int1_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef struct {
     lsm6ds3tr_c_sensorhub1_reg_t   sh_byte_1;
@@ -1778,14 +1778,14 @@ typedef struct {
     lsm6ds3tr_c_sensorhub17_reg_t  sh_byte_17;
     lsm6ds3tr_c_sensorhub18_reg_t  sh_byte_18;
 } lsm6ds3tr_c_emb_sh_read_t;
-PT_THREAD(lsm6ds3tr_c_sh_read_data_raw_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_emb_sh_read_t *val));
+pbio_error_t lsm6ds3tr_c_sh_read_data_raw_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_emb_sh_read_t *val);
 
-PT_THREAD(lsm6ds3tr_c_sh_cmd_sens_sync_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_sh_cmd_sens_sync_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_sh_cmd_sens_sync_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_sh_cmd_sens_sync_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
-PT_THREAD(lsm6ds3tr_c_sh_spi_sync_error_set(struct pt *pt, stmdev_ctx_t *ctx, uint8_t val));
-PT_THREAD(lsm6ds3tr_c_sh_spi_sync_error_get(struct pt *pt, stmdev_ctx_t *ctx, uint8_t *val));
+pbio_error_t lsm6ds3tr_c_sh_spi_sync_error_set(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t val);
+pbio_error_t lsm6ds3tr_c_sh_spi_sync_error_get(pbio_os_state_t *state, stmdev_ctx_t *ctx, uint8_t *val);
 
 typedef enum {
   LSM6DS3TR_C_SLV_0        = 0,
@@ -1794,31 +1794,31 @@ typedef enum {
   LSM6DS3TR_C_SLV_0_1_2_3  = 3,
   LSM6DS3TR_C_SLV_EN_ND    = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_aux_sens_on_t;
-PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_aux_sens_on_t val));
-PT_THREAD(lsm6ds3tr_c_sh_num_of_dev_connected_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_aux_sens_on_t *val));
+pbio_error_t lsm6ds3tr_c_sh_num_of_dev_connected_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_aux_sens_on_t val);
+pbio_error_t lsm6ds3tr_c_sh_num_of_dev_connected_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_aux_sens_on_t *val);
 
 typedef struct{
   uint8_t   slv0_add;
   uint8_t   slv0_subadd;
   uint8_t   slv0_data;
 } lsm6ds3tr_c_sh_cfg_write_t;
-PT_THREAD(lsm6ds3tr_c_sh_cfg_write(struct pt *pt, stmdev_ctx_t *ctx, lsm6ds3tr_c_sh_cfg_write_t *val));
+pbio_error_t lsm6ds3tr_c_sh_cfg_write(pbio_os_state_t *state, stmdev_ctx_t *ctx, lsm6ds3tr_c_sh_cfg_write_t *val);
 
 typedef struct{
   uint8_t   slv_add;
   uint8_t   slv_subadd;
   uint8_t   slv_len;
 } lsm6ds3tr_c_sh_cfg_read_t;
-PT_THREAD(lsm6ds3tr_c_sh_slv0_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val));
-PT_THREAD(lsm6ds3tr_c_sh_slv1_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val));
-PT_THREAD(lsm6ds3tr_c_sh_slv2_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val));
-PT_THREAD(lsm6ds3tr_c_sh_slv3_cfg_read(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_sh_cfg_read_t *val));
+pbio_error_t lsm6ds3tr_c_sh_slv0_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val);
+pbio_error_t lsm6ds3tr_c_sh_slv1_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val);
+pbio_error_t lsm6ds3tr_c_sh_slv2_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val);
+pbio_error_t lsm6ds3tr_c_sh_slv3_cfg_read(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_sh_cfg_read_t *val);
 
 typedef enum {
   LSM6DS3TR_C_SL0_NO_DEC   = 0,
@@ -1827,20 +1827,20 @@ typedef enum {
   LSM6DS3TR_C_SL0_DEC_8    = 3,
   LSM6DS3TR_C_SL0_DEC_ND   = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_slave0_rate_t;
-PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave0_rate_t val));
-PT_THREAD(lsm6ds3tr_c_sh_slave_0_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave0_rate_t *val));
+pbio_error_t lsm6ds3tr_c_sh_slave_0_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave0_rate_t val);
+pbio_error_t lsm6ds3tr_c_sh_slave_0_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave0_rate_t *val);
 
 typedef enum {
   LSM6DS3TR_C_EACH_SH_CYCLE     = 0,
   LSM6DS3TR_C_ONLY_FIRST_CYCLE  = 1,
   LSM6DS3TR_C_SH_WR_MODE_ND     = 2,    /* ERROR CODE */
 } lsm6ds3tr_c_write_once_t;
-PT_THREAD(lsm6ds3tr_c_sh_write_mode_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_write_once_t val));
-PT_THREAD(lsm6ds3tr_c_sh_write_mode_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_write_once_t *val));
+pbio_error_t lsm6ds3tr_c_sh_write_mode_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_write_once_t val);
+pbio_error_t lsm6ds3tr_c_sh_write_mode_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_write_once_t *val);
 
 typedef enum {
   LSM6DS3TR_C_SL1_NO_DEC   = 0,
@@ -1849,10 +1849,10 @@ typedef enum {
   LSM6DS3TR_C_SL1_DEC_8    = 3,
   LSM6DS3TR_C_SL1_DEC_ND   = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_slave1_rate_t;
-PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave1_rate_t val));
-PT_THREAD(lsm6ds3tr_c_sh_slave_1_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave1_rate_t *val));
+pbio_error_t lsm6ds3tr_c_sh_slave_1_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave1_rate_t val);
+pbio_error_t lsm6ds3tr_c_sh_slave_1_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave1_rate_t *val);
 
 typedef enum {
   LSM6DS3TR_C_SL2_NO_DEC  = 0,
@@ -1861,10 +1861,10 @@ typedef enum {
   LSM6DS3TR_C_SL2_DEC_8   = 3,
   LSM6DS3TR_C_SL2_DEC_ND  = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_slave2_rate_t;
-PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave2_rate_t val));
-PT_THREAD(lsm6ds3tr_c_sh_slave_2_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave2_rate_t *val));
+pbio_error_t lsm6ds3tr_c_sh_slave_2_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave2_rate_t val);
+pbio_error_t lsm6ds3tr_c_sh_slave_2_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave2_rate_t *val);
 
 typedef enum {
   LSM6DS3TR_C_SL3_NO_DEC  = 0,
@@ -1873,10 +1873,10 @@ typedef enum {
   LSM6DS3TR_C_SL3_DEC_8   = 3,
   LSM6DS3TR_C_SL3_DEC_ND  = 4,    /* ERROR CODE */
 } lsm6ds3tr_c_slave3_rate_t;
-PT_THREAD(lsm6ds3tr_c_sh_slave_3_dec_set(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave3_rate_t val));
-PT_THREAD(lsm6ds3tr_c_sh_slave_3_dec_get(struct pt *pt, stmdev_ctx_t *ctx,
-    lsm6ds3tr_c_slave3_rate_t *val));
+pbio_error_t lsm6ds3tr_c_sh_slave_3_dec_set(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave3_rate_t val);
+pbio_error_t lsm6ds3tr_c_sh_slave_3_dec_get(pbio_os_state_t *state, stmdev_ctx_t *ctx,
+    lsm6ds3tr_c_slave3_rate_t *val);
 
 /**
   * @}

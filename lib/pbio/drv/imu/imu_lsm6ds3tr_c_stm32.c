@@ -27,15 +27,6 @@
 #include "../core.h"
 #include "./imu_lsm6ds3tr_c_stm32.h"
 
-typedef enum {
-    /** Initialization is not complete yet. */
-    IMU_INIT_STATE_BUSY,
-    /** Initialization failed at some point. */
-    IMU_INIT_STATE_FAILED,
-    /** Initialization was successful. */
-    IMU_INIT_STATE_COMPLETE,
-} imu_init_state_t;
-
 struct _pbdrv_imu_dev_t {
     /** Driver context for external library. */
     stmdev_ctx_t ctx;
@@ -67,8 +58,6 @@ struct _pbdrv_imu_dev_t {
     uint32_t stationary_sample_count;
     /** Whether it is currently stationary, to be polled by higher level APIs. */
     bool stationary_now;
-    /** Initialization state. */
-    imu_init_state_t init_state;
     /** INT1 oneshot. */
     volatile bool int1;
 };
@@ -83,7 +72,6 @@ struct _pbdrv_imu_dev_t {
 #define LSM6DS3TR_ACCL_DATA_RATE (LSM6DS3TR_C_XL_ODR_833Hz)
 
 static pbdrv_imu_dev_t global_imu_dev;
-PROCESS(pbdrv_imu_lsm6ds3tr_c_stm32_process, "LSM6DS3TR-C");
 
 // REVISIT: For now, this driver takes complete ownership of the STM32 I2C
 // subsystem. A shared I2C driver would be needed
@@ -98,32 +86,32 @@ void pbdrv_imu_lsm6ds3tr_c_stm32_handle_i2c_ev_irq(void) {
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_request_poll();
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_request_poll();
 }
 
 void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_request_poll();
 }
 
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_request_poll();
 }
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c) {
     global_imu_dev.ctx.read_write_done = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_request_poll();
 }
 
 void pbdrv_imu_lsm6ds3tr_c_stm32_handle_int1_irq(void) {
     global_imu_dev.int1 = true;
-    process_poll(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_request_poll();
 }
 
 /**
@@ -160,17 +148,17 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_read_reg(void *handle, uint8_t reg, uint
     }
 }
 
-static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
+static pbio_error_t pbdrv_imu_lsm6ds3tr_c_stm32_init(pbio_os_state_t *state) {
     const pbdrv_imu_lsm6s3tr_c_stm32_platform_data_t *pdata = &pbdrv_imu_lsm6s3tr_c_stm32_platform_data;
     pbdrv_imu_dev_t *imu_dev = &global_imu_dev;
     I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
     stmdev_ctx_t *ctx = &imu_dev->ctx;
 
-    static struct pt child;
+    static pbio_os_state_t sub;
     static uint8_t id;
     static uint8_t rst;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     ctx->write_reg = pbdrv_imu_lsm6ds3tr_c_stm32_write_reg;
     ctx->read_reg = pbdrv_imu_lsm6ds3tr_c_stm32_read_reg;
@@ -192,11 +180,10 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
 
     HAL_I2C_Init(hi2c);
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_device_id_get(&child, ctx, &id));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_device_id_get(&sub, ctx, &id));
 
     if (id != LSM6DS3TR_C_ID) {
-        imu_dev->init_state = IMU_INIT_STATE_FAILED;
-        PT_EXIT(pt);
+        return PBIO_ERROR_FAILED;
     }
 
     // Init based on data polling example
@@ -204,21 +191,21 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     /*
      *  Restore default configuration
      */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_reset_set(&child, ctx, PROPERTY_ENABLE));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_reset_set(&sub, ctx, PROPERTY_ENABLE));
     do {
-        PT_SPAWN(pt, &child, lsm6ds3tr_c_reset_get(&child, ctx, &rst));
+        PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_reset_get(&sub, ctx, &rst));
     } while (rst);
 
     /*
      *  Enable Block Data Update
      */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_block_data_update_set(&child, ctx, PROPERTY_ENABLE));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_block_data_update_set(&sub, ctx, PROPERTY_ENABLE));
 
     /*
      * Set Output Data Rate
      */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_ACCL_DATA_RATE));
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_data_rate_set(&child, ctx, LSM6DS3TR_GYRO_DATA_RATE));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_xl_data_rate_set(&sub, ctx, LSM6DS3TR_ACCL_DATA_RATE));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_gy_data_rate_set(&sub, ctx, LSM6DS3TR_GYRO_DATA_RATE));
 
     // This value varies per device and is updated during runtime. This sets
     // an initial value in case the calibration never completes.
@@ -227,10 +214,10 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     /*
      * Set scale
      */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_full_scale_set(&child, ctx, LSM6DS3TR_C_8g));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_xl_full_scale_set(&sub, ctx, LSM6DS3TR_C_8g));
     imu_dev->config.accel_scale = lsm6ds3tr_c_from_fs8g_to_mg(1) * 9.81f;
 
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_2000dps));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_gy_full_scale_set(&sub, ctx, LSM6DS3TR_C_2000dps));
     imu_dev->config.gyro_scale = lsm6ds3tr_c_from_fs2000dps_to_mdps(1) / 1000.0f;
 
     // Noise thresholds. Will be loaded from user preferences. Can be changed
@@ -240,24 +227,21 @@ static PT_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_init(struct pt *pt)) {
     imu_dev->config.accel_stationary_threshold = 0;
 
     // Configure INT1 to trigger when new gyro data is ready.
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_pin_int1_route_set(&child, ctx, (lsm6ds3tr_c_int1_route_t) {
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_pin_int1_route_set(&sub, ctx, (lsm6ds3tr_c_int1_route_t) {
         .int1_drdy_g = 1,
     }));
 
     // If we leave the default latched mode, sometimes we don't get the INT1 interrupt.
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_data_ready_mode_set(&child, ctx, LSM6DS3TR_C_DRDY_PULSED));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_data_ready_mode_set(&sub, ctx, LSM6DS3TR_C_DRDY_PULSED));
 
     // Enable rounding mode so we can get gyro + accel in continuous reads.
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_rounding_mode_set(&child, ctx, LSM6DS3TR_C_ROUND_GY_XL));
+    PBIO_OS_AWAIT(state, &sub, lsm6ds3tr_c_rounding_mode_set(&sub, ctx, LSM6DS3TR_C_ROUND_GY_XL));
 
     if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
-        imu_dev->init_state = IMU_INIT_STATE_FAILED;
-        PT_EXIT(pt);
+        return PBIO_ERROR_FAILED;
     }
 
-    imu_dev->init_state = IMU_INIT_STATE_COMPLETE;
-
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static inline bool is_bounded(int16_t diff, int16_t threshold) {
@@ -337,22 +321,25 @@ static void pbdrv_imu_lsm6ds3tr_c_stm32_update_stationary_status(pbdrv_imu_dev_t
     pbdrv_imu_lsm6ds3tr_c_stm32_reset_stationary_buffer(imu_dev);
 }
 
-PROCESS_THREAD(pbdrv_imu_lsm6ds3tr_c_stm32_process, ev, data) {
+static pbio_os_process_t pbdrv_imu_lsm6ds3tr_c_stm32_process;
+
+static pbio_error_t pbdrv_imu_lsm6ds3tr_c_stm32_process_thread(pbio_os_state_t *state, void *context) {
     pbdrv_imu_dev_t *imu_dev = &global_imu_dev;
     I2C_HandleTypeDef *hi2c = &imu_dev->hi2c;
 
-    static struct pt child;
+    static pbio_os_state_t sub;
     static uint8_t buf[NUM_DATA_BYTES];
+    pbio_error_t err;
 
-    PROCESS_BEGIN();
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    PROCESS_PT_SPAWN(&child, pbdrv_imu_lsm6ds3tr_c_stm32_init(&child));
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_imu_lsm6ds3tr_c_stm32_init(&sub));
 
     pbdrv_init_busy_down();
 
-    if (imu_dev->init_state != IMU_INIT_STATE_COMPLETE) {
+    if (err != PBIO_SUCCESS) {
         // The IMU is not essential. It just won't be available if init fails.
-        PROCESS_EXIT();
+        return err;
     }
 
 retry:
@@ -367,7 +354,7 @@ retry:
         goto retry;
     }
 
-    PROCESS_WAIT_UNTIL(imu_dev->ctx.read_write_done);
+    PBIO_OS_AWAIT_UNTIL(state, imu_dev->ctx.read_write_done);
 
     if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
         pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
@@ -381,7 +368,7 @@ retry:
     // we have fewer interrupts per sample.
 
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(atomic_exchange(&imu_dev->int1, false));
+        PBIO_OS_AWAIT_UNTIL(state, atomic_exchange(&imu_dev->int1, false));
 
         imu_dev->ctx.read_write_done = false;
         ret = HAL_I2C_Master_Seq_Receive_IT(
@@ -392,7 +379,7 @@ retry:
             goto retry;
         }
 
-        PROCESS_WAIT_UNTIL(imu_dev->ctx.read_write_done);
+        PBIO_OS_AWAIT_UNTIL(state, imu_dev->ctx.read_write_done);
 
         if (HAL_I2C_GetError(hi2c) != HAL_I2C_ERROR_NONE) {
             pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
@@ -416,29 +403,29 @@ retry:
         }
     }
 
-    PROCESS_END();
+    // Unreachable
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 // internal driver interface implementation
 
 void pbdrv_imu_init(void) {
     pbdrv_init_busy_up();
-    process_start(&pbdrv_imu_lsm6ds3tr_c_stm32_process);
+    pbio_os_process_start(&pbdrv_imu_lsm6ds3tr_c_stm32_process, pbdrv_imu_lsm6ds3tr_c_stm32_process_thread, NULL);
 }
 
 // public driver interface implementation
 
 pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **config) {
-    *imu_dev = &global_imu_dev;
-    *config = &global_imu_dev.config;
 
-    if ((*imu_dev)->init_state == IMU_INIT_STATE_BUSY) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    if ((*imu_dev)->init_state == IMU_INIT_STATE_FAILED) {
+    // When this is called from pbio, driver initialization must have finished
+    // and the process should be up and running to process sensor data.
+    if (pbdrv_init_busy() || pbdrv_imu_lsm6ds3tr_c_stm32_process.err != PBIO_ERROR_AGAIN) {
         return PBIO_ERROR_FAILED;
     }
+
+    *imu_dev = &global_imu_dev;
+    *config = &global_imu_dev.config;
 
     return PBIO_SUCCESS;
 }
