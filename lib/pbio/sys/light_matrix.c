@@ -101,6 +101,11 @@ void pbsys_hub_light_matrix_init(void) {
     pbsys_hub_light_matrix_start_power_animation();
 }
 
+void pbsys_hub_light_matrix_deinit(void) {
+    // Starting it again continues it in reverse.
+    pbsys_hub_light_matrix_start_power_animation();
+}
+
 /**
  * Clears the pixels needed for the run animation
  */
@@ -139,35 +144,23 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
 }
 
 void pbsys_hub_light_matrix_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
+
+    pbio_pybricks_status_t status = (intptr_t)data;
+
+    // Only need to handle changing program running state.
+    if (status != PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
+        return;
+    }
+
     if (event == PBSYS_STATUS_CHANGE_SET) {
-        pbio_pybricks_status_t status = (intptr_t)data;
-
-        if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
-            // The user animation updates only a subset of pixels to save time,
-            // so the rest must be cleared before it starts.
-            pbsys_hub_light_matrix_user_program_animation_clear();
-            pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
-            pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
-        } else if (status == PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST && !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-            // If shutdown was requested and no program is running, start power
-            // down animation. This makes it run while the system processes are
-            // deinitializing. If it was running, we should wait for it to end
-            // first, which is handled below to avoid a race condition.
-            pbsys_hub_light_matrix_start_power_animation();
-        }
+        // The user animation updates only a subset of pixels to save time,
+        // so the rest must be cleared before it starts.
+        pbsys_hub_light_matrix_user_program_animation_clear();
+        pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
+        pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
     } else if (event == PBSYS_STATUS_CHANGE_CLEARED) {
-        pbio_pybricks_status_t status = (intptr_t)data;
-
-        // The user program has ended.
-        if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
-            if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-                // If it ended due to forced shutdown, show power-off animation.
-                pbsys_hub_light_matrix_start_power_animation();
-            } else {
-                // If it simply completed, show stop sign and selected slot.
-                pbsys_hub_light_matrix_show_idle_ui(100);
-            }
-        }
+        // If the user program has ended, show stop sign and selected slot.
+        pbsys_hub_light_matrix_show_idle_ui(100);
     }
 }
 

@@ -13,6 +13,7 @@
 #include "core.h"
 #include "hmi.h"
 #include "light.h"
+#include "light_matrix.h"
 #include "storage.h"
 #include "supervisor.h"
 #include "program_stop.h"
@@ -58,6 +59,7 @@ void pbsys_init(void) {
 void pbsys_deinit(void) {
 
     pbsys_storage_deinit();
+    pbsys_hub_light_matrix_deinit();
 
     uint32_t start = pbdrv_clock_get_ms();
 

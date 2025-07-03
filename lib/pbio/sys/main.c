@@ -120,6 +120,11 @@ int main(int argc, char **argv) {
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
         pbio_stop_all(true);
         program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
+
+        // Handle pending events triggered by the status change, such as
+        // stopping status light animation.
+        while (pbio_os_run_processes_once()) {
+        }
     }
 
     // Power off sensors and motors, including the ones that are always powered.
