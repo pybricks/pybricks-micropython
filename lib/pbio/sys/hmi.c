@@ -176,18 +176,6 @@ void pbsys_hmi_init(void) {
 void pbsys_hmi_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
     pbsys_status_light_handle_status_change(event, data);
     pbsys_hub_light_matrix_handle_status_change(event, data);
-
-    #if PBSYS_CONFIG_BATTERY_CHARGER
-    // On the Technic Large hub, USB can keep the power on even though we are
-    // "shutdown", so if the button is pressed again, we reset to turn back on
-    if (
-        pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)
-        && event == PBSYS_STATUS_CHANGE_SET
-        && data == PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED
-        ) {
-        pbdrv_reset(PBDRV_RESET_ACTION_RESET);
-    }
-    #endif // PBSYS_CONFIG_BATTERY_CHARGER
 }
 
 /**

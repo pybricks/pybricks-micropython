@@ -133,11 +133,23 @@ int main(int argc, char **argv) {
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button
-    // or USB being plugged in, so we have this loop to keep pumping events
-    // to turn off most of the peripherals and keep the battery charger running.
-    while (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED) || pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
+    // so we have this loop to keep handling events to drive processes that
+    // turn off some of the peripherals.
+    while (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)) {
         pbio_os_run_processes_and_wait_for_event();
     }
+
+    #if PBSYS_CONFIG_BATTERY_CHARGER
+    // Similarly, run events to keep charging while the hub is "off".
+    while (pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
+        pbio_os_run_processes_and_wait_for_event();
+        // If the button is pressed again, the user wants to turn the hub
+        // "back on". We are still on, so do a full reset instead.
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)) {
+            pbdrv_reset(PBDRV_RESET_ACTION_RESET);
+        }
+    }
+    #endif
 
     // Platform-specific power off.
     pbdrv_reset_power_off();
