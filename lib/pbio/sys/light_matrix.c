@@ -143,22 +143,19 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
     return 40;
 }
 
-void pbsys_hub_light_matrix_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
-
-    pbio_pybricks_status_t status = (intptr_t)data;
-
-    // Only need to handle changing program running state.
-    if (status != PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
-        return;
-    }
-
-    if (event == PBSYS_STATUS_CHANGE_SET) {
+/**
+ * Updates light matrix behavior when program is started or stopped.
+ *
+ * @param start   @c true for start or @c false for stop.
+ */
+void pbsys_hub_light_matrix_handle_user_program_start(bool start) {
+    if (start) {
         // The user animation updates only a subset of pixels to save time,
         // so the rest must be cleared before it starts.
         pbsys_hub_light_matrix_user_program_animation_clear();
         pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
         pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
-    } else if (event == PBSYS_STATUS_CHANGE_CLEARED) {
+    } else {
         // If the user program has ended, show stop sign and selected slot.
         pbsys_hub_light_matrix_show_idle_ui(100);
     }

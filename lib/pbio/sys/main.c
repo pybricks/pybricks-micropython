@@ -17,6 +17,7 @@
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
+#include "light_matrix.h"
 #include "program_stop.h"
 #include "storage.h"
 #include <pbsys/program_stop.h>
@@ -105,6 +106,7 @@ int main(int argc, char **argv) {
         pbsys_status_set_program_id(program.id);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_host_rx_set_callback(pbsys_main_stdin_event);
+        pbsys_hub_light_matrix_handle_user_program_start(true);
 
         // Handle pending events triggered by the status change, such as
         // starting status light animation.
@@ -118,6 +120,7 @@ int main(int argc, char **argv) {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_host_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
+        pbsys_hub_light_matrix_handle_user_program_start(false);
         pbio_stop_all(true);
         program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
 

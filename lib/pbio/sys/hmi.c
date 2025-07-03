@@ -175,7 +175,6 @@ void pbsys_hmi_init(void) {
 
 void pbsys_hmi_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
     pbsys_status_light_handle_status_change(event, data);
-    pbsys_hub_light_matrix_handle_status_change(event, data);
 }
 
 /**
