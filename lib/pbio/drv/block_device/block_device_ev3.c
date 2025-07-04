@@ -164,10 +164,10 @@ enum {
 // The EDMA3 peripheral has 128 parameter sets. 32 of them are triggered by events, but the others
 // can be used by "linking" to them from a previous one. Instead of having an allocator for these,
 // we hardcode the usage of linked slots (which means that we don't support arbitrary scatter-gather).
-// - EDMA3_CHA_SPI0_TX: used to send initial command, chains to 126 or 127
-// - EDMA3_CHA_SPI0_RX: used to receive bytes corresponding to initial command, chains to 125
+// - EDMA3_CHA_SPI0_TX: used to send initial command, links to 126 or 127
+// - EDMA3_CHA_SPI0_RX: used to receive bytes corresponding to initial command, links to 125
 // - 125: used to receive bytes corresponding to "user data"
-// - 126: used to send all but the last byte, chains to 127
+// - 126: used to send all but the last byte, links to 127
 // - 127: used to send the last byte, which is necessary to clear CSHOLD
 
 
@@ -632,7 +632,7 @@ void pbdrv_block_device_init(void) {
     IntChannelSet(SYS_INT_SPINT0, 2);
     IntSystemEnable(SYS_INT_SPINT0);
 
-    // Request DMA channels. This only needs to be done for the initial events (and not for chained parameter sets)
+    // Request DMA channels. This only needs to be done for the initial events (and not for linked parameter sets)
     EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
     EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI1_RX, EDMA3_CHA_SPI1_RX, 0);
 
