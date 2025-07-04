@@ -655,7 +655,7 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 
 # firmware in uImage format (for EV3)
 $(BUILD)/uImage: $(BUILD)/firmware-obj.bin
-	mkimage -C none -A arm -T kernel -O linux -a 0xC0008000 -e 0xC0008000 -d $< $@
+	mkimage -C none -A arm -T standalone -O u-boot -a 0xC0008000 -e 0xC0008000 -d $< $@
 
 # PRU firmware
 $(BUILD)/pru_suart.bin.o: $(PBTOP)/lib/pbio/drv/uart/uart_ev3_pru_lib/pru_suart.bin
