@@ -17,9 +17,10 @@
 #define PBDRV_CONFIG_BATTERY_EV3                    (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST              (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE         (8 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER    (512)
+#define PBDRV_CONFIG_BLOCK_DEVICE_EV3               (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE          (8 * 1024)         // TBD, can be a few MB
+#define PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE_USER     (512)
+#define PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS (10 * 1024 * 1024) // TBD
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
