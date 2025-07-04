@@ -14,6 +14,16 @@
 #include "../core.h"
 
 #include <pbdrv/block_device.h>
+#include <pbdrv/gpio.h>
+
+#include <tiam1808/spi.h>
+#include <tiam1808/psc.h>
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/armv5/am1808/interrupt.h>
+
+#include "../drv/gpio/gpio_ev3.h"
 
 #include <pbio/error.h>
 #include <pbio/int_math.h>
@@ -58,41 +68,17 @@ typedef struct {
  * The block device driver state.
  */
 static struct {
-    /** Platform-specific data */
-    const pbdrv_block_device_ev3_platform_data_t *pdata;
-    /** HAL SPI data */
-    SPI_HandleTypeDef hspi;
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
-    /** DMA for sending SPI commands and data */
-    DMA_HandleTypeDef tx_dma;
-    /** DMA for receiving SPI data */
-    DMA_HandleTypeDef rx_dma;
+    //
+    // Any state variables can go here as needed. We don't need pdata in platform.c
+    // since this driver is going to only ever be used with EV3
+    //
 } bdev;
 
-/**
- * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
- */
-void pbdrv_block_device_ev3_spi_handle_tx_dma_irq(void) {
-    HAL_DMA_IRQHandler(&bdev.tx_dma);
-}
 
 /**
- * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
- */
-void pbdrv_block_device_ev3_spi_handle_rx_dma_irq(void) {
-    HAL_DMA_IRQHandler(&bdev.rx_dma);
-}
-
-/**
- * Interrupt handler for SPI IRQ. Called from IRQ handler in platform.c.
- */
-void pbdrv_block_device_ev3_spi_irq(void) {
-    HAL_SPI_IRQHandler(&bdev.hspi);
-}
-
-/**
- * Tx transfer complete. Called from IRQ handler in platform.c.
+ * Tx transfer complete. // Leaving this here for inspiration as hook for TI API. Delete if not needed.
  */
 void pbdrv_block_device_ev3_spi_tx_complete(void) {
     bdev.spi_status = SPI_STATUS_COMPLETE;
@@ -100,7 +86,7 @@ void pbdrv_block_device_ev3_spi_tx_complete(void) {
 }
 
 /**
- * Rx transfer complete. Called from IRQ handler in platform.c.
+ * Rx transfer complete. // Leaving this here for inspiration as hook for TI API. Delete if not needed.
  */
 void pbdrv_block_device_ev3_spi_rx_complete(void) {
     bdev.spi_status = SPI_STATUS_COMPLETE;
@@ -108,25 +94,39 @@ void pbdrv_block_device_ev3_spi_rx_complete(void) {
 }
 
 /**
- * Transfer error. Called from IRQ handler in platform.c.
+ * Transfer error. // Leaving this here for inspiration as hook for TI API. Delete if not needed.
  */
 void pbdrv_block_device_ev3_spi_error(void) {
     bdev.spi_status = SPI_STATUS_ERROR;
     pbio_os_request_poll();
 }
 
+// ADC / Flash SPI0 data MOSI
+static const pbdrv_gpio_t pin_spi0_mosi = PBDRV_GPIO_EV3_PIN(3, 15, 12, 8, 5);
+
+// ADC / Flash SPI0 data MISO
+static const pbdrv_gpio_t pin_spi0_miso = PBDRV_GPIO_EV3_PIN(3, 11, 8, 8, 6);
+
+// LCD SPI0 Clock
+static const pbdrv_gpio_t pin_spi0_clk = PBDRV_GPIO_EV3_PIN(3, 3, 0, 1, 8);
+
+// ADC / Flash SPI0 chip select (active low).
+static const pbdrv_gpio_t pin_spi0_ncs3 = PBDRV_GPIO_EV3_PIN(3, 27, 24, 8, 2);
+static const pbdrv_gpio_t pin_spi0_ncs0 = PBDRV_GPIO_EV3_PIN(4, 7, 4, 1, 6);
+
 /**
- * Sets or clears the chip select line. This is required for various operations
- * of the w25qxx
+ * Sets or clears the chip select line.
+ *
+ * // REVISIT: TI API also seems to have ways of having the peripheral do this for us. Whatever works is fine.
  *
  * @param [in] set         Whether to set (true) or clear (false) CS.
  */
 static void spi_chip_select(bool set) {
     // Active low, so set CS means set /CS low.
     if (set) {
-        pbdrv_gpio_out_low(&bdev.pdata->pin_ncs);
+        pbdrv_gpio_out_low(&pin_spi0_ncs0);
     } else {
-        pbdrv_gpio_out_high(&bdev.pdata->pin_ncs);
+        pbdrv_gpio_out_high(&pin_spi0_ncs0);
     }
 }
 
@@ -152,25 +152,32 @@ static pbio_error_t spi_begin(const spi_command_t *cmd) {
     // Set status to wait and start receiving.
     bdev.spi_status = SPI_STATUS_WAIT;
 
-    // Start SPI operation.
-    HAL_StatusTypeDef err;
-    if (cmd->operation == SPI_RECV) {
-        err = HAL_SPI_Receive_DMA(&bdev.hspi, cmd->buffer, cmd->size);
-    } else {
-        err = HAL_SPI_Transmit_DMA(&bdev.hspi, cmd->buffer, cmd->size);
-    }
+    // REPLACE WITH TI AM1808 SPI DMA operation
+    //
+    //
+    // // Start SPI operation.
+    // HAL_StatusTypeDef err;
+    // if (cmd->operation == SPI_RECV) {
+    //     err = HAL_SPI_Receive_DMA(&bdev.hspi, cmd->buffer, cmd->size);
+    // } else {
+    //     err = HAL_SPI_Transmit_DMA(&bdev.hspi, cmd->buffer, cmd->size);
+    // }
 
-    // Handle HAL errors.
-    switch (err) {
-        case HAL_OK:
-            return PBIO_SUCCESS;
-        case HAL_ERROR:
-            return PBIO_ERROR_INVALID_ARG;
-        case HAL_BUSY:
-            return PBIO_ERROR_BUSY;
-        default:
-            return PBIO_ERROR_IO;
-    }
+    // // Handle HAL errors.
+    // switch (err) {
+    //     case HAL_OK:
+    //         return PBIO_SUCCESS;
+    //     case HAL_ERROR:
+    //         return PBIO_ERROR_INVALID_ARG;
+    //     case HAL_BUSY:
+    //         return PBIO_ERROR_BUSY;
+    //     default:
+    //         return PBIO_ERROR_IO;
+    // }
+
+    // REVISIT: DELETE ME. Here for now until we implement a real transfer.
+    bdev.spi_status = SPI_STATUS_COMPLETE;
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -203,31 +210,27 @@ static pbio_error_t spi_command_thread(pbio_os_state_t *state, const spi_command
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+//
+// REVISIT: Can delete this, and hardcode for N25Q128
+//
 // Select constant values based on flash device type.
-#if PBDRV_CONFIG_BLOCK_DEVICE_EV3_W25Q32
+#if 1
 #define W25Qxx(Q32, Q256) (Q32)
-#elif PBDRV_CONFIG_BLOCK_DEVICE_EV3_W25Q256
+#else
 #define W25Qxx(Q32, Q256) (Q256)
 #endif
 
-// 3 or 4 byte addressing mode.
-#define FLASH_ADDRESS_SIZE (W25Qxx(3, 4))
+// 3 byte addressing mode.
+#define FLASH_ADDRESS_SIZE (3)
 
 static void set_address_be(uint8_t *buf, uint32_t address) {
-    #if PBDRV_CONFIG_BLOCK_DEVICE_EV3_W25Q32
     buf[0] = address >> 16;
     buf[1] = address >> 8;
     buf[2] = address;
-    #else
-    buf[0] = address >> 24;
-    buf[1] = address >> 16;
-    buf[2] = address >> 8;
-    buf[3] = address;
-    #endif
 }
 
 /**
- * Device-specific flash commands.
+ * Device-specific flash commands. // REVISIT: Hardcode for N25Q128
  */
 enum {
     FLASH_CMD_GET_STATUS = 0x05,
@@ -239,7 +242,7 @@ enum {
 };
 
 /**
- * Flash sizes.
+ * Flash sizes. // REVISIT: for N25Q128
  */
 enum {
     FLASH_SIZE_ERASE = 4 * 1024, // Limited by W25QXX operation
@@ -248,14 +251,14 @@ enum {
 };
 
 /**
- * Flash status flags.
+ * Flash status flags.  // REVISIT: for N25Q128
  */
 enum {
     FLASH_STATUS_BUSY = 0x01,
     FLASH_STATUS_WRITE_ENABLED = 0x02,
 };
 
-// W25Qxx manufacturer and device ID.
+// W25Qxx manufacturer and device ID.  // REVISIT: for N25Q128
 static const uint8_t device_id[] = {0xEF, 0x40, W25Qxx(0x16, 0x19)};
 
 // Request flash device ID.
@@ -487,10 +490,10 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
         return err;
     }
 
-    // Verify flash device ID
-    if (memcmp(device_id, id_data, sizeof(id_data))) {
-        return PBIO_ERROR_FAILED;
-    }
+    // Verify flash device ID // REVISIT: Fix up id_data so we can memcmp
+    // if (memcmp(device_id, id_data, sizeof(id_data))) {
+    //     return PBIO_ERROR_FAILED;
+    // }
 
     // Initialization done.
     pbdrv_init_busy_down();
@@ -500,55 +503,26 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 
 void pbdrv_block_device_init(void) {
 
-    bdev.pdata = &pbdrv_block_device_ev3_platform_data;
     bdev.spi_status = SPI_STATUS_COMPLETE;
 
-    bdev.tx_dma.Instance = bdev.pdata->tx_dma;
-    bdev.tx_dma.Init.Channel = bdev.pdata->tx_dma_ch;
-    bdev.tx_dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    bdev.tx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
-    bdev.tx_dma.Init.MemInc = DMA_MINC_ENABLE;
-    bdev.tx_dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    bdev.tx_dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    bdev.tx_dma.Init.Mode = DMA_NORMAL;
-    bdev.tx_dma.Init.Priority = DMA_PRIORITY_HIGH;
-    bdev.tx_dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    bdev.tx_dma.Init.MemBurst = DMA_MBURST_SINGLE;
-    bdev.tx_dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init(&bdev.tx_dma);
-    HAL_NVIC_SetPriority(bdev.pdata->tx_dma_irq, 5, 0);
-    HAL_NVIC_EnableIRQ(bdev.pdata->tx_dma_irq);
-    __HAL_LINKDMA(&bdev.hspi, hdmatx, bdev.tx_dma);
+    // Configure the GPIO pins.
+    pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
+    pbdrv_gpio_alt(&pin_spi0_miso, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
+    pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
 
-    bdev.rx_dma.Instance = bdev.pdata->rx_dma;
-    bdev.rx_dma.Init.Channel = bdev.pdata->rx_dma_ch;
-    bdev.rx_dma.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    bdev.rx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
-    bdev.rx_dma.Init.MemInc = DMA_MINC_ENABLE;
-    bdev.rx_dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    bdev.rx_dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    bdev.rx_dma.Init.Mode = DMA_NORMAL;
-    bdev.rx_dma.Init.Priority = DMA_PRIORITY_HIGH;
-    bdev.rx_dma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    bdev.rx_dma.Init.MemBurst = DMA_MBURST_SINGLE;
-    bdev.rx_dma.Init.PeriphBurst = DMA_PBURST_SINGLE;
-    HAL_DMA_Init(&bdev.rx_dma);
-    HAL_NVIC_SetPriority(bdev.pdata->rx_dma_irq, 5, 0);
-    HAL_NVIC_EnableIRQ(bdev.pdata->rx_dma_irq);
-    __HAL_LINKDMA(&bdev.hspi, hdmarx, bdev.rx_dma);
+    // REVISIT: Do we want to have the peripheral control CS or do it manually
+    // like we did in the W25QXX STM32 driver? If so, just set it high just
+    // like the next pin below.
+    pbdrv_gpio_alt(&pin_spi0_ncs0, SYSCFG_PINMUX4_PINMUX4_7_4_NSPI0_SCS0);
 
-    bdev.hspi.Instance = bdev.pdata->spi;
-    bdev.hspi.Init.Mode = SPI_MODE_MASTER;
-    bdev.hspi.Init.Direction = SPI_DIRECTION_2LINES;
-    bdev.hspi.Init.DataSize = SPI_DATASIZE_8BIT;
-    bdev.hspi.Init.CLKPolarity = SPI_POLARITY_LOW;
-    bdev.hspi.Init.CLKPhase = SPI_PHASE_1EDGE;
-    bdev.hspi.Init.NSS = SPI_NSS_SOFT;
-    bdev.hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-    bdev.hspi.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    HAL_SPI_Init(&bdev.hspi);
-    HAL_NVIC_SetPriority(bdev.pdata->irq, 6, 2);
-    HAL_NVIC_EnableIRQ(bdev.pdata->irq);
+    // Is this sufficient to disable ADC SPI?
+    pbdrv_gpio_out_high(&pin_spi0_ncs3);
+
+    //
+    // REVISIT: Init SPI and DMA with TI AM1808 API
+    //
+    // See display_ev3.c for inspiration and adapt settings as needed.
+    //
 
     pbdrv_init_busy_up();
     pbio_os_process_start(&pbdrv_block_device_ev3_init_process, pbdrv_block_device_ev3_init_process_thread, NULL);
