@@ -632,7 +632,7 @@ UBOOT_FILE = $(PBTOP)/bricks/ev3/u-boot.bin
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 # For EV3, merge firmware blob with u-boot to create a bootable image.
 $(BUILD)/firmware-base.bin: $(BUILD)/uImage
-	python $(MAKE_BOOTABLE_IMAGE) $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
+	$(Q)$(MAKE_BOOTABLE_IMAGE) $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
 else
 # For embeded systems, the firmware is just the base file.
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
