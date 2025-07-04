@@ -31,8 +31,6 @@
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-
 /**
  * SPI bus state.
  */
@@ -566,19 +564,14 @@ pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, ui
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbdrv_uart_debug_printf("read %d %d\r\n", offset, size);
-
     // Exit on invalid size.
     if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
-        pbdrv_uart_debug_printf("read bad\r\n");
         return PBIO_ERROR_INVALID_ARG;
     }
 
     // Split up reads to maximum chunk size.
     for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_READ);
-
-        pbdrv_uart_debug_printf("read now %d %d\r\n", offset, size_done, size_now);
 
         // Set address for this read request and send it.
         set_address_be(&read_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset + size_done);
@@ -588,8 +581,6 @@ pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, ui
         }
         PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
     }
-
-    pbdrv_uart_debug_printf("read done\r\n");
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -625,8 +616,6 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
-
-    pbdrv_uart_debug_printf("store %d\r\n", size);
 
     // Exit on invalid size.
     if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
@@ -705,8 +694,6 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
         return PBIO_ERROR_FAILED;
     }
 
-    pbdrv_uart_debug_printf("OK OK OK!\r\n");
-
     // Initialization done.
     pbdrv_init_busy_down();
 
@@ -714,9 +701,6 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 }
 
 void pbdrv_block_device_init(void) {
-
-    pbdrv_uart_debug_printf("block device init test\r\n");
-
     // SPI module basic init
     PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_SPI0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
     SPIReset(SOC_SPI_0_REGS);

@@ -26,8 +26,6 @@
 #include "light_matrix.h"
 #include "light.h"
 
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-
 static struct pt update_program_run_button_wait_state_pt;
 
 // The selected slot is not persistent across reboot, so that the first slot
@@ -193,8 +191,7 @@ void pbsys_hmi_poll(void) {
             update_program_run_button_wait_state(true);
 
             // power off when button is held down for 2 seconds
-            if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 1000)) {
-                pbdrv_uart_debug_printf("shutdown\r\n");
+            if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 2000)) {
                 pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
             }
         } else {
