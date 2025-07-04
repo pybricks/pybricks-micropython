@@ -127,6 +127,25 @@ void pbdrv_block_device_ev3_spi_error(void) {
     pbio_os_request_poll();
 }
 
+/**
+ * SPI interrupt handler, which is only used for single-byte commands
+ */
+static void spi0_isr(void) {
+    uint32_t intCode = 0;
+    IntSystemStatusClear(SYS_INT_SPINT0);
+
+    while ((intCode = SPIInterruptVectorGet(SOC_SPI_0_REGS))) {
+        if (intCode != SPI_RECV_FULL) {
+            continue;
+        }
+
+        bdev.spi_cmd_buf_rx[0] = HWREG(SOC_SPI_0_REGS + SPI_SPIBUF);
+        bdev.spi_status &= ~SPI_STATUS_WAIT_RX;
+        SPIIntDisable(SOC_SPI_0_REGS, SPI_RECV_INT);
+        pbio_os_request_poll();
+    }
+}
+
 // ADC / Flash SPI0 data MOSI
 static const pbdrv_gpio_t pin_spi0_mosi = PBDRV_GPIO_EV3_PIN(3, 15, 12, 8, 5);
 // ADC / Flash SPI0 data MISO
@@ -235,7 +254,11 @@ static pbio_error_t spi_begin_for_flash(
         // There is no point in using DMA here
         // (this is used for e.g. WREN)
 
-        // TODO!
+        bdev.spi_status = SPI_STATUS_WAIT_RX;
+
+        uint32_t tx = spi0_last_dat1_for_flash(cmd[0]);
+        SPIIntEnable(SOC_SPI_0_REGS, SPI_RECV_INT);
+        HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = tx;
     } else {
         memcpy(&bdev.spi_cmd_buf_tx, cmd, cmd_len);
 
@@ -294,7 +317,7 @@ static pbio_error_t spi_begin_for_flash(
 
         EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
         EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
-        SPIIntEnable(SOC_SPI_0_REGS, (SPI_DMA_REQUEST_ENA_INT));
+        SPIIntEnable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
     }
 
     return PBIO_SUCCESS;
@@ -749,7 +772,9 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-uint8_t tx_test[4] = {0x9f, 0x5a, 0xa5, 0x33};
+uint8_t tx_test_rdid[4] = {0x9f, 0x5a, 0xa5, 0x33};
+uint8_t tx_test_rdsr[2] = {0x05, 0x5a};
+uint8_t tx_test_wren[1] = {0x06};
 
 static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 
@@ -762,13 +787,25 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    spi_begin_for_flash(tx_test, 4, 0, 0, 0);
+    spi_begin_for_flash(tx_test_rdid, 4, 0, 0, 0);
     PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
     pbdrv_uart_debug_printf("id1 %02x%02x%02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff, bdev.spi_cmd_buf_rx[2] & 0xff, bdev.spi_cmd_buf_rx[3] & 0xff);
 
-    spi_begin_for_flash(tx_test, 4, 0, 0, 0);
+    spi_begin_for_flash(tx_test_rdid, 4, 0, 0, 0);
     PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
     pbdrv_uart_debug_printf("id2 %02x%02x%02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff, bdev.spi_cmd_buf_rx[2] & 0xff, bdev.spi_cmd_buf_rx[3] & 0xff);
+
+    spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    pbdrv_uart_debug_printf("sr1 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+
+    spi_begin_for_flash(tx_test_wren, 1, 0, 0, 0);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    pbdrv_uart_debug_printf("wren %02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff);
+
+    spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    pbdrv_uart_debug_printf("sr2 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
 
     // // Write the ID getter command
     // PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
@@ -831,6 +868,9 @@ void pbdrv_block_device_init(void) {
 
     // Set up interrupts
     SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
+    IntRegister(SYS_INT_SPINT0, spi0_isr);
+    IntChannelSet(SYS_INT_SPINT0, 2);
+    IntSystemEnable(SYS_INT_SPINT0);
     
     // Request DMA channels. This only needs to be done for the initial events (and not for chained parameter sets)
     EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
