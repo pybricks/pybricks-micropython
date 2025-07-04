@@ -16,11 +16,13 @@
 #include <pbdrv/block_device.h>
 #include <pbdrv/gpio.h>
 
+#include <tiam1808/edma.h>
 #include <tiam1808/spi.h>
 #include <tiam1808/psc.h>
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
 #include "block_device_ev3.h"
@@ -156,6 +158,21 @@ static const pbdrv_gpio_t pin_flash_nhold = PBDRV_GPIO_EV3_PIN(6, 31, 28, 2, 0);
 // - 126: used to send all but the last byte of the "user data" block, chains to 127
 // - 127: used to send the last byte of the "user data" block, which is necessary to clear CSHOLD
 
+// XXX In the TI StarterWare code, miscompiles seemed to be happening due to strict aliasing issues with this type.
+// Fix it by using a union for type punning, which is more-or-less allowed
+// (it is explicitly allowed by GCC, and we do not have trap representations on this platform)
+//
+// This declaration also forces alignment
+typedef union {
+    EDMA3CCPaRAMEntry p;
+    uint32_t u[32 / 4];
+} EDMA3CCPaRAMEntry_;
+
+static void edma3_set_param(unsigned int slot, EDMA3CCPaRAMEntry_ *p) {
+    for (int i = 0; i < 32 / 4; i++)
+        HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_PaRAM_BASE + slot*32 + i*4) = p->u[i];
+}
+
 // /**
 //  * Sets or clears the chip select line.
 //  *
@@ -172,11 +189,16 @@ static const pbdrv_gpio_t pin_flash_nhold = PBDRV_GPIO_EV3_PIN(6, 31, 28, 2, 0);
 //     }
 // }
 
-static void spi0_setup_for_flash() {
+static inline void spi0_setup_for_flash() {
     *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) =
         (1 << (SPI_SPIDAT1_CSHOLD_SHIFT - 16)) |
         (SPI_SPIDAT1_DFSEL_FORMAT0 << (SPI_SPIDAT1_DFSEL_SHIFT - 16)) |
         (1 << 3) | (0 << 0);    // nCS3 inactive, nCS0 active
+}
+static inline uint32_t spi0_last_dat1_for_flash(uint8_t x) {
+    return x |
+        (SPI_SPIDAT1_DFSEL_FORMAT0 << SPI_SPIDAT1_DFSEL_SHIFT) |
+        (1 << (SPI_SPIDAT1_CSNR_SHIFT + 3)) | (0 << (SPI_SPIDAT1_CSNR_SHIFT + 0));  // nCS3 inactive, nCS0 active
 }
 
 // /**
@@ -628,6 +650,10 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+uint8_t tx_test[4] = {0x9f, 0x5a, 0xa5, 0x33};
+uint8_t rx_test[4] = {0xde, 0xad, 0xbe, 0xef};
+uint32_t tx_test_blahblah;
+
 static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 
 pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
@@ -641,52 +667,108 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 
     spi0_setup_for_flash();
 
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+    tx_test_blahblah = spi0_last_dat1_for_flash(tx_test[3]);
 
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+    EDMA3CCPaRAMEntry_ ps;
+    ps.p.srcAddr = (unsigned int)tx_test;
+    ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+    ps.p.aCnt = 1;
+    ps.p.bCnt = 4 - 1;
+    ps.p.cCnt = 1;
+    ps.p.srcBIdx = 1;
+    ps.p.destBIdx = 0;
+    ps.p.srcCIdx = 0;
+    ps.p.destCIdx = 0;
+    ps.p.linkAddr = 127 * 32;
+    ps.p.bCntReload = 0;
+    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+    edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
 
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+    ps.p.srcAddr = (unsigned int)&tx_test_blahblah;
+    ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+    ps.p.aCnt = 4;
+    ps.p.bCnt = 1;
+    ps.p.linkAddr = 0xffff;
+    edma3_set_param(127, &ps);
+    
+    ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
+    ps.p.destAddr = (unsigned int)rx_test;
+    ps.p.aCnt = 1;
+    ps.p.bCnt = 4;
+    ps.p.cCnt = 1;
+    ps.p.srcBIdx = 0;
+    ps.p.destBIdx = 1;
+    ps.p.srcCIdx = 0;
+    ps.p.destCIdx = 0;
+    ps.p.linkAddr = 0xffff;
+    ps.p.bCntReload = 0;
+    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+    edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
 
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    bdev.spi_status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
+
+    pbdrv_uart_debug_printf("block device init thread param setup\r\n");
+
+    // TODO: pbio probably needs a framework for memory barriers and DMA cache management
+    __asm__ volatile("":::"memory");
+
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
+    SPIIntEnable(SOC_SPI_0_REGS, (SPI_DMA_REQUEST_ENA_INT));
+
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+
+    __asm__ volatile("":::"memory");
+
+    pbdrv_uart_debug_printf("block device init thread wait done\r\n");
+    pbdrv_uart_debug_printf("%02x%02x%02x%02x\r\n", rx_test[0] & 0xff, rx_test[1] & 0xff, rx_test[2] & 0xff, rx_test[3] & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // // *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) = 1 << 3;
+    // // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
+    // HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // spi0_setup_for_flash();
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 3) = 0;
     // *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) = 1 << 3;
     // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
-    HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    spi0_setup_for_flash();
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 3) = 0;
-    *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) = 1 << 3;
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
-    // HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+    // // HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
+    // while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    // pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
 
     // // Write the ID getter command
     // PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
@@ -749,6 +831,10 @@ void pbdrv_block_device_init(void) {
 
     // Set up interrupts
     SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
+    
+    // Request DMA channels. This only needs to be done for the initial events (and not for chained parameter sets)
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI1_RX, EDMA3_CHA_SPI1_RX, 0); 
 
     // Enable!
     SPIEnable(SOC_SPI_0_REGS);
