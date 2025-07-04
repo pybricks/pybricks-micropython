@@ -23,6 +23,7 @@
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
+#include "block_device_ev3.h"
 #include "../drv/gpio/gpio_ev3.h"
 
 #include <pbio/error.h>
@@ -34,12 +35,16 @@
  * SPI bus state.
  */
 typedef enum {
-    /** Operation started, bus is busy. */
-    SPI_STATUS_WAIT,
     /** Operation complete, bus is idle. */
-    SPI_STATUS_COMPLETE,
+    SPI_STATUS_COMPLETE = 0,
     /** Operation failed. */
-    SPI_STATUS_ERROR,
+    SPI_STATUS_ERROR = 1,
+    /** Waiting for TX to complete. Bitfield. */
+    SPI_STATUS_WAIT_TX = 0x100,
+    /** Waiting for RX to complete. Bitfield. */
+    SPI_STATUS_WAIT_RX = 0x200,
+    /** Waiting for anything to complete. Bit mask. */
+    SPI_STATUS_WAIT_ANY = 0x300,
 } spi_status_t;
 
 /**
@@ -66,33 +71,43 @@ typedef struct {
     uint16_t size;
 } spi_command_t;
 
+#define SPI_CMD_BUF_SZ      4
+
 /**
  * The block device driver state.
  */
 static struct {
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
-    //
-    // Any state variables can go here as needed. We don't need pdata in platform.c
-    // since this driver is going to only ever be used with EV3
-    //
+
+    // This is programmed into the DMA controller when SPI only needs to receive.
+    // It should always stay as 0.
+    uint8_t tx_dummy_byte;
+    // This is used when transmitting user data, so that the last byte clears CSHOLD.
+    uint32_t tx_last_word;
+    // This is programmed into the DMA controller when SPI only needs to receive.
+    uint8_t rx_dummy_byte;
+    // This is used to hold the initial command to the SPI peripheral.
+    uint8_t spi_cmd_buf[SPI_CMD_BUF_SZ];
 } bdev;
 
 
 /**
- * Tx transfer complete. // Leaving this here for inspiration as hook for TI API. Delete if not needed.
+ * Tx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_tx_complete(void) {
-    bdev.spi_status = SPI_STATUS_COMPLETE;
-    pbio_os_request_poll();
+    bdev.spi_status &= ~SPI_STATUS_WAIT_TX;
+    if (!(bdev.spi_status & SPI_STATUS_WAIT_ANY))
+        pbio_os_request_poll();
 }
 
 /**
- * Rx transfer complete. // Leaving this here for inspiration as hook for TI API. Delete if not needed.
+ * Rx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_rx_complete(void) {
-    bdev.spi_status = SPI_STATUS_COMPLETE;
-    pbio_os_request_poll();
+    bdev.spi_status &= ~SPI_STATUS_WAIT_RX;
+    if (!(bdev.spi_status & SPI_STATUS_WAIT_ANY))
+        pbio_os_request_poll();
 }
 
 /**
@@ -131,6 +146,15 @@ static const pbdrv_gpio_t pin_flash_nhold = PBDRV_GPIO_EV3_PIN(6, 31, 28, 2, 0);
 // We use the following:
 // - Format 0: Flash
 // - Format 1: ADC (TODO)
+//
+// The EDMA3 peripheral has 128 parameter sets. 32 of them are triggered by events, but the others
+// can be used by "linking" to them from a previous one. Instead of having an allocator for these,
+// we hardcode the usage of linked slots (which means that we don't support arbitrary scatter-gather).
+// - EDMA3_CHA_SPI0_TX: used to send initial command, chains to 126
+// - EDMA3_CHA_SPI0_RX: used to receive bytes corresponding to initial command, chains to 125
+// - 125: used to receive bytes corresponding to "user data"
+// - 126: used to send all but the last byte of the "user data" block, chains to 127
+// - 127: used to send the last byte of the "user data" block, which is necessary to clear CSHOLD
 
 // /**
 //  * Sets or clears the chip select line.
@@ -608,10 +632,61 @@ static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 
 pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
 
+    pbdrv_uart_debug_printf("block device init thread\r\n");
+
     // pbio_error_t err;
     // static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    spi0_setup_for_flash();
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) = 1 << 3;
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
+    HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    spi0_setup_for_flash();
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
+
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
+    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 3) = 0;
+    *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) = 1 << 3;
+    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
+    // HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
+    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
+    pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
 
     // // Write the ID getter command
     // PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
@@ -680,61 +755,7 @@ void pbdrv_block_device_init(void) {
 
     pbdrv_uart_debug_printf("block device init done basic\r\n");
 
-    spi0_setup_for_flash();
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) = 1 << 3;
-    // *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
-    HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    spi0_setup_for_flash();
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x9f;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x5a;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0xa5;
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_TXINTFLG)) {}
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 3) = 0;
-    *(volatile unsigned char *)(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33;
-    // HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = 0x33 | (1 << (8 + 3));
-    while (!(HWREG(SOC_SPI_0_REGS + SPI_SPIFLG) & SPI_SPIFLG_RXINTFLG)) {}
-    pbdrv_uart_debug_printf("%02x\r\n", HWREG(SOC_SPI_0_REGS + SPI_SPIBUF) & 0xff);
-
     bdev.spi_status = SPI_STATUS_COMPLETE;
-
-    //
-    // REVISIT: Init SPI and DMA with TI AM1808 API
-    //
-    // See display_ev3.c for inspiration and adapt settings as needed.
-    //
 
     pbdrv_init_busy_up();
     pbio_os_process_start(&pbdrv_block_device_ev3_init_process, pbdrv_block_device_ev3_init_process_thread, NULL);
