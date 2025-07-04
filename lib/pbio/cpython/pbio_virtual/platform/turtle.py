@@ -175,7 +175,10 @@ class Motor:
 
     def _calc_new_output(self, new_timestamp: int) -> Tuple(int, int):
         delta = new_timestamp - self._state.timestamp
-        new_count = self._state.count + self._state.duty_cycle * delta * self.MAX_SPEED / 1000000
+        new_count = (
+            self._state.count
+            + self._state.duty_cycle * delta * self.MAX_SPEED / 1000000
+        )
         new_rate = self._state.duty_cycle * self.MAX_SPEED
 
         return new_count, new_rate

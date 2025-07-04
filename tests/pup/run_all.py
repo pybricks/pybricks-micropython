@@ -10,12 +10,13 @@ from pybricksdev.ble import find_device
 
 
 async def main():
-
     # Get all script paths.
     scripts = []
-    for (dirpath, dirnames, filenames) in os.walk("."):
+    for dirpath, dirnames, filenames in os.walk("."):
         if dirpath != ".":
-            scripts += [os.path.join(dirpath, name) for name in filenames if ".py" == name[-3:]]
+            scripts += [
+                os.path.join(dirpath, name) for name in filenames if ".py" == name[-3:]
+            ]
 
     # Sort tests to re-run previously failed tests first.
     test_passed = lambda name: (not os.path.exists(name[:-3] + ".out"), name)
@@ -28,7 +29,6 @@ async def main():
 
     # Run all scripts.
     for file_name in scripts:
-
         # Run it.
         print("Now running:", file_name)
         await hub.run(file_name)

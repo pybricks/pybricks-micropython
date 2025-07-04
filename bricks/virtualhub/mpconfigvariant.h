@@ -56,15 +56,16 @@
 #define MICROPY_DEBUG_PRINTERS                  (1)
 #define MICROPY_MODULE_ATTR_DELEGATION          (1)
 #define MICROPY_MODULE_BUILTIN_INIT             (1)
+#define MICROPY_MODULE_BUILTIN_SUBPACKAGES      (1)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO         (1)
 #define MICROPY_PY_BUILTINS_HELP                (1)
 #define MICROPY_PY_BUILTINS_HELP_MODULES        (1)
 #define MICROPY_PY_SYS_SETTRACE                 (1)
-#define MICROPY_PY_UERRNO                       (1)
-#define MICROPY_PY_UOS                          (1)
-#define MICROPY_PY_UOS_GETENV_PUTENV_UNSETENV   (1)
-#define MICROPY_PY_UOS_INCLUDEFILE              "ports/unix/moduos.c"
-#define MICROPY_PY_URANDOM_EXTRA_FUNCS          (1)
+#define MICROPY_PY_ERRNO                        (1)
+#define MICROPY_PY_OS                           (1)
+#define MICROPY_PY_OS_GETENV_PUTENV_UNSETENV    (1)
+#define MICROPY_PY_OS_INCLUDEFILE               "ports/unix/modos.c"
+#define MICROPY_PY_RANDOM_EXTRA_FUNCS           (1)
 #define MICROPY_PY_BUILTINS_SLICE_INDICES       (1)
 #define MICROPY_PERSISTENT_CODE_SAVE            (1)
 #define MICROPY_STREAMS_POSIX_API               (1)
@@ -72,7 +73,7 @@
 #define MICROPY_KBD_EXCEPTION                   (1)
 
 // REVISIT: This list currently matches the stm32 builds.
-#define MICROPY_PY_UERRNO_LIST \
+#define MICROPY_PY_ERRNO_LIST \
     X(EPERM) \
     X(EIO) \
     X(EBUSY) \

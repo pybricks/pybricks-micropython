@@ -51,7 +51,9 @@ class SimulationModel(ABC):
             u (array): Control signal vector.
         """
         self.input_times = concatenate((self.input_times, array([t])))
-        self.input_values = concatenate((self.input_values, u.reshape(self.m, 1)), axis=1)
+        self.input_values = concatenate(
+            (self.input_values, u.reshape(self.m, 1)), axis=1
+        )
 
     def simulate(self, time_end):
         """Simulates the system until time_end, subject to the ongoing input.
@@ -84,7 +86,6 @@ class SimulationModel(ABC):
 
         # Evaluate RK4 integration for all time steps
         for i, t in enumerate(times):
-
             # Save the state and output
             states[:, i] = state
             outputs[:, i] = self.output(t, state)
@@ -144,13 +145,14 @@ class SimulationModel(ABC):
         """
         # If time is in the past, interpolate from available results.
         if time < self.times[-1]:
-
             # Find first index larger than given time, which always exists.
             i = next(i for i, t in enumerate(self.times) if t > time)
 
             # Interpolate output in time
             ratio = (time - self.times[i - 1]) / (self.times[i] - self.times[i - 1])
-            return self.outputs[:, i - 1] + ratio * (self.outputs[:, i] - self.outputs[:, i - 1])
+            return self.outputs[:, i - 1] + ratio * (
+                self.outputs[:, i] - self.outputs[:, i - 1]
+            )
 
         # Return latest available data.
         return self.outputs[:, -1]

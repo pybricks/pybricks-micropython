@@ -566,7 +566,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
-    pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_BLE);
+    pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data, observed_data_t, num_observe_channels, &pb_type_BLE);
     self->broadcast_channel = broadcast_channel_in;
 
     for (mp_int_t i = 0; i < num_observe_channels; i++) {
