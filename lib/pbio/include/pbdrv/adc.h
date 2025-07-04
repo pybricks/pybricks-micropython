@@ -51,7 +51,10 @@ static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
+static inline void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
+}
+
+static inline void pbdrv_adc_update_soon(void) {
 }
 
 #endif
