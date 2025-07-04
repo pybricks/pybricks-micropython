@@ -3,8 +3,8 @@
 
 // platform-specific configuration for LEGO MINDSTORMS EV3
 
-#define PBDRV_CONFIG_ADC                            (1)
-#define PBDRV_CONFIG_ADC_EV3                        (1)
+#define PBDRV_CONFIG_ADC                            (0)
+#define PBDRV_CONFIG_ADC_EV3                        (0)
 #define PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS       (16)
 
 #define PBDRV_CONFIG_CLOCK                          (1)
