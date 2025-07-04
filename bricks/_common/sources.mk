@@ -116,7 +116,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
 	drv/battery/battery_ev3.c \
-	drv/battery/battery_linux_ev3.c \
 	drv/battery/battery_nxt.c \
 	drv/battery/battery_test.c \
 	drv/battery/battery_virtual.c \
@@ -132,7 +131,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
 	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_gpio.c \
-	drv/button/button_linux_ev3.c \
 	drv/button/button_nxt.c \
 	drv/button/button_resistor_ladder.c \
 	drv/button/button_test.c \
