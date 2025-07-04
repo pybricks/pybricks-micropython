@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import argparse
+import sys
 
 # Expected layout of the firmware image:
 #
@@ -21,14 +22,18 @@ UIMAGE_OFFSET = 0x50000
 FIRMWARE_ROUND_SIZE = 256 * 1024
 
 
-def make_firmware(uboot_blob, uimage_blob):
+def make_firmware(uboot_blob: bytes, uimage_blob: bytes) -> bytes:
 
     if len(uboot_blob) > UBOOT_MAX_SIZE:
-        print("u-boot file is bigger than expected. Using only the first 256KiB.")
-        uboot_blob = uboot_blob[:UBOOT_MAX_SIZE]
+        print(
+            f"u-boot file is bigger than 256KiB ({len(uboot_blob)} bytes), it is not safe to use.",
+            file=sys.stderr,
+        )
+        exit(1)
 
     if len(uimage_blob) > UIMAGE_MAX_SIZE:
-        raise ValueError("uImage file is too big.")
+        print(f"uImage file is too big ({len(uimage_blob)} > {UIMAGE_MAX_SIZE}).", file=sys.stderr)
+        exit(1)
 
     # Gets combined size, rounded to nearest expected size.
     combined_size = UIMAGE_OFFSET + len(uimage_blob)
