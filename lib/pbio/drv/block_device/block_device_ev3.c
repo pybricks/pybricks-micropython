@@ -199,6 +199,7 @@ static void edma3_set_param(unsigned int slot, EDMA3CCPaRAMEntry_ *p) {
         HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_PaRAM_BASE + slot*32 + i*4) = p->u[i];
 }
 
+// Helper functions for setting up the high control bits of a data transfer
 static inline void spi0_setup_for_flash() {
     *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) =
         (1 << (SPI_SPIDAT1_CSHOLD_SHIFT - 16)) |
@@ -216,8 +217,8 @@ static inline uint32_t spi0_last_dat1_for_flash(uint8_t x) {
  *
  * @param [in] cmd              Bytes to initially transfer as the command for the flash
  * @param [in] cmd_len          Length of \p cmd
- * @param [in] user_data_tx     Bytes to be sent to the flash after the initial command. May be null,
- *                              in which case a dummy value is sent.
+ * @param [in] user_data_tx     Bytes to be sent to the flash after the initial command. May be null, in which case a dummy value is sent.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
  * @param [out] user_data_rx    Bytes to be received from the flash after the initial command. May be null.
  *                              Lifetime must remain valid until after the completion of the entire transfer.
  * @param [in] user_data_len    Length of the user data (both transmission and reception)
@@ -279,15 +280,15 @@ static pbio_error_t spi_begin_for_flash(
             ps.p.destCIdx = 0;
             ps.p.linkAddr = 127 * 32;
             ps.p.bCntReload = 0;
-            ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+            ps.p.opt = 0;
             edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
 
             // TX last byte, clearing CSHOLD
             ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
-            ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
             ps.p.aCnt = 4;
             ps.p.bCnt = 1;
             ps.p.linkAddr = 0xffff;
+            ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
             edma3_set_param(127, &ps);
 
             // RX all bytes
@@ -307,7 +308,87 @@ static pbio_error_t spi_begin_for_flash(
         } else {
             // Command *and* user data
 
-            // TODO!
+            // TX the command
+            ps.p.srcAddr = (unsigned int)(&bdev.spi_cmd_buf_tx);
+            ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+            ps.p.aCnt = 1;
+            ps.p.bCnt = cmd_len;
+            ps.p.cCnt = 1;
+            ps.p.srcBIdx = 1;
+            ps.p.destBIdx = 0;
+            ps.p.srcCIdx = 0;
+            ps.p.destCIdx = 0;
+            ps.p.linkAddr = 126 * 32;
+            ps.p.bCntReload = 0;
+            ps.p.opt = 0;
+            edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
+
+            if (user_data_tx) {
+                bdev.tx_last_word = spi0_last_dat1_for_flash(user_data_tx[user_data_len - 1]);
+
+                // TX all but the last byte
+                ps.p.srcAddr = (unsigned int)(user_data_tx);
+                ps.p.bCnt = user_data_len - 1;
+                ps.p.linkAddr = 127 * 32;
+                edma3_set_param(126, &ps);
+
+                // TX the last byte, clearing CSHOLD
+                ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+                ps.p.aCnt = 4;
+                ps.p.bCnt = 1;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(127, &ps);
+            } else {
+                bdev.tx_last_word = spi0_last_dat1_for_flash(0);
+
+                // TX all but the last byte
+                ps.p.srcAddr = (unsigned int)(&bdev.tx_dummy_byte);
+                ps.p.bCnt = user_data_len - 1;
+                ps.p.srcBIdx = 0;
+                ps.p.linkAddr = 127 * 32;
+                edma3_set_param(126, &ps);
+
+                // TX the last byte, clearing CSHOLD
+                ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+                ps.p.aCnt = 4;
+                ps.p.bCnt = 1;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(127, &ps);
+            }
+
+            // RX the command
+            ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
+            ps.p.destAddr = (unsigned int)(&bdev.spi_cmd_buf_rx);
+            ps.p.aCnt = 1;
+            ps.p.bCnt = cmd_len;
+            ps.p.cCnt = 1;
+            ps.p.srcBIdx = 0;
+            ps.p.destBIdx = 1;
+            ps.p.srcCIdx = 0;
+            ps.p.destCIdx = 0;
+            ps.p.linkAddr = 125 * 32;
+            ps.p.bCntReload = 0;
+            ps.p.opt = 0;
+            edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
+
+            if (user_data_rx) {
+                // RX the data
+                ps.p.destAddr = (unsigned int)(user_data_rx);
+                ps.p.bCnt = user_data_len;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(125, &ps);
+            } else {
+                // RX dummy
+                ps.p.destAddr = (unsigned int)(&bdev.rx_dummy_byte);
+                ps.p.bCnt = user_data_len;
+                ps.p.destBIdx = 0;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(125, &ps);
+            }
         }
 
         bdev.spi_status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
@@ -775,15 +856,20 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
 uint8_t tx_test_rdid[4] = {0x9f, 0x5a, 0xa5, 0x33};
 uint8_t tx_test_rdsr[2] = {0x05, 0x5a};
 uint8_t tx_test_wren[1] = {0x06};
+uint8_t tx_test_read[4] = {0x03, 0x0a, 0x00, 0x00};
+uint8_t tx_test_write[4] = {0x02, 0x0a, 0x00, 0x00};
+uint8_t tx_test_se[4] = {0xd8, 0x0a, 0x00, 0x00};
+uint8_t tx_write_buf[256];
+uint8_t tx_read_buf[256];
 
 static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 
 pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
-
-    pbdrv_uart_debug_printf("block device init thread\r\n");
-
     // pbio_error_t err;
     // static pbio_os_state_t sub;
+
+    for (int i = 0; i < 256; i++)
+        tx_write_buf[i] = i + 1;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -797,15 +883,71 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 
     spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
     PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    pbdrv_uart_debug_printf("sr1 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+    // pbdrv_uart_debug_printf("sr1 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
 
     spi_begin_for_flash(tx_test_wren, 1, 0, 0, 0);
     PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    pbdrv_uart_debug_printf("wren %02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff);
+    // pbdrv_uart_debug_printf("wren %02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff);
 
     spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
     PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    pbdrv_uart_debug_printf("sr2 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+    // pbdrv_uart_debug_printf("sr2 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+
+    spi_begin_for_flash(tx_test_se, 4, 0, 0, 0);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    while (1) {
+        spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
+        PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+        // pbdrv_uart_debug_printf("srX %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+        if ((bdev.spi_cmd_buf_rx[1] & 1) == 0)
+            break;
+    }
+
+    spi_begin_for_flash(tx_test_wren, 1, 0, 0, 0);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    // pbdrv_uart_debug_printf("wren %02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff);
+
+    spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    // pbdrv_uart_debug_printf("sr3 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+
+    spi_begin_for_flash(tx_test_write, 4, tx_write_buf, 0, 255);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    while (1) {
+        spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
+        PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+        // pbdrv_uart_debug_printf("srX %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
+        if ((bdev.spi_cmd_buf_rx[1] & 1) == 0)
+            break;
+    }
+
+    spi_begin_for_flash(tx_test_read, 4, 0, tx_read_buf, 256);
+    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
+    for (int i = 0; i < 16; i++) {
+        pbdrv_uart_debug_printf("%02x ", tx_read_buf[i] & 0xff);
+    }
+    pbdrv_uart_debug_printf("\r\n");
+    for (int i = 0; i < 16; i++) {
+        pbdrv_uart_debug_printf("%02x ", tx_read_buf[0xf0 + i] & 0xff);
+    }
+    pbdrv_uart_debug_printf("\r\n");
+
+    int was_bad = 0;
+    for (int i = 0; i < 255; i++) {
+        if (tx_read_buf[i] != tx_write_buf[i]) {
+            pbdrv_uart_debug_printf("bad! %d\r\n", i);
+            was_bad = 1;
+        }
+    }
+    if (tx_read_buf[255] != 0xff) {
+        pbdrv_uart_debug_printf("bad! 255\r\n");
+        was_bad = 1;
+    }
+
+    // // if (was_bad) while (1) {}
+
+    if (!was_bad)
+        pbdrv_uart_debug_printf("OK!\r\n");
 
     // // Write the ID getter command
     // PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
