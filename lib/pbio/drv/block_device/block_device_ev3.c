@@ -532,15 +532,11 @@ enum {
     FLASH_STATUS_WRITE_ENABLED = 0x02,
 };
 
-// // W25Qxx manufacturer and device ID.  // REVISIT: for N25Q128
-// static const uint8_t device_id[] = {0xEF, 0x40, W25Qxx(0x16, 0x19)};
+// N25Q128 manufacturer and device ID.
+static const uint8_t device_id[] = {0x20, 0xba, 0x18};
 
-// // Request flash device ID.
-// static const spi_command_t cmd_id_tx = {
-//     .operation = SPI_SEND | SPI_CS_KEEP_ENABLED,
-//     .buffer = &(uint8_t) {FLASH_CMD_GET_ID},
-//     .size = 1,
-// };
+// Request flash device ID.
+static const uint8_t cmd_rdid[] = {FLASH_CMD_GET_ID, 0x00, 0x00, 0x00};
 
 // // Receive flash device ID after sending request.
 // static uint8_t id_data[sizeof(device_id)];
@@ -853,118 +849,35 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-uint8_t tx_test_rdid[4] = {0x9f, 0x5a, 0xa5, 0x33};
-uint8_t tx_test_rdsr[2] = {0x05, 0x5a};
-uint8_t tx_test_wren[1] = {0x06};
-uint8_t tx_test_read[4] = {0x03, 0x0a, 0x00, 0x00};
-uint8_t tx_test_write[4] = {0x02, 0x0a, 0x00, 0x00};
-uint8_t tx_test_se[4] = {0xd8, 0x0a, 0x00, 0x00};
-uint8_t tx_write_buf[256];
-uint8_t tx_read_buf[256];
+// uint8_t tx_test_rdid[4] = {0x9f, 0x5a, 0xa5, 0x33};
+// uint8_t tx_test_rdsr[2] = {0x05, 0x5a};
+// uint8_t tx_test_wren[1] = {0x06};
+// uint8_t tx_test_read[4] = {0x03, 0x0a, 0x00, 0x00};
+// uint8_t tx_test_write[4] = {0x02, 0x0a, 0x00, 0x00};
+// uint8_t tx_test_se[4] = {0xd8, 0x0a, 0x00, 0x00};
+// uint8_t tx_write_buf[256];
+// uint8_t tx_read_buf[256];
 
 static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 
 pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
-    // pbio_error_t err;
-    // static pbio_os_state_t sub;
-
-    for (int i = 0; i < 256; i++)
-        tx_write_buf[i] = i + 1;
+    pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    spi_begin_for_flash(tx_test_rdid, 4, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    pbdrv_uart_debug_printf("id1 %02x%02x%02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff, bdev.spi_cmd_buf_rx[2] & 0xff, bdev.spi_cmd_buf_rx[3] & 0xff);
+    // Write the ID getter command
+    err = spi_begin_for_flash(cmd_rdid, sizeof(cmd_rdid), 0, 0, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
 
-    spi_begin_for_flash(tx_test_rdid, 4, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    pbdrv_uart_debug_printf("id2 %02x%02x%02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff, bdev.spi_cmd_buf_rx[2] & 0xff, bdev.spi_cmd_buf_rx[3] & 0xff);
-
-    spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    // pbdrv_uart_debug_printf("sr1 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
-
-    spi_begin_for_flash(tx_test_wren, 1, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    // pbdrv_uart_debug_printf("wren %02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff);
-
-    spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    // pbdrv_uart_debug_printf("sr2 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
-
-    spi_begin_for_flash(tx_test_se, 4, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    while (1) {
-        spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
-        PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-        // pbdrv_uart_debug_printf("srX %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
-        if ((bdev.spi_cmd_buf_rx[1] & 1) == 0)
-            break;
+    // Verify flash device ID
+    if (memcmp(device_id, &bdev.spi_cmd_buf_rx[1], sizeof(device_id))) {
+        return PBIO_ERROR_FAILED;
     }
 
-    spi_begin_for_flash(tx_test_wren, 1, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    // pbdrv_uart_debug_printf("wren %02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff);
-
-    spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    // pbdrv_uart_debug_printf("sr3 %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
-
-    spi_begin_for_flash(tx_test_write, 4, tx_write_buf, 0, 255);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    while (1) {
-        spi_begin_for_flash(tx_test_rdsr, 2, 0, 0, 0);
-        PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-        // pbdrv_uart_debug_printf("srX %02x%02x\r\n", bdev.spi_cmd_buf_rx[0] & 0xff, bdev.spi_cmd_buf_rx[1] & 0xff);
-        if ((bdev.spi_cmd_buf_rx[1] & 1) == 0)
-            break;
-    }
-
-    spi_begin_for_flash(tx_test_read, 4, 0, tx_read_buf, 256);
-    PBIO_OS_AWAIT_UNTIL(state, !(bdev.spi_status & SPI_STATUS_WAIT_ANY));
-    for (int i = 0; i < 16; i++) {
-        pbdrv_uart_debug_printf("%02x ", tx_read_buf[i] & 0xff);
-    }
-    pbdrv_uart_debug_printf("\r\n");
-    for (int i = 0; i < 16; i++) {
-        pbdrv_uart_debug_printf("%02x ", tx_read_buf[0xf0 + i] & 0xff);
-    }
-    pbdrv_uart_debug_printf("\r\n");
-
-    int was_bad = 0;
-    for (int i = 0; i < 255; i++) {
-        if (tx_read_buf[i] != tx_write_buf[i]) {
-            pbdrv_uart_debug_printf("bad! %d\r\n", i);
-            was_bad = 1;
-        }
-    }
-    if (tx_read_buf[255] != 0xff) {
-        pbdrv_uart_debug_printf("bad! 255\r\n");
-        was_bad = 1;
-    }
-
-    // // if (was_bad) while (1) {}
-
-    if (!was_bad)
-        pbdrv_uart_debug_printf("OK!\r\n");
-
-    // // Write the ID getter command
-    // PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
-    // if (err != PBIO_SUCCESS) {
-    //     return err;
-    // }
-
-    // // Get ID command reply
-    // PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_rx));
-    // if (err != PBIO_SUCCESS) {
-    //     return err;
-    // }
-
-    // // Verify flash device ID // REVISIT: Fix up id_data so we can memcmp
-    // // if (memcmp(device_id, id_data, sizeof(id_data))) {
-    // //     return PBIO_ERROR_FAILED;
-    // // }
+    pbdrv_uart_debug_printf("OK OK OK!\r\n");
 
     // Initialization done.
     pbdrv_init_busy_down();
@@ -1020,8 +933,6 @@ void pbdrv_block_device_init(void) {
 
     // Enable!
     SPIEnable(SOC_SPI_0_REGS);
-
-    pbdrv_uart_debug_printf("block device init done basic\r\n");
 
     bdev.spi_status = SPI_STATUS_COMPLETE;
 
