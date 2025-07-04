@@ -22,6 +22,8 @@
 #include "core.h"
 #include "hmi.h"
 
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+
 /**
  * Information about one code slot.
  *
@@ -187,6 +189,8 @@ void pbsys_storage_request_write(void) {
  * be called by the user to reset the data.
  */
 void pbsys_storage_reset_storage(void) {
+    pbdrv_uart_debug_printf("reset storage\r\n");
+
     // Reset storage except for program data. It is sufficient to set its
     // size to 0, which is what happens here since it is in the map.
     // The program data itself is not overwritten with zeros because the user
@@ -518,10 +522,14 @@ static pbio_os_process_t pbsys_storage_deinit_process;
  */
 void pbsys_storage_deinit(void) {
 
+    pbdrv_uart_debug_printf("storage deinit early\r\n");
+
     // If loading failed or writing not requested, don't write.
     if (pbsys_storage_init_process.err != PBIO_SUCCESS || !data_map_write_on_shutdown) {
         return;
     }
+
+    pbdrv_uart_debug_printf("storage deinit\r\n");
 
     pbsys_init_busy_up();
     pbio_os_process_start(&pbsys_storage_deinit_process, pbsys_storage_deinit_process_thread, NULL);

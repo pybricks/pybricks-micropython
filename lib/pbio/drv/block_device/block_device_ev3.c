@@ -494,42 +494,38 @@ static pbio_error_t spi_begin_for_flash(
 #define W25Qxx(Q32, Q256) (Q256)
 #endif
 
-// 3 byte addressing mode.
-#define FLASH_ADDRESS_SIZE (3)
-
-// static void set_address_be(uint8_t *buf, uint32_t address) {
-//     buf[0] = address >> 16;
-//     buf[1] = address >> 8;
-//     buf[2] = address;
-// }
+static void set_address_be(uint8_t *buf, uint32_t address) {
+    buf[0] = address >> 16;
+    buf[1] = address >> 8;
+    buf[2] = address;
+}
 
 /**
- * Device-specific flash commands. // REVISIT: Hardcode for N25Q128
+ * Device-specific flash commands.
  */
 enum {
     FLASH_CMD_GET_STATUS = 0x05,
     FLASH_CMD_WRITE_ENABLE = 0x06,
     FLASH_CMD_GET_ID = 0x9F,
-    FLASH_CMD_READ_DATA = W25Qxx(0x0B, 0x0C),
-    FLASH_CMD_ERASE_BLOCK = W25Qxx(0x20, 0x21),
-    FLASH_CMD_WRITE_DATA = W25Qxx(0x02, 0x12),
+    FLASH_CMD_READ_DATA = 0x03,
+    FLASH_CMD_ERASE_BLOCK = 0xD8,
+    FLASH_CMD_WRITE_DATA = 0x02,
 };
 
 /**
- * Flash sizes. // REVISIT: for N25Q128
+ * Flash sizes.
  */
 enum {
-    FLASH_SIZE_ERASE = 4 * 1024, // Limited by W25QXX operation
-    FLASH_SIZE_READ = UINT16_MAX, // Limited by STM32 DMA transfer size.
-    FLASH_SIZE_WRITE = 256, // Limited by W25QXX operation
+    FLASH_SIZE_ERASE = 64 * 1024,
+    FLASH_SIZE_READ = SPI_MAX_DATA_SZ,
+    FLASH_SIZE_WRITE = 256,
 };
 
 /**
- * Flash status flags.  // REVISIT: for N25Q128
+ * Flash status flags.
  */
 enum {
     FLASH_STATUS_BUSY = 0x01,
-    FLASH_STATUS_WRITE_ENABLED = 0x02,
 };
 
 // N25Q128 manufacturer and device ID.
@@ -538,215 +534,184 @@ static const uint8_t device_id[] = {0x20, 0xba, 0x18};
 // Request flash device ID.
 static const uint8_t cmd_rdid[] = {FLASH_CMD_GET_ID, 0x00, 0x00, 0x00};
 
-// // Receive flash device ID after sending request.
-// static uint8_t id_data[sizeof(device_id)];
-// static const spi_command_t cmd_id_rx = {
-//     .operation = SPI_RECV,
-//     .buffer = id_data,
-//     .size = sizeof(id_data),
-// };
+// Request the write-status byte.
+static const uint8_t cmd_status[] = {FLASH_CMD_GET_STATUS, 0x00};
 
-// // Enable flash writing.
-// static const spi_command_t cmd_write_enable = {
-//     .operation = SPI_SEND,
-//     .buffer = &(uint8_t) {FLASH_CMD_WRITE_ENABLE},
-//     .size = 1,
-// };
+// Enable flash writing. Needed once before each write operation.
+static const uint8_t cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
 
-// // Request the write-status byte.
-// static const spi_command_t cmd_status_tx = {
-//     .operation = SPI_SEND | SPI_CS_KEEP_ENABLED,
-//     .buffer = &(uint8_t) {FLASH_CMD_GET_STATUS},
-//     .size = 1,
-// };
+// Request reading from address. Buffer: read command + address + dummy byte.
+// Should be followed by another command that reads the data.
+static uint8_t read_address[4] = {FLASH_CMD_READ_DATA};
 
-// // Get the write-status byte.
-// static uint8_t status;
-// static const spi_command_t cmd_status_rx = {
-//     .operation = SPI_RECV,
-//     .buffer = (uint8_t *)&status,
-//     .size = sizeof(status),
-// };
+// Request page write at address. Buffer: write command + address.
+// Should be followed by the data.
+static uint8_t write_address[4] = {FLASH_CMD_WRITE_DATA};
 
-// // Request reading from address. Buffer: read command + address + dummy byte.
-// // Should be followed by another command that reads the data.
-// static uint8_t read_address[1 + FLASH_ADDRESS_SIZE + 1] = {FLASH_CMD_READ_DATA};
-// static const spi_command_t cmd_request_read = {
-//     .operation = SPI_SEND | SPI_CS_KEEP_ENABLED,
-//     .buffer = read_address,
-//     .size = sizeof(read_address),
-// };
+// Request sector erase at address. Buffer: erase command + address.
+static uint8_t erase_address[4] = {FLASH_CMD_ERASE_BLOCK};
 
-// // Request page write at address. Buffer: write command + address.
-// // Should be followed by cmd_data_read to read the data.
-// static uint8_t write_address[1 + FLASH_ADDRESS_SIZE] = {FLASH_CMD_WRITE_DATA};
-// static const spi_command_t cmd_request_write = {
-//     .operation = SPI_SEND | SPI_CS_KEEP_ENABLED,
-//     .buffer = write_address,
-//     .size = sizeof(write_address),
-// };
+// // REVISIT: We are not supposed to include these. These are here just to have
+// // some placeholder data to play with until read/write are implemented
+// #include "genhdr/mpversion.h"
+// #include <pbsys/storage.h>
 
-// // Request sector erase at address. Buffer: erase command + address.
-// static uint8_t erase_address[1 + FLASH_ADDRESS_SIZE] = {FLASH_CMD_ERASE_BLOCK};
-// static const spi_command_t cmd_request_erase = {
-//     .operation = SPI_SEND,
-//     .buffer = erase_address,
-//     .size = sizeof(erase_address),
-// };
+// static pbio_error_t delete_me_load_placeholder_data(uint32_t offset, uint8_t *buffer, uint32_t size) {
 
-// // Transmit data. Buffer and size should be set wherever this is used.
-// static spi_command_t cmd_data_write = {
-//     .operation = SPI_SEND,
-// };
+//     // This is a compiled version of the following. It:
+//     // - blinks the LED
+//     // - increments a persistent counter each time you run it
+//     //
+//     // For now, it increases the count each time you press the center button.
+//     // For now, it resets to 0 on shutdown and restart. If read and write are
+//     // implemented, the value is persistent!
+//     /*
 
-// // Read data. Buffer and size should be set wherever this is used.
-// static spi_command_t cmd_data_read = {
-//     .operation = SPI_RECV,
-// };
+//     from pybricks.hubs import EV3Brick
+//     from pybricks.parameters import Color
+//     from pybricks.tools import wait
 
-// REVISIT: We are not supposed to include these. These are here just to have
-// some placeholder data to play with until read/write are implemented
-#include "genhdr/mpversion.h"
-#include <pbsys/storage.h>
+//     hub = EV3Brick()
 
-static pbio_error_t delete_me_load_placeholder_data(uint32_t offset, uint8_t *buffer, uint32_t size) {
+//     count = hub.system.storage(0, read=1)[0]
+//     hub.system.storage(0, write=bytes([(count + 1) % 256]))
 
-    // This is a compiled version of the following. It:
-    // - blinks the LED
-    // - increments a persistent counter each time you run it
-    //
-    // For now, it increases the count each time you press the center button.
-    // For now, it resets to 0 on shutdown and restart. If read and write are
-    // implemented, the value is persistent!
-    /*
+//     print("Persistent count:", count)
 
-    from pybricks.hubs import EV3Brick
-    from pybricks.parameters import Color
-    from pybricks.tools import wait
-
-    hub = EV3Brick()
-
-    count = hub.system.storage(0, read=1)[0]
-    hub.system.storage(0, write=bytes([(count + 1) % 256]))
-
-    print("Persistent count:", count)
-
-    while True:
-        hub.light.on(Color.RED)
-        wait(500)
-        hub.light.on(Color.GREEN)
-        wait(500)
-    */
+//     while True:
+//         hub.light.on(Color.RED)
+//         wait(500)
+//         hub.light.on(Color.GREEN)
+//         wait(500)
+//     */
 
 
-    static const uint8_t _program_data[] = {
-        0x43, 0x01, 0x00, 0x00, 0x5F, 0x5F, 0x6D, 0x61,
-        0x69, 0x6E, 0x5F, 0x5F, 0x00, 0x4D, 0x06, 0x00,
-        0x1F, 0x14, 0x01, 0x0E, 0x74, 0x65, 0x73, 0x74,
-        0x2E, 0x70, 0x79, 0x00, 0x0F, 0x10, 0x45, 0x56,
-        0x33, 0x42, 0x72, 0x69, 0x63, 0x6B, 0x00, 0x1A,
-        0x70, 0x79, 0x62, 0x72, 0x69, 0x63, 0x6B, 0x73,
-        0x2E, 0x68, 0x75, 0x62, 0x73, 0x00, 0x0A, 0x43,
-        0x6F, 0x6C, 0x6F, 0x72, 0x00, 0x26, 0x70, 0x79,
-        0x62, 0x72, 0x69, 0x63, 0x6B, 0x73, 0x2E, 0x70,
-        0x61, 0x72, 0x61, 0x6D, 0x65, 0x74, 0x65, 0x72,
-        0x73, 0x00, 0x08, 0x77, 0x61, 0x69, 0x74, 0x00,
-        0x1C, 0x70, 0x79, 0x62, 0x72, 0x69, 0x63, 0x6B,
-        0x73, 0x2E, 0x74, 0x6F, 0x6F, 0x6C, 0x73, 0x00,
-        0x0C, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6D, 0x00,
-        0x0E, 0x73, 0x74, 0x6F, 0x72, 0x61, 0x67, 0x65,
-        0x00, 0x81, 0x7B, 0x82, 0x49, 0x0A, 0x6C, 0x69,
-        0x67, 0x68, 0x74, 0x00, 0x04, 0x6F, 0x6E, 0x00,
-        0x06, 0x52, 0x45, 0x44, 0x00, 0x0A, 0x47, 0x52,
-        0x45, 0x45, 0x4E, 0x00, 0x06, 0x68, 0x75, 0x62,
-        0x00, 0x81, 0x15, 0x81, 0x05, 0x81, 0x77, 0x05,
-        0x11, 0x50, 0x65, 0x72, 0x73, 0x69, 0x73, 0x74,
-        0x65, 0x6E, 0x74, 0x20, 0x63, 0x6F, 0x75, 0x6E,
-        0x74, 0x3A, 0x00, 0x89, 0x58, 0x30, 0x18, 0x01,
-        0x2C, 0x2C, 0x4C, 0x46, 0x31, 0x5B, 0x49, 0x20,
-        0x2D, 0x28, 0x2D, 0x80, 0x10, 0x02, 0x2A, 0x01,
-        0x1B, 0x03, 0x1C, 0x02, 0x16, 0x02, 0x59, 0x80,
-        0x10, 0x04, 0x2A, 0x01, 0x1B, 0x05, 0x1C, 0x04,
-        0x16, 0x04, 0x59, 0x80, 0x10, 0x06, 0x2A, 0x01,
-        0x1B, 0x07, 0x1C, 0x06, 0x16, 0x06, 0x59, 0x11,
-        0x02, 0x34, 0x00, 0x16, 0x10, 0x11, 0x10, 0x13,
-        0x08, 0x14, 0x09, 0x80, 0x10, 0x0A, 0x81, 0x36,
-        0x82, 0x01, 0x80, 0x55, 0x16, 0x11, 0x11, 0x10,
-        0x13, 0x08, 0x14, 0x09, 0x80, 0x10, 0x0B, 0x11,
-        0x12, 0x11, 0x11, 0x81, 0xF2, 0x22, 0x82, 0x00,
-        0xF8, 0x2B, 0x01, 0x34, 0x01, 0x36, 0x82, 0x01,
-        0x59, 0x11, 0x13, 0x23, 0x00, 0x11, 0x11, 0x34,
-        0x02, 0x59, 0x11, 0x10, 0x13, 0x0C, 0x14, 0x0D,
-        0x11, 0x04, 0x13, 0x0E, 0x36, 0x01, 0x59, 0x11,
-        0x06, 0x22, 0x83, 0x74, 0x34, 0x01, 0x59, 0x11,
-        0x10, 0x13, 0x0C, 0x14, 0x0D, 0x11, 0x04, 0x13,
-        0x0F, 0x36, 0x01, 0x59, 0x11, 0x06, 0x22, 0x83,
-        0x74, 0x34, 0x01, 0x59, 0x42, 0x14, 0x51, 0x63,
-    };
+//     static const uint8_t _program_data[] = {
+//         0x43, 0x01, 0x00, 0x00, 0x5F, 0x5F, 0x6D, 0x61,
+//         0x69, 0x6E, 0x5F, 0x5F, 0x00, 0x4D, 0x06, 0x00,
+//         0x1F, 0x14, 0x01, 0x0E, 0x74, 0x65, 0x73, 0x74,
+//         0x2E, 0x70, 0x79, 0x00, 0x0F, 0x10, 0x45, 0x56,
+//         0x33, 0x42, 0x72, 0x69, 0x63, 0x6B, 0x00, 0x1A,
+//         0x70, 0x79, 0x62, 0x72, 0x69, 0x63, 0x6B, 0x73,
+//         0x2E, 0x68, 0x75, 0x62, 0x73, 0x00, 0x0A, 0x43,
+//         0x6F, 0x6C, 0x6F, 0x72, 0x00, 0x26, 0x70, 0x79,
+//         0x62, 0x72, 0x69, 0x63, 0x6B, 0x73, 0x2E, 0x70,
+//         0x61, 0x72, 0x61, 0x6D, 0x65, 0x74, 0x65, 0x72,
+//         0x73, 0x00, 0x08, 0x77, 0x61, 0x69, 0x74, 0x00,
+//         0x1C, 0x70, 0x79, 0x62, 0x72, 0x69, 0x63, 0x6B,
+//         0x73, 0x2E, 0x74, 0x6F, 0x6F, 0x6C, 0x73, 0x00,
+//         0x0C, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6D, 0x00,
+//         0x0E, 0x73, 0x74, 0x6F, 0x72, 0x61, 0x67, 0x65,
+//         0x00, 0x81, 0x7B, 0x82, 0x49, 0x0A, 0x6C, 0x69,
+//         0x67, 0x68, 0x74, 0x00, 0x04, 0x6F, 0x6E, 0x00,
+//         0x06, 0x52, 0x45, 0x44, 0x00, 0x0A, 0x47, 0x52,
+//         0x45, 0x45, 0x4E, 0x00, 0x06, 0x68, 0x75, 0x62,
+//         0x00, 0x81, 0x15, 0x81, 0x05, 0x81, 0x77, 0x05,
+//         0x11, 0x50, 0x65, 0x72, 0x73, 0x69, 0x73, 0x74,
+//         0x65, 0x6E, 0x74, 0x20, 0x63, 0x6F, 0x75, 0x6E,
+//         0x74, 0x3A, 0x00, 0x89, 0x58, 0x30, 0x18, 0x01,
+//         0x2C, 0x2C, 0x4C, 0x46, 0x31, 0x5B, 0x49, 0x20,
+//         0x2D, 0x28, 0x2D, 0x80, 0x10, 0x02, 0x2A, 0x01,
+//         0x1B, 0x03, 0x1C, 0x02, 0x16, 0x02, 0x59, 0x80,
+//         0x10, 0x04, 0x2A, 0x01, 0x1B, 0x05, 0x1C, 0x04,
+//         0x16, 0x04, 0x59, 0x80, 0x10, 0x06, 0x2A, 0x01,
+//         0x1B, 0x07, 0x1C, 0x06, 0x16, 0x06, 0x59, 0x11,
+//         0x02, 0x34, 0x00, 0x16, 0x10, 0x11, 0x10, 0x13,
+//         0x08, 0x14, 0x09, 0x80, 0x10, 0x0A, 0x81, 0x36,
+//         0x82, 0x01, 0x80, 0x55, 0x16, 0x11, 0x11, 0x10,
+//         0x13, 0x08, 0x14, 0x09, 0x80, 0x10, 0x0B, 0x11,
+//         0x12, 0x11, 0x11, 0x81, 0xF2, 0x22, 0x82, 0x00,
+//         0xF8, 0x2B, 0x01, 0x34, 0x01, 0x36, 0x82, 0x01,
+//         0x59, 0x11, 0x13, 0x23, 0x00, 0x11, 0x11, 0x34,
+//         0x02, 0x59, 0x11, 0x10, 0x13, 0x0C, 0x14, 0x0D,
+//         0x11, 0x04, 0x13, 0x0E, 0x36, 0x01, 0x59, 0x11,
+//         0x06, 0x22, 0x83, 0x74, 0x34, 0x01, 0x59, 0x11,
+//         0x10, 0x13, 0x0C, 0x14, 0x0D, 0x11, 0x04, 0x13,
+//         0x0F, 0x36, 0x01, 0x59, 0x11, 0x06, 0x22, 0x83,
+//         0x74, 0x34, 0x01, 0x59, 0x42, 0x14, 0x51, 0x63,
+//     };
 
-    // The block device normally doesn't need to be aware of this higher level
-    // data structure, but we use it here to mimic some working data into memory
-    // so we have something to test against.
-    static struct {
-        uint32_t write_size;
-        uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
-        char stored_firmware_hash[8];
-        pbsys_storage_settings_t settings;
-        uint32_t program_offset;
-        uint32_t program_size;
-        uint8_t program_data[sizeof(_program_data)];
-    } disk = { 0 };
+//     // The block device normally doesn't need to be aware of this higher level
+//     // data structure, but we use it here to mimic some working data into memory
+//     // so we have something to test against.
+//     static struct {
+//         uint32_t write_size;
+//         uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
+//         char stored_firmware_hash[8];
+//         pbsys_storage_settings_t settings;
+//         uint32_t program_offset;
+//         uint32_t program_size;
+//         uint8_t program_data[sizeof(_program_data)];
+//     } disk = { 0 };
 
-    // Prepare fake disk data
-    disk.write_size = sizeof(disk) + sizeof(_program_data);
-    disk.program_size = sizeof(_program_data);
-    memcpy(&disk.stored_firmware_hash[0], MICROPY_GIT_HASH, sizeof(disk.stored_firmware_hash));
-    memcpy(&disk.program_data[0], _program_data, sizeof(_program_data));
+//     // Prepare fake disk data
+//     disk.write_size = sizeof(disk) + sizeof(_program_data);
+//     disk.program_size = sizeof(_program_data);
+//     memcpy(&disk.stored_firmware_hash[0], MICROPY_GIT_HASH, sizeof(disk.stored_firmware_hash));
+//     memcpy(&disk.program_data[0], _program_data, sizeof(_program_data));
 
-    // Initial value of that one user byte:
-    disk.user_data[0] = 123;
+//     // Initial value of that one user byte:
+//     disk.user_data[0] = 123;
 
-    // Copy requested data to RAM.
-    memcpy(buffer, (uint8_t *)&disk + offset, size);
-    return PBIO_SUCCESS;
-}
+//     // Copy requested data to RAM.
+//     memcpy(buffer, (uint8_t *)&disk + offset, size);
+//     return PBIO_SUCCESS;
+// }
 
 pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
-    // static pbio_os_state_t sub;
-    // static uint32_t size_done;
-    // static uint32_t size_now;
-    // pbio_error_t err;
+    static uint32_t size_done;
+    static uint32_t size_now;
+    pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // REVSISIT: DELETE ME!
-    return delete_me_load_placeholder_data(offset, buffer, size);
+    pbdrv_uart_debug_printf("read %d %d\r\n", offset, size);
 
-    // // Exit on invalid size.
-    // if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
-    //     return PBIO_ERROR_INVALID_ARG;
-    // }
+    // Exit on invalid size.
+    if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
+        pbdrv_uart_debug_printf("read bad\r\n");
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
-    // // Split up reads to maximum chunk size.
-    // for (size_done = 0; size_done < size; size_done += size_now) {
-    //     size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_READ);
+    // Split up reads to maximum chunk size.
+    for (size_done = 0; size_done < size; size_done += size_now) {
+        size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_READ);
 
-    //     // Set address for this read request and send it.
-    //     set_address_be(&cmd_request_read.buffer[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset + size_done);
-    //     PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_request_read));
-    //     if (err != PBIO_SUCCESS) {
-    //         return err;
-    //     }
+        pbdrv_uart_debug_printf("read now %d %d\r\n", offset, size_done, size_now);
 
-    //     // Receive the data.
-    //     cmd_data_read.buffer = buffer + size_done;
-    //     cmd_data_read.size = size_now;
-    //     PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_read));
-    //     if (err != PBIO_SUCCESS) {
-    //         return err;
-    //     }
-    // }
+        // Set address for this read request and send it.
+        set_address_be(&read_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset + size_done);
+        err = spi_begin_for_flash(read_address, sizeof(read_address), 0, buffer + size_done, size_now);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+    }
+
+    pbdrv_uart_debug_printf("read done\r\n");
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Poll the status register waiting for writes to complete.
+ */
+static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
+    uint8_t status;
+    pbio_error_t err;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    do {
+        err = spi_begin_for_flash(cmd_status, sizeof(cmd_status), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        status = bdev.spi_cmd_buf_rx[1];
+    } while (status & FLASH_STATUS_BUSY);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -813,50 +778,73 @@ pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, ui
 
 pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
 
-    // static pbio_os_state_t sub;
-    // static uint32_t offset;
-    // static uint32_t size_now;
-    // static uint32_t size_done;
-    // pbio_error_t err;
+    static pbio_os_state_t sub;
+    static uint32_t offset;
+    static uint32_t size_now;
+    static uint32_t size_done;
+    pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // // Exit on invalid size.
-    // if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
-    //     return PBIO_ERROR_INVALID_ARG;
-    // }
+    pbdrv_uart_debug_printf("store %d\r\n", size);
 
-    // // Erase sector by sector.
-    // for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
-    //     // Writing size 0 means erase.
-    //     PBIO_OS_AWAIT(state, &sub, err = flash_erase_or_write(&sub,
-    //         PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset, NULL, 0));
-    //     if (err != PBIO_SUCCESS) {
-    //         return err;
-    //     }
-    // }
+    // Exit on invalid size.
+    if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
-    // // Write page by page.
-    // for (size_done = 0; size_done < size; size_done += size_now) {
-    //     size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_WRITE);
-    //     PBIO_OS_AWAIT(state, &sub, err = flash_erase_or_write(&sub,
-    //         PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + size_done, buffer + size_done, size_now));
-    //     if (err != PBIO_SUCCESS) {
-    //         return err;
-    //     }
-    // }
+    // Erase sector by sector.
+    for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
+        // Enable writing
+        err = spi_begin_for_flash(cmd_write_enable, sizeof(cmd_write_enable), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Erase this block
+        set_address_be(&erase_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset);
+        err = spi_begin_for_flash(erase_address, sizeof(erase_address), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Wait for completion
+        PBIO_OS_AWAIT(state, &sub, err = flash_wait_write(&sub));
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+
+    // Write page by page.
+    for (size_done = 0; size_done < size; size_done += size_now) {
+        size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_WRITE);
+
+        // Enable writing
+        err = spi_begin_for_flash(cmd_write_enable, sizeof(cmd_write_enable), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Write this block
+        set_address_be(&write_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + size_done);
+        err = spi_begin_for_flash(write_address, sizeof(write_address), buffer + size_done, 0, size_now);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Wait for completion
+        PBIO_OS_AWAIT(state, &sub, err = flash_wait_write(&sub));
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
-
-// uint8_t tx_test_rdid[4] = {0x9f, 0x5a, 0xa5, 0x33};
-// uint8_t tx_test_rdsr[2] = {0x05, 0x5a};
-// uint8_t tx_test_wren[1] = {0x06};
-// uint8_t tx_test_read[4] = {0x03, 0x0a, 0x00, 0x00};
-// uint8_t tx_test_write[4] = {0x02, 0x0a, 0x00, 0x00};
-// uint8_t tx_test_se[4] = {0xd8, 0x0a, 0x00, 0x00};
-// uint8_t tx_write_buf[256];
-// uint8_t tx_read_buf[256];
 
 static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 

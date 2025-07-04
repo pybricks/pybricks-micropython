@@ -23,6 +23,8 @@
 #include <pbsys/program_stop.h>
 #include <pbsys/host.h>
 
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+
 // Singleton with information about the currently (or soon) active program.
 static pbsys_main_program_t program;
 
@@ -130,9 +132,13 @@ int main(int argc, char **argv) {
         }
     }
 
+    pbdrv_uart_debug_printf("out of main loop\r\n");
+
     // Power off sensors and motors, including the ones that are always powered.
     // This also makes it easier to see that users can let go of the button.
     pbio_port_power_off();
+
+    pbdrv_uart_debug_printf("about to deinit\r\n");
 
     // Stop system processes and save user data before we shutdown.
     pbsys_deinit();
