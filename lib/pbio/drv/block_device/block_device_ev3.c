@@ -50,32 +50,14 @@ typedef enum {
 } spi_status_t;
 
 /**
- * Whether to receive (read) or send (write).
+ * Driver-specific sizes.
  */
-typedef enum {
-    /** Receive data from SPI device. */
-    SPI_RECV = 0x00,
-    /** Send data to SPI device. */
-    SPI_SEND = 0x01,
-    /** Bitflag to keep NCS low after the operation. Only used with SPI_SEND. */
-    SPI_CS_KEEP_ENABLED = 0x02,
-} spi_operation_t;
-
-/**
- * SPI command to send or receive data with a buffer of a given size.
- */
-typedef struct {
-    /** Whether to read or write, and whether to keep CS enabled when done. */
-    spi_operation_t operation;
-    /** Buffer to write from or read into. */
-    uint8_t *buffer;
-    /** Buffer size. */
-    uint16_t size;
-} spi_command_t;
-
-#define SPI_CMD_BUF_SZ      4
-// Limited by DMA descriptor
-#define SPI_MAX_DATA_SZ     0xffff
+enum {
+    // This is large enough for all flash commands we use
+    SPI_CMD_BUF_SZ = 4,
+    // Limited by DMA descriptor
+    SPI_MAX_DATA_SZ = 0xffff,
+};
 
 /**
  * The block device driver state.
@@ -146,6 +128,7 @@ static void spi0_isr(void) {
     }
 }
 
+
 // ADC / Flash SPI0 data MOSI
 static const pbdrv_gpio_t pin_spi0_mosi = PBDRV_GPIO_EV3_PIN(3, 15, 12, 8, 5);
 // ADC / Flash SPI0 data MISO
@@ -163,9 +146,14 @@ static const pbdrv_gpio_t pin_flash_nwp = PBDRV_GPIO_EV3_PIN(12, 23, 20, 5, 2);
 // Flash reset/hold (active low).
 static const pbdrv_gpio_t pin_flash_nhold = PBDRV_GPIO_EV3_PIN(6, 31, 28, 2, 0);
 
-// The maximum allowed clock speed is /3 yielding 50 MHz
-// This happens to be below the speed where the FAST_READ command is required
-#define SPI_CLK_SPEED_FLASH     50000000
+/**
+ * Bus speeds.
+ */
+enum {
+    // The maximum allowed clock speed is /3 yielding 50 MHz
+    // This happens to be below the speed where the FAST_READ command is required
+    SPI_CLK_SPEED_FLASH = 50000000,
+};
 
 // -Hardware resource allocation notes-
 //
@@ -184,6 +172,7 @@ static const pbdrv_gpio_t pin_flash_nhold = PBDRV_GPIO_EV3_PIN(6, 31, 28, 2, 0);
 // - 126: used to send all but the last byte, chains to 127
 // - 127: used to send the last byte, which is necessary to clear CSHOLD
 
+
 // XXX In the TI StarterWare code, miscompiles seemed to be happening due to strict aliasing issues with this type.
 // Fix it by using a union for type punning, which is more-or-less allowed
 // (it is explicitly allowed by GCC, and we do not have trap representations on this platform)
@@ -198,6 +187,7 @@ static void edma3_set_param(unsigned int slot, EDMA3CCPaRAMEntry_ *p) {
     for (int i = 0; i < 32 / 4; i++)
         HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_PaRAM_BASE + slot*32 + i*4) = p->u[i];
 }
+
 
 // Helper functions for setting up the high control bits of a data transfer
 static inline void spi0_setup_for_flash() {
@@ -403,96 +393,6 @@ static pbio_error_t spi_begin_for_flash(
 
     return PBIO_SUCCESS;
 }
-
-// /**
-//  * Initiates an SPI transfer via DMA.
-//  *
-//  * @param [in] cmd         The command to start.
-//  * @return                 ::PBIO_SUCCESS on success.
-//  *                         ::PBIO_ERROR_BUSY if SPI is busy.
-//  *                         ::PBIO_ERROR_INVALID_ARG for invalid args to HAL call.
-//  *                         ::PBIO_ERROR_IO for other errors.
-//  */
-// static pbio_error_t spi_begin(const spi_command_t *cmd) {
-
-//     if (bdev.spi_status == SPI_STATUS_WAIT) {
-//         // Another read operation is already in progress.
-//         return PBIO_ERROR_BUSY;
-//     }
-//     if (bdev.spi_status == SPI_STATUS_ERROR) {
-//         // Previous transmission went wrong.
-//         return PBIO_ERROR_IO;
-//     }
-//     // Set status to wait and start receiving.
-//     bdev.spi_status = SPI_STATUS_WAIT;
-
-//     // REPLACE WITH TI AM1808 SPI DMA operation
-//     //
-//     //
-//     // // Start SPI operation.
-//     // HAL_StatusTypeDef err;
-//     // if (cmd->operation == SPI_RECV) {
-//     //     err = HAL_SPI_Receive_DMA(&bdev.hspi, cmd->buffer, cmd->size);
-//     // } else {
-//     //     err = HAL_SPI_Transmit_DMA(&bdev.hspi, cmd->buffer, cmd->size);
-//     // }
-
-//     // // Handle HAL errors.
-//     // switch (err) {
-//     //     case HAL_OK:
-//     //         return PBIO_SUCCESS;
-//     //     case HAL_ERROR:
-//     //         return PBIO_ERROR_INVALID_ARG;
-//     //     case HAL_BUSY:
-//     //         return PBIO_ERROR_BUSY;
-//     //     default:
-//     //         return PBIO_ERROR_IO;
-//     // }
-
-//     // REVISIT: DELETE ME. Here for now until we implement a real transfer.
-//     bdev.spi_status = SPI_STATUS_COMPLETE;
-//     return PBIO_SUCCESS;
-// }
-
-// /**
-//  * Starts and awaits an SPI transfer.
-//  */
-// static pbio_error_t spi_command_thread(pbio_os_state_t *state, const spi_command_t *cmd) {
-
-//     pbio_error_t err;
-
-//     PBIO_OS_ASYNC_BEGIN(state);
-
-//     // Select peripheral.
-//     spi_chip_select(true);
-
-//     // Start SPI operation.
-//     err = spi_begin(cmd);
-//     if (err != PBIO_SUCCESS) {
-//         spi_chip_select(false);
-//         return err;
-//     }
-
-//     // Wait until SPI operation completes.
-//     PBIO_OS_AWAIT_UNTIL(state, bdev.spi_status == SPI_STATUS_COMPLETE);
-
-//     // Turn off peripheral if requested.
-//     if (!(cmd->operation & SPI_CS_KEEP_ENABLED)) {
-//         spi_chip_select(false);
-//     }
-
-//     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-// }
-
-//
-// REVISIT: Can delete this, and hardcode for N25Q128
-//
-// Select constant values based on flash device type.
-#if 1
-#define W25Qxx(Q32, Q256) (Q32)
-#else
-#define W25Qxx(Q32, Q256) (Q256)
-#endif
 
 static void set_address_be(uint8_t *buf, uint32_t address) {
     buf[0] = address >> 16;
@@ -715,66 +615,6 @@ static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
-
-// /**
-//  * Write or erase one chunk of data from flash.
-//  *
-//  * In case of write, address must be aligned with a page.
-//  *
-//  * In case of erase (indicated by size = 0), address must be aligned with a sector.
-//  */
-// static pbio_error_t flash_erase_or_write(pbio_os_state_t *state, uint32_t address, uint8_t *buffer, uint32_t size) {
-
-//     static pbio_os_state_t sub;
-//     static const spi_command_t *cmd;
-//     pbio_error_t err;
-
-//     PBIO_OS_ASYNC_BEGIN(state);
-
-//     // Enable write mode.
-//     PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_write_enable));
-//     if (err != PBIO_SUCCESS) {
-//         return err;
-//     }
-
-//     // Select either write or erase request.
-//     cmd = size == 0 ? &cmd_request_erase : &cmd_request_write;
-
-//     // Set address and send the request.
-//     set_address_be(&cmd->buffer[1], address);
-//     PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, cmd));
-//     if (err != PBIO_SUCCESS) {
-//         return err;
-//     }
-
-//     // Write the data, or skip in case of erase.
-//     if (size != 0) {
-//         cmd_data_write.buffer = buffer;
-//         cmd_data_write.size = size;
-//         PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_write));
-//         if (err != PBIO_SUCCESS) {
-//             return err;
-//         }
-//     }
-
-//     // Wait for busy flag to clear.
-//     do {
-//         // Send command to read status.
-//         PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_tx));
-//         if (err != PBIO_SUCCESS) {
-//             return err;
-//         }
-
-//         // Read the status.
-//         PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_rx));
-//         if (err != PBIO_SUCCESS) {
-//             return err;
-//         }
-//     } while (status & (FLASH_STATUS_BUSY | FLASH_STATUS_WRITE_ENABLED));
-
-//     // The task is ready.
-//     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-// }
 
 pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
 
