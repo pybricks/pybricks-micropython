@@ -17,6 +17,7 @@
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
+#include "light_matrix.h"
 #include "program_stop.h"
 #include "storage.h"
 #include <pbsys/program_stop.h>
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
 
         #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
-        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
+        pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
         #endif
 
         // Drives all processes while we wait for user input.
@@ -105,6 +106,7 @@ int main(int argc, char **argv) {
         pbsys_status_set_program_id(program.id);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_host_rx_set_callback(pbsys_main_stdin_event);
+        pbsys_hub_light_matrix_handle_user_program_start(true);
 
         // Handle pending events triggered by the status change, such as
         // starting status light animation.
@@ -118,8 +120,14 @@ int main(int argc, char **argv) {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_host_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
+        pbsys_hub_light_matrix_handle_user_program_start(false);
         pbio_stop_all(true);
         program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
+
+        // Handle pending events triggered by the status change, such as
+        // stopping status light animation.
+        while (pbio_os_run_processes_once()) {
+        }
     }
 
     // Power off sensors and motors, including the ones that are always powered.
@@ -133,11 +141,23 @@ int main(int argc, char **argv) {
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button
-    // or USB being plugged in, so we have this loop to keep pumping events
-    // to turn off most of the peripherals and keep the battery charger running.
-    while (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED) || pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
+    // so we have this loop to keep handling events to drive processes that
+    // turn off some of the peripherals.
+    while (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)) {
         pbio_os_run_processes_and_wait_for_event();
     }
+
+    #if PBSYS_CONFIG_BATTERY_CHARGER
+    // Similarly, run events to keep charging while the hub is "off".
+    while (pbdrv_usb_get_bcd() != PBDRV_USB_BCD_NONE) {
+        pbio_os_run_processes_and_wait_for_event();
+        // If the button is pressed again, the user wants to turn the hub
+        // "back on". We are still on, so do a full reset instead.
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)) {
+            pbdrv_reset(PBDRV_RESET_ACTION_RESET);
+        }
+    }
+    #endif
 
     // Platform-specific power off.
     pbdrv_reset_power_off();
