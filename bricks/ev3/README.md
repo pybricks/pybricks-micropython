@@ -24,12 +24,6 @@ firmware for one of the other targets, such as the SPIKE Prime Hub, as
 explained [here](../../CONTRIBUTING.md). Make sure that `pybricksdev` is
 installed.
 
-Install the following additional tools:
-
-```
-sudo apt install u-boot-tools
-```
-
 Unlike most other alternative EV3 firmware solutions, Pybricks does not require
 using a microSD card. Instead, Pybricks is installed as a firmware update.
 
