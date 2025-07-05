@@ -628,11 +628,20 @@ $(BUILD)/firmware-obj.bin: $(BUILD)/firmware.elf
 	$(ECHO) "`wc -c < $@` bytes"
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
-UBOOT_FILE = $(PBTOP)/bricks/ev3/u-boot.bin
+
+# REVISIT: downloading things doesn't belong in a Makefile.
+$(BUILD)/u-boot.bin:
+	$(ECHO) "Downloading u-boot.bin"
+	$(Q)mkdir -p $(dir $@)
+	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v1.0.2/u-boot.bin
+	$(Q)echo "62fe9df8138a4676d61b72c6844f9e7c3cbfd85470b9cea1418abec4f79228ac  $@" | sha256sum -c --strict
+
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
+
 # For EV3, merge firmware blob with u-boot to create a bootable image.
-$(BUILD)/firmware-base.bin: $(BUILD)/uImage
-	$(Q)$(MAKE_BOOTABLE_IMAGE) $(UBOOT_FILE) $(BUILD)/uImage $(BUILD)/firmware-base.bin
+$(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(BUILD)/u-boot.bin $(BUILD)/uImage
+	$(Q)$^ $@
+
 else
 # For embeded systems, the firmware is just the base file.
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
