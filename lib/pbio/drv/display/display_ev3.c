@@ -134,7 +134,7 @@ PROCESS(pbdrv_display_ev3_init_process, "st7586s");
  *
  * Non-atomic updated by the application are allowed.
  */
-static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CONFIG_DISPLAY_NUM_COLS] __attribute__((section(".pbdrv_display_user_frame"), used));
+static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CONFIG_DISPLAY_NUM_COLS] __attribute__((section(".noinit"), used));
 
 /**
  * Flag to indicate that the user frame has been updated and needs to be
@@ -164,7 +164,7 @@ static bool pbdrv_display_user_frame_update_requested = false;
  * Even in monochrome mode, you can only have 3 pixels per byte, so there is no
  * savings in using it. We might as well support gray scale.
  */
-static uint8_t st7586s_send_buf[ST7586S_NUM_COL_TRIPLETS * ST7586S_NUM_ROWS] __attribute__((section(".st7586s_send_buf"), used));
+static uint8_t st7586s_send_buf[ST7586S_NUM_COL_TRIPLETS * ST7586S_NUM_ROWS] __attribute__((section(".noinit"), used));
 
 /**
  * Encode a triplet of pixels into a single byte in the format descrived above.
