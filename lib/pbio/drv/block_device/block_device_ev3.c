@@ -65,9 +65,6 @@ static struct {
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
 
-    // Used to sequence startup with ADC.
-    int init_done;
-
     // This is used when SPI only needs to receive. It should always stay as 0.
     uint8_t tx_dummy_byte;
     // This is used when received data is to be discarded. Its value should be ignored.
@@ -536,7 +533,6 @@ pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, ui
 
         // Set address for this read request and send it.
         set_address_be(&read_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset + size_done);
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
         err = spi_begin_for_flash(read_address, sizeof(read_address), 0, buffer + size_done, size_now);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -557,7 +553,6 @@ static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_BEGIN(state);
 
     do {
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
         err = spi_begin_for_flash(cmd_status, sizeof(cmd_status), 0, 0, 0);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -585,10 +580,16 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
         return PBIO_ERROR_INVALID_ARG;
     }
 
+#if PBDRV_CONFIG_ADC_EV3
+    // HACK
+    // We only store on shutdown. Block ADC.
+    pbdrv_adc_ev3_shut_down_hack();
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_is_shut_down_hack());
+#endif
+
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
         // Enable writing
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
         err = spi_begin_for_flash(cmd_write_enable, sizeof(cmd_write_enable), 0, 0, 0);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -597,7 +598,6 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
 
         // Erase this block
         set_address_be(&erase_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset);
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
         err = spi_begin_for_flash(erase_address, sizeof(erase_address), 0, 0, 0);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -616,7 +616,6 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
         size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_WRITE);
 
         // Enable writing
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
         err = spi_begin_for_flash(cmd_write_enable, sizeof(cmd_write_enable), 0, 0, 0);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -625,7 +624,6 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
 
         // Write this block
         set_address_be(&write_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + size_done);
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
         err = spi_begin_for_flash(write_address, sizeof(write_address), buffer + size_done, 0, size_now);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -663,8 +661,6 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 
     // Initialization done.
     pbdrv_init_busy_down();
-    bdev.init_done = 1;
-    pbio_os_request_poll();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -718,11 +714,6 @@ void pbdrv_block_device_init(void) {
 
     pbdrv_init_busy_up();
     pbio_os_process_start(&pbdrv_block_device_ev3_init_process, pbdrv_block_device_ev3_init_process_thread, NULL);
-}
-
-// ADC glue functions
-int pbdrv_block_device_ev3_init_is_done() {
-    return bdev.init_done;
 }
 
 int pbdrv_block_device_ev3_is_busy() {

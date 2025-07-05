@@ -16,7 +16,6 @@ void pbdrv_block_device_ev3_spi_rx_complete();
 // these two drivers have tight dependencies on each other.
 // These functions orchestrate the connection.
 
-int pbdrv_block_device_ev3_init_is_done();
 int pbdrv_block_device_ev3_is_busy();
 pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmds, volatile uint16_t *data, unsigned int len);
 
