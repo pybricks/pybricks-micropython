@@ -185,7 +185,6 @@ build-coverage/lcov.info: Makefile $(SRC)
 		--directory build-coverage/lib/pbio/src \
 		--directory build-coverage/lib/pbio/sys \
 		--exclude **/btstack/** \
-		--exclude **/contiki-core/** \
 
 coverage-html: build-coverage/lcov.info
 	$(Q)genhtml $^ --output-directory build-coverage/html
