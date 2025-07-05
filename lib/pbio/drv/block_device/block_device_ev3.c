@@ -678,7 +678,9 @@ void pbdrv_block_device_init(void) {
     SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_HIGH | SPI_CLK_INPHASE, SPI_DATA_FORMAT0);
     SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT0);
     SPICharLengthSet(SOC_SPI_0_REGS, 8, SPI_DATA_FORMAT0);
+#if PBDRV_CONFIG_ADC_EV3
     pbdrv_adc_ev3_configure_data_format();
+#endif
 
     // Configure the GPIO pins.
     pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);

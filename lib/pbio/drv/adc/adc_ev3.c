@@ -30,10 +30,6 @@
 #include "../drv/block_device/block_device_ev3.h"
 #include "../drv/gpio/gpio_ev3.h"
 
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-
-// PROCESS(pbdrv_adc_process, "ADC");
-
 #define PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES (2)
 
 /**
@@ -100,15 +96,22 @@ void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
-    *value = 1234;
+    if (ch >= PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // XXX atomicity???
+    uint16_t a, b;
+    do {
+        // Values for the requested channel are received several samples later.
+        a = channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
+        b = channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
+    } while (a != b);
+
+    // Mask the data to 10 bits
+    // XXX what was the old (x - 4096 * ch) logic supposed to do???
+    *value = (a >> 2) & 0x3ff;
     return PBIO_SUCCESS;
-    // if (ch >= PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) {
-    //     return PBIO_ERROR_INVALID_ARG;
-    // }
-    // // Values for the requested channel are received several samples later.
-    // // The data only appears 12-bit but the last 2 bits are always zero.
-    // *value = (channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] - 4096 * ch) >> 2;
-    // return PBIO_SUCCESS;
 }
 
 static pbio_os_process_t pbdrv_adc_ev3_process;
