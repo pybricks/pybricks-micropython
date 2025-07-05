@@ -677,7 +677,14 @@ void pbdrv_block_device_init(void) {
 
     // SPI module data formats
     SPIClkConfigure(SOC_SPI_0_REGS, SOC_SPI_0_MODULE_FREQ, SPI_CLK_SPEED_FLASH, SPI_DATA_FORMAT0);
-    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_HIGH | SPI_CLK_INPHASE, SPI_DATA_FORMAT0);
+    // For reasons which have not yet been fully investigated, attempting to switch between
+    // SPI_CLK_POL_HIGH and SPI_CLK_POL_LOW seems to not work correctly (possibly causing a glitch?)
+    // In general, partial writes to SPI_SPIDAT1, such as in spi0_setup_for_flash, seem to behave
+    // unintuitively.
+    //
+    // Since multiple options work for SPI flash, set this CPOL/CPHA to match what the ADC needs
+    // (see comment in adc_ev3.c).
+    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT0);
     SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT0);
     SPICharLengthSet(SOC_SPI_0_REGS, 8, SPI_DATA_FORMAT0);
 #if PBDRV_CONFIG_ADC_EV3
