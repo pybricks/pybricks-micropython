@@ -663,8 +663,10 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(Q)$(ZIP) -j $@ $^
 
 # firmware in uImage format (for EV3)
-$(BUILD)/uImage: $(BUILD)/firmware-obj.bin
-	mkimage -C none -A arm -T standalone -O u-boot -a 0xC0008000 -e 0xC0008000 -d $< $@
+$(BUILD)/uImage: $(BUILD)/firmware-obj.bin $(BUILD)/firmware.elf
+	$(eval LOAD_ADDR := $(shell $(CROSS_COMPILE)readelf -l $(BUILD)/firmware.elf | grep "LOAD" | awk '{print $$4}'))
+	$(eval ENTRY_POINT := $(shell $(CROSS_COMPILE)readelf -h $(BUILD)/firmware.elf | grep "Entry point" | cut -d: -f2))
+	mkimage -C none -A arm -T standalone -O u-boot -a $(LOAD_ADDR) -e $(ENTRY_POINT) -d $< $@
 
 # PRU firmware
 $(BUILD)/pru_suart.bin.o: $(PBTOP)/lib/pbio/drv/uart/uart_ev3_pru_lib/pru_suart.bin
