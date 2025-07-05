@@ -34,7 +34,7 @@
 
 // PROCESS(pbdrv_adc_process, "ADC");
 
-#define PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES (4)
+#define PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES (2)
 
 /**
  * Bus speeds.
@@ -51,7 +51,40 @@ enum {
     SPI_CLK_SPEED_ADC = 18750000,
 };
 
-static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] = {0};
+// Construct both SPI peripheral settings (data format, chip select)
+// and ADC chip settings (manual mode, 2xVref) in one go,
+// so that DMA can be used efficiently
+#define MANUAL_ADC_CHANNEL(x)                                                       \
+    (SPI_SPIDAT1_DFSEL_FORMAT1 << SPI_SPIDAT1_DFSEL_SHIFT) |                        \
+    (0 << (SPI_SPIDAT1_CSNR_SHIFT + 3)) | (1 << (SPI_SPIDAT1_CSNR_SHIFT + 0)) |     \
+    (1 << 12) |                                                                     \
+    (1 << 11) |                                                                     \
+    (((x) & 0xf) << 7) |                                                            \
+    (1 << 6)
+
+static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] = {
+    MANUAL_ADC_CHANNEL(0),
+    MANUAL_ADC_CHANNEL(1),
+    MANUAL_ADC_CHANNEL(2),
+    MANUAL_ADC_CHANNEL(3),
+    MANUAL_ADC_CHANNEL(4),
+    MANUAL_ADC_CHANNEL(5),
+    MANUAL_ADC_CHANNEL(6),
+    MANUAL_ADC_CHANNEL(7),
+    MANUAL_ADC_CHANNEL(8),
+    MANUAL_ADC_CHANNEL(9),
+    MANUAL_ADC_CHANNEL(10),
+    MANUAL_ADC_CHANNEL(11),
+    MANUAL_ADC_CHANNEL(12),
+    MANUAL_ADC_CHANNEL(13),
+    MANUAL_ADC_CHANNEL(14),
+    MANUAL_ADC_CHANNEL(15),
+
+    MANUAL_ADC_CHANNEL(15),
+    MANUAL_ADC_CHANNEL(15),
+};
+// XXX What are the atomicity guarantees around this? What guarantees do we need?
+static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
 static volatile uint8_t channel_data_index = 0;
 static volatile bool adc_busy = false;
 
@@ -129,6 +162,36 @@ pbio_error_t pbdrv_adc_ev3_init_process_thread(pbio_os_state_t *state, void *con
 
     pbdrv_uart_debug_printf("adc init init init\r\n");
 
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+    for (int i = 0; i < 18; i++) {
+        pbdrv_uart_debug_printf("%04x\r\n", channel_data[i] & 0xffff);
+    }
+
+
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+
+
+    pbdrv_uart_debug_printf("adc 2222\r\n");
+
+    pbdrv_block_device_ev3_spi_begin_for_adc(channel_cmd, channel_data, PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+
+    for (int i = 0; i < 18; i++) {
+        pbdrv_uart_debug_printf("%04x\r\n", channel_data[i] & 0xffff);
+    }
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -136,43 +199,6 @@ void pbdrv_adc_init(void) {
     // Immediately go into async mode so that we can wait for the SPI flash driver
     pbdrv_init_busy_up();
     pbio_os_process_start(&pbdrv_adc_ev3_init_process, pbdrv_adc_ev3_init_process_thread, NULL);
-
-    // // Configure the GPIO pins.
-    // pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
-    // pbdrv_gpio_alt(&pin_spi0_miso, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
-    // pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
-    // pbdrv_gpio_alt(&pin_spi0_cs, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
-
-    // pbdrv_gpio_input(&pin_adc_ack);
-
-    // pbdrv_gpio_out_high(&pin_adc_bat_en);
-
-    // // Waking up the SPI1 instance.
-    // PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_SPI0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-
-    // // Register the ISR in the Interrupt Vector Table.
-    // IntRegister(SYS_INT_SPINT0, spi0_isr);
-    // IntChannelSet(SYS_INT_SPINT0, 2);
-    // IntSystemEnable(SYS_INT_SPINT0);
-
-    // // Reset.
-    // SPIReset(SOC_SPI_0_REGS);
-    // SPIOutOfReset(SOC_SPI_0_REGS);
-
-    // // Mode.
-    // uint32_t spipc0 = SPI_SPIPC0_SOMIFUN | SPI_SPIPC0_SIMOFUN | SPI_SPIPC0_CLKFUN | SPI_SPIPC0_SCS0FUN3;
-    // SPIModeConfigure(SOC_SPI_0_REGS, SPI_MASTER_MODE);
-    // SPIPinControl(SOC_SPI_0_REGS, 0, 0, (unsigned int *)&spipc0);
-
-    // // Config.
-    // SPIClkConfigure(SOC_SPI_0_REGS, SOC_SYSCLK_2_FREQ, 2000000, SPI_DATA_FORMAT0);
-    // SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_OUTOFPHASE | 0x00000010, SPI_DATA_FORMAT0);
-    // SPIDelayConfigure(SOC_SPI_0_REGS, 10, 10, 10, 10);
-    // SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
-    // SPIDefaultCSSet(SOC_SPI_0_REGS, 8);
-
-    // // Enable and loop around all channels.
-    // SPIEnable(SOC_SPI_0_REGS);
 
     // process_start(&pbdrv_adc_process);
 }
@@ -210,7 +236,9 @@ void pbdrv_adc_update_soon(void) {
 
 void pbdrv_adc_ev3_configure_data_format() {
     SPIClkConfigure(SOC_SPI_0_REGS, SOC_SYSCLK_2_FREQ, SPI_CLK_SPEED_ADC, SPI_DATA_FORMAT1);
-    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_HIGH | SPI_CLK_INPHASE, SPI_DATA_FORMAT1);
+    // NOTE: Cannot be CPOL=1 CPHA=1 like SPI flash
+    // The ADC seems to use the last falling edge to trigger conversions (see Figure 1 in the datasheet).
+    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT1);
     SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT1);
     SPICharLengthSet(SOC_SPI_0_REGS, 16, SPI_DATA_FORMAT1);
 }

@@ -396,6 +396,70 @@ static pbio_error_t spi_begin_for_flash(
     return PBIO_SUCCESS;
 }
 
+/**
+ * Initiates an SPI transfer via DMA, specifically designed for the ADC.
+ *
+ * @param [in] cmds             Data (both ADC chip commands and SPI peripheral commands) to be sent.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
+ * @param [in] data             Buffer for ADC chip outputs.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
+ * @param [in] len              Length of \p cmds and \p data
+ * @return                      ::PBIO_SUCCESS on success.
+ *                              ::PBIO_ERROR_BUSY if SPI is busy.
+ *                              ::PBIO_ERROR_INVALID_ARG if argument is too big
+ *                              ::PBIO_ERROR_IO for other errors.
+ */
+pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmds, volatile uint16_t *data, unsigned int len) {
+    EDMA3CCPaRAMEntry_ ps;
+
+    if (len > SPI_MAX_DATA_SZ) {
+        // Maximum size exceeded
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    if (bdev.spi_status & SPI_STATUS_WAIT_ANY) {
+        // Another read operation is already in progress.
+        return PBIO_ERROR_BUSY;
+    }
+    if (bdev.spi_status == SPI_STATUS_ERROR) {
+        // Previous transmission went wrong.
+        return PBIO_ERROR_IO;
+    }
+
+    ps.p.srcAddr = (unsigned int)(cmds);
+    ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+    ps.p.aCnt = sizeof(uint32_t);
+    ps.p.bCnt = len;
+    ps.p.cCnt = 1;
+    ps.p.srcBIdx = sizeof(uint32_t);
+    ps.p.destBIdx = 0;
+    ps.p.srcCIdx = 0;
+    ps.p.destCIdx = 0;
+    ps.p.linkAddr = 0xffff;
+    ps.p.bCntReload = 0;
+    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+    edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
+
+    ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
+    ps.p.destAddr = (unsigned int)(data);
+    ps.p.aCnt = sizeof(uint16_t);
+    ps.p.bCnt = len;
+    ps.p.srcBIdx = 0;
+    ps.p.destBIdx = sizeof(uint16_t);
+    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+    edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
+
+    bdev.spi_status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
+
+    // TODO: pbio probably needs a framework for memory barriers and DMA cache management
+    __asm__ volatile("":::"memory");
+
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
+    SPIIntEnable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
+
+    return PBIO_SUCCESS;
+}
+
 static void set_address_be(uint8_t *buf, uint32_t address) {
     buf[0] = address >> 16;
     buf[1] = address >> 8;
@@ -651,6 +715,10 @@ void pbdrv_block_device_init(void) {
 // ADC glue functions
 int pbdrv_block_device_ev3_init_is_done() {
     return bdev.init_done;
+}
+
+int pbdrv_block_device_ev3_is_busy() {
+    return bdev.spi_status & SPI_STATUS_WAIT_ANY;
 }
 
 #endif // PBDRV_CONFIG_BLOCK_DEVICE_EV3
