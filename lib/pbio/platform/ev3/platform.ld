@@ -45,14 +45,6 @@ SECTIONS
         _pru0_end = .;
     } >DDR
 
-    .display_frames (NOLOAD) :
-    {
-        . = ALIGN(4);
-        *(.pbdrv_display_user_frame)
-        . = ALIGN(4);
-        *(.st7586s_send_buf)
-    } > DDR
-
     /* Uninitialized (not zeroed at startup) data section */
 
     .noinit (NOLOAD) :
