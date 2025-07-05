@@ -160,7 +160,7 @@ ifeq ($(PB_MCU_FAMILY),AT91SAM7)
 CFLAGS_MCU = -mthumb -mthumb-interwork -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 else
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
-CFLAGS_MCU = -mcpu=arm926ej-s -Dgcc -Dam1808 # -c -g -fdata-sections -ffunction-sections -Wall -Dgcc -Dam1808 -O0
+CFLAGS_MCU = -mcpu=arm926ej-s -Dgcc -Dam1808
 else
 $(error unsupported PB_MCU_FAMILY)
 endif
@@ -196,7 +196,12 @@ else ifeq ($(DEBUG), 2)
 CFLAGS += -Os -DNDEBUG -flto=auto
 else
 CFLAGS += -Os -DNDEBUG -flto=auto
+ifneq ($(PB_MCU_FAMILY),TIAM1808)
+# This is used for trimming unused code on smaller platforms, but on EV3 we
+# don't want to enable these flags in order to keep the size of the .elf file
+# small by avoiding huge tables of section names.
 CFLAGS += -fdata-sections -ffunction-sections
+endif
 endif
 
 ifeq ($(PB_MCU_FAMILY),STM32)
@@ -623,6 +628,10 @@ $(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) -A $@
 
+$(BUILD)/firmware.stripped.elf: $(BUILD)/firmware.elf
+	$(ECHO) "STRIP $@"
+	$(Q)$(STRIP) $< -o $@
+
 # firmware blob without checksum
 $(BUILD)/firmware-obj.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware base file"
@@ -635,13 +644,13 @@ ifeq ($(PB_MCU_FAMILY),TIAM1808)
 $(BUILD)/u-boot.bin:
 	$(ECHO) "Downloading u-boot.bin"
 	$(Q)mkdir -p $(dir $@)
-	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v1.0.2/u-boot.bin
-	$(Q)echo "62fe9df8138a4676d61b72c6844f9e7c3cbfd85470b9cea1418abec4f79228ac  $@" | sha256sum -c --strict
+	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v2.0.0/u-boot.bin
+	$(Q)echo "570e079870ddc1deb2ce40d7a4d6785c151883a65e273ce6e33643152df90efb  $@" | sha256sum -c --strict
 
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 
 # For EV3, merge firmware blob with u-boot to create a bootable image.
-$(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(BUILD)/u-boot.bin $(BUILD)/uImage
+$(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(BUILD)/u-boot.bin $(BUILD)/firmware.stripped.elf
 	$(Q)$^ $@
 
 else
@@ -663,12 +672,6 @@ ZIP_FILES := \
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
-
-# firmware in uImage format (for EV3)
-$(BUILD)/uImage: $(BUILD)/firmware-obj.bin $(BUILD)/firmware.elf
-	$(eval LOAD_ADDR := $(shell $(CROSS_COMPILE)readelf -l $(BUILD)/firmware.elf | grep "LOAD" | awk '{print $$4}'))
-	$(eval ENTRY_POINT := $(shell $(CROSS_COMPILE)readelf -h $(BUILD)/firmware.elf | grep "Entry point" | cut -d: -f2))
-	mkimage -C none -A arm -T standalone -O u-boot -a $(LOAD_ADDR) -e $(ENTRY_POINT) -d $< $@
 
 # PRU firmware
 $(BUILD)/pru_suart.bin.o: $(PBTOP)/lib/pbio/drv/uart/uart_ev3_pru_lib/pru_suart.bin

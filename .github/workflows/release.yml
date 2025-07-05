@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Install cross-compiler
-        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi u-boot-tools
+        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
       - name: Checkout code
         uses: actions/checkout@v4
         with:
