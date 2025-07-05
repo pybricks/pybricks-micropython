@@ -15,12 +15,6 @@ pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 4;
 
 SECTIONS
 {
-    .startcode :
-    {
-        . = ALIGN(4);
-        *startup.o (.text)
-    } > DDR
-
     .text :
     {
         . = ALIGN(4);
