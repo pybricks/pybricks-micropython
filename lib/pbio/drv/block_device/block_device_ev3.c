@@ -27,6 +27,7 @@
 
 #include "block_device_ev3.h"
 #include "../drv/gpio/gpio_ev3.h"
+#include "../drv/adc/adc_ev3.h"
 
 #include <pbio/error.h>
 #include <pbio/int_math.h>
@@ -63,6 +64,9 @@ enum {
 static struct {
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
+
+    // Used to sequence startup with ADC.
+    int init_done;
 
     // This is used when SPI only needs to receive. It should always stay as 0.
     uint8_t tx_dummy_byte;
@@ -159,7 +163,7 @@ enum {
 // This controls things such as the clock speed, SPI CPOL/CPHA, and timing parameters.
 // We use the following:
 // - Format 0: Flash
-// - Format 1: ADC (TODO)
+// - Format 1: ADC
 //
 // The EDMA3 peripheral has 128 parameter sets. 32 of them are triggered by events, but the others
 // can be used by "linking" to them from a previous one. Instead of having an allocator for these,
@@ -589,6 +593,8 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
 
     // Initialization done.
     pbdrv_init_busy_down();
+    bdev.init_done = 1;
+    pbio_os_request_poll();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -608,23 +614,20 @@ void pbdrv_block_device_init(void) {
     SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_HIGH | SPI_CLK_INPHASE, SPI_DATA_FORMAT0);
     SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT0);
     SPICharLengthSet(SOC_SPI_0_REGS, 8, SPI_DATA_FORMAT0);
-    // TODO: ADC data format
+    pbdrv_adc_ev3_configure_data_format();
 
     // Configure the GPIO pins.
     pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
     pbdrv_gpio_alt(&pin_spi0_miso, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
     pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
     pbdrv_gpio_alt(&pin_spi0_ncs0, SYSCFG_PINMUX4_PINMUX4_7_4_NSPI0_SCS0);
+    pbdrv_gpio_alt(&pin_spi0_ncs3, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
 
     // Configure the flash control pins and put them with the values we want
     pbdrv_gpio_alt(&pin_flash_nwp, SYSCFG_PINMUX12_PINMUX12_23_20_GPIO5_2);
     pbdrv_gpio_out_high(&pin_flash_nwp);
     pbdrv_gpio_alt(&pin_flash_nhold, SYSCFG_PINMUX6_PINMUX6_31_28_GPIO2_0);
     pbdrv_gpio_out_high(&pin_flash_nhold);
-
-    // TODO: We currently disable the ADC CS
-    pbdrv_gpio_alt(&pin_spi0_ncs3, SYSCFG_PINMUX3_PINMUX3_27_24_GPIO8_2);
-    pbdrv_gpio_out_high(&pin_spi0_ncs3);
 
     // Set up interrupts
     SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
@@ -643,6 +646,11 @@ void pbdrv_block_device_init(void) {
 
     pbdrv_init_busy_up();
     pbio_os_process_start(&pbdrv_block_device_ev3_init_process, pbdrv_block_device_ev3_init_process_thread, NULL);
+}
+
+// ADC glue functions
+int pbdrv_block_device_ev3_init_is_done() {
+    return bdev.init_done;
 }
 
 #endif // PBDRV_CONFIG_BLOCK_DEVICE_EV3
