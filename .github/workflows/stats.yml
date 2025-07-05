@@ -10,7 +10,7 @@ env:
 jobs:
   stats:
     name: Generate stats
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Install cross-compiler
         run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
