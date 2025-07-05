@@ -34,7 +34,7 @@ jobs:
 
   mpy_cross:
     name: mpy-cross
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
   unix_coverage:
     name: unix coverage
     needs: mpy_cross
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       PYBRICKS_NO_REDIRECT_STDOUT: 1
     steps:
@@ -90,7 +90,7 @@ jobs:
       matrix:
         hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub, ev3]
     needs: [mpy_cross]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Install cross-compiler
       run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
@@ -142,7 +142,7 @@ jobs:
   virtualhub:
     name: virtual hub
     needs: [mpy_cross]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Install depedencies
       run: sudo apt-get update && sudo apt-get install lcov python3-numpy --yes
@@ -176,7 +176,7 @@ jobs:
 
   pbio:
     name: pbio tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       PBIO_TEST_RESULTS_DIR: lib/pbio/test/results
     steps:
@@ -207,7 +207,7 @@ jobs:
 
   finish:
     needs: [virtualhub, pbio]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Coveralls
         uses: coverallsapp/github-action@v2
