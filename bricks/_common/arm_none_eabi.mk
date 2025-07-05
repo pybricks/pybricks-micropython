@@ -510,7 +510,9 @@ NXOS_SRC_S = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	irq.s \
 	)
 
+ifneq ($(PB_MCU_FAMILY),TIAM1808)
 SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
+endif
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
