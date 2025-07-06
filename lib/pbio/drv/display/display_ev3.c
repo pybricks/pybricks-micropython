@@ -140,7 +140,7 @@ static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CON
  * Flag to indicate that the user frame has been updated and needs to be
  * encoded and sent to the display driver.
  */
-static bool pbdrv_display_user_frame_update_requested = false;
+static bool pbdrv_display_user_frame_update_requested;
 
 /**
  * Display buffer in the format ready for sending to the st7586s display driver.
@@ -194,7 +194,7 @@ static uint8_t encode_triplet(uint8_t p0, uint8_t p1, uint8_t p2) {
  *
  * Revisit: Use standard format, e.g. decompress PNG files from file storage or memory card.
  */
-static uint16_t pbdrv_display_pybricks_logo[] = {
+static const uint16_t pbdrv_display_pybricks_logo[] = {
     3227, 3359, 3403, 3539, 3580, 3718, 3757, 3897, 3934, 4076, 4111, 4255, 4289, 4433, 4466, 4612,
     4644, 4790, 4822, 4968, 5000, 5146, 5178, 5324, 5356, 5502, 5534, 5548, 5666, 5680, 5712, 5725,
     5845, 5858, 5890, 5903, 6023, 6036, 6068, 6081, 6201, 6214, 6246, 6259, 6379, 6392, 6424, 6437,
@@ -235,7 +235,7 @@ static uint16_t pbdrv_display_pybricks_logo[] = {
  *
  * @param bitmap Pointer to the bitmap data.
  */
-static void pbdrv_display_load_indexed_bitmap(uint16_t *indexed_bitmap) {
+static void pbdrv_display_load_indexed_bitmap(const uint16_t *indexed_bitmap) {
     bool set = 0;
     uint32_t switch_index = 0;
     for (size_t r = 0; r < PBDRV_CONFIG_DISPLAY_NUM_ROWS; r++) {
@@ -275,7 +275,7 @@ void pbdrv_display_st7586s_encode_user_frame(void) {
 /**
  * Display initialization script adapted from ev3dev and EV3RT.
  */
-static pbdrv_display_st7586s_action_t init_script[] = {
+static const pbdrv_display_st7586s_action_t init_script[] = {
     #if ST7586S_DO_RESET_AND_INIT
     { ST7586S_ACTION_WRITE_COMMAND, ST7586_ARDCTL},
     { ST7586S_ACTION_WRITE_DATA, 0x9f},
@@ -475,7 +475,7 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
     // For every action in the init script, either send a command or data, or
     // wait for a given delay.
     for (script_index = 0; script_index < PBIO_ARRAY_SIZE(init_script); script_index++) {
-        pbdrv_display_st7586s_action_t *action = &init_script[script_index];
+        const pbdrv_display_st7586s_action_t *action = &init_script[script_index];
 
         if (action->type == ST7586S_ACTION_DELAY) {
             // Simple delay.
