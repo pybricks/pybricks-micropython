@@ -644,8 +644,8 @@ ifeq ($(PB_MCU_FAMILY),TIAM1808)
 $(BUILD)/u-boot.bin:
 	$(ECHO) "Downloading u-boot.bin"
 	$(Q)mkdir -p $(dir $@)
-	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v2.0.0/u-boot.bin
-	$(Q)echo "570e079870ddc1deb2ce40d7a4d6785c151883a65e273ce6e33643152df90efb  $@" | sha256sum -c --strict
+	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v2.0.1/u-boot.bin
+	$(Q)echo "86ddad84f64d8aea85b4315fc1414bdec0bb0d46c92dbd3db45ed599e3a994cb  $@" | sha256sum -c --strict
 
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 
