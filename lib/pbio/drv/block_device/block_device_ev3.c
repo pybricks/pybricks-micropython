@@ -435,13 +435,28 @@ static const uint8_t device_id[] = {0x20, 0xba, 0x18};
 // Request flash device ID.
 static const uint8_t cmd_rdid[] = {FLASH_CMD_GET_ID, 0x00, 0x00, 0x00};
 
+// Request the write-status byte.
+static const uint8_t cmd_status[] = {FLASH_CMD_GET_STATUS, 0x00};
+
+// Enable flash writing. Needed once before each write operation.
+static const uint8_t cmd_write_enable[] = {FLASH_CMD_WRITE_ENABLE};
+
+// Request reading from address. Buffer: read command + address + dummy byte.
+// Should be followed by another command that reads the data.
+static uint8_t read_address[4] = {FLASH_CMD_READ_DATA};
+
+// Request page write at address. Buffer: write command + address.
+// Should be followed by the data.
+static uint8_t write_address[4] = {FLASH_CMD_WRITE_DATA};
+
+// Request sector erase at address. Buffer: erase command + address.
+static uint8_t erase_address[4] = {FLASH_CMD_ERASE_BLOCK};
+
 pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
     static uint32_t size_done;
     static uint32_t size_now;
     pbio_error_t err;
-
-    (void)err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -454,20 +469,47 @@ pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, ui
     for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_READ);
 
-        // TODO: Actually implement reading
+        // Set address for this read request and send it.
+        set_address_be(&read_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset + size_done);
+        err = spi_begin_for_flash(read_address, sizeof(read_address), 0, buffer + size_done, size_now);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
     }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Poll the status register waiting for writes to complete.
+ */
+static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
+    uint8_t status;
+    pbio_error_t err;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    do {
+        err = spi_begin_for_flash(cmd_status, sizeof(cmd_status), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        status = bdev.spi_cmd_buf_rx[1];
+    } while (status & FLASH_STATUS_BUSY);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
 
+    static pbio_os_state_t sub;
     static uint32_t offset;
     static uint32_t size_now;
     static uint32_t size_done;
     pbio_error_t err;
-
-    (void)err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -478,14 +520,52 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
 
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
-        // TODO: Actually implement erasing
+        // Enable writing
+        err = spi_begin_for_flash(cmd_write_enable, sizeof(cmd_write_enable), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Erase this block
+        set_address_be(&erase_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset);
+        err = spi_begin_for_flash(erase_address, sizeof(erase_address), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Wait for completion
+        PBIO_OS_AWAIT(state, &sub, err = flash_wait_write(&sub));
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     // Write page by page.
     for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_WRITE);
 
-        // TODO: Actually implement writing
+        // Enable writing
+        err = spi_begin_for_flash(cmd_write_enable, sizeof(cmd_write_enable), 0, 0, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Write this block
+        set_address_be(&write_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + size_done);
+        err = spi_begin_for_flash(write_address, sizeof(write_address), buffer + size_done, 0, size_now);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+
+        // Wait for completion
+        PBIO_OS_AWAIT(state, &sub, err = flash_wait_write(&sub));
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
@@ -564,8 +644,6 @@ void pbdrv_block_device_init(void) {
 
     // Enable!
     SPIEnable(SOC_SPI_0_REGS);
-
-    (void)set_address_be;
 
     bdev.spi_status = SPI_STATUS_COMPLETE;
 
