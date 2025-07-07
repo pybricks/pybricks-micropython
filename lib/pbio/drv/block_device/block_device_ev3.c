@@ -39,7 +39,23 @@ typedef enum {
     SPI_STATUS_COMPLETE = 0,
     /** Operation failed. */
     SPI_STATUS_ERROR = 1,
+    /** Waiting for TX to complete. Bitfield. */
+    SPI_STATUS_WAIT_TX = 0x100,
+    /** Waiting for RX to complete. Bitfield. */
+    SPI_STATUS_WAIT_RX = 0x200,
+    /** Waiting for anything to complete. Bit mask. */
+    SPI_STATUS_WAIT_ANY = 0x300,
 } spi_status_t;
+
+/**
+ * Driver-specific sizes.
+ */
+enum {
+    // This is large enough for all flash commands we use
+    SPI_CMD_BUF_SZ = 4,
+    // Limited by DMA descriptor
+    SPI_MAX_DATA_SZ = 0xffff,
+};
 
 /**
  * The block device driver state.
@@ -47,6 +63,17 @@ typedef enum {
 static struct {
     /** HAL Transfer status */
     volatile spi_status_t spi_status;
+
+    // This is used when SPI only needs to receive. It should always stay as 0.
+    uint8_t tx_dummy_byte;
+    // This is used when received data is to be discarded. Its value should be ignored.
+    uint8_t rx_dummy_byte;
+    // This is used when transmitting so that the last byte clears CSHOLD.
+    uint32_t tx_last_word;
+    // This is used to hold the initial command to the SPI peripheral.
+    uint8_t spi_cmd_buf_tx[SPI_CMD_BUF_SZ];
+    // This is used to hold the replies to commands to the SPI peripheral.
+    uint8_t spi_cmd_buf_rx[SPI_CMD_BUF_SZ];
 } bdev;
 
 
@@ -54,14 +81,22 @@ static struct {
  * Tx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_tx_complete(void) {
-    // TODO
+    bdev.spi_status &= ~SPI_STATUS_WAIT_TX;
+    if (!(bdev.spi_status & SPI_STATUS_WAIT_ANY)) {
+        SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
+        pbio_os_request_poll();
+    }
 }
 
 /**
  * Rx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_rx_complete(void) {
-    // TODO
+    bdev.spi_status &= ~SPI_STATUS_WAIT_RX;
+    if (!(bdev.spi_status & SPI_STATUS_WAIT_ANY)) {
+        SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
+        pbio_os_request_poll();
+    }
 }
 
 /**
@@ -76,7 +111,19 @@ void pbdrv_block_device_ev3_spi_error(void) {
  * SPI interrupt handler, which is only used for single-byte commands
  */
 static void spi0_isr(void) {
-    // TODO
+    uint32_t intCode = 0;
+    IntSystemStatusClear(SYS_INT_SPINT0);
+
+    while ((intCode = SPIInterruptVectorGet(SOC_SPI_0_REGS))) {
+        if (intCode != SPI_RECV_FULL) {
+            continue;
+        }
+
+        bdev.spi_cmd_buf_rx[0] = HWREG(SOC_SPI_0_REGS + SPI_SPIBUF);
+        bdev.spi_status &= ~SPI_STATUS_WAIT_RX;
+        SPIIntDisable(SOC_SPI_0_REGS, SPI_RECV_INT);
+        pbio_os_request_poll();
+    }
 }
 
 
@@ -124,6 +171,230 @@ enum {
 // - 127: used to send the last byte, which is necessary to clear CSHOLD
 
 
+// XXX In the TI StarterWare code, miscompiles seemed to be happening due to strict aliasing issues with this type.
+// Fix it by using a union for type punning, which is more-or-less allowed
+// (it is explicitly allowed by GCC, and we do not have trap representations on this platform)
+//
+// This declaration also forces alignment
+typedef union {
+    EDMA3CCPaRAMEntry p;
+    uint32_t u[32 / 4];
+} EDMA3CCPaRAMEntry_;
+
+static void edma3_set_param(unsigned int slot, EDMA3CCPaRAMEntry_ *p) {
+    for (int i = 0; i < 32 / 4; i++) {
+        HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_PaRAM_BASE + slot * 32 + i * 4) = p->u[i];
+    }
+}
+
+
+// Helper functions for setting up the high control bits of a data transfer
+static inline void spi0_setup_for_flash() {
+    *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) =
+        (1 << (SPI_SPIDAT1_CSHOLD_SHIFT - 16)) |
+        (SPI_SPIDAT1_DFSEL_FORMAT0 << (SPI_SPIDAT1_DFSEL_SHIFT - 16)) |
+        (1 << PBDRV_EV3_SPI0_ADC_CS) | (0 << PBDRV_EV3_SPI0_FLASH_CS);      // Deselect ADC, select flash
+}
+static inline uint32_t spi0_last_dat1_for_flash(uint8_t x) {
+    return x |
+           (SPI_SPIDAT1_DFSEL_FORMAT0 << SPI_SPIDAT1_DFSEL_SHIFT) |
+           (1 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_ADC_CS)) |
+           (0 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_FLASH_CS));   // Deselect ADC, select flash
+}
+
+/**
+ * Initiates an SPI transfer via DMA, specifically designed for SPI flash command styles.
+ *
+ * @param [in] cmd              Bytes to initially transfer as the command for the flash
+ * @param [in] cmd_len          Length of \p cmd
+ * @param [in] user_data_tx     Bytes to be sent to the flash after the initial command. May be null, in which case a dummy value is sent.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
+ * @param [out] user_data_rx    Bytes to be received from the flash after the initial command. May be null.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
+ * @param [in] user_data_len    Length of the user data (both transmission and reception)
+ * @return                      ::PBIO_SUCCESS on success.
+ *                              ::PBIO_ERROR_BUSY if SPI is busy.
+ *                              ::PBIO_ERROR_INVALID_ARG if argument is too big
+ *                              ::PBIO_ERROR_IO for other errors.
+ */
+static pbio_error_t spi_begin_for_flash(
+    const unsigned char *cmd,
+    unsigned int cmd_len,
+    const unsigned char *user_data_tx,
+    unsigned char *user_data_rx,
+    unsigned int user_data_len
+    ) {
+    EDMA3CCPaRAMEntry_ ps;
+
+    if (cmd_len > SPI_CMD_BUF_SZ || user_data_len > SPI_MAX_DATA_SZ) {
+        // Maximum size exceeded
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    if (bdev.spi_status & SPI_STATUS_WAIT_ANY) {
+        // Another read operation is already in progress.
+        return PBIO_ERROR_BUSY;
+    }
+    if (bdev.spi_status == SPI_STATUS_ERROR) {
+        // Previous transmission went wrong.
+        return PBIO_ERROR_IO;
+    }
+
+    spi0_setup_for_flash();
+
+    if (cmd_len == 1 && user_data_len == 0) {
+        // There is no point in using DMA here
+        // (this is used for e.g. WREN)
+
+        bdev.spi_status = SPI_STATUS_WAIT_RX;
+
+        uint32_t tx = spi0_last_dat1_for_flash(cmd[0]);
+        SPIIntEnable(SOC_SPI_0_REGS, SPI_RECV_INT);
+        HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = tx;
+    } else {
+        memcpy(&bdev.spi_cmd_buf_tx, cmd, cmd_len);
+
+        if (user_data_len == 0) {
+            // Only a command, no user data
+
+            bdev.tx_last_word = spi0_last_dat1_for_flash(cmd[cmd_len - 1]);
+
+            // TX everything except last byte
+            ps.p.srcAddr = (unsigned int)(&bdev.spi_cmd_buf_tx);
+            ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+            ps.p.aCnt = 1;
+            ps.p.bCnt = cmd_len - 1;
+            ps.p.cCnt = 1;
+            ps.p.srcBIdx = 1;
+            ps.p.destBIdx = 0;
+            ps.p.srcCIdx = 0;
+            ps.p.destCIdx = 0;
+            ps.p.linkAddr = 127 * 32;
+            ps.p.bCntReload = 0;
+            ps.p.opt = 0;
+            edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
+
+            // TX last byte, clearing CSHOLD
+            ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+            ps.p.aCnt = 4;
+            ps.p.bCnt = 1;
+            ps.p.linkAddr = 0xffff;
+            ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+            edma3_set_param(127, &ps);
+
+            // RX all bytes
+            ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
+            ps.p.destAddr = (unsigned int)(&bdev.spi_cmd_buf_rx);
+            ps.p.aCnt = 1;
+            ps.p.bCnt = cmd_len;
+            ps.p.cCnt = 1;
+            ps.p.srcBIdx = 0;
+            ps.p.destBIdx = 1;
+            ps.p.srcCIdx = 0;
+            ps.p.destCIdx = 0;
+            ps.p.linkAddr = 0xffff;
+            ps.p.bCntReload = 0;
+            ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+            edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
+        } else {
+            // Command *and* user data
+
+            // TX the command
+            ps.p.srcAddr = (unsigned int)(&bdev.spi_cmd_buf_tx);
+            ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+            ps.p.aCnt = 1;
+            ps.p.bCnt = cmd_len;
+            ps.p.cCnt = 1;
+            ps.p.srcBIdx = 1;
+            ps.p.destBIdx = 0;
+            ps.p.srcCIdx = 0;
+            ps.p.destCIdx = 0;
+            ps.p.linkAddr = 126 * 32;
+            ps.p.bCntReload = 0;
+            ps.p.opt = 0;
+            edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
+
+            if (user_data_tx) {
+                bdev.tx_last_word = spi0_last_dat1_for_flash(user_data_tx[user_data_len - 1]);
+
+                // TX all but the last byte
+                ps.p.srcAddr = (unsigned int)(user_data_tx);
+                ps.p.bCnt = user_data_len - 1;
+                ps.p.linkAddr = 127 * 32;
+                edma3_set_param(126, &ps);
+
+                // TX the last byte, clearing CSHOLD
+                ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+                ps.p.aCnt = 4;
+                ps.p.bCnt = 1;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(127, &ps);
+            } else {
+                bdev.tx_last_word = spi0_last_dat1_for_flash(0);
+
+                // TX all but the last byte
+                ps.p.srcAddr = (unsigned int)(&bdev.tx_dummy_byte);
+                ps.p.bCnt = user_data_len - 1;
+                ps.p.srcBIdx = 0;
+                ps.p.linkAddr = 127 * 32;
+                edma3_set_param(126, &ps);
+
+                // TX the last byte, clearing CSHOLD
+                ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+                ps.p.aCnt = 4;
+                ps.p.bCnt = 1;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(127, &ps);
+            }
+
+            // RX the command
+            ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
+            ps.p.destAddr = (unsigned int)(&bdev.spi_cmd_buf_rx);
+            ps.p.aCnt = 1;
+            ps.p.bCnt = cmd_len;
+            ps.p.cCnt = 1;
+            ps.p.srcBIdx = 0;
+            ps.p.destBIdx = 1;
+            ps.p.srcCIdx = 0;
+            ps.p.destCIdx = 0;
+            ps.p.linkAddr = 125 * 32;
+            ps.p.bCntReload = 0;
+            ps.p.opt = 0;
+            edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
+
+            if (user_data_rx) {
+                // RX the data
+                ps.p.destAddr = (unsigned int)(user_data_rx);
+                ps.p.bCnt = user_data_len;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(125, &ps);
+            } else {
+                // RX dummy
+                ps.p.destAddr = (unsigned int)(&bdev.rx_dummy_byte);
+                ps.p.bCnt = user_data_len;
+                ps.p.destBIdx = 0;
+                ps.p.linkAddr = 0xffff;
+                ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+                edma3_set_param(125, &ps);
+            }
+        }
+
+        bdev.spi_status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
+
+        // TODO: pbio probably needs a framework for memory barriers and DMA cache management
+        __asm__ volatile ("" ::: "memory");
+
+        EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
+        EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
+        SPIIntEnable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
+    }
+
+    return PBIO_SUCCESS;
+}
+
+
 static void set_address_be(uint8_t *buf, uint32_t address) {
     buf[0] = address >> 16;
     buf[1] = address >> 8;
@@ -147,7 +418,7 @@ enum {
  */
 enum {
     FLASH_SIZE_ERASE = 64 * 1024,
-    FLASH_SIZE_READ = UINT16_MAX, // Limited by DMA transfer size.
+    FLASH_SIZE_READ = SPI_MAX_DATA_SZ,
     FLASH_SIZE_WRITE = 256,
 };
 
@@ -160,6 +431,9 @@ enum {
 
 // N25Q128 manufacturer and device ID.
 static const uint8_t device_id[] = {0x20, 0xba, 0x18};
+
+// Request flash device ID.
+static const uint8_t cmd_rdid[] = {FLASH_CMD_GET_ID, 0x00, 0x00, 0x00};
 
 pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
@@ -222,17 +496,19 @@ static pbio_os_process_t pbdrv_block_device_ev3_init_process;
 pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
     pbio_error_t err;
 
-    (void)err;
-    (void)device_id;
-
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // TODO: Get and verify flash ID
+    // Write the ID getter command
+    err = spi_begin_for_flash(cmd_rdid, sizeof(cmd_rdid), 0, 0, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
 
-    // Verify flash device ID // REVISIT: Fix up id_data so we can memcmp
-    // if (memcmp(device_id, id_data, sizeof(id_data))) {
-    //     return PBIO_ERROR_FAILED;
-    // }
+    // Verify flash device ID
+    if (memcmp(device_id, &bdev.spi_cmd_buf_rx[1], sizeof(device_id))) {
+        return PBIO_ERROR_FAILED;
+    }
 
     // Initialization done.
     pbdrv_init_busy_down();
