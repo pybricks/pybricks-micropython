@@ -118,7 +118,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/battery/battery_ev3.c \
 	drv/battery/battery_nxt.c \
 	drv/battery/battery_test.c \
-	drv/battery/battery_virtual.c \
 	drv/block_device/block_device_flash_stm32.c \
 	drv/block_device/block_device_test.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
@@ -134,7 +133,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/button/button_nxt.c \
 	drv/button/button_resistor_ladder.c \
 	drv/button/button_test.c \
-	drv/button/button_virtual.c \
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_linux.c \
 	drv/clock/clock_none.c \
@@ -159,11 +157,9 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_core.c \
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
-	drv/led/led_virtual.c \
 	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/motor_driver/motor_driver_ev3.c \
 	drv/motor_driver/motor_driver_nxt.c \
-	drv/motor_driver/motor_driver_virtual_cpython.c \
 	drv/motor_driver/motor_driver_virtual_simulation.c \
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_lp50xx_stm32.c \
@@ -188,7 +184,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/usb_stm32.c \
 	drv/usb/usb_ev3.c \
-	drv/virtual.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	src/angle.c \

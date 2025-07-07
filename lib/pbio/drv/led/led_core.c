@@ -14,7 +14,6 @@
 
 #include "led_dual.h"
 #include "led_pwm.h"
-#include "led_virtual.h"
 #include "led.h"
 
 #ifndef PBDRV_CONFIG_LED_NUM_DEV
@@ -26,7 +25,6 @@ static pbdrv_led_dev_t pbdrv_led_dev[PBDRV_CONFIG_LED_NUM_DEV];
 void pbdrv_led_init(void) {
     pbdrv_led_dual_init(pbdrv_led_dev);
     pbdrv_led_pwm_init(pbdrv_led_dev);
-    pbdrv_led_virtual_init(pbdrv_led_dev);
 }
 
 /**
