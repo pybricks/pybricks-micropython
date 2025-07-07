@@ -27,6 +27,7 @@
 
 #include "block_device_ev3.h"
 #include "../drv/gpio/gpio_ev3.h"
+#include "../drv/adc/adc_ev3.h"
 
 #include <pbio/error.h>
 #include <pbio/int_math.h>
@@ -581,6 +582,13 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
         return PBIO_ERROR_INVALID_ARG;
     }
+
+    #if PBDRV_CONFIG_ADC_EV3
+    // HACK
+    // We only store on shutdown. Block ADC.
+    pbdrv_adc_ev3_shut_down_hack();
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_is_shut_down_hack());
+    #endif
 
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
