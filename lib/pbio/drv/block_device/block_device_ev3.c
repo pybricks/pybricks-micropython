@@ -191,6 +191,8 @@ static void edma3_set_param(unsigned int slot, EDMA3CCPaRAMEntry_ *p) {
 
 // Helper functions for setting up the high control bits of a data transfer
 static inline void spi0_setup_for_flash() {
+    HWREG(SOC_SPI_0_REGS + SPI_SPIDELAY) = 0;
+
     *(volatile uint16_t *)(SOC_SPI_0_REGS + SPI_SPIDAT1 + 2) =
         (1 << (SPI_SPIDAT1_CSHOLD_SHIFT - 16)) |
         (SPI_SPIDAT1_DFSEL_FORMAT0 << (SPI_SPIDAT1_DFSEL_SHIFT - 16)) |
@@ -423,6 +425,9 @@ pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmds, vola
         // Previous transmission went wrong.
         return PBIO_ERROR_IO;
     }
+
+    // Max out delays for ADC, see comment in adc_ev3.c
+    HWREG(SOC_SPI_0_REGS + SPI_SPIDELAY) = (0xff << SPI_SPIDELAY_C2TDELAY_SHIFT) | (0xff << SPI_SPIDELAY_T2CDELAY_SHIFT);
 
     ps.p.srcAddr = (unsigned int)(cmds);
     ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;

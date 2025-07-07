@@ -52,6 +52,7 @@ enum {
 //
 // NOTE: CSHOLD is *not* set here, so that CS is deasserted between each 16-bit unit
 #define MANUAL_ADC_CHANNEL(x)                                                       \
+    (1 << 26) |                                                                     \
     (SPI_SPIDAT1_DFSEL_FORMAT1 << SPI_SPIDAT1_DFSEL_SHIFT) |                        \
     (0 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_ADC_CS)) |                       \
     (1 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_FLASH_CS)) |                     \
@@ -186,6 +187,12 @@ void pbdrv_adc_ev3_configure_data_format() {
     SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT1);
     SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT1);
     SPICharLengthSet(SOC_SPI_0_REGS, 16, SPI_DATA_FORMAT1);
+    // In order to compensate for analog impedance issues and capacitor charging time,
+    // we set all SPI delays to the maximum for the ADC. This helps get more accurate readings.
+    // This includes both this delay (the delay where CS is held inactive),
+    // as well as the CS-assert-to-clock-start and clock-end-to-CS-deassert delays
+    // (which are global and set in block_device_ev3.c).
+    SPIWdelaySet(SOC_SPI_0_REGS, 0x3f << SPI_SPIFMT_WDELAY_SHIFT, SPI_DATA_FORMAT1);
 }
 
 void pbdrv_adc_ev3_shut_down_hack() {
