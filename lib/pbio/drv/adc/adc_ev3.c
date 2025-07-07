@@ -46,6 +46,47 @@ enum {
     ADC_SAMPLE_PERIOD = 10,
 };
 
+// Construct both SPI peripheral settings (data format, chip select)
+// and ADC chip settings (manual mode, 2xVref) in one go,
+// so that DMA can be used efficiently.
+//
+// NOTE: CSHOLD is *not* set here, so that CS is deasserted between each 16-bit unit
+#define MANUAL_ADC_CHANNEL(x)                                                       \
+    (SPI_SPIDAT1_DFSEL_FORMAT1 << SPI_SPIDAT1_DFSEL_SHIFT) |                        \
+    (0 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_ADC_CS)) |                       \
+    (1 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_FLASH_CS)) |                     \
+    (1 << 12) |                                                                     \
+    (1 << 11) |                                                                     \
+    (((x) & 0xf) << 7) |                                                            \
+    (1 << 6)
+
+static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] = {
+    MANUAL_ADC_CHANNEL(0),
+    MANUAL_ADC_CHANNEL(1),
+    MANUAL_ADC_CHANNEL(2),
+    MANUAL_ADC_CHANNEL(3),
+    MANUAL_ADC_CHANNEL(4),
+    MANUAL_ADC_CHANNEL(5),
+    MANUAL_ADC_CHANNEL(6),
+    MANUAL_ADC_CHANNEL(7),
+    MANUAL_ADC_CHANNEL(8),
+    MANUAL_ADC_CHANNEL(9),
+    MANUAL_ADC_CHANNEL(10),
+    MANUAL_ADC_CHANNEL(11),
+    MANUAL_ADC_CHANNEL(12),
+    MANUAL_ADC_CHANNEL(13),
+    MANUAL_ADC_CHANNEL(14),
+    MANUAL_ADC_CHANNEL(15),
+    // We need two additional commands here because of how the ADC works.
+    // In every given command frame, a new analog channel is selected in the ADC frontend multiplexer.
+    // In frame n+1, that value actually gets converted to a digital value.
+    // In frame n+2, the converted digital value is finally output, and we are able to receive it.
+    // These requests are _pipelined_, so there is a latency of 2 frames, but we get a new sample on each frame.
+    //
+    // For more information, see figures 1 and 51 in the ADS7957 datasheet.
+    MANUAL_ADC_CHANNEL(15),
+    MANUAL_ADC_CHANNEL(15),
+};
 static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
 
 static int adc_soon;
@@ -85,8 +126,6 @@ static pbio_os_process_t pbdrv_adc_ev3_process;
 pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context) {
     static pbio_os_timer_t timer;
 
-    (void)timer;
-
     PBIO_OS_ASYNC_BEGIN(state);
 
     // HACK: This waits until storage is completely done with SPI flash before we start
@@ -95,7 +134,35 @@ pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context)
     // Once SPI flash init is finished, there is nothing further for us to do.
     // We are ready to start sampling.
 
-    // TODO: Actually start sampling
+    pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
+
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, shut_down_hack || adc_soon || pbio_os_timer_is_expired(&timer));
+
+        if (shut_down_hack) {
+            shut_down_hack_done = 1;
+            break;
+        }
+
+        if (adc_soon) {
+            adc_soon = 0;
+            pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
+        } else {
+            // TODO: There should probably be a pbio OS function for this
+            timer.start += timer.duration;
+        }
+
+        // Do a sample of all channels
+        pbdrv_block_device_ev3_spi_begin_for_adc(
+            channel_cmd,
+            channel_data,
+            PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+        PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
+
+        for (uint32_t i = 0; i < pbdrv_adc_callback_count; i++) {
+            pbdrv_adc_callbacks[i]();
+        }
+    }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
