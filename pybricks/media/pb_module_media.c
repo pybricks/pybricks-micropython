@@ -8,10 +8,14 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
+#include <pybricks/media.h>
 #include <pybricks/util_pb/pb_error.h>
 
 static const mp_rom_map_elem_t media_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_media)      },
+    #if PYBRICKS_PY_MEDIA_IMAGE
+    { MP_ROM_QSTR(MP_QSTR_Image),       MP_ROM_PTR(&pb_type_Image)      },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(pb_module_media_globals, media_globals_table);
 
