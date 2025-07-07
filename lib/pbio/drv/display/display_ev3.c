@@ -17,6 +17,7 @@
 
 #include "../core.h"
 
+#include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
@@ -523,6 +524,22 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
     }
 
     PROCESS_END();
+}
+
+pbio_image_t *pbdrv_display_get_image(void) {
+    static pbio_image_t image;
+    pbio_image_init(&image, (uint8_t *)pbdrv_display_user_frame,
+        PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
+        PBDRV_CONFIG_DISPLAY_NUM_COLS);
+    return &image;
+}
+
+uint8_t pbdrv_display_get_max_value(void) {
+    return 3;
+}
+
+void pbdrv_display_update(void) {
+    pbdrv_display_user_frame_update_requested = true;
 }
 
 #endif // PBDRV_CONFIG_DISPLAY_EV3
