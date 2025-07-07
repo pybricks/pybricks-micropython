@@ -30,7 +30,7 @@
 
 #include "../sys/storage.h"
 
-#define PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES (2)
+#define PBDRV_ADC_EV3_NUM_DELAY_SAMPLES (2)
 
 /**
  * Constants.
@@ -61,7 +61,7 @@ enum {
     (((x) & 0xf) << 7) |                                                            \
     (1 << 6)
 
-static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES] = {
+static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES] = {
     MANUAL_ADC_CHANNEL(0),
     MANUAL_ADC_CHANNEL(1),
     MANUAL_ADC_CHANNEL(2),
@@ -88,7 +88,7 @@ static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_
     MANUAL_ADC_CHANNEL(15),
     MANUAL_ADC_CHANNEL(15),
 };
-static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
+static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
 
 static int adc_soon;
 // Used to block ADC from interfering with flash upon shutdown
@@ -113,8 +113,8 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     uint16_t a, b;
     do {
         // Values for the requested channel are received several samples later.
-        a = channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
-        b = channel_data[ch + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
+        a = channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
+        b = channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
     } while (a != b);
 
     // Mask the data to 10 bits
@@ -157,7 +157,7 @@ pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context)
         pbdrv_block_device_ev3_spi_begin_for_adc(
             channel_cmd,
             channel_data,
-            PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES);
+            PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES);
         PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
 
         for (uint32_t i = 0; i < pbdrv_adc_callback_count; i++) {
