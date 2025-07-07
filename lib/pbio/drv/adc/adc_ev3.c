@@ -32,6 +32,20 @@
 
 #define PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES (2)
 
+/**
+ * Constants.
+ */
+enum {
+    // The maximum ADC clock speed according to the datasheet is 20 MHz.
+    // However, because the SPI peripheral does not have a fractional clock generator,
+    // the closest achievable in-spec speed is a division factor of 8.
+    //
+    // 150 MHz / 8 = 18.75 MHz actual
+    SPI_CLK_SPEED_ADC = 20000000,
+
+    ADC_SAMPLE_PERIOD = 10,
+};
+
 static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_CONFIG_ADC_EV3_NUM_DELAY_SAMPLES];
 
 static int adc_soon;
@@ -96,6 +110,15 @@ void pbdrv_adc_init(void) {
 void pbdrv_adc_update_soon(void) {
     adc_soon = 1;
     pbio_os_request_poll();
+}
+
+void pbdrv_adc_ev3_configure_data_format() {
+    SPIClkConfigure(SOC_SPI_0_REGS, SOC_SYSCLK_2_FREQ, SPI_CLK_SPEED_ADC, SPI_DATA_FORMAT1);
+    // NOTE: Cannot be CPOL=1 CPHA=1 like SPI flash
+    // The ADC seems to use the last falling edge to trigger conversions (see Figure 1 in the datasheet).
+    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT1);
+    SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT1);
+    SPICharLengthSet(SOC_SPI_0_REGS, 16, SPI_DATA_FORMAT1);
 }
 
 void pbdrv_adc_ev3_shut_down_hack() {
