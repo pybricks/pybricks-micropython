@@ -50,6 +50,7 @@
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
 
+#include "../../drv/block_device/block_device_ev3.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/display/display_ev3.h"
 #include "../../drv/gpio/gpio_ev3.h"
@@ -414,6 +415,12 @@ unsigned int EDMAVersionGet(void) {
  */
 static void Edma3CompleteCallback(unsigned int tccNum, unsigned int status) {
     switch (tccNum) {
+        case EDMA3_CHA_SPI0_RX:
+            pbdrv_block_device_ev3_spi_rx_complete();
+            return;
+        case EDMA3_CHA_SPI0_TX:
+            pbdrv_block_device_ev3_spi_tx_complete();
+            return;
         case EDMA3_CHA_SPI1_TX:
             pbdrv_display_ev3_spi1_tx_complete(status);
             return;

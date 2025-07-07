@@ -72,6 +72,13 @@ void pbdrv_block_device_ev3_spi_error(void) {
     pbio_os_request_poll();
 }
 
+/**
+ * SPI interrupt handler, which is only used for single-byte commands
+ */
+static void spi0_isr(void) {
+    // TODO
+}
+
 
 // ADC / Flash SPI0 data MOSI
 static const pbdrv_gpio_t pin_spi0_mosi = PBDRV_GPIO_EV3_PIN(3, 15, 12, 8, 5);
@@ -269,7 +276,11 @@ void pbdrv_block_device_init(void) {
     pbdrv_gpio_alt(&pin_flash_nhold, SYSCFG_PINMUX6_PINMUX6_31_28_GPIO2_0);
     pbdrv_gpio_out_high(&pin_flash_nhold);
 
-    // TODO: Set up interrupts
+    // Set up interrupts
+    SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
+    IntRegister(SYS_INT_SPINT0, spi0_isr);
+    IntChannelSet(SYS_INT_SPINT0, 2);
+    IntSystemEnable(SYS_INT_SPINT0);
 
     // Request DMA channels. This only needs to be done for the initial events (and not for linked parameter sets)
     EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
