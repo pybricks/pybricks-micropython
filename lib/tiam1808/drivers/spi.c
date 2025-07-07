@@ -59,7 +59,7 @@ void SPIClkConfigure(unsigned int baseAdd, unsigned int moduleClk,
 {
     unsigned int prescale;
 
-    prescale = (moduleClk/spiClk) - 1;
+    prescale = ((moduleClk + spiClk - 1)/spiClk) - 1;
 
     HWREG(baseAdd + SPI_SPIFMT(dataFormat)) =  \
         (SPI_SPIFMT_PRESCALE & (prescale << SPI_SPIFMT_PRESCALE_SHIFT));
