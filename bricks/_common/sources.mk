@@ -63,6 +63,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_type_uart_device.c \
 	iodevices/pb_type_iodevices_xbox_controller.c \
 	media/pb_module_media.c \
+	media/pb_type_image.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
 	nxtdevices/pb_type_nxtdevices_energymeter.c \
