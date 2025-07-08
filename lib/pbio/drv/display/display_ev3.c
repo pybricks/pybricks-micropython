@@ -115,7 +115,7 @@ static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
  * Number of column triplets. Each triplet is 3 columns of pixels, as detailed
  * below in the description of the display buffer.
  */
-#define ST7586S_NUM_COL_TRIPLETS (60)
+#define ST7586S_NUM_COL_TRIPLETS ((PBDRV_CONFIG_DISPLAY_NUM_COLS + 2) / 3)
 
 /**
  * Number of rows. This is the same as the number of display rows.
@@ -132,7 +132,7 @@ static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
  *
  * Non-atomic updated by the application are allowed.
  */
-static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CONFIG_DISPLAY_NUM_COLS] __attribute__((section(".noinit"), used));
+static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][ST7586S_NUM_COL_TRIPLETS * 3] __attribute__((section(".noinit"), used));
 
 /**
  * Flag to indicate that the user frame has been updated and needs to be
@@ -244,6 +244,10 @@ static void pbdrv_display_load_indexed_bitmap(const uint16_t *indexed_bitmap) {
             }
             pbdrv_display_user_frame[r][c] = set ? 3 : 0;
         }
+        // Fill unused columns out of screen.
+        for (size_t c = PBDRV_CONFIG_DISPLAY_NUM_COLS; c < ST7586S_NUM_COL_TRIPLETS * 3; c++) {
+            pbdrv_display_user_frame[r][c] = 0;
+        }
     }
 }
 
@@ -256,9 +260,8 @@ void pbdrv_display_st7586s_encode_user_frame(void) {
         // Iterating ST7586S column-triplets, which are 3 columns each.
         for (size_t triplet = 0; triplet < ST7586S_NUM_COL_TRIPLETS; triplet++) {
             uint8_t p0 = pbdrv_display_user_frame[row][triplet * 3];
-            // The last triplet has no second and third pixel.
-            uint8_t p1 = triplet == ST7586S_NUM_COL_TRIPLETS - 1 ? 0 : pbdrv_display_user_frame[row][triplet * 3 + 1];
-            uint8_t p2 = triplet == ST7586S_NUM_COL_TRIPLETS - 1 ? 0 : pbdrv_display_user_frame[row][triplet * 3 + 2];
+            uint8_t p1 = pbdrv_display_user_frame[row][triplet * 3 + 1];
+            uint8_t p2 = pbdrv_display_user_frame[row][triplet * 3 + 2];
             st7586s_send_buf[row * ST7586S_NUM_COL_TRIPLETS + triplet] = encode_triplet(p0, p1, p2);
         }
     }
@@ -528,7 +531,7 @@ void pbdrv_display_init(void) {
     // Initialize image.
     pbio_image_init(&display_image, (uint8_t *)pbdrv_display_user_frame,
         PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
-        PBDRV_CONFIG_DISPLAY_NUM_COLS);
+        ST7586S_NUM_COL_TRIPLETS * 3);
 
     // Start display process and ask pbdrv to wait until it is initialized.
     pbdrv_init_busy_up();
