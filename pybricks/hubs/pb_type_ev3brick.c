@@ -10,6 +10,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
+#include <pybricks/media.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
@@ -18,6 +19,7 @@ typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_t battery;
     mp_obj_t buttons;
     mp_obj_t light;
+    mp_obj_t screen;
     mp_obj_t system;
 } hubs_EV3Brick_obj_t;
 
@@ -50,6 +52,7 @@ static mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
     self->buttons = pb_type_Keypad_obj_new(pb_type_ev3brick_button_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
+    self->screen = pb_type_Image_display_obj_new();
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
 
     return MP_OBJ_FROM_PTR(self);
@@ -59,6 +62,7 @@ static const pb_attr_dict_entry_t hubs_EV3Brick_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_EV3Brick_obj_t, battery),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_EV3Brick_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_EV3Brick_obj_t, light),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_EV3Brick_obj_t, screen),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_EV3Brick_obj_t, system),
     PB_ATTR_DICT_SENTINEL
 };
