@@ -14,6 +14,8 @@
 
 extern const mp_obj_type_t pb_type_Image;
 
+mp_obj_t pb_type_Image_display_obj_new(void);
+
 #endif // PYBRICKS_PY_MEDIA_IMAGE
 
 #endif // PYBRICKS_PY_MEDIA

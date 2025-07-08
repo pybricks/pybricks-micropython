@@ -43,6 +43,15 @@ static int get_color(mp_obj_t obj) {
     return max - v * max / 100;
 }
 
+mp_obj_t pb_type_Image_display_obj_new(void) {
+    pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+    self->buffer = NULL;
+    self->is_display = true;
+    self->image = *pbdrv_display_get_image();
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
 static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
     size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
