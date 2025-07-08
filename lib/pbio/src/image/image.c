@@ -263,6 +263,142 @@ void pbio_image_draw_vline(pbio_image_t *image, int x, int y, int l,
 }
 
 /**
+ * Draw a line with a flat slope (less or equal to 1).
+ * @param [in,out] image      Image to draw into.
+ * @param [in]     x1         X coordinate of the first end.
+ * @param [in]     y1         Y coordinate of the first end.
+ * @param [in]     x2         X coordinate of the second end.
+ * @param [in]     y2         Y coordinate of the second end.
+ * @param [in]     value      Pixel value.
+ *
+ * This is an internal function, x2 must be greater or equal to x1.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ */
+static void pbio_image_draw_line_flat(pbio_image_t *image, int x1, int y1,
+    int x2, int y2, uint8_t value) {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int ydir = 1;
+    int x, y, err;
+
+    // Fall back to horizontal line, much faster.
+    if (dy == 0) {
+        pbio_image_draw_hline(image, x1, y1, dx + 1, value);
+        return;
+    }
+
+    // Clipping, X out of image.
+    if (x1 >= image->width || x2 < 0) {
+        return;
+    }
+
+    // Check Y direction.
+    if (dy < 0) {
+        dy = -dy;
+        ydir = -1;
+    }
+
+    // Error is scaled by 2 * dx, offset with one half to look at mid point.
+    err = -dx;
+    y = y1;
+
+    // Skip pixels left of image.
+    if (x1 < 0) {
+        err += -x1 * dy * 2;
+        int yskip = (err + dx * 2) / (dx * 2);
+        err -= yskip * dx * 2;
+        y += yskip * ydir;
+        x1 = 0;
+    }
+
+    // Skip pixels right of image.
+    if (x2 >= image->width) {
+        x2 = image->width - 1;
+    }
+
+    // Draw.
+    x = x1;
+    do {
+        pbio_image_draw_pixel(image, x, y, value);
+        err += dy * 2;
+        if (err >= 0) {
+            err -= dx * 2;
+            y += ydir;
+        }
+        x++;
+    } while (x <= x2);
+}
+
+/**
+ * Draw a line with a steep slope (more than 1).
+ * @param [in,out] image      Image to draw into.
+ * @param [in]     x1         X coordinate of the first end.
+ * @param [in]     y1         Y coordinate of the first end.
+ * @param [in]     x2         X coordinate of the second end.
+ * @param [in]     y2         Y coordinate of the second end.
+ * @param [in]     value      Pixel value.
+ *
+ * This is an internal function, y2 must be greater or equal to y1.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ */
+static void pbio_image_draw_line_steep(pbio_image_t *image, int x1, int y1,
+    int x2, int y2, uint8_t value) {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int xdir = 1;
+    int x, y, err;
+
+    // Fall back to vertical line, much faster.
+    if (dx == 0) {
+        pbio_image_draw_vline(image, x1, y1, dy + 1, value);
+        return;
+    }
+
+    // Clipping, Y out of image.
+    if (y1 >= image->height || y2 < 0) {
+        return;
+    }
+
+    // Check X direction.
+    if (dx < 0) {
+        dx = -dx;
+        xdir = -1;
+    }
+
+    // Error is scaled by 2 * dy, offset with one half to look at mid point.
+    err = -dy;
+    x = x1;
+
+    // Skip pixels above image.
+    if (y1 < 0) {
+        err += -y1 * dx * 2;
+        int xskip = (err + dy * 2) / (dy * 2);
+        err -= xskip * dy * 2;
+        x += xskip * xdir;
+        y1 = 0;
+    }
+
+    // Skip pixels bellow image.
+    if (y2 >= image->height) {
+        y2 = image->height - 1;
+    }
+
+    // Draw.
+    y = y1;
+    do {
+        pbio_image_draw_pixel(image, x, y, value);
+        err += dx * 2;
+        if (err >= 0) {
+            err -= dy * 2;
+            x += xdir;
+        }
+        y++;
+    } while (y <= y2);
+}
+
+/**
  * Draw a line.
  * @param [in,out] image      Image to draw into.
  * @param [in]     x1         X coordinate of the first end.
@@ -275,7 +411,26 @@ void pbio_image_draw_vline(pbio_image_t *image, int x, int y, int l,
  */
 void pbio_image_draw_line(pbio_image_t *image, int x1, int y1, int x2, int y2,
     uint8_t value) {
-    // TODO
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int abs_dx = dx < 0 ? -dx : dx;
+    int abs_dy = dy < 0 ? -dy : dy;
+
+    if (abs_dx >= abs_dy) {
+        // Flat slope, X always increasing.
+        if (dx > 0) {
+            pbio_image_draw_line_flat(image, x1, y1, x2, y2, value);
+        } else {
+            pbio_image_draw_line_flat(image, x2, y2, x1, y1, value);
+        }
+    } else {
+        // Steep slope, Y always increasing.
+        if (dy > 0) {
+            pbio_image_draw_line_steep(image, x1, y1, x2, y2, value);
+        } else {
+            pbio_image_draw_line_steep(image, x2, y2, x1, y1, value);
+        }
+    }
 }
 
 /**
@@ -289,7 +444,7 @@ void pbio_image_draw_line(pbio_image_t *image, int x1, int y1, int x2, int y2,
  * @param [in]     value      Pixel value.
  *
  * When line thickness is odd, pixels are centered on the line. When even,
- * line is thicker on one side.
+ * line is thicker on left side, when looking from first end to second end.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -299,7 +454,47 @@ void pbio_image_draw_thick_line(pbio_image_t *image, int x1, int y1, int x2,
     if (thickness <= 0) {
         return;
     }
-    // TODO
+
+    // Fall back to regular line.
+    if (thickness <= 1) {
+        pbio_image_draw_line(image, x1, y1, x2, y2, value);
+        return;
+    }
+
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int abs_dx = dx < 0 ? -dx : dx;
+    int abs_dy = dy < 0 ? -dy : dy;
+    int i;
+    int offset = thickness / 2;
+
+    if (abs_dx >= abs_dy) {
+        // Flat slope, X always increasing.
+        if (dx > 0) {
+            for (i = 0; i < thickness; i++) {
+                pbio_image_draw_line_flat(image, x1, y1 + i - offset,
+                    x2, y2 + i - offset, value);
+            }
+        } else {
+            for (i = 0; i < thickness; i++) {
+                pbio_image_draw_line_flat(image, x2, y2 - i + offset,
+                    x1, y1 - i + offset, value);
+            }
+        }
+    } else {
+        // Steep slope, Y always increasing.
+        if (dy > 0) {
+            for (i = 0; i < thickness; i++) {
+                pbio_image_draw_line_steep(image, x1 - i + offset, y1,
+                    x2 - i + offset, y2, value);
+            }
+        } else {
+            for (i = 0; i < thickness; i++) {
+                pbio_image_draw_line_steep(image, x2 + i - offset, y2,
+                    x1 + i - offset, y1, value);
+            }
+        }
+    }
 }
 
 /**

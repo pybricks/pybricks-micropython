@@ -274,12 +274,7 @@ static mp_obj_t pb_type_Image_draw_line(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t width = pb_obj_get_int(width_in);
     int color = get_color(color_in);
 
-    mp_raise_NotImplementedError(MP_ERROR_TEXT("draw_line is not implemented yet"));
-    if (width <= 1) {
-        pbio_image_draw_line(&self->image, x1, y1, x2, y2, color);
-    } else {
-        pbio_image_draw_thick_line(&self->image, x1, y1, x2, y2, width, color);
-    }
+    pbio_image_draw_thick_line(&self->image, x1, y1, x2, y2, width, color);
 
     if (self->is_display) {
         pbdrv_display_update();
