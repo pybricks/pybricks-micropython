@@ -13,13 +13,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <contiki.h>
-
 #include "../core.h"
 
 #include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 
 #include <tiam1808/edma.h>
@@ -111,8 +110,6 @@ static const pbdrv_gpio_t pin_lcd_cs = PBDRV_GPIO_EV3_PIN(5, 15, 12, 2, 12);
 static const pbdrv_gpio_t pin_lcd_reset = PBDRV_GPIO_EV3_PIN(12, 31, 28, 5, 0);
 
 static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
-
-PROCESS(pbdrv_display_ev3_init_process, "st7586s");
 
 /**
  * Number of column triplets. Each triplet is 3 columns of pixels, as detailed
@@ -350,7 +347,7 @@ static const pbdrv_display_st7586s_action_t init_script[] = {
 void pbdrv_display_ev3_spi1_tx_complete(uint32_t status) {
     SPIIntDisable(SOC_SPI_1_REGS, SPI_DMA_REQUEST_ENA_INT);
     spi_status = SPI_STATUS_COMPLETE;
-    process_poll(&pbdrv_display_ev3_init_process);
+    pbio_os_request_poll();
 }
 
 /**
@@ -412,7 +409,7 @@ void pbdrv_display_st7586s_write_data_begin(uint8_t *data, uint32_t size) {
  *
  * Pinmux and common EDMA handlers are already set up in platform.c.
  */
-void pbdrv_display_init(void) {
+static void pbdrv_display_ev3_spi_init(void) {
 
     // GPIO Mux. CS is in GPIO mode (manual control).
     pbdrv_gpio_alt(&pin_spi1_mosi, SYSCFG_PINMUX5_PINMUX5_23_20_SPI1_SIMO0);
@@ -445,32 +442,27 @@ void pbdrv_display_init(void) {
 
     // Enable the SPI controller.
     SPIEnable(SOC_SPI_1_REGS);
-
-    // Start SPI process and ask pbdrv to wait until it is initialized.
-    pbdrv_init_busy_up();
-    process_start(&pbdrv_display_ev3_init_process);
 }
+
+static pbio_os_process_t pbdrv_display_ev3_process;
 
 /**
  * Display driver process. Initializes the display and updates the display
- * with the user frame buffer at a regular interval if the user data was
- * updated.
+ * with the user frame buffer if the user data was updated.
  */
-PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
+static pbio_error_t pbdrv_display_ev3_process_thread(pbio_os_state_t *state, void *context) {
 
-    static struct etimer etimer;
+    static pbio_os_timer_t timer;
     static uint32_t script_index;
     static uint8_t payload;
 
-    PROCESS_BEGIN();
+    PBIO_OS_ASYNC_BEGIN(state);
 
     #if ST7586S_DO_RESET_AND_INIT
     pbdrv_gpio_out_low(&pin_lcd_reset);
-    etimer_set(&etimer, 10);
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
+    PBIO_OS_AWAIT_MS(state, &timer, 10);
     pbdrv_gpio_out_high(&pin_lcd_reset);
-    etimer_set(&etimer, 120);
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
+    PBIO_OS_AWAIT_MS(state, &timer, 120);
     #endif // ST7586S_DO_RESET_AND_INIT
 
     // For every action in the init script, either send a command or data, or
@@ -480,8 +472,7 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
 
         if (action->type == ST7586S_ACTION_DELAY) {
             // Simple delay.
-            etimer_set(&etimer, action->payload);
-            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
+            PBIO_OS_AWAIT_MS(state, &timer, action->payload);
         } else {
             // Send command or data.
             payload = action->payload;
@@ -491,7 +482,7 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
                 pbdrv_gpio_out_low(&pin_lcd_a0);
             }
             pbdrv_display_st7586s_write_data_begin(&payload, sizeof(payload));
-            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && spi_status == SPI_STATUS_COMPLETE);
+            PBIO_OS_AWAIT_UNTIL(state, spi_status == SPI_STATUS_COMPLETE);
             pbdrv_gpio_out_high(&pin_lcd_cs);
         }
     }
@@ -503,35 +494,49 @@ PROCESS_THREAD(pbdrv_display_ev3_init_process, ev, data) {
     pbdrv_display_load_indexed_bitmap(pbdrv_display_pybricks_logo);
     pbdrv_display_st7586s_encode_user_frame();
     pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
-    PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && spi_status == SPI_STATUS_COMPLETE);
+    PBIO_OS_AWAIT_UNTIL(state, spi_status == SPI_STATUS_COMPLETE);
     pbdrv_gpio_out_high(&pin_lcd_cs);
 
     // Done initializing.
     pbdrv_init_busy_down();
 
-    // Regularly update the display with the user frame buffer, if changed.
-    etimer_set(&etimer, 40);
+    // Update the display with the user frame buffer, if changed.
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&etimer));
-        if (pbdrv_display_user_frame_update_requested) {
-            pbdrv_display_user_frame_update_requested = false;
-            pbdrv_display_st7586s_encode_user_frame();
-            pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
-            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL && spi_status == SPI_STATUS_COMPLETE);
-            pbdrv_gpio_out_high(&pin_lcd_cs);
-        }
-        etimer_reset(&etimer);
+        PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
+        pbdrv_display_user_frame_update_requested = false;
+        pbdrv_display_st7586s_encode_user_frame();
+        pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
+        PBIO_OS_AWAIT_UNTIL(state, spi_status == SPI_STATUS_COMPLETE);
+        pbdrv_gpio_out_high(&pin_lcd_cs);
     }
 
-    PROCESS_END();
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Image corresponding to the display.
+ */
+static pbio_image_t display_image;
+
+/**
+ * Initialize the display driver.
+ */
+void pbdrv_display_init(void) {
+    // Initialize SPI.
+    pbdrv_display_ev3_spi_init();
+
+    // Initialize image.
+    pbio_image_init(&display_image, (uint8_t *)pbdrv_display_user_frame,
+        PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
+        PBDRV_CONFIG_DISPLAY_NUM_COLS);
+
+    // Start display process and ask pbdrv to wait until it is initialized.
+    pbdrv_init_busy_up();
+    pbio_os_process_start(&pbdrv_display_ev3_process, pbdrv_display_ev3_process_thread, NULL);
 }
 
 pbio_image_t *pbdrv_display_get_image(void) {
-    static pbio_image_t image;
-    pbio_image_init(&image, (uint8_t *)pbdrv_display_user_frame,
-        PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
-        PBDRV_CONFIG_DISPLAY_NUM_COLS);
-    return &image;
+    return &display_image;
 }
 
 uint8_t pbdrv_display_get_max_value(void) {
@@ -540,6 +545,7 @@ uint8_t pbdrv_display_get_max_value(void) {
 
 void pbdrv_display_update(void) {
     pbdrv_display_user_frame_update_requested = true;
+    pbio_os_request_poll();
 }
 
 #endif // PBDRV_CONFIG_DISPLAY_EV3
