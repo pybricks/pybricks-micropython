@@ -98,7 +98,7 @@ typedef enum {
     /**
      * Ask the process to cancel/exit.
      */
-    PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL = 1 << 1,
+    PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL = 1 << 0,
 } pbio_os_process_request_type_t;
 
 /**
@@ -289,6 +289,8 @@ struct _pbio_os_process_t {
             return PBIO_ERROR_AGAIN;                  \
         }                                             \
     } while (0)                                       \
+
+void pbio_os_process_make_request(pbio_os_process_t *process, pbio_os_process_request_type_t request);
 
 bool pbio_os_run_processes_once(void);
 
