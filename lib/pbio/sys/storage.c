@@ -53,19 +53,6 @@ static uint8_t incoming_slot = 0;
  */
 typedef struct {
     /**
-     * How much to write on shutdown (and how much to load on boot).
-     * This must always remain the first element of this structure.
-     */
-    uint32_t saved_data_size;
-    #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
-    /**
-     * Checksum complement to satisfy bootloader requirements. This ensures
-     * that words in the scanned area still add up to precisely 0 after user
-     * data was written.
-     */
-    volatile uint32_t checksum_complement;
-    #endif
-    /**
      * End-user read-write accessible data. Everything after this is also
      * user-readable but not writable.
      */
@@ -92,10 +79,14 @@ typedef struct {
 } pbsys_storage_data_map_t;
 
 /**
- * Map of loaded data.
+ * Map of loaded data. This is kept in memory between successive runs of the
+ * end user application (like MicroPython).
  *
- * Throughout this file, "ROM" is used to indicate
- * non-volatile storage such as internal or external flash.
+ * When any of this pbsys code is running, we know that pbdrv initialization
+ * has completed, which has preloaded stored data into RAM.
+ *
+ * NB: We assume that the reference to 'map' below has been set by pbsys init
+ *     and that we can use it safely throughout, so we will not check for NULL.
  *
  *     ▲  text / other
  *     │
@@ -103,30 +94,14 @@ typedef struct {
  *     │
  * ram │  size info and settings   ▲ saved on   ▲
  *     │                           │ poweroff   │
- *     │  user program(s)          ▼ to "rom"   │ pbsys_user_ram_data_map
+ *     │  user program(s)          ▼ to flash   │ user RAM
  *     │                                        │
- *     │  remaining user ram: application heap  ▼
+ *     │  remaining application heap            ▼
  *     │
  *     ▼  stack
  *
- * The pbsys_user_ram_data_map union ensures that pbsys_storage_data_map_t.program_data
- * has the correct size.
  */
-static union {
-    /** Fully saved to ROM on poweroff. */
-    pbsys_storage_data_map_t data_map;
-    /** This RAM component contains several consecutive user program blobs.
-     *  Those programs are saved to ROM. The remaining user heap is not saved. */
-    uint8_t _size_placeholder[PBSYS_CONFIG_STORAGE_RAM_SIZE];
-} pbsys_user_ram_data_map __attribute__((section(".noinit"), used));
-
-// Application RAM must enough to load ROM and still do something useful.
-#if PBSYS_CONFIG_STORAGE_RAM_SIZE < PBSYS_CONFIG_STORAGE_ROM_SIZE + 2048
-#error "Application RAM must be at least ROM size + 2K."
-#endif
-
-static pbsys_storage_data_map_t *map = &pbsys_user_ram_data_map.data_map;
-static bool data_map_is_loaded = false;
+static pbsys_storage_data_map_t *map;
 static bool data_map_write_on_shutdown = false;
 
 /**
@@ -151,7 +126,7 @@ uint32_t pbsys_storage_get_maximum_program_size(void) {
     // FIXME: This is the total size of *all* slots. This is not a
     // good indicator of the free space for multi-slot hubs. We need to inform
     // the host dynamically about the available size of the current slot.
-    return PBSYS_CONFIG_STORAGE_ROM_SIZE - sizeof(pbsys_storage_data_map_t);
+    return pbdrv_block_device_get_writable_size() - sizeof(pbsys_storage_data_map_t);
 }
 
 /**
@@ -160,9 +135,6 @@ uint32_t pbsys_storage_get_maximum_program_size(void) {
  * @returns             The user settings or NULL if they are not yet loaded.
  */
 pbsys_storage_settings_t *pbsys_storage_settings_get_settings(void) {
-    if (!data_map_is_loaded) {
-        return NULL;
-    }
     return &map->settings;
 }
 
@@ -240,40 +212,6 @@ pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32
     *data = map->user_data + offset;
     return PBIO_SUCCESS;
 }
-
-#if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
-// Updates checksum in data map to satisfy bootloader requirements.
-// NB: saved_data_size must be set before calculating this.
-static void pbsys_storage_update_checksum(void) {
-
-    // Align writable data by a double word, to simplify checksum
-    // computation and storage drivers that write double words.
-    while (map->saved_data_size % 8) {
-        *((uint8_t *)map + map->saved_data_size++) = 0;
-    }
-
-    // The area scanned by the bootloader adds up to 0 when all user data
-    // is 0xFFFFFFFF. So the bootloader value up until just before the user
-    // data is always 0 + the number of words in the scanned user data.
-    extern uint32_t _pbsys_storage_checked_size;
-    uint32_t checksize = (uint32_t)&_pbsys_storage_checked_size;
-    uint32_t checksum = checksize / sizeof(uint32_t);
-
-    // Don't count existing value.
-    map->checksum_complement = 0;
-
-    // Add checksum for each word in the written data and empty checked size.
-    for (uint32_t offset = 0; offset < checksize; offset += sizeof(uint32_t)) {
-        uint32_t *word = (uint32_t *)((uint8_t *)map + offset);
-        // Assume that everything after written data is erased by the block
-        // device driver prior to writing.
-        checksum += offset < map->saved_data_size ? *word : 0xFFFFFFFF;
-    }
-
-    // Set the checksum complement to cancel out user data checksum.
-    map->checksum_complement = 0xFFFFFFFF - checksum + 1;
-}
-#endif // PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
 
 static pbio_error_t pbsys_storage_prepare_receive(void) {
 
@@ -429,48 +367,7 @@ void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
 
     // User ram starts after the last slot.
     program->user_ram_start = map->program_data + pbsys_storage_get_used_program_data_size();
-    program->user_ram_end = ((void *)&pbsys_user_ram_data_map) + sizeof(pbsys_user_ram_data_map);
-}
-
-/**
- * This process loads data from storage on boot.
- */
-static pbio_error_t pbsys_storage_init_process_thread(pbio_os_state_t *state, void *context) {
-
-    pbio_error_t err;
-
-    static pbio_os_state_t sub;
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // Read size of stored data.
-    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)map, sizeof(map->saved_data_size)));
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Read the available data into RAM.
-    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)map, map->saved_data_size));
-
-    bool is_bad_version = strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
-
-    // Test that storage successfully loaded and matches current firmware,
-    // otherwise reset storage.
-    if (err != PBIO_SUCCESS || is_bad_version) {
-        pbsys_storage_reset_storage();
-    }
-
-    // Apply loaded settings as necesary.
-    pbsys_storage_settings_apply_loaded_settings(&map->settings);
-    data_map_is_loaded = true;
-
-    // Poke processes that await on system settings to become available.
-    pbio_os_request_poll();
-
-    // Initialization done.
-    pbsys_init_busy_down();
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    program->user_ram_end = ((void *)map) + PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE;
 }
 
 /**
@@ -482,17 +379,14 @@ static pbio_error_t pbsys_storage_deinit_process_thread(pbio_os_state_t *state, 
 
     static pbio_os_state_t sub;
 
+    static uint32_t write_size;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
-    map->saved_data_size = sizeof(pbsys_storage_data_map_t) + pbsys_storage_get_used_program_data_size();
-
-    #if PBSYS_CONFIG_STORAGE_OVERLAPS_BOOTLOADER_CHECKSUM
-    pbsys_storage_update_checksum();
-    #endif
+    write_size = sizeof(pbsys_storage_data_map_t) + pbsys_storage_get_used_program_data_size();
 
     // Write the data.
-    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_store(&sub, (uint8_t *)map, map->saved_data_size));
-
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_write_all(&sub, write_size));
 
     // Deinitialization done.
     pbsys_init_busy_down();
@@ -500,15 +394,21 @@ static pbio_error_t pbsys_storage_deinit_process_thread(pbio_os_state_t *state, 
     PBIO_OS_ASYNC_END(err);
 }
 
-
-static pbio_os_process_t pbsys_storage_init_process;
-
 /**
  * Starts loading the user data from storage to RAM.
  */
 void pbsys_storage_init(void) {
-    pbsys_init_busy_up();
-    pbio_os_process_start(&pbsys_storage_init_process, pbsys_storage_init_process_thread, NULL);
+
+    pbio_error_t err = pbdrv_block_device_get_data((uint8_t **)&map);
+
+    // Test that storage successfully loaded and matches current firmware,
+    // otherwise reset storage.
+    if (err != PBIO_SUCCESS || strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash))) {
+        pbsys_storage_reset_storage();
+    }
+
+    // Apply loaded settings as necesary.
+    pbsys_storage_settings_apply_loaded_settings(&map->settings);
 }
 
 static pbio_os_process_t pbsys_storage_deinit_process;
@@ -518,8 +418,8 @@ static pbio_os_process_t pbsys_storage_deinit_process;
  */
 void pbsys_storage_deinit(void) {
 
-    // If loading failed or writing not requested, don't write.
-    if (pbsys_storage_init_process.err != PBIO_SUCCESS || !data_map_write_on_shutdown) {
+    // If writing not requested, don't write.
+    if (!data_map_write_on_shutdown) {
         return;
     }
 

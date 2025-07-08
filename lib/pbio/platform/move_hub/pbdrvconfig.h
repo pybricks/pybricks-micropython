@@ -19,6 +19,7 @@
 #define PBDRV_CONFIG_BATTERY_ADC_TYPE               (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (7 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32       (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE  (4 * 1024) // Must match FLASH_USER_0 + FLASH_USER_1 in linker script
 

@@ -10,13 +10,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <contiki.h>
-
 #include <pbdrv/block_device.h>
 
 #include <pbio/version.h>
-
-#include <pbsys/storage.h>
 
 /**
 The following script is compiled using pybricksdev compile hello.py in MULTI_MPY_V6.
@@ -58,43 +54,42 @@ static const uint8_t _program_data[] = {
     0x63,
 };
 
+// Information from MicroPython should not be used in the pbdrv drivers but it
+// is permissible for this test. It ensures we can place the expected git
+// version at the right place. FIXME: Move the git version to pybricks build
+// system, since it isn't actually the micropython git version.
+#include "genhdr/mpversion.h"
+#include <pbsys/storage.h>
+
 static struct {
-    uint32_t write_size;
     uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
     char stored_firmware_hash[8];
     pbsys_storage_settings_t settings;
     uint32_t program_offset;
     uint32_t program_size;
     uint8_t program_data[sizeof(_program_data)];
-} blockdev = { 0 };
+} ramdisk __attribute__((section(".noinit"), used)) = { 0 };
 
-// Information from MicroPython should not be used in the pbdrv drivers but it
-// is permissible for this test. It ensures we can place the expected git
-// version at the right place. FIXME: Move the git version to pybricks build
-// system, since it isn't actually the micropython git version.
-#include "genhdr/mpversion.h"
-
-void pbdrv_block_device_init(void) {
-    blockdev.write_size = sizeof(blockdev) + sizeof(_program_data);
-    blockdev.program_size = sizeof(_program_data);
-    memcpy(&blockdev.stored_firmware_hash[0], MICROPY_GIT_HASH, sizeof(blockdev.stored_firmware_hash));
-    memcpy(&blockdev.program_data[0], _program_data, sizeof(_program_data));
+uint32_t pbdrv_block_device_get_writable_size(void) {
+    return 0;
 }
 
-pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
+pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
+    *data = (void *)&ramdisk;
 
-    // Exit on invalid size.
-    if (size == 0 || offset + size > PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Copy requested data to RAM.
-    memcpy(buffer, (uint8_t *)&blockdev + offset, size);
+    // Higher level code can use the ramdisk data if initialization completed
+    // successfully. Otherwise it should reset to factory default data.
     return PBIO_SUCCESS;
 }
 
+void pbdrv_block_device_init(void) {
+    ramdisk.program_size = sizeof(_program_data);
+    memcpy(&ramdisk.stored_firmware_hash[0], MICROPY_GIT_HASH, sizeof(ramdisk.stored_firmware_hash));
+    memcpy(&ramdisk.program_data[0], _program_data, sizeof(_program_data));
+}
+
 // Don't store any data in this implementation.
-pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
+pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_data_size) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 

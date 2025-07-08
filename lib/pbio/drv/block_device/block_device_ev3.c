@@ -32,6 +32,34 @@
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 
+static pbio_os_process_t pbdrv_block_device_ev3_init_process;
+
+static struct {
+    /**
+     * How much data to write on shutdown and load on the next boot. Includes
+     * the size of this field, because it is also saved.
+     */
+    uint32_t saved_size;
+    /**
+     * A copy of the data loaded from flash and application heap. The first
+     * portion of this, up to pbdrv_block_device_get_writable_size() bytes,
+     * gets saved to flash at shutdown.
+     */
+    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+} ramdisk __attribute__((section(".noinit"), used));
+
+uint32_t pbdrv_block_device_get_writable_size(void) {
+    return PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE - sizeof(ramdisk.saved_size);
+}
+
+pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
+    *data = ramdisk.data;
+
+    // Higher level code can use the ramdisk data if initialization completed
+    // successfully. Otherwise it should reset to factory default data.
+    return pbdrv_block_device_ev3_init_process.err;
+}
+
 /**
  * SPI bus state.
  */
@@ -522,7 +550,7 @@ static uint8_t write_address[4] = {FLASH_CMD_WRITE_DATA};
 // Request sector erase at address. Buffer: erase command + address.
 static uint8_t erase_address[4] = {FLASH_CMD_ERASE_BLOCK};
 
-pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
+static pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
     static uint32_t size_done;
     static uint32_t size_now;
@@ -573,7 +601,7 @@ static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, uint32_t size) {
+pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_data_size) {
 
     static pbio_os_state_t sub;
     static uint32_t offset;
@@ -581,12 +609,20 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     static uint32_t size_done;
     pbio_error_t err;
 
+    // We're going to write the used portion of the ramdisk to flash. Includes
+    // the size field itself, so add it to the total write size.
+    uint8_t *buffer = (void *)&ramdisk;
+    uint32_t size = used_data_size + sizeof(ramdisk.saved_size);
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Exit on invalid size.
     if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
         return PBIO_ERROR_INVALID_ARG;
     }
+
+    // Store the new size so we know how much to load on next boot.
+    ramdisk.saved_size = size;
 
     #if PBDRV_CONFIG_ADC_EV3
     // HACK
@@ -648,10 +684,9 @@ pbio_error_t pbdrv_block_device_store(pbio_os_state_t *state, uint8_t *buffer, u
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static pbio_os_process_t pbdrv_block_device_ev3_init_process;
-
 pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
     pbio_error_t err;
+    static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -667,10 +702,24 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
         return PBIO_ERROR_FAILED;
     }
 
-    // Initialization done.
+    // Read size of stored data.
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)&ramdisk.saved_size, sizeof(ramdisk.saved_size)));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Read the available data into RAM.
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)&ramdisk, ramdisk.saved_size));
+
+    // Reading may fail with PBIO_ERROR_INVALID_ARG if the size is too big.
+    // This happens when the size value was uninitialized or another firmware
+    // was used before. We still want to proceed with the boot process. The
+    // higher level code sees this error when requesting the RAM disk. On
+    // failure, it can reset the user data to factory defaults, and save it
+    // properly on shutdown.
     pbdrv_init_busy_down();
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(err);
 }
 
 void pbdrv_block_device_init(void) {

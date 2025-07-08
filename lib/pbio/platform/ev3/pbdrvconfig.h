@@ -17,6 +17,7 @@
 #define PBDRV_CONFIG_BATTERY_EV3                    (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (10 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_EV3               (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE          (8 * 1024)         // TBD, can be a few MB
 #define PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE_USER     (512)

@@ -45,10 +45,14 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
 }
 
 void pbsys_init(void) {
+
+    // Makes user data and settings available to modules below, so must be done first.
+    pbsys_storage_init();
+
     pbsys_battery_init();
     pbsys_host_init();
     pbsys_hmi_init();
-    pbsys_storage_init();
+
     process_start(&pbsys_system_process);
 
     while (pbsys_init_busy()) {

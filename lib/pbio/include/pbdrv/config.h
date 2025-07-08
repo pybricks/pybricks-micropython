@@ -57,4 +57,11 @@
 #define PBDRV_CONFIG_HAS_PORT_4 (0)
 #endif
 
+#if PBDRV_CONFIG_BLOCK_DEVICE
+// Application RAM must enough to load ROM and still do something useful.
+#if PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE < PBDRV_CONFIG_BLOCK_DEVICE_ROM_SIZE + 2048
+#error "Application RAM must be at least ROM size + 2K."
+#endif
+#endif
+
 #endif // _PBDRV_CONFIG_H_
