@@ -616,6 +616,11 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    #if PBDRV_CONFIG_ADC_EV3
+    // Need to await the ADC process to exit before we can write to flash.
+    PBIO_OS_AWAIT(state, &sub, pbdrv_adc_ev3_exit(&sub));
+    #endif
+
     // Exit on invalid size.
     if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
         return PBIO_ERROR_INVALID_ARG;
@@ -623,13 +628,6 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
 
     // Store the new size so we know how much to load on next boot.
     ramdisk.saved_size = size;
-
-    #if PBDRV_CONFIG_ADC_EV3
-    // HACK
-    // We only store on shutdown. Block ADC.
-    pbdrv_adc_ev3_shut_down_hack();
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_is_shut_down_hack());
-    #endif
 
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
@@ -719,6 +717,11 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
     // properly on shutdown.
     pbdrv_init_busy_down();
 
+    // ADC may start polling now.
+    #if PBDRV_CONFIG_ADC_EV3
+    pbdrv_adc_ev3_init();
+    #endif
+
     PBIO_OS_ASYNC_END(err);
 }
 
@@ -743,9 +746,8 @@ void pbdrv_block_device_init(void) {
     SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT0);
     SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT0);
     SPICharLengthSet(SOC_SPI_0_REGS, 8, SPI_DATA_FORMAT0);
-    #if PBDRV_CONFIG_ADC_EV3
-    pbdrv_adc_ev3_configure_data_format();
-    #endif
+
+    // Additional SPI configuration ADC is done when the ADC driver starts.
 
     // Configure the GPIO pins.
     pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);

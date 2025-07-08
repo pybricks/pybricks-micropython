@@ -5,6 +5,10 @@
 
 #if PBDRV_CONFIG_ADC_EV3
 
+#if !PBDRV_CONFIG_BLOCK_DEVICE_EV3
+#error "EV3 block device driver must be enabled"
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -91,9 +95,6 @@ static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_
 static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
 
 static int adc_soon;
-// Used to block ADC from interfering with flash upon shutdown
-static int shut_down_hack = 0;
-static int shut_down_hack_done = 0;
 
 static pbdrv_adc_callback_t pbdrv_adc_callbacks[1];
 static uint32_t pbdrv_adc_callback_count = 0;
@@ -124,24 +125,30 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
 
 static pbio_os_process_t pbdrv_adc_ev3_process;
 
+/**
+ * Request ADC process to exit and await until it does.
+ */
+pbio_error_t pbdrv_adc_ev3_exit(pbio_os_state_t *state) {
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbio_os_process_make_request(&pbdrv_adc_ev3_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_process.err == PBIO_SUCCESS);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context) {
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // HACK: This waits until storage is completely done with SPI flash before we start
-    PBIO_OS_AWAIT_UNTIL(state, pbsys_storage_settings_get_settings());
-
-    // Once SPI flash init is finished, there is nothing further for us to do.
-    // We are ready to start sampling.
-
     pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
 
     for (;;) {
-        PBIO_OS_AWAIT_UNTIL(state, shut_down_hack || adc_soon || pbio_os_timer_is_expired(&timer));
+        PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_process.request || adc_soon || pbio_os_timer_is_expired(&timer));
 
-        if (shut_down_hack) {
-            shut_down_hack_done = 1;
+        // Here we can exit gracefully since no SPI operation is in progress.
+        if (pbdrv_adc_ev3_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
             break;
         }
 
@@ -165,14 +172,10 @@ pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context)
         }
     }
 
+    // Processes may be waiting on us to complete, so kick when done.
+    pbio_os_request_poll();
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-void pbdrv_adc_init(void) {
-    // Immediately go into async mode so that we can wait for the SPI flash driver.
-    // We *don't* want to block the initial init phase, or else things will deadlock.
-
-    pbio_os_process_start(&pbdrv_adc_ev3_process, pbdrv_adc_ev3_process_thread, NULL);
 }
 
 void pbdrv_adc_update_soon(void) {
@@ -180,7 +183,15 @@ void pbdrv_adc_update_soon(void) {
     pbio_os_request_poll();
 }
 
-void pbdrv_adc_ev3_configure_data_format() {
+// Public init is not used.
+void pbdrv_adc_init(void) {
+}
+
+// Init starts here instead. Called by SPI flash driver when it is done initializing.
+void pbdrv_adc_ev3_init(void) {
+
+    // Most of the SPI initialization is already done by the SPI flash driver.
+
     SPIClkConfigure(SOC_SPI_0_REGS, SOC_SYSCLK_2_FREQ, SPI_CLK_SPEED_ADC, SPI_DATA_FORMAT1);
     // NOTE: Cannot be CPOL=1 CPHA=1 like SPI flash
     // The ADC seems to use the last falling edge to trigger conversions (see Figure 1 in the datasheet).
@@ -193,14 +204,9 @@ void pbdrv_adc_ev3_configure_data_format() {
     // as well as the CS-assert-to-clock-start and clock-end-to-CS-deassert delays
     // (which are global and set in block_device_ev3.c).
     SPIWdelaySet(SOC_SPI_0_REGS, 0x3f << SPI_SPIFMT_WDELAY_SHIFT, SPI_DATA_FORMAT1);
-}
 
-void pbdrv_adc_ev3_shut_down_hack() {
-    shut_down_hack = 1;
-    pbio_os_request_poll();
-}
-int pbdrv_adc_ev3_is_shut_down_hack() {
-    return shut_down_hack_done;
+    // Begin polling.
+    pbio_os_process_start(&pbdrv_adc_ev3_process, pbdrv_adc_ev3_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_ADC_EV3
