@@ -269,37 +269,27 @@ endif
 TI_AM1808_SRC_C = $(addprefix lib/tiam1808/,\
 	drivers/cppi41dma.c \
 	drivers/cpsw.c \
-	drivers/dcan.c \
 	drivers/dmtimer.c \
 	drivers/ecap.c \
 	drivers/edma.c \
 	drivers/ehrpwm.c \
-	drivers/elm.c \
-	drivers/emac.c \
 	drivers/emifa.c \
 	drivers/gpio.c \
 	drivers/gpmc.c \
 	drivers/hs_mmcsd.c \
 	drivers/i2c.c \
-	drivers/lan8710a.c \
-	drivers/lidd.c \
-	drivers/mailbox.c \
 	drivers/mcasp.c \
 	drivers/mcspi.c \
 	drivers/mdio.c \
-	drivers/phy.c \
 	drivers/pruss.c \
 	drivers/psc.c \
-	drivers/raster.c \
 	drivers/rtc.c \
 	drivers/spi.c \
 	drivers/syscfg.c \
 	drivers/timer.c \
-	drivers/tsc_adc.c \
 	drivers/uart.c \
 	drivers/usb.c \
 	drivers/usbphyGS60.c \
-	drivers/vpif.c \
 	drivers/watchdog.c \
 	system_config/armv5/gcc/cp15.c \
 	system_config/armv5/gcc/cpu.c \
