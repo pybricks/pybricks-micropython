@@ -386,6 +386,13 @@ typedef enum {
      * @since Pybricks Profile v1.4.0.
      */
     PBIO_PYBRICKS_FEATURE_FLAG_BUILTIN_USER_PROGRAM_IMU_CALIBRATION = 1 << 4,
+    /**
+     * Hub supports user program with multiple MicroPython .mpy files ABI v6.3
+     * including native module support.
+     *
+     * @since Pybricks Profile v1.5.0.
+     */
+    PBIO_PYBRICKS_FEATURE_FLAG_USER_PROG_FORMAT_MULTI_MPY_V6_3_NATIVE = 1 << 5,
 } pbio_pybricks_feature_flags_t;
 
 void pbio_pybricks_hub_capabilities(uint8_t *buf,
