@@ -6,17 +6,16 @@ This is the recommended development environment used by the Pybricks maintainers
 
 ### Requirements
 
-- Ubuntu 22.04 (Jammy Jellyfish)
+- Ubuntu 24.04
 - [Git SCM][git] any recent-ish version
 - [VS Code][vscode] latest version
-- [Python][python] v3.10.x
-- [Poetry][poetry] v1.8.x
-- [GNU ARM Embedded Toolchain][arm-gcc] v10-2020-q4
+- [Python][python] v3.12.x
+- [Poetry][poetry] v2.x
+- [GNU ARM Embedded Toolchain][arm-gcc] v13.x
 - [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
 
 Optional:
-- [Docker][docker] (only needed if building for ev3dev)
 - [Emscripten][emsdk] v1.39.x (only needed if building mpy-cross JavaScript package)
 - [Yarn][yarn] v1.x (only needed if building JavaScript packages)
 
@@ -24,10 +23,9 @@ Optional:
 [vscode]: https://code.visualstudio.com/Download
 [python]: https://www.python.org/downloads/
 [poetry]: https://python-poetry.org/docs/
-[arm-gcc]: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+[arm-gcc]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 [gcc]: https://gcc.gnu.org/
 [make]: https://www.gnu.org/software/make/
-[docker]: https://docs.docker.com/engine/install/ubuntu/
 [emsdk]: https://emscripten.org/docs/getting_started/downloads.html
 [yarn]: https://classic.yarnpkg.com/en/docs/install
 
