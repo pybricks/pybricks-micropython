@@ -41,7 +41,7 @@
 */
 
 
-#include "soc_AM335x.h"
+#include "soc_AM1808.h"
 #include "hw_types.h"
 #include "hs_mmcsd.h"
 #include "hw_hs_mmcsd.h"
@@ -154,7 +154,7 @@ void HSMMCSDSystemConfig(unsigned int baseAddr, unsigned int config)
  * \param   baseAddr      Base Address of the MMC/SD controller Registers.
  * \param   width         SD/MMC bus width
  *
- * width can take the values \n 
+ * width can take the values \n
  *     HS_MMCSD_BUS_WIDTH_8BIT \n
  *     HS_MMCSD_BUS_WIDTH_4BIT \n
  *     HS_MMCSD_BUS_WIDTH_1BIT \n
@@ -166,13 +166,13 @@ void HSMMCSDBusWidthSet(unsigned int baseAddr, unsigned int width)
 {
     switch (width)
     {
-        case HS_MMCSD_BUS_WIDTH_8BIT: 
+        case HS_MMCSD_BUS_WIDTH_8BIT:
             HWREG(baseAddr + MMCHS_CON) |= MMCHS_CON_DW8;
         break;
 
         case HS_MMCSD_BUS_WIDTH_4BIT:
             HWREG(baseAddr + MMCHS_CON) &= ~MMCHS_CON_DW8;
-            HWREG(baseAddr + MMCHS_HCTL) |= 
+            HWREG(baseAddr + MMCHS_HCTL) |=
                     (MMCHS_HCTL_DTW_4_BITMODE << MMCHS_HCTL_DTW_SHIFT);
         break;
 
@@ -191,7 +191,7 @@ void HSMMCSDBusWidthSet(unsigned int baseAddr, unsigned int width)
  * \param   baseAddr      Base Address of the MMC/SD controller Registers.
  * \param   volt          SD/MMC bus voltage
  *
- * volt can take the values \n 
+ * volt can take the values \n
  *     HS_MMCSD_BUS_VOLT_1P8 \n
  *     HS_MMCSD_BUS_VOLT_3P0 \n
  *     HS_MMCSD_BUS_VOLT_3P3 \n
@@ -311,7 +311,7 @@ unsigned int HSMMCSDIsIntClockStable(unsigned int baseAddr, unsigned int retry)
  * \param   baseAddr      Base Address of the MMC/SD controller Registers.
  * \param   volt          Supported bus voltage
  *
- * volt can take the values (or a combination of)\n 
+ * volt can take the values (or a combination of)\n
  *     HS_MMCSD_SUPPORT_VOLT_1P8 \n
  *     HS_MMCSD_SUPPORT_VOLT_3P0 \n
  *     HS_MMCSD_SUPPORT_VOLT_3P3 \n
@@ -359,7 +359,7 @@ void HSMMCSDDataTimeoutSet(unsigned int baseAddr, unsigned int timeout)
 {
     HWREG(baseAddr + MMCHS_SYSCTL) &= ~(MMCHS_SYSCTL_DTO);
     HWREG(baseAddr + MMCHS_SYSCTL) |= timeout;
-}    
+}
 
 /**
  * \brief   Set output bus frequency
@@ -414,13 +414,13 @@ int HSMMCSDBusFreqSet(unsigned int baseAddr, unsigned int freq_in,
         {
             return -1;
         }
-        
+
         /* Enable clock to the card */
         HWREG(baseAddr + MMCHS_SYSCTL) |= MMCHS_SYSCTL_CEN;
     }
 
     return 0;
-}    
+}
 
 /**
  * \brief   Sends INIT stream to the card
@@ -510,7 +510,7 @@ void HSMMCSDIntrEnable(unsigned int baseAddr, unsigned int flag)
 }
 
 /**
- * \brief   Gets the status bits from the controller 
+ * \brief   Gets the status bits from the controller
  *
  * \param   baseAddr    Base Address of the MMC/SD controller Registers.
  * \param   flag        Specific status required;
@@ -527,7 +527,7 @@ unsigned int HSMMCSDIntrStatusGet(unsigned int baseAddr, unsigned int flag)
 }
 
 /**
- * \brief   Clear the status bits from the controller 
+ * \brief   Clear the status bits from the controller
  *
  * \param   baseAddr    Base Address of the MMC/SD controller Registers.
  * \param   flag        Specific status required;
@@ -598,7 +598,7 @@ unsigned int HSMMCSDIsXferComplete(unsigned int baseAddr, unsigned int retry)
  *
  * \param    baseAddr    Base Address of the MMC/SD controller Registers
  * \param    blklen      Command to be passed to the controller/card
- * 
+ *
  * \note: blklen should be within the limits specified by the controller/card
  *
  * \return   none
