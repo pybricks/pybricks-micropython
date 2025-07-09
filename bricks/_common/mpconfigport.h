@@ -36,7 +36,11 @@
     X(ETIMEDOUT) \
     X(ECANCELED) \
 
-#define MICROPY_QSTR_BYTES_IN_HASH              (1)
+#if PYBRICKS_OPT_EXTRA_LEVEL2
+#define MICROPY_QSTR_BYTES_IN_HASH              (2)
+#else
+#define MICROPY_QSTR_BYTES_IN_HASH              (0)
+#endif
 #define MICROPY_ALLOC_PATH_MAX                  (256)
 #define MICROPY_ALLOC_PARSE_CHUNK_INIT          (16)
 #define MICROPY_EMIT_X64                        (PYBRICKS_OPT_NATIVE_MOD && __x86_64__)
