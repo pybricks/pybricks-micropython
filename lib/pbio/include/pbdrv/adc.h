@@ -13,6 +13,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 
 typedef void (*pbdrv_adc_callback_t)(void);
 
@@ -38,11 +39,13 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
 void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback);
 
 /**
- * Requests the ADC to update soon.
+ * Awaits for ADC to have new samples ready to be read.
  *
- * NB: Not implemented on all platforms.
+ * Not implemented on all platforms.
+ *
+ * @param [in] state    Protothread state.
  */
-void pbdrv_adc_update_soon(void);
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state);
 
 #else
 
@@ -54,7 +57,8 @@ static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
 static inline void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
-static inline void pbdrv_adc_update_soon(void) {
+static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif

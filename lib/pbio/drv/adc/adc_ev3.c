@@ -47,7 +47,7 @@ enum {
     // 150 MHz / 8 = 18.75 MHz actual
     SPI_CLK_SPEED_ADC = 20000000,
 
-    ADC_SAMPLE_PERIOD = 10,
+    ADC_SAMPLE_PERIOD = 2,
 };
 
 // Construct both SPI peripheral settings (data format, chip select)
@@ -94,8 +94,6 @@ static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_
 };
 static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
 
-static int adc_soon;
-
 static pbdrv_adc_callback_t pbdrv_adc_callbacks[1];
 static uint32_t pbdrv_adc_callback_count = 0;
 
@@ -137,39 +135,33 @@ pbio_error_t pbdrv_adc_ev3_exit(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context) {
+static pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context) {
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
+    // Poll continuously until cancellation is requested.
+    while (!(pbdrv_adc_ev3_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL)) {
 
-    for (;;) {
-        PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_process.request || adc_soon || pbio_os_timer_is_expired(&timer));
-
-        // Here we can exit gracefully since no SPI operation is in progress.
-        if (pbdrv_adc_ev3_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
-            break;
-        }
-
-        if (adc_soon) {
-            adc_soon = 0;
-            pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
-        } else {
-            // TODO: There should probably be a pbio OS function for this
-            timer.start += timer.duration;
-        }
-
-        // Do a sample of all channels
+        // Start a sample of all channels
         pbdrv_block_device_ev3_spi_begin_for_adc(
             channel_cmd,
             channel_data,
             PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES);
+
+        // Allow event loop to run once so that processes that await new
+        // samples can begin awaiting completion of the transfer.
+        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
+
+        // Await for actual transfer to complete.
         PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
 
         for (uint32_t i = 0; i < pbdrv_adc_callback_count; i++) {
             pbdrv_adc_callbacks[i]();
         }
+
+        pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
+        PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_process.request || pbio_os_timer_is_expired(&timer));
     }
 
     // Processes may be waiting on us to complete, so kick when done.
@@ -178,9 +170,11 @@ pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *context)
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-void pbdrv_adc_update_soon(void) {
-    adc_soon = 1;
-    pbio_os_request_poll();
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_block_device_ev3_is_busy());
+    PBIO_OS_AWAIT_UNTIL(state, !pbdrv_block_device_ev3_is_busy());
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // Public init is not used.

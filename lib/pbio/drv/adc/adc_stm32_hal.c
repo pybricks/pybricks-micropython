@@ -50,7 +50,8 @@ PROCESS(pbdrv_adc_process, "ADC");
 void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
-void pbdrv_adc_update_soon(void) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {

@@ -69,7 +69,8 @@ void pbdrv_adc_init(void) {
 void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
-void pbdrv_adc_update_soon(void) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 // does a single conversion for the specified channel
