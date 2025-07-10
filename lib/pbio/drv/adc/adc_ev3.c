@@ -94,15 +94,6 @@ static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_
 };
 static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
 
-static pbdrv_adc_callback_t pbdrv_adc_callbacks[1];
-static uint32_t pbdrv_adc_callback_count = 0;
-
-void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
-    if (pbdrv_adc_callback_count < PBIO_ARRAY_SIZE(pbdrv_adc_callbacks)) {
-        pbdrv_adc_callbacks[pbdrv_adc_callback_count++] = callback;
-    }
-}
-
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch >= PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) {
         return PBIO_ERROR_INVALID_ARG;
@@ -155,10 +146,6 @@ static pbio_error_t pbdrv_adc_ev3_process_thread(pbio_os_state_t *state, void *c
 
         // Await for actual transfer to complete.
         PBIO_OS_AWAIT_WHILE(state, pbdrv_block_device_ev3_is_busy());
-
-        for (uint32_t i = 0; i < pbdrv_adc_callback_count; i++) {
-            pbdrv_adc_callbacks[i]();
-        }
 
         pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_adc_ev3_process.request || pbio_os_timer_is_expired(&timer));

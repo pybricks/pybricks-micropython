@@ -30,15 +30,6 @@ typedef void (*pbdrv_adc_callback_t)(void);
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
 
 /**
- * Sets a callback to be called when the ADC has new data.
- *
- * NB: Not implemented on all platforms.
- *
- * @param [in] callback The callback function.
- */
-void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback);
-
-/**
  * Awaits for ADC to have new samples ready to be read.
  *
  * Not implemented on all platforms.
@@ -52,9 +43,6 @@ pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state);
 static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbdrv_adc_set_callback(pbdrv_adc_callback_t callback) {
 }
 
 static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {

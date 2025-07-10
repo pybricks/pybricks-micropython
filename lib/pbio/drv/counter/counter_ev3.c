@@ -130,10 +130,11 @@ static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
     return LEGO_DEVICE_TYPE_ID_NONE;
 }
 
+#define PBDRV_COUNTER_EV3_TYPE_LOOP_TIME (10)
+#define PBDRV_COUNTER_EV3_TYPE_MIN_STABLE_COUNT (20)
+
 /**
  * Updates the type of all EV3 motors based on the current ADC values.
- *
- * This is called periodically by the ADC process.
  */
 static void pbdrv_counter_ev3_update_type(void) {
 
@@ -155,11 +156,31 @@ static void pbdrv_counter_ev3_update_type(void) {
 
         // Update stable type if we have seen enough identical detections,
         // including none detections.
-        if (dev->type_id_count >= 20) {
+        if (dev->type_id_count >= PBDRV_COUNTER_EV3_TYPE_MIN_STABLE_COUNT) {
             dev->stable_type_id = type_id;
         }
     }
 }
+
+static pbio_os_process_t pbdrv_counter_device_detect_process;
+
+/**
+ * Background process to periodically read the ADC values to detect devices.
+ */
+static pbio_error_t pbdrv_counter_device_detect_process_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (;;) {
+        pbdrv_counter_ev3_update_type();
+        PBIO_OS_AWAIT_MS(state, &timer, PBDRV_COUNTER_EV3_TYPE_LOOP_TIME);
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 
 pbio_error_t pbdrv_counter_assert_type(pbdrv_counter_dev_t *dev, lego_device_type_id_t *expected_type_id) {
 
@@ -256,7 +277,8 @@ void pbdrv_counter_init(void) {
     HWREG(baseAddr + GPIO_SET_RIS_TRIG(3)) = HWREG(baseAddr + GPIO_SET_RIS_TRIG(3)) | 0x00000200;
     HWREG(baseAddr + GPIO_SET_FAL_TRIG(3)) = HWREG(baseAddr + GPIO_SET_FAL_TRIG(3)) | 0x00000200;
 
-    pbdrv_adc_set_callback(pbdrv_counter_ev3_update_type);
+    // Monitor attached counter devices
+    pbio_os_process_start(&pbdrv_counter_device_detect_process, pbdrv_counter_device_detect_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_COUNTER_EV3
