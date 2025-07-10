@@ -11,6 +11,7 @@
 #include <pbio/control_settings.h>
 #include <pbio/integrator.h>
 #include <pbio/int_math.h>
+#include <pbio/util.h>
 
 /**
  * Pauses the speed integrator at the current position error.
@@ -124,7 +125,7 @@ bool pbio_speed_integrator_stalled(const pbio_speed_integrator_t *itg, uint32_t 
     }
 
     // If the integrator is paused for less than the stall time, we're still not stalled for now.
-    if (!pbio_control_settings_time_is_later(time_now, itg->time_pause_begin + itg->settings->stall_time)) {
+    if (!pbio_util_time_has_passed(time_now, itg->time_pause_begin + itg->settings->stall_time)) {
         return false;
     }
 
@@ -299,7 +300,7 @@ bool pbio_position_integrator_stalled(const pbio_position_integrator_t *itg, uin
     }
 
     // If the integrator is paused for less than the stall time, we're still not stalled for now.
-    if (!pbio_control_settings_time_is_later(time_now, itg->time_pause_begin + itg->settings->stall_time)) {
+    if (!pbio_util_time_has_passed(time_now, itg->time_pause_begin + itg->settings->stall_time)) {
         return false;
     }
 

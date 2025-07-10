@@ -130,6 +130,8 @@ void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 
 bool pbio_oneshot(bool value, bool *state);
 
+bool pbio_util_time_has_passed(uint32_t sample, uint32_t base);
+
 #endif // _PBIO_UTIL_H_
 
 /** @} */

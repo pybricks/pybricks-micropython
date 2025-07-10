@@ -80,3 +80,14 @@ bool pbio_oneshot(bool value, bool *state) {
 
     return ret;
 }
+
+/**
+ * Checks if a time sample is equal to or newer than a given base time stamp.
+ *
+ * @param [in] sample         Sample time.
+ * @param [in] base           Base time to compare to.
+ * @return                    True if sample time is equal to or newer than base time, else false.
+ */
+bool pbio_util_time_has_passed(uint32_t sample, uint32_t base) {
+    return sample - base < UINT32_MAX / 2;
+}

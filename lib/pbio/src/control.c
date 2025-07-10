@@ -14,6 +14,7 @@
 #include <pbio/int_math.h>
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
+#include <pbio/util.h>
 
 /**
  * Gets the wall time in control unit time ticks (1e-4 seconds).
@@ -108,7 +109,7 @@ static bool pbio_control_check_completion(const pbio_control_t *ctl, uint32_t ti
     }
 
     // Check if we are passed the nominal maneuver time.
-    bool time_completed = pbio_control_settings_time_is_later(time, end->time);
+    bool time_completed = pbio_util_time_has_passed(time, end->time);
 
     if (pbio_control_type_is_time(ctl)) {
         // Infinite maneuvers are always done (should never block).
@@ -354,7 +355,7 @@ void pbio_control_update(
         // without resetting any controllers. This avoids accumulating errors
         // in sequential relative maneuvers.
         (pbio_control_on_completion_is_passive_smart(ctl->on_completion) &&
-         !pbio_control_settings_time_is_later(ref->time, ref_end.time + ctl->settings.smart_passive_hold_time))) {
+         !pbio_util_time_has_passed(ref->time, ref_end.time + ctl->settings.smart_passive_hold_time))) {
         // Keep actuating, so apply calculated PID torque value.
         *actuation = PBIO_DCMOTOR_ACTUATION_TORQUE;
         *control = torque;
