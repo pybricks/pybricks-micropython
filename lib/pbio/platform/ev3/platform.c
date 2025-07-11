@@ -36,6 +36,8 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <string.h>
+
 #include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/evmAM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
@@ -45,6 +47,7 @@
 #include <tiam1808/hw/hw_syscfg1_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/i2c.h>
 #include <tiam1808/psc.h>
 
 #include <pbdrv/ioport.h>
@@ -535,6 +538,11 @@ static void Edma3CCErrHandlerIsr(void) {
     }
 }
 
+enum {
+    BOOT_EEPROM_I2C_ADDRESS = 0x50,
+};
+uint8_t pbdrv_ev3_bluetooth_mac_address[6];
+
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
 // initialization (low level in pbdrv, high level in pbio), and system level
@@ -580,6 +588,54 @@ void SystemInit(void) {
     const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
     pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
     pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
+
+    // Read the EV3 Bluetooth MAC address from the I2C boot EEPROM
+
+    // Set up pin mux
+    const pbdrv_gpio_t i2c_scl = PBDRV_GPIO_EV3_PIN(4, 11, 8, 1, 5);
+    const pbdrv_gpio_t i2c_sda = PBDRV_GPIO_EV3_PIN(4, 15, 12, 1, 4);
+    pbdrv_gpio_alt(&i2c_scl, SYSCFG_PINMUX4_PINMUX4_11_8_I2C0_SCL);
+    pbdrv_gpio_alt(&i2c_sda, SYSCFG_PINMUX4_PINMUX4_15_12_I2C0_SDA);
+    // Reset I2C
+    I2CMasterDisable(SOC_I2C_0_REGS);
+    // Configure I2C bus speed to 100 kHz
+    I2CMasterInitExpClk(SOC_I2C_0_REGS, SOC_ASYNC_2_FREQ, 8000000, 100000);
+    // Configure I2C to be in master mode
+    I2CMasterControl(SOC_I2C_0_REGS, I2C_CFG_MST_TX);
+    // Un-reset I2C
+    I2CMasterEnable(SOC_I2C_0_REGS);
+
+    // Send EEPROM address of 0x3f00
+    I2CMasterSlaveAddrSet(SOC_I2C_0_REGS, BOOT_EEPROM_I2C_ADDRESS);
+    I2CSetDataCount(SOC_I2C_0_REGS, 2);
+    I2CMasterStart(SOC_I2C_0_REGS);
+    while (!(I2CMasterIntStatus(SOC_I2C_0_REGS) & I2C_ICSTR_ICXRDY)) {
+    }
+    I2CMasterDataPut(SOC_I2C_0_REGS, 0x3f);
+    while (!(I2CMasterIntStatus(SOC_I2C_0_REGS) & I2C_ICSTR_ICXRDY)) {
+    }
+    I2CMasterDataPut(SOC_I2C_0_REGS, 0x00);
+
+    // Get 12 bytes
+    uint8_t i2c_buf[12];
+    HWREG(SOC_I2C_0_REGS + I2C_ICMDR) &= ~I2C_ICMDR_TRX;
+    I2CSetDataCount(SOC_I2C_0_REGS, sizeof(i2c_buf));
+    I2CMasterStart(SOC_I2C_0_REGS);
+    for (unsigned int i = 0; i < sizeof(i2c_buf); i++) {
+        while (!(I2CMasterIntStatus(SOC_I2C_0_REGS) & I2C_ICSTR_ICRRDY)) {
+        }
+        i2c_buf[i] = I2CMasterDataGet(SOC_I2C_0_REGS);
+    }
+
+    // Check for presence of hardware version number according to notes at
+    // https://www.ev3dev.org/docs/kernel-hackers-notebook/ev3-eeprom/
+    unsigned int b0 = i2c_buf[0];
+    unsigned int b1 = i2c_buf[1] ^ 0xff;
+    if (b0 == b1) {
+        memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[6], 6);
+    } else {
+        memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[0], 6);
+    }
 }
 
 
