@@ -71,10 +71,3 @@ SRC_THIRDPARTY_C += $(CONTIKI_SRC_C) $(PBIO_SRC_C)
 
 # realtime library for timer signals
 LIB += -lrt
-
-# embedded Python
-EMBEDDED_PYTHON ?= python3.10
-PYTHON_CONFIG := $(EMBEDDED_PYTHON)-config
-
-INC += $(shell $(PYTHON_CONFIG) --includes)
-LDFLAGS += -rdynamic $(shell $(PYTHON_CONFIG) --ldflags --embed)
