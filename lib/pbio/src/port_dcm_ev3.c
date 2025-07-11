@@ -374,14 +374,12 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             while (!pbdrv_gpio_input(&pins->p2)) {
                 // Reflected intensity.
                 pbdrv_gpio_out_high(&pins->p5);
-                PBIO_OS_AWAIT_MS(state, timer, 2);
-                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child));
+                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, timer, 2));
                 dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 1);
 
                 // Ambient intensity.
                 pbdrv_gpio_out_low(&pins->p5);
-                PBIO_OS_AWAIT_MS(state, timer, 2);
-                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child));
+                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, timer, 2));
                 dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 1);
             }
             continue;
@@ -412,23 +410,19 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             while (!pbdrv_gpio_input(&pins->p2)) {
 
                 pbdrv_gpio_out_low(&pins->p5);
-                PBIO_OS_AWAIT_MS(state, timer, 2);
-                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child));
+                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, timer, 2));
                 dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 6);
 
                 pbdrv_gpio_out_high(&pins->p5);
-                PBIO_OS_AWAIT_MS(state, timer, 2);
-                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child));
+                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, timer, 2));
                 dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 6);
 
                 pbdrv_gpio_out_low(&pins->p5);
-                PBIO_OS_AWAIT_MS(state, timer, 2);
-                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child));
+                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, timer, 2));
                 dcm->nxt_rgba.g = pbio_port_dcm_get_mv(pins, 6);
 
                 pbdrv_gpio_out_high(&pins->p5);
-                PBIO_OS_AWAIT_MS(state, timer, 2);
-                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child));
+                PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, timer, 2));
                 dcm->nxt_rgba.b = pbio_port_dcm_get_mv(pins, 6);
             }
             pbdrv_gpio_out_low(&pins->p5);

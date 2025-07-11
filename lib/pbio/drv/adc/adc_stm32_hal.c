@@ -47,7 +47,7 @@ static uint32_t pbdrv_adc_last_error;
 
 PROCESS(pbdrv_adc_process, "ADC");
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, pbio_os_timer_t *timer, uint32_t future) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

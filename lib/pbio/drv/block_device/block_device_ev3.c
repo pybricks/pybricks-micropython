@@ -23,6 +23,7 @@
 #include "../core.h"
 
 #include <pbdrv/block_device.h>
+#include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
 
 #include <tiam1808/edma.h>
@@ -103,15 +104,24 @@ static struct {
     uint8_t spi_cmd_buf_rx[SPI_CMD_BUF_SZ];
 } spi_dev;
 
+static uint32_t last_spi_dma_complete_time;
+
+static void spi_dma_complete(void) {
+    // Only complete once RX and TX complete.
+    if (spi_dev.status & SPI_STATUS_WAIT_ANY) {
+        return;
+    }
+    SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
+    pbio_os_request_poll();
+    last_spi_dma_complete_time = pbdrv_clock_get_ms();
+}
+
 /**
  * Tx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_tx_complete(void) {
     spi_dev.status &= ~SPI_STATUS_WAIT_TX;
-    if (!(spi_dev.status & SPI_STATUS_WAIT_ANY)) {
-        SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
-        pbio_os_request_poll();
-    }
+    spi_dma_complete();
 }
 
 /**
@@ -119,10 +129,7 @@ void pbdrv_block_device_ev3_spi_tx_complete(void) {
  */
 void pbdrv_block_device_ev3_spi_rx_complete(void) {
     spi_dev.status &= ~SPI_STATUS_WAIT_RX;
-    if (!(spi_dev.status & SPI_STATUS_WAIT_ANY)) {
-        SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
-        pbio_os_request_poll();
-    }
+    spi_dma_complete();
 }
 
 /**
@@ -735,10 +742,10 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, pbio_os_timer_t *timer, uint32_t future) {
     PBIO_OS_ASYNC_BEGIN(state);
-    PBIO_OS_AWAIT_UNTIL(state, (spi_dev.status & SPI_STATUS_WAIT_ANY));
-    PBIO_OS_AWAIT_UNTIL(state, !(spi_dev.status & SPI_STATUS_WAIT_ANY));
+    pbio_os_timer_set(timer, 0);
+    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(last_spi_dma_complete_time, timer->start + future));
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -887,11 +894,7 @@ pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
             channel_data,
             PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES);
 
-        // Allow event loop to run once so that processes that await new
-        // samples can begin awaiting completion of the transfer.
-        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
-
-        // Await for actual transfer to complete.
+        // Await for transfer to complete.
         PBIO_OS_AWAIT_WHILE(state, (spi_dev.status & SPI_STATUS_WAIT_ANY));
 
         pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
