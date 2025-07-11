@@ -1,7 +1,16 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 The Pybricks Authors
 
-// Block device driver for N25Q128 SPI flash memory chip connected to TI AM1808.
+// Block device driver for N25Q128 SPI flash memory chip and the ADS7957SRHB
+// ADC converter, both connected to SPI0 on the TIAM1808.
+//
+// This driver has these main parts:
+//
+// Part 1: Common SPI setup and DMA configuration.
+// Part 2: Awaitable SPI flash read and write operations.
+// Part 3: ADC read operations using DMA. Implements pbdrv/adc for this platform.
+// Part 4: A process that coordinates SPI for flash and ADC since they share
+//         the same SPI bus. Implements pbdrv/block_device for this platform.
 
 #include <pbdrv/config.h>
 
@@ -27,38 +36,14 @@
 
 #include "block_device_ev3.h"
 #include "../drv/gpio/gpio_ev3.h"
-#include "../drv/adc/adc_ev3.h"
 
 #include <pbio/error.h>
 #include <pbio/int_math.h>
+#include <pbio/util.h>
 
-static pbio_os_process_t pbdrv_block_device_ev3_init_process;
-
-static struct {
-    /**
-     * How much data to write on shutdown and load on the next boot. Includes
-     * the size of this field, because it is also saved.
-     */
-    uint32_t saved_size;
-    /**
-     * A copy of the data loaded from flash and application heap. The first
-     * portion of this, up to pbdrv_block_device_get_writable_size() bytes,
-     * gets saved to flash at shutdown.
-     */
-    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
-} ramdisk __attribute__((section(".noinit"), used));
-
-uint32_t pbdrv_block_device_get_writable_size(void) {
-    return PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE - sizeof(ramdisk.saved_size);
-}
-
-pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
-    *data = ramdisk.data;
-
-    // Higher level code can use the ramdisk data if initialization completed
-    // successfully. Otherwise it should reset to factory default data.
-    return pbdrv_block_device_ev3_init_process.err;
-}
+//
+// Part 1: Common SPI setup and DMA configuration.
+//
 
 /**
  * SPI bus state.
@@ -77,7 +62,7 @@ typedef enum {
 } spi_status_t;
 
 /**
- * Driver-specific sizes.
+ * SPI flash driver sizes.
  */
 enum {
     // This is large enough for all flash commands we use
@@ -87,12 +72,25 @@ enum {
 };
 
 /**
+ * SPI ADC constants.
+ */
+enum {
+    // The maximum ADC clock speed according to the datasheet is 20 MHz.
+    // However, because the SPI peripheral does not have a fractional clock generator,
+    // the closest achievable in-spec speed is a division factor of 8.
+    //
+    // 150 MHz / 8 = 18.75 MHz actual
+    ADC_SPI_CLK_SPEED = 20000000,
+    // Time between the end of one SPI operation and start of the next.
+    ADC_SAMPLE_PERIOD = 2,
+};
+
+/**
  * The block device driver state.
  */
 static struct {
     /** HAL Transfer status */
-    volatile spi_status_t spi_status;
-
+    volatile spi_status_t status;
     // This is used when SPI only needs to receive. It should always stay as 0.
     uint8_t tx_dummy_byte;
     // This is used when received data is to be discarded. Its value should be ignored.
@@ -103,15 +101,14 @@ static struct {
     uint8_t spi_cmd_buf_tx[SPI_CMD_BUF_SZ];
     // This is used to hold the replies to commands to the SPI peripheral.
     uint8_t spi_cmd_buf_rx[SPI_CMD_BUF_SZ];
-} bdev;
-
+} spi_dev;
 
 /**
  * Tx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_tx_complete(void) {
-    bdev.spi_status &= ~SPI_STATUS_WAIT_TX;
-    if (!(bdev.spi_status & SPI_STATUS_WAIT_ANY)) {
+    spi_dev.status &= ~SPI_STATUS_WAIT_TX;
+    if (!(spi_dev.status & SPI_STATUS_WAIT_ANY)) {
         SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
         pbio_os_request_poll();
     }
@@ -121,8 +118,8 @@ void pbdrv_block_device_ev3_spi_tx_complete(void) {
  * Rx transfer complete.
  */
 void pbdrv_block_device_ev3_spi_rx_complete(void) {
-    bdev.spi_status &= ~SPI_STATUS_WAIT_RX;
-    if (!(bdev.spi_status & SPI_STATUS_WAIT_ANY)) {
+    spi_dev.status &= ~SPI_STATUS_WAIT_RX;
+    if (!(spi_dev.status & SPI_STATUS_WAIT_ANY)) {
         SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
         pbio_os_request_poll();
     }
@@ -132,7 +129,7 @@ void pbdrv_block_device_ev3_spi_rx_complete(void) {
  * Transfer error. // TODO: hook this up
  */
 void pbdrv_block_device_ev3_spi_error(void) {
-    bdev.spi_status = SPI_STATUS_ERROR;
+    spi_dev.status = SPI_STATUS_ERROR;
     pbio_os_request_poll();
 }
 
@@ -148,8 +145,8 @@ static void spi0_isr(void) {
             continue;
         }
 
-        bdev.spi_cmd_buf_rx[0] = HWREG(SOC_SPI_0_REGS + SPI_SPIBUF);
-        bdev.spi_status &= ~SPI_STATUS_WAIT_RX;
+        spi_dev.spi_cmd_buf_rx[0] = HWREG(SOC_SPI_0_REGS + SPI_SPIBUF);
+        spi_dev.status &= ~SPI_STATUS_WAIT_RX;
         SPIIntDisable(SOC_SPI_0_REGS, SPI_RECV_INT);
         pbio_os_request_poll();
     }
@@ -182,6 +179,72 @@ enum {
     SPI_CLK_SPEED_FLASH = 50000000,
 };
 
+static void spi_bus_init(void) {
+    // SPI module basic init
+    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_SPI0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    SPIReset(SOC_SPI_0_REGS);
+    SPIOutOfReset(SOC_SPI_0_REGS);
+    SPIModeConfigure(SOC_SPI_0_REGS, SPI_MASTER_MODE);
+    unsigned int spipc0 = SPI_SPIPC0_SOMIFUN | SPI_SPIPC0_SIMOFUN | SPI_SPIPC0_CLKFUN | SPI_SPIPC0_SCS0FUN0 | SPI_SPIPC0_SCS0FUN3;
+    SPIPinControl(SOC_SPI_0_REGS, 0, 0, &spipc0);
+    SPIDefaultCSSet(SOC_SPI_0_REGS, (1 << PBDRV_EV3_SPI0_FLASH_CS) | (1 << PBDRV_EV3_SPI0_ADC_CS));
+
+    // SPI module data formats
+    SPIClkConfigure(SOC_SPI_0_REGS, SOC_SPI_0_MODULE_FREQ, SPI_CLK_SPEED_FLASH, SPI_DATA_FORMAT0);
+    // For reasons which have not yet been fully investigated, attempting to switch between
+    // SPI_CLK_POL_HIGH and SPI_CLK_POL_LOW seems to not work correctly (possibly causing a glitch?).
+    // The suspected cause is that partial writes to SPI_SPIDAT1 do not update *anything*,
+    // not even the clock idle state, until *after* the data field is written to.
+    // Since multiple options work for SPI flash but the ADC requires one particular setting,
+    // set this CPOL/CPHA to match what the ADC needs.
+    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT0);
+    SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT0);
+    SPICharLengthSet(SOC_SPI_0_REGS, 8, SPI_DATA_FORMAT0);
+
+    // ADC configuration
+    SPIClkConfigure(SOC_SPI_0_REGS, SOC_SYSCLK_2_FREQ, ADC_SPI_CLK_SPEED, SPI_DATA_FORMAT1);
+    // NOTE: Cannot be CPOL=1 CPHA=1 like SPI flash
+    // The ADC seems to use the last falling edge to trigger conversions (see Figure 1 in the datasheet).
+    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT1);
+    SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT1);
+    SPICharLengthSet(SOC_SPI_0_REGS, 16, SPI_DATA_FORMAT1);
+    // In order to compensate for analog impedance issues and capacitor charging time,
+    // we set all SPI delays to the maximum for the ADC. This helps get more accurate readings.
+    // This includes both this delay (the delay where CS is held inactive),
+    // as well as the CS-assert-to-clock-start and clock-end-to-CS-deassert delays
+    // (which are global and set in block_device_ev3.c).
+    SPIWdelaySet(SOC_SPI_0_REGS, 0x3f << SPI_SPIFMT_WDELAY_SHIFT, SPI_DATA_FORMAT1);
+
+    // Configure the GPIO pins.
+    pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
+    pbdrv_gpio_alt(&pin_spi0_miso, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
+    pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
+    pbdrv_gpio_alt(&pin_spi0_ncs0, SYSCFG_PINMUX4_PINMUX4_7_4_NSPI0_SCS0);
+    pbdrv_gpio_alt(&pin_spi0_ncs3, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
+
+    // Configure the flash control pins and put them with the values we want
+    pbdrv_gpio_alt(&pin_flash_nwp, SYSCFG_PINMUX12_PINMUX12_23_20_GPIO5_2);
+    pbdrv_gpio_out_high(&pin_flash_nwp);
+    pbdrv_gpio_alt(&pin_flash_nhold, SYSCFG_PINMUX6_PINMUX6_31_28_GPIO2_0);
+    pbdrv_gpio_out_high(&pin_flash_nhold);
+
+    // Set up interrupts
+    SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
+    IntRegister(SYS_INT_SPINT0, spi0_isr);
+    IntChannelSet(SYS_INT_SPINT0, 2);
+    IntSystemEnable(SYS_INT_SPINT0);
+
+    // Request DMA channels. This only needs to be done for the initial events (and not for linked parameter sets)
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI1_RX, EDMA3_CHA_SPI1_RX, 0);
+
+    // Enable!
+    SPIEnable(SOC_SPI_0_REGS);
+
+    spi_dev.status = SPI_STATUS_COMPLETE;
+}
+
+
 // -Hardware resource allocation notes-
 //
 // The SPI peripheral can be configured with multiple "data formats" which can be used for different peripherals.
@@ -207,15 +270,18 @@ enum {
 // This declaration also forces alignment
 typedef union {
     EDMA3CCPaRAMEntry p;
-    uint32_t u[32 / 4];
+    uint32_t u[sizeof(EDMA3CCPaRAMEntry) / 4];
 } EDMA3CCPaRAMEntry_;
 
 static void edma3_set_param(unsigned int slot, EDMA3CCPaRAMEntry_ *p) {
-    for (int i = 0; i < 32 / 4; i++) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(p->u); i++) {
         HWREG(SOC_EDMA30CC_0_REGS + EDMA3CC_PaRAM_BASE + slot * 32 + i * 4) = p->u[i];
     }
 }
 
+//
+// Part 2: Implementation for SPI flash.
+//
 
 // Helper functions for setting up the high control bits of a data transfer
 static inline void spi0_setup_for_flash() {
@@ -261,11 +327,11 @@ static pbio_error_t spi_begin_for_flash(
         // Maximum size exceeded
         return PBIO_ERROR_INVALID_ARG;
     }
-    if (bdev.spi_status & SPI_STATUS_WAIT_ANY) {
+    if (spi_dev.status & SPI_STATUS_WAIT_ANY) {
         // Another read operation is already in progress.
         return PBIO_ERROR_BUSY;
     }
-    if (bdev.spi_status == SPI_STATUS_ERROR) {
+    if (spi_dev.status == SPI_STATUS_ERROR) {
         // Previous transmission went wrong.
         return PBIO_ERROR_IO;
     }
@@ -276,21 +342,21 @@ static pbio_error_t spi_begin_for_flash(
         // There is no point in using DMA here
         // (this is used for e.g. WREN)
 
-        bdev.spi_status = SPI_STATUS_WAIT_RX;
+        spi_dev.status = SPI_STATUS_WAIT_RX;
 
         uint32_t tx = spi0_last_dat1_for_flash(cmd[0]);
         SPIIntEnable(SOC_SPI_0_REGS, SPI_RECV_INT);
         HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = tx;
     } else {
-        memcpy(&bdev.spi_cmd_buf_tx, cmd, cmd_len);
+        memcpy(&spi_dev.spi_cmd_buf_tx, cmd, cmd_len);
 
         if (user_data_len == 0) {
             // Only a command, no user data
 
-            bdev.tx_last_word = spi0_last_dat1_for_flash(cmd[cmd_len - 1]);
+            spi_dev.tx_last_word = spi0_last_dat1_for_flash(cmd[cmd_len - 1]);
 
             // TX everything except last byte
-            ps.p.srcAddr = (unsigned int)(&bdev.spi_cmd_buf_tx);
+            ps.p.srcAddr = (unsigned int)(&spi_dev.spi_cmd_buf_tx);
             ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len - 1;
@@ -305,7 +371,7 @@ static pbio_error_t spi_begin_for_flash(
             edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
 
             // TX last byte, clearing CSHOLD
-            ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+            ps.p.srcAddr = (unsigned int)(&spi_dev.tx_last_word);
             ps.p.aCnt = 4;
             ps.p.bCnt = 1;
             ps.p.linkAddr = 0xffff;
@@ -314,7 +380,7 @@ static pbio_error_t spi_begin_for_flash(
 
             // RX all bytes
             ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
-            ps.p.destAddr = (unsigned int)(&bdev.spi_cmd_buf_rx);
+            ps.p.destAddr = (unsigned int)(&spi_dev.spi_cmd_buf_rx);
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len;
             ps.p.cCnt = 1;
@@ -330,7 +396,7 @@ static pbio_error_t spi_begin_for_flash(
             // Command *and* user data
 
             // TX the command
-            ps.p.srcAddr = (unsigned int)(&bdev.spi_cmd_buf_tx);
+            ps.p.srcAddr = (unsigned int)(&spi_dev.spi_cmd_buf_tx);
             ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len;
@@ -345,7 +411,7 @@ static pbio_error_t spi_begin_for_flash(
             edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
 
             if (user_data_tx) {
-                bdev.tx_last_word = spi0_last_dat1_for_flash(user_data_tx[user_data_len - 1]);
+                spi_dev.tx_last_word = spi0_last_dat1_for_flash(user_data_tx[user_data_len - 1]);
 
                 // TX all but the last byte
                 ps.p.srcAddr = (unsigned int)(user_data_tx);
@@ -354,24 +420,24 @@ static pbio_error_t spi_begin_for_flash(
                 edma3_set_param(126, &ps);
 
                 // TX the last byte, clearing CSHOLD
-                ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+                ps.p.srcAddr = (unsigned int)(&spi_dev.tx_last_word);
                 ps.p.aCnt = 4;
                 ps.p.bCnt = 1;
                 ps.p.linkAddr = 0xffff;
                 ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
                 edma3_set_param(127, &ps);
             } else {
-                bdev.tx_last_word = spi0_last_dat1_for_flash(0);
+                spi_dev.tx_last_word = spi0_last_dat1_for_flash(0);
 
                 // TX all but the last byte
-                ps.p.srcAddr = (unsigned int)(&bdev.tx_dummy_byte);
+                ps.p.srcAddr = (unsigned int)(&spi_dev.tx_dummy_byte);
                 ps.p.bCnt = user_data_len - 1;
                 ps.p.srcBIdx = 0;
                 ps.p.linkAddr = 127 * 32;
                 edma3_set_param(126, &ps);
 
                 // TX the last byte, clearing CSHOLD
-                ps.p.srcAddr = (unsigned int)(&bdev.tx_last_word);
+                ps.p.srcAddr = (unsigned int)(&spi_dev.tx_last_word);
                 ps.p.aCnt = 4;
                 ps.p.bCnt = 1;
                 ps.p.linkAddr = 0xffff;
@@ -381,7 +447,7 @@ static pbio_error_t spi_begin_for_flash(
 
             // RX the command
             ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
-            ps.p.destAddr = (unsigned int)(&bdev.spi_cmd_buf_rx);
+            ps.p.destAddr = (unsigned int)(&spi_dev.spi_cmd_buf_rx);
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len;
             ps.p.cCnt = 1;
@@ -403,7 +469,7 @@ static pbio_error_t spi_begin_for_flash(
                 edma3_set_param(125, &ps);
             } else {
                 // RX dummy
-                ps.p.destAddr = (unsigned int)(&bdev.rx_dummy_byte);
+                ps.p.destAddr = (unsigned int)(&spi_dev.rx_dummy_byte);
                 ps.p.bCnt = user_data_len;
                 ps.p.destBIdx = 0;
                 ps.p.linkAddr = 0xffff;
@@ -412,7 +478,7 @@ static pbio_error_t spi_begin_for_flash(
             }
         }
 
-        bdev.spi_status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
+        spi_dev.status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
 
         // TODO: pbio probably needs a framework for memory barriers and DMA cache management
         __asm__ volatile ("" ::: "memory");
@@ -424,74 +490,6 @@ static pbio_error_t spi_begin_for_flash(
 
     return PBIO_SUCCESS;
 }
-
-/**
- * Initiates an SPI transfer via DMA, specifically designed for the ADC.
- *
- * @param [in] cmds             Data (both ADC chip commands and SPI peripheral commands) to be sent.
- *                              Lifetime must remain valid until after the completion of the entire transfer.
- * @param [in] data             Buffer for ADC chip outputs.
- *                              Lifetime must remain valid until after the completion of the entire transfer.
- * @param [in] len              Length of \p cmds and \p data
- * @return                      ::PBIO_SUCCESS on success.
- *                              ::PBIO_ERROR_BUSY if SPI is busy.
- *                              ::PBIO_ERROR_INVALID_ARG if argument is too big
- *                              ::PBIO_ERROR_IO for other errors.
- */
-pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmds, volatile uint16_t *data, unsigned int len) {
-    EDMA3CCPaRAMEntry_ ps;
-
-    if (len > SPI_MAX_DATA_SZ) {
-        // Maximum size exceeded
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    if (bdev.spi_status & SPI_STATUS_WAIT_ANY) {
-        // Another read operation is already in progress.
-        return PBIO_ERROR_BUSY;
-    }
-    if (bdev.spi_status == SPI_STATUS_ERROR) {
-        // Previous transmission went wrong.
-        return PBIO_ERROR_IO;
-    }
-
-    // Max out delays for ADC, see comment in adc_ev3.c
-    HWREG(SOC_SPI_0_REGS + SPI_SPIDELAY) = (0xff << SPI_SPIDELAY_C2TDELAY_SHIFT) | (0xff << SPI_SPIDELAY_T2CDELAY_SHIFT);
-
-    ps.p.srcAddr = (unsigned int)(cmds);
-    ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
-    ps.p.aCnt = sizeof(uint32_t);
-    ps.p.bCnt = len;
-    ps.p.cCnt = 1;
-    ps.p.srcBIdx = sizeof(uint32_t);
-    ps.p.destBIdx = 0;
-    ps.p.srcCIdx = 0;
-    ps.p.destCIdx = 0;
-    ps.p.linkAddr = 0xffff;
-    ps.p.bCntReload = 0;
-    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
-    edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
-
-    ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
-    ps.p.destAddr = (unsigned int)(data);
-    ps.p.aCnt = sizeof(uint16_t);
-    ps.p.bCnt = len;
-    ps.p.srcBIdx = 0;
-    ps.p.destBIdx = sizeof(uint16_t);
-    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
-    edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
-
-    bdev.spi_status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
-
-    // TODO: pbio probably needs a framework for memory barriers and DMA cache management
-    __asm__ volatile ("" ::: "memory");
-
-    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
-    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
-    SPIIntEnable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
-
-    return PBIO_SUCCESS;
-}
-
 
 static void set_address_be(uint8_t *buf, uint32_t address) {
     buf[0] = address >> 16;
@@ -573,7 +571,7 @@ static pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t off
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+        PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
@@ -593,15 +591,15 @@ static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+        PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
 
-        status = bdev.spi_cmd_buf_rx[1];
+        status = spi_dev.spi_cmd_buf_rx[1];
     } while (status & FLASH_STATUS_BUSY);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_data_size) {
+static pbio_error_t pbdrv_block_device_write_disk(pbio_os_state_t *state, const uint8_t *buffer, uint32_t size) {
 
     static pbio_os_state_t sub;
     static uint32_t offset;
@@ -609,25 +607,12 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
     static uint32_t size_done;
     pbio_error_t err;
 
-    // We're going to write the used portion of the ramdisk to flash. Includes
-    // the size field itself, so add it to the total write size.
-    uint8_t *buffer = (void *)&ramdisk;
-    uint32_t size = used_data_size + sizeof(ramdisk.saved_size);
-
     PBIO_OS_ASYNC_BEGIN(state);
-
-    #if PBDRV_CONFIG_ADC_EV3
-    // Need to await the ADC process to exit before we can write to flash.
-    PBIO_OS_AWAIT(state, &sub, pbdrv_adc_ev3_exit(&sub));
-    #endif
 
     // Exit on invalid size.
     if (size == 0 || size > PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE) {
         return PBIO_ERROR_INVALID_ARG;
     }
-
-    // Store the new size so we know how much to load on next boot.
-    ramdisk.saved_size = size;
 
     // Erase sector by sector.
     for (offset = 0; offset < size; offset += FLASH_SIZE_ERASE) {
@@ -636,7 +621,7 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+        PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
 
         // Erase this block
         set_address_be(&erase_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + offset);
@@ -644,7 +629,7 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+        PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
 
         // Wait for completion
         PBIO_OS_AWAIT(state, &sub, err = flash_wait_write(&sub));
@@ -662,7 +647,7 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+        PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
 
         // Write this block
         set_address_be(&write_address[1], PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS + size_done);
@@ -670,7 +655,7 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
+        PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
 
         // Wait for completion
         PBIO_OS_AWAIT(state, &sub, err = flash_wait_write(&sub));
@@ -682,31 +667,206 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, void *context) {
+//
+// Part 3: Implementation for pbdrv/adc.
+//
+
+// Construct both SPI peripheral settings (data format, chip select)
+// and ADC chip settings (manual mode, 2xVref) in one go,
+// so that DMA can be used efficiently.
+//
+// NOTE: CSHOLD is *not* set here, so that CS is deasserted between each 16-bit unit
+#define MANUAL_ADC_CHANNEL(x)                                                       \
+    (1 << 26) |                                                                     \
+    (SPI_SPIDAT1_DFSEL_FORMAT1 << SPI_SPIDAT1_DFSEL_SHIFT) |                        \
+    (0 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_ADC_CS)) |                       \
+    (1 << (SPI_SPIDAT1_CSNR_SHIFT + PBDRV_EV3_SPI0_FLASH_CS)) |                     \
+    (1 << 12) |                                                                     \
+    (1 << 11) |                                                                     \
+    (((x) & 0xf) << 7) |                                                            \
+    (1 << 6)
+
+#define PBDRV_ADC_EV3_NUM_DELAY_SAMPLES (2)
+
+static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES] = {
+    MANUAL_ADC_CHANNEL(0),
+    MANUAL_ADC_CHANNEL(1),
+    MANUAL_ADC_CHANNEL(2),
+    MANUAL_ADC_CHANNEL(3),
+    MANUAL_ADC_CHANNEL(4),
+    MANUAL_ADC_CHANNEL(5),
+    MANUAL_ADC_CHANNEL(6),
+    MANUAL_ADC_CHANNEL(7),
+    MANUAL_ADC_CHANNEL(8),
+    MANUAL_ADC_CHANNEL(9),
+    MANUAL_ADC_CHANNEL(10),
+    MANUAL_ADC_CHANNEL(11),
+    MANUAL_ADC_CHANNEL(12),
+    MANUAL_ADC_CHANNEL(13),
+    MANUAL_ADC_CHANNEL(14),
+    MANUAL_ADC_CHANNEL(15),
+    // We need two additional commands here because of how the ADC works.
+    // In every given command frame, a new analog channel is selected in the ADC frontend multiplexer.
+    // In frame n+1, that value actually gets converted to a digital value.
+    // In frame n+2, the converted digital value is finally output, and we are able to receive it.
+    // These requests are _pipelined_, so there is a latency of 2 frames, but we get a new sample on each frame.
+    //
+    // For more information, see figures 1 and 51 in the ADS7957 datasheet.
+    MANUAL_ADC_CHANNEL(15),
+    MANUAL_ADC_CHANNEL(15),
+};
+static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
+
+pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
+    if (ch >= PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    // XXX We probably need to figure out how atomicity works between the DMA and the CPU.
+    // For now, read the value twice and assume it's good (not torn) if the values are the same.
+    uint16_t a, b;
+    do {
+        // Values for the requested channel are received several samples later.
+        a = channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
+        b = channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
+    } while (a != b);
+
+    // Mask the data to 10 bits
+    *value = (a >> 2) & 0x3ff;
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state) {
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT_UNTIL(state, (spi_dev.status & SPI_STATUS_WAIT_ANY));
+    PBIO_OS_AWAIT_UNTIL(state, !(spi_dev.status & SPI_STATUS_WAIT_ANY));
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Initiates an SPI transfer via DMA, specifically designed for the ADC.
+ *
+ * @param [in] cmds             Data (both ADC chip commands and SPI peripheral commands) to be sent.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
+ * @param [in] data             Buffer for ADC chip outputs.
+ *                              Lifetime must remain valid until after the completion of the entire transfer.
+ * @param [in] len              Length of \p cmds and \p data
+ * @return                      ::PBIO_SUCCESS on success.
+ *                              ::PBIO_ERROR_BUSY if SPI is busy.
+ *                              ::PBIO_ERROR_INVALID_ARG if argument is too big
+ *                              ::PBIO_ERROR_IO for other errors.
+ */
+static pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmds, volatile uint16_t *data, unsigned int len) {
+    EDMA3CCPaRAMEntry_ ps;
+
+    if (len > SPI_MAX_DATA_SZ) {
+        // Maximum size exceeded
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    if (spi_dev.status & SPI_STATUS_WAIT_ANY) {
+        // Another read operation is already in progress.
+        return PBIO_ERROR_BUSY;
+    }
+    if (spi_dev.status == SPI_STATUS_ERROR) {
+        // Previous transmission went wrong.
+        return PBIO_ERROR_IO;
+    }
+
+    // Max out delays for ADC, see comment in adc_ev3.c
+    HWREG(SOC_SPI_0_REGS + SPI_SPIDELAY) = (0xff << SPI_SPIDELAY_C2TDELAY_SHIFT) | (0xff << SPI_SPIDELAY_T2CDELAY_SHIFT);
+
+    ps.p.srcAddr = (unsigned int)(cmds);
+    ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
+    ps.p.aCnt = sizeof(uint32_t);
+    ps.p.bCnt = len;
+    ps.p.cCnt = 1;
+    ps.p.srcBIdx = sizeof(uint32_t);
+    ps.p.destBIdx = 0;
+    ps.p.srcCIdx = 0;
+    ps.p.destCIdx = 0;
+    ps.p.linkAddr = 0xffff;
+    ps.p.bCntReload = 0;
+    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
+    edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
+
+    ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
+    ps.p.destAddr = (unsigned int)(data);
+    ps.p.aCnt = sizeof(uint16_t);
+    ps.p.bCnt = len;
+    ps.p.srcBIdx = 0;
+    ps.p.destBIdx = sizeof(uint16_t);
+    ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
+    edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
+
+    spi_dev.status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
+
+    // TODO: pbio probably needs a framework for memory barriers and DMA cache management
+    __asm__ volatile ("" ::: "memory");
+
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
+    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
+    SPIIntEnable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
+
+    return PBIO_SUCCESS;
+}
+
+//
+// Part 4: Block device and ADC coordination process.
+//
+
+static struct {
+    /**
+     * How much data to write on shutdown and load on the next boot. Includes
+     * the size of this field, because it is also saved.
+     */
+    uint32_t saved_size;
+    /**
+     * A copy of the data loaded from flash and application heap. The first
+     * portion of this, up to pbdrv_block_device_get_writable_size() bytes,
+     * gets saved to flash at shutdown.
+     */
+    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+} ramdisk __attribute__((section(".noinit"), used));
+
+uint32_t pbdrv_block_device_get_writable_size(void) {
+    return PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE - sizeof(ramdisk.saved_size);
+}
+
+static pbio_error_t pbdrv_block_device_load_err = PBIO_ERROR_FAILED;
+
+pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
+    *data = ramdisk.data;
+
+    // Higher level code can use the ramdisk data if initialization completed
+    // successfully. Otherwise it should reset to factory default data.
+    return pbdrv_block_device_load_err;
+}
+
+static pbio_os_process_t ev3_spi_process;
+
+pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
+
     pbio_error_t err;
+
+    static pbio_os_timer_t timer;
     static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Write the ID getter command
+    // Write the SPI flash device ID getter command and verify result.
     err = spi_begin_for_flash(cmd_rdid, sizeof(cmd_rdid), 0, 0, 0);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT_WHILE(state, bdev.spi_status & SPI_STATUS_WAIT_ANY);
-
-    // Verify flash device ID
-    if (memcmp(device_id, &bdev.spi_cmd_buf_rx[1], sizeof(device_id))) {
+    PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
+    if (memcmp(device_id, &spi_dev.spi_cmd_buf_rx[1], sizeof(device_id))) {
         return PBIO_ERROR_FAILED;
     }
 
-    // Read size of stored data.
+    // Read size of stored data and available data into RAM.
     PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)&ramdisk.saved_size, sizeof(ramdisk.saved_size)));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // Read the available data into RAM.
     PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)&ramdisk, ramdisk.saved_size));
 
     // Reading may fail with PBIO_ERROR_INVALID_ARG if the size is too big.
@@ -715,74 +875,57 @@ pbio_error_t pbdrv_block_device_ev3_init_process_thread(pbio_os_state_t *state, 
     // higher level code sees this error when requesting the RAM disk. On
     // failure, it can reset the user data to factory defaults, and save it
     // properly on shutdown.
+    pbdrv_block_device_load_err = err;
     pbdrv_init_busy_down();
 
-    // ADC may start polling now.
-    #if PBDRV_CONFIG_ADC_EV3
-    pbdrv_adc_ev3_init();
-    #endif
+    // Poll ADC continuously until cancellation is requested.
+    while (!(ev3_spi_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL)) {
+
+        // Start a sample of all channels
+        pbdrv_block_device_ev3_spi_begin_for_adc(
+            channel_cmd,
+            channel_data,
+            PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES);
+
+        // Allow event loop to run once so that processes that await new
+        // samples can begin awaiting completion of the transfer.
+        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
+
+        // Await for actual transfer to complete.
+        PBIO_OS_AWAIT_WHILE(state, (spi_dev.status & SPI_STATUS_WAIT_ANY));
+
+        pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
+        PBIO_OS_AWAIT_UNTIL(state, ev3_spi_process.request || pbio_os_timer_is_expired(&timer));
+    }
+
+    // Now that the ADC loop has ended, we can use the SPI bus to save user
+    // data to persistent storage.
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_write_disk(&sub, (uint8_t *)&ramdisk, ramdisk.saved_size));
+
+    // Poll the process that awaits on us to complete.
+    pbio_os_request_poll();
 
     PBIO_OS_ASYNC_END(err);
 }
 
-void pbdrv_block_device_init(void) {
-    // SPI module basic init
-    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_SPI0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-    SPIReset(SOC_SPI_0_REGS);
-    SPIOutOfReset(SOC_SPI_0_REGS);
-    SPIModeConfigure(SOC_SPI_0_REGS, SPI_MASTER_MODE);
-    unsigned int spipc0 = SPI_SPIPC0_SOMIFUN | SPI_SPIPC0_SIMOFUN | SPI_SPIPC0_CLKFUN | SPI_SPIPC0_SCS0FUN0 | SPI_SPIPC0_SCS0FUN3;
-    SPIPinControl(SOC_SPI_0_REGS, 0, 0, &spipc0);
-    SPIDefaultCSSet(SOC_SPI_0_REGS, (1 << PBDRV_EV3_SPI0_FLASH_CS) | (1 << PBDRV_EV3_SPI0_ADC_CS));
+pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_data_size) {
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    // SPI module data formats
-    SPIClkConfigure(SOC_SPI_0_REGS, SOC_SPI_0_MODULE_FREQ, SPI_CLK_SPEED_FLASH, SPI_DATA_FORMAT0);
-    // For reasons which have not yet been fully investigated, attempting to switch between
-    // SPI_CLK_POL_HIGH and SPI_CLK_POL_LOW seems to not work correctly (possibly causing a glitch?).
-    // The suspected cause is that partial writes to SPI_SPIDAT1 do not update *anything*,
-    // not even the clock idle state, until *after* the data field is written to.
-    // Since multiple options work for SPI flash but the ADC requires one particular setting,
-    // set this CPOL/CPHA to match what the ADC needs.
-    SPIConfigClkFormat(SOC_SPI_0_REGS, SPI_CLK_POL_LOW | SPI_CLK_OUTOFPHASE, SPI_DATA_FORMAT0);
-    SPIShiftMsbFirst(SOC_SPI_0_REGS, SPI_DATA_FORMAT0);
-    SPICharLengthSet(SOC_SPI_0_REGS, 8, SPI_DATA_FORMAT0);
+    // Store the new size so we know how much to load on next boot.
+    ramdisk.saved_size = used_data_size + sizeof(ramdisk.saved_size);
 
-    // Additional SPI configuration ADC is done when the ADC driver starts.
+    // Rather than write here, we ask the common SPI process to start writing
+    // when it is ready for it, and wait for the whole process to complete.
+    pbio_os_process_make_request(&ev3_spi_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
+    PBIO_OS_AWAIT_UNTIL(state, ev3_spi_process.err != PBIO_ERROR_AGAIN);
 
-    // Configure the GPIO pins.
-    pbdrv_gpio_alt(&pin_spi0_mosi, SYSCFG_PINMUX3_PINMUX3_15_12_SPI0_SIMO0);
-    pbdrv_gpio_alt(&pin_spi0_miso, SYSCFG_PINMUX3_PINMUX3_11_8_SPI0_SOMI0);
-    pbdrv_gpio_alt(&pin_spi0_clk, SYSCFG_PINMUX3_PINMUX3_3_0_SPI0_CLK);
-    pbdrv_gpio_alt(&pin_spi0_ncs0, SYSCFG_PINMUX4_PINMUX4_7_4_NSPI0_SCS0);
-    pbdrv_gpio_alt(&pin_spi0_ncs3, SYSCFG_PINMUX3_PINMUX3_27_24_NSPI0_SCS3);
-
-    // Configure the flash control pins and put them with the values we want
-    pbdrv_gpio_alt(&pin_flash_nwp, SYSCFG_PINMUX12_PINMUX12_23_20_GPIO5_2);
-    pbdrv_gpio_out_high(&pin_flash_nwp);
-    pbdrv_gpio_alt(&pin_flash_nhold, SYSCFG_PINMUX6_PINMUX6_31_28_GPIO2_0);
-    pbdrv_gpio_out_high(&pin_flash_nhold);
-
-    // Set up interrupts
-    SPIIntLevelSet(SOC_SPI_0_REGS, SPI_RECV_INTLVL | SPI_TRANSMIT_INTLVL);
-    IntRegister(SYS_INT_SPINT0, spi0_isr);
-    IntChannelSet(SYS_INT_SPINT0, 2);
-    IntSystemEnable(SYS_INT_SPINT0);
-
-    // Request DMA channels. This only needs to be done for the initial events (and not for linked parameter sets)
-    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
-    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI1_RX, EDMA3_CHA_SPI1_RX, 0);
-
-    // Enable!
-    SPIEnable(SOC_SPI_0_REGS);
-
-    bdev.spi_status = SPI_STATUS_COMPLETE;
-
-    pbdrv_init_busy_up();
-    pbio_os_process_start(&pbdrv_block_device_ev3_init_process, pbdrv_block_device_ev3_init_process_thread, NULL);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-int pbdrv_block_device_ev3_is_busy() {
-    return bdev.spi_status & SPI_STATUS_WAIT_ANY;
+void pbdrv_block_device_init(void) {
+    spi_bus_init();
+    pbdrv_init_busy_up();
+    pbio_os_process_start(&ev3_spi_process, ev3_spi_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_BLOCK_DEVICE_EV3
