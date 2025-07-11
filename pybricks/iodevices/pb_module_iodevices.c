@@ -35,6 +35,8 @@ const mp_obj_module_t pb_module_iodevices = {
     .globals = (mp_obj_dict_t *)&pb_module_iodevices_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_iodevices, pb_module_iodevices);
+#endif
 
 #endif // PYBRICKS_PY_IODEVICES

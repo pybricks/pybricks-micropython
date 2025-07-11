@@ -20,6 +20,8 @@ const mp_obj_module_t pb_module_media = {
     .globals = (mp_obj_dict_t *)&pb_module_media_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_media, pb_module_media);
+#endif
 
 #endif // PYBRICKS_PY_MEDIA

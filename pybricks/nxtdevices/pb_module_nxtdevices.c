@@ -30,6 +30,8 @@ const mp_obj_module_t pb_module_nxtdevices = {
     .globals = (mp_obj_dict_t *)&pb_module_nxtdevices_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_nxtdevices, pb_module_nxtdevices);
+#endif
 
 #endif // PYBRICKS_PY_NXTDEVICES
