@@ -382,11 +382,15 @@ const mp_obj_module_t pb_module_tools = {
     .globals = (mp_obj_dict_t *)&pb_module_tools_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
+
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_tools, pb_module_tools);
 
 // backwards compatibility for pybricks.geometry
 #if MICROPY_PY_BUILTINS_FLOAT
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_geometry, pb_module_tools);
 #endif // MICROPY_PY_BUILTINS_FLOAT
+
+#endif // !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 
 #endif // PYBRICKS_PY_TOOLS

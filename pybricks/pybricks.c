@@ -47,6 +47,39 @@ void pb_package_pybricks_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 }
 #endif
 
+#if MICROPY_MODULE_BUILTIN_SUBPACKAGES
+#if PYBRICKS_PY_EXPERIMENTAL
+extern const mp_obj_module_t pb_module_experimental;
+#endif
+#if PYBRICKS_PY_HUBS
+extern const mp_obj_module_t pb_module_hubs;
+#endif
+#if PYBRICKS_PY_NXTDEVICES
+extern const mp_obj_module_t pb_module_nxtdevices;
+#endif
+#if PYBRICKS_PY_EV3DEVICES
+extern const mp_obj_module_t pb_module_ev3devices;
+#endif
+#if PYBRICKS_PY_PUPDEVICES
+extern const mp_obj_module_t pb_module_pupdevices;
+#endif
+#if PYBRICKS_PY_IODEVICES
+extern const mp_obj_module_t pb_module_iodevices;
+#endif
+#if PYBRICKS_PY_MEDIA
+extern const mp_obj_module_t pb_module_media;
+#endif
+#if PYBRICKS_PY_PARAMETERS
+extern const mp_obj_module_t pb_module_parameters;
+#endif
+#if PYBRICKS_PY_TOOLS
+extern const mp_obj_module_t pb_module_tools;
+#endif
+#if PYBRICKS_PY_ROBOTICS
+extern const mp_obj_module_t pb_module_robotics;
+#endif
+#endif
+
 static const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},

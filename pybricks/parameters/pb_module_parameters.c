@@ -30,6 +30,8 @@ const mp_obj_module_t pb_module_parameters = {
     .globals = (mp_obj_dict_t *)&pb_module_parameters_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_parameters, pb_module_parameters);
+#endif
 
 #endif // PYBRICKS_PY_PARAMETERS

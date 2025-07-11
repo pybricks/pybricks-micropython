@@ -35,6 +35,8 @@ const mp_obj_module_t pb_module_pupdevices = {
     .globals = (mp_obj_dict_t *)&pb_module_pupdevices_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_pupdevices, pb_module_pupdevices);
+#endif
 
 #endif // PYBRICKS_PY_PUPDEVICES

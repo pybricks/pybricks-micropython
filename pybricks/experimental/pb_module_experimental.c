@@ -69,6 +69,8 @@ const mp_obj_module_t pb_module_experimental = {
     .globals = (mp_obj_dict_t *)&pb_module_experimental_globals,
 };
 
+#if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_experimental, pb_module_experimental);
+#endif
 
 #endif // PYBRICKS_PY_EXPERIMENTAL
