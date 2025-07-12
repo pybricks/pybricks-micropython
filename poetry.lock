@@ -2817,14 +2817,14 @@ files = [
 
 [[package]]
 name = "pybricksdev"
-version = "1.0.1"
+version = "1.2.0"
 description = "Pybricks developer tools"
 optional = false
 python-versions = "<3.14,>=3.10"
 groups = ["dev"]
 files = [
-    {file = "pybricksdev-1.0.1-py3-none-any.whl", hash = "sha256:126a6a2b416d503e85f166dc82a77b3864a5242c88d8f6f6a8d7190dca0fa5fa"},
-    {file = "pybricksdev-1.0.1.tar.gz", hash = "sha256:d1baef369fc5f7ac58bbfb606fe43ffcb24eeb7a549e6fcde386ecea2d375c70"},
+    {file = "pybricksdev-1.2.0-py3-none-any.whl", hash = "sha256:e278b885abe0ae1e940be838781e968f175c636a5bcf4320a2a10a91b9c2ab9f"},
+    {file = "pybricksdev-1.2.0.tar.gz", hash = "sha256:c32c59a5002b11decd3160081616d7cccdd3a2569442e9d5b9ab978b49d7e8fb"},
 ]
 
 [package.dependencies]
@@ -4608,4 +4608,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "a97622ebb5b5c33bb1503137186c8d810841ef73ac4f0a8e68af4e79562174ef"
+content-hash = "8c4fa43596a47d7181188c58238cf62395d0ed1a4e1c051c6dec5dc336d92b25"
