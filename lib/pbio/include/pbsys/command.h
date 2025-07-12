@@ -17,7 +17,12 @@
 
 #include <pbio/protocol.h>
 
-pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size);
+typedef enum {
+    PBSYS_COMMAND_TRANSPORT_BLE,
+    PBSYS_COMMAND_TRANSPORT_USB,
+} pbsys_command_transport_t;
+
+pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size, pbsys_command_transport_t transport);
 
 /**
  * Callback called when the write app data command is given by the host.

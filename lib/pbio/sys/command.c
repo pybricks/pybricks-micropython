@@ -30,8 +30,9 @@ void pbsys_command_set_write_app_data_callback(pbsys_command_write_app_data_call
  * Parses binary data for command and dispatches handler for command.
  * @param [in]  data    The raw command data.
  * @param [in]  size    The size of @p data in bytes.
+ * @param [in]  transport  The transport over which the command was received.
  */
-pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
+pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size, pbsys_command_transport_t transport) {
     assert(data);
     assert(size);
 
@@ -72,12 +73,18 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             return PBIO_PYBRICKS_ERROR_OK;
 
         case PBIO_PYBRICKS_COMMAND_WRITE_STDIN:
-            #if PBSYS_CONFIG_BLUETOOTH
-            if (pbsys_bluetooth_rx_get_free() < size - 1) {
-                return PBIO_PYBRICKS_ERROR_BUSY;
+            switch (transport) {
+                #if PBSYS_CONFIG_BLUETOOTH
+                case PBSYS_COMMAND_TRANSPORT_BLE:
+                    if (pbsys_bluetooth_rx_get_free() < size - 1) {
+                        return PBIO_PYBRICKS_ERROR_BUSY;
+                    }
+                    pbsys_bluetooth_rx_write(&data[1], size - 1);
+                    break;
+                #endif
+                default:
+                    break;
             }
-            pbsys_bluetooth_rx_write(&data[1], size - 1);
-            #endif
             // If no consumers are configured, goes to "/dev/null" without error
             return PBIO_PYBRICKS_ERROR_OK;
 

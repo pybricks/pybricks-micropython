@@ -360,7 +360,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
             switch (usb_in_buf[0]) {
                 case USBD_PYBRICKS_OUT_EP_MSG_COMMAND:
                     if (usb_response_sz == 0) {
-                        result = pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
+                        result = pbsys_command(usb_in_buf + 1, usb_in_sz - 1, PBSYS_COMMAND_TRANSPORT_USB);
                         usb_response_buf[0] = USBD_PYBRICKS_IN_EP_MSG_RESPONSE;
                         pbio_set_uint32_le(&usb_response_buf[1], result);
                         usb_response_sz = sizeof(usb_response_buf);

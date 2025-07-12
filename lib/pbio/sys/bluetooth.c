@@ -209,7 +209,7 @@ bool pbsys_bluetooth_tx_is_idle(void) {
 
 static pbio_pybricks_error_t handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint32_t size) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
-        return pbsys_command(data, size);
+        return pbsys_command(data, size, PBSYS_COMMAND_TRANSPORT_BLE);
     }
 
     if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
