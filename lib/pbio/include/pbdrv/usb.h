@@ -10,6 +10,7 @@
 #define _PBDRV_USB_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
@@ -34,6 +35,15 @@ typedef enum {
 
 #if PBDRV_CONFIG_USB
 
+// producer
+uint32_t pbdrv_usb_rx_get_free(void);
+void pbdrv_usb_rx_write(const uint8_t *data, uint32_t size);
+// consumer
+typedef bool (*pbdrv_usb_rx_callback_t)(uint8_t c);
+void pbdrv_usb_rx_set_callback(pbdrv_usb_rx_callback_t callback);
+uint32_t pbdrv_usb_rx_get_available(void);
+pbio_error_t pbdrv_usb_rx(uint8_t *data, uint32_t *size);
+
 /**
  * Gets the result of the USB battery charger detection.
  * @return              The result.
@@ -54,17 +64,14 @@ bool pbdrv_usb_stdout_tx_is_idle(void);
 
 #else // PBDRV_CONFIG_USB
 
-static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
-    return PBDRV_USB_BCD_NONE;
-}
-
-static inline pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
-    return PBIO_SUCCESS;
-}
-
-static inline bool pbdrv_usb_stdout_tx_is_idle(void) {
-    return true;
-}
+#define pbdrv_usb_rx_get_free() 0
+#define pbdrv_usb_rx_write(data, size)
+#define pbdrv_usb_rx_set_callback(callback)
+#define pbdrv_usb_rx_get_available() 0
+#define pbdrv_usb_rx(data, size) PBIO_SUCCESS
+#define pbdrv_usb_get_bcd() PBDRV_USB_BCD_NONE
+#define pbdrv_usb_stdout_tx(data, size) PBIO_SUCCESS
+#define pbdrv_usb_stdout_tx_is_idle() true
 
 #endif // PBDRV_CONFIG_USB
 

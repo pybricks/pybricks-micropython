@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include <pbdrv/reset.h>
+#include <pbdrv/usb.h>
 #include <pbio/protocol.h>
 #include <pbsys/bluetooth.h>
 #include <pbsys/command.h>
@@ -80,6 +81,14 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size, pbsys_co
                         return PBIO_PYBRICKS_ERROR_BUSY;
                     }
                     pbsys_bluetooth_rx_write(&data[1], size - 1);
+                    break;
+                #endif
+                #if PBDRV_CONFIG_USB
+                case PBSYS_COMMAND_TRANSPORT_USB:
+                    if (pbdrv_usb_rx_get_free() < size - 1) {
+                        return PBIO_PYBRICKS_ERROR_BUSY;
+                    }
+                    pbdrv_usb_rx_write(&data[1], size - 1);
                     break;
                 #endif
                 default:

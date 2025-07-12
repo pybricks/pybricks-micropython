@@ -522,6 +522,10 @@ uint32_t pbdrv_usb_rx_data_available(void) {
     return USBBufferDataAvailable((tUSBBuffer *)&g_sRxBuffer);
 }
 
+void pbdrv_usb_rx_set_callback(pbdrv_usb_rx_callback_t callback) {
+    // TODO
+}
+
 int32_t pbdrv_usb_get_char(void) {
     uint8_t c;
     if (USBBufferRead((tUSBBuffer *)&g_sRxBuffer, &c, 1) > 0) {

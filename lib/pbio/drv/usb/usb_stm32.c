@@ -11,6 +11,7 @@
 #include <stdbool.h>
 
 #include <contiki.h>
+#include <lwrb/lwrb.h>
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_pcd_ex.h>
 #include <usbd_core.h>
@@ -138,6 +139,86 @@ void pbdrv_usb_stm32_handle_otg_fs_irq(void) {
 void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
     vbus_active = active;
     process_poll(&pbdrv_usb_process);
+}
+
+// REVISIT: this needs to be moved to a common place where it can be shared with Bluetooth
+static pbdrv_usb_rx_callback_t stdin_event_callback;
+static lwrb_t stdin_ring_buf;
+
+/**
+ * Gets the number of bytes currently free for writing in stdin.
+ * @return              The number of bytes.
+ */
+uint32_t pbdrv_usb_rx_get_free(void) {
+    return lwrb_get_free(&stdin_ring_buf);
+}
+
+/**
+ * Writes data to the stdin buffer.
+ *
+ * This does not currently return the number of bytes written, so first call
+ * pbdrv_usb_rx_get_free() to ensure enough free space.
+ *
+ * @param [in]  data    The data to write to the stdin buffer.
+ * @param [in]  size    The size of @p data in bytes.
+ */
+void pbdrv_usb_rx_write(const uint8_t *data, uint32_t size) {
+    if (stdin_event_callback) {
+        // If there is a callback hook, we have to process things one byte at
+        // a time.
+        for (uint32_t i = 0; i < size; i++) {
+            if (!stdin_event_callback(data[i])) {
+                lwrb_write(&stdin_ring_buf, &data[i], 1);
+            }
+        }
+    } else {
+        lwrb_write(&stdin_ring_buf, data, size);
+    }
+}
+
+/**
+ * Sets the UART Rx callback function.
+ * @param callback  [in]    The callback or NULL.
+ */
+void pbdrv_usb_rx_set_callback(pbdrv_usb_rx_callback_t callback) {
+    stdin_event_callback = callback;
+}
+
+/**
+ * Gets the number of bytes currently available to be read from the UART Rx
+ * characteristic.
+ * @return              The number of bytes.
+ */
+uint32_t pbdrv_usb_rx_get_available(void) {
+    return lwrb_get_full(&stdin_ring_buf);
+}
+
+/**
+ * Reads data from the stdin buffer.
+ * @param data  [in]        A buffer to receive a copy of the data.
+ * @param size  [in, out]   The number of bytes to read (@p data must be at least
+ *                          this big). After return @p size contains the number
+ *                          of bytes actually read.
+ * @return                  ::PBIO_SUCCESS if @p data was read, ::PBIO_ERROR_AGAIN
+ *                          if @p data could not be read at this time (i.e. buffer
+ *                          is empty), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
+ *                          if this platform does not support Bluetooth.
+ */
+pbio_error_t pbdrv_usb_rx(uint8_t *data, uint32_t *size) {
+    if ((*size = lwrb_read(&stdin_ring_buf, data, *size)) == 0) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Flushes data from the UART Rx characteristic so that ::pbdrv_usb_rx
+ * can be used to wait for new data.
+ */
+void pbdrv_usb_rx_flush(void) {
+    lwrb_reset(&stdin_ring_buf);
 }
 
 /**
@@ -285,6 +366,9 @@ void pbdrv_usb_init(void) {
     USBD_Pybricks_RegisterInterface(&husbd, &USBD_Pybricks_fops);
     USBD_Start(&husbd);
     #endif
+
+    static uint8_t stdin_buf[USBD_PYBRICKS_MAX_PACKET_SIZE * 2];
+    lwrb_init(&stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
 
     process_start(&pbdrv_usb_process);
 
