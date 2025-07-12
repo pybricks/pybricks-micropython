@@ -105,16 +105,30 @@ static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minima
 
 // Prints the exception that ended the program.
 static void print_final_exception(mp_obj_t exc, int ret) {
-    // Handle graceful stop with button.
-    if ((ret & PYEXEC_FORCED_EXIT) &&
-        mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
-        mp_printf(&mp_plat_print, "The program was stopped (%q).\n",
-            ((mp_obj_exception_t *)MP_OBJ_TO_PTR(exc))->base.type->name);
-        return;
-    }
+    nlr_buf_t nlr;
+    nlr.ret_val = NULL;
 
-    // Print unhandled exception with traceback.
-    mp_obj_print_exception(&mp_plat_print, exc);
+    if (nlr_push(&nlr) == 0) {
+        // Handle graceful stop with button.
+        if ((ret & PYEXEC_FORCED_EXIT) &&
+            mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
+            mp_printf(&mp_plat_print, "The program was stopped (%q).\n",
+                ((mp_obj_exception_t *)MP_OBJ_TO_PTR(exc))->base.type->name);
+            return;
+        }
+
+        // REVISIT: flash the light red a few times to indicate an unhandled exception?
+
+        // Print unhandled exception with traceback.
+        mp_obj_print_exception(&mp_plat_print, exc);
+
+        nlr_pop();
+    } else {
+        // If we couldn't print the exception, just return. There is nothing
+        // else we can do.
+
+        // REVISIT: flash the light with a different pattern here?
+    }
 }
 
 #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
