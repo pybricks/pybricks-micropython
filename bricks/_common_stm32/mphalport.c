@@ -11,7 +11,7 @@
 #include <pbdrv/clock.h>
 #include <pbdrv/config.h>
 #include <pbio/main.h>
-#include <pbsys/host.h>
+#include <pbsys/bluetooth.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -43,7 +43,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     uintptr_t ret = 0;
 
-    if ((poll_flags & MP_STREAM_POLL_RD) && pbsys_host_rx_get_available()) {
+    if ((poll_flags & MP_STREAM_POLL_RD) && pbsys_bluetooth_rx_get_available()) {
         ret |= MP_STREAM_POLL_RD;
     }
 
@@ -56,7 +56,7 @@ int mp_hal_stdin_rx_chr(void) {
     uint8_t c;
 
     // wait for rx interrupt
-    while (size = 1, pbsys_host_rx(&c, &size) != PBIO_SUCCESS) {
+    while (size = 1, pbsys_bluetooth_rx(&c, &size) != PBIO_SUCCESS) {
         MICROPY_EVENT_POLL_HOOK
     }
 
@@ -65,16 +65,31 @@ int mp_hal_stdin_rx_chr(void) {
 
 // Send string of given length
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
-    while (pbsys_host_tx((const uint8_t *)str, len) == PBIO_ERROR_AGAIN) {
-        MICROPY_EVENT_POLL_HOOK
-    }
-    // Not raising the error. This means stdout lost if host is not connected.
+    uint32_t remaining = len;
 
-    return len;
+    while (remaining) {
+        uint32_t size = remaining;
+
+        pbio_error_t err = pbsys_bluetooth_tx((const uint8_t *)str, &size);
+        if (err == PBIO_SUCCESS) {
+            str += size;
+            remaining -= size;
+        }
+
+        MICROPY_EVENT_POLL_HOOK
+
+        if (err != PBIO_ERROR_AGAIN) {
+            // Ignoring error for now. This means stdout lost if Bluetooth is
+            // disconnected.
+            break;
+        }
+    }
+
+    return len - remaining;
 }
 
 void mp_hal_stdout_tx_flush(void) {
-    while (!pbsys_host_tx_is_idle()) {
+    while (!pbsys_bluetooth_tx_is_idle()) {
         MICROPY_EVENT_POLL_HOOK
     }
 }

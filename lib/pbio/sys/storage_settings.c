@@ -10,14 +10,13 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
-
 #include <pbio/error.h>
 #include <pbio/imu.h>
+#include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 
-#include "bluetooth.h"
 #include "storage.h"
 
 /**

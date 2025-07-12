@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 The Pybricks Authors
 
-#ifndef _PBSYS_SYS_BLUETOOTH_H_
-#define _PBSYS_SYS_BLUETOOTH_H_
+#ifndef _PBSYS_BLUETOOTH_H_
+#define _PBSYS_BLUETOOTH_H_
 
 #include <stdbool.h>
 #include <stdint.h>
 
 #include <pbio/error.h>
-#include <pbsys/host.h>
+#include <pbsys/config.h>
 
 uint32_t pbsys_bluetooth_rx_get_free(void);
 void pbsys_bluetooth_rx_write(const uint8_t *data, uint32_t size);
 void pbsys_bluetooth_process_poll(void);
 
+typedef bool (*pbsys_bluetooth_rx_callback_t)(uint8_t c);
+
 #if PBSYS_CONFIG_BLUETOOTH
 
 void pbsys_bluetooth_init(void);
-void pbsys_bluetooth_rx_set_callback(pbsys_host_stdin_event_callback_t callback);
+void pbsys_bluetooth_rx_set_callback(pbsys_bluetooth_rx_callback_t callback);
 void pbsys_bluetooth_rx_flush(void);
 uint32_t pbsys_bluetooth_rx_get_available(void);
 pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size);
@@ -43,4 +45,4 @@ static inline bool pbsys_bluetooth_tx_is_idle(void) {
 
 #endif // PBSYS_CONFIG_BLUETOOTH
 
-#endif // _PBSYS_SYS_BLUETOOTH_H_
+#endif // _PBSYS_BLUETOOTH_H_

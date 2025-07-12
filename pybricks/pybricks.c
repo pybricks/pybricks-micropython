@@ -12,7 +12,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbio/version.h>
-#include <pbsys/host.h>
+#include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
 
 #include <pybricks/common.h>
@@ -207,7 +207,7 @@ void pb_package_pybricks_deinit(void) {
     // tasks and deinit tasks queued before it have completed.
     static pbio_task_t noop_task;
     pbdrv_bluetooth_queue_noop(&noop_task);
-    while (noop_task.status == PBIO_ERROR_AGAIN || !pbsys_host_tx_is_idle()) {
+    while (noop_task.status == PBIO_ERROR_AGAIN || !pbsys_bluetooth_tx_is_idle()) {
         MICROPY_VM_HOOK_LOOP
 
         // Stop waiting (and potentially blocking) in case of forced shutdown.

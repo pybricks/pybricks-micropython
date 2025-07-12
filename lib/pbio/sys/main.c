@@ -20,8 +20,8 @@
 #include "light_matrix.h"
 #include "program_stop.h"
 #include "storage.h"
+#include <pbsys/bluetooth.h>
 #include <pbsys/program_stop.h>
-#include <pbsys/host.h>
 
 // Singleton with information about the currently (or soon) active program.
 static pbsys_main_program_t program;
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
         // Prepare pbsys for running the program.
         pbsys_status_set_program_id(program.id);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
-        pbsys_host_rx_set_callback(pbsys_main_stdin_event);
+        pbsys_bluetooth_rx_set_callback(pbsys_main_stdin_event);
         pbsys_hub_light_matrix_handle_user_program_start(true);
 
         // Handle pending events triggered by the status change, such as
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 
         // Get system back in idle state.
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
-        pbsys_host_rx_set_callback(NULL);
+        pbsys_bluetooth_rx_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
         pbsys_hub_light_matrix_handle_user_program_start(false);
         pbio_stop_all(true);
