@@ -40,6 +40,8 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_motor.c \
 	common/pb_type_speaker.c \
 	common/pb_type_system.c \
+	common/pb_type_usb.c \
+	common/pb_type_usb_stdio.c \
 	ev3devices/pb_module_ev3devices.c \
 	ev3devices/pb_type_ev3devices_colorsensor.c \
 	ev3devices/pb_type_ev3devices_gyrosensor.c \

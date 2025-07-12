@@ -30,6 +30,9 @@ typedef struct _hubs_EssentialHub_obj_t {
     #if PYBRICKS_PY_COMMON_BLE
     mp_obj_t ble;
     #endif
+    #if PYBRICKS_PY_COMMON_USB
+    mp_obj_t usb;
+    #endif
     mp_obj_t buttons;
     mp_obj_t charger;
     mp_obj_t imu;
@@ -52,6 +55,9 @@ static mp_obj_t hubs_EssentialHub_make_new(const mp_obj_type_t *type, size_t n_a
     #if PYBRICKS_PY_COMMON_BLE
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
+    #if PYBRICKS_PY_COMMON_USB
+    self->usb = pb_type_USB_new();
+    #endif
     self->buttons = pb_type_Keypad_obj_new(pb_type_button_pressed_hub_single_button);
     self->charger = pb_type_Charger_obj_new();
     self->imu = pb_type_IMU_obj_new(MP_OBJ_FROM_PTR(self), top_side_in, front_side_in);
@@ -64,6 +70,9 @@ static const pb_attr_dict_entry_t hubs_EssentialHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_EssentialHub_obj_t, battery),
     #if PYBRICKS_PY_COMMON_BLE
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_EssentialHub_obj_t, ble),
+    #endif
+    #if PYBRICKS_PY_COMMON_USB
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_usb, hubs_EssentialHub_obj_t, usb),
     #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_EssentialHub_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_button, hubs_EssentialHub_obj_t, buttons), // backwards compatibility

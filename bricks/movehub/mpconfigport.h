@@ -25,6 +25,7 @@
 #define PYBRICKS_PY_COMMON_MOTOR_MODEL          (0)
 #define PYBRICKS_PY_COMMON_MOTORS               (1)
 #define PYBRICKS_PY_COMMON_SYSTEM               (1)
+#define PYBRICKS_PY_COMMON_USB                  (0)
 #define PYBRICKS_PY_EXPERIMENTAL                (0)
 #define PYBRICKS_PY_HUBS                        (1)
 #define PYBRICKS_PY_IODEVICES                   (0)

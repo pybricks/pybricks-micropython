@@ -21,6 +21,7 @@ extern const mp_obj_type_t pb_text_io_wrapper_obj_type;
 extern const mp_obj_dict_t pb_stdio_locals_dict;
 
 extern const pb_text_io_wrapper_t pb_bluetooth_stdio_wrapper_obj;
+extern const pb_text_io_wrapper_t pb_usb_stdio_wrapper_obj;
 
 #endif // PYBRICKS_PY_STDIO
 

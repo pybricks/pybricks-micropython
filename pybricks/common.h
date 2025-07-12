@@ -145,6 +145,10 @@ extern const mp_obj_module_t pb_type_System;
 
 #endif // PYBRICKS_PY_COMMON_SYSTEM
 
+#if PYBRICKS_PY_COMMON_USB
+mp_obj_t pb_type_USB_new(void);
+#endif // PYBRICKS_PY_COMMON_USB
+
 #endif // PYBRICKS_PY_COMMON
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
