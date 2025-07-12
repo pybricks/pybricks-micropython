@@ -9,6 +9,37 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
+int pb_errcode_from_pbio_error(pbio_error_t error) {
+    switch (error) {
+        case PBIO_SUCCESS:
+            return 0;
+        case PBIO_ERROR_FAILED:
+            return MP_EFAULT;
+        case PBIO_ERROR_INVALID_ARG:
+            return MP_EINVAL;
+        case PBIO_ERROR_NOT_IMPLEMENTED:
+            return MP_ENOENT;
+        case PBIO_ERROR_IO:
+            return MP_EIO;
+        case PBIO_ERROR_BUSY:
+            return MP_EBUSY;
+        case PBIO_ERROR_NO_DEV:
+            return MP_ENODEV;
+        case PBIO_ERROR_NOT_SUPPORTED:
+            return MP_EOPNOTSUPP;
+        case PBIO_ERROR_AGAIN:
+            return MP_EAGAIN;
+        case PBIO_ERROR_INVALID_OP:
+            return MP_EPERM;
+        case PBIO_ERROR_TIMEDOUT:
+            return MP_ETIMEDOUT;
+        case PBIO_ERROR_CANCELED:
+            return MP_ECANCELED;
+    }
+    // This should never happen, but if it does, return a generic error.
+    return MP_EFAULT;
+}
+
 /**
  * Raise an exception if @p error is not ::PBIO_SUCCESS. Most errors translate
  * to an OSError with the appropriate error code. There are a few special
