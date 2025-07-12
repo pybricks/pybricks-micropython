@@ -24,6 +24,7 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_ble.c \
 	common/pb_type_battery.c \
+	common/pb_type_bluetooth_stdio.c \
 	common/pb_type_charger.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
@@ -91,6 +92,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	pupdevices/pb_type_pupdevices_tiltsensor.c \
 	pupdevices/pb_type_pupdevices_ultrasonicsensor.c \
 	pybricks.c \
+	stdio.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_car.c \
 	robotics/pb_type_drivebase.c \

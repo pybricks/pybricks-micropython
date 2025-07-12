@@ -20,6 +20,7 @@
 #include "py/runtime.h"
 
 #include <pybricks/common.h>
+#include <pybricks/stdio.h>
 #include <pybricks/tools.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -527,6 +528,9 @@ static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_observe_enable), MP_ROM_PTR(&pb_module_ble_observe_enable_obj) },
     { MP_ROM_QSTR(MP_QSTR_signal_strength), MP_ROM_PTR(&pb_module_ble_signal_strength_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
+    #if PYBRICKS_PY_STDIO
+    { MP_ROM_QSTR(MP_QSTR_io), MP_ROM_PTR(&pb_bluetooth_stdio_wrapper_obj) },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);
 
