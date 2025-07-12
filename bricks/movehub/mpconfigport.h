@@ -29,6 +29,7 @@
 #define PYBRICKS_PY_HUBS                        (1)
 #define PYBRICKS_PY_IODEVICES                   (0)
 #define PYBRICKS_PY_MEDIA                       (0)
+#define PYBRICKS_PY_MEDIA_IMAGE                 (0)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON_REMOTE_ONLY (1)
