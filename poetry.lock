@@ -392,7 +392,7 @@ version = "2025.4.26"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
-groups = ["stats"]
+groups = ["dev", "stats"]
 files = [
     {file = "certifi-2025.4.26-py3-none-any.whl", hash = "sha256:30350364dfe371162649852c63336a15c70c6510c2ad5015b21c2345311805f3"},
     {file = "certifi-2025.4.26.tar.gz", hash = "sha256:0a816057ea3cdefcef70270d2c515e4506bbc954f417fa5ade2021213bb8f0c6"},
@@ -484,7 +484,7 @@ version = "3.4.2"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 optional = false
 python-versions = ">=3.7"
-groups = ["stats"]
+groups = ["dev", "stats"]
 files = [
     {file = "charset_normalizer-3.4.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7c48ed483eb946e6c04ccbe02c6b4d1d48e51944b6db70f697e089c193404941"},
     {file = "charset_normalizer-3.4.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b2d318c11350e10662026ad0eb71bb51c7812fc8590825304ae0bdd4ac283acd"},
@@ -2022,6 +2022,7 @@ files = [
     {file = "mpy_cross_v5-1.0.2-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:a3d9c151318c5c4d298fb477497b15ccb2bcde4f0d7e32a7b02179482429a52e"},
     {file = "mpy_cross_v5-1.0.2-py3-none-win32.whl", hash = "sha256:121c22ba2fef5549ceb0640d046c0606857d83cf93aa1bda8084fee8366aa148"},
     {file = "mpy_cross_v5-1.0.2-py3-none-win_amd64.whl", hash = "sha256:bc003357bdc69912a0affa2bb87cefe531bcdcd21e1646f939a4773d6801b435"},
+    {file = "mpy_cross_v5-1.0.2-py3-none-win_arm64.whl", hash = "sha256:c784926367bddc89d0e2943c7fd2bc67548146c00899f59c49f6afd5ea004e4b"},
     {file = "mpy_cross_v5-1.0.2.tar.gz", hash = "sha256:50797bd49e675d262d44816c407f8c8074b4d4304ff9b8dd7aec35f3210b29ce"},
 ]
 
@@ -2041,6 +2042,7 @@ files = [
     {file = "mpy_cross_v6-1.0.2-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:99978e8bf6acb3265da72157559080792bcf4646db3c797546e581972fb13c0d"},
     {file = "mpy_cross_v6-1.0.2-py3-none-win32.whl", hash = "sha256:db7ca32c3c74ee3ca18d9032a7d0fd6f77054f0dc1830fba607b50183721a738"},
     {file = "mpy_cross_v6-1.0.2-py3-none-win_amd64.whl", hash = "sha256:5a63e082d9084e4e51ba023d844dc92ea32f777536e46969895b9fc89011a8db"},
+    {file = "mpy_cross_v6-1.0.2-py3-none-win_arm64.whl", hash = "sha256:ce23505da1e25c8f56508e9992bce7be80f522ef4b366238cb8ddc32dff71ef3"},
     {file = "mpy_cross_v6-1.0.2.tar.gz", hash = "sha256:8e67d5ddf4fd49274a0eb6efe60a919a90c57925c0b2127154b75f23d18f7f96"},
 ]
 
@@ -3464,19 +3466,19 @@ typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "requests"
-version = "2.32.3"
+version = "2.32.4"
 description = "Python HTTP for Humans."
 optional = false
 python-versions = ">=3.8"
-groups = ["stats"]
+groups = ["dev", "stats"]
 files = [
-    {file = "requests-2.32.3-py3-none-any.whl", hash = "sha256:70761cfe03c773ceb22aa2f671b4757976145175cdfca038c02654d061d6dcc6"},
-    {file = "requests-2.32.3.tar.gz", hash = "sha256:55365417734eb18255590a9ff9eb97e9e1da868d4ccd6402399eaf68af20a760"},
+    {file = "requests-2.32.4-py3-none-any.whl", hash = "sha256:27babd3cda2a6d50b30443204ee89830707d396671944c998b5975b031ac2b2c"},
+    {file = "requests-2.32.4.tar.gz", hash = "sha256:27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422"},
 ]
 
 [package.dependencies]
 certifi = ">=2017.4.17"
-charset-normalizer = ">=2,<4"
+charset_normalizer = ">=2,<4"
 idna = ">=2.5,<4"
 urllib3 = ">=1.21.1,<3"
 
@@ -4059,7 +4061,7 @@ version = "2.4.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.9"
-groups = ["stats"]
+groups = ["dev", "stats"]
 files = [
     {file = "urllib3-2.4.0-py3-none-any.whl", hash = "sha256:4e16665048960a0900c702d4a66415956a584919c03361cac9f1df5c5dd7e813"},
     {file = "urllib3-2.4.0.tar.gz", hash = "sha256:414bc6535b787febd7567804cc015fee39daab8ad86268f1310a9250697de466"},
