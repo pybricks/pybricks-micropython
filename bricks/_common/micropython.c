@@ -19,6 +19,7 @@
 #include <pbsys/storage.h>
 
 #include <pybricks/common.h>
+#include <pybricks/stdio.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 #include "genhdr/mpversion.h"
@@ -388,6 +389,13 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
 
     // Initialize MicroPython.
     mp_init();
+
+    #if MICROPY_PY_SYS_MUTABLE_STDIO
+    // TODO: add logic to allow USB instead of Bluetooth
+    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDIN]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
+    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDOUT]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
+    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDERR]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
+    #endif
 
     // Runs the requested downloaded or builtin user program.
     switch (program->id) {
