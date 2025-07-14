@@ -36,8 +36,18 @@ typedef enum {
     PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI = 2,
     /**
      * The program was requested to start remotely, such as with an IDE.
+     *
+     * @deprecated Use transport-specific items instead.
      */
     PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE = 3,
+    /**
+     * The program was requested to start using Bluetooth.
+     */
+    PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BLUETOOTH = 4,
+    /**
+     * The program was requested to start using USB.
+     */
+    PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_USB = 5,
 } pbsys_main_program_start_request_type_t;
 
 /**

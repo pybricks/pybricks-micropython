@@ -51,14 +51,14 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size, pbsys_co
             }
             // Use payload as program ID, otherwise use active user slot.
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start((size == 2 ? data[1] : pbsys_hmi_get_selected_program_slot()), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE));
+                pbsys_main_program_request_start((size == 2 ? data[1] : pbsys_hmi_get_selected_program_slot()), (pbsys_main_program_start_request_type_t)transport));
         }
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
         case PBIO_PYBRICKS_COMMAND_START_REPL:
             // Deprecated. For backwards compatibility with Pybricks
             // Profile < v1.4.0, make it work anyway.
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE));
+                pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, (pbsys_main_program_start_request_type_t)transport));
         #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 
         case PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META:

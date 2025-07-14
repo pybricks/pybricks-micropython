@@ -16,10 +16,13 @@
 #include <stdint.h>
 
 #include <pbio/protocol.h>
+#include <pbsys/main.h>
 
 typedef enum {
-    PBSYS_COMMAND_TRANSPORT_BLE,
-    PBSYS_COMMAND_TRANSPORT_USB,
+    // NB: these values allow passing pbsys_command_transport_t directly as
+    // pbsys_main_program_start_request_type_t without a lookup table.
+    PBSYS_COMMAND_TRANSPORT_BLE = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BLUETOOTH,
+    PBSYS_COMMAND_TRANSPORT_USB = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_USB,
 } pbsys_command_transport_t;
 
 pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size, pbsys_command_transport_t transport);

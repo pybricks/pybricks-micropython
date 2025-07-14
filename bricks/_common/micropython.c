@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/stack.h>
 
 #include <pbio/button.h>
@@ -391,11 +392,36 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     mp_init();
 
     #if MICROPY_PY_SYS_MUTABLE_STDIO
-    // TODO: add logic to allow USB instead of Bluetooth
-    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDIN]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
-    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDOUT]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
-    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDERR]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
-    #endif
+
+    bool use_bluetooth;
+
+    // If the program was started remotely, use the same transport for stdio.
+    switch (program->start_request_type) {
+        case PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BLUETOOTH:
+            use_bluetooth = true;
+            break;
+        case PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_USB:
+            use_bluetooth = false;
+            break;
+        default:
+            // Use Bluetooth if available, otherwise USB.
+            // REVISIT: might want to keep track of last used transport and use
+            // that instead.
+            use_bluetooth = pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS);
+            break;
+    }
+
+    if (use_bluetooth) {
+        MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDIN]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
+        MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDOUT]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
+        MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDERR]) = MP_OBJ_FROM_PTR(&pb_bluetooth_stdio_wrapper_obj);
+    } else {
+        MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDIN]) = MP_OBJ_FROM_PTR(&pb_usb_stdio_wrapper_obj);
+        MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDOUT]) = MP_OBJ_FROM_PTR(&pb_usb_stdio_wrapper_obj);
+        MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_STDERR]) = MP_OBJ_FROM_PTR(&pb_usb_stdio_wrapper_obj);
+    }
+
+    #endif // MICROPY_PY_SYS_MUTABLE_STDIO
 
     // Runs the requested downloaded or builtin user program.
     switch (program->id) {
