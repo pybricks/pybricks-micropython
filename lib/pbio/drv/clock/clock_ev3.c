@@ -41,20 +41,14 @@ volatile uint32_t systick_ms = 0;
  * The systick interrupt service routine (ISR) which will be called every millisecond.
  */
 void systick_isr_C(void) {
-    /* Disable the timer interrupt */
-    TimerIntDisable(SOC_TMR_0_REGS, TMR_INT_TMR34_NON_CAPT_MODE);
-
     /* Clear the interrupt status in AINTC and in timer */
     IntSystemStatusClear(SYS_INT_TINT34_0);
-    TimerIntStatusClear(SOC_TMR_0_REGS, TMR_INT_TMR34_NON_CAPT_MODE);
+    TimerIntStatusClear(SOC_TMR_0_REGS, TMR_INTSTAT34_TIMER_NON_CAPT);
 
     ++systick_ms;
 
     etimer_request_poll();
     pbio_os_request_poll();
-
-    /* Enable the timer interrupt */
-    TimerIntEnable(SOC_TMR_0_REGS, TMR_INT_TMR34_NON_CAPT_MODE);
 }
 
 /**
