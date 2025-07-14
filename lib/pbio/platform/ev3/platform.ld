@@ -30,6 +30,16 @@ SECTIONS
         *(.rodata.*)
     } > DDR
 
+    /* External firmware binaries */
+    .firmware :
+    {
+        . = ALIGN(4);
+        _pru0_start = .;
+        KEEP(*(.pru0));
+        . = ALIGN(4);
+        _pru0_end = .;
+    } >DDR
+
     .data :
     {
         . = ALIGN(4);
@@ -46,15 +56,6 @@ SECTIONS
         . = ALIGN(4);
         _bss_end = .;
     } > DDR
-
-    .pru :
-    {
-        . = ALIGN(4);
-        _pru0_start = .;
-        KEEP(*(.pru0));
-        . = ALIGN(4);
-        _pru0_end = .;
-    } >DDR
 
     /* Uninitialized (not zeroed at startup) data section */
 
