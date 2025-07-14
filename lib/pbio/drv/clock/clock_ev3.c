@@ -65,7 +65,7 @@ void systick_suspend(void) {
  */
 void systick_resume(void) {
     /* Enable the timer interrupt */
-    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONTRELOAD);
+    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
 }
 
 /**
@@ -81,7 +81,6 @@ void pbdrv_clock_init(void) {
     /* Set up the timer */
     TimerConfigure(SOC_TMR_0_REGS, TMR_CFG_32BIT_UNCH_CLK_BOTH_INT);
     TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, TMR_PERIOD_LSB32);
-    TimerReloadSet(SOC_TMR_0_REGS, TMR_TIMER34, TMR_PERIOD_LSB32);
 
     /* Register the Timer ISR */
     IntRegister(SYS_INT_TINT34_0, systick_isr_C);
@@ -96,7 +95,7 @@ void pbdrv_clock_init(void) {
     TimerIntEnable(SOC_TMR_0_REGS, TMR_INT_TMR34_NON_CAPT_MODE);
 
     /* Start the timer */
-    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONTRELOAD);
+    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
 }
 
 uint32_t pbdrv_clock_get_us(void) {
