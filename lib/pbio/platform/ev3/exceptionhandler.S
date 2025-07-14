@@ -11,6 +11,11 @@
 
         .equ I_F_BIT, 0xC0 
         .equ MASK_SWI_NUM, 0xFF000000
+        .equ MASK_SR_MODE, 0x1F
+        .equ EXCEPT_TYPE_UNKNOWN, 0
+        .equ EXCEPT_TYPE_UNDEF, 1
+        .equ EXCEPT_TYPE_PREFETCH_ABORT, 2
+        .equ EXCEPT_TYPE_DATA_ABORT, 3
 
         @ This will be placed at 0xffff0000 by the linker script
         .section .vector,"ax",%progbits
@@ -19,13 +24,63 @@
 
 ResetToEntry:
         B Entry
-        B ResetToEntry
+        B UndefHandlder
         B SWIHandler
-        B ResetToEntry
-        B ResetToEntry
-        B ResetToEntry
+        B PrefetchAbortHandler
+        B DataAbortHandler
+        B UnknownExceptionHandler
         B IRQHandler
-        NOP @ Fall to FIQHandler
+        B FIQHandler
+
+UndefHandlder:
+        @ Save r0-r12, lr
+        stmfd   sp!, {r0-r12, lr}
+        mov     r7, #EXCEPT_TYPE_UNDEF
+        b       CommonPanicHandler
+
+PrefetchAbortHandler:
+        @ Save r0-r12, lr
+        stmfd   sp!, {r0-r12, lr}
+        mov     r7, #EXCEPT_TYPE_PREFETCH_ABORT
+        b       CommonPanicHandler
+
+DataAbortHandler:
+        @ Save r0-r12, lr
+        stmfd   sp!, {r0-r12, lr}
+        mov     r7, #EXCEPT_TYPE_DATA_ABORT
+        b       CommonPanicHandler
+
+UnknownExceptionHandler:
+        @ Save r0-r12, lr
+        stmfd   sp!, {r0-r12, lr}
+        mov     r7, #EXCEPT_TYPE_UNKNOWN
+        @ b       CommonPanicHandler
+        @ fall through
+
+CommonPanicHandler:
+        @ Save SPSR
+        mrs     r0, spsr
+        stmfd   sp!, {r0}
+        @ Switch to previous mode to read its sp/lr
+        @ NOTE: Assumes we never use User mode
+        and     r0, #MASK_SR_MODE
+        mrs     r1, cpsr
+        and     r2, r1, #MASK_SR_MODE
+        orr     r2, r0
+        msr     cpsr, r2
+        mov     r3, r13
+        mov     r4, r14
+        msr     cpsr, r1
+        stmfd   sp!, {r3, r4}
+        @ Call panic handler
+        mov     r0, r7
+        mov     r1, sp
+        bl      ev3_panic_handler_
+        @ Reset
+        b       ResetToEntry
+
+ev3_panic_handler_:
+        ldr pc, =ev3_panic_handler
 
 FIQHandler:
         STMFD    r13!, {r0-r7, lr}
