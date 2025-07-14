@@ -1,9 +1,5 @@
 @ SPDX-License-Identifier: MPL-1.0
 @ Copyright (c) 2016 Tobias Schießl
-        .global ExceptionHandler
-        .global IRQHandler
-        .global SWIHandler
-        
         .set  MODE_USR, 0x10            
         .set  MODE_FIQ, 0x11
         .set  MODE_IRQ, 0x12
@@ -16,22 +12,21 @@
         .equ I_F_BIT, 0xC0 
         .equ MASK_SWI_NUM, 0xFF000000
 
-        .text
+        @ This will be placed at 0xffff0000 by the linker script
+        .section .vector,"ax",%progbits
 
         .code 32
 
-@ Default entry for all vectors except Reset is "B ExceptionHandler" so each interrupt would cause a reset
-@ Since I can only say that the IRQ Handler works, we leave the remaining ones as they are
-ExceptionHandler:
+ResetToEntry:
         B Entry
-        B ExceptionHandler
+        B ResetToEntry
         B SWIHandler
-        B ExceptionHandler
-        B ExceptionHandler
-        B ExceptionHandler
+        B ResetToEntry
+        B ResetToEntry
+        B ResetToEntry
         B IRQHandler
         NOP @ Fall to FIQHandler
-        
+
 FIQHandler:
         STMFD    r13!, {r0-r7, lr}
         LDR      r0, =0xFFFEF600

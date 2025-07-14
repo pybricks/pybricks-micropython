@@ -8,6 +8,7 @@ MEMORY
     SRAM       (rwx) : ORIGIN = 0x80000000, LENGTH = 128K
     DDR_unused (rwx) : ORIGIN = 0xC0000000, LENGTH = 0x8000
     DDR        (rwx) : ORIGIN = 0xC0008000, LENGTH = (64M - 0x8000)
+    ARM_LRAM   (rwx) : ORIGIN = 0xFFFF0000, LENGTH = 8K
 }
 
 _minimal_stack_size = 4M;
@@ -52,6 +53,13 @@ SECTIONS
         . = ALIGN(4);
         *(.noinit)
     } > DDR
+
+    /* Exception vector table */
+    .vector :
+    {
+        . = ALIGN(4);
+        KEEP(*(.vector));
+    } > ARM_LRAM
 
     .stack :
     {
