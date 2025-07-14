@@ -398,15 +398,98 @@ unsigned int EDMAVersionGet(void) {
     return 1;
 }
 
-void ev3_panic_handler(int except_type, void *except_data) {
+static void panic_puts(const char *c) {
+    while (*c) {
+        UARTCharPut(SOC_UART_1_REGS, *(c++));
+    }
+}
+static void panic_putu8(uint8_t x) {
+    const char *hex = "0123456789ABCDEF";
+    UARTCharPut(SOC_UART_1_REGS, hex[x >> 4]);
+    UARTCharPut(SOC_UART_1_REGS, hex[x & 0xf]);
+}
+static void panic_putu32(uint32_t x) {
+    panic_putu8(x >> 24);
+    panic_putu8(x >> 16);
+    panic_putu8(x >> 8);
+    panic_putu8(x);
+}
+// This needs to be kept in sync with exceptionhandler.S
+static const char *const panic_types[] = {
+    "UNKNOWN",
+    "Undefined Instruction",
+    "Prefetch Abort",
+    "Data Abort",
+};
+typedef struct {
+    uint32_t r13;
+    uint32_t r14;
+    uint32_t spsr;
+    uint32_t r0;
+    uint32_t r1;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r4;
+    uint32_t r5;
+    uint32_t r6;
+    uint32_t r7;
+    uint32_t r8;
+    uint32_t r9;
+    uint32_t r10;
+    uint32_t r11;
+    uint32_t r12;
+    uint32_t exc_lr;
+} ev3_panic_ctx;
+
+void ev3_panic_handler(int except_type, ev3_panic_ctx *except_data) {
     // Regardless of what's going on, configure the UART1 for a debug console
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
     UARTConfigSetExpClk(SOC_UART_1_REGS, SOC_UART_1_MODULE_FREQ, 115200, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_13);
     UARTFIFOEnable(SOC_UART_1_REGS);
 
-    // TODO: Implement panic handler
-    UARTCharPut(SOC_UART_1_REGS, 'H');
-    UARTCharPut(SOC_UART_1_REGS, 'i');
+    panic_puts("********************************************************************************\r\n");
+    panic_puts("*                            Pybricks on EV3 Panic                             *\r\n");
+    panic_puts("********************************************************************************\r\n");
+
+    panic_puts("Exception type: ");
+    panic_puts(panic_types[except_type]);
+
+    panic_puts("\r\nR0:   0x");
+    panic_putu32(except_data->r0);
+    panic_puts("\r\nR1:   0x");
+    panic_putu32(except_data->r1);
+    panic_puts("\r\nR2:   0x");
+    panic_putu32(except_data->r2);
+    panic_puts("\r\nR3:   0x");
+    panic_putu32(except_data->r3);
+    panic_puts("\r\nR4:   0x");
+    panic_putu32(except_data->r4);
+    panic_puts("\r\nR5:   0x");
+    panic_putu32(except_data->r5);
+    panic_puts("\r\nR6:   0x");
+    panic_putu32(except_data->r6);
+    panic_puts("\r\nR7:   0x");
+    panic_putu32(except_data->r7);
+    panic_puts("\r\nR8:   0x");
+    panic_putu32(except_data->r8);
+    panic_puts("\r\nR9:   0x");
+    panic_putu32(except_data->r9);
+    panic_puts("\r\nR10:  0x");
+    panic_putu32(except_data->r10);
+    panic_puts("\r\nR11:  0x");
+    panic_putu32(except_data->r11);
+    panic_puts("\r\nR12:  0x");
+    panic_putu32(except_data->r12);
+    panic_puts("\r\nR13:  0x");
+    panic_putu32(except_data->r13);
+    panic_puts("\r\nR14:  0x");
+    panic_putu32(except_data->r14);
+    panic_puts("\r\nR15:  0x");
+    panic_putu32(except_data->exc_lr);
+    panic_puts("\r\nSPSR: 0x");
+    panic_putu32(except_data->spsr);
+
+    panic_puts("\r\nSystem will now reboot...\r\n");
 }
 
 /**
