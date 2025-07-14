@@ -21,16 +21,15 @@
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/timer.h>
 
-/**
- * The compare value to set for the 16 least significant bits of the hardware timer
- *
- * This is the value which causes the interrupt to be triggered every millisecond.
- */
-#define TMR_PERIOD_LSB32              0x05CC
-/*
- * The compare value to set for the 16 most significant bits of the hardware timer
- */
-#define TMR_PERIOD_MSB32              0x0
+// The input to the Timer0 module is PLL0_AUXCLK. This will always run at 24 MHz on the EV3,
+// regardless of what the CPU speed is set to. We configure the timer to generate interrupts
+// every millisecond, and we configure the timer to reset to 0 when it reaches a count value
+// corresponding to one millisecond of time. Finer timing resolution can be obtained by
+// combining the software-managed millisecond counter with the timer value.
+//
+// The system tick uses the "12" half of the timer, and the PRU1 (TODO) uses the "34" half.
+static const uint32_t auxclk_freq_hz = SOC_ASYNC_2_FREQ;
+static const uint32_t timer_ms_period = (auxclk_freq_hz / 1000) - 1;
 
 /**
  * The current tick in milliseconds
@@ -80,7 +79,8 @@ void pbdrv_clock_init(void) {
 
     /* Set up the timer */
     TimerConfigure(SOC_TMR_0_REGS, TMR_CFG_32BIT_UNCH_CLK_BOTH_INT);
-    TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, TMR_PERIOD_LSB32);
+    TimerPreScalarCount34Set(SOC_TMR_0_REGS, 0);
+    TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, timer_ms_period);
 
     /* Register the Timer ISR */
     IntRegister(SYS_INT_TINT34_0, systick_isr_C);
