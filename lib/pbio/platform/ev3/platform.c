@@ -49,6 +49,7 @@
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/i2c.h>
 #include <tiam1808/psc.h>
+#include <tiam1808/uart.h>
 
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
@@ -395,6 +396,17 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
 
 unsigned int EDMAVersionGet(void) {
     return 1;
+}
+
+void ev3_panic_handler(int except_type, void *except_data) {
+    // Regardless of what's going on, configure the UART1 for a debug console
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    UARTConfigSetExpClk(SOC_UART_1_REGS, SOC_UART_1_MODULE_FREQ, 115200, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_13);
+    UARTFIFOEnable(SOC_UART_1_REGS);
+
+    // TODO: Implement panic handler
+    UARTCharPut(SOC_UART_1_REGS, 'H');
+    UARTCharPut(SOC_UART_1_REGS, 'i');
 }
 
 /**
