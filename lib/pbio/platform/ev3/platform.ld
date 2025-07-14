@@ -20,12 +20,21 @@ SECTIONS
     {
         . = ALIGN(4);
         *(.text)
+        *(.text.*)
+    } > DDR
+
+    .rodata :
+    {
+        . = ALIGN(4);
+        *(.rodata)
+        *(.rodata.*)
     } > DDR
 
     .data :
     {
         . = ALIGN(4);
         *(.data)
+        *(.data.*)
     } > DDR
 
     .bss :
@@ -33,6 +42,7 @@ SECTIONS
         . = ALIGN(4);
         _bss_start = .;
         *(.bss)
+        *(.bss.*)
         . = ALIGN(4);
         _bss_end = .;
     } > DDR
