@@ -344,9 +344,6 @@ void pbdrv_uart_ev3_handle_tx_complete(uint8_t id) {
 static void pbdrv_uart_init_hw(pbdrv_uart_dev_t *uart) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
-    // Enabling the PSC for given UART.
-    PSCModuleControl(SOC_PSC_1_REGS, pdata->peripheral_id, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-
     // Enabling the transmitter and receiver.
     UARTEnable(pdata->base_address);
 
@@ -388,7 +385,10 @@ void pbdrv_uart_init_pru(pbdrv_uart_dev_t *uart) {
 
 void pbdrv_uart_init(void) {
 
-    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    // Enabling the PSC for all UARTs
+    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_UART0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
     extern uint8_t _pru0_start;
     extern uint8_t _pru0_end;
