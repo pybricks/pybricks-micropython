@@ -41,8 +41,8 @@ volatile uint32_t systick_ms = 0;
  */
 void systick_isr_C(void) {
     /* Clear the interrupt status in AINTC and in timer */
-    IntSystemStatusClear(SYS_INT_TINT34_0);
-    TimerIntStatusClear(SOC_TMR_0_REGS, TMR_INTSTAT34_TIMER_NON_CAPT);
+    IntSystemStatusClear(SYS_INT_TINT12_0);
+    TimerIntStatusClear(SOC_TMR_0_REGS, TMR_INTSTAT12_TIMER_NON_CAPT);
 
     ++systick_ms;
 
@@ -56,7 +56,7 @@ void systick_isr_C(void) {
  */
 void systick_suspend(void) {
     /* Disable the timer interrupt */
-    TimerDisable(SOC_TMR_0_REGS, TMR_TIMER34);
+    TimerDisable(SOC_TMR_0_REGS, TMR_TIMER12);
 }
 
 /**
@@ -64,7 +64,7 @@ void systick_suspend(void) {
  */
 void systick_resume(void) {
     /* Enable the timer interrupt */
-    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
+    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER12, TMR_ENABLE_CONT);
 }
 
 /**
@@ -79,23 +79,22 @@ void pbdrv_clock_init(void) {
 
     /* Set up the timer */
     TimerConfigure(SOC_TMR_0_REGS, TMR_CFG_32BIT_UNCH_CLK_BOTH_INT);
-    TimerPreScalarCount34Set(SOC_TMR_0_REGS, 0);
-    TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, timer_ms_period);
+    TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER12, timer_ms_period);
 
     /* Register the Timer ISR */
-    IntRegister(SYS_INT_TINT34_0, systick_isr_C);
+    IntRegister(SYS_INT_TINT12_0, systick_isr_C);
 
     /* Set the channel number for Timer interrupt, it will map to IRQ */
-    IntChannelSet(SYS_INT_TINT34_0, 3);
+    IntChannelSet(SYS_INT_TINT12_0, 3);
 
     /* Enable timer interrupts in AINTC */
-    IntSystemEnable(SYS_INT_TINT34_0);
+    IntSystemEnable(SYS_INT_TINT12_0);
 
     /* Enable the timer interrupt */
-    TimerIntEnable(SOC_TMR_0_REGS, TMR_INT_TMR34_NON_CAPT_MODE);
+    TimerIntEnable(SOC_TMR_0_REGS, TMR_INT_TMR12_NON_CAPT_MODE);
 
     /* Start the timer */
-    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
+    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER12, TMR_ENABLE_CONT);
 }
 
 uint32_t pbdrv_clock_get_us(void) {
