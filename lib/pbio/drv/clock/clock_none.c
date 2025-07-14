@@ -22,11 +22,4 @@ uint32_t pbdrv_clock_get_100us(void) {
     return 0;
 }
 
-void pbdrv_clock_busy_delay_ms(uint32_t ms) {
-}
-
-bool pbdrv_clock_is_ticking(void) {
-    return false;
-}
-
 #endif // PBDRV_CONFIG_CLOCK_NONE

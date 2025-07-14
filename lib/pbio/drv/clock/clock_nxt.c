@@ -98,21 +98,12 @@ void nx_systick_wait_ms(uint32_t ms) {
     }
 }
 
-void pbdrv_clock_busy_delay_ms(uint32_t ms) {
-    nx_systick_wait_ms(ms);
-}
-
 void nx_systick_wait_ns(uint32_t ns) {
     volatile uint32_t x = (ns >> 7) + 1;
 
     while (x--) {
         ;
     }
-}
-
-bool pbdrv_clock_is_ticking(void) {
-    // TODO
-    return true;
 }
 
 #endif // PBDRV_CONFIG_CLOCK_NXT

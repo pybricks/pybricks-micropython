@@ -92,6 +92,8 @@ uint32_t HAL_GetTick(void) {
 // We provide our own version of HAL_Delay that calls __WFI while waiting,
 // and works when interrupts are disabled.  This function is intended to be
 // used only by the ST HAL functions.
+//
+// TODO: Is anything actually still calling this?
 void HAL_Delay(uint32_t Delay) {
     if (__get_PRIMASK() == 0) {
         // IRQs enabled, so can use systick counter to do the delay
@@ -110,16 +112,6 @@ void HAL_Delay(uint32_t Delay) {
             }
         }
     }
-}
-
-void pbdrv_clock_busy_delay_ms(uint32_t ms) {
-    HAL_Delay(ms);
-}
-
-bool pbdrv_clock_is_ticking(void) {
-    // Init already completed in SystemInit(), so we just need to check if
-    // interrupts are enabled.
-    return __get_PRIMASK() == 0;
 }
 
 #endif // PBDRV_CONFIG_CLOCK_STM32
