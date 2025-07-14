@@ -22,22 +22,17 @@
 extern volatile uint32_t pbdrv_clock_ticks;
 
 // Core delay function that does an efficient sleep and may switch thread context.
-// If IRQs are enabled then we must have the GIL.
+// We must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {
-    if (pbdrv_clock_is_ticking()) {
-        // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = pbdrv_clock_ticks;
-        // Wraparound of tick is taken care of by 2's complement arithmetic.
-        do {
-            // This macro will execute the necessary idle behaviour.  It may
-            // raise an exception, switch threads or enter sleep mode (waiting for
-            // (at least) the SysTick interrupt).
-            MICROPY_EVENT_POLL_HOOK
-        } while (pbdrv_clock_ticks - start < Delay);
-    } else {
-        // IRQs disabled, so need to use a busy loop for the delay.
-        pbdrv_clock_busy_delay_ms(Delay);
-    }
+    // Use systick counter to do the delay
+    uint32_t start = pbdrv_clock_ticks;
+    // Wraparound of tick is taken care of by 2's complement arithmetic.
+    do {
+        // This macro will execute the necessary idle behaviour.  It may
+        // raise an exception, switch threads or enter sleep mode (waiting for
+        // (at least) the SysTick interrupt).
+        MICROPY_EVENT_POLL_HOOK
+    } while (pbdrv_clock_ticks - start < Delay);
 }
 
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {

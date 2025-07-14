@@ -19,9 +19,9 @@
 #include "py/stream.h"
 
 // Core delay function that does an efficient sleep and may switch thread context.
-// If IRQs are enabled then we must have the GIL.
+// We must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {
-    // IRQs enabled, so can use systick counter to do the delay
+    // Use systick counter to do the delay
     uint32_t start = pbdrv_clock_get_ms();
     // Wraparound of tick is taken care of by 2's complement arithmetic.
     do {
