@@ -196,12 +196,7 @@ else ifeq ($(DEBUG), 2)
 CFLAGS += -Os -DNDEBUG -flto=auto
 else
 CFLAGS += -Os -DNDEBUG -flto=auto
-ifneq ($(PB_MCU_FAMILY),TIAM1808)
-# This is used for trimming unused code on smaller platforms, but on EV3 we
-# don't want to enable these flags in order to keep the size of the .elf file
-# small by avoiding huge tables of section names.
 CFLAGS += -fdata-sections -ffunction-sections
-endif
 endif
 
 ifeq ($(PB_MCU_FAMILY),STM32)
