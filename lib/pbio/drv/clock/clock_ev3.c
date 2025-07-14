@@ -30,6 +30,7 @@
 // The system tick uses the "12" half of the timer, and the PRU1 (TODO) uses the "34" half.
 static const uint32_t auxclk_freq_hz = SOC_ASYNC_2_FREQ;
 static const uint32_t timer_ms_period = (auxclk_freq_hz / 1000) - 1;
+static const uint32_t timer_us_division = auxclk_freq_hz / 1000000;
 
 /**
  * The current tick in milliseconds
@@ -81,8 +82,9 @@ void pbdrv_clock_init(void) {
 }
 
 uint32_t pbdrv_clock_get_us(void) {
-    // TODO: TIAM1808 implementation.
-    return 0;
+    uint32_t tim_val = TimerCounterGet(SOC_TMR_0_REGS, TMR_TIMER12);
+    uint32_t t_us = tim_val / timer_us_division;
+    return pbdrv_clock_get_ms() * 1000 + t_us;
 }
 
 uint32_t pbdrv_clock_get_ms(void) {
@@ -90,8 +92,9 @@ uint32_t pbdrv_clock_get_ms(void) {
 }
 
 uint32_t pbdrv_clock_get_100us(void) {
-    // REVISIT: Use actual time since this isn't providing better resolution.
-    return pbdrv_clock_get_ms() * 10;
+    uint32_t tim_val = TimerCounterGet(SOC_TMR_0_REGS, TMR_TIMER12);
+    uint32_t t_100_us = tim_val / timer_us_division / 100;
+    return pbdrv_clock_get_ms() * 10 + t_100_us;
 }
 
 #endif // PBDRV_CONFIG_CLOCK_TIAM1808
