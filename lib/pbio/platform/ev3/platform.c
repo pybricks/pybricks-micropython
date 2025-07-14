@@ -393,19 +393,6 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     },
 };
 
-// See exceptionhandler.S
-extern void ExceptionHandler(void);
-
-void copy_vector_table(void) {
-    unsigned int *dest = (unsigned int *)0xFFFF0000;
-    unsigned int *addrExceptionHandler = (unsigned int *)ExceptionHandler;
-    int i = 1;
-
-    for (; i < 8 + 2048; ++i) {
-        dest[i] = addrExceptionHandler[i];
-    }
-}
-
 unsigned int EDMAVersionGet(void) {
     return 1;
 }
@@ -557,8 +544,6 @@ uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 void SystemInit(void) {
 
     SysCfgRegistersUnlock();
-
-    copy_vector_table();
 
     // Initialize advanced interrupt controller (AINTC)
     IntAINTCInit();
