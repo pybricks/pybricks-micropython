@@ -51,23 +51,6 @@ void systick_isr_C(void) {
 }
 
 /**
- * Disable the timer and therefore the systick
- *
- */
-void systick_suspend(void) {
-    /* Disable the timer interrupt */
-    TimerDisable(SOC_TMR_0_REGS, TMR_TIMER12);
-}
-
-/**
- * Enable the timer and therefore the systick
- */
-void systick_resume(void) {
-    /* Enable the timer interrupt */
-    TimerEnable(SOC_TMR_0_REGS, TMR_TIMER12, TMR_ENABLE_CONT);
-}
-
-/**
  * Initialize the systick module, i.e. the hardware timer of the SoC
  *
  * This function will register the corresponding ISR, enable the timer
