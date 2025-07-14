@@ -120,7 +120,7 @@
 #define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_LARGE_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 #define PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR   0x08007d80
-#define PBDRV_CONFIG_USB_CHARGE_ONLY                (1)
+#define PBDRV_CONFIG_USB_CHARGE_ONLY                (0)
 
 #define PBDRV_CONFIG_STACK                          (1)
 #define PBDRV_CONFIG_STACK_EMBEDDED                 (1)

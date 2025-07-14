@@ -103,7 +103,7 @@
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
 #define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_SMALL_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
-#define PBDRV_CONFIG_USB_CHARGE_ONLY                (1)
+#define PBDRV_CONFIG_USB_CHARGE_ONLY                (0)
 
 #define PBDRV_CONFIG_STACK                          (1)
 #define PBDRV_CONFIG_STACK_EMBEDDED                 (1)
