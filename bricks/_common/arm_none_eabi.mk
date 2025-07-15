@@ -564,6 +564,7 @@ OBJ += $(addprefix $(BUILD)/, $(TI_AM1808_USB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o))
 $(addprefix $(BUILD)/, $(EV3_SRC_S:.S=.o)): CFLAGS += -D__ASSEMBLY__
 OBJ += $(BUILD)/pru_suart.bin.o
+OBJ += $(BUILD)/pru_ledpwm.bin.o
 endif
 
 # List of sources for qstr extraction
@@ -637,6 +638,11 @@ $(BUILD)/u-boot.bin:
 	$(Q)mkdir -p $(dir $@)
 	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v2.0.1/u-boot.bin
 	$(Q)echo "86ddad84f64d8aea85b4315fc1414bdec0bb0d46c92dbd3db45ed599e3a994cb  $@" | sha256sum -c --strict
+$(BUILD)/pru_ledpwm.bin:
+	$(ECHO) "Downloading pru_ledpwm.bin"
+	$(Q)mkdir -p $(dir $@)
+	$(Q)curl -sL -o $@ https://github.com/pybricks/pybricks-pru/releases/download/v0.0.1/pru_ledpwm.bin
+	$(Q)echo "c0138addb8ebb3d0f531499b6f45ccc71f524afbb6ce55ca3ab462a001ec28d2  $@" | sha256sum -c --strict
 
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 
@@ -668,6 +674,9 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 $(BUILD)/pru_suart.bin.o: $(PBTOP)/lib/pbio/drv/uart/uart_ev3_pru_lib/pru_suart.bin
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
 		--rename-section .data=.pru0,alloc,load,readonly,data,contents $^ $@
+$(BUILD)/pru_ledpwm.bin.o: $(BUILD)/pru_ledpwm.bin
+	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
+		--rename-section .data=.pru1,alloc,load,readonly,data,contents $^ $@
 
 # firmware in DFU format
 $(BUILD)/%.dfu: $(BUILD)/%-base.bin
