@@ -6,6 +6,7 @@
 #if PBDRV_CONFIG_PWM_TIAM1808
 
 #include <stdio.h>
+#include <string.h>
 
 #include <pbdrv/pwm.h>
 #include <pbdrv/gpio.h>
@@ -19,6 +20,7 @@
 #include <tiam1808/timer.h>
 
 #include "../drv/pwm/pwm.h"
+#include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_ev3.h"
 #include "../../drv/gpio/gpio_ev3.h"
 
@@ -32,7 +34,12 @@ typedef struct shared_ram {
 static volatile shared_ram *const pru1_shared_ram = (volatile shared_ram *)PRU1_SHARED_RAM_ADDR;
 
 static pbio_error_t pbdrv_pwm_tiam1808_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t value) {
-    // TODO: Reimplement this function to use the PRU
+    // Blue not available.
+    if (ch == PBDRV_LED_PWM_CHANNEL_INVALID) {
+        return PBIO_SUCCESS;
+    }
+
+    pru1_shared_ram->pwms[ch] = value;
     return PBIO_SUCCESS;
 }
 
@@ -52,11 +59,8 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, 256 * 256 - 1);
     TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
 
-    // TODO: Remove this test code
-    pru1_shared_ram->pwms[0] = 0x20;    // R
-    pru1_shared_ram->pwms[1] = 0xc0;    // G
-    pru1_shared_ram->pwms[2] = 0x10;    // R
-    pru1_shared_ram->pwms[3] = 0xf0;    // G
+    // Clear shared command memory
+    memset((void *)pru1_shared_ram, 0, sizeof(shared_ram));
 
     // Enable PRU1 and load its firmware
     PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
