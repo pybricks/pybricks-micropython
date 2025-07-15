@@ -38,6 +38,10 @@ SECTIONS
         KEEP(*(.pru0));
         . = ALIGN(4);
         _pru0_end = .;
+        _pru1_start = .;
+        KEEP(*(.pru1));
+        . = ALIGN(4);
+        _pru1_end = .;
     } >DDR
 
     .data :
