@@ -56,7 +56,7 @@ extern "C" {
 */
 
 #define  ECAP_CAPTURE_MODE               1
-#define  ECAP_APWM_MODE                  0 
+#define  ECAP_APWM_MODE                  0
 
 /****************************************************************************/
 /*
@@ -64,7 +64,7 @@ extern "C" {
 ** to determine for which capture event time-stamp has to be returned
 */
 
-#define  ECAP_CAPTURE_EVENT_1            0x08     
+#define  ECAP_CAPTURE_EVENT_1            0x08
 #define  ECAP_CAPTURE_EVENT_2            0x0c
 #define  ECAP_CAPTURE_EVENT_3            0x10
 #define  ECAP_CAPTURE_EVENT_4            0x14
@@ -76,8 +76,8 @@ extern "C" {
 ** Capture register(1-4) frozen.\n
 */
 
-#define  ECAP_CAPTURE_EVENT1_STOP        (0x00 << ECAP_ECCTL2_STOP_WRAP_SHIFT)  
-#define  ECAP_CAPTURE_EVENT2_STOP        (0x01 << ECAP_ECCTL2_STOP_WRAP_SHIFT) 
+#define  ECAP_CAPTURE_EVENT1_STOP        (0x00 << ECAP_ECCTL2_STOP_WRAP_SHIFT)
+#define  ECAP_CAPTURE_EVENT2_STOP        (0x01 << ECAP_ECCTL2_STOP_WRAP_SHIFT)
 #define  ECAP_CAPTURE_EVENT3_STOP        (0x02 << ECAP_ECCTL2_STOP_WRAP_SHIFT)
 #define  ECAP_CAPTURE_EVENT4_STOP        (0x03 << ECAP_ECCTL2_STOP_WRAP_SHIFT)
 
@@ -87,8 +87,8 @@ extern "C" {
 ** which determines the output polarity for APWM output
 */
 
-#define  ECAP_APWM_ACTIVE_HIGH           0 
-#define  ECAP_APWM_ACTIVE_LOW            1   
+#define  ECAP_APWM_ACTIVE_HIGH           0
+#define  ECAP_APWM_ACTIVE_LOW            1
 
 /****************************************************************************/
 /*
@@ -113,7 +113,7 @@ extern "C" {
 /****************************************************************************/
 /*
 ** Values that can be passed to ECAPSyncInOutSelect API  as syncOut
-** to select syncIn event to be the Sync-Out signal or select 
+** to select syncIn event to be the Sync-Out signal or select
 ** PRD_eq event to be Sync-Out signal or to disaqble syncOut
 ** signal
 */
@@ -121,20 +121,20 @@ extern "C" {
 #define  ECAP_SYNC_IN                    (00 << ECAP_ECCTL2_SYNCO_SEL_SHIFT)
 #define  ECAP_PRD_EQ                     (01 << ECAP_ECCTL2_SYNCO_SEL_SHIFT)
 #define  ECAP_SYNC_OUT_DISABLE           (10 << ECAP_ECCTL2_SYNCO_SEL_SHIFT)
- 
+
 /****************************************************************************/
 /*
-** Values that can be passed to ECAPIntEnable/Disable  API 
+** Values that can be passed to ECAPIntEnable/Disable  API
 ** to enable or disable interrupt or it can be passed
-** ECAPIntStatus to get the interrupt or it can be passed 
-** to ECAPIntStatusClear to clear the interrupt status 
+** ECAPIntStatus to get the interrupt or it can be passed
+** to ECAPIntStatusClear to clear the interrupt status
 */
 
-#define  ECAP_CEVT1_INT                  ECAP_ECEINT_CEVT1                   
+#define  ECAP_CEVT1_INT                  ECAP_ECEINT_CEVT1
 #define  ECAP_CEVT2_INT                  ECAP_ECEINT_CEVT2
 #define  ECAP_CEVT3_INT                  ECAP_ECEINT_CEVT3
 #define  ECAP_CEVT4_INT                  ECAP_ECEINT_CEVT4
-#define  ECAP_CNTOVF_INT                 ECAP_ECEINT_CTROVF 
+#define  ECAP_CNTOVF_INT                 ECAP_ECEINT_CTROVF
 #define  ECAP_PRDEQ_INT                  ECAP_ECEINT_CTR_PRD
 #define  ECAP_CMPEQ_INT                  ECAP_ECEINT_CTR_CMP
 
@@ -143,21 +143,21 @@ extern "C" {
 
 /****************************************************************************/
 /*
-** Values that can be passed to ECAPStandByModeConfig API 
+** Values that can be passed to ECAPStandByModeConfig API
 ** to configure ECAP module in different stand by mode.
-**  
+**
 */
 #define     ECAP_SMART_STAND_BY_WAKE_UP     3
-#define     ECAP_FORCE_STAND_BY             0  
+#define     ECAP_FORCE_STAND_BY             0
 #define     ECAP_SMART_STAND_BY             2
 #define     ECAP_NO_STAND_BY                1
 /****************************************************************************/
 /*
-** Values that can be passed to ECAPIdleModeConfig API 
+** Values that can be passed to ECAPIdleModeConfig API
 ** to configure ECAP module in different Idle mode.
-**  
+**
 */
-#define     ECAP_SMART_IDLE_WAKE_UP        3  
+#define     ECAP_SMART_IDLE_WAKE_UP        3
 #define     ECAP_SMART_IDLE_MODE           2
 #define     ECAP_FORCE_IDLE_MODE           0
 #define     ECAP_NO_IDLE_MODE              1
@@ -218,4 +218,4 @@ extern void EcapContextSave(unsigned int ecapBase, unsigned int pwmssBase,
 extern void EcapContextRestore(unsigned int ecapBase, unsigned int pwmssBase,
                                ECAPCONTEXT *contextPtr);
 
-#endif  
+#endif

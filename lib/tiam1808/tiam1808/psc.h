@@ -1,8 +1,8 @@
 /**
  *  \file  psc.h
  *
- *  \brief This file contains the function prototypes for the device abstraction 
- *         layer for PSC. It also contains some related macro definitions and some 
+ *  \brief This file contains the function prototypes for the device abstraction
+ *         layer for PSC. It also contains some related macro definitions and some
  *         files to be included.
  */
 

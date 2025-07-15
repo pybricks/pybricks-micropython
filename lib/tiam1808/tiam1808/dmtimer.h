@@ -105,7 +105,7 @@ extern "C" {
 
 /******************************************************************************/
 /*
-** Values that can be passed to DMTimerPWMEnable as ptMode. 
+** Values that can be passed to DMTimerPWMEnable as ptMode.
 */
 /* Value used to determine Pulse(Positive) mode for PORTTIMERPWM */
 #define DMTIMER_PWM_PULSE_MODE_POSITIVE	    (DMTIMER_TCLR_PT_PULSE | \
@@ -176,7 +176,7 @@ extern "C" {
 
 /******************************************************************************/
 /*
-** Values that can be passed to DMTimerEmulationModeConfigure as emuMode. 
+** Values that can be passed to DMTimerEmulationModeConfigure as emuMode.
 */
 /* Value used to signify that the Emulation mode is free */
 #define DMTIMER_EMUFREE_FREE		    (DMTIMER_TIOCP_CFG_EMUFREE)
@@ -186,7 +186,7 @@ extern "C" {
 
 /******************************************************************************/
 /*
-** Values that can be passed to DMTimerPwrMngmntConfigure as pwrMngMode. 
+** Values that can be passed to DMTimerPwrMngmntConfigure as pwrMngMode.
 */
 /* Value used to configure force-idle mode */
 #define DMTIMER_FORCE_IDLE_MODE		    (DMTIMER_TIOCP_CFG_IDLEMODE_FORCE)
@@ -206,7 +206,7 @@ extern "C" {
 /******************************************************************************/
 /*
 ** Values that can be passed to DMTimerIntStatusClear/DMTimerIntRawStatusSet/
-** as intFlags. Also these values can be used while checking the status got from 
+** as intFlags. Also these values can be used while checking the status got from
 ** DMTimerIntRawStatusGet/DMTimerIntStatusGet.
 ** Any combination is also followed.
 ** Example- (DMTIMER_INT_TCAR_IT_FLAG | DMTIMER_INT_OVF_IT_FLAG)
@@ -215,7 +215,7 @@ extern "C" {
 #define DMTIMER_INT_TCAR_IT_FLAG             (DMTIMER_IRQSTATUS_RAW_TCAR_IT_FLAG)
 
 /* Value used for overflow event of DMTimer */
-#define DMTIMER_INT_OVF_IT_FLAG              (DMTIMER_IRQSTATUS_RAW_OVF_IT_FLAG) 
+#define DMTIMER_INT_OVF_IT_FLAG              (DMTIMER_IRQSTATUS_RAW_OVF_IT_FLAG)
 
 /* Value used for Match event of DMTimer */
 #define DMTIMER_INT_MAT_IT_FLAG              (DMTIMER_IRQSTATUS_RAW_MAT_IT_FLAG)
@@ -223,7 +223,7 @@ extern "C" {
 /******************************************************************************/
 /*
 ** Values that can be passed to DMTimerIntEnable/DMTimerIntDisable as intFlags.
-** Also these values can be used while checking the status got from 
+** Also these values can be used while checking the status got from
 ** DMTimerIntEnableGet.
 ** Any combination is also followed.
 ** Example- (DMTIMER_INT_TCAR_EN_FLAG | DMTIMER_INT_OVF_EN_FLAG)
@@ -265,7 +265,7 @@ extern "C" {
 
 /******************************************************************************/
 /*
-** Values that can be used while checking status received from 
+** Values that can be used while checking status received from
 ** DMTimerWritePostedStatusGet.
 */
 /* Value used to check the write posted condition for TMAR register */
@@ -275,7 +275,7 @@ extern "C" {
 #define DMTIMER_WRITE_POST_TTGR              (DMTIMER_TWPS_W_PEND_TTGR)
 
 /* Value used to check the write posted condition for TLDR register */
-#define DMTIMER_WRITE_POST_TLDR              (DMTIMER_TWPS_W_PEND_TLDR) 
+#define DMTIMER_WRITE_POST_TLDR              (DMTIMER_TWPS_W_PEND_TLDR)
 
 /* Value used to check the write posted condition for TCRR register */
 #define DMTIMER_WRITE_POST_TCRR              (DMTIMER_TWPS_W_PEND_TCRR)
@@ -295,7 +295,7 @@ extern "C" {
 
 /******************************************************************************/
 /*
-** Values that can be used while checking the status received from 
+** Values that can be used while checking the status received from
 ** DMTimerIsResetDone.
 */
 /* Value used to check whether reset is done */

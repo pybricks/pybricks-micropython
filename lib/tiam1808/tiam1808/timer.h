@@ -169,13 +169,13 @@ extern "C" {
 /*
 ** Prototypes for the APIs
 */
-extern unsigned int TimerCompareGet(unsigned int baseAddr, 
+extern unsigned int TimerCompareGet(unsigned int baseAddr,
                                      unsigned int regIndex);
-extern unsigned int TimerOUTStatusGet(unsigned int baseAddr, 
+extern unsigned int TimerOUTStatusGet(unsigned int baseAddr,
                                        unsigned int timer);
-extern unsigned int TimerIntStatusGet(unsigned int baseAddr, 
+extern unsigned int TimerIntStatusGet(unsigned int baseAddr,
                                     unsigned int statFlag);
-extern unsigned int TimerIntStatusClear(unsigned int baseAddr, 
+extern unsigned int TimerIntStatusClear(unsigned int baseAddr,
                                     unsigned int statFlag);
 extern unsigned int TimerCaptureGet(unsigned int baseAddr,unsigned int timer);
 extern unsigned int TimerCounterGet(unsigned int baseAddr, unsigned int timer);
@@ -184,15 +184,15 @@ extern unsigned int TimerReloadGet(unsigned int baseAddr, unsigned int timer);
 extern unsigned int TimerPreScalarCount34Get(unsigned int baseAddr);
 extern unsigned int TimerDivDwnRatio34Get(unsigned int baseAddr);
 
-extern void TimerCounterSet(unsigned int baseAddr, unsigned int timer, 
+extern void TimerCounterSet(unsigned int baseAddr, unsigned int timer,
                             unsigned int counter);
-extern void TimerPeriodSet(unsigned int baseAddr, unsigned int timer, 
+extern void TimerPeriodSet(unsigned int baseAddr, unsigned int timer,
                            unsigned int period);
-extern void TimerReloadSet(unsigned int baseAddr, unsigned int timer, 
+extern void TimerReloadSet(unsigned int baseAddr, unsigned int timer,
                            unsigned int reload);
-extern void TimerEnable(unsigned int baseAddr, unsigned int timer, 
+extern void TimerEnable(unsigned int baseAddr, unsigned int timer,
                                                 unsigned int enaMode);
-extern void TimerPreScalarCount34Set(unsigned int baseAddr, 
+extern void TimerPreScalarCount34Set(unsigned int baseAddr,
                                      unsigned int psc34);
 extern void TimerDivDwnRatio34Set(unsigned int baseAddr, unsigned int tddr34);
 extern void TimerInvertOUTDisable(unsigned int baseAddr, unsigned int timer);

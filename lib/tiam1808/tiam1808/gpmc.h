@@ -57,7 +57,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Macros which can be used as 'mode' parameter to GPMCIdleModeSelect API.
-** 
+**
 */
 #define GPMC_IDLEMODE_FORCEIDLE                       (0)
 #define GPMC_IDLEMODE_NOIDLE                          (1)
@@ -66,7 +66,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Macros which can be used as 'configVal' parameter to GPMCAutoIdleConfig API.
-** 
+**
 */
 #define GPMC_AUTOIDLE_FREERUN                         (0)
 #define GPMC_AUTOIDLE_AUTORUN                         (1)
@@ -166,7 +166,7 @@ extern "C" {
 ** GPMCycle2CycleAndTurnArndTimeTimingConfig, GPMCSNANDCmdWrite,
 ** GPMCNANDAddrWrite, GPMCNANDDataWrite, GPMCNANDDataRead, GPMCPrefetchCSSelect,
 ** GPMCECCCSSelect, GPMCECCBCHResultGet APIs.
-** 
+**
 */
 #define GPMC_CHIP_SELECT_0                            (0)
 #define GPMC_CHIP_SELECT_1                            (1)
@@ -179,9 +179,9 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Macros which can be used as 'divideVal' parameter to GPMCFclkDividerSelect 
+** Macros which can be used as 'divideVal' parameter to GPMCFclkDividerSelect
 ** API.
-** 
+**
 */
 #define GPMC_FCLK_DIV_BY_1                            (0)
 #define GPMC_FCLK_DIV_BY_2                            (1)
@@ -191,7 +191,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Macros which can be used as 'scaleftr' parameter to
-** GPMCTimeparaGranularitySelect API. 
+** GPMCTimeparaGranularitySelect API.
 **
 */
 #define GPMC_TIMEPARAGRANULARITY_X1                   (0)
@@ -199,8 +199,8 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Macros which can be used as 'protocol' parameter to 
-** GPMCAddrDataMuxProtocolSelect API. 
+** Macros which can be used as 'protocol' parameter to
+** GPMCAddrDataMuxProtocolSelect API.
 **
 */
 #define GPMC_MUXADDDATA_NOMUX                         (0)
@@ -235,7 +235,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Macros which can be used as 'mode' parameter to GPMCWaitPinMonitoringConfig 
+** Macros which can be used as 'mode' parameter to GPMCWaitPinMonitoringConfig
 ** API.
 **
 */
@@ -305,7 +305,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Macros which can be used as 'CSExtDelayFlag' parameter to 
+** Macros which can be used as 'CSExtDelayFlag' parameter to
 ** GPMC_CS_TIMING_CONFIG macro
 */
 #define GPMC_CS_EXTRA_DELAY                           (1)
@@ -313,21 +313,21 @@ extern "C" {
 
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*         CS signal timing configuration.\n 
+*         CS signal timing configuration.\n
 *
-* \param  CSWrOffTime    CS# de-assertion time from start cycle time for write 
+* \param  CSWrOffTime    CS# de-assertion time from start cycle time for write
 *                        accesses in GPMC_FCLK cycles.
 *
-*         CSRdOffTime    CS# de-assertion time from start cycle time for read 
+*         CSRdOffTime    CS# de-assertion time from start cycle time for read
 *                        accesses in GPMC_FCLK cycles
 *
 *         CSExtDelayFlag Flag to indicate whether to add half GPMC_FCLK delay to
 *                        CS or not.
 *                        This can take one of the following values :
-*                        GPMC_CS_EXTRA_DELAY --   CS# Timing control  
-*                                                 signal is delayed of          
+*                        GPMC_CS_EXTRA_DELAY --   CS# Timing control
+*                                                 signal is delayed of
 *                                                 half GPMC_FCLK cycle.
-*                        GPMC_CS_EXTRA_NODELAY -- CS# Timing control  
+*                        GPMC_CS_EXTRA_NODELAY -- CS# Timing control
 *                                                 signal is not delayed
 *
 *         CSOnTime       CS# assertion time from start cycle time in GPMC_FCLK
@@ -351,36 +351,36 @@ extern "C" {
 
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*         ADV# signal timing configuration.\n 
+*         ADV# signal timing configuration.\n
 *
-* \param  ADVAADMuxWrOffTime    ADV# de-assertion time in GPMC_FCLK cycles for 
+* \param  ADVAADMuxWrOffTime    ADV# de-assertion time in GPMC_FCLK cycles for
 *                               first address phase when using the AAD-Mux
 *                               prorocol.
 *
-*         ADVAADMuxRdOffTime    ADV# de-assertion time in GPMC_FCLK cycles for 
+*         ADVAADMuxRdOffTime    ADV# de-assertion time in GPMC_FCLK cycles for
 *                               first address phase when using the AAD-Mux
 *                               prorocol.
 *
-*         ADVWrOffTime          ADV# de-assertion time in GPMC_FCLK cycles from 
+*         ADVWrOffTime          ADV# de-assertion time in GPMC_FCLK cycles from
 *                               start cycle time for write accesses
 *
-*         ADVRdOffTime          ADV# de-assertion time in GPMC_FCLK cycles from 
+*         ADVRdOffTime          ADV# de-assertion time in GPMC_FCLK cycles from
 *                               start cycle time for write accesses
 *
-*         ADVExtDelayFlag       Flag to indicate whether to add half GPMC_FCLK 
+*         ADVExtDelayFlag       Flag to indicate whether to add half GPMC_FCLK
 *                               delay to ADV or not.
 *                               This can take one of the following values :
-*                               GPMC_ADV_EXTRA_DELAY --   ADV# Timing control  
-*                                                         signal is delayed of  
+*                               GPMC_ADV_EXTRA_DELAY --   ADV# Timing control
+*                                                         signal is delayed of
 *                                                         half GPMC_FCLK cycle.
-*                               GPMC_ADV_EXTRA_NODELAY -- ADV# Timing control  
+*                               GPMC_ADV_EXTRA_NODELAY -- ADV# Timing control
 *                                                         signal is not delayed.
 *
-*         ADVAADMuxOnTime       ADV# assertion time in GPMC_FCLK cycles for 
-*                               first address phase when using the 
-*                               AAD-Multiplexed protocol.   
+*         ADVAADMuxOnTime       ADV# assertion time in GPMC_FCLK cycles for
+*                               first address phase when using the
+*                               AAD-Multiplexed protocol.
 *
-*         ADVOnTime             ADV# assertion time from start cycle time in 
+*         ADVOnTime             ADV# assertion time from start cycle time in
 *                               GPMC_FCLK cycles.
 */
 
@@ -412,43 +412,43 @@ extern "C" {
 
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*         WE# and OE# signal timing configuration.\n 
+*         WE# and OE# signal timing configuration.\n
 *
-* \param  WEOffTime             WE# de-assertion time in GPMC_FCLK cycles from 
+* \param  WEOffTime             WE# de-assertion time in GPMC_FCLK cycles from
 *                               start cycle time.
 *
-*         WEExtDelayFlag        Flag to indicate whether to add half GPMC_FCLK 
+*         WEExtDelayFlag        Flag to indicate whether to add half GPMC_FCLK
 *                               delay to WE or not.
 *                               This can take one of the following values :
-*                               GPMC_WE_EXTRA_DELAY --   WE# Timing control  
-*                                                        signal is delayed of   
+*                               GPMC_WE_EXTRA_DELAY --   WE# Timing control
+*                                                        signal is delayed of
 *                                                        half GPMC_FCLK cycle.
-*                               GPMC_WE_EXTRA_NODELAY -- WE# Timing control  
+*                               GPMC_WE_EXTRA_NODELAY -- WE# Timing control
 *                                                        signal is not delayed
-*         WEOnTime              WE# assertion time in GPMC_FCLK cycles from 
+*         WEOnTime              WE# assertion time in GPMC_FCLK cycles from
 *                               start cycle time.
 *
-*         OEAADMuxOffTime       OE# de-assertion time in GPMC_FCLK cycles for 
+*         OEAADMuxOffTime       OE# de-assertion time in GPMC_FCLK cycles for
 *                               first address phase when using the AAD-Mux
 *                               prorocol.
 *
-*         OEOffTime             OE# de-assertion time in GPMC_FCLK cycles from 
+*         OEOffTime             OE# de-assertion time in GPMC_FCLK cycles from
 *                               start cycle time.
 *
-*         OEExtDelayFlag        Flag to indicate whether to add half GPMC_FCLK 
+*         OEExtDelayFlag        Flag to indicate whether to add half GPMC_FCLK
 *                               delay to OE or not.
 *                               This can take one of the following values :
-*                               GPMC_OE_EXTRA_DELAY --   OE# Timing control  
-*                                                        signal is delayed of   
+*                               GPMC_OE_EXTRA_DELAY --   OE# Timing control
+*                                                        signal is delayed of
 *                                                        half GPMC_FCLK cycle.
-*                               GPMC_OE_EXTRA_NODELAY -- OE# Timing control  
+*                               GPMC_OE_EXTRA_NODELAY -- OE# Timing control
 *                                                        signal is not delayed
 *
-*         OEAADMuxOnTime        OE# assertion time in GPMC_FCLK cycles for 
+*         OEAADMuxOnTime        OE# assertion time in GPMC_FCLK cycles for
 *                               first address phase when using the AAD-Mux
 *                               prorocol.
 *
-*         OEOnTime              OE# assertion time in GPMC_FCLK cycles from 
+*         OEOnTime              OE# assertion time in GPMC_FCLK cycles from
 *                               start cycle time.
 *
 */
@@ -465,7 +465,7 @@ extern "C" {
 
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*         read access and cycle time timing configuration.\n 
+*         read access and cycle time timing configuration.\n
 *
 * \param  rdCycleTime           Total read cycle time in GPMC_FCLK cycles.
 *
@@ -474,8 +474,8 @@ extern "C" {
 *         rdAccessTime          Read access time (Delay between start cycle time
 *                               and first data valid) in GPMC_FCLK cycles.
 *
-*         pageBurstAccessTime   Page burest access time (Delay between 
-*                               successive words in a multiple access)in 
+*         pageBurstAccessTime   Page burest access time (Delay between
+*                               successive words in a multiple access)in
 *                               GPMC_FCLK cycles.
 *
 */
@@ -504,31 +504,31 @@ extern "C" {
 
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*         cycle to cycle and bus turn around time timing configuration.\n 
+*         cycle to cycle and bus turn around time timing configuration.\n
 *
-* \param  cycle2CycleDelay       Cycle to cycle delay (Chip select high pulse 
-*                                delay between two successive accesses)in 
+* \param  cycle2CycleDelay       Cycle to cycle delay (Chip select high pulse
+*                                delay between two successive accesses)in
 *                                GPMC_FCLK cycles.
 *
 *      cycle2CycleDelaySameCSCfg Specified whether to add the cycle to cycle
 *                                delay between two successive accesses or not
 *                                (to the same chip-select).
 *                                This can take one of the following values :
-*                                GPMC_CYCLE2CYCLESAMECSEN_C2CDELAY   -- To add 
+*                                GPMC_CYCLE2CYCLESAMECSEN_C2CDELAY   -- To add
 *                                                                     the delay.
-*                                GPMC_CYCLE2CYCLESAMECSEN_NOC2CDELAY -- Don't 
+*                                GPMC_CYCLE2CYCLESAMECSEN_NOC2CDELAY -- Don't
 *                                                                 add the delay.
 *
 *      cycle2CycleDelayDiffCSCfg Specified whether to add the cycle to cycle
 *                                delay between two successive accesses or not
 *                                (to the diffrent chip-select).
 *                                This can take one of the following values :
-*                                GPMC_CYCLE2CYCLEDIFFCSEN_C2CDELAY   -- To add 
+*                                GPMC_CYCLE2CYCLEDIFFCSEN_C2CDELAY   -- To add
 *                                                                     the delay.
-*                                GPMC_CYCLE2CYCLEDIFFCSEN_NOC2CDELAY -- Don't 
+*                                GPMC_CYCLE2CYCLEDIFFCSEN_NOC2CDELAY -- Don't
 *                                                                 add the delay.
 *
-*         busTAtime             Bus turn aroung time between two successive 
+*         busTAtime             Bus turn aroung time between two successive
 *                               accesses to the same chip-select (read to write)
 *                               or to a diff chip-select in GPMC_FCLK cycles.
 *
@@ -599,7 +599,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Macros which can be used as 'configVal' GPMCPrefetchAccessCycleOptConfig API.
-** 
+**
 */
 #define GPMC_PREFETCH_OPTIMIZED_ACCESS_ENABLE         (1)
 #define GPMC_PREFETCH_OPTIMIZED_ACCESS_DISABLE        (0)
@@ -615,7 +615,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Macros which can be used as 'algo' parameter to GPMCECCAlgoSelect API.
-** 
+**
 */
 #define GPMC_ECC_ALGORITHM_HAMMINGCODE                (0)
 #define GPMC_ECC_ALGORITHM_BCH                        (1)

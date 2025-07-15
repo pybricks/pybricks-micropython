@@ -38,7 +38,7 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
- 
+
 #ifndef      __GPIO_H__
 #define      __GPIO_H__
 
@@ -86,10 +86,10 @@ extern "C" {
 
 
 /*****************Bit Mask values for banks.***************************/
-/* 
+/*
 ** The following macros are used by the application while invoking
-** the function 'GPIOBankPinsWrite'. Any one or a combination of 
-** the below macros is passed as 'setPins' and 'clrPins' to 
+** the function 'GPIOBankPinsWrite'. Any one or a combination of
+** the below macros is passed as 'setPins' and 'clrPins' to
 ** 'GPIOBankPinsWrite'.
 */
 #define GPIO_BANK_PIN_0              GPIO_DIR_DIR0
@@ -112,7 +112,7 @@ extern "C" {
 
 
 /*****************************************************************************
-**                   FUNCTION DECLARATIONS                                   
+**                   FUNCTION DECLARATIONS
 *****************************************************************************/
 
 

@@ -59,25 +59,25 @@
 
 static void Cppi41DmaModeSet(unsigned short usbDevInst, endpointInfo *epInfo);
 static void Cppi41DmaInitBdPool();
-static unsigned int Cppi41DmaReadCompletionQueue(unsigned short usbDevInst, 
+static unsigned int Cppi41DmaReadCompletionQueue(unsigned short usbDevInst,
 													unsigned int queueNum);
 
 static void Cppi41DmaConfigRxhostPacket(unsigned short usbDevInst, unsigned short chan,
 										unsigned int rxSubmitqA, unsigned int rxSubmitqB);
 
-static void Cppi41DmaConfigRxCompletionQueue(unsigned short usbDevInst, 
+static void Cppi41DmaConfigRxCompletionQueue(unsigned short usbDevInst,
 												unsigned short rxChan,unsigned int rxCompq);
-static void Cppi41DmaConfigTxCompletionQueue(unsigned short usbDevInst, 
+static void Cppi41DmaConfigTxCompletionQueue(unsigned short usbDevInst,
 												unsigned short txChan,unsigned int txCompq);
 
 static void Cppi41DmaClearINTD0Status(unsigned short usbDevInst);
 
 static void Cppi41DmaControlScheduler(unsigned short usbDevInst,
-												unsigned short enableDisable, 
+												unsigned short enableDisable,
 													unsigned short numOfentries);
 
-static void Cppi41DmaProcessBD( unsigned short usbDevInst, hostPacketDesc *current_bd, 
-											unsigned short direction, unsigned char * buffadd, 
+static void Cppi41DmaProcessBD( unsigned short usbDevInst, hostPacketDesc *current_bd,
+											unsigned short direction, unsigned char * buffadd,
 												unsigned int length, unsigned int ulEndpoint);
 static void cppi41DmaInitBuffer();
 
@@ -135,9 +135,9 @@ dmaDataBuffer dmaBuffer[CPDMA_NUMOF_BUFFERS]__attribute__((aligned(32)));
 
 /**
 * \brief	  This API initializes the DMA. This API should be called by the application
-*		  API .  API populates cppi Info structure according to the information 
+*		  API .  API populates cppi Info structure according to the information
 *		  passed from the application. This information is used by this API and all other
-*		  APIs. This API configures Channels queues and schedulers as per the 
+*		  APIs. This API configures Channels queues and schedulers as per the
 *		  information passed from the application.
 *
 * \param	  usbDevIns :- This is the USB device instance
@@ -149,20 +149,20 @@ dmaDataBuffer dmaBuffer[CPDMA_NUMOF_BUFFERS]__attribute__((aligned(32)));
 * \return	  None.
 *
 **/
-void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo, 
+void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 						unsigned short numOfEndPoimts)
 {
-	/* This function need to be changed for porting to different SoC , 
+	/* This function need to be changed for porting to different SoC ,
 	 * to initialise base addresses and other details. */
-	
+
 	unsigned int descAddress = 0;
-	unsigned short i= 0;	
+	unsigned short i= 0;
 	usbInstance *usbInstance;
 #if defined (am335x_15x15) || defined(am335x)
 	unsigned short j = 0;
 #endif
 
-	usbInstance = &(cppiInfo.usbInst[usbDevInst]);	
+	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
 
 	/*Populate the CPPI info structure */
 	cppiInfo.head_bd = NULL;
@@ -170,7 +170,7 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 
 #if defined (am335x_15x15) || defined(am335x)
 	for(i =0; i < 15; i++)
-	{	
+	{
 		/*TX Completion queues */
 		cppiInfo.txCompletionq[i]= TX_COMPQ1 + i;
 		/*RX Completion queues */
@@ -205,55 +205,55 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 	cppiInfo.txSubmitq[2][1]=TX_SUBMITQ6;
 	cppiInfo.txSubmitq[3][0]=TX_SUBMITQ7;
 	cppiInfo.txSubmitq[3][1]=TX_SUBMITQ8;
-#endif	
+#endif
 
 	/*USB base address and OTG basse adress  for USB instance 0 */
 	cppiInfo.usbInst[0].usbBaseAddress = USB0_BASE;
 	cppiInfo.usbInst[0].otgBaseAddress = USB_OTGBASE;
-	
+
 	/*This function initializes the buffer Management system */
 	cppi41DmaInitBuffer();
 
-	/* This loop populates the RX and TX queues(both submission and completion queues), 
+	/* This loop populates the RX and TX queues(both submission and completion queues),
 	 * channels and dma mode for each end point */
 	for(i= 0;i< numOfEndPoimts;i++)
 	{
 		if((epInfo + i)->direction == CPDMA_DIR_RX)
 		{
-			usbInstance->rxEndPoint[(epInfo + i)->endPoint].channel = 
+			usbInstance->rxEndPoint[(epInfo + i)->endPoint].channel =
 												   (epInfo + i)->endPoint - 1;
-			
-			usbInstance->rxEndPoint[(epInfo + i)->endPoint].complettionq = 
+
+			usbInstance->rxEndPoint[(epInfo + i)->endPoint].complettionq =
 									 cppiInfo.rxCompletionq[(epInfo + i)->endPoint - 1];
-			
-			usbInstance->rxEndPoint[(epInfo + i)->endPoint].submitq = 
+
+			usbInstance->rxEndPoint[(epInfo + i)->endPoint].submitq =
 													(epInfo + i)->endPoint - 1;
-			
-			usbInstance->rxEndPoint[(epInfo + i)->endPoint].mode = 
+
+			usbInstance->rxEndPoint[(epInfo + i)->endPoint].mode =
 														(epInfo + i)->dmaMode;
 		}
 		else
 		{
-			usbInstance->txEndPoint[(epInfo + i)->endPoint].channel = 
+			usbInstance->txEndPoint[(epInfo + i)->endPoint].channel =
 													(epInfo + i)->endPoint - 1;
-			usbInstance->txEndPoint[(epInfo + i)->endPoint].complettionq = 
+			usbInstance->txEndPoint[(epInfo + i)->endPoint].complettionq =
 									cppiInfo.txCompletionq[(epInfo + i)->endPoint - 1];
-			
-			usbInstance->txEndPoint[(epInfo + i)->endPoint].submitq = 
+
+			usbInstance->txEndPoint[(epInfo + i)->endPoint].submitq =
 									 cppiInfo.txSubmitq[(epInfo + i)->endPoint - 1][0];
-			
-			usbInstance->txEndPoint[(epInfo + i)->endPoint].mode = 
+
+			usbInstance->txEndPoint[(epInfo + i)->endPoint].mode =
 														(epInfo + i)->dmaMode;
 		}
 	}
-	
+
 	/* Set  mode for each end pont*/
 	for(i = 0;i < numOfEndPoimts; i++)
 		Cppi41DmaModeSet(usbDevInst, &epInfo[i]);
-	
+
 	/*Link Ram setup	 */
 	HWREG(usbInstance->otgBaseAddress + CPDMA_LRAM_0_BASE) = (unsigned int)&linking_ram0[0];
-	HWREG(usbInstance->otgBaseAddress + CPDMA_LRAM_0_SIZE) = sizeof(linking_ram0); 
+	HWREG(usbInstance->otgBaseAddress + CPDMA_LRAM_0_SIZE) = sizeof(linking_ram0);
 	HWREG(usbInstance->otgBaseAddress + CPDMA_LRAM_1_BASE) = 0x0;
 
 	/*Queue region setup */
@@ -264,11 +264,11 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 	/*Align the strating adress */
 	descAddress &= ~0x3F;
 	cppiInfo.region0DescriptorAddress = (unsigned int *)descAddress;
-	
-	HWREG(usbInstance->otgBaseAddress + CPDMA_QUEUEMGR_REGION_0)= 
+
+	HWREG(usbInstance->otgBaseAddress + CPDMA_QUEUEMGR_REGION_0)=
 									(unsigned int)cppiInfo.region0DescriptorAddress;
 	/*queue manager cotrol setup */
-	HWREG(usbInstance->otgBaseAddress + CPDMA_QUEUEMGR_REGION_0_CONTROL) = 
+	HWREG(usbInstance->otgBaseAddress + CPDMA_QUEUEMGR_REGION_0_CONTROL) =
 										QUEUE_MGR_DESCSIZE | QUEUE_MGR_REGSIZE;
 
 	/*initialize the  BD pool */
@@ -279,10 +279,10 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 	{
 		if((epInfo + i)->direction == CPDMA_DIR_RX)
 			Cppi41DmaConfigRxhostPacket(usbDevInst, usbInstance
-				->rxEndPoint[(epInfo + i)->endPoint].channel, 
-				usbInstance->rxEndPoint[(epInfo + i)->endPoint].submitq, 
+				->rxEndPoint[(epInfo + i)->endPoint].channel,
+				usbInstance->rxEndPoint[(epInfo + i)->endPoint].submitq,
 				usbInstance->rxEndPoint[(epInfo + i)->endPoint].submitq);
-		
+
 	}
 
 	/*configure the RX and TX completion queues for each end point */
@@ -293,7 +293,7 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 		 	Cppi41DmaConfigRxCompletionQueue(usbDevInst, usbInstance
 		 	->rxEndPoint[(epInfo + i)->endPoint].channel, usbInstance
 		 					->rxEndPoint[(epInfo + i)->endPoint].complettionq);
-		}	
+		}
 		else
 		{
 		 	Cppi41DmaConfigTxCompletionQueue(usbDevInst, usbInstance
@@ -308,10 +308,10 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo,
 	HWREG(usbInstance->otgBaseAddress + CPDMA_SCHED_TABLE_1) = SCHEDULE_RX_CHANNEL;
 
 	/*Specify the number of entries in the scheduler table 0 */
-	HWREG(usbInstance->otgBaseAddress + CPDMA_SCHED_CONTROL_REG )= 
-								(ENABLE_CPPIDMA<< SCHEDULER_ENABLE_SHFT) | 
+	HWREG(usbInstance->otgBaseAddress + CPDMA_SCHED_CONTROL_REG )=
+								(ENABLE_CPPIDMA<< SCHEDULER_ENABLE_SHFT) |
 											(NUM_OF_SCHEDULER_ENTRIES - 1);
-	
+
 }
 
 /**
@@ -330,18 +330,18 @@ void Cppi41DmaModeSet(unsigned short usbDevInst, endpointInfo *epInfo)
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	/* Enable RNDIS from Global Level */
 	if (epInfo->dmaMode == CPDMA_MODE_SET_RNDIS)
 	{
 		HWREG(usbInstance->otgBaseAddress + USB_0_CTRL)|=
-												CPDMA_MODE_ENABLE_GLOBAL_RNDIS;	
+												CPDMA_MODE_ENABLE_GLOBAL_RNDIS;
 	}
-	
+
 	/* Disable RNDIS from Global Level	 */
 	else
 	{
-		HWREG(usbInstance->otgBaseAddress + USB_0_CTRL)&= 
+		HWREG(usbInstance->otgBaseAddress + USB_0_CTRL)&=
 												~CPDMA_MODE_ENABLE_GLOBAL_RNDIS;
 	}
 
@@ -351,7 +351,7 @@ void Cppi41DmaModeSet(unsigned short usbDevInst, endpointInfo *epInfo)
 		HWREG(usbInstance->otgBaseAddress + USB_0_MODE)|=
 					(epInfo->dmaMode << USB_TX_MODE_SHIFT(epInfo->endPoint));
 	}
-	
+
 	else
 	{
 		HWREG(usbInstance->otgBaseAddress + USB_0_MODE)|=
@@ -361,16 +361,16 @@ void Cppi41DmaModeSet(unsigned short usbDevInst, endpointInfo *epInfo)
 	/* For GRNDIS mode, set the maximum packet length */
 	if (epInfo->dmaMode == CPDMA_MODE_SET_GRNDIS)
 	{
-		HWREG(usbInstance->otgBaseAddress + USB_0_GEN_RNDIS_SIZE_EP1) = 
+		HWREG(usbInstance->otgBaseAddress + USB_0_GEN_RNDIS_SIZE_EP1) =
 			GRNDIS_MAX_PACKET_LENGTH;
 	}
 }
 
 
 /**
-* \brief	  This API enables the TX DMA for an endpoint. The API access the CSR 
-*		  register of  the particular endpoint to set appropriate bits. This API is 
-*		  called by the stack to enable DMA when it is requied. 
+* \brief	  This API enables the TX DMA for an endpoint. The API access the CSR
+*		  register of  the particular endpoint to set appropriate bits. This API is
+*		  called by the stack to enable DMA when it is requied.
 *
 * \param	  usbDevInst:- USB device instance
 *
@@ -379,7 +379,7 @@ void Cppi41DmaModeSet(unsigned short usbDevInst, endpointInfo *epInfo)
 * \return	  None.
 *
 **/
-void enableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint) 
+void enableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 {
 	unsigned int ulRegister;
 	usbInstance *usbInstance;
@@ -393,18 +393,18 @@ void enableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 	while ((HWREGH(usbInstance->usbBaseAddress + ulRegister) & 0x2) == 0x02);
 
 	/* Clear Autoset */
-	HWREGH(usbInstance->usbBaseAddress + ulRegister)&= CPDMA_TX_CLR_AUTO_SET; 
+	HWREGH(usbInstance->usbBaseAddress + ulRegister)&= CPDMA_TX_CLR_AUTO_SET;
 
 	/* Set DMAReqEnab & DMAReqMode */
-	HWREGH(usbInstance->usbBaseAddress + ulRegister)|=CPDMA_TX_SET_REQ_ENABLE; 
+	HWREGH(usbInstance->usbBaseAddress + ulRegister)|=CPDMA_TX_SET_REQ_ENABLE;
 
 }
 
 
 /**
-* \brief	  This API enables the RX DMA for an endPoint.The API access the CSR 
-*		  register of  the particular endpoint to set appropriate bits. This API is 
-*		  called by the stack to enable DMA when it is requied. 
+* \brief	  This API enables the RX DMA for an endPoint.The API access the CSR
+*		  register of  the particular endpoint to set appropriate bits. This API is
+*		  called by the stack to enable DMA when it is requied.
 *
 * \param	  usbDevInst:- USB device instance
 *
@@ -419,7 +419,7 @@ void enableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	/*Find out the RX CSR  address */
 	ulRegister = USB_O_RXCSRL1 + EP_OFFSET(ulEndpoint);
 
@@ -430,20 +430,20 @@ void enableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 	Cppi41DmaControlScheduler(usbDevInst, ENABLE_CPPIDMA, NUM_OF_SCHEDULER_ENTRIES);
 
 	/*Configure the completion queue */
-	Cppi41DmaConfigRxCompletionQueue(usbDevInst, usbInstance->rxEndPoint[ulEndpoint].channel, 
-		 				 			usbInstance->rxEndPoint[ulEndpoint].complettionq);	
+	Cppi41DmaConfigRxCompletionQueue(usbDevInst, usbInstance->rxEndPoint[ulEndpoint].channel,
+		 				 			usbInstance->rxEndPoint[ulEndpoint].complettionq);
 
 	/* Clear AUTOCLEAR and DMAReqMode */
-	HWREGH(usbInstance->usbBaseAddress + ulRegister)&=CPDMA_RX_CLR_AUTO_CLEAR; 
-	
+	HWREGH(usbInstance->usbBaseAddress + ulRegister)&=CPDMA_RX_CLR_AUTO_CLEAR;
+
 	/* Set DMAReqEnab */
-	HWREGH(usbInstance->usbBaseAddress + ulRegister)|=CPDMA_RX_SET_REQ_ENABLE; 
+	HWREGH(usbInstance->usbBaseAddress + ulRegister)|=CPDMA_RX_SET_REQ_ENABLE;
 }
 
 /**
-* \brief	  This API disables the RX DMA for an endpoint. The API access the CSR 
-*		  register of  the particular endpoint to set appropriate bits. This API is 
-*		  Called by the stack to disable DMA when it is required 
+* \brief	  This API disables the RX DMA for an endpoint. The API access the CSR
+*		  register of  the particular endpoint to set appropriate bits. This API is
+*		  Called by the stack to disable DMA when it is required
 *
 * \param	  usbDevInst:- USB device instance
 *
@@ -452,7 +452,7 @@ void enableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 * \return	  None.
 *
 **/
-void disableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint) 
+void disableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 {
 	unsigned int ulRegister;
 	usbInstance *usbInstance;
@@ -464,15 +464,15 @@ void disableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 
 	/*wait till completion of any previos transaction */
 	while ((HWREGH(usbInstance->usbBaseAddress + ulRegister) & 0x1) == 0x01);
-	
+
 	/* Clear DMAReqEnab */
-	HWREGH(usbInstance->usbBaseAddress + ulRegister)&= CPDMA_RX_CLR_REQ_ENABLE; 
+	HWREGH(usbInstance->usbBaseAddress + ulRegister)&= CPDMA_RX_CLR_REQ_ENABLE;
 }
 
 /**
-* \brief	  This API enables the TX DMA for an endpont. The API access the CSR 
-*		  register of  the particular endpoint to set appropriate bits. This API is 
-*		  Called by the stack to disable DMA when it is required 
+* \brief	  This API enables the TX DMA for an endpont. The API access the CSR
+*		  register of  the particular endpoint to set appropriate bits. This API is
+*		  Called by the stack to disable DMA when it is required
 *
 * \param	  usbDevInst:- USB device instance
 *
@@ -481,7 +481,7 @@ void disableCoreRxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 * \return	  None.
 *
 **/
-void disableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint) 
+void disableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 {
 	unsigned int ulRegister;
 	usbInstance *usbInstance;
@@ -490,16 +490,16 @@ void disableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 
 	ulRegister = USB_O_TXCSRL1 + EP_OFFSET(ulEndpoint);
 	while ((HWREGH(usbInstance->usbBaseAddress + ulRegister) & 0x2) == 0x02);
-	
+
 	/* Clear AUTOSET */
 	HWREGH(usbInstance->usbBaseAddress + ulRegister)&=CPDMA_TX_CLR_AUTO_SET;
-	
+
 	/* Clear DMAReqEnab & DMAReqMode */
-	HWREGH(usbInstance->usbBaseAddress + ulRegister)&=CPDMA_TX_CLR_REQ_ENABLE; 
+	HWREGH(usbInstance->usbBaseAddress + ulRegister)&=CPDMA_TX_CLR_REQ_ENABLE;
 }
 
 /**
-* \brief	  This API reads the complettion queue. This is called from the stack when a completion 
+* \brief	  This API reads the complettion queue. This is called from the stack when a completion
 * 		   interrupt comes. RX/TX completion queue number can be passed as an argument to
 *		   this function. The function returns completed BD address.
 *
@@ -510,17 +510,17 @@ void disableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint)
 * \return	  None.
 *
 **/
-unsigned int Cppi41DmaReadCompletionQueue(unsigned short usbDevInst, 
-														unsigned int queueNum) 
+unsigned int Cppi41DmaReadCompletionQueue(unsigned short usbDevInst,
+														unsigned int queueNum)
 {
 	unsigned int  descAddress;
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	/*Read the completetion queue register */
-	descAddress=(unsigned int)HWREG(usbInstance->otgBaseAddress + 
-							(CPDMA_QUEUE_REGISTER_D + QUEUE_OFFSET(queueNum)));	
+	descAddress=(unsigned int)HWREG(usbInstance->otgBaseAddress +
+							(CPDMA_QUEUE_REGISTER_D + QUEUE_OFFSET(queueNum)));
 	/*Extract the BD address  */
 	descAddress&=0xFFFFFFE0;
 	return(descAddress);
@@ -540,16 +540,16 @@ unsigned int Cppi41DmaReadCompletionQueue(unsigned short usbDevInst,
 * \return	  None.
 *
 **/
-void Cppi41DmaConfigRxhostPacket(unsigned short usbDevInst, unsigned short chan, 
+void Cppi41DmaConfigRxhostPacket(unsigned short usbDevInst, unsigned short chan,
 							unsigned int rxSubmitqA, unsigned int rxSubmitqB)
 {
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
-	HWREG(usbInstance->otgBaseAddress + (CPDMA_RX_CHANNEL_REG_A + 
+
+	HWREG(usbInstance->otgBaseAddress + (CPDMA_RX_CHANNEL_REG_A +
 											CHANNEL_OFFSET(chan))) = (rxSubmitqA | rxSubmitqA << 16);
-	HWREG(usbInstance->otgBaseAddress + (CPDMA_RX_CHANNEL_REG_B + 
+	HWREG(usbInstance->otgBaseAddress + (CPDMA_RX_CHANNEL_REG_B +
 											CHANNEL_OFFSET(chan))) = (rxSubmitqB | rxSubmitqB << 16) ;
 }
 
@@ -565,16 +565,16 @@ void Cppi41DmaConfigRxhostPacket(unsigned short usbDevInst, unsigned short chan,
 * \return	  None.
 *
 **/
-void Cppi41DmaConfigRxCompletionQueue(unsigned short usbDevInst, 
+void Cppi41DmaConfigRxCompletionQueue(unsigned short usbDevInst,
 								unsigned short rxChan,unsigned int rxCompq)
 {
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
-	HWREG(usbInstance->otgBaseAddress + (CPDMA_RX_CHANNEL_CONFIG_REG + 
+
+	HWREG(usbInstance->otgBaseAddress + (CPDMA_RX_CHANNEL_CONFIG_REG +
 				CHANNEL_OFFSET(rxChan))) = CPDMA_RX_CHANNEL_ENABLE	 | rxCompq;
-	
+
 }
 
 
@@ -590,13 +590,13 @@ void Cppi41DmaConfigRxCompletionQueue(unsigned short usbDevInst,
 * \return	  None.
 *
 **/
-void Cppi41DmaConfigTxCompletionQueue(unsigned short usbDevInst, 
-									unsigned short txChan, unsigned int txCompq)	
+void Cppi41DmaConfigTxCompletionQueue(unsigned short usbDevInst,
+									unsigned short txChan, unsigned int txCompq)
 {
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	HWREG(usbInstance->otgBaseAddress + (CPDMA_TX_CHANNEL_CONFIG_REG +
 				CHANNEL_OFFSET(txChan))) = 	CPDMA_TX_CHANNEL_ENABLE	 | txCompq;
 }
@@ -606,7 +606,7 @@ void Cppi41DmaConfigTxCompletionQueue(unsigned short usbDevInst,
 /**
 * \brief	 Initializes the BD pool
 *
-* \param	  
+* \param
 *
 * \return	  None.
 *
@@ -618,7 +618,7 @@ void Cppi41DmaInitBdPool()
 
 	temp_bd = (hostPacketDesc *)cppiInfo.region0DescriptorAddress;
 	for(i=0;i<MAX_BD_NUM; i++, temp_bd++)
-	{		
+	{
 		if(!cppiInfo.head_bd)
 		{
 			cppiInfo.head_bd = temp_bd;
@@ -639,7 +639,7 @@ void Cppi41DmaInitBdPool()
 /**
 * \brief	This API will get a free BD from the BD pool
 *
-* \param	  
+* \param
 *
 * \return	  None.
 *
@@ -649,13 +649,13 @@ hostPacketDesc * getFreeBd()
 	hostPacketDesc *free_bd;
 
 	free_bd = NULL;
-	
+
 	if(cppiInfo.head_bd)
 	{
 		free_bd = cppiInfo.head_bd;
 		cppiInfo.head_bd = cppiInfo.head_bd->nextHBDptr;
 		free_bd->nextHBDptr = NULL;
-	}	
+	}
 
 	return free_bd;
 }
@@ -663,7 +663,7 @@ hostPacketDesc * getFreeBd()
 /**
 * \brief	 This API puts the free BD back to the BD pool
 *
-* \param	  
+* \param
 *
 * \return	  None.
 *
@@ -678,8 +678,8 @@ void putFreeBd(hostPacketDesc *free_bd)
 	else
 	{
 		cppiInfo.head_bd = free_bd;
-		cppiInfo.head_bd->nextHBDptr = NULL;		
-	}	
+		cppiInfo.head_bd->nextHBDptr = NULL;
+	}
 }
 
 /**
@@ -694,8 +694,8 @@ void putFreeBd(hostPacketDesc *free_bd)
 * \return	  None.
 *
 **/
-void pushToSubmitQ(unsigned short usbDevInst, 
-							unsigned int  queueNum, hostPacketDesc *curr_bd) 
+void pushToSubmitQ(unsigned short usbDevInst,
+							unsigned int  queueNum, hostPacketDesc *curr_bd)
 {
 
 	unsigned int submitqAdd;
@@ -711,16 +711,16 @@ void pushToSubmitQ(unsigned short usbDevInst,
 	curr_bdAdd |= SIZE_OF_SINGLE_BD;
 	bdAddr = (hostPacketDesc *)curr_bdAdd;
 	/*Get the submit queue address */
-	submitqAdd = usbInstance->otgBaseAddress + (CPDMA_QUEUE_REGISTER_D + 
+	submitqAdd = usbInstance->otgBaseAddress + (CPDMA_QUEUE_REGISTER_D +
 														QUEUE_OFFSET(queueNum));
 	/*submit the queue */
 	HWREG(submitqAdd) = (unsigned int) bdAddr;
-	
-}	
+
+}
 
 /**
-* \brief	 This API gets a free BD , process it for TX transfer and submit it to the TX queue. 
-*		 The API can take care of packetizing the data according to USB transfer size and 
+* \brief	 This API gets a free BD , process it for TX transfer and submit it to the TX queue.
+*		 The API can take care of packetizing the data according to USB transfer size and
 *		 attach to the BDs. This API will work in both transparent mode and GRNDIS mode .
 *
 * \param	  lenght:- length of the data buffer
@@ -856,7 +856,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 
 }
 #else
-void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff, 
+void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 								unsigned int length, unsigned int endPoint)
 {
 	hostPacketDesc *current_bd = NULL;
@@ -869,7 +869,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
 
 	endPoint = USB_EP_TO_INDEX(endPoint);
-	
+
 	/*This code segment will take care of the transparent mode transaction */
 	if(CPDMA_MODE_SET_TRANSPARENT == usbInstance->txEndPoint[endPoint].mode)
 	{
@@ -889,7 +889,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 			current_bd->packetId = EOP;
 
 			/*Clean the cache so that bd  will have proper data */
-			CP15DCacheCleanBuff((unsigned int)current_bd,sizeof(hostPacketDesc));	
+			CP15DCacheCleanBuff((unsigned int)current_bd,sizeof(hostPacketDesc));
 
 			/*Submit the BD to the queue for transaction	 */
 			pushToSubmitQ(usbDevInst, usbInstance->txEndPoint[endPoint]
@@ -897,7 +897,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 		}
 
 		/*If the length is more than packet size, then packetize it  */
-		else 
+		else
 		{
 			numOfBlocks = length / USB_PACKET_LENGTH;
 			residue = length -  (numOfBlocks * USB_PACKET_LENGTH);
@@ -912,7 +912,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 					USB_PACKET_LENGTH);
 
 				/*This API will initialize the BD fields */
-				Cppi41DmaProcessBD(usbDevInst, current_bd, CPDMA_DIR_TX, 
+				Cppi41DmaProcessBD(usbDevInst, current_bd, CPDMA_DIR_TX,
 									&buff[i*USB_PACKET_LENGTH], USB_PACKET_LENGTH, endPoint);
 
 				/*Set the packet id to identify the packet position */
@@ -921,19 +921,19 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 				else if(i==0)
 					current_bd->packetId = SOP;
 				else if((numOfBlocks != 1) && (i < (numOfBlocks -1)))
-					current_bd->packetId = MOP;	
+					current_bd->packetId = MOP;
 				else if(i == (numOfBlocks -1) && residue == 0)
 					current_bd->packetId = EOP;
 				else
 					current_bd->packetId = MOP;
-				
-				CP15DCacheCleanBuff((unsigned int)current_bd,sizeof(hostPacketDesc));	
-				
+
+				CP15DCacheCleanBuff((unsigned int)current_bd,sizeof(hostPacketDesc));
+
 				/*Submit the BD to the queue for transaction	 */
 				pushToSubmitQ(usbDevInst, usbInstance->txEndPoint[endPoint]
 					.submitq, current_bd);
 			}
-			
+
 			/*If there are some remaining data then send it also */
 			if(residue)
 			{
@@ -942,21 +942,21 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 				ASSERT(current_bd != NULL);
 
 				CP15DCacheCleanBuff((unsigned int)&buff[i*USB_PACKET_LENGTH], residue);
-				
+
 				/*This API will initialize the BD fields */
-				Cppi41DmaProcessBD(usbDevInst, current_bd, CPDMA_DIR_TX, 
+				Cppi41DmaProcessBD(usbDevInst, current_bd, CPDMA_DIR_TX,
 									&buff[i*USB_PACKET_LENGTH], residue, endPoint);
-				
+
 				current_bd->packetId = EOP;
 
 				/*This API will initialize the BD fields */
 				CP15DCacheCleanBuff((unsigned int)current_bd,sizeof(hostPacketDesc));
-				
+
 				/*Submit the BD to the queue for transaction	 */
 				pushToSubmitQ(usbDevInst, usbInstance->txEndPoint[endPoint]
 					.submitq, current_bd);
 			}
-		
+
 		}
 	}
 
@@ -966,16 +966,16 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 		/*get a free db from the BD pool	 */
 		current_bd = getFreeBd();
 		ASSERT(current_bd != NULL);
-		
+
 		CP15DCacheCleanBuff((unsigned int)buff, length);
 
 		/*This API will initialize the BD fields */
 		Cppi41DmaProcessBD(usbDevInst, current_bd, CPDMA_DIR_TX, buff, length, endPoint);
 
 		current_bd->packetId = EOP;
-		
+
 		CP15DCacheCleanBuff((unsigned int)current_bd,sizeof(hostPacketDesc));
-		
+
 		/*Submit the BD to the queue for transaction	 */
 		pushToSubmitQ(usbDevInst, usbInstance->txEndPoint[endPoint]
 			.submitq, current_bd);
@@ -986,7 +986,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 
 /**
 * \brief	 This API gets a free BD , process it for RX transfer and submit it to the RX queue.
-*		 This API will work in both transparent mode and GRNDIS mode. . Max transfer size 
+*		 This API will work in both transparent mode and GRNDIS mode. . Max transfer size
 *		 of this rx transfer is max USB packet size
 *
 * \param	  lenght:- length of the data buffer
@@ -999,7 +999,7 @@ void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 *
 **/
 #ifdef _TMS320C6X
-void doDmaRxTransfer(unsigned short usbDevInst, unsigned int length, 
+void doDmaRxTransfer(unsigned short usbDevInst, unsigned int length,
 								unsigned char *buff, unsigned int endPoint)
 {
 	hostPacketDesc *current_bd = NULL;
@@ -1046,9 +1046,9 @@ void doDmaRxTransfer(unsigned short usbDevInst, unsigned int length,
 }
 #endif
 /**
-* \brief	 This API reads the TX completion queue and puts the free bd to the BD pool. 
-*		 Extracts the buffer address from the BD and frees it. This will return the 
-*		 current DMA status on TX operation to the caller. his API will be called on 
+* \brief	 This API reads the TX completion queue and puts the free bd to the BD pool.
+*		 Extracts the buffer address from the BD and frees it. This will return the
+*		 current DMA status on TX operation to the caller. his API will be called on
 *		reception of a completion interrupt
 *
 * \param	 usbDevIns:- The USB device instacnce
@@ -1112,12 +1112,12 @@ unsigned int dmaTxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	ulRegister = USB_O_TXCSRL1 + EP_OFFSET( ulEndpoint);
 
 	ulEndpoint = USB_EP_TO_INDEX(ulEndpoint);
 
-	
+
 	/*read the compltetion queue */
 	completed_bd = (hostPacketDesc *)Cppi41DmaReadCompletionQueue(usbDevInst, usbInstance
 											->txEndPoint[ulEndpoint].complettionq);
@@ -1127,10 +1127,10 @@ unsigned int dmaTxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 		state = DMA_TX_COMPLETED;
 	else
 		state = DMA_TX_IN_PROGRESS;
-	
+
 	/*wait till Tx completion */
 	if(state == DMA_TX_COMPLETED)
-		while ((HWREGH(usbInstance->usbBaseAddress + ulRegister) & 0x2) == 0x02);	
+		while ((HWREGH(usbInstance->usbBaseAddress + ulRegister) & 0x2) == 0x02);
 
 	CP15ICacheFlushBuff((unsigned int)completed_bd->buffAdd, sizeof(completed_bd->buffAdd));
 
@@ -1147,8 +1147,8 @@ unsigned int dmaTxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 #endif
 /**
 * \brief	 This API reads the RX completion queue and puts the free bd to the BD pool
-*		Extracts the data buffer from the DB and pass it to the caller . Extracts the 
-*		data buffer from the DB and pass it to the caller . This API will be called on 
+*		Extracts the data buffer from the DB and pass it to the caller . Extracts the
+*		data buffer from the DB and pass it to the caller . This API will be called on
 *		reception of a completion interrupt
 *
 * \param	  usbDevInst:- The USB Intance  Number
@@ -1195,34 +1195,34 @@ unsigned int dmaRxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 	unsigned int bufferAdd;
 	unsigned int length;
 	usbInstance *usbInstance;
-    
+
     hostPacketDesc *rx_bd =NULL;;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
 
-	ulEndpoint = USB_EP_TO_INDEX(ulEndpoint);	
-	
-	/*read the compltetion queue */	
+	ulEndpoint = USB_EP_TO_INDEX(ulEndpoint);
+
+	/*read the compltetion queue */
 	rx_bd = (hostPacketDesc *)Cppi41DmaReadCompletionQueue(usbDevInst, usbInstance
 												->rxEndPoint[ulEndpoint].complettionq);
 
 	/*Fush the cache to update the BD */
-	CP15ICacheFlushBuff((unsigned int)rx_bd, sizeof(hostPacketDesc));	
+	CP15ICacheFlushBuff((unsigned int)rx_bd, sizeof(hostPacketDesc));
 
-	bufferAdd = rx_bd->buffAdd;	
+	bufferAdd = rx_bd->buffAdd;
 	length = rx_bd->buffLength;
 
 	/*Flush the cache to update the buffer */
 	CP15ICacheFlushBuff(bufferAdd, length);
 
 	putFreeBd(rx_bd);
-	
+
 	return bufferAdd;
 }
 #endif
 
 /**
-* \brief	 This API gets the transfer completion interupt status. This API will be on 
+* \brief	 This API gets the transfer completion interupt status. This API will be on
 *		 reception of a USB interrupt to check the cause of interrupt.
 *
 * \param	 usbDevInst:- The USB Intance  Number
@@ -1231,15 +1231,15 @@ unsigned int dmaRxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 *
 **/
 unsigned int CppiDmaGetPendStatus(unsigned short usbDevInst)
-{	
+{
 
 #if defined (am335x_15x15) || defined(am335x)
 	unsigned int pendReg2 = 0;
-	unsigned int pendReg3 = 0;	
+	unsigned int pendReg3 = 0;
 #endif
 
 	unsigned int pendReg0 = 0;
-	
+
 #if defined (am335x_15x15) || defined(am335x)
 	pendReg2 = HWREG(USB_OTGBASE + CPDMA_PEND_2_REGISTER);
 	pendReg3 = HWREG(USB_OTGBASE + CPDMA_PEND_3_REGISTER);
@@ -1257,9 +1257,9 @@ unsigned int CppiDmaGetPendStatus(unsigned short usbDevInst)
 }
 
 /**
-* \brief	 This API gets the starvation interupt status. This API will be on 
+* \brief	 This API gets the starvation interupt status. This API will be on
 *		 reception of a USB interrupt to check the cause of interrupt.
-*		 This API will also disable the scheduler and clear the starvation 
+*		 This API will also disable the scheduler and clear the starvation
 *		 interrupt status in order to avoid over flooding of interrupt
 *
 * \param	 usbDevInst:- The USB Intance  Number
@@ -1279,11 +1279,11 @@ unsigned int CppiDmaGetINTD0Status(unsigned short usbDevInst)
 
 	if(intdReg0 == CPDMA_STAR_0_PEND ||intdReg0 == CPDMA_STAR_1_PEND)
 	{
-		Cppi41DmaControlScheduler(usbDevInst, ENABLE_CPPIDMA, 
+		Cppi41DmaControlScheduler(usbDevInst, ENABLE_CPPIDMA,
 										(NUM_OF_SCHEDULER_ENTRIES / 2));
 		Cppi41DmaClearINTD0Status(usbDevInst);
 	}
-	
+
 	return intdReg0;
 }
 
@@ -1300,9 +1300,9 @@ void Cppi41DmaClearINTD0Status(unsigned short usbDevInst)
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	HWREG(usbInstance->otgBaseAddress + CPDMA_CLEAR_INTD_0_STATUS) = CLAER_INTDO_STATUS;
-	
+
 }
 
 /**
@@ -1313,14 +1313,14 @@ void Cppi41DmaClearINTD0Status(unsigned short usbDevInst)
 * \return	  None.
 *
 **/
-void Cppi41DmaControlScheduler(unsigned short usbDevInst, unsigned short enableDisable, 
+void Cppi41DmaControlScheduler(unsigned short usbDevInst, unsigned short enableDisable,
 												unsigned short numOfentries)
 {
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
-	HWREG(usbInstance->otgBaseAddress + CPDMA_SCHED_CONTROL_REG ) =(enableDisable 
+
+	HWREG(usbInstance->otgBaseAddress + CPDMA_SCHED_CONTROL_REG ) =(enableDisable
 								<< SCHEDULER_ENABLE_SHFT) | (numOfentries - 1);
 
 }
@@ -1334,20 +1334,20 @@ void Cppi41DmaControlScheduler(unsigned short usbDevInst, unsigned short enableD
 *
 * \param	 buffadd:- The buffer address
 *
-* \param	 length:- Length of the buffer	
+* \param	 length:- Length of the buffer
 *
 * \return	  None.
 *
 **/
-void Cppi41DmaProcessBD(unsigned short usbDevInst, hostPacketDesc *current_bd, 
-								 unsigned short direction, unsigned char * buffadd, 
+void Cppi41DmaProcessBD(unsigned short usbDevInst, hostPacketDesc *current_bd,
+								 unsigned short direction, unsigned char * buffadd,
 									   unsigned int length, unsigned int ulEndpoint)
 {
 
 	usbInstance *usbInstance;
 
 	usbInstance = &(cppiInfo.usbInst[usbDevInst]);
-	
+
 	/*These values are fixed for a PD */
 	current_bd->hPDword0.hostPktType = CPDMA_BD_PACKET_TYPE;
 	current_bd->hPDword0.protSize=0;
@@ -1357,7 +1357,7 @@ void Cppi41DmaProcessBD(unsigned short usbDevInst, hostPacketDesc *current_bd,
 		current_bd->hPDword0.pktLength= length;
 	else
 		current_bd->hPDword0.pktLength= 0;
-	
+
 	/* These vlaues are always initialized to zero */
 	current_bd->hPDword1.dstTag=0;
 	current_bd->hPDword1.srcSubChNum=0;
@@ -1370,7 +1370,7 @@ void Cppi41DmaProcessBD(unsigned short usbDevInst, hostPacketDesc *current_bd,
 	else
 		current_bd->hPDword1.srcPrtNum = usbInstance->rxEndPoint[ulEndpoint]
 																		.channel + 1; /*chan_num+1; */
-		
+
 	/*Completion Queues */
 	if(direction == CPDMA_DIR_TX)
 		current_bd->hPDword2.pktRetQueue=usbInstance->txEndPoint[ulEndpoint]
@@ -1393,7 +1393,7 @@ void Cppi41DmaProcessBD(unsigned short usbDevInst, hostPacketDesc *current_bd,
 	current_bd->nextHBDptr=0;
 	current_bd->gBuffLength=current_bd->buffLength;
 	current_bd->gBuffLength |= (unsigned int)(1<<31);
-	current_bd->gBuffAdd=current_bd->buffAdd;	
+	current_bd->gBuffAdd=current_bd->buffAdd;
 	current_bd->endPoint = (unsigned short)ulEndpoint;
 	if(direction == CPDMA_DIR_TX)
 		current_bd->channel = usbInstance->txEndPoint[ulEndpoint].channel;
@@ -1415,20 +1415,20 @@ void Cppi41DmaProcessBD(unsigned short usbDevInst, hostPacketDesc *current_bd,
 void cppi41DmaInitBuffer()
 {
 	int i;
-	
+
 	for(i =0;i<CPDMA_NUMOF_BUFFERS;i++)
 		{
 			 dmaBuffer[i].dataBuffer =(unsigned int *)&dBuffer[i][0];
 			 dmaBuffer[i].usedFlag = CPDMA_BUFFER_NOT_USED;
-			 dmaBuffer[i].nBlocks = 0;		 
+			 dmaBuffer[i].nBlocks = 0;
 		}
 
 }
 
 
 /**
-* \brief	 This API will allocate 1unit(512 bytes) of  buffer. This API is called 
-*		just before the RX and TX transfer. The API returns a pointer to the 
+* \brief	 This API will allocate 1unit(512 bytes) of  buffer. This API is called
+*		just before the RX and TX transfer. The API returns a pointer to the
 *		buffer allocated , which can used by the caller for data transfer.
 *
 * \param	 none
@@ -1449,14 +1449,14 @@ unsigned int * cppiDmaAllocBuffer()
 			return dmaBuffer[i].dataBuffer;
 		}
 	}
-	
-	return NULL;	
+
+	return NULL;
 }
 
 
 /**
-* \brief	 This API will free 1 unit of buffer. Caller needs to pass the buffer 
-*		address to be freed. Once buffer is freed, the usage flag will set 
+* \brief	 This API will free 1 unit of buffer. Caller needs to pass the buffer
+*		address to be freed. Once buffer is freed, the usage flag will set
 *		as BUFFER _NOT_USED
 *
 * \param	 dataBuffer:- Buffer address
@@ -1467,7 +1467,7 @@ unsigned int * cppiDmaAllocBuffer()
 void cppiDmaFreeBuffer(unsigned int *dataBuffer)
 {
 	int i;
-	
+
 	for(i=0;i<CPDMA_NUMOF_BUFFERS;i++)
 	{
 		if(dmaBuffer[i].dataBuffer == dataBuffer)
@@ -1481,8 +1481,8 @@ void cppiDmaFreeBuffer(unsigned int *dataBuffer)
 }
 
 /**
-* \brief	 This API will allocate N (N*512 bytes) number of buffers. This API is called 
-*		just before the RX and TX transfer. The API returns a pointer to the 
+* \brief	 This API will allocate N (N*512 bytes) number of buffers. This API is called
+*		just before the RX and TX transfer. The API returns a pointer to the
 *		buffer allocated , which can used by the caller for data transfer.
 *
 * \param	 numOfBlocks:- Number of buffers
@@ -1495,7 +1495,7 @@ unsigned int * cppiDmaAllocnBuffer(unsigned int numOfBlocks)
 	unsigned int nBlocks = numOfBlocks;
 	unsigned int i,j;
 
-	
+
 
 	for(i =0;i<CPDMA_NUMOF_BUFFERS;i++)
 	{
@@ -1506,29 +1506,29 @@ unsigned int * cppiDmaAllocnBuffer(unsigned int numOfBlocks)
 
 		if(nBlocks == 0)
 			break;
-	
+
 	}
 
-	
+
 	if(nBlocks == 0)
 	{
 		for(j = i; j>(i-numOfBlocks); j--)
 		{
 			dmaBuffer[j].usedFlag =  CPDMA_BUFFER_USED;
 		}
-		dmaBuffer[j+1].nBlocks = numOfBlocks;	
+		dmaBuffer[j+1].nBlocks = numOfBlocks;
 		return dmaBuffer[j+1].dataBuffer;
 	}
 	else
-		return NULL;	
-	
+		return NULL;
+
 }
 
 
 /**
-* \brief	 This API will free N(N *512 Bytes) buffers. Caller needs to pass the buffer 
-*		address to be freed. Once buffer is freed, the usage flag will set 
-*		as BUFFER _NOT_USED. 
+* \brief	 This API will free N(N *512 Bytes) buffers. Caller needs to pass the buffer
+*		address to be freed. Once buffer is freed, the usage flag will set
+*		as BUFFER _NOT_USED.
 *
 * \param	 dataBuffer:- Buffer address
 *
@@ -1540,11 +1540,11 @@ void cppiDmaFreenBuffer(unsigned int *dataBuffer)
 {
 	unsigned int i,j;
 	unsigned int nBlocks = 0;
-	
+
 	for(i=0;i<CPDMA_NUMOF_BUFFERS;i++)
 	{
 		if(dmaBuffer[i].dataBuffer == dataBuffer)
-		{	
+		{
 			nBlocks= dmaBuffer[i].nBlocks;
 			break;
 		}
@@ -1559,12 +1559,12 @@ void cppiDmaFreenBuffer(unsigned int *dataBuffer)
 		}
 
 	}
-		
+
 }
 
 /**
-* \brief	 This API will Handle the starvation Error.  The API will enable the 
-*		 scheduler which is disabled due to the starvation interrupt. 
+* \brief	 This API will Handle the starvation Error.  The API will enable the
+*		 scheduler which is disabled due to the starvation interrupt.
 *		 This will help the DMA to resume the operation after clearing the starvation
 *		 interrupt.
 *

@@ -44,7 +44,7 @@
 #include "rtc.h"
 
 /******************************************************************************
-**                 LOCAL MACRO DEFINITIONS                                   
+**                 LOCAL MACRO DEFINITIONS
 ******************************************************************************/
 
 #define IS_RTC_BUSY             (HWREG(baseAdd + RTC_STATUS) & (RTC_STATUS_BUSY))
@@ -96,7 +96,7 @@
 
 /**
  * \brief    This function sets the 32KHz counter to run.\n
- * 
+ *
  * \param    baseAdd   The base address of the RTC instance being used.\n
  *
  * \return   None.\n
@@ -115,10 +115,10 @@ void RTCRun(unsigned int baseAdd)
     ** only when RTC is running. The current function is invoked when
     ** RTC is stopped. Thus, BUSY status need not be checked.
     */
-    
+
     /* Setting the RUN bit in CTRL register.*/
     HWREG(baseAdd + RTC_CTRL) |= (RTC_CTRL_RUN | splitPower);
-} 
+}
 
 
 /**
@@ -128,13 +128,13 @@ void RTCRun(unsigned int baseAdd)
  *
  * \return  None. \n
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
  *
  */
 void RTCStop(unsigned int baseAdd)
 {
-   
+
     volatile unsigned int splitPower = 0;
 
     if(RTC_REV_AM1808 == RtcVersionGet())
@@ -147,8 +147,8 @@ void RTCStop(unsigned int baseAdd)
     ** is low.
     */
     while(IS_RTC_BUSY);
-     
-      /* Clearing the RUN bit in CTRL register. */    
+
+      /* Clearing the RUN bit in CTRL register. */
     HWREG(baseAdd + RTC_CTRL) &= ~(RTC_CTRL_RUN);
     HWREG(baseAdd + RTC_CTRL) |= splitPower;
 }
@@ -159,7 +159,7 @@ void RTCStop(unsigned int baseAdd)
  * \param   baseAdd  The base address of the RTC instance being used.\n
  *
  * \return  None.\n
- * 
+ *
  * \note    To enable write-protection for RTC registers, the KICK registers
  *          have to be programmed with any value other than their key values.\n
  */
@@ -179,11 +179,11 @@ void RTCWriteProtectEnable(unsigned int baseAdd)
  * \return  None.\n
  *
  * \note    To disable write-protection for RTC registers, the KICK registers
- *          namely KICK0R and KICK1R have to be programmed with specific key 
+ *          namely KICK0R and KICK1R have to be programmed with specific key
  *          values .\n
- *          The pre-requisite to write to any RTC registers except KICK  
+ *          The pre-requisite to write to any RTC registers except KICK
  *          registers is that the KICK registers have to be programmed with
- *          specific key values mentioned in the RTC peripheral user manual. 
+ *          specific key values mentioned in the RTC peripheral user manual.
  */
 
 
@@ -199,9 +199,9 @@ void RTCWriteProtectDisable(unsigned int baseAdd)
  *
  * \param   baseAdd  The base address of the RTC instance being used.\n
  *
- * \return  None. \n 
+ * \return  None. \n
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
  *          By ALARM, the functional specification effectively means ALARM1,
  *          although it does not use the name ALARM1. This comes into context
@@ -215,7 +215,7 @@ void RTCIntAlarmEnable(unsigned int baseAdd)
     ** is low.
     */
     while(IS_RTC_BUSY);
-        
+
     HWREG(baseAdd + RTC_INTERRUPT) |= RTC_INTERRUPTS_ALARM;
 }
 
@@ -226,7 +226,7 @@ void RTCIntAlarmEnable(unsigned int baseAdd)
  *
  * \return  None. \n
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
  *
  */
@@ -238,13 +238,13 @@ void RTCIntAlarmDisable(unsigned int baseAdd)
     */
     while(IS_RTC_BUSY);
     HWREG(baseAdd + RTC_INTERRUPT) &= ~(RTC_INTERRUPTS_ALARM);
-}   
+}
 
 /**
  * \brief   This function enables the periodic timer interrupt.\n
  *
  * \param   baseAdd     The base address of the RTC instance being used.\n
- * \param   timerPeriod  This specifies the period between two consecutive 
+ * \param   timerPeriod  This specifies the period between two consecutive
  *                       interrupts. This can take one of the following values:\n
  *                       RTC_INT_EVERY_SECOND \n
  *                       RTC_INT_EVERY_MINUTE \n
@@ -253,16 +253,16 @@ void RTCIntAlarmDisable(unsigned int baseAdd)
  *
  * \return  None. \n
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 
 void RTCIntTimerEnable(unsigned int baseAdd, unsigned int timerPeriod)
 {
     /*
     ** Writing to INTERRUPT register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
@@ -277,9 +277,9 @@ void RTCIntTimerEnable(unsigned int baseAdd, unsigned int timerPeriod)
  *
  * \return  None. \n
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 
 void RTCIntTimerDisable(unsigned int baseAdd)
@@ -288,8 +288,8 @@ void RTCIntTimerDisable(unsigned int baseAdd)
     ** Writing to INTERRUPT register requires that BUSY bit in STATUS register
     ** is low.
     */
-    while(IS_RTC_BUSY); 
-    HWREG(baseAdd + RTC_INTERRUPT) &= ~(RTC_INTERRUPTS_TIMER);    
+    while(IS_RTC_BUSY);
+    HWREG(baseAdd + RTC_INTERRUPT) &= ~(RTC_INTERRUPTS_TIMER);
 }
 
 
@@ -310,7 +310,7 @@ unsigned int  RTCBusyStatusGet(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function indicates whether RTC is currently running or 
+ * \brief   This function indicates whether RTC is currently running or
  *          stopped.\n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
@@ -318,7 +318,7 @@ unsigned int  RTCBusyStatusGet(unsigned int baseAdd)
  * \return  This function returns either of the following two values:\n
  *          1> RTC_STATUS_RUNNING - indicating that RTC is in running state.\n
  *          2> RTC_STATUS_STOPPED - indicating that RTC is in stopped state.\n
- * 
+ *
  */
 
 unsigned int RTCRunStatusGet(unsigned int baseAdd)
@@ -337,12 +337,12 @@ unsigned int RTCRunStatusGet(unsigned int baseAdd)
  *          has been generated.\n
  *          RTC_NO_NEW_ALARM_INTERRUPT - indicating that no new ALARM interrupt
  *          has been generated. \n
- * 
+ *
  * \note    It is important to invoke the function RTCSAlarmIntStatusClear()
  *          to clear the ALARM interrupt status whenever an ALARM interrupt is \n
- *          generated. Otherwise, there is a possibility of the interrupt 
+ *          generated. Otherwise, there is a possibility of the interrupt
  *          handler being entered again since the previous interrupt's status
- *          was not cleared. \n 
+ *          was not cleared. \n
  */
 unsigned int RTCAlarmIntStatusGet(unsigned int baseAdd)
 {
@@ -368,21 +368,21 @@ void RTCAlarmIntStatusClear(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function determines what registers have been incremented in 
+ * \brief   This function determines what registers have been incremented in
  *          the latest time update.\n
  *
  * \param    baseAdd  The base address of the RTC instance being used.\n
  *
  * \return  This function can return one of the following four values:\n
- *          1> RTC_SECOND_EVENT - when only SECOND register has incremented.\n 
- *          2> (RTC_SECOND_EVENT | RTC_MINUTE_EVENT) - when both SECOND and 
+ *          1> RTC_SECOND_EVENT - when only SECOND register has incremented.\n
+ *          2> (RTC_SECOND_EVENT | RTC_MINUTE_EVENT) - when both SECOND and
  *             MINUTE registers have been incremented.\n
- *          3> (RTC_SECOND_EVENT | RTC_MINUTE_EVENT | RTC_HOUR_EVENT) - when 
+ *          3> (RTC_SECOND_EVENT | RTC_MINUTE_EVENT | RTC_HOUR_EVENT) - when
  *              SECOND, MINUTE and HOUR register have been incremented.\n
- *          4> (RTC_SECOND_EVENT | RTC_MINUTE_EVENT | RTC_HOUR_EVENT | 
- *              RTC_DAY_EVENT) - when SECOND, MINUTE, HOUR and DAY registers 
+ *          4> (RTC_SECOND_EVENT | RTC_MINUTE_EVENT | RTC_HOUR_EVENT |
+ *              RTC_DAY_EVENT) - when SECOND, MINUTE, HOUR and DAY registers
  *              have been incremented.\n
- * 
+ *
  */
 unsigned int RTCEventUpdateGet(unsigned int baseAdd)
 {
@@ -394,11 +394,11 @@ unsigned int RTCEventUpdateGet(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function enables the rounding feature on the current time to 
+ * \brief   This function enables the rounding feature on the current time to
  *          the nearest minute.\n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
- * 
+ *
  * \return  None.
  *
  */
@@ -412,7 +412,7 @@ void RTCMinRoundingEnable(unsigned int baseAdd)
     }
 
     /*
-    ** Writing to any bit in CTRL register except for SET32COUNTER bit does 
+    ** Writing to any bit in CTRL register except for SET32COUNTER bit does
     ** not require BUSY bit in STATUS register to be low.
     */
     HWREG(baseAdd + RTC_CTRL) |= (RTC_CTRL_ROUNDMIN | splitPower);
@@ -451,7 +451,7 @@ void RTCMinRoundingDisable(unsigned int baseAdd)
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
  *
- * \return  None. 
+ * \return  None.
  *
  */
 
@@ -495,7 +495,7 @@ void RTCAutoCompDisable(unsigned int baseAdd)
     ** Writing to any bit in CTRL register except for SET32COUNTER bit does
     ** not require BUSY bit in STATUS register to be low.
     */
-    
+
     HWREG(baseAdd + RTC_CTRL) &= ~(RTC_CTRL_AUTOCOMP);
     HWREG(baseAdd + RTC_CTRL) |= splitPower;
 }
@@ -504,13 +504,13 @@ void RTCAutoCompDisable(unsigned int baseAdd)
 /**
  * \brief   This function configures the representation type for hours for the
  *          RTC as either being 24 hour type or 12 hour type. \n
- * 
+ *
  * \param   baseAdd   The base address of the RTC instance being used.\n
- * \param   hourType   Represents the hour mode representation type. This can 
+ * \param   hourType   Represents the hour mode representation type. This can
  *                     take one of the two below values: \n
  *                     RTC_12HOUR_MODE - for 12 hour mode representation.\n
  *                     RTC_24HOUR_MODE - for 24 hour mode representation.\n
- * 
+ *
  * \return  None. \n
  */
 
@@ -525,12 +525,12 @@ void RTCHourModeSet(unsigned int baseAdd, unsigned int hourType)
 
     switch(hourType)
     {
-        case RTC_12HOUR_MODE:            
+        case RTC_12HOUR_MODE:
              HWREG(baseAdd + RTC_CTRL) |= (RTC_12HOUR_MODE | splitPower);
         break;
-   
+
         case RTC_24HOUR_MODE:
-        default:    
+        default:
              HWREG(baseAdd + RTC_CTRL) |= (RTC_24HOUR_MODE | splitPower);
         break;
 
@@ -539,8 +539,8 @@ void RTCHourModeSet(unsigned int baseAdd, unsigned int hourType)
 
 
 /**
- * \brief  This function reads the hour mode representation currently used in RTC. 
- *         The hour mode representation used could either be a 12 hour mode or 
+ * \brief  This function reads the hour mode representation currently used in RTC.
+ *         The hour mode representation used could either be a 12 hour mode or
  *         24 hour mode representation.
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
@@ -554,7 +554,7 @@ unsigned int RTCHourModeGet(unsigned int baseAdd)
 {
 
     return(HWREG(baseAdd + RTC_CTRL) & (RTC_12HOUR_MODE));
-} 
+}
 
 /**
  * \brief   This function sets the SET32COUNTER bit in CTRL register.
@@ -634,7 +634,7 @@ void RTCSet32CounterDisable(unsigned int baseAdd)
  * \brief   This function is used to disable the RTC instance. Disabling the
  *          RTC would gate the 32KHz reference clock to the RTC.\n
  *
- * \param   baseAdd   The base address of the RTC instance being used.\n  
+ * \param   baseAdd   The base address of the RTC instance being used.\n
  *
  * \return  None.
  *
@@ -689,15 +689,15 @@ void RTCEnable(unsigned int baseAdd)
     HWREG(baseAdd + RTC_CTRL) &= ~(RTC_CTRL_RTCDISABLE);
     HWREG(baseAdd + RTC_CTRL) |= splitPower;
 }
- 
+
 /**
- * \brief   This function indicates whether RTC is disabled or is enabled 
+ * \brief   This function indicates whether RTC is disabled or is enabled
  *          and functional.\n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
  *
  * \return  This can return one of the two below values:
- *          RTC_ENABLED - indicating that RTC is enabled and is 
+ *          RTC_ENABLED - indicating that RTC is enabled and is
  *                        functional.
  *          RTC_DISABLED - indicating that RTC is disabled.
  */
@@ -707,7 +707,7 @@ unsigned int RTCEnableStatus(unsigned int baseAdd)
 }
 
 /**
- *  \brief  This function enables the split power feature of RTC and 
+ *  \brief  This function enables the split power feature of RTC and
  *          in turn enabling the leakage isolation circuitry.
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
@@ -722,7 +722,7 @@ void RTCSplitPwrEnable(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function disables the split power feature of RTC and 
+ * \brief   This function disables the split power feature of RTC and
  *          in turn disabling the leakage isolation circuitry. \n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
@@ -738,68 +738,68 @@ void RTCSplitPwrDisable(unsigned int baseAdd)
 
 /**
  * \brief   This function sets the SECOND register with the specified value.\n
- 
+
  * \param   baseAdd   The base address of the RTC instance being used.\n
- * \param   secValue   The value of 'seconds' to be written to SECOND 
+ * \param   secValue   The value of 'seconds' to be written to SECOND
  *                     register.\n
  * \return  None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 void RTCSecondSet(unsigned int baseAdd, unsigned int secValue)
 {
-    
+
     /*
     ** Writing to SECOND register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
- 
-    while(IS_RTC_BUSY); 
-    
+
+    while(IS_RTC_BUSY);
+
     /* Writing least 7 bits of 'secValue' into SECOND register.*/
-    HWREG(baseAdd + RTC_SECOND) = (secValue & (RTC_SECOND_SEC1 | 
-                                               RTC_SECOND_SEC0));        
+    HWREG(baseAdd + RTC_SECOND) = (secValue & (RTC_SECOND_SEC1 |
+                                               RTC_SECOND_SEC0));
 }
 
 /**
  * \brief   This function determines the 'second' value of the current time.\n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
- *        
- * \return  The value in the SECOND register. 
+ *
+ * \return  The value in the SECOND register.
  */
 unsigned int RTCSecondGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_SECOND) & (RTC_SECOND_SEC1 | RTC_SECOND_SEC0)); 
+    return(HWREG(baseAdd + RTC_SECOND) & (RTC_SECOND_SEC1 | RTC_SECOND_SEC0));
 }
 
 /**
  * \brief   This function sets the MINUTE register with the specified value.\n
  *
  * \param   baseAdd  The base address of the RTC instance being used.\n
- * \param   minValue  The value of 'minutes' to be written to MINUTE 
- *                    register.\n  
+ * \param   minValue  The value of 'minutes' to be written to MINUTE
+ *                    register.\n
  *
  * \return  None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- *  
+ *
  */
 
 void RTCMinuteSet(unsigned int baseAdd, unsigned int minValue)
 {
     /*
     ** Writing to MINUTE register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
- 
+
     while(IS_RTC_BUSY);
 
     /* Writing least 7 bits of 'minValue' into MINUTE register.*/
-    HWREG(baseAdd + RTC_MINUTE) = (minValue & (RTC_MINUTE_MIN1 | 
+    HWREG(baseAdd + RTC_MINUTE) = (minValue & (RTC_MINUTE_MIN1 |
                                                 RTC_MINUTE_MIN0));
 }
 
@@ -813,7 +813,7 @@ void RTCMinuteSet(unsigned int baseAdd, unsigned int minValue)
 
 unsigned int RTCMinuteGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_MINUTE) & (RTC_MINUTE_MIN1 | 
+    return(HWREG(baseAdd + RTC_MINUTE) & (RTC_MINUTE_MIN1 |
                                            RTC_MINUTE_MIN0));
 }
 
@@ -822,16 +822,16 @@ unsigned int RTCMinuteGet(unsigned int baseAdd)
  *
  * \param  baseAdd   The base address of the RTC instance being used.\n
  * \param  hourValue  The value of 'hours' to be written into HOURS register.\n
- * 
+ *
  * \return None.
  *
  * \note   Programming the HOUR register with the hours value will also modify
  *         the MERIDIEM bit present in the HOUR register. Thus, invoke the \n
- *         API \RTCMeridiemSet after invoking this API to set the meridiem 
+ *         API \RTCMeridiemSet after invoking this API to set the meridiem
  *         type. \n
- *         If the RTC is busy in updating its registers, then this API waits 
+ *         If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
- * 
+ *
  */
 
 
@@ -840,12 +840,12 @@ void RTCHourSet(unsigned int baseAdd, unsigned int hourValue)
 
     /*
     ** Writing to HOUR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
     /* Writing least 6 bits of 'hourValue' into HOUR register.*/
-    HWREG(baseAdd + RTC_HOUR) = (hourValue & (RTC_HOUR_HOUR1 | 
+    HWREG(baseAdd + RTC_HOUR) = (hourValue & (RTC_HOUR_HOUR1 |
                                               RTC_HOUR_HOUR0));
 }
 
@@ -856,7 +856,7 @@ void RTCHourSet(unsigned int baseAdd, unsigned int hourValue)
  *
  * \param  baseAdd   The base address of the RTC instance being used.\n
  *
- * \return The value in the HOUR register. 
+ * \return The value in the HOUR register.
  */
 unsigned int RTCHourGet(unsigned int baseAdd)
 {
@@ -864,8 +864,8 @@ unsigned int RTCHourGet(unsigned int baseAdd)
 }
 
 /**
- * \brief  This function sets the meridiem type for the time that is 
- *         programmed. 
+ * \brief  This function sets the meridiem type for the time that is
+ *         programmed.
  *
  * \param   baseAdd      The base address of the RTC instance being used.\n
  * \param   meridiemType  This specifies the meridiem type. This can take one
@@ -877,10 +877,10 @@ unsigned int RTCHourGet(unsigned int baseAdd)
  *
  * \note    Programming the type of meridiem is meaningful only when 12-hour
  *          mode of time representation has been opted for. Use RTCHourModeSet()
- *          to do this. 
- *          If the RTC is busy in updating its registers, then this API waits 
+ *          to do this.
+ *          If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- */                        
+ */
 
 
 
@@ -888,10 +888,10 @@ void RTCMeridiemSet(unsigned int baseAdd, unsigned int meridiemType)
 {
     /*
     ** Writing to HOUR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
-    
+
     /* Set the MERIDIEM bit in HOUR register.*/
     HWREG(baseAdd + RTC_HOUR) |= (meridiemType & RTC_HOUR_MERIDIEM);
 
@@ -902,12 +902,12 @@ void RTCMeridiemSet(unsigned int baseAdd, unsigned int meridiemType)
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
  *
- * \return  The meridiem type of the current time. This will be one of the 
+ * \return  The meridiem type of the current time. This will be one of the
  *          two below values:
  *          RTC_ANTE_MERIDIEM - indicating ante-meridiem(AM).
  *          RTC_POST_MERIDIEM - indicating post-meridiem(PM).
  *
- * \note    The meridiem type of the current time should be ignored if the 
+ * \note    The meridiem type of the current time should be ignored if the
  *          time representation is in 24 hour mode format.
  */
 
@@ -917,14 +917,14 @@ unsigned int RTCMeridiemGet(unsigned int baseAdd)
 }
 
 /**
- * \brief  This function sets the day of the month in the relevant register.  
+ * \brief  This function sets the day of the month in the relevant register.
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
  * \param  dayValue  The 'day' value to be written to DAY register.\n
  *
  * \return None.\n
  *
- * \note   If the RTC is busy in updating its registers, then this API waits 
+ * \note   If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
  *
  */
@@ -933,17 +933,17 @@ void RTCDayOfMonthSet(unsigned int baseAdd, unsigned int dayValue)
 {
     /*
     ** Writing to DAY register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
     /* Writing least 6 bits of 'dayValue' to DAY register.*/
-    HWREG(baseAdd + RTC_DAY) = (dayValue & (RTC_DAY_DAY1 | RTC_DAY_DAY0));    
+    HWREG(baseAdd + RTC_DAY) = (dayValue & (RTC_DAY_DAY1 | RTC_DAY_DAY0));
 
 }
 
 /**
- * \brief  This function determines the day of the month currently held by 
+ * \brief  This function determines the day of the month currently held by
  *         relevant RTC register.
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
@@ -959,35 +959,35 @@ unsigned int RTCDayOfMonthGet(unsigned int baseAdd)
 
 /**
  * \brief   This function sets the month of the year in the relevant RTC
- *          register. 
+ *          register.
  *
  * \param   baseAdd    The base address of the RTC instance being used.\n
  * \param   monthValue  The 'month' value to be written to MONTH regsiter.\n
  *
  * \return  None.\n
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- 
+
  */
 
 void RTCMonthSet(unsigned int baseAdd, unsigned int monthValue)
 {
     /*
     ** Writing to MONTH register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
     /* Writing least 5 bits of 'monthValue' into MONTH register.*/
-    HWREG(baseAdd + RTC_MONTH) = (monthValue & (RTC_MONTH_MONTH1 | 
+    HWREG(baseAdd + RTC_MONTH) = (monthValue & (RTC_MONTH_MONTH1 |
                                                 RTC_MONTH_MONTH0));
 
 }
 
 /**
- * \brief  This function determines the month of the year from the relevant 
- *         RTC register. 
+ * \brief  This function determines the month of the year from the relevant
+ *         RTC register.
  *
  * \param   baseAdd    The base address of the RTC instance being used.\n
  *
@@ -1001,7 +1001,7 @@ unsigned int RTCMonthGet(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function sets the year value in the relevant RTC register. 
+ * \brief   This function sets the year value in the relevant RTC register.
  *
  * \param   baseAdd  The base address of the RTC instance being used.\n
  * \param   yearValue  The 'year' value to be written to YEAR register. \n
@@ -1010,9 +1010,9 @@ unsigned int RTCMonthGet(unsigned int baseAdd)
  *
  * \note    We can program only the last two digits of the four digit year
  *          value. Ex: 87 is programmed for year being 1987. \n
- *          If the RTC is busy in updating its registers, then this API waits 
+ *          If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 
 
@@ -1020,7 +1020,7 @@ void RTCYearSet(unsigned int baseAdd, unsigned int yearValue)
 {
     /*
     ** Writing to YEAR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
@@ -1031,10 +1031,10 @@ void RTCYearSet(unsigned int baseAdd, unsigned int yearValue)
 
 /**
  * \brief  This function determines the current year value from the relevant
- *         RTC register. 
+ *         RTC register.
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
- * 
+ *
  * \return  The 'year' value in the YEAR register.\n
  */
 
@@ -1044,7 +1044,7 @@ unsigned int RTCYearGet(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function sets the day of the week in the relevant RTC register. 
+ * \brief   This function sets the day of the week in the relevant RTC register.
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
  * \param   weekValue  The 'day of the week' value to be written to DOTW
@@ -1056,22 +1056,22 @@ unsigned int RTCYearGet(unsigned int baseAdd)
  *                     RTC_DOTW_WED - indicating Wednesday. \n
  *                     RTC_DOTW_THU - indicating Thursday. \n
  *                     RTC_DOTW_FRI - indicating Friday. \n
- *                     RTC_DOTW_SAT - indicating Saturday. \n                     
+ *                     RTC_DOTW_SAT - indicating Saturday. \n
  *
  * \return  None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 void RTCDayOfTheWeekSet(unsigned int baseAdd, unsigned int dotwValue)
 {
     /*
     ** Writing to DOTW register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
-    
+
     /* Write least 3 bits of 'weekValue' to DOTW register.*/
     HWREG(baseAdd + RTC_DOTW) = (dotwValue & RTC_DOTW_DOTW);
 }
@@ -1082,7 +1082,7 @@ void RTCDayOfTheWeekSet(unsigned int baseAdd, unsigned int dotwValue)
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
  *
- * \return  The 'day of the week' value in the DOTW register. 
+ * \return  The 'day of the week' value in the DOTW register.
  *          This returns one of the seven values mentioned in the API
  *          \RTCDayOfTheWeekSet. \n
  */
@@ -1139,11 +1139,11 @@ void RTCTimeSet(unsigned int baseAdd, unsigned int time)
     HWREG(baseAdd + RTC_HOUR) = (((time & HOUR_MASK) >> HOUR_SHIFT) |
                                  (time & MERIDIEM_MASK));
 
-}  
+}
 
 
 /**
- * \brief   This function reads the current time from the registers holding 
+ * \brief   This function reads the current time from the registers holding
  *          time information. \n
  *
  * \param   baseAdd  The base address of the RTC instance being used.\n
@@ -1168,20 +1168,20 @@ unsigned int RTCTimeGet(unsigned int baseAdd)
     hour = (hour & (RTC_HOUR_HOUR1 | RTC_HOUR_HOUR0)) << HOUR_SHIFT;
 
     /* Reading MERIDIEM bit in HOUR register.*/
-    mer = (HWREG(baseAdd + RTC_HOUR) & RTC_HOUR_MERIDIEM);      
-          
- 
-    return ( sec | min | hour | mer);  
+    mer = (HWREG(baseAdd + RTC_HOUR) & RTC_HOUR_MERIDIEM);
+
+
+    return ( sec | min | hour | mer);
 }
 
 /**
- * \brief  This function sets the specified calendar information in registers 
+ * \brief  This function sets the specified calendar information in registers
  *         holding calendar settings. \n
- *          
+ *
  *
  * \param   baseAdd  The base address of the RTC instance being used.\n
  * \param   calendar  This parameter includes values for day of the month,
- *                    month, year and day of the week. The format is:  
+ *                    month, year and day of the week. The format is:
  *                    <day of the month><month><year><day of the week>
  *
  *                    For example, if the date is: 29 November,2010,Monday,then
@@ -1190,9 +1190,9 @@ unsigned int RTCTimeGet(unsigned int baseAdd)
  *
  * \return  None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 
 void RTCCalendarSet(unsigned int baseAdd, unsigned int calendar)
@@ -1227,17 +1227,17 @@ void RTCCalendarSet(unsigned int baseAdd, unsigned int calendar)
 unsigned int RTCCalendarGet(unsigned int baseAdd)
 {
     unsigned int calVal = 0;
-    
+
     /* Reading from the DAY register.*/
     calVal = (HWREG(baseAdd + RTC_DAY) & (RTC_DAY_DAY1 | RTC_DAY_DAY0)) <<  \
                                              DAY_SHIFT;
 
     /* Reading from MONTH register.*/
-    calVal |= (HWREG(baseAdd + RTC_MONTH) & (RTC_MONTH_MONTH1 | 
+    calVal |= (HWREG(baseAdd + RTC_MONTH) & (RTC_MONTH_MONTH1 |
                                               RTC_MONTH_MONTH0)) << MONTH_SHIFT;
 
     /* Reading from YEAR register.*/
-    calVal |= (HWREG(baseAdd + RTC_YEAR) & (RTC_YEAR_YEAR1 | 
+    calVal |= (HWREG(baseAdd + RTC_YEAR) & (RTC_YEAR_YEAR1 |
                                              RTC_YEAR_YEAR0))  << YEAR_SHIFT;
 
     /* Reading from DOTW register.*/
@@ -1251,20 +1251,20 @@ unsigned int RTCCalendarGet(unsigned int baseAdd)
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
  * \param  alarmsecValue  The seconds value to be set in the ALARMSECOND
- *                        registers. \n 
+ *                        registers. \n
  *
  * \return None.
  *
- * \note   If the RTC is busy in updating its registers, then this API waits 
+ * \note   If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
- * 
+ *
  */
 
 void RTCAlarmSecondSet(unsigned int baseAdd, unsigned int alarmSecValue)
-{    
+{
     /*
     ** Writing to ALARMSECOND register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
@@ -1286,7 +1286,7 @@ void RTCAlarmSecondSet(unsigned int baseAdd, unsigned int alarmSecValue)
 
 unsigned int RTCAlarmSecondGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_ALARMSECOND) & (RTC_ALARMSECOND_SEC1 | 
+    return(HWREG(baseAdd + RTC_ALARMSECOND) & (RTC_ALARMSECOND_SEC1 |
                                                 RTC_ALARMSECOND_SEC0));
 }
 
@@ -1294,12 +1294,12 @@ unsigned int RTCAlarmSecondGet(unsigned int baseAdd)
  * \brief   This configures the minutes value in the ALARM registers. \n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
- * \param   alarmminValue  The minutes value to be written to 
+ * \param   alarmminValue  The minutes value to be written to
  *                         ALARMMINUTES register. \n
  * \return  None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
- *          until this update is complete. \n 
+ * \note    If the RTC is busy in updating its registers, then this API waits
+ *          until this update is complete. \n
  *
  */
 
@@ -1308,9 +1308,9 @@ void RTCAlarmMinuteSet(unsigned int baseAdd, unsigned int alrmMinValue)
 {
     /*
     ** Writing to ALARMMINUTE register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
-    
+
     while(IS_RTC_BUSY);
 
     /* Write least 7 bits to ALARMMINUTE register.*/
@@ -1330,7 +1330,7 @@ void RTCAlarmMinuteSet(unsigned int baseAdd, unsigned int alrmMinValue)
 
 unsigned int RTCAlarmMinuteGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_ALARMMINUTE) & (RTC_ALARMMINUTE_MIN1 | 
+    return(HWREG(baseAdd + RTC_ALARMMINUTE) & (RTC_ALARMMINUTE_MIN1 |
                                                 RTC_ALARMMINUTE_MIN0));
 }
 
@@ -1338,32 +1338,32 @@ unsigned int RTCAlarmMinuteGet(unsigned int baseAdd)
  * \brief  This sets the value of hours in the ALARM registers. \n
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
- * \param  alarmhourValue  The value of hours to be written to 
+ * \param  alarmhourValue  The value of hours to be written to
  *                         ALARMHOUR register. \n
  * \return None.
- * 
- * \note   Programming the ALARMHOUR register with the hours value will also 
+ *
+ * \note   Programming the ALARMHOUR register with the hours value will also
  *         modify the MERIDIEM bit present in the ALARMHOUR register.
  *         Thus, invoke the API RTCAlarmHourMeridiemSet() after invoking
  *         the current API to configure the MERIDIEM bit. \n
- *         If the RTC is busy in updating its registers, then this API waits 
+ *         If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
- * 
+ *
  */
 
 void RTCAlarmHourSet(unsigned int baseAdd, unsigned int alrmHourVal)
 {
     /*
     ** Writing to ALARMHOUR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
     /*
-    ** Writing the least 6 bits of 'alrmHourVal' to the ALARMHOUR 
+    ** Writing the least 6 bits of 'alrmHourVal' to the ALARMHOUR
     ** register.
     */
-    HWREG(baseAdd + RTC_ALARMHOUR) = (alrmHourVal & (RTC_ALARMHOUR_HOUR1 | 
+    HWREG(baseAdd + RTC_ALARMHOUR) = (alrmHourVal & (RTC_ALARMHOUR_HOUR1 |
                                                       RTC_ALARMHOUR_HOUR0));
 }
 
@@ -1378,7 +1378,7 @@ void RTCAlarmHourSet(unsigned int baseAdd, unsigned int alrmHourVal)
 
 unsigned int RTCAlarmHourGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_ALARMHOUR) & (RTC_ALARMHOUR_HOUR1 | 
+    return(HWREG(baseAdd + RTC_ALARMHOUR) & (RTC_ALARMHOUR_HOUR1 |
                                               RTC_ALARMHOUR_HOUR0));
 }
 
@@ -1397,7 +1397,7 @@ unsigned int RTCAlarmHourGet(unsigned int baseAdd)
  * \note    Programming the type of meridiem is meaningful only when 12-hour
  *          mode of time representation has been opted for. Use RTCHourModeSet()
  *          to do this.
- *          If the RTC is busy in updating its registers, then this API waits 
+ *          If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
  */
 
@@ -1406,7 +1406,7 @@ void RTCAlarmHourMeridiemSet(unsigned int baseAdd, unsigned int meridiemType)
 {
     /*
     ** Writing to YEAR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
 
@@ -1427,7 +1427,7 @@ void RTCAlarmHourMeridiemSet(unsigned int baseAdd, unsigned int meridiemType)
  * \note    The meridiem type of the ALARM time should be ignored if the
  *          time representation is in 24 hour mode format.
  */
- 
+
 unsigned int RTCAlarmHourMeridiemGet(unsigned int baseAdd)
 {
     return(HWREG(baseAdd + RTC_ALARMHOUR) & RTC_HOUR_MERIDIEM);
@@ -1437,7 +1437,7 @@ unsigned int RTCAlarmHourMeridiemGet(unsigned int baseAdd)
  * \brief  This function sets the ALARM time regiters with the specified
  *         ALARM time value. \n
  *
- * \param  baseAdd   The base address of the RTC instance being used.\n  
+ * \param  baseAdd   The base address of the RTC instance being used.\n
  * \param  alarmTime  The time is specified here and should be in the
  *                    following format: <hours><minutes><seconds><meridiem>.\n
  *                    Example - For 12-hour mode representation:\n
@@ -1448,9 +1448,9 @@ unsigned int RTCAlarmHourMeridiemGet(unsigned int baseAdd)
  *                    If the time is 17 hours, 36 minutes, 41 seconds, then
  *                    'alarmTime' should be (0x17364100).\n
  *
- * \note   If the RTC is busy in updating its registers, then this API waits 
+ * \note   If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
- * 
+ *
  */
 
 
@@ -1472,7 +1472,7 @@ void RTCAlarmTimeSet(unsigned int baseAdd, unsigned int alarmTime)
 
 
 
-/**  
+/**
  * \brief   This function reads the programmed ALARM time from the ALARM
  *          registers.
  *
@@ -1481,9 +1481,9 @@ void RTCAlarmTimeSet(unsigned int baseAdd, unsigned int alarmTime)
  * \return  The ALARM time is returned in the format:
  *          <hour><minute><second><meridiem>.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 unsigned int RTCAlarmTimeGet(unsigned int baseAdd)
 {
@@ -1504,10 +1504,10 @@ unsigned int RTCAlarmTimeGet(unsigned int baseAdd)
     alrmHour = (alrmHour & (RTC_HOUR_HOUR1 | RTC_HOUR_HOUR0)) << HOUR_SHIFT;
 
     /* Reading MERIDIEM bit in ALARMHOUR register.*/
-    alrmMer = (HWREG(baseAdd + RTC_ALARMHOUR) & RTC_HOUR_MERIDIEM);      
-          
- 
-    return ( alrmSec | alrmMin | alrmHour | alrmMer);  
+    alrmMer = (HWREG(baseAdd + RTC_ALARMHOUR) & RTC_HOUR_MERIDIEM);
+
+
+    return ( alrmSec | alrmMin | alrmHour | alrmMer);
 }
 
  /**
@@ -1519,21 +1519,21 @@ unsigned int RTCAlarmTimeGet(unsigned int baseAdd)
  *
  * \return None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 
 void RTCAlarmDayOfMonthSet(unsigned int baseAdd, unsigned int alarmDayValue)
 {
     /*
     ** Writing to YEAR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
- 
+
     /* Writing the least 6 bits of 'alarmDayValue' to ALARMHOUR register.*/
-    HWREG(baseAdd + RTC_ALARMDAY) = (alarmDayValue & (RTC_ALARMDAY_DAY1 | 
+    HWREG(baseAdd + RTC_ALARMDAY) = (alarmDayValue & (RTC_ALARMDAY_DAY1 |
                                                   RTC_ALARMDAY_DAY0));
 
 }
@@ -1555,25 +1555,25 @@ unsigned int RTCAlarmDayOfMonthGet(unsigned int baseAdd)
  * \brief   This function sets the value of the month in the ALARM registers.\n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
- * \param   alarmmonthValue  The value of the month to be written to 
+ * \param   alarmmonthValue  The value of the month to be written to
  *                           ALARMMONTH register. \n
  * \return  None.
  *
- * \note    If the RTC is busy in updating its registers, then this API waits 
+ * \note    If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
- * 
+ *
  */
 
 void RTCAlarmMonthSet(unsigned int baseAdd, unsigned int alrmMnthVal)
 {
     /*
     ** Writing to YEAR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
-   
+
     /* Writing the least 6 bits of 'alrmMnthVal' to ALARMHOUR register.*/
-    HWREG(baseAdd + RTC_ALARMMONTH) = (alrmMnthVal & (RTC_ALARMMONTH_MONTH1 | 
+    HWREG(baseAdd + RTC_ALARMMONTH) = (alrmMnthVal & (RTC_ALARMMONTH_MONTH1 |
                                                        RTC_ALARMMONTH_MONTH0));
 }
 
@@ -1582,13 +1582,13 @@ void RTCAlarmMonthSet(unsigned int baseAdd, unsigned int alrmMnthVal)
  *         ALARM registers. \n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
- * 
+ *
  * \return  The value of month being set in the ALARMMONTH register. \n
  */
 
 unsigned int RTCAlarmMonthGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_ALARMMONTH) & (RTC_ALARMMONTH_MONTH1 | 
+    return(HWREG(baseAdd + RTC_ALARMMONTH) & (RTC_ALARMMONTH_MONTH1 |
                                                RTC_ALARMMONTH_MONTH0));
 }
 
@@ -1598,12 +1598,12 @@ unsigned int RTCAlarmMonthGet(unsigned int baseAdd)
  * \param   baseAdd   The base address of the RTC instance being used.\n
  * \param   alarmyearValue  The value of year to be written to ALARMYEAR
  *                          register. \n
- * 
+ *
  * \return  None.
  *
  * \note    We can program only the last two digits of the four digit year
  *          value. Ex: 87 is programmed for year being 1987.
- *          If the RTC is busy in updating its registers, then this API waits 
+ *          If the RTC is busy in updating its registers, then this API waits
  *          until this update is complete. \n
  *
  */
@@ -1612,17 +1612,17 @@ void RTCAlarmYearSet(unsigned int baseAdd, unsigned int alrmYrVal)
 {
     /*
     ** Writing to YEAR register requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
     while(IS_RTC_BUSY);
-    
+
     /* Writing the least 8 bits of 'alrmYrVal' to ALARMYEAR register.*/
-    HWREG(baseAdd + RTC_ALARMYEAR) = (alrmYrVal & (RTC_ALARMYEAR_YEAR1 | 
+    HWREG(baseAdd + RTC_ALARMYEAR) = (alrmYrVal & (RTC_ALARMYEAR_YEAR1 |
                                                     RTC_ALARMYEAR_YEAR0));
 }
 
 /**
- * \brief  This function determines the value of the year being set in the 
+ * \brief  This function determines the value of the year being set in the
  *         ALARM registers. \n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
@@ -1633,7 +1633,7 @@ void RTCAlarmYearSet(unsigned int baseAdd, unsigned int alrmYrVal)
 
 unsigned int RTCAlarmYearGet(unsigned int baseAdd)
 {
-    return(HWREG(baseAdd + RTC_ALARMYEAR) & (RTC_ALARMYEAR_YEAR1 | 
+    return(HWREG(baseAdd + RTC_ALARMYEAR) & (RTC_ALARMYEAR_YEAR1 |
                                               RTC_ALARMYEAR_YEAR0));
 }
 
@@ -1643,17 +1643,17 @@ unsigned int RTCAlarmYearGet(unsigned int baseAdd)
  *
  * \param  baseAdd  The base address of the RTC instance being used.\n
  * \param  calVal    This parameter includes values for day of the month,
- *                   month and  year. The format is:  
+ *                   month and  year. The format is:
  *                   <day of the month><month><year>.
  *                   For example, if the ALARM calendar registers are to be
- *                   loaded with a date namely 24 February, 2003, then 
+ *                   loaded with a date namely 24 February, 2003, then
  *                   'calVal' should be 0x24020300(February=0x02, 2003=0x03)
  *
  * \return None. \n
- * 
- * \note   If the RTC is busy in updating its registers, then this API waits 
+ *
+ * \note   If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
- * 
+ *
  */
 void RTCAlarmCalendarSet(unsigned int baseAdd, unsigned int calVal)
 {
@@ -1679,23 +1679,23 @@ void RTCAlarmCalendarSet(unsigned int baseAdd, unsigned int calVal)
  *          registers. The format of this information is:
  *          <day of the week><month><year>.
  *
- * 
+ *
  */
 unsigned int RTCAlarmCalendarGet(unsigned int baseAdd)
 {
     unsigned int calVal = 0;
-    
+
     /* Reading from the ALARMDAY register.*/
-    calVal = (HWREG(baseAdd + RTC_ALARMDAY) & (RTC_DAY_DAY1 | 
+    calVal = (HWREG(baseAdd + RTC_ALARMDAY) & (RTC_DAY_DAY1 |
                                                 RTC_DAY_DAY0)) << DAY_SHIFT;
 
     /* Reading from ALARMMONTH register.*/
-    calVal |= (HWREG(baseAdd + RTC_ALARMMONTH) & (RTC_MONTH_MONTH1 | 
+    calVal |= (HWREG(baseAdd + RTC_ALARMMONTH) & (RTC_MONTH_MONTH1 |
                                                    RTC_MONTH_MONTH0)) <<   \
                                                    MONTH_SHIFT;
 
     /* Reading from ALARMYEAR register.*/
-    calVal |= (HWREG(baseAdd + RTC_ALARMYEAR) & (RTC_YEAR_YEAR1 | 
+    calVal |= (HWREG(baseAdd + RTC_ALARMYEAR) & (RTC_YEAR_YEAR1 |
                                                   RTC_YEAR_YEAR0))  <<     \
                                                   YEAR_SHIFT;
 
@@ -1712,21 +1712,21 @@ unsigned int RTCAlarmCalendarGet(unsigned int baseAdd)
  *
  * \return None. \n
  *
- * \note   Compensation value is subtracted from the 32KHz period. The 
+ * \note   Compensation value is subtracted from the 32KHz period. The
  *         subtraction here is accomplished by two's complement
- *         addititon. Thus the application should pass the two's 
+ *         addititon. Thus the application should pass the two's
  *         complement value of the value to be subtracted.\n
- *         If the RTC is busy in updating its registers, then this API waits 
+ *         If the RTC is busy in updating its registers, then this API waits
  *         until this update is complete. \n
- * 
+ *
  */
 void RTCCompensationSet(unsigned int baseAdd, unsigned int compVal)
 {
     /*
     ** Writing to COMPENSATION registers requires that BUSY bit in STATUS register
-    ** is low.    
+    ** is low.
     */
-    while(IS_RTC_BUSY);  
+    while(IS_RTC_BUSY);
 
     /* Writing the lower 8 bits of 'compVal' to COMPLSB register.*/
     HWREG(baseAdd + RTC_COMPLSB) = (compVal & COMP_LOW_MASK);
@@ -1736,15 +1736,15 @@ void RTCCompensationSet(unsigned int baseAdd, unsigned int compVal)
 }
 
 /**
- * \brief   This function reads the compensation value being set in the 
+ * \brief   This function reads the compensation value being set in the
  *          compensation registers. \n
  *
  * \param   baseAdd   The base address of the RTC instance being used.\n
  *
  * \return  The value in the compensation registers COMPMSB and COMPLSB.
  *
- * \note    This returns the two's complement value of the number to be 
- *          subtracted from 32KHz period. Refer to \note of 
+ * \note    This returns the two's complement value of the number to be
+ *          subtracted from 32KHz period. Refer to \note of
  *          \RTCCompensationSet  API for more details.
  */
 
@@ -1770,14 +1770,14 @@ unsigned int RTCCompensationGet(unsigned int baseAdd)
  * \param   baseAdd       The base address of the RTC instance being used.\n
  * \param   regNumber     This specifies the scratch register number to be
  *                        accessed. This can take the values: 0, 1 or 2. \n
- * \param   scratchValue  Refers to the value to be written to the scratch 
+ * \param   scratchValue  Refers to the value to be written to the scratch
  *                        registers. \n
  *
  * \return  None.
  *
  */
 
-void RTCScratchPadSet(unsigned int baseAdd, unsigned int regNumber, 
+void RTCScratchPadSet(unsigned int baseAdd, unsigned int regNumber,
                       unsigned int scratchValue)
 {
     unsigned int offset = 0;
@@ -1789,7 +1789,7 @@ void RTCScratchPadSet(unsigned int baseAdd, unsigned int regNumber,
 /**
  * \brief   This function reads the value stored in a specified scratch
  *          register. \n
- * 
+ *
  * \param   baseAdd  The base address of the RTC instance being used.\n
  * \param   regNumber Specifies the scratch register number to be accessed.
  *                    This can take the values: 0, 1 or 2. \n
@@ -1800,7 +1800,7 @@ void RTCScratchPadSet(unsigned int baseAdd, unsigned int regNumber,
 unsigned int RTCScratchPadGet(unsigned int baseAdd, unsigned int regNumber)
 {
     unsigned int offset = 0;
- 
+
     offset = regNumber * 4;
     return(HWREG(baseAdd + RTC_SCRATCH0 + offset));
 }
@@ -1921,7 +1921,7 @@ void RTCWakeUpAlarmEventControl(unsigned int baseAdd, unsigned int controlFlag)
  *   event\n
  *
  * \return  None
- */ 
+ */
 
 void RTCWakeUpTimerEventControl(unsigned int baseAdd, unsigned int controlFlag)
 {
@@ -2220,7 +2220,7 @@ void RTCAlarm2CalendarSet(unsigned int baseAdd, unsigned int calVal)
 }
 
 /*****************************************************************************
-**                      End of APIs specific to AM335x                       
+**                      End of APIs specific to AM335x
 *****************************************************************************/
 
 /************************* End of file ***************************************/

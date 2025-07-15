@@ -4,21 +4,21 @@
 //
 // Copyright (c) 2008-2010 Texas Instruments Incorporated.  All rights reserved.
 // Software License Agreement
-// 
+//
 // Texas Instruments (TI) is supplying this software for use solely and
 // exclusively on TI's microcontroller products. The software is owned by
 // TI and/or its suppliers, and is protected under applicable copyright
 // laws. You may not combine this software with "viral" open-source
 // software in order to form a larger program.
-// 
+//
 // THIS SOFTWARE IS PROVIDED "AS IS" AND WITH ALL FAULTS.
 // NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT
 // NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 // A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. TI SHALL NOT, UNDER ANY
 // CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
 // DAMAGES, FOR ANY REASON WHATSOEVER.
-// 
-// This is part of AM1808 StarterWare USB Library, resused from revision 6288 of the 
+//
+// This is part of AM1808 StarterWare USB Library, resused from revision 6288 of the
 // stellaris USB Library.
 //
 //*****************************************************************************
@@ -209,14 +209,14 @@ USBHSCSIInquiry(unsigned int ulInPipe, unsigned int ulOutPipe,
     //
     SCSICmd.bCBWCBLength = 6;
 
-#if defined (__IAR_SYSTEMS_ICC__)     
+#if defined (__IAR_SYSTEMS_ICC__)
     //
     // Send Inquiry command with no request for vital product data.
     //
     SCSICmd.CBWCB[0] = SCSI_INQUIRY_CMD;
     SCSICmd.CBWCB[1] = 0;
     SCSICmd.CBWCB[2] = 0;
-    SCSICmd.CBWCB[3] = 0;  
+    SCSICmd.CBWCB[3] = 0;
     //
     // Allocation length.
     //
@@ -256,7 +256,7 @@ USBHSCSIInquiry(unsigned int ulInPipe, unsigned int ulOutPipe,
 	*((unsigned int *)&SCSICmd.CBWCB[4]) = SCSI_INQUIRY_DATA_SZ;
 	*((unsigned int *)&SCSICmd.CBWCB[8]) = 0;
 	*((unsigned int *)&SCSICmd.CBWCB[12]) = 0;
-#endif  
+#endif
 
 
 
@@ -315,17 +315,17 @@ USBHSCSIReadCapacity(unsigned int ulInPipe, unsigned int ulOutPipe,
     //
     // Set the length of the command itself.
     //
-    SCSICmd.bCBWCBLength = 12;   
-    
+    SCSICmd.bCBWCBLength = 12;
+
 	//
 	// Only use the first byte and set it to the Read Capacity command.  The
 	// rest are set to 0.	//
-	 
-#if defined (__IAR_SYSTEMS_ICC__)  
+
+#if defined (__IAR_SYSTEMS_ICC__)
     SCSICmd.CBWCB[0] = SCSI_READ_CAPACITY;
     SCSICmd.CBWCB[1] = 0;
     SCSICmd.CBWCB[2] = 0;
-    SCSICmd.CBWCB[3] = 0;  
+    SCSICmd.CBWCB[3] = 0;
     SCSICmd.CBWCB[4] = 0;
 	SCSICmd.CBWCB[5] = 0;
 	SCSICmd.CBWCB[6] = 0;
@@ -396,16 +396,16 @@ USBHSCSIReadCapacities(unsigned int ulInPipe, unsigned int ulOutPipe,
     // Set the length of the command itself.
     //
     SCSICmd.bCBWCBLength = 12;
-           
+
     //
     // Only use the first byte and set it to the Read Capacity command.  The
     // rest are set to 0.
     //
-#if defined (__IAR_SYSTEMS_ICC__)  
+#if defined (__IAR_SYSTEMS_ICC__)
     SCSICmd.CBWCB[0] = SCSI_READ_CAPACITIES;
     SCSICmd.CBWCB[1] = 0;
     SCSICmd.CBWCB[2] = 0;
-    SCSICmd.CBWCB[3] = 0;  
+    SCSICmd.CBWCB[3] = 0;
     SCSICmd.CBWCB[4] = 0;
 	SCSICmd.CBWCB[5] = 0;
 	SCSICmd.CBWCB[6] = 0;
@@ -517,12 +517,12 @@ USBHSCSIModeSense6(unsigned int ulInPipe, unsigned int ulOutPipe,
 
     //
     // Set the options for the Mode Sense Command (6).
-    //    
-#if defined (__IAR_SYSTEMS_ICC__)   
+    //
+#if defined (__IAR_SYSTEMS_ICC__)
     SCSICmd.CBWCB[0] = (SCSI_MODE_SENSE_6 | ulFlags);
 	SCSICmd.CBWCB[1] = 0;
     SCSICmd.CBWCB[2] = 0;
-    SCSICmd.CBWCB[3] = 0;  
+    SCSICmd.CBWCB[3] = 0;
     SCSICmd.CBWCB[4] = (unsigned char)*pulSize;
 	SCSICmd.CBWCB[5] = 0;
 	SCSICmd.CBWCB[6] = 0;
@@ -597,11 +597,11 @@ USBHSCSITestUnitReady(unsigned int ulInPipe, unsigned int ulOutPipe)
     //
     // Set the parameter options.
     //
-#if defined (__IAR_SYSTEMS_ICC__) 
+#if defined (__IAR_SYSTEMS_ICC__)
     SCSICmd.CBWCB[0] = SCSI_TEST_UNIT_READY;
     SCSICmd.CBWCB[1] = 0;
     SCSICmd.CBWCB[2] = 0;
-    SCSICmd.CBWCB[3] = 0;  
+    SCSICmd.CBWCB[3] = 0;
     SCSICmd.CBWCB[4] = 0;
 	SCSICmd.CBWCB[5] = 0;
 	SCSICmd.CBWCB[6] = 0;
@@ -676,11 +676,11 @@ USBHSCSIRequestSense(unsigned int ulInPipe, unsigned int ulOutPipe,
     //
     // Set the parameter options.
     //
-#if defined (__IAR_SYSTEMS_ICC__) 
-	SCSICmd.CBWCB[0] = SCSI_REQUEST_SENSE;    
+#if defined (__IAR_SYSTEMS_ICC__)
+	SCSICmd.CBWCB[0] = SCSI_REQUEST_SENSE;
     SCSICmd.CBWCB[1] = 0;
     SCSICmd.CBWCB[2] = 0;
-    SCSICmd.CBWCB[3] = 0;  
+    SCSICmd.CBWCB[3] = 0;
     SCSICmd.CBWCB[4] = 18;
 	SCSICmd.CBWCB[5] = 0;
 	SCSICmd.CBWCB[6] = 0;
@@ -800,10 +800,10 @@ USBHSCSIRead10(unsigned int ulInPipe, unsigned int ulOutPipe,
 #elif defined (_TMS320C6X)
 	_mem4(&SCSICmd.CBWCB[8]) = (ulNumBlocks & 0xFF);
 	_mem4(&SCSICmd.CBWCB[12]) = 0;
-#else	
+#else
 	*((unsigned int *)&SCSICmd.CBWCB[8]) = (ulNumBlocks & 0xFF);
 	*((unsigned int *)&SCSICmd.CBWCB[12]) = 0;
-#endif    
+#endif
 
     //
     // Send the command and get the results.
@@ -886,7 +886,7 @@ USBHSCSIWrite10(unsigned int ulInPipe, unsigned int ulOutPipe,
     //
     SCSICmd.CBWCB[7] = (ulNumBlocks & 0xFF00) >> 8;
 
-#if defined (__IAR_SYSTEMS_ICC__)    
+#if defined (__IAR_SYSTEMS_ICC__)
 	SCSICmd.CBWCB[8] = (ulNumBlocks & 0xFF);
 	SCSICmd.CBWCB[9] = 0;
 	SCSICmd.CBWCB[10]= 0;
@@ -898,10 +898,10 @@ USBHSCSIWrite10(unsigned int ulInPipe, unsigned int ulOutPipe,
 #elif defined (_TMS320C6X)
 	_mem4(&SCSICmd.CBWCB[8]) = ulNumBlocks & 0xFF;
 	_mem4(&SCSICmd.CBWCB[12]) = 0;
-#else	
+#else
 	*((unsigned int *)&SCSICmd.CBWCB[8]) = (ulNumBlocks & 0xFF);
 	*((unsigned int *)&SCSICmd.CBWCB[12]) = 0;
-#endif   
+#endif
     //
     // Send the command and get the results.
     //

@@ -56,7 +56,7 @@
 *******************************************************************************/
 
 /**
- * \brief   Starts/Enables the watchdog timer. 
+ * \brief   Starts/Enables the watchdog timer.
  *
  * \param   baseAdd       Base Address of the Watchdog Timer Module Registers.
  *
@@ -69,14 +69,14 @@ void WatchdogTimerEnable(unsigned int baseAdd)
     HWREG(baseAdd + WDT_WSPR) = WDT_ENABLE_SEQ1;
 
     /* Wait until write is successful to WDT_WSPR register */
-    while(WatchdogTimerWritePostedStatusGet(baseAdd, 
+    while(WatchdogTimerWritePostedStatusGet(baseAdd,
                                             WDT_WRITE_PENDING_WSPR));
 
     /* Write the second value of the watchdog timer enabling sequence */
     HWREG(baseAdd + WDT_WSPR) = WDT_ENABLE_SEQ2;
 
     /* Wait until write is successful to WDT_WSPR register */
-    while(WatchdogTimerWritePostedStatusGet(baseAdd, 
+    while(WatchdogTimerWritePostedStatusGet(baseAdd,
                                             WDT_WRITE_PENDING_WSPR));
 }
 
@@ -183,15 +183,15 @@ void WatchdogTimerPreScalerClkEnable(unsigned int baseAdd, unsigned int ptv)
     HWREG(baseAdd + WDT_WCLR) &= ~WDT_WCLR_PTV;
 
     /* Wait until write is successful to WDT_WCLR register */
-    while(WatchdogTimerWritePostedStatusGet(baseAdd, 
+    while(WatchdogTimerWritePostedStatusGet(baseAdd,
                                               WDT_WRITE_PENDING_WCLR));
 
-    /* 
-    ** Set the ptv field of WDT_WCLR register with the ptv value and also 
-    ** enable the pre-scaler clock 
-    */                
-    HWREG(baseAdd + WDT_WCLR) |= ((ptv & WDT_WCLR_PTV) | 
-                                              WDT_WCLR_PRE);               
+    /*
+    ** Set the ptv field of WDT_WCLR register with the ptv value and also
+    ** enable the pre-scaler clock
+    */
+    HWREG(baseAdd + WDT_WCLR) |= ((ptv & WDT_WCLR_PTV) |
+                                              WDT_WCLR_PRE);
 
     /* Wait until write is successful to WDT_WCLR register */
     while(WatchdogTimerWritePostedStatusGet(baseAdd,
@@ -231,7 +231,7 @@ void WatchdogTimerCounterSet(unsigned int baseAdd, unsigned int countVal)
     HWREG(baseAdd + WDT_WCRR) = countVal;
 
     /* Wait until write is successful to WDT_WCRR register */
-    while(WatchdogTimerWritePostedStatusGet(baseAdd, 
+    while(WatchdogTimerWritePostedStatusGet(baseAdd,
                                             WDT_WRITE_PENDING_WCRR));
 }
 
@@ -240,7 +240,7 @@ void WatchdogTimerCounterSet(unsigned int baseAdd, unsigned int countVal)
  *
  * \param   baseAdd       Base Address of the Watchdog Timer Module Register.
  *
- * \return  This API returns the count value present in the Watchdog Timer 
+ * \return  This API returns the count value present in the Watchdog Timer
  *            Counter register.
  *
  **/
@@ -258,7 +258,7 @@ unsigned int WatchdogTimerCounterGet(unsigned int baseAdd)
  *
  * \return  None.
  *
- * \note:   It is recommended to not use reload value as 0xFFFFFFFF. 
+ * \note:   It is recommended to not use reload value as 0xFFFFFFFF.
  *
  **/
 void WatchdogTimerReloadSet(unsigned int baseAdd, unsigned int reloadVal)
@@ -292,11 +292,11 @@ unsigned int WatchdogTimerReloadGet(unsigned int baseAdd)
  *
  * \return  None.
  *
- * \note    This API should be called if the Watchdog timer WDT_WCRR 
- *          register has to be loaded with the WDT_WLDR register before 
+ * \note    This API should be called if the Watchdog timer WDT_WCRR
+ *          register has to be loaded with the WDT_WLDR register before
  *          overflow occurs. If this API has to be called more than once in an
- *          application then ensure each time this API is called, pass a 
- *          different value to the parameter 'trigVal' to ensure proper working. 
+ *          application then ensure each time this API is called, pass a
+ *          different value to the parameter 'trigVal' to ensure proper working.
  *
  **/
 void WatchdogTimerTriggerSet(unsigned int baseAdd, unsigned int trigVal)
@@ -305,7 +305,7 @@ void WatchdogTimerTriggerSet(unsigned int baseAdd, unsigned int trigVal)
     HWREG(baseAdd + WDT_WTGR) = trigVal;
 
     /* Wait till write is successful to WDT_WTGR register */
-    while(WatchdogTimerWritePostedStatusGet(baseAdd, 
+    while(WatchdogTimerWritePostedStatusGet(baseAdd,
                                                   WDT_WRITE_PENDING_WTGR));
 }
 
@@ -313,7 +313,7 @@ void WatchdogTimerTriggerSet(unsigned int baseAdd, unsigned int trigVal)
  * \brief   Load the delay register of Watchdog timer with the delay value.
  *
  * \param   baseAdd       Base Address of the Watchdog Timer Module Register.
- * \param   delayVal      Delay value. 
+ * \param   delayVal      Delay value.
  *
  * \return  None.
  *
@@ -324,7 +324,7 @@ void WatchdogTimerDelaySet(unsigned int baseAdd, unsigned int delayVal)
     HWREG(baseAdd + WDT_WDLY) = delayVal;
 
     /* Wait until write is successful to the WDT_WDLY register */
-    while(WatchdogTimerWritePostedStatusGet(baseAdd, 
+    while(WatchdogTimerWritePostedStatusGet(baseAdd,
           WDT_WRITE_PENDING_WDLY));
 }
 
@@ -333,7 +333,7 @@ void WatchdogTimerDelaySet(unsigned int baseAdd, unsigned int delayVal)
  *
  * \param   baseAdd       Base Address of the Watchdog Timer Module Register.
  *
- * \return  This API returns the delay register(WDT_WDLY) value of Watchdog 
+ * \return  This API returns the delay register(WDT_WDLY) value of Watchdog
  *          timer.
  *
  **/
@@ -359,8 +359,8 @@ unsigned int WatchdogTimerDelayGet(unsigned int baseAdd)
 void WatchdogTimerIntRawStatusSet(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Set the status in the WDT_WIRQSTATRAW register */
-    HWREG(baseAdd + WDT_WIRQSTATRAW) = (intFlags & 
-                                            (WDT_INT_OVERFLOW | 
+    HWREG(baseAdd + WDT_WIRQSTATRAW) = (intFlags &
+                                            (WDT_INT_OVERFLOW |
                                              WDT_INT_DELAY));
 }
 
@@ -408,8 +408,8 @@ unsigned int WatchdogTimerIntStatusGet(unsigned int baseAdd)
 void WatchdogTimerIntStatusClear(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Clear the status in the WDT_WIRQSTAT register */
-    HWREG(baseAdd + WDT_WIRQSTAT) = (intFlags & 
-                                         (WDT_INT_OVERFLOW | 
+    HWREG(baseAdd + WDT_WIRQSTAT) = (intFlags &
+                                         (WDT_INT_OVERFLOW |
                                           WDT_INT_DELAY));
 }
 
@@ -429,13 +429,13 @@ void WatchdogTimerIntStatusClear(unsigned int baseAdd, unsigned int intFlags)
 void WatchdogTimerIntEnable(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Enable the watchdog timer interrupts */
-    HWREG(baseAdd + WDT_WIRQENSET) = (intFlags & 
-                                          (WDT_INT_ENABLE_OVRFLW | 
-                                           WDT_INT_ENABLE_DELAY)); 
+    HWREG(baseAdd + WDT_WIRQENSET) = (intFlags &
+                                          (WDT_INT_ENABLE_OVRFLW |
+                                           WDT_INT_ENABLE_DELAY));
 }
 
 /**
- * \brief   Used to check whether interrupts of Watchdog timer are enabled 
+ * \brief   Used to check whether interrupts of Watchdog timer are enabled
  *          or disabled.
  *
  * \param   baseAdd       Base Address of the Watchdog Timer Module Register.
@@ -465,8 +465,8 @@ unsigned int WatchdogTimerIntEnableStatusGet(unsigned int baseAdd)
 void WatchdogTimerIntDisable(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Disable the Watchdog timer interrupts */
-    HWREG(baseAdd + WDT_WIRQENCLR) = (intFlags & 
-                                          (WDT_INT_DISABLE_DELAY | 
+    HWREG(baseAdd + WDT_WIRQENCLR) = (intFlags &
+                                          (WDT_INT_DISABLE_DELAY |
                                            WDT_INT_DISABLE_OVRFLW));
 }
 

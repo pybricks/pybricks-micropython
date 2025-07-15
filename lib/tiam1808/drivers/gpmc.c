@@ -51,7 +51,7 @@
 * \brief   This function reads the IP revision code of GPMC.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \return  ipRev          IP revision code of GPMC.\n
 */
 unsigned int  GPMCRevisionGet(unsigned int baseAddr)
@@ -67,12 +67,12 @@ unsigned int  GPMCRevisionGet(unsigned int baseAddr)
 * \brief   This function sets the idle mode for gpmc.\n
 *
 * \param   baseaddr       Memory address of gpmc.\n
-* 
+*
 * \param   mode           Idle mode.\n
 *                         This can take one of the following values :\n
 *                         GPMC_IDLEMODE_FORCEIDLE -- for force-idle. \n
 *                         GPMC_IDLEMODE_NOIDLE    -- for no-idle. \n
-*                         GPMC_IDLEMODE_SMARTIDLE -- for smart-idle.\n 
+*                         GPMC_IDLEMODE_SMARTIDLE -- for smart-idle.\n
 *
 * \return  none.\n
 */
@@ -88,12 +88,12 @@ void  GPMCIdleModeSelect(unsigned int baseAddr, unsigned int mode)
 * \brief   This function configs the internal OCP clock gating strategy.\n
 *
 * \param   baseaddr       Memory address of gpmc.\n
-* 
+*
 * \param   configVal      Config value.\n
 *                         This can take one of the following values :\n
-*                         GPMC_AUTOIDLE_FREERUN -- When Interface clock is 
+*                         GPMC_AUTOIDLE_FREERUN -- When Interface clock is
 *                                                  free-running. \n
-*                         GPMC_AUTOIDLE_AUTORUN -- When Automatic Interface clk 
+*                         GPMC_AUTOIDLE_AUTORUN -- When Automatic Interface clk
 *                                                  gating strategy is applied.\n
 *
 * \return  none.\n
@@ -110,7 +110,7 @@ void  GPMCAutoIdleConfig(unsigned int baseAddr, unsigned int configVal)
 * \brief   This function resets the GPMC.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \return  None.\n
 */
 
@@ -125,7 +125,7 @@ void  GPMCModuleSoftReset(unsigned int baseAddr)
 * \brief   This function gets the software resets status of GPMC.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \return  status         Reset status : \n
 *                            0 : Module reset is on-going.\n
 *                            1 : Module reset is completed.\n
@@ -144,10 +144,10 @@ unsigned int  GPMCModuleResetStatusGet(unsigned int baseAddr)
 * \brief   This function gets Interrupt status of interrupt passed.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \param   flag           Flag for which interrupt status has to get.\n
 *                         This can take one of the following values :\n
-*                         GPMC_FIFOEVENT_STATUS         : For FIFOEvent 
+*                         GPMC_FIFOEVENT_STATUS         : For FIFOEvent
 *                                                         interrupt status.\n
 *                         GPMC_TERMINALCOUNT_STATUS     : For TerminalCountEvent
 *                                                         interrupt status.\n
@@ -155,18 +155,18 @@ unsigned int  GPMCModuleResetStatusGet(unsigned int baseAddr)
 *                                                         Detection interrupt
 *                                                         status.\n
 *                         GPMC_WAIT1EDGEDETECTION_STATUS: For Wait1 Edge
-*                                                         Detection interrupt 
+*                                                         Detection interrupt
 *                                                         status.\n
 *
-* 
+*
 * \return  intSts         Interrupt Status. Return value meaning depends on the
 *                         interrupt flag passed. \n
 *                         if flag is GPMC_FIFOEVENT_STATUS, then \n
-*                            0 : Less than FIFOTHRESHOLD bytes are available in 
+*                            0 : Less than FIFOTHRESHOLD bytes are available in
 *                                prefetch/read mode.\n
 *                                Less than FIFOTHRESHOLD byte free spaces are
 *                                available in write-posting/write mode. \n
-*                            1 : Atleast FIFOTHRESHOLD bytes are available in 
+*                            1 : Atleast FIFOTHRESHOLD bytes are available in
 *                                prefetch/read mode.\n
 *                                Atlease FIFOTHRESHOLD byte free places are
 *                                available in write-posting/write mode.\n
@@ -174,16 +174,16 @@ unsigned int  GPMCModuleResetStatusGet(unsigned int baseAddr)
 *                            0 : CountValue is greater than 0.\n
 *                            1 : CountValue is equal to 0.\n
 *                         if flag is GPMC_WAIT0EDGEDETECTION_STATUS, then \n
-*                            0 : A transition on WAIT0 input pin has not been 
+*                            0 : A transition on WAIT0 input pin has not been
 *                                detected.\n
-*                            1 : A transition on WAIT0 input pin has been 
+*                            1 : A transition on WAIT0 input pin has been
 *                                detected.\n
 *                         if flag is GPMC_WAIT1EDGEDETECTION_STATUS, then \n
-*                            0 : A transition on WAIT1 input pin has not been 
+*                            0 : A transition on WAIT1 input pin has not been
 *                                detected.\n
-*                            1 : A transition on WAIT1 input pin has been 
+*                            1 : A transition on WAIT1 input pin has been
 *                                detected.\n
-*                
+*
 */
 unsigned int  GPMCIntStatusGet(unsigned int baseAddr, unsigned int flag)
 {
@@ -223,10 +223,10 @@ unsigned int  GPMCIntStatusGet(unsigned int baseAddr, unsigned int flag)
 * \brief   This function clears/resets the interrupt status.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \param   flag           Flag for which interrupt status has to reset.\n
 *                         This can take one of the following values :\n
-*                         GPMC_FIFOEVENT_STATUS         : For FIFOEvent 
+*                         GPMC_FIFOEVENT_STATUS         : For FIFOEvent
 *                                                         interrupt status.\n
 *                         GPMC_TERMINALCOUNT_STATUS     : For TerminalCountEvent
 *                                                         interrupt status.\n
@@ -234,10 +234,10 @@ unsigned int  GPMCIntStatusGet(unsigned int baseAddr, unsigned int flag)
 *                                                         Detection interrupt
 *                                                         status.\n
 *                         GPMC_WAIT1EDGEDETECTION_STATUS: For Wait1 Edge
-*                                                         Detection interrupt 
+*                                                         Detection interrupt
 *                                                         status.\n
 *
-* \return  None. 
+* \return  None.
 *
 */
 void  GPMCIntStatusClear(unsigned int baseAddr, unsigned int flag)
@@ -272,7 +272,7 @@ void  GPMCIntStatusClear(unsigned int baseAddr, unsigned int flag)
 * \brief   This function enables the interrupts.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \param   flag           Flag for which interrupt has to enable.
 *                         This can take one of the following values :\n
 *                         GPMC_FIFOEVENT_INT          : For FIFOEvent interrupt.\n
@@ -313,7 +313,7 @@ void  GPMCIntEnable(unsigned int baseAddr, unsigned int flag)
 * \brief   This function disable/masks the interrupts.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \param   flag           Flag for which interrupt has to mask.\n
 *                         This can take one of the following values :\n
 *                         GPMC_FIFOEVENT_INT          : For FIFOEvent interrupt.\n
@@ -324,7 +324,7 @@ void  GPMCIntEnable(unsigned int baseAddr, unsigned int flag)
 *                         GPMC_WAIT1EDGEDETECTION_INT : For Wait1 Edge
 *                                                       Detection interrupt. \n
 *
-* \return  None.\n 
+* \return  None.\n
 *
 */
 void  GPMCIntDisable(unsigned int baseAddr, unsigned int flag)
@@ -351,11 +351,11 @@ void  GPMCIntDisable(unsigned int baseAddr, unsigned int flag)
 }
 
 /**
-* \brief   This function sets the start timeout value(TIMEOUTSTARTVALUE) 
+* \brief   This function sets the start timeout value(TIMEOUTSTARTVALUE)
 *          of the timeout counter.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \param   timoutVal      Timeout start Value in GPMC_FCLK cycles.\n
 *
 * \return  None. \n
@@ -374,13 +374,13 @@ void  GPMCTimeOutStartValSet(unsigned int baseAddr, unsigned int timeoutVal)
 * \brief   This function configures the timeout feature.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
-* \param   flag           Flag to indicate whether to enable or disable the 
+*
+* \param   flag           Flag to indicate whether to enable or disable the
 *                         feature.\n
 *                         This can take one of the following values :\n
 *                         GPMC_TIMEOUTFEATURE_ENABLE  - To enable the timout
 *                                                       feature.\n
-*                         GPMC_TIMEOUTFEATURE_DISABLE - To disable the timout 
+*                         GPMC_TIMEOUTFEATURE_DISABLE - To disable the timout
 *                                                       feature.\n
 * \return  None. \n
 *
@@ -400,11 +400,11 @@ void  GPMCTimeOutFeatureConfig(unsigned int baseAddr, unsigned int flag)
 }
 
 /**
-* \brief   This function returns the address of illegal access when an error 
+* \brief   This function returns the address of illegal access when an error
 *          occures.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \return  illegalAddrVal Address of illegal access. \n
 *
 */
@@ -421,10 +421,10 @@ unsigned int  GPMCErrAddrGet(unsigned int baseAddr)
 * \brief   This function returns the status of error validity.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \return  ErrValstatus   Error validity status. \n
 *                         0 : Error fields are no longer valid.\n
-*                         1 : Error detected and logged in the 
+*                         1 : Error detected and logged in the
 *                             other error fields.\n
 *
 */
@@ -438,11 +438,11 @@ unsigned int  GPMCErrValStatusGet(unsigned int baseAddr)
 }
 
 /**
-* \brief   This function returns the System Command of the transaction 
+* \brief   This function returns the System Command of the transaction
 *          that caused the error.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \return  errCmd         System Command that caused the error. \n
 *
 */
@@ -457,7 +457,7 @@ unsigned int  GPMCErrSysCmdGet(unsigned int baseAddr)
 }
 
 /**
-* \brief   This function returns whether passed error is occured or not.\n 
+* \brief   This function returns whether passed error is occured or not.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -466,7 +466,7 @@ unsigned int  GPMCErrSysCmdGet(unsigned int baseAddr)
 *                         GPMC_TIMEOUT_ERROR     -- For timeout error.\n
 *                         GPMC_NOTSUPPMCMD_ERROR -- For non-supported cmd error.\n
 *                         GPMC_NOTSUPPADD_ERROR  -- For non-supported add error.\n
-* 
+*
 * \return  ErrStatus \n
 *
 *                         1 : If passed argument type of error occured.\n
@@ -501,7 +501,7 @@ unsigned int  GPMCErrStatusGet(unsigned int baseAddr, unsigned int err)
 }
 
 /**
-* \brief   This function sets/selects the waitpin polarity.\n 
+* \brief   This function sets/selects the waitpin polarity.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -509,7 +509,7 @@ unsigned int  GPMCErrStatusGet(unsigned int baseAddr, unsigned int err)
 *                         This can take one of the following values :\n
 *                         GPMC_WAIT_PIN0   -- For WAITPIN0.\n
 *                         GPMC_WAIT_PIN1   -- For WAITPIN1.\n
-* 
+*
 * \param  polarity        Wait pin polarity.\n
 *                         This can take one of the following values :\n
 *                         GPMC_WAIT_PIN_POLARITY_LOW  -- for active low.\n
@@ -546,10 +546,10 @@ void  GPMCWaitPinPolaritySelect(unsigned int baseAddr, unsigned int pin,
 }
 
 /**
-* \brief   This function controls the write protect output pin level.\n 
+* \brief   This function controls the write protect output pin level.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
+*
 * \param   pinLevel       Write Protect pin level.\n
 *                         This can take one of the following values :\n
 *                         GPMC_WP_PIN_LEVEL_LOW  -- for level low.\n
@@ -571,16 +571,16 @@ void  GPMCWriteProtectPinLevelCtrl(unsigned int baseAddr, unsigned int pinLevel)
 }
 
 /**
-* \brief   This function configs the limited address device support.\n 
+* \brief   This function configs the limited address device support.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
-* \param   flag           Flag to indicate whether to enable/disable the 
+*
+* \param   flag           Flag to indicate whether to enable/disable the
 *                         Limited Address device support.\n
 *                         This can take one of the following values :\n
-*                         GPMC_LIMITEDADDRESS_SUPPORT_ENABLE  -- To enable 
+*                         GPMC_LIMITEDADDRESS_SUPPORT_ENABLE  -- To enable
 *                                                                the support.\n
-*                         GPMC_LIMITEDADDRESS_SUPPORT_DISABLE -- To disable 
+*                         GPMC_LIMITEDADDRESS_SUPPORT_DISABLE -- To disable
 *                                                                the support.\n
 *
 * \return  None.\n
@@ -599,17 +599,17 @@ void  GPMCLimitedAddrDevSupportConfig(unsigned int baseAddr, unsigned int flag)
 }
 
 /**
-* \brief   This function configs the Force Posted Write feature to NAND 
-*          Cmd/Add/Data location.\n 
+* \brief   This function configs the Force Posted Write feature to NAND
+*          Cmd/Add/Data location.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
-* 
-* \param   flag           Flag to indicate whether to enable/disable the 
+*
+* \param   flag           Flag to indicate whether to enable/disable the
 *                         Force Posted Write feature.\n
 *                         This can take one of the following values :\n
-*                         GPMC_FORCEPOSTEDWRITE_ENABLE  -- To enable the 
+*                         GPMC_FORCEPOSTEDWRITE_ENABLE  -- To enable the
 *                                                          feature.\n
-*                         GPMC_FORCEPOSTEDWRITE_DISABLE -- To disable 
+*                         GPMC_FORCEPOSTEDWRITE_DISABLE -- To disable
 *                                                          the feature.\n
 *
 * \return  None.\n
@@ -629,7 +629,7 @@ void  GPMCNANDForcePostedWriteFeatureConfig(unsigned int baseAddr,
 }
 
 /**
-* \brief   This function gets the waitpin status.\n 
+* \brief   This function gets the waitpin status.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -664,7 +664,7 @@ unsigned int  GPMCWaitPinStatusGet(unsigned int baseAddr, unsigned int pin)
 }
 
 /**
-* \brief   This function gets the empty write buffer status.\n 
+* \brief   This function gets the empty write buffer status.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -684,7 +684,7 @@ unsigned int  GPMCEmptyWriteBuffStatusGet(unsigned int baseAddr)
 }
 
 /**
-* \brief   This function selects the FCLK DIVIDER for the chip select passed.\n 
+* \brief   This function selects the FCLK DIVIDER for the chip select passed.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -718,8 +718,8 @@ void  GPMCFclkDividerSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function selects the signals timing latencies scalar factor 
-*          for the chip select.\n 
+* \brief   This function selects the signals timing latencies scalar factor
+*          for the chip select.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -752,7 +752,7 @@ void  GPMCTimeParaGranularitySelect(unsigned int baseAddr, unsigned int csNum,
 
 /**
 * \brief   This function selects the Address and data multiplexed protocol
-*          for the device connected to csNum.\n 
+*          for the device connected to csNum.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -787,8 +787,8 @@ void  GPMCAddrDataMuxProtocolSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function selects the device type for the device connected to 
-*          csNum.\n 
+* \brief   This function selects the device type for the device connected to
+*          csNum.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -822,8 +822,8 @@ void  GPMCDevTypeSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function selects the device size for the device connected to 
-*          csNum.\n 
+* \brief   This function selects the device size for the device connected to
+*          csNum.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -855,8 +855,8 @@ void  GPMCDevSizeSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function selects the WAIT PIN for the device connected to 
-*          csNum.\n 
+* \brief   This function selects the WAIT PIN for the device connected to
+*          csNum.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -889,7 +889,7 @@ void  GPMCWaitPinSelect(unsigned int baseAddr, unsigned int csNum,
 
 /**
 * \brief   This function configs/selects the wait monitoring time for the device
-*          connected to csNum.\n 
+*          connected to csNum.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -908,10 +908,10 @@ void  GPMCWaitPinSelect(unsigned int baseAddr, unsigned int csNum,
 *                         This can take one of the following values :\n
 *                         GPMC_WAITMONITORINGTIME_WITH_VALIDDATA  -- For wait
 *                                               pin monitoring with valid data.\n
-*                         GPMC_WAITMONITORINGTIME_ONECLKB4_VALIDDATA  -- For 
+*                         GPMC_WAITMONITORINGTIME_ONECLKB4_VALIDDATA  -- For
 *                                               wait pin monitoring one GPMC_CLK
 *                                               before valid data. \n
-*                         GPMC_WAITMONITORINGTIME_TWOCLKB4_VALIDDATA  -- For 
+*                         GPMC_WAITMONITORINGTIME_TWOCLKB4_VALIDDATA  -- For
 *                                               wait pin monitoring two GPMC_CLK
 *                                               before valid data. \n
 * \return  None.\n
@@ -982,7 +982,7 @@ void  GPMCWaitPinMonitoringConfig(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function configs the output GPMC_CLK activation time.\n 
+* \brief   This function configs the output GPMC_CLK activation time.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1023,7 +1023,7 @@ void  GPMCClkActivationTimeConfig(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function sets the device page length.\n 
+* \brief   This function sets the device page length.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1040,9 +1040,9 @@ void  GPMCClkActivationTimeConfig(unsigned int baseAddr, unsigned int csNum,
 *
 * \param   pageLen        Device Page Length.\n
 *                         This can take one of the following values :\n
-*                         GPMC_DEV_PAGELENGTH_FOUR    -- For 4 words page 
+*                         GPMC_DEV_PAGELENGTH_FOUR    -- For 4 words page
 *                                                        length.\n
-*                         GPMC_DEV_PAGELENGTH_EIGHT   -- For 8 words page 
+*                         GPMC_DEV_PAGELENGTH_EIGHT   -- For 8 words page
 *                                                        length.\n
 *                         GPMC_DEV_PAGELENGTH_SIXTEEN -- For 16 words page
 *                                                        length. \n
@@ -1060,7 +1060,7 @@ void  GPMCDevPageLenSet(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function selects the write type.\n 
+* \brief   This function selects the write type.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1093,7 +1093,7 @@ void  GPMCWriteTypeSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function selects the read type.\n 
+* \brief   This function selects the read type.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1126,7 +1126,7 @@ void  GPMCReadTypeSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function configs the access type for read and write.\n 
+* \brief   This function configs the access type for read and write.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1176,7 +1176,7 @@ void  GPMCAccessTypeSelect(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function configs the wrapping burst capability.\n 
+* \brief   This function configs the wrapping burst capability.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1191,7 +1191,7 @@ void  GPMCAccessTypeSelect(unsigned int baseAddr, unsigned int csNum,
 *                         GPMC_CHIP_SELECT_6 -- For Chip Select 6.\n
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
-* \param   flag           Flag to indicate whether to enable/disable 
+* \param   flag           Flag to indicate whether to enable/disable
 *                         Synchronous wrapping burst capability.\n
 *                         This can take one of the following values :\n
 *                         GPMC_WRAPBURST_ENABLE   -- To enable the wrap burst
@@ -1228,7 +1228,7 @@ void  GPMCSyncWrapBurstConfig(unsigned int baseAddr, unsigned int csNum,
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
 * \param   conf           Configuration value for chip select timing parameters
-*                         Use the GPMC_CS_TIMING_CONFIG macro to get the value 
+*                         Use the GPMC_CS_TIMING_CONFIG macro to get the value
 *                         of conf. \n
 *
 * \return  None.\n
@@ -1241,7 +1241,7 @@ void  GPMCCSTimingConfig(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function configs the timing parameters for ADV# signal.\n 
+* \brief   This function configs the timing parameters for ADV# signal.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1256,8 +1256,8 @@ void  GPMCCSTimingConfig(unsigned int baseAddr, unsigned int csNum,
 *                         GPMC_CHIP_SELECT_6 -- For Chip Select 6.\n
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
-* \param   conf           Configuration value for ADV# signal timing parameters 
-*                         Use the GPMC_ADV_TIMING_CONFIG macro to get the value 
+* \param   conf           Configuration value for ADV# signal timing parameters
+*                         Use the GPMC_ADV_TIMING_CONFIG macro to get the value
 *                         of conf. \n
 *
 * \return  None.\n
@@ -1299,8 +1299,8 @@ void  GPMCWEAndOETimingConfig(unsigned int baseAddr, unsigned int csNum,
 }
 
 /**
-* \brief   This function configs the RdAccessTime and CycleTime timing 
-*          parameters.\n 
+* \brief   This function configs the RdAccessTime and CycleTime timing
+*          parameters.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1316,7 +1316,7 @@ void  GPMCWEAndOETimingConfig(unsigned int baseAddr, unsigned int csNum,
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
 * \param   conf           Configuration value for RdAccessTime and CycleTime
-*                         timing parameters. Use the 
+*                         timing parameters. Use the
 *                         GPMC_RDACCESS_CYCLETIME_TIMING_CONFIG macro to
 *                         get the value of conf. \n
 *
@@ -1332,7 +1332,7 @@ void  GPMCRdAccessAndCycleTimeTimingConfig(unsigned int baseAddr,
 
 /**
 * \brief   This function configs the WrAccessTime, Cycle2Cycle and BusTurnAround
-*          timing parameters.\n 
+*          timing parameters.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1347,13 +1347,13 @@ void  GPMCRdAccessAndCycleTimeTimingConfig(unsigned int baseAddr,
 *                         GPMC_CHIP_SELECT_6 -- For Chip Select 6.\n
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
-* \param   wrAccessTime   Write Access Time(Delay from StartAccessTime to the 
-*                         GPMC_FCLK rising edge corresponding the GPMC_CLK 
-*                         rising edge used by the attached memory for the 
+* \param   wrAccessTime   Write Access Time(Delay from StartAccessTime to the
+*                         GPMC_FCLK rising edge corresponding the GPMC_CLK
+*                         rising edge used by the attached memory for the
 *                         first data capture) in GPMC_FCLK cycles.\n
 *
-*        wrDataOnADmuxBus Specifies on which GPMC_FCLK rising edge the first 
-*                         data of the synchronous burst write is driven in the 
+*        wrDataOnADmuxBus Specifies on which GPMC_FCLK rising edge the first
+*                         data of the synchronous burst write is driven in the
 *                         add/data multiplexed bus.\n
 *
 * \return  None.\n
@@ -1376,7 +1376,7 @@ void  GPMCWrAccessAndWrDataOnADMUXBusTimingConfig(unsigned int baseAddr,
 
 /**
 * \brief   This function configs the Cycle2Cycle and BusTurnAround  timing
-*          parameters.\n 
+*          parameters.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1392,7 +1392,7 @@ void  GPMCWrAccessAndWrDataOnADMUXBusTimingConfig(unsigned int baseAddr,
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
 * \param   conf           Configuration value for Cycle2Cycle and BusTurnAround
-*                         timing parameters. Use the 
+*                         timing parameters. Use the
 *                         GPMC_CYCLE2CYCLE_BUSTURNAROUND_TIMING_CONFIG macro to
 *                         get the value of conf. \n
 *
@@ -1408,7 +1408,7 @@ void  GPMCycle2CycleAndTurnArndTimeTimingConfig(unsigned int baseAddr,
 
 /**
 * \brief   This function enables/disables the chip select. This function
-*          is called during the chip select configuration.\n 
+*          is called during the chip select configuration.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
@@ -1423,7 +1423,7 @@ void  GPMCycle2CycleAndTurnArndTimeTimingConfig(unsigned int baseAddr,
 *                         GPMC_CHIP_SELECT_6 -- For Chip Select 6.\n
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
-* \param   conf           Flag to indicate whether to enable or disable 
+* \param   conf           Flag to indicate whether to enable or disable
 *                         the Chip select.\n
 *                         This can take one of the following values :\n
 *                         GPMC_CS_ENABLE  -- To enable the chip select.\n
@@ -1457,7 +1457,7 @@ void  GPMCCSConfig(unsigned int baseAddr, unsigned int csNum,
 *                         GPMC_CHIP_SELECT_6 -- For Chip Select 6.\n
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
-* \param   addr           Chip Select Base address.Value can range from 
+* \param   addr           Chip Select Base address.Value can range from
 *                         0 to 0x3F\n
 *
 * \return  None.\n
@@ -1524,7 +1524,7 @@ void  GPMCMaskAddrSet(unsigned int baseAddr, unsigned int csNum,
 *                         GPMC_CHIP_SELECT_6 -- For Chip Select 6.
 *                         GPMC_CHIP_SELECT_7 -- For Chip Select 7.\n
 *
-* \param  cmd             COMMAND to write. 
+* \param  cmd             COMMAND to write.
 *
 * \return  None.\n
 *
@@ -1624,7 +1624,7 @@ unsigned int  GPMCNANDDataRead(unsigned int baseAddr, unsigned int csNum)
 *
 * \param   accessMode     Access mode of prefetch engine.\n
 *                         This can take one of the following values :\n
-*                         GPMC_PREFETCH_ACCESSMODE_READ  -- For READ Access 
+*                         GPMC_PREFETCH_ACCESSMODE_READ  -- For READ Access
 *                                                           mode.\n
 *                         GPMC_PREFETCH_ACCESSMODE_WRITE -- For WRITE Access
 *                                                            mode.\n
@@ -1643,7 +1643,7 @@ void GPMCPrefetchAccessModeSelect(unsigned int baseAddr,
 }
 
 /**
-* \brief   This function select the synchronization type to use on FIFO 
+* \brief   This function select the synchronization type to use on FIFO
 *          threshold crossing.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -1672,24 +1672,24 @@ void GPMCPrefetchSyncTypeSelect(unsigned int baseAddr, unsigned int syncType)
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
-* \param   flag           Flag to specify when PREFETCH engine has to start 
+* \param   flag           Flag to specify when PREFETCH engine has to start
 *                         the access to CS.\n
 *                         This can take one of the following values :\n
 *                         GPMC_PREFETCH_ACCESSCS_AT_START       --  To start the
-*                                                                   access as 
-*                                                                   soon as 
-*                                                                   STARTENGINE 
+*                                                                   access as
+*                                                                   soon as
+*                                                                   STARTENGINE
 *                                                                   is set.\n
 *                         GPMC_PREFETCH_ACCESSCS_AT_STARTANDWAIT -- To start the
-*                                                                   access as 
-*                                                                   soon as 
+*                                                                   access as
+*                                                                   soon as
 *                                                                   STARTENGINE
-*                                                                   is set and 
-*                                                                   non wait 
-*                                                                   edge  
-*                                                                   detection 
-*                                                                   on the  
-*                                                                   selected 
+*                                                                   is set and
+*                                                                   non wait
+*                                                                   edge
+*                                                                   detection
+*                                                                   on the
+*                                                                   selected
 *                                                                   wait pin.\n
 *
 * \return  None.\n
@@ -1705,16 +1705,16 @@ void GPMCPrefetchSyncModeConfig(unsigned int baseAddr,unsigned int flag)
 }
 
 /**
-* \brief   This function selects the wait pin edge detector to start the 
+* \brief   This function selects the wait pin edge detector to start the
 *          PREFETCH engine in synchronized mode.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
 * \param   waitPin        Wait pin to use for edge detector. \n
 *                         This can take one of the following values :\n
-*                         GPMC_PREFETCH_WAITPINSELECTOR_W0 -- To Selects 
+*                         GPMC_PREFETCH_WAITPINSELECTOR_W0 -- To Selects
 *                                                             Wait0EdgeDetection\n
-*                         GPMC_PREFETCH_WAITPINSELECTOR_W1 -- To Selects 
+*                         GPMC_PREFETCH_WAITPINSELECTOR_W1 -- To Selects
 *                                                             Wait1EdgeDetection\n
 *
 * \return  None.\n
@@ -1759,8 +1759,8 @@ void GPMCPrefetchEngineDisable(unsigned int baseAddr)
 }
 
 /**
-* \brief   This function sets the FIFOTHRESHOLD (maximum number of bytes read 
-*          from the FIFO or written to the FIFO by the host on a DMA or 
+* \brief   This function sets the FIFOTHRESHOLD (maximum number of bytes read
+*          from the FIFO or written to the FIFO by the host on a DMA or
 *          interrupt request) value for the PREFETCH and POSTWRITE engine.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -1780,7 +1780,7 @@ void GPMCPrefetchFifoThrldValSet(unsigned int baseAddr, unsigned int fifoThrsld)
 }
 
 /**
-* \brief   This function selects the chip select(CS) where Prefetch Postwrite 
+* \brief   This function selects the chip select(CS) where Prefetch Postwrite
 *          engine is active.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -1809,7 +1809,7 @@ void GPMCPrefetchCSSelect(unsigned int baseAddr, unsigned int csNum)
 }
 
 /**
-* \brief   This function configs the access cycle optimization for PREFETCH 
+* \brief   This function configs the access cycle optimization for PREFETCH
 *          engine. \n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -1817,12 +1817,12 @@ void GPMCPrefetchCSSelect(unsigned int baseAddr, unsigned int csNum)
 * \param   configVal      access cycle optimization config value.\n
 *                         This can take one of the following values :\n
 *                         GPMC_PREFETCH_OPTIMIZED_ACCESS_ENABLE  -- To enable
-*                                                                   the access 
+*                                                                   the access
 *                                                                   optimization\n
 *                         GPMC_PREFETCH_OPTIMIZED_ACCESS_DISABLE -- To disable
-*                                                                   the access 
+*                                                                   the access
 *                                                                   optimization\n
-*                                                                    
+*
 * \return  None.\n
 *
 */
@@ -1837,16 +1837,16 @@ void GPMCPrefetchAccessCycleOptConfig(unsigned int baseAddr,
 }
 
 /**
-* \brief   This function sets the number of GPMC_FCLK cycles to be substracted 
-*          from RdCycleTime,WrCycleTime, AccessTime, CSRdOffTime, CSWrOffTime, 
-*          ADVRdOffTime,ADVWrOffTime, OEOffTime, WEOffTime for PREFETCH 
+* \brief   This function sets the number of GPMC_FCLK cycles to be substracted
+*          from RdCycleTime,WrCycleTime, AccessTime, CSRdOffTime, CSWrOffTime,
+*          ADVRdOffTime,ADVWrOffTime, OEOffTime, WEOffTime for PREFETCH
 *          engine cycle optimization. \n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
 * \param   cleOptVal      Cycle optimization value. This can take value from
 *                         0 to 7.\n
-*                                                                    
+*
 * \return  None.\n
 *
 */
@@ -1869,11 +1869,11 @@ void GPMCPrefetchCycleOptValSet(unsigned int baseAddr, unsigned int cleOptVal)
 *                         This can take one of the following values :\n
 *                         GPMC_PREFETCH_RR_ARBITRATION_ENABLE   -- To enable
 *                                                                  the Round
-*                                                                  robin 
+*                                                                  robin
 *                                                                  arbitration\n
 *                         GPMC_PREFETCH_RR_ARBITRATION_DISABLE  -- To disable
 *                                                                  the Round
-*                                                                  robin 
+*                                                                  robin
 *                                                                  arbitration\n
 *
 * \return  None.\n
@@ -1890,11 +1890,11 @@ void GPMCPrefetchRRArbitrationConfig(unsigned int baseAddr,
 }
 
 /**
-* \brief   This function sets the number of access to be granted to PREFETCH 
+* \brief   This function sets the number of access to be granted to PREFETCH
 *          engine when ROUND ROBIN arbitration. i.e When an arbitration occurs
 *          between a direct memory access and a PFPW engine access, the direct
 *          memory access is always serviced. If the PFPWEnRoundRobin is enabled
-*          value set by this function plus one number of access is granted to  
+*          value set by this function plus one number of access is granted to
 *          the PREFETCH and WRITE POST engine.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -1935,7 +1935,7 @@ void GPMCPrefetchTrnsCntValSet(unsigned int baseAddr, unsigned int trnsCntVal)
 }
 
 /**
-* \brief   This function resets the FIFO pointer to 0 in prefetch mode 
+* \brief   This function resets the FIFO pointer to 0 in prefetch mode
 *           and 40h in postwrite mode starts the PREFETCH and POST WRITE engine.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -2009,7 +2009,7 @@ unsigned int  GPMCPrefetchCountValGet(unsigned int baseAddr)
 *
 * \return  stauts         Threshold status.\n
 *                            1 : FIFO Pointer is greater than FIFO Threshold.\n
-*                            0 : FIFO Pointer is smaller or equal to FIFO 
+*                            0 : FIFO Pointer is smaller or equal to FIFO
 *                                Threshold.\n
 *
 */
@@ -2027,7 +2027,7 @@ unsigned int  GPMCPrefetchFifoThrldStatusGet(unsigned int baseAddr)
 
 /**
 * \brief   This function gets the FIFO pointer value of PREFETCH engine.
-*          FIFO pointer value indicates number of bytes available to be read 
+*          FIFO pointer value indicates number of bytes available to be read
 *          or number of free empty place to write.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
@@ -2068,21 +2068,21 @@ void GPMCECCAlgoSelect(unsigned int baseAddr, unsigned int algo)
 }
 
 /**
-* \brief   This function selects the Error correction capability used for BCH 
+* \brief   This function selects the Error correction capability used for BCH
 *          ECC algorithm.\n
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
 * \param   errCorrCapVal  Error correction capability value.\n
 *                         This can take one of the following values :\n
-*                         GPMC_ECC_BCH_ERRCORRCAP_UPTO_4BITS  -- For Up to 4 
-*                                                                bits error 
+*                         GPMC_ECC_BCH_ERRCORRCAP_UPTO_4BITS  -- For Up to 4
+*                                                                bits error
 *                                                                 correction.\n
 *                         GPMC_ECC_BCH_ERRCORRCAP_UPTO_8BITS  -- For Up to 8
 *                                                                 bits error
 *                                                                 correction.\n
 *                         GPMC_ECC_BCH_ERRCORRCAP_UPTO_16BITS -- For Up to 16
-*                                                                 bits error 
+*                                                                 bits error
 *                                                                 correction.\n
 *
 * \return  None.\n
@@ -2146,7 +2146,7 @@ void GPMCECCColumnSelect(unsigned int baseAddr, unsigned int eccColVal)
 * \param   numOfSects     Number of sectors.\n
 *                         This can take one of the following values :\n
 *                         GPMC_ECC_BCH_NUMOFSECTS_1  -- For 1 sector (512 bytes
-*                                                       page).\n 
+*                                                       page).\n
 *                         GPMC_ECC_BCH_NUMOFSECTS_2  -- For 2 sectors. \n
 *                         GPMC_ECC_BCH_NUMOFSECTS_3  -- For 3 sectors. \n
 *                         GPMC_ECC_BCH_NUMOFSECTS_4  -- For 4 sectors. \n
@@ -2244,7 +2244,7 @@ void GPMCECCResultRegClear(unsigned int baseAddr)
 *                         This can take one of the following values :\n
 *                         GPMC_ECCPOINTER_RESULT_1 -- ECC pointer for result 1
 *                                                     register.\n
-*                         GPMC_ECCPOINTER_RESULT_2 -- ECC pointer for result 2 
+*                         GPMC_ECCPOINTER_RESULT_2 -- ECC pointer for result 2
 *                                                     register.\n
 *                         GPMC_ECCPOINTER_RESULT_3 -- ECC pointer for result 3
 *                                                     register.\n
@@ -2412,7 +2412,7 @@ void GPMCECCResultSizeSelect(unsigned int baseAddr,unsigned int eccResReg,
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
-* \param   eccResReg      ECC result register for from which ECC value has to 
+* \param   eccResReg      ECC result register for from which ECC value has to
 *                         retrive.\n
 *                         This can take one of the following values :\n
 *                         GPMC_ECC_RESULT_1 -- For ECC result 1 register.\n
@@ -2442,7 +2442,7 @@ unsigned int GPMCECCResultGet(unsigned int baseAddr,unsigned int eccResReg)
 *
 * \param   baseAddr       Memory address of GPMC.\n
 *
-* \param   resIndex       BCH ECC result index.\n 
+* \param   resIndex       BCH ECC result index.\n
 *                         This can take one of the following values :\n
 *                         GPMC_BCH_RESULT_0 -- For BCH result 0.\n
 *                         GPMC_BCH_RESULT_1 -- For BCH result 1.\n
@@ -2502,7 +2502,7 @@ unsigned int GPMCECCBCHResultGet(unsigned int baseAddr,unsigned int resIndex,
 }
 
 /**
-* \brief   This function write the data to BCH_SWDATA register. This is used 
+* \brief   This function write the data to BCH_SWDATA register. This is used
 *          to directly padd data to the BCH ECC calculator without accessing
 *          the actual NAND flash interface.\n
 *
@@ -2522,7 +2522,7 @@ void GPMCECCBCHSWDataWrite(unsigned int baseAddr,unsigned int bchData)
 }
 
 /**
-* \brief   This function read the data to BCH_SWDATA register. This is used 
+* \brief   This function read the data to BCH_SWDATA register. This is used
 *          to directly padd data to the BCH ECC calculator without accessing
 *          the actual NAND flash interface.\n
 *

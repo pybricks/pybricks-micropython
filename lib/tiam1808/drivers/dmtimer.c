@@ -55,7 +55,7 @@
 *******************************************************************************/
 
 /**
- * \brief   This API will start the timer. 
+ * \brief   This API will start the timer.
  *
  * \param   baseAdd       Base Address of the DMTimer Module Register.
  *
@@ -71,7 +71,7 @@ void DMTimerEnable(unsigned int baseAdd)
 }
 
 /**
- * \brief   This API will stop the timer. 
+ * \brief   This API will stop the timer.
  *
  * \param   baseAdd      Base Address of the DMTimer Module Register.
  *
@@ -85,9 +85,9 @@ void DMTimerDisable(unsigned int baseAdd)
 }
 
 /**
- * \brief   This API will configure the timer in combinations of 
- *          'One Shot timer' and 'Compare' Mode or 'Auto-reload timer' 
- *          and 'Compare' Mode.  
+ * \brief   This API will configure the timer in combinations of
+ *          'One Shot timer' and 'Compare' Mode or 'Auto-reload timer'
+ *          and 'Compare' Mode.
  *
  * \param   baseAdd      Base Address of the DMTimer Module Register.
  * \param   timerMode    Mode for enabling the timer.
@@ -96,7 +96,7 @@ void DMTimerDisable(unsigned int baseAdd)
  *    DMTIMER_ONESHOT_CMP_ENABLE - One shot and compare mode enabled \n
  *    DMTIMER_ONESHOT_NOCMP_ENABLE - One shot enabled, compare mode disabled \n
  *    DMTIMER_AUTORLD_CMP_ENABLE - Auto-reload and compare mode enabled \n
- *    DMTIMER_AUTORLD_NOCMP_ENABLE - Auto-reload enabled, compare mode 
+ *    DMTIMER_AUTORLD_NOCMP_ENABLE - Auto-reload enabled, compare mode
  *                                   disabled \n
  *
  * \return  None.
@@ -108,7 +108,7 @@ void DMTimerModeConfigure(unsigned int baseAdd, unsigned int timerMode)
     HWREG(baseAdd + DMTIMER_TCLR) &= ~(DMTIMER_TCLR_AR | DMTIMER_TCLR_CE);
 
     /* Set the timer mode in TCLR register */
-    HWREG(baseAdd + DMTIMER_TCLR) |= (timerMode & (DMTIMER_TCLR_AR | 
+    HWREG(baseAdd + DMTIMER_TCLR) |= (timerMode & (DMTIMER_TCLR_AR |
                                                    DMTIMER_TCLR_CE));
 }
 
@@ -162,7 +162,7 @@ void DMTimerPreScalerClkDisable(unsigned int baseAdd)
  *
  * \return  None.
  *
- * \note    Value can be loaded into the counter register when the counter is 
+ * \note    Value can be loaded into the counter register when the counter is
  *          stopped or when it is running.
  **/
 void DMTimerCounterSet(unsigned int baseAdd, unsigned int counter)
@@ -196,7 +196,7 @@ unsigned int DMTimerCounterGet(unsigned int baseAdd)
  *
  * \return  None.
  *
- * \note:   It is recommended to not use reload value as 0xFFFFFFFF as it can 
+ * \note:   It is recommended to not use reload value as 0xFFFFFFFF as it can
  *          lead to undesired results.
  **/
 void DMTimerReloadSet(unsigned int baseAdd, unsigned int reload)
@@ -223,7 +223,7 @@ unsigned int DMTimerReloadGet(unsigned int baseAdd)
  * \brief   Configure and enable PWM feature of DMTimer.
  *
  * \param   baseAdd       Base Address of the DMTimer Module Register.
- * \param   ptMode        Pulse or toggle mode also positive or negative pulse 
+ * \param   ptMode        Pulse or toggle mode also positive or negative pulse
  *                        for PWM pin.
  * \param   trgOpMode     Trigger output mode on PWM pin.
  *
@@ -244,11 +244,11 @@ void DMTimerPWMEnable(unsigned int baseAdd, unsigned int ptMode,
                       unsigned int trgOpMode)
 {
     /* Clear the PT, and TRG field of TCLR */
-    HWREG(baseAdd + DMTIMER_TCLR) &= ~(DMTIMER_TCLR_PT | DMTIMER_TCLR_TRG | 
-                                       DMTIMER_TCLR_SCPWM);  
+    HWREG(baseAdd + DMTIMER_TCLR) &= ~(DMTIMER_TCLR_PT | DMTIMER_TCLR_TRG |
+                                       DMTIMER_TCLR_SCPWM);
 
     /* Write to TCLR */
-    HWREG(baseAdd + DMTIMER_TCLR) |= ((ptMode | trgOpMode) & (DMTIMER_TCLR_PT | 
+    HWREG(baseAdd + DMTIMER_TCLR) |= ((ptMode | trgOpMode) & (DMTIMER_TCLR_PT |
                                        DMTIMER_TCLR_TRG | DMTIMER_TCLR_SCPWM));
 }
 
@@ -257,9 +257,9 @@ void DMTimerPWMEnable(unsigned int baseAdd, unsigned int ptMode,
  *
  * \param   baseAdd       Base Address of the DMTimer Module Register.
  *
- * \return  None. 
+ * \return  None.
  *
- * \note:   Modulation on PWM pin is stopped only after this API is called 
+ * \note:   Modulation on PWM pin is stopped only after this API is called
  *          and overflow occurs.
  **/
 void DMTimerPWMDisable(unsigned int baseAdd)
@@ -288,15 +288,15 @@ void DMTimerPWMDisable(unsigned int baseAdd)
  * \return  None.
  *
  **/
-void DMTimerCaptureConfigure(unsigned int baseAdd, unsigned int tcm, 
+void DMTimerCaptureConfigure(unsigned int baseAdd, unsigned int tcm,
                              unsigned int captMode)
 {
     /* Clear the TCM and CAPT_MODE fields of TCLR */
-    HWREG(baseAdd + DMTIMER_TCLR) &= ~(DMTIMER_TCLR_TCM | 
+    HWREG(baseAdd + DMTIMER_TCLR) &= ~(DMTIMER_TCLR_TCM |
                                        DMTIMER_TCLR_CAPT_MODE);
 
     /* Write tcm and captMode fields to TCLR */
-    HWREG(baseAdd + DMTIMER_TCLR) |= ((tcm | captMode) & (DMTIMER_TCLR_TCM | 
+    HWREG(baseAdd + DMTIMER_TCLR) |= ((tcm | captMode) & (DMTIMER_TCLR_TCM |
                                        DMTIMER_TCLR_CAPT_MODE));
 }
 
@@ -305,10 +305,10 @@ void DMTimerCaptureConfigure(unsigned int baseAdd, unsigned int tcm,
  *
  * \param   baseAdd       Base Address of the DMTimer Module Register.
  * \param   gpoCfg        General purpose output.
- * 
+ *
  * 'gpoCfg' can take the following values \n
  *    DMTIMER_GPO_CFG_0 - PORGPOCFG drives 0 \n
- *    DMTIMER_GPO_CFG_1 - PORGPOCFG drives 1 \n  
+ *    DMTIMER_GPO_CFG_1 - PORGPOCFG drives 1 \n
  *
  * \return  None.
  *
@@ -389,7 +389,7 @@ unsigned int DMTimerCapture2Get(unsigned int baseAdd)
  *    DMTIMER_EMUFREE_FREE - Emulation mode free \n
  *    DMTIMER_EMUFREE_FROZEN - Emulation mode is frozen \n
  *
- * \return  None. 
+ * \return  None.
  *
  **/
 void DMTimerEmulationModeConfigure(unsigned int baseAdd, unsigned int emuMode)
@@ -422,7 +422,7 @@ void DMTimerPwrMngmntConfigure(unsigned int baseAdd, unsigned int pwrMngMode)
     HWREG(baseAdd + DMTIMER_TIOCP_CFG) &= ~DMTIMER_TIOCP_CFG_IDLEMODE;
 
     /* Configure power mangagement mode */
-    HWREG(baseAdd + DMTIMER_TIOCP_CFG) |= (pwrMngMode & 
+    HWREG(baseAdd + DMTIMER_TIOCP_CFG) |= (pwrMngMode &
                                            DMTIMER_TIOCP_CFG_IDLEMODE);
 }
 
@@ -433,7 +433,7 @@ void DMTimerPwrMngmntConfigure(unsigned int baseAdd, unsigned int pwrMngMode)
  *
  * \return  None.
  *
- * \note    This API has to be called in the Interrupt service routine after 
+ * \note    This API has to be called in the Interrupt service routine after
  *          servicing the interrupts.
  *
  **/
@@ -460,7 +460,7 @@ void DMTimerEndOfInterrupt(unsigned int baseAdd)
 void DMTimerIntRawStatusSet(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Trigger the events in IRQSTATUS_RAW register */
-    HWREG(baseAdd + DMTIMER_IRQSTATUS_RAW) = (intFlags & 
+    HWREG(baseAdd + DMTIMER_IRQSTATUS_RAW) = (intFlags &
                                            (DMTIMER_IRQSTATUS_RAW_MAT_IT_FLAG |
                                             DMTIMER_IRQSTATUS_RAW_OVF_IT_FLAG |
                                             DMTIMER_IRQSTATUS_RAW_TCAR_IT_FLAG));
@@ -511,9 +511,9 @@ unsigned int DMTimerIntStatusGet(unsigned int baseAdd)
 void DMTimerIntStatusClear(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Clear the interrupt status from IRQSTATUS register */
-    HWREG(baseAdd + DMTIMER_IRQSTATUS) = (intFlags & 
-                                         (DMTIMER_IRQSTATUS_TCAR_IT_FLAG | 
-                                          DMTIMER_IRQSTATUS_OVF_IT_FLAG | 
+    HWREG(baseAdd + DMTIMER_IRQSTATUS) = (intFlags &
+                                         (DMTIMER_IRQSTATUS_TCAR_IT_FLAG |
+                                          DMTIMER_IRQSTATUS_OVF_IT_FLAG |
                                           DMTIMER_IRQSTATUS_MAT_IT_FLAG));
 }
 
@@ -534,9 +534,9 @@ void DMTimerIntStatusClear(unsigned int baseAdd, unsigned int intFlags)
 void DMTimerIntEnable(unsigned int baseAdd, unsigned int intFlags)
 {
     /* Enable the DMTimer interrupts represented by intFlags */
-    HWREG(baseAdd + DMTIMER_IRQENABLE_SET) = (intFlags & 
+    HWREG(baseAdd + DMTIMER_IRQENABLE_SET) = (intFlags &
                                            (DMTIMER_IRQENABLE_SET_TCAR_EN_FLAG |
-                                            DMTIMER_IRQENABLE_SET_OVF_EN_FLAG | 
+                                            DMTIMER_IRQENABLE_SET_OVF_EN_FLAG |
                                             DMTIMER_IRQENABLE_SET_MAT_EN_FLAG));
 }
 
@@ -570,9 +570,9 @@ void DMTimerIntDisable(unsigned int baseAdd, unsigned int intFlags)
  *
  * \return  None.
  *
- * \note    When we have enabled the timer in Auto-reload mode, the value from 
- *          TLDR is reloaded into TCRR when a overflow condition occurs. But if 
- *           we want to load the contents from TLDR to TCRR before overflow 
+ * \note    When we have enabled the timer in Auto-reload mode, the value from
+ *          TLDR is reloaded into TCRR when a overflow condition occurs. But if
+ *           we want to load the contents from TLDR to TCRR before overflow
  *          occurs then call this API.
  **/
 void DMTimerTriggerSet(unsigned int baseAdd)
@@ -633,10 +633,10 @@ unsigned int DMTimerIntEnableGet(unsigned int baseAdd)
  **/
 void DMTimerWakeUpEnable(unsigned int baseAdd, unsigned int wakeUpFlags)
 {
-    /* Write to the fields of IRQWAKEEN register */    
-    HWREG(baseAdd + DMTIMER_IRQWAKEEN) |= (wakeUpFlags & 
-                                          (DMTIMER_IRQWAKEEN_TCAR_WUP_ENA | 
-                                           DMTIMER_IRQWAKEEN_OVF_WUP_ENA | 
+    /* Write to the fields of IRQWAKEEN register */
+    HWREG(baseAdd + DMTIMER_IRQWAKEEN) |= (wakeUpFlags &
+                                          (DMTIMER_IRQWAKEEN_TCAR_WUP_ENA |
+                                           DMTIMER_IRQWAKEEN_OVF_WUP_ENA |
                                            DMTIMER_IRQWAKEEN_MAT_WUP_ENA));
 }
 
@@ -674,7 +674,7 @@ void DMTimerWakeUpDisable(unsigned int baseAdd, unsigned int wakeUpFlags)
 unsigned int DMTimerWritePostedStatusGet(unsigned int baseAdd)
 {
     /* Return the status of TWPS register */
-    return (HWREG(baseAdd + DMTIMER_TWPS)); 
+    return (HWREG(baseAdd + DMTIMER_TWPS));
 }
 
 /**
@@ -682,10 +682,10 @@ unsigned int DMTimerWritePostedStatusGet(unsigned int baseAdd)
  *
  * \param   baseAdd       Base Address of the DMTimer Module Register.
  * \param   rstOption     Enable/Disable reset option for DMTimer.
- *          
+ *
  * 'rstOption' can take the following values \n
  *    DMTIMER_SFT_RESET_ENABLE - Software reset is enabled \n
- *    DMTIMER_SFT_RESET_DISABLE - Software reset is disabled \n   
+ *    DMTIMER_SFT_RESET_DISABLE - Software reset is disabled \n
  *
  * \return  None.
  *

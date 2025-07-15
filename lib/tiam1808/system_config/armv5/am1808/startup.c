@@ -110,13 +110,13 @@ static unsigned int const vecTbl[14]=
  * \param   none
  *
  * \return  None.
- * 
+ *
  * This function is the first function that needs to be called in a system.
  * This should be set as the entry point in the linker script if loading the
  * elf binary via a debugger, on the target. This function never returns, but
  * gives control to the application entry point
  **/
-unsigned int start_boot(void) 
+unsigned int start_boot(void)
 {
 
     /* Enable write-protection for registers of SYSCFG module. */

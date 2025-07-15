@@ -55,7 +55,7 @@ extern "C" {
 *******************************************************************************/
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANandCSSet API as CSNum to select 
+** Values that can be passed to EMIFANandCSSet API as CSNum to select
 ** Chip Select.
 */
 
@@ -87,7 +87,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFACSWaitPinSelect API as pin to select 
+** Values that can be passed to EMIFACSWaitPinSelect API as pin to select
 ** EMA_WAIT Pin.
 */
 
@@ -98,7 +98,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFAWaitPinPolaritySet API as pinPolarity to 
+** Values that can be passed to EMIFAWaitPinPolaritySet API as pinPolarity to
 ** select Pin polarity.
 */
 
@@ -110,7 +110,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFADataBusWidthSelect API as width to set the 
+** Values that can be passed to EMIFADataBusWidthSelect API as width to set the
 ** bus width.
 */
 
@@ -119,7 +119,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFAOpModeSelect API as mode to set the 
+** Values that can be passed to EMIFAOpModeSelect API as mode to set the
 ** Asynchronous interface opmode.
 */
 
@@ -128,7 +128,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFAExtendedWaitEnable API as flag to select 
+** Values that can be passed to EMIFAExtendedWaitEnable API as flag to select
 ** or deselect the extended wait cycles.
 */
 
@@ -137,7 +137,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANORPageSizeSet API as pagesize to set the  
+** Values that can be passed to EMIFANORPageSizeSet API as pagesize to set the
 ** page size for NOR.
 */
 
@@ -146,7 +146,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANANDEccValGet API as eccValIndex to   
+** Values that can be passed to EMIFANANDEccValGet API as eccValIndex to
 ** specify the ecc value to read.
 */
 
@@ -161,7 +161,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANAND4BitEccErrAddrGet API as    
+** Values that can be passed to EMIFANAND4BitEccErrAddrGet API as
 ** eccErrAddrIndex to specify the ecc error address to read.
 */
 
@@ -172,7 +172,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that define the state values in the ECC_STATE field of NANDFSR   
+** Values that define the state values in the ECC_STATE field of NANDFSR
 ** as returned by EMIFANAND4BitECCStateGet.
 */
 #define EMIFA_4BITECC_CORRECTION_ECCSTATE_0           (0u)
@@ -183,7 +183,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANANDECCStart API as eccType to specify   
+** Values that can be passed to EMIFANANDECCStart API as eccType to specify
 ** specify the ecc type.
 */
 
@@ -192,7 +192,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANAND4BitEccErrValGet API as eccErrValIndex 
+** Values that can be passed to EMIFANAND4BitEccErrValGet API as eccErrValIndex
 ** to specify the ecc error value to read.
 */
 
@@ -203,7 +203,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFASDRAMSelfRefModeConfig API as flag 
+** Values that can be passed to EMIFASDRAMSelfRefModeConfig API as flag
 ** to specify the selfrefresh mode to enter or exit.
 */
 
@@ -212,7 +212,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFASDRAMPowDownModeConfig API as flag 
+** Values that can be passed to EMIFASDRAMPowDownModeConfig API as flag
 ** to specify the powerdown mode ot enter or exit.
 */
 
@@ -221,7 +221,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFA_SDRAM_CONF macro as psize 
+** Values that can be passed to EMIFA_SDRAM_CONF macro as psize
 ** to specify the internal page size.
 */
 
@@ -232,7 +232,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFA_SDRAM_CONF macro as ibank 
+** Values that can be passed to EMIFA_SDRAM_CONF macro as ibank
 ** to specify the Internal SDRAM bank size.
 */
 
@@ -242,7 +242,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFA_SDRAM_CONF macro as bit11_9lock 
+** Values that can be passed to EMIFA_SDRAM_CONF macro as bit11_9lock
 ** to specify the CAS lat write lock flag.
 */
 
@@ -251,7 +251,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFA_SDRAM_CONF macro as nm 
+** Values that can be passed to EMIFA_SDRAM_CONF macro as nm
 ** to specify the Narrow mode bit.
 */
 
@@ -260,7 +260,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFA_SDRAM_CONF macro as caslat 
+** Values that can be passed to EMIFA_SDRAM_CONF macro as caslat
 ** to specify the CAS latency.
 */
 
@@ -269,7 +269,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be passed to EMIFANORPageModeConfig API as flag 
+** Values that can be passed to EMIFANORPageModeConfig API as flag
 ** to specify the page mode to enable or disable.
 */
 
@@ -290,7 +290,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*           async wait time.\n 
+*           async wait time.\n
 *
 * \param  wset      Write setup time or width in EMA_CLK cycles.\n
 *
@@ -320,7 +320,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*           SDRAM.\n 
+*           SDRAM.\n
 *
 * \param  psize       -- internal page size.It can take follwing values.
 *                           EMIFA_SDRAM_8COLUMN_ADDR_BITS
@@ -337,37 +337,37 @@ extern "C" {
 *         caslat      -- CAS latency. It can take following values.
 *                           EMIFA_SDRAM_CAS_LAT_2CYCLES
 *                           EMIFA_SDRAM_CAS_LAT_3CYCLES
-*         nm          -- Narrow mode bit.This defines whether a 16- or 
+*         nm          -- Narrow mode bit.This defines whether a 16- or
 *                        32-bit-wide SDRAM is connected to the EMIFA.It can
 *                        take following values.
 *                           EMIFA_SDRAM_32BIT
 *                           EMIFA_SDRAM_16BIT
 *
 */
-                               
+
 #define EMIFA_SDRAM_CONF(psize, ibank, bit11_9lock, caslat, nm )   ((unsigned int) \
                                                                     ((psize << EMIFA_SDCR_PAGESIZE_SHIFT) & EMIFA_SDCR_PAGESIZE) | \
                                                                     ((ibank << EMIFA_SDCR_IBANK_SHIFT) & EMIFA_SDCR_IBANK) | \
                                                                     ((bit11_9lock << EMIFA_SDCR_BIT11_9LOCK_SHIFT) & EMIFA_SDCR_BIT11_9LOCK) | \
                                                                     ((caslat << EMIFA_SDCR_CL_SHIFT) & EMIFA_SDCR_CL) | \
                                                                     ((nm << EMIFA_SDCR_NM_SHIFT) & EMIFA_SDCR_NM))
-                                                                    
+
 /*****************************************************************************/
 /*
 * \brief  This macro used to make the conf value which is used to configure the
-*           SDRAM.\n 
+*           SDRAM.\n
 *
 * \param  t_rrd   -- internal page size.It can take follwing values.
-*         t_rc    -- EMA_CLK clock cycles from Activate to Activate 
+*         t_rc    -- EMA_CLK clock cycles from Activate to Activate
 *         t_ras   -- EMA_CLK clock cycles from Activate(ACTV) to Precharge(PRE)
 *         t_wr    -- EMA_CLK cycles from last Write (WRT) to Precharge (PRE)
 *         t_rcd   -- EMA_CLK cycles from Active(ACTV) to Rd(READ) or Wr(WRT).
-*         t_rp    -- EMA_CLK cycles from Precharge (PRE) to Activate (ACTV) 
+*         t_rp    -- EMA_CLK cycles from Precharge (PRE) to Activate (ACTV)
 *                       or Refresh (REFR) command,
 *         t_rfc   -- EMA_CLK cycles from Refresh (REFR) to Refresh (REFR).
 *
-*/                                                                  
-                                                                                                                            
+*/
+
 #define EMIFA_SDRAM_TIMING_CONF(t_rrd, t_rc, t_ras, t_wr, t_rcd, t_rp, t_rfc )   ((unsigned int) \
                                                                                   ((t_rrd << EMIFA_SDTIMR_T_RRD_SHIFT) & EMIFA_SDTIMR_T_RRD) | \
                                                                                   ((t_rc << EMIFA_SDTIMR_T_RC_SHIFT) & EMIFA_SDTIMR_T_RC) | \
@@ -399,32 +399,32 @@ extern void EMIFANAND4BitECCSelect(unsigned int baseAddr, unsigned int CSNum);
 extern void EMIFAMaxExtWaitCycleSet(unsigned int baseAddr,
                                     unsigned int waitVal);
 extern void EMIFASDRAMSelfRefModeConfig(unsigned int baseAddr,
-                                        unsigned int flag);                                    
+                                        unsigned int flag);
 extern unsigned int EMIFARawIntStatusRead(unsigned int baseAddr,
-                                          unsigned int intFlag);                                    
+                                          unsigned int intFlag);
 extern unsigned int EMIFAMskedIntStatusRead(unsigned int baseAddr,
-                                            unsigned int intFlag);                                          
+                                            unsigned int intFlag);
 extern void EMIFASDRAMPowDownModeConfig(unsigned int baseAddr,
                                         unsigned int flag);
 extern unsigned int EMIFAWaitPinStatusGet(unsigned int baseAddr,
-                                              unsigned int pinNum);                                        
+                                              unsigned int pinNum);
 extern void EMIFASDRAMSelfRefExitTimeConfig(unsigned int baseAddr,
-                                            unsigned int exitTime);                                            
+                                            unsigned int exitTime);
 extern unsigned int EMIFANAND4BitEccErrAddrGet(unsigned int baseAddr,
                                                unsigned int eccErrAddrIndex);
 extern unsigned int EMIFANAND4BitEccErrValGet(unsigned int baseAddr,
-                                              unsigned int eccErrValIndex);                                            
+                                              unsigned int eccErrValIndex);
 extern void EMIFACSWaitPinSelect(unsigned int baseAddr,
-                                 unsigned int CSNum,unsigned int pin);                             
+                                 unsigned int CSNum,unsigned int pin);
 extern void EMIFAAsyncDevOpModeSelect(unsigned int baseAddr,unsigned int CSNum,
-                                      unsigned int mode);                             
+                                      unsigned int mode);
 extern void EMIFAExtendedWaitConfig(unsigned int baseAddr,unsigned int CSNum,
-                                    unsigned int flag);                                  
+                                    unsigned int flag);
 extern void EMIFAAsyncDevDataBusWidthSelect(unsigned int baseAddr,
                                             unsigned int CSNum,
-                                            unsigned int width);                                 
+                                            unsigned int width);
 extern void EMIFAWaitTimingConfig(unsigned int baseAddr,unsigned int csNum,
-                                  unsigned int conf);                                    
+                                  unsigned int conf);
 extern void EMIFAWaitPinPolaritySet(unsigned int baseAddr,unsigned int pin,
                                     unsigned int pinPolarity);
 extern void EMIFANORPageModeConfig(unsigned int baseAddr, unsigned int CSNum,

@@ -4,7 +4,7 @@
  * \brief This file contains the driver API prototypes and macro definitions
  *        for the VPIF module.
  */
- 
+
 /*
 * Copyright (C) 2010 Texas Instruments Incorporated - http://www.ti.com/
 */
@@ -56,7 +56,7 @@ extern "C" {
 /***************************************************************************/
 /*
 ** Constants that represent VPIF channel
-** Channel 0 & 1 are capture channels; channel 2 & 3 are display channels 
+** Channel 0 & 1 are capture channels; channel 2 & 3 are display channels
 ** Used in most APIs
 */
 
@@ -67,7 +67,7 @@ extern "C" {
 
 /***************************************************************************/
 /*
-** Values that represent top/bottom field 
+** Values that represent top/bottom field
 ** Used in all the FBConfig (frame buffer config) APIs
 */
 
@@ -95,7 +95,7 @@ extern "C" {
 /***************************************************************************/
 /*
 ** Values that can be passed to VPIFCaptureModeConfig/VPIFDisplayModeConfig
-** API to select mode of capture/display 
+** API to select mode of capture/display
 ** More supported modes will be added
 */
 
@@ -105,7 +105,7 @@ extern "C" {
 
 /***************************************************************************/
 /*
-** Values that represent different VPIF interrupts 
+** Values that represent different VPIF interrupts
 ** Used in all the interrupt APIs
 */
 
@@ -121,21 +121,21 @@ extern "C" {
 ** Used in the ErrorStatus APIs
 */
 
- /* Underflow error for channel 3 */ 
+ /* Underflow error for channel 3 */
 #define VPIF_UNDERFLOW3                         (1 << VPIF_ERRSTAT_UNDERFLOW3_SHIFT)
- /* Underflow error for channel 2 */ 
+ /* Underflow error for channel 2 */
 #define VPIF_UNDERFLOW2                         (1 << VPIF_ERRSTAT_UNDERFLOW2_SHIFT)
- /* Overflow error for channel 1 */ 
+ /* Overflow error for channel 1 */
 #define VPIF_OVERFLOW1                          (1 << VPIF_ERRSTAT_OVERFLOW1_SHIFT)
- /* Overflow error for channel 0 */ 
+ /* Overflow error for channel 0 */
 #define VPIF_OVERFLOW0                          (1 << VPIF_ERRSTAT_OVERFLOW0_SHIFT)
- /* Synchronization error for channel 1 (mismatch EAV2SAV/SAV2EAV) */ 
+ /* Synchronization error for channel 1 (mismatch EAV2SAV/SAV2EAV) */
 #define VPIF_SYNCDISTERR1                       (1 << VPIF_ERRSTAT_SYNCDISTERR1_SHIFT)
- /* Synchronization error for channel 0 (mismatch EAV2SAV/SAV2EAV) */ 
+ /* Synchronization error for channel 0 (mismatch EAV2SAV/SAV2EAV) */
 #define VPIF_SYNCDISTERR0                       (1 << VPIF_ERRSTAT_SYNCDISTERR0_SHIFT)
- /* Error in EAV2SAV/SAV2EAV code for channel 1 */ 
+ /* Error in EAV2SAV/SAV2EAV code for channel 1 */
 #define VPIF_BITERR1                            (1 << VPIF_ERRSTAT_BITERR1_SHIFT)
- /* Error in EAV2SAV/SAV2EAV code for channel 1 */ 
+ /* Error in EAV2SAV/SAV2EAV code for channel 1 */
 #define VPIF_BITERR0                            (1 << VPIF_ERRSTAT_BITERR0_SHIFT)
 
 /***************************************************************************/
@@ -189,7 +189,7 @@ extern "C" {
 
 /***************************************************************************/
 /*
-** Values that represent storage mode of the data. 
+** Values that represent storage mode of the data.
 ** Used in the FieldframeModeSelect APIs of channel 2/0. However, setting on
 ** channel 2 will apply to channel 3, and setting on channel 0 will apply to
 ** channel 1.
@@ -227,7 +227,7 @@ extern "C" {
 /***************************************************************************/
 /*
 ** Values that represent the particular field being processed (in interlaced mode)
-** Value read in the FidModeRead APIs of all channels 
+** Value read in the FidModeRead APIs of all channels
 */
 #define VPIF_FIELD_IDENTIFICATION_TOP           (0 << VPIF_C0CTRL_FID_SHIFT)
 #define VPIF_FIELD_IDENTIFICATION_BOTTOM        (1 << VPIF_C0CTRL_FID_SHIFT)
@@ -235,7 +235,7 @@ extern "C" {
 /***************************************************************************/
 /*
 ** Values that represent the data format
-** Value used in the YcmuxModeSelect APIs of all channels 
+** Value used in the YcmuxModeSelect APIs of all channels
 */
  /* Y & C data are non-muxed, parallel over a 16-bit bus */
 #define VPIF_YC_NONMUXED                        (0 << VPIF_C0CTRL_YCMUX_SHIFT)
@@ -244,7 +244,7 @@ extern "C" {
 
 /***************************************************************************/
 /*
-** Values that represent the capture mode. 
+** Values that represent the capture mode.
 ** (Raw w/ external sync, or BT w/ embedded sync)
 ** Value used in the VPIFCaptureCapmodeModeSelect API
 */
@@ -267,7 +267,7 @@ typedef struct vbufParam
     unsigned int eav2sav;
     unsigned int vsize;
     unsigned int l1;
-    unsigned int l3;    
+    unsigned int l3;
     unsigned int l5;
     unsigned int l7;
     unsigned int l9;
@@ -291,7 +291,7 @@ extern unsigned int VPIFInterruptStatus(unsigned int baseAddr, unsigned int intr
 
 /* C0CTRL & C1CTRL */
 extern void VPIFCaptureClkedgeModeSelect(unsigned int baseAddr, unsigned int channel, unsigned int mode);
-extern void VPIFCaptureRawDatawidthConfig(unsigned int baseAddr, unsigned int width); 
+extern void VPIFCaptureRawDatawidthConfig(unsigned int baseAddr, unsigned int width);
 extern void VPIFCaptureRawIntlineConfig(unsigned int baseAddr, unsigned int interval);
 extern void VPIFCaptureRawFidinvSet(unsigned int baseAddr, unsigned int mode);
 extern void VPIFCaptureRawVvinvSet(unsigned int baseAddr, unsigned int mode);
@@ -317,14 +317,14 @@ extern unsigned int VPIFCaptureFBExchange(unsigned int baseAddr, unsigned int ch
 
 /* C2CTRL & C3CTRL */
 extern void VPIFDisplayClkedgeModeSelect(unsigned int baseAddr, unsigned int channel, unsigned int mode);
-extern void VPIFDisplayClipancEnable(unsigned int baseAddr, unsigned int channel); 
-extern void VPIFDisplayClipancDisable(unsigned int baseAddr, unsigned int channel); 
-extern void VPIFDisplayClipvidEnable(unsigned int baseAddr, unsigned int channel); 
-extern void VPIFDisplayClipvidDisable(unsigned int baseAddr, unsigned int channel); 
+extern void VPIFDisplayClipancEnable(unsigned int baseAddr, unsigned int channel);
+extern void VPIFDisplayClipancDisable(unsigned int baseAddr, unsigned int channel);
+extern void VPIFDisplayClipvidEnable(unsigned int baseAddr, unsigned int channel);
+extern void VPIFDisplayClipvidDisable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayFieldframeModeSelect(unsigned int baseAddr, unsigned int mode);
 extern void VPIFDisplayIntrprogModeSelect(unsigned int baseAddr, unsigned int channel, unsigned int mode);
-extern void VPIFDisplayPixelEnable(unsigned int baseAddr, unsigned int channel); 
-extern void VPIFDisplayPixelDisable(unsigned int baseAddr, unsigned int channel); 
+extern void VPIFDisplayPixelEnable(unsigned int baseAddr, unsigned int channel);
+extern void VPIFDisplayPixelDisable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayVancEnable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayVancDisable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayHancEnable(unsigned int baseAddr, unsigned int channel);
@@ -332,7 +332,7 @@ extern void VPIFDisplayHancDisable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayIntframeConfig(unsigned int baseAddr, unsigned int channel, unsigned int mode);
 extern unsigned int VPIFDisplayFidModeRead(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayYcmuxModeSelect(unsigned int baseAddr, unsigned int channel, unsigned int mode);
-extern void VPIFDisplayClkenEnable(unsigned int baseAddr, unsigned int channel); 
+extern void VPIFDisplayClkenEnable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayClkenDisable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayChanenEnable(unsigned int baseAddr, unsigned int channel);
 extern void VPIFDisplayChanenDisable(unsigned int baseAddr, unsigned int channel);

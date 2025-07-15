@@ -91,7 +91,7 @@ void CP15ICacheEnable(void)
 * \param      None.
 *
 * \retiurn     None.
-* 
+*
 * Note: MMU shall be enabled before enabling D-Cache
 **/
 void CP15DCacheEnable(void)
@@ -111,7 +111,7 @@ void CP15DCacheEnable(void)
 **/
 void CP15DCacheFlush(void)
 {
-    __asm( "   mov     r0, #0\n\t"   
+    __asm( "   mov     r0, #0\n\t"
            "   mcr     p15, #0, r0, c7, c6, #0\n\t");
 }
 
@@ -154,7 +154,7 @@ void CP15DCacheCleanFlush(void)
 **/
 void CP15ICacheFlush(void)
 {
-    __asm("    mov     r0, #0\n\t" 
+    __asm("    mov     r0, #0\n\t"
           "    mcr     p15, #0, r0, c7, c5, #0\n\t");
 }
 
@@ -170,16 +170,16 @@ void CP15ICacheFlush(void)
 **/
 void CP15ICacheFlushBuff(unsigned int bufPtr, unsigned int size)
 {
-    unsigned int ptr;  
+    unsigned int ptr;
 
-    ptr = bufPtr & ~0x1f; 
-  
-    while(ptr < bufPtr + size) 
-    { 
+    ptr = bufPtr & ~0x1f;
+
+    while(ptr < bufPtr + size)
+    {
         __asm("    mcr p15, #0, %[value], c7, c6, #1":: [value] "r" (ptr));
 
         ptr += 32;
-    } 
+    }
 }
 
 /**
@@ -222,15 +222,15 @@ void CP15TtbSet(unsigned int ttb)
     * client by configuring domain access register,
     * in that case access controlled by permission value
     * set by page table entry
-    */  
+    */
     __asm("   mov r1, #0\n\t"
           "   mcr p15, #0, r1, c8, c7, #0\n\t"
           "   ldr r1, =0x55555555\n\t"
           "   mcr p15, #0, r1, c3, c0, #0\n\t");
-  
-   /* sets translation table base resgister with page table 
+
+   /* sets translation table base resgister with page table
     * starting address.
-    */ 
+    */
     __asm("   mcr p15, #0, %[value], c2, c0, 0":: [value] "r" (ttb));
 
 }
@@ -248,8 +248,8 @@ void CP15MMUDisable(void)
     __asm("    mov r0, #0\n\t"
           "    mcr p15, #0, r0, c8, c7, #0\n\t"
           "    mrc p15, #0, r0, c1, c0, #0\n\t"
-          "    mov r1, #0x1\n\t"       
-          "    bic r0, r0, r1\n\t"        
+          "    mov r1, #0x1\n\t"
+          "    bic r0, r0, r1\n\t"
           "    mcr p15, #0, r0, c1, c0, #0\n\t");
 }
 

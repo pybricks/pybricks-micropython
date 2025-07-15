@@ -4,21 +4,21 @@
 //
 // Copyright (c) 2007-2010 Texas Instruments Incorporated.  All rights reserved.
 // Software License Agreement
-// 
+//
 // Texas Instruments (TI) is supplying this software for use solely and
 // exclusively on TI's microcontroller products. The software is owned by
 // TI and/or its suppliers, and is protected under applicable copyright
 // laws. You may not combine this software with "viral" open-source
 // software in order to form a larger program.
-// 
+//
 // THIS SOFTWARE IS PROVIDED "AS IS" AND WITH ALL FAULTS.
 // NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT
 // NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 // A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. TI SHALL NOT, UNDER ANY
 // CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
 // DAMAGES, FOR ANY REASON WHATSOEVER.
-// 
-// This is part of AM1808 StarterWare USB Library and reused from revision 6288 
+//
+// This is part of AM1808 StarterWare USB Library and reused from revision 6288
 // of the  Stellaris USB Library.
 //
 //*****************************************************************************
@@ -444,7 +444,7 @@ USBDCDInit(unsigned int ulIndex, tDeviceInfo *psDevice)
         //
         // Enable Clocking to the USB controller.
         //
-	
+
 		USBModuleClkEnable(ulIndex, USB0_BASE);
 
 		USBReset(USB_0_OTGBASE);
@@ -454,13 +454,13 @@ USBDCDInit(unsigned int ulIndex, tDeviceInfo *psDevice)
         UsbPhyOn();
     }
 
-	
+
 
 	//
     // Initialize the USB tick module.
     //
 
-	InternalUSBTickInit();    
+	InternalUSBTickInit();
 
     //
     // Only do hardware update if the stack is in Device mode, do not touch the
@@ -489,7 +489,7 @@ USBDCDInit(unsigned int ulIndex, tDeviceInfo *psDevice)
                                        USB_INTCTRL_SUSPEND |
                                        USB_INTCTRL_SOF);
         USBIntEnableEndpoint(USB0_BASE, USB_INTEP_ALL);
-		
+
     }
 
     //
@@ -621,7 +621,7 @@ USBDCDTerm(unsigned int ulIndex)
     // Disable the USB peripheral
     //
 	USBModuleClkDisable(ulIndex, USB0_BASE);
-	 
+
 }
 
 //*****************************************************************************
@@ -993,8 +993,8 @@ USBDReadAndDispatchRequest(unsigned int ulIndex)
 
 
 
-	
-		
+
+
 
 	if((pRequest->bmRequestType & USB_RTYPE_TYPE_M) != USB_RTYPE_STANDARD)
     {
@@ -2925,7 +2925,7 @@ USBDEP0StateTxConfig(unsigned int ulIndex)
 //
 //*****************************************************************************
 void
-USBDeviceIntHandlerInternal(unsigned int ulIndex, unsigned int ulStatus, 
+USBDeviceIntHandlerInternal(unsigned int ulIndex, unsigned int ulStatus,
 													unsigned int *endPStatus)
 {
     static unsigned int ulSOFDivide = 0;
@@ -2933,7 +2933,7 @@ USBDeviceIntHandlerInternal(unsigned int ulIndex, unsigned int ulStatus,
     void *pvInstance;
 	unsigned int epStatus;
 	unsigned int epnStatus = 0;
-    
+
 	//
     // Get the controller interrupt status from the wrapper registers
     // Only the lower 16bits contain EP intr data
@@ -2947,8 +2947,8 @@ USBDeviceIntHandlerInternal(unsigned int ulIndex, unsigned int ulStatus,
 	{
 		epStatus = *endPStatus;
 	}
-	
-	ulStatus |= USBIntStatusControl(USB0_BASE);	
+
+	ulStatus |= USBIntStatusControl(USB0_BASE);
 
 	//
     // If device initialization has not been performed then just disconnect

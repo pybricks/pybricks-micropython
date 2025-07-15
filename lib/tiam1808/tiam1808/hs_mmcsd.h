@@ -146,12 +146,12 @@ extern "C" {
 ** Macros that can be used for checking the present state of the host controller
 */
 #define HS_MMCSD_CARD_WRITEPROT        (MMCHS_PSTATE_WP)
-#define HS_MMCSD_CARD_INSERTED         (MMCHS_PSTATE_CINS)        
-#define HS_MMCSD_CARD_STABLE           (MMCHS_PSTATE_CSS)        
-#define HS_MMCSD_BUFFER_READABLE       (MMCHS_PSTATE_BRE)        
-#define HS_MMCSD_BUFFER_WRITEABLE      (MMCHS_PSTATE_BWE)        
-#define HS_MMCSD_READ_INPROGRESS       (MMCHS_PSTATE_RTA)        
-#define HS_MMCSD_WRITE_INPROGRESS      (MMCHS_PSTATE_WTA)        
+#define HS_MMCSD_CARD_INSERTED         (MMCHS_PSTATE_CINS)
+#define HS_MMCSD_CARD_STABLE           (MMCHS_PSTATE_CSS)
+#define HS_MMCSD_BUFFER_READABLE       (MMCHS_PSTATE_BRE)
+#define HS_MMCSD_BUFFER_WRITEABLE      (MMCHS_PSTATE_BWE)
+#define HS_MMCSD_READ_INPROGRESS       (MMCHS_PSTATE_RTA)
+#define HS_MMCSD_WRITE_INPROGRESS      (MMCHS_PSTATE_WTA)
 
 /*
 ** Macros that can be used for configuring the power and transfer parameters
@@ -195,9 +195,9 @@ extern "C" {
 #define HS_MMCSD_INTR_CMDBITERR         (MMCHS_IE_CEB_ENABLE)
 #define HS_MMCSD_INTR_CMDCRCERR         (MMCHS_IE_CCRC_ENABLE)
 #define HS_MMCSD_INTR_CMDTIMEOUT        (MMCHS_IE_CTO_ENABLE)
-#define HS_MMCSD_INTR_CARDINS           (MMCHS_IE_CINS_ENABLE)                    
-#define HS_MMCSD_INTR_BUFRDRDY          (MMCHS_IE_BRR_ENABLE)                    
-#define HS_MMCSD_INTR_BUFWRRDY          (MMCHS_IE_BWR_ENABLE)                    
+#define HS_MMCSD_INTR_CARDINS           (MMCHS_IE_CINS_ENABLE)
+#define HS_MMCSD_INTR_BUFRDRDY          (MMCHS_IE_BRR_ENABLE)
+#define HS_MMCSD_INTR_BUFWRRDY          (MMCHS_IE_BWR_ENABLE)
 #define HS_MMCSD_INTR_TRNFCOMP          (MMCHS_IE_TC_ENABLE)
 #define HS_MMCSD_INTR_CMDCOMP           (MMCHS_IE_CC_ENABLE)
 
@@ -213,9 +213,9 @@ extern "C" {
 #define HS_MMCSD_STAT_CMDBITERR         (MMCHS_STAT_CEB)
 #define HS_MMCSD_STAT_CMDCRCERR         (MMCHS_STAT_CCRC)
 #define HS_MMCSD_STAT_CMDTIMEOUT        (MMCHS_STAT_CTO)
-#define HS_MMCSD_STAT_CARDINS           (MMCHS_STAT_CINS)                    
-#define HS_MMCSD_STAT_BUFRDRDY          (MMCHS_STAT_BRR)                    
-#define HS_MMCSD_STAT_BUFWRRDY          (MMCHS_STAT_BWR)                    
+#define HS_MMCSD_STAT_CARDINS           (MMCHS_STAT_CINS)
+#define HS_MMCSD_STAT_BUFRDRDY          (MMCHS_STAT_BRR)
+#define HS_MMCSD_STAT_BUFWRRDY          (MMCHS_STAT_BWR)
 #define HS_MMCSD_STAT_TRNFCOMP          (MMCHS_STAT_TC)
 #define HS_MMCSD_STAT_CMDCOMP           (MMCHS_STAT_CC)
 
@@ -230,9 +230,9 @@ extern "C" {
 #define HS_MMCSD_SIGEN_CMDBITERR        (MMCHS_ISE_CEB_SIGEN)
 #define HS_MMCSD_SIGEN_CMDCRCERR        (MMCHS_ISE_CCRC_SIGEN)
 #define HS_MMCSD_SIGEN_CMDTIMEOUT       (MMCHS_ISE_CTO_SIGEN)
-#define HS_MMCSD_SIGEN_CARDINS          (MMCHS_ISE_CINS_SIGEN)                    
-#define HS_MMCSD_SIGEN_BUFRDRDY         (MMCHS_ISE_BRR_SIGEN)                    
-#define HS_MMCSD_SIGEN_BUFWRRDY         (MMCHS_ISE_BWR_SIGEN)                    
+#define HS_MMCSD_SIGEN_CARDINS          (MMCHS_ISE_CINS_SIGEN)
+#define HS_MMCSD_SIGEN_BUFRDRDY         (MMCHS_ISE_BRR_SIGEN)
+#define HS_MMCSD_SIGEN_BUFWRRDY         (MMCHS_ISE_BWR_SIGEN)
 #define HS_MMCSD_SIGEN_TRNFCOMP         (MMCHS_ISE_TC_SIGEN)
 #define HS_MMCSD_SIGEN_CMDCOMP          (MMCHS_ISE_CC_SIGEN)
 

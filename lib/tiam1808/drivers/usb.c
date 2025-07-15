@@ -795,13 +795,13 @@ USBIntRegister(unsigned int ulBase, void(*pfnHandler)(void))
 
     /* Register the interrupt handler. */
     IntRegister(INT_USB0, pfnHandler);
-    
+
     /* Enable the USB interrupt. */
     IntEnable(INT_USB0);
 #else
     /* Register the interrupt handler. */
     IntRegister(INT_USB0, pfnHandler);
-    
+
     /* Enable the USB interrupt. */
     IntSystemEnable(INT_USB0);
 #endif
@@ -1327,7 +1327,7 @@ USBDevDisconnect(unsigned int ulBase)
     ASSERT(ulBase == USB0_BASE);
 
     /* Disable connection to the USB bus. */
-    HWREGB(ulBase + USB_O_POWER) &= (~USB_POWER_SOFTCONN);	 
+    HWREGB(ulBase + USB_O_POWER) &= (~USB_POWER_SOFTCONN);
 }
 
 /**
@@ -1478,12 +1478,12 @@ USBHostEndpointConfig(unsigned int ulBase, unsigned int ulEndpoint,
 		}
 		else if(ulFlags & USB_EP_SPEED_FULL)
 		{
-			 HWREGB(ulBase + EP_OFFSET(ulEndpoint) + USB_O_TYPE0) = 
+			 HWREGB(ulBase + EP_OFFSET(ulEndpoint) + USB_O_TYPE0) =
 			 			USB_TYPE0_SPEED_FULL;
 		}
 		else
 		{
-			 HWREGB(ulBase + EP_OFFSET(ulEndpoint) + USB_O_TYPE0) = 
+			 HWREGB(ulBase + EP_OFFSET(ulEndpoint) + USB_O_TYPE0) =
 			 			USB_TYPE0_SPEED_LOW;
 		}
     }
@@ -2431,7 +2431,7 @@ USBEndpointDataSend(unsigned int ulBase, unsigned int ulEndpoint,
     {
         ulTxPktRdy = (ulTransType >> 8) & 0xff;
     }
-	
+
     /* Don't allow transmit of data if the TxPktRdy bit is already set. */
     if(HWREGB(ulBase + USB_O_CSRL0 + ulEndpoint) & USB_CSRL0_TXRDY)
     {
@@ -3154,9 +3154,9 @@ void USBEnableOtgIntr(unsigned int ulBase)
 	reg &= 0xFFFFFFF7;
 	HWREG(ulBase + USB_0_CTRL) = reg;
 
-	/* This API  enables the USB Interrupts through subsystem specific wrapper 
+	/* This API  enables the USB Interrupts through subsystem specific wrapper
 	registers*/
-	USBEnableInt(ulBase); 
+	USBEnableInt(ulBase);
 }
 
 /**
@@ -3175,7 +3175,7 @@ void USBReset(unsigned int ulBase)
 
 	/* Set the Reset Bit */
 	HWREG(ulBase + USB_0_CTRL) = reg;
-	 
+
 	/* Wait till Reset bit is cleared */
 	while(((HWREG(ulBase + USB_0_CTRL)) & 0x1 )== 1);
 

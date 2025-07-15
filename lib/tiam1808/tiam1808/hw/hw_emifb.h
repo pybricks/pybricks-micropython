@@ -47,7 +47,7 @@
 extern "C" {
 #endif
 
-#define EMIFB_REVID		(0x0)	
+#define EMIFB_REVID		(0x0)
 #define EMIFB_SDCFG		(0x4)
 #define EMIFB_SDRFC		(0x8)
 #define EMIFB_SDTIM1		(0xC)

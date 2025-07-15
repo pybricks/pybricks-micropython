@@ -56,14 +56,14 @@ extern "C" {
 #define EMAC_RMIISPEED_100MBPS                (0x00008000u)
 
 /*
-** Macros which can be used as duplexMode parameter to the API 
+** Macros which can be used as duplexMode parameter to the API
 ** EMACDuplexSet
 */
 #define EMAC_DUPLEX_FULL                      (0x00000001u)
 #define EMAC_DUPLEX_HALF                      (0x00000000u)
 
 /*
-** Macros which can be used as matchFilt  parameters to the API 
+** Macros which can be used as matchFilt  parameters to the API
 ** EMACMACAddrSet
 */
 /* Address not used to match/filter incoming packets */

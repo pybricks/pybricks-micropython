@@ -126,7 +126,7 @@ unsigned int ECAPClockDisableStatusGet(unsigned int baseAdd)
  **/
 void ECAPCaptureLoadingEnable(unsigned int baseAdd)
 {
-    HWREGH(baseAdd + ECAP_ECCTL1) |= ECAP_ECCTL1_CAPLDEN; 
+    HWREGH(baseAdd + ECAP_ECCTL1) |= ECAP_ECCTL1_CAPLDEN;
 }
 
 /**
@@ -139,7 +139,7 @@ void ECAPCaptureLoadingEnable(unsigned int baseAdd)
  **/
 void ECAPCaptureLoadingDisable(unsigned int baseAdd)
 {
-    HWREGH(baseAdd + ECAP_ECCTL1) &= ~ECAP_ECCTL1_CAPLDEN; 
+    HWREGH(baseAdd + ECAP_ECCTL1) &= ~ECAP_ECCTL1_CAPLDEN;
 }
 
 /**
@@ -167,7 +167,7 @@ void ECAPPrescaleConfig(unsigned int baseAdd, unsigned int prescale)
  * \param   baseAdd     It is the Memory address of the ECAP instance used.
  * \param   modeSelect  It is the value which determines whether ecapture
  *                      module to operate in capture mode or in APWM mode.\n
- * 
+ *
  *         modeSelect can take following macros.
  *
  *         ECAP_CAPTURE_MODE - Capture Mode.\n
@@ -187,14 +187,14 @@ void ECAPOperatingModeSelect(unsigned int baseAdd, unsigned int modeSelect)
          HWREGH(baseAdd + ECAP_ECCTL2) |=  ECAP_ECCTL2_CAP_APWM;
     }
 }
-    
+
 /**
  * \brief   This function returns time-stamp for a given capture event.
  *
  * \param   baseAdd     It is the Memory address of the ECAP instance used.
  * \param   capEvtFlag  It is the value which determines for which capture event
  *                      time-stam has to returned.
- * 
+ *
  *         capEvtFlag can take following macros.
  *
  *         ECAP_CAPTURE_EVENT_1 - Capture Event 1.\n
@@ -211,7 +211,7 @@ unsigned int ECAPTimeStampRead(unsigned int baseAdd, unsigned int capEvtFlag)
 }
 
 /**
- * \brief   This function configures the counter register which is used as 
+ * \brief   This function configures the counter register which is used as
  *          Capture Time base.
  *
  * \param   baseAdd     It is the Memory address of the ECAP instance used.
@@ -227,7 +227,7 @@ void ECAPCounterConfig(unsigned int baseAdd, unsigned int countVal)
 
 /**
  * \brief   This function configures Capture Event polarity.
- *          
+ *
  * \param   baseAdd     It is the Memory address of the ECAP instance used.
  * \param   capEvt1pol  It determines whether Capture Event1 has to be generated
  *                      on rising edge or falling edge of pulse.
@@ -240,7 +240,7 @@ void ECAPCounterConfig(unsigned int baseAdd, unsigned int countVal)
  *
  * \param   capEvt4pol  It determines whether Capture Event4 has to be generated
  *                      on rising edge or falling edge of pulse.
- * 
+ *
  *                      0 - falling edge
  *                      1 - rising  edge
  * \return  None.
@@ -258,18 +258,18 @@ void ECAPCapeEvtPolarityConfig(unsigned int baseAdd, unsigned int capEvt1pol,
 
 /**
  * \brief   This function enables reset of the counters upon Capture Events.
- *          
+ *
  * \param   baseAdd      It is the Memory address of the ECAP instance used.
- * \param   CounterRst1  It determines whether counter has to be reset upon 
+ * \param   CounterRst1  It determines whether counter has to be reset upon
  *                       Capture Event1.
  *
- * \param   CounterRst2  It determines whether counter has to be reset upon 
+ * \param   CounterRst2  It determines whether counter has to be reset upon
  *                       Capture Event2.
  *
- * \param   CounterRst3  It determines whether counter has to be reset upon 
+ * \param   CounterRst3  It determines whether counter has to be reset upon
  *                       Capture Event3.
  *
- * \param   CounterRst4  It determines whether counter has to be reset upon 
+ * \param   CounterRst4  It determines whether counter has to be reset upon
  *                       Capture Event4.
  *
  *                       0 - Don't reset counter upon capture event.\n
@@ -300,7 +300,7 @@ void ECAPCaptureEvtCntrRstConfig(unsigned int baseAdd, unsigned int CounterRst1,
  **/
 void ECAPContinousModeConfig(unsigned int baseAdd)
 {
-    HWREGH(baseAdd + ECAP_ECCTL2) &= ~ECAP_ECCTL2_CONT_ONESHT;  
+    HWREGH(baseAdd + ECAP_ECCTL2) &= ~ECAP_ECCTL2_CONT_ONESHT;
 }
 
 /**
@@ -327,11 +327,11 @@ void ECAPContinousModeConfig(unsigned int baseAdd)
 void ECAPOneShotModeConfig(unsigned int baseAdd, unsigned int stopVal)
 {
     HWREGH(baseAdd + ECAP_ECCTL2) |= ECAP_ECCTL2_CONT_ONESHT;
-   
+
     HWREGH(baseAdd + ECAP_ECCTL2) &= 0xfffffff9;
 
     HWREGH(baseAdd + ECAP_ECCTL2) |= stopVal;
-}  
+}
 
 /**
  * \brief   This function configures ECAP to One-Short Re-arming.
@@ -339,7 +339,7 @@ void ECAPOneShotModeConfig(unsigned int baseAdd, unsigned int stopVal)
  * \param   baseAdd   It is the Memory address of the ECAP instance used.
  *
  * \return  None.\n
- * 
+ *
  * When this API is invoked following things happen.\n
  *
  * 1. Resets Mod4 counter to zero.\n
@@ -365,7 +365,7 @@ void ECAPOneShotREARM(unsigned int baseAdd)
  *         ECAP_APWM_ACTIVE_LOW.\n
  *
  * \return  None.
- * 
+ *
  **/
 void ECAPAPWMPolarityConfig(unsigned int baseAdd, unsigned int flag)
 {
@@ -393,7 +393,7 @@ void ECAPAPWMPolarityConfig(unsigned int baseAdd, unsigned int flag)
  *         ECAP_COUNTER_FREE_RUNNING.\n
  *
  * \return  None.
- * 
+ *
  **/
 void ECAPCounterControl(unsigned int baseAdd, unsigned int flag)
 {
@@ -424,7 +424,7 @@ void ECAPCounterControl(unsigned int baseAdd, unsigned int flag)
  * \param   syncOut   It is the value which select type of syncOut signal
  *                    (i.e select syncIn event to be the Sync-Out signal,
  *                         select PRD_eq event to be Sync-Out signal).\n
- *                    
+ *
  *
  *         syncOut can take following macros.\n
  *
@@ -433,7 +433,7 @@ void ECAPCounterControl(unsigned int baseAdd, unsigned int flag)
  *         ECAP_SYNC_OUT_DISABLE - Disable syncOut signal.\n
  *
  * \return  None.
- * 
+ *
  **/
 void ECAPSyncInOutSelect(unsigned int baseAdd, unsigned int syncIn,
                          unsigned int syncOut)
@@ -452,15 +452,15 @@ void ECAPSyncInOutSelect(unsigned int baseAdd, unsigned int syncIn,
  * \param   baseAdd    It is the Memory address of the ECAP instance used.
  * \param   compareVal It is the Compare value to be configured.
  * \param   periodVal  It is the Period value to be configured.
- * 
+ *
  * \return  None.
  *
  **/
 void ECAPAPWMCaptureConfig(unsigned int baseAdd, unsigned int compareVal,
                            unsigned int periodVal)
 {
-    HWREG(baseAdd + ECAP_CAP1) = periodVal; 
-    HWREG(baseAdd + ECAP_CAP2) = compareVal; 
+    HWREG(baseAdd + ECAP_CAP1) = periodVal;
+    HWREG(baseAdd + ECAP_CAP2) = compareVal;
 }
 
 /**
@@ -469,15 +469,15 @@ void ECAPAPWMCaptureConfig(unsigned int baseAdd, unsigned int compareVal,
  * \param   baseAdd    It is the Memory address of the ECAP instance used.
  * \param   compareVal It is the Compare value to be configured.
  * \param   periodVal  It is the Period value to be configured.
- * 
+ *
  * \return  None.
  *
  **/
 void ECAPAPWMShadowCaptureConfig(unsigned int baseAdd, unsigned int compareVal,
                                  unsigned int periodVal)
 {
-    HWREG(baseAdd + ECAP_CAP1) = periodVal; 
-    HWREG(baseAdd + ECAP_CAP2) = compareVal; 
+    HWREG(baseAdd + ECAP_CAP1) = periodVal;
+    HWREG(baseAdd + ECAP_CAP2) = compareVal;
 }
 
 /**
@@ -497,7 +497,7 @@ void ECAPCounterPhaseValConfig(unsigned int baseAdd, unsigned int cntPhaseVal)
 
 /**
  * \brief   This function enables the generation of interrupts if any of
- *          event interrupt are enable and corresponding event interrupt 
+ *          event interrupt are enable and corresponding event interrupt
  *          flag is set.
  *
  * \param   baseAdd   It is the Memory address of the ECAP instance used.
@@ -525,7 +525,7 @@ void ECAPGlobalIntEnable(unsigned int baseAdd)
  *          ECAP_CEVT4_INT   - Enable Capture Event 4 interrupt.\n
  *          ECAP_CNTOVF_INT  - Enable Counter Overflow interrupt.\n
  *          ECAP_PRDEQ_INT   - Enable Period equal interrupt.\n
- *          ECAP_CMPEQ_INT   - Enable Compare equal interrupt.\n  
+ *          ECAP_CMPEQ_INT   - Enable Compare equal interrupt.\n
  *
  * \return  None.
  *
@@ -550,7 +550,7 @@ void ECAPIntEnable(unsigned int baseAdd, unsigned int flag)
  *          ECAP_CEVT4_INT   - Enable Capture Event 4 interrupt.\n
  *          ECAP_CNTOVF_INT  - Enable Counter Overflow interrupt.\n
  *          ECAP_PRDEQ_INT   - Enable Period equal interrupt.\n
- *          ECAP_CMPEQ_INT   - Enable Compare equal interrupt.\n  
+ *          ECAP_CMPEQ_INT   - Enable Compare equal interrupt.\n
  *
  * \return  None.
  *
@@ -575,8 +575,8 @@ void ECAPIntDisable(unsigned int baseAdd, unsigned int flag)
  *          ECAP_CEVT4_INT   - Status of Capture Event 4 interrupt.\n
  *          ECAP_CNTOVF_INT  - Status of Counter Overflow interrupt.\n
  *          ECAP_PRDEQ_INT   - Status of Period equal interrupt.\n
- *          ECAP_CMPEQ_INT   - Status of Compare equal interrupt.\n  
- *          ECAP_GLOBAL_INT  - Global interrupt status.\n 
+ *          ECAP_CMPEQ_INT   - Status of Compare equal interrupt.\n
+ *          ECAP_GLOBAL_INT  - Global interrupt status.\n
  *
  * \returns Status of the specified interrupts.
  *
@@ -601,7 +601,7 @@ unsigned int ECAPIntStatus(unsigned int baseAdd, unsigned int flag)
  *          ECAP_CEVT4_INT   - Status of Capture Event 4 interrupt.\n
  *          ECAP_CNTOVF_INT  - Status of Counter Overflow interrupt.\n
  *          ECAP_PRDEQ_INT   - Status of Period equal interrupt.\n
- *          ECAP_CMPEQ_INT   - Status of Compare equal interrupt.\n  
+ *          ECAP_CMPEQ_INT   - Status of Compare equal interrupt.\n
  *
  * \return  None.
  *

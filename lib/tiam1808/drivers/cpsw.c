@@ -71,7 +71,7 @@ void CPSWSSReset(unsigned int baseAddr)
     /* Reset the CPSW */
     HWREG(baseAddr + CPSW_SS_SOFT_RESET) = CPSW_SS_SOFT_RESET_SOFT_RESET;
 
-    while(HWREG(baseAddr + CPSW_SS_SOFT_RESET) 
+    while(HWREG(baseAddr + CPSW_SS_SOFT_RESET)
           & CPSW_SS_SOFT_RESET_SOFT_RESET);
 }
 
@@ -106,10 +106,10 @@ void CPSWSlRxShortFramesCopyDisable(unsigned int baseAddr)
 /**
  * \brief   Enables limiting the number of short gap packets transmitted to
  *          100ppm. Each time a short gap packet is sent, a counter is loaded
- *          with 10,000 and decremented on each wireside clock. Another short 
- *          gap packet will not be sent out until the counter decrements to 
- *          zero. This mode is included to preclude the host from filling up 
- *          the FIFO and sending every packet out with short gap which would 
+ *          with 10,000 and decremented on each wireside clock. Another short
+ *          gap packet will not be sent out until the counter decrements to
+ *          zero. This mode is included to preclude the host from filling up
+ *          the FIFO and sending every packet out with short gap which would
  *          violate the maximum number of packets per second allowed.
  *
  * \param   baseAddr    Base address of the CPSW Sliver Module registers.
@@ -180,11 +180,11 @@ void CPSWSlControlExtEnable(unsigned int baseAddr)
 void CPSWSlGigModeForceDisable(unsigned int baseAddr)
 {
     HWREG(baseAddr + CPSW_SL_MACCONTROL) &= ~CPSW_SL_MACCONTROL_GIG_FORCE;
-} 
+}
 
 /**
  * \brief   Sets the Transfer mode, 10/100 or gigabit mode  and the duplex
- *          mode  for the sliver.  
+ *          mode  for the sliver.
  *
  * \param   baseAddr    Base address of the CPSW Sliver Module registers.
  * \param   mode        The transfer mode
@@ -200,7 +200,7 @@ void CPSWSlTransferModeSet(unsigned int baseAddr, unsigned int mode)
 {
     HWREG(baseAddr + CPSW_SL_MACCONTROL) &= ~(CPSW_SL_MACCONTROL_GIG
                                               | CPSW_SL_MACCONTROL_FULLDUPLEX);
-      
+
     HWREG(baseAddr + CPSW_SL_MACCONTROL) |= mode;
 }
 
@@ -223,15 +223,15 @@ void CPSWSlTransferModeSet(unsigned int baseAddr, unsigned int mode)
  *            The MAC status register value returned can be compared against
  *            the below tokens. \n
  *              CPSW_SLIVER_STATE_IDLE - The Sliver is in idle state. \n
- *              CPSW_SLIVER_EXT_GIG_INPUT_HIGH - The EXT_GIG input 
+ *              CPSW_SLIVER_EXT_GIG_INPUT_HIGH - The EXT_GIG input
  *                                                 bit is in HIGH state.\n
- *              CPSW_SLIVER_EXT_FULL_DUPLEX_HIGH - The EXT_FULLDUPLEX input 
+ *              CPSW_SLIVER_EXT_FULL_DUPLEX_HIGH - The EXT_FULLDUPLEX input
  *                                                   bit is in HIGH state. \n
  *              CPSW_SLIVER_RX_FLOWCTRL_ACTIVE - The receive flow control is
  *                                                 active. \n
- *              CPSW_SLIVER_TX_FLOWCTRL_ACTIVE - The pause time period is 
- *                                                 observed for a received 
- *                                                 pause frame 
+ *              CPSW_SLIVER_TX_FLOWCTRL_ACTIVE - The pause time period is
+ *                                                 observed for a received
+ *                                                 pause frame
  *
  **/
 unsigned int CPSWSlMACStatusGet(unsigned int baseAddr, unsigned int statFlag)
@@ -252,20 +252,20 @@ void CPSWSlReset(unsigned int baseAddr)
 {
     /* Reset the sliver logic */
     HWREG(baseAddr + CPSW_SL_SOFT_RESET) = CPSW_SL_SOFT_RESET_SOFT_RESET;
-    
+
     /* Wait till the reset completes */
-    while(CPSW_SL_SOFT_RESET_SOFT_RESET == 
-          ((HWREG(baseAddr + CPSW_SL_SOFT_RESET)) 
+    while(CPSW_SL_SOFT_RESET_SOFT_RESET ==
+          ((HWREG(baseAddr + CPSW_SL_SOFT_RESET))
            & CPSW_SL_SOFT_RESET_SOFT_RESET));
 }
 
 
 /**
- * \brief   Sets the maximum length for received frame. 
+ * \brief   Sets the maximum length for received frame.
  *
  * \param   baseAddr    Base address of the CPSW Sliver Module registers.
  * \param   rxMaxLen    Maximum length for a received frame
- *     The default value for 'rxMaxLen' is 1518. The maximum value 
+ *     The default value for 'rxMaxLen' is 1518. The maximum value
  *     which can be set is 16383.
  *
  * \return  None
@@ -334,7 +334,7 @@ unsigned int CPSWSlTxPauseTmrGet(unsigned int baseAddr)
 }
 
 /**
- * \brief   Sets the transmitter inter-packet gap value. 
+ * \brief   Sets the transmitter inter-packet gap value.
  *
  * \param   baseAddr    Base address of the CPSW Sliver Module registers.
  * \param   intrPktGap  The transmit inter-packet gap value.
@@ -374,8 +374,8 @@ void CPSWSlGMIIEnable(unsigned int baseAddr)
  **/
 void CPSWSlRGMIIEnable(unsigned int baseAddr)
 {
-   HWREG(baseAddr + CPSW_SL_MACCONTROL) |= (CPSW_SL_MACCONTROL_GMII_EN 
-                                            | CPSW_SL_MACCONTROL_IFCTL_A 
+   HWREG(baseAddr + CPSW_SL_MACCONTROL) |= (CPSW_SL_MACCONTROL_GMII_EN
+                                            | CPSW_SL_MACCONTROL_IFCTL_A
                                             | CPSW_SL_MACCONTROL_IFCTL_B);
 }
 
@@ -391,7 +391,7 @@ void CPSWWrReset(unsigned int baseAddr)
     /* Reset the CPSW Wrapper */
     HWREG(baseAddr + CPSW_WR_SOFT_RESET) = CPSW_WR_SOFT_RESET_SOFT_RESET;
 
-    while(HWREG(baseAddr + CPSW_WR_SOFT_RESET) 
+    while(HWREG(baseAddr + CPSW_WR_SOFT_RESET)
           & CPSW_WR_SOFT_RESET_SOFT_RESET);
 }
 
@@ -426,7 +426,7 @@ void CPSWWrControlRegReset(unsigned int baseAddr)
 void CPSWWrCoreIntEnable(unsigned int baseAddr, unsigned int core,
                          unsigned int channel, unsigned int intFlag)
 {
-    HWREG(baseAddr + CPSW_WR_C_RX_THRESH_EN(core) + intFlag) |= (1 << channel); 
+    HWREG(baseAddr + CPSW_WR_C_RX_THRESH_EN(core) + intFlag) |= (1 << channel);
 }
 
 /**
@@ -444,11 +444,11 @@ void CPSWWrCoreIntEnable(unsigned int baseAddr, unsigned int core,
  *
  * \return  None
  **/
-void CPSWWrCoreIntDisable(unsigned int baseAddr, unsigned int core, 
+void CPSWWrCoreIntDisable(unsigned int baseAddr, unsigned int core,
                           unsigned int channel, unsigned int intFlag)
 {
-    HWREG(baseAddr + CPSW_WR_C_RX_THRESH_EN(core) + intFlag) &= 
-                                                            ~(1 << channel); 
+    HWREG(baseAddr + CPSW_WR_C_RX_THRESH_EN(core) + intFlag) &=
+                                                            ~(1 << channel);
 }
 
 /**
@@ -487,7 +487,7 @@ unsigned int CPSWWrCoreIntStatusGet(unsigned int baseAddr, unsigned int core,
  *        CPSW_RGMII1_DUPLEX - Duplex of RGMII1 \n
  *        CPSW_RGMII1_SPEED - Speed of RGMII1 \n
  *        CPSW_RGMII1_LINK_STAT - Link Status of RGMII1 \n
- *  
+ *
  *    The returned value can be compared agains the below values \n
  *        CPSW_RGMII2_DUPLEX_FULL - RGMII2 full duplex \n
  *        CPSW_RGMII2_DUPLEX_HALF - RGMII2 half duplex \n
@@ -505,7 +505,7 @@ unsigned int CPSWWrCoreIntStatusGet(unsigned int baseAddr, unsigned int core,
  *        CPSW_RGMII1_LINK_DOWN - RGMII1 link is down \n
  *
  * \return  Status of RGMII. Return value can be compared agains the same
- *          statFlag passed. 
+ *          statFlag passed.
  **/
 unsigned int CPSWWrRGMIIStatusGet(unsigned int baseAddr, unsigned int statFlag)
 {
@@ -518,12 +518,12 @@ unsigned int CPSWWrRGMIIStatusGet(unsigned int baseAddr, unsigned int statFlag)
  * \param   baseAddr    Base address of the CPSW Wrapper Module
  * \param   pacFlag     The interrpupts for which pacing to be enabled
  *    'pacFlag' can take any combination of the below values. \n
- *         CPSW_INT_PACING_C0_RX_PULSE  - Core 0 RX pulse interrupt pacing \n 
- *         CPSW_INT_PACING_C0_TX_PULSE  - Core 0 TX pulse interrupt pacing \n 
- *         CPSW_INT_PACING_C1_RX_PULSE  - Core 1 RX pulse interrupt pacing \n 
- *         CPSW_INT_PACING_C1_TX_PULSE  - Core 1 TX pulse interrupt pacing \n 
- *         CPSW_INT_PACING_C2_RX_PULSE  - Core 2 RX pulse interrupt pacing \n 
- *         CPSW_INT_PACING_C2_TX_PULSE  - Core 2 TX pulse interrupt pacing \n 
+ *         CPSW_INT_PACING_C0_RX_PULSE  - Core 0 RX pulse interrupt pacing \n
+ *         CPSW_INT_PACING_C0_TX_PULSE  - Core 0 TX pulse interrupt pacing \n
+ *         CPSW_INT_PACING_C1_RX_PULSE  - Core 1 RX pulse interrupt pacing \n
+ *         CPSW_INT_PACING_C1_TX_PULSE  - Core 1 TX pulse interrupt pacing \n
+ *         CPSW_INT_PACING_C2_RX_PULSE  - Core 2 RX pulse interrupt pacing \n
+ *         CPSW_INT_PACING_C2_TX_PULSE  - Core 2 TX pulse interrupt pacing \n
  *
  * \return  None
  **/
@@ -566,7 +566,7 @@ void CPSWWrIntRxPerMsSet(unsigned int baseAddr, unsigned int core,
 }
 
 /**
- * \brief   Disables pacing of interrupts                           
+ * \brief   Disables pacing of interrupts
  *
  * \param   baseAddr    Base address of the CPSW Wrapper Module
  * \param   pacFlag     The interrpupts for which pacing to be disabled
@@ -595,7 +595,7 @@ void CPSWWrIntPacingDisable(unsigned int baseAddr, unsigned int pacFlag)
  **/
 void CPSWALEInit(unsigned int baseAddr)
 {
-    HWREG(baseAddr + CPSW_ALE_CONTROL) = (CPSW_ALE_CONTROL_CLEAR_TABLE 
+    HWREG(baseAddr + CPSW_ALE_CONTROL) = (CPSW_ALE_CONTROL_CLEAR_TABLE
                                           | CPSW_ALE_CONTROL_ENABLE_ALE);
 }
 
@@ -626,12 +626,12 @@ void CPSWALEPortStateSet(unsigned int baseAddr, unsigned int portNum,
  * \brief   Sets an ALE table entry
  *
  * \param   baseAddr    Base address of the ALE Module
- * \param   aleTblIdx   The Index of the table entry 
+ * \param   aleTblIdx   The Index of the table entry
  * \param   aleEntryPtr The address of the entry to be set
  *
  * \return  None
  **/
-void CPSWALETableEntrySet(unsigned int baseAddr, unsigned int aleTblIdx, 
+void CPSWALETableEntrySet(unsigned int baseAddr, unsigned int aleTblIdx,
                           unsigned int *aleEntryPtr)
 {
     unsigned int cnt;
@@ -639,8 +639,8 @@ void CPSWALETableEntrySet(unsigned int baseAddr, unsigned int aleTblIdx,
     for (cnt = 0; cnt < ALE_ENTRY_WORDS; cnt++)
     {
         HWREG(baseAddr +  CPSW_ALE_TBLW(cnt)) =  *(aleEntryPtr + cnt);
-    }     
-    
+    }
+
     HWREG(baseAddr +  CPSW_ALE_TBLCTL) =
                                 aleTblIdx | CPSW_ALE_TBLCTL_WRITE_RDZ;
 }
@@ -649,7 +649,7 @@ void CPSWALETableEntrySet(unsigned int baseAddr, unsigned int aleTblIdx,
  * \brief   Returns an ALE table entry
  *
  * \param   baseAddr    Base address of the ALE Module
- * \param   aleTblIdx   The Index of the table entry 
+ * \param   aleTblIdx   The Index of the table entry
  * \param   aleEntryPtr The address where the ALE entry to be written
  *
  * \return  None
@@ -671,14 +671,14 @@ void CPSWALETableEntryGet(unsigned int baseAddr, unsigned int aleTblIdx,
  * \brief   Enables the ALE port to leaning an address
  *
  * \param   baseAddr      Base Address of the ALE module
- * \param   portNum       The port number 
+ * \param   portNum       The port number
  *
  * \return  None
  *
  **/
 void CPSWALELearnModeEnable(unsigned int baseAddr, unsigned int  portNum)
 {
-    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) &= 
+    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) &=
                                          ~CPSW_ALE_PORTCTL0_NO_LEARN;
 }
 
@@ -686,23 +686,23 @@ void CPSWALELearnModeEnable(unsigned int baseAddr, unsigned int  portNum)
  * \brief   Disables the ALE port from leaning an address
  *
  * \param   baseAddr      Base Address of the ALE module
- * \param   portNum       The port number 
+ * \param   portNum       The port number
  *
  * \return  None
  *
  **/
 void CPSWALELearnModeDisable(unsigned int baseAddr, unsigned int  portNum)
 {
-    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |= 
+    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |=
                                          CPSW_ALE_PORTCTL0_NO_LEARN;
 }
 
 /**
- * \brief   Sets the rate limit for broadcast packets. Each prescale pulse 
+ * \brief   Sets the rate limit for broadcast packets. Each prescale pulse
  *          loads the rate limit into the port counter, which gets decremented
  *          with each packet received or transmitted. If the counters
  *          decrement to zero, then further packets are rate limited until the
- *          next prescale pulse. 
+ *          next prescale pulse.
  *
  * \param   baseAddr      Base Address of the ALE module
  * \param   portNum       The port number
@@ -715,16 +715,16 @@ void CPSWALEBCastPktRateLimitSet(unsigned int baseAddr, unsigned int  portNum,
                                  unsigned int rateLtVal)
 {
     HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) &= ~CPSW_ALE_PORTCTL0_BCAST_LIMIT;
-    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |= 
+    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |=
                                (rateLtVal << CPSW_ALE_PORTCTL0_BCAST_LIMIT_SHIFT);
 }
 
 /**
- * \brief   Sets the rate limit for multicast packets. Each prescale pulse 
+ * \brief   Sets the rate limit for multicast packets. Each prescale pulse
  *          loads the rate limit into the port counter, which gets decremented
  *          with each packet received or transmitted. If the counters
  *          decrement to zero, then further packets are rate limited until the
- *          next prescale pulse. 
+ *          next prescale pulse.
  *
  * \param   baseAddr      Base Address of the ALE module
  * \param   portNum       The port number
@@ -737,40 +737,40 @@ void CPSWALEMCastPktRateLimitSet(unsigned int baseAddr, unsigned int  portNum,
                                  unsigned int rateLtVal)
 {
     HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) &= ~CPSW_ALE_PORTCTL0_MCAST_LIMIT;
-    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |= 
+    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |=
                                (rateLtVal << CPSW_ALE_PORTCTL0_MCAST_LIMIT_SHIFT);
 
 }
 
 /**
- * \brief   Enables the port for updating the source port number in the ALE 
+ * \brief   Enables the port for updating the source port number in the ALE
  *          table entry.
  *
  * \param   baseAddr      Base Address of the ALE module
- * \param   portNum       The port number 
+ * \param   portNum       The port number
  *
  * \return  None
  *
  **/
 void CPSWALESrcPortNumUpdateEnable(unsigned int baseAddr, unsigned int portNum)
 {
-    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) &= 
+    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) &=
                                            ~CPSW_ALE_PORTCTL0_NO_SA_UPDATE;
 }
 
 /**
- * \brief   Disables the port from updating the source port number in the ALE 
+ * \brief   Disables the port from updating the source port number in the ALE
  *          table entry.
  *
  * \param   baseAddr      Base Address of the ALE module
- * \param   portNum       The port number 
+ * \param   portNum       The port number
  *
  * \return  None
  *
  **/
 void CPSWALESrcPortNumUpdateDisable(unsigned int baseAddr, unsigned int portNum)
 {
-    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |= 
+    HWREG(baseAddr + CPSW_ALE_PORTCTL(portNum)) |=
                                            CPSW_ALE_PORTCTL0_NO_SA_UPDATE;
 }
 
@@ -785,8 +785,8 @@ void CPSWALESrcPortNumUpdateDisable(unsigned int baseAddr, unsigned int portNum)
  **/
 unsigned int CPSWALEPrescaleGet(unsigned int baseAddr)
 {
-    return (HWREG(baseAddr + CPSW_ALE_PRESCALE) 
-            & CPSW_ALE_PRESCALE_ALE_PRESCALE);   
+    return (HWREG(baseAddr + CPSW_ALE_PRESCALE)
+            & CPSW_ALE_PRESCALE_ALE_PRESCALE);
 }
 
 /**
@@ -801,13 +801,13 @@ unsigned int CPSWALEPrescaleGet(unsigned int baseAddr)
  **/
 void CPSWALEPrescaleSet(unsigned int baseAddr, unsigned int psVal)
 {
-    HWREG(baseAddr + CPSW_ALE_PRESCALE) |= psVal 
+    HWREG(baseAddr + CPSW_ALE_PRESCALE) |= psVal
                                    & CPSW_ALE_PRESCALE_ALE_PRESCALE ;
 }
 
 /**
  * \brief   By calling this APIs, The ALE hardware removes (free up) any
- *          ageable table entry that does not have a set touch bit 
+ *          ageable table entry that does not have a set touch bit
  *
  * \param   baseAddr      Base Address of the ALE module
  *
@@ -817,7 +817,7 @@ void CPSWALEPrescaleSet(unsigned int baseAddr, unsigned int psVal)
 void CPSWALEAddrTblAgeOut(unsigned int baseAddr)
 {
     HWREG(baseAddr + CPSW_ALE_CONTROL) |= CPSW_ALE_CONTROL_AGE_OUT_NOW ;
-   
+
     /* Wait till ageout completes */
     while(HWREG(baseAddr +  CPSW_ALE_CONTROL) & CPSW_ALE_CONTROL_AGE_OUT_NOW);
 }
@@ -913,11 +913,11 @@ void CPSWRxFlowControlDisable(unsigned int baseAddr, unsigned int portNum)
  **/
 void CPSWSoftwareIdleEnable(unsigned int baseAddr)
 {
-    HWREG(baseAddr + CPSW_SS_SOFT_IDLE) |= CPSW_SS_SOFT_IDLE_SOFT_IDLE; 
+    HWREG(baseAddr + CPSW_SS_SOFT_IDLE) |= CPSW_SS_SOFT_IDLE_SOFT_IDLE;
 }
 
 /**
- * \brief   Disables the software idle mode, causing the switch fabric to 
+ * \brief   Disables the software idle mode, causing the switch fabric to
  *          forward packets at the next start of packet.
  *
  * \param   baseAddr      Base Address of the CPSW subsystem
@@ -970,19 +970,19 @@ void CPSWVLANAwareDisable(unsigned int baseAddr)
  **/
 void CPSWPortSrcAddrSet(unsigned int baseAddr, unsigned char *ethAddr)
 {
- 
-    HWREG(baseAddr + CPSW_PORT_SA_HI) = 
-                   ethAddr[0] 
+
+    HWREG(baseAddr + CPSW_PORT_SA_HI) =
+                   ethAddr[0]
                    | (ethAddr[1] << CPSW_PORT_P1_SA_HI_MACSRCADDR_39_32_SHIFT)
-                   | (ethAddr[2] << CPSW_PORT_P1_SA_HI_MACSRCADDR_31_24_SHIFT) 
+                   | (ethAddr[2] << CPSW_PORT_P1_SA_HI_MACSRCADDR_31_24_SHIFT)
                    | (ethAddr[3] << CPSW_PORT_P1_SA_HI_MACSRCADDR_23_16_SHIFT);
-    HWREG(baseAddr + CPSW_PORT_SA_LO) = 
-                   ethAddr[4]  
+    HWREG(baseAddr + CPSW_PORT_SA_LO) =
+                   ethAddr[4]
                    | (ethAddr[5] << CPSW_PORT_P1_SA_LO_MACSRCADDR_7_0_SHIFT);
 }
 
 /**
- * \brief   Sets the Tx Header Priority to Switch Pri Mapping 
+ * \brief   Sets the Tx Header Priority to Switch Pri Mapping
  *
  * \param   baseAddr      Base address of the CPSW Port Module registers.
  * \param   txPriMap      TX header priority map
@@ -996,31 +996,31 @@ void CPSWPortTxHdrPriMapSet(unsigned int baseAddr, unsigned int txPriMap)
 }
 
 /**
- * \brief   Sets the maximum number of 1k memory blocks that may be allocated 
+ * \brief   Sets the maximum number of 1k memory blocks that may be allocated
  *          to the FIFOs logical transmit priority queues. Port 0 should
  *          remain in flow control mode. 0x10 is the recommended value.
  *
  * \param   baseAddr      Base address of the CPSW Port Module registers.
- * \param   maxBlks       Number of blocks 
+ * \param   maxBlks       Number of blocks
  *
  * \return  None
  *
  **/
 void CPSWPortTxMaxBlksSet(unsigned int baseAddr, unsigned int maxBlks)
 {
-    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) &= 
+    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) &=
                        ~(CPSW_PORT_P0_MAX_BLKS_P0_TX_MAX_BLKS);
- 
-    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) |= 
+
+    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) |=
                        (maxBlks << CPSW_PORT_P0_MAX_BLKS_P0_TX_MAX_BLKS_SHIFT);
 }
 
 /**
  * \brief   Sets the maximum number of 1k memory blocks that may be allocated
- *          to the FIFOs logical receive queues. 0x4 is the recommended value. 
+ *          to the FIFOs logical receive queues. 0x4 is the recommended value.
  *
  * \param   baseAddr      Base address of the CPSW Port Module registers.
- * \param   maxBlks       Number of blocks 
+ * \param   maxBlks       Number of blocks
  *           0x3 <= 'maxBlks' <= 0x6
  *
  * \return  None
@@ -1028,10 +1028,10 @@ void CPSWPortTxMaxBlksSet(unsigned int baseAddr, unsigned int maxBlks)
  **/
 void CPSWPortRxMaxBlksSet(unsigned int baseAddr, unsigned int maxBlks)
 {
-    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) &= 
+    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) &=
                        ~(CPSW_PORT_P0_MAX_BLKS_P0_RX_MAX_BLKS);
- 
-    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) |= 
+
+    HWREG(baseAddr + CPSW_PORT_MAX_BLKS) |=
                        (maxBlks << CPSW_PORT_P0_MAX_BLKS_P0_RX_MAX_BLKS_SHIFT);
 }
 
@@ -1087,7 +1087,7 @@ void CPSWPortTxFIFODualMACModeSet(unsigned int baseAddr, unsigned int blksRem)
 {
     HWREG(baseAddr + CPSW_PORT_TX_IN_CTL) &= ~(CPSW_PORT_P0_TX_IN_CTL_TX_IN_SEL
                                          | CPSW_PORT_P0_TX_IN_CTL_TX_BLKS_REM);
-    HWREG(baseAddr + CPSW_PORT_TX_IN_CTL) |= 
+    HWREG(baseAddr + CPSW_PORT_TX_IN_CTL) |=
                      (CPSW_PORT_DUAL_MAC_MODE
                       | (blksRem << CPSW_PORT_P0_TX_IN_CTL_TX_BLKS_REM_SHIFT));
 }
@@ -1122,7 +1122,7 @@ void CPSWPortTxFIFOWordsSet(unsigned int baseAddr, unsigned int txPriWds)
 }
 
 /**
- * \brief   Sets the RX DSCP priority map. 
+ * \brief   Sets the RX DSCP priority map.
  *
  * \param   baseAddr      Base address of the CPSW Port Module registers.
  * \param   priReg        The priority Register to be set
@@ -1152,17 +1152,17 @@ unsigned int CPSWStatisticsGet(unsigned int baseAddr, unsigned int statReg)
 }
 
 /**
- * \brief   Sets the the threshold value for issuing receive threshold 
+ * \brief   Sets the the threshold value for issuing receive threshold
  *          pending interrupts
  *
  * \param   baseAddr      Base address of the CPDMA Module registers.
- * \param   channel       Channel number 
+ * \param   channel       Channel number
  * \param   threshVal     Threshold value to be set
  *
  * \return  None
  *
  **/
-void CPSWCPDMARxFlowThreshSet(unsigned int baseAddr, unsigned int channel, 
+void CPSWCPDMARxFlowThreshSet(unsigned int baseAddr, unsigned int channel,
                               unsigned int threshVal)
 {
     HWREG(baseAddr + CPSW_CPDMA_RX_PENDTHRESH(channel)) = threshVal;
@@ -1209,13 +1209,13 @@ void CPSWCPDMAReset(unsigned int baseAddr)
     unsigned int cnt;
 
     /* Reset the CPDMA */
-    HWREG(baseAddr + CPSW_CPDMA_CPDMA_SOFT_RESET) =  
+    HWREG(baseAddr + CPSW_CPDMA_CPDMA_SOFT_RESET) =
                      CPSW_CPDMA_CPDMA_SOFT_RESET_SOFT_RESET;
 
     /* Wait till the reset completes */
     while(HWREG(baseAddr + CPSW_CPDMA_CPDMA_SOFT_RESET)
           & CPSW_CPDMA_CPDMA_SOFT_RESET_SOFT_RESET);
- 
+
     /* Initialize all the header descriptor pointer registers */
     for(cnt =  0; cnt< CPSW_MAX_HEADER_DESC; cnt++)
     {
@@ -1357,14 +1357,14 @@ void CPSWCPDMARxHdrDescPtrWrite(unsigned int baseAddr, unsigned int descHdr,
  *
  * \param   baseAddr      Base Address of the CPDMA module registers.
  * \param   eoiFlag       Type of interrupt to acknowledge to the CPDMA
- *            'eoiFlag' can take the following values \n                            
- *                CPSW_EOI_TX_PULSE - TX Pulse Interrupt \n                                    
- *                CPSW_EOI_RX_PULSE - RX Pulse Interrupt \n                                    
- *                CPSW_EOI_RX_THRESH_PULSE - RX Pulse Threshold Interrupt \n                   
- *                CPSW_EOI_MISC_PULSE - Misc Interrupt \n                                      
+ *            'eoiFlag' can take the following values \n
+ *                CPSW_EOI_TX_PULSE - TX Pulse Interrupt \n
+ *                CPSW_EOI_RX_PULSE - RX Pulse Interrupt \n
+ *                CPSW_EOI_RX_THRESH_PULSE - RX Pulse Threshold Interrupt \n
+ *                CPSW_EOI_MISC_PULSE - Misc Interrupt \n
  *
  * \return  None
- * 
+ *
  **/
 void CPSWCPDMAEndOfIntVectorWrite(unsigned int baseAddr, unsigned int eoiFlag)
 {
@@ -1382,7 +1382,7 @@ void CPSWCPDMAEndOfIntVectorWrite(unsigned int baseAddr, unsigned int eoiFlag)
  * \return  None
  *
  **/
-void CPSWCPDMATxCPWrite(unsigned int baseAddr, unsigned int channel, 
+void CPSWCPDMATxCPWrite(unsigned int baseAddr, unsigned int channel,
                         unsigned int comPtr)
 {
     HWREG(baseAddr + CPSW_CPDMA_TX_CP(channel)) = comPtr;
@@ -1398,7 +1398,7 @@ void CPSWCPDMATxCPWrite(unsigned int baseAddr, unsigned int channel,
  * \return  None
  *
  **/
-void CPSWCPDMARxCPWrite(unsigned int baseAddr, unsigned int channel, 
+void CPSWCPDMARxCPWrite(unsigned int baseAddr, unsigned int channel,
                         unsigned int comPtr)
 {
     HWREG(baseAddr + CPSW_CPDMA_RX_CP(channel)) = comPtr;
@@ -1431,47 +1431,47 @@ void CPSWCPDMANumFreeBufSet(unsigned int baseAddr, unsigned int channel,
  *            CPDMA_STAT_TX_HOST_ERR_CHAN - TX host error channel. \n
  *            CPDMA_STAT_RX_HOST_ERR_CODE - RX host error code. \n
  *            CPDMA_STAT_RX_HOST_ERR_CHAN - RX host error channel. \n
- * 
+ *
  * \return  the DMA status for the status flag passed.
  *          The return values for CPDMA_STAT_IDLE are, \n
  *            CPDMA_STAT_IDLE - CPDMA is in idle state \n
  *            CPDMA_STAT_NOT_IDLE - CPDMA is not in idle state \n
  *
  *          The return values for CPDMA_STAT_TX_HOST_ERR_CODE are, \n
- *            CPDMA_STAT_TX_NO_ERR - No error \n 
- *            CPDMA_STAT_TX_SOP_ERR - SOP error \n 
+ *            CPDMA_STAT_TX_NO_ERR - No error \n
+ *            CPDMA_STAT_TX_SOP_ERR - SOP error \n
  *            CPDMA_STAT_TX_OWN_ERR - Ownership bit not
- *                                                  set in SOP buffer \n 
- *            CPDMA_STAT_TX_ZERO_DESC - Zero Next Buffer 
- *                                       Descriptor Pointer Without EOP \n 
- *            CPDMA_STAT_TX_ZERO_BUF_PTR - Zero Buffer Pointer \n 
- *            CPDMA_STAT_TX_ZERO_BUF_LEN - Zero Buffer Length \n 
- *            CPDMA_STAT_TX_PKT_LEN_ERR - Packet Length Error \n 
+ *                                                  set in SOP buffer \n
+ *            CPDMA_STAT_TX_ZERO_DESC - Zero Next Buffer
+ *                                       Descriptor Pointer Without EOP \n
+ *            CPDMA_STAT_TX_ZERO_BUF_PTR - Zero Buffer Pointer \n
+ *            CPDMA_STAT_TX_ZERO_BUF_LEN - Zero Buffer Length \n
+ *            CPDMA_STAT_TX_PKT_LEN_ERR - Packet Length Error \n
  *
  *          The return values for CPDMA_STAT_RX_HOST_ERR_CODE are, \n
- *            CPDMA_STAT_RXi_NO_ERR - No error \n 
- *            CPDMA_STAT_RX_OWN_NOT_SET - Ownership bit not set in 
+ *            CPDMA_STAT_RXi_NO_ERR - No error \n
+ *            CPDMA_STAT_RX_OWN_NOT_SET - Ownership bit not set in
                                           input buffer \n
- *            CPDMA_STAT_RX_ZERO_BUF_PTR - Zero Buffer Pointer\n 
- *            CPDMA_STAT_RX_ZERO_BUF_LEN - Zero Buffer Length on 
- *                                       non-SOP descriptor \n 
+ *            CPDMA_STAT_RX_ZERO_BUF_PTR - Zero Buffer Pointer\n
+ *            CPDMA_STAT_RX_ZERO_BUF_LEN - Zero Buffer Length on
+ *                                       non-SOP descriptor \n
  *            CPDMA_STAT_RX_SOP_BUF_LEN_ERR - SOP buffer length not
- *                                       greater than offset\n 
+ *                                       greater than offset\n
  *
  **/
 unsigned int CPSWCPDMAStatusGet(unsigned int baseAddr, unsigned int statFlag)
 {
-    return (((HWREG(baseAddr + CPSW_CPDMA_DMASTATUS)) & statFlag) 
-            >> (statFlag & CPDMA_ERR_CHANNEL_POS));   
+    return (((HWREG(baseAddr + CPSW_CPDMA_DMASTATUS)) & statFlag)
+            >> (statFlag & CPDMA_ERR_CHANNEL_POS));
 }
 
 /**
  * \brief   Configures the CPDMA module by writing the configuration value
- *          to the DMA control register. 
+ *          to the DMA control register.
  *
  * \param   baseAddr      Base Address of the CPDMA module registers
  * \param   cfg           CPDMA configuration written to control register
- *     'cfg' shall be CPDMA_CFG(tx_rlim, rx_cef, cmd_idle, 
+ *     'cfg' shall be CPDMA_CFG(tx_rlim, rx_cef, cmd_idle,
  *                              rx_offlen_blk, rx_own, tx_ptype). \n
  *        The parameter 'tx_rlim' to CPDMA_CFG can take one of the below
  *        values, showing which all channels are rate-limited. \n
@@ -1483,7 +1483,7 @@ unsigned int CPSWCPDMAStatusGet(unsigned int baseAddr, unsigned int statFlag)
  *            CPDMA_CFG_TX_RATE_LIM_CH_7_TO_2 \n
  *            CPDMA_CFG_TX_RATE_LIM_CH_7_TO_1 \n
  *            CPDMA_CFG_TX_RATE_LIM_CH_7_TO_0 \n
- *        The parameter 'rx_cef' to CPDMA_CFG can take one of the below 
+ *        The parameter 'rx_cef' to CPDMA_CFG can take one of the below
  *        values \n
  *            CPDMA_CFG_COPY_ERR_FRAMES - To copy error frames to memory \n
  *            CPDMA_CFG_NO_COPY_ERR_FRAMES - Not to copy error frames \n
@@ -1491,27 +1491,27 @@ unsigned int CPSWCPDMAStatusGet(unsigned int baseAddr, unsigned int statFlag)
  *        values \n
  *            CPDMA_CFG_IDLE_COMMAND - Idle commanded \n
  *            CPDMA_CFG_IDLE_COMMAND_NONE - Idle not commanded \n
- *        The parameter 'rx_offlen_blk' to CPDMA_CFG can take one of the below 
+ *        The parameter 'rx_offlen_blk' to CPDMA_CFG can take one of the below
  *        values \n
  *            CPDMA_CFG_BLOCK_RX_OFF_LEN_WRITE - Block the DMA writes to the
- *                                               offset/length field during 
+ *                                               offset/length field during
  *                                               packet processing. \n
  *            CPDMA_CFG_NOT_BLOCK_RX_OFF_LEN_WRITE - Do not Block the DMA writes
- *                                              to the offset/length field during 
+ *                                              to the offset/length field during
  *                                              packet processing. \n
- *        The parameter 'rx_own' to CPDMA_CFG can take one of the below 
+ *        The parameter 'rx_own' to CPDMA_CFG can take one of the below
  *        values \n
- *            CPDMA_CFG_RX_OWN_1 - The CPDMA writes 1 to the ownership bit at 
+ *            CPDMA_CFG_RX_OWN_1 - The CPDMA writes 1 to the ownership bit at
  *                                 the end of packet processing. \n
- *            CPDMA_CFG_RX_OWN_0 - The CPDMA writes 0 to the ownership bit at 
+ *            CPDMA_CFG_RX_OWN_0 - The CPDMA writes 0 to the ownership bit at
  *                                 the end of packet processing. \n
- *        The parameter 'tx_ptype' to CPDMA_CFG can take one of the below 
+ *        The parameter 'tx_ptype' to CPDMA_CFG can take one of the below
  *        values \n
  *            CPDMA_CFG_TX_PRI_ROUND_ROBIN - The next channel for transmit is
- *                                           chosen round-robin. \n 
+ *                                           chosen round-robin. \n
  *            CPDMA_CFG_TX_PRI_FIXED - The next channel for transmit is
  *                                     chosen priority based, channel 7 with the
- *                                     highest priority \n 
+ *                                     highest priority \n
  *
  * \return  None
  *
@@ -1536,14 +1536,14 @@ void CPSWCPDMAConfig(unsigned int baseAddr, unsigned int cfg)
 void CPSWCPDMACmdIdleEnable(unsigned int baseAddr)
 {
     HWREG(baseAddr + CPSW_CPDMA_DMACONTROL) |= CPSW_CPDMA_DMACONTROL_CMD_IDLE;
-    
+
     /* Wait till the state changes to idle */
     while((HWREG(baseAddr + CPSW_CPDMA_DMASTATUS) & CPSW_CPDMA_DMASTATUS_IDLE)
-          != CPSW_CPDMA_DMASTATUS_IDLE); 
+          != CPSW_CPDMA_DMASTATUS_IDLE);
 }
 
 /**
- * \brief   Disable the command idle mode for CPDMA. 
+ * \brief   Disable the command idle mode for CPDMA.
  *
  * \param   baseAddr      Base Address of the CPDMA module registers
  *
@@ -1557,9 +1557,9 @@ void CPSWCPDMACmdIdleDisable(unsigned int baseAddr)
 
 /**
  * \brief   Sets the RX buffer offset value. The RX buffer offset will be
- *          written by the port into each frame SOP buffer descriptor 
- *          buffer_offset field. The frame data will begin after the 
- *          rx_buffer_offset value of bytes. This value will be used for  
+ *          written by the port into each frame SOP buffer descriptor
+ *          buffer_offset field. The frame data will begin after the
+ *          rx_buffer_offset value of bytes. This value will be used for
  *          all the channels .
  *
  * \param   baseAddr      Base Address of the CPDMA module registers
@@ -1588,7 +1588,7 @@ void CPSWCPDMARxBufOffsetSet(unsigned int baseAddr, unsigned int bufOff)
  *                                                              pending \n
  *
  **/
-unsigned int CPSWCPDMATxIntStatRawGet(unsigned int baseAddr, 
+unsigned int CPSWCPDMATxIntStatRawGet(unsigned int baseAddr,
                                       unsigned int chanMask)
 {
     return (HWREG(baseAddr + CPSW_CPDMA_TX_INTSTAT_RAW) & chanMask);
@@ -1609,7 +1609,7 @@ unsigned int CPSWCPDMATxIntStatRawGet(unsigned int baseAddr,
  *                                                              pending \n
  *
  **/
-unsigned int CPSWCPDMATxIntStatMaskedGet(unsigned int baseAddr, 
+unsigned int CPSWCPDMATxIntStatMaskedGet(unsigned int baseAddr,
                                          unsigned int chanMask)
 {
     return (HWREG(baseAddr + CPSW_CPDMA_TX_INTSTAT_MASKED) & chanMask);
@@ -1625,8 +1625,8 @@ unsigned int CPSWCPDMATxIntStatMaskedGet(unsigned int baseAddr,
  *         0x01- for 0th channel, 0x80 for 7th channel, 0x81 for both 0th
  *         and 7th channel etc. \n
  *    'intType' can take one of the following values. \n
- *         CPDMA_RX_INT_THRESH_PEND - RX threshold interrupt pending \n               
- *         CPDMA_RX_INT_PULSE_PEND - RX pulse interrupt pending \n                    
+ *         CPDMA_RX_INT_THRESH_PEND - RX threshold interrupt pending \n
+ *         CPDMA_RX_INT_PULSE_PEND - RX pulse interrupt pending \n
  *
  * \return  Raw receive interrupt status \n
  *          bits for the 'chanMask' will be set if interrupt is pending \n
@@ -1634,12 +1634,12 @@ unsigned int CPSWCPDMATxIntStatMaskedGet(unsigned int baseAddr,
  *                                                              pending \n
  *
  **/
-unsigned int CPSWCPDMARxIntStatRawGet(unsigned int baseAddr, 
-                                      unsigned int chanMask, 
+unsigned int CPSWCPDMARxIntStatRawGet(unsigned int baseAddr,
+                                      unsigned int chanMask,
                                       unsigned int intType)
 {
     return ((HWREG(baseAddr + CPSW_CPDMA_RX_INTSTAT_RAW) >> intType)
-             & chanMask);    
+             & chanMask);
 }
 
 /**
@@ -1652,21 +1652,21 @@ unsigned int CPSWCPDMARxIntStatRawGet(unsigned int baseAddr,
  *         0x01- for 0th channel, 0x80 for 7th channel, 0x81 for both 0th
  *         and 7th channel etc. \n
  *    'intType' can take one of the following values. \n
- *         CPDMA_RX_INT_THRESH_PEND - RX threshold interrupt pending \n               
- *         CPDMA_RX_INT_PULSE_PEND - RX pulse interrupt pending \n                    
+ *         CPDMA_RX_INT_THRESH_PEND - RX threshold interrupt pending \n
+ *         CPDMA_RX_INT_PULSE_PEND - RX pulse interrupt pending \n
  *
  * \return  Masked receive interrupt status \n
  *          bits for the 'chanMask' will be set if interrupt is pending \n
- *          bits for the 'chanMask' will be cleared if interrupt is not 
+ *          bits for the 'chanMask' will be cleared if interrupt is not
  *                                                              pending \n
  *
  **/
-unsigned int CPSWCPDMARxIntStatMaskedGet(unsigned int baseAddr, 
+unsigned int CPSWCPDMARxIntStatMaskedGet(unsigned int baseAddr,
                                          unsigned int chanMask,
                                          unsigned int intType)
 {
-    return ((HWREG(baseAddr + CPSW_CPDMA_RX_INTMASK_SET) >> intType) 
-             & chanMask);    
+    return ((HWREG(baseAddr + CPSW_CPDMA_RX_INTMASK_SET) >> intType)
+             & chanMask);
 }
 
 /**
@@ -1699,22 +1699,22 @@ void CPSWContextSave(CPSWCONTEXT *contextPtr)
 
     for(idx = 0; idx < CPSW_MAX_NUM_ALE_ENTRY; idx++)
     {
-        CPSWALETableEntryGet(contextPtr->aleBase, idx, 
+        CPSWALETableEntryGet(contextPtr->aleBase, idx,
                              &(contextPtr->aleEntry[idx * 3]));
-    } 
+    }
 
     contextPtr->ssStatPortEn = HWREG(contextPtr->ssBase + CPSW_SS_STAT_PORT_EN);
     contextPtr->port1SaHi = HWREG(contextPtr->port1Base + CPSW_PORT_SA_HI);
     contextPtr->port1SaLo = HWREG(contextPtr->port1Base + CPSW_PORT_SA_LO);
     contextPtr->port2SaHi = HWREG(contextPtr->port2Base + CPSW_PORT_SA_HI);
     contextPtr->port2SaLo = HWREG(contextPtr->port2Base + CPSW_PORT_SA_LO);
-    contextPtr->cpdmaRxFB = HWREG(contextPtr->cpdmaBase 
+    contextPtr->cpdmaRxFB = HWREG(contextPtr->cpdmaBase
                                   + CPSW_CPDMA_RX_FREEBUFFER(0));
-    contextPtr->cpdmaTxCtl = HWREG(contextPtr->cpdmaBase 
+    contextPtr->cpdmaTxCtl = HWREG(contextPtr->cpdmaBase
                                    + CPSW_CPDMA_TX_CONTROL);
     contextPtr->cpdmaRxCtl = HWREG(contextPtr->cpdmaBase
                                    + CPSW_CPDMA_RX_CONTROL);
-    contextPtr->cpdmaRxHdp = HWREG(contextPtr->cpdmaBase 
+    contextPtr->cpdmaRxHdp = HWREG(contextPtr->cpdmaBase
                                    + CPSW_CPDMA_RX_HDP(0));
     contextPtr->txIntMaskSet = HWREG(contextPtr->cpdmaBase
                                      + CPSW_CPDMA_TX_INTMASK_SET);
@@ -1741,7 +1741,7 @@ void CPSWContextSave(CPSWCONTEXT *contextPtr)
 void CPSWContextRestore(CPSWCONTEXT *contextPtr)
 {
     unsigned int idx;
-    unsigned int *cppiDest = (unsigned int*)contextPtr->cppiRamBase; 
+    unsigned int *cppiDest = (unsigned int*)contextPtr->cppiRamBase;
 
     /* Restore the CPPI RAM contents */
     for(idx = 0; idx < (CPSW_SIZE_CPPI_RAM / 4); idx++, cppiDest++)
@@ -1767,15 +1767,15 @@ void CPSWContextRestore(CPSWCONTEXT *contextPtr)
     HWREG(contextPtr->port2Base + CPSW_PORT_SA_LO) = contextPtr->port2SaLo;
     HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_RX_FREEBUFFER(0)) =
                                 contextPtr->cpdmaRxFB;
-    HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_TX_CONTROL) 
+    HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_TX_CONTROL)
                                  = contextPtr->cpdmaTxCtl;
     HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_RX_CONTROL)
                                  = contextPtr->cpdmaRxCtl;
     HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_RX_HDP(0))
                                  = contextPtr->cpdmaRxHdp;
-    HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_TX_INTMASK_SET) 
+    HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_TX_INTMASK_SET)
                                  = contextPtr->txIntMaskSet;
-    HWREG(contextPtr->wrBase + CPSW_WR_C_RX_THRESH_EN(0) + 0x04) 
+    HWREG(contextPtr->wrBase + CPSW_WR_C_RX_THRESH_EN(0) + 0x04)
                                  = contextPtr->wrCoreIntTxPulse;
     HWREG(contextPtr->cpdmaBase + CPSW_CPDMA_RX_INTMASK_SET)
                                  = contextPtr->rxIntMaskSet;

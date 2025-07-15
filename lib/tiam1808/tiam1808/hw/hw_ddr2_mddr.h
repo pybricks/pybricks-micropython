@@ -89,8 +89,8 @@ extern "C" {
 #define DDR2_MDDR_SDCR_DDR2TERM1_SHIFT  (0x0000001Bu)
 /*----DDR2TERM1 Tokens----*/
 /* Tokens shown below should be used in conjunction with tokens for DDR2TERM0 to
- * generate the required temination resistor settings.                          
- * For example: 
+ * generate the required temination resistor settings.
+ * For example:
  * To disable termination the required value is 00 (binary), which would
  * require DDR2TERM0 to be 0 and DDR2TERM1 to be 0. This could be generated as
  * shown below:
@@ -107,10 +107,10 @@ extern "C" {
 #define DDR2_MDDR_SDCR_DDRDRIVE1_SHIFT  (0x00000018u)
 /*----DDRDRIVE1 Tokens----*/
 /* Tokens shown below should be used in conjunction with tokens for DDRDRIVE1 to
- * generate the required temination resistor settings.                          
- * For example: 
+ * generate the required temination resistor settings.
+ * For example:
  * For the case of weak driver streangth for DDR2 or 1/2 driver strength for mDDR
- * setting the required value is 01 (binary), which would require DDRDRIVE0 to 
+ * setting the required value is 01 (binary), which would require DDRDRIVE0 to
  * be 1 and DDRDRIVE1 to be 0. This could be generated as shown below:
  * ((DDR2_MDDR_SDCR_DDRDRIVE0_SET | DDR2_MDDR_SDCR_DDRDRIVE0_SHIFT) |
  *  (DDR2_MDDR_SDCR_DDRDRIVE1_CLEAR | DDR2_MDDR_SDCR_DDRDRIVE1_SHIFT))
@@ -125,8 +125,8 @@ extern "C" {
 #define DDR2_MDDR_SDCR_DDR2TERM0_SHIFT  (0x00000015u)
 /*----DDR2TERM0 Tokens----*/
 /* Tokens shown below should be used in conjunction with tokens for DDR2TERM1 to
- * generate the required temination resistor settings.                          
- * For example: 
+ * generate the required temination resistor settings.
+ * For example:
  * For disable termination the required value is 00 (binary), which would
  * require DDR2TERM0 to be 0 and DDR2TERM1 to be 0. This could be generated as
  * shown below:
@@ -144,10 +144,10 @@ extern "C" {
 #define DDR2_MDDR_SDCR_DDRDRIVE0_SHIFT  (0x00000012u)
 /*----DDRDRIVE0 Tokens----*/
 /* Tokens shown below should be used in conjunction with tokens for DDRDRIVE0 to
- * generate the required temination resistor settings.                          
- * For example: 
+ * generate the required temination resistor settings.
+ * For example:
  * For the case of weak driver streangth for DDR2 or 1/2 driver strength for mDDR
- * setting the required value is 01 (binary), which would require DDRDRIVE0 to 
+ * setting the required value is 01 (binary), which would require DDRDRIVE0 to
  * be 1 and DDRDRIVE1 to be 0. This could be generated as shown below:
  * ((DDR2_MDDR_SDCR_DDRDRIVE0_SET | DDR2_MDDR_SDCR_DDRDRIVE0_SHIFT) |
  *  (DDR2_MDDR_SDCR_DDRDRIVE1_CLEAR | DDR2_MDDR_SDCR_DDRDRIVE1_SHIFT))

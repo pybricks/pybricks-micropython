@@ -57,9 +57,9 @@ extern "C" {
 #define     I2C_CFG_MST_TX              I2C_CON_TRX | I2C_CON_MST
 #define     I2C_CFG_MST_RX              I2C_CON_MST
 #define     I2C_CFG_STOP                I2C_CON_STP
-#define     I2C_CFG_N0RMAL_MODE         (0 << I2C_CON_STB_SHIFT) 
+#define     I2C_CFG_N0RMAL_MODE         (0 << I2C_CON_STB_SHIFT)
 #define     I2C_CFG_SRT_BYTE_MODE       I2C_CON_STB
-#define     I2C_CFG_7BIT_SLAVE_ADDR     (0 << I2C_CON_XSA_SHIFT) 
+#define     I2C_CFG_7BIT_SLAVE_ADDR     (0 << I2C_CON_XSA_SHIFT)
 #define     I2C_CFG_10BIT_SLAVE_ADDR    I2C_CON_XSA
 #define     I2C_CFG_10BIT_OWN_ADDR_0    I2C_CON_XOA0
 #define     I2C_CFG_10BIT_OWN_ADDR_1    I2C_CON_XOA1
@@ -89,11 +89,11 @@ extern "C" {
 #define     I2C_INT_TRANSMIT_UNDER_FLOW  I2C_IRQSTATUS_XUDF
 #define     I2C_INT_RECV_OVER_RUN        I2C_IRQSTATUS_ROVR
 #define     I2C_INT_RECV_DRAIN           I2C_IRQSTATUS_RDR
-#define     I2C_INT_TRANSMIT_DRAIN       I2C_IRQSTATUS_XDR   
+#define     I2C_INT_TRANSMIT_DRAIN       I2C_IRQSTATUS_XDR
 
 /****************************************************************************/
 /*
-** Values that can be passed to I2CFIFOThersholdConfig/I2CFIFOClear API as 
+** Values that can be passed to I2CFIFOThersholdConfig/I2CFIFOClear API as
 ** flag to select recieve or transmit mode.
 */
 #define     I2C_TX_MODE                  1
@@ -126,10 +126,10 @@ extern "C" {
 ** any one of the idle mode of operation.
 */
 
-#define     I2C_FORCE_IDLE_MODE          (0 << I2C_SYSC_IDLEMODE_SHIFT)   
-#define     I2C_NO_IDLE_MODE             (1 << I2C_SYSC_IDLEMODE_SHIFT)   
-#define     I2C_SMART_IDLE_MODE          (2 << I2C_SYSC_IDLEMODE_SHIFT)   
-#define     I2C_SMART_IDLE_WAKEUP_MODE   (3 << I2C_SYSC_IDLEMODE_SHIFT)   
+#define     I2C_FORCE_IDLE_MODE          (0 << I2C_SYSC_IDLEMODE_SHIFT)
+#define     I2C_NO_IDLE_MODE             (1 << I2C_SYSC_IDLEMODE_SHIFT)
+#define     I2C_SMART_IDLE_MODE          (2 << I2C_SYSC_IDLEMODE_SHIFT)
+#define     I2C_SMART_IDLE_WAKEUP_MODE   (3 << I2C_SYSC_IDLEMODE_SHIFT)
 
 /****************************************************************************/
 /*
@@ -137,10 +137,10 @@ extern "C" {
 ** the type of activity
 */
 
-#define     I2C_CUT_OFF_BOTH_CLK         (0 << I2C_SYSC_CLKACTIVITY_SHIFT)   
-#define     I2C_CUT_OFF_SYS_CLK          (1 << I2C_SYSC_CLKACTIVITY_SHIFT)   
-#define     I2C_CUT_OFF_OCP_CLK          (2 << I2C_SYSC_CLKACTIVITY_SHIFT)   
-#define     I2C_KEEP_ALIVE_BOTH_CLK      (3 << I2C_SYSC_CLKACTIVITY_SHIFT)   
+#define     I2C_CUT_OFF_BOTH_CLK         (0 << I2C_SYSC_CLKACTIVITY_SHIFT)
+#define     I2C_CUT_OFF_SYS_CLK          (1 << I2C_SYSC_CLKACTIVITY_SHIFT)
+#define     I2C_CUT_OFF_OCP_CLK          (2 << I2C_SYSC_CLKACTIVITY_SHIFT)
+#define     I2C_KEEP_ALIVE_BOTH_CLK      (3 << I2C_SYSC_CLKACTIVITY_SHIFT)
 
 /****************************************************************************/
 /*
@@ -170,7 +170,7 @@ extern "C" {
 #define     I2C_WAKE_UP_IRQ               1
 #define     I2C_WAKE_UP_DMA_RECV          2
 #define     I2C_WAKE_UP_DMA_TRANSMIT      3
-  
+
 /****************************************************************************/
 /*
 ** Values that can be passed to I2CMasterIntStatus/I2CSlaveIntStatus

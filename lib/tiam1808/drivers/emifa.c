@@ -51,16 +51,16 @@
 * \brief   This function reads the module ID of EMIFA.\n
 *
 * \param   baseAddr  Memory address of EMIFA.\n
-* 
+*
 * \return  Module Id of EMIFA.\n
 */
 
 unsigned int  EMIFAModuleIdRead(unsigned int baseAddr)
 {
     unsigned int modId;
-    
+
     modId = HWREG(baseAddr + EMIFA_MIDR);
-    
+
     return (modId);
 }
 
@@ -101,7 +101,7 @@ void EMIFANANDCSSet(unsigned int baseAddr, unsigned int CSNum)
 }
 
 /**
-* \brief  This function start the NAND 4-bit ECC address 
+* \brief  This function start the NAND 4-bit ECC address
 *         and error value calculation.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
@@ -124,8 +124,8 @@ void EMIFANAND4BitECCAddrCalcStart(unsigned int baseAddr)
 *                    EMIFA_NAND_1BIT_ECC - To start 1 bit ECC.
 *                    EMIFA_NAND_4BIT_ECC - To start 4 bit ecc
 *
-* \param  csNum      This parameter is only valid when ecc value is 
-*                    EMIFA_NAND_1BIT_ECC. This specifies the chip 
+* \param  csNum      This parameter is only valid when ecc value is
+*                    EMIFA_NAND_1BIT_ECC. This specifies the chip
 *                    select for which nand is interfaced.
 *                    This can take one of the following values :
 *                    EMIFA_CHIP_SELECT_2  -  Using nand on CS2.
@@ -163,7 +163,7 @@ void EMIFANANDECCStart(unsigned int baseAddr, unsigned int eccType,
     {
         HWREG(baseAddr + EMIFA_NANDFCR) |= EMIFA_NANDFCR_4BITECC_START;
     }
-} 
+}
 
 /**
 * \brief  This function selects the NAND for 4-bit ECC.\n
@@ -182,7 +182,7 @@ void EMIFANANDECCStart(unsigned int baseAddr, unsigned int eccType,
 
 void EMIFANAND4BitECCSelect(unsigned int baseAddr, unsigned int CSNum)
 {
-    HWREG(baseAddr + EMIFA_NANDFCR) &= ~EMIFA_NANDFCR_4BITECCSEL;   
+    HWREG(baseAddr + EMIFA_NANDFCR) &= ~EMIFA_NANDFCR_4BITECCSEL;
     switch(CSNum)
     {
         case EMIFA_CHIP_SELECT_2:
@@ -211,9 +211,9 @@ void EMIFANAND4BitECCSelect(unsigned int baseAddr, unsigned int CSNum)
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
-* \param  waitVal    Maximum extended wait cycles.The EMIFA will wait for 
-*                    a maximum of (waitVal + 1)*16  clock cycles before it 
-*                    stops inserting asynchronous wait cycles and proceeds 
+* \param  waitVal    Maximum extended wait cycles.The EMIFA will wait for
+*                    a maximum of (waitVal + 1)*16  clock cycles before it
+*                    stops inserting asynchronous wait cycles and proceeds
 *                    to the hold period of the access.\n
 *
 * \return none.
@@ -221,8 +221,8 @@ void EMIFANAND4BitECCSelect(unsigned int baseAddr, unsigned int CSNum)
 
 void EMIFAMaxExtWaitCycleSet(unsigned int baseAddr, unsigned int waitVal)
 {
-    HWREG(baseAddr + EMIFA_AWCC) &= ~EMIFA_AWCC_MAX_EXT_WAIT;   
-    HWREG(baseAddr + EMIFA_AWCC) |=(waitVal & EMIFA_AWCC_MAX_EXT_WAIT); 
+    HWREG(baseAddr + EMIFA_AWCC) &= ~EMIFA_AWCC_MAX_EXT_WAIT;
+    HWREG(baseAddr + EMIFA_AWCC) |=(waitVal & EMIFA_AWCC_MAX_EXT_WAIT);
 }
 
 /**
@@ -243,7 +243,7 @@ void EMIFAMaxExtWaitCycleSet(unsigned int baseAddr, unsigned int waitVal)
 *                    EMIFA_EMA_WAIT_PIN1  -  To select EMA_WAIT[1] pin.\n
 * \return none.
 */
-void EMIFACSWaitPinSelect(unsigned int baseAddr, unsigned int CSNum, 
+void EMIFACSWaitPinSelect(unsigned int baseAddr, unsigned int CSNum,
                           unsigned int pin)
 {
     switch(CSNum)
@@ -256,17 +256,17 @@ void EMIFACSWaitPinSelect(unsigned int baseAddr, unsigned int CSNum,
         case EMIFA_CHIP_SELECT_3:
 	         HWREG(baseAddr + EMIFA_AWCC) &= ~EMIFA_AWCC_CS3_WAIT;
 	         HWREG(baseAddr + EMIFA_AWCC) |= ((pin << EMIFA_AWCC_CS3_WAIT_SHIFT)
-     		                                   &EMIFA_AWCC_CS3_WAIT);      
+     		                                   &EMIFA_AWCC_CS3_WAIT);
         break;
         case EMIFA_CHIP_SELECT_4:
 	         HWREG(baseAddr + EMIFA_AWCC) &= ~EMIFA_AWCC_CS4_WAIT;
 	         HWREG(baseAddr + EMIFA_AWCC) |= ((pin << EMIFA_AWCC_CS4_WAIT_SHIFT)
-	                                           &EMIFA_AWCC_CS4_WAIT);      
+	                                           &EMIFA_AWCC_CS4_WAIT);
         break;
         case EMIFA_CHIP_SELECT_5:
       	     HWREG(baseAddr + EMIFA_AWCC) &= ~EMIFA_AWCC_CS5_WAIT;
 	         HWREG(baseAddr + EMIFA_AWCC) |= ((pin << EMIFA_AWCC_CS5_WAIT_SHIFT)
-	                                           &EMIFA_AWCC_CS5_WAIT);      
+	                                           &EMIFA_AWCC_CS5_WAIT);
         break;
         default:
         break;
@@ -290,18 +290,18 @@ void EMIFACSWaitPinSelect(unsigned int baseAddr, unsigned int CSNum,
 *
 * \return none.
 */
-void EMIFAWaitPinPolaritySet(unsigned int baseAddr, unsigned int pin, 
+void EMIFAWaitPinPolaritySet(unsigned int baseAddr, unsigned int pin,
                              unsigned int pinPolarity)
 {
     if(pin == EMIFA_EMA_WAIT_PIN0)
-    {   
-        HWREG(baseAddr + EMIFA_AWCC) |= (pinPolarity << EMIFA_AWCC_WP0_SHIFT);      
-        
+    {
+        HWREG(baseAddr + EMIFA_AWCC) |= (pinPolarity << EMIFA_AWCC_WP0_SHIFT);
+
     }
     else if(pin == EMIFA_EMA_WAIT_PIN1)
     {
-        HWREG(baseAddr + EMIFA_AWCC) |= (pinPolarity << EMIFA_AWCC_WP1_SHIFT);              
-    }       
+        HWREG(baseAddr + EMIFA_AWCC) |= (pinPolarity << EMIFA_AWCC_WP1_SHIFT);
+    }
 }
 
 /**
@@ -374,15 +374,15 @@ void EMIFAAsyncDevOpModeSelect(unsigned int baseAddr,unsigned int CSNum,
         break;
         case EMIFA_CHIP_SELECT_3:
 	         HWREG(baseAddr + EMIFA_CE3CFG) |= ((mode << EMIFA_CE3CFG_SS_SHIFT)
-     		                                     &EMIFA_CE3CFG_SS);     
+     		                                     &EMIFA_CE3CFG_SS);
         break;
         case EMIFA_CHIP_SELECT_4:
 	         HWREG(baseAddr + EMIFA_CE4CFG) |= ((mode << EMIFA_CE4CFG_SS_SHIFT)
-     	                                        &EMIFA_CE4CFG_SS);     
+     	                                        &EMIFA_CE4CFG_SS);
         break;
         case EMIFA_CHIP_SELECT_5:
 	         HWREG(baseAddr + EMIFA_CE5CFG) |= ((mode << EMIFA_CE5CFG_SS_SHIFT)
-     	                                        &EMIFA_CE5CFG_SS);     
+     	                                        &EMIFA_CE5CFG_SS);
         break;
         default:
         break;
@@ -420,15 +420,15 @@ void EMIFAExtendedWaitConfig(unsigned int baseAddr,unsigned int CSNum,
         break;
         case EMIFA_CHIP_SELECT_3:
 	         HWREG(baseAddr + EMIFA_CE3CFG) |= ((flag << EMIFA_CE3CFG_EW_SHIFT)
-     		                                    &EMIFA_CE3CFG_EW);      
+     		                                    &EMIFA_CE3CFG_EW);
         break;
         case EMIFA_CHIP_SELECT_4:
 	         HWREG(baseAddr + EMIFA_CE4CFG) |= ((flag << EMIFA_CE4CFG_EW_SHIFT)
-     		                                    &EMIFA_CE4CFG_EW);      
+     		                                    &EMIFA_CE4CFG_EW);
         break;
         case EMIFA_CHIP_SELECT_5:
 	         HWREG(baseAddr + EMIFA_CE5CFG) |= ((flag << EMIFA_CE5CFG_EW_SHIFT)
-     	 	                                    &EMIFA_CE5CFG_EW);      
+     	 	                                    &EMIFA_CE5CFG_EW);
         break;
         default:
         break;
@@ -436,7 +436,7 @@ void EMIFAExtendedWaitConfig(unsigned int baseAddr,unsigned int CSNum,
 }
 
 /**
-* \brief  This function Configures the SDRAM.\n 
+* \brief  This function Configures the SDRAM.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
@@ -444,11 +444,11 @@ void EMIFAExtendedWaitConfig(unsigned int baseAddr,unsigned int CSNum,
 *                    macro to get the value of conf. \n
 *
 *  NOTE : Calling this funcion triggers the SDRAM initialization sequence.
-*         Hence first update the Self-Refresh mode,Power Down mode,refreshes 
+*         Hence first update the Self-Refresh mode,Power Down mode,refreshes
 *         during power down,refresh rate,sdram timing,self ref exit timing
 *         using EMIFASDRAMSelfRefModeConfig,EMIFASDRAMPowDownModeConfig
 *         EMIFASDRAMRefDurPowDownModeEnable,EMIFASDRAMRefRateSet,
-*         EMIFASDRAMTimingConfig,EMIFASDRAMSelfRefExitTimeConfig functions 
+*         EMIFASDRAMTimingConfig,EMIFASDRAMSelfRefExitTimeConfig functions
 *         respectively.\n
 *
 * \return none.
@@ -459,16 +459,16 @@ void EMIFASDRAMConfig(unsigned int baseAddr,unsigned int conf)
 }
 
 /**
-* \brief  This function configure the Self refresh mode of SDRAM.\n 
+* \brief  This function configure the Self refresh mode of SDRAM.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
-* \param  flag       Flag indicates whether to enter or exit the self refresh    
+* \param  flag       Flag indicates whether to enter or exit the self refresh
 *                    mode.
 *                    This can take one of the following values :
-*                    EMIFA_SDRAM_SELFREF_MODE_ENTER  -  To enter to self 
+*                    EMIFA_SDRAM_SELFREF_MODE_ENTER  -  To enter to self
 *                                                       refresh mode.
-*                    EMIFA_SDRAM_SELFREF_MODE_EXIT   -  To exit from self 
+*                    EMIFA_SDRAM_SELFREF_MODE_EXIT   -  To exit from self
 *                                                       refresh mode.\n
 *
 * \return none.
@@ -476,32 +476,32 @@ void EMIFASDRAMConfig(unsigned int baseAddr,unsigned int conf)
 void EMIFASDRAMSelfRefModeConfig(unsigned int baseAddr,unsigned int flag)
 {
     HWREG(baseAddr + EMIFA_SDCR) |= ((flag << EMIFA_SDCR_SR_SHIFT)
-                                    & EMIFA_SDCR_SR);       
+                                    & EMIFA_SDCR_SR);
 }
 
 /**
-* \brief  This function configure the Self refresh mode of SDRAM.\n 
+* \brief  This function configure the Self refresh mode of SDRAM.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  flag       Flag indicate whether to enter or exit the power down
-*                    mode. 
+*                    mode.
 *                    This can take one of the following values :
-*                    EMIFA_SDRAM_POWDOWN_MODE_ENTER  -  To enter to power 
+*                    EMIFA_SDRAM_POWDOWN_MODE_ENTER  -  To enter to power
 *                                                       down mode.
-*                    EMIFA_SDRAM_POWDOEN_MODE_EXIT   -  To exit from power 
+*                    EMIFA_SDRAM_POWDOEN_MODE_EXIT   -  To exit from power
 *                                                       down mode.\n
 *
 * \return none.
 */
 void EMIFASDRAMPowDownModeConfig(unsigned int baseAddr,unsigned int flag)
 {
-    HWREG(baseAddr + EMIFA_SDCR) |= ((flag << EMIFA_SDCR_PD_SHIFT) 
-                                    & EMIFA_SDCR_PD);       
+    HWREG(baseAddr + EMIFA_SDCR) |= ((flag << EMIFA_SDCR_PD_SHIFT)
+                                    & EMIFA_SDCR_PD);
 }
 
 /**
-* \brief  This function enables the refresh during power down mode.\n 
+* \brief  This function enables the refresh during power down mode.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
@@ -509,25 +509,25 @@ void EMIFASDRAMPowDownModeConfig(unsigned int baseAddr,unsigned int flag)
 */
 void EMIFASDRAMRefDurPowDownModeEnable(unsigned int baseAddr)
 {
-    HWREG(baseAddr + EMIFA_SDCR) |= EMIFA_SDCR_PDWR;            
+    HWREG(baseAddr + EMIFA_SDCR) |= EMIFA_SDCR_PDWR;
 }
 
 /**
-* \brief  This function configure the Self refresh rate of SDRAM.\n 
+* \brief  This function configure the Self refresh rate of SDRAM.\n
 *
 * \param  baseAddr    Memory address of EMIFA.\n
-*   
+*
 *         refRate     SDRAM refresh rate interms of EMA_CLK cycles.\n
 *
 * \return none.
 */
 void EMIFASDRAMRefRateSet(unsigned int baseAddr,unsigned int refRate)
 {
-    HWREG(baseAddr + EMIFA_SDRCR) = (refRate & EMIFA_SDRCR_RR);                  
+    HWREG(baseAddr + EMIFA_SDRCR) = (refRate & EMIFA_SDRCR_RR);
 }
 
 /**
-* \brief  This function does the Timing Configurations of SDRAM.\n 
+* \brief  This function does the Timing Configurations of SDRAM.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
@@ -542,7 +542,7 @@ void EMIFASDRAMTimingConfig(unsigned int baseAddr,unsigned int conf)
 }
 
 /**
-* \brief  This function congigures the self refresh exit timing .\n 
+* \brief  This function congigures the self refresh exit timing .\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
@@ -556,7 +556,7 @@ void EMIFASDRAMSelfRefExitTimeConfig(unsigned int baseAddr,unsigned int exitTime
 }
 
 /**
-* \brief  This function returns the status of EMA_WAIT[n] pins.\n 
+* \brief  This function returns the status of EMA_WAIT[n] pins.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
@@ -573,20 +573,20 @@ unsigned int EMIFAWaitPinStatusGet(unsigned int baseAddr,unsigned int pinNum)
     unsigned int status = 0;
 
     if( pinNum  == EMIFA_EMA_WAIT_PIN0)
-    {   
+    {
         status = (HWREG(baseAddr + EMIFA_NANDFSR) & 0x1);
-        
+
     }
     else if(pinNum == EMIFA_EMA_WAIT_PIN1)
     {
         status = ((HWREG(baseAddr + EMIFA_NANDFSR) >> 1) & 0x1);
-    }       
-    return status;   
+    }
+    return status;
 }
 
 /**
 * \brief  This function returns ECC correction state while performing 4-bit ECC
-*         Address and Error Value Calculation.\n 
+*         Address and Error Value Calculation.\n
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
@@ -595,31 +595,31 @@ unsigned int EMIFAWaitPinStatusGet(unsigned int baseAddr,unsigned int pinNum)
 unsigned int EMIFANAND4BitECCStateGet(unsigned int baseAddr)
 {
     unsigned int eccState;
-    
-    eccState = ((HWREG(baseAddr + EMIFA_NANDFSR) & EMIFA_NANDFSR_ECC_STATE) >> 
-                EMIFA_NANDFSR_ECC_STATE_SHIFT); 
-                
-    return eccState;                
+
+    eccState = ((HWREG(baseAddr + EMIFA_NANDFSR) & EMIFA_NANDFSR_ECC_STATE) >>
+                EMIFA_NANDFSR_ECC_STATE_SHIFT);
+
+    return eccState;
 }
 
 /**
-* \brief  This function returns the Number of Errors found after the 4-Bit ECC 
+* \brief  This function returns the Number of Errors found after the 4-Bit ECC
 *         Error Address and Error Value Calculation.
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
-* \return eccErrNum  Num of erros during 4-bit ECC add and err val 
+* \return eccErrNum  Num of erros during 4-bit ECC add and err val
 *                    calculation(ECC_ERRNUM).
 */
 unsigned int EMIFANAND4BitECCNumOfErrsGet(unsigned int baseAddr)
 {
     unsigned int eccErrNum;
-    
-    eccErrNum = ((HWREG(baseAddr + EMIFA_NANDFSR) & EMIFA_NANDFSR_ECC_ERRNUM) >> 
-                EMIFA_NANDFSR_ECC_ERRNUM_SHIFT);    
-                
-    return eccErrNum;   
-    
+
+    eccErrNum = ((HWREG(baseAddr + EMIFA_NANDFSR) & EMIFA_NANDFSR_ECC_ERRNUM) >>
+                EMIFA_NANDFSR_ECC_ERRNUM_SHIFT);
+
+    return eccErrNum;
+
 }
 
 /**
@@ -635,13 +635,13 @@ unsigned int EMIFANAND4BitECCNumOfErrsGet(unsigned int baseAddr)
 *                    EMIFA_CHIP_SELECT_5  -  NOR interfaced on CS5.\n
 *
 *         flag       Page mode to enable or disable.
-*                    This can take one of the following values :        
+*                    This can take one of the following values :
 *                    EMIFA_NOR_PAGEMODE_ENABLE  - Nor page mode enable
 *                    EMIFA_NOR_PAGEMODE_DISABLE - Nor page mode disable.\n
-* 
+*
 * \return none.
 */
-void EMIFANORPageModeConfig(unsigned int baseAddr, unsigned int CSNum, 
+void EMIFANORPageModeConfig(unsigned int baseAddr, unsigned int CSNum,
                                    unsigned int flag)
 {
     switch(CSNum)
@@ -683,7 +683,7 @@ void EMIFANORPageModeConfig(unsigned int baseAddr, unsigned int CSNum,
 *                    This can take one of the following values :
 *                    EMIFA_NOR_PAGE_SIZE_4WORDS  - Nor page size is 4 words
 *                    EMIFA_NOR_PAGE_SIZE_8WORDS  - Nor page size is 8 words
-* 
+*
 * \return none.
 */
 void EMIFANORPageSizeSet(unsigned int baseAddr,unsigned int CSNum,
@@ -692,22 +692,22 @@ void EMIFANORPageSizeSet(unsigned int baseAddr,unsigned int CSNum,
     switch(CSNum)
     {
         case EMIFA_CHIP_SELECT_2:
-        	 HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize << 
+        	 HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize <<
 											  EMIFA_PMCR_CS2_PG_SIZE_SHIFT)
                                               & EMIFA_PMCR_CS2_PG_SIZE);
         break;
         case EMIFA_CHIP_SELECT_3:
-	         HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize << 
+	         HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize <<
 							  	     		  EMIFA_PMCR_CS3_PG_SIZE_SHIFT)
                                               & EMIFA_PMCR_CS3_PG_SIZE);
         break;
         case EMIFA_CHIP_SELECT_4:
-	         HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize << 
+	         HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize <<
 											  EMIFA_PMCR_CS4_PG_SIZE_SHIFT)
 		                                      & EMIFA_PMCR_CS4_PG_SIZE);
         break;
         case EMIFA_CHIP_SELECT_5:
-		     HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize << 
+		     HWREG(baseAddr + EMIFA_PMCR) |= ((pageSize <<
 								  			  EMIFA_PMCR_CS5_PG_SIZE_SHIFT)
 	                                          & EMIFA_PMCR_CS5_PG_SIZE);
         break;
@@ -729,8 +729,8 @@ void EMIFANORPageSizeSet(unsigned int baseAddr,unsigned int CSNum,
 *                    EMIFA_CHIP_SELECT_5  -  NOR interfaced on CS5.\n
 *
 *        delay      Page access delay for NOR Flash in EMA_CLK cycles.\n
-*        
-* 
+*
+*
 * \return none.\n
 */
 void EMIFANORPageAccessDelaySet(unsigned int baseAddr, unsigned int CSNum,
@@ -739,23 +739,23 @@ void EMIFANORPageAccessDelaySet(unsigned int baseAddr, unsigned int CSNum,
     switch(CSNum)
     {
         case EMIFA_CHIP_SELECT_2:
-        	 HWREG(baseAddr + EMIFA_PMCR) |= ((delay << 
-                                              EMIFA_PMCR_CS2_PG_DEL_SHIFT) 
+        	 HWREG(baseAddr + EMIFA_PMCR) |= ((delay <<
+                                              EMIFA_PMCR_CS2_PG_DEL_SHIFT)
              			                      & EMIFA_PMCR_CS2_PG_DEL);
         break;
         case EMIFA_CHIP_SELECT_3:
-	         HWREG(baseAddr + EMIFA_PMCR) |= ((delay << 
-											  EMIFA_PMCR_CS3_PG_DEL_SHIFT) 
+	         HWREG(baseAddr + EMIFA_PMCR) |= ((delay <<
+											  EMIFA_PMCR_CS3_PG_DEL_SHIFT)
 		                                      & EMIFA_PMCR_CS3_PG_DEL);
         break;
         case EMIFA_CHIP_SELECT_4:
 	         HWREG(baseAddr + EMIFA_PMCR) |= ((delay <<
-											   EMIFA_PMCR_CS4_PG_DEL_SHIFT) 
+											   EMIFA_PMCR_CS4_PG_DEL_SHIFT)
 			                                   & EMIFA_PMCR_CS4_PG_DEL);
         break;
         case EMIFA_CHIP_SELECT_5:
-	         HWREG(baseAddr + EMIFA_PMCR) |= ((delay << 
-					  						  EMIFA_PMCR_CS5_PG_DEL_SHIFT) 
+	         HWREG(baseAddr + EMIFA_PMCR) |= ((delay <<
+					  						  EMIFA_PMCR_CS5_PG_DEL_SHIFT)
 			                                  & EMIFA_PMCR_CS5_PG_DEL);
         break;
         default:
@@ -768,14 +768,14 @@ void EMIFANORPageAccessDelaySet(unsigned int baseAddr, unsigned int CSNum,
 *
 * \param  baseAddr   Memory address of EMIFA.\n
 *
-*         eccLdVal   ECC load value .\n  
-* 
+*         eccLdVal   ECC load value .\n
+*
 * \return none.\n
 */
 void EMIFANAND4BitECCLoad(unsigned int baseAddr,unsigned int eccLdVal)
 {
 
-    HWREG(baseAddr + EMIFA_NAND4BITECCLOAD) =( eccLdVal & 
+    HWREG(baseAddr + EMIFA_NAND4BITECCLOAD) =( eccLdVal &
                                              EMIFA_NAND4BITECCLOAD_4BITECCLOAD);
 }
 
@@ -789,16 +789,16 @@ void EMIFANAND4BitECCLoad(unsigned int baseAddr,unsigned int eccLdVal)
 *                          EMIFA_NAND_1BIT_ECC - To start 1 bit ECC.
 *                          EMIFA_NAND_4BIT_ECC - To start 4 bit ecc
 *
-*         eccValIndexOrCS  When ecc is EMIFA_NAND_1BIT_ECC, this argument 
-*                          acts as CS(chip select), where it can take one of 
-*                          the following values : 
+*         eccValIndexOrCS  When ecc is EMIFA_NAND_1BIT_ECC, this argument
+*                          acts as CS(chip select), where it can take one of
+*                          the following values :
 *                          EMIFA_CHIP_SELECT_2  -  Using nand on CS2.
 *                          EMIFA_CHIP_SELECT_3  -  Using nand on CS3.
 *                          EMIFA_CHIP_SELECT_4  -  Using nand on CS4.
 *                          EMIFA_CHIP_SELECT_5  -  Using nand on CS5.\n
 *
-*                          When ecc is EMIFA_NAND_4BIT_ECC, this argument 
-*                          acts asa ECC value index, where it can take one of     
+*                          When ecc is EMIFA_NAND_4BIT_ECC, this argument
+*                          acts asa ECC value index, where it can take one of
 *                          following values :
 *                          EMIFA_NAND_4BITECCVAL1 -- To retrive 4BITECCVAL1
 *                          EMIFA_NAND_4BITECCVAL2 -- To retrive 4BITECCVAL2
@@ -808,7 +808,7 @@ void EMIFANAND4BitECCLoad(unsigned int baseAddr,unsigned int eccLdVal)
 *                          EMIFA_NAND_4BITECCVAL6 -- To retrive 4BITECCVAL6
 *                          EMIFA_NAND_4BITECCVAL7 -- To retrive 4BITECCVAL7
 *                          EMIFA_NAND_4BITECCVAL8 -- To retrive 4BITECCVAL8
-*   
+*
 * \return eccVal           ECC value.
 */
 unsigned int EMIFANANDEccValGet(unsigned int baseAddr,unsigned int eccType,
@@ -842,42 +842,42 @@ unsigned int EMIFANANDEccValGet(unsigned int baseAddr,unsigned int eccType,
         {
             case EMIFA_NAND_4BITECCVAL1:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC1) &
-                            EMIFA_NAND4BITECC1_4BITECCVAL1) >> 
+                            EMIFA_NAND4BITECC1_4BITECCVAL1) >>
                             EMIFA_NAND4BITECC1_4BITECCVAL1_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL2:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC1) &
-                            EMIFA_NAND4BITECC1_4BITECCVAL2) >> 
-                            EMIFA_NAND4BITECC1_4BITECCVAL2_SHIFT);                
+                            EMIFA_NAND4BITECC1_4BITECCVAL2) >>
+                            EMIFA_NAND4BITECC1_4BITECCVAL2_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL3:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC2) &
-                            EMIFA_NAND4BITECC2_4BITECCVAL3) >> 
+                            EMIFA_NAND4BITECC2_4BITECCVAL3) >>
                             EMIFA_NAND4BITECC2_4BITECCVAL3_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL4:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC2) &
-                            EMIFA_NAND4BITECC2_4BITECCVAL4) >> 
-                            EMIFA_NAND4BITECC2_4BITECCVAL4_SHIFT);        
+                            EMIFA_NAND4BITECC2_4BITECCVAL4) >>
+                            EMIFA_NAND4BITECC2_4BITECCVAL4_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL5:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC3) &
-                            EMIFA_NAND4BITECC3_4BITECCVAL5) >> 
-                            EMIFA_NAND4BITECC3_4BITECCVAL5_SHIFT);        
+                            EMIFA_NAND4BITECC3_4BITECCVAL5) >>
+                            EMIFA_NAND4BITECC3_4BITECCVAL5_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL6:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC3) &
-                            EMIFA_NAND4BITECC3_4BITECCVAL6) >> 
-                            EMIFA_NAND4BITECC3_4BITECCVAL6_SHIFT);        
+                            EMIFA_NAND4BITECC3_4BITECCVAL6) >>
+                            EMIFA_NAND4BITECC3_4BITECCVAL6_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL7:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC4) &
-                            EMIFA_NAND4BITECC4_4BITECCVAL7) >> 
-                            EMIFA_NAND4BITECC4_4BITECCVAL7_SHIFT);        
+                            EMIFA_NAND4BITECC4_4BITECCVAL7) >>
+                            EMIFA_NAND4BITECC4_4BITECCVAL7_SHIFT);
             break;
             case EMIFA_NAND_4BITECCVAL8:
                  eccVal = ((HWREG(baseAddr + EMIFA_NAND4BITECC4) &
-                            EMIFA_NAND4BITECC4_4BITECCVAL8) >> 
+                            EMIFA_NAND4BITECC4_4BITECCVAL8) >>
                             EMIFA_NAND4BITECC4_4BITECCVAL8_SHIFT);
             break;
             default:
@@ -885,30 +885,30 @@ unsigned int EMIFANANDEccValGet(unsigned int baseAddr,unsigned int eccType,
         }
     }
     return eccVal;
-}               
+}
 
 /**
 * \brief  This function retrives the Address of 4-bit ECC error.
 *
 * \param  baseAddr         Memory address of EMIFA.\n
 *
-*         eccErrAddrIndex  ECC address error index.\n    
-*                          This can take one of the following values : 
-*                          EMIFA_4BITECC_ERRADDR_INDEX_1 -- To retrice 
+*         eccErrAddrIndex  ECC address error index.\n
+*                          This can take one of the following values :
+*                          EMIFA_4BITECC_ERRADDR_INDEX_1 -- To retrice
 *                                                           4BITECCERRADD1
-*                          EMIFA_4BITECC_ERRADDR_INDEX_2 -- To retrice 
+*                          EMIFA_4BITECC_ERRADDR_INDEX_2 -- To retrice
 *                                                           4BITECCERRADD2
-*                          EMIFA_4BITECC_ERRADDR_INDEX_3 -- To retrice 
+*                          EMIFA_4BITECC_ERRADDR_INDEX_3 -- To retrice
 *                                                           4BITECCERRADD3
-*                          EMIFA_4BITECC_ERRADDR_INDEX_4 -- To retrice 
+*                          EMIFA_4BITECC_ERRADDR_INDEX_4 -- To retrice
 *                                                           4BITECCERRADD4
-*   
+*
 * \return eccAddrVal   Address of 4-bit ECC error.
 **/
 unsigned int EMIFANAND4BitEccErrAddrGet(unsigned int baseAddr,
                                         unsigned int eccErrAddrIndex)
 {
-    unsigned int eccAddrVal = 0;   
+    unsigned int eccAddrVal = 0;
 
     switch(eccErrAddrIndex)
     {
@@ -920,17 +920,17 @@ unsigned int EMIFANAND4BitEccErrAddrGet(unsigned int baseAddr,
         case EMIFA_4BITECC_ERRADDR_INDEX_2:
              eccAddrVal = ((HWREG(baseAddr + EMIFA_NANDERRADD1) &
                            EMIFA_NANDERRADD1_4BITECCERRADD2) >>
-                           EMIFA_NANDERRADD1_4BITECCERRADD2_SHIFT);  
+                           EMIFA_NANDERRADD1_4BITECCERRADD2_SHIFT);
         break;
         case EMIFA_4BITECC_ERRADDR_INDEX_3:
              eccAddrVal = ((HWREG(baseAddr + EMIFA_NANDERRADD2) &
                           EMIFA_NANDERRADD2_4BITECCERRADD3) >>
-                          EMIFA_NANDERRADD2_4BITECCERRADD3_SHIFT);  
+                          EMIFA_NANDERRADD2_4BITECCERRADD3_SHIFT);
         break;
         case EMIFA_4BITECC_ERRADDR_INDEX_4:
              eccAddrVal = ((HWREG(baseAddr + EMIFA_NANDERRADD2) &
                           EMIFA_NANDERRADD2_4BITECCERRADD4) >>
-                          EMIFA_NANDERRADD2_4BITECCERRADD4_SHIFT);  
+                          EMIFA_NANDERRADD2_4BITECCERRADD4_SHIFT);
         break;
         default:
         break;
@@ -949,13 +949,13 @@ unsigned int EMIFANAND4BitEccErrAddrGet(unsigned int baseAddr,
 *                    EMIFA_4BITECC_ERRVAL_INDEX_2 -- To retrice 4BITECCERRVAL2
 *                    EMIFA_4BITECC_ERRVAL_INDEX_3 -- To retrice 4BITECCERRVAL3
 *                    EMIFA_4BITECC_ERRVAL_INDEX_4 -- To retrice 4BITECCERRVAL4
-*   
+*
 * \return eccErrVal  Value of 4-bit ECC error.
 */
 unsigned int EMIFANAND4BitEccErrValGet(unsigned int baseAddr,
                                         unsigned int eccErrValIndex)
 {
-    unsigned int eccErrVal = 0;    
+    unsigned int eccErrVal = 0;
 
     switch(eccErrValIndex)
     {
@@ -967,27 +967,27 @@ unsigned int EMIFANAND4BitEccErrValGet(unsigned int baseAddr,
         case EMIFA_4BITECC_ERRVAL_INDEX_2:
 	         eccErrVal = ((HWREG(baseAddr + EMIFA_NANDERRVAL1) &
      	                   EMIFA_NANDERRVAL1_4BITECCERRVAL2) >>
-          		           EMIFA_NANDERRVAL1_4BITECCERRVAL2_SHIFT);  
+          		           EMIFA_NANDERRVAL1_4BITECCERRVAL2_SHIFT);
         break;
         case EMIFA_4BITECC_ERRVAL_INDEX_3:
 	         eccErrVal = ((HWREG(baseAddr + EMIFA_NANDERRVAL2) &
      	                   EMIFA_NANDERRVAL2_4BITECCERRVAL3) >>
-	                       EMIFA_NANDERRVAL2_4BITECCERRVAL3_SHIFT);  
+	                       EMIFA_NANDERRVAL2_4BITECCERRVAL3_SHIFT);
         break;
         case EMIFA_4BITECC_ERRVAL_INDEX_4:
 	         eccErrVal = ((HWREG(baseAddr + EMIFA_NANDERRVAL2) &
      	                   EMIFA_NANDERRVAL2_4BITECCERRVAL4) >>
-	                       EMIFA_NANDERRVAL2_4BITECCERRVAL4_SHIFT);  
+	                       EMIFA_NANDERRVAL2_4BITECCERRVAL4_SHIFT);
         break;
         default:
         break;
-    }    
- 
+    }
+
     return (eccErrVal);
 }
 
 /**
-* \brief  This function configures the wait timing for the device interfaced on 
+* \brief  This function configures the wait timing for the device interfaced on
 *         csNum.
 *
 * \param  baseAddr   Memory address of EMIFA.\n
@@ -1000,11 +1000,11 @@ unsigned int EMIFANAND4BitEccErrValGet(unsigned int baseAddr,
 *                    EMIFA_CHIP_SELECT_5  -  For CS5.\n
 *
 * \param  conf       Configuration value for the device connected to csNum.
-*                    Use the EMIFA_ASYNC_WAITTIME_CONFIG macro to get the value 
+*                    Use the EMIFA_ASYNC_WAITTIME_CONFIG macro to get the value
 *                    of conf. \n
 *
 * \return none.
-**/                    
+**/
 void EMIFAWaitTimingConfig(unsigned int baseAddr,unsigned int CSNum,
                            unsigned int conf)
 {
@@ -1012,30 +1012,30 @@ void EMIFAWaitTimingConfig(unsigned int baseAddr,unsigned int CSNum,
     switch(CSNum)
     {
         case EMIFA_CHIP_SELECT_2:
-     	     HWREG(baseAddr + EMIFA_CE2CFG) |= conf;     
+     	     HWREG(baseAddr + EMIFA_CE2CFG) |= conf;
         break;
         case EMIFA_CHIP_SELECT_3:
-	         HWREG(baseAddr + EMIFA_CE3CFG) |= conf;     
+	         HWREG(baseAddr + EMIFA_CE3CFG) |= conf;
         break;
         case EMIFA_CHIP_SELECT_4:
-	         HWREG(baseAddr + EMIFA_CE4CFG) |= conf;     
+	         HWREG(baseAddr + EMIFA_CE4CFG) |= conf;
         break;
         case EMIFA_CHIP_SELECT_5:
-	         HWREG(baseAddr + EMIFA_CE5CFG) |= conf;     
+	         HWREG(baseAddr + EMIFA_CE5CFG) |= conf;
         break;
         default:
         break;
     }
-}                          
+}
 
 /**
 * \brief  This function monitors/reads the EMIFA's hardware-generated interrupts
-*           
+*
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  intFlag    Interrupt Flag for which interrupt status has to read.\n
 *                    This can take one of the following values :
-*                    EMIFA_ASYNC_TIMOUT_INT  -  For Asynchronous Timeout 
+*                    EMIFA_ASYNC_TIMOUT_INT  -  For Asynchronous Timeout
 *                                               interrupt.
 *                    EMIFA_LINE_TRAP_INT     -  For Line Trap interrupt.
 *                    EMIFA_WAIT_RISE_INT     -  For Wait Rise interrupt.
@@ -1053,19 +1053,19 @@ unsigned int EMIFARawIntStatusRead(unsigned int baseAddr,unsigned int intFlag)
     else if (intFlag == EMIFA_LINE_TRAP_INT)
     {
         intStatus = ((HWREG(baseAddr + EMIFA_INTRAW) & EMIFA_INTRAW_LT) >>
-                    EMIFA_INTRAW_LT_SHIFT);     
+                    EMIFA_INTRAW_LT_SHIFT);
     }
     else if (intFlag == EMIFA_WAIT_RISE_INT)
     {
         intStatus = ((HWREG(baseAddr + EMIFA_INTRAW) & EMIFA_INTRAW_WR) >>
-                    EMIFA_INTRAW_WR_SHIFT);             
-    }       
+                    EMIFA_INTRAW_WR_SHIFT);
+    }
     return intStatus;
 }
 
 /**
 * \brief  This function Clears the EMIFA hardware-generated interrupts
-*           
+*
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  intFlag    Interrupt Flag for which interrupt has to clear.\n
@@ -1085,17 +1085,17 @@ void EMIFARawIntClear(unsigned int baseAddr,unsigned int intFlag)
     }
     else if (intFlag == EMIFA_LINE_TRAP_INT)
     {
-        HWREG(baseAddr + EMIFA_INTRAW) |= EMIFA_INTRAW_LT;       
+        HWREG(baseAddr + EMIFA_INTRAW) |= EMIFA_INTRAW_LT;
     }
     else if (intFlag == EMIFA_WAIT_RISE_INT)
     {
-        HWREG(baseAddr + EMIFA_INTRAW) |= EMIFA_INTRAW_WR;               
-    }       
+        HWREG(baseAddr + EMIFA_INTRAW) |= EMIFA_INTRAW_WR;
+    }
 }
 
 /**
 * \brief  This function monitors/reads the EMIFA's hardware-generated interrupts
-*           
+*
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  intFlag    Interrupt Flag for which interrupt status has to read.\n
@@ -1107,9 +1107,9 @@ void EMIFARawIntClear(unsigned int baseAddr,unsigned int intFlag)
 *
 * \return Interrupt status.
 *
-*  NOTE : Main diffrence between EMIFAMskedIntStatusRead and 
-*         EMIFARawIntStatusRead is that when any int flag in 
-*         EMIFAMskedIntStatusRead is set an active-high pulse will be sent 
+*  NOTE : Main diffrence between EMIFAMskedIntStatusRead and
+*         EMIFARawIntStatusRead is that when any int flag in
+*         EMIFAMskedIntStatusRead is set an active-high pulse will be sent
 *         to the CPU interrupt controller.
 *
 */
@@ -1131,13 +1131,13 @@ unsigned int EMIFAMskedIntStatusRead(unsigned int baseAddr,unsigned int intFlag)
     {
        intStatus = ((HWREG(baseAddr + EMIFA_INTMSK) & EMIFA_INTMSK_WRED_MASK) >>
                      EMIFA_INTMSK_WRED_SHIFT);
-    }       
-    return intStatus;   
+    }
+    return intStatus;
 }
 
 /**
-* \brief  This function Clears the EMIFA’s hardware-generated interrupts
-*           
+* \brief  This function Clears the EMIFAï¿½s hardware-generated interrupts
+*
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  intFlag    Interrupt Flag for which interrupt has to clear.\n
@@ -1147,9 +1147,9 @@ unsigned int EMIFAMskedIntStatusRead(unsigned int baseAddr,unsigned int intFlag)
 *                    EMIFA_LINE_TRAP_INT     -  For Line Trap interrupt.\n
 *                    EMIFA_WAIT_RISE_INT     -  For Wait Rise interrupt.\n
 *
-*  NOTE : Main diffrence between EMIFAMskedIntStatusRead and 
-*         EMIFARawIntStatusRead is that when any int flag in 
-*         EMIFAMskedIntStatusRead is set an active-high pulse will be sent 
+*  NOTE : Main diffrence between EMIFAMskedIntStatusRead and
+*         EMIFARawIntStatusRead is that when any int flag in
+*         EMIFAMskedIntStatusRead is set an active-high pulse will be sent
 *         to the CPU interrupt controller.
 *
 * \return none.
@@ -1162,17 +1162,17 @@ void EMIFAMskedIntClear(unsigned int baseAddr,unsigned int intFlag)
     }
     else if (intFlag == EMIFA_LINE_TRAP_INT)
     {
-        HWREG(baseAddr + EMIFA_INTMSK) &= (~EMIFA_INTMSK_LTED_MASK);        
+        HWREG(baseAddr + EMIFA_INTMSK) &= (~EMIFA_INTMSK_LTED_MASK);
     }
     else if (intFlag == EMIFA_WAIT_RISE_INT)
     {
-        HWREG(baseAddr + EMIFA_INTMSK) &= (~EMIFA_INTMSK_WRED_MASK);                
-    }       
+        HWREG(baseAddr + EMIFA_INTMSK) &= (~EMIFA_INTMSK_WRED_MASK);
+    }
 }
 
 /**
 * \brief  This function Enables the interrupts.
-*           
+*
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  intFlag    Interrupt Flag for which interrupt has to enable.\n
@@ -1183,7 +1183,7 @@ void EMIFAMskedIntClear(unsigned int baseAddr,unsigned int intFlag)
 *                    EMIFA_WAIT_RISE_INT     -  For Wait Rise interrupt.\n
 *
 * \return none.
-*/                 
+*/
 void EMIFAMskedIntEnable(unsigned int baseAddr,unsigned int intFlag)
 {
     if(intFlag == EMIFA_ASYNC_TIMOUT_INT)
@@ -1192,28 +1192,28 @@ void EMIFAMskedIntEnable(unsigned int baseAddr,unsigned int intFlag)
     }
     else if (intFlag == EMIFA_LINE_TRAP_INT)
     {
-        HWREG(baseAddr + EMIFA_INTMSKSET) |= EMIFA_INTMSKSET_LT_SET_MASK;       
+        HWREG(baseAddr + EMIFA_INTMSKSET) |= EMIFA_INTMSKSET_LT_SET_MASK;
     }
     else if (intFlag == EMIFA_WAIT_RISE_INT)
     {
-        HWREG(baseAddr + EMIFA_INTMSKSET) |= EMIFA_INTMSKSET_WR_SET_MASK;       
-    }           
+        HWREG(baseAddr + EMIFA_INTMSKSET) |= EMIFA_INTMSKSET_WR_SET_MASK;
+    }
 }
 
 /**
 * \brief  This function Disables the interrupts.
-*           
+*
 * \param  baseAddr   Memory address of EMIFA.\n
 *
 * \param  intFlag    Interrupt Flag for which interrupt has to disable.\n
 *                    This can take one of the following values :
-*                    EMIFA_ASYNC_TIMOUT_INT  -  For Asynchronous Timeout 
+*                    EMIFA_ASYNC_TIMOUT_INT  -  For Asynchronous Timeout
 *                                               interrupt.\n
 *                    EMIFA_LINE_TRAP_INT     -  For Line Trap interrupt.\n
 *                    EMIFA_WAIT_RISE_INT     -  For Wait Rise interrupt.\n
 *
 * \return none.
-*/                 
+*/
 void EMIFAMskedIntDisable(unsigned int baseAddr,unsigned int intFlag)
 {
     if(intFlag == EMIFA_ASYNC_TIMOUT_INT)
@@ -1222,11 +1222,11 @@ void EMIFAMskedIntDisable(unsigned int baseAddr,unsigned int intFlag)
     }
     else if (intFlag == EMIFA_LINE_TRAP_INT)
     {
-        HWREG(baseAddr + EMIFA_INTMSKCLR) |= EMIFA_INTMSKCLR_LT_CLR_MASK;       
+        HWREG(baseAddr + EMIFA_INTMSKCLR) |= EMIFA_INTMSKCLR_LT_CLR_MASK;
     }
     else if (intFlag == EMIFA_WAIT_RISE_INT)
     {
-        HWREG(baseAddr + EMIFA_INTMSKCLR) |= EMIFA_INTMSKCLR_WR_CLR_MASK;       
-    }           
+        HWREG(baseAddr + EMIFA_INTMSKCLR) |= EMIFA_INTMSKCLR_WR_CLR_MASK;
+    }
 }
 /***************************** End Of File ***********************************/

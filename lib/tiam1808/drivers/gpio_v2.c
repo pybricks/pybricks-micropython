@@ -44,7 +44,7 @@
 #include "hw_types.h"
 
 /*****************************************************************************
-**                       FUNCTION DEFINITIONS                                
+**                       FUNCTION DEFINITIONS
 *****************************************************************************/
 
 /**
@@ -63,7 +63,7 @@ void GPIOModuleReset(unsigned int baseAdd)
     ** Doing so would reset the GPIO module.
     */
     HWREG(baseAdd + GPIO_SYSCONFIG) |= (GPIO_SYSCONFIG_SOFTRESET);
-    
+
     /* Waiting until the GPIO Module is reset.*/
     while(!(HWREG(baseAdd + GPIO_SYSSTATUS) & GPIO_SYSSTATUS_RESETDONE));
 }
@@ -136,13 +136,13 @@ void GPIODirModeSet(unsigned int baseAdd,
 
 /**
  * \brief   This API determines the direction of a specified GPIO pin.
- * 
+ *
  * \param   baseAdd      The memory address of the GPIO instance being used
  * \param   pinNumber    The number of the pin in the GPIO instance
  *
  * 'pinNumber' can take one of the following values:
  * (0 <= pinNumber <= 31)\n
- * 
+ *
  * \return  The direction of the specified pin. This returns one of the
  *          following two values:
  *          - GPIO_DIR_INPUT - signifying that the pin is an input pin\n
@@ -270,7 +270,7 @@ unsigned int GPIOMultiplePinsRead(unsigned int baseAdd,
  * 'intLine' can take one of the following two values:
  * - GPIO_INT_LINE_1 - interrupt request be propagated over interrupt line 1\n
  * - GPIO_INT_LINE_2 - interrupt request be propagated over interrupt line 2\n
- * 
+ *
  * 'pinNumber' can take one of the following values:
  * (0 <= pinNumber <= 31)\n
  *
@@ -285,7 +285,7 @@ void GPIOPinIntEnable(unsigned int baseAdd,
     {
         HWREG(baseAdd + GPIO_IRQSTATUS_SET(0)) = (1 << pinNumber);
     }
-    else     
+    else
     {
         HWREG(baseAdd + GPIO_IRQSTATUS_SET(1)) = (1 << pinNumber);
     }
@@ -321,7 +321,7 @@ void GPIOPinIntDisable(unsigned int baseAdd,
     {
         HWREG(baseAdd + GPIO_IRQSTATUS_CLR(0)) = (1 << pinNumber);
     }
-    else 
+    else
     {
         HWREG(baseAdd + GPIO_IRQSTATUS_CLR(1)) = (1 << pinNumber);
     }
@@ -362,7 +362,7 @@ void GPIOPinIntDisable(unsigned int baseAdd,
  * \return  None
  *
  * \note  A typical use case of this API is explained below:
- * 
+ *
  *        If it is initially required that interrupt should be generated on
  *        LOW level only, then this API can be called with 'GPIO_INT_TYPE_LEVEL_0'
  *        as the parameter. At a later point of time, if logic HIGH level only
@@ -402,21 +402,21 @@ void GPIOIntTypeSet(unsigned int baseAdd,
 
             /* Enabling logic HIGH level detect interrupt generation. */
             HWREG(baseAdd + GPIO_LEVELDETECT(1)) |= (1 << pinNumber);
-        
+
         break;
 
         case GPIO_INT_TYPE_BOTH_LEVEL:
-            
+
             /* Enabling logic LOW level detect interrupt geenration. */
             HWREG(baseAdd + GPIO_LEVELDETECT(0)) |= (1 << pinNumber);
 
             /* Enabling logic HIGH level detect interrupt generation. */
             HWREG(baseAdd + GPIO_LEVELDETECT(1)) |= (1 << pinNumber);
-            
+
         break;
 
         case GPIO_INT_TYPE_NO_EDGE:
-            
+
             /* Disabling rising edge detect interrupt generation. */
             HWREG(baseAdd + GPIO_RISINGDETECT) &= ~(1 << pinNumber);
 
@@ -485,14 +485,14 @@ unsigned int GPIOIntTypeGet(unsigned int baseAdd,
 {
     unsigned int intEvent = (GPIO_INT_TYPE_NO_LEVEL | GPIO_INT_TYPE_NO_EDGE);
 
-    /* Checking if logic LOW level trigger interrupt is enabled. */ 
+    /* Checking if logic LOW level trigger interrupt is enabled. */
     if(HWREG(baseAdd + GPIO_LEVELDETECT(0)) & (1 << pinNumber))
     {
         intEvent &= ~(GPIO_INT_TYPE_NO_LEVEL);
         intEvent |= GPIO_INT_TYPE_LEVEL_0;
     }
 
-    /* Checking if logic HIGH level trigger interrupt is enabled. */ 
+    /* Checking if logic HIGH level trigger interrupt is enabled. */
     if(HWREG(baseAdd + GPIO_LEVELDETECT(1)) & (1 << pinNumber))
     {
         intEvent &= ~(GPIO_INT_TYPE_NO_LEVEL);
@@ -524,7 +524,7 @@ unsigned int GPIOIntTypeGet(unsigned int baseAdd,
  *                    enabled interrupt status register has to be accessed.
  *                    The status of the specified pin is returned in this API.
  * \param  pinNumber  The number of the pin in the GPIO instance
- * 
+ *
  * 'intLine' can take one of the following two values:
  * - GPIO_INT_LINE_1 - to read the enabled interrupt status register
  *   corresponding to interrupt line 1\n
@@ -549,7 +549,7 @@ unsigned int GPIOPinIntStatus(unsigned int baseAdd,
     {
         intStatus = (HWREG(baseAdd + GPIO_IRQSTATUS(0)) & (1 << pinNumber));
     }
-    else 
+    else
     {
         intStatus = (HWREG(baseAdd + GPIO_IRQSTATUS(1)) & (1 << pinNumber));
     }
@@ -573,7 +573,7 @@ unsigned int GPIOPinIntStatus(unsigned int baseAdd,
  *   corresponding to interrupt line 1\n
  * - GPIO_INT_LINE_2 - to access the enabled interrupt status register
  *   corresponding to interrupt line 2\n
- * 
+ *
  * 'pinNumber' can take one of the following values:
  * (0 <= pinNumber <= 31)\n
  *
@@ -625,7 +625,7 @@ unsigned int GPIORawIntStatus(unsigned int baseAdd,
     {
         intStatus = HWREG(baseAdd + GPIO_IRQSTATUS_RAW(0)) & readMask;
     }
-    else  
+    else
     {
         intStatus = HWREG(baseAdd + GPIO_IRQSTATUS_RAW(1)) & readMask;
     }
@@ -634,8 +634,8 @@ unsigned int GPIORawIntStatus(unsigned int baseAdd,
 }
 
 /**
- * \brief  This API manually triggers an interrupt request due to a specified 
- *         GPIO pin. 
+ * \brief  This API manually triggers an interrupt request due to a specified
+ *         GPIO pin.
  *
  * \param  baseAdd    The memory address of the GPIO instance being used
  * \param  intLine    This specifies the interrupt line over which the
@@ -754,18 +754,18 @@ void GPIOGatingRatioConfigure(unsigned int baseAdd, unsigned int configFlag)
     HWREG(baseAdd + GPIO_CTRL) &= ~(GPIO_CTRL_GATINGRATIO);
 
     /* Programming the GATINGRATIO field in GPIO_CTRL register. */
-    HWREG(baseAdd + GPIO_CTRL) |= (configFlag & GPIO_CTRL_GATINGRATIO);    
+    HWREG(baseAdd + GPIO_CTRL) |= (configFlag & GPIO_CTRL_GATINGRATIO);
 }
 
 /**
  * \brief  This API enables/disables debouncing feature for a specified input
  *         GPIO pin.
- * 
+ *
  * \param  baseAdd      The memory address of the GPIO instance being used
  * \param  pinNumber    The number of the pin in the GPIO instance
  * \param  controlFlag  This specifies whether to enable/disable Debouncing
  *                      feature for the specified input pin
- * 
+ *
  * 'pinNumber' can take one of the following values:
  * (0 <= pinNumber <= 31)\n
  *
@@ -782,7 +782,7 @@ void GPIODebounceFuncControl(unsigned int baseAdd,
                              unsigned int pinNumber,
                              unsigned int controlFlag)
 {
-    
+
     /* Clearing the DEBOUNCEENABLE[n] bit in GPIO_DEBOUNCEENABLE register. */
     HWREG(baseAdd + GPIO_DEBOUNCENABLE) &= ~(1 << pinNumber);
 
@@ -810,7 +810,7 @@ void GPIODebounceTimeConfig(unsigned int baseAdd,
                             unsigned int debounceTime)
 {
     /* Programming the DEBOUNCETIME field in GPIO_DEBOUNCINGTIME register. */
-    HWREG(baseAdd + GPIO_DEBOUNCINGTIME) = (debounceTime & 
+    HWREG(baseAdd + GPIO_DEBOUNCINGTIME) = (debounceTime &
                                             GPIO_DEBOUNCINGTIME_DEBOUNCETIME);
 }
 
@@ -820,7 +820,7 @@ void GPIODebounceTimeConfig(unsigned int baseAdd,
  *
  * \param  baseAdd    The memory address of the GPIO instance being used
  * \param  intLine    This specifies the interrupt line for which the EOI
- *                    signal has to be generated 
+ *                    signal has to be generated
  *
  * 'intLine' can take one of the following values:
  * - GPIO_INT_LINE_1 - for EOI generation for interrupt line 1\n

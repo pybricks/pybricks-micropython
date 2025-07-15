@@ -1,8 +1,8 @@
 /**
  * \file      uart.c
  *
- * \brief     This file contains device abstraction layer APIs for the 
- *            UART device. There are APIs here to enable the UART instance, 
+ * \brief     This file contains device abstraction layer APIs for the
+ *            UART device. There are APIs here to enable the UART instance,
  *            set the required configurations for communication, transmit
  *            or receive data and also to disable the UART instance.
  */
@@ -62,25 +62,25 @@
  * \param     baseAdd         Memory address of the UART instance used.\n
  * \param     uartClk         Frequency of the clock supplied to the UART module.\n
  * \param     baudrate        Required baud rate of communication.\n
- * \param     config          Logical OR of the appropriate macros related to 
- *                            parity, number of stop bits and number of data 
+ * \param     config          Logical OR of the appropriate macros related to
+ *                            parity, number of stop bits and number of data
  *                            bits per frame.\n
  * \param     overSampRate    Over-sampling rate(either 13x or 16x).\n
  *
  * \return                    None.\n
- *            
- * \note     The baud rate is configured by setting the divisor values derived 
- *           from the module input clock \uartClk and the over sampling rate 
- *           \overSampleRate. The module input clock depends on the PLL 
- *           configurations and the system clock tree. 
+ *
+ * \note     The baud rate is configured by setting the divisor values derived
+ *           from the module input clock \uartClk and the over sampling rate
+ *           \overSampleRate. The module input clock depends on the PLL
+ *           configurations and the system clock tree.
  */
 
-void UARTConfigSetExpClk (unsigned int baseAdd, unsigned int uartClk, 
-                          unsigned int baudrate, unsigned int config, 
-                          unsigned int overSampRate) 
-{                                         
+void UARTConfigSetExpClk (unsigned int baseAdd, unsigned int uartClk,
+                          unsigned int baudrate, unsigned int config,
+                          unsigned int overSampRate)
+{
     unsigned int divisor = 0;
-    
+
     /* Calculating the divisor value */
     switch (overSampRate)
     {
@@ -88,14 +88,14 @@ void UARTConfigSetExpClk (unsigned int baseAdd, unsigned int uartClk,
             divisor = uartClk/(baudrate * 13);
             HWREG(baseAdd + UART_MDR) = UART_OVER_SAMP_RATE;
         break;
-        
+
         case UART_OVER_SAMP_RATE_16:
-        default: 
+        default:
             divisor = uartClk/(baudrate * 16);
             HWREG(baseAdd + UART_MDR) &= ~UART_OVER_SAMP_RATE;
         break;
     }
-    
+
     /*
     ** Writing the divisor value onto the Divisor Latch registers.
     ** Programming the divisor latch registers with an appropriate value sets
@@ -107,7 +107,7 @@ void UARTConfigSetExpClk (unsigned int baseAdd, unsigned int uartClk,
     /*
     ** Write only relevant values to the LCR. LCR controls the number of data
     ** bits and stop bits per frame, parity enable feature, type of parity
-    ** (even of odd), stick parity enable feature, Break control and DLAB 
+    ** (even of odd), stick parity enable feature, Break control and DLAB
     ** selection bits.
     */
 
@@ -127,7 +127,7 @@ void UARTConfigSetExpClk (unsigned int baseAdd, unsigned int uartClk,
  * \param    baseAdd      Memory address of the UART instance used.\n
  * \param    uartClk      Frequency of clock supplied to the UART module.\n
  * \param    pBaud        Pointer to the storage of the UART baud rate.\n
- * \param    pConfig      Pointer to the storage of the configuration 
+ * \param    pConfig      Pointer to the storage of the configuration
  *                        parameters.\n
  *
  * \return   None.\n
@@ -147,7 +147,7 @@ void UARTConfigGetExpClk (unsigned int baseAdd, unsigned int uartClk,
    {
       overSampRate = 13;
    }
-   else 
+   else
    {
       overSampRate = 16;
    }
@@ -176,9 +176,9 @@ void UARTConfigGetExpClk (unsigned int baseAdd, unsigned int uartClk,
  *                        3> UART_RX_TRIG_LEVEL_8
  *                        4> UART_RX_TRIG_LEVEL_14
  *  \return   None.\n
- * 
- *  \note   This API needs needs to be called to configure the FIFO without 
- *          enabling the DMA mode. If DMA mode is being used, the 
+ *
+ *  \note   This API needs needs to be called to configure the FIFO without
+ *          enabling the DMA mode. If DMA mode is being used, the
  *          UARTDMAEnable() should be used to configure the FIFO.
  *
  * \note    FIFO Control Register(FCR) and the Interrupt Identification Register
@@ -189,7 +189,7 @@ void UARTConfigGetExpClk (unsigned int baseAdd, unsigned int uartClk,
  *          Since these share the same address, the integrity of bits in FCR \n
  *          register are at risk if we read from IIR register, modify this value
  *          and write the new value into the FCR register. Thus, we retain the \n
- *          status of the FIFOEN bit and the RXFIFTL bit in the FCR register by 
+ *          status of the FIFOEN bit and the RXFIFTL bit in the FCR register by
  *          reinstating them to their previous values.\n
 
 
@@ -210,16 +210,16 @@ void UARTFIFOLevelSet (unsigned int baseAdd, unsigned int rxLevel)
  *                      macros:
  *                      UART_FIFO_MODE - which enables the FIFO mode of operation,
  *                      UART_DMAMODE - which enables the DMA mode of operation.
- * 
+ *
  *                      This can also contain the Rx FIFO threshold value.\n
  *                      This can take any one of the four following values:
  *                      1> UART_RX_TRIG_LEVEL_1 - one byte trigger level.\n
  *                      2> UART_RX_TRIG_LEVEL_4 - 4 bytes trigger level. \n
  *                      3> UART_RX_TRIG_LEVEL_8 - 8 bytes trigger level. \n
  *                      4> UART_RX_TRIG_LEVEL_14 - 14 bytes trigger level.\n
- *                      
+ *
  * \return   None.\n
- *                 
+ *
  * \note    FIFO Control Register(FCR) and the Interrupt Identification Regsiter
  *          (IIR) share a common offset address. FCR register has write-only \n
  *          permissions and IIR register has read-only permissions. Therefore,
@@ -228,7 +228,7 @@ void UARTFIFOLevelSet (unsigned int baseAdd, unsigned int rxLevel)
  *          Since these share the same address, the integrity of bits in FCR \n
  *          register are at risk if we read from IIR register, modify this value
  *          and write the new value into the FCR register. Thus, we retain the \n
- *          status of the FIFOEN bit and the RXFIFTL bit in the FCR register by 
+ *          status of the FIFOEN bit and the RXFIFTL bit in the FCR register by
  *          reinstating them to their previous values. Also, since the DMA mode \n
  *          requires that the FIFO be enabled, FIFO is enabled here. \n
  */
@@ -254,7 +254,7 @@ void UARTDMAEnable (unsigned int baseAdd, unsigned int flags)
  *                        2> UART_RX_TRIG_LEVEL_4 - 4 bytes trigger level. \n
  *                        3> UART_RX_TRIG_LEVEL_8 - 8 bytes trigger level. \n
  *                        4> UART_RX_TRIG_LEVEL_14 - 14 bytes trigger level.\n
- * 
+ *
  *
  * \return    None.\n
  *
@@ -265,7 +265,7 @@ void UARTDMAEnable (unsigned int baseAdd, unsigned int flags)
 
 void UARTDMADisable (unsigned int baseAdd, unsigned int flags)
 {
-    /* Enabling the FIFO mode of operation.*/   
+    /* Enabling the FIFO mode of operation.*/
     HWREG(baseAdd + UART_FCR) = (flags & (UART_FIFO_MODE | UART_RX_TRIG_LEVEL));
 }
 
@@ -282,10 +282,10 @@ void UARTDMADisable (unsigned int baseAdd, unsigned int flags)
 
 void UARTParityModeSet(unsigned int baseAdd, unsigned int parityMode)
 {
-    /* Clearing the Parity related bits.*/ 
-    HWREG(baseAdd + UART_LCR) &= ~(UART_PARITY  | UART_SET_PARITY_TYPE | 
+    /* Clearing the Parity related bits.*/
+    HWREG(baseAdd + UART_LCR) &= ~(UART_PARITY  | UART_SET_PARITY_TYPE |
                                    UART_STICK_PARITY);
-    /* Setting the Parity related bits depending upon 'parityMode'.*/ 
+    /* Setting the Parity related bits depending upon 'parityMode'.*/
     HWREG(baseAdd + UART_LCR) |= (parityMode & (UART_PARITY |
                                                 UART_SET_PARITY_TYPE |
                                                 UART_STICK_PARITY));
@@ -296,7 +296,7 @@ void UARTParityModeSet(unsigned int baseAdd, unsigned int parityMode)
  * \brief    This function gets the parity mode currently being used.\n
  *
  * \param    baseAdd   Memory address of the UART instance used.\n
- * 
+ *
  * \return   A value which when appropriately decoded in the application
  *           program would tell whether: \n
  *           a> No, odd or even parity is selected.\n
@@ -308,7 +308,7 @@ unsigned int UARTParityModeGet(unsigned int baseAdd)
     unsigned int mask;
 
     mask = (UART_PARITY | UART_SET_PARITY_TYPE | UART_STICK_PARITY);
-    
+
     return (HWREG(baseAdd + UART_LCR)& mask);
 }
 
@@ -337,8 +337,8 @@ void UARTEnable (unsigned int baseAdd)
  * \brief     This function does the following operations.\n
  *            1> Disables and resets the transmitter.\n
  *            2> Disables the resets the receiver.\n
- *            3> Disables the FREE running mode of operation of the UART. \n   
- *           
+ *            3> Disables the FREE running mode of operation of the UART. \n
+ *
  * \param    baseAdd     Memory address of the UART instance used.
  *
  * \return   None.
@@ -365,9 +365,9 @@ void UARTDisable (unsigned int baseAdd)
  *
  * \return  None.
  *
- * \note    This enable the FIFO and the trigger levels are set to the default 
+ * \note    This enable the FIFO and the trigger levels are set to the default
  *          values. The TX and the RX FIFO are also cleared. If the FIFO needs
- *          to be enabled, with different settings then one should call 
+ *          to be enabled, with different settings then one should call
  *          \UARTFIFOLevelSet after this API call.
  *
  */
@@ -388,7 +388,7 @@ void UARTFIFOEnable(unsigned int baseAdd)
  *
  * \note     This clears all the settings of the FIFO control Register(FCR)
  *           and disables the FIFO.
- *          
+ *
  */
 
 void UARTFIFODisable(unsigned int baseAdd)
@@ -399,10 +399,10 @@ void UARTFIFODisable(unsigned int baseAdd)
 
 /**
  * \brief   This function checks if the transmitter is empty by checking for
- *          the emptiness of Transmitter Holding Register(THR) and the 
+ *          the emptiness of Transmitter Holding Register(THR) and the
  *          Transmit Shift regsiter(TSR).
- *          
- *                               
+ *
+ *
  * \param   baseAdd   Memory address of the UART instance used.
  *
  * \return            Returns TRUE if Transmitter FIFO(or THR register
@@ -412,18 +412,18 @@ void UARTFIFODisable(unsigned int baseAdd)
 unsigned int UARTSpaceAvail(unsigned int baseAdd)
 {
     unsigned int retVal = FALSE;
-     
+
     /*
-    ** Checking if THRE or TEMT bits in Line Status Register (LSR) are set. 
-    ** THRE bit is set when the Transmitter FIFO is empty( THR register in 
+    ** Checking if THRE or TEMT bits in Line Status Register (LSR) are set.
+    ** THRE bit is set when the Transmitter FIFO is empty( THR register in
     ** non-FIFO mode). TEMT bit is set when both Transmitter FIFO and the
-    ** Transmitter Shift Register(TSR)are empty(THR and TSR registers in 
+    ** Transmitter Shift Register(TSR)are empty(THR and TSR registers in
     ** non-FIFO mode).
     */
-      
+
     if (HWREG(baseAdd + UART_LSR) & (UART_THR_TSR_EMPTY | UART_THR_EMPTY))
-    {                                         
-        retVal = TRUE;                                              
+    {
+        retVal = TRUE;
     }
 
     return retVal;
@@ -432,27 +432,27 @@ unsigned int UARTSpaceAvail(unsigned int baseAdd)
 
 /**
  * \brief   This function checks if: \n
- *          a> the Receiver Buffer Register(RBR) has data and it is ready to 
+ *          a> the Receiver Buffer Register(RBR) has data and it is ready to
  *             be read (for non-FIFO mode) or\n
  *          b> the Receiver FIFO has atleast one byte of data to be read
  *             (FIFO mode). \n
  *
  * \param     baseAdd   Memory address of the UART instance used.
  *
- * \return    Returns TRUE if there is atleast one byte to be read. 
+ * \return    Returns TRUE if there is atleast one byte to be read.
  *            Else it returns FALSE.
  *
  */
 
 unsigned int UARTCharsAvail(unsigned int baseAdd)
 {
-    unsigned int retVal = FALSE;    
+    unsigned int retVal = FALSE;
 
     if (HWREG(baseAdd + UART_LSR) & UART_DATA_READY)
-    {                                         
-        retVal = TRUE;                                              
+    {
+        retVal = TRUE;
     }
-    
+
     return retVal;
 }
 
@@ -467,7 +467,7 @@ unsigned int UARTCharsAvail(unsigned int baseAdd)
  *                      UART_OVERRUN_ERROR - indicating an Overrun Error.
  *                      UART_PARITY_ERROR - indicating a Parity Error.
  *                      UART_FRAME_ERROR - indicating a Frame Error.
- *                      UART_BREAK_IND - indicating a Break Indicator 
+ *                      UART_BREAK_IND - indicating a Break Indicator
  *                                       has been generated.
  */
 
@@ -479,7 +479,7 @@ unsigned int UARTRxErrorGet(unsigned int baseAdd)
 
 
 /**
- * \brief    This function attempts to write a byte into Transmitter Holding 
+ * \brief    This function attempts to write a byte into Transmitter Holding
  *           Register (THR). This API checks only once if the transmitter
  *           is empty. If yes, it puts the byte, else it returns FALSE.
  *
@@ -490,28 +490,28 @@ unsigned int UARTRxErrorGet(unsigned int baseAdd)
  *           is empty and the character was written. Else it returns FALSE.
  */
 
-unsigned int UARTCharPutNonBlocking(unsigned int baseAdd, 
+unsigned int UARTCharPutNonBlocking(unsigned int baseAdd,
                                     unsigned char byteWrite)
 {
     unsigned int retVal = FALSE;
-    
+
     if (HWREG(baseAdd + UART_LSR) & (UART_THR_TSR_EMPTY | UART_THR_EMPTY))
     {
        HWREG(baseAdd + UART_THR) = byteWrite;
        retVal = TRUE;
     }
-    
+
     return retVal;
  }
 
- 
+
 /**
  * \brief    This function reads a byte from the Receiver Buffer Register
  *           (RBR). This API checks if any character is ready to be read.
  *            If ready then returns the read byte, else it returns -1.
  *
  * \param    baseAdd   Memory address of the UART instance being used.
- * 
+ *
  * \return   The character in the RBR register typecasted as integer.
  *           If no character is found in the RBR register, -1
  *           is returned.
@@ -525,14 +525,14 @@ int UARTCharGetNonBlocking(unsigned int baseAdd)
     {
        retVal = HWREG(baseAdd + UART_RBR);
     }
-    
+
     return retVal;
 }
 
 
 /**
- * \brief      This function waits indefinitely for the arrival of a byte in   
- *             the receiver FIFO. Once a byte has arrived, it returns that 
+ * \brief      This function waits indefinitely for the arrival of a byte in
+ *             the receiver FIFO. Once a byte has arrived, it returns that
  *             byte typecasted as integer.
  *
  * \param      baseAdd     Memory address of the UART instance being used.
@@ -544,13 +544,13 @@ int UARTCharGetNonBlocking(unsigned int baseAdd)
 int UARTCharGet(unsigned int baseAdd)
 {
     int data = 0;
-    
+
     /*
     ** Busy check if data is available in receiver FIFO(RBR regsiter in non-FIFO
     ** mode) so that data could be read from the RBR register.
     */
     while ((HWREG(baseAdd + UART_LSR) & UART_DATA_READY) == 0);
-    
+
     data = (int)HWREG(baseAdd + UART_RBR);
 
     return data;
@@ -580,9 +580,9 @@ void UARTCharPut(unsigned int baseAdd, unsigned char byteTx)
    ** Register(THR) and Transmitter Shift Register(TSR) before writing
    ** data into the Transmitter FIFO(THR for non-FIFO mode).
    */
-   
+
    while (txEmpty != (HWREG(baseAdd + UART_LSR) & txEmpty));
-   
+
    /*
    ** Transmitter FIFO(THR register in non-FIFO mode) is empty.
    ** Write the byte onto the THR register.
@@ -594,7 +594,7 @@ void UARTCharPut(unsigned int baseAdd, unsigned char byteTx)
 /**
  * \brief   This function enables the specified interrupts of the UART module.
  *          The interrupts that can be enabled are the receive interrupt,
- *          transmit interrupt, line status interrupt and the modem status 
+ *          transmit interrupt, line status interrupt and the modem status
  *          interrupt.
  *
  * \param   baseAdd    Memory address of the UART instance being used.
@@ -607,7 +607,7 @@ void UARTCharPut(unsigned int baseAdd, unsigned char byteTx)
 
 void UARTIntEnable(unsigned int baseAdd, unsigned int intFlags)
 {
-    HWREG(baseAdd + UART_IER) |= 
+    HWREG(baseAdd + UART_IER) |=
             (intFlags & (UART_INT_MODEM_STAT | UART_INT_LINE_STAT |
                          UART_INT_TX_EMPTY | UART_INT_RXDATA_CTI));
 }
@@ -617,16 +617,16 @@ void UARTIntEnable(unsigned int baseAdd, unsigned int intFlags)
  * \brief   This function disables the specified interrupts of the UART module.
  *
  * \param   baseAdd    Memory address of the UART instance being used.
- * \param   intFlags   This is bitwise OR of interrupts that need to be 
+ * \param   intFlags   This is bitwise OR of interrupts that need to be
  *                     disabled.
  *
  * \return  None.
- * 
+ *
  */
 
 void UARTIntDisable(unsigned int baseAdd, unsigned int intFlags)
 {
-    HWREG(baseAdd + UART_IER) &= ~(intFlags & (UART_INT_MODEM_STAT | 
+    HWREG(baseAdd + UART_IER) &= ~(intFlags & (UART_INT_MODEM_STAT |
                                                UART_INT_LINE_STAT |
                                                UART_INT_TX_EMPTY |
                                                UART_INT_RXDATA_CTI));
@@ -637,8 +637,8 @@ void UARTIntDisable(unsigned int baseAdd, unsigned int intFlags)
  * \brief   This function returns highest priority UART interrupt for service
  *
  * \param   baseAdd    Memory address of the UART instance being used.
- * 
- * \return  Contents of the Interrupt Type field of IIR register. 
+ *
+ * \return  Contents of the Interrupt Type field of IIR register.
  *          This function returns one of the following macros:
  *          1> UART_INTID_TX_EMPTY.
  *          2> UART_INTID_RX_DATA.
@@ -659,29 +659,29 @@ unsigned int UARTIntStatus(unsigned int baseAdd)
 }
 
 /**
- * \brief   This function is used to transmit Break condition to the receiving 
+ * \brief   This function is used to transmit Break condition to the receiving
  *          UART and also to release the Break condition depending on the value
  *          of the 'breakState' variable
  *
  * \param   baseAdd      Memory address of the UART instance being used.
  * \param   BreakState   TRUE for transmitting the Break condition to the
  *                       receiving UART.
- *                       FALSE for releasing the receiver from the Break 
+ *                       FALSE for releasing the receiver from the Break
  *                       condition.
  *
  * \return  None.
  *
- */ 
- 
+ */
+
 void UARTBreakCtl(unsigned int baseAdd, unsigned int breakState)
 {
    if(TRUE == breakState)
    {
         HWREG(baseAdd + UART_LCR) |= UART_BREAK_CTRL;
    }
-   else 
+   else
    {
-       HWREG(baseAdd + UART_LCR) &= ~UART_BREAK_CTRL; 
+       HWREG(baseAdd + UART_LCR) &= ~UART_BREAK_CTRL;
    }
 
    return;
@@ -692,7 +692,7 @@ void UARTBreakCtl(unsigned int baseAdd, unsigned int breakState)
  *         bit and Request To Send(RTS) bit in the Modem Control Register(MCR).
  *
  * \param  baseAdd      Memory address of the UART instance being used.
- * \param  ctrlFlags    This contains bitwise OR of the AFE enable  bit and 
+ * \param  ctrlFlags    This contains bitwise OR of the AFE enable  bit and
  *                      RTS bit in the MCR register.
  *
  * \return  None.
@@ -703,7 +703,7 @@ void UARTModemControlSet(unsigned int baseAdd, unsigned int ctrlFlags)
 {
    /* Reading the Modem Control Register(MCR).*/
    HWREG(baseAdd + UART_MCR) &= ~(UART_AUTOFLOW | UART_RTS);
-   
+
    HWREG(baseAdd + UART_MCR) |= (ctrlFlags & (UART_AUTOFLOW | UART_RTS));
 }
 
@@ -733,7 +733,7 @@ void UARTModemControlClear(unsigned int baseAdd, unsigned int ctrlFlags)
  *
  * \return  The status of RTS and AFE bits if MCR
  *
- */ 
+ */
 unsigned int UARTModemControlGet(unsigned int baseAdd)
 {
    return HWREG(baseAdd + UART_MCR) & (UART_AUTOFLOW | UART_RTS);
@@ -744,14 +744,14 @@ unsigned int UARTModemControlGet(unsigned int baseAdd)
  *
  * \param   baseAdd    Memory address of the UART instance being used.
  *
- * \return  This function returns the status of DCD, CTS, DSR and RI 
+ * \return  This function returns the status of DCD, CTS, DSR and RI
  *          bits of the Modem Status Register(MSR).
  */
 unsigned int UARTModemStatusGet(unsigned int baseAdd)
 {
    return HWREG(baseAdd + UART_MSR) & (UART_RI | UART_DSR |
                                        UART_CTS | UART_DCD);
-                                     
+
 }
 
 /*****************************END OF FILE************************************/

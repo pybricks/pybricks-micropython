@@ -61,7 +61,7 @@
 *******************************************************************************/
 
 /**
- * \brief   Enables the timer in the specified mode. The timer must be 
+ * \brief   Enables the timer in the specified mode. The timer must be
  *          configured before it is enabled. The timer starts running when this
  *          API is called
  *
@@ -82,7 +82,7 @@
  * \return  None.
  *
  **/
-void TimerEnable(unsigned int baseAddr, unsigned int timer, 
+void TimerEnable(unsigned int baseAddr, unsigned int timer,
                  unsigned int enaMode)
 {
     /* Clear the enable bits of both timers; the timers stops couting */
@@ -118,7 +118,7 @@ void TimerDisable(unsigned int baseAddr, unsigned int timer)
  * \brief   Configures the timer. The timer can be configured in 64 bit mode
  *          32 bit chained/unchained mode, or as a watchdog timer. The timer
  *          can be given external clock input or internal clock input. When
- *          this API is called,\n  
+ *          this API is called,\n
  *          > The Timer counters are cleared \n
  *          > Both the timers are disabled from Reset. Hence, both the timers
  *            will start counting when enabled. \n
@@ -126,19 +126,19 @@ void TimerDisable(unsigned int baseAddr, unsigned int timer)
  * \param   baseAddr      Base Address of the Timer Module Registers.
  * \param   config        Configuration of the Timer Module.
  *
- * config can take the values \n 
+ * config can take the values \n
  *     TMR_CFG_64BIT_CLK_INT - 64 bit mode with internal clock \n
  *     TMR_CFG_64BIT_CLK_EXT - 64 bit mode with external clock \n
  *     TMR_CFG_64BIT_WATCHDOG - 64 bit watchdog timer mode \n
  *     TMR_CFG_32BIT_CH_CLK_INT - 32 bit chained mode with internal clock \n
  *     TMR_CFG_32BIT_CH_CLK_EXT - 32 bit chained mode with external clock \n
- *     TMR_CFG_32BIT_UNCH_CLK_BOTH_INT - 32 bit unchained mode; Both timers 
+ *     TMR_CFG_32BIT_UNCH_CLK_BOTH_INT - 32 bit unchained mode; Both timers
  *                                       clock sources are internal \n
  *     TMR_CFG_32BIT_UNCH_CLK_12INT_34EXT - 32 bit unchained mode; Clock source
- *                       for Timer12 is internal and for Timer34 is external \n 
+ *                       for Timer12 is internal and for Timer34 is external \n
  *     TMR_CFG_32BIT_UNCH_CLK_12EXT_34INT - 32 bit unchained mode; Clock source
  *                       for Timer12 is external and for Timer34 is internal \n
- *     TMR_CFG_32BIT_UNCH_CLK_BOTH_EXT - 32 bit unchained  mode; Both timers 
+ *     TMR_CFG_32BIT_UNCH_CLK_BOTH_EXT - 32 bit unchained  mode; Both timers
  *                                       clock sources are external
  *
  * \return  None.
@@ -166,7 +166,7 @@ void TimerConfigure(unsigned int baseAddr, unsigned int config)
     ** Select the timer mode and disable the timer module from Reset
     ** Timer Plus features are enabled.
     */
-    HWREG(baseAddr + TMR_TGCR) |= (config & 
+    HWREG(baseAddr + TMR_TGCR) |= (config &
                                    (TMR_TGCR_TIMMODE | TMR_TGCR_TIM34RS |
                                     TMR_TGCR_TIM12RS | TMR_TGCR_PLUSEN));
 }
@@ -190,7 +190,7 @@ void TimerWatchdogActivate(unsigned int baseAddr)
     HWREG(baseAddr + TMR_WDTCR) = ((HWREG(baseAddr + TMR_WDTCR) &
                                     (~TMR_WDTCR_WDKEY)) |
                                    (WDT_KEY_ACTIVE << TMR_WDTCR_WDKEY_SHIFT));
-                                        
+
 }
 
 /**
@@ -212,7 +212,7 @@ void TimerWatchdogReactivate(unsigned int baseAddr)
     HWREG(baseAddr + TMR_WDTCR) = ((HWREG(baseAddr + TMR_WDTCR) &
                                     (~TMR_WDTCR_WDKEY)) |
                                    (WDT_KEY_ACTIVE << TMR_WDTCR_WDKEY_SHIFT));
- 
+
 }
 
 /**
@@ -225,12 +225,12 @@ void TimerWatchdogReactivate(unsigned int baseAddr)
  * timer can take the values \n
  *     TMR_TIMER34 - Timer34 only \n
  *     TMR_TIMER12 - Timer12 only \n
- *     TMR_TIMER_BOTH - Both timers 
+ *     TMR_TIMER_BOTH - Both timers
  *
  * \return  None.
  *
  **/
-void TimerPeriodSet(unsigned int baseAddr, unsigned int timer, 
+void TimerPeriodSet(unsigned int baseAddr, unsigned int timer,
                     unsigned int period)
 {
     if(TMR_TIMER12 & timer)
@@ -254,7 +254,7 @@ void TimerPeriodSet(unsigned int baseAddr, unsigned int timer,
  *
  * timer can take the values \n
  *     TMR_TIMER34 - Timer34 \n
- *     TMR_TIMER12 - Timer12 
+ *     TMR_TIMER12 - Timer12
  *
  * \return  Period Value
  *
@@ -281,7 +281,7 @@ unsigned int TimerPeriodGet(unsigned int baseAddr, unsigned int timer)
  * \return  None.
  *
  **/
-void TimerCounterSet(unsigned int baseAddr, unsigned int timer, 
+void TimerCounterSet(unsigned int baseAddr, unsigned int timer,
                      unsigned int counter)
 {
     if(TMR_TIMER12 & timer)
@@ -333,7 +333,7 @@ unsigned int TimerCounterGet(unsigned int baseAddr, unsigned int timer)
  * \return  None.
  *
  **/
-void TimerReloadSet(unsigned int baseAddr, unsigned int timer, 
+void TimerReloadSet(unsigned int baseAddr, unsigned int timer,
                     unsigned int reload)
 {
     if(TMR_TIMER12 & timer)
@@ -402,7 +402,7 @@ unsigned int TimerCaptureGet(unsigned int baseAddr, unsigned int timer)
  * \return  None.
  *
  **/
-void TimerCompareSet(unsigned int baseAddr, unsigned int regIndex, 
+void TimerCompareSet(unsigned int baseAddr, unsigned int regIndex,
                      unsigned int compare)
 {
     /* Write only to the desired Compare register according to the index */
@@ -486,9 +486,9 @@ void TimerIntDisable(unsigned int baseAddr, unsigned int intFlags)
  * \return  Status of Interrupt. Returns all the fields of which status is set
  *
  * Note : This API will return the same fields which is passed as parameter, if
- * all the specified interrupt status is set. The return value will be 0 if 
- * none of the interrupt status in the parameter passed is set. 
- *     
+ * all the specified interrupt status is set. The return value will be 0 if
+ * none of the interrupt status in the parameter passed is set.
+ *
  **/
 unsigned int TimerIntStatusGet(unsigned int baseAddr, unsigned int statFlag)
 {
@@ -510,7 +510,7 @@ unsigned int TimerIntStatusGet(unsigned int baseAddr, unsigned int statFlag)
  *    TMR_INTSTAT34_TIMER_CAPT - Timer34 interrupt status in capture mode \n
  *
  * \return  None
- *     
+ *
  **/
 unsigned int TimerIntStatusClear(unsigned int baseAddr, unsigned int statFlag)
 {
@@ -533,10 +533,10 @@ unsigned int TimerIntStatusClear(unsigned int baseAddr, unsigned int statFlag)
  **/
 void TimerPreScalarCount34Set(unsigned int baseAddr, unsigned int psc34)
 {
-    HWREG(baseAddr + TMR_TGCR) &= ~(PRESCALE_MASK << TMR_TGCR_PSC34_SHIFT); 
+    HWREG(baseAddr + TMR_TGCR) &= ~(PRESCALE_MASK << TMR_TGCR_PSC34_SHIFT);
 
     /* Set the Prescalar value. This is applicable only for Timer34 */
-    HWREG(baseAddr + TMR_TGCR) |= ((psc34 & PRESCALE_MASK) << 
+    HWREG(baseAddr + TMR_TGCR) |= ((psc34 & PRESCALE_MASK) <<
                                    TMR_TGCR_PSC34_SHIFT);
 }
 
@@ -551,11 +551,11 @@ void TimerPreScalarCount34Set(unsigned int baseAddr, unsigned int psc34)
  **/
 unsigned int TimerPreScalarCount34Get(unsigned int baseAddr)
 {
-    /* 
-    ** Return the prescalar value. This is only for Timer34 in 32 bit 
+    /*
+    ** Return the prescalar value. This is only for Timer34 in 32 bit
     ** unchained mode.
-    */ 
-    return((HWREG(baseAddr + TMR_TGCR) & TMR_TGCR_PSC34) >> 
+    */
+    return((HWREG(baseAddr + TMR_TGCR) & TMR_TGCR_PSC34) >>
            TMR_TGCR_PSC34_SHIFT);
 }
 
@@ -574,7 +574,7 @@ void TimerDivDwnRatio34Set(unsigned int baseAddr, unsigned int tddr34)
     HWREG(baseAddr + TMR_TGCR) &= ~(TDDR_MASK << TMR_TGCR_TDDR34_SHIFT);
 
     /* Set the TDDR. This is only for Timer34  in unchained mode */
-    HWREG(baseAddr + TMR_TGCR) |= ((tddr34 & TDDR_MASK) << 
+    HWREG(baseAddr + TMR_TGCR) |= ((tddr34 & TDDR_MASK) <<
                                    TMR_TGCR_TDDR34_SHIFT);
 }
 
@@ -589,7 +589,7 @@ void TimerDivDwnRatio34Set(unsigned int baseAddr, unsigned int tddr34)
 unsigned int TimerDivDwnRatio34Get(unsigned int baseAddr)
 {
     /* Return the TDDR value. Only applicable in unchained mode for Timer34 */
-    return((HWREG(baseAddr + TMR_TGCR) & TMR_TGCR_TDDR34) >> 
+    return((HWREG(baseAddr + TMR_TGCR) & TMR_TGCR_TDDR34) >>
             TMR_TGCR_TDDR34_SHIFT);
 }
 
@@ -610,12 +610,12 @@ unsigned int TimerDivDwnRatio34Get(unsigned int baseAddr)
  *     TMR_CAPT_DISABLE - Capture Mode disable \n
  *     TMR_CAPT_ENABLE_RIS_EDGE - Capture enable at rising edge \n
  *     TMR_CAPT_ENABLE_FALL_EDGE - Capture enable at falling edge \n
- *     TMR_CAPT_ENABLE_BOTH_EDGE - Capture enable at both edges 
+ *     TMR_CAPT_ENABLE_BOTH_EDGE - Capture enable at both edges
  *
  * \return  None.
  *
  **/
-void TimerCaptureConfigure(unsigned int baseAddr, unsigned int timer, 
+void TimerCaptureConfigure(unsigned int baseAddr, unsigned int timer,
                            unsigned int cfgCap)
 {
     /* Clear the bits CAPTEN and edge selection bits */
@@ -632,7 +632,7 @@ void TimerCaptureConfigure(unsigned int baseAddr, unsigned int timer,
 /**
  * \brief   Enables the timer(s) for read reset mode. The timer shall be
  *          Configured in 32 bit unchained mode before this API is called.
- *          Read reset determines the effect of timer counter read on TIMn. 
+ *          Read reset determines the effect of timer counter read on TIMn.
  *          If Read reset is enabled, the timer counter will be reset when
  *          the timer counter register TIMn is read.
  *
@@ -649,7 +649,7 @@ void TimerCaptureConfigure(unsigned int baseAddr, unsigned int timer,
  **/
 void TimerReadResetEnable(unsigned int baseAddr, unsigned int timer)
 {
-    /* 
+    /*
     ** Enable the read reset mode for the specified timers; The timer counter
     ** for the corresponding timer will be reset for further TIMn reads
     */
@@ -746,7 +746,7 @@ void TimerInputGateDisable(unsigned int baseAddr, unsigned int timer)
  * \return  None.
  *
  **/
-void TimerPulseWidthSet(unsigned int baseAddr, unsigned int timer, 
+void TimerPulseWidthSet(unsigned int baseAddr, unsigned int timer,
                         unsigned int pulseWidth)
 {
     /* Clear the bits for Pulse width selection */
@@ -823,7 +823,7 @@ void TimerPulseModeSet(unsigned int baseAddr, unsigned int timer)
  * \return  Status of the timer. Returns the following values or the
  *          combination of both. \n
  *          TMR_OUT12_ASSERTED - TMR64P_OUT12 is asserted \n
- *          TMR_OUT34_ASSERTED - TMR64P_OUT34 is asserted 
+ *          TMR_OUT34_ASSERTED - TMR64P_OUT34 is asserted
  *
  **/
 unsigned int TimerOUTStatusGet(unsigned int baseAddr, unsigned int timer)
@@ -859,7 +859,7 @@ void TimerInvertINEnable(unsigned int baseAddr, unsigned int timer)
  *
  * \param   baseAddr      Base Address of the Timer Module Registers.
  * \param   timer         The timer, of which inversion to be disabled.
- * 
+ *
  *  timer can take the values \n
  *     TMR_TIMER34 - TMR64P_INT34 inversion will be disabled \n
  *     TMR_TIMER12 - TMR64P_IN12 inversion will be disabled \n

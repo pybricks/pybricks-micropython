@@ -1,6 +1,6 @@
 /**
  * \file  i2c.c
- *    
+ *
  * \brief I2C device abstraction layer APIs
  */
 
@@ -76,7 +76,7 @@ void I2CMasterInitExpClk(unsigned int baseAdd, unsigned int inputClk,
 
     HWREG(baseAdd + I2C_ICPSC) = prescale;
 
-    switch (prescale) 
+    switch (prescale)
     {
         case 0:
             dValue = 7;
@@ -94,16 +94,16 @@ void I2CMasterInitExpClk(unsigned int baseAdd, unsigned int inputClk,
 
     HWREG(baseAdd + I2C_ICCLKL)= div/2;
     HWREG(baseAdd + I2C_ICCLKH) = div - HWREG(baseAdd + I2C_ICCLKL);
-    
+
     return;
 }
 
 /**
-* \brief   Enables the I2C module.This will bring the I2C module out of local 
+* \brief   Enables the I2C module.This will bring the I2C module out of local
 *           reset.\n
 *
 * \param  baseAddr Base Address is the Memory address of the I2C instance used\n
-* 
+*
 * \return None.\n
 *
 **/
@@ -120,7 +120,7 @@ void I2CMasterEnable(unsigned int baseAddr)
 * \brief  Disables the I2C Module.This will put the I2C module in local reset.
 *
 * \param  baseAddr Base Address is the Memory address of the I2C instance used
-* 
+*
 *  \return None.
 *
 **/
@@ -132,7 +132,7 @@ void I2CMasterDisable(unsigned int baseAddr)
 
 /**
 * \brief  Enables the interrupt when I2C is in Master mode.Enables the indicated
-*          I2C interrupt sources.Only the sources that are enabled can be 
+*          I2C interrupt sources.Only the sources that are enabled can be
 *          reflected to the processor interrupt; disabled sources have no effect on
 *          the processor.\n
 *
@@ -142,19 +142,19 @@ void I2CMasterDisable(unsigned int baseAddr)
 *        intFlag can take following values.\n
 *
 *               I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt\n
-*                                              
+*
 *               I2C_INT_NO_ACK               - No-acknowledgment interrupt\n
-*                                              
+*
 *               I2C_INT_ADRR_READY_ACESS     - No-acknowledgment interrupt\n
-*                                              
+*
 *               I2C_INT_DATA_RECV_READY      - Receive-data-ready interrupt\n
-*                                              
+*
 *               I2C_INT_DATA_TRANSMIT_READY  - Transmit-data-ready interrupt\n
-*                                              
+*
 *               I2C_INT_STOP_CONDITION       - Stop condition interrupt\n
-*                                              
+*
 *               I2C_INT_ADRR_SLAVE            -Address-as-slave interrupt\n
-*                                              
+*
 *
 * \return None.\n
 *
@@ -162,35 +162,35 @@ void I2CMasterDisable(unsigned int baseAddr)
 void I2CMasterIntEnableEx(unsigned int baseAddr, unsigned int intFlag)
 {
     /*Enable the master interrupt.*/
-    HWREG(baseAddr + I2C_ICIMR) |= intFlag; 
+    HWREG(baseAddr + I2C_ICIMR) |= intFlag;
 }
 /**
 * \brief  Enables individual interrupt sources when I2C is in Slave mode.
 *          Enables the indicated I2C interrupt sources.  Only the sources that
 *          are enabled can be reflected to the processor interrupt; disabled sources
 *          have no effect on the processor\n
-* 
+*
 * \param baseAddr is the Memory address of the I2C instance used\n
 * \param intFlag is the bit mask of the interrupt sources to be enabled.\n
-* 
+*
 *        intFlag can take following values\n
-*                        
+*
 *               I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt\n
-*                                              
+*
 *               I2C_INT_NO_ACK               - No-acknowledgment interrupt\n
-*                                              
+*
 *               I2C_INT_ADRR_READY_ACESS     - No-acknowledgment interrupt\n
-*                                              
+*
 *               I2C_INT_DATA_RECV_READY      - Receive-data-ready interrupt\n
-*                                              
+*
 *               I2C_INT_DATA_TRANSMIT_READY  - Transmit-data-ready interrupt\n
-*                                              
+*
 *               I2C_INT_STOP_CONDITION       - Stop condition interrupt \n
-*                                             
+*
 *               I2C_INT_ADRR_SLAVE           - Address-as-slave interrupt\n
-* 
+*
 *\return None.
-* 
+*
 **/
 void I2CSlaveIntEnableEx(unsigned int baseAddr, unsigned int intFlag)
 {
@@ -198,29 +198,29 @@ void I2CSlaveIntEnableEx(unsigned int baseAddr, unsigned int intFlag)
 }
 
 /**
-* \brief  Disables the interrupt when I2C is in Master mode.Disables the 
-*          indicated I2C interrupt sources.  Only the sources that are 
+* \brief  Disables the interrupt when I2C is in Master mode.Disables the
+*          indicated I2C interrupt sources.  Only the sources that are
 *          enabled can be reflected to the processor interrupt;disabled sources
 *          have no effect on the processor.\n
 *
 *
 * \param baseAddr is the Memory address of the I2C instance used\n
 * \param intFlag is the bit mask of the interrupt sources to be dislabled.\n
-*  
+*
 * intFlag can take follwing values\n
 *
 *                I2C_INT_ARBITRATION_LOST      - Arbitration-lost interrupt\n
-*                                               
+*
 *                I2C_INT_NO_ACK                - No-acknowledgment interrupt\n
-*                                               
+*
 *                I2C_INT_ADRR_READY_ACESS      - No-acknowledgment interrupt\n
-*                                               
+*
 *                I2C_INT_DATA_RECV_READY       - Receive-data-ready interrupt\n
-*                                                
+*
 *                I2C_INT_DATA_TRANSMIT_READY   - Transmit-data-ready interrupt\n
-*                                               
+*
 *                I2C_INT_STOP_CONDITION        - Stop condition interrupt \n
-*                                                
+*
 *                I2C_INT_ADRR_SLAVE            - Address-as-slave interrupt\n
 * \return None.\n
 *
@@ -232,28 +232,28 @@ void I2CMasterIntDisableEx(unsigned int baseAddr, unsigned int intFlag)
 /**
 * \brief  Disables individual interrupt sources when I2C is in Slave mode.
 *`          Disables the indicated I2C Slave interrupt sources.  Only the sources
-*          that are enabled can be reflected to the processor interrupt; 
+*          that are enabled can be reflected to the processor interrupt;
 *          disabled sources have no effect on the processor.\n
 *
 * \param baseAddr is the Memory address of the I2C instance used \n
 * \param intFlag is the bit mask of the interrupt sources to be disabled.\n
 *
 * intFlag is can take following values.\n
-*                        
+*
 *               I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt\n
-*                                              
+*
 *               I2C_INT_NO_ACK               - No-acknowledgment interrupt\n
-*                                              
+*
 *               I2C_INT_ADRR_READY_ACESS     - No-acknowledgment interrupt\n
-*                                              
+*
 *               I2C_INT_DATA_RECV_READY      - Receive-data-ready interrupt\n
-*                                              
+*
 *               I2C_INT_DATA_TRANSMIT_READY  - Transmit-data-ready interrupt\n
-*                                              
+*
 *               I2C_INT_STOP_CONDITION       - Stop condition interrupt\n
-*                                              
+*
 *               I2C_INT_ADRR_SLAVE           - Address-as-slave interrupt\n
-*                                              
+*
 * \return None.\n
 *
 **/
@@ -268,7 +268,7 @@ void I2CSlaveIntDisableEx(unsigned int baseAddr, unsigned int intFlag)
 *          For more information on ICSTR refer to SPRUFV4.\n
 *
 * \param baseAddr is the Memory address of the I2C instance used \n
-* 
+*
 * \returns the interrupt status when I2C is in Master Mode.\n
 *
 **/
@@ -287,7 +287,7 @@ unsigned int I2CMasterIntStatus(unsigned int baseAddr)
 *         on ICSTR refer to SPRUFV4.\n
 *
 * \param baseAddr is the Memory address of the I2C instance used \n
-*  
+*
 * \returns the interrupt status for the when I2C is in Slave mode.\n
 *
 **/
@@ -303,7 +303,7 @@ unsigned int I2CSlaveIntStatus(unsigned int baseAddr)
 /**
 * \brief  This API determine the status of any one of the bit in interrupt \n
 *          status register.where intFlag is Mask of status bit needs to read.\n
-* 
+*
 * \param baseAddr is the Memory address of the I2C instance used\n
 * \param intFlag is Mask of status bit needs to read.\n
 *
@@ -312,7 +312,7 @@ unsigned int I2CSlaveIntStatus(unsigned int baseAddr)
 unsigned int I2CSlaveIntStatusEx(unsigned int baseAddr, unsigned int intFlag)
 {
     intFlag &= HWREG(baseAddr + I2C_ICSTR);
-        
+
     return intFlag;
 }
 
@@ -324,7 +324,7 @@ unsigned int I2CSlaveIntStatusEx(unsigned int baseAddr, unsigned int intFlag)
 * \intFlag is the mask of status bit to be cleared.\n
 *
 *        intFlag can take following values\n
-*        
+*
 *                I2C_CLEAR_NO_ACK          - No-acknowledgment interrupt
 *                                            flag bit.\n
 *                I2C_CLEAR_ADDR_READY      - Register-access-ready interrupt
@@ -364,7 +364,7 @@ void I2CMasterIntClearEx(unsigned int baseAddr, unsigned int intFlag)
 *               I2C_CLEAR_NO_ACK_SENT   - No-acknowledgment sent bit\n
 *               I2C_CLEAR_ARBITARTION_LOST-Arbitration-lost interrupt flag \n
 *
-* 
+*
 * \return None.\n
 *
 **/
@@ -391,9 +391,9 @@ void I2CMasterSlaveAddrSet(unsigned int baseAddr, unsigned int slaveAddr)
 * \brief   This function returns the indication of whether or not I2c bus is busy
 *
 * \param   baseAddr is the Memory address of the I2C instance used
-*   
-* \return  non zero of  the bus is busy, zero otherwise 
-* 
+*
+* \return  non zero of  the bus is busy, zero otherwise
+*
 **/
 unsigned int  I2CMasterBusBusy(unsigned int baseAddr)
 {
@@ -404,11 +404,11 @@ unsigned int  I2CMasterBusBusy(unsigned int baseAddr)
 * \brief   This function checks if indeed I2c operation has completed.
 *
 * \param   baseAddr is the Memory address of the I2C instance used\n
-*   
+*
 * \return   Non-Zero if the I2C peripheral operation is not complete
 *           0 if complete
-* 
-* \note    This is different from bus busy. This API checks if the peripheral is 
+*
+* \note    This is different from bus busy. This API checks if the peripheral is
 *          ready to be used for next transaction.
 **/
 unsigned int  I2CMasterIsBusy(unsigned int baseAddr)
@@ -423,7 +423,7 @@ unsigned int  I2CMasterIsBusy(unsigned int baseAddr)
 *         I2c Mode register i.e ICMDR referto SPRUFV4 document,which is a I2C
 *         peripheral manual.\n
 *
-* 
+*
 * \param baseAddr is the Memory address of the I2C instance used.\n
 * \param cmd is the command to be issued to the I2C Master module\n
 *
@@ -433,7 +433,7 @@ unsigned int  I2CMasterIsBusy(unsigned int baseAddr)
 *
 *               I2C_CFG_MAST_STOP_TX      -     This command configures I2C to
 *                                               Master-trasmiter generates stop
-*                                               conditon when internal data 
+*                                               conditon when internal data
 *                                               counts to 0 \n
 *
 *               I2C_CFG_MST_RX            -     This command configuers I2C to
@@ -441,7 +441,7 @@ unsigned int  I2CMasterIsBusy(unsigned int baseAddr)
 *
 *               I2C_CFG_NACKMOD           -     This command set the NACKMOD bit
 *                                               in ICMDR to send NACK bit to
-*                                               slave device to stop 
+*                                               slave device to stop
                                                 transmission of data.\n
 *
 *               I2C_CFG_STOP              -     This command sets STP bit in
@@ -451,16 +451,16 @@ unsigned int  I2CMasterIsBusy(unsigned int baseAddr)
 *
 *               I2C_CFG_7BIT_ADDR_MODE    -     This command configures I2C in
 *                                               to 7 bit addressing mode.\n
-* 
+*
 *               I2C_CFG_10BIT_ADDR_MODE   -     This command configures I2C in
 *                                               to 10 bit addressing mode.\n
-* 
+*
 *               I2C_CFG_FREE_FORMAT_DATA  -     This command configures I2C in
 *                                               to free format addressing mode.\n
 *
 *               I2C_CFG_SLAVE_STT         -     This command configures I2C to
 *                                               Slave mode and sets STT bit in
-*                                               ICSTR,if STT bit is not set 
+*                                               ICSTR,if STT bit is not set
 *                                               slave not responds to commands
 *                                               from master. \n
 *
@@ -486,7 +486,7 @@ void I2CMasterControl(unsigned int baseAddr, unsigned int cmd)
 * \brief  This API is used to start a I2C transaction on the bus. This API must
 *         be called after all the configuration for the i2c module is done and after
 *        bringing I2C out of local reset
-* 
+*
 * \param baseAddr is the Memory address of the I2C instance used.\n
 *
 * \return None
@@ -500,7 +500,7 @@ void I2CMasterStart(unsigned int baseAddr)
 * \brief  This API is used to stop a I2C transaction on the bus.\n
 *         This API must be used in case a deliberate STOP needs to be sent
 *         on the bus
-* 
+*
 * \param baseAddr is the Memory address of the I2C instance used.\n
 *
 * \return None
@@ -512,7 +512,7 @@ void I2CMasterStop(unsigned int baseAddr)
 
 /**
 * \brief  This API is used to clear a specific status bit(s).\n
-* 
+*
 * \param  baseAddr is the Memory address of the I2C instance used.\n
 * \param  status   contains mask of status bit(s) to be cleared.\n
 *
@@ -530,7 +530,7 @@ void I2CStatusClear(unsigned int baseAddr, unsigned int status)
 * \brief  This function indicates error if occured in I2C operation.\n
 *
 * \param  baseAddr is the Memory address of the I2C instance used.\n
-*  
+*
 * \returns 1 is error has because of above reasons,otherwise;return 0
 * i.e (error has not occured);\n
 *
@@ -546,10 +546,10 @@ unsigned int I2CMasterErr(unsigned int baseAddr)
 
 /**
 * \brief  This function Transmits a byte from the I2C in Master mode.\n
-* 
+*
 * \param baseAddr is the Memory address of the I2C instance used.\n
 * \param data data to be transmitted from the I2C Master\n
-* 
+*
 * \return None.\n
 *
 **/
@@ -561,9 +561,9 @@ void I2CMasterDataPut(unsigned int baseAddr, unsigned char data)
 
 /**
 *  \brief  This Receives a byte that has been sent to the I2C in Master mode.\n
-* 
+*
 *  \param baseAddr is the Memory address of the I2C instance used.\n
-* 
+*
 *  \return Returns the byte received from by the I2C in Master mode.\n
 *
 **/
@@ -576,10 +576,10 @@ unsigned int I2CMasterDataGet(unsigned int baseAddr)
 }
 /**
 * \brief This Transmits a byte from the I2C in Slave mode.\n
-* 
+*
 * \param baseAddr is the Memory address of the I2C Slave module.\n
 * \param data data to be transmitted from the I2C in Slave mode.\n
-* 
+*
 * \return None.\n
 *
 **/
@@ -592,11 +592,11 @@ void I2CSlaveDataPut(unsigned int baseAddr, unsigned char data)
 /**
 * \brief  This function Receives a byte that has been sent to the I2C in Slave
 *          mode.\n
-* 
+*
 * \param baseAddr is the Memory address of the I2C instace used.\n
-* 
+*
 * \return Returns the byte received from by the I2C in Slave mode\n
-* 
+*
 **/
 unsigned int I2CSlaveDataGet(unsigned int baseAddr)
 {
@@ -678,7 +678,7 @@ void I2CDMATxRxEventDisable(unsigned int baseAddr)
 **/
 void I2CDMATxEventEnable(unsigned int baseAddr)
 {
-    HWREG(baseAddr + I2C_ICDMAC) |= I2C_ICDMAC_TXDMAEN; 
+    HWREG(baseAddr + I2C_ICDMAC) |= I2C_ICDMAC_TXDMAEN;
 }
 
 /**
@@ -700,7 +700,7 @@ void I2CDMARxEventEnable(unsigned int baseAddr)
 * \param baseAddr is the Memory address of the instance used.
 *
 * \param flag     is the value which disables the transmit event of I2C
-* 
+*
 * \return None.
 *
 **/
@@ -715,7 +715,7 @@ void I2CDMATxEventDisable(unsigned int baseAddr)
 * \param baseAddr is the Memory address of the instance used.
 *
 * \param flag     is the value which disables the receiption event of I2C
-* 
+*
 * \return None.
 *
 **/

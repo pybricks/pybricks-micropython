@@ -53,7 +53,7 @@ extern "C" {
 #define EHRPWM_PRD_LOAD_SHADOW_MASK		EHRPWM_TBCTL_PRDLD
 
 /* Counter mode */
-#define EHRPWM_COUNTER_MODE_MASK		EHRPWM_TBCTL_CTRMODE 
+#define EHRPWM_COUNTER_MODE_MASK		EHRPWM_TBCTL_CTRMODE
 #define EHRPWM_COUNT_UP				(EHRPWM_TBCTL_CTRMODE_UP << \
 	       						EHRPWM_TBCTL_CTRMODE_SHIFT)
 #define EHRPWM_COUNT_DOWN			(EHRPWM_TBCTL_CTRMODE_DOWN << \
@@ -66,7 +66,7 @@ extern "C" {
 #define EHRPWM_SYNC_ENABLE			EHRPWM_TBCTL_PHSEN
 //#define EHRPWM_SW_FORCED_SYNC			0x1
 
-#define EHRPWM_SYNCOUT_MASK			EHRPWM_TBCTL_SYNCOSEL   
+#define EHRPWM_SYNCOUT_MASK			EHRPWM_TBCTL_SYNCOSEL
 #define EHRPWM_SYNCOUT_SYNCIN			(EHRPWM_TBCTL_SYNCOSEL_EPWMXSYNCI << \
 							EHRPWM_TBCTL_SYNCOSEL_SHIFT)
 #define EHRPWM_SYNCOUT_COUNTER_EQUAL_ZERO	(EHRPWM_TBCTL_SYNCOSEL_TBCTRZERO << \
@@ -138,7 +138,7 @@ extern "C" {
 							EHRPWM_CMPCTL_LOADAMODE_SHIFT)
 #define EHRPWM_COMPA_LOAD_COUNT_EQUAL_ZERO_OR_PERIOD \
 						(EHRPWM_CMPCTL_LOADAMODE_ZEROORPRD << \
-							EHRPWM_CMPCTL_LOADAMODE_SHIFT)						 
+							EHRPWM_CMPCTL_LOADAMODE_SHIFT)
 #define EHRPWM_COMPA_NO_LOAD			(EHRPWM_CMPCTL_LOADAMODE_FREEZE << \
 							EHRPWM_CMPCTL_LOADAMODE_SHIFT)
 
@@ -167,15 +167,15 @@ extern "C" {
 //**********************************************************************/
 
 /* Timebase sub-module */
-void EHRPWMTimebaseClkConfig(unsigned int baseAddr, unsigned int tbClk, 
+void EHRPWMTimebaseClkConfig(unsigned int baseAddr, unsigned int tbClk,
 		unsigned int moduleClk);
 void EHRPWMPWMOpFreqSet(unsigned int baseAddr, unsigned int tbClk,
-		unsigned int pwmFreq,unsigned int counterDir, 
+		unsigned int pwmFreq,unsigned int counterDir,
 		bool enableShadowWrite);
 void EHRPWMTBEmulationModeSet(unsigned int baseAddr, unsigned int mode);
 void EHRPWMTimebaseSyncEnable(unsigned int baseAddr, unsigned int tbPhsValue,
 	       	unsigned int phsCountDir);
-void EHRPWMTimebaseSyncDisable(unsigned int baseAddr); 
+void EHRPWMTimebaseSyncDisable(unsigned int baseAddr);
 void EHRPWMTriggerSWSync(unsigned int baseAddr);
 void EHRPWMSyncOutModeSet(unsigned int baseAddr, unsigned int syncOutMode);
 void EHRPWMWriteTBCount(unsigned int baseAddr, unsigned int tbCount);
@@ -186,7 +186,7 @@ void EHRPWMTBClearStatus(unsigned int baseAddr, unsigned int tbStatusMask);
 
 /* Counter compare sub-module */
 bool EHRPWMLoadCMPA(unsigned int baseAddr, unsigned int CMPAVal,
-		bool enableShadowWrite, unsigned int ShadowToActiveLoadTrigger, 
+		bool enableShadowWrite, unsigned int ShadowToActiveLoadTrigger,
 		bool OverwriteShadowFull);
 
 bool EHRPWMLoadCMPB(unsigned int baseAddr, unsigned int CMPBVal,
@@ -194,19 +194,19 @@ bool EHRPWMLoadCMPB(unsigned int baseAddr, unsigned int CMPBVal,
 		bool OverwriteShadowFull);
 
 /* Action Qualifier sub-module */
-void EHRPWMConfigureAQActionOnA(unsigned int baseAddr, unsigned int zero, 
+void EHRPWMConfigureAQActionOnA(unsigned int baseAddr, unsigned int zero,
 		unsigned int period,
 		unsigned int CAUp,  unsigned int CADown,  unsigned int CBUp,
 		unsigned int CBDown, unsigned int SWForced);
-void EHRPWMConfigureAQActionOnB(unsigned int baseAddr, unsigned int zero, 
+void EHRPWMConfigureAQActionOnB(unsigned int baseAddr, unsigned int zero,
 		unsigned int period,
 		unsigned int CAUp,  unsigned int CADown,  unsigned int CBUp,
 		unsigned int CBDown, unsigned int SWForced);
 void EHRPWMSWForceA(unsigned int baseAddr);
 void EHRPWMSWForceB(unsigned int baseAddr);
-void EHRPWMAQContSWForceOnA(unsigned int baseAddr, unsigned int forceVal, 
+void EHRPWMAQContSWForceOnA(unsigned int baseAddr, unsigned int forceVal,
 		unsigned int activeRegReloadMode);
-void EHRPWMAQContSWForceOnB(unsigned int baseAddr, unsigned int forceVal, 
+void EHRPWMAQContSWForceOnB(unsigned int baseAddr, unsigned int forceVal,
 		unsigned int activeRegReloadMode);
 
 /* Dead Band Generator */
@@ -246,9 +246,9 @@ void EHRPWMETIntSWForce(unsigned int baseAddr);
 
 /* HEPWM sub-module */
 void EHRPWMLoadTBPHSHR(unsigned int baseAddr, unsigned int TBPHSHRVal);
-void EHRPWMLoadCMPAHR(unsigned int baseAddr, unsigned int CMPAHRVal, 
+void EHRPWMLoadCMPAHR(unsigned int baseAddr, unsigned int CMPAHRVal,
 		unsigned int ShadowToActiveLoadTrigger);
-void EHRPWMConfigHR(unsigned int baseAddr,unsigned int ctrlMode, 
+void EHRPWMConfigHR(unsigned int baseAddr,unsigned int ctrlMode,
 		unsigned int MEPCtrlEdge); /* also enables */
 void EHRPWMHRDisable(unsigned int baseAddr);
 void EHRPWMClockEnable(unsigned int baseAdd);

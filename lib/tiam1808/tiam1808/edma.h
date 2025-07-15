@@ -297,27 +297,27 @@ typedef struct EDMA3CCPaRAMEntry {
 typedef struct edmaContext {
     /* Channel mapping reg Val */
     unsigned int dchMap[64];
-    /* DMA Queue Number Register Val */    
-    unsigned int dmaQNum[8];    
-    
-    /* DMA Region Access Enable Register val */    
-    unsigned int regAccEnableLow;    
-    unsigned int regAccEnableHigh;        
+    /* DMA Queue Number Register Val */
+    unsigned int dmaQNum[8];
 
-    /* Event Set Register value */    
+    /* DMA Region Access Enable Register val */
+    unsigned int regAccEnableLow;
+    unsigned int regAccEnableHigh;
+
+    /* Event Set Register value */
     unsigned int eventSetRegLow;
-    unsigned int eventSetRegHigh;    
-    
-    /* Enable Event Set Register value */    
+    unsigned int eventSetRegHigh;
+
+    /* Enable Event Set Register value */
     unsigned int enableEvtSetRegLow;
     unsigned int enableEvtSetRegHigh;
-    
-    /* Interrupt Enable Set Register value */            
-    unsigned int intEnableSetRegLow;        
-    unsigned int intEnableSetRegHigh;    
-    
-    struct EDMA3CCPaRAMEntry dmaParEntry[512];    
-    
+
+    /* Interrupt Enable Set Register value */
+    unsigned int intEnableSetRegLow;
+    unsigned int intEnableSetRegHigh;
+
+    struct EDMA3CCPaRAMEntry dmaParEntry[512];
+
 } EDMACONTEXT;
 
 /****************************************************************************

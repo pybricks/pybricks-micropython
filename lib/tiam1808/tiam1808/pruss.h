@@ -15,12 +15,12 @@
 *  modification, are permitted provided that the following conditions
 *  are met:
 *
-*    Redistributions of source code must retain the above copyright 
+*    Redistributions of source code must retain the above copyright
 *    notice, this list of conditions and the following disclaimer.
 *
 *    Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in the 
-*    documentation and/or other materials provided with the   
+*    notice, this list of conditions and the following disclaimer in the
+*    documentation and/or other materials provided with the
 *    distribution.
 *
 *    Neither the name of Texas Instruments Incorporated nor the names of
@@ -73,7 +73,7 @@ extern "C" {
 #define	PRUSS_ECAP_BASE               0x4a330000
 #define	PRUSS_MIIRT_BASE              0x4a332000
 #define	PRUSS_MDIO_BASE               0x4a332400
-#else 
+#else
 //***********************************************************************
 //  PRUSS Register Offsets for AM18X SOC
 //***********************************************************************/
@@ -99,10 +99,10 @@ extern "C" {
 #define PRU_EVTOUT_5            5
 #define PRU_EVTOUT_6            6
 #define PRU_EVTOUT_7            7
-/* 
+/*
  * PRUSS Interrupt Controller (PRUSS INTC) Registers Offsets
  */
- 
+
 #define PRU_INTC_REVID_REG  0x000
 #define PRU_INTC_CR_REG     0x004
 #define PRU_INTC_HCR_REG    0x00C
@@ -172,7 +172,7 @@ extern "C" {
 #define	PRUSS0_MII_RT           9
 #define	PRUSS0_MDIO            10
 //***********************************************************************
-//  Macros representing Interrupt-Channel-Host sizes 
+//  Macros representing Interrupt-Channel-Host sizes
 //***********************************************************************/
 #define MAX_HOSTS_SUPPORTED	 10
 #define NUM_PRU_HOSTS        10
@@ -180,11 +180,11 @@ extern "C" {
 #define NUM_PRU_SYS_EVTS     64
 
 //***********************************************************************
-//  Macros to support dynamic chip detecting feature 
+//  Macros to support dynamic chip detecting feature
 //***********************************************************************/
 #define AM18XX_INTC_PHYS_BASE		0x01C34000
 #define AM18XX_DATARAM0_PHYS_BASE	0x01C30000
-#define AM18XX_PRUSS_INTC_REV		0x4E825900	
+#define AM18XX_PRUSS_INTC_REV		0x4E825900
 #define AM33XX_INTC_PHYS_BASE		0x4a320000
 #define AM33XX_DATARAM0_PHYS_BASE	0x4a300000
 #define AM33XX_PRUSS_INTC_REV		0x4E82A900
@@ -197,31 +197,31 @@ extern "C" {
      short sysevt;
      short channel;
  }tsysevt_to_channel_map;
- 
+
  typedef struct __channel_to_host_map
  {
      short channel;
      short host;
  }tchannel_to_host_map;
- 
- typedef struct __pruss_intc_initdata 
+
+ typedef struct __pruss_intc_initdata
  {
      //Enabled SYSEVTs - Range:0..63
      //{-1} indicates end of list
      char sysevts_enabled[NUM_PRU_SYS_EVTS];
- 
+
      //SysEvt to Channel map. SYSEVTs - Range:0..63 Channels -Range: 0..9
      //{-1, -1} indicates end of list
      tsysevt_to_channel_map sysevt_to_channel_map[NUM_PRU_SYS_EVTS];
-     
-     //Channel to Host map.Channels -Range: 0..9  HOSTs - Range:0..9 
+
+     //Channel to Host map.Channels -Range: 0..9  HOSTs - Range:0..9
      //{-1, -1} indicates end of list
      tchannel_to_host_map channel_to_host_map[NUM_PRU_CHANNELS];
- 
+
      //10-bit mask - Enable Host0-Host9 {Host0/1:PRU0/1, Host2..9 : PRUEVT_OUT0..7)
      unsigned int host_enable_bitmask;
  }tpruss_intc_initdata;
- 
+
  //typedef void *(*PRUSSDRV_IRQ_HANDLER) (void *);
  typedef void (*PRUSSDRV_IRQ_HANDLER)(void);
 
@@ -240,16 +240,16 @@ int PRUSSDRVPruExecProgram(int prunum, char *filename);
 int PRUSSDRVPruSendEvent(unsigned int eventnum);
 int PRUSSDRVPruClearEvent(unsigned int eventnum);
 int PRUSSDRVPruWaitEvent(unsigned int pruEvtoutNum);
-int PRUSSDRVPruSendWaitCearEvent(unsigned int sendEventNum, 
+int PRUSSDRVPruSendWaitCearEvent(unsigned int sendEventNum,
 								 unsigned int pruEvtoutNum,
 								 unsigned int ackEventNum);
-int PRUSSDRVRegisterIrqHandler(unsigned int pruEvtoutNum, 
+int PRUSSDRVRegisterIrqHandler(unsigned int pruEvtoutNum,
 						       unsigned char channel,
 						       PRUSSDRV_IRQ_HANDLER irqHandler);
-int PRUSSDRVSetPRUBuffer(unsigned int pruNum, 
+int PRUSSDRVSetPRUBuffer(unsigned int pruNum,
 						 void *buffer,
 						 unsigned int numBytes);
- 
+
 int PRUSSDRVMapL3Mem(void **address);
 int PRUSSDRVMapExtMem(void **address);
 int PRUSSDRVMapPruMem(unsigned int pru_ram_id, void **address);

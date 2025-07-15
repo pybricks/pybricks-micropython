@@ -53,7 +53,7 @@ extern "C" {
 ** Macros to combine to pass as formatVal to the API McASPTxFmtSet.
 ** The value formatVal is directly written to the register. So
 ** proper combination of the below macros shall be selected
-** Thus the default value is 
+** Thus the default value is
 ** (MCASP_TX_SYNC_DELAY_0BIT | MCASP_TX_BITSTREAM_LSB_FIRST |
 **  MCASP_TX_PAD_WITH_0 | MCASP_TX_SLOTSIZE_8BITS |MCASP_TX_BUF_DMAPORT
 **  MCASP_TX_ROT_RIGHT_NONE)
@@ -111,7 +111,7 @@ extern "C" {
 ** Macros to combine to pass as formatVal to the API McASPRxFmtSet.
 ** The value formatVal is directly written to the register. So
 ** proper combination of the below macros shall be selected
-** Thus the default value is 
+** Thus the default value is
 ** (MCASP_RX_SYNC_DELAY_0BIT | MCASP_RX_BITSTREAM_LSB_FIRST |
 **  MCASP_RX_PAD_WITH_0 | MCASP_RX_SLOTSIZE_8BITS |MCASP_RX_BUF_DMAPORT
 **  MCASP_RX_ROT_RIGHT_NONE)
@@ -210,7 +210,7 @@ i** Macros which can be passed as rxMode to McASPRxFmtI2SSet API.
 
 /*****************************************************************************/
 /*
-** Macros which can be passed as clkSrc to McASPTxClkCfg API and 
+** Macros which can be passed as clkSrc to McASPTxClkCfg API and
 ** McASPTxClkStart API.
 */
 #define MCASP_TX_CLK_INTERNAL                  (0x00008020u)
@@ -282,7 +282,7 @@ i** Macros which can be passed as rxMode to McASPRxFmtI2SSet API.
 
 /*****************************************************************************/
 /*
-** Macros which can be used in pinMask to the APIs 
+** Macros which can be used in pinMask to the APIs
 ** McASPPinDirOutput and SetMcASPPinDirInputSet, McASPPinMcASPSet
 ** and McASPPinGPIOSet
 */
@@ -375,7 +375,7 @@ i** Macros which can be passed as rxMode to McASPRxFmtI2SSet API.
 
 /*****************************************************************************/
 /*
-** Macros which can be passed as usrDataBits to the APIs 
+** Macros which can be passed as usrDataBits to the APIs
 ** McASPDITChanUsrDataWrite and McASPDITChanUsrDataRead.
 */
 #define MCASP_DIT_USRDATA_BITS_0_31            (0x00000000)
@@ -417,12 +417,12 @@ i** Macros which can be passed as rxMode to McASPRxFmtI2SSet API.
 
 /*****************************************************************************/
 /*
-** Macros to be used for the variable 'sectFlag' for 'McASPContextSave' 
+** Macros to be used for the variable 'sectFlag' for 'McASPContextSave'
 ** and 'McASPContextRestore'
 */
 #define McASP_CONTEXT_TX                       (0x01)
 #define McASP_CONTEXT_RX                       (0x02)
-#define McASP_CONTEXT_BOTH                     (0x03)  
+#define McASP_CONTEXT_BOTH                     (0x03)
 
 /*****************************************************************************/
 /*
@@ -479,15 +479,15 @@ extern void McASPRxClkCfg(unsigned int baseAddr, unsigned int clkSrc,
                           unsigned int mixClkDiv, unsigned int auxClkDiv);
 extern void McASPTxClkPolaritySet(unsigned int baseAddr, unsigned int polarity);
 extern void McASPRxClkPolaritySet(unsigned int baseAddr, unsigned int polarity);
-extern void McASPTxHFClkPolaritySet(unsigned int baseAddr, 
+extern void McASPTxHFClkPolaritySet(unsigned int baseAddr,
                                     unsigned int polarity);
-extern void McASPRxHFClkPolaritySet(unsigned int baseAddr, 
+extern void McASPRxHFClkPolaritySet(unsigned int baseAddr,
                                     unsigned int polarity);
 extern void McASPTxRxClkSyncEnable(unsigned int baseAddr);
 extern void McASPTxRxClkSyncDisable(unsigned int baseAddr);
 extern void McASPSerializerTxSet(unsigned int baseAddr, unsigned int serNum);
 extern void McASPSerializerRxSet(unsigned int baseAddr, unsigned int serNum);
-extern void McASPSerializerInactivate(unsigned int baseAddr, 
+extern void McASPSerializerInactivate(unsigned int baseAddr,
                                       unsigned int serNum);
 extern void McASPPinDirOutputSet(unsigned int baseAddr, unsigned int pinMask);
 extern void McASPPinDirInputSet(unsigned int baseAddr, unsigned int pinMask);
@@ -510,7 +510,7 @@ extern void McASPAMuteEnable(unsigned int baseAddr, unsigned int errFlags,
 extern void McASPAMuteDisable(unsigned int baseAddr);
 extern void McASPAMUTEINActivate(unsigned int baseAddr, unsigned int polarity);
 extern void McASPTxClkCheckConfig(unsigned int baseAddr, unsigned int clkDiv,
-                                  unsigned char boundMin, 
+                                  unsigned char boundMin,
                                   unsigned char boundMax);
 extern void McASPRxClkCheckConfig(unsigned int baseAddr, unsigned int clkDiv,
                                   unsigned char boundMin,
@@ -521,16 +521,16 @@ extern void McASPDITEnable(unsigned int baseAddr, unsigned int vBit);
 extern void McASPDITDisable(unsigned int baseAddr);
 extern void McASPDITChanStatWrite(unsigned int baseAddr,
                                   unsigned int chStatBits,
-                                  unsigned int channel, 
+                                  unsigned int channel,
                                   unsigned int data);
-extern void McASPDITChanUsrDataWrite(unsigned int baseAddr, 
+extern void McASPDITChanUsrDataWrite(unsigned int baseAddr,
                                      unsigned int chUsrDataBits,
-                                     unsigned int channel, 
+                                     unsigned int channel,
                                      unsigned int data);
 extern unsigned int McASPDITChanStatRead(unsigned int baseAddr,
                                          unsigned int chStatBits,
                                          unsigned int channel);
-extern unsigned int McASPDITChanUsrDataRead(unsigned int baseAddr, 
+extern unsigned int McASPDITChanUsrDataRead(unsigned int baseAddr,
                                             unsigned int chUsrDataBits,
                                             unsigned int channel);
 extern unsigned int McASPRxBufRead(unsigned int baseAddr, unsigned int serNum);

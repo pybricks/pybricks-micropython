@@ -53,7 +53,7 @@
 /**
  * \brief  This API configures the clock divider of the Time base module.
  *         The clock divider can be calculated using the equation
- *         TBCLK = SYSCLKOUT/(HSPCLKDIV × CLKDIV)
+ *         TBCLK = SYSCLKOUT/(HSPCLKDIV ï¿½ CLKDIV)
  *
  * \param   baseAddr      Base Address of the PWM Module Registers.
  * \param   tbClk         Timebase clock to be generated.
