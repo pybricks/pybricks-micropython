@@ -429,9 +429,8 @@ static void pbdrv_display_ev3_spi_init(void) {
     SPIOutOfReset(SOC_SPI_1_REGS);
 
     // Mode.
-    uint32_t spipc0 = SPI_SPIPC0_SOMIFUN | SPI_SPIPC0_SIMOFUN | SPI_SPIPC0_CLKFUN | SPI_SPIPC0_ENAFUN;
     SPIModeConfigure(SOC_SPI_1_REGS, SPI_MASTER_MODE);
-    SPIPinControl(SOC_SPI_1_REGS, 0, 0, (unsigned int *)&spipc0);
+    SPIPinControlSet(SOC_SPI_1_REGS, 0, SPI_SPIPC0_SOMIFUN | SPI_SPIPC0_SIMOFUN | SPI_SPIPC0_CLKFUN | SPI_SPIPC0_ENAFUN);
 
     // Config.
     SPIClkConfigure(SOC_SPI_1_REGS, SOC_SYSCLK_2_FREQ, 10000000, SPI_DATA_FORMAT0);

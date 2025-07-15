@@ -204,8 +204,8 @@ void SPIOutOfReset(unsigned int baseAdd);
 
 void SPIModeConfigure(unsigned int baseAdd, unsigned int flag);
 
-void SPIPinControl(unsigned int baseAdd, unsigned int idx,
-                   unsigned int flag, unsigned int *val);
+void SPIPinControlGet(unsigned int baseAdd, unsigned int idx, unsigned int *val);
+void SPIPinControlSet(unsigned int baseAdd, unsigned int idx, unsigned int val);
 
 void SPIDelayConfigure(unsigned int baseAdd, unsigned int c2edelay,
                        unsigned int t2edelay, unsigned int t2cdelay,
