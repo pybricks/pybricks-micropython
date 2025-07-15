@@ -82,7 +82,7 @@ extern "C" {
 
 /*
 ** The macro defined below corresponds to HRCTL register of EHRPWM module.
-** This definition is used to keep compatibility with the driver(EHRPWM DAL). 
+** This definition is used to keep compatibility with the driver(EHRPWM DAL).
 */
 #if defined(am335x) || defined(am335x_15x15) || defined(c6a811x) || \
     defined(am386x) || defined(c6741x)

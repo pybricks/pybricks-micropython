@@ -117,8 +117,8 @@ extern "C"
 
 #if defined (am335x_15x15) || defined(am335x)
 //DMA registers
-#define CPDMA_TX_CHANNEL_CONFIG_REG		 	0x2800 
-#define CPDMA_RX_CHANNEL_CONFIG_REG 		0x2808 
+#define CPDMA_TX_CHANNEL_CONFIG_REG		 	0x2800
+#define CPDMA_RX_CHANNEL_CONFIG_REG 		0x2808
 #define CPDMA_RX_CHANNEL_REG_A      		0x280C
 #define CPDMA_RX_CHANNEL_REG_B      		0x2810
 #define CPDMA_SCHED_CONTROL_REG        		0x3000
@@ -126,8 +126,8 @@ extern "C"
 #define CPDMA_SCHED_TABLE_1            		0x3804
 #else
 //DMA registers
-#define CPDMA_TX_CHANNEL_CONFIG_REG		 	0x1800 
-#define CPDMA_RX_CHANNEL_CONFIG_REG 		0x1808 
+#define CPDMA_TX_CHANNEL_CONFIG_REG		 	0x1800
+#define CPDMA_RX_CHANNEL_CONFIG_REG 		0x1808
 #define CPDMA_RX_CHANNEL_REG_A      		0x180C
 #define CPDMA_RX_CHANNEL_REG_B      		0x1810
 #define CPDMA_SCHED_CONTROL_REG        		0x2000
@@ -330,11 +330,11 @@ typedef struct hostPacketDesc {
 	unsigned char devInst;
 	void * reqContext;
 	unsigned char reserved[18];
-	
+
 } hostPacketDesc ;
 
 // End point info structure for the application
-typedef struct  
+typedef struct
 {
 	 unsigned int endPoint;
 	 unsigned short direction;
@@ -373,9 +373,9 @@ typedef struct
 
 	//Pointers for BD Management
 	hostPacketDesc *tail_bd ;
-	hostPacketDesc *head_bd;	
+	hostPacketDesc *head_bd;
 	unsigned int *region0DescriptorAddress;
-	
+
 	//Array of USB Instances
 	usbInstance usbInst[NUMOF_USB_INSTANCE];
 }cppi41DmaInfo;
@@ -388,10 +388,10 @@ void Cppi41DmaInit(unsigned short usbDevInst, endpointInfo *epInfo, unsigned sho
 unsigned int dmaTxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint);
 unsigned int  dmaRxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint);
 
-void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff, 
+void doDmaTxTransfer(unsigned short usbDevInst, unsigned char *buff,
 								unsigned int length, unsigned int endPoint);
 
-void doDmaRxTransfer(unsigned short usbDevInst, unsigned int length, 
+void doDmaRxTransfer(unsigned short usbDevInst, unsigned int length,
 								unsigned char *buff, unsigned int endPoint);
 
 void enableCoreTxDMA(unsigned short usbDevInst, unsigned int ulEndpoint);
@@ -406,7 +406,7 @@ unsigned int * cppiDmaAllocBuffer();
 void cppiDmaFreeBuffer(unsigned int *dataBuffer);
 unsigned int * cppiDmaAllocnBuffer(unsigned int numOfBlocks);
 void cppiDmaFreenBuffer(unsigned int *dataBuffer);
-void cppiDmaHandleError(unsigned int usbDevInst); 
+void cppiDmaHandleError(unsigned int usbDevInst);
 
 
 #ifdef __cplusplus

@@ -50,11 +50,11 @@ extern "C" {
 #endif
 /*****************************************************************************/
 /*
-** Values that can be passed to WatchdogTimerEmulationModeConfigure API as 
-** emuMode. 
+** Values that can be passed to WatchdogTimerEmulationModeConfigure API as
+** emuMode.
 */
 /* WDT counter free-running in emulation mode */
-#define WDT_EMULATION_FREE              (WDT_WDSC_EMUFREE)    
+#define WDT_EMULATION_FREE              (WDT_WDSC_EMUFREE)
 
 /* WDT counter frozen in emulation mode */
 #define WDT_EMULATION_FROZEN            (WDT_WDSC_EMUFREE_TIMER_FROZEN)
@@ -91,7 +91,7 @@ extern "C" {
 /*
 ** Values that can be passed to WatchdogTimerIntRawStatusSet,
 ** WatchdogTimerIntStatusClear APIs as intFlags.
-** These values can also be used to read the status obatined from 
+** These values can also be used to read the status obatined from
 ** WatchdogTimerIntRawStatusGet, WatchdogTimerIntStatusGet APIs.
 ** These values can also be combined together and passed.
 ** For e.g. (WDT_INT_DELAY | WDT_INT_OVERFLOW)
@@ -105,7 +105,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Values that can be passed to WatchdogTimerIntEnable as intFlags.
-** These values can also be used to read the status obtained from 
+** These values can also be used to read the status obtained from
 ** WatchdogTimerIntEnableStatusGet API.
 ** These values can also be combined together and passed.
 ** For e.g. (WDT_INT_ENABLE_DELAY | WDT_INT_ENABLE_OVRFLW)
@@ -130,7 +130,7 @@ extern "C" {
 
 /*****************************************************************************/
 /*
-** Values that can be used to read the status obtained from 
+** Values that can be used to read the status obtained from
 ** WatchdogTimerWritePostedStatusGet API.
 ** These values can also be combined while reading.
 ** For e.g. (WDT_WRITE_PENDING_WCLR | WDT_WRITE_PENDING_WCRR)
@@ -157,13 +157,13 @@ extern "C" {
 
 /***************************************************************************/
 /*
-** Watchdog timer API prototypes 
+** Watchdog timer API prototypes
 */
 extern void WatchdogTimerEnable(unsigned int baseAdd);
 extern void WatchdogTimerDisable(unsigned int baseAdd);
 extern unsigned int WatchdogTimerRevisionIDGet(unsigned int baseAdd);
 extern void WatchdogTimerReset(unsigned int baseAdd);
-extern void WatchdogTimerEmulationModeConfigure(unsigned int baseAdd, 
+extern void WatchdogTimerEmulationModeConfigure(unsigned int baseAdd,
                                          unsigned int emuMode);
 extern void WatchdogTimerPreScalerClkEnable(unsigned int baseAdd, unsigned int ptv);
 extern void WatchdogTimerPreScalerClkDisable(unsigned int baseAdd);

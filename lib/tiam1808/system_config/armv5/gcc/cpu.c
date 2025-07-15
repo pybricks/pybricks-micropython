@@ -43,7 +43,7 @@
 ******************************************************************************/
 /**
  * \brief     This API can be used to switch from user mode to privileged mode
- *            The priviledge mode will be system mode. System mode will share 
+ *            The priviledge mode will be system mode. System mode will share
  *            the same resources as user mode, but with privileges.
  *
  * \param     None.
@@ -59,7 +59,7 @@ void CPUSwitchToPrivilegedMode(void)
 }
 
 /**
- * \brief     This API can be used to switch from any previleged mode of ARM to 
+ * \brief     This API can be used to switch from any previleged mode of ARM to
  *            user mode. After this API is called, the program will continue
  *            to operate in non-privileged mode, until any exception occurs.
  *            After the exception is serviced, execution will continue in user
@@ -83,13 +83,13 @@ void CPUSwitchToUserMode(void)
 /**
  * \brief     This API is called when the CPU is aborted or during execution
  *            of any undefined instruction. Both IRQ and FIQ will be disabled
- *            when the CPU gets an abort and calls this API. 
+ *            when the CPU gets an abort and calls this API.
  *
  * \param     None.
  *
  * \return    None.
  *
- * Note : The user can perform error handling such as an immediate reset 
+ * Note : The user can perform error handling such as an immediate reset
  *        inside this API if required.
  **/
 void CPUAbortHandler(void)
@@ -109,7 +109,7 @@ unsigned int CPUIntStatus(void)
     /* IRQ and FIQ in CPSR */
     __asm("    mrs     r0, CPSR\n\t"
           "    and     %[result], r0, #0xC0" : [result] "=r" (stat));
-    
+
     return stat;
 }
 

@@ -63,7 +63,7 @@
 #include "hw_psc_C6748.h"
 #include "hw_usbphyGS60.h"
 #include "hw_usbOtg_C6748.h"
-#elif defined(am335x) || defined(am335x_13x13) || defined(am335x_15x15) 
+#elif defined(am335x) || defined(am335x_13x13) || defined(am335x_15x15)
 #include "soc_AM335x.h"
 #include "hw_usbphyGS70.h"
 #include "hw_usbOtg_AM335x.h"

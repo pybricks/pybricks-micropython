@@ -79,8 +79,8 @@ extern "C" {
 
  /* Assert CS pin(line)*/
 #define SPI_CSHOLD                    SPI_SPIDAT1_CSHOLD
- 
-/* Enable Counter */ 
+
+/* Enable Counter */
 #define SPI_DELCOUNT_ENABLE           SPI_SPIDAT1_WDEL
 
 /* Disable Counter */
@@ -98,7 +98,7 @@ extern "C" {
  /* Active high clock */
 #define SPI_CLK_POL_LOW               0
 
- /* In Phase clock */ 
+ /* In Phase clock */
 #define SPI_CLK_INPHASE               0
 
  /* Out of Phase clock */
@@ -121,10 +121,10 @@ extern "C" {
 ** interrupts to interrupt line INT1
 */
 
-  /* Data length error interrupt enable level */    
+  /* Data length error interrupt enable level */
 #define SPI_DATALEN_ERR_INTLVL        SPI_SPILVL_DLENERRLVL
 
- /* Time out interrupt level */ 
+ /* Time out interrupt level */
 #define SPI_TIMEOUT_INTLVL            SPI_SPILVL_TIMEOUTLVL
 
  /* Parrity interrupt level */

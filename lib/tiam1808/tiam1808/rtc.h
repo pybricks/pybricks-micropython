@@ -2,7 +2,7 @@
 /**
  * \file   rtc.h
  *
- * \brief  Header file for RTC driver module. This file contains the 
+ * \brief  Header file for RTC driver module. This file contains the
  *         prototypes of the APIs of RTC module and some related macros.
  */
 
@@ -51,7 +51,7 @@ extern "C" {
 #endif
 
 /*****************************************************************************/
-/* Either of these macros are returned by the RTCEnableStatus() API.*/   
+/* Either of these macros are returned by the RTCEnableStatus() API.*/
 
 /* Used to disable RTC instance.*/
 #define RTC_DISABLED              RTC_CTRL_RTCDISABLE
@@ -68,7 +68,7 @@ extern "C" {
 #define RTC_24HOUR_MODE           (0 << RTC_CTRL_HOURMODE_SHIFT)
 /*****************************************************************************/
 /*
-** One among the following  macros are passed as a parameter to 
+** One among the following  macros are passed as a parameter to
 ** RTCIntTimerEnable() API.
 */
 
@@ -107,13 +107,13 @@ extern "C" {
 ** by the RTCEventUpdateGet() API.
 */
 /*
-** Used to indicate that DAY register was incremented in the latest 
+** Used to indicate that DAY register was incremented in the latest
 ** time update.
 */
 #define RTC_DAY_EVENT                RTC_STATUS_DAYEVT
 
 /*
-** Used to indicate that HOUR register was incremented in the latest 
+** Used to indicate that HOUR register was incremented in the latest
 ** time update.
 */
 #define RTC_HOUR_EVENT               RTC_STATUS_HREVT
@@ -136,7 +136,7 @@ extern "C" {
 #define RTC_BUSY                     RTC_STATUS_BUSY
 
 /*
-** Used to indicate that RTC is free and is currently not updating its 
+** Used to indicate that RTC is free and is currently not updating its
 ** registers.
 */
 #define RTC_FREE                     RTC_STATUS_BUSY_SHIFT
@@ -152,7 +152,7 @@ extern "C" {
 /*****************************************************************************/
 /*
 ** Either of following macros are passed as a parameter to
-** RTCAlarmHourMeridiemSet() and RTCMeridiemSet() APIs. Similarly either of 
+** RTCAlarmHourMeridiemSet() and RTCMeridiemSet() APIs. Similarly either of
 ** these are returned by RTCAlarmHourMeridiemGet() and RTCMeridiemGet() APIs.
 */
 
@@ -163,7 +163,7 @@ extern "C" {
 #define RTC_ANTE_MERIDIEM            (0 << RTC_HOUR_MERIDIEM_SHIFT)
 /*****************************************************************************/
 /*
-** One among the following  macros are passed as a parameter to 
+** One among the following  macros are passed as a parameter to
 ** RTCDayOfTheWeekSet() API. Similarly one of these macros are returned by the
 ** RTCDayOfTheWeekGet() API.
 */
@@ -246,7 +246,7 @@ extern "C" {
 /*****************************************************************************/
 
 /******************************************************************************
-**            DRIVER API FUNCTIONS PROTOTYPES                              
+**            DRIVER API FUNCTIONS PROTOTYPES
 ******************************************************************************/
 /******************************************************************************
 **         APIs common to the RTC IPs of both AM1808 and AM335x.

@@ -9,7 +9,7 @@
 
 @****************************** Global Symbols*********************************
         .global Entry
-        .global _stack                  
+        .global _stack
         .global _bss_start
         .global _bss_end
         .global start_boot
@@ -27,16 +27,16 @@
 
 @
 @ to set the mode bits in CPSR for different modes
-@        
-        .set  MODE_USR, 0x10            
+@
+        .set  MODE_USR, 0x10
         .set  MODE_FIQ, 0x11
         .set  MODE_IRQ, 0x12
         .set  MODE_SVC, 0x13
         .set  MODE_ABT, 0x17
         .set  MODE_UND, 0x1B
-        .set  MODE_SYS, 0x1F            
+        .set  MODE_SYS, 0x1F
 
-        .equ  I_F_BIT, 0xC0               
+        .equ  I_F_BIT, 0xC0
 
 @**************************** Code Seection ***********************************
         .text
@@ -52,7 +52,7 @@
 @
 @ The reset handler sets up the stack pointers for all the modes. The FIQ and
 @ IRQ shall be disabled during this. Then, clearthe BSS sections, switch to the
-@ main() function. 
+@ main() function.
 @
 Entry:
 @
@@ -64,31 +64,31 @@ Entry:
          SUB   r0, r0, #UND_STACK_SIZE         @ give stack space
 @
 @ Set up the Stack for abort mode
-@        
+@
          MSR   cpsr_c, #MODE_ABT|I_F_BIT       @ Change to abort mode
          MOV   sp, r0                          @ write the stack pointer
          SUB   r0,r0, #ABT_STACK_SIZE          @ give stack space
 @
 @ Set up the Stack for FIQ mode
-@       
+@
          MSR   cpsr_c, #MODE_FIQ|I_F_BIT       @ change to FIQ mode
          MOV   sp,r0                           @ write the stack pointer
          SUB   r0,r0, #FIQ_STACK_SIZE          @ give stack space
 @
 @ Set up the Stack for IRQ mode
-@       
+@
          MSR   cpsr_c, #MODE_IRQ|I_F_BIT       @ change to IRQ mode
          MOV   sp,r0                           @ write the stack pointer
          SUB   r0,r0, #IRQ_STACK_SIZE          @ give stack space
 @
 @ Set up the Stack for SVC mode
-@        
+@
          MSR   cpsr_c, #MODE_SVC|I_F_BIT       @ change to SVC mode
          MOV   sp,r0                           @ write the stack pointer
          SUB   r0,r0, #SVC_STACK_SIZE          @ give stack space
 @
 @ Set up the Stack for USer/System mode
-@      
+@
          MSR   cpsr_c, #MODE_SYS|I_F_BIT       @ change to system mode
          MOV   sp,r0                           @ write the stack pointer
 
@@ -99,8 +99,8 @@ Clear_Bss_Section:
 
          LDR   r0, =_bss_start                 @ Start address of BSS
          LDR   r1, =(_bss_end - 0x04)          @ End address of BSS
-         MOV   r2, #0  
-Loop: 
+         MOV   r2, #0
+Loop:
          STR   r2, [r0], #4                    @ Clear one word in BSS
          CMP   r0, r1
          BLE   Loop                            @ Clear till BSS end
@@ -110,16 +110,16 @@ Loop:
 @
 @Enter_main:
          LDR   r10,=start_boot                 @ Get the address of start_boot
-         MOV   lr,pc                           @ Dummy return 
+         MOV   lr,pc                           @ Dummy return
          BX    r10                             @ Branch to start_boot
-         SUB   pc, pc, #0x08                   @ looping   
+         SUB   pc, pc, #0x08                   @ looping
 
 @
 @ End of the file
 @
          .end
-    
-    
+
+
 
 
 

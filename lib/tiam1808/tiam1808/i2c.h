@@ -51,7 +51,7 @@ extern "C" {
 
 /******************Macros to confiure I2C********************************************/
 
-#define I2C_CFG_MST_TX                  (I2C_ICMDR_MST |I2C_ICMDR_TRX) 
+#define I2C_CFG_MST_TX                  (I2C_ICMDR_MST |I2C_ICMDR_TRX)
 
 #define I2C_CFG_MST_RX                  (I2C_ICMDR_MST |(I2C_ICMDR_TRX & 0x00000000))
 
@@ -121,10 +121,10 @@ extern "C" {
 
 #define I2C_INTCODE_AAS                I2C_ICIVR_INTCODE_AAS
 
-#define I2C_INTCODE_AL                 I2C_ICIVR_INTCODE_AL 
+#define I2C_INTCODE_AL                 I2C_ICIVR_INTCODE_AL
 /**************************************************************************************/
 #define I2C_DMA_TX_ENABLE              (0x01 << I2C_ICDMAC_TXDMAEN_SHIFT)
-#define I2C_DMA_RX_ENABLE              I2C_ICDMAC_RXDMAEN      
+#define I2C_DMA_RX_ENABLE              I2C_ICDMAC_RXDMAEN
 
 /*********Prototype of driver API*****************************************************/
 

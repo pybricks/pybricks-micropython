@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 /*****************************************************************************
-**                       MACRO DEFINITIONS                                   
+**                       MACRO DEFINITIONS
 *****************************************************************************/
 
 /* Values used to configure the direction of GPIO pins. */
@@ -99,7 +99,7 @@ extern "C" {
 
 /* Values used to configure the Gating Ratio. */
 #define GPIO_GR_FUNC_CLK_INTER_CLK_BY_1  (GPIO_CTRL_GATINGRATIO_N_1 << \
-                                          GPIO_CTRL_GATINGRATIO_SHIFT)    
+                                          GPIO_CTRL_GATINGRATIO_SHIFT)
 #define GPIO_GR_FUNC_CLK_INTER_CLK_BY_2  (GPIO_CTRL_GATINGRATIO_N_2 << \
                                           GPIO_CTRL_GATINGRATIO_SHIFT)
 #define GPIO_GR_FUNC_CLK_INTER_CLK_BY_4  (GPIO_CTRL_GATINGRATIO_N_4 << \
@@ -121,7 +121,7 @@ typedef struct gpioContext{
 
 
 /*****************************************************************************
-**                       FUNCTION PROTOTYPES                                   
+**                       FUNCTION PROTOTYPES
 *****************************************************************************/
 
 extern void GPIOModuleReset(unsigned int baseAdd);

@@ -170,17 +170,17 @@ void MDIOInit(unsigned int baseAddr, unsigned int mdioInputFreq,
    unsigned int clkDiv = (mdioInputFreq/mdioOutputFreq) - 1;
 
    HWREG(baseAddr + MDIO_CONTROL) = ((clkDiv & MDIO_CONTROL_CLKDIV)
-                                     | MDIO_CONTROL_ENABLE 
+                                     | MDIO_CONTROL_ENABLE
                                      | MDIO_CONTROL_PREAMBLE
                                      | MDIO_CONTROL_FAULTENB);
 }
 
 /**
- * \brief   Saves the MDIO register context. Note that only MDIO control 
+ * \brief   Saves the MDIO register context. Note that only MDIO control
  *          register context is saved here.
  *
  * \param   baseAddr       Base Address of the MDIO Module Registers.
- * \param   contextPtr     Pointer to the structure where MDIO context 
+ * \param   contextPtr     Pointer to the structure where MDIO context
  *                         needs to be saved.
  * \return  None
  *
@@ -191,12 +191,12 @@ void MDIOContextSave(unsigned int baseAddr, MDIOCONTEXT *contextPtr)
 }
 
 /**
- * \brief   Restores the MDIO register context. Note that only MDIO control 
+ * \brief   Restores the MDIO register context. Note that only MDIO control
  *          register context is restored here. Hence enough delay shall be
  *          given after this API
  *
  * \param   baseAddr       Base Address of the MDIO Module Registers.
- * \param   contextPtr     Pointer to the structure where MDIO context 
+ * \param   contextPtr     Pointer to the structure where MDIO context
  *                         needs to be restored from
  * \return  None
  *

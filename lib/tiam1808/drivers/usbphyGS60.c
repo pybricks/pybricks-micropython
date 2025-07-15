@@ -53,8 +53,8 @@
 #endif
 
 /**
- * \brief This function will switch on the USB Phy  
- *          
+ * \brief This function will switch on the USB Phy
+ *
  *
  * \param    None
  *
@@ -66,9 +66,9 @@ void UsbPhyOn()
 
     unsigned int  reg = 0;
 
-	reg = HWREG(CFGCHIP2_USBPHYCTRL); 
+	reg = HWREG(CFGCHIP2_USBPHYCTRL);
 
-    reg &= ~(CFGCHIP2_RESET | CFGCHIP2_PHYPWRDN | CFGCHIP2_OTGPWRDN);   
+    reg &= ~(CFGCHIP2_RESET | CFGCHIP2_PHYPWRDN | CFGCHIP2_OTGPWRDN);
 
     reg |= CFGCHIP2_PHY_PLLON;
 
@@ -78,14 +78,14 @@ void UsbPhyOn()
 
     HWREG(CFGCHIP2_USBPHYCTRL) = reg;
 
-    while (!(HWREG(CFGCHIP2_USBPHYCTRL) & CFGCHIP2_PHYCLKGD)); 
-	
+    while (!(HWREG(CFGCHIP2_USBPHYCTRL) & CFGCHIP2_PHYCLKGD));
+
 }
 
 
 /**
- * \brief This function will switch off  the USB Phy  
- *          
+ * \brief This function will switch off  the USB Phy
+ *
  *
  * \param    None
  *
@@ -95,12 +95,12 @@ void UsbPhyOn()
 void UsbPhyOff()
 {
 	unsigned int  reg = 0;
-	reg = HWREG(CFGCHIP2_USBPHYCTRL); 
-	
-	/** Ensure that USB 1.1 reference clock is not being sourced from	
+	reg = HWREG(CFGCHIP2_USBPHYCTRL);
+
+	/** Ensure that USB 1.1 reference clock is not being sourced from
 			* USB 2.0 PHY.	Otherwise do not power down the PHY.*/
-	
-	if (!( reg & CFGCHIP2_USB1PHYCLKMUX) && ( reg & CFGCHIP2_USB1SUSPENDM)) 
+
+	if (!( reg & CFGCHIP2_USB1PHYCLKMUX) && ( reg & CFGCHIP2_USB1SUSPENDM))
 	{
 	   return;
 	}

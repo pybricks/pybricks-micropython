@@ -1,6 +1,6 @@
 /**
 *  \file spi.c
-*    
+*
 *  \brief SPI device abstraction layer APIs
 */
 
@@ -68,12 +68,12 @@ void SPIClkConfigure(unsigned int baseAdd, unsigned int moduleClk,
 * \brief - It will Enable SPI module\n.
 *
 * \param - baseAdd  is the Memory Address of the SPI instance used\n.
-*    
+*
 * \return none.
-**/    
+**/
 void SPIEnable(unsigned int baseAdd)
 {
-    HWREG(baseAdd + SPI_SPIGCR1) |= SPI_SPIGCR1_ENABLE;           
+    HWREG(baseAdd + SPI_SPIGCR1) |= SPI_SPIGCR1_ENABLE;
 }
 /**
 * \brief - It will put SPI in to reset state.\n
@@ -95,8 +95,8 @@ void SPIReset(unsigned int baseAdd)
 **/
 void SPIOutOfReset(unsigned int baseAdd)
 {
-    HWREG(baseAdd + SPI_SPIGCR0) =  SPI_SPIGCR0_RESET; 
-}      
+    HWREG(baseAdd + SPI_SPIGCR0) =  SPI_SPIGCR0_RESET;
+}
 /**
 * \brief - Configures SPI to master or slave mode.
 *
@@ -159,7 +159,7 @@ void SPIDelayConfigure(unsigned int baseAdd, unsigned int c2edelay,
 {
     HWREG(baseAdd + SPI_SPIDELAY) |= (c2edelay & SPI_SPIDELAY_C2EDELAY);
 
-    HWREG(baseAdd + SPI_SPIDELAY) |= (SPI_SPIDELAY_T2EDELAY & 
+    HWREG(baseAdd + SPI_SPIDELAY) |= (SPI_SPIDELAY_T2EDELAY &
                                      (t2edelay << SPI_SPIDELAY_T2EDELAY_SHIFT));
 
     HWREG(baseAdd + SPI_SPIDELAY) |= (SPI_SPIDELAY_T2CDELAY &
@@ -167,7 +167,7 @@ void SPIDelayConfigure(unsigned int baseAdd, unsigned int c2edelay,
 
     HWREG(baseAdd + SPI_SPIDELAY) |= (SPI_SPIDELAY_C2TDELAY &
                                      (c2tdelay << SPI_SPIDELAY_C2TDELAY_SHIFT));
-}  
+}
 /**
 * \brief - Sets the default value for CS pin(line)  when no transmission is
 *            is performed by writing to SPIDEF Reg.\n
@@ -187,20 +187,20 @@ void SPIDefaultCSSet(unsigned int baseAdd, unsigned char dcsval)
 *            of the SPIDat1 Register.\n
 *
 * \param - baseAdd  is the Memory Address of the SPI data instance used.\n
-* \param - flag is value to Configure CSHOL,Wait Delay Conter Enable bit  
+* \param - flag is value to Configure CSHOL,Wait Delay Conter Enable bit
 *          and to select the appropriate DataFormat register.\n
 *
 *         flag can take following values.\n
-*               
+*
 *         SPI_CSHOLD            - To Hold the CS line active after data Transfer
 *                                 untill new data and Control information is
 *                                 loaded.\n
-*             
+*
 *         SPI_DELAY_COUNTER_ENA - Enables Delay Counter.\n
 *
-*         SPI_DATA_FORMAT0      - To select DataFormat Register 0.\n            
-*         SPI_DATA_FORMAT1      - To select DataFormat Register 1.\n            
-*         SPI_DATA_FORMAT2      - To select DataFormat Register 2.\n            
+*         SPI_DATA_FORMAT0      - To select DataFormat Register 0.\n
+*         SPI_DATA_FORMAT1      - To select DataFormat Register 1.\n
+*         SPI_DATA_FORMAT2      - To select DataFormat Register 2.\n
 *         SPI_DATA_FORMAT3      - To select DataFormat Register 3.\n
 *
 * \param - cs is the value to driven on CS pin(line).\n
@@ -212,10 +212,10 @@ void SPIDat1Config(unsigned int baseAdd, unsigned int flag, unsigned char cs)
     unsigned char *ptr = (unsigned char*)(baseAdd + SPI_SPIDAT1);
     unsigned char dcs;
 
-    *(ptr+3) = (char)((flag >> 24) | (flag & (SPI_SPIDAT1_DFSEL >> 
+    *(ptr+3) = (char)((flag >> 24) | (flag & (SPI_SPIDAT1_DFSEL >>
                                       SPI_SPIDAT1_DFSEL_SHIFT)));
 
-    dcs = HWREG(baseAdd + SPI_SPIDEF ) & (SPI_SPIDEF_CSDEF);          
+    dcs = HWREG(baseAdd + SPI_SPIDEF ) & (SPI_SPIDEF_CSDEF);
 
     *(ptr+2) = cs ^ dcs;
 }
@@ -240,14 +240,14 @@ void SPITransmitData1(unsigned int baseAdd, unsigned int data)
 * \param - dataFormat is the value to select the Format register.\n
 *
 *            dataFormat can take following value.\n
-*         
+*
 *            SPI_DATA_FORMAT0      - To select DataFormat Register 0.\n
 *            SPI_DATA_FORMAT1      - To select DataFormat Register 1.\n
 *            SPI_DATA_FORMAT2      - To select DataFormat Register 2.\n
 *            SPI_DATA_FORMAT3      - To select DataFormat Register 3.\n
 *
 * \return none.
-**/            
+**/
 void SPICSTimerDisable(unsigned int baseAdd, unsigned int dataFormat)
 {
     HWREG(baseAdd + SPI_SPIFMT(dataFormat)) |= SPI_SPIFMT_DISCSTIMERS;
@@ -373,7 +373,7 @@ void SPIShiftLsbFirst(unsigned int baseAdd, unsigned int dataFormat)
 * \param - flag    is the value determines whether odd or even Parity.\n
 *
 *            flag can take following values.\n
-*          
+*
 *            SPI_ODD_PARITY   -  selects odd parity
 *            SPI_EVEN_PARITY  -  selects even parity
 *
@@ -453,7 +453,7 @@ void SPIWdelaySet(unsigned int baseAdd, unsigned int flag,
 *
 * \return none.
 *
-* Note:It is applicable only in SPI Master Mode.SPIx_ENA is a active 
+* Note:It is applicable only in SPI Master Mode.SPIx_ENA is a active
 *      low signal
 **/
 void SPIWaitEnable(unsigned int baseAdd, unsigned int dataFormat)
@@ -501,7 +501,7 @@ void SPIWaitDisable(unsigned int baseAdd, unsigned int dataFormat)
 *
 * \return none.
 *
-**/    
+**/
 void SPIIntLevelSet(unsigned int baseAdd, unsigned int flag)
 {
     HWREG(baseAdd + SPI_SPILVL) |= flag;
@@ -625,10 +625,10 @@ unsigned int SPIDataReceive(unsigned int baseAdd)
 * \param - baseAdd is the memory instance to be used.\n
 *
 * \returns vector of the pending interrupt at interrupt line INT1.
-**/  
+**/
 unsigned int  SPIInterruptVectorGet(unsigned int baseAdd)
 {
-   unsigned int intVectorCode; 
+   unsigned int intVectorCode;
    intVectorCode = HWREG(baseAdd + SPI_INTVEC1);
 
    return (intVectorCode >> 1);

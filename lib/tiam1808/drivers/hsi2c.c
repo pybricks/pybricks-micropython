@@ -61,7 +61,7 @@
  * \param   outputClk   It is the required I2C bus speed or frequency.
  *
  * \return  None.
- **/ 
+ **/
 void I2CMasterInitExpClk(unsigned int baseAdd, unsigned int sysClk,
                          unsigned int internalClk, unsigned int outputClk)
 {
@@ -79,7 +79,7 @@ void I2CMasterInitExpClk(unsigned int baseAdd, unsigned int sysClk,
 
     HWREG(baseAdd + I2C_SCLL) = divider - 7;
 
-    HWREG(baseAdd + I2C_SCLH) = divider - 5; 
+    HWREG(baseAdd + I2C_SCLH) = divider - 5;
 }
 
 /**
@@ -135,7 +135,7 @@ unsigned int I2CMasterBusBusy(unsigned int baseAdd)
          status = 0;
     }
 
-    return status; 
+    return status;
 }
 
 /**
@@ -159,7 +159,7 @@ unsigned int I2CMasterBusy(unsigned int baseAdd)
  * \param   baseAdd   It is the Memory address of the I2C instance used.
  *
  * \returns error status.If error has occured it returns a non zero value.
- *          If no error has occured then return status will be zero.       
+ *          If no error has occured then return status will be zero.
  *
  * Error may occur during I2C operation due to arbitration lost,access error,
  * receive overrun and transmit underrun.
@@ -182,12 +182,12 @@ unsigned int I2CMasterErr(unsigned int baseAdd)
  * \param   baseAdd   It is the Memory address of the I2C instance used.
  * \param   cmd       It is the value which configures I2C in different mode's
  *                    of operation.\n
- * 
+ *
  *          cmd can take follwing macros.\n
  *
  *          I2C_CFG_MST_TX             - Configure's I2C as Master-Transmitter.\n
  *          I2C_CFG_MST_RX             - Configure's I2C as Master-Receiver.\n
- *          I2C_CFG_STOP               - Configure's I2C to generate stop 
+ *          I2C_CFG_STOP               - Configure's I2C to generate stop
  *                                       condition when DCOUNT counts down to
  *                                       zero.\n
  *          I2C_CFG_N0RMAL_MODE        - Configure's I2C in normal mode.\n
@@ -195,7 +195,7 @@ unsigned int I2CMasterErr(unsigned int baseAdd)
  *          I2C_CFG_7BIT_SLAVE_ADDR    - Configure's I2C to address seven bit
  *                                       addressed slave.\n
  *          I2C_CFG_10BIT_SLAVE_ADDR   - Configure's I2C to address ten bit
- *                                       addressed slave.\n 
+ *                                       addressed slave.\n
  *          I2C_CFG_10BIT_OWN_ADDR_0   - Enable 10bit addressing mode for own
  *                                       address 0.\n
  *          I2C_CFG_10BIT_OWN_ADDR_1   - Enable 10bit addressing mode for own
@@ -222,7 +222,7 @@ void I2CMasterControl(unsigned int baseAdd, unsigned int cmd)
 
 /**
  * \brief   This API start's a I2C transaction on the bus. This API must
- *          be called after all the configuration for the i2c module is 
+ *          be called after all the configuration for the i2c module is
  *          done and after bringing I2C out of local reset
  *
  * \param   baseAdd  It is the Memory address of the I2C instance used.
@@ -255,7 +255,7 @@ void I2CMasterStop(unsigned int baseAdd)
  * \param  intFlag   It specifies the interrupts that are rquired to be enabled.\n
  *
  *         intFlag can take following values.\n
- *         
+ *
  *         I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt.\n
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
@@ -269,7 +269,7 @@ void I2CMasterStop(unsigned int baseAdd)
  *         I2C_INT_TRANSMIT_UNDER_FLOW  - Transmit under flow interrupt.\n
  *         I2C_INT_RECV_OVER_RUN        - Receive overrun interrupt.\n
  *         I2C_INT_RECV_DRAIN           - Receive drain interrupt.\n
- *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n   
+ *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n
  *
  * \return None.
  **/
@@ -285,7 +285,7 @@ void I2CMasterIntEnableEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag   It specifies the interrupts that are rquired to be enabled.\n
  *
  *         intFlag can take following values.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -297,7 +297,7 @@ void I2CMasterIntEnableEx(unsigned int baseAdd, unsigned int intFlag)
  *         I2C_INT_TRANSMIT_UNDER_FLOW  - Transmit under flow interrupt.\n
  *         I2C_INT_RECV_OVER_RUN        - Receive overrun interrupt.\n
  *         I2C_INT_RECV_DRAIN           - Receive drain interrupt.\n
- *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n   
+ *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n
  *
  * \return None.
  **/
@@ -313,7 +313,7 @@ void I2CSlaveIntEnableEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag   It specifies the interrupts that are rquired to be disabled\n
  *
  *         intFlag can take following values.\n
- *         
+ *
  *         I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt.\n
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
@@ -327,7 +327,7 @@ void I2CSlaveIntEnableEx(unsigned int baseAdd, unsigned int intFlag)
  *         I2C_INT_TRANSMIT_UNDER_FLOW  - Transmit under flow interrupt.\n
  *         I2C_INT_RECV_OVER_RUN        - Receive overrun interrupt.\n
  *         I2C_INT_RECV_DRAIN           - Receive drain interrupt.\n
- *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n   
+ *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n
  *
  * \return None.
  **/
@@ -343,7 +343,7 @@ void I2CMasterIntDisableEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag   It specifies the interrupts that are rquired to be disabled\n
  *
  *         intFlag can take following values.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -355,7 +355,7 @@ void I2CMasterIntDisableEx(unsigned int baseAdd, unsigned int intFlag)
  *         I2C_INT_TRANSMIT_UNDER_FLOW  - Transmit under flow interrupt.\n
  *         I2C_INT_RECV_OVER_RUN        - Receive overrun interrupt.\n
  *         I2C_INT_RECV_DRAIN           - Receive drain interrupt.\n
- *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n   
+ *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n
  *
  * \return None.
  **/
@@ -399,7 +399,7 @@ unsigned int I2CSlaveIntStatus(unsigned int baseAdd)
  *                  returned.\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt.\n
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C register ready to access.\n
@@ -432,7 +432,7 @@ unsigned int I2CMasterIntStatusEx(unsigned int baseAdd, unsigned int intFlag)
  *                  returned.\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -490,7 +490,7 @@ unsigned int I2CSlaveIntRawStatus(unsigned int baseAdd)
  *                  returned.\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt.\n
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
@@ -523,7 +523,7 @@ unsigned int I2CMasterIntRawStatusEx(unsigned int baseAdd, unsigned int intFlag)
  *                   returned.\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -554,7 +554,7 @@ unsigned int I2CSlaveIntRawStatusEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag  It specifies the interrupts whose status needs to be cleared\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_ARBITRATION_LOST     - Arbitration-lost interrupt.\n
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers ready to access.\n
@@ -567,13 +567,13 @@ unsigned int I2CSlaveIntRawStatusEx(unsigned int baseAdd, unsigned int intFlag)
  *         I2C_INT_ADRR_SLAVE           - Address-as-slave interrupt.\n
  *         I2C_INT_TRANSMIT_UNDER_FLOW  - Transmit under flow interrupt.\n
  *         I2C_INT_RECV_DRAIN           - Receive drain interrupt.\n
- *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n   
+ *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n
  *
  * \returns None
  **/
 void I2CMasterIntClearEx(unsigned int baseAdd, unsigned int intFlag)
 {
-    HWREG(baseAdd + I2C_IRQSTATUS) = intFlag; 
+    HWREG(baseAdd + I2C_IRQSTATUS) = intFlag;
 }
 
 /**
@@ -584,7 +584,7 @@ void I2CMasterIntClearEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag  It specifies the interrupts whose status needs to be cleared\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - No-acknowledgment interrupt.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -596,13 +596,13 @@ void I2CMasterIntClearEx(unsigned int baseAdd, unsigned int intFlag)
  *         I2C_INT_ADRR_SLAVE           - Address-as-slave interrupt.\n
  *         I2C_INT_TRANSMIT_UNDER_FLOW  - Transmit under flow interrupt.\n
  *         I2C_INT_RECV_DRAIN           - Receive drain interrupt.\n
- *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n   
+ *         I2C_INT_TRANSMIT_DRAIN       - Transmit drain interrupt.\n
  *
  * \returns None
  **/
 void I2CSlaveIntClearEx(unsigned int baseAdd, unsigned int intFlag)
 {
-    HWREG(baseAdd + I2C_IRQSTATUS) = intFlag; 
+    HWREG(baseAdd + I2C_IRQSTATUS) = intFlag;
 }
 
 /**
@@ -613,7 +613,7 @@ void I2CSlaveIntClearEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag  It specifies the interrupts whose status needs to be cleared\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C registers are ready to access.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -624,7 +624,7 @@ void I2CSlaveIntClearEx(unsigned int baseAdd, unsigned int intFlag)
  **/
 void I2CMasterIntRawStatusClearEx(unsigned int baseAdd, unsigned int intFlag)
 {
-    HWREG(baseAdd + I2C_IRQSTATUS_RAW) = intFlag; 
+    HWREG(baseAdd + I2C_IRQSTATUS_RAW) = intFlag;
 }
 
 /**
@@ -635,7 +635,7 @@ void I2CMasterIntRawStatusClearEx(unsigned int baseAdd, unsigned int intFlag)
  * \param  intFlag   It specifies the interrupts whose status needs to be cleared\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_INT_NO_ACK               - No-acknowledgment interrupt.\n
  *         I2C_INT_ADRR_READY_ACESS     - I2C register are ready to access.\n
  *         I2C_INT_RECV_READY           - Receive-data-ready interrupt.\n
@@ -646,7 +646,7 @@ void I2CMasterIntRawStatusClearEx(unsigned int baseAdd, unsigned int intFlag)
  **/
 void I2CSlaveIntRawStatusClearEx(unsigned int baseAdd, unsigned int intFlag)
 {
-    HWREG(baseAdd + I2C_IRQSTATUS_RAW) = intFlag; 
+    HWREG(baseAdd + I2C_IRQSTATUS_RAW) = intFlag;
 }
 
 /**
@@ -680,7 +680,7 @@ unsigned int I2CMasterSlaveAddrGet(unsigned int baseAdd, unsigned int slaveAdd)
 }
 
 /**
- * \brief   This API configure I2C data count register with a value. 
+ * \brief   This API configure I2C data count register with a value.
  *          The value in the I2C data count register indicate how many data
  *          words to transfer when the I2C is configured as a  master-transmitter
  *          and repeat mode is off.
@@ -697,7 +697,7 @@ void I2CSetDataCount(unsigned int baseAdd, unsigned int count)
 
 
 /**
- * \brief   This API configure I2C data count register with a value. 
+ * \brief   This API configure I2C data count register with a value.
  *          The value in the I2C data count register indicate how many data
  *          words to transfer when the I2C is configured as a  master-transmitter
  *          and repeat mode is off.
@@ -715,11 +715,11 @@ unsigned int I2CDataCountGet(unsigned int baseAdd)
  * \brief   This API configure's the threshold value for FIFO buffer.
  *
  * \param   baseAdd     It is the Memory address of the I2C instance used.
- * \param   thresholdVal It is the threshold value for FIFO buffer.Which is 
+ * \param   thresholdVal It is the threshold value for FIFO buffer.Which is
  *                       used to specify the trigger level for data transfer or
  *                       data receive transfers.
  * \param   flag         It specifies FIFO buffer in TX mode or RX mode.\n
- *     
+ *
  *          flag can take following macros.\n
  *
  *          I2C_TX_MODE.\n
@@ -749,7 +749,7 @@ void I2CFIFOThresholdConfig(unsigned int baseAdd, unsigned int threshlodVal,
  *
  * \param   baseAdd     It is the Memory address of the I2C instance used..
  * \param   flag        It specifies Transmit FIFO or Receive FIFO.\n
- *     
+ *
  *         flag can take following macros.\n
  *
  *         I2C_TX_MODE - .\n
@@ -797,7 +797,7 @@ void I2CDMARxEventEnable(unsigned int baseAdd)
 {
     HWREG(baseAdd + I2C_BUF) |= (I2C_BUF_RDMA_EN);
 
-    HWREG(baseAdd + I2C_DMARXENABLE_SET) =   
+    HWREG(baseAdd + I2C_DMARXENABLE_SET) =
                                        (I2C_DMARXENABLE_SET_DMARX_ENABLE_SET);
 }
 
@@ -812,7 +812,7 @@ void I2CDMATxEventDisable(unsigned int baseAdd)
 {
     HWREG(baseAdd + I2C_BUF) &= ~(I2C_BUF_XDMA_EN);
 
-    HWREG(baseAdd + I2C_DMATXENABLE_CLR) =   
+    HWREG(baseAdd + I2C_DMATXENABLE_CLR) =
                                     (I2C_DMATXENABLE_CLR_DMATX_ENABLE_CLEAR);
 }
 
@@ -827,7 +827,7 @@ void I2CDMARxEventDisable(unsigned int baseAdd)
 {
     HWREG(baseAdd + I2C_BUF) &= ~(I2C_BUF_RDMA_EN);
 
-    HWREG(baseAdd + I2C_DMARXENABLE_CLR) =  
+    HWREG(baseAdd + I2C_DMARXENABLE_CLR) =
                                      (I2C_DMARXENABLE_CLR_DMARX_ENABLE_CLEAR);
 }
 
@@ -836,7 +836,7 @@ void I2CDMARxEventDisable(unsigned int baseAdd)
  *
  * \param   baseAdd     It is the Memory address of the I2C instance used..
  * \param   flag        It specifies required status field.\n
- *     
+ *
  *          flag can take following macros.\n
  *
  *          I2C_TX_BUFFER_STATUS - Indicates the number of data bytes still.
@@ -859,12 +859,12 @@ unsigned int I2CBufferStatus(unsigned int baseAdd, unsigned int flag)
                break;
 
          case 1:
-               status = (HWREG(baseAdd + I2C_BUFSTAT) & I2C_BUFSTAT_RXSTAT) 
+               status = (HWREG(baseAdd + I2C_BUFSTAT) & I2C_BUFSTAT_RXSTAT)
                         >> I2C_BUFSTAT_RXSTAT_SHIFT;
                break;
 
          case 2:
-               status = (HWREG(baseAdd + I2C_BUFSTAT) & I2C_BUFSTAT_FIFODEPTH) 
+               status = (HWREG(baseAdd + I2C_BUFSTAT) & I2C_BUFSTAT_FIFODEPTH)
                         >> I2C_BUFSTAT_FIFODEPTH_SHIFT;
                break;
 
@@ -881,7 +881,7 @@ unsigned int I2CBufferStatus(unsigned int baseAdd, unsigned int flag)
  *
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
- * \returns one of the module's four own address the external master used 
+ * \returns one of the module's four own address the external master used
  *          when addressing the module.
  **/
 unsigned int I2CActiveOwnAddressGet(unsigned int baseAdd)
@@ -905,29 +905,29 @@ unsigned int I2CActiveOwnAddressGet(unsigned int baseAdd)
 
     return 0;
 }
-    
+
 /**
  * \brief   This API blocks or unblocks the clock for any of the module's four own
  *          addresses.
  *
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
- * \param   ownAdd0  It is value which blocks or unblocks clock to i2c if 
+ * \param   ownAdd0  It is value which blocks or unblocks clock to i2c if
  *                   an external master using own address 0.
  *
- * \param   ownAdd1  It is value which blocks or unblocks clock to i2c if 
+ * \param   ownAdd1  It is value which blocks or unblocks clock to i2c if
  *                   an external master using own address 1.
  *
- * \param   ownAdd2  It is value which blocks or unblocks clock to i2c if 
+ * \param   ownAdd2  It is value which blocks or unblocks clock to i2c if
  *                   an external master using own address 2.
  *
- * \param   ownAdd3  It is value which blocks or unblocks clock to i2c if 
+ * \param   ownAdd3  It is value which blocks or unblocks clock to i2c if
  *                   an external master using own address 0.
  *
  *                   0 - Unblocks clock to i2c
  *                   1 - Blocks clock to i2c
  * \returns None.
- *          
+ *
  **/
 void I2CClockBlockingControl(unsigned int baseAdd, unsigned int ownAdd0,
                              unsigned int ownAdd1, unsigned int ownAdd2,
@@ -956,27 +956,27 @@ void I2CClockBlockingControl(unsigned int baseAdd, unsigned int ownAdd0,
  *                    out of four.\n
  *
  *          flag can take following values.\n
- *      
+ *
  *          I2C_OWN_ADDR_0.\n
  *          I2C_OWN_ADDR_1.\n
  *          I2C_OWN_ADDR_2.\n
  *          I2C_OWN_ADDR_3.\n
  *
  * \returns None.
- *          
+ *
  **/
 void I2COwnAddressSet(unsigned int baseAdd, unsigned int slaveAdd,
                         unsigned int flag)
 {
     switch(flag)
     {
-         case 0 : 
+         case 0 :
                HWREG(baseAdd + I2C_OA) = slaveAdd;
                return;
-         case 1 : 
+         case 1 :
                HWREG(baseAdd + I2C_OAn(0)) = slaveAdd;
                return;
-         case 2 : 
+         case 2 :
                HWREG(baseAdd + I2C_OAn(1)) = slaveAdd;
                return;
          case 3 :
@@ -992,7 +992,7 @@ void I2COwnAddressSet(unsigned int baseAdd, unsigned int slaveAdd,
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
  * \returns None.
- *          
+ *
  **/
 void I2CSoftReset(unsigned int baseAdd)
 {
@@ -1005,7 +1005,7 @@ void I2CSoftReset(unsigned int baseAdd)
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
  * \returns None.
- *          
+ *
  **/
 void I2CAutoIdleEnable(unsigned int baseAdd)
 {
@@ -1018,7 +1018,7 @@ void I2CAutoIdleEnable(unsigned int baseAdd)
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
  * \returns None.
- *          
+ *
  **/
 void I2CAutoIdleDisable(unsigned int baseAdd)
 {
@@ -1031,7 +1031,7 @@ void I2CAutoIdleDisable(unsigned int baseAdd)
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
  * \returns None.
- *          
+ *
  **/
 void I2CGlobalWakeUpEnable(unsigned int baseAdd)
 {
@@ -1044,7 +1044,7 @@ void I2CGlobalWakeUpEnable(unsigned int baseAdd)
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
  * \returns None.
- *          
+ *
  **/
 void I2CGlobalWakeUpDisable(unsigned int baseAdd)
 {
@@ -1066,7 +1066,7 @@ void I2CGlobalWakeUpDisable(unsigned int baseAdd)
  *                                         of operation.\n
  *
  * \returns None.
- *          
+ *
  **/
 void I2CIdleModeSelect(unsigned int baseAdd, unsigned int flag)
 {
@@ -1092,7 +1092,7 @@ void I2CIdleModeSelect(unsigned int baseAdd, unsigned int flag)
  *          I2C_KEEP_ALIVE_BOTH_CLK     - BOTH OCP and SYS Clk are kept alive.\n
  *
  * \returns None.
- *          
+ *
  **/
 void I2CClockActivitySelect(unsigned int baseAdd, unsigned int flag)
 {
@@ -1108,11 +1108,11 @@ void I2CClockActivitySelect(unsigned int baseAdd, unsigned int flag)
  *         the I2C controller.
  *
  * \param  baseAdd    It is the Memory address of the I2C instance used.
- * \param  eventFlag   It specifies for which event wakeup sinal has to 
+ * \param  eventFlag   It specifies for which event wakeup sinal has to
  *                     Enable.\n
  *
  *         intFlag can take following values.\n
- *         
+ *
  *         I2C_WAKE_UP_ARBITRATION_LOST    - Arbitration-lost wakeup signal.\n
  *         I2C_WAKE_UP_NO_ACK              - No-acknowledgment wakeup signal.\n
  *         I2C_WAKE_UP_ADRR_READY_ACCESS   - No-acknowledgment wakeup signal.\n
@@ -1123,11 +1123,11 @@ void I2CClockActivitySelect(unsigned int baseAdd, unsigned int flag)
  *         I2C_WAKE_UP_TX_UNDER_FLOW       - Transmit under flow wakeup siganl.\n
  *         I2C_WAKE_UP_RECV_OVER_RUN       - Receive overrun wakeup signal.\n
  *         I2C_WAKE_UP_RECV_DRAIN          - Receive drain wakeup signal.\n
- *         I2C_WAKE_UP_TRANSMIT_DRAIN      - Transmit drain wakeup siganl.\n   
+ *         I2C_WAKE_UP_TRANSMIT_DRAIN      - Transmit drain wakeup siganl.\n
  *         I2C_WAKE_UP_DATA_RECV_TX_RDY    - Receive-data-ready
  *                                                  wakeup signal.\n
  *
- * \param  flag        It specifies IRQ or DMA Transmit or DMA receive 
+ * \param  flag        It specifies IRQ or DMA Transmit or DMA receive
  *                     request source to generate asynchronous wake up
  *                     signal.\n
  *
@@ -1154,7 +1154,7 @@ void I2CWakeUpEnable(unsigned int baseAdd, unsigned int eventFlag,
     {
          HWREG(baseAdd + I2C_DMATXWAKE_EN) |= eventFlag;
     }
-     
+
 }
 
 /**
@@ -1164,11 +1164,11 @@ void I2CWakeUpEnable(unsigned int baseAdd, unsigned int eventFlag,
  *         the I2C controller.
  *
  * \param  baseAdd    It is the Memory address of the I2C instance used.
- * \param  eventflag   It specifies for which event wakeup sinal has to 
+ * \param  eventflag   It specifies for which event wakeup sinal has to
  *                     disabled.\n
  *
  *         intFlag can take following macros.\n
- *         
+ *
  *         I2C_WAKE_UP_ARBITRATION_LOST    - Arbitration-lost wakeup signal.\n
  *         I2C_WAKE_UP_NO_ACK              - No-acknowledgment wakeup signal.\n
  *         I2C_WAKE_UP_ADRR_RDY_ACCESS     - No-acknowledgment wakeup signal.\n
@@ -1179,11 +1179,11 @@ void I2CWakeUpEnable(unsigned int baseAdd, unsigned int eventFlag,
  *         I2C_WAKE_UP_TX_UNDER_FLOW       - Transmit under flow wakeup siganl.\n
  *         I2C_WAKE_UP_RECV_OVER_RUN       - Receive overrun wakeup signal.\n
  *         I2C_WAKE_UP_RECV_DRAIN          - Receive drain wakeup signal.\n
- *         I2C_WAKE_UP_TRANSMIT_DRAIN      - Transmit drain wakeup siganl.\n   
+ *         I2C_WAKE_UP_TRANSMIT_DRAIN      - Transmit drain wakeup siganl.\n
  *         I2C_WAKE_UP_DATA_RECV_TX_RDY    - Receive-data-ready
  *                                              wakeup signal.\n
  *
- * \param  flag        It specifies IRQ or DMA Transmit or DMA receive 
+ * \param  flag        It specifies IRQ or DMA Transmit or DMA receive
  *                     request source to generate asynchronous wake up
  *                     signal.\n
  *
@@ -1218,9 +1218,9 @@ void I2CWakeUpDisable(unsigned int baseAdd, unsigned int eventFlag,
  *
  * \param   baseAdd  It is the Memory address of the I2C instance used.
  *
- * \returns returns "1" if reset is completed. 
+ * \returns returns "1" if reset is completed.
  *          returns "0" if internal module reset is ongoing.
- *          
+ *
  **/
 unsigned int I2CSystemStatusGet(unsigned int baseAdd)
 {
@@ -1229,10 +1229,10 @@ unsigned int I2CSystemStatusGet(unsigned int baseAdd)
 
 /**
  * \brief  This function Transmits a byte from the I2C in Master mode.
- * 
+ *
  * \param  baseAdd is the Memory address of the I2C instance used.
  * \param  data data to be transmitted from the I2C Master.
- * 
+ *
  * \return None.\n
  *
  **/
@@ -1244,9 +1244,9 @@ void I2CMasterDataPut(unsigned int baseAdd, unsigned char data)
 
 /**
  *  \brief  This Receives a byte that has been sent to the I2C in Master mode.
- * 
+ *
  *  \param  baseAdd is the Memory address of the I2C instance used.
- * 
+ *
  *  \return Returns the byte received from by the I2C in Master mode.
  *
  **/
@@ -1260,10 +1260,10 @@ unsigned char I2CMasterDataGet(unsigned int baseAdd)
 
 /**
  * \brief  This Transmits a byte from the I2C in Slave mode.
- * 
+ *
  * \param  baseAdd is the Memory address of the I2C Slave module.
  * \param  data data to be transmitted from the I2C in Slave mode.
- * 
+ *
  * \return None.
  *
  **/
@@ -1275,11 +1275,11 @@ void I2CSlaveDataPut(unsigned int baseAdd,unsigned int data)
 /**
  * \brief  This function Receives a byte that has been sent to the I2C in Slave
  *         mode.
- * 
+ *
  * \param  baseAdd is the Memory address of the I2C instace used.
- * 
+ *
  * \return Returns the byte received from by the I2C in Slave mode.
- * 
+ *
  **/
 unsigned int I2CSlaveDataGet(unsigned int baseAdd)
 {
@@ -1292,11 +1292,11 @@ unsigned int I2CSlaveDataGet(unsigned int baseAdd)
 
 
 /**
- * \brief  This function Acknowledges interrupt. 
- * 
+ * \brief  This function Acknowledges interrupt.
+ *
  * \param  baseAdd is the Memory address of the I2C instace used.
  * \param  flag    is value which acknowledges the asserted interrupt.
- * 
+ *
  **/
 void I2CEndOfInterrupt(unsigned int baseAdd, unsigned int flag)
 {
@@ -1342,8 +1342,8 @@ void I2CContextRestore(unsigned int i2cBase, I2CCONTEXT *contextPtr)
     HWREG(i2cBase + I2C_SCLL)	=	contextPtr->lowdivider;
     HWREG(i2cBase + I2C_SCLH)	=	contextPtr->highdivider;
     HWREG(i2cBase + I2C_OA)		=	contextPtr->ownaddr;
-	
-	HWREG(i2cBase + I2C_CON) |= I2C_CON_I2C_EN; 	// Enable 
+
+	HWREG(i2cBase + I2C_CON) |= I2C_CON_I2C_EN; 	// Enable
 	while((!HWREG(i2cBase + I2C_SYSS) & I2C_SYSS_RDONE)); 	// reset complete...?
 }
 

@@ -100,14 +100,14 @@ extern "C" {
 #define CPSW_RGMII1_LINK_STAT                  CPSW_WR_RGMII_CTL_RGMII1_LINK
 
 /* The values, one of which will be returned by CPSWWrRGMIIStatusGet */
-#define CPSW_RGMII2_DUPLEX_FULL                CPSW_WR_RGMII_CTL_RGMII2_FULLDUPLEX 
+#define CPSW_RGMII2_DUPLEX_FULL                CPSW_WR_RGMII_CTL_RGMII2_FULLDUPLEX
 #define CPSW_RGMII2_DUPLEX_HALF                (0x00u)
 #define CPSW_RGMII2_SPEED_10M                  (0x00u << CPSW_WR_RGMII_CTL_RGMII2_SPEED_SHIFT)
 #define CPSW_RGMII2_SPEED_100M                 (0x01u << CPSW_WR_RGMII_CTL_RGMII2_SPEED_SHIFT)
 #define CPSW_RGMII2_SPEED_1000M                (0x02u << CPSW_WR_RGMII_CTL_RGMII2_SPEED_SHIFT)
-#define CPSW_RGMII2_LINK_UP                    CPSW_WR_RGMII_CTL_RGMII2_LINK 
+#define CPSW_RGMII2_LINK_UP                    CPSW_WR_RGMII_CTL_RGMII2_LINK
 #define CPSW_RGMII2_LINK_DOWN                  (0x00u)
-#define CPSW_RGMII1_DUPLEX_FULL                CPSW_WR_RGMII_CTL_RGMII1_FULLDUPLEX 
+#define CPSW_RGMII1_DUPLEX_FULL                CPSW_WR_RGMII_CTL_RGMII1_FULLDUPLEX
 #define CPSW_RGMII1_DUPLEX_HALF                (0x00u)
 #define CPSW_RGMII1_SPEED_10M                  (0x00u << CPSW_WR_RGMII_CTL_RGMII1_SPEED_SHIFT)
 #define CPSW_RGMII1_SPEED_100M                 (0x01u << CPSW_WR_RGMII_CTL_RGMII1_SPEED_SHIFT)
@@ -116,10 +116,10 @@ extern "C" {
 #define CPSW_RGMII1_LINK_DOWN                  (0x00u)
 
 /*
-** Macros which can be passed as 'pacFlag' to the API CPSWWrIntPacingEnable 
+** Macros which can be passed as 'pacFlag' to the API CPSWWrIntPacingEnable
 ** CPSWWrIntPacingDisable
 */
-#define CPSW_INT_PACING_C0_RX_PULSE            (0x01 << CPSW_WR_INT_CONTROL_INT_PACE_EN_SHIFT) 
+#define CPSW_INT_PACING_C0_RX_PULSE            (0x01 << CPSW_WR_INT_CONTROL_INT_PACE_EN_SHIFT)
 #define CPSW_INT_PACING_C0_TX_PULSE            (0x02 << CPSW_WR_INT_CONTROL_INT_PACE_EN_SHIFT)
 #define CPSW_INT_PACING_C1_RX_PULSE            (0x04 << CPSW_WR_INT_CONTROL_INT_PACE_EN_SHIFT)
 #define CPSW_INT_PACING_C1_TX_PULSE            (0x08 << CPSW_WR_INT_CONTROL_INT_PACE_EN_SHIFT)
@@ -133,7 +133,7 @@ extern "C" {
 #define CPSW_ALE_PORT_STATE_LEARN              (0x02u)
 #define CPSW_ALE_PORT_STATE_BLOCKED            (0x01u)
 #define CPSW_ALE_PORT_STATE_DISABLED           (0x00u)
- 
+
 /*
 ** Macros which can be passed as 'eoiFlag' to CPSWCPDMAEndOfIntVectorWrite
 */
@@ -154,7 +154,7 @@ extern "C" {
 #define CPDMA_STAT_TX_HOST_ERR_CODE            (CPSW_CPDMA_DMASTATUS_TX_HOST_ERR_CODE)
 
 /* The return values for the above 'statFlag' */
-#define CPDMA_STAT_TX_NO_ERR                   (0x00u << CPSW_CPDMA_DMASTATUS_TX_HOST_ERR_CODE_SHIFT) 
+#define CPDMA_STAT_TX_NO_ERR                   (0x00u << CPSW_CPDMA_DMASTATUS_TX_HOST_ERR_CODE_SHIFT)
 #define CPDMA_STAT_TX_SOP_ERR                  (0x01u << CPSW_CPDMA_DMASTATUS_TX_HOST_ERR_CODE_SHIFT)
 #define CPDMA_STAT_TX_OWN_ERR                  (0x02u << CPSW_CPDMA_DMASTATUS_TX_HOST_ERR_CODE_SHIFT)
 #define CPDMA_STAT_TX_ZERO_DESC                (0x03u << CPSW_CPDMA_DMASTATUS_TX_HOST_ERR_CODE_SHIFT)

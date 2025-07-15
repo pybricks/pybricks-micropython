@@ -2,7 +2,7 @@
  * \file      psc.c
  *
  * \brief     This file contains the device abstraction layer APIs for the
- *            PSC module. There are APIs here to enable power domain, 
+ *            PSC module. There are APIs here to enable power domain,
  *            transitions for a particular module
  */
 
@@ -66,7 +66,7 @@
  *                            the commands that can be given to a module.
  *
  * \return                    0 in case of successful transition, -1 otherwise.
- *            
+ *
  */
 
 int PSCModuleControl (unsigned int baseAdd, unsigned int moduleId,
@@ -103,10 +103,10 @@ int PSCModuleControl (unsigned int baseAdd, unsigned int moduleId,
     if (timeout != 0)
     {
         timeout = 0xFFFFFF;
-        status = flags & PSC_MDCTL_NEXT; 
+        status = flags & PSC_MDCTL_NEXT;
         do {
             timeout--;
-        } while(timeout && 
+        } while(timeout &&
                 (HWREG(baseAdd + PSC_MDSTAT(moduleId)) & PSC_MDSTAT_STATE) != status);
     }
 

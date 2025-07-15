@@ -57,7 +57,7 @@ unsigned int regionId;
 
 /**
  *  \brief   EDMA3 Initialization
- *  
+ *
  *  This function initializes the EDMA3 Driver
  *  Clears the error specific registers (EMCR/EMCRh, QEMCR, CCERRCLR) &
  *  initialize the Queue Number Registers
@@ -71,7 +71,7 @@ unsigned int regionId;
  *  \return None
  *
  *  \note   The regionId is the shadow region(0 or 1) used and the,
- *          Event Queue used is either (0 or 1). There are only four shadow 
+ *          Event Queue used is either (0 or 1). There are only four shadow
  *          regions and only two event Queues
  */
 void EDMA3Init(unsigned int baseAdd,
@@ -79,7 +79,7 @@ void EDMA3Init(unsigned int baseAdd,
 {
     unsigned int count = 0;
     unsigned int i = 0;
-    
+
 #ifdef _TMS320C6X
     /* For DSP, regionId is assigned here and used globally in the driver */
     regionId = (unsigned int)1u;
@@ -97,15 +97,15 @@ void EDMA3Init(unsigned int baseAdd,
     /* Clear CCERR register                                                 */
     HWREG(baseAdd + EDMA3CC_CCERRCLR) = EDMA3_SET_ALL_BITS;
 
-    /* FOR TYPE EDMA*/ 
+    /* FOR TYPE EDMA*/
     /* Enable the DMA (0 - 64) channels in the DRAE and DRAEH register */
-       
+
     HWREG(baseAdd + EDMA3CC_DRAE(regionId)) = EDMA3_SET_ALL_BITS;
     HWREG(baseAdd + EDMA3CC_DRAEH(regionId)) = EDMA3_SET_ALL_BITS;
 
 
     if((EDMA_REVID_AM335X == EDMAVersionGet()))
-    {           
+    {
          for(i = 0; i < 64; i++)
          {
               /* All events are one to one mapped with the channels */
@@ -116,9 +116,9 @@ void EDMA3Init(unsigned int baseAdd,
     /* Initialize the DMA Queue Number Registers                            */
     for (count = 0;count < SOC_EDMA3_NUM_DMACH; count++)
     {
-         HWREG(baseAdd + EDMA3CC_DMAQNUM(count >> 3u)) &= 
+         HWREG(baseAdd + EDMA3CC_DMAQNUM(count >> 3u)) &=
                                                     EDMA3CC_DMAQNUM_CLR(count);
-         HWREG(baseAdd + EDMA3CC_DMAQNUM(count >> 3u)) |= 
+         HWREG(baseAdd + EDMA3CC_DMAQNUM(count >> 3u)) |=
                                                     EDMA3CC_DMAQNUM_SET(count,queNum);
     }
 
@@ -130,7 +130,7 @@ void EDMA3Init(unsigned int baseAdd,
     for (count = 0;count < SOC_EDMA3_NUM_QDMACH; count++)
     {
         HWREG(baseAdd + EDMA3CC_QDMAQNUM) &= EDMA3CC_QDMAQNUM_CLR(count);
-        HWREG(baseAdd + EDMA3CC_QDMAQNUM) |= 
+        HWREG(baseAdd + EDMA3CC_QDMAQNUM) |=
                        EDMA3CC_QDMAQNUM_SET(count,queNum);
     }
 }
@@ -150,7 +150,7 @@ unsigned int EDMA3PeripheralIdGet(unsigned int baseAdd)
 /**
  * \brief  Enable channel to Shadow region mapping
  *
- * This API allocates DMA/QDMA channels or TCCs, and the same resources are 
+ * This API allocates DMA/QDMA channels or TCCs, and the same resources are
  * enabled in the shadow region specific register (DRAE/DRAEH/QRAE).
  * Here only one shadow region is used since, there is only one Master.
  *
@@ -168,14 +168,14 @@ unsigned int EDMA3PeripheralIdGet(unsigned int baseAdd)
  *
  *  \return  None
  */
-void EDMA3EnableChInShadowReg(unsigned int baseAdd, 
-                              unsigned int chType, 
+void EDMA3EnableChInShadowReg(unsigned int baseAdd,
+                              unsigned int chType,
                               unsigned int chNum)
 {
     /* Allocate the DMA/QDMA channel */
     if (EDMA3_CHANNEL_TYPE_DMA == chType)
     {
-         /* FOR TYPE EDMA*/ 
+         /* FOR TYPE EDMA*/
          if(chNum < 32)
          {
               /* Enable the DMA channel in the DRAE registers */
@@ -186,7 +186,7 @@ void EDMA3EnableChInShadowReg(unsigned int baseAdd,
               /* Enable the DMA channel in the DRAEH registers */
               HWREG(baseAdd + EDMA3CC_DRAEH(regionId)) |= (0x01u << (chNum - 32));
          }
-        
+
     }
     else if (EDMA3_CHANNEL_TYPE_QDMA== chType)
     {
@@ -199,7 +199,7 @@ void EDMA3EnableChInShadowReg(unsigned int baseAdd,
 /**
  * \brief  Disable channel to Shadow region mapping
  *
- * This API allocates DMA/QDMA channels or TCCs, and the same resources are 
+ * This API allocates DMA/QDMA channels or TCCs, and the same resources are
  * enabled in the shadow region specific register (DRAE/DRAEH/QRAE).
  * Here only one shadow region is used since, there is only one Master.
  *
@@ -217,8 +217,8 @@ void EDMA3EnableChInShadowReg(unsigned int baseAdd,
  *
  *  \return  None
  */
-void EDMA3DisableChInShadowReg(unsigned int baseAdd, 
-                               unsigned int chType, 
+void EDMA3DisableChInShadowReg(unsigned int baseAdd,
+                               unsigned int chType,
                                unsigned int chNum)
 {
     /* Allocate the DMA/QDMA channel */
@@ -226,7 +226,7 @@ void EDMA3DisableChInShadowReg(unsigned int baseAdd,
     {
         /* FOR TYPE EDMA*/
          if(chNum < 32)
-         { 
+         {
               /* Enable the DMA channel in the DRAE registers */
               HWREG(baseAdd + EDMA3CC_DRAE(regionId)) &= ~(0x01u << chNum);
          }
@@ -262,7 +262,7 @@ void EDMA3ChannelToParamMap(unsigned int baseAdd,
                             unsigned int paramSet)
 {
     HWREG(baseAdd + EDMA3CC_DCHMAP(channel)) = paramSet << 5;
-} 
+}
 
 /**
  *  \brief  Map channel to Event Queue
@@ -287,24 +287,24 @@ void EDMA3ChannelToParamMap(unsigned int baseAdd,
  *
  *  \return  None
  */
-void EDMA3MapChToEvtQ(unsigned int baseAdd, 
-                      unsigned int chType, 
-                      unsigned int chNum, 
+void EDMA3MapChToEvtQ(unsigned int baseAdd,
+                      unsigned int chType,
+                      unsigned int chNum,
                       unsigned int evtQNum)
 {
     if (EDMA3_CHANNEL_TYPE_DMA == chType)
     {
         /* Associate DMA Channel to Event Queue                             */
-        HWREG(baseAdd + EDMA3CC_DMAQNUM((chNum) >> 3u)) &= 
+        HWREG(baseAdd + EDMA3CC_DMAQNUM((chNum) >> 3u)) &=
                              EDMA3CC_DMAQNUM_CLR(chNum);
 
-        HWREG(baseAdd + EDMA3CC_DMAQNUM((chNum) >> 3u)) |= 
+        HWREG(baseAdd + EDMA3CC_DMAQNUM((chNum) >> 3u)) |=
                       EDMA3CC_DMAQNUM_SET((chNum), evtQNum);
     }
     else if (EDMA3_CHANNEL_TYPE_QDMA == chType)
     {
         /* Associate QDMA Channel to Event Queue                            */
-        HWREG(baseAdd + EDMA3CC_QDMAQNUM) |= 
+        HWREG(baseAdd + EDMA3CC_QDMAQNUM) |=
                        EDMA3CC_QDMAQNUM_SET(chNum, evtQNum);
     }
 }
@@ -328,20 +328,20 @@ void EDMA3MapChToEvtQ(unsigned int baseAdd,
  *
  *  \return  None
  */
-void EDMA3UnmapChToEvtQ(unsigned int baseAdd, 
-                        unsigned int chType, 
+void EDMA3UnmapChToEvtQ(unsigned int baseAdd,
+                        unsigned int chType,
                         unsigned int chNum)
 {
     if (EDMA3_CHANNEL_TYPE_DMA == chType)
     {
         /* Unmap DMA Channel to Event Queue                                */
-        HWREG(baseAdd + EDMA3CC_DMAQNUM((chNum) >> 3u)) |= 
+        HWREG(baseAdd + EDMA3CC_DMAQNUM((chNum) >> 3u)) |=
                           EDMA3CC_DMAQNUM_CLR(chNum);
     }
     else if (EDMA3_CHANNEL_TYPE_QDMA == chType)
     {
         /* Unmap QDMA Channel to Event Queue                               */
-        HWREG(baseAdd + EDMA3CC_QDMAQNUM) |= 
+        HWREG(baseAdd + EDMA3CC_QDMAQNUM) |=
                              EDMA3CC_QDMAQNUM_CLR(chNum);
     }
 }
@@ -349,7 +349,7 @@ void EDMA3UnmapChToEvtQ(unsigned int baseAdd,
 /**
  *  \brief  Enables the user to map a QDMA channel to PaRAM set
  *          This API Needs to be called before programming the paRAM sets for
- *          the QDMA Channels.Application needs to maitain the paRAMId 
+ *          the QDMA Channels.Application needs to maitain the paRAMId
  *          provided by this API.This paRAMId is used to set paRAM and get
  *          paRAM. Refer corresponding API's for more details.
  *
@@ -362,10 +362,10 @@ void EDMA3UnmapChToEvtQ(unsigned int baseAdd,
  *
  *  \return None
  *
- *  Note : The PaRAMId requested must be greater than 32(SOC_EDMA3_NUM_DMACH). 
- *         and lesser than SOC_EDMA3_NUM_DMACH + chNum  Because, the first 
+ *  Note : The PaRAMId requested must be greater than 32(SOC_EDMA3_NUM_DMACH).
+ *         and lesser than SOC_EDMA3_NUM_DMACH + chNum  Because, the first
  *         32 PaRAM's are directly mapped to first 32 DMA channels and (32 - 38)
- *         for QDMA Channels. (32 - 38) is assigned by driver in this API. 
+ *         for QDMA Channels. (32 - 38) is assigned by driver in this API.
  *
  */
 void EDMA3MapQdmaChToPaRAM(unsigned int baseAdd,
@@ -374,7 +374,7 @@ void EDMA3MapQdmaChToPaRAM(unsigned int baseAdd,
 {
     /* First 32 channels are for DMA only                                   */
     /* if (((*paRAMId) > SOC_EDMA3_NUM_DMACH) &&
-            ((*paRAMId) < SOC_EDMA3_NUM_DMACH+SOC_EDMA3_NUM_QDMACH))  */ 
+            ((*paRAMId) < SOC_EDMA3_NUM_DMACH+SOC_EDMA3_NUM_QDMACH))  */
     if ((SOC_EDMA3_NUM_DMACH + chNum) == (*paRAMId))
     {
         /* Map Parameter RAM Set Number for specified channelId             */
@@ -422,10 +422,10 @@ void EDMA3SetQdmaTrigWord(unsigned int baseAdd,
  *  \param   baseAdd                Memory address of the EDMA instance used.\n
  *
  *  \param   chNum                  Allocated channel number.\n
- * 
+ *
  *  \return  None
  */
-void EDMA3ClrMissEvt(unsigned int baseAdd, 
+void EDMA3ClrMissEvt(unsigned int baseAdd,
                      unsigned int chNum)
 {
     if(chNum < 32)
@@ -436,7 +436,7 @@ void EDMA3ClrMissEvt(unsigned int baseAdd,
          HWREG(baseAdd + EDMA3CC_EMCR) |= (0x01u <<  chNum);
     }
     else
-    { 
+    {
          HWREG(baseAdd + EDMA3CC_S_SECRH(regionId)) = (0x01u << (chNum - 32));
          /*clear EMCRH to clean any previous NULL request                         */
          HWREG(baseAdd + EDMA3CC_EMCRH) |= (0x01u <<  (chNum - 32));
@@ -450,15 +450,15 @@ void EDMA3ClrMissEvt(unsigned int baseAdd,
  *  \param   baseAdd                Memory address of the EDMA instance used.\n
  *
  *  \param   chNum                  Allocated channel number.\n
- * 
+ *
  *  \return  None
  */
-void EDMA3QdmaClrMissEvt(unsigned int baseAdd, 
+void EDMA3QdmaClrMissEvt(unsigned int baseAdd,
                          unsigned int chNum)
 {
     /*clear SECR to clean any previous NULL request                         */
     HWREG(baseAdd + EDMA3CC_S_QSECR(regionId)) = (0x01u << chNum);
-    
+
     /*clear EMCR to clean any previous NULL request                         */
     HWREG(baseAdd + EDMA3CC_QEMCR) |= (0x01u <<  chNum);
 }
@@ -472,14 +472,14 @@ void EDMA3QdmaClrMissEvt(unsigned int baseAdd,
  *
  *  Flags can have values:
  *
- *  EDMA3CC_CLR_TCCERR            Clears the TCCERR bit in the EDMA3CC 
+ *  EDMA3CC_CLR_TCCERR            Clears the TCCERR bit in the EDMA3CC
  *                                ERR Reg\n
  *  EDMA3CC_CLR_QTHRQ0            Queue threshold error clear for queue 0.\n
  *  EDMA3CC_CLR_QTHRQ1            Queue threshold error clear for queue 1.
  *
  *  \return  None
  */
-void EDMA3ClrCCErr(unsigned int baseAdd, 
+void EDMA3ClrCCErr(unsigned int baseAdd,
                    unsigned int Flags)
 {
     /* (CCERRCLR) - clear channel controller error register                 */
@@ -487,7 +487,7 @@ void EDMA3ClrCCErr(unsigned int baseAdd,
 }
 
 /**
- *  \brief   Enables the user to Set an event. This API helps user to manually 
+ *  \brief   Enables the user to Set an event. This API helps user to manually
  *           set events to initiate DMA transfer requests.
  *
  *  \param   baseAdd                Memory address of the EDMA instance used.\n
@@ -498,11 +498,11 @@ void EDMA3ClrCCErr(unsigned int baseAdd,
  *
  *  Note :   This API is generally used during Manual transfers.\n
  */
-void EDMA3SetEvt(unsigned int baseAdd, 
+void EDMA3SetEvt(unsigned int baseAdd,
                  unsigned int chNum)
 {
     if(chNum < 32)
-    { 
+    {
          /* (ESR) - set corresponding bit to set a event                         */
          HWREG(baseAdd + EDMA3CC_S_ESR(regionId)) |= (0x01u <<  chNum);
     }
@@ -524,8 +524,8 @@ void EDMA3SetEvt(unsigned int baseAdd,
  *
  *  Note :   This API is generally used during Manual transfers.\n
  */
-void EDMA3ClrEvt(unsigned int baseAdd, 
-                 unsigned int chNum) 
+void EDMA3ClrEvt(unsigned int baseAdd,
+                 unsigned int chNum)
 {
     if(chNum < 32)
     {
@@ -548,19 +548,19 @@ void EDMA3ClrEvt(unsigned int baseAdd,
  *
  *  \return  None
  *
- *  Note :   Writes of 1 to the bits in EESR sets the corresponding event 
+ *  Note :   Writes of 1 to the bits in EESR sets the corresponding event
  *           bits in EER. This is generally used for Event Based transfers.\n
  */
-void EDMA3EnableDmaEvt(unsigned int baseAdd, 
+void EDMA3EnableDmaEvt(unsigned int baseAdd,
                        unsigned int chNum)
 {
     if(chNum < 32)
-    { 
+    {
          /* (EESR) - set corresponding bit to enable DMA event                   */
          HWREG(baseAdd + EDMA3CC_S_EESR(regionId)) |= (0x01u <<  chNum);
     }
     else
-    { 
+    {
          /* (EESRH) - set corresponding bit to enable DMA event                   */
          HWREG(baseAdd + EDMA3CC_S_EESRH(regionId)) |= (0x01u << (chNum - 32));
     }
@@ -575,11 +575,11 @@ void EDMA3EnableDmaEvt(unsigned int baseAdd,
  *
  *  \return  None
  *
- *  Note :   Writes of 1 to the bits in EECR clear the corresponding event bits 
- *           in EER; writes of 0 have no effect.. This is generally used for 
+ *  Note :   Writes of 1 to the bits in EECR clear the corresponding event bits
+ *           in EER; writes of 0 have no effect.. This is generally used for
  *           Event Based transfers.\n
  */
-void EDMA3DisableDmaEvt(unsigned int baseAdd, 
+void EDMA3DisableDmaEvt(unsigned int baseAdd,
                         unsigned int chNum)
 {
     if(chNum < 32)
@@ -603,10 +603,10 @@ void EDMA3DisableDmaEvt(unsigned int baseAdd,
  *
  *  \return  None
  *
- *  Note :   Writes of 1 to the bits in QEESR sets the corresponding event 
+ *  Note :   Writes of 1 to the bits in QEESR sets the corresponding event
               bits in QEER.\n
  */
-void EDMA3EnableQdmaEvt(unsigned int baseAdd, 
+void EDMA3EnableQdmaEvt(unsigned int baseAdd,
                         unsigned int chNum)
 {
     /* (QEESR) - set corresponding bit to enable QDMA event                 */
@@ -622,10 +622,10 @@ void EDMA3EnableQdmaEvt(unsigned int baseAdd,
  *
  *  \return  None
  *
- *  Note :   Writes of 1 to the bits in QEECR clears the corresponding event 
+ *  Note :   Writes of 1 to the bits in QEECR clears the corresponding event
               bits in QEER.\n
  */
-void EDMA3DisableQdmaEvt(unsigned int baseAdd, 
+void EDMA3DisableQdmaEvt(unsigned int baseAdd,
                          unsigned int chNum)
 {
     /* (QEESR) - set corresponding bit to enable QDMA event                 */
@@ -737,7 +737,7 @@ unsigned int EDMA3QdmaGetErrIntrStatus(unsigned int baseAdd)
 }
 
 /**
- *  \brief   Enables the user to enable the transfer completion interrupt 
+ *  \brief   Enables the user to enable the transfer completion interrupt
  *           generation by the EDMA3CC for all DMA/QDMA channels.
  *
  *  \param   baseAdd                Memory address of the EDMA instance used.\n
@@ -746,11 +746,11 @@ unsigned int EDMA3QdmaGetErrIntrStatus(unsigned int baseAdd)
  *
  *  \return  None
  *
- *  Note :   To set any interrupt bit in IER, a 1 must be written to the 
+ *  Note :   To set any interrupt bit in IER, a 1 must be written to the
  *           corresponding interrupt bit in the interrupt enable set register.
  */
-void EDMA3EnableEvtIntr(unsigned int baseAdd, 
-                        unsigned int chNum) 
+void EDMA3EnableEvtIntr(unsigned int baseAdd,
+                        unsigned int chNum)
 {
     if(chNum < 32)
     {
@@ -773,11 +773,11 @@ void EDMA3EnableEvtIntr(unsigned int baseAdd,
  *
  *  \return  None
  *
- *  Note :   Writes of 1 to the bits in IECR clear the corresponding interrupt 
- *           bits in the interrupt enable registers (IER); writes of 0 have 
+ *  Note :   Writes of 1 to the bits in IECR clear the corresponding interrupt
+ *           bits in the interrupt enable registers (IER); writes of 0 have
  *           no effect.\n
  */
-void EDMA3DisableEvtIntr(unsigned int baseAdd, 
+void EDMA3DisableEvtIntr(unsigned int baseAdd,
                          unsigned int chNum)
 {
     if(chNum < 32)
@@ -818,18 +818,18 @@ void EDMA3ClrIntr(unsigned int baseAdd, unsigned int value)
 /**
  *  \brief   Retrieve existing PaRAM set associated with specified logical
  *           channel (DMA/Link).
- *  
+ *
  *  \param   baseAdd                Memory address of the EDMA instance used.\n
- *  
+ *
  *  \param   chNum                  Logical Channel whose PaRAM set is
  *                                  requested.\n
- *  
+ *
  *  \param   currPaRAM              User gets the existing PaRAM here.\n
- *  
+ *
  *  \return  None
  */
-void EDMA3GetPaRAM(unsigned int baseAdd, 
-                   unsigned int PaRAMId, 
+void EDMA3GetPaRAM(unsigned int baseAdd,
+                   unsigned int PaRAMId,
                    EDMA3CCPaRAMEntry* currPaRAM)
 {
     unsigned int i = 0;
@@ -847,19 +847,19 @@ void EDMA3GetPaRAM(unsigned int baseAdd,
 /**
  * \brief   Retrieve existing PaRAM set associated with specified logical
  *          channel (QDMA).
- * 
+ *
  * \param   baseAdd                Memory address of the EDMA instance used.\n
- * 
+ *
  * \param   chNum                  Logical Channel whose PaRAM set is
  *                                 requested.\n
- * 
+ *
  * \param   currPaRAM              User gets the existing PaRAM here.\n
- * 
+ *
  * \return  None
  */
-void EDMA3QdmaGetPaRAM(unsigned int baseAdd, 
+void EDMA3QdmaGetPaRAM(unsigned int baseAdd,
                        unsigned int chNum,
-                       unsigned int paRAMId, 
+                       unsigned int paRAMId,
                        EDMA3CCPaRAMEntry* currPaRAM)
 {
     unsigned int i = 0;
@@ -877,7 +877,7 @@ void EDMA3QdmaGetPaRAM(unsigned int baseAdd,
 }
 
 /**
- * \brief   Copy the user specified PaRAM Set onto the PaRAM Set associated 
+ * \brief   Copy the user specified PaRAM Set onto the PaRAM Set associated
  *          with the logical channel (DMA/Link).
  *
  * This API takes a PaRAM Set as input and copies it onto the actual PaRAM Set
@@ -895,7 +895,7 @@ void EDMA3QdmaGetPaRAM(unsigned int baseAdd,
  *
  * \return  None
  */
-void EDMA3SetPaRAM(unsigned int baseAdd, 
+void EDMA3SetPaRAM(unsigned int baseAdd,
                    unsigned int chNum,
                    EDMA3CCPaRAMEntry* newPaRAM)
 {
@@ -903,7 +903,7 @@ void EDMA3SetPaRAM(unsigned int baseAdd,
     unsigned int i = 0;
     unsigned int *sr = (unsigned int *)newPaRAM;
     volatile unsigned int *ds;
- 
+
     ds = (unsigned int *)(baseAdd + EDMA3CC_OPT(PaRAMId));
 
     for(i=0; i < EDMA3CC_PARAM_ENTRY_FIELDS; i++)
@@ -915,7 +915,7 @@ void EDMA3SetPaRAM(unsigned int baseAdd,
 }
 
 /**
- * \brief   Copy the user specified PaRAM Set onto the PaRAM Set associated 
+ * \brief   Copy the user specified PaRAM Set onto the PaRAM Set associated
  *          with the logical channel (QDMA only).
  *
  * This API takes a PaRAM Set as input and copies it onto the actual PaRAM Set
@@ -929,14 +929,14 @@ void EDMA3SetPaRAM(unsigned int baseAdd,
  *                                 requested.\n
  *
  * \param  paRaMID                 PaRAM Id to which the QDMA channel is
- *                        mapped to. 
+ *                        mapped to.
  *
  * \param   newPaRAM               Parameter RAM set to be copied onto existing
  *                                 PaRAM.\n
  *
  * \return  None
  */
-void EDMA3QdmaSetPaRAM(unsigned int baseAdd, 
+void EDMA3QdmaSetPaRAM(unsigned int baseAdd,
                        unsigned int chNum,
                        unsigned int paRAMId,
                        EDMA3CCPaRAMEntry* newPaRAM)
@@ -944,7 +944,7 @@ void EDMA3QdmaSetPaRAM(unsigned int baseAdd,
     unsigned int i = 0;
     unsigned int *sr = (unsigned int *)newPaRAM;
     unsigned int *ds;
- 
+
     ds = (unsigned int *)(baseAdd + EDMA3CC_OPT(paRAMId));
 
     for(i=0;i<EDMA3CC_PARAM_ENTRY_FIELDS;i++)
@@ -966,7 +966,7 @@ void EDMA3QdmaSetPaRAM(unsigned int baseAdd,
  * \param   paRAMEntry        Specify the PaRAM set entry which needs
  *                            to be set.
  *
- * \param   newPaRAMEntryVal  The new field setting. Make sure this field is 
+ * \param   newPaRAMEntryVal  The new field setting. Make sure this field is
  *                            packed for setting certain fields in paRAM.
  *
  *  paRAMEntry can have values:
@@ -979,7 +979,7 @@ void EDMA3QdmaSetPaRAM(unsigned int baseAdd,
  *  EDMA3CC_PARAM_ENTRY_LINK_BCNTRLD
  *  EDMA3CC_PARAM_ENTRY_SRC_DST_CIDX
  *  EDMA3CC_PARAM_ENTRY_CCNT
- * 
+ *
  * \return  None
  *
  * \note    This API should be used while setting the PaRAM set entry
@@ -992,10 +992,10 @@ void EDMA3QdmaSetPaRAMEntry(unsigned int baseAdd,
                             unsigned int paRAMEntry,
                             unsigned int newPaRAMEntryVal)
 {
-    if((paRAMEntry > EDMA3CC_PARAM_ENTRY_OPT) || 
+    if((paRAMEntry > EDMA3CC_PARAM_ENTRY_OPT) ||
             (paRAMEntry < EDMA3CC_PARAM_ENTRY_CCNT))
     {
-        HWREG(baseAdd + EDMA3CC_OPT(paRAMId) + 
+        HWREG(baseAdd + EDMA3CC_OPT(paRAMId) +
                     (unsigned int)(paRAMEntry * 0x04)) = newPaRAMEntryVal;
     }
 }
@@ -1022,12 +1022,12 @@ void EDMA3QdmaSetPaRAMEntry(unsigned int baseAdd,
  *  EDMA3CC_PARAM_ENTRY_SRC_DST_CIDX
  *  EDMA3CC_PARAM_ENTRY_CCNT
  *
- * \return  paRAMEntryVal     The value of the paRAM field pointed by the  
+ * \return  paRAMEntryVal     The value of the paRAM field pointed by the
  *                            paRAMEntry.
  *
  * \note    This API should be used while reading the PaRAM set entry
  *          for QDMA channels. And the paRAMEntryVal is a packed value for
- *          certain fields of paRAMEntry.The user has to make sure the value 
+ *          certain fields of paRAMEntry.The user has to make sure the value
  *          is unpacked appropriately.
  *          For example, the third field is A_B_CNT. Hence he will have to
  *          unpack it to two 16 bit fields to get ACNT and BCNT.
@@ -1055,17 +1055,17 @@ unsigned int EDMA3QdmaGetPaRAMEntry(unsigned int baseAdd,
  *  This API is used to allocate a logical channel (DMA/QDMA/Link) along with
  *  the associated resources. For DMA and QDMA channels, TCC and PaRAM Set are
  *  also allocated along with the requested channel.
- *  
+ *
  *  User can request a specific logical channel by passing the channel number
  *  in 'chNum'.
- *  
+ *
  *  For DMA/QDMA channels, after allocating all the EDMA3 resources, this API
  *  sets the TCC field of the OPT PaRAM Word with the allocated TCC. It also sets
  *  the event queue for the channel allocated. The event queue needs to be
  *  specified by the user.
- *  
+ *
  *  For DMA channel, it also sets the DCHMAP register.
- *  
+ *
  *  For QDMA channel, it sets the QCHMAP register and CCNT as trigger word and
  *  enables the QDMA channel by writing to the QEESR register.
  *
@@ -1089,10 +1089,10 @@ unsigned int EDMA3QdmaGetPaRAMEntry(unsigned int baseAdd,
  *
  *  \return  TRUE if parameters are valid, else FALSE
  */
-unsigned int EDMA3RequestChannel(unsigned int baseAdd, 
-                                 unsigned int chType, 
-                                 unsigned int chNum, 
-                                 unsigned int tccNum, 
+unsigned int EDMA3RequestChannel(unsigned int baseAdd,
+                                 unsigned int chType,
+                                 unsigned int chNum,
+                                 unsigned int tccNum,
                                  unsigned int evtQNum)
 {
     unsigned int retVal = FALSE;
@@ -1124,7 +1124,7 @@ unsigned int EDMA3RequestChannel(unsigned int baseAdd,
                 /* Enable the Event Interrupt                             */
                 EDMA3EnableEvtIntr(baseAdd, chNum);
                 retVal = TRUE;
-            } 
+            }
             HWREG(baseAdd + EDMA3CC_OPT(chNum)) &= EDMA3CC_OPT_TCC_CLR;
             HWREG(baseAdd + EDMA3CC_OPT(chNum)) |= EDMA3CC_OPT_TCC_SET(chNum);
         }
@@ -1135,9 +1135,9 @@ unsigned int EDMA3RequestChannel(unsigned int baseAdd,
 /**
  *  \brief    Free the specified channel (DMA/QDMA/Link) and its associated
  *            resources (PaRAM Set, TCC etc) and removes various mappings.
- *  
+ *
  *  For Link channels, this API only frees the associated PaRAM Set.
- *  
+ *
  *  For DMA/QDMA channels, it does the following operations:
  *  1) Disable any ongoing transfer on the channel,\n
  *  2) Remove the channel to Event Queue mapping,\n
@@ -1172,7 +1172,7 @@ unsigned int EDMA3RequestChannel(unsigned int baseAdd,
  *
  *  \return  TRUE if parameters are valid else return FALSE
  */
-unsigned int EDMA3FreeChannel(unsigned int baseAdd, unsigned int chType, 
+unsigned int EDMA3FreeChannel(unsigned int baseAdd, unsigned int chType,
                               unsigned int chNum, unsigned int trigMode,
                               unsigned int tccNum, unsigned int evtQNum)
 {
@@ -1180,7 +1180,7 @@ unsigned int EDMA3FreeChannel(unsigned int baseAdd, unsigned int chType,
     if (chNum < SOC_EDMA3_NUM_DMACH)
     {
         EDMA3DisableTransfer(baseAdd, chNum, trigMode);
-        /* Disable the DMA channel in the shadow region specific register 
+        /* Disable the DMA channel in the shadow region specific register
          */
         EDMA3DisableChInShadowReg(baseAdd, chType, chNum);
 
@@ -1215,15 +1215,15 @@ unsigned int EDMA3FreeChannel(unsigned int baseAdd, unsigned int chType,
  *  There are multiple ways to trigger an EDMA3 transfer. The triggering mode
  *  option allows choosing from the available triggering modes: Event,
  *  Manual or QDMA.
- *  
+ *
  *  In event triggered, a peripheral or an externally generated event triggers
  *  the transfer. This API clears the Event and Event Miss Register and then
  *  enables the DMA channel by writing to the EESR.
- *  
+ *
  *  In manual triggered mode, CPU manually triggers a transfer by writing a 1
- *  in the Event Set Register ESR. This API writes to the ESR to start the 
+ *  in the Event Set Register ESR. This API writes to the ESR to start the
  *  transfer.
- *  
+ *
  *  In QDMA triggered mode, a QDMA transfer is triggered when a CPU (or other
  *  EDMA3 programmer) writes to the trigger word of the QDMA channel PaRAM set
  *  (auto-triggered) or when the EDMA3CC performs a link update on a PaRAM set
@@ -1245,8 +1245,8 @@ unsigned int EDMA3FreeChannel(unsigned int baseAdd, unsigned int chType,
  *  \return  retVal         TRUE or FALSE depending on the param passed.\n
  *
  */
-unsigned int EDMA3EnableTransfer(unsigned int baseAdd, 
-                                 unsigned int chNum, 
+unsigned int EDMA3EnableTransfer(unsigned int baseAdd,
+                                 unsigned int chNum,
                                  unsigned int trigMode)
 {
     unsigned int retVal = FALSE;
@@ -1259,7 +1259,7 @@ unsigned int EDMA3EnableTransfer(unsigned int baseAdd,
                 retVal = TRUE;
             }
            break;
-    
+
         case EDMA3_TRIG_MODE_QDMA :
             if (chNum < SOC_EDMA3_NUM_QDMACH)
             {
@@ -1267,7 +1267,7 @@ unsigned int EDMA3EnableTransfer(unsigned int baseAdd,
                 retVal = TRUE;
             }
         break;
-    
+
         case EDMA3_TRIG_MODE_EVENT :
             if (chNum < SOC_EDMA3_NUM_DMACH)
             {
@@ -1279,7 +1279,7 @@ unsigned int EDMA3EnableTransfer(unsigned int baseAdd,
                 retVal = TRUE;
             }
         break;
-    
+
         default :
             retVal = FALSE;
         break;
@@ -1289,18 +1289,18 @@ unsigned int EDMA3EnableTransfer(unsigned int baseAdd,
 
 /**
  *  \brief   Disable DMA transfer on the specified channel
- *  
+ *
  *  There are multiple ways by which an EDMA3 transfer could be triggered.
  *  The triggering mode option allows choosing from the available triggering
  *  modes.
- *  
+ *
  *  To disable a channel which was previously triggered in manual mode,
  *  this API clears the Secondary Event Register and Event Miss Register,
  *  if set, for the specific DMA channel.
- *  
+ *
  *  To disable a channel which was previously triggered in QDMA mode, this
  *  API clears the QDMA Event Enable Register, for the specific QDMA channel.
- *  
+ *
  *  To disable a channel which was previously triggered in event mode, this API
  *  clears the Event Enable Register, Event Register, Secondary Event Register
  *  and Event Miss Register, if set, for the specific DMA channel.
@@ -1321,8 +1321,8 @@ unsigned int EDMA3EnableTransfer(unsigned int baseAdd,
  *  \return  retVal         TRUE or FALSE depending on the param passed.\n
  *
  */
-unsigned int EDMA3DisableTransfer(unsigned int baseAdd, 
-                                  unsigned int chNum, 
+unsigned int EDMA3DisableTransfer(unsigned int baseAdd,
+                                  unsigned int chNum,
                                   unsigned int trigMode)
 {
     unsigned int retVal = FALSE;
@@ -1335,7 +1335,7 @@ unsigned int EDMA3DisableTransfer(unsigned int baseAdd,
                 retVal = TRUE;
             }
         break;
-    
+
         case EDMA3_TRIG_MODE_QDMA :
             if (chNum < SOC_EDMA3_NUM_QDMACH)
             {
@@ -1343,7 +1343,7 @@ unsigned int EDMA3DisableTransfer(unsigned int baseAdd,
                 retVal = TRUE;
             }
         break;
-    
+
         case EDMA3_TRIG_MODE_EVENT :
             if (chNum < SOC_EDMA3_NUM_DMACH)
             {
@@ -1355,7 +1355,7 @@ unsigned int EDMA3DisableTransfer(unsigned int baseAdd,
                 retVal = TRUE;
             }
         break;
-    
+
         default :
             retVal = FALSE;
         break;
@@ -1382,8 +1382,8 @@ unsigned int EDMA3DisableTransfer(unsigned int baseAdd,
  *
  *  \return none.\n
  */
-void EDMA3ClearErrorBits(unsigned int baseAdd, 
-             unsigned int chNum, 
+void EDMA3ClearErrorBits(unsigned int baseAdd,
+             unsigned int chNum,
              unsigned int evtQNum)
 {
     if(chNum < SOC_EDMA3_NUM_DMACH)
@@ -1410,39 +1410,39 @@ void EDMA3ClearErrorBits(unsigned int baseAdd,
     /* Clear the global CC Error Register */
     if (0 == evtQNum)
     {
-         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD0 | 
+         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD0 |
                                 EDMA3CC_CCERRCLR_TCCERR);
     }
     else if(1 == evtQNum)
     {
-         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD1 | 
+         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD1 |
                                 EDMA3CC_CCERRCLR_TCCERR);
     }
     else if(2 == evtQNum)
     {
-         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD2 | 
+         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD2 |
                                 EDMA3CC_CCERRCLR_TCCERR);
     }
     else if(3 == evtQNum)
     {
-         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD2 | 
+         HWREG(baseAdd + EDMA3CC_CCERRCLR) &= (EDMA3CC_CCERRCLR_QTHRXCD2 |
                                 EDMA3CC_CCERRCLR_TCCERR);
     }
 }
 
 /**
  *  \brief   EDMA3 Deinitialization
- *  
+ *
  *  This function deinitializes the EDMA3 Driver
  *  Clears the error specific registers (EMCR/EMCRh, QEMCR, CCERRCLR) &
  *  deinitialize the Queue Number Registers
- *  
+ *
  *  \param  baseAdd         Memory address of the EDMA instance used.\n
- *  
- *  \param  queNum          Event Queue used 
- *  
+ *
+ *  \param  queNum          Event Queue used
+ *
  *  \return  None
- *  
+ *
  *  \note     The regionId is the shadow region(0 or 1) used and the,
  *            Event Queue used is either (0 or 1). There are only two shadow regions
  *            and only two event Queues
@@ -1455,9 +1455,9 @@ void EDMA3Deinit(unsigned int baseAdd,
     /* Disable the DMA (0 - 62) channels in the DRAE register */
     HWREG(baseAdd + EDMA3CC_DRAE(regionId)) = EDMA3_CLR_ALL_BITS;
     HWREG(baseAdd + EDMA3CC_DRAEH(regionId)) = EDMA3_CLR_ALL_BITS;
-    
+
     EDMA3ClrCCErr(baseAdd, EDMA3CC_CLR_TCCERR);
-    
+
     /* Clear the Event miss Registers                      */
     HWREG(baseAdd + EDMA3CC_EMCR)  = EDMA3_SET_ALL_BITS;
     HWREG(baseAdd + EDMA3CC_EMCRH) = EDMA3_SET_ALL_BITS;
@@ -1493,38 +1493,38 @@ void EDMA3ContextSave(unsigned int baseAddr, EDMACONTEXT *edmaCntxPtr)
     unsigned int maxPar;
 
     /* Get the Channel mapping reg Val */
-    
+
     for(i = 0; i < 64; i++)
     {
-         /* All events are one to one mapped with the channels */        
+         /* All events are one to one mapped with the channels */
          edmaCntxPtr->dchMap[i] = HWREG(baseAddr + EDMA3CC_DCHMAP(i));
     }
-      
+
     /* Get DMA Queue Number Register Val */
     for(i=0; i < 8; i++)
-    {    
-        edmaCntxPtr->dmaQNum[i] = HWREG(baseAddr + EDMA3CC_DMAQNUM((i)));    
-    }         
+    {
+        edmaCntxPtr->dmaQNum[i] = HWREG(baseAddr + EDMA3CC_DMAQNUM((i)));
+    }
 
     /* Get the DMA Region Access Enable Register val */
-               
-    edmaCntxPtr->regAccEnableLow = HWREG(baseAddr + EDMA3CC_DRAE(0));            
-    edmaCntxPtr->regAccEnableHigh = HWREG(baseAddr + EDMA3CC_DRAEH(0));            
-    
+
+    edmaCntxPtr->regAccEnableLow = HWREG(baseAddr + EDMA3CC_DRAE(0));
+    edmaCntxPtr->regAccEnableHigh = HWREG(baseAddr + EDMA3CC_DRAEH(0));
+
     /* Get Event Set Register value */
-        
-    edmaCntxPtr->eventSetRegLow  = HWREG(baseAddr + EDMA3CC_S_ESR(0));                
-    edmaCntxPtr->eventSetRegHigh = HWREG(baseAddr + EDMA3CC_S_ESRH(0));                    
-                  
+
+    edmaCntxPtr->eventSetRegLow  = HWREG(baseAddr + EDMA3CC_S_ESR(0));
+    edmaCntxPtr->eventSetRegHigh = HWREG(baseAddr + EDMA3CC_S_ESRH(0));
+
     /* Get Event Enable Set Register value */
-      
-    edmaCntxPtr->enableEvtSetRegLow = HWREG(baseAddr + EDMA3CC_S_EER(0));                   
-    edmaCntxPtr->enableEvtSetRegHigh = HWREG(baseAddr + EDMA3CC_S_EERH(0));                       
-          
+
+    edmaCntxPtr->enableEvtSetRegLow = HWREG(baseAddr + EDMA3CC_S_EER(0));
+    edmaCntxPtr->enableEvtSetRegHigh = HWREG(baseAddr + EDMA3CC_S_EERH(0));
+
     /* Get Interrupt Enable Set Register value */
-           
-    edmaCntxPtr->intEnableSetRegLow =  HWREG(baseAddr + EDMA3CC_S_IER(0));                    
-    edmaCntxPtr->intEnableSetRegHigh =  HWREG(baseAddr + EDMA3CC_S_IERH(0));                        
+
+    edmaCntxPtr->intEnableSetRegLow =  HWREG(baseAddr + EDMA3CC_S_IER(0));
+    edmaCntxPtr->intEnableSetRegHigh =  HWREG(baseAddr + EDMA3CC_S_IERH(0));
 
     maxPar = 128;
 
@@ -1535,10 +1535,10 @@ void EDMA3ContextSave(unsigned int baseAddr, EDMACONTEXT *edmaCntxPtr)
 
     for(i = 0; i < maxPar; i++)
     {
-        /* Get the  PaRAM  values */            
-        EDMA3GetPaRAM(baseAddr, i, 
+        /* Get the  PaRAM  values */
+        EDMA3GetPaRAM(baseAddr, i,
                       (struct EDMA3CCPaRAMEntry *)(&(edmaCntxPtr->dmaParEntry[i])));
-    }	                      
+    }
 }
 
 /**
@@ -1555,36 +1555,36 @@ void EDMA3ContextRestore(unsigned int baseAddr, EDMACONTEXT *edmaCntxPtr)
 {
     unsigned int i;
     unsigned int maxPar;
-    
+
     /* set the Channel mapping reg Val */
     for(i = 0; i < 64; i++)
     {
-         /* All events are one to one mapped with the channels */        
+         /* All events are one to one mapped with the channels */
          HWREG(baseAddr + EDMA3CC_DCHMAP(i)) = edmaCntxPtr->dchMap[i] ;
     }
-      
+
     /* set DMA Queue Number Register Val */
     for(i=0; i < 8; i++)
-    {    
-	HWREG(baseAddr + EDMA3CC_DMAQNUM((i))) = edmaCntxPtr->dmaQNum[i];    
-    }         
+    {
+	HWREG(baseAddr + EDMA3CC_DMAQNUM((i))) = edmaCntxPtr->dmaQNum[i];
+    }
 
     /* set the DMA Region Access Enable Register val */
-               
+
     HWREG(baseAddr + EDMA3CC_DRAE(0)) = edmaCntxPtr->regAccEnableLow;
-    HWREG(baseAddr + EDMA3CC_DRAEH(0)) = edmaCntxPtr->regAccEnableHigh;            
-    
+    HWREG(baseAddr + EDMA3CC_DRAEH(0)) = edmaCntxPtr->regAccEnableHigh;
+
     /* set Event Set Register value */
-    HWREG(baseAddr + EDMA3CC_S_ESR(0)) = edmaCntxPtr->eventSetRegLow;                
-    HWREG(baseAddr + EDMA3CC_S_ESRH(0)) = edmaCntxPtr->eventSetRegHigh;                    
-                  
+    HWREG(baseAddr + EDMA3CC_S_ESR(0)) = edmaCntxPtr->eventSetRegLow;
+    HWREG(baseAddr + EDMA3CC_S_ESRH(0)) = edmaCntxPtr->eventSetRegHigh;
+
     /* set Event Enable Set Register value */
-    HWREG(baseAddr + EDMA3CC_S_EESR(0)) = edmaCntxPtr->enableEvtSetRegLow;                   
-    HWREG(baseAddr + EDMA3CC_S_EESRH(0)) = edmaCntxPtr->enableEvtSetRegHigh;                       
-          
+    HWREG(baseAddr + EDMA3CC_S_EESR(0)) = edmaCntxPtr->enableEvtSetRegLow;
+    HWREG(baseAddr + EDMA3CC_S_EESRH(0)) = edmaCntxPtr->enableEvtSetRegHigh;
+
     /* set Interrupt Enable Set Register value */
-    HWREG(baseAddr + EDMA3CC_S_IESR(0)) = edmaCntxPtr->intEnableSetRegLow;                    
-    HWREG(baseAddr + EDMA3CC_S_IESRH(0)) = edmaCntxPtr->intEnableSetRegHigh;                        
+    HWREG(baseAddr + EDMA3CC_S_IESR(0)) = edmaCntxPtr->intEnableSetRegLow;
+    HWREG(baseAddr + EDMA3CC_S_IESRH(0)) = edmaCntxPtr->intEnableSetRegHigh;
 
     maxPar = 128;
 
@@ -1595,10 +1595,10 @@ void EDMA3ContextRestore(unsigned int baseAddr, EDMACONTEXT *edmaCntxPtr)
 
     for(i = 0; i < maxPar; i++)
     {
-        /* Get the  PaRAM  values */            
-        EDMA3SetPaRAM(baseAddr, i, 
+        /* Get the  PaRAM  values */
+        EDMA3SetPaRAM(baseAddr, i,
              (struct EDMA3CCPaRAMEntry *)(&(edmaCntxPtr->dmaParEntry[i])));
-    }	                   
+    }
 }
 
 /********************************* End of file ******************************/

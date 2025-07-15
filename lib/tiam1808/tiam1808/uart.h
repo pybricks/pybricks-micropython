@@ -65,9 +65,9 @@ extern "C" {
 /***********************************************************************/
 /*
 ** The macros below are used to set the reciever trigger levels.
-** One of the macros  below is passed as 'rxLevel' to'UARTFIFOLevelSet', 
+** One of the macros  below is passed as 'rxLevel' to'UARTFIFOLevelSet',
 ** as 'flags' to 'UARTDMAEnable' and to 'UARTDMADisable'.
-*/ 
+*/
 
 /* This is used to select the receiver trigger level as 1 byte.*/
 #define UART_RX_TRIG_LEVEL_1       (UART_FCR_RXFIFTL_CHAR1                  \
@@ -116,8 +116,8 @@ extern "C" {
 /***************************************************************************/
 
 /************************************************************************/
-/* 
-** These macros are used to set the Parity settings. 
+/*
+** These macros are used to set the Parity settings.
 ** They are used in the functions 'UARTConfigSetExpClk', 'UARTConfigGetExpClk',
 ** 'UARTParityModeSet', 'UARTParityModeGet'.
 */
@@ -166,7 +166,7 @@ extern "C" {
 /* This is used to select single/multiple stop bits.*/
 #define UART_STOP_BIT                  UART_LCR_STB
 
-/* This can be used as a mask for word length selection bits.*/ 
+/* This can be used as a mask for word length selection bits.*/
 #define UART_WORDL                     UART_LCR_WLS
 
 /* This is used to select character length as 5 bits per frame.*/
@@ -238,7 +238,7 @@ extern "C" {
 /* This is used to enable/disable Transmitter Empty Interrupt.*/
 #define UART_INT_TX_EMPTY              UART_IER_ETBEI
 
-/* This is used to enable/disable Receiver Data Available and Character Timeout 
+/* This is used to enable/disable Receiver Data Available and Character Timeout
    Interrupt*/
 #define UART_INT_RXDATA_CTI            UART_IER_ERBI
 
@@ -248,33 +248,33 @@ extern "C" {
 /*
 ** These macros are used to identify what events have generated interrupts.
 ** These are used in the function: 'UARTIntStatus'.
-** One of the macro below is returned by 'UARTIntStatus'. Refer to 
+** One of the macro below is returned by 'UARTIntStatus'. Refer to
 ** definition of 'UARTIntStatus' function for more information.
 */
 
 /* This is used to identify whether FIFO mode is enabled or not.*/
 #define UART_FIFOEN_STAT              UART_IIR_FIFOEN
 
-/* This can be used as a mask for the Interrupt Identification(INTID) bits in 
+/* This can be used as a mask for the Interrupt Identification(INTID) bits in
  * the Interrupt Identification Register(IIR).*/
 #define UART_INTID                    UART_IIR_INTID
 
 /* This is used to identify whether Transmitter Empty event has generated an
-**  interrupt. 
+**  interrupt.
 */
-#define UART_INTID_TX_EMPTY           UART_IIR_INTID_THRE                    
+#define UART_INTID_TX_EMPTY           UART_IIR_INTID_THRE
 
-/* This is used to identify whether Receiver Data Available event has generated 
+/* This is used to identify whether Receiver Data Available event has generated
  * an interrupt.*/
-#define UART_INTID_RX_DATA            UART_IIR_INTID_RDA                     
+#define UART_INTID_RX_DATA            UART_IIR_INTID_RDA
 
 /* This is used to identify whether Receiver Line Status event has generated
  * an interrupt.*/
-#define UART_INTID_RX_LINE_STAT       UART_IIR_INTID_RLS                     
+#define UART_INTID_RX_LINE_STAT       UART_IIR_INTID_RLS
 
 /* This is used to identify whether Character Timeout event has generated an
  * interrupt.*/
-#define UART_INTID_CTI                UART_IIR_INTID_CTI		     
+#define UART_INTID_CTI                UART_IIR_INTID_CTI
 
 /* This is used to identify whether the servicing of any interrupt is pending
  * or not. */
@@ -349,7 +349,7 @@ extern "C" {
 */
 
 /* This is used to identify the Over-sampling rate being set.*/
-#define UART_OVER_SAMP_RATE             UART_MDR_OSM_SEL                            
+#define UART_OVER_SAMP_RATE             UART_MDR_OSM_SEL
 
 /* This is used to select Over-sampling rate as 16. */
 #define UART_OVER_SAMP_RATE_16          UART_MDR_OSM_SEL_SHIFT
@@ -365,21 +365,21 @@ extern "C" {
 //**********************************************************************/
 
 void UARTConfigSetExpClk (unsigned int baseAdd, unsigned int uartClk,
-                          unsigned int baudrate, unsigned int config, 
-                          unsigned int overSampRate); 
+                          unsigned int baudrate, unsigned int config,
+                          unsigned int overSampRate);
 void UARTConfigGetExpClk (unsigned int baseAdd, unsigned int uartClk,
                           unsigned int *pBaud, unsigned int *pConfig);
 void UARTFIFOLevelSet (unsigned int baseAdd, unsigned int rxLevel);
 void UARTParityModeSet(unsigned int baseAdd, unsigned int parityMode);
-unsigned int UARTParityModeGet(unsigned int baseAdd);                                     
+unsigned int UARTParityModeGet(unsigned int baseAdd);
 void UARTEnable (unsigned int baseAdd);
 void UARTDisable (unsigned int baseAdd);
 void UARTFIFOEnable(unsigned int baseAdd);
 void UARTFIFODisable(unsigned int baseAdd);
-unsigned int UARTCharsAvail(unsigned int baseAdd);                                           
+unsigned int UARTCharsAvail(unsigned int baseAdd);
 
-unsigned int UARTSpaceAvail(unsigned int baseAdd);                                           
-unsigned int UARTCharPutNonBlocking(unsigned int baseAdd, 
+unsigned int UARTSpaceAvail(unsigned int baseAdd);
+unsigned int UARTCharPutNonBlocking(unsigned int baseAdd,
                                     unsigned char byteWrite);
 
 int UARTCharGetNonBlocking(unsigned int baseAdd);

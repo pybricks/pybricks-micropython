@@ -52,7 +52,7 @@
 
 #define PWMSS_EHRPWM_CLK_EN_ACK_SHIFT    0x08
 
-#define PWMSS_EHRPWM_CLK_STOP_ACK_SHIFT  0x09  
+#define PWMSS_EHRPWM_CLK_STOP_ACK_SHIFT  0x09
 
 #define PWMSS_ECAP_CLK_EN_ACK            0x01
 
@@ -63,4 +63,4 @@
 #define PWMSS_EHRPWM_CLK_STOP_ACK        0x200
 
 
-#endif 
+#endif

@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 /****************************************************************************
-**                       MACRO DEFINITIONS 
+**                       MACRO DEFINITIONS
 ****************************************************************************/
 
 /*
@@ -66,13 +66,13 @@ extern "C" {
 */
 #define MCSPI_MAX_CH                   (4)
 /*
-** Values used for determining the granularity for McSPI clock. 
+** Values used for determining the granularity for McSPI clock.
 */
 #define MCSPI_CLK_GRAN_2_PWR_N         (0)
 #define MCSPI_CLK_GRAN_1               (1)
 
 /*
-** Values of polarity and phase of SPICLK that are used to configure the clock 
+** Values of polarity and phase of SPICLK that are used to configure the clock
 ** value in various modes of operation.
 */
 #define MCSPI_CLK_MODE_0              ((MCSPI_CH0CONF_POL_ACTIVEHIGH << \
@@ -101,12 +101,12 @@ extern "C" {
 #define MCSPI_CS_TCS_0PNT5_CLK             (MCSPI_CH0CONF_TCS0_0P5 << \
                                             MCSPI_CH0CONF_TCS0_SHIFT)
 #define MCSPI_CS_TCS_1PNT5_CLK             (MCSPI_CH0CONF_TCS0_1P5 << \
-                                            MCSPI_CH0CONF_TCS0_SHIFT) 
+                                            MCSPI_CH0CONF_TCS0_SHIFT)
 #define MCSPI_CS_TCS_2PNT5_CLK             (MCSPI_CH0CONF_TCS0_2P5 << \
                                             MCSPI_CH0CONF_TCS0_SHIFT)
 #define MCSPI_CS_TCS_3PNT5_CLK             (MCSPI_CH0CONF_TCS0_3P5 << \
                                             MCSPI_CH0CONF_TCS0_SHIFT)
-    
+
 /*
 ** Value used to set the polarity for start bit for McSPI communication.
 */
@@ -114,11 +114,11 @@ extern "C" {
 #define MCSPI_START_BIT_POL_HIGH           (MCSPI_CH0CONF_SBPOL)
 
 /*
-** Values used to configure communication on data line pins. 
+** Values used to configure communication on data line pins.
 */
 #define MCSPI_DATA_LINE_COMM_MODE_0        ((MCSPI_CH0CONF_IS_LINE0) | \
                                             (MCSPI_CH0CONF_DPE1_ENABLED) | \
-                                            (MCSPI_CH0CONF_DPE0_ENABLED)) 
+                                            (MCSPI_CH0CONF_DPE0_ENABLED))
 #define MCSPI_DATA_LINE_COMM_MODE_1        ((MCSPI_CH0CONF_IS_LINE0)| \
                                             (MCSPI_CH0CONF_DPE1_ENABLED)| \
                                             (MCSPI_CH0CONF_DPE0_DISABLED << \
@@ -126,7 +126,7 @@ extern "C" {
 #define MCSPI_DATA_LINE_COMM_MODE_2        ((MCSPI_CH0CONF_IS_LINE0) | \
                                             (MCSPI_CH0CONF_DPE1_DISABLED << \
                                              MCSPI_CH0CONF_DPE1_SHIFT) | \
-                                            (MCSPI_CH0CONF_DPE0_ENABLED)) 
+                                            (MCSPI_CH0CONF_DPE0_ENABLED))
 #define MCSPI_DATA_LINE_COMM_MODE_3        ((MCSPI_CH0CONF_IS_LINE0) | \
                                             (MCSPI_CH0CONF_DPE1_DISABLED << \
                                              MCSPI_CH0CONF_DPE1_SHIFT) | \
@@ -174,9 +174,9 @@ extern "C" {
 
 /*
 ** Values used to determine transmit/receive modes of McSPI peripheral in
-**  master or slave modes. 
+**  master or slave modes.
 */
-#define MCSPI_TX_RX_MODE                    (MCSPI_CH0CONF_TRM_TXRX) 
+#define MCSPI_TX_RX_MODE                    (MCSPI_CH0CONF_TRM_TXRX)
 #define MCSPI_RX_ONLY_MODE                  (MCSPI_CH0CONF_TRM_RXONLY << \
                                              MCSPI_CH0CONF_TRM_SHIFT)
 #define MCSPI_TX_ONLY_MODE                  (MCSPI_CH0CONF_TRM_TXONLY << \
@@ -185,7 +185,7 @@ extern "C" {
 /*
 ** Values that can be passed to enable/disable/clear status of  the various
 ** interrupts of McSPI peripheral.
-** These macros can also be used to check the status obtained from 
+** These macros can also be used to check the status obtained from
 ** 'McSPIIntStatusGet' API.
 ** 0 <= chan <= 3 \n
 */
@@ -200,7 +200,7 @@ extern "C" {
 */
 #define MCSPI_CH_STAT_RXS_FULL             (MCSPI_CH0STAT_RXS)
 #define MCSPI_CH_STAT_TXS_EMPTY            (MCSPI_CH0STAT_TXS)
-#define MCSPI_CH_STAT_EOT                  (MCSPI_CH0STAT_EOT)    
+#define MCSPI_CH_STAT_EOT                  (MCSPI_CH0STAT_EOT)
 #define MCSPI_CH_TXFFE                     (MCSPI_CH0STAT_TXFFE)
 #define MCSPI_CH_TXFFF                     (MCSPI_CH0STAT_TXFFF)
 #define MCSPI_CH_RXFFE                     (MCSPI_CH0STAT_RXFFE)
@@ -219,7 +219,7 @@ extern "C" {
                                          MCSPI_CH0CONF_SPIENSLV_SHIFT)
 
 /*
-** Values used to configure the SPIDAT[1:0] pins as input or output. 
+** Values used to configure the SPIDAT[1:0] pins as input or output.
 */
 #define MCSPI_DAT0_OUT_DAT1_IN          (MCSPI_SYST_SPIDATDIR0_OUT | \
                                          MCSPI_SYST_SPIDATDIR1)
@@ -233,7 +233,7 @@ extern "C" {
 
 /*
 ** Values used to set the word length for McSPI communication.
-** 'n' can take values only between 4 <= n <= 32. 
+** 'n' can take values only between 4 <= n <= 32.
 */
 #define MCSPI_WORD_LENGTH(n)           ((n - 1) << MCSPI_CH0CONF_WL_SHIFT)
 /*
@@ -243,24 +243,24 @@ extern "C" {
 #define MCSPI_CS_POL_LOW             (MCSPI_CH0CONF_EPOL)
 
 /*
-** Values used to enable/disable the read/write DMA events of McSPI peripheral. 
+** Values used to enable/disable the read/write DMA events of McSPI peripheral.
 */
 #define MCSPI_DMA_RX_EVENT           (MCSPI_CH0CONF_DMAR)
 #define MCSPI_DMA_TX_EVENT           (MCSPI_CH0CONF_DMAW)
 
 /*
-** Value used to enable the turbo mode of operation for McSPI peripheral. 
+** Value used to enable the turbo mode of operation for McSPI peripheral.
 */
 #define MCSPI_SET_STATUS_BIT         (MCSPI_SYST_SSB)
 
 /*
-** Value used to set the value of SPICLK in master mode of McSPI peripheral. 
+** Value used to set the value of SPICLK in master mode of McSPI peripheral.
 */
 #define MCSPI_CLK_HIGH               (MCSPI_SYST_SPICLK)
 #define MCSPI_CLK_LOW                (0x00000000)
 
 /*
-** Values used to set the instance of SPIEN used. 
+** Values used to set the instance of SPIEN used.
 */
 #define MCSPI_SPIEN_0                (MCSPI_SYST_SPIEN_0)
 #define MCSPI_SPIEN_1                (MCSPI_SYST_SPIEN_1)
@@ -268,25 +268,25 @@ extern "C" {
 #define MCSPI_SPIEN_3                (MCSPI_SYST_SPIEN_3)
 
 /*
-** Value used to enable/disable multiple word ocp access. 
+** Value used to enable/disable multiple word ocp access.
 */
 #define MCSPI_MOA_ENABLE            (MCSPI_MODULCTRL_MOA)
 #define MCSPI_MOA_DISABLE           (MCSPI_MODULCTRL_MOA_DISABLED)
 
 /*
-** Value used to enable/disable FDAA operation of McSPI peripheral. 
+** Value used to enable/disable FDAA operation of McSPI peripheral.
 */
 #define MCSPI_FDAA_DISABLE           (MCSPI_MODULCTRL_FDAA_NOSHADOWREG)
 #define MCSPI_FDAA_ENABLE            (MCSPI_MODULCTRL_FDAA)
 
 /*
-** Value used to enable/disable auto-idle mode of operation of McSPI peripheral. 
+** Value used to enable/disable auto-idle mode of operation of McSPI peripheral.
 */
 #define MCSPI_AUTO_IDLE_ENABLE       (MCSPI_SYSCONFIG_AUTOIDLE_ENABLE)
 #define MCSPI_AUTO_IDLE_DISABLE      (MCSPI_SYSCONFIG_AUTOIDLE_DISABLE)
 
 /*
-** Value used to set mode of operation  in smart idle mode of McSPI peripheral. 
+** Value used to set mode of operation  in smart idle mode of McSPI peripheral.
 */
 #define MCSPI_SIDLE_MODE_FORCE       (MCSPI_SYSCONFIG_SIDLEMODE_FORCE)
 #define MCSPI_SIDLE_MODE_NOIDLE      (MCSPI_SYSCONFIG_SIDLEMODE_NOIDLE << \
@@ -295,7 +295,7 @@ extern "C" {
                        			      MCSPI_SYSCONFIG_SIDLEMODE_SHIFT)
 
 /*
-** Value used to set clock activity of McSPI peripheral. 
+** Value used to set clock activity of McSPI peripheral.
 */
 #define MCSPI_CLK_ACTIVITY_NONE      (MCSPI_SYSCONFIG_CLOCKACTIVITY_NONE)
 #define MCSPI_CLK_ACTIVITY_OCP       (MCSPI_SYSCONFIG_CLOCKACTIVITY_OCP << \
@@ -306,27 +306,27 @@ extern "C" {
                       			      MCSPI_SYSCONFIG_CLOCKACTIVITY_SHIFT)
 
 /*
-** Values used to enable/disable the Tx/Rx FIFOs of McSPI peripheral. 
+** Values used to enable/disable the Tx/Rx FIFOs of McSPI peripheral.
 */
 #define MCSPI_RX_FIFO_ENABLE         (MCSPI_CH0CONF_FFER)
 #define MCSPI_RX_FIFO_DISABLE        (MCSPI_CH0CONF_FFER_FFDISABLED)
-#define MCSPI_TX_FIFO_ENABLE         (MCSPI_CH0CONF_FFEW)    
-#define MCSPI_TX_FIFO_DISABLE        (MCSPI_CH0CONF_FFEW_FFDISABLED)    
+#define MCSPI_TX_FIFO_ENABLE         (MCSPI_CH0CONF_FFEW)
+#define MCSPI_TX_FIFO_DISABLE        (MCSPI_CH0CONF_FFEW_FFDISABLED)
 
 /*
-** Values used to drive the data pins of McSPI peripheral high/low. 
+** Values used to drive the data pins of McSPI peripheral high/low.
 */
 #define MCSPI_DATA_PIN_HIGH          (0x00000001)
-#define MCSPI_DATA_PIN_LOW           (0x00000000)        
+#define MCSPI_DATA_PIN_LOW           (0x00000000)
 
 /*
-** Values used to drive the SPIEN pins of McSPI peripheral high/low. 
+** Values used to drive the SPIEN pins of McSPI peripheral high/low.
 */
 #define MCSPI_SPIEN_HIGH             (0x00000001)
 #define MCSPI_SPIEN_LOW              (0x00000000)
 
 
-extern void McSPIClkConfig(unsigned int baseAdd, unsigned int spiInClk, 
+extern void McSPIClkConfig(unsigned int baseAdd, unsigned int spiInClk,
                            unsigned int spiOutClk,
                            unsigned int chNum, unsigned int clkMode);
 extern void McSPIWordLengthSet(unsigned int baseAdd, unsigned int wordLength,
@@ -338,16 +338,16 @@ extern void McSPICSTimeControlSet(unsigned int baseAdd, unsigned int csTimeContr
 extern void McSPICSAssert(unsigned int baseAdd, unsigned int chNum);
 extern void McSPICSDeAssert(unsigned int baseAdd, unsigned int chNum);
 extern void McSPIStartBitEnable(unsigned int baseAdd, unsigned int chNum);
-extern void McSPIStartBitPolarityConfig(unsigned int baseAdd, 
+extern void McSPIStartBitPolarityConfig(unsigned int baseAdd,
                  unsigned int startBitPol, unsigned int chNum);
 extern void McSPICSPolarityConfig(unsigned int baseAdd, unsigned int spiEnPol,
                            unsigned int chNum);
 extern void McSPIStartBitDisable(unsigned int baseAdd,unsigned int chNum);
 extern void McSPIMasterModeEnable(unsigned int baseAdd);
 extern void McSPISlaveModeEnable(unsigned int baseAdd);
-extern unsigned int McSPIMasterModeConfig(unsigned int baseAdd, 
-                                          unsigned int channelMode, 
-                                          unsigned int trMode, 
+extern unsigned int McSPIMasterModeConfig(unsigned int baseAdd,
+                                          unsigned int channelMode,
+                                          unsigned int trMode,
                           unsigned int pinMode,
                                           unsigned int chNum);
 extern unsigned int McSPISlaveModeConfig(unsigned int baseAdd, unsigned int trMode,
@@ -355,15 +355,15 @@ extern unsigned int McSPISlaveModeConfig(unsigned int baseAdd, unsigned int trMo
 extern void McSPIChannelEnable(unsigned int baseAdd, unsigned int chNum);
 extern void McSPIChannelDisable(unsigned int baseAdd, unsigned int chNum);
 extern void McSPIReset(unsigned int baseAdd);
-extern void McSPIDataPinDirectionConfig(unsigned int baseAdd, 
+extern void McSPIDataPinDirectionConfig(unsigned int baseAdd,
                  unsigned int datDirection);
 extern void McSPITurboModeEnable(unsigned int baseAdd, unsigned int chNum);
 extern void McSPITurboModeDisable(unsigned int baseAdd, unsigned int chNum);
-extern void McSPITxFIFOConfig(unsigned int baseAdd, unsigned int txFifo, 
+extern void McSPITxFIFOConfig(unsigned int baseAdd, unsigned int txFifo,
                        unsigned int chNum);
-extern void McSPIRxFIFOConfig(unsigned int baseAdd, unsigned int rxFifo, 
+extern void McSPIRxFIFOConfig(unsigned int baseAdd, unsigned int rxFifo,
                        unsigned int chNum);
-extern void McSPIFIFOTrigLvlSet(unsigned int baseAdd, unsigned char afl, 
+extern void McSPIFIFOTrigLvlSet(unsigned int baseAdd, unsigned char afl,
                          unsigned char ael, unsigned int trMode);
 extern void McSPIWordCountSet(unsigned int baseAdd, unsigned short wCnt);
 extern void McSPIDMAEnable(unsigned int baseAdd, unsigned int dmaFlags,
@@ -385,7 +385,7 @@ extern unsigned int McSPIClkForceWrite(unsigned int baseAdd, unsigned int spiClk
 extern unsigned int McSPIDataPinRead(unsigned int baseAdd, unsigned int dataPin, unsigned int *spiDat);
 extern unsigned int McSPIDataPinWrite(unsigned int baseAdd, unsigned int dataDir,
                                     unsigned int spiDat);
-extern unsigned int McSPICSRead(unsigned int baseAdd, unsigned int *spiEn, 
+extern unsigned int McSPICSRead(unsigned int baseAdd, unsigned int *spiEn,
                          unsigned int spiEnNum);
 extern unsigned int McSPICSForceWrite(unsigned int baseAdd, unsigned int spiEnLvl,
                    unsigned int spiEnNum);

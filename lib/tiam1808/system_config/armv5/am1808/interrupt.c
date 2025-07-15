@@ -66,7 +66,7 @@ static void IntDefaultHandler(void);
 
 /**
  *
- * The Default Interrupt Handler. 
+ * The Default Interrupt Handler.
  *
  * This is the default interrupt handler for all interrupts.  It simply loops
  * forever so that the system state is preserved for observation by a
@@ -86,14 +86,14 @@ static void IntDefaultHandler(void)
 
 /**
  * \brief    Registers an interrupt Handler in the interrupt vector table for
- *           system interrupts. 
- * 
+ *           system interrupts.
+ *
  * \param    intrNum - Interrupt Number
  * \param    fnHandler - Function pointer to the ISR
- * 
+ *
  * Note: When the interrupt occurs for the sytem interrupt number indicated,
  * the control goes to the ISR given as the parameter.
- * 
+ *
  * \return      None.
  **/
 void IntRegister(unsigned int intrNum, void (*fnHandler)(void))
@@ -104,12 +104,12 @@ void IntRegister(unsigned int intrNum, void (*fnHandler)(void))
 
 /**
  * \brief   Unregisters an interrupt
- * 
+ *
  * \param   intrNum - Interrupt Number
- * 
+ *
  * Note: Once an interrupt is unregistered it will enter infinite loop once
  * an interrupt occurs
- * 
+ *
  * \return      None.
  **/
 void IntUnRegister(unsigned int intrNum)
@@ -119,11 +119,11 @@ void IntUnRegister(unsigned int intrNum)
 }
 
 /**
- * \brief  Set the channel number for a system interrupt. Channel numbers 0-1 
+ * \brief  Set the channel number for a system interrupt. Channel numbers 0-1
  *         are mapped to FIQ and Channel numbers 2-31 are mapped to IRQ of ARM.
- *         One or more system interrupt can be mapped to one channel. However, 
+ *         One or more system interrupt can be mapped to one channel. However,
  *         one system interrupt can not be mapped to multiple channels.
- * 
+ *
  * \param   intrNum - Interrupt Number
  * \param   channel - Channel Number to be set
  *
@@ -131,10 +131,10 @@ void IntUnRegister(unsigned int intrNum)
  **/
 void IntChannelSet(unsigned int intrNum, unsigned char channel)
 {
-    volatile unsigned char *CMRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *CMRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                        AINTC_CMR(0));
 
-    /* 
+    /*
     ** This function assumes that the CMRs are continuous in memory and are
     ** byte accessible. Also assumes that the architecture is little-endian
     */
@@ -148,17 +148,17 @@ void IntChannelSet(unsigned int intrNum, unsigned char channel)
 
 /**
  * \brief    Get the channel number for a system interrupt
- * 
+ *
  * \param    intrNum - Interrupt Number
- * 
+ *
  * \return   Channel Number.
  **/
 unsigned char IntChannelGet(unsigned int intrNum)
 {
-    volatile unsigned char *CMRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *CMRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                        AINTC_CMR(0));
 
-    /* 
+    /*
     ** This function assumes that the CMRs are continuous in memory and are
     ** byte accessible. Also assumes that the architecture is little-endian
     */
@@ -172,9 +172,9 @@ unsigned char IntChannelGet(unsigned int intrNum)
 /**
  * \brief    Enables interrupts in GER register of AINTC. FIQ and IRQ will be
  *           signaled for processing.
- * 
+ *
  * \param    None
- * 
+ *
  * \return   None
  **/
 void IntGlobalEnable(void)
@@ -186,9 +186,9 @@ void IntGlobalEnable(void)
 /**
  * \brief    Disables interrupts in GER register of AINTC. No interrupts will
  *           be signaled by the AINTC to the ARM core.
- * 
+ *
  * \param    None
- * 
+ *
  * \return   None
  **/
 void IntGlobalDisable(void)
@@ -198,24 +198,24 @@ void IntGlobalDisable(void)
 }
 
 /**
- * \brief    Enables the sytem interrupt in AINTC. The interrupt will be 
+ * \brief    Enables the sytem interrupt in AINTC. The interrupt will be
  *           processed only if it is enabled in AINTC
- * 
+ *
  * \param    intrNum - Interrupt number
  *
  * \return   None.
  **/
 void IntSystemEnable(unsigned int intrNum)
 {
-    volatile unsigned char *ESRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *ESRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                        AINTC_ESR(0));
     unsigned int bitNum;
-    
-    /* 
+
+    /*
     **  This function assumes that the ESRn are continuous in memory and are
     **  byte accessible. Also assumes that the architecture is little-endian
     */
-    
+
     /* Get the byte address corresponding to the system interrupt */
     ESRByte += (intrNum >> SYSTEM_INTR_BYTE_SHIFT);
 
@@ -228,22 +228,22 @@ void IntSystemEnable(unsigned int intrNum)
 
 /**
  * \brief   Disables the sytem interrupt in the AINTC
- * 
+ *
  * \param   intrNum - Interrupt number
- * 
+ *
  * \return  None
  **/
 void IntSystemDisable(unsigned int intrNum)
 {
-    volatile unsigned char *ECRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *ECRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                        AINTC_ECR(0));
     unsigned int bitNum;
 
-    /* 
+    /*
     **  This function assumes that the ESRn are continuous in memory and are
     **  byte accessible. Also assumes that the architecture is little-endian
     */
-    
+
     /* Get the byte address corresponding to the system interrupt */
     ECRByte += (intrNum >> SYSTEM_INTR_BYTE_SHIFT);
 
@@ -256,7 +256,7 @@ void IntSystemDisable(unsigned int intrNum)
 
 /**
  * \brief    Clears a sytem interrupt status in AINTC
- * 
+ *
  * \param    intrNum - Interrupt number
  *
  * \return   None
@@ -264,10 +264,10 @@ void IntSystemDisable(unsigned int intrNum)
  **/
 void IntSystemStatusClear(unsigned int intrNum)
 {
-    volatile unsigned char *SECRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *SECRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                         AINTC_SECR(0));
     unsigned int bitNum;
-    
+
     /* Get the byte address corresponding to the system interrupt */
     SECRByte += (intrNum >> SYSTEM_INTR_BYTE_SHIFT);
 
@@ -281,24 +281,24 @@ void IntSystemStatusClear(unsigned int intrNum)
 /**
  * \brief    Get the raw status of a system interrupt. This will return 1
  *           if the status is set and return 0 if the status is clear.
- * 
+ *
  * \param    intrNum - Interrupt number
- * 
- * \return   Raw Interrupt Status 
- * 
+ *
+ * \return   Raw Interrupt Status
+ *
  **/
 unsigned int IntSystemStatusRawGet(unsigned int intrNum)
 {
-    volatile unsigned char *SRSRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *SRSRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                         AINTC_SRSR(0));
 
     unsigned int bitNum;
-    
+
     /*
     **  This function assumes that the SRSRn are continuous in memory
     **  are byte accessible; also that the architecture is little-endian
     */
- 
+
     /* Get the byte address corresponding to the system interrupt */
     SRSRByte += (intrNum >> SYSTEM_INTR_BYTE_SHIFT);
 
@@ -312,21 +312,21 @@ unsigned int IntSystemStatusRawGet(unsigned int intrNum)
 /**
  * \brief    Get the enabled status of a system interrupt. This will return
  *           1 if the status is set, and return 0 if the status is clear.
- * 
+ *
  * \param    intrNum - Interrupt Number
- *  
+ *
  * \return   Enabled Interrupt Status.
- * 
+ *
  **/
 unsigned int IntSystemStatusEnabledGet(unsigned int intrNum)
 {
-    volatile unsigned char *SECRByte = (unsigned char*)(SOC_AINTC_0_REGS + 
+    volatile unsigned char *SECRByte = (unsigned char*)(SOC_AINTC_0_REGS +
                                                         AINTC_SECR(0));
 
     unsigned int bitNum;
-   
+
     /*
-    **  This function assumes that the SECRn are continuous in memory 
+    **  This function assumes that the SECRn are continuous in memory
     **  are byte accessible; also that the architecture is little-endian
     */
 
@@ -342,9 +342,9 @@ unsigned int IntSystemStatusEnabledGet(unsigned int intrNum)
 
 /**
  * \brief    Enables IRQ in HIER register of AINTC
- * 
+ *
  * \param    None
- * 
+ *
  * \return   None.
  **/
 void IntIRQEnable(void)
@@ -355,9 +355,9 @@ void IntIRQEnable(void)
 
 /**
  * \brief    Disables IRQ in HIER register of AINTC
- * 
+ *
  * \param    None
- * 
+ *
  * \return   None.
  **/
 void IntIRQDisable(void)
@@ -368,9 +368,9 @@ void IntIRQDisable(void)
 
 /**
  * \brief    Enables FIQ in AINTC
- * 
+ *
  * \param    None
- * 
+ *
  * \return   None.
  **/
 void IntFIQEnable(void)
@@ -381,9 +381,9 @@ void IntFIQEnable(void)
 
 /**
  * \brief     Disables FIQ host interrupts in  AINTC
- * 
+ *
  * \param     None
- * 
+ *
  * \return    None
  **/
 void IntFIQDisable(void)
@@ -393,20 +393,20 @@ void IntFIQDisable(void)
 }
 
 /**
- * \brief   This API is used to setup the AINTC. This API shall be called 
+ * \brief   This API is used to setup the AINTC. This API shall be called
  *          before using the AINTC. All the host interruptsi will be disabled
  *          after calling this API. The user shall enable all the interrupts
- *          required for processing. 
+ *          required for processing.
  *
  * \param   None
- * 
+ *
  * \return  None.
  *
  **/
 void IntAINTCInit(void)
 {
     unsigned int cnt;
-  
+
     /* Reset AINTC */
     for(cnt = 0; cnt < 3; cnt++)
     {
@@ -428,8 +428,8 @@ void IntAINTCInit(void)
 }
 
 /**
- * \brief  Enables the processor IRQ only in CPSR. Makes the processor to 
- *         respond to IRQs.  This does not affect the set of interrupts 
+ * \brief  Enables the processor IRQ only in CPSR. Makes the processor to
+ *         respond to IRQs.  This does not affect the set of interrupts
  *         enabled/disabled in the AINTC.
  *
  * \param    None
@@ -446,8 +446,8 @@ void IntMasterIRQEnable(void)
 }
 
 /**
- * \brief  Disables the processor IRQ only in CPSR.Prevents the processor to 
- *         respond to IRQs.  This does not affect the set of interrupts 
+ * \brief  Disables the processor IRQ only in CPSR.Prevents the processor to
+ *         respond to IRQs.  This does not affect the set of interrupts
  *         enabled/disabled in the AINTC.
  *
  * \param    None
@@ -463,8 +463,8 @@ void IntMasterIRQDisable(void)
 }
 
 /**
- * \brief  Enables the processor FIQ only in CPSR. Makes the processor to 
- *         respond to FIQs.  This does not affect the set of interrupts 
+ * \brief  Enables the processor FIQ only in CPSR. Makes the processor to
+ *         respond to FIQs.  This does not affect the set of interrupts
  *         enabled/disabled in the AINTC.
  *
  * \param    None
@@ -480,8 +480,8 @@ void IntMasterFIQEnable(void)
 }
 
 /**
- * \brief  Disables the processor FIQ only in CPSR.Prevents the processor to 
- *         respond to FIQs.  This does not affect the set of interrupts 
+ * \brief  Disables the processor FIQ only in CPSR.Prevents the processor to
+ *         respond to FIQs.  This does not affect the set of interrupts
  *         enabled/disabled in the AINTC.
  *
  * \param    None
@@ -512,7 +512,7 @@ unsigned int IntMasterStatusGet(void)
 
 /**
  * \brief Read and save the stasus and Disables the processor IRQ .
- *         Prevents the processor to respond to IRQs.  
+ *         Prevents the processor to respond to IRQs.
  *
  * \param    None
  *
@@ -546,7 +546,7 @@ unsigned char IntDisable(void)
 }
 
 /**
- * \brief  Restore the processor IRQ only status. This does not affect 
+ * \brief  Restore the processor IRQ only status. This does not affect
  *          the set of interrupts enabled/disabled in the AINTC.
  *
  * \param    The status returned by the IntDisable fundtion.
@@ -561,10 +561,10 @@ void IntEnable(unsigned char  status)
 {
     // REVISIT: Why does original library version (above) not work?
 
-	// if((status & 0x80) == 0) 
+	// if((status & 0x80) == 0)
 	// {
 	// 	IntMasterIRQEnable();
-	// } 
+	// }
     __asm__ __volatile__ ("msr cpsr_c, %0" : : "r" (status));
 }
 

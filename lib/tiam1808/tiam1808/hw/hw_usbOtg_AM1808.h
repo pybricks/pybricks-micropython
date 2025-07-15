@@ -60,7 +60,7 @@ extern "C"
 #define USB_0_CTRL	            	0x04
 #define USB_0_STAT	            	0x08
 #define USB_0_EMULATION				0x08
-#define USB_0_MODE					0x10    
+#define USB_0_MODE					0x10
 #define USB_0_AUTOREQ 	        	0x14
 #define USB_0_SRP_FIX_TIME 	    	0x18
 #define USB_0_TEARDOWN 	        	0x1c

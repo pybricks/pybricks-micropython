@@ -2,7 +2,7 @@
  * \file  syscfg.c
  *
  * \brief This file contains APIs to lock and unlock the System Configuration
- *        (SYSCFG) module registers by appropriately programming the Kick 
+ *        (SYSCFG) module registers by appropriately programming the Kick
  *        Registers.
  */
 
@@ -44,19 +44,19 @@
 #include "hw_types.h"
 
 /**
- * \brief   This function unlocks the write-protection of the SYSCFG module. 
- * 
+ * \brief   This function unlocks the write-protection of the SYSCFG module.
+ *
  * \return  None.
- * 
- * \note    The other registers of the SYSCFG module can be programmed only 
- *          when an unlock sequence has been written to the Kick Regsiters. 
+ *
+ * \note    The other registers of the SYSCFG module can be programmed only
+ *          when an unlock sequence has been written to the Kick Regsiters.
  */
 
 void SysCfgRegistersUnlock(void)
 {
      /* Unlocking Kick Registers before pinmux configuration */
      HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_KICK0R) = SYSCFG_KICK0R_UNLOCK;
-     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_KICK1R) = SYSCFG_KICK1R_UNLOCK; 
+     HWREG(SOC_SYSCFG_0_REGS + SYSCFG0_KICK1R) = SYSCFG_KICK1R_UNLOCK;
 
 }
 
@@ -65,8 +65,8 @@ void SysCfgRegistersUnlock(void)
  *
  * \return  None.
  *
- * \note    On programming the Kick Registers with any value other than the 
- *          unlock sequence, the SYSCFG module gets locked and its registers 
+ * \note    On programming the Kick Registers with any value other than the
+ *          unlock sequence, the SYSCFG module gets locked and its registers
  *          cannot be accessed.
  */
 
