@@ -70,6 +70,9 @@
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_EV3                      (1)
 
+#define PBDRV_CONFIG_SOUND                          (1)
+#define PBDRV_CONFIG_SOUND_EV3                      (1)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (1)
 #define PBDRV_CONFIG_UART_EV3                       (1)
