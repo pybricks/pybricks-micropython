@@ -27,6 +27,8 @@
 
 #include <pbdrv/clock.h>
 
+#include "usb_ch9.h"
+
 #define INTR_BIT_USB_RESET      (1 << 18)
 #define INTR_BIT_EP1_OUT        (1 << 9)
 #define INTR_BIT_EP1_IN         (1 << 1)
