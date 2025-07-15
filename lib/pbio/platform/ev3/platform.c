@@ -86,7 +86,7 @@ const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_L
 };
 
 static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
-    // TODO: PWM not yet implemented, so these values not used.
+    // TODO: Calibrate these numbers, as well as .scale_factor
     .r_factor = 1000,
     .g_factor = 170,
     .b_factor = 200,
