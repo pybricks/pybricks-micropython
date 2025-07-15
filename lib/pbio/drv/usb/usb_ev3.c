@@ -8,8 +8,10 @@
 
 #if PBDRV_CONFIG_USB_EV3
 
+#include <assert.h>
 #include <stdint.h>
 
+#include <pbdrv/compiler.h>
 #include <pbdrv/usb.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -19,6 +21,7 @@
 #include "pbdrvconfig.h"
 
 #include <tiam1808/armv5/am1808/interrupt.h>
+#include <tiam1808/cppi41dma.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/hw_usbOtg_AM1808.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
@@ -225,6 +228,115 @@ static uint32_t setup_misc_tx_byte;
 // Whether the device is using USB high-speed mode or not
 static bool is_usb_hs;
 
+// Buffers, used for different logical flows on the data endpoint
+static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_tx_response_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_tx_status_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_tx_stdout_buf[PYBRICKS_EP_PKT_SZ_HS];
+
+// Buffer status flags
+static volatile bool usb_rx_is_ready;
+static volatile bool usb_tx_response_is_not_ready;
+static volatile bool usb_tx_status_is_not_ready;
+static volatile bool usb_tx_stdout_is_not_ready;
+
+// CPPI DMA support code
+
+// Descriptors must be aligned to a power of 2 greater than or equal to their size.
+// We are using a descriptor of 32 bytes which is also the required alignment.
+#define CPPI_DESCRIPTOR_ALIGN   32
+
+// Host Packet Descriptor
+// The TI support library has hardcoded assumptions about the layout of these structures,
+// so we declare it ourselves here in order to control it as we wish.
+typedef struct {
+    hPDWord0 word0;
+    hPDWord1 word1;
+    hPDWord2 word2;
+    uint32_t buf_len;
+    void *buf_ptr;
+    void *next_desc_ptr;
+    uint32_t orig_buf_len;
+    void *orig_buf_ptr;
+} __attribute__((aligned(CPPI_DESCRIPTOR_ALIGN))) usb_cppi_hpd_t;
+_Static_assert(sizeof(usb_cppi_hpd_t) <= CPPI_DESCRIPTOR_ALIGN);
+
+// This goes into the lower bits of the queue CTRLD register
+#define CPPI_DESCRIPTOR_SIZE_BITS   ((sizeof(usb_cppi_hpd_t) - 24) / 4)
+
+// We only use a hardcoded descriptor for each logical flow,
+// rather than dynamically allocating them as needed
+enum {
+    CPPI_DESC_RX,
+    CPPI_DESC_TX_RESPONSE,
+    CPPI_DESC_TX_STATUS,
+    CPPI_DESC_TX_STDOUT,
+    // the minimum number of descriptors we can allocate is 32,
+    // even though we do not use nearly all of them
+    CPPI_DESC_COUNT = 32,
+};
+
+enum {
+    // Documenting explicitly that we only use RX queue 0
+    // (out of 16 total which are supported by the hardware)
+    CPPI_RX_SUBMIT_QUEUE = 0,
+};
+
+// CPPI memory
+static usb_cppi_hpd_t cppi_descriptors[CPPI_DESC_COUNT];
+static uint32_t cppi_linking_ram[CPPI_DESC_COUNT];
+
+// Fill in the CPPI DMA descriptor to receive a packet
+static void usb_setup_rx_dma_desc(void) {
+    cppi_descriptors[CPPI_DESC_RX] = (usb_cppi_hpd_t) {
+        .word0 = {
+            .hostPktType = 0x10,
+        },
+        .word1 = {},
+        .word2 = {
+            .pktRetQueue = RX_COMPQ1,
+        },
+        .buf_len = PYBRICKS_EP_PKT_SZ_HS,
+        .buf_ptr = ep1_rx_buf,
+        .next_desc_ptr = 0,
+        .orig_buf_len = PYBRICKS_EP_PKT_SZ_HS,
+        .orig_buf_ptr = ep1_rx_buf,
+    };
+
+    pbdrv_compiler_memory_barrier();
+
+    HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + CPPI_RX_SUBMIT_QUEUE * 16) =
+        (uint32_t)(&cppi_descriptors[CPPI_DESC_RX]) | CPPI_DESCRIPTOR_SIZE_BITS;
+}
+
+
+// Fill in the CPPI DMA descriptor to send a packet
+static void usb_setup_tx_dma_desc(int tx_type, void *buf, uint32_t buf_len) {
+    cppi_descriptors[tx_type] = (usb_cppi_hpd_t) {
+        .word0 = {
+            .hostPktType = 0x10,
+            .pktLength = buf_len,
+        },
+        .word1 = {
+            .srcPrtNum = 1,             // port is EP1
+        },
+        .word2 = {
+            .pktType = 5,               // USB packet type
+            .pktRetQueue = TX_COMPQ1,
+        },
+        .buf_len = buf_len,
+        .buf_ptr = buf,
+        .next_desc_ptr = 0,
+        .orig_buf_len = buf_len,
+        .orig_buf_ptr = buf,
+    };
+
+    pbdrv_compiler_memory_barrier();
+
+    HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + TX_SUBMITQ1 * 16) =
+        (uint32_t)(&cppi_descriptors[tx_type]) | CPPI_DESCRIPTOR_SIZE_BITS;
+}
+
 // Helper function for dividing up buffers for EP0 and feeding the FIFO
 static void usb_setup_send_chunk(void) {
     unsigned int this_chunk_sz = setup_data_to_send_sz;
@@ -266,7 +378,64 @@ static void usb_device_intr(void) {
             is_usb_hs = false;
         }
 
-        // TODO: More tasks in the future
+        // Set up the FIFOs
+        // We use a hardcoded address allocation as follows
+        // @ 0      ==> EP0
+        // @ 64     ==> EP1 IN (device to host, tx)
+        // @ 64+512 ==> EP1 OUT (host to device, rx)
+        HWREGB(USB0_BASE + USB_O_EPIDX) = 1;
+        if (is_usb_hs) {
+            HWREGB(USB0_BASE + USB_O_TXFIFOSZ) = USB_TXFIFOSZ_SIZE_512;
+            HWREGB(USB0_BASE + USB_O_RXFIFOSZ) = USB_RXFIFOSZ_SIZE_512;
+            HWREGH(USB0_BASE + USB_O_TXMAXP1) = PYBRICKS_EP_PKT_SZ_HS;
+            HWREGH(USB0_BASE + USB_O_RXMAXP1) = PYBRICKS_EP_PKT_SZ_HS;
+        } else {
+            HWREGB(USB0_BASE + USB_O_TXFIFOSZ) = USB_TXFIFOSZ_SIZE_64;
+            HWREGB(USB0_BASE + USB_O_RXFIFOSZ) = USB_RXFIFOSZ_SIZE_64;
+            HWREGH(USB0_BASE + USB_O_TXMAXP1) = PYBRICKS_EP_PKT_SZ_FS;
+            HWREGH(USB0_BASE + USB_O_RXMAXP1) = PYBRICKS_EP_PKT_SZ_FS;
+        }
+        HWREGH(USB0_BASE + USB_O_TXFIFOADD) = EP0_BUF_SZ / 8;
+        HWREGH(USB0_BASE + USB_O_RXFIFOADD) = (EP0_BUF_SZ + PYBRICKS_EP_PKT_SZ_HS) / 8;
+
+        // Set up the TX fifo for DMA and a stall condition
+        HWREGH(USB0_BASE + USB_O_TXCSRL1) = ((USB_TXCSRH1_AUTOSET | USB_TXCSRH1_MODE | USB_TXCSRH1_DMAEN | USB_TXCSRH1_DMAMOD) << 8) | USB_TXCSRL1_STALL;
+        // Set up the RX fifo for DMA and a stall condition
+        HWREGH(USB0_BASE + USB_O_RXCSRL1) = ((USB_RXCSRH1_AUTOCL | USB_RXCSRH1_DMAEN) << 8) | USB_RXCSRL1_STALL;
+
+        // Set up CPPI DMA
+        HWREG(USB_0_OTGBASE + CPDMA_LRAM_0_BASE) = (uint32_t)cppi_linking_ram;
+        HWREG(USB_0_OTGBASE + CPDMA_LRAM_0_SIZE) = CPPI_DESC_COUNT;
+        HWREG(USB_0_OTGBASE + CPDMA_LRAM_1_BASE) = 0;
+
+        HWREG(USB_0_OTGBASE + CPDMA_QUEUEMGR_REGION_0) = (uint32_t)cppi_descriptors;
+        // 32 descriptors of 32 bytes each
+        HWREG(USB_0_OTGBASE + CPDMA_QUEUEMGR_REGION_0_CONTROL) = 0;
+
+        // scheduler table: RX on 0, TX on 0
+        HWREG(USB_0_OTGBASE + CPDMA_SCHED_TABLE_0) = 0x0080;
+        HWREG(USB_0_OTGBASE + CPDMA_SCHED_CONTROL_REG) = (1 << SCHEDULER_ENABLE_SHFT) | (2 - 1);
+
+        // CPPI RX
+        HWREG(USB_0_OTGBASE + CPDMA_RX_CHANNEL_REG_A) =
+            (CPPI_RX_SUBMIT_QUEUE << 0) |
+            (CPPI_RX_SUBMIT_QUEUE << 16);
+        HWREG(USB_0_OTGBASE + CPDMA_RX_CHANNEL_REG_B) =
+            (CPPI_RX_SUBMIT_QUEUE << 0) |
+            (CPPI_RX_SUBMIT_QUEUE << 16);
+        HWREG(USB_0_OTGBASE + CPDMA_RX_CHANNEL_CONFIG_REG) =
+            (1 << 31) |         // enable
+            (1 << 24) |         // starvation = retry
+            (1 << 14) |         // "host" descriptors (the only valid type)
+            RX_COMPQ1;
+
+        // CPPI TX
+        HWREG(USB_0_OTGBASE + CPDMA_TX_CHANNEL_CONFIG_REG) =
+            (1 << 31) |         // enable
+            TX_COMPQ1;
+
+        // queue RX descriptor
+        usb_setup_rx_dma_desc();
     }
 
     if (intr_src & INTR_BIT_EP0) {
@@ -313,11 +482,15 @@ static void usb_device_intr(void) {
                             if (usb_config == 1) {
                                 // configuring
 
-                                // TODO: Handle configuring
+                                // Reset data toggle, clear stall, flush fifo
+                                HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_CLRDT | USB_TXCSRL1_FLUSH;
+                                HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_CLRDT | USB_RXCSRL1_FLUSH;
                             } else {
                                 // deconfiguring
 
-                                // TODO: Handle deconfiguring
+                                // Set stall condition
+                                HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_STALL;
+                                HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_STALL;
                             }
                             handled = 1;
                         }
@@ -422,6 +595,38 @@ static void usb_device_intr(void) {
                             handled = 1;
                         }
                     }
+                } else if (((setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) == BM_REQ_TYPE_STANDARD) &&
+                           ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) == BM_REQ_RECIP_EP)) {
+
+                    if (setup_pkt.s.bRequest == GET_STATUS) {
+                        if (setup_pkt.s.wIndex == 1) {
+                            setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_RXCSRL1) & USB_RXCSRL1_STALL);
+                            setup_data_to_send = &setup_misc_tx_byte;
+                            setup_data_to_send_sz = 2;
+                            handled = 1;
+                        } else if (setup_pkt.s.wIndex == 0x81) {
+                            setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_STALL);
+                            setup_data_to_send = &setup_misc_tx_byte;
+                            setup_data_to_send_sz = 2;
+                            handled = 1;
+                        }
+                    } else if (setup_pkt.s.bRequest == CLEAR_FEATURE && setup_pkt.s.wValue == 0) {
+                        if (setup_pkt.s.wIndex == 1) {
+                            HWREGB(USB0_BASE + USB_O_RXCSRL1) &= ~USB_RXCSRL1_STALL;
+                            handled = 1;
+                        } else if (setup_pkt.s.wIndex == 0x81) {
+                            HWREGB(USB0_BASE + USB_O_TXCSRL1) &= ~USB_TXCSRL1_STALL;
+                            handled = 1;
+                        }
+                    } else if (setup_pkt.s.bRequest == SET_FEATURE && setup_pkt.s.wValue == 0) {
+                        if (setup_pkt.s.wIndex == 1) {
+                            HWREGB(USB0_BASE + USB_O_RXCSRL1) |= USB_RXCSRL1_STALL;
+                            handled = 1;
+                        } else if (setup_pkt.s.wIndex == 0x81) {
+                            HWREGB(USB0_BASE + USB_O_TXCSRL1) |= USB_TXCSRL1_STALL;
+                            handled = 1;
+                        }
+                    }
                 }
 
                 if (!handled) {
@@ -460,6 +665,61 @@ static void usb_device_intr(void) {
         }
     }
 
+    // EP1 interrupts, which only trigger on error conditions since we use DMA
+
+    if (intr_src & INTR_BIT_EP1_OUT) {
+        // EP 1 OUT, host to device, rx
+        uint8_t rxcsr = HWREGB(USB0_BASE + USB_O_RXCSRL1);
+
+        // Clear error bits
+        rxcsr &= ~USB_RXCSRL1_STALLED;
+
+        HWREGB(USB0_BASE + USB_O_RXCSRL1) = rxcsr;
+    }
+
+    if (intr_src & INTR_BIT_EP1_IN) {
+        // EP 1 IN, device to host, tx
+        uint8_t txcsr = HWREGB(USB0_BASE + USB_O_TXCSRL1);
+
+        // Clear error bits
+        txcsr &= ~(USB_TXCSRL1_STALLED | USB_TXCSRL1_UNDRN | USB_TXCSRL1_FIFONE);
+
+        HWREGB(USB0_BASE + USB_O_TXCSRL1) = txcsr;
+    }
+
+    // Check for DMA completions
+    uint32_t dma_q_pend_0 = HWREG(USB_0_OTGBASE + CPDMA_PEND_0_REGISTER);
+
+    if (dma_q_pend_0 & (1 << RX_COMPQ1)) {
+        // DMA for EP 1 OUT is done
+
+        // Pop the descriptor from the queue
+        uint32_t qctrld = HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + RX_COMPQ1 * 16);
+        (void)qctrld;
+
+        // Signal the main loop that we have something
+        usb_rx_is_ready = true;
+        pbio_os_request_poll();
+    }
+
+    if (dma_q_pend_0 & (1 << TX_COMPQ1)) {
+        // DMA for EP 1 IN is done
+
+        // Pop the descriptor from the queue
+        uint32_t qctrld = HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + TX_COMPQ1 * 16) & ~0x1f;
+
+        if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_RESPONSE])) {
+            usb_tx_response_is_not_ready = false;
+            pbio_os_request_poll();
+        } else if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_STATUS])) {
+            usb_tx_status_is_not_ready = false;
+            pbio_os_request_poll();
+        } else if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_STDOUT])) {
+            usb_tx_stdout_is_not_ready = false;
+            pbio_os_request_poll();
+        }
+    }
+
     HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = intr_src;
     HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
@@ -468,6 +728,41 @@ static pbio_os_process_t pbdrv_usb_ev3_process;
 
 static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_BEGIN(state);
+
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, usb_rx_is_ready);
+
+        if (usb_rx_is_ready) {
+            // This barrier prevents *subsequent* memory reads from being
+            // speculatively moved *earlier*, outside the if statement
+            // (which is technically allowed by the as-if rule).
+            pbdrv_compiler_memory_barrier();
+
+            uint32_t usb_rx_sz = cppi_descriptors[CPPI_DESC_RX].word0.pktLength;
+
+            // TODO: Remove this echo test
+            unsigned int i;
+            for (i = 0; i < usb_rx_sz; i++) {
+                ep1_tx_response_buf[i] = ep1_rx_buf[i] + 1;
+            }
+            for (; i < 512; i++) {
+                ep1_tx_response_buf[i] = 0xaa;
+            }
+
+            (void)ep1_tx_status_buf;
+            (void)ep1_tx_stdout_buf;
+
+            unsigned int tx_sz = is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
+            if (!usb_tx_response_is_not_ready) {
+                usb_tx_response_is_not_ready = true;
+                usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, tx_sz);
+            }
+
+            // Re-queue RX buffer after processing is complete
+            usb_rx_is_ready = false;
+            usb_setup_rx_dma_desc();
+        }
+    }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
