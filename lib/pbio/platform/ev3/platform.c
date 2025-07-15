@@ -72,8 +72,7 @@ enum {
 };
 
 enum {
-    PWM_DEV_0_TODO,
-    PWM_DEV_1_TODO,
+    PWM_DEV_0,
 };
 
 // LED
@@ -100,42 +99,39 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
     {
         .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_1_STATUS_LEFT,
-        .r_id = PWM_DEV_0_TODO,
+        .r_id = PWM_DEV_0,
         .r_ch = 0,
-        .g_id = PWM_DEV_0_TODO,
+        .g_id = PWM_DEV_0,
         .g_ch = 1,
         // Blue not available.
-        .b_id = PWM_DEV_0_TODO,
-        .b_ch = 2,
+        .b_id = PWM_DEV_0,
+        .b_ch = PBDRV_LED_PWM_CHANNEL_INVALID,
         // TODO: PWM not yet implemented, so these values not used.
         .scale_factor = 35,
     },
     {
         .color = &pbdrv_led_pwm_color,
         .id = LED_DEV_2_STATUS_RIGHT,
-        .r_id = PWM_DEV_1_TODO,
-        .r_ch = 0,
-        .g_id = PWM_DEV_1_TODO,
-        .g_ch = 1,
+        .r_id = PWM_DEV_0,
+        .r_ch = 2,
+        .g_id = PWM_DEV_0,
+        .g_ch = 3,
         // Blue not available.
-        .b_id = PWM_DEV_1_TODO,
-        .b_ch = 2,
+        .b_id = PWM_DEV_0,
+        .b_ch = PBDRV_LED_PWM_CHANNEL_INVALID,
         // TODO: PWM not yet implemented, so these values not used.
         .scale_factor = 35,
     },
 };
 
-const pbdrv_pwm_tiam1808_platform_data_t
-    pbdrv_pwm_tiam1808_platform_data[PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV] = {
-    {
-        .id = PWM_DEV_0_TODO,
-        .gpio_red = PBDRV_GPIO_EV3_PIN(13, 11, 8, 6, 13),
-        .gpio_green = PBDRV_GPIO_EV3_PIN(14, 3, 0, 6, 7),
-    },
-    {
-        .id = PWM_DEV_1_TODO,
-        .gpio_red = PBDRV_GPIO_EV3_PIN(13, 15, 12, 6, 12),
-        .gpio_green = PBDRV_GPIO_EV3_PIN(13, 7, 4, 6, 14),
+const pbdrv_pwm_tiam1808_platform_data_t pbdrv_pwm_tiam1808_platform_data =
+{
+    .id = PWM_DEV_0,
+    .gpios = {
+        PBDRV_GPIO_EV3_PIN(13, 11, 8, 6, 13),
+        PBDRV_GPIO_EV3_PIN(14, 3, 0, 6, 7),
+        PBDRV_GPIO_EV3_PIN(13, 15, 12, 6, 12),
+        PBDRV_GPIO_EV3_PIN(13, 7, 4, 6, 14),
     },
 };
 

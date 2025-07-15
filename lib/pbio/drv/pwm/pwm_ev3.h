@@ -13,16 +13,16 @@
 #include <pbdrv/pwm.h>
 #include <pbdrv/gpio.h>
 
+#define PBDRV_PWM_EV3_NUM_CHANNELS  4
+
 /** Platform-specific device information. */
 typedef struct {
     uint8_t id;
-    pbdrv_gpio_t gpio_red;
-    pbdrv_gpio_t gpio_green;
+    pbdrv_gpio_t gpios[PBDRV_PWM_EV3_NUM_CHANNELS];
 } pbdrv_pwm_tiam1808_platform_data_t;
 
 // Defined in platform.c
-extern const pbdrv_pwm_tiam1808_platform_data_t
-    pbdrv_pwm_tiam1808_platform_data[PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV];
+extern const pbdrv_pwm_tiam1808_platform_data_t pbdrv_pwm_tiam1808_platform_data;
 
 void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs);
 
