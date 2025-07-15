@@ -14,26 +14,26 @@
 void pbdrv_button_init(void) {
 }
 
-pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
+pbio_button_flags_t pbdrv_button_get_pressed(void) {
 
     nx_avr_button_t button = nx_avr_get_button();
 
-    *pressed = 0;
+    pbio_button_flags_t pressed = 0;
 
     if (button == BUTTON_OK) {
-        *pressed |= PBIO_BUTTON_CENTER;
+        pressed |= PBIO_BUTTON_CENTER;
     }
     if (button == BUTTON_LEFT) {
-        *pressed |= PBIO_BUTTON_LEFT;
+        pressed |= PBIO_BUTTON_LEFT;
     }
     if (button == BUTTON_RIGHT) {
-        *pressed |= PBIO_BUTTON_RIGHT;
+        pressed |= PBIO_BUTTON_RIGHT;
     }
     if (button == BUTTON_CANCEL) {
-        *pressed |= PBIO_BUTTON_DOWN;
+        pressed |= PBIO_BUTTON_DOWN;
     }
 
-    return PBIO_SUCCESS;
+    return pressed;
 }
 
 #endif // PBDRV_CONFIG_BUTTON_NXT

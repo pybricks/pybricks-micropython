@@ -52,15 +52,12 @@ static pbio_button_flags_t pbdrv_button_gpio_read(void) {
     return flags;
 }
 
-
-pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
+pbio_button_flags_t pbdrv_button_get_pressed(void) {
     #if PBDRV_CONFIG_BUTTON_GPIO_DEBOUNCE
-    *pressed = pbdrv_button_state;
+    return pbdrv_button_state;
     #else
-    *pressed = pbdrv_button_gpio_read();
+    return pbdrv_button_gpio_read();
     #endif
-
-    return PBIO_SUCCESS;
 }
 
 #if PBDRV_CONFIG_BUTTON_GPIO_DEBOUNCE

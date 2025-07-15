@@ -22,18 +22,15 @@
 
 /**
  * Get bitmask indicating currently pressed buttons.
- * @param [out] pressed     Bitmask indicating which buttons are pressed
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_NO_DEV if port is valid but a device with buttons is not connected
- *                          ::PBIO_ERROR_IO if there was an I/O error
+ *
+ * @return                  Bitmask indicating which buttons are pressed
  */
-pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed);
+pbio_button_flags_t pbdrv_button_get_pressed(void);
 
 #else
 
-static inline pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
-    *pressed = 0;
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline pbio_button_flags_t pbdrv_button_get_pressed(void) {
+    return 0;
 }
 
 #endif

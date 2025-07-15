@@ -14,11 +14,11 @@
 void pbdrv_button_init(void) {
 }
 
-pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
+pbio_button_flags_t pbdrv_button_get_pressed(void) {
     pbdrv_resistor_ladder_ch_flags_t flags;
     pbio_error_t err;
 
-    *pressed = 0;
+    pbio_button_flags_t pressed = 0;
 
     // REVISIT: For now, this is hard-coded for SPIKE Prime. If more platforms
     // that use this are added, a resistor ladder flags to buttons map will
@@ -26,31 +26,31 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
 
     err = pbdrv_resistor_ladder_get(0, &flags);
     if (err != PBIO_SUCCESS) {
-        return err;
+        return pressed;
     }
 
     if (flags & PBDRV_RESISTOR_LADDER_CH_1) {
-        *pressed |= PBIO_BUTTON_CENTER;
+        pressed |= PBIO_BUTTON_CENTER;
     }
 
     err = pbdrv_resistor_ladder_get(1, &flags);
     if (err != PBIO_SUCCESS) {
-        return err;
+        return pressed;
     }
 
     if (flags & PBDRV_RESISTOR_LADDER_CH_0) {
-        *pressed |= PBIO_BUTTON_LEFT;
+        pressed |= PBIO_BUTTON_LEFT;
     }
 
     if (flags & PBDRV_RESISTOR_LADDER_CH_1) {
-        *pressed |= PBIO_BUTTON_RIGHT;
+        pressed |= PBIO_BUTTON_RIGHT;
     }
 
     if (flags & PBDRV_RESISTOR_LADDER_CH_2) {
-        *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
+        pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
     }
 
-    return PBIO_SUCCESS;
+    return pressed;
 }
 
 #endif // PBDRV_CONFIG_BUTTON_RESISTOR_LADDER
