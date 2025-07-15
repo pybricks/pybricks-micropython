@@ -27,6 +27,8 @@
 
 #include <pbdrv/clock.h>
 
+#include "usb_ch9.h"
+
 static void usb_device_intr(void) {
     IntSystemStatusClear(SYS_INT_USB0);
 }
