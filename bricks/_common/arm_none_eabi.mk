@@ -178,6 +178,12 @@ LD_FILES += $(PBTOP)/lib/pbio/platform/arm_common.ld
 endif
 
 LDFLAGS = $(addprefix -T,$(LD_FILES)) -Wl,-Map=$@.map -Wl,--cref -Wl,--gc-sections
+ifeq ($(PB_MCU_FAMILY),TIAM1808)
+# "nmagic" mode
+# This option (with a legacy name) is used to disable page alignment of sections,
+# which makes the resulting ELF file smaller as padding will be eliminated.
+LDFLAGS += -n
+endif
 
 SUPPORTS_HARDWARE_FP_SINGLE = 0
 ifeq ($(PB_MCU_FAMILY),STM32)
