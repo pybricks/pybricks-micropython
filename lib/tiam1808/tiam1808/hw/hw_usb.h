@@ -706,6 +706,8 @@
 //*****************************************************************************
 #define USB_POWER_ISOUP         0x00000080  // Isochronous Update
 #define USB_POWER_SOFTCONN      0x00000040  // Soft Connect/Disconnect
+#define USB_POWER_HSEN          0x00000020  // Attempt to negotiate high-speed mode
+#define USB_POWER_HSMODE        0x00000010  // High-speed mode is active
 #define USB_POWER_RESET         0x00000008  // RESET Signaling
 #define USB_POWER_RESUME        0x00000004  // RESUME Signaling
 #define USB_POWER_SUSPEND       0x00000002  // SUSPEND Mode
