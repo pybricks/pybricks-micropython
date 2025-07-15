@@ -777,6 +777,8 @@
 #define USB_TXIE_EP0            0x00000001  // TX and RX Endpoint 0 Interrupt
                                             // Enable
 
+#define USB_TXIE_ALL_AM1808     0x0000001F  // EP0, EP1-4
+
 //*****************************************************************************
 //
 // The following are defines for the bit fields in the USB_O_RXIE register.
@@ -797,6 +799,8 @@
 #define USB_RXIE_EP3            0x00000008  // RX Endpoint 3 Interrupt Enable
 #define USB_RXIE_EP2            0x00000004  // RX Endpoint 2 Interrupt Enable
 #define USB_RXIE_EP1            0x00000002  // RX Endpoint 1 Interrupt Enable
+
+#define USB_RXIE_ALL_AM1808     0x0000001E  // EP1-4
 
 //*****************************************************************************
 //
@@ -827,6 +831,8 @@
 #define USB_IE_RESET            0x00000004  // Enable RESET Interrupt
 #define USB_IE_RESUME           0x00000002  // Enable RESUME Interrupt
 #define USB_IE_SUSPND           0x00000001  // Enable SUSPEND Interrupt
+
+#define USB_IE_ALL              0x000000FF
 
 //*****************************************************************************
 //

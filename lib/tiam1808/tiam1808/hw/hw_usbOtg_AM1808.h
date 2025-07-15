@@ -79,6 +79,33 @@ extern "C"
 #define USB_0_GEN_RNDIS_SIZE_EP4	0x5C
 #define USB_0_GENR_INTR				0x22
 
+// Bits for CTRL
+#define USBOTG_CTRL_RESET           0x01
+#define USBOTG_CTRL_CLKFACK         0x02
+#define USBOTG_CTRL_UINT            0x08
+#define USBOTG_CTRL_RNDIS           0x10
+
+// The following are interrupt bits as found in the OTG wrapper
+#define USBOTG_INTR_EP0             0x00000001
+#define USBOTG_INTR_EP1_IN          0x00000002
+#define USBOTG_INTR_EP2_IN          0x00000004
+#define USBOTG_INTR_EP3_IN          0x00000008
+#define USBOTG_INTR_EP4_IN          0x00000010
+#define USBOTG_INTR_EP1_OUT         0x00000200
+#define USBOTG_INTR_EP2_OUT         0x00000400
+#define USBOTG_INTR_EP3_OUT         0x00000800
+#define USBOTG_INTR_EP4_OUT         0x00001000
+#define USBOTG_INTR_DRVVBUS         0x01000000  // DRVVBUS level change
+#define USBOTG_INTR_VBUSERR         0x00800000  // VBUS Error
+#define USBOTG_INTR_SESREQ          0x00400000  // SESSION REQUEST
+#define USBOTG_INTR_DISCON          0x00200000  // Session Disconnect
+#define USBOTG_INTR_CONN            0x00100000  // Session Connect
+#define USBOTG_INTR_SOF             0x00080000  // Start of Frame
+#define USBOTG_INTR_BABBLE          0x00040000  // Babble Detected
+#define USBOTG_INTR_RESET           0x00040000  // RESET Signaling Detected
+#define USBOTG_INTR_RESUME          0x00020000  // RESUME Signaling Detected
+#define USBOTG_INTR_SUSPEND         0x00010000  // SUSPEND Signaling Detected
+
 #ifdef __cplusplus
 }
 #endif
