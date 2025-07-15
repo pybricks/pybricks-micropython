@@ -27,7 +27,7 @@
 
 // This needs to match the interface expected by the PRU firmware
 typedef struct shared_ram {
-    uint8_t pwms[4];
+    uint8_t pwms[PBDRV_PWM_EV3_NUM_CHANNELS];
 } shared_ram;
 static volatile shared_ram *const pru1_shared_ram = (volatile shared_ram *)PRU1_SHARED_RAM_ADDR;
 
@@ -43,18 +43,14 @@ static const pbdrv_pwm_driver_funcs_t pbdrv_pwm_tiam1808_funcs = {
 extern char _pru1_start;
 extern char _pru1_end;
 
+#define PINMUX_ALT_PRU1     4
+
 void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     // Enable Timer0 "34" half to count up to 256 * 256
     // This is used by the PRU to time the PWM
     TimerPreScalarCount34Set(SOC_TMR_0_REGS, 0);
     TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, 256 * 256 - 1);
     TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
-
-    // Set GPIO alt modes for the PRU
-    pbdrv_gpio_alt(&pbdrv_pwm_tiam1808_platform_data[0].gpio_red, SYSCFG_PINMUX13_PINMUX13_11_8_PRU1_R30_12);
-    pbdrv_gpio_alt(&pbdrv_pwm_tiam1808_platform_data[0].gpio_green, SYSCFG_PINMUX14_PINMUX14_3_0_PRU1_R30_10);
-    pbdrv_gpio_alt(&pbdrv_pwm_tiam1808_platform_data[1].gpio_red, SYSCFG_PINMUX13_PINMUX13_15_12_PRU1_R30_11);
-    pbdrv_gpio_alt(&pbdrv_pwm_tiam1808_platform_data[1].gpio_green, SYSCFG_PINMUX13_PINMUX13_7_4_PRU1_R30_13);
 
     // TODO: Remove this test code
     pru1_shared_ram->pwms[0] = 0x20;    // R
@@ -73,9 +69,11 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     PRUSSDRVPruSetCTable(1, 30, (PRU1_SHARED_RAM_ADDR >> 8) & 0xffff);
     PRUSSDRVPruEnable(1);
 
-    for (int i = 0; i < PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV; i++) {
-        devs[i].funcs = &pbdrv_pwm_tiam1808_funcs;
-        devs[i].priv = (pbdrv_pwm_tiam1808_platform_data_t *)&pbdrv_pwm_tiam1808_platform_data[i];
+    devs[0].funcs = &pbdrv_pwm_tiam1808_funcs;
+
+    // Set GPIO alt modes for the PRU
+    for (int j = 0; j < PBDRV_PWM_EV3_NUM_CHANNELS; j++) {
+        pbdrv_gpio_alt(&pbdrv_pwm_tiam1808_platform_data.gpios[j], PINMUX_ALT_PRU1);
     }
 }
 

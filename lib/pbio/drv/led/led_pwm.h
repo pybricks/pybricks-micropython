@@ -52,6 +52,8 @@ typedef struct {
     uint8_t scale_factor;
 } pbdrv_led_pwm_platform_data_t;
 
+#define PBDRV_LED_PWM_CHANNEL_INVALID   0xff
+
 // defined in platform/*/platform.c
 extern const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV];
 

@@ -66,7 +66,6 @@
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (2)
 #define PBDRV_CONFIG_PWM_TIAM1808                   (1)
-#define PBDRV_CONFIG_PWM_TIAM1808_NUM_DEV           (2)
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_EV3                      (1)
