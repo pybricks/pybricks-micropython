@@ -110,32 +110,37 @@ void SPIModeConfigure(unsigned int baseAdd, unsigned int flag)
 }
 
 /**
-* \brief - Configures SPI Pin Control Registers.\n
+* \brief - Get SPI Pin Control Register value.\n
 *
 * \param - baseAdd is the Memory Address of the SPI instance used.\n
 * \param - idx     is the Pin Control register number.It can take
 *                  any integer value between 0 and 5.\n
 *
-* \param - flag    is to indicate to whether to (1)read from Pin Control
-*                  Register or to (0)write to Pin Control Register.\n
-*
-* \param - val     is a value/return argument which has the value to be written
-*                  in case of writes or the value read in case of reads
+* \param - val     the value read
 *
 * \return none.\n
 **/
-void SPIPinControl(unsigned int baseAdd, unsigned int idx,
-                           unsigned int flag, unsigned int *val)
+void SPIPinControlGet(unsigned int baseAdd, unsigned int idx, unsigned int *val)
 {
-    if (0 == flag)
-    {
-        HWREG(baseAdd + SPI_SPIPC(idx)) = *val;
-    }
-    else
-    {
-        *val = HWREG(baseAdd + SPI_SPIPC(idx));
-    }
+    *val = HWREG(baseAdd + SPI_SPIPC(idx));
 }
+
+/**
+* \brief - Set SPI Pin Control Register value.\n
+*
+* \param - baseAdd is the Memory Address of the SPI instance used.\n
+* \param - idx     is the Pin Control register number.It can take
+*                  any integer value between 0 and 5.\n
+*
+* \param - val     the value to be written
+*
+* \return none.\n
+**/
+void SPIPinControlSet(unsigned int baseAdd, unsigned int idx, unsigned int val)
+{
+    HWREG(baseAdd + SPI_SPIPC(idx)) = val;
+}
+
 /**
 * \brief - Configures SPI CS and ENA Delay in SPIDELAY Register.\n
 *
