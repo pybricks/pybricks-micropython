@@ -26,8 +26,7 @@ typedef struct _hubs_NXTBrick_obj_t {
 } hubs_NXTBrick_obj_t;
 
 static mp_obj_t pb_type_nxtbrick_button_pressed(void) {
-    pbio_button_flags_t flags;
-    pb_assert(pbio_button_is_pressed(&flags));
+    pbio_button_flags_t flags = pbdrv_button_get_pressed();
     mp_obj_t pressed[4];
     size_t num = 0;
     if (flags & PBIO_BUTTON_LEFT) {

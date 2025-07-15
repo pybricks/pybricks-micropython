@@ -154,8 +154,7 @@ pbio_button_flags_t pb_type_button_get_button_flag(mp_obj_t obj) {
  * Common button pressed function for single button hubs.
  */
 mp_obj_t pb_type_button_pressed_hub_single_button(void) {
-    pbio_button_flags_t flags;
-    pb_assert(pbio_button_is_pressed(&flags));
+    pbio_button_flags_t flags = pbdrv_button_get_pressed();
     mp_obj_t buttons[] = { pb_type_button_new(MP_QSTR_CENTER) };
 
     #if MICROPY_PY_BUILTINS_SET

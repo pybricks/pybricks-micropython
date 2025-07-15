@@ -63,8 +63,7 @@ void pbsys_program_stop_poll(void) {
         return;
     }
 
-    pbio_button_flags_t btn;
-    pbio_button_is_pressed(&btn);
+    pbio_button_flags_t btn = pbdrv_button_get_pressed();
 
     if (!stop_buttons) {
         return;

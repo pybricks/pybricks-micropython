@@ -746,9 +746,7 @@ void SystemInit(void) {
  * as a very convenient way to power off the EV3 for fast iteration.
  */
 void lazy_poweroff_hook(void) {
-    pbio_button_flags_t flags;
-    pbio_error_t err = pbio_button_is_pressed(&flags);
-    if (err == PBIO_SUCCESS && (flags & PBIO_BUTTON_LEFT_UP)) {
+    if (pbdrv_button_get_pressed() & PBIO_BUTTON_LEFT_UP) {
         pbdrv_reset_power_off();
         return;
     }

@@ -183,30 +183,28 @@ void pbsys_hmi_handle_status_change(pbsys_status_change_t event, pbio_pybricks_s
  * This is called periodically to update the current HMI state.
  */
 void pbsys_hmi_poll(void) {
-    pbio_button_flags_t btn;
+    pbio_button_flags_t btn = pbdrv_button_get_pressed();
 
-    if (pbio_button_is_pressed(&btn) == PBIO_SUCCESS) {
-        if (btn & PBIO_BUTTON_CENTER) {
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-            update_program_run_button_wait_state(true);
+    if (btn & PBIO_BUTTON_CENTER) {
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
+        update_program_run_button_wait_state(true);
 
-            // power off when button is held down for 2 seconds
-            if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 2000)) {
-                pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
-            }
-        } else {
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-            update_program_run_button_wait_state(false);
+        // power off when button is held down for 2 seconds
+        if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 2000)) {
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
         }
-
-        #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-        update_bluetooth_button_wait_state(btn & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON);
-        #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
-        #if PBSYS_CONFIG_HMI_NUM_SLOTS
-        update_left_right_button_wait_state(btn & PBIO_BUTTON_LEFT, btn & PBIO_BUTTON_RIGHT);
-        #endif // PBSYS_CONFIG_HMI_NUM_SLOTS
+    } else {
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
+        update_program_run_button_wait_state(false);
     }
+
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    update_bluetooth_button_wait_state(btn & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON);
+    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
+
+    #if PBSYS_CONFIG_HMI_NUM_SLOTS
+    update_left_right_button_wait_state(btn & PBIO_BUTTON_LEFT, btn & PBIO_BUTTON_RIGHT);
+    #endif // PBSYS_CONFIG_HMI_NUM_SLOTS
 
     pbsys_status_light_poll();
 }

@@ -275,12 +275,10 @@ static pbio_button_flags_t pb_module_tools_hub_menu_wait_for_press(bool press) {
     // This function should only be used in a blocking context.
     pb_module_tools_assert_blocking();
 
-    pbio_error_t err;
     pbio_button_flags_t btn;
-    while ((err = pbio_button_is_pressed(&btn)) == PBIO_SUCCESS && ((bool)btn) == !press) {
+    while ((bool)(btn = pbdrv_button_get_pressed()) == !press) {
         MICROPY_EVENT_POLL_HOOK;
     }
-    pb_assert(err);
     return btn;
 }
 
