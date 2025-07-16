@@ -43,8 +43,6 @@ typedef struct {
     uint16_t sample_attenuator;
 } pb_type_Speaker_obj_t;
 
-static uint16_t waveform_data[128];
-
 static mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_Speaker_obj_t, self,
@@ -63,44 +61,8 @@ static mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, 
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_volume_obj, 1, pb_type_Speaker_volume);
 
-static void pb_type_Speaker_generate_square_wave(uint16_t sample_attenuator) {
-    uint16_t lo_amplitude_value = INT16_MAX - sample_attenuator;
-    uint16_t hi_amplitude_value = sample_attenuator + INT16_MAX;
-
-    size_t i = 0;
-    for (; i < MP_ARRAY_SIZE(waveform_data) / 2; i++) {
-        waveform_data[i] = lo_amplitude_value;
-    }
-    for (; i < MP_ARRAY_SIZE(waveform_data); i++) {
-        waveform_data[i] = hi_amplitude_value;
-    }
-}
-
-// For 0 frequencies that are just flat lines.
-static void pb_type_Speaker_generate_line_wave(void) {
-    for (size_t i = 0; i < MP_ARRAY_SIZE(waveform_data); i++) {
-        waveform_data[i] = INT16_MAX;
-    }
-}
-
 static void pb_type_Speaker_start_beep(uint32_t frequency, uint16_t sample_attenuator) {
-    // TODO: allow other wave shapes - sine, triangle, sawtooth
-    // TODO: don't recreate waveform if it hasn't changed shape or volume
-
-    if (frequency == 0) {
-        pb_type_Speaker_generate_line_wave();
-    } else {
-        pb_type_Speaker_generate_square_wave(sample_attenuator);
-    }
-
-    if (frequency < 64) {
-        frequency = 64;
-    }
-    if (frequency > 24000) {
-        frequency = 24000;
-    }
-
-    pbdrv_sound_start(&waveform_data[0], MP_ARRAY_SIZE(waveform_data), frequency * MP_ARRAY_SIZE(waveform_data));
+    pbdrv_beep_start(frequency, sample_attenuator);
 }
 
 static void pb_type_Speaker_stop_beep(void) {
