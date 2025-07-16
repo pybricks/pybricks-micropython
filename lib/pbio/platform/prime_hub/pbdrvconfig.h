@@ -104,6 +104,8 @@
 #define PBDRV_CONFIG_RESISTOR_LADDER_NUM_DEV        (2)
 
 #define PBDRV_CONFIG_SOUND                          (1)
+#define PBDRV_CONFIG_SOUND_SAMPLED                  (1)
+#define PBDRV_CONFIG_SOUND_BEEP_SAMPLED             (1)
 #define PBDRV_CONFIG_SOUND_STM32_HAL_DAC            (1)
 
 #define PBDRV_CONFIG_UART                           (1)
