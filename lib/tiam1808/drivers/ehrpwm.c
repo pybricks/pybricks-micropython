@@ -146,6 +146,38 @@ void EHRPWMPWMOpFreqSet(unsigned int baseAddr,
 
 
 /**
+ * \brief  This API configures the PWM Frequency/Period. The period count
+ *         determines the period of the final output waveform.
+ *         This function loads the precise period value specified.
+ *
+ * \param   baseAddr     Base Address of the PWM Module Registers.
+ * \param   tbPeriod     Timebase period.
+ *
+ * \param   counterDir           Direction of the counter(up, down, up-down)
+ * \param   enableShadowWrite    Whether write to Period register is to be shadowed
+ *
+ * \return  None.
+ *
+ **/
+void EHRPWMPWMOpPeriodSet(unsigned int baseAddr,
+                        unsigned int tbPeriod,
+                        unsigned int counterDir,
+                        bool enableShadowWrite)
+{
+     HWREGH(baseAddr + EHRPWM_TBCTL) = (HWREGH(baseAddr + EHRPWM_TBCTL) &
+             (~EHRPWM_PRD_LOAD_SHADOW_MASK)) | ((enableShadowWrite <<
+            EHRPWM_TBCTL_PRDLD_SHIFT) & EHRPWM_PRD_LOAD_SHADOW_MASK);
+
+     HWREGH(baseAddr + EHRPWM_TBCTL) = (HWREGH(baseAddr + EHRPWM_TBCTL) &
+             (~EHRPWM_COUNTER_MODE_MASK)) | ((counterDir <<
+            EHRPWM_TBCTL_CTRMODE_SHIFT) &  EHRPWM_COUNTER_MODE_MASK);
+
+     HWREGH(baseAddr + EHRPWM_TBPRD) = (unsigned short)tbPeriod;
+
+}
+
+
+/**
  * \brief  This API configures emulation mode. This setting determines
  *         the behaviour of Timebase during emulation (debugging).
  *
