@@ -30,11 +30,32 @@ static const pbdrv_gpio_t pin_audio = PBDRV_GPIO_EV3_PIN(3, 7, 4, 0, 0);
 // and we do not want the usable bit depth to vary as the sample rate changes.
 static const unsigned N_BITS_PER_SAMPLE = 12;
 
+static uint64_t sample_timing_accum_numerator;
+static uint32_t sample_idx;
+
+static const uint16_t *playing_data;
+static uint32_t playing_data_len;
+static uint32_t playing_sample_rate;
+
 static void sound_isr() {
     EHRPWMETIntClear(SOC_EHRPWM_0_REGS);
     IntSystemStatusClear(SYS_INT_EHRPWM0);
 
-    // TODO: Load samples
+    // Convert the hardware sample index to a desired data sample index
+    // (using a naive ratio, rearranged to be computable using integers)
+    // TODO: Use a real DSP resampling algorithm
+    sample_timing_accum_numerator += (uint64_t)playing_sample_rate * (1ull << N_BITS_PER_SAMPLE);
+    if (sample_timing_accum_numerator >= SOC_EHRPWM_0_MODULE_FREQ) {
+        sample_timing_accum_numerator -= SOC_EHRPWM_0_MODULE_FREQ;
+        sample_idx++;
+    }
+    if (sample_idx == playing_data_len) {
+        sample_idx = 0;
+    }
+
+    uint16_t sample = playing_data[sample_idx];
+    // TODO: Dither the quantization error
+    HWREGH(SOC_EHRPWM_0_REGS + EHRPWM_CMPB) = sample >> (16 - N_BITS_PER_SAMPLE);
 }
 
 void pbdrv_sound_stop() {
@@ -52,7 +73,28 @@ void pbdrv_sound_stop() {
 }
 
 void pbdrv_sound_start(const uint16_t *data, uint32_t length, uint32_t sample_rate) {
+    // Stop any currently-playing sounds
+    pbdrv_sound_stop();
 
+    if (length == 0) {
+        return;
+    }
+
+    __asm__ volatile ("" ::: "memory");
+    playing_data = data;
+    playing_data_len = length;
+    playing_sample_rate = sample_rate;
+    sample_idx = 0;
+    sample_timing_accum_numerator = 0;
+    __asm__ volatile ("" ::: "memory");
+
+    // Set the first sample
+    HWREGH(SOC_EHRPWM_0_REGS + EHRPWM_CMPB) = data[0] >> (16 - N_BITS_PER_SAMPLE);
+
+    // Enable all the sound generation
+    pbdrv_gpio_out_high(&pin_sound_en);
+    EHRPWMETIntEnable(SOC_EHRPWM_0_REGS);
+    HWREGH(SOC_EHRPWM_0_REGS + EHRPWM_TBCTL) = (HWREGH(SOC_EHRPWM_0_REGS + EHRPWM_TBCTL) & ~EHRPWM_TBCTL_CTRMODE) | EHRPWM_TBCTL_CTRMODE_UP;
 }
 
 void pbdrv_sound_init() {
