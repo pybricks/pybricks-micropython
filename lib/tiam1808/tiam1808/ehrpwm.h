@@ -172,6 +172,9 @@ void EHRPWMTimebaseClkConfig(unsigned int baseAddr, unsigned int tbClk,
 void EHRPWMPWMOpFreqSet(unsigned int baseAddr, unsigned int tbClk,
 		unsigned int pwmFreq,unsigned int counterDir,
 		bool enableShadowWrite);
+void EHRPWMPWMOpPeriodSet(unsigned int baseAddr, unsigned int tbPeriod,
+		unsigned int counterDir,
+		bool enableShadowWrite);
 void EHRPWMTBEmulationModeSet(unsigned int baseAddr, unsigned int mode);
 void EHRPWMTimebaseSyncEnable(unsigned int baseAddr, unsigned int tbPhsValue,
 	       	unsigned int phsCountDir);
