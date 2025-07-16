@@ -24,14 +24,11 @@
 #include "../../drv/pwm/pwm_ev3.h"
 #include "../../drv/gpio/gpio_ev3.h"
 
-// This is the second 64K of the on-chip RAM
-#define PRU1_SHARED_RAM_ADDR    0x80010000
-
 // This needs to match the interface expected by the PRU firmware
 typedef struct shared_ram {
     uint8_t pwms[PBDRV_PWM_EV3_NUM_CHANNELS];
 } shared_ram;
-static volatile shared_ram *const pru1_shared_ram = (volatile shared_ram *)PRU1_SHARED_RAM_ADDR;
+static volatile shared_ram pru1_shared_ram __attribute__((section(".shared1")));
 
 static pbio_error_t pbdrv_pwm_tiam1808_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t value) {
     // Blue not available.
@@ -39,7 +36,7 @@ static pbio_error_t pbdrv_pwm_tiam1808_set_duty(pbdrv_pwm_dev_t *dev, uint32_t c
         return PBIO_SUCCESS;
     }
 
-    pru1_shared_ram->pwms[ch] = value;
+    pru1_shared_ram.pwms[ch] = value;
     return PBIO_SUCCESS;
 }
 
@@ -60,7 +57,7 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
 
     // Clear shared command memory
-    memset((void *)pru1_shared_ram, 0, sizeof(shared_ram));
+    memset((void *)&pru1_shared_ram, 0, sizeof(shared_ram));
 
     // Enable PRU1 and load its firmware
     PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
@@ -69,8 +66,8 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     unsigned int *fw_start = (unsigned int *)&_pru1_start;
     uint32_t fw_sz = &_pru1_end - &_pru1_start;
     PRUSSDRVPruWriteMemory(PRUSS0_PRU1_IRAM, 0, fw_start, fw_sz);
-    // Set constant table C30 to point to 0x80010000
-    PRUSSDRVPruSetCTable(1, 30, (PRU1_SHARED_RAM_ADDR >> 8) & 0xffff);
+    // Set constant table C30 to point to shared memory
+    PRUSSDRVPruSetCTable(1, 30, (((uint32_t)&pru1_shared_ram) >> 8) & 0xffff);
     PRUSSDRVPruEnable(1);
 
     devs[0].funcs = &pbdrv_pwm_tiam1808_funcs;
