@@ -86,13 +86,16 @@ const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_L
 };
 
 static const pbdrv_led_pwm_platform_color_t pbdrv_led_pwm_color = {
-    // TODO: Calibrate these numbers, as well as .scale_factor
-    .r_factor = 1000,
-    .g_factor = 170,
-    .b_factor = 200,
-    .r_brightness = 174,
-    .g_brightness = 1590,
-    .b_brightness = 327,
+    // The red LED is much stronger than the green one, so leave green at 1000
+    // and adjust red until yellow looks good.
+    .r_factor = 150,
+    .g_factor = 1000,
+    .b_factor = 0,
+    // 1250 allows max brightness for an 8-bit PWM size (with scale_factor = 1).
+    // Increase to limit max brightness. Going lower will cause overflow.
+    .r_brightness = 1250,
+    .g_brightness = 1250,
+    .b_brightness = 0,
 };
 
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
@@ -106,8 +109,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         // Blue not available.
         .b_id = PWM_DEV_0,
         .b_ch = PBDRV_LED_PWM_CHANNEL_INVALID,
-        // TODO: PWM not yet implemented, so these values not used.
-        .scale_factor = 35,
+        .scale_factor = 1,
     },
     {
         .color = &pbdrv_led_pwm_color,
@@ -119,8 +121,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         // Blue not available.
         .b_id = PWM_DEV_0,
         .b_ch = PBDRV_LED_PWM_CHANNEL_INVALID,
-        // TODO: PWM not yet implemented, so these values not used.
-        .scale_factor = 35,
+        .scale_factor = 1,
     },
 };
 
