@@ -91,6 +91,13 @@ extern "C" {
 #define PRU1IRAM_PHYS_BASE            0x01C3C000
 #endif
 
+/*
+ * PRUSS control and status registers offsets
+ */
+#define PRU_CONTABBLKIDX0       0x20
+#define PRU_CONTABPROPTR0       0x28
+#define PRU_CONTABPROPTR1       0x2C
+
 #define PRU_EVTOUT_0            0
 #define PRU_EVTOUT_1            1
 #define PRU_EVTOUT_2            2
@@ -257,6 +264,10 @@ void PRUSSDRVIntcSetCmr(unsigned short sysevt,
                         unsigned short channel);
 void PRUSSDRVIntcSetHmr(unsigned short channel,
                         unsigned short host);
+
+int PRUSSDRVPruSetCTable(unsigned int pruNum,
+                         unsigned int ctable_idx,
+                         unsigned int value);
 
 void ICSS_Init(void);
 
