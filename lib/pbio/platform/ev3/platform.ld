@@ -5,7 +5,8 @@ ENTRY(Entry)
 
 MEMORY
 {
-    SRAM       (rwx) : ORIGIN = 0x80000000, LENGTH = 128K
+    SRAM_PRU0  (rw)  : ORIGIN = 0x80000000, LENGTH = 64K
+    SRAM_PRU1  (rw)  : ORIGIN = 0x80010000, LENGTH = 64K
     DDR_unused (rwx) : ORIGIN = 0xC0000000, LENGTH = 0x8000
     DDR        (rwx) : ORIGIN = 0xC0008000, LENGTH = (64M - 0x8000)
     ARM_LRAM   (rwx) : ORIGIN = 0xFFFF0000, LENGTH = 8K
@@ -83,4 +84,14 @@ SECTIONS
         . = . + _minimal_stack_size; /* will cause linker error if there is not enough space for stack. */
         . = ALIGN(4);
     } > DDR
+
+    /* Shared on-chip SRAM */
+    .shared0 (NOLOAD) :
+    {
+        *(.shared0)
+    } > SRAM_PRU0
+    .shared1 (NOLOAD) :
+    {
+        *(.shared1)
+    } > SRAM_PRU1
 }
