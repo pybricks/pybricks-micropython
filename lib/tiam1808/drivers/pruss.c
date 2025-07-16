@@ -332,6 +332,53 @@ void PRUSSDRVIntcSetHmr(unsigned short channel,
             | (((host) & 0xF) << (((channel) & 0x3) << 3));
 }
 
+/**
+ * \brief   Set PRU constant table entries
+ *
+ * \param   pruNum          PRU instance number[0 or 1].
+ * \param   ctable_idx      Index into constants table
+ * \param   value           Value to set
+ *
+ * \return   0 in case of success, -1 otherwise.
+ */
+int PRUSSDRVPruSetCTable(unsigned int pruNum,
+                         unsigned int ctable_idx,
+                         unsigned int value)
+{
+    unsigned int regAddr;
+
+    if(pruNum == 0)
+        regAddr = PRU0CONTROL_PHYS_BASE;
+    else if(pruNum == 1)
+        regAddr = PRU1CONTROL_PHYS_BASE;
+    else
+        return -1;
+
+    switch (ctable_idx) {
+    case 24:
+        HWREG(regAddr + PRU_CONTABBLKIDX0) = (HWREG(regAddr + PRU_CONTABBLKIDX0) & ~0xf) | (value & 0xf);
+        break;
+    case 25:
+        HWREG(regAddr + PRU_CONTABBLKIDX0) = (HWREG(regAddr + PRU_CONTABBLKIDX0) & ~0xf0000) | ((value & 0xf) << 16);
+        break;
+    case 28:
+        HWREG(regAddr + PRU_CONTABPROPTR0) = (HWREG(regAddr + PRU_CONTABPROPTR0) & ~0xffff) | (value & 0xffff);
+        break;
+    case 29:
+        HWREG(regAddr + PRU_CONTABPROPTR0) = (HWREG(regAddr + PRU_CONTABPROPTR0) & ~0xffff0000) | ((value & 0xffff) << 16);
+        break;
+    case 30:
+        HWREG(regAddr + PRU_CONTABPROPTR1) = (HWREG(regAddr + PRU_CONTABPROPTR1) & ~0xffff) | (value & 0xffff);
+        break;
+    case 31:
+        HWREG(regAddr + PRU_CONTABPROPTR1) = (HWREG(regAddr + PRU_CONTABPROPTR1) & ~0xffff0000) | ((value & 0xffff) << 16);
+        break;
+    default:
+        return -1;
+    }
+    return 0;
+}
+
 void ICSS_Init(void)
 {
 	/*	ICSS PRCM Enable	*/
