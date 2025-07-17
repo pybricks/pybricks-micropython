@@ -25,6 +25,7 @@
 #define PYBRICKS_PY_COMMON_MOTORS               (1)
 #define PYBRICKS_PY_COMMON_SPEAKER              (1)
 #define PYBRICKS_PY_COMMON_SYSTEM               (1)
+#define PYBRICKS_PY_COMMON_SYSTEM_UMM_INFO      (1)
 #define PYBRICKS_PY_EV3DEVICES                  (1)
 #define PYBRICKS_PY_EXPERIMENTAL                (1)
 #define PYBRICKS_PY_HUBS                        (1)
