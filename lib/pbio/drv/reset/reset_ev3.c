@@ -7,6 +7,8 @@
 
 #if PBDRV_CONFIG_RESET_EV3
 
+#include <stdbool.h>
+
 #include <pbdrv/reset.h>
 #include <pbdrv/gpio.h>
 
@@ -18,6 +20,11 @@
 #include <tiam1808/timer.h>
 
 #define BOOTLOADER_UPDATE_MODE_VALUE    0x5555AAAA
+
+// 'Pybr'
+#define RESET_REASON_FLAG_WDT           0x50796272
+// 'rboo'
+#define RESET_REASON_FLAG_SOFT_RESET    0x72626f6f
 
 typedef struct {
     // 0xffff1ff0
@@ -39,10 +46,13 @@ typedef struct {
 // This lives at the very end of the ARM local RAM.
 extern volatile persistent_data_t ev3_persistent_data;
 
+static uint32_t saved_reset_reason_flag;
+
 static const pbdrv_gpio_t poweroff_pin = PBDRV_GPIO_EV3_PIN(13, 19, 16, 6, 11);
 
 void pbdrv_reset_init(void) {
-    pbdrv_gpio_out_high(&poweroff_pin);
+    saved_reset_reason_flag = ev3_persistent_data.reset_reason_flag;
+    ev3_persistent_data.reset_reason_flag = RESET_REASON_FLAG_WDT;
 }
 
 void pbdrv_reset(pbdrv_reset_action_t action) {
@@ -57,6 +67,8 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
             default:
                 // PBDRV_RESET_ACTION_RESET
 
+                ev3_persistent_data.reset_reason_flag = RESET_REASON_FLAG_SOFT_RESET;
+
                 // Poke the watchdog timer with a bad value to immediately trigger it
                 HWREG(SOC_TMR_1_REGS + TMR_WDTCR) = 0;
                 break;
@@ -65,7 +77,17 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
 }
 
 pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
+    if (saved_reset_reason_flag == RESET_REASON_FLAG_SOFT_RESET) {
+        return PBDRV_RESET_REASON_SOFTWARE;
+    }
+    if (saved_reset_reason_flag == RESET_REASON_FLAG_WDT) {
+        return PBDRV_RESET_REASON_WATCHDOG;
+    }
     return PBDRV_RESET_REASON_NONE;
+}
+
+void pbdrv_reset_ev3_early_init(void) {
+    pbdrv_gpio_out_high(&poweroff_pin);
 }
 
 void pbdrv_reset_power_off(void) {
