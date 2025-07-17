@@ -49,6 +49,7 @@
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/i2c.h>
 #include <tiam1808/psc.h>
+#include <tiam1808/timer.h>
 #include <tiam1808/uart.h>
 
 #include <umm_malloc.h>
@@ -489,6 +490,12 @@ void ev3_panic_handler(int except_type, ev3_panic_ctx *except_data) {
     panic_putu32(except_data->spsr);
 
     panic_puts("\r\nSystem will now reboot...\r\n");
+
+    // Poke the watchdog timer with a bad value to immediately trigger it
+    // if it has already been configured. If it has *not* been configured,
+    // that means we are crashing in early boot, and we let the jump back
+    // to the reset vector take care of rebooting the system.
+    HWREG(SOC_TMR_1_REGS + TMR_WDTCR) = 0;
 }
 
 /**

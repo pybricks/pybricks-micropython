@@ -9,13 +9,19 @@ MEMORY
     SRAM_PRU1  (rw)  : ORIGIN = 0x80010000, LENGTH = 64K
     DDR_unused (rwx) : ORIGIN = 0xC0000000, LENGTH = 0x8000
     DDR        (rwx) : ORIGIN = 0xC0008000, LENGTH = (64M - 0x8000)
-    ARM_LRAM   (rwx) : ORIGIN = 0xFFFF0000, LENGTH = 8K
+    ARM_LRAM   (rwx) : ORIGIN = 0xFFFF0000, LENGTH = (8K - 16)
 }
 
 _minimal_stack_size = 4M;
 pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 4;
 /* Extra heap for large allocations (images, etc). */
 pb_umm_heap_size = 2M;
+/*
+We declare this in this style rather than creating a section.
+If we do create a section, the loader (U-boot) will always clear it.
+This defeats what we are trying to do to determine reset causes.
+*/
+ev3_persistent_data = ORIGIN(ARM_LRAM) + LENGTH(ARM_LRAM);
 
 SECTIONS
 {
