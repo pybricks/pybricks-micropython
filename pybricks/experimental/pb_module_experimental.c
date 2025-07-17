@@ -11,6 +11,7 @@
 #include "py/runtime.h"
 #include "py/mperrno.h"
 
+#include <pbdrv/reset.h>
 #include <pbio/util.h>
 
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -58,9 +59,32 @@ static mp_obj_t experimental_hello_world(size_t n_args, const mp_obj_t *pos_args
 // See also experimental_globals_table below. This function object is added there to make it importable.
 static MP_DEFINE_CONST_FUN_OBJ_KW(experimental_hello_world_obj, 0, experimental_hello_world);
 
+// pybricks.experimental.reset
+static mp_obj_t experimental_reset(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(reset_type));
+
+    mp_int_t reset_type = pb_obj_get_int(reset_type_in);
+
+    pbdrv_reset(reset_type);
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(experimental_reset_obj, 0, experimental_reset);
+
+// pybricks.experimental.crash
+static mp_obj_t experimental_crash(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    __asm__ volatile (".word 0xffffffff");
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(experimental_crash_obj, 0, experimental_crash);
+
 static const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
+    { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&experimental_reset_obj) },
+    { MP_ROM_QSTR(MP_QSTR_crash), MP_ROM_PTR(&experimental_crash_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);
 
