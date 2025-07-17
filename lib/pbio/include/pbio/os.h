@@ -194,7 +194,7 @@ struct _pbio_os_process_t {
 #define PBIO_OS_AWAIT_WHILE(state, condition)    \
     do {                                         \
         PBIO_OS_ASYNC_SET_CHECKPOINT(state);     \
-        if (condition) {                         \
+        if ((condition)) {                       \
             return PBIO_ERROR_AGAIN;             \
         }                                        \
     } while (0)
