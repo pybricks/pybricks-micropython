@@ -59,6 +59,9 @@
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (2)
 
+#define PBDRV_CONFIG_MMCSD                          (1)
+#define PBDRV_CONFIG_MMCSD_EV3                      (1)
+
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_EV3               (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV           (8)
