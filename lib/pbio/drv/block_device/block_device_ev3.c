@@ -24,6 +24,7 @@
 
 #include <pbdrv/block_device.h>
 #include <pbdrv/clock.h>
+#include <pbdrv/compiler.h>
 #include <pbdrv/gpio.h>
 
 #include <tiam1808/edma.h>
@@ -486,8 +487,8 @@ static pbio_error_t spi_begin_for_flash(
 
         spi_dev.status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
 
-        // TODO: pbio probably needs a framework for memory barriers and DMA cache management
-        __asm__ volatile ("" ::: "memory");
+        // TODO: eventually needs DMA cache management
+        pbdrv_compiler_memory_barrier();
 
         EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
         EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
@@ -805,8 +806,8 @@ static pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmd
 
     spi_dev.status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
 
-    // TODO: pbio probably needs a framework for memory barriers and DMA cache management
-    __asm__ volatile ("" ::: "memory");
+    // TODO: eventually needs DMA cache management
+    pbdrv_compiler_memory_barrier();
 
     EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
     EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);

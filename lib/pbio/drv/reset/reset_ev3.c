@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 
+#include <pbdrv/compiler.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/gpio.h>
 
@@ -63,7 +64,7 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
                 break;
             case PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE:
                 ev3_persistent_data.bootloader_update_flag = BOOTLOADER_UPDATE_MODE_VALUE;
-                __attribute__((fallthrough));
+                PBDRV_FALL_THROUGH;
             default:
                 // PBDRV_RESET_ACTION_RESET
 
