@@ -26,13 +26,7 @@
 // Singleton with information about the currently (or soon) active program.
 static pbsys_main_program_t program;
 
-/**
- * Checks if a start request has been made for the main program.
- *
- * @param [in]  program A pointer to the main program structure.
- * @returns     true if a start request has been made, false otherwise.
- */
-static bool pbsys_main_program_start_requested() {
+bool pbsys_main_program_start_is_requested() {
     return program.start_request_type != PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
 }
 
@@ -58,7 +52,7 @@ pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_typ
 pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type) {
 
     // Can't start new program if already running or new requested.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || pbsys_main_program_start_requested()) {
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) || pbsys_main_program_start_is_requested()) {
         return PBIO_ERROR_BUSY;
     }
 
@@ -98,7 +92,7 @@ int main(int argc, char **argv) {
         // Drives all processes while we wait for user input.
         pbio_os_run_processes_and_wait_for_event();
 
-        if (!pbsys_main_program_start_requested()) {
+        if (!pbsys_main_program_start_is_requested()) {
             continue;
         }
 

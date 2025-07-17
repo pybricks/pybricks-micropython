@@ -74,7 +74,23 @@ typedef struct _pbsys_main_program_t {
 
 pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void);
 
+/**
+ * Requests a program to be started soon.
+ *
+ * @param [in]  id                  Program identifier or slot.
+ * @param [in]  start_request_type  Who is making the request.
+ * @returns     ::PBIO_ERROR_BUSY if a start request was already made or a program is already running.
+ *              ::PBIO_ERROR_NOT_SUPPORTED if the program is not available.
+ *              ::PBIO_SUCCESS otherwise.
+ */
 pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type);
+
+/**
+ * Checks if a program start request has been made.
+ *
+ * @returns     @c true if a request was already made, @c false if not.
+ */
+bool pbsys_main_program_start_is_requested();
 
 /**
  * Validates the program that is being requested to start.
@@ -131,6 +147,10 @@ static inline pbsys_main_program_start_request_type_t pbsys_main_program_get_sta
 
 static inline pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbsys_main_program_start_is_requested() {
+    return false;
 }
 
 static inline pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
