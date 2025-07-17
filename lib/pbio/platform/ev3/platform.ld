@@ -14,6 +14,8 @@ MEMORY
 
 _minimal_stack_size = 4M;
 pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 4;
+/* Extra heap for large allocations (images, etc). */
+pb_umm_heap_size = 2M;
 
 SECTIONS
 {
@@ -68,6 +70,11 @@ SECTIONS
     {
         . = ALIGN(4);
         *(.noinit)
+
+        . = ALIGN(4);
+        pb_umm_heap_start = .;
+        . = . + pb_umm_heap_size;
+        pb_umm_heap_end = .;
     } > DDR
 
     /* Exception vector table */

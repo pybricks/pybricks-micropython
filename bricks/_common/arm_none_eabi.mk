@@ -70,6 +70,15 @@ $(error failed)
 endif
 endif
 endif
+ifeq ($(PB_LIB_UMM_MALLOC),1)
+ifeq ("$(wildcard $(PBTOP)/lib/umm_malloc/README.md)","")
+$(info GIT cloning umm_malloc submodule)
+$(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/umm_malloc))
+ifeq ("$(wildcard $(PBTOP)/lib/umm_malloc/README.md)","")
+$(error failed)
+endif
+endif
+endif
 
 # lets micropython make files work with external files
 USER_C_MODULES = $(PBTOP)
@@ -479,6 +488,16 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 	usbd_pybricks.c \
 	)
 
+# umm_malloc library
+
+SRC_UMM_MALLOC = lib/umm_malloc/src/umm_malloc.c
+
+ifeq ($(PB_LIB_UMM_MALLOC),1)
+CFLAGS += -I$(PBTOP)/lib/umm_malloc/src
+endif
+
+# NXT OS
+
 NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	_abort.c \
 	assert.c \
@@ -551,6 +570,10 @@ endif
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
 $(BUILD)/lib/STM32_USB_Device_Library/%.o: CFLAGS += -Wno-sign-compare
+endif
+
+ifeq ($(PB_LIB_UMM_MALLOC),1)
+OBJ += $(addprefix $(BUILD)/, $(SRC_UMM_MALLOC:.c=.o))
 endif
 
 ifeq ($(PBIO_PLATFORM),nxt)

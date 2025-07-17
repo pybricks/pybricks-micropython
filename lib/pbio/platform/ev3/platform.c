@@ -51,6 +51,8 @@
 #include <tiam1808/psc.h>
 #include <tiam1808/uart.h>
 
+#include <umm_malloc.h>
+
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
 
@@ -720,6 +722,11 @@ void SystemInit(void) {
     } else {
         memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[0], 6);
     }
+
+    // Separate heap for large allocations - defined in linker script.
+    extern char pb_umm_heap_start;
+    extern char pb_umm_heap_end;
+    umm_init_heap(&pb_umm_heap_start, &pb_umm_heap_end - &pb_umm_heap_start);
 }
 
 

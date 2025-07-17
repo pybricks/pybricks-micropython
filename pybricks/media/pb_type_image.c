@@ -5,6 +5,12 @@
 
 #if PYBRICKS_PY_MEDIA && PYBRICKS_PY_MEDIA_IMAGE
 
+#if !MICROPY_ENABLE_FINALISER
+#error "MICROPY_ENABLE_FINALISER must be enabled."
+#endif
+
+#include <umm_malloc.h>
+
 #include "py/mphal.h"
 #include "py/obj.h"
 
@@ -23,9 +29,9 @@ extern const mp_obj_type_t pb_type_Image;
 // pybricks.media.Image class object
 typedef struct _pb_type_Image_obj_t {
     mp_obj_base_t base;
-    // TODO: avoid using MicroPython heap for large allocation, use a separate
-    // memory allocator and use a python object to handle memory release.
-    uint8_t *buffer;  // m_malloc'd buffer, may be shared, NULL for display.
+    // For images with shared memory, we need to keep a reference to the object
+    // that owns the memory.
+    mp_obj_t owner;
     pbio_image_t image;
     bool is_display;
 } pb_type_Image_obj_t;
@@ -45,7 +51,7 @@ static int get_color(mp_obj_t obj) {
 
 mp_obj_t pb_type_Image_display_obj_new(void) {
     pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
-    self->buffer = NULL;
+    self->owner = MP_OBJ_NULL;
     self->is_display = true;
     self->image = *pbdrv_display_get_image();
 
@@ -62,7 +68,7 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_NONE(x2),
         PB_ARG_DEFAULT_NONE(y2));
 
-    pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, type);
+    pb_type_Image_obj_t *self;
 
     if (mp_obj_is_type(source_in, &pb_type_Image)) {
         pb_type_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
@@ -70,10 +76,16 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
             // Copy.
             int width = source->image.width;
             int height = source->image.height;
-            // TODO: avoid using MicroPython heap for large allocation.
-            self->buffer = m_malloc(width * height * sizeof(uint8_t));
+
+            void *buf = umm_malloc(width * height * sizeof(uint8_t));
+            if (!buf) {
+                mp_raise_type(&mp_type_MemoryError);
+            }
+
+            self = mp_obj_malloc_with_finaliser(pb_type_Image_obj_t, &pb_type_Image);
+            self->owner = MP_OBJ_NULL;
             self->is_display = false;
-            pbio_image_init(&self->image, self->buffer, width, height, width);
+            pbio_image_init(&self->image, buf, width, height, width);
             pbio_image_draw_image(&self->image, &source->image, 0, 0);
         } else {
             // Sub-image.
@@ -81,7 +93,8 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
             mp_int_t y1 = pb_obj_get_int(y1_in);
             mp_int_t x2 = x2_in == mp_const_none ? source->image.width - 1 : pb_obj_get_int(x2_in);
             mp_int_t y2 = y2_in == mp_const_none ? source->image.height - 1 : pb_obj_get_int(y2_in);
-            self->buffer = source->buffer;
+            self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+            self->owner = source_in;
             self->is_display = false;
             int width = x2 - x1 + 1;
             int height = y2 - y1 + 1;
@@ -89,7 +102,8 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
         }
     } else if (mp_obj_equal(source_in, MP_OBJ_NEW_QSTR(MP_QSTR__screen_))) {
         // Screen.
-        self->buffer = NULL;
+        self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+        self->owner = MP_OBJ_NULL;
         self->is_display = true;
         self->image = *pbdrv_display_get_image();
     } else if (mp_obj_is_str(source_in)) {
@@ -101,6 +115,17 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
 
     return MP_OBJ_FROM_PTR(self);
 }
+
+static mp_obj_t pb_type_Image_close(mp_obj_t self_in) {
+    pb_type_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // If we own the memory, free it.
+    if (self->owner == MP_OBJ_NULL && !self->is_display && self->image.pixels) {
+        umm_free(self->image.pixels);
+        self->image.pixels = NULL;
+    }
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Image_close_obj, pb_type_Image_close);
 
 static mp_obj_t pb_type_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
@@ -116,12 +141,15 @@ static mp_obj_t pb_type_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_
         mp_raise_ValueError(MP_ERROR_TEXT("Image width or height is less than 1"));
     }
 
-    pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+    void *buf = umm_malloc(width * height * sizeof(uint8_t));
+    if (!buf) {
+        mp_raise_type(&mp_type_MemoryError);
+    }
 
-    // TODO: avoid using MicroPython heap for large allocation.
-    self->buffer = m_malloc0(width * height * sizeof(uint8_t));
+    pb_type_Image_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_Image_obj_t, &pb_type_Image);
+    self->owner = MP_OBJ_NULL;
     self->is_display = false;
-    pbio_image_init(&self->image, self->buffer, width, height, width);
+    pbio_image_init(&self->image, buf, width, height, width);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -328,6 +356,9 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_draw_circle_obj, 1, pb_type_Imag
 
 // dir(pybricks.media.Image)
 static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
+    // REVISIT: consider close() method and __enter__/__exit__ for context manager
+    // to deterministically free memory if needed.
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_Image_close_obj) },
     { MP_ROM_QSTR(MP_QSTR_empty), MP_ROM_PTR(&pb_type_Image_empty_obj) },
     { MP_ROM_QSTR(MP_QSTR_clear), MP_ROM_PTR(&pb_type_Image_clear_obj) },
     { MP_ROM_QSTR(MP_QSTR_load_image), MP_ROM_PTR(&pb_type_Image_load_image_obj) },

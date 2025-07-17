@@ -73,6 +73,7 @@
                 "${workspaceFolder}/lib/tiam1808/tiam1808/armv5",
                 "${workspaceFolder}/lib/tiam1808/tiam1808/armv5/am1808",
                 "${workspaceFolder}/lib/tiam1808/tiam1808/usblib",
+                "${workspaceFolder}/lib/umm_malloc/src"
             ],
             "defines": [
                 "am1808",
