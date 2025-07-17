@@ -77,6 +77,8 @@ for commit in pybricks.iter_commits(
         pybricks.git.submodule(
             "update", "--init", "--checkout", "lib/STM32_USB_Device_Library"
         )
+    if args.hub == "ev3":
+        pybricks.git.submodule("update", "--init", "--checkout", "lib/umm_malloc")
 
     # build the firmware
     subprocess.check_call(

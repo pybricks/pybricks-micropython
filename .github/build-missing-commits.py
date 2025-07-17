@@ -100,6 +100,7 @@ for commit in pybricks.iter_commits(
     pybricks.git.submodule(
         "update", "--init", "--checkout", "lib/STM32_USB_Device_Library"
     )
+    pybricks.git.submodule("update", "--init", "--checkout", "lib/umm_malloc")
 
     # Make mpy-cross once
     print("Building mpy-cross")
