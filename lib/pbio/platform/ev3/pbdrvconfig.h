@@ -89,3 +89,6 @@
 
 #define PBDRV_CONFIG_STACK                          (1)
 #define PBDRV_CONFIG_STACK_EMBEDDED                 (1)
+
+#define PBDRV_CONFIG_WATCHDOG                       (1)
+#define PBDRV_CONFIG_WATCHDOG_EV3                   (1)
