@@ -150,6 +150,20 @@ static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_storage_obj, pb_type_Syste
 
 #endif // PBIO_CONFIG_ENABLE_SYS
 
+#if PYBRICKS_PY_COMMON_SYSTEM_UMM_INFO
+
+// Not in library header for some reason.
+extern void *umm_info(void *ptr, bool force);
+
+// Prints out umm usage similar to micropython.mem_info().
+static mp_obj_t pb_type_System_umm_info(void) {
+    umm_info(NULL, false);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_umm_info_obj, pb_type_System_umm_info);
+
+#endif // PYBRICKS_PY_COMMON_SYSTEM_UMM_INFO
+
 // dir(pybricks.common.System)
 static const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_System_name_obj) },
@@ -162,6 +176,9 @@ static const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reset_storage), MP_ROM_PTR(&pb_type_System_reset_storage_obj) },
     { MP_ROM_QSTR(MP_QSTR_shutdown), MP_ROM_PTR(&pb_type_System_shutdown_obj) },
     { MP_ROM_QSTR(MP_QSTR_storage), MP_ROM_PTR(&pb_type_System_storage_obj) },
+    #endif
+    #if PYBRICKS_PY_COMMON_SYSTEM_UMM_INFO
+    { MP_ROM_QSTR(MP_QSTR_umm_info), MP_ROM_PTR(&pb_type_System_umm_info_obj) },
     #endif
 };
 static MP_DEFINE_CONST_DICT(common_System_locals_dict, common_System_locals_dict_table);
