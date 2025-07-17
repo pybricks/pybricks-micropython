@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_EV3DEVDEVICES
+#if PYBRICKS_PY_EV3DEVICES
 
 #include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
@@ -63,4 +63,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_ev3devices_UltrasonicSensor,
     make_new, ev3devices_UltrasonicSensor_make_new,
     locals_dict, &ev3devices_UltrasonicSensor_locals_dict);
 
-#endif // PYBRICKS_PY_EV3DEVDEVICES
+#endif // PYBRICKS_PY_EV3DEVICES
