@@ -65,8 +65,8 @@
 #include "../../drv/led/led_dual.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_ev3.h"
+#include "../../drv/reset/reset_ev3.h"
 #include "../../drv/uart/uart_ev3.h"
-#include "../../drv/reset/reset.h"
 
 enum {
     LED_DEV_0_STATUS,
@@ -670,7 +670,7 @@ void SystemInit(void) {
 
     // Must set the power enable bin before disabling the pull up on the power
     // pin below, otherwise the hub will power off.
-    pbdrv_reset_init();
+    pbdrv_reset_ev3_early_init();
 
     // Disable all pull-up/pull-down groups.
     HWREG(SOC_SYSCFG_1_REGS + SYSCFG1_PUPD_ENA) &= ~0xFFFFFFFF;
