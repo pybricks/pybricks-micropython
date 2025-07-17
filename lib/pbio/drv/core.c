@@ -20,6 +20,7 @@
 #include "imu/imu.h"
 #include "led/led_array.h"
 #include "led/led.h"
+#include "mmcsd/mmcsd.h"
 #include "motor_driver/motor_driver.h"
 #include "pwm/pwm.h"
 #include "random/random.h"
@@ -52,6 +53,7 @@ void pbdrv_init(void) {
     pbdrv_imu_init();
     pbdrv_led_array_init();
     pbdrv_led_init();
+    pbdrv_mmcsd_init();
     pbdrv_motor_driver_init();
     pbdrv_pwm_init();
     pbdrv_random_init();
