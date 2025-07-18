@@ -4,20 +4,13 @@
 #ifndef _PBSYS_SYS_HMI_H_
 #define _PBSYS_SYS_HMI_H_
 
-#include <contiki.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 
 void pbsys_hmi_init(void);
 void pbsys_hmi_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data);
 void pbsys_hmi_poll(void);
-
-#if PBSYS_CONFIG_HMI_NUM_SLOTS
+void pbsys_hmi_await_program_selection(void);
 uint8_t pbsys_hmi_get_selected_program_slot(void);
-#else
-static inline uint8_t pbsys_hmi_get_selected_program_slot(void) {
-    return 0;
-}
-#endif
 
 #endif // _PBSYS_SYS_HMI_H_

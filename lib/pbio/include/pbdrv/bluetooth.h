@@ -417,6 +417,9 @@ static inline void pbdrv_bluetooth_queue_noop(pbio_task_t *task) {
 static inline void pbdrv_bluetooth_start_advertising(void) {
 }
 
+static inline void pbdrv_bluetooth_stop_advertising(void) {
+}
+
 static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     return false;
 }
