@@ -17,6 +17,7 @@
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
+#include "hmi.h"
 #include "light_matrix.h"
 #include "program_stop.h"
 #include "storage.h"
@@ -89,12 +90,10 @@ int main(int argc, char **argv) {
         pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
         #endif
 
-        // Drives all processes while we wait for user input.
-        pbio_os_run_processes_and_wait_for_event();
-
-        if (!pbsys_main_program_start_is_requested()) {
-            continue;
-        }
+        // Drives all processes while waiting for user input. This completes
+        // when a user program request is made using the buttons or by a
+        // connected host.
+        pbsys_hmi_await_program_selection();
 
         // Prepare pbsys for running the program.
         pbsys_status_set_program_id(program.id);
@@ -132,6 +131,8 @@ int main(int argc, char **argv) {
     pbio_port_power_off();
 
     // Stop system processes and save user data before we shutdown.
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
     pbsys_deinit();
 
     // Now lower-level processes may shutdown and/or power off.

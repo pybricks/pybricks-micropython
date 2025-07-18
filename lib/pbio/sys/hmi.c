@@ -12,12 +12,15 @@
 
 #include <contiki.h>
 
+#include <pbdrv/bluetooth.h>
+#include <pbdrv/clock.h>
 #include <pbdrv/core.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/led.h>
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/light.h>
+#include <pbio/os.h>
 #include <pbsys/config.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
@@ -26,74 +29,19 @@
 #include "light_matrix.h"
 #include "light.h"
 
-static struct pt update_program_run_button_wait_state_pt;
+#define DEBUG 0
+
+#if DEBUG
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#define DEBUG_PRINT pbdrv_uart_debug_printf
+#else
+#define DEBUG_PRINT(...)
+#endif
 
 // The selected slot is not persistent across reboot, so that the first slot
 // is always active on boot. This allows consistently starting programs without
 // visibility of the display.
 static uint8_t selected_slot = 0;
-
-/**
- * Protothread to monitor the button state to trigger starting the user program.
- * @param [in]  button_pressed      The current button state.
- */
-static PT_THREAD(update_program_run_button_wait_state(bool button_pressed)) {
-    struct pt *pt = &update_program_run_button_wait_state_pt;
-
-    // This should not be active while a program is running.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        PT_EXIT(pt);
-    }
-
-    PT_BEGIN(pt);
-
-    for (;;) {
-        // button may still be pressed from power on or user program stop
-        PT_WAIT_UNTIL(pt, !button_pressed);
-        PT_WAIT_UNTIL(pt, button_pressed);
-        PT_WAIT_UNTIL(pt, !button_pressed);
-
-        // If we made it through a full press and release, without the user
-        // program running, then start the currently selected user program.
-        pbsys_main_program_request_start(selected_slot, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
-    }
-
-    PT_END(pt);
-}
-
-#if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
-static struct pt update_bluetooth_button_wait_state_pt;
-
-/**
- * Protothread to monitor the button state to toggle Bluetooth.
- * @param [in]  button_pressed      The current button state.
- */
-static PT_THREAD(update_bluetooth_button_wait_state(bool button_pressed)) {
-    struct pt *pt = &update_bluetooth_button_wait_state_pt;
-
-    // This should not be active while a program is running.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        PT_EXIT(pt);
-    }
-
-    PT_BEGIN(pt);
-
-    for (;;) {
-        // button may still be pressed during user program
-        PT_WAIT_UNTIL(pt, !button_pressed);
-        PT_WAIT_UNTIL(pt, button_pressed);
-        pbsys_storage_settings_bluetooth_enabled_request_toggle();
-    }
-
-    PT_END(pt);
-}
-
-#endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
-#if PBSYS_CONFIG_HMI_NUM_SLOTS
-
-static struct pt update_left_right_button_wait_state_pt;
 
 /**
  * Gets the currently selected program slot.
@@ -104,73 +52,9 @@ uint8_t pbsys_hmi_get_selected_program_slot(void) {
     return selected_slot;
 }
 
-/**
- * Protothread to monitor the left and right button state to select a slot.
- *
- * @param [in]  left_button_pressed      The current left button state.
- * @param [in]  right_button_pressed     The current right button state.
- */
-static PT_THREAD(update_left_right_button_wait_state(bool left_button_pressed, bool right_button_pressed)) {
-    struct pt *pt = &update_left_right_button_wait_state_pt;
-
-    // This should not be active while a program is running.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        PT_EXIT(pt);
-    }
-
-    static uint8_t previous_slot;
-    static uint32_t first_press_time;
-
-    PT_BEGIN(pt);
-
-    for (;;) {
-        // Buttons may still be pressed during user program
-        PT_WAIT_UNTIL(pt, !left_button_pressed && !right_button_pressed);
-
-        // Wait for either button.
-        PT_WAIT_UNTIL(pt, left_button_pressed || right_button_pressed);
-
-        first_press_time = pbdrv_clock_get_ms();
-
-        // On right, increment slot when possible.
-        if (right_button_pressed && selected_slot < 4) {
-            selected_slot++;
-            pbsys_hub_light_matrix_update_program_slot();
-        }
-        // On left, decrement slot when possible.
-        if (left_button_pressed && selected_slot > 0) {
-            selected_slot--;
-            pbsys_hub_light_matrix_update_program_slot();
-        }
-
-        // Next state could be either both pressed or both released.
-        PT_WAIT_UNTIL(pt, left_button_pressed == right_button_pressed);
-
-        // If both were pressed soon after another, user wanted to start port view,
-        // not switch programs, so revert slot change.
-        if (left_button_pressed && pbdrv_clock_get_ms() - first_press_time < 100) {
-            selected_slot = previous_slot;
-            pbsys_hub_light_matrix_update_program_slot();
-            pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
-        } else {
-            // Successful switch. And UI was already updated.
-            previous_slot = selected_slot;
-        }
-    }
-
-    PT_END(pt);
-}
-
-#endif // PBSYS_CONFIG_HMI_NUM_SLOTS
-
 void pbsys_hmi_init(void) {
     pbsys_status_light_init();
     pbsys_hub_light_matrix_init();
-    PT_INIT(&update_program_run_button_wait_state_pt);
-
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    PT_INIT(&update_bluetooth_button_wait_state_pt);
-    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 }
 
 void pbsys_hmi_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
@@ -187,7 +71,6 @@ void pbsys_hmi_poll(void) {
 
     if (btn & PBIO_BUTTON_CENTER) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-        update_program_run_button_wait_state(true);
 
         // power off when button is held down for 2 seconds
         if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 2000)) {
@@ -195,16 +78,167 @@ void pbsys_hmi_poll(void) {
         }
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-        update_program_run_button_wait_state(false);
     }
 
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    update_bluetooth_button_wait_state(btn & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON);
-    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
-    #if PBSYS_CONFIG_HMI_NUM_SLOTS
-    update_left_right_button_wait_state(btn & PBIO_BUTTON_LEFT, btn & PBIO_BUTTON_RIGHT);
-    #endif // PBSYS_CONFIG_HMI_NUM_SLOTS
-
     pbsys_status_light_poll();
+}
+
+/**
+ * Registers button presses to update the visual UI state and request the
+ * launch of a program.
+ */
+static pbio_error_t pbsys_hmi_launch_program_with_button(pbio_os_state_t *state) {
+
+    pbio_button_flags_t pressed;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbsys_hub_light_matrix_update_program_slot();
+
+    for (;;) {
+
+        // Buttons could be pressed at the end of the user program, so wait for
+        // a release and then a new press.
+        PBIO_OS_AWAIT_WHILE(state, pressed = pbdrv_button_get_pressed());
+        PBIO_OS_AWAIT_UNTIL(state, (pressed = pbdrv_button_get_pressed()) || pbsys_main_program_start_is_requested());
+
+        // Abandon this UI thread if a program was scheduled to start from the host.
+        if (pbsys_main_program_start_is_requested()) {
+            break;
+        }
+
+        if (pressed & PBIO_BUTTON_CENTER) {
+            pbio_error_t err = pbsys_main_program_request_start(selected_slot, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
+
+            if (err == PBIO_SUCCESS) {
+                // Program is available so we can leave this UI thread and
+                // start it. First wait for all buttons to be released so the
+                // user doesn't accidentally push their robot off course.
+                PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
+                break;
+            }
+
+            // TODO: Show brief visual indicator if program not available.
+        }
+
+        // On right, increment slot when possible.
+        if ((pressed & PBIO_BUTTON_RIGHT) && selected_slot < 4) {
+            selected_slot++;
+            pbsys_hub_light_matrix_update_program_slot();
+        }
+
+        // On left, decrement slot when possible.
+        if ((pressed & PBIO_BUTTON_LEFT) && selected_slot > 0) {
+            selected_slot--;
+            pbsys_hub_light_matrix_update_program_slot();
+        }
+    }
+
+    // Wait for all buttons to be released so the user doesn't accidentally
+    // push their robot off course. This await also makes it safe to call this
+    // function after completion. We just exit from here right away again.
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+#if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+static bool pbsys_hmi_bluetooth_button_is_pressed() {
+    return pbdrv_button_get_pressed() & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON;
+}
+#else
+static inline bool pbsys_hmi_bluetooth_button_is_pressed() {
+    return false;
+}
+#endif
+
+static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // FIXME: We can drop this once Bluetooth poweron-init is moved to pbdrv.
+    // It waits for Bluetooth to be ready before staring pbsys.
+    static pbio_os_timer_t timer;
+    if (pbdrv_clock_get_ms() < 1000) {
+        PBIO_OS_AWAIT_MS(state, &timer, 2000);
+    }
+
+    for (;;) {
+
+        // No need to monitor buttons if connected, so just wait for program
+        // start or disconnect and then re-assess.
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+            PBIO_OS_AWAIT_UNTIL(state,
+                pbsys_main_program_start_is_requested() ||
+                !pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
+                );
+            if (pbsys_main_program_start_is_requested()) {
+                // Done, ready to run the program.
+                break;
+            } else {
+                // Disconnected, so start over.
+                continue;
+            }
+        }
+
+        // Begin advertising.
+        pbdrv_bluetooth_start_advertising();
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+
+        // Wait for connection, program run, or bluetooth toggle.
+        PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
+        PBIO_OS_AWAIT_UNTIL(state,
+            pbsys_hmi_bluetooth_button_is_pressed() ||
+            pbsys_main_program_start_is_requested() ||
+            pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
+            );
+
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+            // On connecting we can stop monitoring the button. Advertising stops
+            // automatically.
+            continue;
+        }
+        pbdrv_bluetooth_stop_advertising();
+
+        if (pbsys_main_program_start_is_requested()) {
+            // Done, ready to run the program.
+            break;
+        }
+
+        // Otherwise, we got here because the Bluetooth button was toggled.
+        // Bluetooth is now off so we only have to wait for another button
+        // press or a program started with the buttons.
+        PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
+        PBIO_OS_AWAIT_UNTIL(state,
+            pbsys_hmi_bluetooth_button_is_pressed() ||
+            pbsys_main_program_start_is_requested()
+            );
+        if (pbsys_main_program_start_is_requested()) {
+            // Done, ready to run the program.
+            break;
+        }
+    }
+
+    // Wait for all buttons to be released before starting under all conditions.
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+/**
+ * Drives all processes while we wait for user input. This completes when a
+ * user program request is made using the buttons or by a connected host.
+ */
+void pbsys_hmi_await_program_selection(void) {
+    pbio_os_state_t btn_state = 0;
+    pbio_os_state_t ble_state = 0;
+
+    pbio_error_t btn_err;
+    pbio_os_state_t ble_err;
+
+    do {
+        btn_err = pbsys_hmi_launch_program_with_button(&btn_state);
+        ble_err = pbsys_hmi_monitor_bluetooth_state(&ble_state);
+        pbio_os_run_processes_and_wait_for_event();
+    } while ((btn_err == PBIO_ERROR_AGAIN || ble_err == PBIO_ERROR_AGAIN) && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST));
 }
