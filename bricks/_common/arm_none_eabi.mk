@@ -301,9 +301,9 @@ TI_AM1808_SRC_C = $(addprefix lib/tiam1808/,\
 	drivers/usb.c \
 	drivers/usbphyGS60.c \
 	drivers/watchdog.c \
+	system_config/armv5/am1808/interrupt.c \
 	system_config/armv5/gcc/cp15.c \
 	system_config/armv5/gcc/cpu.c \
-	system_config/armv5/am1808/interrupt.c \
 	)
 
 TI_AM1808_SRC_C += $(addprefix lib/pbio/drv/uart/uart_ev3_pru_lib/,\
@@ -380,31 +380,31 @@ BTSTACK_SRC_C = $(addprefix lib/btstack/src/,\
 	btstack_crypto.c \
 	btstack_hid_parser.c \
 	btstack_linked_list.c \
-	btstack_memory.c \
 	btstack_memory_pool.c \
+	btstack_memory.c \
 	btstack_ring_buffer.c \
 	btstack_run_loop.c \
 	btstack_slip.c \
 	btstack_tlv.c \
 	btstack_util.c \
-	hci.c \
 	hci_cmd.c \
 	hci_dump.c \
 	hci_transport_em9304_spi.c \
 	hci_transport_h4.c \
 	hci_transport_h5.c \
-	l2cap.c \
+	hci.c \
 	l2cap_signaling.c \
+	l2cap.c \
 	)
 
 BTSTACK_SRC_C += $(addprefix lib/btstack/src/ble/,\
-	gatt-service/device_information_service_server.c \
-	gatt-service/nordic_spp_service_server.c \
 	att_db_util.c \
 	att_db.c \
 	att_dispatch.c \
 	att_server.c \
 	gatt_client.c \
+	gatt-service/device_information_service_server.c \
+	gatt-service/nordic_spp_service_server.c \
 	le_device_db_memory.c \
 	sm.c \
 	)
@@ -424,8 +424,8 @@ STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Sr
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
-	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_fmpi2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
@@ -501,10 +501,7 @@ endif
 NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	_abort.c \
 	assert.c \
-	lock.c \
-	util.c \
 	display.c \
-	interrupts.c \
 	drivers/_efc.c \
 	drivers/_lcd.c \
 	drivers/_twi.c \
@@ -519,6 +516,9 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	drivers/rs485.c \
 	drivers/sensors.c \
 	drivers/usb.c \
+	interrupts.c \
+	lock.c \
+	util.c \
 	)
 
 NXOS_SRC_S = $(addprefix lib/pbio/platform/nxt/nxos/,\
