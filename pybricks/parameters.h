@@ -65,6 +65,11 @@ extern const pb_obj_enum_member_t pb_Direction_COUNTERCLOCKWISE_obj;
 extern const mp_obj_base_t pb_Icon_obj;
 #endif
 
+#if PYBRICKS_PY_PARAMETERS_IMAGE
+extern const mp_obj_type_t pb_type_Image;
+mp_obj_t pb_type_Image_display_obj_new(void);
+#endif
+
 extern const mp_obj_type_t pb_enum_type_Port;
 
 extern const mp_obj_type_t pb_enum_type_Stop;

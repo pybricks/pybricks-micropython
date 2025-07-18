@@ -19,6 +19,9 @@ static const mp_rom_map_elem_t parameters_globals_table[] = {
     #if PYBRICKS_PY_PARAMETERS_ICON
     { MP_ROM_QSTR(MP_QSTR_Icon),        MP_ROM_PTR(&pb_Icon_obj)            },
     #endif
+    #if PYBRICKS_PY_PARAMETERS_IMAGE
+    { MP_ROM_QSTR(MP_QSTR_Image),       MP_ROM_PTR(&pb_type_Image)          },
+    #endif
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)      },
     { MP_ROM_QSTR(MP_QSTR_Side),        MP_ROM_PTR(&pb_enum_type_Side)      },
     { MP_ROM_QSTR(MP_QSTR_Stop),        MP_ROM_PTR(&pb_enum_type_Stop)      },

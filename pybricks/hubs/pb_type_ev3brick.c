@@ -10,7 +10,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
-#include <pybricks/media.h>
+#include <pybricks/parameters.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
