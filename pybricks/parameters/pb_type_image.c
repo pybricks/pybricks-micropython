@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_MEDIA && PYBRICKS_PY_MEDIA_IMAGE
+#if PYBRICKS_PY_PARAMETERS_IMAGE
 
 #if !MICROPY_ENABLE_FINALISER
 #error "MICROPY_ENABLE_FINALISER must be enabled."
@@ -14,7 +14,6 @@
 #include "py/mphal.h"
 #include "py/obj.h"
 
-#include <pybricks/media.h>
 #include <pybricks/parameters.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -378,4 +377,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_Image,
     attr, pb_type_Image_attr,
     locals_dict, &pb_type_Image_locals_dict);
 
-#endif // PYBRICKS_PY_MEDIA && PYBRICKS_PY_MEDIA_IMAGE
+#endif // PYBRICKS_PY_PARAMETERS_IMAGE

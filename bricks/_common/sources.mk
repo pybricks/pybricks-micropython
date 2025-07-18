@@ -63,7 +63,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_type_iodevices_xbox_controller.c \
 	iodevices/pb_type_uart_device.c \
 	media/pb_module_media.c \
-	media/pb_type_image.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
 	nxtdevices/pb_type_nxtdevices_energymeter.c \
@@ -78,6 +77,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_color.c \
 	parameters/pb_type_direction.c \
 	parameters/pb_type_icon.c \
+	parameters/pb_type_image.c \
 	parameters/pb_type_port.c \
 	parameters/pb_type_side.c \
 	parameters/pb_type_stop.c \
