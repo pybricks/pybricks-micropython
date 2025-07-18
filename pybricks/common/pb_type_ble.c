@@ -561,7 +561,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
 
     // Raise if Bluetooth is attempted to be used while not enabled.
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_storage_settings_bluetooth_enabled() && (num_observe_channels > 0 || broadcast_channel_in != mp_const_none)) {
+    if (!pbsys_storage_settings_bluetooth_enabled_get() && (num_observe_channels > 0 || broadcast_channel_in != mp_const_none)) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
