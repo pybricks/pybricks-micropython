@@ -22,8 +22,8 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 # Pybricks modules
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
-	common/pb_type_ble.c \
 	common/pb_type_battery.c \
+	common/pb_type_ble.c \
 	common/pb_type_charger.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
@@ -60,8 +60,8 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_type_iodevices_i2cdevice.c \
 	iodevices/pb_type_iodevices_lwp3device.c \
 	iodevices/pb_type_iodevices_pupdevice.c \
-	iodevices/pb_type_uart_device.c \
 	iodevices/pb_type_iodevices_xbox_controller.c \
+	iodevices/pb_type_uart_device.c \
 	media/pb_module_media.c \
 	media/pb_type_image.c \
 	nxtdevices/pb_module_nxtdevices.c \
@@ -97,8 +97,8 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_spikebase.c \
 	tools/pb_module_tools.c \
-	tools/pb_type_awaitable.c \
 	tools/pb_type_app_data.c \
+	tools/pb_type_awaitable.c \
 	tools/pb_type_matrix.c \
 	tools/pb_type_stopwatch.c \
 	tools/pb_type_task.c \
@@ -136,20 +136,20 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/button/button_resistor_ladder.c \
 	drv/button/button_test.c \
 	drv/charger/charger_mp2639a.c \
+	drv/clock/clock_ev3.c \
 	drv/clock/clock_linux.c \
 	drv/clock/clock_none.c \
 	drv/clock/clock_nxt.c \
 	drv/clock/clock_stm32.c \
 	drv/clock/clock_test.c \
-	drv/clock/clock_ev3.c \
 	drv/core.c \
 	drv/counter/counter_ev3.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/display/display_ev3.c \
+	drv/gpio/gpio_ev3.c \
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
-	drv/gpio/gpio_ev3.c \
 	drv/gpio/gpio_virtual.c \
 	drv/i2c/i2c_ev3.c \
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
@@ -159,41 +159,41 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_core.c \
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
-	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/motor_driver/motor_driver_ev3.c \
+	drv/motor_driver/motor_driver_hbridge_pwm.c \
 	drv/motor_driver/motor_driver_nxt.c \
 	drv/motor_driver/motor_driver_virtual_simulation.c \
 	drv/pwm/pwm_core.c \
+	drv/pwm/pwm_ev3.c \
 	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_test.c \
-	drv/pwm/pwm_ev3.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/random/random_adc.c \
 	drv/random/random_stm32_hal.c \
+	drv/reset/reset_ev3.c \
 	drv/reset/reset_nxt.c \
 	drv/reset/reset_stm32.c \
-	drv/reset/reset_ev3.c \
 	drv/resistor_ladder/resistor_ladder.c \
 	drv/sound/sound_nxt.c \
 	drv/sound/sound_stm32_hal_dac.c \
 	drv/stack/stack_embedded.c \
 	drv/uart/uart_debug_first_port.c \
-	drv/uart/uart_ev3.c \
 	drv/uart/uart_ev3_pru.c \
+	drv/uart/uart_ev3.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
-	drv/usb/usb_stm32.c \
 	drv/usb/usb_ev3.c \
+	drv/usb/usb_stm32.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	src/angle.c \
 	src/battery.c \
 	src/color/conversion.c \
 	src/color/util.c \
-	src/control.c \
 	src/control_settings.c \
+	src/control.c \
 	src/dcmotor.c \
 	src/differentiator.c \
 	src/drivebase.c \
@@ -213,10 +213,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/observer.c \
 	src/os.c \
 	src/parent.c \
-	src/port.c \
-	src/port_dcm_pup.c \
 	src/port_dcm_ev3.c \
+	src/port_dcm_pup.c \
 	src/port_lump.c \
+	src/port.c \
 	src/protocol/nus.c \
 	src/protocol/pybricks.c \
 	src/servo.c \
@@ -235,8 +235,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/main.c \
 	sys/program_stop.c \
 	sys/status.c \
-	sys/storage.c \
 	sys/storage_settings.c \
+	sys/storage.c \
 	sys/supervisor.c \
 	)
 
