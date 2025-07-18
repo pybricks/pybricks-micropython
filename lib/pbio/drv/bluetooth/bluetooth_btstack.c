@@ -603,7 +603,15 @@ void pbdrv_bluetooth_init(void) {
     nordic_spp_service_server_init(nordic_spp_packet_handler);
 }
 
+static bool pbdrv_bluetooth_powered_on;
+
 void pbdrv_bluetooth_power_on(bool on) {
+
+    if (pbdrv_bluetooth_powered_on == on) {
+        return;
+    }
+    pbdrv_bluetooth_powered_on = on;
+
     hci_power_control(on ? HCI_POWER_ON : HCI_POWER_OFF);
 
     // When powering off, cancel all pending tasks.
@@ -619,7 +627,7 @@ void pbdrv_bluetooth_power_on(bool on) {
 }
 
 bool pbdrv_bluetooth_is_ready(void) {
-    return hci_get_state() != HCI_STATE_OFF;
+    return hci_get_state() != HCI_STATE_OFF || !pbdrv_bluetooth_powered_on;
 }
 
 const char *pbdrv_bluetooth_get_hub_name(void) {

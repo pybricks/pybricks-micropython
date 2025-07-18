@@ -222,7 +222,6 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
 }
 
 PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
-    static struct etimer timer;
     static struct pt status_monitor_pt;
 
     PROCESS_BEGIN();
@@ -231,14 +230,6 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-
-        // make sure the Bluetooth chip is in reset long enough to actually reset
-        etimer_set(&timer, 150);
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-
-        // Enable Bluetooth.
-        pbdrv_bluetooth_power_on(true);
-        PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_ready());
 
         // Now we are idle. We need to change the Bluetooth state and
         // indicators if a host connects to us, or a user program starts, or we
@@ -288,11 +279,6 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         }
 
         reset_all();
-        PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
-
-        // reset Bluetooth chip
-        pbdrv_bluetooth_power_on(false);
-        PROCESS_WAIT_WHILE(pbdrv_bluetooth_is_ready());
     }
 
     PROCESS_END();
