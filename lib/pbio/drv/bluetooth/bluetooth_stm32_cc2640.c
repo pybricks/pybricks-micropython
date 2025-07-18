@@ -262,7 +262,15 @@ void pbdrv_bluetooth_init(void) {
 
 // Public Bluetooth driver API implementation
 
+static bool pbdrv_bluetooth_powered_on;
+
 void pbdrv_bluetooth_power_on(bool on) {
+
+    if (pbdrv_bluetooth_powered_on == on) {
+        return;
+    }
+    pbdrv_bluetooth_powered_on = on;
+
     if (on) {
         process_start(&pbdrv_bluetooth_spi_process);
     } else {
