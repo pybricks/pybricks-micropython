@@ -45,7 +45,7 @@ void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *sett
     #endif // PBIO_CONFIG_IMU
 }
 
-bool pbsys_storage_settings_bluetooth_enabled(void) {
+bool pbsys_storage_settings_bluetooth_enabled_get(void) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
     pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
     if (!settings) {
@@ -56,30 +56,21 @@ bool pbsys_storage_settings_bluetooth_enabled(void) {
     return true;
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 }
-
-void pbsys_storage_settings_bluetooth_enabled_request_toggle(void) {
+void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
     pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
 
-    // Ignore toggle request in all but idle system status.
-    if (!settings
-        || pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
-        || pbsys_status_test(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED)
-        || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)
-        || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)
-        // Ignore toggle is Bluetooth is currently being used in a connection.
-        || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
-        || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)
-        // Ignore if last request not yet finished processing.
-        || pbsys_storage_settings_bluetooth_enabled() != pbdrv_bluetooth_is_ready()
-        ) {
+    bool current_value = pbsys_storage_settings_bluetooth_enabled_get();
+    if (enable == current_value) {
         return;
     }
 
-    // Toggle the user enabled state and poll process to take action.
-    settings->flags ^= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
+    if (enable) {
+        settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
+    } else {
+        settings->flags &= ~PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
+    }
     pbsys_storage_request_write();
-    pbsys_bluetooth_process_poll();
     #endif
 }
 

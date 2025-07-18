@@ -405,7 +405,7 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
         PB_ARG_DEFAULT_INT(timeout, 10000));
 
     #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-    if (!pbsys_storage_settings_bluetooth_enabled()) {
+    if (!pbsys_storage_settings_bluetooth_enabled_get()) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE

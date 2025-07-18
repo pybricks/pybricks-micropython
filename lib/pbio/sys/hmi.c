@@ -183,6 +183,7 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
 
         // Begin advertising.
         pbdrv_bluetooth_start_advertising();
+        pbsys_storage_settings_bluetooth_enabled_set(true);
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
@@ -208,6 +209,8 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
         }
 
         // Otherwise, we got here because the Bluetooth button was toggled.
+        pbsys_storage_settings_bluetooth_enabled_set(false);
+
         // Bluetooth is now off so we only have to wait for another button
         // press or a program started with the buttons.
         PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());

@@ -48,9 +48,9 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings);
 
 void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings);
 
-bool pbsys_storage_settings_bluetooth_enabled(void);
+bool pbsys_storage_settings_bluetooth_enabled_get(void);
 
-void pbsys_storage_settings_bluetooth_enabled_request_toggle(void);
+void pbsys_storage_settings_bluetooth_enabled_set(bool enable);
 
 #else
 
@@ -58,10 +58,10 @@ static inline void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t 
 }
 static inline void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings) {
 }
-static inline bool pbsys_storage_settings_bluetooth_enabled(void) {
+static inline bool pbsys_storage_settings_bluetooth_enabled_get(void) {
     return true;
 }
-static inline void pbsys_storage_settings_bluetooth_enabled_request_toggle(void) {
+static inline void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE
