@@ -10,6 +10,7 @@
 #include <tinytest.h>
 
 #include <pbio/util.h>
+#include <pbsys/host.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <test-pbio.h>
@@ -20,7 +21,7 @@
 static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_BEGIN(pt);
 
-    pbsys_bluetooth_init();
+    pbsys_host_init();
 
     // power should be initialized to off
     tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_OFF);
@@ -84,7 +85,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
         size = PBIO_ARRAY_SIZE(rx_data);
-        pbsys_bluetooth_rx(rx_data, &size) == PBIO_SUCCESS;
+        pbsys_host_stdin_read(rx_data, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen("test3\n"));

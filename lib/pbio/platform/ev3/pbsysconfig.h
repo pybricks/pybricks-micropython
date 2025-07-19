@@ -7,6 +7,7 @@
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6           (1)
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6_3_NATIVE  (0)
 #define PBSYS_CONFIG_HOST                           (1)
+#define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (21)
 #define PBSYS_CONFIG_MAIN                           (1)
 #define PBSYS_CONFIG_STORAGE                        (1)
 #define PBSYS_CONFIG_STORAGE_NUM_SLOTS              (1)

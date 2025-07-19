@@ -26,33 +26,26 @@ typedef bool (*pbsys_host_stdin_event_callback_t)(uint8_t c);
 #if PBSYS_CONFIG_HOST
 
 void pbsys_host_init(void);
-void pbsys_host_rx_set_callback(pbsys_host_stdin_event_callback_t callback);
-void pbsys_host_rx_flush(void);
-uint32_t pbsys_host_rx_get_available(void);
-uint32_t pbsys_host_rx_get_free(void);
-void pbsys_host_rx_write(const uint8_t *data, uint32_t size);
-pbio_error_t pbsys_host_rx(uint8_t *data, uint32_t *size);
+uint32_t pbsys_host_stdin_get_free(void);
+void pbsys_host_stdin_write(const uint8_t *data, uint32_t size);
+void pbsys_host_stdin_set_callback(pbsys_host_stdin_event_callback_t callback);
+void pbsys_host_stdin_flush(void);
+uint32_t pbsys_host_stdin_get_available(void);
+pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t size);
 bool pbsys_host_tx_is_idle(void);
 
 #else // PBSYS_CONFIG_HOST
 
 #define pbsys_host_init()
-#define pbsys_host_rx_set_callback(callback)
-#define pbsys_host_rx_flush()
-#define pbsys_host_rx_get_available() 0
-#define pbsys_host_rx_get_free() 0
-#define pbsys_host_rx_write(data, size)
-
-static inline pbio_error_t pbsys_host_rx(uint8_t *data, uint32_t *size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline bool pbsys_host_tx_is_idle(void) {
-    return false;
-}
+#define pbsys_host_stdin_get_free() 0
+#define pbsys_host_stdin_write(data, size) { (void)(data); (void)(size); }
+#define pbsys_host_stdin_set_callback(callback) { (void)(callback); }
+#define pbsys_host_stdin_flush()
+#define pbsys_host_stdin_get_available() 0
+#define pbsys_host_stdin_read(data, size) PBIO_ERROR_NOT_SUPPORTED
+#define pbsys_host_tx(data, size) { (void)(data); (void)(size); PBIO_ERROR_NOT_SUPPORTED; }
+#define pbsys_host_tx_is_idle() false
 
 #endif // PBSYS_CONFIG_HOST
 
