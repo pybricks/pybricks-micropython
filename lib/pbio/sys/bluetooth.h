@@ -16,6 +16,7 @@ void pbsys_bluetooth_process_poll(void);
 
 void pbsys_bluetooth_init(void);
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size);
+uint32_t pbsys_bluetooth_tx_available(void);
 bool pbsys_bluetooth_tx_is_idle(void);
 
 #else // PBSYS_CONFIG_BLUETOOTH
@@ -24,6 +25,9 @@ bool pbsys_bluetooth_tx_is_idle(void);
 
 static inline pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline uint32_t pbsys_bluetooth_tx_available(void) {
+    return UINT32_MAX;
 }
 static inline bool pbsys_bluetooth_tx_is_idle(void) {
     return false;

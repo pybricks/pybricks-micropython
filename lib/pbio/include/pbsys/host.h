@@ -32,7 +32,7 @@ void pbsys_host_stdin_set_callback(pbsys_host_stdin_event_callback_t callback);
 void pbsys_host_stdin_flush(void);
 uint32_t pbsys_host_stdin_get_available(void);
 pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size);
-pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t size);
+pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size);
 bool pbsys_host_tx_is_idle(void);
 
 #else // PBSYS_CONFIG_HOST
@@ -44,7 +44,7 @@ bool pbsys_host_tx_is_idle(void);
 #define pbsys_host_stdin_flush()
 #define pbsys_host_stdin_get_available() 0
 #define pbsys_host_stdin_read(data, size) PBIO_ERROR_NOT_SUPPORTED
-#define pbsys_host_tx(data, size) { (void)(data); (void)(size); PBIO_ERROR_NOT_SUPPORTED; }
+#define pbsys_host_stdout_write(data, size) { (void)(data); (void)(size); PBIO_ERROR_NOT_SUPPORTED; }
 #define pbsys_host_tx_is_idle() false
 
 #endif // PBSYS_CONFIG_HOST
