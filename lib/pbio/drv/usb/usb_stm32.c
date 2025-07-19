@@ -39,6 +39,7 @@ static volatile uint32_t usb_response_sz;
 static volatile uint32_t usb_status_sz;
 static volatile uint32_t usb_stdout_sz;
 static volatile bool transmitting;
+static volatile bool pbdrv_usb_stm32_is_events_subscribed;
 
 static USBD_HandleTypeDef husbd;
 static PCD_HandleTypeDef hpcd;
@@ -156,11 +157,13 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
     #endif
 
+    if (!pbdrv_usb_stm32_is_events_subscribed) {
+        // If the app hasn't subscribed to events, we can't send stdout.
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     uint8_t *ptr = usb_stdout_buf;
     uint32_t ptr_len = sizeof(usb_stdout_buf);
-
-    // TODO: return PBIO_ERROR_INVALID_OP if app flag is not set. Also need a
-    // timeout in case the app crashes and doesn't clear the flag on exit.
 
     if (usb_stdout_sz) {
         *size = 0;
@@ -184,7 +187,9 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
 }
 
 uint32_t pbdrv_usb_stdout_tx_available(void) {
-    // TODO: return UINT32_MAX if app flag is not set.
+    if (!pbdrv_usb_stm32_is_events_subscribed) {
+        return UINT32_MAX;
+    }
 
     if (usb_stdout_sz) {
         return 0;
@@ -201,6 +206,14 @@ bool pbdrv_usb_stdout_tx_is_idle(void) {
     return usb_stdout_sz == 0;
 }
 
+static void pbdrv_usb_stm32_reset_tx_state(void) {
+    usb_response_sz = 0;
+    usb_status_sz = 0;
+    usb_stdout_sz = 0;
+    transmitting = false;
+    pbdrv_usb_stm32_is_events_subscribed = false;
+}
+
 /**
   * @brief  Pybricks_Itf_Init
   *         Initializes the Pybricks media low layer
@@ -210,10 +223,7 @@ bool pbdrv_usb_stdout_tx_is_idle(void) {
 static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
     USBD_Pybricks_SetRxBuffer(&husbd, usb_in_buf);
     usb_in_sz = 0;
-    usb_response_sz = 0;
-    usb_status_sz = 0;
-    usb_stdout_sz = 0;
-    transmitting = false;
+    pbdrv_usb_stm32_reset_tx_state();
 
     return USBD_OK;
 }
@@ -225,6 +235,7 @@ static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static USBD_StatusTypeDef Pybricks_Itf_DeInit(void) {
+    pbdrv_usb_stm32_reset_tx_state();
     return USBD_OK;
 }
 
@@ -316,7 +327,8 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static PBIO_ONESHOT(pwrdn_oneshot);
     static bool bcd_busy;
     static pbio_pybricks_error_t result;
-    static struct etimer timer;
+    static struct etimer status_timer;
+    static struct etimer transmit_timer;
     static uint32_t prev_status_flags = ~0;
     static uint32_t new_status_flags;
 
@@ -337,7 +349,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    etimer_set(&timer, 500);
+    etimer_set(&status_timer, 500);
 
     for (;;) {
         PROCESS_WAIT_EVENT();
@@ -369,6 +381,12 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
         if (usb_in_sz) {
             switch (usb_in_buf[0]) {
+                case USBD_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
+                    pbdrv_usb_stm32_is_events_subscribed = usb_in_buf[1];
+                    usb_response_buf[0] = USBD_PYBRICKS_IN_EP_MSG_RESPONSE;
+                    pbio_set_uint32_le(&usb_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
+                    usb_response_sz = sizeof(usb_response_buf);
+                    break;
                 case USBD_PYBRICKS_OUT_EP_MSG_COMMAND:
                     if (usb_response_sz == 0) {
                         result = pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
@@ -385,6 +403,13 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
         }
 
         if (transmitting) {
+            if (etimer_expired(&transmit_timer)) {
+                // Transmission has taken too long, so reset the state to allow
+                // new transmissions. This can happen if the host stops reading
+                // data for some reason.
+                pbdrv_usb_stm32_reset_tx_state();
+            }
+
             continue;
         }
 
@@ -394,20 +419,32 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
         if (usb_response_sz) {
             transmitting = true;
             USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
-        } else if ((new_status_flags != prev_status_flags) || etimer_expired(&timer)) {
-            usb_status_buf[0] = USBD_PYBRICKS_IN_EP_MSG_EVENT;
-            _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
-                "size of status report does not match size of event");
-            usb_status_sz = 1 + pbsys_status_get_status_report(&usb_status_buf[1]);
+        } else if (pbdrv_usb_stm32_is_events_subscribed) {
+            if ((new_status_flags != prev_status_flags) || etimer_expired(&status_timer)) {
+                usb_status_buf[0] = USBD_PYBRICKS_IN_EP_MSG_EVENT;
+                _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
+                    "size of status report does not match size of event");
+                usb_status_sz = 1 + pbsys_status_get_status_report(&usb_status_buf[1]);
 
-            etimer_restart(&timer);
-            prev_status_flags = new_status_flags;
+                // REVISIT: we really shouldn't need a status timer on USB since
+                // it's not a lossy transport. We just need to make sure we send
+                // status updates when they change and send the current status
+                // immediately after subscribing to events.
+                etimer_restart(&status_timer);
+                prev_status_flags = new_status_flags;
 
-            transmitting = true;
-            USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
-        } else if (usb_stdout_sz) {
-            transmitting = true;
-            USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
+                transmitting = true;
+                USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
+            } else if (usb_stdout_sz) {
+                transmitting = true;
+                USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
+            }
+        }
+
+        if (transmitting) {
+            // If the FIFO isn't emptied quickly, then there probably isn't an
+            // app anymore. This timer is used to detect such a condition.
+            etimer_set(&transmit_timer, 5);
         }
     }
 
