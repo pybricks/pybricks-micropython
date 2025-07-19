@@ -83,6 +83,7 @@
 #define MICROPY_PY_BUILTINS_SLICE               (PYBRICKS_OPT_EXTRA_LEVEL1)
 #define MICROPY_PY_BUILTINS_PROPERTY            (0)
 #define MICROPY_PY_BUILTINS_MIN_MAX             (1)
+#define MICROPY_PY_FSTRINGS                     (PYBRICKS_OPT_EXTRA_LEVEL2)
 #define MICROPY_PY_BUILTINS_STR_UNICODE         (PYBRICKS_OPT_EXTRA_LEVEL2)
 #define MICROPY_PY___FILE__                     (0)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO         (1)
