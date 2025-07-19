@@ -79,7 +79,7 @@ static mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_arg
 
     // REVISIT: If a user creates two Speaker instances, this will reset the volume settings for both.
     // If done only once per singleton, however, altered volume settings would be persisted between program runs.
-    self->volume = 100;
+    self->volume = PBDRV_CONFIG_SOUND_DEFAULT_VOLUME;
     self->sample_attenuator = INT16_MAX;
 
     return MP_OBJ_FROM_PTR(self);

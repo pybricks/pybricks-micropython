@@ -42,6 +42,7 @@
 #define PBDRV_CONFIG_RESET_NXT                      (1)
 
 #define PBDRV_CONFIG_SOUND                          (1)
+#define PBDRV_CONFIG_SOUND_DEFAULT_VOLUME           100
 #define PBDRV_CONFIG_SOUND_SAMPLED                  (1)
 #define PBDRV_CONFIG_SOUND_BEEP_SAMPLED             (1)
 #define PBDRV_CONFIG_SOUND_NXT                      (1)
