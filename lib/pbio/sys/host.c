@@ -7,6 +7,7 @@
 
 #include <lwrb/lwrb.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
 #include <pbsys/host.h>
 
@@ -101,53 +102,57 @@ pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
 }
 
 /**
- * Transmits data over Bluetooth and USB.
+ * Transmits data over any connected transport that is subscribed to Pybricks
+ * protocol events.
  *
- * Should be called in a loop with the same arguments until it no longer
- * returns ::PBIO_ERROR_AGAIN.
+ * This may perform partial writes. Callers should check the number of bytes
+ * actually written and call again with the remaining data until all data is
+ * written.
  *
- * @param data  [in]   The data to transmit.
- * @param size  [in]   The size of the data to transmit.
- * @return             ::PBIO_ERROR_AGAIN if the data is still being transmitted
- *                     ::PBIO_SUCCESS if complete or failed.
+ * @param data  [in]        The data to transmit.
+ * @param size  [inout]     The size of the data to transmit. Upon success, this
+ *                          contains the number of bytes actually processed.
+ * @return                  ::PBIO_ERROR_INVALID_OP if there is no active transport,
+ *                          ::PBIO_ERROR_AGAIN if no @p data could be queued,
+ *                          ::PBIO_SUCCESS if at least some data was queued.
  */
-pbio_error_t pbsys_host_tx(const uint8_t *data, uint32_t size) {
+pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
+    #if PBSYS_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY)
+    return pbsys_bluetooth_tx(data, size);
+    #elif !PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
+    return pbdrv_usb_stdout_tx(data, size);
+    #elif PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
 
-    static bool transmitting = false;
-    static uint32_t tx_done_ble;
-    static uint32_t tx_done_usb;
+    uint32_t bt_avail = pbsys_bluetooth_tx_available();
+    uint32_t usb_avail = pbdrv_usb_stdout_tx_available();
+    uint32_t available = MIN(UINT32_MAX, MIN(bt_avail, usb_avail));
 
-    if (!transmitting) {
-        tx_done_ble = 0;
-        tx_done_usb = 0;
-        transmitting = true;
+    // If all tx_available() calls returned UINT32_MAX, then there is one listening.
+    if (available == UINT32_MAX) {
+        return PBIO_ERROR_INVALID_OP;
     }
-
-    pbio_error_t err_ble = PBIO_SUCCESS;
-    pbio_error_t err_usb = PBIO_SUCCESS;
-    uint32_t size_now;
-
-    if (tx_done_ble < size) {
-        size_now = size - tx_done_ble;
-        err_ble = pbsys_bluetooth_tx(data + tx_done_ble, &size_now);
-        tx_done_ble += size_now;
-    }
-
-    if (tx_done_usb < size) {
-        size_now = size - tx_done_usb;
-        err_usb = pbdrv_usb_stdout_tx(data + tx_done_usb, &size_now);
-        tx_done_usb += size_now;
-    }
-
-    // Keep waiting as long as at least has not completed or errored.
-    if (err_ble == PBIO_ERROR_AGAIN || err_usb == PBIO_ERROR_AGAIN) {
+    // If one or more tx_available() calls returned 0, then we need to wait.
+    if (available == 0) {
         return PBIO_ERROR_AGAIN;
     }
 
-    // Both of them are either complete or failed. The caller of this function
-    // does not currently raise errors, so we just return success.
-    transmitting = false;
+    // Limit size to smallest available space from all transports so that we
+    // don't do partial writes to one transport and not the other.
+    *size = MIN(*size, available);
+
+    // Unless something became disconnected in an interrupt handler, these
+    // functions should always succeed since we already checked tx_available().
+    // And if both somehow got disconnected at the same time, it is not a big deal
+    // if we return PBIO_SUCCESS without actually sending anything.
+    (void)pbsys_bluetooth_tx(data, size);
+    (void)pbdrv_usb_stdout_tx(data, size);
+
     return PBIO_SUCCESS;
+
+    #else
+    // stdout goes to /dev/null
+    return PBIO_SUCCESS;
+    #endif
 }
 
 bool pbsys_host_tx_is_idle(void) {

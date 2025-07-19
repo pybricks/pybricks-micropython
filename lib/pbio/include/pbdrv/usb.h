@@ -47,6 +47,16 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void);
 pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size);
 
 /**
+ * Gets the number of bytes that can be queued for sending stdout via USB.
+ *
+ * Returns UINT32_MAX if there is no USB connection or no app is subscribed to
+ * stdout.
+ *
+ * @return              The number of bytes that can be queued.
+ */
+uint32_t pbdrv_usb_stdout_tx_available(void);
+
+/**
  * Indicates if the USB stdout stream is idle.
  * @return              true if the USB stdout stream is idle.
 */
@@ -60,6 +70,10 @@ static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
 
 static inline pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_SUCCESS;
+}
+
+static inline uint32_t pbdrv_usb_stdout_tx_available(void) {
+    return UINT32_MAX;
 }
 
 static inline bool pbdrv_usb_stdout_tx_is_idle(void) {
