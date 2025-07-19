@@ -155,8 +155,23 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
     #endif
 }
 
+/**
+ * Checks if all data has been transmitted.
+ *
+ * This is used to implement, e.g. a flush() function that blocks until all
+ * data has been sent.
+ *
+ * @return              true if all data has been transmitted or no one is
+ *                      listening, false if there is still data queued to be sent.
+ */
 bool pbsys_host_tx_is_idle(void) {
+    #if PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
+    // The USB part is a bit of a hack since it depends on the USB driver not
+    // buffering more than one packet at a time to actually be accurate.
+    return pbsys_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_available();
+    #else
     return pbsys_bluetooth_tx_is_idle();
+    #endif
 }
 
 #endif // PBSYS_CONFIG_HOST
