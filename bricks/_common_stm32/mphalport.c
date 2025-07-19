@@ -38,7 +38,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     uintptr_t ret = 0;
 
-    if ((poll_flags & MP_STREAM_POLL_RD) && pbsys_host_rx_get_available()) {
+    if ((poll_flags & MP_STREAM_POLL_RD) && pbsys_host_stdin_get_available()) {
         ret |= MP_STREAM_POLL_RD;
     }
 
@@ -51,7 +51,7 @@ int mp_hal_stdin_rx_chr(void) {
     uint8_t c;
 
     // wait for rx interrupt
-    while (size = 1, pbsys_host_rx(&c, &size) != PBIO_SUCCESS) {
+    while (size = 1, pbsys_host_stdin_read(&c, &size) != PBIO_SUCCESS) {
         MICROPY_EVENT_POLL_HOOK
     }
 

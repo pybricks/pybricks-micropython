@@ -5,38 +5,99 @@
 
 #if PBSYS_CONFIG_HOST
 
-#include <pbdrv/usb.h>
+#include <lwrb/lwrb.h>
 
+#include <pbdrv/usb.h>
 #include <pbsys/host.h>
 
 #include "bluetooth.h"
 
+static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
+static lwrb_t pbsys_host_stdin_ring_buf;
+
 void pbsys_host_init(void) {
+    static uint8_t stdin_buf[PBSYS_CONFIG_HOST_STDIN_BUF_SIZE];
+    lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
     pbsys_bluetooth_init();
 }
 
-void pbsys_host_rx_set_callback(pbsys_host_stdin_event_callback_t callback) {
-    pbsys_bluetooth_rx_set_callback(callback);
+// Publisher APIs. Pybricks Profile connections call these to push data to
+// a common stdin buffer.
+
+/**
+ * Gets the number of bytes currently free for writing in stdin.
+ * @return              The number of bytes.
+ */
+uint32_t pbsys_host_stdin_get_free(void) {
+    return lwrb_get_free(&pbsys_host_stdin_ring_buf);
 }
 
-void pbsys_host_rx_flush(void) {
-    pbsys_bluetooth_rx_flush();
+/**
+ * Writes data to the stdin buffer.
+ *
+ * This does not currently return the number of bytes written, so first call
+ * pbsys_bluetooth_stdin_get_free() to ensure enough free space.
+ *
+ * @param [in]  data    The data to write to the stdin buffer.
+ * @param [in]  size    The size of @p data in bytes.
+ */
+void pbsys_host_stdin_write(const uint8_t *data, uint32_t size) {
+    if (pbsys_host_stdin_event_callback) {
+        // If there is a callback hook, we have to process things one byte at
+        // a time. This is needed, e.g. by Micropython to handle Ctrl-C.
+        for (uint32_t i = 0; i < size; i++) {
+            if (!pbsys_host_stdin_event_callback(data[i])) {
+                lwrb_write(&pbsys_host_stdin_ring_buf, &data[i], 1);
+            }
+        }
+    } else {
+        lwrb_write(&pbsys_host_stdin_ring_buf, data, size);
+    }
 }
 
-uint32_t pbsys_host_rx_get_available(void) {
-    return pbsys_bluetooth_rx_get_available();
+// Consumer APIs. User-facing code calls these to read data from stdin.
+
+/**
+ * Sets the host stdin callback function.
+ * @param callback  [in]    The callback or NULL.
+ */
+void pbsys_host_stdin_set_callback(pbsys_host_stdin_event_callback_t callback) {
+    pbsys_host_stdin_event_callback = callback;
 }
 
-uint32_t pbsys_host_rx_get_free(void) {
-    return pbsys_bluetooth_rx_get_free();
+/**
+ * Flushes data from the stdin buffer without reading it.
+ */
+void pbsys_host_stdin_flush(void) {
+    lwrb_reset(&pbsys_host_stdin_ring_buf);
 }
 
-void pbsys_host_rx_write(const uint8_t *data, uint32_t size) {
-    pbsys_bluetooth_rx_write(data, size);
+/**
+ * Gets the number of bytes currently available to be read from the host stdin buffer.
+ * @return              The number of bytes.
+ */
+uint32_t pbsys_host_stdin_get_available(void) {
+    return lwrb_get_full(&pbsys_host_stdin_ring_buf);
 }
 
-pbio_error_t pbsys_host_rx(uint8_t *data, uint32_t *size) {
-    return pbsys_bluetooth_rx(data, size);
+/**
+ * Reads data from the stdin buffer.
+ * @param data  [in]        A buffer to receive a copy of the data.
+ * @param size  [in, out]   The number of bytes to read (@p data must be at least
+ *                          this big). After return @p size contains the number
+ *                          of bytes actually read.
+ * @return                  ::PBIO_SUCCESS if @p data was read, ::PBIO_ERROR_AGAIN
+ *                          if @p data could not be read at this time (i.e. buffer
+ *                          is empty), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
+ *                          if this platform does not support Bluetooth.
+ */
+pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
+    if ((*size = lwrb_read(&pbsys_host_stdin_ring_buf, data, *size)) == 0) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    return PBIO_SUCCESS;
 }
 
 /**
