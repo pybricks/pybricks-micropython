@@ -43,6 +43,12 @@ void pbdrv_sound_stop() {
 }
 
 void pbdrv_beep_start(uint32_t frequency, uint16_t sample_attenuator) {
+    // A frequency of 0 is equivalent to turning the sound off
+    if (frequency == 0) {
+        pbdrv_sound_stop();
+        return;
+    }
+
     // Clamp the frequency into the supported range
     if (frequency < 64) {
         frequency = 64;
