@@ -243,7 +243,7 @@ static void spi_bus_init(void) {
 
     // Request DMA channels. This only needs to be done for the initial events (and not for linked parameter sets)
     EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_TX, EDMA3_CHA_SPI0_TX, 0);
-    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI1_RX, EDMA3_CHA_SPI1_RX, 0);
+    EDMA3RequestChannel(SOC_EDMA30CC_0_REGS, EDMA3_CHANNEL_TYPE_DMA, EDMA3_CHA_SPI0_RX, EDMA3_CHA_SPI0_RX, 0);
 
     // Enable!
     SPIEnable(SOC_SPI_0_REGS);
