@@ -20,13 +20,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../core.h"
-
-#include <pbdrv/block_device.h>
-#include <pbdrv/clock.h>
-#include <pbdrv/compiler.h>
-#include <pbdrv/gpio.h>
-
 #include <tiam1808/edma.h>
 #include <tiam1808/spi.h>
 #include <tiam1808/psc.h>
@@ -36,9 +29,15 @@
 #include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
-#include "block_device_ev3.h"
+#include "../core.h"
 #include "../drv/gpio/gpio_ev3.h"
+#include "../sys/storage_data.h"
+#include "block_device_ev3.h"
 
+#include <pbdrv/block_device.h>
+#include <pbdrv/clock.h>
+#include <pbdrv/compiler.h>
+#include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 #include <pbio/util.h>
@@ -831,7 +830,11 @@ static struct {
      * portion of this, up to pbdrv_block_device_get_writable_size() bytes,
      * gets saved to flash at shutdown.
      */
-    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+    union {
+        // ensure that data is properly aligned for pbsys_storage_data_map_t
+        pbsys_storage_data_map_t data_map;
+        uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+    };
 } ramdisk __attribute__((section(".noinit"), used));
 
 uint32_t pbdrv_block_device_get_writable_size(void) {
@@ -840,8 +843,8 @@ uint32_t pbdrv_block_device_get_writable_size(void) {
 
 static pbio_error_t pbdrv_block_device_load_err = PBIO_ERROR_FAILED;
 
-pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
-    *data = ramdisk.data;
+pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
+    *data = &ramdisk.data_map;
 
     // Higher level code can use the ramdisk data if initialization completed
     // successfully. Otherwise it should reset to factory default data.

@@ -10,8 +10,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/block_device.h>
+#include "../sys/storage_data.h"
 
+#include <pbio/os.h>
 #include <pbio/version.h>
 
 /**
@@ -59,23 +60,20 @@ static const uint8_t _program_data[] = {
 // version at the right place. FIXME: Move the git version to pybricks build
 // system, since it isn't actually the micropython git version.
 #include "genhdr/mpversion.h"
-#include <pbsys/storage.h>
+
 
 static struct {
-    uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
-    char stored_firmware_hash[8];
-    pbsys_storage_settings_t settings;
-    uint32_t program_offset;
-    uint32_t program_size;
-    uint8_t program_data[sizeof(_program_data)];
-} ramdisk __attribute__((section(".noinit"), used)) = { 0 };
+    // ensure that data is properly aligned for pbsys_storage_data_map_t
+    pbsys_storage_data_map_t data_map;
+    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+} ramdisk;
 
 uint32_t pbdrv_block_device_get_writable_size(void) {
     return 0;
 }
 
-pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
-    *data = (void *)&ramdisk;
+pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
+    *data = &ramdisk.data_map;
 
     // Higher level code can use the ramdisk data if initialization completed
     // successfully. Otherwise it should reset to factory default data.
@@ -83,9 +81,9 @@ pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
 }
 
 void pbdrv_block_device_init(void) {
-    ramdisk.program_size = sizeof(_program_data);
-    memcpy(&ramdisk.stored_firmware_hash[0], MICROPY_GIT_HASH, sizeof(ramdisk.stored_firmware_hash));
-    memcpy(&ramdisk.program_data[0], _program_data, sizeof(_program_data));
+    ramdisk.data_map.slot_info[0].size = sizeof(_program_data);
+    memcpy(ramdisk.data_map.stored_firmware_hash, MICROPY_GIT_HASH, sizeof(ramdisk.data_map.stored_firmware_hash));
+    memcpy(ramdisk.data_map.program_data, _program_data, sizeof(_program_data));
 }
 
 // Don't store any data in this implementation.
