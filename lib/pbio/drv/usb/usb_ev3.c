@@ -1,49 +1,27 @@
-// *****************************************************************************
-//
-// Copyright (c) 2008-2010 Texas Instruments Incorporated.  All rights reserved.
-// Software License Agreement
-//
-// Texas Instruments (TI) is supplying this software for use solely and
-// exclusively on TI's microcontroller products. The software is owned by
-// TI and/or its suppliers, and is protected under applicable copyright
-// laws. You may not combine this software with "viral" open-source
-// software in order to form a larger program.
-//
-// THIS SOFTWARE IS PROVIDED "AS IS" AND WITH ALL FAULTS.
-// NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT
-// NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. TI SHALL NOT, UNDER ANY
-// CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
-// DAMAGES, FOR ANY REASON WHATSOEVER.
-//
-// This is part of AM1808 Sitaraware firmware package, modified and reused from revision 6288
-// of the DK-LM3S9B96 Firmware Package.
-//
-// *****************************************************************************
-
-// EV3 USB serial driver.
-//
-// Primarily based on usb_dev_serial.c and usb_serial_structs.c from TI's USB
-// library as above. USB hooks from starterware/platform/evmAM1808/usb.c
-// Additional inspiration by liyixiao from EV3RT.
-//
-// Pybricks modifications are licensed as follows:
-//
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2024 The Pybricks Authors
+// Copyright (c) 2025 The Pybricks Authors
+
+// EV3 / TI AM1808 / Mentor Graphics MUSBMHDRC driver
+// implementing a bespoke USB stack for Pybricks USB protocol
 
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_USB_EV3
 
-#include <stdbool.h>
+#include <assert.h>
+#include <stdint.h>
 
-#include <contiki.h>
-
+#include <pbdrv/compiler.h>
 #include <pbdrv/usb.h>
+#include <pbio/os.h>
+#include <pbio/protocol.h>
 #include <pbio/util.h>
 
+#include <lego/usb.h>
+#include "pbdrvconfig.h"
+
 #include <tiam1808/armv5/am1808/interrupt.h>
+#include <tiam1808/cppi41dma.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/hw_usbOtg_AM1808.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
@@ -52,500 +30,840 @@
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/hw/hw_psc_AM1808.h>
 #include <tiam1808/psc.h>
+#include <tiam1808/usb.h>
 
 #include <pbdrv/clock.h>
 
-// Revisit: USB init currently has a few blocking waits. Need to split up to
-// async functions.
-void delay(uint32_t ms) {
-    uint32_t start = pbdrv_clock_get_ms();
-    while (pbdrv_clock_get_ms() - start < ms) {
-        /* Wait */
+#include "usb_ch9.h"
+
+#define INTR_BIT_USB_RESET      (1 << 18)
+#define INTR_BIT_EP1_OUT        (1 << 9)
+#define INTR_BIT_EP1_IN         (1 << 1)
+#define INTR_BIT_EP0            (1 << 0)
+
+// Maximum packet sizes for the USB pipes
+#define EP0_BUF_SZ              64
+#define PYBRICKS_EP_PKT_SZ_FS   64
+#define PYBRICKS_EP_PKT_SZ_HS   512
+
+/**
+ * Indices for string descriptors
+ */
+enum {
+    STRING_DESC_LANGID,
+    STRING_DESC_MFG,
+    STRING_DESC_PRODUCT,
+    STRING_DESC_SERIAL,
+};
+
+// Begin hardcoded USB descriptors
+
+static const usb_dev_desc_u dev_desc = {
+    .s = {
+        .bLength = sizeof(usb_dev_desc),
+        .bDescriptorType = DESC_TYPE_DEVICE,
+        // A BOS descriptor is needed for Windows driver auto-installation,
+        // so this must be at least 2.1
+        .bcdUSB = 0x0201,
+        .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+        .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+        .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bMaxPacketSize0 = EP0_BUF_SZ,
+        .idVendor = PBDRV_CONFIG_USB_VID,
+        .idProduct = PBDRV_CONFIG_USB_PID,
+        .bcdDevice = 0x0200,
+        .iManufacturer = STRING_DESC_MFG,
+        .iProduct = STRING_DESC_PRODUCT,
+        .iSerialNumber = STRING_DESC_SERIAL,
+        .bNumConfigurations = 1,
     }
-}
-
-unsigned int USBVersionGet(void) {
-    return USB_REV_AM1808;
-}
-
-void USBEnableInt(unsigned int ulBase) {
-    HWREG(ulBase + USB_0_INTR_MASK_SET) = 0x01FF1E1F;
-}
-
-void USBClearInt(unsigned int ulBase) {
-    HWREG(ulBase + USB_0_INTR_SRC_CLEAR) = HWREG(ulBase + USB_0_INTR_SRC);
-}
-
-void USBModuleClkEnable(unsigned int ulIndex, unsigned int ulBase) {
-    PSCModuleControl(SOC_PSC_1_REGS, 1, 0, PSC_MDCTL_NEXT_ENABLE);
-}
-
-void USBModuleClkDisable(unsigned int ulIndex, unsigned int ulBase) {
-    PSCModuleControl(SOC_PSC_1_REGS, 1, 0, PSC_MDCTL_NEXT_DISABLE);
-}
-
-PROCESS(pbdrv_usb_process, "USB");
-
-
-// #include <tiam1808/usb.h>
-#include <tiam1808/usblib/usblib.h>
-#include <tiam1808/usblib/usbcdc.h>
-#include <tiam1808/usblib/usb-ids.h>
-#include <tiam1808/usblib/usbdevice.h>
-#include <tiam1808/usblib/usbdcdc.h>
-
-// The languages supported by this device.
-const unsigned char g_pLangDescriptor[] =
-{
-    4,
-    USB_DTYPE_STRING,
-    USBShort(USB_LANG_EN_US)
+};
+static const usb_dev_qualifier_desc_u dev_qualifier_desc = {
+    .s = {
+        .bLength = sizeof(usb_dev_qualifier_desc_u),
+        .bDescriptorType = DESC_TYPE_DEVICE_QUALIFIER,
+        .bcdUSB = 0x0201,
+        .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+        .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+        .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bMaxPacketSize0 = EP0_BUF_SZ,
+        .bNumConfigurations = 1,
+        .bReserved = 0,
+    }
 };
 
-// The manufacturer string.
-const unsigned char g_pManufacturerString[] =
-{
-    (17 + 1) * 2,
-    USB_DTYPE_STRING,
-    'T', 0, 'e', 0, 'x', 0, 'a', 0, 's', 0, ' ', 0, 'I', 0, 'n', 0, 's', 0,
-    't', 0, 'r', 0, 'u', 0, 'm', 0, 'e', 0, 'n', 0, 't', 0, 's', 0,
+typedef struct __attribute__((packed)) {
+    usb_conf_desc conf_desc;
+    usb_iface_desc iface_desc;
+    usb_ep_desc ep_1_out;
+    usb_ep_desc ep_1_in;
+} usb_conf_1;
+typedef union {
+    usb_conf_1 s;
+    uint32_t u[(sizeof(usb_conf_1) + 3) / 4];
+} usb_conf_1_u;
+
+static const usb_conf_1_u configuration_1_desc_hs = {
+    .s = {
+        .conf_desc = {
+            .bLength = sizeof(usb_conf_desc),
+            .bDescriptorType = DESC_TYPE_CONFIGURATION,
+            .wTotalLength = sizeof(usb_conf_1),
+            .bNumInterfaces = 1,
+            .bConfigurationValue = 1,
+            .iConfiguration = 0,
+            .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED,
+            .bMaxPower = 0,
+        },
+        .iface_desc = {
+            .bLength = sizeof(usb_iface_desc),
+            .bDescriptorType = DESC_TYPE_INTERFACE,
+            .bInterfaceNumber = 0,
+            .bAlternateSetting = 0,
+            .bNumEndpoints = 2,
+            .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+            .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+            .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+            .iInterface = 0,
+        },
+        .ep_1_out = {
+            .bLength = sizeof(usb_ep_desc),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = 0x01,
+            .bmAttributes = EP_TYPE_BULK,
+            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_HS,
+            .bInterval = 0xff,
+        },
+        .ep_1_in = {
+            .bLength = sizeof(usb_ep_desc),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = 0x81,
+            .bmAttributes = EP_TYPE_BULK,
+            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_HS,
+            .bInterval = 0xff,
+        },
+    }
 };
 
-// The product string.
-const unsigned char g_pProductString[] =
-{
-    2 + (16 * 2),
-    USB_DTYPE_STRING,
-    'V', 0, 'i', 0, 'r', 0, 't', 0, 'u', 0, 'a', 0, 'l', 0, ' ', 0,
-    'C', 0, 'O', 0, 'M', 0, ' ', 0, 'P', 0, 'o', 0, 'r', 0, 't', 0
+static const usb_conf_1_u configuration_1_desc_fs = {
+    .s = {
+        .conf_desc = {
+            .bLength = sizeof(usb_conf_desc),
+            .bDescriptorType = DESC_TYPE_CONFIGURATION,
+            .wTotalLength = sizeof(usb_conf_1),
+            .bNumInterfaces = 1,
+            .bConfigurationValue = 1,
+            .iConfiguration = 0,
+            .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED,
+            .bMaxPower = 0,
+        },
+        .iface_desc = {
+            .bLength = sizeof(usb_iface_desc),
+            .bDescriptorType = DESC_TYPE_INTERFACE,
+            .bInterfaceNumber = 0,
+            .bAlternateSetting = 0,
+            .bNumEndpoints = 2,
+            .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+            .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+            .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+            .iInterface = 0,
+        },
+        .ep_1_out = {
+            .bLength = sizeof(usb_ep_desc),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = 0x01,
+            .bmAttributes = EP_TYPE_BULK,
+            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_FS,
+            .bInterval = 0,
+        },
+        .ep_1_in = {
+            .bLength = sizeof(usb_ep_desc),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = 0x81,
+            .bmAttributes = EP_TYPE_BULK,
+            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_FS,
+            .bInterval = 0,
+        },
+    }
 };
 
-// The serial number string.
-const unsigned char g_pSerialNumberString[] =
-{
-    2 + (8 * 2),
-    USB_DTYPE_STRING,
-    '1', 0, '2', 0, '3', 0, '4', 0, '5', 0, '6', 0, '7', 0, '8', 0
+static const union {
+    struct {
+        uint8_t bLength;
+        uint8_t bDescriptorType;
+        uint16_t langID[1];
+    } s;
+    uint32_t u[1];
+} usb_str_desc_langid = {
+    .s = {
+        .bLength = 4,
+        .bDescriptorType = DESC_TYPE_STRING,
+        .langID = {0x0409},     // English (United States)
+    }
 };
 
-// The control interface description string.
-const unsigned char g_pControlInterfaceString[] =
-{
-    2 + (21 * 2),
-    USB_DTYPE_STRING,
-    'A', 0, 'C', 0, 'M', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0, 't', 0,
-    'r', 0, 'o', 0, 'l', 0, ' ', 0, 'I', 0, 'n', 0, 't', 0, 'e', 0,
-    'r', 0, 'f', 0, 'a', 0, 'c', 0, 'e', 0
+// We generate string descriptors at runtime, so this dynamic buffer is needed
+static union {
+    uint8_t b[64];
+    uint32_t u[64 / 4];
+} usb_string_desc_buffer;
+
+// Defined in pbio/platform/ev3/platform.c
+extern uint8_t pbdrv_ev3_bluetooth_mac_address[6];
+
+// USB stack state
+
+// Set to true if the USB address needs to be set after a SET_ADDRESS
+static bool usb_addr_needs_setting;
+// The USB device address to use
+static uint8_t usb_addr;
+// The active USB configuration index (either 0 if unconfigured, or else 1)
+static uint8_t usb_config;
+// Data which remains to be sent for a CONTROL IN request
+static const uint32_t *setup_data_to_send;
+// Size of data remaining for a CONTROL IN
+static unsigned int setup_data_to_send_sz;
+// Used to send one (or a few) bytes back, for simple GET commands on EP0.
+static uint32_t setup_misc_tx_byte;
+// Whether the device is using USB high-speed mode or not
+static bool is_usb_hs;
+
+// Buffers, used for different logical flows on the data endpoint
+static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_tx_response_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_tx_status_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_tx_stdout_buf[PYBRICKS_EP_PKT_SZ_HS];
+
+// Buffer status flags
+static volatile bool usb_rx_is_ready;
+static volatile bool usb_tx_response_is_not_ready;
+static volatile bool usb_tx_status_is_not_ready;
+static volatile bool usb_tx_stdout_is_not_ready;
+
+// CPPI DMA support code
+
+// Descriptors must be aligned to a power of 2 greater than or equal to their size.
+// We are using a descriptor of 32 bytes which is also the required alignment.
+#define CPPI_DESCRIPTOR_ALIGN   32
+
+// Host Packet Descriptor
+// The TI support library has hardcoded assumptions about the layout of these structures,
+// so we declare it ourselves here in order to control it as we wish.
+typedef struct {
+    hPDWord0 word0;
+    hPDWord1 word1;
+    hPDWord2 word2;
+    uint32_t buf_len;
+    void *buf_ptr;
+    void *next_desc_ptr;
+    uint32_t orig_buf_len;
+    void *orig_buf_ptr;
+} __attribute__((aligned(CPPI_DESCRIPTOR_ALIGN))) usb_cppi_hpd_t;
+_Static_assert(sizeof(usb_cppi_hpd_t) <= CPPI_DESCRIPTOR_ALIGN);
+
+// This goes into the lower bits of the queue CTRLD register
+#define CPPI_DESCRIPTOR_SIZE_BITS   ((sizeof(usb_cppi_hpd_t) - 24) / 4)
+
+// We only use a hardcoded descriptor for each logical flow,
+// rather than dynamically allocating them as needed
+enum {
+    CPPI_DESC_RX,
+    CPPI_DESC_TX_RESPONSE,
+    CPPI_DESC_TX_STATUS,
+    CPPI_DESC_TX_STDOUT,
+    // the minimum number of descriptors we can allocate is 32,
+    // even though we do not use nearly all of them
+    CPPI_DESC_COUNT = 32,
 };
 
-// The configuration description string.
-const unsigned char g_pConfigString[] =
-{
-    2 + (26 * 2),
-    USB_DTYPE_STRING,
-    'S', 0, 'e', 0, 'l', 0, 'f', 0, ' ', 0, 'P', 0, 'o', 0, 'w', 0,
-    'e', 0, 'r', 0, 'e', 0, 'd', 0, ' ', 0, 'C', 0, 'o', 0, 'n', 0,
-    'f', 0, 'i', 0, 'g', 0, 'u', 0, 'r', 0, 'a', 0, 't', 0, 'i', 0,
-    'o', 0, 'n', 0
+enum {
+    // Documenting explicitly that we only use RX queue 0
+    // (out of 16 total which are supported by the hardware)
+    CPPI_RX_SUBMIT_QUEUE = 0,
 };
 
-// The descriptor string table.
-const unsigned char *const g_pStringDescriptors[] =
-{
-    g_pLangDescriptor,
-    g_pManufacturerString,
-    g_pProductString,
-    g_pSerialNumberString,
-    g_pControlInterfaceString,
-    g_pConfigString
-};
+// CPPI memory
+static usb_cppi_hpd_t cppi_descriptors[CPPI_DESC_COUNT];
+static uint32_t cppi_linking_ram[CPPI_DESC_COUNT];
 
-extern const tUSBBuffer g_sTxBuffer;
-extern const tUSBBuffer g_sRxBuffer;
+// Fill in the CPPI DMA descriptor to receive a packet
+static void usb_setup_rx_dma_desc(void) {
+    cppi_descriptors[CPPI_DESC_RX] = (usb_cppi_hpd_t) {
+        .word0 = {
+            .hostPktType = 0x10,
+        },
+        .word1 = {},
+        .word2 = {
+            .pktRetQueue = RX_COMPQ1,
+        },
+        .buf_len = PYBRICKS_EP_PKT_SZ_HS,
+        .buf_ptr = ep1_rx_buf,
+        .next_desc_ptr = 0,
+        .orig_buf_len = PYBRICKS_EP_PKT_SZ_HS,
+        .orig_buf_ptr = ep1_rx_buf,
+    };
 
-// Global flag indicating that a USB configuration has been set.
-static volatile bool g_bUSBConfigured = false;
-static bool g_bUSBSerialConfigured = false;
+    pbdrv_compiler_memory_barrier();
 
-static void GetLineCoding(tLineCoding *psLineCoding) {
-    //
-    // Get the current line coding set in the UART.
-    //
-    psLineCoding->ulRate = 115200;
-    psLineCoding->ucDatabits = 8;
-    psLineCoding->ucParity = USB_CDC_PARITY_NONE;
-    psLineCoding->ucStop = USB_CDC_STOP_BITS_1;
-
+    HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + CPPI_RX_SUBMIT_QUEUE * 16) =
+        (uint32_t)(&cppi_descriptors[CPPI_DESC_RX]) | CPPI_DESCRIPTOR_SIZE_BITS;
 }
 
-// *****************************************************************************
-//
-// Handles CDC driver notifications related to the receive channel (data from
-// the USB host).
-//
-// \param ulCBData is the client-supplied callback data value for this channel.
-// \param ulEvent identifies the event we are being notified about.
-// \param ulMsgValue is an event-specific value.
-// \param pvMsgData is an event-specific pointer.
-//
-// This function is called by the CDC driver to notify us of any events
-// related to operation of the receive data channel (the OUT channel carrying
-// data from the USB host).
-//
-// \return The return value is event-specific.
-//
-// *****************************************************************************
-unsigned int RxHandler(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgValue, void *pvMsgData) {
 
-    //
-    // Which event are we being sent?
-    //
-    switch (ulEvent)
-    {
-        //
-        // A new packet has been received.
-        //
-        case USB_EVENT_RX_AVAILABLE: {
-            // Hack to get CTRL+C to work. Needs to be moved to pbsys.
-            char *test = pvMsgData;
-            extern bool pbsys_main_stdin_event(uint8_t c);
-            for (unsigned int i = 0; i < ulMsgValue; i++) {
-                pbsys_main_stdin_event(test[i]);
+// Fill in the CPPI DMA descriptor to send a packet
+static void usb_setup_tx_dma_desc(int tx_type, void *buf, uint32_t buf_len) {
+    cppi_descriptors[tx_type] = (usb_cppi_hpd_t) {
+        .word0 = {
+            .hostPktType = 0x10,
+            .pktLength = buf_len,
+        },
+        .word1 = {
+            .srcPrtNum = 1,             // port is EP1
+        },
+        .word2 = {
+            .pktType = 5,               // USB packet type
+            .pktRetQueue = TX_COMPQ1,
+        },
+        .buf_len = buf_len,
+        .buf_ptr = buf,
+        .next_desc_ptr = 0,
+        .orig_buf_len = buf_len,
+        .orig_buf_ptr = buf,
+    };
+
+    pbdrv_compiler_memory_barrier();
+
+    HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + TX_SUBMITQ1 * 16) =
+        (uint32_t)(&cppi_descriptors[tx_type]) | CPPI_DESCRIPTOR_SIZE_BITS;
+}
+
+// Helper function for dividing up buffers for EP0 and feeding the FIFO
+static void usb_setup_send_chunk(void) {
+    unsigned int this_chunk_sz = setup_data_to_send_sz;
+    if (this_chunk_sz > EP0_BUF_SZ) {
+        this_chunk_sz = EP0_BUF_SZ;
+    }
+
+    // 4-byte-at-a-time copy
+    unsigned int this_chunk_sz_words = this_chunk_sz / 4;
+    for (unsigned int i = 0; i < this_chunk_sz_words; i++) {
+        HWREG(USB0_BASE + USB_O_FIFO0) = setup_data_to_send[i];
+    }
+    setup_data_to_send += this_chunk_sz_words;
+
+    // Copy remainder
+    for (unsigned int i = 0; i < this_chunk_sz % 4; i++) {
+        HWREGB(USB0_BASE + USB_O_FIFO0) = ((const uint8_t *)setup_data_to_send)[i];
+    }
+
+    setup_data_to_send_sz -= this_chunk_sz;
+}
+
+static void usb_device_intr(void) {
+    IntSystemStatusClear(SYS_INT_USB0);
+    uint32_t intr_src = HWREG(USB_0_OTGBASE + USB_0_INTR_SRC);
+
+    if (intr_src & INTR_BIT_USB_RESET) {
+        // USB reset
+
+        // Reset state variables
+        usb_addr = 0;
+        usb_config = 0;
+        setup_data_to_send = 0;
+        usb_addr_needs_setting = false;
+
+        if (HWREGH(USB0_BASE + USB_O_POWER) & (1 << 4)) {
+            is_usb_hs = true;
+        } else {
+            is_usb_hs = false;
+        }
+
+        // Set up the FIFOs
+        // We use a hardcoded address allocation as follows
+        // @ 0      ==> EP0
+        // @ 64     ==> EP1 IN (device to host, tx)
+        // @ 64+512 ==> EP1 OUT (host to device, rx)
+        HWREGB(USB0_BASE + USB_O_EPIDX) = 1;
+        if (is_usb_hs) {
+            HWREGB(USB0_BASE + USB_O_TXFIFOSZ) = USB_TXFIFOSZ_SIZE_512;
+            HWREGB(USB0_BASE + USB_O_RXFIFOSZ) = USB_RXFIFOSZ_SIZE_512;
+            HWREGH(USB0_BASE + USB_O_TXMAXP1) = PYBRICKS_EP_PKT_SZ_HS;
+            HWREGH(USB0_BASE + USB_O_RXMAXP1) = PYBRICKS_EP_PKT_SZ_HS;
+        } else {
+            HWREGB(USB0_BASE + USB_O_TXFIFOSZ) = USB_TXFIFOSZ_SIZE_64;
+            HWREGB(USB0_BASE + USB_O_RXFIFOSZ) = USB_RXFIFOSZ_SIZE_64;
+            HWREGH(USB0_BASE + USB_O_TXMAXP1) = PYBRICKS_EP_PKT_SZ_FS;
+            HWREGH(USB0_BASE + USB_O_RXMAXP1) = PYBRICKS_EP_PKT_SZ_FS;
+        }
+        HWREGH(USB0_BASE + USB_O_TXFIFOADD) = EP0_BUF_SZ / 8;
+        HWREGH(USB0_BASE + USB_O_RXFIFOADD) = (EP0_BUF_SZ + PYBRICKS_EP_PKT_SZ_HS) / 8;
+
+        // Set up the TX fifo for DMA and a stall condition
+        HWREGH(USB0_BASE + USB_O_TXCSRL1) = ((USB_TXCSRH1_AUTOSET | USB_TXCSRH1_MODE | USB_TXCSRH1_DMAEN | USB_TXCSRH1_DMAMOD) << 8) | USB_TXCSRL1_STALL;
+        // Set up the RX fifo for DMA and a stall condition
+        HWREGH(USB0_BASE + USB_O_RXCSRL1) = ((USB_RXCSRH1_AUTOCL | USB_RXCSRH1_DMAEN) << 8) | USB_RXCSRL1_STALL;
+
+        // Set up CPPI DMA
+        HWREG(USB_0_OTGBASE + CPDMA_LRAM_0_BASE) = (uint32_t)cppi_linking_ram;
+        HWREG(USB_0_OTGBASE + CPDMA_LRAM_0_SIZE) = CPPI_DESC_COUNT;
+        HWREG(USB_0_OTGBASE + CPDMA_LRAM_1_BASE) = 0;
+
+        HWREG(USB_0_OTGBASE + CPDMA_QUEUEMGR_REGION_0) = (uint32_t)cppi_descriptors;
+        // 32 descriptors of 32 bytes each
+        HWREG(USB_0_OTGBASE + CPDMA_QUEUEMGR_REGION_0_CONTROL) = 0;
+
+        // scheduler table: RX on 0, TX on 0
+        HWREG(USB_0_OTGBASE + CPDMA_SCHED_TABLE_0) = 0x0080;
+        HWREG(USB_0_OTGBASE + CPDMA_SCHED_CONTROL_REG) = (1 << SCHEDULER_ENABLE_SHFT) | (2 - 1);
+
+        // CPPI RX
+        HWREG(USB_0_OTGBASE + CPDMA_RX_CHANNEL_REG_A) =
+            (CPPI_RX_SUBMIT_QUEUE << 0) |
+            (CPPI_RX_SUBMIT_QUEUE << 16);
+        HWREG(USB_0_OTGBASE + CPDMA_RX_CHANNEL_REG_B) =
+            (CPPI_RX_SUBMIT_QUEUE << 0) |
+            (CPPI_RX_SUBMIT_QUEUE << 16);
+        HWREG(USB_0_OTGBASE + CPDMA_RX_CHANNEL_CONFIG_REG) =
+            (1 << 31) |         // enable
+            (1 << 24) |         // starvation = retry
+            (1 << 14) |         // "host" descriptors (the only valid type)
+            RX_COMPQ1;
+
+        // CPPI TX
+        HWREG(USB_0_OTGBASE + CPDMA_TX_CHANNEL_CONFIG_REG) =
+            (1 << 31) |         // enable
+            TX_COMPQ1;
+
+        // queue RX descriptor
+        usb_setup_rx_dma_desc();
+    }
+
+    if (intr_src & INTR_BIT_EP0) {
+        // USB EP0
+        uint16_t peri_csr = HWREGH(USB0_BASE + USB_O_CSRL0);
+
+        if (peri_csr & USB_CSRL0_STALLED) {
+            // If this is a sent-stall confirmation, clear the bit
+            HWREGH(USB0_BASE + USB_O_CSRL0) = 0;
+            setup_data_to_send = 0;
+            usb_addr_needs_setting = false;
+        } else if (peri_csr & USB_CSRL0_SETEND) {
+            // Error in SETUP transaction
+            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_SETENDC;
+            setup_data_to_send = 0;
+            usb_addr_needs_setting = false;
+        } else {
+            if (usb_addr_needs_setting) {
+                USBDevAddrSet(USB0_BASE, usb_addr);
+                usb_addr_needs_setting = false;
             }
-            break;
-        }
 
-        //
-        // We are being asked how much unprocessed data we have still to
-        // process. We return 0 if the UART is currently idle or 1 if it is
-        // in the process of transmitting something. The actual number of
-        // bytes in the UART FIFO is not important here, merely whether or
-        // not everything previously sent to us has been transmitted.
-        //
-        case USB_EVENT_DATA_REMAINING: {
-            return 0;
-        }
+            if (peri_csr & USB_CSRL0_RXRDY) {
+                // Got a new setup packet
+                usb_setup_packet_u setup_pkt;
+                int handled = 0;
+                setup_data_to_send = 0;
 
-        //
-        // We are being asked to provide a buffer into which the next packet
-        // can be read. We do not support this mode of receiving data so let
-        // the driver know by returning 0. The CDC driver should not be sending
-        // this message but this is included just for illustration and
-        // completeness.
-        //
-        case USB_EVENT_REQUEST_BUFFER: {
-            return 0;
-        }
+                setup_pkt.u[0] = HWREG(USB0_BASE + USB_O_FIFO0);
+                setup_pkt.u[1] = HWREG(USB0_BASE + USB_O_FIFO0);
+                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC;
 
-        //
-        // We don't expect to receive any other events.  Ignore any that show
-        // up in a release build or hang in a debug build.
-        //
-        default:
-            break;
+                if (((setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) == BM_REQ_TYPE_STANDARD) &&
+                    ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) == BM_REQ_RECIP_DEV)) {
+
+                    if (setup_pkt.s.bRequest == SET_ADDRESS) {
+                        usb_addr = setup_pkt.s.wValue;
+                        usb_addr_needs_setting = true;
+                        handled = 1;
+                    } else if (setup_pkt.s.bRequest == SET_CONFIGURATION) {
+                        if (setup_pkt.s.wValue <= 1) {
+                            usb_config = setup_pkt.s.wValue;
+
+                            if (usb_config == 1) {
+                                // configuring
+
+                                // Reset data toggle, clear stall, flush fifo
+                                HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_CLRDT | USB_TXCSRL1_FLUSH;
+                                HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_CLRDT | USB_RXCSRL1_FLUSH;
+                            } else {
+                                // deconfiguring
+
+                                // Set stall condition
+                                HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_STALL;
+                                HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_STALL;
+                            }
+                            handled = 1;
+                        }
+                    } else if (setup_pkt.s.bRequest == GET_CONFIGURATION) {
+                        setup_misc_tx_byte = usb_config;
+                        setup_data_to_send = &setup_misc_tx_byte;
+                        setup_data_to_send_sz = 1;
+                        handled = 1;
+                    } else if (setup_pkt.s.bRequest == GET_STATUS) {
+                        setup_misc_tx_byte = 1;     // self-powered
+                        setup_data_to_send = &setup_misc_tx_byte;
+                        setup_data_to_send_sz = 2;
+                        handled = 1;
+                    } else if (setup_pkt.s.bRequest == GET_DESCRIPTOR) {
+                        uint8_t desc_ty = setup_pkt.s.wValue >> 8;
+                        uint8_t desc_idx = setup_pkt.s.wValue;
+
+                        if (desc_ty == DESC_TYPE_DEVICE) {
+                            setup_data_to_send = dev_desc.u;
+                            setup_data_to_send_sz = sizeof(usb_dev_desc);
+                            handled = 1;
+                        } else if (desc_ty == DESC_TYPE_DEVICE_QUALIFIER) {
+                            setup_data_to_send = dev_qualifier_desc.u;
+                            setup_data_to_send_sz = sizeof(usb_dev_qualifier_desc);
+                            handled = 1;
+                        } else if (desc_ty == DESC_TYPE_CONFIGURATION) {
+                            if (is_usb_hs) {
+                                setup_data_to_send = configuration_1_desc_hs.u;
+                            } else {
+                                setup_data_to_send = configuration_1_desc_fs.u;
+                            }
+                            setup_data_to_send_sz = sizeof(usb_conf_1);
+                            handled = 1;
+                        } else if (desc_ty == DESC_TYPE_OTHER_SPEED_CONFIGURATION) {
+                            if (is_usb_hs) {
+                                setup_data_to_send = configuration_1_desc_fs.u;
+                            } else {
+                                setup_data_to_send = configuration_1_desc_hs.u;
+                            }
+                            setup_data_to_send_sz = sizeof(usb_conf_1);
+                            handled = 1;
+                        } else if (desc_ty == DESC_TYPE_STRING) {
+                            if (desc_idx == STRING_DESC_LANGID) {
+                                setup_data_to_send = usb_str_desc_langid.u;
+                                setup_data_to_send_sz = sizeof(usb_str_desc_langid);
+                                handled = 1;
+                            } else if (desc_idx == STRING_DESC_MFG) {
+                                usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
+                                int i = 0;
+                                while (PBDRV_CONFIG_USB_MFG_STR[i]) {
+                                    usb_string_desc_buffer.b[2 + 2 * i] = PBDRV_CONFIG_USB_MFG_STR[i];
+                                    usb_string_desc_buffer.b[2 + 2 * i + 1] = 0;
+                                    i++;
+                                }
+                                usb_string_desc_buffer.b[0] = 2 * i + 2;
+
+                                setup_data_to_send = usb_string_desc_buffer.u;
+                                setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                                handled = 1;
+                            } else if (desc_idx == STRING_DESC_PRODUCT) {
+                                usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
+                                int i = 0;
+                                while (PBDRV_CONFIG_USB_PROD_STR[i]) {
+                                    usb_string_desc_buffer.b[2 + 2 * i] = PBDRV_CONFIG_USB_PROD_STR[i];
+                                    usb_string_desc_buffer.b[2 + 2 * i + 1] = 0;
+                                    i++;
+                                }
+                                usb_string_desc_buffer.b[0] = 2 * i + 2;
+
+                                setup_data_to_send = usb_string_desc_buffer.u;
+                                setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                                handled = 1;
+                            } else if (desc_idx == STRING_DESC_SERIAL) {
+                                usb_string_desc_buffer.b[0] = 2 * 2 * 6 + 2;
+                                usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
+                                for (int i = 0; i < 6; i++) {
+                                    usb_string_desc_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] >> 4];
+                                    usb_string_desc_buffer.b[2 + 4 * i + 1] = 0;
+                                    usb_string_desc_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] & 0xf];
+                                    usb_string_desc_buffer.b[2 + 4 * i + 3] = 0;
+                                }
+
+                                setup_data_to_send = usb_string_desc_buffer.u;
+                                setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                                handled = 1;
+                            }
+                        }
+                    }
+                } else if (((setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) == BM_REQ_TYPE_STANDARD) &&
+                           ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) == BM_REQ_RECIP_IF)) {
+
+                    if (setup_pkt.s.wIndex == 0) {
+                        if (setup_pkt.s.bRequest == GET_INTERFACE) {
+                            setup_misc_tx_byte = 0;
+                            setup_data_to_send = &setup_misc_tx_byte;
+                            setup_data_to_send_sz = 1;
+                            handled = 1;
+                        } else if (setup_pkt.s.bRequest == GET_STATUS) {
+                            setup_misc_tx_byte = 0;
+                            setup_data_to_send = &setup_misc_tx_byte;
+                            setup_data_to_send_sz = 2;
+                            handled = 1;
+                        }
+                    }
+                } else if (((setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) == BM_REQ_TYPE_STANDARD) &&
+                           ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) == BM_REQ_RECIP_EP)) {
+
+                    if (setup_pkt.s.bRequest == GET_STATUS) {
+                        if (setup_pkt.s.wIndex == 1) {
+                            setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_RXCSRL1) & USB_RXCSRL1_STALL);
+                            setup_data_to_send = &setup_misc_tx_byte;
+                            setup_data_to_send_sz = 2;
+                            handled = 1;
+                        } else if (setup_pkt.s.wIndex == 0x81) {
+                            setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_STALL);
+                            setup_data_to_send = &setup_misc_tx_byte;
+                            setup_data_to_send_sz = 2;
+                            handled = 1;
+                        }
+                    } else if (setup_pkt.s.bRequest == CLEAR_FEATURE && setup_pkt.s.wValue == 0) {
+                        if (setup_pkt.s.wIndex == 1) {
+                            HWREGB(USB0_BASE + USB_O_RXCSRL1) &= ~USB_RXCSRL1_STALL;
+                            handled = 1;
+                        } else if (setup_pkt.s.wIndex == 0x81) {
+                            HWREGB(USB0_BASE + USB_O_TXCSRL1) &= ~USB_TXCSRL1_STALL;
+                            handled = 1;
+                        }
+                    } else if (setup_pkt.s.bRequest == SET_FEATURE && setup_pkt.s.wValue == 0) {
+                        if (setup_pkt.s.wIndex == 1) {
+                            HWREGB(USB0_BASE + USB_O_RXCSRL1) |= USB_RXCSRL1_STALL;
+                            handled = 1;
+                        } else if (setup_pkt.s.wIndex == 0x81) {
+                            HWREGB(USB0_BASE + USB_O_TXCSRL1) |= USB_TXCSRL1_STALL;
+                            handled = 1;
+                        }
+                    }
+                }
+
+                if (!handled) {
+                    // send stall
+                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_STALL;
+                } else {
+                    if (setup_data_to_send) {
+                        // Clamp by host request size
+                        if (setup_pkt.s.wLength < setup_data_to_send_sz) {
+                            setup_data_to_send_sz = setup_pkt.s.wLength;
+                        }
+
+                        // Send as much as we can in one chunk
+                        usb_setup_send_chunk();
+                        if (setup_data_to_send_sz == 0) {
+                            setup_data_to_send = 0;
+                            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY | USB_CSRL0_DATAEND;
+                        } else {
+                            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY;
+                        }
+                    } else {
+                        // Just get ready to send ACK, no data
+                        HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_DATAEND;
+                    }
+                }
+            } else if (setup_data_to_send) {
+                // Need to continue to TX data
+                usb_setup_send_chunk();
+                if (setup_data_to_send_sz == 0) {
+                    setup_data_to_send = 0;
+                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY | USB_CSRL0_DATAEND;
+                } else {
+                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY;
+                }
+            }
+        }
     }
 
-    return 0;
-}
+    // EP1 interrupts, which only trigger on error conditions since we use DMA
 
-// *****************************************************************************
-//
-// Handles CDC driver notifications related to the transmit channel (data to
-// the USB host).
-//
-// \param ulCBData is the client-supplied callback pointer for this channel.
-// \param ulEvent identifies the event we are being notified about.
-// \param ulMsgValue is an event-specific value.
-// \param pvMsgData is an event-specific pointer.
-//
-// This function is called by the CDC driver to notify us of any events
-// related to operation of the transmit data channel (the IN channel carrying
-// data to the USB host).
-//
-// \return The return value is event-specific.
-//
-// *****************************************************************************
-static unsigned int TxHandler(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgValue, void *pvMsgData) {
-    //
-    // Which event have we been sent?
-    //
-    switch (ulEvent)
-    {
-        case USB_EVENT_TX_COMPLETE:
-            //
-            // Since we are using the USBBuffer, we don't need to do anything here.
-            //
-            break;
+    if (intr_src & INTR_BIT_EP1_OUT) {
+        // EP 1 OUT, host to device, rx
+        uint8_t rxcsr = HWREGB(USB0_BASE + USB_O_RXCSRL1);
 
-        //
-        // We don't expect to receive any other events.  Ignore any that show
-        // up in a release build or hang in a debug build.
-        //
-        default:
-            break;
-    }
-    return 0;
-}
+        // Clear error bits
+        rxcsr &= ~USB_RXCSRL1_STALLED;
 
-// *****************************************************************************
-//
-// Handles CDC driver notifications related to control and setup of the device.
-//
-// \param pvCBData is the client-supplied callback pointer for this channel.
-// \param ulEvent identifies the event we are being notified about.
-// \param ulMsgValue is an event-specific value.
-// \param pvMsgData is an event-specific pointer.
-//
-// This function is called by the CDC driver to perform control-related
-// operations on behalf of the USB host.  These functions include setting
-// and querying the serial communication parameters, setting handshake line
-// states and sending break conditions.
-//
-// \return The return value is event-specific.
-//
-// *****************************************************************************
-unsigned int ControlHandler(void *pvCBData, unsigned int ulEvent, unsigned int ulMsgValue, void *pvMsgData) {
-    //
-    // Which event are we being asked to process?
-    //
-    switch (ulEvent)
-    {
-        //
-        // We are connected to a host and communication is now possible.
-        //
-        case USB_EVENT_CONNECTED:
-            g_bUSBConfigured = true;
-
-            //
-            // Flush our buffers.
-            //
-            USBBufferFlush(&g_sTxBuffer);
-            USBBufferFlush(&g_sRxBuffer);
-            process_poll(&pbdrv_usb_process);
-            break;
-
-        //
-        // The host has disconnected.
-        //
-        case USB_EVENT_DISCONNECTED:
-            g_bUSBConfigured = false;
-            g_bUSBSerialConfigured = false;
-            process_poll(&pbdrv_usb_process);
-            break;
-
-        //
-        // Return the current serial communication parameters.
-        //
-        case USBD_CDC_EVENT_GET_LINE_CODING:
-            GetLineCoding(pvMsgData);
-            break;
-
-        //
-        // Set the current serial communication parameters.
-        //
-        case USBD_CDC_EVENT_SET_LINE_CODING:
-            break;
-
-        //
-        // Set the current serial communication parameters.
-        //
-        case USBD_CDC_EVENT_SET_CONTROL_LINE_STATE:
-            g_bUSBSerialConfigured = true;
-            process_poll(&pbdrv_usb_process);
-            //
-            // TODO: If configured with GPIOs controlling the handshake lines,
-            // set them appropriately depending upon the flags passed in the wValue
-            // field of the request structure passed.
-            //
-            break;
-
-        //
-        // Send a break condition on the serial line.
-        //
-        case USBD_CDC_EVENT_SEND_BREAK:
-            break;
-
-        //
-        // Clear the break condition on the serial line.
-        //
-        case USBD_CDC_EVENT_CLEAR_BREAK:
-            break;
-
-        //
-        // Ignore SUSPEND and RESUME for now.
-        //
-        case USB_EVENT_SUSPEND:
-        case USB_EVENT_RESUME:
-            break;
-
-        //
-        // We don't expect to receive any other events.  Ignore any that show
-        // up in a release build or hang in a debug build.
-        //
-        default:
-            break;
+        HWREGB(USB0_BASE + USB_O_RXCSRL1) = rxcsr;
     }
 
-    return 0;
+    if (intr_src & INTR_BIT_EP1_IN) {
+        // EP 1 IN, device to host, tx
+        uint8_t txcsr = HWREGB(USB0_BASE + USB_O_TXCSRL1);
+
+        // Clear error bits
+        txcsr &= ~(USB_TXCSRL1_STALLED | USB_TXCSRL1_UNDRN | USB_TXCSRL1_FIFONE);
+
+        HWREGB(USB0_BASE + USB_O_TXCSRL1) = txcsr;
+    }
+
+    // Check for DMA completions
+    uint32_t dma_q_pend_0 = HWREG(USB_0_OTGBASE + CPDMA_PEND_0_REGISTER);
+
+    if (dma_q_pend_0 & (1 << RX_COMPQ1)) {
+        // DMA for EP 1 OUT is done
+
+        // Pop the descriptor from the queue
+        uint32_t qctrld = HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + RX_COMPQ1 * 16);
+        (void)qctrld;
+
+        // Signal the main loop that we have something
+        usb_rx_is_ready = true;
+        pbio_os_request_poll();
+    }
+
+    if (dma_q_pend_0 & (1 << TX_COMPQ1)) {
+        // DMA for EP 1 IN is done
+
+        // Pop the descriptor from the queue
+        uint32_t qctrld = HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + TX_COMPQ1 * 16) & ~0x1f;
+
+        if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_RESPONSE])) {
+            usb_tx_response_is_not_ready = false;
+            pbio_os_request_poll();
+        } else if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_STATUS])) {
+            usb_tx_status_is_not_ready = false;
+            pbio_os_request_poll();
+        } else if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_STDOUT])) {
+            usb_tx_stdout_is_not_ready = false;
+            pbio_os_request_poll();
+        }
+    }
+
+    HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = intr_src;
+    HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
-// *****************************************************************************
-//
-// The CDC device initialization and customization structures. In this case,
-// we are using USBBuffers between the CDC device class driver and the
-// application code. The function pointers and callback data values are set
-// to insert a buffer in each of the data channels, transmit and receive.
-//
-// With the buffer in place, the CDC channel callback is set to the relevant
-// channel function and the callback data is set to point to the channel
-// instance data. The buffer, in turn, has its callback set to the application
-// function and the callback data set to our CDC instance structure.
-//
-// *****************************************************************************
-tCDCSerInstance g_sCDCInstance;
 
-const tUSBDCDCDevice g_sCDCDevice =
-{
-    USB_VID_STELLARIS,
-    USB_PID_SERIAL,
-    0,
-    USB_CONF_ATTR_SELF_PWR,
-    ControlHandler,
-    (void *)&g_sCDCDevice,
-    USBBufferEventCallback,
-    (void *)&g_sRxBuffer,
-    USBBufferEventCallback,
-    (void *)&g_sTxBuffer,
-    g_pStringDescriptors,
-    PBIO_ARRAY_SIZE(g_pStringDescriptors),
-    &g_sCDCInstance
-};
+static pbio_os_process_t pbdrv_usb_ev3_process;
 
-#define USB_CDC_BUFFER_SIZE (2048)
+static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *context) {
+    PBIO_OS_ASYNC_BEGIN(state);
 
-// Receive buffer (from the USB perspective).
-unsigned char g_pcUSBRxBuffer[USB_CDC_BUFFER_SIZE] __attribute__ ((aligned(16)));
-unsigned char g_pucRxBufferWorkspace[USB_BUFFER_WORKSPACE_SIZE]  __attribute__ ((aligned(16)));
-const tUSBBuffer g_sRxBuffer =
-{
-    false,                          // This is a receive buffer.
-    RxHandler,                // pfnCallback
-    (void *)&g_sCDCDevice,          // Callback data is our device pointer.
-    USBDCDCPacketRead,              // pfnTransfer
-    USBDCDCRxPacketAvailable,       // pfnAvailable
-    (void *)&g_sCDCDevice,          // pvHandle
-    g_pcUSBRxBuffer,                // pcBuffer
-    USB_CDC_BUFFER_SIZE,               // ulBufferSize
-    g_pucRxBufferWorkspace          // pvWorkspace
-};
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, usb_rx_is_ready);
 
-// Transmit buffer (from the USB perspective).
-unsigned char g_pcUSBTxBuffer[USB_CDC_BUFFER_SIZE] __attribute__ ((aligned(16)));
-unsigned char g_pucTxBufferWorkspace[USB_BUFFER_WORKSPACE_SIZE] __attribute__ ((aligned(16)));
-const tUSBBuffer g_sTxBuffer =
-{
-    true,                           // This is a transmit buffer.
-    TxHandler,                      // pfnCallback
-    (void *)&g_sCDCDevice,          // Callback data is our device pointer.
-    USBDCDCPacketWrite,             // pfnTransfer
-    USBDCDCTxPacketAvailable,       // pfnAvailable
-    (void *)&g_sCDCDevice,          // pvHandle
-    g_pcUSBTxBuffer,                // pcBuffer
-    USB_CDC_BUFFER_SIZE,            // ulBufferSize
-    g_pucTxBufferWorkspace          // pvWorkspace // is this rhe ringbuff??
-};
+        if (usb_rx_is_ready) {
+            // This barrier prevents *subsequent* memory reads from being
+            // speculatively moved *earlier*, outside the if statement
+            // (which is technically allowed by the as-if rule).
+            pbdrv_compiler_memory_barrier();
+
+            uint32_t usb_rx_sz = cppi_descriptors[CPPI_DESC_RX].word0.pktLength;
+
+            // TODO: Remove this echo test
+            unsigned int i;
+            for (i = 0; i < usb_rx_sz; i++) {
+                ep1_tx_response_buf[i] = ep1_rx_buf[i] + 1;
+            }
+            for (; i < 512; i++) {
+                ep1_tx_response_buf[i] = 0xaa;
+            }
+
+            (void)ep1_tx_status_buf;
+            (void)ep1_tx_stdout_buf;
+
+            unsigned int tx_sz = is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
+            if (!usb_tx_response_is_not_ready) {
+                usb_tx_response_is_not_ready = true;
+                usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, tx_sz);
+            }
+
+            // Re-queue RX buffer after processing is complete
+            usb_rx_is_ready = false;
+            usb_setup_rx_dma_desc();
+        }
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
 
 void pbdrv_usb_init(void) {
+    // This reset sequence is from Example 34-1 in the AM1808 TRM (spruh82c.pdf)
+    // Because PHYs and clocking are... as they tend to be, use the precise sequence
+    // of operations specified.
 
-    // Enable the clocks to the USB and PHY modules. Inspired by EV3RT.
-    HWREG(CFGCHIP2_USBPHYCTRL) &= ~SYSCFG_CFGCHIP2_USB0OTGMODE;
-    HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_FORCE_DEVICE;  // Force USB device operation
-    HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_REFFREQ_24MHZ; // 24 MHz OSCIN
+    // Power on and reset the controller
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    USBReset(USB0_BASE);
 
-    process_start(&pbdrv_usb_process);
+    // Reset the PHY
+    HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_RESET;
+    for (int i = 0; i < 50; i++) {
+        // Empty delay loop which should not be optimized out.
+        // This is the delay amount in the TI datasheet example.
+        __asm__ volatile ("");
+    }
+    HWREG(CFGCHIP2_USBPHYCTRL) &= ~CFGCHIP2_RESET;
 
-    /*
-    ** Registers the UARTIsr in the Interrupt Vector Table of AINTC.
-    ** The event number of UART2 interrupt is 61.
-    */
+    // Set up the PHY and force it into device mode
+    HWREG(CFGCHIP2_USBPHYCTRL) =
+        (HWREG(CFGCHIP2_USBPHYCTRL) &
+            ~CFGCHIP2_OTGMODE &
+            ~CFGCHIP2_PHYPWRDN &            // Make sure PHY is on
+            ~CFGCHIP2_OTGPWRDN) |           // Make sure OTG subsystem is on
+        CFGCHIP2_FORCE_DEVICE |             // We only ever want device operation
+        CFGCHIP2_DATPOL |                   // Data lines are *not* inverted
+        CFGCHIP2_SESENDEN |                 // Enable various analog comparators
+        CFGCHIP2_VBDTCTEN;
 
-    IntRegister(SYS_INT_USB0, USB0DeviceIntHandler);
+    HWREG(CFGCHIP2_USBPHYCTRL) =
+        (HWREG(CFGCHIP2_USBPHYCTRL) & ~CFGCHIP2_REFFREQ) |
+        CFGCHIP2_REFFREQ_24MHZ |            // Clock is 24 MHz
+        CFGCHIP2_USB2PHYCLKMUX;             // Clock comes from PLL
 
-    /*
-    ** Map the channel number 2 of AINTC to system interrupt 61.
-    ** Channel number 2 of AINTC is mapped to IRQ interrupt of ARM9 processor.
-    */
+    // Wait for PHY clocks to be ready
+    while (!(HWREG(CFGCHIP2_USBPHYCTRL) & CFGCHIP2_PHYCLKGD)) {
+    }
+
+    // Enable "PDR" mode for handling interrupts
+    //
+    // The datasheet doesn't clearly explain what this means,
+    // but what it appears TI has done is to wrap some custom interrupt and DMA
+    // logic around the Mentor Graphics core. The standard core registers
+    // thus now live at offset +0x400, and addresses below that pertain to the wrapper.
+    // This leaves some redundancy with how interrupts are set up, and this bit
+    // seems to enable accessing everything the TI way (more convenient) rather than
+    // the standard Mentor Graphics way (interrupt flags spread across more registers).
+    HWREG(USB_0_OTGBASE + USB_0_CTRL) &= ~(1 << 3);
+    HWREGH(USB0_BASE + USB_O_TXIE) = 0x1f;
+    HWREGH(USB0_BASE + USB_O_RXIE) = 0x1e;
+    HWREGB(USB0_BASE + USB_O_IE) = 0xff;
+
+    // Enable the interrupts we actually care about
+    HWREG(USB_0_OTGBASE + USB_0_INTR_MASK_SET) =
+        INTR_BIT_USB_RESET |
+        INTR_BIT_EP1_OUT |
+        INTR_BIT_EP1_IN |
+        INTR_BIT_EP0;
+
+    // Clear all the interrupts once
+    HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = HWREG(USB_0_OTGBASE + USB_0_INTR_SRC);
+
+    // Hook up interrupt handler
+    IntRegister(SYS_INT_USB0, usb_device_intr);
     IntChannelSet(SYS_INT_USB0, 2);
-
-    /* Enable the system interrupt number 61 in AINTC.*/
     IntSystemEnable(SYS_INT_USB0);
 
-    //
-    // Not configured initially.
-    //
-    g_bUSBConfigured = false;
+    // Finally signal a connection
+    USBDevConnect(USB0_BASE);
 
-    //
-    // Initialize the Rx and TX Buffers
-    //
-    USBBufferInit((tUSBBuffer *)&g_sTxBuffer);
-    USBBufferInit((tUSBBuffer *)&g_sRxBuffer);
-
-    USBBufferFlush(&g_sTxBuffer);
-    USBBufferFlush(&g_sRxBuffer);
-
-    g_sCDCSerDeviceInfo.sCallbacks.pfnSuspendHandler = g_sCDCSerDeviceInfo.sCallbacks.pfnDisconnectHandler;
-    //
-    // Pass our device information to the USB library and place the device
-    // on the bus.
-    //
-    USBDCDCInit(0, (tUSBDCDCDevice *)&g_sCDCDevice);
+    // We are basically done. USB is event-driven, and so we don't have to block boot.
+    pbio_os_process_start(&pbdrv_usb_ev3_process, pbdrv_usb_ev3_process_thread, NULL);
 }
 
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
-    return g_bUSBConfigured ? PBDRV_USB_BCD_STANDARD_DOWNSTREAM : PBDRV_USB_BCD_NONE;
+    // This function is not used on EV3
+    return PBDRV_USB_BCD_NONE;
 }
 
 uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size) {
-    // Attempt to write to the USB buffer.
-    uint32_t written = USBBufferWrite((tUSBBuffer *)&g_sTxBuffer, data, size);
-
-    // If configured, return the number of bytes written so we can await completion.
-    if (g_bUSBSerialConfigured) {
-        return written;
-    }
-
-    // If not configured, return the size requested so that caller doesn't block.
+    // TODO: Reimplement this
+    // Return the size requested so that caller doesn't block.
     return size;
 }
 
 uint32_t pbdrv_usb_rx_data_available(void) {
-    return USBBufferDataAvailable((tUSBBuffer *)&g_sRxBuffer);
+    // TODO: Reimplement this
+    return 0;
 }
 
 int32_t pbdrv_usb_get_char(void) {
-    uint8_t c;
-    if (USBBufferRead((tUSBBuffer *)&g_sRxBuffer, &c, 1) > 0) {
-        return c;
-    }
+    // TODO: Reimplement this
     return -1;
 }
 
 void pbdrv_usb_tx_flush(void) {
-    USBBufferFlush((tUSBBuffer *)&g_sTxBuffer);
-}
-
-PROCESS_THREAD(pbdrv_usb_process, ev, data) {
-
-    PROCESS_BEGIN();
-
-    // TODO: Async init USB, pausing pbdrv/core.
-
-    for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL);
-        // Can handle connect/disconnect events here.
-    }
-
-    PROCESS_END();
+    // TODO: Reimplement this
 }
 
 #endif // PBDRV_CONFIG_USB_EV3
