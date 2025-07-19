@@ -10,9 +10,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <contiki.h>
-
 #include "../core.h"
+#include "../sys/storage_data.h"
 
 #include <pbdrv/block_device.h>
 
@@ -41,7 +40,11 @@ static struct {
      * portion of this, up to pbdrv_block_device_get_writable_size() bytes,
      * gets saved to flash at shutdown.
      */
-    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+    union {
+        // ensure that data is properly aligned for pbsys_storage_data_map_t
+        pbsys_storage_data_map_t data_map;
+        uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+    };
 } ramdisk __attribute__((section(".noinit"), used));
 
 const uint32_t header_size = sizeof(ramdisk.saved_size) + sizeof(ramdisk.checksum_complement);
@@ -70,8 +73,8 @@ void pbdrv_block_device_init(void) {
     memcpy(&ramdisk, _pbdrv_block_device_storage_start, size);
 }
 
-pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
-    *data = ramdisk.data;
+pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
+    *data = &ramdisk.data_map;
     return init_err;
 }
 

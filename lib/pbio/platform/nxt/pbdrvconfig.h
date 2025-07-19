@@ -11,8 +11,6 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (10 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST              (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE         (8 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST_SIZE_USER    (512)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_NXT                     (1)

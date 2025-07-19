@@ -13,9 +13,8 @@
 
 #include STM32_HAL_H
 
-#include <contiki.h>
-
 #include "../core.h"
+#include "../sys/storage_data.h"
 #include "block_device_w25qxx_stm32.h"
 
 #include <pbdrv/block_device.h>
@@ -36,15 +35,19 @@ static struct {
      * portion of this, up to pbdrv_block_device_get_writable_size() bytes,
      * gets saved to flash at shutdown.
      */
-    uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+    union {
+        // ensure that data is properly aligned for pbsys_storage_data_map_t
+        pbsys_storage_data_map_t data_map;
+        uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+    };
 } ramdisk __attribute__((section(".noinit"), used));
 
 uint32_t pbdrv_block_device_get_writable_size(void) {
     return PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE - sizeof(ramdisk.saved_size);
 }
 
-pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
-    *data = ramdisk.data;
+pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
+    *data = &ramdisk.data_map;
 
     // Higher level code can use the ramdisk data if initialization completed
     // successfully. Otherwise it should reset to factory default data.

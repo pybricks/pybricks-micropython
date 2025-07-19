@@ -11,9 +11,10 @@
 
 #include <stdint.h>
 
+#include "../sys/storage_data.h"
+
 #include <pbdrv/config.h>
 #include <pbio/error.h>
-
 #include <pbio/os.h>
 
 #if PBDRV_CONFIG_BLOCK_DEVICE
@@ -28,7 +29,7 @@
  *                      ::PBIO_ERROR_IO (driver-specific error), though boot
  *                        does not proceed if this happens.
  */
-pbio_error_t pbdrv_block_device_get_data(uint8_t **data);
+pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data);
 
 /**
  * Writes the "RAM Disk" to storage. May erase entire disk prior to writing.
@@ -57,7 +58,7 @@ uint32_t pbdrv_block_device_get_writable_size(void);
 
 #else
 
-static inline pbio_error_t pbdrv_block_device_get_data(uint8_t **data) {
+static inline pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
