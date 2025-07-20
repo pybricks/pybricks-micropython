@@ -10,10 +10,11 @@
 #include <at91sam7s256.h>
 #include <nxos/drivers/_avr.h>
 #include <nxos/drivers/_lcd.h>
-#include <nxos/drivers/_usb.h>
 #include <nxos/drivers/bt.h>
 
 #include <pbdrv/reset.h>
+
+#include "../usb/usb_nxt.h"
 
 void pbdrv_reset_init(void) {
 }
@@ -70,7 +71,7 @@ void pbdrv_reset_power_off(void) {
     }
 
     nx__lcd_shutdown();
-    nx__usb_disable();
+    pbdrv_usb_nxt_deinit();
     nx__avr_power_down();
 }
 
