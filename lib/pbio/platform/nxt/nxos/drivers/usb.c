@@ -1,14 +1,19 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2007 the NxOS developers
+ * Copyright (C) 2025 the Pybricks Authors
  *
  * See AUTHORS for a full list of the developers.
- *
- * Redistribution of this file is permitted under
- * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <pbdrv/bluetooth.h>
+#include <pbio/protocol.h>
+#include <pbio/version.h>
+#include <pbsys/config.h>
+#include <pbsys/storage.h>
 
 #include <at91sam7s256.h>
 
@@ -37,16 +42,20 @@
  *
  * TODO: clean up these. Most are unused.
  */
-#define USB_BMREQUEST_DIR            0x80
-#define USB_BMREQUEST_H_TO_D         0x0
-#define USB_BMREQUEST_D_TO_H         0x80
+#define USB_BMREQUEST_DIR             0x80
+#define   USB_BMREQUEST_H_TO_D          0x00
+#define   USB_BMREQUEST_D_TO_H          0x80
+#define USB_BMREQUEST_TYPE            0x60
+#define   USB_BMREQUEST_TYPE_STD        0x00
+#define   USB_BMREQUEST_TYPE_CLASS      0x20
+#define   USB_BMREQUEST_TYPE_VENDOR     0x40
+#define USB_BMREQUEST_RCPT            0x1F
+#define   USB_BMREQUEST_RCPT_DEV        0x00 /* device */
+#define   USB_BMREQUEST_RCPT_INT        0x01 /* interface */
+#define   USB_BMREQUEST_RCPT_EPT        0x02 /* endpoint */
+#define   USB_BMREQUEST_RCPT_OTH        0x03 /* other */
 
-#define USB_BMREQUEST_RCPT           0x0F
-#define USB_BMREQUEST_RCPT_DEV       0x0 /* device */
-#define USB_BMREQUEST_RCPT_INT       0x1 /* interface */
-#define USB_BMREQUEST_RCPT_EPT       0x2 /* endpoint */
-#define USB_BMREQUEST_RCPT_OTH       0x3 /* other */
-
+// Standard requests
 #define USB_BREQUEST_GET_STATUS      0x0
 #define USB_BREQUEST_CLEAR_FEATURE   0x1
 #define USB_BREQUEST_SET_FEATURE     0x3
@@ -65,6 +74,11 @@
 #define USB_DESC_TYPE_INT              4
 #define USB_DESC_TYPE_ENDPT            5
 #define USB_DESC_TYPE_DEVICE_QUALIFIER 6
+#define USB_DESC_TYPE_BOS              15
+
+//BOS descriptor related defines
+#define USB_DEVICE_CAPABILITY_TYPE    0x10
+#define USB_DEV_CAP_TYPE_PLATFORM     5
 
 #define USB_WVALUE_INDEX       0xFF
 
@@ -84,14 +98,14 @@
  */
 static const uint8_t usb_device_descriptor[] = {
   18, USB_DESC_TYPE_DEVICE, /* Packet size and type. */
-  0x00, 0x20, /* This packet is USB 2.0. */
-  2, /* Class code. */
-  0, /* Sub class code. */
-  0, /* Device protocol. */
+  0x10, 0x02, /* This packet is USB 2.1 (needed for BOS descriptors). */
+  PBIO_PYBRICKS_USB_DEVICE_CLASS, /* Class code. */
+  PBIO_PYBRICKS_USB_DEVICE_SUBCLASS, /* Sub class code. */
+  PBIO_PYBRICKS_USB_DEVICE_PROTOCOL, /* Device protocol. */
   MAX_EP0_SIZE, /* Maximum packet size for EP0 (control endpoint). */
   0x94, 0x06, /* Vendor ID : LEGO */
-  0x00, 0xFF, /* Product ID : NXOS */
-  0x00, 0x00, /* Product revision. */
+  0x02, 0x00, /* Product ID : NXT */
+  0x00, 0x02, /* Product revision: 2.0.0. */
   1, /* Index of the vendor string. */
   2, /* Index of the product string. */
   0, /* Index of the serial number (none for us). */
@@ -100,15 +114,72 @@ static const uint8_t usb_device_descriptor[] = {
 
 static const uint8_t usb_dev_qualifier_desc[] = {
   10, USB_DESC_TYPE_DEVICE_QUALIFIER, /* Packet size and type. */
-  0x00, 0x20, /* This packet is USB 2.0. */
-  2, /* Class code */
-  0, /* Sub class code */
-  0, /* Device protocol */
+  0x10, 0x02, /* This packet is USB 2.1. */
+  PBIO_PYBRICKS_USB_DEVICE_CLASS, /* Class code */
+  PBIO_PYBRICKS_USB_DEVICE_SUBCLASS, /* Sub class code */
+  PBIO_PYBRICKS_USB_DEVICE_PROTOCOL, /* Device protocol */
   MAX_EP0_SIZE, /* Maximum packet size for EP0. */
   1, /* The number of possible configurations. */
   0 /* Reserved for future use, must be zero. */
 };
 
+// These enumerations are specific to the configuration of this device.
+
+enum {
+  USBD_VENDOR_CODE_WEBUSB,
+  USBD_VENDOR_CODE_MS,
+};
+
+// NB: Chromium seems quite particular about the order of these descriptors.
+// The WebUSB descriptor must come first and the MS OS 2.0 descriptor be last.
+static const uint8_t usb_bos_desc[] = {
+  5, USB_DESC_TYPE_BOS, /* Descriptor length and type. */
+  0x39, 0x00, /* Total length of the descriptor = 57. */
+  2, /* Number of device capabilities. */
+
+  24,                                 /* bLength */
+  USB_DEVICE_CAPABILITY_TYPE,         /* bDescriptorType = Device Capability */
+  USB_DEV_CAP_TYPE_PLATFORM,          /* bDevCapabilityType */
+  0x00,                               /* bReserved */
+
+  /*
+    * PlatformCapabilityUUID
+    * WebUSB Platform Capability descriptor
+    * 3408B638-09A9-47A0-8BFD-A0768815B665
+    * RFC 4122 explains the correct byte ordering
+    */
+  0x38, 0xB6, 0x08, 0x34,             /* 32-bit value */
+  0xA9, 0x09,                         /* 16-bit value */
+  0xA0, 0x47,                         /* 16-bit value */
+  0x8B, 0xFD,
+  0xA0, 0x76, 0x88, 0x15, 0xB6, 0x65,
+
+  0x00, 0x01,                         /* bcdVersion = 1.00 */
+  USBD_VENDOR_CODE_WEBUSB,            /* bVendorCode */
+  1,                                  /* iLandingPage */
+
+  28,                                 /* bLength */
+  USB_DEVICE_CAPABILITY_TYPE,         /* bDescriptorType = Device Capability */
+  USB_DEV_CAP_TYPE_PLATFORM,          /* bDevCapabilityType */
+  0x00,                               /* bReserved */
+
+  /*
+   * PlatformCapabilityUUID
+   * Microsoft OS 2.0 descriptor platform capability ID
+   * D8DD60DF-4589-4CC7-9CD2-659D9E648A9F
+   * RFC 4122 explains the correct byte ordering
+   */
+  0xDF, 0x60, 0xDD, 0xD8,           /* 32-bit value */
+  0x89, 0x45,                       /* 16-bit value */
+  0xC7, 0x4C,                       /* 16-bit value */
+  0x9C, 0xD2,
+  0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F,
+
+  0x00, 0x00, 0x03, 0x06,           /* dwWindowsVersion = 0x06030000 for Windows 8.1 Build */
+  0xA2, 0x00,                       /* wMSOSDescriptorSetTotalLength = 162 */
+  USBD_VENDOR_CODE_MS,              /* bMS_VendorCode */
+  0x00,                             /* bAltEnumCode = Does not support alternate enumeration */
+};
 
 static const uint8_t usb_nxos_full_config[] = {
   0x09, USB_DESC_TYPE_CONFIG, /* Descriptor size and type. */
@@ -123,7 +194,7 @@ static const uint8_t usb_nxos_full_config[] = {
    * 1 because the NXT is self-powered, bit 5 is 0 because the NXT
    * doesn't support remote wakeup, and bits 0-4 are 0 (reserved).
    */
-  0x40,
+  0xC0,
   0, /* Device power consumption, for non self-powered devices. */
 
 
@@ -137,9 +208,9 @@ static const uint8_t usb_nxos_full_config[] = {
   0x02, /* The number of endpoints defined by this interface
          * (excluding EP0).
          */
-  0xFF, /* Interface class ("Vendor specific"). */
-  0xFF, /* Interface subclass (see above). */
-  0xFF, /* Interface protocol (see above). */
+  PBIO_PYBRICKS_USB_DEVICE_CLASS, /* Interface class ("Vendor specific"). */
+  PBIO_PYBRICKS_USB_DEVICE_SUBCLASS, /* Interface subclass (see above). */
+  PBIO_PYBRICKS_USB_DEVICE_PROTOCOL, /* Interface protocol (see above). */
   0x00, /* Index of the string descriptor for this interface (none). */
 
 
@@ -178,11 +249,21 @@ static const uint8_t usb_lego_str[] = {
 };
 
 static const uint8_t usb_nxt_str[] = {
-  10, USB_DESC_TYPE_STR,
+  30, USB_DESC_TYPE_STR,
   'N', 0,
-  'x', 0,
-  'O', 0,
-  'S', 0,
+  'X', 0,
+  'T', 0,
+  ' ', 0,
+  '+', 0,
+  ' ', 0,
+  'P', 0,
+  'y', 0,
+  'b', 0,
+  'r', 0,
+  'i', 0,
+  'c', 0,
+  'k', 0,
+  's', 0
 };
 
 
@@ -374,6 +455,107 @@ static void usb_send_null(void) {
   usb_write_data(0, NULL, 0);
 }
 
+static const uint8_t ms_os_desc_set[] = {
+    0x0A, 0x00,                       /* wLength = 10 */
+    0x00, 0x00,                       /* wDescriptorType = MS_OS_20_SET_HEADER_DESCRIPTOR */
+    0x00, 0x00, 0x03, 0x06,           /* dwWindowsVersion = 0x06030000 for Windows 8.1 Build */
+    0xA2, 0x00,                       /* wTotalLength = 162 */
+
+    0x14, 0x00,                       /* wLength = 20 */
+    0x03, 0x00,                       /* wDescriptorType = MS_OS_20_FEATURE_COMPATBLE_ID */
+    'W', 'I', 'N', 'U', 'S', 'B',     /* CompatibleID */
+    0x00, 0x00,                       /* CompatibleID (cont.) */
+    0x00, 0x00, 0x00, 0x00,           /* SubCompatibleID */
+    0x00, 0x00, 0x00, 0x00,           /* SubCompatibleID (cont.) */
+
+    0x84, 0x00,                       /* wLength = 132 */
+    0x04, 0x00,                       /* wDescriptorType = MS_OS_20_FEATURE_REG_PROPERTY */
+    0x07, 0x00,                       /* wStringType = REG_MULTI_SZ */
+    /* wPropertyNameLength = 42 */
+    0x2A, 0x00,
+    /* PropertyName = DeviceInterfaceGUIDs */
+    'D', '\0',
+    'e', '\0',
+    'v', '\0',
+    'i', '\0',
+    'c', '\0',
+    'e', '\0',
+    'I', '\0',
+    'n', '\0',
+    't', '\0',
+    'e', '\0',
+    'r', '\0',
+    'f', '\0',
+    'a', '\0',
+    'c', '\0',
+    'e', '\0',
+    'G', '\0',
+    'U', '\0',
+    'I', '\0',
+    'D', '\0',
+    's', '\0',
+    '\0', '\0',
+
+    /* wPropertyDataLength = 80 */
+    0x50, 0x00,
+    /* PropertyData = {A5C44A4C-53D4-4389-9821-AE95051908A1} */
+    '{', '\0',
+    'A', '\0',
+    '5', '\0',
+    'C', '\0',
+    '4', '\0',
+    '4', '\0',
+    'A', '\0',
+    '4', '\0',
+    'C', '\0',
+    '-', '\0',
+    '5', '\0',
+    '3', '\0',
+    'D', '\0',
+    '4', '\0',
+    '-', '\0',
+    '4', '\0',
+    '3', '\0',
+    '8', '\0',
+    '9', '\0',
+    '-', '\0',
+    '9', '\0',
+    '8', '\0',
+    '2', '\0',
+    '1', '\0',
+    '-', '\0',
+    'A', '\0',
+    'E', '\0',
+    '9', '\0',
+    '5', '\0',
+    '0', '\0',
+    '5', '\0',
+    '1', '\0',
+    '9', '\0',
+    '0', '\0',
+    '8', '\0',
+    'A', '\0',
+    '1', '\0',
+    '}', '\0',
+    '\0', '\0',
+    '\0', '\0'
+};
+
+static const uint8_t WebUSB_DescSet[] = {
+    20,    /* bLength */
+    0x03,  /* bDescriptorType = URL */
+    0x01,  /* bScheme = https:// */
+
+    /* URL */
+    #if PBIO_VERSION_LEVEL_HEX == 0xA
+    'a', 'l', 'p', 'h', 'a',
+    #elif PBIO_VERSION_LEVEL_HEX == 0xB
+    'b', 'e', 't', 'a',
+    #else
+    'c', 'o', 'd', 'e',
+    #endif
+    '.', 'p', 'y', 'b', 'r', 'i', 'c', 'k', 's', '.', 'c', 'o', 'm'
+};
 
 /* Handle receiving and responding to setup packets on EP0. */
 static uint32_t usb_manage_setup_packet(void) {
@@ -386,7 +568,6 @@ static uint32_t usb_manage_setup_packet(void) {
     uint16_t length; /* The number of bytes transferred in the (optional)
                  * second phase of the control transfer. */
   } packet;
-  uint16_t response;
   uint32_t size;
   uint8_t index;
 
@@ -404,143 +585,223 @@ static uint32_t usb_manage_setup_packet(void) {
 
   usb_csr_clear_flag(0, AT91C_UDP_RXSETUP);
 
+  switch (packet.request_attrs & USB_BMREQUEST_TYPE) {
+  case USB_BMREQUEST_TYPE_STD:
+    /* Respond to the control request. */
+    switch (packet.request) {
+    case USB_BREQUEST_GET_STATUS: {
+        /* The host wants to know our status.
+        *
+        * If it wants the device status, just reply that the NXT is still
+        * self-powered (as first declared by the setup packets). If it
+        * wants endpoint status, reply that the endpoint has not
+        * halted. Any other status request types are reserved, which
+        * translates to replying zero.
+        */
+        uint16_t response;
 
-  response = 0;
+        if ((packet.request_attrs & USB_BMREQUEST_RCPT) == USB_BMREQUEST_RCPT_DEV)
+          response = 1;
+        else
+          response = 0;
 
-
-  /* Respond to the control request. */
-  switch (packet.request) {
-  case USB_BREQUEST_GET_STATUS:
-    /* The host wants to know our status.
-     *
-     * If it wants the device status, just reply that the NXT is still
-     * self-powered (as first declared by the setup packets). If it
-     * wants endpoint status, reply that the endpoint has not
-     * halted. Any other status request types are reserved, which
-     * translates to replying zero.
-     */
-    if ((packet.request_attrs & USB_BMREQUEST_RCPT) == USB_BMREQUEST_RCPT_DEV)
-      response = 1;
-    else
-      response = 0;
-
-    usb_write_data(0, (uint8_t*)&response, 2);
-    break;
-
-  case USB_BREQUEST_CLEAR_FEATURE:
-  case USB_BREQUEST_SET_INTERFACE:
-  case USB_BREQUEST_SET_FEATURE:
-    /* TODO: Refer back to the specs and send the right
-     * replies. This is wrong, even though it happens to not break
-     * on linux.
-     */
-    usb_send_null();
-    break;
-
-  case USB_BREQUEST_SET_ADDRESS:
-    /* The host has given the NXT a new USB address. This address
-     * must be set AFTER sending the ack packet. Therefore, we just
-     * remember the new address, and the interrupt handler will set
-     * it when the transmission completes.
-     */
-    usb_state.new_device_address = packet.value;
-    usb_send_null();
-
-    /* If the address change is to 0, do it immediately.
-     *
-     * TODO: Why? And when does this happen?
-     */
-    if (usb_state.new_device_address == 0) {
-      *AT91C_UDP_FADDR = AT91C_UDP_FEN;
-      *AT91C_UDP_GLBSTATE = 0;
-    }
-    break;
-
-  case USB_BREQUEST_GET_DESCRIPTOR:
-    /* The host requested a descriptor. */
-
-    index = (packet.value & USB_WVALUE_INDEX);
-    switch ((packet.value & USB_WVALUE_TYPE) >> 8) {
-    case USB_DESC_TYPE_DEVICE: /* Device descriptor */
-      size = usb_device_descriptor[0];
-      usb_write_data(0, usb_device_descriptor,
-                    MIN(size, packet.length));
-      break;
-
-    case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
-      usb_write_data(0, usb_nxos_full_config,
-                    MIN(usb_nxos_full_config[2], packet.length));
-
-      /* TODO: Why? This is not specified in the USB specs. */
-      if (usb_nxos_full_config[2] < packet.length)
-        usb_send_null();
-      break;
-
-    case USB_DESC_TYPE_STR: /* String or language info. */
-      if ((packet.value & USB_WVALUE_INDEX) == 0) {
-        usb_write_data(0, usb_string_desc,
-                      MIN(usb_string_desc[0], packet.length));
-      } else {
-        /* The host wants a specific string. */
-        /* TODO: This should check if the requested string exists. */
-        usb_write_data(0, usb_strings[index-1],
-                      MIN(usb_strings[index-1][0],
-                          packet.length));
+        usb_write_data(0, (uint8_t*)&response, 2);
       }
       break;
 
-    case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
-      size = usb_dev_qualifier_desc[0];
-      usb_write_data(0, usb_dev_qualifier_desc,
-                    MIN(size, packet.length));
+    case USB_BREQUEST_CLEAR_FEATURE:
+    case USB_BREQUEST_SET_INTERFACE:
+    case USB_BREQUEST_SET_FEATURE:
+      /* TODO: Refer back to the specs and send the right
+       * replies. This is wrong, even though it happens to not break
+       * on linux.
+       */
+      usb_send_null();
       break;
 
-    default: /* Unknown descriptor, tell the host by stalling. */
+    case USB_BREQUEST_SET_ADDRESS:
+      /* The host has given the NXT a new USB address. This address
+       * must be set AFTER sending the ack packet. Therefore, we just
+       * remember the new address, and the interrupt handler will set
+       * it when the transmission completes.
+       */
+      usb_state.new_device_address = packet.value;
+      usb_send_null();
+
+      /* If the address change is to 0, do it immediately.
+       *
+       * TODO: Why? And when does this happen?
+       */
+      if (usb_state.new_device_address == 0) {
+        *AT91C_UDP_FADDR = AT91C_UDP_FEN;
+        *AT91C_UDP_GLBSTATE = 0;
+      }
+      break;
+
+    case USB_BREQUEST_GET_DESCRIPTOR:
+      /* The host requested a descriptor. */
+
+      index = (packet.value & USB_WVALUE_INDEX);
+      switch ((packet.value & USB_WVALUE_TYPE) >> 8) {
+      case USB_DESC_TYPE_DEVICE: /* Device descriptor */
+        size = usb_device_descriptor[0];
+        usb_write_data(0, usb_device_descriptor,
+                      MIN(size, packet.length));
+        break;
+
+      case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
+        usb_write_data(0, usb_nxos_full_config,
+                      MIN(usb_nxos_full_config[2], packet.length));
+
+        /* TODO: Why? This is not specified in the USB specs. */
+        if (usb_nxos_full_config[2] < packet.length)
+          usb_send_null();
+        break;
+
+      case USB_DESC_TYPE_STR: /* String or language info. */
+        if ((packet.value & USB_WVALUE_INDEX) == 0) {
+          usb_write_data(0, usb_string_desc,
+                        MIN(usb_string_desc[0], packet.length));
+        } else {
+          /* The host wants a specific string. */
+          /* TODO: This should check if the requested string exists. */
+          usb_write_data(0, usb_strings[index-1],
+                        MIN(usb_strings[index-1][0],
+                            packet.length));
+        }
+        break;
+
+      case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
+        size = usb_dev_qualifier_desc[0];
+        usb_write_data(0, usb_dev_qualifier_desc,
+                      MIN(size, packet.length));
+        break;
+
+      case USB_DESC_TYPE_BOS: /* BOS descriptor */
+        size = usb_bos_desc[2];
+        usb_write_data(0, usb_bos_desc, MIN(size, packet.length));
+        break;
+
+      default: /* Unknown descriptor, tell the host by stalling. */
+        usb_send_stall(0);
+      }
+      break;
+
+    case USB_BREQUEST_GET_CONFIG:
+      /* The host wants to know the ID of the current configuration. */
+      usb_write_data(0, (uint8_t *)&(usb_state.current_config), 1);
+      break;
+
+    case USB_BREQUEST_SET_CONFIG:
+      /* The host selected a new configuration. */
+      usb_state.current_config = packet.value;
+
+      /* we ack */
+      usb_send_null();
+
+      /* we set the register in configured mode */
+      *AT91C_UDP_GLBSTATE = packet.value > 0 ?
+        (AT91C_UDP_CONFG | AT91C_UDP_FADDEN)
+        :AT91C_UDP_FADDEN;
+
+      /* TODO: Make this a little nicer. Not quite sure how. */
+
+      /* we can only active the EP1 if we have a buffer to get the data */
+      /* TODO: This was:
+       *
+       * if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
+       *
+       * The second part always evaluates to true.
+       */
+      if (usb_state.rx_len == 0) {
+        AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+        while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+      }
+
+      AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
+      while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
+      AT91C_UDP_CSR[3] = 0;
+      while (AT91C_UDP_CSR[3] != 0);
+
+      usb_state.status = USB_READY;
+      break;
+
+    case USB_BREQUEST_GET_INTERFACE: /* TODO: This should respond, not stall. */
+    case USB_BREQUEST_SET_DESCRIPTOR:
+    default:
       usb_send_stall(0);
+      break;
     }
     break;
-
-  case USB_BREQUEST_GET_CONFIG:
-    /* The host wants to know the ID of the current configuration. */
-    usb_write_data(0, (uint8_t *)&(usb_state.current_config), 1);
-    break;
-
-  case USB_BREQUEST_SET_CONFIG:
-    /* The host selected a new configuration. */
-    usb_state.current_config = packet.value;
-
-    /* we ack */
-    usb_send_null();
-
-    /* we set the register in configured mode */
-    *AT91C_UDP_GLBSTATE = packet.value > 0 ?
-      (AT91C_UDP_CONFG | AT91C_UDP_FADDEN)
-      :AT91C_UDP_FADDEN;
-
-    /* TODO: Make this a little nicer. Not quite sure how. */
-
-    /* we can only active the EP1 if we have a buffer to get the data */
-    /* TODO: This was:
-     *
-     * if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
-     *
-     * The second part always evaluates to true.
-     */
-    if (usb_state.rx_len == 0) {
-      AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-      while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+  case USB_BMREQUEST_TYPE_CLASS:
+    switch (packet.request_attrs & USB_BMREQUEST_RCPT) {
+    case USB_BMREQUEST_RCPT_INT:
+      // Ignoring wIndex for now as we only have one interface.
+      switch (packet.request) {
+      case 0x01: // Standard GATT characteristic
+        switch (packet.value) {
+        case 0x2A00: { // device name
+          const char *name = pbdrv_bluetooth_get_hub_name();
+          usb_write_data(0, (const uint8_t *)name, MIN(strlen(name), packet.length));
+          break;
+        }
+        case 0x2A26: { // firmware revision
+          const char *fw = PBIO_VERSION_STR;
+          usb_write_data(0, (const uint8_t *)fw, MIN(strlen(fw), packet.length));
+          break;
+        }
+        case 0x2A28: { // software revision
+          const char *sw = PBIO_PROTOCOL_VERSION_STR;
+          usb_write_data(0, (const uint8_t *)sw, MIN(strlen(sw), packet.length));
+          break;
+        }
+        default:
+          usb_send_stall(0);
+          break;
+        }
+        break;
+      case 0x02: // Pybricks characteristic
+        switch (packet.value) {
+          case 0x0003: { // hub capabilities
+            uint8_t caps[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
+            pbio_pybricks_hub_capabilities(caps,
+              MAX_RCV_SIZE - 1,
+              PBSYS_CONFIG_APP_FEATURE_FLAGS,
+              pbsys_storage_get_maximum_program_size(),
+              PBSYS_CONFIG_HMI_NUM_SLOTS);
+            usb_write_data(0, caps, MIN(sizeof(caps), packet.length));
+            break;
+          }
+          default:
+              usb_send_stall(0);
+              break;
+        }
+        break;
+      default:
+        usb_send_stall(0);
+        break;
+      }
+      break;
+    default:
+      usb_send_stall(0);
+      break;
     }
-
-    AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
-    while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
-    AT91C_UDP_CSR[3] = 0;
-    while (AT91C_UDP_CSR[3] != 0);
-
-    usb_state.status = USB_READY;
     break;
-
-  case USB_BREQUEST_GET_INTERFACE: /* TODO: This should respond, not stall. */
-  case USB_BREQUEST_SET_DESCRIPTOR:
+  case USB_BMREQUEST_TYPE_VENDOR:
+    switch (packet.request) {
+    case USBD_VENDOR_CODE_WEBUSB:
+      // Since there is only one WebUSB descriptor, we ignore the index.
+      usb_write_data(0, WebUSB_DescSet, MIN(sizeof(WebUSB_DescSet), packet.length));
+      break;
+    case USBD_VENDOR_CODE_MS:
+      // Since there is only one MS descriptor, we ignore the index.
+      usb_write_data(0, ms_os_desc_set, MIN(sizeof(ms_os_desc_set), packet.length));
+      break;
+    default:
+      usb_send_stall(0);
+      break;
+    }
+    break;
   default:
     usb_send_stall(0);
     break;
