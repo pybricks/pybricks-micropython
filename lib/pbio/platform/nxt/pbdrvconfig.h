@@ -47,3 +47,6 @@
 
 #define PBDRV_CONFIG_STACK                          (1)
 #define PBDRV_CONFIG_STACK_EMBEDDED                 (1)
+
+#define PBDRV_CONFIG_USB                            (1)
+#define PBDRV_CONFIG_USB_NXT                        (1)

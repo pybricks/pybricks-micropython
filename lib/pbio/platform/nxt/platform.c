@@ -23,7 +23,6 @@
 #include <nxos/drivers/_lcd.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_sensors.h>
-#include <nxos/drivers/_usb.h>
 #include <nxos/drivers/bt.h>
 #include <nxos/drivers/i2c.h>
 #include <nxos/drivers/systick.h>
@@ -113,7 +112,8 @@ void SystemInit(void) {
     nx__lcd_init();
     nx__display_init();
     nx__sensors_init();
-    nx__usb_init();
+    extern void pbdrv_usb_init(void);
+    pbdrv_usb_init();
     nx_i2c_init();
 
     /* Delay a little post-init, to let all the drivers settle down. */

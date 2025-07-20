@@ -515,7 +515,6 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	drivers/radar.c \
 	drivers/rs485.c \
 	drivers/sensors.c \
-	drivers/usb.c \
 	interrupts.c \
 	lock.c \
 	util.c \
