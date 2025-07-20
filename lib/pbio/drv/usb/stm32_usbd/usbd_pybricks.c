@@ -37,6 +37,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <pbio/protocol.h>
+#include <pbio/version.h>
 
 #include "usbd_ctlreq.h"
 #include "usbd_pybricks.h"
@@ -155,16 +156,25 @@ __ALIGN_BEGIN static uint8_t USBD_Pybricks_CfgDesc[USBD_PYBRICKS_CONFIG_DESC_SIZ
     0x00                                      /* bInterval */
 };
 
-__ALIGN_BEGIN static const uint8_t WebUSB_DescSet[20] __ALIGN_END =
+__ALIGN_BEGIN static const uint8_t WebUSB_DescSet[] __ALIGN_END =
 {
+    #if PBIO_VERSION_LEVEL_HEX == 0xA
+    21,    /* bLength */
+    #else
     20,    /* bLength */
+    #endif
     0x03,  /* bDescriptorType = URL */
     0x01,  /* bScheme = https:// */
 
     /* URL */
-    'c', 'o', 'd', 'e', '.',
-    'p', 'y', 'b', 'r', 'i', 'c', 'k', 's', '.',
-    'c', 'o', 'm'
+    #if PBIO_VERSION_LEVEL_HEX == 0xA
+    'a', 'l', 'p', 'h', 'a',
+    #elif PBIO_VERSION_LEVEL_HEX == 0xB
+    'b', 'e', 't', 'a',
+    #else
+    'c', 'o', 'd', 'e',
+    #endif
+    '.', 'p', 'y', 'b', 'r', 'i', 'c', 'k', 's', '.', 'c', 'o', 'm'
 };
 
 /**
@@ -245,18 +255,19 @@ static USBD_StatusTypeDef USBD_Pybricks_Setup(USBD_HandleTypeDef *pdev,
     switch (req->bmRequest & USB_REQ_TYPE_MASK)
     {
         case USB_REQ_TYPE_CLASS:
+            ret = ((USBD_Pybricks_ItfTypeDef *)pdev->pUserData[pdev->classId])->ReadCharacteristic(pdev, req);
             break;
 
         case USB_REQ_TYPE_VENDOR:
             switch (req->bRequest)
             {
-                case USBD_MS_VENDOR_CODE:
+                case USBD_VENDOR_CODE_MS:
                     (void)USBD_CtlSendData(pdev,
                         (uint8_t *)USBD_OSDescSet,
                         MIN(sizeof(USBD_OSDescSet), req->wLength));
                     break;
 
-                case USBD_WEBUSB_VENDOR_CODE:
+                case USBD_VENDOR_CODE_WEBUSB:
                     if ((req->wValue == USBD_WEBUSB_LANDING_PAGE_IDX) && (req->wIndex == 0x02)) {
                         (void)USBD_CtlSendData(pdev,
                             (uint8_t *)WebUSB_DescSet,

@@ -40,10 +40,10 @@ extern "C" {
 /** @defgroup USBD_Pybricks_Exported_Defines
   * @{
   */
-#define USBD_MS_VENDOR_CODE                0x01
-#define USBD_WEBUSB_VENDOR_CODE            0x02
-
-#define USBD_SIZ_MS_OS_DSCRPTR_SET         (10 + 20 + 132)
+enum {
+    USBD_VENDOR_CODE_WEBUSB,
+    USBD_VENDOR_CODE_MS
+};
 
 #define USBD_WEBUSB_LANDING_PAGE_IDX       1
 
@@ -94,6 +94,7 @@ typedef struct
     USBD_StatusTypeDef (*DeInit)(void);
     USBD_StatusTypeDef (*Receive)(uint8_t *Buf, uint32_t Len);
     USBD_StatusTypeDef (*TransmitCplt)(uint8_t *Buf, uint32_t Len, uint8_t epnum);
+    USBD_StatusTypeDef (*ReadCharacteristic)(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 } USBD_Pybricks_ItfTypeDef;
 
 
@@ -121,6 +122,7 @@ typedef struct
 
 extern USBD_ClassTypeDef USBD_Pybricks_ClassDriver;
 
+#define USBD_SIZ_MS_OS_DSCRPTR_SET  (10 + 20 + 132)
 extern const uint8_t USBD_OSDescSet[USBD_SIZ_MS_OS_DSCRPTR_SET];
 
 /**

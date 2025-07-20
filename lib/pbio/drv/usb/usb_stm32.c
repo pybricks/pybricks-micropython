@@ -17,11 +17,15 @@
 #include <usbd_desc.h>
 #include <usbd_pybricks.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
+#include <pbio/version.h>
 #include <pbsys/command.h>
+#include <pbsys/config.h>
 #include <pbsys/status.h>
+#include <pbsys/storage.h>
 
 #include "../charger/charger.h"
 #include "./usb_stm32.h"
@@ -284,11 +288,77 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
     return ret;
 }
 
+#define USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_GATT 0x01
+#define USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_PYBRICKS 0x02
+
+static USBD_StatusTypeDef Pybricks_Itf_ReadCharacteristic(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {
+    USBD_StatusTypeDef ret = USBD_OK;
+
+    switch (req->bRequest) {
+        case USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_GATT:
+            switch (req->wValue) {
+                case 0x2A00: {
+                    // GATT Device Name characteristic
+                    const char *name = pbdrv_bluetooth_get_hub_name();
+                    (void)USBD_CtlSendData(pdev, (uint8_t *)name, MIN(strlen(name), req->wLength));
+                }
+                break;
+
+                case 0x2A26: {
+                    // GATT Firmware Revision characteristic
+                    const char *fw_version = PBIO_VERSION_STR;
+                    (void)USBD_CtlSendData(pdev, (uint8_t *)fw_version, MIN(strlen(fw_version), req->wLength));
+                }
+                break;
+
+                case 0x2A28: {
+                    // GATT Software Revision characteristic
+                    const char *sw_version = PBIO_PROTOCOL_VERSION_STR;
+                    (void)USBD_CtlSendData(pdev, (uint8_t *)sw_version, MIN(strlen(sw_version), req->wLength));
+                }
+                break;
+
+                default:
+                    USBD_CtlError(pdev, req);
+                    ret = USBD_FAIL;
+                    break;
+            }
+            break;
+        case USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
+            switch (req->wValue) {
+                case 0x0003: {
+                    // Pybricks hub capabilities characteristic
+                    uint8_t caps[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
+                    pbio_pybricks_hub_capabilities(caps,
+                        USBD_PYBRICKS_MAX_PACKET_SIZE - 1,
+                        PBSYS_CONFIG_APP_FEATURE_FLAGS,
+                        pbsys_storage_get_maximum_program_size(),
+                        PBSYS_CONFIG_HMI_NUM_SLOTS);
+                    (void)USBD_CtlSendData(pdev, caps, MIN(sizeof(caps), req->wLength));
+                }
+                break;
+
+                default:
+                    USBD_CtlError(pdev, req);
+                    ret = USBD_FAIL;
+                    break;
+            }
+            break;
+        default:
+            USBD_CtlError(pdev, req);
+            ret = USBD_FAIL;
+            break;
+    }
+
+    return ret;
+}
+
 USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
     .Init = Pybricks_Itf_Init,
     .DeInit = Pybricks_Itf_DeInit,
     .Receive = Pybricks_Itf_Receive,
     .TransmitCplt = Pybricks_Itf_TransmitCplt,
+    .ReadCharacteristic = Pybricks_Itf_ReadCharacteristic,
 };
 
 // Common USB driver implementation.
