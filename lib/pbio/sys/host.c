@@ -125,7 +125,7 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
 
     uint32_t bt_avail = pbsys_bluetooth_tx_available();
     uint32_t usb_avail = pbdrv_usb_stdout_tx_available();
-    uint32_t available = MIN(UINT32_MAX, MIN(bt_avail, usb_avail));
+    uint32_t available = bt_avail < usb_avail ? bt_avail : usb_avail;
 
     // If all tx_available() calls returned UINT32_MAX, then there is one listening.
     if (available == UINT32_MAX) {
@@ -138,7 +138,9 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
 
     // Limit size to smallest available space from all transports so that we
     // don't do partial writes to one transport and not the other.
-    *size = MIN(*size, available);
+    if (*size > available) {
+        *size = available;
+    }
 
     // Unless something became disconnected in an interrupt handler, these
     // functions should always succeed since we already checked tx_available().
