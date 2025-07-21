@@ -21,11 +21,4 @@
 void pbsys_supervisor_poll(void) {
     // keep the hub from resetting itself
     pbdrv_watchdog_update();
-
-    // Shut down on low voltage so we don't damage rechargeable batteries.
-    bool low_battery_shutdown = pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000);
-
-    if (low_battery_shutdown) {
-        pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
-    }
 }

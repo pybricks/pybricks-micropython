@@ -55,6 +55,11 @@ void pbsys_battery_poll(void) {
     } else if (avg_battery_voltage >= battery_ok_mv) {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     }
+
+    // Shut down on low voltage so we don't damage rechargeable batteries.
+    if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)) {
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
+    }
 }
 
 /**
