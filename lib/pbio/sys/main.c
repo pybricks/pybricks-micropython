@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     pbsys_init();
 
     // Keep loading and running user programs until shutdown is requested.
-    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
+    for (;;) {
 
         #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
         pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
@@ -92,8 +92,12 @@ int main(int argc, char **argv) {
 
         // Drives all processes while waiting for user input. This completes
         // when a user program request is made using the buttons or by a
-        // connected host.
-        pbsys_hmi_await_program_selection();
+        // connected host. It is cancelled on shutdown request or idle timeout.
+        pbio_error_t err = pbsys_hmi_await_program_selection();
+        if (err != PBIO_SUCCESS) {
+            // Shutdown requested or idle for a long time.
+            break;
+        }
 
         // Prepare pbsys for running the program.
         pbsys_status_set_program_id(program.id);

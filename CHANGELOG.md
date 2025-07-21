@@ -20,6 +20,8 @@
 ### Fixed
 - Reduced hanging when broadcasting and observing at the same time with Technic
   Hub ([support#2206]).
+- Fixed hub shutting down immediately after disconnecting Bluetooth when
+  no program had run for a while.
 
 [support#220]: https://github.com/pybricks/support/issues/220
 [support#2206]: https://github.com/pybricks/support/issues/2206

@@ -86,6 +86,8 @@ void pbsys_hmi_poll(void) {
 /**
  * Registers button presses to update the visual UI state and request the
  * launch of a program.
+ *
+ * NB: Must allow calling after completion, so must set os state prior to returning.
  */
 static pbio_error_t pbsys_hmi_launch_program_with_button(pbio_os_state_t *state) {
 
@@ -151,6 +153,11 @@ static inline bool pbsys_hmi_bluetooth_button_is_pressed() {
 }
 #endif
 
+/**
+ * Monitors Bluetooth enable button and starts/stops advertising as needed.
+ *
+ * NB: Must allow calling after completion, so must set os state prior to returning.
+ */
 static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -230,20 +237,53 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
     PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
+
 /**
  * Drives all processes while we wait for user input. This completes when a
  * user program request is made using the buttons or by a connected host.
+ *
+ * @return  Error code.
+ *          ::PBIO_SUCCESS when a program is selected.
+ *          ::PBIO_ERROR_CANCELED when selection was cancelled by shutdown request.
+ *          ::PBIO_ERROR_TIMEDOUT when there was no user interaction for a long time.
  */
-void pbsys_hmi_await_program_selection(void) {
+pbio_error_t pbsys_hmi_await_program_selection(void) {
     pbio_os_state_t btn_state = 0;
     pbio_os_state_t ble_state = 0;
 
     pbio_error_t btn_err;
     pbio_os_state_t ble_err;
 
+    uint32_t time_start = pbdrv_clock_get_ms();
+
     do {
+        // Shutdown may be requested by a background process such as critical
+        // battery or user interaction. This means we should skip the user
+        // program so return an error.
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
+            return PBIO_ERROR_CANCELED;
+        }
+
+        // Don't time out while connected to host.
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+            // REVISIT: This should ask sys/host for "is connected" so it covers all connection types.
+            time_start = pbdrv_clock_get_ms();
+        }
+
+        // Timeout on idle.
+        if (pbdrv_clock_get_ms() - time_start > 3 * 60000) {
+            return PBIO_ERROR_TIMEDOUT;
+        }
+
+        // Iterate UI once. We will be back here on the next event, including
+        // on the next timer tick.
         btn_err = pbsys_hmi_launch_program_with_button(&btn_state);
         ble_err = pbsys_hmi_monitor_bluetooth_state(&ble_state);
+
+        // run all processes and wait for next event.
         pbio_os_run_processes_and_wait_for_event();
-    } while ((btn_err == PBIO_ERROR_AGAIN || ble_err == PBIO_ERROR_AGAIN) && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST));
+
+    } while ((btn_err == PBIO_ERROR_AGAIN || ble_err == PBIO_ERROR_AGAIN));
+
+    return PBIO_SUCCESS;
 }
