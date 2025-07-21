@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <pbdrv/watchdog.h>
+
 #include <pbio/main.h>
 #include <pbio/os.h>
 
@@ -15,7 +17,6 @@
 #include "light.h"
 #include "light_matrix.h"
 #include "storage.h"
-#include "supervisor.h"
 #include "program_stop.h"
 
 uint32_t pbsys_init_busy_count;
@@ -36,8 +37,10 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
             etimer_reset(&timer);
             pbsys_battery_poll();
             pbsys_hmi_poll();
-            pbsys_supervisor_poll();
             pbsys_program_stop_poll();
+
+            // keep the hub from resetting itself
+            pbdrv_watchdog_update();
         }
     }
 
