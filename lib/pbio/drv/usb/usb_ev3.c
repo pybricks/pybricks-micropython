@@ -534,6 +534,10 @@ void pbdrv_usb_tx_flush(void) {
     USBBufferFlush((tUSBBuffer *)&g_sTxBuffer);
 }
 
+bool pbdrv_usb_connection_is_active(void) {
+    return false;
+}
+
 PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
     PROCESS_BEGIN();

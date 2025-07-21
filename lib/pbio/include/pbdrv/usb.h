@@ -62,6 +62,13 @@ uint32_t pbdrv_usb_stdout_tx_available(void);
 */
 bool pbdrv_usb_stdout_tx_is_idle(void);
 
+/**
+ * Indicates if a Pybricks app is connected and configured.
+ *
+ * @retval  true if active, so the host has subscribed to events.
+ */
+bool pbdrv_usb_connection_is_active(void);
+
 #else // PBDRV_CONFIG_USB
 
 static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
@@ -78,6 +85,10 @@ static inline uint32_t pbdrv_usb_stdout_tx_available(void) {
 
 static inline bool pbdrv_usb_stdout_tx_is_idle(void) {
     return true;
+}
+
+static inline bool pbdrv_usb_connection_is_active(void) {
+    return false;
 }
 
 #endif // PBDRV_CONFIG_USB

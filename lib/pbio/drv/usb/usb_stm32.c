@@ -218,6 +218,10 @@ static void pbdrv_usb_stm32_reset_tx_state(void) {
     pbdrv_usb_stm32_is_events_subscribed = false;
 }
 
+bool pbdrv_usb_connection_is_active(void) {
+    return pbdrv_usb_stm32_is_events_subscribed;
+}
+
 /**
   * @brief  Pybricks_Itf_Init
   *         Initializes the Pybricks media low layer

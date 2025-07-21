@@ -22,6 +22,19 @@ void pbsys_host_init(void) {
     pbsys_bluetooth_init();
 }
 
+/**
+ * Tests if the hub is connected to the host with BLE or USB.
+ *
+ * Connected implies an active connection to a Pybricks app, not just
+ * physically plugged in.
+ *
+ * @return              @c true if connection is active, else @c false.
+ */
+bool pbsys_host_is_connected(void) {
+    return pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) ||
+           pbdrv_usb_connection_is_active();
+}
+
 // Publisher APIs. Pybricks Profile connections call these to push data to
 // a common stdin buffer.
 

@@ -10,8 +10,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/core.h>
@@ -22,6 +20,7 @@
 #include <pbio/light.h>
 #include <pbio/os.h>
 #include <pbsys/config.h>
+#include <pbsys/host.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/storage_settings.h>
@@ -265,8 +264,7 @@ pbio_error_t pbsys_hmi_await_program_selection(void) {
         }
 
         // Don't time out while connected to host.
-        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
-            // REVISIT: This should ask sys/host for "is connected" so it covers all connection types.
+        if (pbsys_host_is_connected()) {
             time_start = pbdrv_clock_get_ms();
         }
 

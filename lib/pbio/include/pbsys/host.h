@@ -26,6 +26,7 @@ typedef bool (*pbsys_host_stdin_event_callback_t)(uint8_t c);
 #if PBSYS_CONFIG_HOST
 
 void pbsys_host_init(void);
+bool pbsys_host_is_connected(void);
 uint32_t pbsys_host_stdin_get_free(void);
 void pbsys_host_stdin_write(const uint8_t *data, uint32_t size);
 void pbsys_host_stdin_set_callback(pbsys_host_stdin_event_callback_t callback);
@@ -38,6 +39,7 @@ bool pbsys_host_tx_is_idle(void);
 #else // PBSYS_CONFIG_HOST
 
 #define pbsys_host_init()
+#define pbsys_host_is_connected() false
 #define pbsys_host_stdin_get_free() 0
 #define pbsys_host_stdin_write(data, size) { (void)(data); (void)(size); }
 #define pbsys_host_stdin_set_callback(callback) { (void)(callback); }

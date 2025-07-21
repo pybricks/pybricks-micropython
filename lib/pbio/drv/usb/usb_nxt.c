@@ -1055,6 +1055,10 @@ bool nx_usb_is_connected(void) {
     return pbdrv_usb_nxt_state.status != USB_UNINITIALIZED;
 }
 
+bool pbdrv_usb_connection_is_active(void) {
+    return nx_usb_is_connected();
+}
+
 void nx_usb_read(uint8_t *data, uint32_t length) {
     pbdrv_usb_nxt_state.rx_data = data;
     pbdrv_usb_nxt_state.rx_size = length;
