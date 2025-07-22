@@ -9,6 +9,8 @@
 #include <tinytest_macros.h>
 #include <tinytest.h>
 
+#include <pbdrv/bluetooth.h>
+
 #include <pbio/util.h>
 #include <pbsys/host.h>
 #include <pbsys/main.h>
@@ -26,11 +28,15 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     // power should be initialized to off
     tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_OFF);
 
+    pbdrv_bluetooth_power_on(true);
+
     // wait for the power on delay
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
         pbio_test_bluetooth_get_control_state() == PBIO_TEST_BLUETOOTH_STATE_ON;
     }));
+
+    pbdrv_bluetooth_start_advertising();
 
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
