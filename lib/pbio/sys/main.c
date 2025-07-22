@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include <pbdrv/core.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/usb.h>
 #include <pbio/main.h>
@@ -140,6 +141,7 @@ int main(int argc, char **argv) {
     pbsys_deinit();
 
     // Now lower-level processes may shutdown and/or power off.
+    pbdrv_deinit();
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button

@@ -367,7 +367,8 @@ retry:
     // value each time we want to read new data. This saves CPU usage since
     // we have fewer interrupts per sample.
 
-    for (;;) {
+    while (!(pbdrv_imu_lsm6ds3tr_c_stm32_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL)) {
+
         PBIO_OS_AWAIT_UNTIL(state, atomic_exchange(&imu_dev->int1, false));
 
         imu_dev->ctx.read_write_done = false;
@@ -403,8 +404,10 @@ retry:
         }
     }
 
-    // Unreachable
-    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+    // Cancellation complete.
+    pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
+    pbdrv_init_busy_down();
+    PBIO_OS_ASYNC_END(PBIO_ERROR_CANCELED);
 }
 
 // internal driver interface implementation
@@ -412,6 +415,11 @@ retry:
 void pbdrv_imu_init(void) {
     pbdrv_init_busy_up();
     pbio_os_process_start(&pbdrv_imu_lsm6ds3tr_c_stm32_process, pbdrv_imu_lsm6ds3tr_c_stm32_process_thread, NULL);
+}
+
+void pbdrv_imu_deinit(void) {
+    pbdrv_init_busy_up();
+    pbio_os_process_make_request(&pbdrv_imu_lsm6ds3tr_c_stm32_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
 // public driver interface implementation

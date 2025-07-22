@@ -11,10 +11,12 @@
 #include <pbdrv/imu.h>
 
 void pbdrv_imu_init(void);
+void pbdrv_imu_deinit(void);
 
 #else // PBDRV_CONFIG_IMU
 
 #define pbdrv_imu_init()
+#define pbdrv_imu_deinit()
 
 #endif // PBDRV_CONFIG_IMU
 

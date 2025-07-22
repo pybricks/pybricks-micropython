@@ -90,3 +90,16 @@ void pbdrv_init(void) {
     #endif
     pbdrv_ioport_enable_vcc(true);
 }
+
+/**
+ * Deinitializes selected drivers that are not needed after soft-shutdown.
+ */
+void pbdrv_deinit(void) {
+
+    pbdrv_imu_deinit();
+
+    while (pbdrv_init_busy()) {
+        pbio_os_run_processes_once();
+    }
+
+}
