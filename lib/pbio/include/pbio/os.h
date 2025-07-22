@@ -71,6 +71,8 @@ typedef struct pbio_os_timer_t {
 
 void pbio_os_timer_set(pbio_os_timer_t *timer, uint32_t duration);
 
+void pbio_os_timer_extend(pbio_os_timer_t *timer);
+
 bool pbio_os_timer_is_expired(pbio_os_timer_t *timer);
 
 /**

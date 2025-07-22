@@ -25,6 +25,17 @@ void pbio_os_timer_set(pbio_os_timer_t *timer, uint32_t duration) {
 }
 
 /**
+ * Extends the timeout by incrementing the start time by the duration.
+ *
+ * Duration must have been set by ::pbio_os_timer_set previously.
+ *
+ * @param timer     The timer whose timeout to extend.
+ */
+void pbio_os_timer_extend(pbio_os_timer_t *timer) {
+    timer->start += timer->duration;
+}
+
+/**
  * Whether the timer has expired.
  *
  * @param timer     The timer to check.
