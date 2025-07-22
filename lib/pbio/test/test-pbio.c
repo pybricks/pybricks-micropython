@@ -13,6 +13,8 @@
 
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
 
+#include <pbdrv/core.h>
+
 #include <pbio/main.h>
 
 #include <contiki.h>
@@ -52,6 +54,7 @@ static void pbio_test_run_thread(void *env, bool start_pbio_processes) {
         pbdrv_motor_driver_disable_process();
     }
 
+    pbdrv_init();
     pbio_init(start_pbio_processes);
 
     PT_INIT(&pt);
@@ -111,6 +114,7 @@ void pbio_test_run_thread_with_pbio_os_processes(void *env) {
     // when not needed.
     pbdrv_motor_driver_disable_process();
 
+    pbdrv_init();
     pbio_init(true);
 
     clock_gettime(CLOCK_MONOTONIC, &start_time);

@@ -16,6 +16,8 @@
 
 #include "pbio_os_config.h"
 
+#include <pbdrv/core.h>
+
 #include <pbio/main.h>
 #include <pbio/os.h>
 #include <pbsys/core.h>
@@ -70,8 +72,8 @@ bool pbsys_main_stdin_event(uint8_t c) {
 // MICROPY_PORT_INIT_FUNC
 void pb_virtualhub_port_init(void) {
 
+    pbdrv_init();
     pbio_init(true);
-
     pbsys_init();
 
     pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);

@@ -8,18 +8,9 @@
 
 #include <stdbool.h>
 
-#include <contiki.h>
-
-#include <pbdrv/button.h>
-#include <pbdrv/config.h>
-#include <pbdrv/core.h>
 #include <pbdrv/sound.h>
-#include <pbio/config.h>
-#include <pbio/dcmotor.h>
+
 #include <pbio/imu.h>
-#include <pbio/light_matrix.h>
-#include <pbio/light.h>
-#include <pbio/main.h>
 #include <pbio/motor_process.h>
 #include <pbio/port_interface.h>
 
@@ -35,7 +26,6 @@
  *                               tests that test one driver at a time.
  */
 void pbio_init(bool start_processes) {
-    pbdrv_init();
 
     pbio_imu_init();
 
@@ -51,14 +41,23 @@ void pbio_init(bool start_processes) {
 }
 
 /**
- * Stops all user-level background processes. Drivers and OS-level processes
- * continue running.
+ * Deinitialize pbio modules that are not needed after soft-poweroff.
+ */
+void pbio_deinit(void) {
+    // Power off sensors and motors, including the ones that are always powered.
+    pbio_port_power_off();
+}
+
+/**
+ * Stops all user-level background processes. Called when the user application
+ * completes to get these modules back into their default state. Drivers and
+ * OS-level processes continue running.
  *
  * @param [in]  reset  Whether to reset all user-level processes to a clean
  *                     state (true), or whether to only stop active outputs
- *                     like sound or motors (false). The latter is useful
- *                     to preserve the state for debugging, without sound
- *                     or movement getting in the way or out of control.
+ *                     like sound or motors (false). The latter is useful to
+ *                     preserve the state for debugging, without sound or
+ *                     movement getting in the way, or out of control.
  */
 void pbio_stop_all(bool reset) {
     #if PBIO_CONFIG_LIGHT

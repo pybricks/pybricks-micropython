@@ -9,6 +9,7 @@
 #include "pbio/config.h"
 
 void pbio_init(bool start_processes);
+void pbio_deinit(void);
 void pbio_stop_all(bool reset);
 
 #endif // _PBIO_MAIN_H_

@@ -81,6 +81,7 @@ pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id
  */
 int main(int argc, char **argv) {
 
+    pbdrv_init();
     pbio_init(true);
     pbsys_init();
 
@@ -131,17 +132,16 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Power off sensors and motors, including the ones that are always powered.
-    // This also makes it easier to see that users can let go of the button.
-    pbio_port_power_off();
-
-    // Stop system processes and save user data before we shutdown.
-    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+    // Stop system processes and selected drivers in reverse order. This will
+    // also save user data to flash,
     pbsys_deinit();
 
     // Now lower-level processes may shutdown and/or power off.
+    pbio_deinit();
     pbdrv_deinit();
+
+    // REVISIT: We should use the deinit hooks above to gracefully request exit
+    // instead of having the drivers rely on system statuses.
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button

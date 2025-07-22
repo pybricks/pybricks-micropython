@@ -65,6 +65,9 @@ void pbsys_init(void) {
 
 void pbsys_deinit(void) {
 
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+
     pbsys_storage_deinit();
     pbsys_hub_light_matrix_deinit();
 
