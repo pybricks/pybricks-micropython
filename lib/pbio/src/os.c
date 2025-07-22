@@ -130,9 +130,9 @@ void pbio_os_process_make_request(pbio_os_process_t *process, pbio_os_process_re
  */
 bool pbio_os_run_processes_once(void) {
 
-    // DELETEME: Legacy hook to drive pbio event loop until all processes migrated.
-    extern int pbio_do_one_event(void);
-    bool pbio_event_pending = pbio_do_one_event();
+    // DELETEME: Legacy hook to drive Contiki processes until all are migrated.
+    extern int process_run(void);
+    bool pbio_event_pending = process_run();
 
     if (!poll_request_is_pending) {
 

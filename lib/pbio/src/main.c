@@ -72,19 +72,4 @@ void pbio_stop_all(bool reset) {
     pbdrv_sound_stop();
 }
 
-/**
- * Checks for and performs pending background tasks.
- *
- * This function is meant to be called as frequently as possible. To conserve
- * power, you can wait for an interrupt after all events have been processed
- * (i.e. return value is 0).
- *
- * Important!!! This function must not be called recursively.
- *
- * @return      The number of still-pending events.
- */
-int pbio_do_one_event(void) {
-    return process_run();
-}
-
 /** @} */

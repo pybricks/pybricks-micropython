@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbio/button.h>
 #include <pbio/int_math.h>
 #include <pbio/main.h>
@@ -72,7 +74,7 @@ void pbio_test_counter_set_abs_angle(int32_t millidegrees);
     }
 
 static inline void pbio_handle_pending_events(void) {
-    while (pbio_do_one_event()) {
+    while (process_run()) {
     }
 }
 
