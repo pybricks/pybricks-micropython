@@ -194,6 +194,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	platform/$(PBIO_PLATFORM)/platform.c \
 	src/angle.c \
 	src/battery.c \
+	src/busy_count.c \
 	src/color/conversion.c \
 	src/color/util.c \
 	src/control_settings.c \

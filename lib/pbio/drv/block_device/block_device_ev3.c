@@ -29,7 +29,6 @@
 #include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
 
-#include "../core.h"
 #include "../drv/gpio/gpio_ev3.h"
 #include "../sys/storage_data.h"
 #include "block_device_ev3.h"
@@ -38,6 +37,8 @@
 #include <pbdrv/clock.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/gpio.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 #include <pbio/util.h>
@@ -886,7 +887,7 @@ pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
     // failure, it can reset the user data to factory defaults, and save it
     // properly on shutdown.
     pbdrv_block_device_load_err = err;
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     // Poll ADC continuously until cancellation is requested.
     while (!(ev3_spi_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL)) {
@@ -930,7 +931,7 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
 
 void pbdrv_block_device_init(void) {
     spi_bus_init();
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&ev3_spi_process, ev3_spi_process_thread, NULL);
 }
 

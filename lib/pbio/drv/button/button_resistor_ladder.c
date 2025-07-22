@@ -10,11 +10,11 @@
 #include <stddef.h>
 
 #include <pbdrv/resistor_ladder.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/button.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
-
-#include "../core.h"
 
 static pbio_os_process_t pbdrv_button_init_process;
 
@@ -38,13 +38,13 @@ pbio_error_t pbdrv_button_init_process_thread(pbio_os_state_t *state, void *cont
     }
     PBIO_OS_AWAIT_MS(state, &timer, 30);
 
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_button_init(void) {
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_button_init_process, pbdrv_button_init_process_thread, NULL);
 }
 

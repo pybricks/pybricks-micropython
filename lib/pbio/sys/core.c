@@ -5,6 +5,7 @@
 
 #include <pbdrv/watchdog.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
 
@@ -12,14 +13,12 @@
 #include <pbsys/host.h>
 #include <pbsys/status.h>
 
-#include "core.h"
+
 #include "hmi.h"
 #include "light.h"
 #include "light_matrix.h"
 #include "storage.h"
 #include "program_stop.h"
-
-uint32_t pbsys_init_busy_count;
 
 PROCESS(pbsys_system_process, "System");
 
@@ -58,7 +57,7 @@ void pbsys_init(void) {
 
     process_start(&pbsys_system_process);
 
-    while (pbsys_init_busy()) {
+    while (pbio_busy_count_busy()) {
         pbio_os_run_processes_once();
     }
 }
@@ -75,7 +74,7 @@ void pbsys_deinit(void) {
 
     // Wait for all relevant pbsys processes to end, but at least 500 ms so we
     // see a shutdown animation even if the button is released sooner.
-    while (pbsys_init_busy() || pbdrv_clock_get_ms() - start < 500) {
+    while (pbio_busy_count_busy() || pbdrv_clock_get_ms() - start < 500) {
         pbio_os_run_processes_once();
     }
 }

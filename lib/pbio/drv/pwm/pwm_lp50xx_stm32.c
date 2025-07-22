@@ -15,11 +15,12 @@
 #include STM32_HAL_H
 
 #include <pbdrv/pwm.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
 
-#include "../core.h"
 #include "pwm_lp50xx_stm32.h"
 #include "pwm.h"
 
@@ -153,7 +154,7 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_process_thread(pbio_os_state_t *state
 
     // initialization is finished so consumers can use this PWM device now.
     priv->pwm->funcs = &pbdrv_pwm_lp50xx_stm32_funcs;
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, priv->changed);
@@ -251,7 +252,7 @@ void pbdrv_pwm_lp50xx_stm32_init(pbdrv_pwm_dev_t *devs) {
         pbio_os_process_start(&priv->process, pbdrv_pwm_lp50xx_stm32_process_thread, priv);
 
         // don't set funcs yet since we are not fully initialized
-        pbdrv_init_busy_up();
+        pbio_busy_count_up();
     }
 }
 

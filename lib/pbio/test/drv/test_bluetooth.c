@@ -18,7 +18,6 @@
 #include "../../drv/bluetooth/bluetooth_btstack_run_loop_contiki.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/clock/clock_test.h"
-#include "../../drv/core.h"
 
 // UART HCI queue
 

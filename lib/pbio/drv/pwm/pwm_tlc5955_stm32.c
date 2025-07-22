@@ -17,10 +17,10 @@
 
 #include <pbdrv/pwm.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 
-#include "../core.h"
 #include "pwm_tlc5955_stm32.h"
 #include "pwm.h"
 
@@ -240,7 +240,7 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         pwm->pdata = pdata;
         pwm->priv = priv;
         // don't set funcs yet since we are not fully initialized
-        pbdrv_init_busy_up();
+        pbio_busy_count_up();
     }
 
     process_start(&pwm_tlc5955_stm32);
@@ -267,7 +267,7 @@ static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_pr
 
     // initialization is finished so consumers can use this PWM device now.
     priv->pwm->funcs = &pbdrv_pwm_tlc5955_stm32_funcs;
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     for (;;) {
         PT_WAIT_UNTIL(&priv->pt, priv->changed);

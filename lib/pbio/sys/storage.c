@@ -12,6 +12,8 @@
 #include <pbio/os.h>
 
 #include <pbdrv/block_device.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/main.h>
 #include <pbio/protocol.h>
 #include <pbio/version.h>
@@ -19,7 +21,6 @@
 #include <pbsys/storage.h>
 #include <pbsys/status.h>
 
-#include "core.h"
 #include "hmi.h"
 
 /**
@@ -338,7 +339,7 @@ static pbio_error_t pbsys_storage_deinit_process_thread(pbio_os_state_t *state, 
     PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_write_all(&sub, write_size));
 
     // Deinitialization done.
-    pbsys_init_busy_down();
+    pbio_busy_count_down();
 
     PBIO_OS_ASYNC_END(err);
 }
@@ -372,7 +373,7 @@ void pbsys_storage_deinit(void) {
         return;
     }
 
-    pbsys_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&pbsys_storage_deinit_process, pbsys_storage_deinit_process_thread, NULL);
 }
 

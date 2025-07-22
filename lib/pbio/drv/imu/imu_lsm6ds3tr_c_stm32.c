@@ -15,7 +15,8 @@
 #include <pbdrv/clock.h>
 #include <pbdrv/imu.h>
 
-#include <contiki.h>
+#include <pbio/busy_count.h>
+
 #include <lsm6ds3tr_c_reg.h>
 
 #include STM32_HAL_H
@@ -24,7 +25,6 @@
 #include <stm32l4xx_ll_i2c.h>
 #endif
 
-#include "../core.h"
 #include "./imu_lsm6ds3tr_c_stm32.h"
 
 struct _pbdrv_imu_dev_t {
@@ -335,7 +335,7 @@ static pbio_error_t pbdrv_imu_lsm6ds3tr_c_stm32_process_thread(pbio_os_state_t *
 
     PBIO_OS_AWAIT(state, &sub, err = pbdrv_imu_lsm6ds3tr_c_stm32_init(&sub));
 
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     if (err != PBIO_SUCCESS) {
         // The IMU is not essential. It just won't be available if init fails.
@@ -406,19 +406,19 @@ retry:
 
     // Cancellation complete.
     pbdrv_imu_lsm6ds3tr_c_stm32_i2c_reset(hi2c);
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
     PBIO_OS_ASYNC_END(PBIO_ERROR_CANCELED);
 }
 
 // internal driver interface implementation
 
 void pbdrv_imu_init(void) {
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_imu_lsm6ds3tr_c_stm32_process, pbdrv_imu_lsm6ds3tr_c_stm32_process_thread, NULL);
 }
 
 void pbdrv_imu_deinit(void) {
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_make_request(&pbdrv_imu_lsm6ds3tr_c_stm32_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
@@ -428,7 +428,7 @@ pbio_error_t pbdrv_imu_get_imu(pbdrv_imu_dev_t **imu_dev, pbdrv_imu_config_t **c
 
     // When this is called from pbio, driver initialization must have finished
     // and the process should be up and running to process sensor data.
-    if (pbdrv_init_busy() || pbdrv_imu_lsm6ds3tr_c_stm32_process.err != PBIO_ERROR_AGAIN) {
+    if (pbio_busy_count_busy() || pbdrv_imu_lsm6ds3tr_c_stm32_process.err != PBIO_ERROR_AGAIN) {
         return PBIO_ERROR_FAILED;
     }
 

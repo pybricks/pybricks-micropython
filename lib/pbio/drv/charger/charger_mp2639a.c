@@ -25,11 +25,12 @@
 #include <pbdrv/pwm.h>
 #include <pbdrv/resistor_ladder.h>
 #include <pbdrv/usb.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 #include <pbio/os.h>
 
-#include "../core.h"
 #include "charger_mp2639a.h"
 
 #define platform pbdrv_charger_mp2639a_platform_data
@@ -204,7 +205,7 @@ pbio_error_t pbdrv_charger_mp2639a_process_thread(pbio_os_state_t *state, void *
     pbdrv_gpio_input(&platform.chg_gpio);
     #endif
 
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     // When there is a fault the /CHG pin will toggle on and off at 1Hz, so we
     // have to try to detect that to get 3 possible states out of a digital input.
@@ -281,7 +282,7 @@ pbio_error_t pbdrv_charger_mp2639a_process_thread(pbio_os_state_t *state, void *
 }
 
 void pbdrv_charger_init(void) {
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_charger_mp2639a_process, pbdrv_charger_mp2639a_process_thread, NULL);
 }
 

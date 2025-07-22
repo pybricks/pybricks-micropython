@@ -10,11 +10,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../core.h"
 #include "../sys/storage_data.h"
 
 #include <pbdrv/block_device.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 

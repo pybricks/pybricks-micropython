@@ -13,15 +13,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <contiki.h>
-
 #include <pbdrv/uart.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
 
 #include "./uart_stm32l4_ll_dma.h"
-#include "../core.h"
 
 #include "stm32l4xx_ll_dma.h"
 #include "stm32l4xx_ll_lpuart.h"

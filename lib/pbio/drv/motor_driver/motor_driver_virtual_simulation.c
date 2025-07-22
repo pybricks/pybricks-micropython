@@ -13,12 +13,12 @@
 
 #include <contiki.h>
 
-#include "../core.h"
 #include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/motor_driver.h>
 
 #include <pbio/battery.h>
+#include <pbio/busy_count.h>
 #include <pbio/observer.h>
 #include <pbio/port_interface.h>
 #include <pbio/util.h>

@@ -13,12 +13,12 @@
 
 #include STM32_HAL_H
 
-#include "../core.h"
 #include "../sys/storage_data.h"
 #include "block_device_w25qxx_stm32.h"
 
 #include <pbdrv/block_device.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 
@@ -549,7 +549,7 @@ pbio_error_t pbdrv_block_device_w25qxx_stm32_init_process_thread(pbio_os_state_t
     // higher level code sees this error when requesting the RAM disk. On
     // failure, it can reset the user data to factory defaults, and save it
     // properly on shutdown.
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     PBIO_OS_ASYNC_END(err);
 }
@@ -606,7 +606,7 @@ void pbdrv_block_device_init(void) {
     HAL_NVIC_SetPriority(bdev.pdata->irq, 6, 2);
     HAL_NVIC_EnableIRQ(bdev.pdata->irq);
 
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_block_device_w25qxx_stm32_init_process, pbdrv_block_device_w25qxx_stm32_init_process_thread, NULL);
 }
 

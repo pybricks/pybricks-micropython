@@ -15,14 +15,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <contiki.h>
-
 #include <pbdrv/uart.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
-
-#include "../core.h"
 
 #include "stm32f0xx.h"
 #include "uart_stm32f0.h"

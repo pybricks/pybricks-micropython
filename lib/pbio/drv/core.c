@@ -5,9 +5,10 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/os.h>
 
-#include "core.h"
 #include "adc/adc.h"
 #include "battery/battery.h"
 #include "block_device/block_device.h"
@@ -29,8 +30,6 @@
 #include "uart/uart_debug_first_port.h"
 #include "usb/usb.h"
 #include "watchdog/watchdog.h"
-
-uint32_t pbdrv_init_busy_count;
 
 /** Initializes all enabled drivers. */
 void pbdrv_init(void) {
@@ -79,7 +78,7 @@ void pbdrv_init(void) {
 
     // Wait for all async pbdrv drivers to initialize before starting
     // higher level system processes.
-    while (pbdrv_init_busy()) {
+    while (pbio_busy_count_busy()) {
         pbio_os_run_processes_once();
     }
 
@@ -98,7 +97,7 @@ void pbdrv_deinit(void) {
 
     pbdrv_imu_deinit();
 
-    while (pbdrv_init_busy()) {
+    while (pbio_busy_count_busy()) {
         pbio_os_run_processes_once();
     }
 

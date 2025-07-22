@@ -11,18 +11,18 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <contiki.h>
 #include <contiki-lib.h>
 
 #include <stm32f4xx_ll_rcc.h>
 #include <stm32f4xx_ll_usart.h>
 
 #include <pbdrv/uart.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
 
-#include "../core.h"
 #include "./uart_stm32f4_ll_irq.h"
 
 #define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!

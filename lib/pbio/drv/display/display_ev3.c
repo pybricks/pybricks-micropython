@@ -13,10 +13,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../core.h"
-
 #include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -500,7 +500,7 @@ static pbio_error_t pbdrv_display_ev3_process_thread(pbio_os_state_t *state, voi
     pbdrv_gpio_out_high(&pin_lcd_cs);
 
     // Done initializing.
-    pbdrv_init_busy_down();
+    pbio_busy_count_down();
 
     // Update the display with the user frame buffer, if changed.
     for (;;) {
@@ -533,7 +533,7 @@ void pbdrv_display_init(void) {
         ST7586S_NUM_COL_TRIPLETS * 3);
 
     // Start display process and ask pbdrv to wait until it is initialized.
-    pbdrv_init_busy_up();
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_display_ev3_process, pbdrv_display_ev3_process_thread, NULL);
 }
 

@@ -26,7 +26,6 @@
 #include <pbio/servo.h>
 #include <test-pbio.h>
 
-#include "../drv/core.h"
 #include "../drv/clock/clock_test.h"
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
 

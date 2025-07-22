@@ -15,11 +15,12 @@
 #include <contiki-lib.h>
 
 #include <pbdrv/uart.h>
+
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
 
-#include "../core.h"
 #include "./uart_ev3.h"
 #include "./uart_ev3_pru.h"
 
