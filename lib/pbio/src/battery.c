@@ -13,10 +13,7 @@
 #include <pbdrv/battery.h>
 #include <pbio/battery.h>
 #include <pbio/int_math.h>
-
-#if !PBIO_CONFIG_MOTOR_PROCESS
-#error "PBIO_CONFIG_MOTOR_PROCESS must be enabled to continously update battery voltage."
-#endif
+#include <pbio/os.h>
 
 // Slow moving average battery voltage.
 static int32_t battery_voltage_avg_scaled;
@@ -24,46 +21,6 @@ static int32_t battery_voltage_avg_scaled;
 // The average battery value is scaled up numerically
 // to reduce rounding errors in the moving average.
 #define SCALE (1024)
-
-/**
- * Initializes battery voltage state to first measurement.
- *
- * @return                  Error code.
- */
-pbio_error_t pbio_battery_init(void) {
-
-    // Get battery voltage.
-    uint16_t battery_voltage_now_mv;
-    pbio_error_t err = pbdrv_battery_get_voltage_now(&battery_voltage_now_mv);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Initialize average voltage.
-    battery_voltage_avg_scaled = (int32_t)battery_voltage_now_mv * SCALE;
-
-    return PBIO_SUCCESS;
-}
-
-/**
- * Updates the average voltage using a new measurement.
- *
- * @return                  Error code.
- */
-pbio_error_t pbio_battery_update(void) {
-
-    // Get battery voltage.
-    uint16_t battery_voltage_now_mv;
-    pbio_error_t err = pbdrv_battery_get_voltage_now(&battery_voltage_now_mv);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Update moving average.
-    battery_voltage_avg_scaled = (battery_voltage_avg_scaled * 127 + ((int32_t)battery_voltage_now_mv) * SCALE) / 128;
-
-    return PBIO_SUCCESS;
-}
 
 /**
  * Gets the moving average battery voltage.
@@ -114,6 +71,49 @@ int32_t pbio_battery_get_voltage_from_duty(int32_t duty) {
 int32_t pbio_battery_get_voltage_from_duty_pct(int32_t duty) {
     duty = pbio_int_math_clamp(duty, 100);
     return duty * (battery_voltage_avg_scaled / SCALE) / 100;
+}
+
+static pbio_os_process_t pbio_battery_process;
+
+static pbio_error_t pbio_battery_process_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbio_os_timer_set(&timer, PBIO_CONFIG_CONTROL_LOOP_TIME_MS);
+
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
+
+        uint16_t battery_voltage_now_mv;
+        pbdrv_battery_get_voltage_now(&battery_voltage_now_mv);
+        // Returned error is ignored.
+
+        // Update moving average.
+        battery_voltage_avg_scaled = (battery_voltage_avg_scaled * 127 + ((int32_t)battery_voltage_now_mv) * SCALE) / 128;
+
+        pbio_os_timer_extend(&timer);
+    }
+
+    // Unreachable.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+}
+
+/**
+ * Initializes battery voltage state to first measurement.
+ */
+void pbio_battery_init(void) {
+
+    // Get battery voltage.
+    uint16_t battery_voltage_now_mv;
+    pbdrv_battery_get_voltage_now(&battery_voltage_now_mv);
+    // Returned error is ignored.
+
+    // Initialize average upscaled voltage.
+    battery_voltage_avg_scaled = (int32_t)battery_voltage_now_mv * SCALE;
+
+    pbio_os_process_start(&pbio_battery_process, pbio_battery_process_thread, NULL);
 }
 
 #endif // PBIO_CONFIG_BATTERY

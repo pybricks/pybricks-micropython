@@ -10,6 +10,7 @@
 
 #include <pbdrv/sound.h>
 
+#include <pbio/battery.h>
 #include <pbio/imu.h>
 #include <pbio/motor_process.h>
 #include <pbio/port_interface.h>
@@ -27,6 +28,7 @@
  */
 void pbio_init(bool start_processes) {
 
+    pbio_battery_init();
     pbio_imu_init();
 
     if (!start_processes) {

@@ -3,7 +3,6 @@
 
 #include <pbdrv/clock.h>
 
-#include <pbio/battery.h>
 #include <pbio/control.h>
 #include <pbio/drivebase.h>
 #include <pbio/servo.h>
@@ -23,13 +22,7 @@ static pbio_error_t pbio_motor_process_thread(pbio_os_state_t *state, void *cont
     timer.start = pbdrv_clock_get_ms() - PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
     timer.duration = PBIO_CONFIG_CONTROL_LOOP_TIME_MS;
 
-    // Initialize battery voltage.
-    pbio_battery_init();
-
     for (;;) {
-        // Update battery voltage.
-        pbio_battery_update();
-
         // Update drivebase
         pbio_drivebase_update_all();
 

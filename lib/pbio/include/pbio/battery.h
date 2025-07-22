@@ -27,8 +27,7 @@
 #if PBIO_CONFIG_BATTERY
 
 /** @cond INTERNAL */
-pbio_error_t pbio_battery_init(void);
-pbio_error_t pbio_battery_update(void);
+void pbio_battery_init(void);
 /** @endcond */
 int32_t pbio_battery_get_average_voltage(void);
 int32_t pbio_battery_get_duty_from_voltage(int32_t voltage);
@@ -37,12 +36,7 @@ int32_t pbio_battery_get_voltage_from_duty_pct(int32_t duty);
 
 #else // PBIO_CONFIG_BATTERY
 
-static inline pbio_error_t pbio_battery_init(void) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_battery_update(void) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline void pbio_battery_init(void) {
 }
 
 static inline int32_t pbio_battery_get_average_voltage(void) {
