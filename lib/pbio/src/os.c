@@ -42,7 +42,7 @@ void pbio_os_timer_extend(pbio_os_timer_t *timer) {
  * @return          Whether the timer has expired.
  */
 bool pbio_os_timer_is_expired(pbio_os_timer_t *timer) {
-    return pbdrv_clock_get_ms() - timer->start >= timer->duration;
+    return pbio_util_time_has_passed(pbdrv_clock_get_ms(), timer->start + timer->duration);
 }
 
 /**
