@@ -42,6 +42,8 @@
 #include "usbd_ctlreq.h"
 #include "usbd_pybricks.h"
 
+#include "../usb_ch9.h"
+
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -111,49 +113,54 @@ USBD_ClassTypeDef USBD_Pybricks_ClassDriver =
 };
 
 /* USB Pybricks device Configuration Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_Pybricks_CfgDesc[USBD_PYBRICKS_CONFIG_DESC_SIZ] __ALIGN_END =
-{
-    /* Configuration Descriptor */
-    0x09,                                     /* bLength: Configuration Descriptor size */
-    USB_DESC_TYPE_CONFIGURATION,              /* bDescriptorType: Configuration */
-    LOBYTE(USBD_PYBRICKS_CONFIG_DESC_SIZ),    /* wTotalLength:no of returned bytes */
-    HIBYTE(USBD_PYBRICKS_CONFIG_DESC_SIZ),
-    0x01,                                     /* bNumInterfaces: 1 interface */
-    0x01,                                     /* bConfigurationValue: Configuration value */
-    0x00,                                     /* iConfiguration: Index of string descriptor describing the configuration */
-    0x80,                                     /* bmAttributes */
-    250,                                      /* MaxPower 500mA (number of 2mA units) */
+typedef struct PBDRV_PACKED {
+    pbdrv_usb_conf_desc_t conf_desc;
+    pbdrv_usb_iface_desc_t iface_desc;
+    pbdrv_usb_ep_desc_t ep_out;
+    pbdrv_usb_ep_desc_t ep_in;
+} pbdrv_usb_stm32_conf_t;
+PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_stm32_conf);
 
-    /*---------------------------------------------------------------------------*/
-
-    /* Data class interface descriptor */
-    0x09,                                     /* bLength: Endpoint Descriptor size */
-    USB_DESC_TYPE_INTERFACE,                  /* bDescriptorType: */
-    0x00,                                     /* bInterfaceNumber: Number of Interface */
-    0x00,                                     /* bAlternateSetting: Alternate setting */
-    0x02,                                     /* bNumEndpoints: Two endpoints used */
-    PBIO_PYBRICKS_USB_DEVICE_CLASS,           /* bInterfaceClass */
-    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,        /* bInterfaceSubClass */
-    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,        /* bInterfaceProtocol */
-    0x00,                                     /* iInterface: */
-
-    /* Endpoint OUT Descriptor */
-    0x07,                                     /* bLength: Endpoint Descriptor size */
-    USB_DESC_TYPE_ENDPOINT,                   /* bDescriptorType: Endpoint */
-    USBD_PYBRICKS_OUT_EP,                     /* bEndpointAddress */
-    USBD_EP_TYPE_BULK,                        /* bmAttributes */
-    LOBYTE(USBD_PYBRICKS_MAX_PACKET_SIZE),    /* wMaxPacketSize: */
-    HIBYTE(USBD_PYBRICKS_MAX_PACKET_SIZE),
-    0x00,                                     /* bInterval: ignore for Bulk transfer */
-
-    /* Endpoint IN Descriptor */
-    0x07,                                     /* bLength: Endpoint Descriptor size */
-    USB_DESC_TYPE_ENDPOINT,                   /* bDescriptorType: Endpoint */
-    USBD_PYBRICKS_IN_EP,                      /* bEndpointAddress */
-    USBD_EP_TYPE_BULK,                        /* bmAttributes */
-    LOBYTE(USBD_PYBRICKS_MAX_PACKET_SIZE),    /* wMaxPacketSize: */
-    HIBYTE(USBD_PYBRICKS_MAX_PACKET_SIZE),
-    0x00                                      /* bInterval */
+static pbdrv_usb_stm32_conf_union_t USBD_Pybricks_CfgDesc = {
+    .s = {
+        .conf_desc = {
+            .bLength = sizeof(pbdrv_usb_conf_desc_t),
+            .bDescriptorType = DESC_TYPE_CONFIGURATION,
+            .wTotalLength = sizeof(pbdrv_usb_stm32_conf_t),
+            .bNumInterfaces = 1,
+            .bConfigurationValue = 1,
+            .iConfiguration = 0,
+            .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET,
+            .bMaxPower = 250,   /* 500mA (number of 2mA units) */
+        },
+        .iface_desc = {
+            .bLength = sizeof(pbdrv_usb_iface_desc_t),
+            .bDescriptorType = DESC_TYPE_INTERFACE,
+            .bInterfaceNumber = 0,
+            .bAlternateSetting = 0,
+            .bNumEndpoints = 2,
+            .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+            .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+            .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+            .iInterface = 0,
+        },
+        .ep_out = {
+            .bLength = sizeof(pbdrv_usb_ep_desc_t),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = USBD_PYBRICKS_OUT_EP,
+            .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
+            .wMaxPacketSize = USBD_PYBRICKS_MAX_PACKET_SIZE,
+            .bInterval = 0,     /* ignore for Bulk transfer */
+        },
+        .ep_in = {
+            .bLength = sizeof(pbdrv_usb_ep_desc_t),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = USBD_PYBRICKS_IN_EP,
+            .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
+            .wMaxPacketSize = USBD_PYBRICKS_MAX_PACKET_SIZE,
+            .bInterval = 0,     /* ignore for Bulk transfer */
+        },
+    }
 };
 
 __ALIGN_BEGIN static const uint8_t WebUSB_DescSet[] __ALIGN_END =
@@ -336,8 +343,8 @@ static USBD_StatusTypeDef USBD_Pybricks_Setup(USBD_HandleTypeDef *pdev,
   * @retval pointer to descriptor buffer
   */
 static uint8_t *USBD_Pybricks_GetCfgDesc(uint16_t *length) {
-    *length = (uint16_t)sizeof(USBD_Pybricks_CfgDesc);
-    return USBD_Pybricks_CfgDesc;
+    *length = (uint16_t)sizeof(USBD_Pybricks_CfgDesc.s);
+    return (uint8_t *)&USBD_Pybricks_CfgDesc;
 }
 
 /**

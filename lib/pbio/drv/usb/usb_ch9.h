@@ -141,10 +141,10 @@ typedef struct PBDRV_PACKED {
 } pbdrv_usb_ep_desc_t;
 
 // Endpoint types for bmAttributes
-#define EP_TYPE_CTRL    0
-#define EP_TYPE_ISOC    1
-#define EP_TYPE_BULK    2
-#define EP_TYPE_INTR    3
+#define PBDRV_USB_EP_TYPE_CTRL    0
+#define PBDRV_USB_EP_TYPE_ISOC    1
+#define PBDRV_USB_EP_TYPE_BULK    2
+#define PBDRV_USB_EP_TYPE_INTR    3
 
 // Device qualifier descriptor
 typedef struct PBDRV_PACKED {
