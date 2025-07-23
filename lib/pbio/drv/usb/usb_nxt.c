@@ -112,7 +112,7 @@ static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
     .bcdDevice = 0x0200,    /* Product revision: 2.0.0. */
     .iManufacturer = 1,
     .iProduct = 2,
-    .iSerialNumber = 0,
+    .iSerialNumber = 0,     // TODO: implement a serial number
     .bNumConfigurations = 1,
 };
 
@@ -303,7 +303,8 @@ static void pbdrv_usb_nxt_csr_set_flag(uint8_t endpoint, uint32_t flags) {
  * single USB packet, the data is split and scheduled to be sent in
  * several packets.
  */
-static void pbdrv_usb_nxt_write_data(int endpoint, const uint8_t *ptr, uint32_t length) {
+static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t length) {
+    const uint8_t *ptr = ptr_;
     uint32_t packet_size;
     int tx;
 
@@ -438,7 +439,7 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                 response = 0;
             }
 
-            pbdrv_usb_nxt_write_data(0, (uint8_t *)&response, 2);
+            pbdrv_usb_nxt_write_data(0, &response, 2);
         }
         break;
 
@@ -478,13 +479,14 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
             switch ((packet->value & USB_WVALUE_TYPE) >> 8) {
                 case USB_DESC_TYPE_DEVICE: /* Device descriptor */
                     size = sizeof(pbdrv_usb_nxt_device_descriptor);
-                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_nxt_device_descriptor,
+                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_device_descriptor,
                         MIN(size, packet->length));
                     break;
 
                 case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
-                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_nxt_full_config,
-                        MIN(sizeof(pbdrv_usb_nxt_full_config), packet->length));
+                    size = sizeof(pbdrv_usb_nxt_full_config);
+                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_full_config,
+                        MIN(size, packet->length));
 
                     /* TODO: Why? This is not specified in the USB specs. */
                     if (pbdrv_usb_nxt_full_config.conf_desc.wTotalLength < packet->length) {
@@ -507,13 +509,13 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
 
                 case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
                     size = pbdrv_usb_nxt_dev_qualifier_desc.bLength;
-                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_nxt_dev_qualifier_desc,
+                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_dev_qualifier_desc,
                         MIN(size, packet->length));
                     break;
 
                 case USB_DESC_TYPE_BOS: /* BOS descriptor */
                     size = sizeof(pbdrv_usb_bos_desc_set.s);
-                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_bos_desc_set, MIN(size, packet->length));
+                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_bos_desc_set, MIN(size, packet->length));
                     break;
 
                 default: /* Unknown descriptor, tell the host by stalling. */
@@ -582,19 +584,19 @@ static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_nxt_setup_packet_t *pac
                     switch (packet->value) {
                         case 0x2A00: { // device name
                             const char *name = pbdrv_bluetooth_get_hub_name();
-                            pbdrv_usb_nxt_write_data(0, (const uint8_t *)name,
+                            pbdrv_usb_nxt_write_data(0, name,
                                 MIN(strlen(name), packet->length));
                             break;
                         }
                         case 0x2A26: { // firmware revision
                             const char *fw = PBIO_VERSION_STR;
-                            pbdrv_usb_nxt_write_data(0, (const uint8_t *)fw,
+                            pbdrv_usb_nxt_write_data(0, fw,
                                 MIN(strlen(fw), packet->length));
                             break;
                         }
                         case 0x2A28: { // software revision
                             const char *sw = PBIO_PROTOCOL_VERSION_STR;
-                            pbdrv_usb_nxt_write_data(0, (const uint8_t *)sw,
+                            pbdrv_usb_nxt_write_data(0, sw,
                                 MIN(strlen(sw), packet->length));
                             break;
                         }
@@ -660,12 +662,12 @@ static uint32_t pbdrv_usb_nxt_manage_setup_packet(void) {
             switch (packet.request) {
                 case PBDRV_USB_VENDOR_REQ_WEBUSB:
                     // Since there is only one WebUSB descriptor, we ignore the index.
-                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_webusb_landing_page,
+                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_webusb_landing_page,
                         MIN(pbdrv_usb_webusb_landing_page.s.bLength, packet.length));
                     break;
                 case PBDRV_USB_VENDOR_REQ_MS_20:
                     // Since there is only one MS descriptor, we ignore the index.
-                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_ms_20_desc_set,
+                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_ms_20_desc_set,
                         MIN(sizeof(pbdrv_usb_ms_20_desc_set.s), packet.length));
                     break;
                 default:
