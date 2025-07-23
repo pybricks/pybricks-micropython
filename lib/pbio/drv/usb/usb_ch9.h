@@ -136,6 +136,10 @@ typedef struct PBDRV_PACKED {
     uint8_t iInterface;
 } pbdrv_usb_iface_desc_t;
 
+// This LangID is used for string descriptors
+// English (United States)
+#define PBDRV_USB_STRING_LANGID_EN_US   0x0409
+
 // Endpoint descriptor
 typedef struct PBDRV_PACKED {
     uint8_t bLength;
