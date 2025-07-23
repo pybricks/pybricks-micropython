@@ -60,8 +60,6 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define USBD_LANGID_STRING            0x409
-#define USBD_CONFIGURATION_FS_STRING  "Pybricks Config"
-#define USBD_INTERFACE_FS_STRING      "Pybricks Interface"
 
 // STM32 MCU Device ID register addresses
 // REVISIT: make pbdrv_xxx_get_serial_number() and use that instead
@@ -229,28 +227,6 @@ static uint8_t *USBD_Pybricks_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint1
     return (uint8_t *)USBD_StringSerial;
 }
 
-/**
-  * @brief  Returns the configuration string descriptor.
-  * @param  speed: Current device speed
-  * @param  length: Pointer to data length variable
-  * @retval Pointer to descriptor buffer
-  */
-static uint8_t *USBD_Pybricks_ConfigStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-    USBD_GetString((uint8_t *)USBD_CONFIGURATION_FS_STRING, USBD_StrDesc, length);
-    return USBD_StrDesc;
-}
-
-/**
-  * @brief  Returns the interface string descriptor.
-  * @param  speed: Current device speed
-  * @param  length: Pointer to data length variable
-  * @retval Pointer to descriptor buffer
-  */
-static uint8_t *USBD_Pybricks_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-    USBD_GetString((uint8_t *)USBD_INTERFACE_FS_STRING, USBD_StrDesc, length);
-    return USBD_StrDesc;
-}
-
 static uint8_t *USBD_Pybricks_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
@@ -265,8 +241,6 @@ USBD_DescriptorsTypeDef USBD_Pybricks_Desc = {
     .GetManufacturerStrDescriptor = USBD_Pybricks_ManufacturerStrDescriptor,
     .GetProductStrDescriptor = USBD_Pybricks_ProductStrDescriptor,
     .GetSerialStrDescriptor = USBD_Pybricks_SerialStrDescriptor,
-    .GetConfigurationStrDescriptor = USBD_Pybricks_ConfigStrDescriptor,
-    .GetInterfaceStrDescriptor = USBD_Pybricks_InterfaceStrDescriptor,
     .GetBOSDescriptor = USBD_Pybricks_BOSDescriptor,
 };
 
