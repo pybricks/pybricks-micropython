@@ -54,6 +54,8 @@
 #include "usbd_conf.h"
 #include "usbd_pybricks.h"
 
+#include "../usb_ch9.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define USBD_LANGID_STRING            0x409
@@ -74,29 +76,28 @@
 #define USB_SIZ_BOS_DESC            (5 + 28 + 24)
 
 /* USB Standard Device Descriptor */
-__ALIGN_BEGIN static
+static
 #if !defined(PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR)
 const
 #endif
-uint8_t USBD_DeviceDesc[] __ALIGN_END = {
-    0x12,                     /* bLength */
-    USB_DESC_TYPE_DEVICE,     /* bDescriptorType */
-    0x10, 0x02,               /* bcdUSB = 2.1.0 (for BOS support) */
-    PBIO_PYBRICKS_USB_DEVICE_CLASS,     /* bDeviceClass */
-    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,  /* bDeviceSubClass */
-    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,  /* bDeviceProtocol */
-    USB_MAX_EP0_SIZE,         /* bMaxPacketSize */
-    LOBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
-    HIBYTE(PBDRV_CONFIG_USB_VID), /* idVendor */
-    LOBYTE(PBDRV_CONFIG_USB_PID), /* idProduct */
-    HIBYTE(PBDRV_CONFIG_USB_PID), /* idProduct */
-    0x00, 0x02,                  /* bcdDevice rel. 2.0.0 */
-    USBD_IDX_MFC_STR,         /* Index of manufacturer string */
-    USBD_IDX_PRODUCT_STR,     /* Index of product string */
-    USBD_IDX_SERIAL_STR,      /* Index of serial number string */
-    USBD_MAX_NUM_CONFIGURATION /* bNumConfigurations */
+pbdrv_usb_dev_desc_union_t USBD_DeviceDesc = {
+    .s = {
+        .bLength = sizeof(pbdrv_usb_dev_desc_t),
+        .bDescriptorType = DESC_TYPE_DEVICE,
+        .bcdUSB = 0x0210,       /* 2.1.0 (for BOS support) */
+        .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+        .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+        .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bMaxPacketSize0 = USB_MAX_EP0_SIZE,
+        .idVendor = PBDRV_CONFIG_USB_VID,
+        .idProduct = PBDRV_CONFIG_USB_PID,
+        .bcdDevice = 0x0200,    /* rel. 2.0.0 */
+        .iManufacturer = USBD_IDX_MFC_STR,
+        .iProduct = USBD_IDX_PRODUCT_STR,
+        .iSerialNumber = USBD_IDX_SERIAL_STR,
+        .bNumConfigurations = USBD_MAX_NUM_CONFIGURATION,
+    }
 }; /* USB_DeviceDescriptor */
-_Static_assert(USB_LEN_DEV_DESC == sizeof(USBD_DeviceDesc));
 
 /** BOS descriptor. */
 __ALIGN_BEGIN static const uint8_t USBD_BOSDesc[] __ALIGN_END =
@@ -316,8 +317,8 @@ static uint8_t *USBD_Pybricks_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
-    *length = sizeof(USBD_DeviceDesc);
-    return (uint8_t *)USBD_DeviceDesc;
+    *length = sizeof(USBD_DeviceDesc.s);
+    return (uint8_t *)&USBD_DeviceDesc;
 }
 
 /**
@@ -424,11 +425,9 @@ void USBD_Pybricks_Desc_Init(void) {
     #ifdef PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR
     #define VARIANT (*(uint32_t *)PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR)
     if (VARIANT == 0) {
-        USBD_DeviceDesc[10] = LOBYTE(PBDRV_CONFIG_USB_PID_0);
-        USBD_DeviceDesc[11] = HIBYTE(PBDRV_CONFIG_USB_PID_0);
+        USBD_DeviceDesc.s.idProduct = PBDRV_CONFIG_USB_PID_0;
     } else if (VARIANT == 1) {
-        USBD_DeviceDesc[10] = LOBYTE(PBDRV_CONFIG_USB_PID_1);
-        USBD_DeviceDesc[11] = HIBYTE(PBDRV_CONFIG_USB_PID_1);
+        USBD_DeviceDesc.s.idProduct = PBDRV_CONFIG_USB_PID_1;
     }
     #endif
 }

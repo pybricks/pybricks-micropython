@@ -47,8 +47,6 @@ enum {
 
 #define USBD_WEBUSB_LANDING_PAGE_IDX       1
 
-#define USBD_PYBRICKS_CONFIG_DESC_SIZ      (9 + 9 + 7 + 7)
-
 #define USBD_PYBRICKS_IN_EP                0x81U  /* EP1 for data IN */
 #define USBD_PYBRICKS_OUT_EP               0x01U  /* EP1 for data OUT */
 
