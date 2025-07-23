@@ -27,6 +27,8 @@
 #include "nxos/drivers/aic.h"
 #include "nxos/util.h"
 
+#include "usb_ch9.h"
+
 /* The USB controller supports up to 4 endpoints. */
 #define PBDRV_USB_NXT_N_ENDPOINTS 4
 
@@ -96,31 +98,33 @@
  * don't have a vendor ID to use. Therefore, we are currently
  * piggybacking on Lego's device space, using an unused product ID.
  */
-static const uint8_t pbdrv_usb_nxt_device_descriptor[] = {
-    18, USB_DESC_TYPE_DEVICE, /* Packet size and type. */
-    0x10, 0x02, /* This packet is USB 2.1 (needed for BOS descriptors). */
-    PBIO_PYBRICKS_USB_DEVICE_CLASS, /* Class code. */
-    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS, /* Sub class code. */
-    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL, /* Device protocol. */
-    MAX_EP0_SIZE, /* Maximum packet size for EP0 (control endpoint). */
-    0x94, 0x06, /* Vendor ID : LEGO */
-    0x02, 0x00, /* Product ID : NXT */
-    0x00, 0x02, /* Product revision: 2.0.0. */
-    1, /* Index of the vendor string. */
-    2, /* Index of the product string. */
-    0, /* Index of the serial number (none for us). */
-    1, /* The number of possible configurations. */
+static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
+    .bLength = sizeof(pbdrv_usb_dev_desc_t),
+    .bDescriptorType = DESC_TYPE_DEVICE,
+    .bcdUSB = 0x0210,       /* This packet is USB 2.1 (needed for BOS descriptors). */
+    .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+    .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+    .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+    .bMaxPacketSize0 = MAX_EP0_SIZE,
+    .idVendor = 0x0694,     /* Vendor ID : LEGO */
+    .idProduct = 0x0002,    /* Product ID : NXT */
+    .bcdDevice = 0x0200,    /* Product revision: 2.0.0. */
+    .iManufacturer = 1,
+    .iProduct = 2,
+    .iSerialNumber = 0,
+    .bNumConfigurations = 1,
 };
 
-static const uint8_t pbdrv_usb_nxt_dev_qualifier_desc[] = {
-    10, USB_DESC_TYPE_DEVICE_QUALIFIER, /* Packet size and type. */
-    0x10, 0x02, /* This packet is USB 2.1. */
-    PBIO_PYBRICKS_USB_DEVICE_CLASS, /* Class code */
-    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS, /* Sub class code */
-    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL, /* Device protocol */
-    MAX_EP0_SIZE, /* Maximum packet size for EP0. */
-    1, /* The number of possible configurations. */
-    0, /* Reserved for future use, must be zero. */
+static const pbdrv_usb_dev_qualifier_desc_t pbdrv_usb_nxt_dev_qualifier_desc = {
+    .bLength = sizeof(pbdrv_usb_dev_qualifier_desc_t),
+    .bDescriptorType = DESC_TYPE_DEVICE_QUALIFIER,
+    .bcdUSB = 0x0210,       /* This packet is USB 2.1. */
+    .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+    .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+    .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+    .bMaxPacketSize0 = MAX_EP0_SIZE,
+    .bNumConfigurations = 1,
+    .bReserved = 0,
 };
 
 // These enumerations are specific to the configuration of this device.
@@ -181,54 +185,61 @@ static const uint8_t pbdrv_usb_nxt_bos_desc[] = {
     0x00,                           /* bAltEnumCode = Does not support alternate enumeration */
 };
 
-static const uint8_t pbdrv_usb_nxt_full_config[] = {
-    0x09, USB_DESC_TYPE_CONFIG, /* Descriptor size and type. */
-    0x20, 0x00, /* Total length of the configuration, interface
-               * description included.
-               */
-    1, /* The number of interfaces declared by this configuration. */
-    1, /* The ID for this configuration. */
-    0, /* Index of the configuration description string (none). */
+typedef struct PBDRV_PACKED {
+    pbdrv_usb_conf_desc_t conf_desc;
+    pbdrv_usb_iface_desc_t iface_desc;
+    pbdrv_usb_ep_desc_t ep_out;
+    pbdrv_usb_ep_desc_t ep_in;
+} pbdrv_usb_nxt_conf_t;
 
-    /* Configuration attributes bitmap. Bit 7 (MSB) must be 1, bit 6 is
-     * 1 because the NXT is self-powered, bit 5 is 0 because the NXT
-     * doesn't support remote wakeup, and bits 0-4 are 0 (reserved).
-     */
-    0xC0,
-    0, /* Device power consumption, for non self-powered devices. */
-
-    /*
-     * This is the descriptor for the interface associated with the
-     * configuration.
-     */
-    0x09, USB_DESC_TYPE_INT, /* Descriptor size and type. */
-    0x00, /* Interface index. */
-    0x00, /* ID for this interface configuration. */
-    0x02, /* The number of endpoints defined by this interface
-         * (excluding EP0).
-         */
-    PBIO_PYBRICKS_USB_DEVICE_CLASS, /* Interface class ("Vendor specific"). */
-    PBIO_PYBRICKS_USB_DEVICE_SUBCLASS, /* Interface subclass (see above). */
-    PBIO_PYBRICKS_USB_DEVICE_PROTOCOL, /* Interface protocol (see above). */
-    0x00, /* Index of the string descriptor for this interface (none). */
-
+static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
+    .conf_desc = {
+        .bLength = sizeof(pbdrv_usb_conf_desc_t),
+        .bDescriptorType = DESC_TYPE_CONFIGURATION,
+        .wTotalLength = sizeof(pbdrv_usb_nxt_conf_t),
+        .bNumInterfaces = 1,
+        .bConfigurationValue = 1,
+        .iConfiguration = 0,
+        /* Configuration attributes bitmap. Bit 7 (MSB) must be 1, bit 6 is
+        * 1 because the NXT is self-powered, bit 5 is 0 because the NXT
+        * doesn't support remote wakeup, and bits 0-4 are 0 (reserved).
+        */
+        .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED,
+        .bMaxPower = 0,
+    },
+    .iface_desc = {
+        .bLength = sizeof(pbdrv_usb_iface_desc_t),
+        .bDescriptorType = DESC_TYPE_INTERFACE,
+        .bInterfaceNumber = 0,
+        .bAlternateSetting = 0,
+        .bNumEndpoints = 2,
+        .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
+        .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
+        .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .iInterface = 0,
+    },
     /*
      * Descriptor for EP1.
      */
-    7, USB_DESC_TYPE_ENDPT, /* Descriptor length and type. */
-    0x1, /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
-    0x2, /* Endpoint type (bulk). */
-    MAX_RCV_SIZE, 0x00, /* Maximum packet size (64). */
-    0, /* EP maximum NAK rate (device never NAKs). */
-
+    .ep_out = {
+        .bLength = sizeof(pbdrv_usb_ep_desc_t),
+        .bDescriptorType = DESC_TYPE_ENDPOINT,
+        .bEndpointAddress = 0x01,   /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
+        .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
+        .wMaxPacketSize = MAX_RCV_SIZE,
+        .bInterval = 0,
+    },
     /*
      * Descriptor for EP2.
      */
-    7, USB_DESC_TYPE_ENDPT, /* Descriptor length and type. */
-    0x82, /* Endpoint number. MSB is one, meaning this is an IN EP. */
-    0x2, /* Endpoint type (bulk). */
-    MAX_RCV_SIZE, 0x00, /* Maximum packet size (64). */
-    0, /* EP maximum NAK rate (device never NAKs). */
+    .ep_in = {
+        .bLength = sizeof(pbdrv_usb_ep_desc_t),
+        .bDescriptorType = DESC_TYPE_ENDPOINT,
+        .bEndpointAddress = 0x82,   /* Endpoint number. MSB is one, meaning this is an IN EP. */
+        .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
+        .wMaxPacketSize = MAX_SND_SIZE,
+        .bInterval = 0,
+    },
 };
 
 static const uint8_t pbdrv_usb_nxt_string_desc[] = {
@@ -625,17 +636,17 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
             index = (packet->value & USB_WVALUE_INDEX);
             switch ((packet->value & USB_WVALUE_TYPE) >> 8) {
                 case USB_DESC_TYPE_DEVICE: /* Device descriptor */
-                    size = pbdrv_usb_nxt_device_descriptor[0];
-                    pbdrv_usb_nxt_write_data(0, pbdrv_usb_nxt_device_descriptor,
+                    size = sizeof(pbdrv_usb_nxt_device_descriptor);
+                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_nxt_device_descriptor,
                         MIN(size, packet->length));
                     break;
 
                 case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
-                    pbdrv_usb_nxt_write_data(0, pbdrv_usb_nxt_full_config,
-                        MIN(pbdrv_usb_nxt_full_config[2], packet->length));
+                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_nxt_full_config,
+                        MIN(sizeof(pbdrv_usb_nxt_full_config), packet->length));
 
                     /* TODO: Why? This is not specified in the USB specs. */
-                    if (pbdrv_usb_nxt_full_config[2] < packet->length) {
+                    if (pbdrv_usb_nxt_full_config.conf_desc.wTotalLength < packet->length) {
                         pbdrv_usb_nxt_send_null();
                     }
                     break;
@@ -654,8 +665,8 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                     break;
 
                 case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
-                    size = pbdrv_usb_nxt_dev_qualifier_desc[0];
-                    pbdrv_usb_nxt_write_data(0, pbdrv_usb_nxt_dev_qualifier_desc,
+                    size = pbdrv_usb_nxt_dev_qualifier_desc.bLength;
+                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_nxt_dev_qualifier_desc,
                         MIN(size, packet->length));
                     break;
 
