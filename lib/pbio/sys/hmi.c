@@ -247,6 +247,13 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
  *          ::PBIO_ERROR_TIMEDOUT when there was no user interaction for a long time.
  */
 pbio_error_t pbsys_hmi_await_program_selection(void) {
+
+    #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
+    // Skip any UI, always just start the REPL.
+    pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
+    return PBIO_SUCCESS;
+    #endif
+
     pbio_os_state_t btn_state = 0;
     pbio_os_state_t ble_state = 0;
 
