@@ -98,19 +98,10 @@ pbdrv_usb_dev_desc_union_t USBD_DeviceDesc = {
 }; /* USB_DeviceDescriptor */
 
 /* USB Standard Device Descriptor */
-__ALIGN_BEGIN static const uint8_t USBD_LangIDDesc[USB_LEN_LANGID_STR_DESC] __ALIGN_END = {
-    USB_LEN_LANGID_STR_DESC,
-    USB_DESC_TYPE_STRING,
-    LOBYTE(USBD_LANGID_STRING),
-    HIBYTE(USBD_LANGID_STRING),
-};
-
 __ALIGN_BEGIN static uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
     USB_SIZ_STRING_SERIAL,
     USB_DESC_TYPE_STRING,
 };
-
-__ALIGN_BEGIN static uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ] __ALIGN_END;
 
 
 /**
@@ -180,8 +171,8 @@ static uint8_t *USBD_Pybricks_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint1
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
-    *length = sizeof(USBD_LangIDDesc);
-    return (uint8_t *)USBD_LangIDDesc;
+    *length = sizeof(pbdrv_usb_str_desc_langid.s);
+    return (uint8_t *)&pbdrv_usb_str_desc_langid;
 }
 
 /**
@@ -191,8 +182,11 @@ static uint8_t *USBD_Pybricks_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint1
   * @retval Pointer to descriptor buffer
   */
 static uint8_t *USBD_Pybricks_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-    USBD_GetString((uint8_t *)PBDRV_CONFIG_USB_PROD_STR, USBD_StrDesc, length);
-    return USBD_StrDesc;
+    /* Prevent unused argument(s) compilation warning */
+    UNUSED(speed);
+
+    *length = sizeof(pbdrv_usb_str_desc_prod.s);
+    return (uint8_t *)&pbdrv_usb_str_desc_prod;
 }
 
 /**
@@ -205,8 +199,8 @@ static uint8_t *USBD_Pybricks_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed,
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
-    USBD_GetString((uint8_t *)PBDRV_CONFIG_USB_MFG_STR, USBD_StrDesc, length);
-    return USBD_StrDesc;
+    *length = sizeof(pbdrv_usb_str_desc_mfg.s);
+    return (uint8_t *)&pbdrv_usb_str_desc_mfg;
 }
 
 /**

@@ -50,3 +50,7 @@
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_NXT                        (1)
+#define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
+#define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_NXT
+#define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
+#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_NXT " + Pybricks"

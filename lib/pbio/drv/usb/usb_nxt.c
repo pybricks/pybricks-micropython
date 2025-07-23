@@ -27,6 +27,8 @@
 #include "nxos/drivers/aic.h"
 #include "nxos/util.h"
 
+#include <lego/usb.h>
+
 #include "usb_ch9.h"
 #include "usb_common_desc.h"
 
@@ -86,6 +88,15 @@
 
 #define USB_WVALUE_INDEX       0xFF
 
+/**
+ * Indices for string descriptors
+ */
+enum {
+    STRING_DESC_LANGID,
+    STRING_DESC_MFG,
+    STRING_DESC_PRODUCT,
+};
+
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
  * packets are all constant, and mostly boilerplate. Don't be too
@@ -110,8 +121,8 @@ static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
     .idVendor = 0x0694,     /* Vendor ID : LEGO */
     .idProduct = 0x0002,    /* Product ID : NXT */
     .bcdDevice = 0x0200,    /* Product revision: 2.0.0. */
-    .iManufacturer = 1,
-    .iProduct = 2,
+    .iManufacturer = STRING_DESC_MFG,
+    .iProduct = STRING_DESC_PRODUCT,
     .iSerialNumber = 0,     // TODO: implement a serial number
     .bNumConfigurations = 1,
 };
@@ -183,45 +194,6 @@ static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
         .wMaxPacketSize = MAX_SND_SIZE,
         .bInterval = 0,
     },
-};
-
-static const uint8_t pbdrv_usb_nxt_string_desc[] = {
-    4, USB_DESC_TYPE_STR, /* Descriptor length and type. */
-    0x09, 0x04, /* Supported language ID (US English). */
-};
-
-static const uint8_t pbdrv_usb_lego_str[] = {
-    10, USB_DESC_TYPE_STR,
-    'L', 0,
-    'E', 0,
-    'G', 0,
-    'O', 0,
-};
-
-static const uint8_t pbdrv_usb_nxt_str[] = {
-    30, USB_DESC_TYPE_STR,
-    'N', 0,
-    'X', 0,
-    'T', 0,
-    ' ', 0,
-    '+', 0,
-    ' ', 0,
-    'P', 0,
-    'y', 0,
-    'b', 0,
-    'r', 0,
-    'i', 0,
-    'c', 0,
-    'k', 0,
-    's', 0,
-};
-
-/* Internal lookup table mapping string descriptors to their indices
- * in the USB string descriptor table.
- */
-static const uint8_t *pbdrv_usb_nxt_strings[] = {
-    pbdrv_usb_lego_str,
-    pbdrv_usb_nxt_str,
 };
 
 typedef enum {
@@ -495,17 +467,30 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                     break;
 
                 case USB_DESC_TYPE_STR: /* String or language info. */
-                    if ((packet->value & USB_WVALUE_INDEX) == 0) {
-                        pbdrv_usb_nxt_write_data(0, pbdrv_usb_nxt_string_desc,
-                            MIN(pbdrv_usb_nxt_string_desc[0], packet->length));
-                    } else {
-                        /* The host wants a specific string. */
-                        /* TODO: This should check if the requested string exists. */
-                        pbdrv_usb_nxt_write_data(0, pbdrv_usb_nxt_strings[index - 1],
-                            MIN(pbdrv_usb_nxt_strings[index - 1][0],
-                                packet->length));
+                {
+                    const void *desc = 0;
+                    switch (index) {
+                        case STRING_DESC_LANGID:
+                            desc = &pbdrv_usb_str_desc_langid;
+                            size = sizeof(pbdrv_usb_str_desc_langid.s);
+                            break;
+                        case STRING_DESC_MFG:
+                            desc = &pbdrv_usb_str_desc_mfg;
+                            size = sizeof(pbdrv_usb_str_desc_mfg.s);
+                            break;
+                        case STRING_DESC_PRODUCT:
+                            desc = &pbdrv_usb_str_desc_prod;
+                            size = sizeof(pbdrv_usb_str_desc_prod.s);
+                            break;
                     }
-                    break;
+
+                    if (desc) {
+                        pbdrv_usb_nxt_write_data(0, desc, MIN(size, packet->length));
+                    } else {
+                        pbdrv_usb_nxt_send_stall(0);
+                    }
+                }
+                break;
 
                 case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
                     size = pbdrv_usb_nxt_dev_qualifier_desc.bLength;

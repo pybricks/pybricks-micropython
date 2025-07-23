@@ -18,7 +18,6 @@
 #include <pbio/util.h>
 
 #include <lego/usb.h>
-#include "pbdrvconfig.h"
 
 #include <tiam1808/armv5/am1808/interrupt.h>
 #include <tiam1808/cppi41dma.h>
@@ -180,22 +179,8 @@ static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_fs = {
     }
 };
 
-typedef struct PBDRV_PACKED {
-    uint8_t bLength;
-    uint8_t bDescriptorType;
-    uint16_t langID[1];
-} pbdrv_usb_langid_t;
-PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_langid);
-
-pbdrv_usb_langid_union_t usb_str_desc_langid = {
-    .s = {
-        .bLength = 4,
-        .bDescriptorType = DESC_TYPE_STRING,
-        .langID = {0x0409},     // English (United States)
-    }
-};
-
-// We generate string descriptors at runtime, so this dynamic buffer is needed
+// We generate a serial number string descriptors at runtime
+// so this dynamic buffer is needed
 #define STRING_DESC_MAX_SZ      64
 static union {
     uint8_t b[STRING_DESC_MAX_SZ];
@@ -456,36 +441,18 @@ static bool usb_get_descriptor(uint16_t wValue) {
         case DESC_TYPE_STRING:
             switch (desc_idx) {
                 case STRING_DESC_LANGID:
-                    pbdrv_usb_setup_data_to_send = usb_str_desc_langid.u;
-                    pbdrv_usb_setup_data_to_send_sz = sizeof(usb_str_desc_langid);
+                    pbdrv_usb_setup_data_to_send = pbdrv_usb_str_desc_langid.u;
+                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_str_desc_langid.s);
                     return true;
 
                 case STRING_DESC_MFG:
-                    usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
-                    i = 0;
-                    while (PBDRV_CONFIG_USB_MFG_STR[i]) {
-                        usb_string_desc_buffer.b[2 + 2 * i] = PBDRV_CONFIG_USB_MFG_STR[i];
-                        usb_string_desc_buffer.b[2 + 2 * i + 1] = 0;
-                        i++;
-                    }
-                    usb_string_desc_buffer.b[0] = 2 * i + 2;
-
-                    pbdrv_usb_setup_data_to_send = usb_string_desc_buffer.u;
-                    pbdrv_usb_setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                    pbdrv_usb_setup_data_to_send = pbdrv_usb_str_desc_mfg.u;
+                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_str_desc_mfg.s);
                     return true;
 
                 case STRING_DESC_PRODUCT:
-                    usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
-                    i = 0;
-                    while (PBDRV_CONFIG_USB_PROD_STR[i]) {
-                        usb_string_desc_buffer.b[2 + 2 * i] = PBDRV_CONFIG_USB_PROD_STR[i];
-                        usb_string_desc_buffer.b[2 + 2 * i + 1] = 0;
-                        i++;
-                    }
-                    usb_string_desc_buffer.b[0] = 2 * i + 2;
-
-                    pbdrv_usb_setup_data_to_send = usb_string_desc_buffer.u;
-                    pbdrv_usb_setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                    pbdrv_usb_setup_data_to_send = pbdrv_usb_str_desc_prod.u;
+                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_str_desc_prod.s);
                     return true;
 
                 case STRING_DESC_SERIAL:
