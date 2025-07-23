@@ -43,6 +43,7 @@
 #include "usbd_pybricks.h"
 
 #include "../usb_ch9.h"
+#include "../usb_common_desc.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -163,27 +164,6 @@ static pbdrv_usb_stm32_conf_union_t USBD_Pybricks_CfgDesc = {
     }
 };
 
-__ALIGN_BEGIN static const uint8_t WebUSB_DescSet[] __ALIGN_END =
-{
-    #if PBIO_VERSION_LEVEL_HEX == 0xA
-    21,    /* bLength */
-    #else
-    20,    /* bLength */
-    #endif
-    0x03,  /* bDescriptorType = URL */
-    0x01,  /* bScheme = https:// */
-
-    /* URL */
-    #if PBIO_VERSION_LEVEL_HEX == 0xA
-    'a', 'l', 'p', 'h', 'a',
-    #elif PBIO_VERSION_LEVEL_HEX == 0xB
-    'b', 'e', 't', 'a',
-    #else
-    'c', 'o', 'd', 'e',
-    #endif
-    '.', 'p', 'y', 'b', 'r', 'i', 'c', 'k', 's', '.', 'c', 'o', 'm'
-};
-
 /**
   * @}
   */
@@ -268,17 +248,17 @@ static USBD_StatusTypeDef USBD_Pybricks_Setup(USBD_HandleTypeDef *pdev,
         case USB_REQ_TYPE_VENDOR:
             switch (req->bRequest)
             {
-                case USBD_VENDOR_CODE_MS:
+                case PBDRV_USB_VENDOR_REQ_MS_20:
                     (void)USBD_CtlSendData(pdev,
-                        (uint8_t *)USBD_OSDescSet,
-                        MIN(sizeof(USBD_OSDescSet), req->wLength));
+                        (uint8_t *)&pbdrv_usb_ms_20_desc_set,
+                        MIN(sizeof(pbdrv_usb_ms_20_desc_set.s), req->wLength));
                     break;
 
-                case USBD_VENDOR_CODE_WEBUSB:
-                    if ((req->wValue == USBD_WEBUSB_LANDING_PAGE_IDX) && (req->wIndex == 0x02)) {
+                case PBDRV_USB_VENDOR_REQ_WEBUSB:
+                    if ((req->wValue == PBDRV_USB_WEBUSB_LANDING_PAGE_URL_IDX) && (req->wIndex == WEBUSB_REQ_GET_URL)) {
                         (void)USBD_CtlSendData(pdev,
-                            (uint8_t *)WebUSB_DescSet,
-                            MIN(sizeof(WebUSB_DescSet), req->wLength));
+                            (uint8_t *)&pbdrv_usb_webusb_landing_page,
+                            MIN(pbdrv_usb_webusb_landing_page.s.bLength, req->wLength));
                     }
                     break;
 

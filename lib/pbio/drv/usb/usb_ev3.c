@@ -35,6 +35,7 @@
 #include <pbdrv/clock.h>
 
 #include "usb_ch9.h"
+#include "usb_common_desc.h"
 
 // Maximum packet sizes for the USB pipes
 #define EP0_BUF_SZ              64
@@ -50,16 +51,6 @@ enum {
     STRING_DESC_PRODUCT,
     STRING_DESC_SERIAL,
 };
-
-/**
- * Indices for vendor requests, which are used for platform descriptors
- */
-enum {
-    VENDOR_REQ_WEBUSB,
-    VENDOR_REQ_MS_20,
-};
-
-#define WEBUSB_LANDING_PAGE_URL_IDX     1
 
 // Begin hardcoded USB descriptors
 
@@ -186,113 +177,6 @@ static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_fs = {
             .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_FS,
             .bInterval = 0,
         },
-    }
-};
-
-#if PBIO_VERSION_LEVEL_HEX == 0xA
-#define PYBRICKS_CODE_URL   "alpha.pybricks.com"
-#elif PBIO_VERSION_LEVEL_HEX == 0xB
-#define PYBRICKS_CODE_URL   "beta.pybricks.com"
-#else
-#define PYBRICKS_CODE_URL   "code.pybricks.com"
-#endif
-
-static const pbdrv_usb_webusb_url_desc_union_t webusb_landing_page = {
-    .s = {
-        .bLength = sizeof(pbdrv_usb_webusb_url_desc_t) + sizeof(PYBRICKS_CODE_URL) - 1,
-        .bDescriptorType = WEBUSB_DESC_TYPE_URL,
-        .bScheme = WEBUSB_URL_SCHEME_HTTPS,
-        .url = PYBRICKS_CODE_URL,
-    },
-};
-
-#define PBDRV_USB_MS_20_REG_PROPERTY_NAME   u"DeviceInterfaceGUIDs"
-#define PBDRV_USB_MS_20_REG_PROPERTY_VAL    u"{A5C44A4C-53D4-4389-9821-AE95051908A1}"
-
-#define MS_20_REGISTRY_DATA_EXTRA_SZ                    \
-    2 + sizeof(PBDRV_USB_MS_20_REG_PROPERTY_NAME) +     \
-    2 + sizeof(PBDRV_USB_MS_20_REG_PROPERTY_VAL) +      \
-    2
-
-typedef struct PBDRV_PACKED {
-    pbdrv_usb_ms_20_desc_set_header_t desc_set_hdr;
-    pbdrv_usb_ms_20_compatible_t compatible;
-    pbdrv_usb_ms_20_reg_prop_hdr_t reg_prop_hdr;
-    uint16_t property_name_len;
-    uint16_t device_interface_guids[sizeof(PBDRV_USB_MS_20_REG_PROPERTY_NAME) / 2];
-    uint16_t property_val_len;
-    uint16_t device_interface_guid_val[sizeof(PBDRV_USB_MS_20_REG_PROPERTY_VAL) / 2];
-    uint16_t _multi_sz_end;     /* Terminates a REG_MULTI_SZ list */
-} pbdrv_usb_ev3_ms_20_desc_set_t;
-PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_ev3_ms_20_desc_set);
-
-static const pbdrv_usb_ev3_ms_20_desc_set_union_t ms_20_desc_set = {
-    .s = {
-        .desc_set_hdr = {
-            .wLength = sizeof(pbdrv_usb_ms_20_desc_set_header_t),
-            .wDescriptorType = MS_OS_20_SET_HEADER_DESCRIPTOR,
-            .dwWindowsVersion = MS_WINDOWS_VERSION_81,
-            .wTotalLength = sizeof(pbdrv_usb_ev3_ms_20_desc_set_t),
-        },
-        .compatible = {
-            .wLength = sizeof(pbdrv_usb_ms_20_compatible_t),
-            .wDescriptorType = MS_OS_20_FEATURE_COMPATBLE_ID,
-            .CompatibleID = "WINUSB",
-            .SubCompatibleID = "",
-        },
-        .reg_prop_hdr = {
-            .wLength = sizeof(pbdrv_usb_ms_20_reg_prop_hdr_t) + MS_20_REGISTRY_DATA_EXTRA_SZ,
-            .wDescriptorType = MS_OS_20_FEATURE_REG_PROPERTY,
-            .wPropertyDataType = MS_OS_20_REG_PROP_TYPE_REG_MULTI_SZ,
-        },
-        .property_name_len = sizeof(PBDRV_USB_MS_20_REG_PROPERTY_NAME),
-        .device_interface_guids = PBDRV_USB_MS_20_REG_PROPERTY_NAME,
-        .property_val_len = sizeof(PBDRV_USB_MS_20_REG_PROPERTY_VAL),
-        .device_interface_guid_val = PBDRV_USB_MS_20_REG_PROPERTY_VAL,
-    }
-};
-
-typedef struct PBDRV_PACKED {
-    pbdrv_usb_bos_desc_t bos;
-    // WebUSB must occur before Microsoft OS descriptors
-    pbdrv_usb_webusb_capability_t webusb;
-    pbdrv_usb_microsoft_20_capability_t ms_20;
-} pbdrv_usb_ev3_bos_desc_set_t;
-PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_ev3_bos_desc_set);
-
-static const pbdrv_usb_ev3_bos_desc_set_union_t bos_desc_set = {
-    .s = {
-        .bos = {
-            .bLength = sizeof(pbdrv_usb_bos_desc_t),
-            .bDescriptorType = DESC_TYPE_BOS,
-            .wTotalLength = sizeof(pbdrv_usb_ev3_bos_desc_set_t),
-            .bNumDeviceCaps = 2,
-        },
-        .webusb = {
-            .hdr = {
-                .bLength = sizeof(pbdrv_usb_webusb_capability_t),
-                .bDescriptorType = DESC_TYPE_DEVICE_CAPABILITY,
-                .bDevCapabilityType = USB_DEVICE_CAPABILITY_TYPE_PLATFORM,
-                .bReserved = 0,
-                .uuid = USB_PLATFORM_CAP_GUID_WEBUSB,
-            },
-            .bcdVersion = 0x0100,
-            .bVendorCode = VENDOR_REQ_WEBUSB,
-            .iLandingPage = WEBUSB_LANDING_PAGE_URL_IDX,
-        },
-        .ms_20 = {
-            .hdr = {
-                .bLength = sizeof(pbdrv_usb_microsoft_20_capability_t),
-                .bDescriptorType = DESC_TYPE_DEVICE_CAPABILITY,
-                .bDevCapabilityType = USB_DEVICE_CAPABILITY_TYPE_PLATFORM,
-                .bReserved = 0,
-                .uuid = USB_PLATFORM_CAP_GUID_MS_20,
-            },
-            .dwWindowsVersion = MS_WINDOWS_VERSION_81,
-            .wMSOSDescriptorSetTotalLength = sizeof(pbdrv_usb_ev3_ms_20_desc_set_t),
-            .bMS_VendorCode = VENDOR_REQ_MS_20,
-            .bAltEnumCode = 0,
-        }
     }
 };
 
@@ -621,8 +505,8 @@ static bool usb_get_descriptor(uint16_t wValue) {
             break;
 
         case DESC_TYPE_BOS:
-            pbdrv_usb_setup_data_to_send = bos_desc_set.u;
-            pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_ev3_bos_desc_set_t);
+            pbdrv_usb_setup_data_to_send = pbdrv_usb_bos_desc_set.u;
+            pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_bos_desc_set.s);
             return true;
     }
 
@@ -805,18 +689,18 @@ static void usb_device_intr(void) {
 
                     case BM_REQ_TYPE_VENDOR:
                         switch (setup_pkt.s.bRequest) {
-                            case VENDOR_REQ_WEBUSB:
-                                if (setup_pkt.s.wIndex == WEBUSB_REQ_GET_URL && setup_pkt.s.wValue == WEBUSB_LANDING_PAGE_URL_IDX) {
-                                    pbdrv_usb_setup_data_to_send = webusb_landing_page.u;
-                                    pbdrv_usb_setup_data_to_send_sz = webusb_landing_page.s.bLength;
+                            case PBDRV_USB_VENDOR_REQ_WEBUSB:
+                                if (setup_pkt.s.wIndex == WEBUSB_REQ_GET_URL && setup_pkt.s.wValue == PBDRV_USB_WEBUSB_LANDING_PAGE_URL_IDX) {
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_webusb_landing_page.u;
+                                    pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_webusb_landing_page.s.bLength;
                                     handled = true;
                                 }
                                 break;
 
-                            case VENDOR_REQ_MS_20:
+                            case PBDRV_USB_VENDOR_REQ_MS_20:
                                 if (setup_pkt.s.wIndex == MS_OS_20_DESCRIPTOR_INDEX) {
-                                    pbdrv_usb_setup_data_to_send = ms_20_desc_set.u;
-                                    pbdrv_usb_setup_data_to_send_sz = ms_20_desc_set.s.desc_set_hdr.wTotalLength;
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ms_20_desc_set.u;
+                                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_ms_20_desc_set.s);
                                     handled = true;
                                 }
                                 break;

@@ -28,6 +28,7 @@
 #include "nxos/util.h"
 
 #include "usb_ch9.h"
+#include "usb_common_desc.h"
 
 /* The USB controller supports up to 4 endpoints. */
 #define PBDRV_USB_NXT_N_ENDPOINTS 4
@@ -125,64 +126,6 @@ static const pbdrv_usb_dev_qualifier_desc_t pbdrv_usb_nxt_dev_qualifier_desc = {
     .bMaxPacketSize0 = MAX_EP0_SIZE,
     .bNumConfigurations = 1,
     .bReserved = 0,
-};
-
-// These enumerations are specific to the configuration of this device.
-
-enum {
-    PBDRV_USB_NXT_VENDOR_CODE_WEBUSB,
-    PBDRV_USB_NXT_VENDOR_CODE_MS,
-};
-
-// NB: Chromium seems quite particular about the order of these descriptors.
-// The WebUSB descriptor must come first and the MS OS 2.0 descriptor be last.
-static const uint8_t pbdrv_usb_nxt_bos_desc[] = {
-    5, USB_DESC_TYPE_BOS, /* Descriptor length and type. */
-    0x39, 0x00, /* Total length of the descriptor = 57. */
-    2, /* Number of device capabilities. */
-
-    24,                               /* bLength */
-    USB_DEVICE_CAPABILITY_TYPE,       /* bDescriptorType = Device Capability */
-    USB_DEV_CAP_TYPE_PLATFORM,        /* bDevCapabilityType */
-    0x00,                             /* bReserved */
-
-    /*
-      * PlatformCapabilityUUID
-      * WebUSB Platform Capability descriptor
-      * 3408B638-09A9-47A0-8BFD-A0768815B665
-      * RFC 4122 explains the correct byte ordering
-      */
-    0x38, 0xB6, 0x08, 0x34,           /* 32-bit value */
-    0xA9, 0x09,                       /* 16-bit value */
-    0xA0, 0x47,                       /* 16-bit value */
-    0x8B, 0xFD,
-    0xA0, 0x76, 0x88, 0x15, 0xB6, 0x65,
-
-    0x00, 0x01,                       /* bcdVersion = 1.00 */
-    PBDRV_USB_NXT_VENDOR_CODE_WEBUSB,          /* bVendorCode */
-    1,                                /* iLandingPage */
-
-    28,                               /* bLength */
-    USB_DEVICE_CAPABILITY_TYPE,       /* bDescriptorType = Device Capability */
-    USB_DEV_CAP_TYPE_PLATFORM,        /* bDevCapabilityType */
-    0x00,                             /* bReserved */
-
-    /*
-     * PlatformCapabilityUUID
-     * Microsoft OS 2.0 descriptor platform capability ID
-     * D8DD60DF-4589-4CC7-9CD2-659D9E648A9F
-     * RFC 4122 explains the correct byte ordering
-     */
-    0xDF, 0x60, 0xDD, 0xD8,         /* 32-bit value */
-    0x89, 0x45,                     /* 16-bit value */
-    0xC7, 0x4C,                     /* 16-bit value */
-    0x9C, 0xD2,
-    0x65, 0x9D, 0x9E, 0x64, 0x8A, 0x9F,
-
-    0x00, 0x00, 0x03, 0x06,         /* dwWindowsVersion = 0x06030000 for Windows 8.1 Build */
-    0xA2, 0x00,                     /* wMSOSDescriptorSetTotalLength = 162 */
-    PBDRV_USB_NXT_VENDOR_CODE_MS,            /* bMS_VendorCode */
-    0x00,                           /* bAltEnumCode = Does not support alternate enumeration */
 };
 
 typedef struct PBDRV_PACKED {
@@ -464,108 +407,6 @@ static void pbdrv_usb_nxt_send_null(void) {
     pbdrv_usb_nxt_write_data(0, NULL, 0);
 }
 
-static const uint8_t pbdrv_usb_desc_set_ms_os[] = {
-    0x0A, 0x00,                       /* wLength = 10 */
-    0x00, 0x00,                       /* wDescriptorType = MS_OS_20_SET_HEADER_DESCRIPTOR */
-    0x00, 0x00, 0x03, 0x06,           /* dwWindowsVersion = 0x06030000 for Windows 8.1 Build */
-    0xA2, 0x00,                       /* wTotalLength = 162 */
-
-    0x14, 0x00,                       /* wLength = 20 */
-    0x03, 0x00,                       /* wDescriptorType = MS_OS_20_FEATURE_COMPATBLE_ID */
-    'W', 'I', 'N', 'U', 'S', 'B',     /* CompatibleID */
-    0x00, 0x00,                       /* CompatibleID (cont.) */
-    0x00, 0x00, 0x00, 0x00,           /* SubCompatibleID */
-    0x00, 0x00, 0x00, 0x00,           /* SubCompatibleID (cont.) */
-
-    0x84, 0x00,                       /* wLength = 132 */
-    0x04, 0x00,                       /* wDescriptorType = MS_OS_20_FEATURE_REG_PROPERTY */
-    0x07, 0x00,                       /* wStringType = REG_MULTI_SZ */
-    /* wPropertyNameLength = 42 */
-    0x2A, 0x00,
-    /* PropertyName = DeviceInterfaceGUIDs */
-    'D', '\0',
-    'e', '\0',
-    'v', '\0',
-    'i', '\0',
-    'c', '\0',
-    'e', '\0',
-    'I', '\0',
-    'n', '\0',
-    't', '\0',
-    'e', '\0',
-    'r', '\0',
-    'f', '\0',
-    'a', '\0',
-    'c', '\0',
-    'e', '\0',
-    'G', '\0',
-    'U', '\0',
-    'I', '\0',
-    'D', '\0',
-    's', '\0',
-    '\0', '\0',
-
-    /* wPropertyDataLength = 80 */
-    0x50, 0x00,
-    /* PropertyData = {A5C44A4C-53D4-4389-9821-AE95051908A1} */
-    '{', '\0',
-    'A', '\0',
-    '5', '\0',
-    'C', '\0',
-    '4', '\0',
-    '4', '\0',
-    'A', '\0',
-    '4', '\0',
-    'C', '\0',
-    '-', '\0',
-    '5', '\0',
-    '3', '\0',
-    'D', '\0',
-    '4', '\0',
-    '-', '\0',
-    '4', '\0',
-    '3', '\0',
-    '8', '\0',
-    '9', '\0',
-    '-', '\0',
-    '9', '\0',
-    '8', '\0',
-    '2', '\0',
-    '1', '\0',
-    '-', '\0',
-    'A', '\0',
-    'E', '\0',
-    '9', '\0',
-    '5', '\0',
-    '0', '\0',
-    '5', '\0',
-    '1', '\0',
-    '9', '\0',
-    '0', '\0',
-    '8', '\0',
-    'A', '\0',
-    '1', '\0',
-    '}', '\0',
-    '\0', '\0',
-    '\0', '\0',
-};
-
-static const uint8_t pbdrv_usb_desc_set_webusb[] = {
-    20,    /* bLength */
-    0x03,  /* bDescriptorType = URL */
-    0x01,  /* bScheme = https:// */
-
-    /* URL */
-    #if PBIO_VERSION_LEVEL_HEX == 0xA
-    'a', 'l', 'p', 'h', 'a',
-    #elif PBIO_VERSION_LEVEL_HEX == 0xB
-    'b', 'e', 't', 'a',
-    #else
-    'c', 'o', 'd', 'e',
-    #endif
-    '.', 'p', 'y', 'b', 'r', 'i', 'c', 'k', 's', '.', 'c', 'o', 'm',
-};
-
 typedef struct {
     uint8_t request_attrs;  /* Request characteristics. */
     uint8_t request;        /* Request type. */
@@ -671,8 +512,8 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                     break;
 
                 case USB_DESC_TYPE_BOS: /* BOS descriptor */
-                    size = pbdrv_usb_nxt_bos_desc[2];
-                    pbdrv_usb_nxt_write_data(0, pbdrv_usb_nxt_bos_desc, MIN(size, packet->length));
+                    size = sizeof(pbdrv_usb_bos_desc_set.s);
+                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_bos_desc_set, MIN(size, packet->length));
                     break;
 
                 default: /* Unknown descriptor, tell the host by stalling. */
@@ -817,15 +658,15 @@ static uint32_t pbdrv_usb_nxt_manage_setup_packet(void) {
             break;
         case USB_BMREQUEST_TYPE_VENDOR:
             switch (packet.request) {
-                case PBDRV_USB_NXT_VENDOR_CODE_WEBUSB:
+                case PBDRV_USB_VENDOR_REQ_WEBUSB:
                     // Since there is only one WebUSB descriptor, we ignore the index.
-                    pbdrv_usb_nxt_write_data(0, pbdrv_usb_desc_set_webusb,
-                        MIN(sizeof(pbdrv_usb_desc_set_webusb), packet.length));
+                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_webusb_landing_page,
+                        MIN(pbdrv_usb_webusb_landing_page.s.bLength, packet.length));
                     break;
-                case PBDRV_USB_NXT_VENDOR_CODE_MS:
+                case PBDRV_USB_VENDOR_REQ_MS_20:
                     // Since there is only one MS descriptor, we ignore the index.
-                    pbdrv_usb_nxt_write_data(0, pbdrv_usb_desc_set_ms_os,
-                        MIN(sizeof(pbdrv_usb_desc_set_ms_os), packet.length));
+                    pbdrv_usb_nxt_write_data(0, (const uint8_t *)&pbdrv_usb_ms_20_desc_set,
+                        MIN(sizeof(pbdrv_usb_ms_20_desc_set.s), packet.length));
                     break;
                 default:
                     pbdrv_usb_nxt_send_stall(0);
