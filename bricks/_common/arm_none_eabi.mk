@@ -176,7 +176,7 @@ endif
 endif
 
 CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
-CFLAGS = $(INC) -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS = $(INC) -std=c11 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
 $(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
 
 # linker scripts
