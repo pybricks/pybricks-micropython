@@ -186,6 +186,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
+	drv/usb/usb_common_desc.c \
 	drv/usb/usb_ev3.c \
 	drv/usb/usb_nxt.c \
 	drv/usb/usb_stm32.c \

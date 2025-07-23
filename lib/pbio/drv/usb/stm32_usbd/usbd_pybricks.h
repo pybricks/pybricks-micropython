@@ -36,17 +36,6 @@ extern "C" {
   * @{
   */
 
-
-/** @defgroup USBD_Pybricks_Exported_Defines
-  * @{
-  */
-enum {
-    USBD_VENDOR_CODE_WEBUSB,
-    USBD_VENDOR_CODE_MS
-};
-
-#define USBD_WEBUSB_LANDING_PAGE_IDX       1
-
 #define USBD_PYBRICKS_IN_EP                0x81U  /* EP1 for data IN */
 #define USBD_PYBRICKS_OUT_EP               0x01U  /* EP1 for data OUT */
 
@@ -119,9 +108,6 @@ typedef struct
   */
 
 extern USBD_ClassTypeDef USBD_Pybricks_ClassDriver;
-
-#define USBD_SIZ_MS_OS_DSCRPTR_SET  (10 + 20 + 132)
-extern const uint8_t USBD_OSDescSet[USBD_SIZ_MS_OS_DSCRPTR_SET];
 
 /**
   * @}
