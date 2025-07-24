@@ -11,8 +11,6 @@
 
 #include <pbio/config.h>
 
-#if PBIO_CONFIG_IMAGE
-
 #include <stdint.h>
 
 /**
@@ -52,6 +50,8 @@ typedef struct _pbio_image_t {
      */
     int stride;
 } pbio_image_t;
+
+#if PBIO_CONFIG_IMAGE
 
 void pbio_image_init(pbio_image_t *image, uint8_t *pixels, int width,
     int height, int stride);
