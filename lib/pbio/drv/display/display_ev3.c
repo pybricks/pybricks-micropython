@@ -492,12 +492,17 @@ static pbio_error_t pbdrv_display_ev3_process_thread(pbio_os_state_t *state, voi
     // Staying in data mode from here.
     pbdrv_gpio_out_high(&pin_lcd_a0);
 
-    // Initial splash screen.
+    // Briefly show initial splash screen. REVISIT: Move boot animation to sys/hmi.
     pbdrv_display_load_indexed_bitmap(pbdrv_display_pybricks_logo);
     pbdrv_display_st7586s_encode_user_frame();
     pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
     PBIO_OS_AWAIT_UNTIL(state, spi_status == SPI_STATUS_COMPLETE);
     pbdrv_gpio_out_high(&pin_lcd_cs);
+    PBIO_OS_AWAIT_MS(state, &timer, 500);
+
+    // Clear display to start with.
+    memset(&pbdrv_display_user_frame, 0, sizeof(pbdrv_display_user_frame));
+    pbdrv_display_user_frame_update_requested = true;
 
     // Done initializing.
     pbio_busy_count_down();
