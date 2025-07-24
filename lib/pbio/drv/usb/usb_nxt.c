@@ -127,18 +127,6 @@ static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
     .bNumConfigurations = 1,
 };
 
-static const pbdrv_usb_dev_qualifier_desc_t pbdrv_usb_nxt_dev_qualifier_desc = {
-    .bLength = sizeof(pbdrv_usb_dev_qualifier_desc_t),
-    .bDescriptorType = DESC_TYPE_DEVICE_QUALIFIER,
-    .bcdUSB = 0x0210,       /* This packet is USB 2.1. */
-    .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-    .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-    .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
-    .bMaxPacketSize0 = MAX_EP0_SIZE,
-    .bNumConfigurations = 1,
-    .bReserved = 0,
-};
-
 typedef struct PBDRV_PACKED {
     pbdrv_usb_conf_desc_t conf_desc;
     pbdrv_usb_iface_desc_t iface_desc;
@@ -491,12 +479,6 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                     }
                 }
                 break;
-
-                case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
-                    size = pbdrv_usb_nxt_dev_qualifier_desc.bLength;
-                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_dev_qualifier_desc,
-                        MIN(size, packet->length));
-                    break;
 
                 case USB_DESC_TYPE_BOS: /* BOS descriptor */
                     size = sizeof(pbdrv_usb_bos_desc_set.s);
