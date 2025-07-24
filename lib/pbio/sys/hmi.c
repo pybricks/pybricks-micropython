@@ -109,7 +109,16 @@ static pbio_error_t pbsys_hmi_launch_program_with_button(pbio_os_state_t *state)
         }
 
         if (pressed & PBIO_BUTTON_CENTER) {
-            pbio_error_t err = pbsys_main_program_request_start(selected_slot, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
+
+            uint8_t slot = selected_slot;
+            #if PBSYS_CONFIG_HMI_SLOT_0_STARTS_REPL
+            // HACK: This is useful for testing a new hub until some
+            // download-and-run mechanism is implemented.
+            if (slot == 0) {
+                slot = PBIO_PYBRICKS_USER_PROGRAM_ID_REPL;
+            }
+            #endif
+            pbio_error_t err = pbsys_main_program_request_start(slot, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
 
             if (err == PBIO_SUCCESS) {
                 // Program is available so we can leave this UI thread and
