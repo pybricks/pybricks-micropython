@@ -9,7 +9,9 @@
 
 #include <contiki.h>
 
+#include <pbdrv/display.h>
 #include <pbdrv/led.h>
+#include <pbio/image.h>
 #include <pbio/error.h>
 #include <pbio/light_matrix.h>
 #include <pbio/util.h>
@@ -32,14 +34,24 @@ static pbsys_hub_light_matrix_t pbsys_hub_light_matrix_instance;
 pbio_light_matrix_t *pbsys_hub_light_matrix = &pbsys_hub_light_matrix_instance.light_matrix;
 
 static pbio_error_t pbsys_hub_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
+    #if PBSYS_CONFIG_HUB_LIGHT_MATRIX_LED_ARRAY
     // REVISIT: currently hub light matrix is hard-coded as LED array at index 0
     // on all platforms
     pbdrv_led_array_dev_t *array;
     if (pbdrv_led_array_get_dev(0, &array) == PBIO_SUCCESS) {
         return pbdrv_led_array_set_brightness(array, row * light_matrix->size + col, brightness);
     }
-
+    #elif PBSYS_CONFIG_HUB_LIGHT_MATRIX_DISPLAY
+    pbio_image_t *display = pbdrv_display_get_image();
+    uint8_t value = brightness * (pbdrv_display_get_max_value() + 1) / 100;
+    const uint32_t size = PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBSYS_CONFIG_HMI_NUM_SLOTS;
+    const uint32_t width = size * 4 / 5;
+    const uint32_t offset = (PBDRV_CONFIG_DISPLAY_NUM_COLS - (PBSYS_CONFIG_HMI_NUM_SLOTS * size)) / 2;
+    pbio_image_fill_rect(display, col * size + offset, row * size, width, width, value);
+    pbdrv_display_update();
     return PBIO_SUCCESS;
+    #endif
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static const pbio_light_matrix_funcs_t pbsys_hub_light_matrix_funcs = {

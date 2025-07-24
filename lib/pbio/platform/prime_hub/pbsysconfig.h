@@ -12,6 +12,7 @@
 #define PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON        (512) // PBIO_BUTTON_RIGHT_UP, but enum value cannot be used here.
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (5)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (1)
+#define PBSYS_CONFIG_HUB_LIGHT_MATRIX_LED_ARRAY     (1)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (64)
 #define PBSYS_CONFIG_MAIN                           (1)
