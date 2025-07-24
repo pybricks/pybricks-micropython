@@ -291,7 +291,14 @@ static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t le
         pbdrv_usb_nxt_state.tx_data[tx] = (uint8_t *)(ptr + packet_size);
         pbdrv_usb_nxt_state.tx_len[tx] = length;
     } else {
-        pbdrv_usb_nxt_state.tx_data[tx] = NULL;
+        if (length == packet_size && endpoint == 0) {
+            // If we are sending data to the control pipe, we must terminate the data
+            // with a ZLP. In order to do so, we set the data pointer to non-NULL
+            // but the length to 0. We do not want to send ZLPs on the Pybricks bulk pipe.
+            pbdrv_usb_nxt_state.tx_data[tx] = (uint8_t *)(ptr);
+        } else {
+            pbdrv_usb_nxt_state.tx_data[tx] = NULL;
+        }
         pbdrv_usb_nxt_state.tx_len[tx] = 0;
     }
 
@@ -447,11 +454,6 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                     size = sizeof(pbdrv_usb_nxt_full_config);
                     pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_full_config,
                         MIN(size, packet->length));
-
-                    /* TODO: Why? This is not specified in the USB specs. */
-                    if (pbdrv_usb_nxt_full_config.conf_desc.wTotalLength < packet->length) {
-                        pbdrv_usb_nxt_send_null();
-                    }
                     break;
 
                 case USB_DESC_TYPE_STR: /* String or language info. */
@@ -776,8 +778,7 @@ static void pbdrv_usb_nxt_isr(void) {
             }
 
             /* and we will send the following data */
-            if (pbdrv_usb_nxt_state.tx_len[endpoint] > 0
-                && pbdrv_usb_nxt_state.tx_data[endpoint] != NULL) {
+            if (pbdrv_usb_nxt_state.tx_data[endpoint] != NULL) {
                 pbdrv_usb_nxt_write_data(endpoint, pbdrv_usb_nxt_state.tx_data[endpoint],
                     pbdrv_usb_nxt_state.tx_len[endpoint]);
             } else {
