@@ -142,22 +142,22 @@ static pbio_error_t pbsys_hmi_launch_program_with_button(pbio_os_state_t *state)
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-#if PBSYS_CONFIG_BLUETOOTH_TOGGLE
-static bool pbsys_hmi_bluetooth_button_is_pressed() {
-    return pbdrv_button_get_pressed() & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON;
-}
-#else
-static inline bool pbsys_hmi_bluetooth_button_is_pressed() {
-    return false;
-}
-#endif
-
 /**
  * Monitors Bluetooth enable button and starts/stops advertising as needed.
  *
  * NB: Must allow calling after completion, so must set os state prior to returning.
  */
 static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
+
+    #if !PBSYS_CONFIG_BLUETOOTH
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
+
+    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    bool bluetooth_button_is_pressed = pbdrv_button_get_pressed() & PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON;
+    #else
+    bool bluetooth_button_is_pressed = false;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -192,7 +192,7 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
         PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
         PBIO_OS_AWAIT_UNTIL(state,
             pbsys_storage_settings_bluetooth_enabled_get() ||
-            pbsys_hmi_bluetooth_button_is_pressed() ||
+            bluetooth_button_is_pressed ||
             pbsys_main_program_start_is_requested()
             );
         if (pbsys_main_program_start_is_requested()) {
@@ -210,7 +210,7 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
         // Wait for connection, program run, or bluetooth toggle.
         PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed());
         PBIO_OS_AWAIT_UNTIL(state,
-            pbsys_hmi_bluetooth_button_is_pressed() ||
+            bluetooth_button_is_pressed ||
             pbsys_main_program_start_is_requested() ||
             pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
             );
