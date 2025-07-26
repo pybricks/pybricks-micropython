@@ -515,197 +515,202 @@ static void usb_device_intr(void) {
             HWREGH(USB0_BASE + USB_O_CSRL0) = 0;
             pbdrv_usb_setup_data_to_send = 0;
             pbdrv_usb_addr_needs_setting = false;
-        } else if (peri_csr & USB_CSRL0_SETEND) {
+        }
+
+        if (peri_csr & USB_CSRL0_SETEND) {
             // Error in SETUP transaction
             HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_SETENDC;
             pbdrv_usb_setup_data_to_send = 0;
             pbdrv_usb_addr_needs_setting = false;
-        } else {
-            if (pbdrv_usb_addr_needs_setting) {
-                USBDevAddrSet(USB0_BASE, pbdrv_usb_addr);
-                pbdrv_usb_addr_needs_setting = false;
-            }
+        }
 
-            if (peri_csr & USB_CSRL0_RXRDY) {
-                // Got a new setup packet
-                pbdrv_usb_setup_packet_union_t setup_pkt;
-                bool handled = false;
-                pbdrv_usb_setup_data_to_send = 0;
+        // If we got here (and didn't wipe out this flag),
+        // then this indicates completion of the SET_ADDRESS command.
+        // We thus have to make it take effect at this point.
+        if (pbdrv_usb_addr_needs_setting) {
+            USBDevAddrSet(USB0_BASE, pbdrv_usb_addr);
+            pbdrv_usb_addr_needs_setting = false;
+        }
 
-                setup_pkt.u[0] = HWREG(USB0_BASE + USB_O_FIFO0);
-                setup_pkt.u[1] = HWREG(USB0_BASE + USB_O_FIFO0);
-                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC;
+        if (peri_csr & USB_CSRL0_RXRDY) {
+            // Got a new setup packet
+            pbdrv_usb_setup_packet_union_t setup_pkt;
+            bool handled = false;
+            pbdrv_usb_setup_data_to_send = 0;
 
-                switch (setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) {
-                    case BM_REQ_TYPE_STANDARD:
-                        switch (setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) {
-                            case BM_REQ_RECIP_DEV:
-                                switch (setup_pkt.s.bRequest) {
-                                    case SET_ADDRESS:
-                                        pbdrv_usb_addr = setup_pkt.s.wValue;
-                                        pbdrv_usb_addr_needs_setting = true;
-                                        handled = true;
-                                        break;
+            setup_pkt.u[0] = HWREG(USB0_BASE + USB_O_FIFO0);
+            setup_pkt.u[1] = HWREG(USB0_BASE + USB_O_FIFO0);
+            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC;
 
-                                    case SET_CONFIGURATION:
-                                        if (setup_pkt.s.wValue <= 1) {
-                                            pbdrv_usb_config = setup_pkt.s.wValue;
+            switch (setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) {
+                case BM_REQ_TYPE_STANDARD:
+                    switch (setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) {
+                        case BM_REQ_RECIP_DEV:
+                            switch (setup_pkt.s.bRequest) {
+                                case SET_ADDRESS:
+                                    pbdrv_usb_addr = setup_pkt.s.wValue;
+                                    pbdrv_usb_addr_needs_setting = true;
+                                    handled = true;
+                                    break;
 
-                                            if (pbdrv_usb_config == 1) {
-                                                // configuring
+                                case SET_CONFIGURATION:
+                                    if (setup_pkt.s.wValue <= 1) {
+                                        pbdrv_usb_config = setup_pkt.s.wValue;
 
-                                                // Reset data toggle, clear stall, flush fifo
-                                                HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_CLRDT | USB_TXCSRL1_FLUSH;
-                                                HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_CLRDT | USB_RXCSRL1_FLUSH;
-                                            } else {
-                                                // deconfiguring
+                                        if (pbdrv_usb_config == 1) {
+                                            // configuring
 
-                                                // Set stall condition
-                                                HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_STALL;
-                                                HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_STALL;
-                                            }
-                                            handled = true;
+                                            // Reset data toggle, clear stall, flush fifo
+                                            HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_CLRDT | USB_TXCSRL1_FLUSH;
+                                            HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_CLRDT | USB_RXCSRL1_FLUSH;
+                                        } else {
+                                            // deconfiguring
+
+                                            // Set stall condition
+                                            HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_STALL;
+                                            HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_STALL;
                                         }
-                                        break;
+                                        handled = true;
+                                    }
+                                    break;
 
-                                    case GET_CONFIGURATION:
-                                        pbdrv_usb_setup_misc_tx_byte = pbdrv_usb_config;
+                                case GET_CONFIGURATION:
+                                    pbdrv_usb_setup_misc_tx_byte = pbdrv_usb_config;
+                                    pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
+                                    pbdrv_usb_setup_data_to_send_sz = 1;
+                                    handled = true;
+                                    break;
+
+                                case GET_STATUS:
+                                    pbdrv_usb_setup_misc_tx_byte = 1; // self-powered
+                                    pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
+                                    pbdrv_usb_setup_data_to_send_sz = 2;
+                                    handled = true;
+                                    break;
+
+                                case GET_DESCRIPTOR:
+                                    if (usb_get_descriptor(setup_pkt.s.wValue)) {
+                                        handled = true;
+                                    }
+                                    break;
+                            }
+                            break;
+
+                        case BM_REQ_RECIP_IF:
+                            if (setup_pkt.s.wIndex == 0) {
+                                switch (setup_pkt.s.bRequest) {
+                                    case GET_INTERFACE:
+                                        pbdrv_usb_setup_misc_tx_byte = 0;
                                         pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
                                         pbdrv_usb_setup_data_to_send_sz = 1;
                                         handled = true;
                                         break;
 
                                     case GET_STATUS:
-                                        pbdrv_usb_setup_misc_tx_byte = 1; // self-powered
+                                        pbdrv_usb_setup_misc_tx_byte = 0;
                                         pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
                                         pbdrv_usb_setup_data_to_send_sz = 2;
                                         handled = true;
                                         break;
-
-                                    case GET_DESCRIPTOR:
-                                        if (usb_get_descriptor(setup_pkt.s.wValue)) {
-                                            handled = true;
-                                        }
-                                        break;
                                 }
-                                break;
+                            }
+                            break;
 
-                            case BM_REQ_RECIP_IF:
-                                if (setup_pkt.s.wIndex == 0) {
-                                    switch (setup_pkt.s.bRequest) {
-                                        case GET_INTERFACE:
-                                            pbdrv_usb_setup_misc_tx_byte = 0;
-                                            pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
-                                            pbdrv_usb_setup_data_to_send_sz = 1;
-                                            handled = true;
-                                            break;
-
-                                        case GET_STATUS:
-                                            pbdrv_usb_setup_misc_tx_byte = 0;
-                                            pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
-                                            pbdrv_usb_setup_data_to_send_sz = 2;
-                                            handled = true;
-                                            break;
+                        case BM_REQ_RECIP_EP:
+                            switch (setup_pkt.s.bRequest) {
+                                case GET_STATUS:
+                                    if (setup_pkt.s.wIndex == 1) {
+                                        pbdrv_usb_setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_RXCSRL1) & USB_RXCSRL1_STALL);
+                                        pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
+                                        pbdrv_usb_setup_data_to_send_sz = 2;
+                                        handled = true;
+                                    } else if (setup_pkt.s.wIndex == 0x81) {
+                                        pbdrv_usb_setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_STALL);
+                                        pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
+                                        pbdrv_usb_setup_data_to_send_sz = 2;
+                                        handled = true;
                                     }
-                                }
-                                break;
+                                    break;
 
-                            case BM_REQ_RECIP_EP:
-                                switch (setup_pkt.s.bRequest) {
-                                    case GET_STATUS:
+                                case CLEAR_FEATURE:
+                                    if (setup_pkt.s.wValue == 0) {
                                         if (setup_pkt.s.wIndex == 1) {
-                                            pbdrv_usb_setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_RXCSRL1) & USB_RXCSRL1_STALL);
-                                            pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
-                                            pbdrv_usb_setup_data_to_send_sz = 2;
+                                            HWREGB(USB0_BASE + USB_O_RXCSRL1) &= ~USB_RXCSRL1_STALL;
                                             handled = true;
                                         } else if (setup_pkt.s.wIndex == 0x81) {
-                                            pbdrv_usb_setup_misc_tx_byte = !!(HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_STALL);
-                                            pbdrv_usb_setup_data_to_send = &pbdrv_usb_setup_misc_tx_byte;
-                                            pbdrv_usb_setup_data_to_send_sz = 2;
+                                            HWREGB(USB0_BASE + USB_O_TXCSRL1) &= ~USB_TXCSRL1_STALL;
                                             handled = true;
                                         }
-                                        break;
+                                    }
+                                    break;
 
-                                    case CLEAR_FEATURE:
-                                        if (setup_pkt.s.wValue == 0) {
-                                            if (setup_pkt.s.wIndex == 1) {
-                                                HWREGB(USB0_BASE + USB_O_RXCSRL1) &= ~USB_RXCSRL1_STALL;
-                                                handled = true;
-                                            } else if (setup_pkt.s.wIndex == 0x81) {
-                                                HWREGB(USB0_BASE + USB_O_TXCSRL1) &= ~USB_TXCSRL1_STALL;
-                                                handled = true;
-                                            }
+                                case SET_FEATURE:
+                                    if (setup_pkt.s.wValue == 0) {
+                                        if (setup_pkt.s.wIndex == 1) {
+                                            HWREGB(USB0_BASE + USB_O_RXCSRL1) |= USB_RXCSRL1_STALL;
+                                            handled = true;
+                                        } else if (setup_pkt.s.wIndex == 0x81) {
+                                            HWREGB(USB0_BASE + USB_O_TXCSRL1) |= USB_TXCSRL1_STALL;
+                                            handled = true;
                                         }
-                                        break;
-
-                                    case SET_FEATURE:
-                                        if (setup_pkt.s.wValue == 0) {
-                                            if (setup_pkt.s.wIndex == 1) {
-                                                HWREGB(USB0_BASE + USB_O_RXCSRL1) |= USB_RXCSRL1_STALL;
-                                                handled = true;
-                                            } else if (setup_pkt.s.wIndex == 0x81) {
-                                                HWREGB(USB0_BASE + USB_O_TXCSRL1) |= USB_TXCSRL1_STALL;
-                                                handled = true;
-                                            }
-                                        }
-                                        break;
-                                }
-                                break;
-                        }
-                        break;
-
-                    case BM_REQ_TYPE_VENDOR:
-                        switch (setup_pkt.s.bRequest) {
-                            case PBDRV_USB_VENDOR_REQ_WEBUSB:
-                                if (setup_pkt.s.wIndex == WEBUSB_REQ_GET_URL && setup_pkt.s.wValue == PBDRV_USB_WEBUSB_LANDING_PAGE_URL_IDX) {
-                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_webusb_landing_page.u;
-                                    pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_webusb_landing_page.s.bLength;
-                                    handled = true;
-                                }
-                                break;
-
-                            case PBDRV_USB_VENDOR_REQ_MS_20:
-                                if (setup_pkt.s.wIndex == MS_OS_20_DESCRIPTOR_INDEX) {
-                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ms_20_desc_set.u;
-                                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_ms_20_desc_set.s);
-                                    handled = true;
-                                }
-                                break;
-                        }
-                }
-
-                if (!handled) {
-                    // send stall
-                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_STALL;
-                } else {
-                    if (pbdrv_usb_setup_data_to_send) {
-                        // Clamp by host request size
-                        if (setup_pkt.s.wLength < pbdrv_usb_setup_data_to_send_sz) {
-                            pbdrv_usb_setup_data_to_send_sz = setup_pkt.s.wLength;
-                        }
-
-                        // Send as much as we can in one chunk
-                        usb_setup_send_chunk();
-                        if (pbdrv_usb_setup_data_to_send_sz == 0) {
-                            pbdrv_usb_setup_data_to_send = 0;
-                            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY | USB_CSRL0_DATAEND;
-                        } else {
-                            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY;
-                        }
-                    } else {
-                        // Just get ready to send ACK, no data
-                        HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_DATAEND;
+                                    }
+                                    break;
+                            }
+                            break;
                     }
-                }
-            } else if (pbdrv_usb_setup_data_to_send) {
-                // Need to continue to TX data
-                usb_setup_send_chunk();
-                if (pbdrv_usb_setup_data_to_send_sz == 0) {
-                    pbdrv_usb_setup_data_to_send = 0;
-                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY | USB_CSRL0_DATAEND;
+                    break;
+
+                case BM_REQ_TYPE_VENDOR:
+                    switch (setup_pkt.s.bRequest) {
+                        case PBDRV_USB_VENDOR_REQ_WEBUSB:
+                            if (setup_pkt.s.wIndex == WEBUSB_REQ_GET_URL && setup_pkt.s.wValue == PBDRV_USB_WEBUSB_LANDING_PAGE_URL_IDX) {
+                                pbdrv_usb_setup_data_to_send = pbdrv_usb_webusb_landing_page.u;
+                                pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_webusb_landing_page.s.bLength;
+                                handled = true;
+                            }
+                            break;
+
+                        case PBDRV_USB_VENDOR_REQ_MS_20:
+                            if (setup_pkt.s.wIndex == MS_OS_20_DESCRIPTOR_INDEX) {
+                                pbdrv_usb_setup_data_to_send = pbdrv_usb_ms_20_desc_set.u;
+                                pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_ms_20_desc_set.s);
+                                handled = true;
+                            }
+                            break;
+                    }
+            }
+
+            if (!handled) {
+                // send stall
+                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_STALL;
+            } else {
+                if (pbdrv_usb_setup_data_to_send) {
+                    // Clamp by host request size
+                    if (setup_pkt.s.wLength < pbdrv_usb_setup_data_to_send_sz) {
+                        pbdrv_usb_setup_data_to_send_sz = setup_pkt.s.wLength;
+                    }
+
+                    // Send as much as we can in one chunk
+                    usb_setup_send_chunk();
+                    if (pbdrv_usb_setup_data_to_send_sz == 0) {
+                        pbdrv_usb_setup_data_to_send = 0;
+                        HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY | USB_CSRL0_DATAEND;
+                    } else {
+                        HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY;
+                    }
                 } else {
-                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY;
+                    // Just get ready to send ACK, no data
+                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_DATAEND;
                 }
+            }
+        } else if (pbdrv_usb_setup_data_to_send) {
+            // Need to continue to TX data
+            usb_setup_send_chunk();
+            if (pbdrv_usb_setup_data_to_send_sz == 0) {
+                pbdrv_usb_setup_data_to_send = 0;
+                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY | USB_CSRL0_DATAEND;
+            } else {
+                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_TXRDY;
             }
         }
     }
