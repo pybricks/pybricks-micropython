@@ -8,6 +8,8 @@
 
 #if PBDRV_CONFIG_USB
 
+#include <pbio/version.h>
+
 #include "usb_common_desc.h"
 
 #if PBIO_VERSION_LEVEL_HEX == 0xA
