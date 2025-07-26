@@ -493,7 +493,7 @@ static void usb_device_intr(void) {
         pbdrv_usb_setup_data_to_send = 0;
         pbdrv_usb_addr_needs_setting = false;
 
-        if (HWREGH(USB0_BASE + USB_O_POWER) & USB_POWER_HSMODE) {
+        if (HWREGB(USB0_BASE + USB_O_POWER) & USB_POWER_HSMODE) {
             pbdrv_usb_is_usb_hs = true;
         } else {
             pbdrv_usb_is_usb_hs = false;
