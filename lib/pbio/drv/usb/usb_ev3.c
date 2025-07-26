@@ -813,13 +813,16 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
 }
 
 void pbdrv_usb_init(void) {
+    // If we came straight from a firmware update, we need to send a disconnect
+    // to the host, then reset the USB controller.
+    USBDevDisconnect(USB0_BASE);
+
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_SWRSTDISABLE);
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
     // This reset sequence is from Example 34-1 in the AM1808 TRM (spruh82c.pdf)
     // Because PHYs and clocking are... as they tend to be, use the precise sequence
     // of operations specified.
-
-    // Power on and reset the controller
-    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-    USBReset(USB_0_OTGBASE);
 
     // Reset the PHY
     HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_RESET;
