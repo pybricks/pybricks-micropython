@@ -14,16 +14,16 @@
 #include <pbio/util.h>
 
 /** The current major version. */
-#define PBIO_VERSION_MAJOR 3
+#define PBIO_VERSION_MAJOR 4
 
 /** The current minor version. */
-#define PBIO_VERSION_MINOR 6
+#define PBIO_VERSION_MINOR 0
 
 /** The current patch version. */
-#define PBIO_VERSION_MICRO 1
+#define PBIO_VERSION_MICRO 0
 
 /** The current prerelease level as a hex digit. */
-#define PBIO_VERSION_LEVEL_HEX 0xF
+#define PBIO_VERSION_LEVEL_HEX 0xA
 
 /** The current prerelease serial. */
 #define PBIO_VERSION_SERIAL 0
