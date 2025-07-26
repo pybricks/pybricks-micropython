@@ -3151,7 +3151,7 @@ void USBEnableOtgIntr(unsigned int ulBase)
 	unsigned int reg;
 
 	reg = HWREG(ulBase + USB_0_CTRL);
-	reg &= 0xFFFFFFF7;
+	reg &= ~USBOTG_CTRL_UINT;
 	HWREG(ulBase + USB_0_CTRL) = reg;
 
 	/* This API  enables the USB Interrupts through subsystem specific wrapper
@@ -3171,14 +3171,13 @@ void USBReset(unsigned int ulBase)
 	unsigned int reg;
 
 	reg = HWREG(ulBase + USB_0_CTRL);
-	reg |= 1;
+	reg |= USBOTG_CTRL_RESET;
 
 	/* Set the Reset Bit */
 	HWREG(ulBase + USB_0_CTRL) = reg;
 
 	/* Wait till Reset bit is cleared */
-	while(((HWREG(ulBase + USB_0_CTRL)) & 0x1 )== 1);
-
+	while(((HWREG(ulBase + USB_0_CTRL)) & USBOTG_CTRL_RESET) == USBOTG_CTRL_RESET);
 }
 
 void USBClearOtgIntr(unsigned int ulBase)

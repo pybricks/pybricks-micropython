@@ -819,7 +819,7 @@ void pbdrv_usb_init(void) {
 
     // Power on and reset the controller
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-    USBReset(USB0_BASE);
+    USBReset(USB_0_OTGBASE);
 
     // Reset the PHY
     HWREG(CFGCHIP2_USBPHYCTRL) |= CFGCHIP2_RESET;
