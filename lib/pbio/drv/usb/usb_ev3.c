@@ -823,8 +823,14 @@ void pbdrv_usb_init(void) {
     // to the host, then reset the USB controller.
     USBDevDisconnect(USB0_BASE);
 
+    // Reset the module through the PSC
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_SWRSTDISABLE);
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
+    // Local soft reset, as well as following the sequence described in sprz313h.pdf
+    // Advisory 2.3.3 describing a workaround for a potential reset timing issue
+    USBReset(USB_0_OTGBASE);
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_DISABLE);
 
     // This reset sequence is from Example 34-1 in the AM1808 TRM (spruh82c.pdf)
     // Because PHYs and clocking are... as they tend to be, use the precise sequence
@@ -858,6 +864,9 @@ void pbdrv_usb_init(void) {
     // Wait for PHY clocks to be ready
     while (!(HWREG(CFGCHIP2_USBPHYCTRL) & CFGCHIP2_PHYCLKGD)) {
     }
+
+    // Final enable for the USB module
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_USB0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
     // Enable "PDR" mode for handling interrupts
     //
