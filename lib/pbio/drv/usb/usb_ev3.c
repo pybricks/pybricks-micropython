@@ -634,11 +634,12 @@ static void usb_device_intr(void) {
 
                                 case CLEAR_FEATURE:
                                     if (setup_pkt.s.wValue == 0) {
+                                        // Clear the endpoint halt, which also resets the data toggle value
                                         if (setup_pkt.s.wIndex == 1) {
-                                            HWREGB(USB0_BASE + USB_O_RXCSRL1) &= ~USB_RXCSRL1_STALL;
+                                            HWREGB(USB0_BASE + USB_O_RXCSRL1) = (HWREGB(USB0_BASE + USB_O_RXCSRL1) & ~USB_RXCSRL1_STALL) | USB_RXCSRL1_CLRDT;
                                             handled = true;
                                         } else if (setup_pkt.s.wIndex == 0x81) {
-                                            HWREGB(USB0_BASE + USB_O_TXCSRL1) &= ~USB_TXCSRL1_STALL;
+                                            HWREGB(USB0_BASE + USB_O_TXCSRL1) = (HWREGB(USB0_BASE + USB_O_TXCSRL1) & ~USB_TXCSRL1_STALL) | USB_TXCSRL1_CLRDT;
                                             handled = true;
                                         }
                                     }
