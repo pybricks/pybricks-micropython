@@ -540,7 +540,6 @@ static void usb_device_intr(void) {
 
             setup_pkt.u[0] = HWREG(USB0_BASE + USB_O_FIFO0);
             setup_pkt.u[1] = HWREG(USB0_BASE + USB_O_FIFO0);
-            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC;
 
             switch (setup_pkt.s.bmRequestType & BM_REQ_TYPE_MASK) {
                 case BM_REQ_TYPE_STANDARD:
@@ -681,11 +680,29 @@ static void usb_device_intr(void) {
                     }
             }
 
+            // Note regarding the setting of the USB_CSRL0_RXRDYC bit:
+            // The Linux kernel has a comment saying
+            // > For zero-data requests we want to delay the STATUS stage to avoid SETUPEND errors.
+            // but also that
+            // > If we write data, the controller acts happier if we enable the TX FIFO right away
+            // We implement something similar but not identical. In general, we wait until
+            // we have completely processed the request and decided what we're going to do
+            // before we indicate that we are ready to progress to the next phase.
+            // We do not support any requests that require receiving data from the host,
+            // only zero-data requests or those that require sending data to the host.
+            // For errors or zero-data requests, we set USB_CSRL0_RXRDYC and USB_CSRL0_DATAEND
+            // at the same time so that we don't get spurious SETUPEND errors
+            // (which we treat as a command failure). For requests that require sending data,
+            // we set USB_CSRL0_RXRDYC while we get ready to copy data into the FIFO.
+
             if (!handled) {
-                // send stall
-                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_STALL;
+                // Indicate we read the packet, but also send stall
+                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC | USB_CSRL0_STALL;
             } else {
                 if (pbdrv_usb_setup_data_to_send) {
+                    // Indicate we read the packet
+                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC;
+
                     // Clamp by host request size
                     if (setup_pkt.s.wLength < pbdrv_usb_setup_data_to_send_sz) {
                         pbdrv_usb_setup_data_to_send_sz = setup_pkt.s.wLength;
@@ -701,7 +718,7 @@ static void usb_device_intr(void) {
                     }
                 } else {
                     // Just get ready to send ACK, no data
-                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_DATAEND;
+                    HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC | USB_CSRL0_DATAEND;
                 }
             }
         } else if (pbdrv_usb_setup_data_to_send) {
