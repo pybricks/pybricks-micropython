@@ -12,6 +12,9 @@
 #include <stdio.h>
 
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/timer.h>
 
 #include "../drv/gpio/gpio_ev3.h"
 
@@ -75,234 +78,36 @@ static inline void delaydelay() {
 
 pbio_error_t ev3_i2c_wip_process_thread(pbio_os_state_t *state, void *context) {
     static pbio_os_timer_t timer;
-    static int bit;
-    static uint8_t byte;
+    // static int bit;
+    // static uint8_t byte;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    pbdrv_gpio_out_low(&test_scl);
     pbdrv_gpio_input(&test_scl);
+    pbdrv_gpio_out_low(&test_sda);
     pbdrv_gpio_input(&test_sda);
 
     PBIO_OS_AWAIT_MS(state, &timer, 1000);
-    debug_pr("i2c test C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
+    *(volatile uint8_t *)(0x80010004) = 0xaa;
 
-    pbdrv_gpio_out_low(&test_sda);          // S
-    delaydelay();
+    PBIO_OS_AWAIT_UNTIL(state, *(volatile uint8_t *)(0x80010004) == 0x55);
+    debug_pr("i2c test done\r\n");
+    debug_pr("i2c ack 0: %d\r\n", *(volatile uint8_t *)(0x80010004 + 1));
+    debug_pr("i2c ack 1: %d\r\n", *(volatile uint8_t *)(0x80010004 + 2));
 
-    byte = 0x02;
-    bit = 8;
+    uint32_t x;
+    x = *(volatile uint32_t *)(0x80010014 + 0);
+    debug_pr("i2c debug time %d\r\n", x);
+    x = *(volatile uint32_t *)(0x80010014 + 4);
+    debug_pr("i2c debug 0 clk%d dat%d\r\n", !!(x & (1 << 12)), !!(x & (1 << (14 + 16))));
+    x = *(volatile uint32_t *)(0x80010014 + 8);
+    debug_pr("i2c debug 1 clk%d dat%d\r\n", !!(x & (1 << 12)), !!(x & (1 << (14 + 16))));
 
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        delaydelay();
-        if (byte & (1 << bit)) {
-            pbdrv_gpio_input(&test_sda);
-        } else {
-            pbdrv_gpio_out_low(&test_sda);
-        }
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        delaydelay();
-    }
+    debug_pr("i2c ack 2: %d\r\n", *(volatile uint8_t *)(0x80010004 + 3));
 
-    pbdrv_gpio_out_low(&test_scl);          // ACK
-    delaydelay();
-    pbdrv_gpio_input(&test_sda);
-    delaydelay();
-    debug_pr("i2c ack D%d\r\n", pbdrv_gpio_input(&test_sda));
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    byte = 0x00;
-    bit = 8;
-
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        delaydelay();
-        if (byte & (1 << bit)) {
-            pbdrv_gpio_input(&test_sda);
-        } else {
-            pbdrv_gpio_out_low(&test_sda);
-        }
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK
-    delaydelay();
-    pbdrv_gpio_input(&test_sda);
-    delaydelay();
-    debug_pr("i2c ack D%d\r\n", pbdrv_gpio_input(&test_sda));
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    pbdrv_gpio_out_low(&test_scl);          // P
-    delaydelay();
-    pbdrv_gpio_out_low(&test_sda);
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-    pbdrv_gpio_input(&test_sda);
-    delaydelay();
-
-    debug_pr("i2c test 2 C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
-
-    pbdrv_gpio_out_low(&test_scl);          // NXT wiggle
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    debug_pr("i2c test 3 C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
-
-    pbdrv_gpio_out_low(&test_sda);          // S
-    delaydelay();
-
-    byte = 0x03;
-    bit = 8;
-
-    while (bit-- > 0) {
-        // debug_pr("byte %02x bit %d\r\n", byte, bit);
-        pbdrv_gpio_out_low(&test_scl);
-        delaydelay();
-        if (byte & (1 << bit)) {
-            pbdrv_gpio_input(&test_sda);
-        } else {
-            pbdrv_gpio_out_low(&test_sda);
-        }
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK
-    delaydelay();
-    pbdrv_gpio_input(&test_sda);
-    delaydelay();
-    debug_pr("i2c ack D%d\r\n", pbdrv_gpio_input(&test_sda));
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    byte = 0;
-    bit = 8;
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        pbdrv_gpio_input(&test_sda);
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        if (pbdrv_gpio_input(&test_sda)) {
-            byte |= (1 << bit);
-        }
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK send
-    delaydelay();
-    pbdrv_gpio_out_low(&test_sda);
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    debug_pr("i2c get %02x\r\n", byte);
-
-    byte = 0;
-    bit = 8;
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        pbdrv_gpio_input(&test_sda);
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        if (pbdrv_gpio_input(&test_sda)) {
-            byte |= (1 << bit);
-        }
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK send
-    delaydelay();
-    pbdrv_gpio_out_low(&test_sda);
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    debug_pr("i2c get %02x\r\n", byte);
-
-    byte = 0;
-    bit = 8;
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        pbdrv_gpio_input(&test_sda);
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        if (pbdrv_gpio_input(&test_sda)) {
-            byte |= (1 << bit);
-        }
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK send
-    delaydelay();
-    pbdrv_gpio_out_low(&test_sda);
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    debug_pr("i2c get %02x\r\n", byte);
-
-    byte = 0;
-    bit = 8;
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        pbdrv_gpio_input(&test_sda);
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        if (pbdrv_gpio_input(&test_sda)) {
-            byte |= (1 << bit);
-        }
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK send
-    delaydelay();
-    pbdrv_gpio_out_low(&test_sda);
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    debug_pr("i2c get %02x\r\n", byte);
-
-    byte = 0;
-    bit = 8;
-    while (bit-- > 0) {
-        pbdrv_gpio_out_low(&test_scl);
-        pbdrv_gpio_input(&test_sda);
-        delaydelay();
-        pbdrv_gpio_input(&test_scl);
-        if (pbdrv_gpio_input(&test_sda)) {
-            byte |= (1 << bit);
-        }
-        delaydelay();
-    }
-
-    pbdrv_gpio_out_low(&test_scl);          // ACK send
-    delaydelay();
-    // pbdrv_gpio_out_low(&test_sda);
-    pbdrv_gpio_input(&test_sda);
-    delaydelay();
-    // debug_pr("i2c last ack %d\r\n", pbdrv_gpio_input(&test_sda));
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-
-    debug_pr("i2c get %02x\r\n", byte);
-
-    pbdrv_gpio_out_low(&test_scl);          // P
-    delaydelay();
-    pbdrv_gpio_out_low(&test_sda);
-    delaydelay();
-    pbdrv_gpio_input(&test_scl);
-    delaydelay();
-    pbdrv_gpio_input(&test_sda);
-    delaydelay();
+    debug_pr("i2c get 0: %02x\r\n", *(volatile uint8_t *)(0x80010004 + 4));
+    debug_pr("i2c get 1: %02x\r\n", *(volatile uint8_t *)(0x80010004 + 5));
 
     debug_pr("i2c test end C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
 
@@ -319,6 +124,10 @@ void pbdrv_i2c_init(void) {
     //     pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
     //     i2c->pdata = pdata;
     // }
+
+    TimerConfigure(SOC_TMR_2_REGS, TMR_CFG_32BIT_UNCH_CLK_BOTH_INT);
+    TimerPeriodSet(SOC_TMR_2_REGS, TMR_TIMER12, 150000000 / 20000 - 1);
+    TimerEnable(SOC_TMR_2_REGS, TMR_TIMER12, TMR_ENABLE_CONT);
 
     pbio_os_process_start(&ev3_i2c_wip_process, ev3_i2c_wip_process_thread, NULL);
 }
