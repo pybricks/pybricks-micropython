@@ -13,6 +13,7 @@
 
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 
 #include <pbdrv/i2c.h>
@@ -58,12 +59,27 @@ pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const cha
     return PBIO_SUCCESS;
 }
 
+static pbio_os_process_t ev3_i2c_wip_process;
+
+pbio_error_t ev3_i2c_wip_process_thread(pbio_os_state_t *state, void *context) {
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    PBIO_OS_AWAIT_MS(state, &timer, 1000);
+    debug_pr("i2c test\r\n");
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 void pbdrv_i2c_init(void) {
-    for (int i = 0; i < PBDRV_CONFIG_I2C_EV3_NUM_DEV; i++) {
-        const pbdrv_i2c_ev3_platform_data_t *pdata = &pbdrv_i2c_ev3_platform_data[i];
-        pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
-        i2c->pdata = pdata;
-    }
+    // for (int i = 0; i < PBDRV_CONFIG_I2C_EV3_NUM_DEV; i++) {
+    //     const pbdrv_i2c_ev3_platform_data_t *pdata = &pbdrv_i2c_ev3_platform_data[i];
+    //     pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
+    //     i2c->pdata = pdata;
+    // }
+
+    pbio_os_process_start(&ev3_i2c_wip_process, ev3_i2c_wip_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_I2C_EV3
