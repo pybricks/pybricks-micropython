@@ -27,10 +27,7 @@
 // This needs to match the interface expected by the PRU firmware
 typedef struct shared_ram {
     uint8_t pwms[PBDRV_PWM_EV3_NUM_CHANNELS];
-    uint32_t dummy0;
-    uint32_t dummy1;
-    uint32_t dummy2;
-    uint32_t dummy3;
+    uint32_t dummy[9];
 } shared_ram;
 static volatile shared_ram pru1_shared_ram __attribute__((section(".shared1")));
 
