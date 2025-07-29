@@ -398,12 +398,12 @@ unsigned int EDMAVersionGet(void) {
     return 1;
 }
 
-static void panic_puts(const char *c) {
+void panic_puts(const char *c) {
     while (*c) {
         UARTCharPut(SOC_UART_1_REGS, *(c++));
     }
 }
-static void panic_putu8(uint8_t x) {
+void panic_putu8(uint8_t x) {
     const char *hex = "0123456789ABCDEF";
     UARTCharPut(SOC_UART_1_REGS, hex[x >> 4]);
     UARTCharPut(SOC_UART_1_REGS, hex[x & 0xf]);
