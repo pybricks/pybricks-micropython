@@ -96,16 +96,40 @@ pbio_error_t ev3_i2c_wip_process_thread(pbio_os_state_t *state, void *context) {
     pbdrv_gpio_input(&test_sda);
 
     PBIO_OS_AWAIT_MS(state, &timer, 100);
+    debug_pr("i2c test start C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
+
     i2c_wip_buf[0] = 0x10;
+    i2c_wip_buf[1] = 0xaa;
+    i2c_wip_buf[2] = 0x55;
+    i2c_wip_buf[3] = 0x12;
+    i2c_wip_buf[4] = 0x34;
     pbdrv_compiler_memory_barrier();
     *(volatile uint32_t *)(0x80010008) = (uint32_t)i2c_wip_buf;
-    *(volatile uint32_t *)(0x80010004) = 0x010601aa;
+    *(volatile uint32_t *)(0x80010004) = 0x17000501;
+    // *(volatile uint32_t *)(0x80010004) = 0x01060103;
 
     pbio_os_timer_set(&timer, 1000);
-    PBIO_OS_AWAIT_UNTIL(state, *(volatile uint8_t *)(0x80010004) == 0x55 || pbio_os_timer_is_expired(&timer));
+    PBIO_OS_AWAIT_UNTIL(state, *(volatile uint8_t *)(0x80010004) & 0x80 || pbio_os_timer_is_expired(&timer));
     debug_pr("i2c test done\r\n");
     debug_pr("i2c flags %08x\r\n", *(volatile uint32_t *)(0x80010004));
-    debug_pr("i2c delays %d\r\n", *(volatile uint32_t *)(0x8001000c));
+    debug_pr("i2c max time %d\r\n", *(volatile uint32_t *)(0x8001000c));
+
+    debug_pr("i2c test end C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
+
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
+
+    debug_pr("i2c test end 2 C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
+
+    // NEW
+    i2c_wip_buf[0] = 0x0e;
+    pbdrv_compiler_memory_barrier();
+    *(volatile uint32_t *)(0x80010004) = 0x17060101;
+
+    pbio_os_timer_set(&timer, 1000);
+    PBIO_OS_AWAIT_UNTIL(state, *(volatile uint8_t *)(0x80010004) & 0x80 || pbio_os_timer_is_expired(&timer));
+    debug_pr("i2c #2 test done\r\n");
+    debug_pr("i2c #2 flags %08x\r\n", *(volatile uint32_t *)(0x80010004));
+    debug_pr("i2c #2 max time %d\r\n", *(volatile uint32_t *)(0x8001000c));
 
     PBIO_OS_AWAIT_MS(state, &timer, 100);
 
@@ -115,27 +139,6 @@ pbio_error_t ev3_i2c_wip_process_thread(pbio_os_state_t *state, void *context) {
             panic_puts("\r\n");
         }
     }
-    // debug_pr("i2c ack 0: %d\r\n", *(volatile uint8_t *)(0x80010004 + 1));
-    // debug_pr("i2c ack 1: %d\r\n", *(volatile uint8_t *)(0x80010004 + 2));
-
-    // uint32_t x;
-    // x = *(volatile uint32_t *)(0x80010014 + 0);
-    // debug_pr("i2c debug time %d\r\n", x);
-    // x = *(volatile uint32_t *)(0x80010014 + 4);
-    // debug_pr("i2c debug 0 clk%d dat%d\r\n", !!(x & (1 << 12)), !!(x & (1 << (14 + 16))));
-    // x = *(volatile uint32_t *)(0x80010014 + 8);
-    // debug_pr("i2c debug 1 clk%d dat%d\r\n", !!(x & (1 << 12)), !!(x & (1 << (14 + 16))));
-
-    // debug_pr("i2c ack 2: %d\r\n", *(volatile uint8_t *)(0x80010004 + 3));
-
-    // debug_pr("i2c get 0: %02x\r\n", *(volatile uint8_t *)(0x80010004 + 4));
-    // debug_pr("i2c get 1: %02x\r\n", *(volatile uint8_t *)(0x80010004 + 5));
-
-    debug_pr("i2c test end C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
-
-    PBIO_OS_AWAIT_MS(state, &timer, 100);
-
-    debug_pr("i2c test end 2 C%d D%d\r\n", pbdrv_gpio_input(&test_scl), pbdrv_gpio_input(&test_sda));
 
     for (i = 0; i < 6; i++) {
         debug_pr("i2c get %02x\r\n", i2c_wip_buf[1 + i]);

@@ -30,6 +30,7 @@ typedef struct shared_ram {
     uint32_t dummy0;
     uint32_t dummy1;
     uint32_t dummy2;
+    uint32_t dummy3;
 } shared_ram;
 static volatile shared_ram pru1_shared_ram __attribute__((section(".shared1")));
 
