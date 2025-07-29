@@ -66,6 +66,10 @@ void pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev_t *devs) {
     unsigned int *fw_start = (unsigned int *)&_pru1_start;
     uint32_t fw_sz = &_pru1_end - &_pru1_start;
     PRUSSDRVPruWriteMemory(PRUSS0_PRU1_IRAM, 0, fw_start, fw_sz);
+    // Clear data RAM
+    for (int i = 0; i < PRUSS_DATARAM_SIZE; i += 4) {
+        HWREG(DATARAM1_PHYS_BASE + i) = 0;
+    }
     // Set constant table C30 to point to shared memory
     PRUSSDRVPruSetCTable(1, 30, (((uint32_t)&pru1_shared_ram) >> 8) & 0xffff);
     PRUSSDRVPruEnable(1);
