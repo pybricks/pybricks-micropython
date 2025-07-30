@@ -838,7 +838,7 @@ static void usb_device_intr(void) {
         pbio_os_request_poll();
     }
 
-    if (dma_q_pend_0 & (1 << TX_COMPQ1)) {
+    while (dma_q_pend_0 & (1 << TX_COMPQ1)) {
         // DMA for EP 1 IN is done
 
         // Pop the descriptor from the queue
@@ -854,6 +854,10 @@ static void usb_device_intr(void) {
             usb_tx_stdout_is_not_ready = false;
             pbio_os_request_poll();
         }
+
+        // Multiple TX completions can happen at once
+        // (since we have up to three descriptors in flight)
+        dma_q_pend_0 = HWREG(USB_0_OTGBASE + CPDMA_PEND_0_REGISTER);
     }
 
     HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = intr_src;
