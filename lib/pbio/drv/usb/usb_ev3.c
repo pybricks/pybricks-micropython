@@ -502,6 +502,7 @@ static void usb_device_intr(void) {
         // Mark config and address as 0 for main loop to detect
         pbdrv_usb_addr = 0;
         pbdrv_usb_config = 0;
+        pbio_os_request_poll();
     }
 
     if (intr_src & USBOTG_INTR_RESET) {
@@ -892,6 +893,12 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
+        if (pbdrv_usb_config == 0) {
+            pbdrv_usb_is_events_subscribed = false;
+            // Resend status flags when host subscribes
+            prev_status_flags = ~0;
+        }
+
         if (usb_rx_is_ready) {
             // This barrier prevents *subsequent* memory reads from being
             // speculatively moved *earlier*, outside the if statement
@@ -1067,6 +1074,10 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
+bool pbdrv_usb_connection_is_active(void) {
+    return pbdrv_usb_is_events_subscribed;
+}
+
 // TODO: Reimplement the following functions as appropriate
 // (mphalport.c and the "host" layer are currently being refactored)
 uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size) {
@@ -1083,10 +1094,6 @@ int32_t pbdrv_usb_get_char(void) {
 }
 
 void pbdrv_usb_tx_flush(void) {
-}
-
-bool pbdrv_usb_connection_is_active(void) {
-    return false;
 }
 
 #endif // PBDRV_CONFIG_USB_EV3
