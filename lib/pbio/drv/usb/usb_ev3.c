@@ -10,12 +10,17 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <string.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/usb.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
+#include <pbio/version.h>
+#include <pbsys/config.h>
+#include <pbsys/storage.h>
 
 #include <lego/usb.h>
 
@@ -179,13 +184,15 @@ static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_fs = {
     }
 };
 
-// We generate a serial number string descriptors at runtime
-// so this dynamic buffer is needed
-#define STRING_DESC_MAX_SZ      64
+// This dynamic buffer is needed in order to have an aligned,
+// global-lifetime buffer for sending dynamic data in response
+// to control transfers. This is used for the serial number string
+// and for Pybricks protocol requests.
 static union {
-    uint8_t b[STRING_DESC_MAX_SZ];
-    uint32_t u[STRING_DESC_MAX_SZ / 4];
-} usb_string_desc_buffer;
+    uint8_t b[EP0_BUF_SZ];
+    uint32_t u[EP0_BUF_SZ / sizeof(uint32_t)];
+} pbdrv_usb_ev3_ep0_buffer;
+_Static_assert(PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE <= EP0_BUF_SZ);
 
 // Defined in pbio/platform/ev3/platform.c
 extern uint8_t pbdrv_ev3_bluetooth_mac_address[6];
@@ -456,17 +463,17 @@ static bool usb_get_descriptor(uint16_t wValue) {
                     return true;
 
                 case STRING_DESC_SERIAL:
-                    usb_string_desc_buffer.b[0] = 2 * 2 * 6 + 2;
-                    usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
+                    pbdrv_usb_ev3_ep0_buffer.b[0] = 2 * 2 * 6 + 2;
+                    pbdrv_usb_ev3_ep0_buffer.b[1] = DESC_TYPE_STRING;
                     for (i = 0; i < 6; i++) {
-                        usb_string_desc_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] >> 4];
-                        usb_string_desc_buffer.b[2 + 4 * i + 1] = 0;
-                        usb_string_desc_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] & 0xf];
-                        usb_string_desc_buffer.b[2 + 4 * i + 3] = 0;
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] >> 4];
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 1] = 0;
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] & 0xf];
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 3] = 0;
                     }
 
-                    pbdrv_usb_setup_data_to_send = usb_string_desc_buffer.u;
-                    pbdrv_usb_setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                    pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_ev3_ep0_buffer.b[0];
                     return true;
             }
             break;
@@ -678,6 +685,67 @@ static void usb_device_intr(void) {
                             }
                             break;
                     }
+                    break;
+
+                case BM_REQ_TYPE_CLASS:
+                    if ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) != BM_REQ_RECIP_IF) {
+                        // Pybricks class requests must be directed at the interface
+                        break;
+                    }
+
+                    switch (setup_pkt.s.bRequest) {
+                        const char *s;
+
+                        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
+                            // Standard GATT characteristic
+                            switch (setup_pkt.s.wValue) {
+                                case 0x2A00:
+                                    // GATT Device Name characteristic
+                                    s = pbdrv_bluetooth_get_hub_name();
+                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
+                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    handled = true;
+                                    break;
+
+                                case 0x2A26:
+                                    // GATT Firmware Revision characteristic
+                                    s = PBIO_VERSION_STR;
+                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
+                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    handled = true;
+                                    break;
+
+                                case 0x2A28:
+                                    // GATT Software Revision characteristic
+                                    s = PBIO_PROTOCOL_VERSION_STR;
+                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
+                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    handled = true;
+                                    break;
+                            }
+                            break;
+
+                        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
+                            // Pybricks characteristic
+                            switch (setup_pkt.s.wValue) {
+                                case 0x0003:
+                                    pbio_pybricks_hub_capabilities(
+                                        pbdrv_usb_ev3_ep0_buffer.b,
+                                        (pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS) - 1,
+                                        PBSYS_CONFIG_APP_FEATURE_FLAGS,
+                                        pbsys_storage_get_maximum_program_size(),
+                                        PBSYS_CONFIG_HMI_NUM_SLOTS);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    pbdrv_usb_setup_data_to_send_sz = PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
+                                    handled = true;
+                                    break;
+                            }
+                            break;
+                    }
+                    break;
             }
 
             // Note regarding the setting of the USB_CSRL0_RXRDYC bit:

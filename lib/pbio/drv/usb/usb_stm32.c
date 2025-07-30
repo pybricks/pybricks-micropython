@@ -292,14 +292,11 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
     return ret;
 }
 
-#define USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_GATT 0x01
-#define USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_PYBRICKS 0x02
-
 static USBD_StatusTypeDef Pybricks_Itf_ReadCharacteristic(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {
     USBD_StatusTypeDef ret = USBD_OK;
 
     switch (req->bRequest) {
-        case USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_GATT:
+        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
             switch (req->wValue) {
                 case 0x2A00: {
                     // GATT Device Name characteristic
@@ -328,7 +325,7 @@ static USBD_StatusTypeDef Pybricks_Itf_ReadCharacteristic(USBD_HandleTypeDef *pd
                     break;
             }
             break;
-        case USBD_PYBRICKS_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
+        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
             switch (req->wValue) {
                 case 0x0003: {
                     // Pybricks hub capabilities characteristic
