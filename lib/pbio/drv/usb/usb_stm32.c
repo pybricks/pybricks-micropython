@@ -35,8 +35,8 @@ PROCESS(pbdrv_usb_process, "USB");
 // These buffers need to be 32-bit aligned because the USB driver moves data
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
-static uint8_t usb_response_buf[1 + sizeof(uint32_t)] __aligned(4);
-static uint8_t usb_status_buf[1 + PBSYS_STATUS_REPORT_SIZE] __aligned(4);
+static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4);
+static uint8_t usb_status_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(PBSYS_STATUS_REPORT_SIZE)] __aligned(4);
 static uint8_t usb_stdout_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static volatile uint32_t usb_in_sz;
 static volatile uint32_t usb_response_sz;
@@ -174,7 +174,7 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
         return PBIO_ERROR_AGAIN;
     }
 
-    *ptr++ = USBD_PYBRICKS_IN_EP_MSG_EVENT;
+    *ptr++ = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
     ptr_len--;
 
     *ptr++ = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
@@ -452,16 +452,16 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
 
         if (usb_in_sz) {
             switch (usb_in_buf[0]) {
-                case USBD_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
+                case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
                     pbdrv_usb_stm32_is_events_subscribed = usb_in_buf[1];
-                    usb_response_buf[0] = USBD_PYBRICKS_IN_EP_MSG_RESPONSE;
+                    usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
                     pbio_set_uint32_le(&usb_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
                     usb_response_sz = sizeof(usb_response_buf);
                     break;
-                case USBD_PYBRICKS_OUT_EP_MSG_COMMAND:
+                case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
                     if (usb_response_sz == 0) {
                         result = pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
-                        usb_response_buf[0] = USBD_PYBRICKS_IN_EP_MSG_RESPONSE;
+                        usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
                         pbio_set_uint32_le(&usb_response_buf[1], result);
                         usb_response_sz = sizeof(usb_response_buf);
                     }
@@ -492,10 +492,10 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
             USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
         } else if (pbdrv_usb_stm32_is_events_subscribed) {
             if ((new_status_flags != prev_status_flags) || etimer_expired(&status_timer)) {
-                usb_status_buf[0] = USBD_PYBRICKS_IN_EP_MSG_EVENT;
+                usb_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
                 _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
                     "size of status report does not match size of event");
-                usb_status_sz = 1 + pbsys_status_get_status_report(&usb_status_buf[1]);
+                usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&usb_status_buf[1]));
 
                 // REVISIT: we really shouldn't need a status timer on USB since
                 // it's not a lossy transport. We just need to make sure we send
