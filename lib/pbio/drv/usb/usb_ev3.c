@@ -883,6 +883,7 @@ static pbio_os_process_t pbdrv_usb_ev3_process;
 static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *context) {
     static pbio_os_timer_t delay_timer;
     static pbio_os_timer_t tx_timeout_timer;
+    static pbio_os_timer_t keepalive_timer;
     static bool was_transmitting = false;
     static bool is_transmitting = false;
     static uint32_t prev_status_flags = ~0;
@@ -910,6 +911,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
             if (usb_rx_sz && !usb_tx_response_is_not_ready) {
                 switch (ep1_rx_buf[0]) {
                     case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
+                        pbio_os_timer_set(&keepalive_timer, 1000);
                         pbdrv_usb_is_events_subscribed = ep1_rx_buf[1];
                         ep1_tx_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
                         pbio_set_uint32_le(&ep1_tx_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
@@ -936,7 +938,8 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
 
         // Send status flags if they've changed (and we can)
         new_status_flags = pbsys_status_get_flags();
-        if (pbdrv_usb_is_events_subscribed && !usb_tx_status_is_not_ready && new_status_flags != prev_status_flags) {
+        if (pbdrv_usb_is_events_subscribed && !usb_tx_status_is_not_ready &&
+            (new_status_flags != prev_status_flags || pbio_os_timer_is_expired(&keepalive_timer))) {
             ep1_tx_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
             uint32_t usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&ep1_tx_status_buf[1]));
 
@@ -944,6 +947,15 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
             usb_setup_tx_dma_desc(CPPI_DESC_TX_STATUS, ep1_tx_status_buf, usb_status_sz);
 
             prev_status_flags = new_status_flags;
+
+            if (new_status_flags != prev_status_flags) {
+                // If we are sending a status because the flags have changed,
+                // we can bump out the keepalive timer.
+                pbio_os_timer_set(&keepalive_timer, 1000);
+            } else {
+                // Otherwise, we want to send keepalives at a particular rate.
+                pbio_os_timer_extend(&keepalive_timer);
+            }
         }
 
         // Handle timeouts
