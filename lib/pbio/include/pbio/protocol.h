@@ -427,6 +427,14 @@ extern const uint8_t pbio_nus_tx_char_uuid[];
 /** USB bDeviceProtocol for Pybricks hubs */
 #define PBIO_PYBRICKS_USB_DEVICE_PROTOCOL 0xF5
 
+/** USB bRequest for Pybricks class-specific requests */
+enum {
+    /** Retrieve GATT characteristics */
+    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT = 0x01,
+    /** Retrieve Pybricks characteristics */
+    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS = 0x02,
+};
+
 #endif // _PBIO_PROTOCOL_H_
 
 /** @} */
