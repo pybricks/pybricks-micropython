@@ -491,6 +491,14 @@ static void usb_device_intr(void) {
     IntSystemStatusClear(SYS_INT_USB0);
     uint32_t intr_src = HWREG(USB_0_OTGBASE + USB_0_INTR_SRC);
 
+    if (intr_src & USBOTG_INTR_DISCON) {
+        // USB cable disconnected
+
+        // Mark config and address as 0 for main loop to detect
+        pbdrv_usb_addr = 0;
+        pbdrv_usb_config = 0;
+    }
+
     if (intr_src & USBOTG_INTR_RESET) {
         // USB reset
 
@@ -940,7 +948,6 @@ void pbdrv_usb_init(void) {
             ~CFGCHIP2_OTGMODE &
             ~CFGCHIP2_PHYPWRDN &            // Make sure PHY is on
             ~CFGCHIP2_OTGPWRDN) |           // Make sure OTG subsystem is on
-        CFGCHIP2_FORCE_DEVICE |             // We only ever want device operation
         CFGCHIP2_DATPOL |                   // Data lines are *not* inverted
         CFGCHIP2_SESENDEN |                 // Enable various analog comparators
         CFGCHIP2_VBDTCTEN;
@@ -973,6 +980,7 @@ void pbdrv_usb_init(void) {
 
     // Enable the interrupts we actually care about
     HWREG(USB_0_OTGBASE + USB_0_INTR_MASK_SET) =
+        USBOTG_INTR_DISCON |
         USBOTG_INTR_RESET |
         USBOTG_INTR_EP1_OUT |
         USBOTG_INTR_EP1_IN |
