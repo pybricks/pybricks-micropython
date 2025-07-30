@@ -888,8 +888,6 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
     static uint32_t prev_status_flags = ~0;
     static uint32_t new_status_flags = 0;
 
-    (void)ep1_tx_stdout_buf;
-
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
@@ -1078,22 +1076,70 @@ bool pbdrv_usb_connection_is_active(void) {
     return pbdrv_usb_is_events_subscribed;
 }
 
-// TODO: Reimplement the following functions as appropriate
-// (mphalport.c and the "host" layer are currently being refactored)
-uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size) {
-    // Return the size requested so that caller doesn't block.
-    return size;
+/**
+ * Queues data to be transmitted via USB.
+ * @param data  [in]        The data to be sent.
+ * @param size  [in, out]   The size of @p data in bytes. After return, @p size
+ *                          contains the number of bytes actually written.
+ * @return                  ::PBIO_SUCCESS if some @p data was queued, ::PBIO_ERROR_AGAIN
+ *                          if no @p data could not be queued at this time (e.g. buffer
+ *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active USB connection
+ */
+pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
+    if (!pbdrv_usb_is_events_subscribed) {
+        // If the app hasn't subscribed to events, we can't send stdout.
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    uint8_t *ptr = ep1_tx_stdout_buf;
+    uint32_t ptr_len = pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
+
+    if (usb_tx_stdout_is_not_ready) {
+        *size = 0;
+        return PBIO_ERROR_AGAIN;
+    }
+
+    *ptr++ = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+    ptr_len--;
+
+    *ptr++ = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+    ptr_len--;
+
+    if (*size > ptr_len) {
+        *size = ptr_len;
+    }
+    memcpy(ptr, data, *size);
+
+    usb_tx_stdout_is_not_ready = true;
+    usb_setup_tx_dma_desc(CPPI_DESC_TX_STDOUT, ep1_tx_stdout_buf, 2 + *size);
+
+    return PBIO_SUCCESS;
 }
 
-uint32_t pbdrv_usb_rx_data_available(void) {
-    return 0;
+// REVISIT: These two functions do not keep track of how much data
+// is held in the DMA engine or the packet FIFO (i.e. the DMA engine
+// has returned the descriptor to us (and thus we can queue more),
+// but the hardware is still buffering data which we cannot see without
+// performing much more accurate accounting)
+uint32_t pbdrv_usb_stdout_tx_available(void) {
+    if (!pbdrv_usb_is_events_subscribed) {
+        return UINT32_MAX;
+    }
+
+    if (usb_tx_stdout_is_not_ready) {
+        return 0;
+    }
+
+    // Subtract 2 bytes for header
+    if (pbdrv_usb_is_usb_hs) {
+        return PYBRICKS_EP_PKT_SZ_HS - 2;
+    }
+    return PYBRICKS_EP_PKT_SZ_FS - 2;
 }
 
-int32_t pbdrv_usb_get_char(void) {
-    return -1;
-}
-
-void pbdrv_usb_tx_flush(void) {
+bool pbdrv_usb_stdout_tx_is_idle(void) {
+    return !usb_tx_stdout_is_not_ready;
 }
 
 #endif // PBDRV_CONFIG_USB_EV3
