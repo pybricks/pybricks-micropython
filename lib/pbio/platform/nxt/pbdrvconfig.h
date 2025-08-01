@@ -35,6 +35,7 @@
 #define PBDRV_CONFIG_HAS_PORT_2                     (1)
 #define PBDRV_CONFIG_HAS_PORT_3                     (1)
 #define PBDRV_CONFIG_HAS_PORT_4                     (1)
+#define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL           (1)
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_NXT                      (1)

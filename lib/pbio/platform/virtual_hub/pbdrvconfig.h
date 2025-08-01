@@ -29,3 +29,4 @@
 #define PBDRV_CONFIG_HAS_PORT_D (1)
 #define PBDRV_CONFIG_HAS_PORT_E (1)
 #define PBDRV_CONFIG_HAS_PORT_F (1)
+#define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL                   (1)
