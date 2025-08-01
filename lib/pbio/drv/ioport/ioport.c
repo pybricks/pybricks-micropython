@@ -65,6 +65,7 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_u
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+#if PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 void pbdrv_ioport_enable_vcc(bool enable) {
     if (enable) {
         pbdrv_gpio_out_high(&pbdrv_ioport_platform_data_vcc_pin);
@@ -72,5 +73,6 @@ void pbdrv_ioport_enable_vcc(bool enable) {
         pbdrv_gpio_out_low(&pbdrv_ioport_platform_data_vcc_pin);
     }
 }
+#endif // PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 
 #endif // PBDRV_CONFIG_IOPORT
