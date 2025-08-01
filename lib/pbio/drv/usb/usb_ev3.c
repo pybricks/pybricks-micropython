@@ -10,12 +10,19 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <string.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/usb.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
+#include <pbio/version.h>
+#include <pbsys/command.h>
+#include <pbsys/config.h>
+#include <pbsys/status.h>
+#include <pbsys/storage.h>
 
 #include <lego/usb.h>
 
@@ -179,13 +186,15 @@ static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_fs = {
     }
 };
 
-// We generate a serial number string descriptors at runtime
-// so this dynamic buffer is needed
-#define STRING_DESC_MAX_SZ      64
+// This dynamic buffer is needed in order to have an aligned,
+// global-lifetime buffer for sending dynamic data in response
+// to control transfers. This is used for the serial number string
+// and for Pybricks protocol requests.
 static union {
-    uint8_t b[STRING_DESC_MAX_SZ];
-    uint32_t u[STRING_DESC_MAX_SZ / 4];
-} usb_string_desc_buffer;
+    uint8_t b[EP0_BUF_SZ];
+    uint32_t u[EP0_BUF_SZ / sizeof(uint32_t)];
+} pbdrv_usb_ev3_ep0_buffer;
+_Static_assert(PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE <= EP0_BUF_SZ);
 
 // Defined in pbio/platform/ev3/platform.c
 extern uint8_t pbdrv_ev3_bluetooth_mac_address[6];
@@ -206,6 +215,9 @@ static unsigned int pbdrv_usb_setup_data_to_send_sz;
 static uint32_t pbdrv_usb_setup_misc_tx_byte;
 // Whether the device is using USB high-speed mode or not
 static bool pbdrv_usb_is_usb_hs;
+
+// Whether there is a host app listening to events
+static bool pbdrv_usb_is_events_subscribed;
 
 // Buffers, used for different logical flows on the data endpoint
 static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS];
@@ -456,17 +468,17 @@ static bool usb_get_descriptor(uint16_t wValue) {
                     return true;
 
                 case STRING_DESC_SERIAL:
-                    usb_string_desc_buffer.b[0] = 2 * 2 * 6 + 2;
-                    usb_string_desc_buffer.b[1] = DESC_TYPE_STRING;
+                    pbdrv_usb_ev3_ep0_buffer.b[0] = 2 * 2 * 6 + 2;
+                    pbdrv_usb_ev3_ep0_buffer.b[1] = DESC_TYPE_STRING;
                     for (i = 0; i < 6; i++) {
-                        usb_string_desc_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] >> 4];
-                        usb_string_desc_buffer.b[2 + 4 * i + 1] = 0;
-                        usb_string_desc_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] & 0xf];
-                        usb_string_desc_buffer.b[2 + 4 * i + 3] = 0;
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] >> 4];
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 1] = 0;
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] & 0xf];
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 3] = 0;
                     }
 
-                    pbdrv_usb_setup_data_to_send = usb_string_desc_buffer.u;
-                    pbdrv_usb_setup_data_to_send_sz = usb_string_desc_buffer.b[0];
+                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                    pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_ev3_ep0_buffer.b[0];
                     return true;
             }
             break;
@@ -483,6 +495,15 @@ static bool usb_get_descriptor(uint16_t wValue) {
 static void usb_device_intr(void) {
     IntSystemStatusClear(SYS_INT_USB0);
     uint32_t intr_src = HWREG(USB_0_OTGBASE + USB_0_INTR_SRC);
+
+    if (intr_src & USBOTG_INTR_DISCON) {
+        // USB cable disconnected
+
+        // Mark config and address as 0 for main loop to detect
+        pbdrv_usb_addr = 0;
+        pbdrv_usb_config = 0;
+        pbio_os_request_poll();
+    }
 
     if (intr_src & USBOTG_INTR_RESET) {
         // USB reset
@@ -678,6 +699,67 @@ static void usb_device_intr(void) {
                             }
                             break;
                     }
+                    break;
+
+                case BM_REQ_TYPE_CLASS:
+                    if ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) != BM_REQ_RECIP_IF) {
+                        // Pybricks class requests must be directed at the interface
+                        break;
+                    }
+
+                    switch (setup_pkt.s.bRequest) {
+                        const char *s;
+
+                        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
+                            // Standard GATT characteristic
+                            switch (setup_pkt.s.wValue) {
+                                case 0x2A00:
+                                    // GATT Device Name characteristic
+                                    s = pbdrv_bluetooth_get_hub_name();
+                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
+                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    handled = true;
+                                    break;
+
+                                case 0x2A26:
+                                    // GATT Firmware Revision characteristic
+                                    s = PBIO_VERSION_STR;
+                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
+                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    handled = true;
+                                    break;
+
+                                case 0x2A28:
+                                    // GATT Software Revision characteristic
+                                    s = PBIO_PROTOCOL_VERSION_STR;
+                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
+                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    handled = true;
+                                    break;
+                            }
+                            break;
+
+                        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
+                            // Pybricks characteristic
+                            switch (setup_pkt.s.wValue) {
+                                case 0x0003:
+                                    pbio_pybricks_hub_capabilities(
+                                        pbdrv_usb_ev3_ep0_buffer.b,
+                                        (pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS) - 1,
+                                        PBSYS_CONFIG_APP_FEATURE_FLAGS,
+                                        pbsys_storage_get_maximum_program_size(),
+                                        PBSYS_CONFIG_HMI_NUM_SLOTS);
+                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
+                                    pbdrv_usb_setup_data_to_send_sz = PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
+                                    handled = true;
+                                    break;
+                            }
+                            break;
+                    }
+                    break;
             }
 
             // Note regarding the setting of the USB_CSRL0_RXRDYC bit:
@@ -770,7 +852,7 @@ static void usb_device_intr(void) {
         pbio_os_request_poll();
     }
 
-    if (dma_q_pend_0 & (1 << TX_COMPQ1)) {
+    while (dma_q_pend_0 & (1 << TX_COMPQ1)) {
         // DMA for EP 1 IN is done
 
         // Pop the descriptor from the queue
@@ -786,6 +868,10 @@ static void usb_device_intr(void) {
             usb_tx_stdout_is_not_ready = false;
             pbio_os_request_poll();
         }
+
+        // Multiple TX completions can happen at once
+        // (since we have up to three descriptors in flight)
+        dma_q_pend_0 = HWREG(USB_0_OTGBASE + CPDMA_PEND_0_REGISTER);
     }
 
     HWREG(USB_0_OTGBASE + USB_0_INTR_SRC_CLEAR) = intr_src;
@@ -795,10 +881,22 @@ static void usb_device_intr(void) {
 static pbio_os_process_t pbdrv_usb_ev3_process;
 
 static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *context) {
+    static pbio_os_timer_t delay_timer;
+    static pbio_os_timer_t tx_timeout_timer;
+    static pbio_os_timer_t keepalive_timer;
+    static bool was_transmitting = false;
+    static bool is_transmitting = false;
+    static uint32_t prev_status_flags = ~0;
+    static uint32_t new_status_flags = 0;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
-        PBIO_OS_AWAIT_UNTIL(state, usb_rx_is_ready);
+        if (pbdrv_usb_config == 0) {
+            pbdrv_usb_is_events_subscribed = false;
+            // Resend status flags when host subscribes
+            prev_status_flags = ~0;
+        }
 
         if (usb_rx_is_ready) {
             // This barrier prevents *subsequent* memory reads from being
@@ -807,29 +905,89 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
             pbdrv_compiler_memory_barrier();
 
             uint32_t usb_rx_sz = cppi_descriptors[CPPI_DESC_RX].word0.pktLength;
-
-            // TODO: Remove this echo test
-            unsigned int i;
-            for (i = 0; i < usb_rx_sz; i++) {
-                ep1_tx_response_buf[i] = ep1_rx_buf[i] + 1;
+            pbio_pybricks_error_t result;
+            bool usb_send_response = false;
+            // Skip empty commands, or commands sent when previous response is still busy
+            if (usb_rx_sz && !usb_tx_response_is_not_ready) {
+                switch (ep1_rx_buf[0]) {
+                    case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
+                        pbio_os_timer_set(&keepalive_timer, 1000);
+                        pbdrv_usb_is_events_subscribed = ep1_rx_buf[1];
+                        ep1_tx_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
+                        pbio_set_uint32_le(&ep1_tx_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
+                        usb_send_response = true;
+                        break;
+                    case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
+                        result = pbsys_command(ep1_rx_buf + 1, usb_rx_sz - 1);
+                        ep1_tx_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
+                        pbio_set_uint32_le(&ep1_tx_response_buf[1], result);
+                        usb_send_response = true;
+                        break;
+                }
             }
-            for (; i < 512; i++) {
-                ep1_tx_response_buf[i] = 0xaa;
-            }
 
-            (void)ep1_tx_status_buf;
-            (void)ep1_tx_stdout_buf;
-
-            unsigned int tx_sz = pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
-            if (!usb_tx_response_is_not_ready) {
+            if (usb_send_response) {
                 usb_tx_response_is_not_ready = true;
-                usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, tx_sz);
+                usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t)));
             }
 
             // Re-queue RX buffer after processing is complete
             usb_rx_is_ready = false;
             usb_setup_rx_dma_desc();
         }
+
+        // Send status flags if they've changed (and we can)
+        new_status_flags = pbsys_status_get_flags();
+        if (pbdrv_usb_is_events_subscribed && !usb_tx_status_is_not_ready &&
+            (new_status_flags != prev_status_flags || pbio_os_timer_is_expired(&keepalive_timer))) {
+            ep1_tx_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+            uint32_t usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&ep1_tx_status_buf[1]));
+
+            usb_tx_status_is_not_ready = true;
+            usb_setup_tx_dma_desc(CPPI_DESC_TX_STATUS, ep1_tx_status_buf, usb_status_sz);
+
+            prev_status_flags = new_status_flags;
+
+            if (new_status_flags != prev_status_flags) {
+                // If we are sending a status because the flags have changed,
+                // we can bump out the keepalive timer.
+                pbio_os_timer_set(&keepalive_timer, 1000);
+            } else {
+                // Otherwise, we want to send keepalives at a particular rate.
+                pbio_os_timer_extend(&keepalive_timer);
+            }
+        }
+
+        // Handle timeouts
+        is_transmitting = usb_tx_response_is_not_ready || usb_tx_status_is_not_ready || usb_tx_stdout_is_not_ready;
+        if (was_transmitting && is_transmitting) {
+            if (pbio_os_timer_is_expired(&tx_timeout_timer)) {
+                // Flush _all_ TX packets
+                while (HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_TXRDY) {
+                    HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_FLUSH;
+                    // We need to wait a bit until the DMA refills the FIFO.
+                    // There doesn't seem to be a good way to figure out if
+                    // there are packets in flight *within* the DMA engine itself
+                    // (i.e. no longer in the queue but in the transfer engine).
+                    PBIO_OS_AWAIT_MS(state, &delay_timer, 1);
+                }
+                usb_tx_response_is_not_ready = false;
+                usb_tx_status_is_not_ready = false;
+                usb_tx_stdout_is_not_ready = false;
+                pbdrv_usb_is_events_subscribed = false;
+                // Resend status flags when host subscribes
+                prev_status_flags = ~0;
+            }
+        } else if (!was_transmitting && is_transmitting) {
+            pbio_os_timer_set(&tx_timeout_timer, 5);
+        }
+        was_transmitting = is_transmitting;
+
+        // Make this process loop run from the beginning.
+        // Because we check so many different conditions,
+        // we don't use the normal await macros.
+        PBIO_OS_ASYNC_RESET(state);
+        return PBIO_ERROR_AGAIN;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
@@ -868,7 +1026,6 @@ void pbdrv_usb_init(void) {
             ~CFGCHIP2_OTGMODE &
             ~CFGCHIP2_PHYPWRDN &            // Make sure PHY is on
             ~CFGCHIP2_OTGPWRDN) |           // Make sure OTG subsystem is on
-        CFGCHIP2_FORCE_DEVICE |             // We only ever want device operation
         CFGCHIP2_DATPOL |                   // Data lines are *not* inverted
         CFGCHIP2_SESENDEN |                 // Enable various analog comparators
         CFGCHIP2_VBDTCTEN;
@@ -901,6 +1058,7 @@ void pbdrv_usb_init(void) {
 
     // Enable the interrupts we actually care about
     HWREG(USB_0_OTGBASE + USB_0_INTR_MASK_SET) =
+        USBOTG_INTR_DISCON |
         USBOTG_INTR_RESET |
         USBOTG_INTR_EP1_OUT |
         USBOTG_INTR_EP1_IN |
@@ -926,26 +1084,74 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-// TODO: Reimplement the following functions as appropriate
-// (mphalport.c and the "host" layer are currently being refactored)
-uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size) {
-    // Return the size requested so that caller doesn't block.
-    return size;
-}
-
-uint32_t pbdrv_usb_rx_data_available(void) {
-    return 0;
-}
-
-int32_t pbdrv_usb_get_char(void) {
-    return -1;
-}
-
-void pbdrv_usb_tx_flush(void) {
-}
-
 bool pbdrv_usb_connection_is_active(void) {
-    return false;
+    return pbdrv_usb_is_events_subscribed;
+}
+
+/**
+ * Queues data to be transmitted via USB.
+ * @param data  [in]        The data to be sent.
+ * @param size  [in, out]   The size of @p data in bytes. After return, @p size
+ *                          contains the number of bytes actually written.
+ * @return                  ::PBIO_SUCCESS if some @p data was queued, ::PBIO_ERROR_AGAIN
+ *                          if no @p data could not be queued at this time (e.g. buffer
+ *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active USB connection
+ */
+pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
+    if (!pbdrv_usb_is_events_subscribed) {
+        // If the app hasn't subscribed to events, we can't send stdout.
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    uint8_t *ptr = ep1_tx_stdout_buf;
+    uint32_t ptr_len = pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
+
+    if (usb_tx_stdout_is_not_ready) {
+        *size = 0;
+        return PBIO_ERROR_AGAIN;
+    }
+
+    *ptr++ = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+    ptr_len--;
+
+    *ptr++ = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+    ptr_len--;
+
+    if (*size > ptr_len) {
+        *size = ptr_len;
+    }
+    memcpy(ptr, data, *size);
+
+    usb_tx_stdout_is_not_ready = true;
+    usb_setup_tx_dma_desc(CPPI_DESC_TX_STDOUT, ep1_tx_stdout_buf, 2 + *size);
+
+    return PBIO_SUCCESS;
+}
+
+// REVISIT: These two functions do not keep track of how much data
+// is held in the DMA engine or the packet FIFO (i.e. the DMA engine
+// has returned the descriptor to us (and thus we can queue more),
+// but the hardware is still buffering data which we cannot see without
+// performing much more accurate accounting)
+uint32_t pbdrv_usb_stdout_tx_available(void) {
+    if (!pbdrv_usb_is_events_subscribed) {
+        return UINT32_MAX;
+    }
+
+    if (usb_tx_stdout_is_not_ready) {
+        return 0;
+    }
+
+    // Subtract 2 bytes for header
+    if (pbdrv_usb_is_usb_hs) {
+        return PYBRICKS_EP_PKT_SZ_HS - 2;
+    }
+    return PYBRICKS_EP_PKT_SZ_FS - 2;
+}
+
+bool pbdrv_usb_stdout_tx_is_idle(void) {
+    return !usb_tx_stdout_is_not_ready;
 }
 
 #endif // PBDRV_CONFIG_USB_EV3

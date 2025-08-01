@@ -549,7 +549,8 @@ static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_nxt_setup_packet_t *pac
         case USB_BMREQUEST_RCPT_INT:
             // Ignoring wIndex for now as we only have one interface.
             switch (packet->request) {
-                case 0x01: // Standard GATT characteristic
+                case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
+                    // Standard GATT characteristic
                     switch (packet->value) {
                         case 0x2A00: { // device name
                             const char *name = pbdrv_bluetooth_get_hub_name();
@@ -574,7 +575,8 @@ static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_nxt_setup_packet_t *pac
                             break;
                     }
                     break;
-                case 0x02: // Pybricks characteristic
+                case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
+                    // Pybricks characteristic
                     switch (packet->value) {
                         case 0x0003: { // hub capabilities
                             uint8_t caps[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
