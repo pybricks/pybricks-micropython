@@ -58,6 +58,7 @@ Entry:
          mrc p15, #0, r0, c1, c0,#0            @ Read System Control Register
          bic r0, r0, #0x1000                   @ Clear bit 12 to disable ICache
          bic r0, r0, #0x0004                   @ Clear bit 2 to disable DCache
+         bic r0, r0, #0x0001                   @ Clear bit 0 to disable MMU
          mcr p15, #0, r0, c1, c0, #0           @ Write back to System Control Register
          mov r0, #0                            @ Set r0 to 0
          mcr p15, #0, r0, c7, c7, #0           @ Invalidate all caches
