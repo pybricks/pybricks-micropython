@@ -59,6 +59,8 @@
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
 
+#include "exceptionhandler.h"
+
 #include "../../drv/block_device/block_device_ev3.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/display/display_ev3.h"
@@ -417,6 +419,7 @@ static const char *const panic_types[] = {
     "Prefetch Abort",
     "Data Abort",
 };
+
 typedef struct {
     uint32_t r13;
     uint32_t r14;
@@ -481,7 +484,17 @@ void ev3_panic_handler(int except_type, ev3_panic_ctx *except_data) {
     panic_puts("\r\nR14:  0x");
     panic_putu32(except_data->r14);
     panic_puts("\r\nR15:  0x");
-    panic_putu32(except_data->exc_lr);
+    switch (except_type) {
+        case EV3_PANIC_PREFETCH_ABORT:
+            panic_putu32(except_data->exc_lr - 4);
+            break;
+        case EV3_PANIC_DATA_ABORT:
+            panic_putu32(except_data->exc_lr - 8);
+            break;
+        default:
+            panic_putu32(except_data->exc_lr);
+            break;
+    }
     panic_puts("\r\nSPSR: 0x");
     panic_putu32(except_data->spsr);
 
