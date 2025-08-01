@@ -447,7 +447,9 @@ void pbio_port_stop_user_actions(bool reset) {
         }
 
         // Stops and resets motors. Also stops higher level controls like servo.
-        pbio_dcmotor_reset(port->dcmotor, reset);
+        if (port->dcmotor) {
+            pbio_dcmotor_reset(port->dcmotor, reset);
+        }
     }
 }
 
