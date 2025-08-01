@@ -652,6 +652,21 @@ static void Edma3CCErrHandlerIsr(void) {
 static uint32_t l1_page_table[MMU_L1_ENTS] __attribute__((aligned(MMU_L1_ALIGN)));
 #define SYSTEM_RAM_SZ_MB    64
 
+static void mmu_tlb_lock(uint32_t addr) {
+    uint32_t tmp;
+    __asm__ volatile (
+        "mrc p15, 0, %0, c10, c0, 0\n"  // read lockdown register
+        "orr %0, #1\n"                  // set P bit
+        "mcr p15, 0, %0, c10, c0, 0\n"  // write lockdown register
+        "ldr %0, [%1]\n"                // force a TLB load
+        "mrc p15, 0, %0, c10, c0, 0\n"  // read lockdown register
+        "bic %0, #1\n"                  // clear P bit
+        "mcr p15, 0, %0, c10, c0, 0\n"  // write lockdown register
+        : "=&r" (tmp)
+        : "r" (addr)
+        );
+}
+
 static void mmu_init(void) {
     // Invalidate TLB
     CP15InvTLB();
@@ -701,6 +716,21 @@ static void mmu_init(void) {
     // Enable I-cache, D-cache, alignment faults, and MMU
     c15_control |= (1 << 12) | (1 << 2) | (1 << 1) | (1 << 0);
     CP15ControlSet(c15_control);
+
+    // Set victim field in TLB lockdown register to 0
+    __asm__ volatile (
+        "movs r0, #0\n"
+        "mcr p15, 0, r0, c10, c0, 0"
+        ::: "r0"
+        );
+    // Lock all the TLB entries other than main DDR RAM
+    // This helps improve real-time performance as we will never TLB miss on them
+    mmu_tlb_lock(0x01C00000);
+    mmu_tlb_lock(0x01D00000);
+    mmu_tlb_lock(0x01E00000);
+    mmu_tlb_lock(0x01F00000);
+    mmu_tlb_lock(0x80000000);
+    mmu_tlb_lock(0xFFF00000);
 }
 
 enum {
