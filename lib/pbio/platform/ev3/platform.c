@@ -41,6 +41,7 @@
 #include <tiam1808/armv5/am1808/edma_event.h>
 #include <tiam1808/armv5/am1808/evmAM1808.h>
 #include <tiam1808/armv5/am1808/interrupt.h>
+#include <tiam1808/armv5/cp15.h>
 #include <tiam1808/edma.h>
 #include <tiam1808/hw/hw_edma3cc.h>
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
@@ -54,6 +55,7 @@
 
 #include <umm_malloc.h>
 
+#include <pbdrv/compiler.h>
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
 
@@ -483,6 +485,13 @@ void ev3_panic_handler(int except_type, ev3_panic_ctx *except_data) {
     panic_puts("\r\nSPSR: 0x");
     panic_putu32(except_data->spsr);
 
+    panic_puts("\r\nDFSR: 0x");
+    panic_putu32(CP15GetDFSR());
+    panic_puts("\r\nIFSR: 0x");
+    panic_putu32(CP15GetIFSR());
+    panic_puts("\r\nFAR: 0x");
+    panic_putu32(CP15GetFAR());
+
     panic_puts("\r\nSystem will now reboot...\r\n");
 
     // Poke the watchdog timer with a bad value to immediately trigger it
@@ -627,6 +636,73 @@ static void Edma3CCErrHandlerIsr(void) {
     }
 }
 
+#define MMU_SECTION_SHIFT   20
+#define MMU_SECTION_SZ      (1 << MMU_SECTION_SHIFT)
+#define MMU_L1_ENTS         (1 << (32 - 20))
+#define MMU_L1_ALIGN        (16 * 1024)
+#define MMU_L1_SECTION(addr, ap, domain, c, b)      (       \
+    ((addr) & ~(MMU_SECTION_SZ - 1)) |                      \
+    (((ap) & 3) << 10) |                                    \
+    (((domain) & 0xf) << 5) |                               \
+    (1 << 4) |                                              \
+    ((!!(c)) << 3) |                                        \
+    ((!!(b)) << 2) |                                        \
+    (1 << 1)                                                \
+    )
+static uint32_t l1_page_table[MMU_L1_ENTS] __attribute__((aligned(MMU_L1_ALIGN)));
+#define SYSTEM_RAM_SZ_MB    64
+
+static void mmu_init(void) {
+    // Invalidate TLB
+    CP15InvTLB();
+
+    // Program domain D0 = no access, D1 = manager (no permission checks)
+    // We generally don't bother with permission checks, anything valid is RWX
+    CP15DomainAccessSet(0b1100);
+
+    // For simplicity, everything is mapped as sections (1 MiB chunks)
+    // This potentially fails to catch certain out-of-bounds accesses,
+    // but as a tradeoff we do not need any L2 sections.
+
+    // MMIO register ranges
+    l1_page_table[0x01C00000 >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(0x01C00000, 0, 1, 0, 0);
+    l1_page_table[0x01D00000 >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(0x01D00000, 0, 1, 0, 0);
+    l1_page_table[0x01E00000 >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(0x01E00000, 0, 1, 0, 0);
+    l1_page_table[0x01F00000 >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(0x01F00000, 0, 1, 0, 0);
+
+    // On-chip RAM, which is used to share control structures with the PRUs
+    l1_page_table[0x80000000 >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(0x80000000, 0, 1, 0, 0);
+
+    // Off-chip main DDR RAM
+    for (unsigned int i = 0; i < SYSTEM_RAM_SZ_MB; i++) {
+        uint32_t addr = 0xC0000000 + i * MMU_SECTION_SZ;
+        // TODO: Enable caching once DMA code is upgraded to handle cache
+        l1_page_table[addr >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(addr, 0, 1, 0, 0);
+    }
+    // Off-chip main DDR RAM, uncacheable mirror @ 0xD0000000
+    for (unsigned int i = 0; i < SYSTEM_RAM_SZ_MB; i++) {
+        uint32_t addr_phys = 0xC0000000 + i * MMU_SECTION_SZ;
+        uint32_t addr_virt = 0xD0000000 + i * MMU_SECTION_SZ;
+        l1_page_table[addr_virt >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(addr_phys, 0, 1, 0, 0);
+    }
+
+    // ARM local RAM, interrupt controller
+    l1_page_table[0xFFF00000 >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(0xFFF00000, 0, 1, 0, 0);
+
+    // Make sure this all makes its way into memory
+    pbdrv_compiler_memory_barrier();
+
+    // Set TTBR
+    CP15TtbSet((uint32_t)l1_page_table);
+
+    uint32_t c15_control = CP15ControlGet();
+    // Clear R and S protection bits (even though we don't use them)
+    c15_control &= ~((1 << 9) | (1 << 8));
+    // Enable I-cache, D-cache, alignment faults, and MMU
+    c15_control |= (1 << 12) | (1 << 2) | (1 << 1) | (1 << 0);
+    CP15ControlSet(c15_control);
+}
+
 enum {
     BOOT_EEPROM_I2C_ADDRESS = 0x50,
 };
@@ -637,6 +713,7 @@ uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 // initialization (low level in pbdrv, high level in pbio), and system level
 // functions for running user code (currently a hardcoded MicroPython script).
 void SystemInit(void) {
+    mmu_init();
 
     SysCfgRegistersUnlock();
 
