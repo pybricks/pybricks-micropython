@@ -258,7 +258,10 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
     #if PBSYS_CONFIG_USER_PROGRAM_AUTO_START
-    // Skip any UI, always just start the REPL.
+    // Skip any UI, always just start the REPL except on shutdown.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
+        return PBIO_ERROR_CANCELED;
+    }
     pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
     return PBIO_SUCCESS;
     #endif
