@@ -278,26 +278,23 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
  * @param [in] uart The UART device.
  */
 void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_dev_t *uart) {
-
-    /* This determines the cause of UART0 interrupt.*/
-    unsigned int int_id = UARTIntStatus(uart->pdata->base_address);
-
     /* Clears the system interrupt status of UART in AINTC. */
     IntSystemStatusClear(uart->pdata->sys_int_uart_rx_int_id);
 
-    /* Check if the cause is receiver data condition.*/
-    if (UART_INTID_RX_DATA == (int_id & UART_INTID_RX_DATA) || (UART_INTID_CTI == (int_id & UART_INTID_CTI))) {
+    // Repeatedly attempt to handle all the data which we might have
+    while ((HWREG(uart->pdata->base_address + UART_IIR) & UART_IIR_IPEND) == 0) {
+        // We always have *a* character in the FIFO, even if it might be an error
         int c = UARTCharGetNonBlocking(uart->pdata->base_address);
-        if (c != -1) {
-            ringbuf_put(&uart->rx_buf, c);
-        }
-    }
+        unsigned int err = UARTRxErrorGet(uart->pdata->base_address);
 
-    /* Check if the cause is receiver line error condition.*/
-    if (UART_INTID_RX_LINE_STAT == (int_id & UART_INTID_RX_LINE_STAT)) {
-        while (UARTRxErrorGet(uart->pdata->base_address)) {
-            /* Read a byte from the RBR if RBR has data.*/
-            UARTCharGetNonBlocking(uart->pdata->base_address);
+        // If there is an overrun, the data we do have is nonetheless valid.
+        // We don't report overruns, so just ignore the flag
+        // (reading the LSR register automatically clears it in the hardware side).
+        err &= ~UART_OVERRUN_ERROR;
+
+        if (c != -1 && !err) {
+            // Push valid characters into the ring buffer
+            ringbuf_put(&uart->rx_buf, c);
         }
     }
 

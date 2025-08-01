@@ -627,7 +627,7 @@ void pbdrv_bluetooth_power_on(bool on) {
 }
 
 bool pbdrv_bluetooth_is_ready(void) {
-    return hci_get_state() != HCI_STATE_OFF || !pbdrv_bluetooth_powered_on;
+    return hci_get_state() != HCI_STATE_OFF;
 }
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
