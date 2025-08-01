@@ -41,6 +41,8 @@
 #ifndef __CP15_H
 #define __CP15_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,6 +62,13 @@ extern void CP15MMUDisable(void);
 extern void CP15MMUEnable(void);
 extern void CP15ICacheFlushBuff(unsigned int ptr, unsigned int size);
 extern void CP15DCacheCleanBuff(unsigned int bufPtr, unsigned int size);
+extern uint32_t CP15GetDFSR(void);
+extern uint32_t CP15GetIFSR(void);
+extern uint32_t CP15GetFAR(void);
+extern void CP15InvTLB(void);
+extern void CP15DomainAccessSet(uint32_t domains);
+extern uint32_t CP15ControlGet(void);
+extern void CP15ControlSet(uint32_t control);
 
 #ifdef __cplusplus
 }

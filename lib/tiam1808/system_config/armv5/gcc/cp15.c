@@ -37,6 +37,8 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdint.h>
+
 /******************************************************************************
 **                   FUNCTION DEFINITIONS
 ******************************************************************************/
@@ -218,21 +220,10 @@ void CP15DCacheCleanBuff(unsigned int bufPtr, unsigned int size)
  **/
 void CP15TtbSet(unsigned int ttb)
 {
-   /* Invalidates all TLBs.Domain access is selected as
-    * client by configuring domain access register,
-    * in that case access controlled by permission value
-    * set by page table entry
-    */
-    __asm("   mov r1, #0\n\t"
-          "   mcr p15, #0, r1, c8, c7, #0\n\t"
-          "   ldr r1, =0x55555555\n\t"
-          "   mcr p15, #0, r1, c3, c0, #0\n\t");
-
    /* sets translation table base resgister with page table
     * starting address.
     */
     __asm("   mcr p15, #0, %[value], c2, c0, 0":: [value] "r" (ttb));
-
 }
 
 /**
@@ -266,6 +257,66 @@ void CP15MMUEnable(void)
     __asm("    mrc p15, #0, r0, c1, c0, #0\n\t"
           "    orr r0, r0, #0x00000001\n\t"
           "    mcr p15, #0, r0, c1, c0, #0\n\t");
+}
+
+/**
+ * \brief   This function gets the data fault status register
+ */
+uint32_t CP15GetDFSR(void)
+{
+    uint32_t ret;
+    __asm("mrc p15, 0, %0, c5, c0, 0" : "=r" (ret));
+    return ret;
+}
+
+/**
+ * \brief   This function gets the instruction fault status register
+ */
+uint32_t CP15GetIFSR(void)
+{
+    uint32_t ret;
+    __asm("mrc p15, 0, %0, c5, c0, 1" : "=r" (ret));
+    return ret;
+}
+
+/**
+ * \brief   This function gets the fault address register
+ */
+uint32_t CP15GetFAR(void)
+{
+    uint32_t ret;
+    __asm("mrc p15, 0, %0, c6, c0, 0" : "=r" (ret));
+    return ret;
+}
+
+/**
+ * \brief   This function invalidates the TLB
+ */
+void CP15InvTLB(void)
+{
+    __asm("   mov r0, #0\n\t"
+          "   mcr p15, #0, r0, c8, c7, #0"
+          ::: "r0");
+}
+
+/**
+ * \brief   This function programs the domain access control register
+ */
+void CP15DomainAccessSet(uint32_t domains)
+{
+    __asm("mcr p15, 0, %0, c3, c0, 0" :: "r"(domains));
+}
+
+uint32_t CP15ControlGet(void)
+{
+    uint32_t ret;
+    __asm("mrc p15, 0, %0, c1, c0, 0" : "=r" (ret));
+    return ret;
+}
+
+void CP15ControlSet(uint32_t control)
+{
+    __asm("mcr p15, 0, %0, c1, c0, 0" :: "r" (control));
 }
 
 /********************************* End Of File *******************************/
