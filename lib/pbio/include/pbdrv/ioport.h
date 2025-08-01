@@ -118,12 +118,17 @@ typedef struct {
     uint32_t supported_modes;
 } pbdrv_ioport_platform_data_t;
 
+#if PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 /**
  * Enables or disables VCC on pin 4 of all ioports.
  *
  * @param [in]  enable        Choose true to enable VCC, false to disable.
  */
 void pbdrv_ioport_enable_vcc(bool enable);
+#else
+static inline void pbdrv_ioport_enable_vcc(bool enable) {
+}
+#endif // PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 
 /**
  * Sets the mode of the P5P6 pins on this port.
@@ -143,7 +148,9 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_u
 
 extern const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV];
 
+#if PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 extern const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin;
+#endif // PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 
 #endif // PBDRV_IOPORT_H
 

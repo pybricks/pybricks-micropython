@@ -253,12 +253,6 @@ const pbdrv_uart_ev3_platform_data_t
     },
 };
 
-// TODO.
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
-    .bank = NULL,
-    .pin = 0,
-};
-
 const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
