@@ -47,8 +47,14 @@ uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     return ret;
 }
 
+extern bool nx_bt_is_ready(void);
+
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
+
+    while (!nx_bt_is_ready()) {
+        MICROPY_EVENT_POLL_HOOK
+    }
 
     uint8_t rx_char;
 
@@ -65,6 +71,10 @@ int mp_hal_stdin_rx_chr(void) {
 
 // Send string of given length
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
+
+    while (!nx_bt_is_ready()) {
+        MICROPY_EVENT_POLL_HOOK
+    }
 
     // Nothing to do if disconnected or empty data
     if (!nx_bt_stream_opened() || len == 0) {
