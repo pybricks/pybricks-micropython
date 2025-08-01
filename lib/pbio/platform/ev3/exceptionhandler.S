@@ -1,5 +1,7 @@
 @ SPDX-License-Identifier: MPL-1.0
 @ Copyright (c) 2016 Tobias Schießl
+#include "exceptionhandler.h"
+
         .set  MODE_USR, 0x10            
         .set  MODE_FIQ, 0x11
         .set  MODE_IRQ, 0x12
@@ -12,10 +14,6 @@
         .equ I_F_BIT, 0xC0 
         .equ MASK_SWI_NUM, 0xFF000000
         .equ MASK_SR_MODE, 0x1F
-        .equ EXCEPT_TYPE_UNKNOWN, 0
-        .equ EXCEPT_TYPE_UNDEF, 1
-        .equ EXCEPT_TYPE_PREFETCH_ABORT, 2
-        .equ EXCEPT_TYPE_DATA_ABORT, 3
 
         @ This will be placed at 0xffff0000 by the linker script
         .section .vector,"ax",%progbits
@@ -35,25 +33,25 @@ ResetToEntry:
 UndefHandlder:
         @ Save r0-r12, lr
         stmfd   sp!, {r0-r12, lr}
-        mov     r7, #EXCEPT_TYPE_UNDEF
+        mov     r7, #EV3_PANIC_UNDEFINED_INSTR
         b       CommonPanicHandler
 
 PrefetchAbortHandler:
         @ Save r0-r12, lr
         stmfd   sp!, {r0-r12, lr}
-        mov     r7, #EXCEPT_TYPE_PREFETCH_ABORT
+        mov     r7, #EV3_PANIC_PREFETCH_ABORT
         b       CommonPanicHandler
 
 DataAbortHandler:
         @ Save r0-r12, lr
         stmfd   sp!, {r0-r12, lr}
-        mov     r7, #EXCEPT_TYPE_DATA_ABORT
+        mov     r7, #EV3_PANIC_DATA_ABORT
         b       CommonPanicHandler
 
 UnknownExceptionHandler:
         @ Save r0-r12, lr
         stmfd   sp!, {r0-r12, lr}
-        mov     r7, #EXCEPT_TYPE_UNKNOWN
+        mov     r7, #EV3_PANIC_UNKNOWN
         @ b       CommonPanicHandler
         @ fall through
 
