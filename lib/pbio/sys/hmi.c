@@ -188,7 +188,7 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
 
         // Start with Bluetooth off.
         pbdrv_bluetooth_power_on(false);
-        PBIO_OS_AWAIT_UNTIL(state, pbdrv_bluetooth_is_ready());
+        PBIO_OS_AWAIT_WHILE(state, pbdrv_bluetooth_is_ready());
         // Hack: this is a remnant of pbsys/bluetooth. It needs to be included
         // in the pbdrv_bluetooth_power_on(false) once it is made awaitable.
         static pbio_os_timer_t timer;
