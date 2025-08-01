@@ -11,10 +11,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/timer.h>
+
+#include "../drv/gpio/gpio_ev3.h"
+
+#include <pbdrv/compiler.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 
+#include <pbdrv/gpio.h>
 #include <pbdrv/i2c.h>
 #include "i2c_ev3.h"
 
@@ -58,12 +68,111 @@ pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const cha
     return PBIO_SUCCESS;
 }
 
-void pbdrv_i2c_init(void) {
-    for (int i = 0; i < PBDRV_CONFIG_I2C_EV3_NUM_DEV; i++) {
-        const pbdrv_i2c_ev3_platform_data_t *pdata = &pbdrv_i2c_ev3_platform_data[i];
-        pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
-        i2c->pdata = pdata;
+static pbio_os_process_t ev3_i2c_wip_process;
+
+static pbdrv_gpio_t test_2_scl = PBDRV_GPIO_EV3_PIN(0, 15, 12, 0, 12);
+static pbdrv_gpio_t test_2_sda = PBDRV_GPIO_EV3_PIN(2, 7, 4, 1, 14);
+static pbdrv_gpio_t test_3_scl = PBDRV_GPIO_EV3_PIN(1, 27, 24, 0, 1);
+static pbdrv_gpio_t test_3_sda = PBDRV_GPIO_EV3_PIN(2, 3, 0, 1, 15);
+
+static inline void delaydelay() {
+    for (int i = 0; i < 100; i++) __asm__ volatile("");
+}
+
+extern void panic_puts(const char *c);
+extern void panic_putu8(uint8_t x);
+
+uint8_t i2c_wip_buf_2[16];
+uint8_t i2c_wip_buf_3[16];
+
+pbio_error_t ev3_i2c_wip_process_thread(pbio_os_state_t *state, void *context) {
+    static pbio_os_timer_t timer;
+    static int i;
+    // static int bit;
+    // static uint8_t byte;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbdrv_gpio_out_low(&test_2_scl);
+    pbdrv_gpio_input(&test_2_scl);
+    pbdrv_gpio_out_low(&test_2_sda);
+    pbdrv_gpio_input(&test_2_sda);
+    pbdrv_gpio_out_low(&test_3_scl);
+    pbdrv_gpio_input(&test_3_scl);
+    pbdrv_gpio_out_low(&test_3_sda);
+    pbdrv_gpio_input(&test_3_sda);
+
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
+    debug_pr("i2c test start C%d D%d\r\n", pbdrv_gpio_input(&test_2_scl), pbdrv_gpio_input(&test_2_sda));
+
+    i2c_wip_buf_2[0] = 0x10;
+    i2c_wip_buf_3[0] = 0x10;
+    i2c_wip_buf_3[1] = 0xaa;
+    i2c_wip_buf_3[2] = 0x55;
+    i2c_wip_buf_3[3] = 0x12;
+    i2c_wip_buf_3[4] = 0x34;
+    pbdrv_compiler_memory_barrier();
+    *(volatile uint32_t *)(0x80010018) = (uint32_t)i2c_wip_buf_2;
+    *(volatile uint32_t *)(0x80010020) = (uint32_t)i2c_wip_buf_3;
+
+    *(volatile uint32_t *)(0x80010014) = 0x01060103;
+    *(volatile uint32_t *)(0x8001001c) = 0x17000501;
+
+    pbio_os_timer_set(&timer, 1000);
+    PBIO_OS_AWAIT_UNTIL(state, ((*(volatile uint8_t *)(0x80010014) & 0x80) && (*(volatile uint8_t *)(0x8001001c) & 0x80)) || pbio_os_timer_is_expired(&timer));
+    debug_pr("i2c test done\r\n");
+    debug_pr("i2c flags %08x\r\n", *(volatile uint32_t *)(0x80010014));
+    debug_pr("i2c flags %08x\r\n", *(volatile uint32_t *)(0x8001001c));
+    debug_pr("i2c max time %d\r\n", *(volatile uint32_t *)(0x80010024));
+
+    debug_pr("i2c test end C%d D%d\r\n", pbdrv_gpio_input(&test_2_scl), pbdrv_gpio_input(&test_2_sda));
+
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
+
+    debug_pr("i2c test end 2 C%d D%d\r\n", pbdrv_gpio_input(&test_2_scl), pbdrv_gpio_input(&test_2_sda));
+
+    // NEW
+    i2c_wip_buf_3[0] = 0x0e;
+    pbdrv_compiler_memory_barrier();
+    *(volatile uint32_t *)(0x8001001c) = 0x17060101;
+
+    pbio_os_timer_set(&timer, 1000);
+    PBIO_OS_AWAIT_UNTIL(state, *(volatile uint8_t *)(0x8001001c) & 0x80 || pbio_os_timer_is_expired(&timer));
+    debug_pr("i2c #2 test done\r\n");
+    debug_pr("i2c #2 flags %08x\r\n", *(volatile uint32_t *)(0x8001001c));
+    debug_pr("i2c #2 max time %d\r\n", *(volatile uint32_t *)(0x80010024));
+
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
+
+    for (i = 0; i < 512; i++) {
+        panic_putu8(*(volatile uint8_t *)(0x01C32000 + i));
+        if (i % 16 == 15) {
+            panic_puts("\r\n");
+        }
     }
+
+    for (i = 0; i < 6; i++) {
+        debug_pr("i2c #1 get %02x\r\n", i2c_wip_buf_2[1 + i]);
+    }
+    for (i = 0; i < 6; i++) {
+        debug_pr("i2c #2 get %02x\r\n", i2c_wip_buf_3[1 + i]);
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbdrv_i2c_init(void) {
+    // for (int i = 0; i < PBDRV_CONFIG_I2C_EV3_NUM_DEV; i++) {
+    //     const pbdrv_i2c_ev3_platform_data_t *pdata = &pbdrv_i2c_ev3_platform_data[i];
+    //     pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
+    //     i2c->pdata = pdata;
+    // }
+
+    TimerConfigure(SOC_TMR_2_REGS, TMR_CFG_32BIT_UNCH_CLK_BOTH_INT);
+    TimerPeriodSet(SOC_TMR_2_REGS, TMR_TIMER12, 150000000 / 20000 - 1);
+    TimerEnable(SOC_TMR_2_REGS, TMR_TIMER12, TMR_ENABLE_CONT);
+
+    pbio_os_process_start(&ev3_i2c_wip_process, ev3_i2c_wip_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_I2C_EV3
