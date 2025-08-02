@@ -55,6 +55,7 @@
 
 #include <umm_malloc.h>
 
+#include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/ioport.h>
 #include <pbio/port_interface.h>
@@ -394,6 +395,22 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
 
 unsigned int EDMAVersionGet(void) {
     return 1;
+}
+
+void pbdrv_cache_prepare_before_dma(const void *buf, size_t sz) {
+    // Make sure all data is written by the compiler...
+    pbdrv_compiler_memory_barrier();
+    // and then make sure it's written out of the cache...
+    CP15DCacheCleanBuff((uint32_t)buf, sz);
+    // and also the write buffer, in case the cache missed.
+    CP15DrainWriteBuffer();
+}
+
+void pbdrv_cache_prepare_after_dma(const void *buf, size_t sz) {
+    // Invalidate stale data in the cache...
+    CP15DCacheFlushBuff((uint32_t)buf, sz);
+    // and then make sure _subsequent_ reads cannot be reordered earlier.
+    pbdrv_compiler_memory_barrier();
 }
 
 static void panic_puts(const char *c) {
