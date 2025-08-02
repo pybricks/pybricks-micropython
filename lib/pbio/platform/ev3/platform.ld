@@ -66,7 +66,11 @@ SECTIONS
         _bss_start = .;
         *(.bss)
         *(.bss.*)
-        . = ALIGN(4);
+        /* Put DMA RX buffers here so that they never share cache lines with
+           unrelated data. This makes sure that they can be invalidated properly. */
+        . = ALIGN(32);
+        *(.dma)
+        . = ALIGN(32);
         _bss_end = .;
     } > DDR
 

@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/usb.h>
 #include <pbio/os.h>
@@ -220,7 +221,7 @@ static bool pbdrv_usb_is_usb_hs;
 static bool pbdrv_usb_is_events_subscribed;
 
 // Buffers, used for different logical flows on the data endpoint
-static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS];
+static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS] PBDRV_DMA_BUF;
 static uint8_t ep1_tx_response_buf[PYBRICKS_EP_PKT_SZ_HS];
 static uint8_t ep1_tx_status_buf[PYBRICKS_EP_PKT_SZ_HS];
 static uint8_t ep1_tx_stdout_buf[PYBRICKS_EP_PKT_SZ_HS];
@@ -283,7 +284,7 @@ static uint32_t cppi_linking_ram[CPPI_DESC_COUNT];
 
 // Fill in the CPPI DMA descriptor to receive a packet
 static void usb_setup_rx_dma_desc(void) {
-    cppi_descriptors[CPPI_DESC_RX] = (usb_cppi_hpd_t) {
+    PBDRV_UNCACHED(cppi_descriptors[CPPI_DESC_RX]) = (usb_cppi_hpd_t) {
         .word0 = {
             .hostPktType = CPPI_HOST_PACKET_DESCRIPTOR_TYPE,
         },
@@ -307,7 +308,7 @@ static void usb_setup_rx_dma_desc(void) {
 
 // Fill in the CPPI DMA descriptor to send a packet
 static void usb_setup_tx_dma_desc(int tx_type, void *buf, uint32_t buf_len) {
-    cppi_descriptors[tx_type] = (usb_cppi_hpd_t) {
+    PBDRV_UNCACHED(cppi_descriptors[tx_type]) = (usb_cppi_hpd_t) {
         .word0 = {
             .hostPktType = CPPI_HOST_PACKET_DESCRIPTOR_TYPE,
             .pktLength = buf_len,
@@ -904,11 +905,13 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
             // (which is technically allowed by the as-if rule).
             pbdrv_compiler_memory_barrier();
 
-            uint32_t usb_rx_sz = cppi_descriptors[CPPI_DESC_RX].word0.pktLength;
+            uint32_t usb_rx_sz = PBDRV_UNCACHED(cppi_descriptors[CPPI_DESC_RX].word0).pktLength;
             pbio_pybricks_error_t result;
             bool usb_send_response = false;
             // Skip empty commands, or commands sent when previous response is still busy
             if (usb_rx_sz && !usb_tx_response_is_not_ready) {
+                pbdrv_cache_prepare_after_dma(ep1_rx_buf, sizeof(ep1_rx_buf));
+
                 switch (ep1_rx_buf[0]) {
                     case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
                         pbio_os_timer_set(&keepalive_timer, 1000);
@@ -928,6 +931,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
 
             if (usb_send_response) {
                 usb_tx_response_is_not_ready = true;
+                pbdrv_cache_prepare_before_dma(ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
                 usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t)));
             }
 
@@ -944,6 +948,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
             uint32_t usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&ep1_tx_status_buf[1]));
 
             usb_tx_status_is_not_ready = true;
+            pbdrv_cache_prepare_before_dma(ep1_tx_status_buf, sizeof(ep1_tx_status_buf));
             usb_setup_tx_dma_desc(CPPI_DESC_TX_STATUS, ep1_tx_status_buf, usb_status_sz);
 
             prev_status_flags = new_status_flags;
@@ -1124,6 +1129,7 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
     memcpy(ptr, data, *size);
 
     usb_tx_stdout_is_not_ready = true;
+    pbdrv_cache_prepare_before_dma(ep1_tx_stdout_buf, sizeof(ep1_tx_stdout_buf));
     usb_setup_tx_dma_desc(CPPI_DESC_TX_STDOUT, ep1_tx_stdout_buf, 2 + *size);
 
     return PBIO_SUCCESS;

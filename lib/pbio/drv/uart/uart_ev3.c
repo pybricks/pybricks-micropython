@@ -14,6 +14,7 @@
 #include <contiki.h>
 #include <contiki-lib.h>
 
+#include <pbdrv/cache.h>
 #include <pbdrv/uart.h>
 
 #include <pbio/busy_count.h>
@@ -219,6 +220,8 @@ pbio_error_t pbdrv_uart_write_hw(pbio_os_state_t *state, pbdrv_uart_dev_t *uart,
         .bCntReload = 0,
         .opt = EDMA3CC_OPT_DAM | ((pdata->sys_int_uart_tx_int_id << EDMA3CC_OPT_TCC_SHIFT) & EDMA3CC_OPT_TCC) | (1 << EDMA3CC_OPT_TCINTEN_SHIFT),
     };
+
+    pbdrv_cache_prepare_before_dma(uart->write_buf, length);
 
     // Save configuration and start transfer.
     EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, pdata->sys_int_uart_tx_int_id, (EDMA3CCPaRAMEntry *)&paramSet);
