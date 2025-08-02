@@ -60,7 +60,7 @@ extern void CP15ICacheFlush(void);
 extern void CP15TtbSet(unsigned int ttb);
 extern void CP15MMUDisable(void);
 extern void CP15MMUEnable(void);
-extern void CP15ICacheFlushBuff(unsigned int ptr, unsigned int size);
+extern void CP15DCacheFlushBuff(unsigned int ptr, unsigned int size);
 extern void CP15DCacheCleanBuff(unsigned int bufPtr, unsigned int size);
 extern uint32_t CP15GetDFSR(void);
 extern uint32_t CP15GetIFSR(void);

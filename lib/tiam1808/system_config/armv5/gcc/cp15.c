@@ -170,7 +170,7 @@ void CP15ICacheFlush(void)
 * \return     None.
 *
 **/
-void CP15ICacheFlushBuff(unsigned int bufPtr, unsigned int size)
+void CP15DCacheFlushBuff(unsigned int bufPtr, unsigned int size)
 {
     unsigned int ptr;
 
