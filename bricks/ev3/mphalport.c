@@ -8,10 +8,8 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/clock.h>
-#include <pbdrv/uart.h>
-
 #include <pbio/main.h>
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#include <pbsys/host.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -32,49 +30,53 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
-extern uint32_t pbdrv_usb_rx_data_available(void);
-
-extern int32_t pbdrv_usb_get_char(void);
-
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
-
     uintptr_t ret = 0;
 
-    if ((poll_flags & MP_STREAM_POLL_RD) && pbdrv_usb_rx_data_available() > 0) {
+    if ((poll_flags & MP_STREAM_POLL_RD) && pbsys_host_stdin_get_available()) {
         ret |= MP_STREAM_POLL_RD;
     }
 
     return ret;
 }
 
+// Receive single character
 int mp_hal_stdin_rx_chr(void) {
-    int c;
-    while (((c = pbdrv_uart_debug_get_char()) == -1) && (c = pbdrv_usb_get_char()) == -1) {
-        MICROPY_EVENT_POLL_HOOK;
+    uint32_t size;
+    uint8_t c;
+
+    // wait for rx interrupt
+    while (size = 1, pbsys_host_stdin_read(&c, &size) != PBIO_SUCCESS) {
+        MICROPY_EVENT_POLL_HOOK
     }
+
     return c;
 }
 
-extern uint32_t pbdrv_usb_write(const uint8_t *data, uint32_t size);
-
+// Send string of given length
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
-    pbdrv_uart_debug_printf("%.*s", len, str);
+    size_t remaining = len;
 
-    uint32_t done = 0;
-    while (done < len) {
-        done += pbdrv_usb_write((uint8_t *)str + done, len - done);
-        MICROPY_VM_HOOK_LOOP;
-    }
+    while (remaining) {
+        uint32_t size = remaining;
+        pbio_error_t err = pbsys_host_stdout_write((const uint8_t *)str, &size);
+        if (err == PBIO_SUCCESS) {
+            str += size;
+            remaining -= size;
+        } else if (err != PBIO_ERROR_AGAIN) {
+            // Ignoring error for now. This means stdout is lost if Bluetooth/USB
+            // is disconnected.
+            return len - remaining;
+        }
 
-    while (!pbdrv_uart_debug_is_done()) {
-        MICROPY_VM_HOOK_LOOP;
+        MICROPY_EVENT_POLL_HOOK
     }
 
     return len;
 }
 
-extern void pbdrv_usb_tx_flush(void);
-
 void mp_hal_stdout_tx_flush(void) {
-    pbdrv_usb_tx_flush();
+    while (!pbsys_host_tx_is_idle()) {
+        MICROPY_EVENT_POLL_HOOK
+    }
 }

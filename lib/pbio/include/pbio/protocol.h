@@ -427,6 +427,44 @@ extern const uint8_t pbio_nus_tx_char_uuid[];
 /** USB bDeviceProtocol for Pybricks hubs */
 #define PBIO_PYBRICKS_USB_DEVICE_PROTOCOL 0xF5
 
+/** USB bRequest for Pybricks class-specific requests */
+enum {
+    /** Retrieve GATT characteristics */
+    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT = 0x01,
+    /** Retrieve Pybricks characteristics */
+    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS = 0x02,
+};
+
+// NOTE: These enums values are sent over the wire, so cannot be changed. Also,
+// 0 is skipped to avoid a zeroed buffer from being misinterpreted as a message.
+
+/** Hub to host messages via the Pybricks interface IN endpoint. */
+enum {
+    /**
+     * Analog of BLE status response. Emitted in response to every OUT message
+     * received.
+     */
+    PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
+    /**Analog to BLE notification. Only emitted if subscribed. */
+    PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
+};
+
+/** Host to hub messages via the Pybricks USB interface OUT endpoint. */
+enum {
+    /** Analog of BLE Client Characteristic Configuration Descriptor (CCCD). */
+    PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
+    /** Analog of BLE Client Characteristic Write with response. */
+    PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
+};
+
+/**
+ * Size of USB messages for Pybricks USB interface.
+ *
+ * USB has one extra byte header for a message type discriminator
+ * compared to BLE messages.
+ */
+#define PBIO_PYBRICKS_USB_MESSAGE_SIZE(n) (1 + n)
+
 #endif // _PBIO_PROTOCOL_H_
 
 /** @} */
