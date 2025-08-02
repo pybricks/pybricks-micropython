@@ -1132,7 +1132,7 @@ unsigned int dmaTxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 	if(state == DMA_TX_COMPLETED)
 		while ((HWREGH(usbInstance->usbBaseAddress + ulRegister) & 0x2) == 0x02);
 
-	CP15ICacheFlushBuff((unsigned int)completed_bd->buffAdd, sizeof(completed_bd->buffAdd));
+	CP15DCacheFlushBuff((unsigned int)completed_bd->buffAdd, sizeof(completed_bd->buffAdd));
 
 	cppiDmaFreenBuffer((unsigned int *)completed_bd->buffAdd);
 
@@ -1207,13 +1207,13 @@ unsigned int dmaRxCompletion(unsigned short usbDevInst, unsigned int ulEndpoint 
 												->rxEndPoint[ulEndpoint].complettionq);
 
 	/*Fush the cache to update the BD */
-	CP15ICacheFlushBuff((unsigned int)rx_bd, sizeof(hostPacketDesc));
+	CP15DCacheFlushBuff((unsigned int)rx_bd, sizeof(hostPacketDesc));
 
 	bufferAdd = rx_bd->buffAdd;
 	length = rx_bd->buffLength;
 
 	/*Flush the cache to update the buffer */
-	CP15ICacheFlushBuff(bufferAdd, length);
+	CP15DCacheFlushBuff(bufferAdd, length);
 
 	putFreeBd(rx_bd);
 
