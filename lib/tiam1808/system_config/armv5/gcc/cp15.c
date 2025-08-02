@@ -209,6 +209,16 @@ void CP15DCacheCleanBuff(unsigned int bufPtr, unsigned int size)
 }
 
 /**
+ * \brief   This function drains the CPU write buffer and acts as a data memory barrier.
+ */
+void CP15DrainWriteBuffer(void)
+{
+    __asm("    mov     r0, #0\n\t"
+          "    mcr     p15, #0, r0, c7, c10, #4"
+          ::: "r0");
+}
+
+/**
  * \brief     This API Configures translation table base register with
  *            with page table starting address.
  *
