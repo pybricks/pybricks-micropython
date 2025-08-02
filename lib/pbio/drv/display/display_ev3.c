@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbdrv/cache.h>
 #include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
 
@@ -362,6 +363,8 @@ void pbdrv_display_ev3_spi1_tx_complete(uint32_t status) {
 void pbdrv_display_st7586s_write_data_begin(uint8_t *data, uint32_t size) {
     spi_status = SPI_STATUS_WAIT;
     pbdrv_gpio_out_low(&pin_lcd_cs);
+
+    pbdrv_cache_prepare_before_dma(data, size);
 
     // Parameter object must be volatile since it is copied byte-by-byte in the
     // TI API, causing it to be optimized out.

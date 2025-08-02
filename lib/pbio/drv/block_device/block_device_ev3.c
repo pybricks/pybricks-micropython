@@ -34,6 +34,7 @@
 #include "block_device_ev3.h"
 
 #include <pbdrv/block_device.h>
+#include <pbdrv/cache.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/gpio.h>
@@ -93,17 +94,27 @@ enum {
 static struct {
     /** HAL Transfer status */
     volatile spi_status_t status;
-    // This is used when SPI only needs to receive. It should always stay as 0.
-    uint8_t tx_dummy_byte;
-    // This is used when received data is to be discarded. Its value should be ignored.
-    uint8_t rx_dummy_byte;
+    // This stores the RX buffer address so that we clean the cache when DMA is complete
+    uint32_t rx_user_buf_addr;
+    // This stores the RX buffer size;
+    uint32_t rx_user_buf_sz;
+} spi_dev;
+
+/**
+ * SPI small DMA buffers
+ */
+static struct {
     // This is used when transmitting so that the last byte clears CSHOLD.
     uint32_t tx_last_word;
     // This is used to hold the initial command to the SPI peripheral.
     uint8_t spi_cmd_buf_tx[SPI_CMD_BUF_SZ];
     // This is used to hold the replies to commands to the SPI peripheral.
     uint8_t spi_cmd_buf_rx[SPI_CMD_BUF_SZ];
-} spi_dev;
+    // This is used when SPI only needs to receive. It should always stay as 0.
+    uint8_t tx_dummy_byte;
+    // This is used when received data is to be discarded. Its value should be ignored.
+    uint8_t rx_dummy_byte;
+} spi_dev_bufs PBDRV_DMA_BUF;
 
 static uint32_t last_spi_dma_complete_time;
 
@@ -114,6 +125,10 @@ static void spi_dma_complete(void) {
     }
     SPIIntDisable(SOC_SPI_0_REGS, SPI_DMA_REQUEST_ENA_INT);
     pbio_os_request_poll();
+    pbdrv_cache_prepare_after_dma(&spi_dev_bufs, sizeof(spi_dev_bufs));
+    if (spi_dev.rx_user_buf_addr && spi_dev.rx_user_buf_sz) {
+        pbdrv_cache_prepare_after_dma((void *)spi_dev.rx_user_buf_addr, spi_dev.rx_user_buf_sz);
+    }
     last_spi_dma_complete_time = pbdrv_clock_get_ms();
 }
 
@@ -153,7 +168,7 @@ static void spi0_isr(void) {
             continue;
         }
 
-        spi_dev.spi_cmd_buf_rx[0] = HWREG(SOC_SPI_0_REGS + SPI_SPIBUF);
+        spi_dev_bufs.spi_cmd_buf_rx[0] = HWREG(SOC_SPI_0_REGS + SPI_SPIBUF);
         spi_dev.status &= ~SPI_STATUS_WAIT_RX;
         SPIIntDisable(SOC_SPI_0_REGS, SPI_RECV_INT);
         pbio_os_request_poll();
@@ -351,19 +366,24 @@ static pbio_error_t spi_begin_for_flash(
 
         spi_dev.status = SPI_STATUS_WAIT_RX;
 
+        // Prevent write to spi_dev.status from being reordered
+        pbdrv_compiler_memory_barrier();
+
         uint32_t tx = spi0_last_dat1_for_flash(cmd[0]);
         SPIIntEnable(SOC_SPI_0_REGS, SPI_RECV_INT);
         HWREG(SOC_SPI_0_REGS + SPI_SPIDAT1) = tx;
     } else {
-        memcpy(&spi_dev.spi_cmd_buf_tx, cmd, cmd_len);
+        memcpy(spi_dev_bufs.spi_cmd_buf_tx, cmd, cmd_len);
+        spi_dev.rx_user_buf_addr = (uint32_t)user_data_rx;
+        spi_dev.rx_user_buf_sz = user_data_len;
 
         if (user_data_len == 0) {
             // Only a command, no user data
 
-            spi_dev.tx_last_word = spi0_last_dat1_for_flash(cmd[cmd_len - 1]);
+            spi_dev_bufs.tx_last_word = spi0_last_dat1_for_flash(cmd[cmd_len - 1]);
 
             // TX everything except last byte
-            ps.p.srcAddr = (unsigned int)(&spi_dev.spi_cmd_buf_tx);
+            ps.p.srcAddr = (unsigned int)(&spi_dev_bufs.spi_cmd_buf_tx);
             ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len - 1;
@@ -378,7 +398,7 @@ static pbio_error_t spi_begin_for_flash(
             edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
 
             // TX last byte, clearing CSHOLD
-            ps.p.srcAddr = (unsigned int)(&spi_dev.tx_last_word);
+            ps.p.srcAddr = (unsigned int)(&spi_dev_bufs.tx_last_word);
             ps.p.aCnt = 4;
             ps.p.bCnt = 1;
             ps.p.linkAddr = 0xffff;
@@ -387,7 +407,7 @@ static pbio_error_t spi_begin_for_flash(
 
             // RX all bytes
             ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
-            ps.p.destAddr = (unsigned int)(&spi_dev.spi_cmd_buf_rx);
+            ps.p.destAddr = (unsigned int)(&spi_dev_bufs.spi_cmd_buf_rx);
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len;
             ps.p.cCnt = 1;
@@ -403,7 +423,7 @@ static pbio_error_t spi_begin_for_flash(
             // Command *and* user data
 
             // TX the command
-            ps.p.srcAddr = (unsigned int)(&spi_dev.spi_cmd_buf_tx);
+            ps.p.srcAddr = (unsigned int)(&spi_dev_bufs.spi_cmd_buf_tx);
             ps.p.destAddr = SOC_SPI_0_REGS + SPI_SPIDAT1;
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len;
@@ -418,7 +438,8 @@ static pbio_error_t spi_begin_for_flash(
             edma3_set_param(EDMA3_CHA_SPI0_TX, &ps);
 
             if (user_data_tx) {
-                spi_dev.tx_last_word = spi0_last_dat1_for_flash(user_data_tx[user_data_len - 1]);
+                pbdrv_cache_prepare_before_dma(user_data_tx, user_data_len);
+                spi_dev_bufs.tx_last_word = spi0_last_dat1_for_flash(user_data_tx[user_data_len - 1]);
 
                 // TX all but the last byte
                 ps.p.srcAddr = (unsigned int)(user_data_tx);
@@ -427,24 +448,24 @@ static pbio_error_t spi_begin_for_flash(
                 edma3_set_param(126, &ps);
 
                 // TX the last byte, clearing CSHOLD
-                ps.p.srcAddr = (unsigned int)(&spi_dev.tx_last_word);
+                ps.p.srcAddr = (unsigned int)(&spi_dev_bufs.tx_last_word);
                 ps.p.aCnt = 4;
                 ps.p.bCnt = 1;
                 ps.p.linkAddr = 0xffff;
                 ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_TX << EDMA3CC_OPT_TCC_SHIFT);
                 edma3_set_param(127, &ps);
             } else {
-                spi_dev.tx_last_word = spi0_last_dat1_for_flash(0);
+                spi_dev_bufs.tx_last_word = spi0_last_dat1_for_flash(0);
 
                 // TX all but the last byte
-                ps.p.srcAddr = (unsigned int)(&spi_dev.tx_dummy_byte);
+                ps.p.srcAddr = (unsigned int)(&spi_dev_bufs.tx_dummy_byte);
                 ps.p.bCnt = user_data_len - 1;
                 ps.p.srcBIdx = 0;
                 ps.p.linkAddr = 127 * 32;
                 edma3_set_param(126, &ps);
 
                 // TX the last byte, clearing CSHOLD
-                ps.p.srcAddr = (unsigned int)(&spi_dev.tx_last_word);
+                ps.p.srcAddr = (unsigned int)(&spi_dev_bufs.tx_last_word);
                 ps.p.aCnt = 4;
                 ps.p.bCnt = 1;
                 ps.p.linkAddr = 0xffff;
@@ -454,7 +475,7 @@ static pbio_error_t spi_begin_for_flash(
 
             // RX the command
             ps.p.srcAddr = SOC_SPI_0_REGS + SPI_SPIBUF;
-            ps.p.destAddr = (unsigned int)(&spi_dev.spi_cmd_buf_rx);
+            ps.p.destAddr = (unsigned int)(&spi_dev_bufs.spi_cmd_buf_rx);
             ps.p.aCnt = 1;
             ps.p.bCnt = cmd_len;
             ps.p.cCnt = 1;
@@ -476,7 +497,7 @@ static pbio_error_t spi_begin_for_flash(
                 edma3_set_param(125, &ps);
             } else {
                 // RX dummy
-                ps.p.destAddr = (unsigned int)(&spi_dev.rx_dummy_byte);
+                ps.p.destAddr = (unsigned int)(&spi_dev_bufs.rx_dummy_byte);
                 ps.p.bCnt = user_data_len;
                 ps.p.destBIdx = 0;
                 ps.p.linkAddr = 0xffff;
@@ -487,8 +508,9 @@ static pbio_error_t spi_begin_for_flash(
 
         spi_dev.status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
 
-        // TODO: eventually needs DMA cache management
-        pbdrv_compiler_memory_barrier();
+        // Make sure writes to tx buffer leave cache
+        // (we already flush the user buffer earlier)
+        pbdrv_cache_prepare_before_dma(&spi_dev_bufs, sizeof(spi_dev_bufs));
 
         EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
         EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_RX, EDMA3_TRIG_MODE_EVENT);
@@ -600,7 +622,7 @@ static pbio_error_t flash_wait_write(pbio_os_state_t *state) {
         }
         PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
 
-        status = spi_dev.spi_cmd_buf_rx[1];
+        status = spi_dev_bufs.spi_cmd_buf_rx[1];
     } while (status & FLASH_STATUS_BUSY);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
@@ -722,7 +744,7 @@ static const uint32_t channel_cmd[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_
     MANUAL_ADC_CHANNEL(15),
     MANUAL_ADC_CHANNEL(15),
 };
-static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
+static volatile uint16_t channel_data[PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES] PBDRV_DMA_BUF;
 
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch >= PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS) {
@@ -733,8 +755,8 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     uint16_t a, b;
     do {
         // Values for the requested channel are received several samples later.
-        a = channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
-        b = channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES];
+        a = PBDRV_UNCACHED(channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES]);
+        b = PBDRV_UNCACHED(channel_data[ch + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES]);
     } while (a != b);
 
     // Mask the data to 10 bits
@@ -804,9 +826,14 @@ static pbio_error_t pbdrv_block_device_ev3_spi_begin_for_adc(const uint32_t *cmd
     ps.p.opt = EDMA3CC_OPT_TCINTEN | (EDMA3_CHA_SPI0_RX << EDMA3CC_OPT_TCC_SHIFT);
     edma3_set_param(EDMA3_CHA_SPI0_RX, &ps);
 
+    // We play dangerously and don't flush the cache for the ADC.
+    // The commands are const, and the values are read through an uncached mapping.
+    spi_dev.rx_user_buf_addr = 0;
+    spi_dev.rx_user_buf_sz = 0;
+
     spi_dev.status = SPI_STATUS_WAIT_TX | SPI_STATUS_WAIT_RX;
 
-    // TODO: eventually needs DMA cache management
+    // Prevent write to spi_dev.status from being reordered
     pbdrv_compiler_memory_barrier();
 
     EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, EDMA3_CHA_SPI0_TX, EDMA3_TRIG_MODE_EVENT);
@@ -836,7 +863,7 @@ static struct {
         pbsys_storage_data_map_t data_map;
         uint8_t data[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
     };
-} ramdisk __attribute__((section(".noinit"), used));
+} ramdisk __attribute__((aligned(PBDRV_CACHE_LINE_SZ), section(".noinit"), used));
 
 uint32_t pbdrv_block_device_get_writable_size(void) {
     return PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE - sizeof(ramdisk.saved_size);
@@ -869,7 +896,7 @@ pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
         return err;
     }
     PBIO_OS_AWAIT_WHILE(state, spi_dev.status & SPI_STATUS_WAIT_ANY);
-    if (memcmp(device_id, &spi_dev.spi_cmd_buf_rx[1], sizeof(device_id))) {
+    if (memcmp(device_id, &spi_dev_bufs.spi_cmd_buf_rx[1], sizeof(device_id))) {
         return PBIO_ERROR_FAILED;
     }
 

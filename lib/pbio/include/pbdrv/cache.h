@@ -24,6 +24,6 @@ void pbdrv_cache_prepare_after_dma(const void *buf, size_t sz);
 #define PBDRV_CACHE_LINE_SZ         32
 
 // Align data to a cache line, which is needed for clean RX DMA
-#define PBDRV_CACHE_LINE_ALIGNED    __attribute__((aligned(PBDRV_CACHE_LINE_SZ)))
+#define PBDRV_DMA_BUF               __attribute__((aligned(PBDRV_CACHE_LINE_SZ), section(".dma")))
 
 #endif

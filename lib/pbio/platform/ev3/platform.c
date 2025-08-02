@@ -721,8 +721,8 @@ static void mmu_init(void) {
     // Off-chip main DDR RAM
     for (unsigned int i = 0; i < SYSTEM_RAM_SZ_MB; i++) {
         uint32_t addr = 0xC0000000 + i * MMU_SECTION_SZ;
-        // TODO: Enable caching once DMA code is upgraded to handle cache
-        l1_page_table[addr >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(addr, 0, 1, 0, 0);
+        // Enable write-back caching
+        l1_page_table[addr >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(addr, 0, 1, 1, 1);
     }
     // Off-chip main DDR RAM, uncacheable mirror @ 0xD0000000
     for (unsigned int i = 0; i < SYSTEM_RAM_SZ_MB; i++) {
