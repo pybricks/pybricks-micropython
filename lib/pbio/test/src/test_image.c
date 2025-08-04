@@ -40,7 +40,8 @@ static uint8_t test_image_pixels[2][OUTER_IMAGE_HEIGHT][OUTER_IMAGE_WIDTH];
 
 static uint8_t test_image_small_pixels[SMALL_IMAGE_HEIGHT][SMALL_IMAGE_WIDTH];
 
-static void test_image_prepare_images(pbio_image_t *outer, pbio_image_t *inner, pbio_image_t *full) {
+static void test_image_prepare_images(pbio_image_t *outer, pbio_image_t
+    *inner, pbio_image_t *full) {
     memset(test_image_pixels, 0xff, sizeof(test_image_pixels));
     pbio_image_init(outer, &test_image_pixels[0][0][0], OUTER_IMAGE_WIDTH,
         OUTER_IMAGE_HEIGHT, OUTER_IMAGE_WIDTH);
@@ -88,7 +89,8 @@ static bool test_image_clipping_correct(void) {
     return true;
 }
 
-static void test_image_write_pgm(const char *filename, int width, int height, uint8_t *pixels) {
+static void test_image_write_pgm(const char *filename, int width, int height,
+    uint8_t *pixels) {
     FILE *f;
 
     f = fopen(filename, "wb");
@@ -165,6 +167,102 @@ static void test_image_fill(void *env) {
     test_image_prepare_images(&outer, &inner, &full);
     pbio_image_fill(&inner, 1);
     pbio_image_fill(&full, 1);
+    tt_want_clipping_correct();
+}
+
+static void test_image_draw_image(void *env) {
+    pbio_image_t small, outer, inner, full;
+    pbio_image_t stamp, large_stamp;
+
+    pbio_image_init(&stamp, (uint8_t *)
+        " +-+ "
+        " | | "
+        "====="
+        "STAMP", 5, 4, 5);
+    pbio_image_init(&large_stamp, (uint8_t *)
+        "STAMP stamp ST.......mp STAMP stamp", 27, 8, 1);
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_image(&small, &stamp, 1, 1);
+    pbio_image_draw_image(&small, &stamp, 5, 3);
+    pbio_image_draw_image(&small, &stamp, 12, 0);
+    tt_want_small_image(
+        "............ +-+ ..."
+        ". +-+ ...... | | ..."
+        ". | | ......=====..."
+        ".==== +-+ ..STAMP..."
+        ".STAM | | .........."
+        ".....=====.........."
+        ".....STAMP..........");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_image_transparent(&small, &stamp, 1, 1, ' ');
+    pbio_image_draw_image_transparent(&small, &stamp, 5, 3, ' ');
+    pbio_image_draw_image_transparent(&small, &stamp, 12, 0, ' ');
+    pbio_image_draw_image_transparent(&small, &stamp, 12, 2, ' ');
+    tt_want_small_image(
+        ".............+-+...."
+        "..+-+........|.|...."
+        "..|.|.......=+-+=..."
+        ".=====+-+...S|A|P..."
+        ".STAMP|.|...=====..."
+        ".....=====..STAMP..."
+        ".....STAMP..........");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_image(&small, &large_stamp, -3, 0);
+    tt_want_small_image(
+        "MP stamp ST.......mp"
+        "P stamp ST.......mp "
+        " stamp ST.......mp S"
+        "stamp ST.......mp ST"
+        "tamp ST.......mp STA"
+        "amp ST.......mp STAM"
+        "mp ST.......mp STAMP");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % (OUTER_IMAGE_WIDTH - 4) + 2;
+        int y = rand() % (OUTER_IMAGE_HEIGHT - 4) + 2;
+        if (i % 2) {
+            pbio_image_draw_image(&inner, &stamp,
+                x - INNER_IMAGE_X, y - INNER_IMAGE_Y);
+            pbio_image_draw_image(&full, &stamp, x, y);
+        } else {
+            pbio_image_draw_image_transparent(&inner, &stamp,
+                x - INNER_IMAGE_X, y - INNER_IMAGE_Y, ' ');
+            pbio_image_draw_image_transparent(&full, &stamp, x, y, ' ');
+        }
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_draw_pixel(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_pixel(&small, 1, 1, '*');
+    pbio_image_draw_pixel(&small, 18, 5, '#');
+    tt_want_small_image(
+        "...................."
+        ".*.................."
+        "...................."
+        "...................."
+        "...................."
+        "..................#."
+        "....................");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % (OUTER_IMAGE_WIDTH - 4) + 2;
+        int y = rand() % (OUTER_IMAGE_HEIGHT - 4) + 2;
+        uint8_t value = rand() & 0xff;
+        pbio_image_draw_pixel(&inner, x - INNER_IMAGE_X, y - INNER_IMAGE_Y,
+            value);
+        pbio_image_draw_pixel(&full, x, y, value);
+    }
     tt_want_clipping_correct();
 }
 
@@ -384,16 +482,354 @@ static void test_image_draw_thick_line(void *env) {
         int y2 = rand() % (OUTER_IMAGE_HEIGHT - 4) + 2;
         int thickness = rand() % 5 + 1;
         uint8_t value = rand() & 0xff;
-        pbio_image_draw_thick_line(&inner, x1 - INNER_IMAGE_X, y1 - INNER_IMAGE_Y,
-            x2 - INNER_IMAGE_X, y2 - INNER_IMAGE_Y, thickness, value);
+        pbio_image_draw_thick_line(&inner, x1 - INNER_IMAGE_X,
+            y1 - INNER_IMAGE_Y, x2 - INNER_IMAGE_X, y2 - INNER_IMAGE_Y,
+            thickness, value);
         pbio_image_draw_thick_line(&full, x1, y1, x2, y2, thickness, value);
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_draw_rect(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rect(&small, 1, 1, 18, 5, '*');
+    tt_want_small_image(
+        "...................."
+        ".******************."
+        ".*................*."
+        ".*................*."
+        ".*................*."
+        ".******************."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rect(&small, 1, 1, 18, 1, '*');
+    pbio_image_draw_rect(&small, 1, 3, 18, 2, '#');
+    pbio_image_draw_rect(&small, 10, 1, 1, 6, '+');
+    pbio_image_draw_rect(&small, 13, 1, 2, 6, '/');
+    tt_want_small_image(
+        "...................."
+        ".*********+**//****."
+        "..........+..//....."
+        ".#########+##//####."
+        ".#########+##//####."
+        "..........+..//....."
+        "..........+..//.....");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % OUTER_IMAGE_WIDTH;
+        int y = rand() % OUTER_IMAGE_HEIGHT;
+        int width = rand() % (OUTER_IMAGE_WIDTH / 5);
+        int height = rand() % (OUTER_IMAGE_HEIGHT / 5);
+        uint8_t value = rand() & 0xff;
+        pbio_image_draw_rect(&inner, x - INNER_IMAGE_X, y - INNER_IMAGE_Y,
+            width, height, value);
+        pbio_image_draw_rect(&full, x, y, width, height, value);
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_fill_rect(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rect(&small, 1, 1, 18, 5, '*');
+    tt_want_small_image(
+        "...................."
+        ".******************."
+        ".******************."
+        ".******************."
+        ".******************."
+        ".******************."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rect(&small, 1, 1, 18, 1, '*');
+    pbio_image_fill_rect(&small, 1, 3, 18, 2, '#');
+    pbio_image_fill_rect(&small, 10, 1, 1, 6, '+');
+    pbio_image_fill_rect(&small, 13, 1, 2, 6, '/');
+    tt_want_small_image(
+        "...................."
+        ".*********+**//****."
+        "..........+..//....."
+        ".#########+##//####."
+        ".#########+##//####."
+        "..........+..//....."
+        "..........+..//.....");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % OUTER_IMAGE_WIDTH;
+        int y = rand() % OUTER_IMAGE_HEIGHT;
+        int width = rand() % (OUTER_IMAGE_WIDTH / 5);
+        int height = rand() % (OUTER_IMAGE_HEIGHT / 5);
+        uint8_t value = rand() & 0xff;
+        pbio_image_fill_rect(&inner, x - INNER_IMAGE_X, y - INNER_IMAGE_Y,
+            width, height, value);
+        pbio_image_fill_rect(&full, x, y, width, height, value);
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_draw_rounded_rect(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rounded_rect(&small, 1, 1, 18, 5, 1, '*');
+    tt_want_small_image(
+        "...................."
+        "..****************.."
+        ".*................*."
+        ".*................*."
+        ".*................*."
+        "..****************.."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rounded_rect(&small, 1, 1, 18, 5, 2, '*');
+    tt_want_small_image(
+        "...................."
+        "...**************..."
+        "..*..............*.."
+        ".*................*."
+        "..*..............*.."
+        "...**************..."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rounded_rect(&small, 0, 0, 20, 7, 3, '*');
+    tt_want_small_image(
+        "...**************..."
+        ".**..............**."
+        ".*................*."
+        "*..................*"
+        ".*................*."
+        ".**..............**."
+        "...**************...");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rounded_rect(&small, 0, 0, 40, 40, 6, '*');
+    tt_want_small_image(
+        "......**************"
+        "...***.............."
+        "..*................."
+        ".*.................."
+        ".*.................."
+        ".*.................."
+        "*...................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_rounded_rect(&small, 1, 1, 18, 1, 1, '*');
+    pbio_image_draw_rounded_rect(&small, 1, 3, 18, 2, 1, '#');
+    pbio_image_draw_rounded_rect(&small, 10, 1, 1, 6, 1, '+');
+    pbio_image_draw_rounded_rect(&small, 13, 1, 2, 6, 1, '/');
+    tt_want_small_image(
+        "...................."
+        ".*********+**//****."
+        "..........+..//....."
+        ".#########+##//####."
+        ".#########+##//####."
+        "..........+..//....."
+        "..........+..//.....");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % OUTER_IMAGE_WIDTH;
+        int y = rand() % OUTER_IMAGE_HEIGHT;
+        int width = rand() % (OUTER_IMAGE_WIDTH / 5);
+        int height = rand() % (OUTER_IMAGE_HEIGHT / 5);
+        int r = rand() % (OUTER_IMAGE_HEIGHT / 25);
+        uint8_t value = rand() & 0xff;
+        pbio_image_draw_rounded_rect(&inner, x - INNER_IMAGE_X,
+            y - INNER_IMAGE_Y, width, height, r, value);
+        pbio_image_draw_rounded_rect(&full, x, y, width, height, r, value);
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_fill_rounded_rect(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rounded_rect(&small, 1, 1, 18, 5, 1, '*');
+    tt_want_small_image(
+        "...................."
+        "..****************.."
+        ".******************."
+        ".******************."
+        ".******************."
+        "..****************.."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rounded_rect(&small, 1, 1, 18, 5, 10, '*');
+    tt_want_small_image(
+        "...................."
+        "...**************..."
+        "..****************.."
+        ".******************."
+        "..****************.."
+        "...**************..."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rounded_rect(&small, 1, 1, 18, 5, 2, '*');
+    tt_want_small_image(
+        "...................."
+        "...**************..."
+        "..****************.."
+        ".******************."
+        "..****************.."
+        "...**************..."
+        "....................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rounded_rect(&small, 0, 0, 20, 7, 3, '*');
+    tt_want_small_image(
+        "...**************..."
+        ".******************."
+        ".******************."
+        "********************"
+        ".******************."
+        ".******************."
+        "...**************...");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rounded_rect(&small, 0, 0, 40, 40, 6, '*');
+    tt_want_small_image(
+        "......**************"
+        "...*****************"
+        "..******************"
+        ".*******************"
+        ".*******************"
+        ".*******************"
+        "********************");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_rounded_rect(&small, 1, 1, 18, 1, 1, '*');
+    pbio_image_fill_rounded_rect(&small, 1, 3, 18, 2, 1, '#');
+    pbio_image_fill_rounded_rect(&small, 10, 1, 1, 6, 1, '+');
+    pbio_image_fill_rounded_rect(&small, 13, 1, 2, 6, 1, '/');
+    tt_want_small_image(
+        "...................."
+        ".*********+**//****."
+        "..........+..//....."
+        ".#########+##//####."
+        ".#########+##//####."
+        "..........+..//....."
+        "..........+..//.....");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % OUTER_IMAGE_WIDTH;
+        int y = rand() % OUTER_IMAGE_HEIGHT;
+        int width = rand() % (OUTER_IMAGE_WIDTH / 5);
+        int height = rand() % (OUTER_IMAGE_HEIGHT / 5);
+        int r = rand() % (OUTER_IMAGE_HEIGHT / 25);
+        uint8_t value = rand() & 0xff;
+        pbio_image_fill_rounded_rect(&inner, x - INNER_IMAGE_X,
+            y - INNER_IMAGE_Y, width, height, r, value);
+        pbio_image_fill_rounded_rect(&full, x, y, width, height, r, value);
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_draw_circle(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_circle(&small, 3, 3, 3, '*');
+    tt_want_small_image(
+        "...*................"
+        ".**.**.............."
+        ".*...*.............."
+        "*.....*............."
+        ".*...*.............."
+        ".**.**.............."
+        "...*................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_circle(&small, 6, 6, 6, '*');
+    tt_want_small_image(
+        "......*............."
+        "...***.***.........."
+        "..*.......*........."
+        ".*.........*........"
+        ".*.........*........"
+        ".*.........*........"
+        "*...........*.......");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % OUTER_IMAGE_WIDTH;
+        int y = rand() % OUTER_IMAGE_HEIGHT;
+        int r = rand() % (OUTER_IMAGE_HEIGHT / 5);
+        uint8_t value = rand() & 0xff;
+        pbio_image_draw_circle(&inner, x - INNER_IMAGE_X,
+            y - INNER_IMAGE_Y, r, value);
+        pbio_image_draw_circle(&full, x, y, r, value);
+    }
+    tt_want_clipping_correct();
+}
+
+static void test_image_fill_circle(void *env) {
+    pbio_image_t small, outer, inner, full;
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_circle(&small, 3, 3, 3, '*');
+    tt_want_small_image(
+        "...*................"
+        ".*****.............."
+        ".*****.............."
+        "*******............."
+        ".*****.............."
+        ".*****.............."
+        "...*................");
+
+    test_image_prepare_small_image(&small);
+    pbio_image_fill_circle(&small, 6, 6, 6, '*');
+    tt_want_small_image(
+        "......*............."
+        "...*******.........."
+        "..*********........."
+        ".***********........"
+        ".***********........"
+        ".***********........"
+        "*************.......");
+
+    test_image_prepare_images(&outer, &inner, &full);
+    srand(1234);
+    for (int i = 0; i < 10000; i++) {
+        int x = rand() % OUTER_IMAGE_WIDTH;
+        int y = rand() % OUTER_IMAGE_HEIGHT;
+        int r = rand() % (OUTER_IMAGE_HEIGHT / 5);
+        uint8_t value = rand() & 0xff;
+        pbio_image_fill_circle(&inner, x - INNER_IMAGE_X,
+            y - INNER_IMAGE_Y, r, value);
+        pbio_image_fill_circle(&full, x, y, r, value);
     }
     tt_want_clipping_correct();
 }
 
 struct testcase_t pbio_image_tests[] = {
     PBIO_TEST(test_image_fill),
+    PBIO_TEST(test_image_draw_image),
+    PBIO_TEST(test_image_draw_pixel),
     PBIO_TEST(test_image_draw_line),
     PBIO_TEST(test_image_draw_thick_line),
+    PBIO_TEST(test_image_draw_rect),
+    PBIO_TEST(test_image_fill_rect),
+    PBIO_TEST(test_image_draw_rounded_rect),
+    PBIO_TEST(test_image_fill_rounded_rect),
+    PBIO_TEST(test_image_draw_circle),
+    PBIO_TEST(test_image_fill_circle),
     END_OF_TESTCASES
 };
