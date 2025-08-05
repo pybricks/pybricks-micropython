@@ -78,46 +78,6 @@
 #define PRU_SUART_PRU0_DELAY_OFFSET             (0x0086)
 #define PRU_SUART_PRU0_IDLE_TIMEOUT_OFFSET      (0x0088)
 
-/* ********* PRU 1 Macros ************* */
-#define PRU_SUART_PRU1_CH0_OFFSET               (0x2000)
-/** Channel 0 */
-
-#define PRU_SUART_PRU1_CH1_OFFSET               (0x2010)
-/** Channel 1 */
-
-#define PRU_SUART_PRU1_CH2_OFFSET               (0x2020)
-/** Channel 2 */
-
-#define PRU_SUART_PRU1_CH3_OFFSET               (0x2030)
-/** Channel 3 */
-
-#define PRU_SUART_PRU1_CH4_OFFSET               (0x2040)
-/** Channel 4 */
-
-#define PRU_SUART_PRU1_CH5_OFFSET               (0x2050)
-/** Channel 5 */
-
-#define PRU_SUART_PRU1_CH6_OFFSET               (0x2060)
-/** Channel 6 */
-
-#define PRU_SUART_PRU1_CH7_OFFSET               (0x2070)
-/** Channel 7 */
-
-#define PRU_SUART_PRU1_IMR_OFFSET               (0x2080)
-/** Interrupt Mask Register */
-
-#define PRU_SUART_PRU1_ISR_OFFSET               (0x2082)
-/** Interrupt Status Register */
-
-#define PRU_SUART_PRU1_ID_ADDR                  (0x2084)
-/** PRU ID Register */
-
-#define PRU_SUART_PRU1_RX_TX_MODE               (0x2085)
-
-#define PRU_SUART_PRU1_DELAY_OFFSET             (0x2086)
-
-#define PRU_SUART_PRU1_IDLE_TIMEOUT_OFFSET      (0x2088)
-
 
 /* SUART Channel Control Register bit descriptions */
 #define PRU_SUART_CH_CTRL_MODE_SHIFT            0x0000

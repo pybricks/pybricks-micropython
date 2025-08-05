@@ -477,15 +477,8 @@ int16_t pru_softuart_setbaud
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
 
 
@@ -552,15 +545,8 @@ int16_t pru_softuart_setdatabits
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
 
     if (txDataBits != 0) {
@@ -632,15 +618,8 @@ int16_t pru_softuart_setconfig(suart_handle hUart, suart_config *configUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
     /* Configuring the Transmit part of the given UART */
     if (configUart->TXSerializer != PRU_SUART_SERIALIZER_NONE) {
@@ -755,15 +734,8 @@ int16_t pru_softuart_getTxDataLen(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
     /* Transmit channel number is (UartNum * 2) - 2  */
 
@@ -795,15 +767,8 @@ int16_t pru_softuart_getRxDataLen(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
     chNum++;
 
@@ -843,15 +808,8 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
     /* Configuring the Transmit part of the given UART */
     /* Configuring TX serializer  */
@@ -944,17 +902,9 @@ int16_t pru_softuart_write
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        pru_num = hUart->uartNum;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-        pru_num = hUart->uartNum;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
+    pru_num = hUart->uartNum;
 
     /* Writing data length to SUART channel register */
     offset =
@@ -1010,17 +960,9 @@ int16_t pru_softuart_read
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        pru_num = hUart->uartNum;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-        pru_num = hUart->uartNum;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
+    pru_num = hUart->uartNum;
     chNum++;
 
     /* Writing data length to SUART channel register */
@@ -1088,15 +1030,8 @@ int16_t pru_softuart_read_data(
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     chNum++;
 
     /* Get the data pointer from channel RX data pointer */
@@ -1201,15 +1136,8 @@ int16_t pru_softuart_stopReceive(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     chNum++;
 
     /* read the existing value of status flag */
@@ -1253,15 +1181,8 @@ int16_t pru_softuart_getTxStatus(suart_handle hUart) {
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
     offset =
         pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -1285,15 +1206,8 @@ int16_t pru_softuart_clrTxStatus(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
 
     offset =
         pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -1322,15 +1236,8 @@ int16_t pru_softuart_getRxStatus(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     chNum++;
 
     offset =
@@ -1359,15 +1266,8 @@ int16_t pru_softuart_clrRxFifo(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     chNum++;
 
     /* Reset the number of bytes read into the FIFO */
@@ -1414,15 +1314,8 @@ int16_t pru_softuart_clrRxStatus(suart_handle hUart) {
     /* channel starts from 0 and uart instance starts from 1 */
     chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (hUart->uartNum <= 4) {
-        /* PRU0 */
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chNum -= 8;
-    }
+    /* PRU0 */
+    pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     chNum++;
 
     offset =
@@ -1503,15 +1396,8 @@ int32_t pru_intr_clr_isrstatus(uint16_t uartNum, uint32_t txrxmode) {
     /* channel starts from 0 and uart instance starts from 1 */
     chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-    if (uartNum <= 4) {
-        /* PRU0 */
-        offset = PRU_SUART_PRU0_ISR_OFFSET + 1;
-    } else {
-        /* PRU1 */
-        offset = PRU_SUART_PRU1_ISR_OFFSET + 1;
-        /* First 8 channel corresponds to PRU0 */
-        chnNum -= 8;
-    }
+    /* PRU0 */
+    offset = PRU_SUART_PRU0_ISR_OFFSET + 1;
 
     if (2 == txrxmode) {
         chnNum++;
@@ -1532,9 +1418,6 @@ int16_t suart_arm_to_pru_intr(uint16_t uartNum) {
     if ((uartNum > 0) && (uartNum <= 4)) {
         /* PRU0 SYS_EVT32 */
         u32value = 0x20;
-    } else if ((uartNum > 4) && (uartNum <= 8)) {
-        /* PRU1 SYS_EVT33 */
-        u32value = 0x21;
     } else {
         return SUART_INVALID_UART_NUM;
     }
@@ -1830,12 +1713,6 @@ int32_t suart_intr_setmask(uint16_t uartNum,
 
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         offset = PRU_SUART_PRU0_IMR_OFFSET;
-    } else if ((uartNum > 4) && (uartNum <= 8)) {
-        /* PRU1 */
-        offset = PRU_SUART_PRU1_IMR_OFFSET;
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chnNum -= 8;
     } else {
         return SUART_INVALID_UART_NUM;
     }
@@ -1940,12 +1817,6 @@ int32_t suart_intr_clrmask(uint16_t uartNum,
 
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         offset = PRU_SUART_PRU0_IMR_OFFSET;
-    } else if ((uartNum > 4) && (uartNum <= 8)) {
-        /* PRU1 */
-        offset = PRU_SUART_PRU1_IMR_OFFSET;
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chnNum -= 8;
     } else {
         return SUART_INVALID_UART_NUM;
     }
@@ -2042,11 +1913,6 @@ int32_t suart_intr_getmask(uint16_t uartNum,
     if ((uartNum > 0) && (uartNum <= 4)) {
 
         offset = PRU_SUART_PRU0_IMR_OFFSET;
-    } else if ((uartNum > 4) && (uartNum <= 8)) {
-        /* PRU1 */
-        offset = PRU_SUART_PRU1_IMR_OFFSET;
-        /* First 8 channel corresponds to PRU0 */
-        chnNum -= 8;
     } else {
         return SUART_INVALID_UART_NUM;
     }
@@ -2079,8 +1945,6 @@ static int32_t suart_set_pru_id(uint32_t pru_no) {
 
     if (0 == pru_no) {
         offset = PRU_SUART_PRU0_ID_ADDR;
-    } else if (1 == pru_no) {
-        offset = PRU_SUART_PRU1_ID_ADDR;
     } else {
         return PRU_SUART_FAILURE;
     }
