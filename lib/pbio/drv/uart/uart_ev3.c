@@ -385,17 +385,9 @@ void pbdrv_uart_init_pru(pbdrv_uart_dev_t *uart) {
 }
 
 void pbdrv_uart_init(void) {
-
     // Enabling the PSC for all UARTs
     PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_UART0, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-    PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-
-    extern uint8_t _pru0_start;
-    extern uint8_t _pru0_end;
-    uint32_t fw_size = &_pru0_end - &_pru0_start;
-    uint8_t *fw_data = &_pru0_start;
-    pbdrv_uart_ev3_pru_load_firmware(fw_data, fw_size);
 
     for (int i = 0; i < PBDRV_CONFIG_UART_EV3_NUM_UART; i++) {
         const pbdrv_uart_ev3_platform_data_t *pdata = &pbdrv_uart_ev3_platform_data[i];

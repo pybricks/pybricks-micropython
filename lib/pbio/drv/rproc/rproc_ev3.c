@@ -17,17 +17,23 @@
 #include <tiam1808/timer.h>
 
 #include "rproc_ev3.h"
+#include "../uart/uart_ev3_pru.h"
 
 volatile pbdrv_rproc_ev3_pru1_shared_ram_t pbdrv_rproc_ev3_pru1_shared_ram __attribute__((section(".shared1")));
 
 static bool pbdrv_ev3_rproc_is_ready;
 
-extern char _pru1_start;
-extern char _pru1_end;
-
 void pbdrv_rproc_init(void) {
     // Enable PRU subsystem
     PSCModuleControl(SOC_PSC_0_REGS, HW_PSC_PRU, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
+    // PRU0 initialization
+
+    extern uint8_t _pru0_start;
+    extern uint8_t _pru0_end;
+    uint32_t fw_size = &_pru0_end - &_pru0_start;
+    uint8_t *fw_data = &_pru0_start;
+    pbdrv_uart_ev3_pru_load_firmware(fw_data, fw_size);
 
     // PRU1 initialization
 
@@ -41,6 +47,8 @@ void pbdrv_rproc_init(void) {
     memset((void *)&pbdrv_rproc_ev3_pru1_shared_ram, 0, sizeof(pbdrv_rproc_ev3_pru1_shared_ram));
 
     // Enable PRU1 and load its firmware
+    extern uint8_t _pru1_start;
+    extern uint8_t _pru1_end;
     PRUSSDRVPruDisable(1);
     PRUSSDRVPruReset(1);
     unsigned int *fw_start = (unsigned int *)&_pru1_start;
