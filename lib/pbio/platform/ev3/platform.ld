@@ -7,8 +7,7 @@ MEMORY
 {
     SRAM_PRU0  (rw)  : ORIGIN = 0x80000000, LENGTH = 64K
     SRAM_PRU1  (rw)  : ORIGIN = 0x80010000, LENGTH = 64K
-    DDR_unused (rwx) : ORIGIN = 0xC0000000, LENGTH = 0x8000
-    DDR        (rwx) : ORIGIN = 0xC0008000, LENGTH = (64M - 0x8000)
+    DDR        (rwx) : ORIGIN = 0xC0000000, LENGTH = 64M
     ARM_LRAM   (rwx) : ORIGIN = 0xFFFF0000, LENGTH = (8K - 16)
 }
 
