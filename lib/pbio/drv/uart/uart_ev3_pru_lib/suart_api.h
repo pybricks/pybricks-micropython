@@ -87,8 +87,6 @@
 #define PRU_MODE_RX_ONLY        0x2
 #define PRU_MODE_RX_TX_BOTH     0x3
 
-#define PRU0_MODE    PRU_MODE_RX_TX_BOTH
-
 #if !(defined CONFIG_OMAPL_SUART_MCASP) || (CONFIG_OMAPL_SUART_MCASP == 0)
 #define MCASP_BASE_OFFSET               (0x0)
 #elif (CONFIG_OMAPL_SUART_MCASP == 1)
