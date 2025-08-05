@@ -25,6 +25,7 @@
 #include "pwm/pwm.h"
 #include "random/random.h"
 #include "reset/reset.h"
+#include "rproc/rproc.h"
 #include "sound/sound.h"
 #include "uart/uart.h"
 #include "uart/uart_debug_first_port.h"
@@ -55,6 +56,7 @@ void pbdrv_init(void) {
     pbdrv_pwm_init();
     pbdrv_random_init();
     pbdrv_reset_init();
+    pbdrv_rproc_init();
     pbdrv_sound_init();
     pbdrv_uart_init();
     pbdrv_uart_debug_init();

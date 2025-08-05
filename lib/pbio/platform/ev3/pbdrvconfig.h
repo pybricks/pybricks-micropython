@@ -70,6 +70,9 @@
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_EV3                      (1)
 
+#define PBDRV_CONFIG_RPROC                          (1)
+#define PBDRV_CONFIG_RPROC_EV3                      (1)
+
 #define PBDRV_CONFIG_SOUND                          (1)
 #define PBDRV_CONFIG_SOUND_EV3                      (1)
 #define PBDRV_CONFIG_SOUND_DEFAULT_VOLUME           75
