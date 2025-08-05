@@ -43,14 +43,14 @@ SECTIONS
     .firmware :
     {
         . = ALIGN(4);
-        _pru0_start = .;
+        pbdrv_rproc_ev3_pru0_fw_start = .;
         KEEP(*(.pru0));
         . = ALIGN(4);
-        _pru0_end = .;
-        _pru1_start = .;
+        pbdrv_rproc_ev3_pru0_fw_end = .;
+        pbdrv_rproc_ev3_pru1_fw_start = .;
         KEEP(*(.pru1));
         . = ALIGN(4);
-        _pru1_end = .;
+        pbdrv_rproc_ev3_pru1_fw_end = .;
     } >DDR
 
     .data :

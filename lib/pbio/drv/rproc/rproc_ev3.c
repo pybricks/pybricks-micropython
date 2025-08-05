@@ -29,10 +29,11 @@ void pbdrv_rproc_init(void) {
 
     // PRU0 initialization
 
-    extern uint8_t _pru0_start;
-    extern uint8_t _pru0_end;
-    uint32_t fw_size = &_pru0_end - &_pru0_start;
-    uint8_t *fw_data = &_pru0_start;
+    // These symbols are defined in the linker script (platform.ld)
+    extern uint8_t pbdrv_rproc_ev3_pru0_fw_start;
+    extern uint8_t pbdrv_rproc_ev3_pru0_fw_end;
+    uint32_t fw_size = &pbdrv_rproc_ev3_pru0_fw_end - &pbdrv_rproc_ev3_pru0_fw_start;
+    uint8_t *fw_data = &pbdrv_rproc_ev3_pru0_fw_start;
     pbdrv_uart_ev3_pru_load_firmware(fw_data, fw_size);
 
     // PRU1 initialization
@@ -47,12 +48,13 @@ void pbdrv_rproc_init(void) {
     memset((void *)&pbdrv_rproc_ev3_pru1_shared_ram, 0, sizeof(pbdrv_rproc_ev3_pru1_shared_ram));
 
     // Enable PRU1 and load its firmware
-    extern uint8_t _pru1_start;
-    extern uint8_t _pru1_end;
+    // These symbols are defined in the linker script (platform.ld)
+    extern uint8_t pbdrv_rproc_ev3_pru1_fw_start;
+    extern uint8_t pbdrv_rproc_ev3_pru1_fw_end;
     PRUSSDRVPruDisable(1);
     PRUSSDRVPruReset(1);
-    unsigned int *fw_start = (unsigned int *)&_pru1_start;
-    uint32_t fw_sz = &_pru1_end - &_pru1_start;
+    unsigned int *fw_start = (unsigned int *)&pbdrv_rproc_ev3_pru1_fw_start;
+    uint32_t fw_sz = &pbdrv_rproc_ev3_pru1_fw_end - &pbdrv_rproc_ev3_pru1_fw_start;
     PRUSSDRVPruWriteMemory(PRUSS0_PRU1_IRAM, 0, fw_start, fw_sz);
     // Set constant table C30 to point to shared memory
     PRUSSDRVPruSetCTable(1, 30, (((uint32_t)&pbdrv_rproc_ev3_pru1_shared_ram) >> 8) & 0xffff);
