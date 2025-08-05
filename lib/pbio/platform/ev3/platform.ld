@@ -60,7 +60,7 @@ SECTIONS
         *(.data.*)
     } > DDR
 
-    .bss :
+    .bss (NOLOAD) :
     {
         . = ALIGN(4);
         _bss_start = .;
