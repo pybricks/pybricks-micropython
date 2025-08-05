@@ -49,6 +49,11 @@ void pbdrv_beep_start(uint32_t frequency, uint16_t sample_attenuator) {
         return;
     }
 
+    // Turn speaker amplifier on
+    // We turn the amplifier on and leave it turned on, because otherwise
+    // it will generate a popping sound each time it is enabled.
+    pbdrv_gpio_out_high(&pin_sound_en);
+
     // Clamp the frequency into the supported range
     if (frequency < 64) {
         frequency = 64;
@@ -132,10 +137,6 @@ void pbdrv_sound_init() {
 
     // Configure IO pin mode
     pbdrv_gpio_alt(&pin_audio, SYSCFG_PINMUX3_PINMUX3_7_4_EPWM0B);
-    // Turn speaker amplifier on
-    // We turn the amplifier on and leave it turned on, because otherwise
-    // it will generate a popping sound whenever it is enabled.
-    pbdrv_gpio_out_high(&pin_sound_en);
 }
 
 #endif // PBDRV_CONFIG_SOUND_EV3
