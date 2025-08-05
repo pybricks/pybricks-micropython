@@ -256,7 +256,7 @@ int16_t pru_softuart_init(uint32_t txBaudValue,
 
     suart_set_pru_id(0);
 
-    pru_set_rx_tx_mode(PRU0_MODE, PRU_NUM0);
+    pru_set_rx_tx_mode(PRU_MODE_RX_TX_BOTH, PRU_NUM0);
 
     pru_set_ram_data(arm_iomap_pru);
 
@@ -475,23 +475,17 @@ int16_t pru_softuart_setbaud
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
 
@@ -509,13 +503,7 @@ int16_t pru_softuart_setbaud
             &pru_arm_iomap);
     }
 
-    if (PRU0_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        chNum++;
-    } else {
-        return PRU_MODE_INVALID;
-    }
+    chNum++;
 
     regval = 0;
     if (rxClkDivisor != 0) {
@@ -562,23 +550,17 @@ int16_t pru_softuart_setdatabits
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
 
@@ -595,13 +577,7 @@ int16_t pru_softuart_setdatabits
             &pru_arm_iomap);
     }
 
-    if (PRU0_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        chNum++;
-    } else {
-        return PRU_MODE_INVALID;
-    }
+    chNum++;
 
     if (rxDataBits != 0) {
         offset =
@@ -654,24 +630,17 @@ int16_t pru_softuart_setconfig(suart_handle hUart, suart_config *configUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
-
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
     /* Configuring the Transmit part of the given UART */
@@ -724,13 +693,7 @@ int16_t pru_softuart_setconfig(suart_handle hUart, suart_config *configUart) {
             &pru_arm_iomap);
     }
 
-    if (PRU0_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        chNum++;
-    } else {
-        return PRU_MODE_INVALID;
-    }
+    chNum++;
 
     /* Configuring the Transmit part of the given UART */
     if (configUart->RXSerializer != PRU_SUART_SERIALIZER_NONE) {
@@ -790,23 +753,17 @@ int16_t pru_softuart_getTxDataLen(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
     /* Transmit channel number is (UartNum * 2) - 2  */
@@ -836,26 +793,20 @@ int16_t pru_softuart_getRxDataLen(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
+
+    chNum++;
 
     offset =
         pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -889,24 +840,18 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
      */
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
     /* Configuring the Transmit part of the given UART */
@@ -937,13 +882,7 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
         ((regVal & PRU_SUART_CH_CONFIG1_DIVISOR_MASK) >>
             PRU_SUART_CH_CONFIG1_DIVISOR_SHIFT);
 
-    if (PRU0_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        chNum++;
-    } else {
-        return PRU_MODE_INVALID;
-    }
+    chNum++;
 
     /* Configuring the Transmit part of the given UART */
     /* Configuring RX serializer  */
@@ -981,25 +920,6 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
 
 
 int32_t pru_softuart_pending_tx_request(void) {
-    uint32_t offset = 0;
-    uint32_t u32ISRValue = 0;
-
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        return SUART_SUCCESS;
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
-        /* Read PRU Interrupt Status Register from PRU */
-        offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_STATCLRINT1 &
-                0xFFFF);
-        pru_ram_read_data_4byte(offset, (uint32_t *)&u32ISRValue, 1);
-
-        if ((u32ISRValue & 0x1) == 0x1) {
-            return PRU_SUART_FAILURE;
-        }
-    } else {
-        return PRU_MODE_INVALID;
-    }
-
     return SUART_SUCCESS;
 }
 
@@ -1022,27 +942,19 @@ int16_t pru_softuart_write
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
-
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-            pru_num = hUart->uartNum;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-            pru_num = hUart->uartNum;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        pru_num = 0;
+        pru_num = hUart->uartNum;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
+        pru_num = hUart->uartNum;
     }
 
     /* Writing data length to SUART channel register */
@@ -1096,28 +1008,21 @@ int16_t pru_softuart_read
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-            pru_num = hUart->uartNum;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-            pru_num = hUart->uartNum;
-        }
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        pru_num = 0;
+        pru_num = hUart->uartNum;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
+        pru_num = hUart->uartNum;
     }
+    chNum++;
 
     /* Writing data length to SUART channel register */
     offset =
@@ -1181,25 +1086,19 @@ int16_t pru_softuart_read_data(
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
+    chNum++;
 
     /* Get the data pointer from channel RX data pointer */
     offset =
@@ -1300,26 +1199,19 @@ int16_t pru_softuart_stopReceive(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
-
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
+    chNum++;
 
     /* read the existing value of status flag */
     offset = pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -1358,24 +1250,18 @@ int16_t pru_softuart_getTxStatus(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
     offset =
@@ -1397,24 +1283,17 @@ int16_t pru_softuart_clrTxStatus(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
-
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-    } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
 
     offset =
@@ -1441,25 +1320,19 @@ int16_t pru_softuart_getRxStatus(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
+    chNum++;
 
     offset =
         pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -1484,27 +1357,19 @@ int16_t pru_softuart_clrRxFifo(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
-
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        uartNum = 0;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
+    chNum++;
 
     /* Reset the number of bytes read into the FIFO */
     offset = pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -1547,26 +1412,19 @@ int16_t pru_softuart_clrRxStatus(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
-
-        if (hUart->uartNum <= 4) {
-            /* PRU0 */
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-        } else {
-            /* PRU1 */
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chNum -= 8;
-        }
-        chNum++;
-    } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
+    if (hUart->uartNum <= 4) {
+        /* PRU0 */
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chNum -= 8;
     }
+    chNum++;
 
     offset =
         pruOffset + (chNum * SUART_NUM_OF_BYTES_PER_CHANNEL) +
@@ -1606,59 +1464,32 @@ int16_t pru_softuart_get_isrstatus(uint16_t uartNum, uint16_t *txrxFlag) {
 
     pru_ram_read_data_4byte(u32IntcOffset, (uint32_t *)&u32ISRValue, 1);
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chNum = uartNum * 2 - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chNum = uartNum * 2 - 2;
 
-        /* Check if the interrupt occured for Tx */
-        u32RegVal = PRU_SUART0_TX_EVT_BIT << ((uartNum - 1) * 2);
-        if (u32ISRValue & u32RegVal) {
-            /* interupt occured for TX */
-            *txrxFlag |= PRU_TX_INTR;
+    /* Check if the interrupt occured for Tx */
+    u32RegVal = PRU_SUART0_TX_EVT_BIT << ((uartNum - 1) * 2);
+    if (u32ISRValue & u32RegVal) {
+        /* interupt occured for TX */
+        *txrxFlag |= PRU_TX_INTR;
 
-            /* acknowledge the TX interrupt  */
-            u32AckRegVal = chNum + PRU_SUART0_TX_EVT;
-            pru_ram_write_data_4byte(u32StatInxClrRegoffset, (uint32_t *)&u32AckRegVal, 1);
+        /* acknowledge the TX interrupt  */
+        u32AckRegVal = chNum + PRU_SUART0_TX_EVT;
+        pru_ram_write_data_4byte(u32StatInxClrRegoffset, (uint32_t *)&u32AckRegVal, 1);
 
-        }
+    }
 
-        /* Check if the interrupt occured for Rx */
-        u32RegVal = PRU_SUART0_RX_EVT_BIT << ((uartNum - 1) * 2);
-        pru_ram_read_data_4byte(u32IntcOffset, (uint32_t *)&u32ISRValue, 1);
-        if (u32ISRValue & u32RegVal) {
-            /* interupt occured for RX */
-            *txrxFlag |= PRU_RX_INTR;
-            chNum += 1;
+    /* Check if the interrupt occured for Rx */
+    u32RegVal = PRU_SUART0_RX_EVT_BIT << ((uartNum - 1) * 2);
+    pru_ram_read_data_4byte(u32IntcOffset, (uint32_t *)&u32ISRValue, 1);
+    if (u32ISRValue & u32RegVal) {
+        /* interupt occured for RX */
+        *txrxFlag |= PRU_RX_INTR;
+        chNum += 1;
 
-            /* acknowledge the RX interrupt  */
-            u32AckRegVal = chNum + PRU_SUART0_TX_EVT;
-            pru_ram_write_data_4byte(u32StatInxClrRegoffset, (uint32_t *)&u32AckRegVal, 1);
-        }
-    } else {
-        chNum = uartNum - 1;
-        if ((u32ISRValue & 0x03FC) != 0) {
-            /* PRU0 */
-            u32RegVal = 1 << (uartNum + 1);
-            if (u32ISRValue & u32RegVal) {
-                /* acknowledge the interrupt  */
-                u32AckRegVal = chNum + PRU_SUART0_TX_EVT;
-                pru_ram_write_data_4byte(u32StatInxClrRegoffset, (uint32_t *)&u32AckRegVal, 1);
-                *txrxFlag |= PRU_RX_INTR;
-            }
-        }
-
-        pru_ram_read_data_4byte(u32IntcOffset, (uint32_t *)&u32ISRValue, 1);
-        if (u32ISRValue & 0x3FC00) {
-            /* PRU1 */
-            u32RegVal = 1 << (uartNum + 9);
-            if (u32ISRValue & u32RegVal) {
-                /* acknowledge the interrupt  */
-                u32AckRegVal = chNum + PRU_SUART4_TX_EVT;
-                pru_ram_write_data_4byte(u32StatInxClrRegoffset, (uint32_t *)&u32AckRegVal, 1);
-                *txrxFlag |= PRU_TX_INTR;
-            }
-        }
-
+        /* acknowledge the RX interrupt  */
+        u32AckRegVal = chNum + PRU_SUART0_TX_EVT;
+        pru_ram_write_data_4byte(u32StatInxClrRegoffset, (uint32_t *)&u32AckRegVal, 1);
     }
 
     return regVal;
@@ -1670,27 +1501,21 @@ int32_t pru_intr_clr_isrstatus(uint16_t uartNum, uint32_t txrxmode) {
     uint16_t chnNum;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if (uartNum <= 4) {
-            /* PRU0 */
-            offset = PRU_SUART_PRU0_ISR_OFFSET + 1;
-        } else {
-            /* PRU1 */
-            offset = PRU_SUART_PRU1_ISR_OFFSET + 1;
-            /* First 8 channel corresponds to PRU0 */
-            chnNum -= 8;
-        }
-
-        if (2 == txrxmode) {
-            chnNum++;
-        }
-    } else if (PRU0_MODE == txrxmode) {
+    if (uartNum <= 4) {
+        /* PRU0 */
         offset = PRU_SUART_PRU0_ISR_OFFSET + 1;
     } else {
-        return PRU_MODE_INVALID;
+        /* PRU1 */
+        offset = PRU_SUART_PRU1_ISR_OFFSET + 1;
+        /* First 8 channel corresponds to PRU0 */
+        chnNum -= 8;
+    }
+
+    if (2 == txrxmode) {
+        chnNum++;
     }
 
     pru_ram_read_data(offset, (uint8_t *)&txrxFlag, 1, &pru_arm_iomap);
@@ -1705,29 +1530,14 @@ int16_t suart_arm_to_pru_intr(uint16_t uartNum) {
     uint32_t u32value;
     int16_t s16retval;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        if ((uartNum > 0) && (uartNum <= 4)) {
-            /* PRU0 SYS_EVT32 */
-            u32value = 0x20;
-        } else if ((uartNum > 4) && (uartNum <= 8)) {
-            /* PRU1 SYS_EVT33 */
-            u32value = 0x21;
-        } else {
-            return SUART_INVALID_UART_NUM;
-        }
-    }
-
-    if ((PRU0_MODE == PRU_MODE_RX_ONLY) ||
-        (PRU0_MODE == PRU_MODE_TX_ONLY)) {
-        if (uartNum == PRU_NUM0) {
-            /* PRU0 SYS_EVT32 */
-            u32value = 0x20;
-        }
-
-        if (uartNum == PRU_NUM1) {
-            /* PRU0 SYS_EVT33 */
-            u32value = 0x21;
-        }
+    if ((uartNum > 0) && (uartNum <= 4)) {
+        /* PRU0 SYS_EVT32 */
+        u32value = 0x20;
+    } else if ((uartNum > 4) && (uartNum <= 8)) {
+        /* PRU1 SYS_EVT33 */
+        u32value = 0x21;
+    } else {
+        return SUART_INVALID_UART_NUM;
     }
 
     u32offset =
@@ -1839,168 +1649,83 @@ int16_t arm_to_pru_intr_init(void) {
         return -1;
     }
 
-
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* Sets the channel for the system interrupt
-        * MAP channel 0 to SYS_EVT32
-        * MAP channel 1 to SYS_EVT33
-        * MAP channel 2 to SYS_EVT34  SUART0-Tx
-        * MAP channel 2 to SYS_EVT35  SUART0-Rx
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP8 &
-                0xFFFF);
-        u32value = 0x02020100;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
-
-        /* Sets the channel for the system interrupt
-        * MAP channel 3 to SYS_EVT36	SUART1-Tx
-        * MAP channel 3 to SYS_EVT37    SUART1-Rx
-        * MAP channel 4 to SYS_EVT38    SUART2-Tx
-        * MAP channel 4 to SYS_EVT39    SUART2-Rx
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP9 &
-                0xFFFF);
-        u32value = 0x04040303;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
-
-        /* Sets the channel for the system interrupt
-        * MAP channel 5 to SYS_EVT40	SUART3-Tx
-        * MAP channel 5 to SYS_EVT41    SUART3-Rx
-        * MAP channel 6 to SYS_EVT42    SUART4-Tx
-        * MAP channel 6 to SYS_EVT43    SUART4-Rx
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP10 &
-                0xFFFF);
-        u32value = 0x06060505;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
-
-        /* Sets the channel for the system interrupt
-        * MAP channel 7 to SYS_EVT44	SUART5-Tx
-        * MAP channel 7 to SYS_EVT45    SUART5-Rx
-        * MAP channel 8 to SYS_EVT46    SUART6-Tx
-        * MAP channel 8 to SYS_EVT47    SUART6-Rx
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP11 &
-                0xFFFF);
-        u32value = 0x08080707;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
-
-        /* Sets the channel for the system interrupt
-        * MAP channel 9 to SYS_EVT48	SUART7-Tx
-        * MAP channel 9 to SYS_EVT49    SUART7-Rx
-        * MAP Channel 1 to SYS_EVT50
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP12 &
-                0xFFFF);
-        u32value = 0x00010909;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
+    /* Sets the channel for the system interrupt
+    * MAP channel 0 to SYS_EVT32
+    * MAP channel 1 to SYS_EVT33
+    * MAP channel 2 to SYS_EVT34  SUART0-Tx
+    * MAP channel 2 to SYS_EVT35  SUART0-Rx
+    */
+    u32offset =
+        (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP8 &
+            0xFFFF);
+    u32value = 0x02020100;
+    s16retval =
+        pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
+    if (-1 == s16retval) {
+        return -1;
     }
 
-    if ((PRU0_MODE == PRU_MODE_RX_ONLY) ||
-        (PRU0_MODE == PRU_MODE_TX_ONLY)) {
-        /* Sets the channel for the system interrupt
-        * MAP channel 0 to SYS_EVT32
-        * MAP channel 1 to SYS_EVT33
-        * MAP channel 2 to SYS_EVT34  SUART0
-        * MAP channel 3 to SYS_EVT35  SUART1
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP8 &
-                0xFFFF);
-        u32value = 0x03020100;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
+    /* Sets the channel for the system interrupt
+    * MAP channel 3 to SYS_EVT36	SUART1-Tx
+    * MAP channel 3 to SYS_EVT37    SUART1-Rx
+    * MAP channel 4 to SYS_EVT38    SUART2-Tx
+    * MAP channel 4 to SYS_EVT39    SUART2-Rx
+    */
+    u32offset =
+        (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP9 &
+            0xFFFF);
+    u32value = 0x04040303;
+    s16retval =
+        pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
+    if (-1 == s16retval) {
+        return -1;
+    }
 
-        /* Sets the channel for the system interrupt
-        * MAP channel 4 to SYS_EVT36	SUART2
-        * MAP channel 5 to SYS_EVT37    SUART3
-        * MAP channel 6 to SYS_EVT38    SUART4
-        * MAP channel 7 to SYS_EVT39    SUART5
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP9 &
-                0xFFFF);
-        u32value = 0x07060504;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
+    /* Sets the channel for the system interrupt
+    * MAP channel 5 to SYS_EVT40	SUART3-Tx
+    * MAP channel 5 to SYS_EVT41    SUART3-Rx
+    * MAP channel 6 to SYS_EVT42    SUART4-Tx
+    * MAP channel 6 to SYS_EVT43    SUART4-Rx
+    */
+    u32offset =
+        (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP10 &
+            0xFFFF);
+    u32value = 0x06060505;
+    s16retval =
+        pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
+    if (-1 == s16retval) {
+        return -1;
+    }
 
-        /* Sets the channel for the system interrupt
-        * MAP channel 8 to SYS_EVT40	SUART6
-        * MAP channel 9 to SYS_EVT41    SUART7
-        * MAP channel 2 to SYS_EVT42    SUART0
-        * MAP channel 3 to SYS_EVT43    SUART1
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP10 &
-                0xFFFF);
-        u32value = 0x03020908;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
+    /* Sets the channel for the system interrupt
+    * MAP channel 7 to SYS_EVT44	SUART5-Tx
+    * MAP channel 7 to SYS_EVT45    SUART5-Rx
+    * MAP channel 8 to SYS_EVT46    SUART6-Tx
+    * MAP channel 8 to SYS_EVT47    SUART6-Rx
+    */
+    u32offset =
+        (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP11 &
+            0xFFFF);
+    u32value = 0x08080707;
+    s16retval =
+        pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
+    if (-1 == s16retval) {
+        return -1;
+    }
 
-        /* Sets the channel for the system interrupt
-        * MAP channel 4 to SYS_EVT44	SUART2
-        * MAP channel 5 to SYS_EVT45    SUART3
-        * MAP channel 6 to SYS_EVT46    SUART4
-        * MAP channel 7 to SYS_EVT47    SUART5
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP11 &
-                0xFFFF);
-        u32value = 0x07060504;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
-
-        /* Sets the channel for the system interrupt
-        * MAP channel 8 to SYS_EVT48	SUART6
-        * MAP channel 9 to SYS_EVT49    SUART7
-        * MAP Channel 1 to SYS_EVT50    PRU to PRU Intr
-        */
-        u32offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP12 &
-                0xFFFF);
-        u32value = 0x00010908;
-        s16retval =
-            pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-        if (-1 == s16retval) {
-            return -1;
-        }
+    /* Sets the channel for the system interrupt
+    * MAP channel 9 to SYS_EVT48	SUART7-Tx
+    * MAP channel 9 to SYS_EVT49    SUART7-Rx
+    * MAP Channel 1 to SYS_EVT50
+    */
+    u32offset =
+        (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_CHANMAP12 &
+            0xFFFF);
+    u32value = 0x00010909;
+    s16retval =
+        pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
+    if (-1 == s16retval) {
+        return -1;
     }
 
     /* Clear required set of system events and enable them using indexed register */
@@ -2079,19 +1804,11 @@ int32_t suart_pru_to_host_intr_enable(uint16_t uartNum,
     }
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        chnNum = (uartNum * 2) - 2;
-        if (2 == txrxmode) {            /* Rx mode */
-            chnNum++;
-        }
-        u32value = 34 + chnNum;
-    } else if ((PRU_MODE_RX_ONLY == txrxmode) && (PRU0_MODE == PRU_MODE_RX_ONLY)) {
-        u32value = 34 + chnNum;
-    } else if ((PRU_MODE_TX_ONLY == txrxmode) && (PRU0_MODE == PRU_MODE_TX_ONLY)) {
-        u32value = 34 + chnNum;
-    } else {
-        return -1;
+    chnNum = (uartNum * 2) - 2;
+    if (2 == txrxmode) {            /* Rx mode */
+        chnNum++;
     }
+    u32value = 34 + chnNum;
 
     if (true == s32Flag) {
         u32offset = (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_ENIDXSET & 0xFFFF);
@@ -2118,32 +1835,25 @@ int32_t suart_intr_setmask(uint16_t uartNum,
     uint32_t chnNum;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if ((uartNum > 0) && (uartNum <= 4)) {
+    if ((uartNum > 0) && (uartNum <= 4)) {
 
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-            offset = PRU_SUART_PRU0_IMR_OFFSET;
-        } else if ((uartNum > 4) && (uartNum <= 8)) {
-            /* PRU1 */
-            offset = PRU_SUART_PRU1_IMR_OFFSET;
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chnNum -= 8;
-        } else {
-            return SUART_INVALID_UART_NUM;
-        }
-
-        if (2 == txrxmode) {            /* rx mode */
-            chnNum++;
-        }
-    } else if (PRU0_MODE == txrxmode) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         offset = PRU_SUART_PRU0_IMR_OFFSET;
+    } else if ((uartNum > 4) && (uartNum <= 8)) {
+        /* PRU1 */
+        offset = PRU_SUART_PRU1_IMR_OFFSET;
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chnNum -= 8;
     } else {
-        return PRU_MODE_INVALID;
+        return SUART_INVALID_UART_NUM;
+    }
+
+    if (2 == txrxmode) {            /* rx mode */
+        chnNum++;
     }
 
 
@@ -2235,32 +1945,25 @@ int32_t suart_intr_clrmask(uint16_t uartNum,
     uint16_t chnNum;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if ((uartNum > 0) && (uartNum <= 4)) {
+    if ((uartNum > 0) && (uartNum <= 4)) {
 
-            pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-            offset = PRU_SUART_PRU0_IMR_OFFSET;
-        } else if ((uartNum > 4) && (uartNum <= 8)) {
-            /* PRU1 */
-            offset = PRU_SUART_PRU1_IMR_OFFSET;
-            pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chnNum -= 8;
-        } else {
-            return SUART_INVALID_UART_NUM;
-        }
-
-        if (2 == txrxmode) {            /* rx mode */
-            chnNum++;
-        }
-    } else if (PRU0_MODE == txrxmode) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         offset = PRU_SUART_PRU0_IMR_OFFSET;
+    } else if ((uartNum > 4) && (uartNum <= 8)) {
+        /* PRU1 */
+        offset = PRU_SUART_PRU1_IMR_OFFSET;
+        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chnNum -= 8;
     } else {
-        return PRU_MODE_INVALID;
+        return SUART_INVALID_UART_NUM;
+    }
+
+    if (2 == txrxmode) {            /* rx mode */
+        chnNum++;
     }
 
     regval = 1 << chnNum;
@@ -2345,29 +2048,23 @@ int32_t suart_intr_getmask(uint16_t uartNum,
     uint16_t regval = 1;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
-        /* channel starts from 0 and uart instance starts from 1 */
-        chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
+    /* channel starts from 0 and uart instance starts from 1 */
+    chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
-        if ((uartNum > 0) && (uartNum <= 4)) {
+    if ((uartNum > 0) && (uartNum <= 4)) {
 
-            offset = PRU_SUART_PRU0_IMR_OFFSET;
-        } else if ((uartNum > 4) && (uartNum <= 8)) {
-            /* PRU1 */
-            offset = PRU_SUART_PRU1_IMR_OFFSET;
-            /* First 8 channel corresponds to PRU0 */
-            chnNum -= 8;
-        } else {
-            return SUART_INVALID_UART_NUM;
-        }
-
-        if (2 == txrxmode) {            /* rx mode */
-            chnNum++;
-        }
-    } else if (PRU0_MODE == txrxmode) {
         offset = PRU_SUART_PRU0_IMR_OFFSET;
+    } else if ((uartNum > 4) && (uartNum <= 8)) {
+        /* PRU1 */
+        offset = PRU_SUART_PRU1_IMR_OFFSET;
+        /* First 8 channel corresponds to PRU0 */
+        chnNum -= 8;
     } else {
-        return PRU_MODE_INVALID;
+        return SUART_INVALID_UART_NUM;
+    }
+
+    if (2 == txrxmode) {            /* rx mode */
+        chnNum++;
     }
 
     regval = regval << chnNum;
