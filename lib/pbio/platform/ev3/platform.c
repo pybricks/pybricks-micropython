@@ -397,22 +397,6 @@ unsigned int EDMAVersionGet(void) {
     return 1;
 }
 
-void pbdrv_cache_prepare_before_dma(const void *buf, size_t sz) {
-    // Make sure all data is written by the compiler...
-    pbdrv_compiler_memory_barrier();
-    // and then make sure it's written out of the cache...
-    CP15DCacheCleanBuff((uint32_t)buf, sz);
-    // and also the write buffer, in case the cache missed.
-    CP15DrainWriteBuffer();
-}
-
-void pbdrv_cache_prepare_after_dma(const void *buf, size_t sz) {
-    // Invalidate stale data in the cache...
-    CP15DCacheFlushBuff((uint32_t)buf, sz);
-    // and then make sure _subsequent_ reads cannot be reordered earlier.
-    pbdrv_compiler_memory_barrier();
-}
-
 static void panic_puts(const char *c) {
     while (*c) {
         UARTCharPut(SOC_UART_1_REGS, *(c++));
@@ -727,7 +711,7 @@ static void mmu_init(void) {
     // Off-chip main DDR RAM, uncacheable mirror @ 0xD0000000
     for (unsigned int i = 0; i < SYSTEM_RAM_SZ_MB; i++) {
         uint32_t addr_phys = 0xC0000000 + i * MMU_SECTION_SZ;
-        uint32_t addr_virt = 0xD0000000 + i * MMU_SECTION_SZ;
+        uint32_t addr_virt = addr_phys + PBDRV_CONFIG_CACHE_UNCACHED_OFFSET;
         l1_page_table[addr_virt >> MMU_SECTION_SHIFT] = MMU_L1_SECTION(addr_phys, 0, 1, 0, 0);
     }
 

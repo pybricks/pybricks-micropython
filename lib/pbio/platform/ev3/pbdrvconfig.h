@@ -7,6 +7,18 @@
 #define PBDRV_CONFIG_ADC_EV3                        (1)
 #define PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS       (16)
 
+#define PBDRV_CONFIG_CACHE                          (1)
+#define PBDRV_CONFIG_CACHE_EV3                      (1)
+// The EV3 MMU is configured to additionally map
+// VA 0xDxxxxxxx onto PA 0xCxxxxxxx, covering the DDR RAM region.
+// The 0xD alias is mapped as non-cacheable and non-bufferable
+// and can be used when data needs to be shared with bus-mastering
+// hardware peripherals. The 0xD region is unused in the physical
+// address map and lies at a convenient offset from the 0xC region.
+// The 0xC region, which is the region typically used to access RAM,
+// is cacheable and bufferable.
+#define PBDRV_CONFIG_CACHE_UNCACHED_OFFSET          (0x10000000)
+
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_TIAM1808                 (1)
 
