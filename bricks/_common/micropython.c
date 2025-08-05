@@ -240,7 +240,7 @@ static uint8_t *mpy_data_get_buf(mpy_info_t *info) {
 static mpy_info_t *mpy_data_find(qstr name) {
     const char *name_str = qstr_str(name);
 
-    for (mpy_info_t *info = mpy_first; info < mpy_end;
+    for (mpy_info_t *info = mpy_first; (uintptr_t)info + sizeof(uint32_t) < (uintptr_t)mpy_end;
          info = (mpy_info_t *)(mpy_data_get_buf(info) + pbio_get_uint32_le(info->mpy_size))) {
         if (strcmp(info->mpy_name, name_str) == 0) {
             return info;
