@@ -39,10 +39,6 @@
 #define BIT(x)                          (1 << x)
 #endif
 
-#define  SINGLE_PRU             0
-#define  BOTH_PRU               1
-#define  PRU_ACTIVE             SINGLE_PRU // BOTH_PRU
-
 #define SUART_NUM_OF_CHANNELS_PER_SUART         2
 #define SUART_NUM_OF_BYTES_PER_CHANNEL          16
 
@@ -91,16 +87,7 @@
 #define PRU_MODE_RX_ONLY        0x2
 #define PRU_MODE_RX_TX_BOTH     0x3
 
-#if (PRU_ACTIVE == BOTH_PRU)
-#define PRU0_MODE    PRU_MODE_RX_ONLY
-#define PRU1_MODE    PRU_MODE_TX_ONLY
-#elif (PRU_ACTIVE == SINGLE_PRU)
 #define PRU0_MODE    PRU_MODE_RX_TX_BOTH
-#define PRU1_MODE    PRU_MODE_INVALID
-#else
-#define PRU0_MODE    PRU_MODE_INVALID
-#define PRU1_MODE    PRU_MODE_INVALID
-#endif
 
 #if !(defined CONFIG_OMAPL_SUART_MCASP) || (CONFIG_OMAPL_SUART_MCASP == 0)
 #define MCASP_BASE_OFFSET               (0x0)
