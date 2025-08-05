@@ -12,13 +12,12 @@
 
 #include <pbdrv/pwm.h>
 #include <pbdrv/gpio.h>
-
-#define PBDRV_PWM_EV3_NUM_CHANNELS  4
+#include "../rproc/rproc_ev3.h"
 
 /** Platform-specific device information. */
 typedef struct {
     uint8_t id;
-    pbdrv_gpio_t gpios[PBDRV_PWM_EV3_NUM_CHANNELS];
+    pbdrv_gpio_t gpios[PBDRV_RPROC_EV3_PRU1_NUM_PWM_CHANNELS];
 } pbdrv_pwm_tiam1808_platform_data_t;
 
 // Defined in platform.c
