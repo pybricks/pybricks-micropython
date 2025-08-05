@@ -419,6 +419,7 @@ static const char *const panic_types[] = {
     "Undefined Instruction",
     "Prefetch Abort",
     "Data Abort",
+    "SWI opcode"
 };
 
 typedef struct {

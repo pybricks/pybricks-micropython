@@ -11,8 +11,7 @@
         .set  MODE_SYS, 0x1F            
   
 
-        .equ I_F_BIT, 0xC0 
-        .equ MASK_SWI_NUM, 0xFF000000
+        .equ I_F_BIT, 0xC0
         .equ MASK_SR_MODE, 0x1F
 
         @ This will be placed at 0xffff0000 by the linker script
@@ -52,6 +51,12 @@ UnknownExceptionHandler:
         @ Save r0-r12, lr
         stmfd   sp!, {r0-r12, lr}
         mov     r7, #EV3_PANIC_UNKNOWN
+        b       CommonPanicHandler
+
+SWIHandler:
+        @ Save r0-r12, lr
+        stmfd   sp!, {r0-r12, lr}
+        mov     r7, #EV3_PANIC_SWI
         @ b       CommonPanicHandler
         @ fall through
 
@@ -87,25 +92,7 @@ FIQHandler:
         MOV      lr, pc
         LDR      pc, [r0]
         LDMFD    r13!, {r0-r7, lr}
-        SUBS     pc, lr, #0x4 
-        
-@******************************************************************************
-@*                  Function Definition of SWI Handler
-@******************************************************************************    
-@
-@ The SWI Handler switches to system mode if the SWI number is 458752. If the
-@ SWI number is different, no mode switching will be done. No other SWI are 
-@ handled here
-@
-SWIHandler:
-        STMFD    r13!, {r0-r1, r14}       @ Save context in SVC stack
-        LDR      r0, [r14, #-4]           @ R0 points to SWI instruction
-        BIC      r0, r0, #MASK_SWI_NUM    @ Get the SWI number
-        CMP      r0, #458752
-        MRSEQ    r1, spsr                 @ Copy SPSR  
-        ORREQ    r1, r1, #0x1F            @ Change the mode to System
-        MSREQ    spsr_cf, r1              @ Restore SPSR
-        LDMFD    r13!, {r0-r1, pc}^       @ Restore registers from IRQ stack
+        SUBS     pc, lr, #0x4
 
 @******************************************************************************
 @*                  Function Definition of IRQ Handler

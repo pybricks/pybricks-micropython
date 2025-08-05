@@ -5,5 +5,6 @@
 #define EV3_PANIC_UNDEFINED_INSTR   1
 #define EV3_PANIC_PREFETCH_ABORT    2
 #define EV3_PANIC_DATA_ABORT        3
+#define EV3_PANIC_SWI               4
 
 #endif // PBIO_EV3_EXCEPTIONHANDLER_H_
