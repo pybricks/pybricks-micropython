@@ -239,7 +239,6 @@ int16_t pru_softuart_init(uint32_t txBaudValue,
 
     omapl_addr = (uint32_t)arm_iomap_pru->pru_io_addr;
 
-//	for (u32loop = 0; u32loop < 512; u32loop++)
     for (u32loop = 0; u32loop < 512; u32loop += 4)   // Fixed the alignment fault -- ertl-liyixiao
     {
         *(uint32_t *)(omapl_addr | u32loop) = 0x0;
@@ -1556,18 +1555,7 @@ int16_t arm_to_pru_intr_init(void) {
     uint32_t u32value;
     uint32_t intOffset;
     int16_t s16retval = -1;
-    #if 0
-    /* Set the MCASP Event to PRU0 as Edge Triggered */
-    u32offset =
-        (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_TYPE0 &
-            0xFFFF);
-    u32value = 0x80000000;
-    s16retval =
-        pru_ram_write_data_4byte(u32offset, (uint32_t *)&u32value, 1);
-    if (s16retval == -1) {
-        return -1;
-    }
-    #endif
+
     /* Clear all the host interrupts */
     for (intOffset = 0; intOffset <= PRU_INTC_HOSTINTLVL_MAX; intOffset++)
     {
