@@ -39,328 +39,6 @@ static int32_t suart_set_pru_id(uint32_t pru_no);
 static void pru_set_rx_tx_mode(uint32_t pru_mode, uint32_t pruNum);
 static void pru_set_delay_count(uint32_t pru_freq);
 
-#if (PRU_ACTIVE == BOTH_PRU)
-void pru_set_ram_data(arm_pru_iomap *arm_iomap_pru) {
-
-    PRU_SUART_RegsOvly pru_suart_regs = (PRU_SUART_RegsOvly)arm_iomap_pru->pru_io_addr;
-    uint32_t *pu32SrCtlAddr = (uint32_t *)((uint32_t)
-        arm_iomap_pru->mcasp_io_addr + 0x180);
-    pru_suart_tx_cntx_priv *pru_suart_tx_priv = NULL;
-    pru_suart_rx_cntx_priv *pru_suart_rx_priv = NULL;
-    uint8_t *pu32_pru_ram_base = (uint8_t *)arm_iomap_pru->pru_io_addr;
-
-    /* ***************************** RX PRU - 0  **************************************** */
-
-    /* Chanel 0 context information */
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART1_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART1_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART1_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x090);  /* SUART1 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART1_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART1_CONFIG_RX_SER << 2));
-
-    /* Chanel 1 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART2_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART2_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART2_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x0B0);  /* SUART2 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART2_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART2_CONFIG_RX_SER << 2));
-
-    /* Chanel 2 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART3_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART3_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART3_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x0D0);  /* SUART3 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART3_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART3_CONFIG_RX_SER << 2));
-
-    /* Chanel 3 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART4_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART4_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART4_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x0F0);  /* SUART4 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART4_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART4_CONFIG_RX_SER << 2));
-
-    /* Chanel 4 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART5_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART5_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART5_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x110);  /* SUART5 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART5_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART5_CONFIG_RX_SER << 2));
-
-    /* Chanel 5 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART6_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART6_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART6_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x130);  /* SUART6 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART6_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART6_CONFIG_RX_SER << 2));
-
-    /* Chanel 6 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART7_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART7_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART7_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x150);  /* SUART7 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART7_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART7_CONFIG_RX_SER << 2));
-
-    /* Chanel 7 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_RX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART8_CONFIG_RX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART8_CONFIG_DUPLEX & PRU_SUART_HALF_RX_DISABLED) == PRU_SUART_HALF_RX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART8_CONFIG_RX_SER)) = MCASP_SRCTL_RX_MODE;
-    #endif
-    /* RX is active by default, write the dummy received data at PRU RAM addr 0x1FC to avoid memory corruption */
-    pru_suart_regs->CH_TXRXData = RX_DEFAULT_DATA_DUMP_ADDR;
-    pru_suart_regs->Reserved1 = 0;
-    pru_suart_rx_priv = (pru_suart_rx_cntx_priv *)(pu32_pru_ram_base + 0x170);  /* SUART8 RX context base addr */
-    pru_suart_rx_priv->asp_rbuf_base = (uint32_t)(MCASP_RBUF_BASE_ADDR + (PRU_SUART8_CONFIG_RX_SER << 2));
-    pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART8_CONFIG_RX_SER << 2));
-
-
-    /* ****************************** PRU1 RAM BASE ADDR ******************************** */
-    pru_suart_regs = (PRU_SUART_RegsOvly)((uint32_t)
-        arm_iomap_pru->pru_io_addr + 0x2000);
-    pu32_pru_ram_base = (uint8_t *)((uint32_t)
-        arm_iomap_pru->pru_io_addr + 0x2000);
-
-    /* ***************************** TX PRU - 1  **************************************** */
-    /* Channel 0 context information */
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART1_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART1_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART1_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x0B0);  /* SUART1 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART1_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART1_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x0090; /* SUART1 TX formatted data base addr */
-
-    /* Channel 1 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART2_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART2_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART2_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x0DC);  /* SUART2 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART2_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART2_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x00BC; /* SUART2 TX formatted data base addr */
-
-    /* Channel 2 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART3_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART3_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART3_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x108);  /* SUART3 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART3_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART3_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x00E8; /* SUART3 TX formatted data base addr */
-
-    /* Channel 3 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART4_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART4_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART4_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x134);  /* SUART4 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART4_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART4_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x0114; /* SUART4 TX formatted data base addr */
-
-    /* Channel 4 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART5_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART5_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART5_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x160);  /* SUART5 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART5_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART5_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x0140; /* SUART5 TX formatted data base addr */
-
-    /* Channel 5 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART6_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART6_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART6_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x18C);  /* SUART6 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART6_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART6_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x016C; /* SUART6 TX formatted data base addr */
-
-    /* Channel 6 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART7_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART7_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART7_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x1B8);  /* SUART7 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART7_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART7_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x0198; /* SUART7 TX formatted data base addr */
-
-    /* Channel 7 context information */
-    pru_suart_regs++;
-    pru_suart_regs->CH_Ctrl_Config1.mode = SUART_CHN_TX;
-    pru_suart_regs->CH_Ctrl_Config1.serializer_num = (0xF & PRU_SUART8_CONFIG_TX_SER);
-    pru_suart_regs->CH_Ctrl_Config1.over_sampling = SUART_DEFAULT_OVRSMPL;
-    pru_suart_regs->CH_Config2_TXRXStatus.bits_per_char = 8;
-    #if ((PRU_SUART8_CONFIG_DUPLEX & PRU_SUART_HALF_TX_DISABLED) == PRU_SUART_HALF_TX_DISABLED)
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_DISABLED;
-    #else
-    pru_suart_regs->CH_Config2_TXRXStatus.chn_state = SUART_CHN_ENABLED;
-    *((uint32_t *)(pu32SrCtlAddr + PRU_SUART8_CONFIG_TX_SER)) = MCASP_SRCTL_TX_MODE;
-    #endif
-    pru_suart_regs->Reserved1 = 1;
-    pru_suart_tx_priv = (pru_suart_tx_cntx_priv *)(pu32_pru_ram_base + 0x1E4);  /* SUART8 TX context base addr */
-    pru_suart_tx_priv->asp_xsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART8_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->asp_xbuf_base = (uint32_t)(MCASP_XBUF_BASE_ADDR + (PRU_SUART8_CONFIG_TX_SER << 2));
-    pru_suart_tx_priv->buff_addr = 0x01C4; /* SUART8  TX formatted data base addr */
-}
-#else
 void pru_set_ram_data(arm_pru_iomap *arm_iomap_pru) {
 
     PRU_SUART_RegsOvly pru_suart_regs = (PRU_SUART_RegsOvly)arm_iomap_pru->pru_io_addr;
@@ -524,8 +202,6 @@ void pru_set_ram_data(arm_pru_iomap *arm_iomap_pru) {
     pru_suart_rx_priv->asp_rsrctl_base = (uint32_t)(MCASP_SRCTL_BASE_ADDR + (PRU_SUART4_CONFIG_RX_SER << 2));
 }
 
-#endif
-
 /*
  * suart Initialization routine
  */
@@ -539,10 +215,6 @@ int16_t pru_softuart_init(uint32_t txBaudValue,
     int16_t status = PRU_SUART_SUCCESS;
     int16_t idx;
     int16_t retval;
-
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) && (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
-        return PRU_SUART_FAILURE;
-    }
 
     pru_arm_iomap.pru_io_addr = arm_iomap_pru->pru_io_addr;
     pru_arm_iomap.mcasp_io_addr = arm_iomap_pru->mcasp_io_addr;
@@ -564,9 +236,6 @@ int16_t pru_softuart_init(uint32_t txBaudValue,
         arm_iomap_pru);
 
     pru_enable(0, arm_iomap_pru);
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    pru_enable(1, arm_iomap_pru);
-    #endif
 
     omapl_addr = (uint32_t)arm_iomap_pru->pru_io_addr;
 
@@ -574,17 +243,10 @@ int16_t pru_softuart_init(uint32_t txBaudValue,
     for (u32loop = 0; u32loop < 512; u32loop += 4)   // Fixed the alignment fault -- ertl-liyixiao
     {
         *(uint32_t *)(omapl_addr | u32loop) = 0x0;
-        #if (!(PRU1_MODE == PRU_MODE_INVALID))
-        *(uint32_t *)(omapl_addr | u32loop | 0x2000) = 0x0;
-        #endif
     }
 
     pru_load(PRU_NUM0, (uint32_t *)pru_suart_emu_code,
         (fw_size / sizeof(uint32_t)), arm_iomap_pru);
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    pru_load(PRU_NUM1, (uint32_t *)pru_suart_emu_code,
-        (fw_size / sizeof(uint32_t)), arm_iomap_pru);
-    #endif
 
     retval = arm_to_pru_intr_init();
     if (-1 == retval) {
@@ -594,21 +256,11 @@ int16_t pru_softuart_init(uint32_t txBaudValue,
 
     suart_set_pru_id(0);
 
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    suart_set_pru_id(1);
-    #endif
-
     pru_set_rx_tx_mode(PRU0_MODE, PRU_NUM0);
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    pru_set_rx_tx_mode(PRU1_MODE, PRU_NUM1);
-    #endif
 
     pru_set_ram_data(arm_iomap_pru);
 
     pru_run(PRU_NUM0, arm_iomap_pru);
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    pru_run(PRU_NUM1, arm_iomap_pru);
-    #endif
 
     /* Initialize gUartStatuTable */
     for (idx = 0; idx < 8; idx++) {
@@ -625,9 +277,6 @@ static void pru_set_rx_tx_mode(uint32_t pru_mode, uint32_t pruNum) {
     if (pruNum == PRU_NUM0) {
         /* PRU0 */
         pruOffset = PRU_SUART_PRU0_RX_TX_MODE;
-    } else if (pruNum == PRU_NUM1) {
-        /* PRU1 */
-        pruOffset = PRU_SUART_PRU1_RX_TX_MODE;
     } else {
         return;
     }
@@ -641,11 +290,6 @@ void pru_set_fifo_timeout(uint32_t timeout) {
     /* PRU 0 */
     pru_ram_write_data(PRU_SUART_PRU0_IDLE_TIMEOUT_OFFSET,
         (uint8_t *)&timeout, 2, &pru_arm_iomap);
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    /* PRU 1 */
-    pru_ram_write_data(PRU_SUART_PRU1_IDLE_TIMEOUT_OFFSET,
-        (uint8_t *)&timeout, 2, &pru_arm_iomap);
-    #endif
 }
 
 /* Not needed as PRU Soft Uart Firmware is implemented as Mcasp Event Based */
@@ -663,11 +307,6 @@ static void pru_set_delay_count(uint32_t pru_freq) {
     /* PRU 0 */
     pru_ram_write_data(PRU_SUART_PRU0_DELAY_OFFSET,
         (uint8_t *)&u32delay_cnt, 1, &pru_arm_iomap);
-    #if (!(PRU1_MODE == PRU_MODE_INVALID))
-    /* PRU 1 */
-    pru_ram_write_data(PRU_SUART_PRU1_DELAY_OFFSET,
-        (uint8_t *)&u32delay_cnt, 1, &pru_arm_iomap);
-    #endif
 
 }
 
@@ -782,72 +421,6 @@ int16_t pru_softuart_open(suart_handle hSuart) {
             }
             break;
 
-        /* ************ PRU 1 ************** */
-        case PRU_SUART_UART5:
-            if (gUartStatuTable[PRU_SUART_UART5 - 1] ==
-                ePRU_SUART_UART_IN_USE) {
-                status = SUART_UART_IN_USE;
-                return status;
-            } else {
-                hSuart->uartStatus = ePRU_SUART_UART_IN_USE;
-                hSuart->uartType = PRU_SUART5_CONFIG_DUPLEX;
-                hSuart->uartTxChannel = PRU_SUART5_CONFIG_TX_SER;
-                hSuart->uartRxChannel = PRU_SUART5_CONFIG_RX_SER;
-
-                gUartStatuTable[PRU_SUART_UART5 - 1] =
-                    ePRU_SUART_UART_IN_USE;
-            }
-            break;
-
-        case PRU_SUART_UART6:
-            if (gUartStatuTable[PRU_SUART_UART6 - 1] ==
-                ePRU_SUART_UART_IN_USE) {
-                status = SUART_UART_IN_USE;
-                return status;
-            } else {
-                hSuart->uartStatus = ePRU_SUART_UART_IN_USE;
-                hSuart->uartType = PRU_SUART6_CONFIG_DUPLEX;
-                hSuart->uartTxChannel = PRU_SUART6_CONFIG_TX_SER;
-                hSuart->uartRxChannel = PRU_SUART6_CONFIG_RX_SER;
-
-                gUartStatuTable[PRU_SUART_UART6 - 1] =
-                    ePRU_SUART_UART_IN_USE;
-            }
-
-            break;
-
-        case PRU_SUART_UART7:
-            if (gUartStatuTable[PRU_SUART_UART7 - 1] ==
-                ePRU_SUART_UART_IN_USE) {
-                status = SUART_UART_IN_USE;
-                return status;
-            } else {
-                hSuart->uartStatus = ePRU_SUART_UART_IN_USE;
-                hSuart->uartType = PRU_SUART7_CONFIG_DUPLEX;
-                hSuart->uartTxChannel = PRU_SUART7_CONFIG_TX_SER;
-                hSuart->uartRxChannel = PRU_SUART7_CONFIG_RX_SER;
-
-                gUartStatuTable[PRU_SUART_UART7 - 1] =
-                    ePRU_SUART_UART_IN_USE;
-            }
-            break;
-
-        case PRU_SUART_UART8:
-            if (gUartStatuTable[PRU_SUART_UART8 - 1] ==
-                ePRU_SUART_UART_IN_USE) {
-                status = SUART_UART_IN_USE;
-                return status;
-            } else {
-                hSuart->uartStatus = ePRU_SUART_UART_IN_USE;
-                hSuart->uartType = PRU_SUART8_CONFIG_DUPLEX;
-                hSuart->uartTxChannel = PRU_SUART8_CONFIG_TX_SER;
-                hSuart->uartRxChannel = PRU_SUART8_CONFIG_RX_SER;
-
-                gUartStatuTable[PRU_SUART_UART8 - 1] =
-                    ePRU_SUART_UART_IN_USE;
-            }
-            break;
-
         default:
             /* return invalid UART */
             status = SUART_INVALID_UART_NUM;
@@ -902,7 +475,7 @@ int16_t pru_softuart_setbaud
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -917,8 +490,6 @@ int16_t pru_softuart_setbaud
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -940,9 +511,7 @@ int16_t pru_softuart_setbaud
 
     if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         chNum++;
     } else {
         return PRU_MODE_INVALID;
@@ -993,7 +562,7 @@ int16_t pru_softuart_setdatabits
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1008,8 +577,6 @@ int16_t pru_softuart_setdatabits
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1030,9 +597,7 @@ int16_t pru_softuart_setdatabits
 
     if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         chNum++;
     } else {
         return PRU_MODE_INVALID;
@@ -1089,7 +654,7 @@ int16_t pru_softuart_setconfig(suart_handle hUart, suart_config *configUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
 
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
@@ -1105,8 +670,6 @@ int16_t pru_softuart_setconfig(suart_handle hUart, suart_config *configUart) {
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1163,9 +726,7 @@ int16_t pru_softuart_setconfig(suart_handle hUart, suart_config *configUart) {
 
     if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         chNum++;
     } else {
         return PRU_MODE_INVALID;
@@ -1229,7 +790,7 @@ int16_t pru_softuart_getTxDataLen(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1244,8 +805,6 @@ int16_t pru_softuart_getTxDataLen(suart_handle hUart) {
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1277,7 +836,7 @@ int16_t pru_softuart_getRxDataLen(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1294,8 +853,6 @@ int16_t pru_softuart_getRxDataLen(suart_handle hUart) {
         chNum++;
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1332,7 +889,7 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
      */
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1348,8 +905,6 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1384,9 +939,7 @@ int16_t pru_softuart_getconfig(suart_handle hUart, suart_config *configUart) {
 
     if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    } else if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         chNum++;
     } else {
         return PRU_MODE_INVALID;
@@ -1431,7 +984,7 @@ int32_t pru_softuart_pending_tx_request(void) {
     uint32_t offset = 0;
     uint32_t u32ISRValue = 0;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         return SUART_SUCCESS;
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         /* Read PRU Interrupt Status Register from PRU */
@@ -1441,16 +994,6 @@ int32_t pru_softuart_pending_tx_request(void) {
         pru_ram_read_data_4byte(offset, (uint32_t *)&u32ISRValue, 1);
 
         if ((u32ISRValue & 0x1) == 0x1) {
-            return PRU_SUART_FAILURE;
-        }
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        /* Read PRU Interrupt Status Register from PRU */
-        offset =
-            (uint32_t)pru_arm_iomap.pru_io_addr | (PRU_INTC_STATCLRINT1 &
-                0xFFFF);
-        pru_ram_read_data_4byte(offset, (uint32_t *)&u32ISRValue, 1);
-
-        if ((u32ISRValue & 0x2) == 0x2) {
             return PRU_SUART_FAILURE;
         }
     } else {
@@ -1479,7 +1022,7 @@ int16_t pru_softuart_write
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
 
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
@@ -1498,9 +1041,6 @@ int16_t pru_softuart_write
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         pru_num = 0;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        pru_num = 1;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1556,7 +1096,7 @@ int16_t pru_softuart_read
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1575,9 +1115,6 @@ int16_t pru_softuart_read
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         pru_num = 0;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        pru_num = 1;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1644,7 +1181,7 @@ int16_t pru_softuart_read_data(
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1660,8 +1197,6 @@ int16_t pru_softuart_read_data(
         chNum++;
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1765,7 +1300,7 @@ int16_t pru_softuart_stopReceive(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
 
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
@@ -1782,8 +1317,6 @@ int16_t pru_softuart_stopReceive(suart_handle hUart) {
         chNum++;
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1825,7 +1358,7 @@ int16_t pru_softuart_getTxStatus(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1841,8 +1374,6 @@ int16_t pru_softuart_getTxStatus(suart_handle hUart) {
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1866,7 +1397,7 @@ int16_t pru_softuart_clrTxStatus(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
 
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
@@ -1882,8 +1413,6 @@ int16_t pru_softuart_clrTxStatus(suart_handle hUart) {
         }
     } else if (PRU0_MODE == PRU_MODE_TX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_TX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1912,7 +1441,7 @@ int16_t pru_softuart_getRxStatus(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -1928,8 +1457,6 @@ int16_t pru_softuart_getRxStatus(suart_handle hUart) {
         chNum++;
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -1957,7 +1484,7 @@ int16_t pru_softuart_clrRxFifo(suart_handle hUart) {
 
     chNum = hUart->uartNum - 1;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
 
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
@@ -1975,9 +1502,6 @@ int16_t pru_softuart_clrRxFifo(suart_handle hUart) {
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         uartNum = 0;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
-        uartNum = 1;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -2023,7 +1547,7 @@ int16_t pru_softuart_clrRxStatus(suart_handle hUart) {
     }
 
     chNum = hUart->uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
 
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = (hUart->uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
@@ -2040,8 +1564,6 @@ int16_t pru_softuart_clrRxStatus(suart_handle hUart) {
         chNum++;
     } else if (PRU0_MODE == PRU_MODE_RX_ONLY) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
-    } else if (PRU1_MODE == PRU_MODE_RX_ONLY) {
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -2084,7 +1606,7 @@ int16_t pru_softuart_get_isrstatus(uint16_t uartNum, uint16_t *txrxFlag) {
 
     pru_ram_read_data_4byte(u32IntcOffset, (uint32_t *)&u32ISRValue, 1);
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chNum = uartNum * 2 - 2;
 
@@ -2148,7 +1670,7 @@ int32_t pru_intr_clr_isrstatus(uint16_t uartNum, uint32_t txrxmode) {
     uint16_t chnNum;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -2167,8 +1689,6 @@ int32_t pru_intr_clr_isrstatus(uint16_t uartNum, uint32_t txrxmode) {
         }
     } else if (PRU0_MODE == txrxmode) {
         offset = PRU_SUART_PRU0_ISR_OFFSET + 1;
-    } else if (PRU1_MODE == txrxmode) {
-        offset = PRU_SUART_PRU1_ISR_OFFSET + 1;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -2185,7 +1705,7 @@ int16_t suart_arm_to_pru_intr(uint16_t uartNum) {
     uint32_t u32value;
     int16_t s16retval;
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         if ((uartNum > 0) && (uartNum <= 4)) {
             /* PRU0 SYS_EVT32 */
             u32value = 0x20;
@@ -2197,8 +1717,8 @@ int16_t suart_arm_to_pru_intr(uint16_t uartNum) {
         }
     }
 
-    if ((PRU0_MODE == PRU_MODE_RX_ONLY) || (PRU1_MODE == PRU_MODE_RX_ONLY) ||
-        (PRU0_MODE == PRU_MODE_TX_ONLY) || (PRU1_MODE == PRU_MODE_TX_ONLY)) {
+    if ((PRU0_MODE == PRU_MODE_RX_ONLY) ||
+        (PRU0_MODE == PRU_MODE_TX_ONLY)) {
         if (uartNum == PRU_NUM0) {
             /* PRU0 SYS_EVT32 */
             u32value = 0x20;
@@ -2320,7 +1840,7 @@ int16_t arm_to_pru_intr_init(void) {
     }
 
 
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* Sets the channel for the system interrupt
         * MAP channel 0 to SYS_EVT32
         * MAP channel 1 to SYS_EVT33
@@ -2401,8 +1921,8 @@ int16_t arm_to_pru_intr_init(void) {
         }
     }
 
-    if ((PRU0_MODE == PRU_MODE_RX_ONLY) || (PRU1_MODE == PRU_MODE_RX_ONLY) ||
-        (PRU0_MODE == PRU_MODE_TX_ONLY) || (PRU1_MODE == PRU_MODE_TX_ONLY)) {
+    if ((PRU0_MODE == PRU_MODE_RX_ONLY) ||
+        (PRU0_MODE == PRU_MODE_TX_ONLY)) {
         /* Sets the channel for the system interrupt
         * MAP channel 0 to SYS_EVT32
         * MAP channel 1 to SYS_EVT33
@@ -2559,7 +2079,7 @@ int32_t suart_pru_to_host_intr_enable(uint16_t uartNum,
     }
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         chnNum = (uartNum * 2) - 2;
         if (2 == txrxmode) {            /* Rx mode */
             chnNum++;
@@ -2567,12 +2087,8 @@ int32_t suart_pru_to_host_intr_enable(uint16_t uartNum,
         u32value = 34 + chnNum;
     } else if ((PRU_MODE_RX_ONLY == txrxmode) && (PRU0_MODE == PRU_MODE_RX_ONLY)) {
         u32value = 34 + chnNum;
-    } else if ((PRU_MODE_RX_ONLY == txrxmode) && (PRU1_MODE == PRU_MODE_RX_ONLY)) {
-        u32value = 42 + chnNum;
     } else if ((PRU_MODE_TX_ONLY == txrxmode) && (PRU0_MODE == PRU_MODE_TX_ONLY)) {
         u32value = 34 + chnNum;
-    } else if ((PRU_MODE_TX_ONLY == txrxmode) && (PRU1_MODE == PRU_MODE_TX_ONLY)) {
-        u32value = 42 + chnNum;
     } else {
         return -1;
     }
@@ -2602,7 +2118,7 @@ int32_t suart_intr_setmask(uint16_t uartNum,
     uint32_t chnNum;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -2626,9 +2142,6 @@ int32_t suart_intr_setmask(uint16_t uartNum,
     } else if (PRU0_MODE == txrxmode) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         offset = PRU_SUART_PRU0_IMR_OFFSET;
-    } else if (PRU1_MODE == txrxmode) {
-        offset = PRU_SUART_PRU1_IMR_OFFSET;
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -2722,7 +2235,7 @@ int32_t suart_intr_clrmask(uint16_t uartNum,
     uint16_t chnNum;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -2746,9 +2259,6 @@ int32_t suart_intr_clrmask(uint16_t uartNum,
     } else if (PRU0_MODE == txrxmode) {
         pruOffset = PRU_SUART_PRU0_CH0_OFFSET;
         offset = PRU_SUART_PRU0_IMR_OFFSET;
-    } else if (PRU1_MODE == txrxmode) {
-        offset = PRU_SUART_PRU1_IMR_OFFSET;
-        pruOffset = PRU_SUART_PRU1_CH0_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }
@@ -2835,7 +2345,7 @@ int32_t suart_intr_getmask(uint16_t uartNum,
     uint16_t regval = 1;
 
     chnNum = uartNum - 1;
-    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH) || (PRU1_MODE == PRU_MODE_RX_TX_BOTH)) {
+    if ((PRU0_MODE == PRU_MODE_RX_TX_BOTH)) {
         /* channel starts from 0 and uart instance starts from 1 */
         chnNum = (uartNum * SUART_NUM_OF_CHANNELS_PER_SUART) - 2;
 
@@ -2856,8 +2366,6 @@ int32_t suart_intr_getmask(uint16_t uartNum,
         }
     } else if (PRU0_MODE == txrxmode) {
         offset = PRU_SUART_PRU0_IMR_OFFSET;
-    } else if (PRU1_MODE == txrxmode) {
-        offset = PRU_SUART_PRU1_IMR_OFFSET;
     } else {
         return PRU_MODE_INVALID;
     }

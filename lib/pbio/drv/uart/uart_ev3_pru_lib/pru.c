@@ -129,19 +129,6 @@ uint32_t pru_disable(arm_pru_iomap *pru_arm_iomap) {
         hPru->CONTROL = CSL_PRUCORE_CONTROL_RESETVAL;
     }
 
-    // Disable PRU1
-    hPru = (CSL_PrucoreRegsOvly)((uint32_t)pru_arm_iomap->pru_io_addr + 0x7800);        // CSL_PRUCORE_1_REGS;
-    CSL_FINST(hPru->CONTROL, PRUCORE_CONTROL_COUNTENABLE, DISABLE);
-
-    for (delay_cnt = 0x10000; delay_cnt > 0; delay_cnt--) {
-        CSL_FINST(hPru->CONTROL, PRUCORE_CONTROL_ENABLE, DISABLE);
-    }
-
-    for (delay_cnt = 0x10000; delay_cnt > 0; delay_cnt--) {
-        // Reset PRU1
-        hPru->CONTROL = CSL_PRUCORE_CONTROL_RESETVAL;
-    }
-
     return E_PASS;
 }
 
