@@ -51,10 +51,9 @@
 @ main() function.
 @
 Entry:
-         @ HACK: The U-Boot Linux loader was doing this, but the ELF loader
-         @ does not. Adding this here until we sort out the proper way to handle
-         @ caching. But right now, it breaks the display driver and other things
-         @ if we don't do this.
+         @ U-Boot invokes us with caches and MMU enabled (since we use the
+         @ ELF loader and not the Linux loader). We later do custom setup
+         @ in platform.c, but for now we need to disable caches and MMU.
          mrc p15, #0, r0, c1, c0,#0            @ Read System Control Register
          bic r0, r0, #0x1000                   @ Clear bit 12 to disable ICache
          bic r0, r0, #0x0004                   @ Clear bit 2 to disable DCache
@@ -62,8 +61,9 @@ Entry:
          mcr p15, #0, r0, c1, c0, #0           @ Write back to System Control Register
          mov r0, #0                            @ Set r0 to 0
          mcr p15, #0, r0, c7, c7, #0           @ Invalidate all caches
-         @ END HACK
 
+         @ Set the "V" bit so that exception vectors are at 0xffff0000
+         @ (where the AM1808 SoC has ARM local RAM)
          MRC p15, 0, r0, c1, c0, 0 @ Load Coprocessor Register C1 to ARM Register r0
          ORR r0, r0, #0x00002000 @ Logical OR --> Set Bit 13
          MCR p15, 0, r0, c1, c0, 0 @ Restore Coprocessor Register C1 from ARM Register r0
