@@ -1,6 +1,7 @@
 #ifndef _INTERNAL_PBDRV_UART_EV3_PRU_H_
 #define _INTERNAL_PBDRV_UART_EV3_PRU_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 int pbdrv_uart_ev3_pru_load_firmware(uint8_t *firmware_data, uint32_t firmware_size);
