@@ -34,11 +34,11 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
  *
  * Not implemented on all platforms.
  *
- * @param [in] state    Protothread state.
- * @param [in] timer    Parent process timer, used to store time of calling this.
- * @param [in] future   How far into the future the sample should be (ms).
+ * @param [in]  state          Protothread state.
+ * @param [out] start_time_us  Persistent value used by this function to store the start time (µs).
+ * @param [in]  future_us      How far into the future the sample should be (µs).
  */
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, pbio_os_timer_t *timer, uint32_t future);
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us);
 
 #else
 
@@ -47,7 +47,7 @@ static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, pbio_os_timer_t *timer, uint32_t future) {
+static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

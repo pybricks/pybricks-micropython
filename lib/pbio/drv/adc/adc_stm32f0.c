@@ -66,8 +66,8 @@ void pbdrv_adc_init(void) {
     process_start(&pbdrv_adc_process);
 }
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, pbio_os_timer_t *timer, uint32_t future) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
 // does a single conversion for the specified channel

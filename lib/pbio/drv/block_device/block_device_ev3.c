@@ -116,7 +116,7 @@ static struct {
     uint8_t rx_dummy_byte;
 } spi_dev_bufs PBDRV_DMA_BUF;
 
-static uint32_t last_spi_dma_complete_time;
+static uint32_t last_spi_dma_complete_time_us;
 
 static void spi_dma_complete(void) {
     // Only complete once RX and TX complete.
@@ -129,7 +129,7 @@ static void spi_dma_complete(void) {
     if (spi_dev.rx_user_buf_addr && spi_dev.rx_user_buf_sz) {
         pbdrv_cache_prepare_after_dma((void *)spi_dev.rx_user_buf_addr, spi_dev.rx_user_buf_sz);
     }
-    last_spi_dma_complete_time = pbdrv_clock_get_ms();
+    last_spi_dma_complete_time_us = pbdrv_clock_get_us();
 }
 
 /**
@@ -764,10 +764,10 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, pbio_os_timer_t *timer, uint32_t future) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
     PBIO_OS_ASYNC_BEGIN(state);
-    pbio_os_timer_set(timer, 0);
-    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(last_spi_dma_complete_time, timer->start + future));
+    *start_time_us = pbdrv_clock_get_us();
+    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(last_spi_dma_complete_time_us, *start_time_us + future_us));
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -916,6 +916,8 @@ pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
     pbdrv_block_device_load_err = err;
     pbio_busy_count_down();
 
+    pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
+
     // Poll ADC continuously until cancellation is requested.
     while (!(ev3_spi_process.request & PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL)) {
 
@@ -928,8 +930,8 @@ pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
         // Await for transfer to complete.
         PBIO_OS_AWAIT_WHILE(state, (spi_dev.status & SPI_STATUS_WAIT_ANY));
 
-        pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
-        PBIO_OS_AWAIT_UNTIL(state, ev3_spi_process.request || pbio_os_timer_is_expired(&timer));
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
+        pbio_os_timer_extend(&timer);
     }
 
     // Now that the ADC loop has ended, we can use the SPI bus to save user
