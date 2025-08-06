@@ -21,6 +21,7 @@
 #include <pbio/os.h>
 #include <pbio/util.h>
 
+#include <pbdrv/cache.h>
 #include <pbdrv/i2c.h>
 
 #include "../drv/rproc/rproc.h"
@@ -38,7 +39,14 @@
 #define DBG_ERR(expr)
 #endif
 
+// Max 255 bytes write, 255 bytes read
+// Rounded up to a nice power of 2 and multiple of cache lines
+#define PRU_I2C_MAX_BYTES_PER_TXN   512
+
+static uint8_t pbdrv_i2c_buffers[PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES][PRU_I2C_MAX_BYTES_PER_TXN] PBDRV_DMA_BUF;
+
 struct _pbdrv_i2c_dev_t {
+    uint8_t *buffer;
     volatile bool is_busy;
     bool is_initialized;
     uint8_t pru_i2c_idx;
@@ -104,6 +112,12 @@ pbio_error_t ev3_i2c_init_process_thread(pbio_os_state_t *state, void *context) 
     // Need rproc to be initialized, because it sets up the PRU INTC
     PBIO_OS_AWAIT_UNTIL(state, pbdrv_rproc_is_ready());
 
+    // Set up the buffer pointers
+    for (int i = 0; i < PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES; i++) {
+        pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
+        pbdrv_rproc_ev3_pru1_shared_ram.i2c[i].buffer = (uintptr_t)i2c->buffer;
+    }
+
     // REVISIT: These event numbers get set up by the SUART library.
     // We should separate them cleanly in the future.
     IntRegister(SYS_INT_EVTOUT4, pbdrv_i2c_irq_0);
@@ -135,6 +149,7 @@ void pbdrv_i2c_init(void) {
     for (int i = 0; i < PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES; i++) {
         pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
         i2c->pru_i2c_idx = i;
+        i2c->buffer = pbdrv_i2c_buffers[i];
         i2c->is_initialized = true;
     }
 
