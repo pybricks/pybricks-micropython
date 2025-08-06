@@ -17,6 +17,9 @@
 #include <tiam1808/gpio.h>
 #include <tiam1808/psc.h>
 
+#include "../rproc/rproc.h"
+#include "../rproc/rproc_ev3.h"
+
 static uint32_t get_pin_index(const pbdrv_gpio_t *gpio) {
     // TI API indexes pins from 1 to 144, so need to add 1.
     pbdrv_gpio_ev3_mux_t *mux_info = gpio->bank;
@@ -31,13 +34,32 @@ static void pbdrv_gpio_alt_gpio(const pbdrv_gpio_t *gpio) {
     pbdrv_gpio_alt(gpio, mux_info->gpio_mode);
 }
 
+// If the pin is not in banks 0/1, the PRU is not involved.
+// Otherwise, if the PRU is initialized, do direction changes
+// via the PRU in order to prevent race conditions.
+// If the PRU is not initialized (i.e. doing direction changes
+// during early boot), also set the direction directly via
+// the ARM. The PRU code polls these direction change registers
+// continuously and is not expected to block for too long,
+// only on the order of microseconds.
+#define PBDRV_GPIO_EV3_ARM_OWNS_GPIO_BANK(pin_index)    \
+    ((pin_index) > 32 || !pbdrv_rproc_is_ready())
+
 static void gpio_write(const pbdrv_gpio_t *gpio, uint8_t value) {
     if (!gpio) {
         return;
     }
     pbdrv_gpio_alt_gpio(gpio);
     uint32_t pin_index = get_pin_index(gpio);
-    GPIODirModeSet(SOC_GPIO_0_REGS, pin_index, GPIO_DIR_OUTPUT);
+    if (PBDRV_GPIO_EV3_ARM_OWNS_GPIO_BANK(pin_index)) {
+        GPIODirModeSet(SOC_GPIO_0_REGS, pin_index, GPIO_DIR_OUTPUT);
+    } else if (GPIODirModeGet(SOC_GPIO_0_REGS, pin_index) != GPIO_DIR_OUTPUT) {
+        uint32_t val = 1 << (pin_index - 1);
+        pbdrv_rproc_ev3_pru1_shared_ram.gpio_bank_01_dir_clr = val;
+        while (pbdrv_rproc_ev3_pru1_shared_ram.gpio_bank_01_dir_clr) {
+            // Wait for the PRU to process the command
+        }
+    }
     GPIOPinWrite(SOC_GPIO_0_REGS, pin_index, value);
 }
 
@@ -55,7 +77,15 @@ uint8_t pbdrv_gpio_input(const pbdrv_gpio_t *gpio) {
     }
     pbdrv_gpio_alt_gpio(gpio);
     uint32_t pin_index = get_pin_index(gpio);
-    GPIODirModeSet(SOC_GPIO_0_REGS, pin_index, GPIO_DIR_INPUT);
+    if (PBDRV_GPIO_EV3_ARM_OWNS_GPIO_BANK(pin_index)) {
+        GPIODirModeSet(SOC_GPIO_0_REGS, pin_index, GPIO_DIR_INPUT);
+    } else if (GPIODirModeGet(SOC_GPIO_0_REGS, pin_index) != GPIO_DIR_INPUT) {
+        uint32_t val = 1 << (pin_index - 1);
+        pbdrv_rproc_ev3_pru1_shared_ram.gpio_bank_01_dir_set = val;
+        while (pbdrv_rproc_ev3_pru1_shared_ram.gpio_bank_01_dir_set) {
+            // Wait for the PRU to process the command
+        }
+    }
     return GPIOPinRead(SOC_GPIO_0_REGS, pin_index) == GPIO_PIN_HIGH;
 }
 
