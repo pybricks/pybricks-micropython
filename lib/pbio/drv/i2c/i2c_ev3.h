@@ -22,6 +22,6 @@ typedef struct {
  * Array of I2C platform data to be defined in platform.c.
  */
 extern const pbdrv_i2c_ev3_platform_data_t
-    pbdrv_i2c_ev3_platform_data[PBDRV_CONFIG_I2C_EV3_NUM_DEV];
+    pbdrv_i2c_ev3_platform_data[1];
 
 #endif // _INTERNAL_PBDRV_I2C_EV3_H_
