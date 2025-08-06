@@ -13,6 +13,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/port.h>
 #include <contiki.h>
 
@@ -30,18 +31,37 @@ typedef struct _pbdrv_i2c_dev_t pbdrv_i2c_dev_t;
 pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev);
 
 /**
- * Does an I2C operation. To be replaced.
+ * Does an I2C operation. To be integrated with higher-level code.
  *
- * Doesn't do anything yet. This is a placeholder so someone knowledgable with
- * EV3 I2C has a starting point without setting up all the boilerplate.
- *
- * @param [in]  i2c_dev    The I2C device.
- * @param [in]  operation  Dummy parameter.
- * @return                 ::PBIO_SUCCESS on success.
+ * @param [in]  state       Protothread state for async operation.
+ * @param [in]  i2c_dev     The I2C device.
+ * @param [in]  dev_addr    I2C device address (unshifted).
+ * @param [in]  wdata       Data to be sent to the device.
+ *                          Can be null if \p wlen is 0.
+ * @param [in]  wlen        Length of \p wdata.
+ *                          If this is 0 and \p rlen is also 0,
+ *                          an empty "ping" will be sent, consisting of
+ *                          only a device address (with R/nW = 0).
+ *                          If this is 0 but \p rlen is not 0,
+ *                          a read transaction will be sent.
+ *                          If this is not 0 and \p rlen is not 0,
+ *                          a write will be sent followed by a read in
+ *                          a single transaction.
+ * @param [out] rdata       Buffer for data read from the device.
+ *                          Can be null if \p rlen is 0.
+ * @param [in]  rlen        Size of \p rdata.
+ * @param [in]  nxt_quirk   Whether to use NXT I2C transaction quirk.
+ * @return                  ::PBIO_SUCCESS on success.
  */
-pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const char *operation);
-
-// Delete above and add read/write functions here. See I2C driver for examples, also protothreads.
+pbio_error_t pbdrv_i2c_write_then_read(
+    pbio_os_state_t *state,
+    pbdrv_i2c_dev_t *i2c_dev,
+    uint8_t dev_addr,
+    const uint8_t *wdata,
+    size_t wlen,
+    uint8_t *rdata,
+    size_t rlen,
+    bool nxt_quirk);
 
 #else // PBDRV_CONFIG_I2C
 
@@ -50,7 +70,15 @@ static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const char *operation) {
+static inline pbio_error_t pbdrv_i2c_write_then_read(
+    pbio_os_state_t *state,
+    pbdrv_i2c_dev_t *i2c_dev,
+    uint8_t dev_addr,
+    const uint8_t *wdata,
+    size_t wlen,
+    uint8_t *rdata,
+    size_t rlen,
+    bool nxt_quirk) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

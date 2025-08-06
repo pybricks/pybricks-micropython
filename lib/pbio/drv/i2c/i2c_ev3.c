@@ -99,9 +99,75 @@ static void pbdrv_i2c_irq_3(void) {
     pbio_os_request_poll();
 }
 
-pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const char *operation) {
-    debug_pr("I2C placeholder operation %s\n", operation);
-    return PBIO_SUCCESS;
+pbio_error_t pbdrv_i2c_write_then_read(
+    pbio_os_state_t *state,
+    pbdrv_i2c_dev_t *i2c_dev,
+    uint8_t dev_addr,
+    const uint8_t *wdata,
+    size_t wlen,
+    uint8_t *rdata,
+    size_t rlen,
+    bool nxt_quirk) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (wlen && !wdata) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    if (rlen && !rdata) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    if (wlen > 0xff || rlen > 0xff) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    if (i2c_dev->is_busy) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Prepare TX data
+    if (wlen) {
+        memcpy(i2c_dev->buffer, wdata, wlen);
+    }
+    i2c_dev->is_busy = true;
+    pbdrv_cache_prepare_before_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
+
+    // Kick off transfer
+    pbdrv_rproc_ev3_pru1_shared_ram.i2c[i2c_dev->pru_i2c_idx].flags = PBDRV_RPROC_EV3_PRU1_I2C_PACK_FLAGS(
+        dev_addr,
+        rlen,
+        wlen,
+        PBDRV_RPROC_EV3_PRU1_I2C_CMD_START | (nxt_quirk ? PBDRV_RPROC_EV3_PRU1_I2C_CMD_NXT_QUIRK : 0)
+        );
+
+    // Wait for transfer to finish
+    PBIO_OS_AWAIT_WHILE(state, i2c_dev->is_busy);
+
+    uint32_t flags = pbdrv_rproc_ev3_pru1_shared_ram.i2c[i2c_dev->pru_i2c_idx].flags;
+    debug_pr("i2c %d done flags %08x\r\n", i2c_dev->pru_i2c_idx, flags);
+    if (!(flags & PBDRV_RPROC_EV3_PRU1_I2C_STAT_DONE)) {
+        debug_pr("i2c %d not actually done???\r\n", i2c_dev->pru_i2c_idx);
+        return PBIO_ERROR_FAILED;
+    }
+    switch (flags & PBDRV_RPROC_EV3_PRU1_I2C_STAT_MASK) {
+        case PBDRV_RPROC_EV3_PRU1_I2C_STAT_OK:
+            break;
+        case PBDRV_RPROC_EV3_PRU1_I2C_STAT_TIMEOUT:
+            return PBIO_ERROR_TIMEDOUT;
+        case PBDRV_RPROC_EV3_PRU1_I2C_STAT_NAK:
+            return PBIO_ERROR_IO;
+        default:
+            debug_pr("i2c %d unknown error occurred???\r\n", i2c_dev->pru_i2c_idx);
+            return PBIO_ERROR_FAILED;
+    }
+
+    // If we got here, there's no error. Copy RX data.
+    pbdrv_cache_prepare_after_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
+    if (rlen) {
+        memcpy(rdata, &i2c_dev->buffer[wlen], rlen);
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_os_process_t ev3_i2c_init_process;
