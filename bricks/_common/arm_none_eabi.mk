@@ -93,9 +93,6 @@ endif
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = $(PBTOP)/bricks/_common/qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/_common/mpconfigport.h
-ifeq ($(PB_MCU_FAMILY),STM32)
-QSTR_GLOBAL_DEPENDENCIES += ../_common_stm32/mpconfigport.h
-endif
 
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
