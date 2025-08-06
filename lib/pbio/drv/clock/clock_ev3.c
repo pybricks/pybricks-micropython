@@ -1,9 +1,6 @@
-// SPDX-License-Identifier: MPL-1.0
+// SPDX-License-Identifier: MPL-1.0 AND MIT
 // Copyright (c) 2016 Tobias Schießl
-
-// SPDX-License-Identifier: MIT
 // Copyright (c) 2024 The Pybricks Authors
-
 
 #include <pbdrv/config.h>
 
@@ -35,7 +32,7 @@ static const uint32_t timer_us_division = auxclk_freq_hz / 1000000;
 /**
  * The current tick in milliseconds
  */
-volatile uint32_t systick_ms = 0;
+volatile uint32_t pbdrv_clock_ticks;
 
 /**
  * The systick interrupt service routine (ISR) which will be called every millisecond.
@@ -45,7 +42,7 @@ void systick_isr_C(void) {
     IntSystemStatusClear(SYS_INT_TINT12_0);
     TimerIntStatusClear(SOC_TMR_0_REGS, TMR_INTSTAT12_TIMER_NON_CAPT);
 
-    ++systick_ms;
+    pbdrv_clock_ticks++;
 
     etimer_request_poll();
     pbio_os_request_poll();
@@ -88,7 +85,7 @@ uint32_t pbdrv_clock_get_us(void) {
 }
 
 uint32_t pbdrv_clock_get_ms(void) {
-    return systick_ms;
+    return pbdrv_clock_ticks;
 }
 
 uint32_t pbdrv_clock_get_100us(void) {

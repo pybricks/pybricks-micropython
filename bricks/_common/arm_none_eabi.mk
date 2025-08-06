@@ -253,24 +253,22 @@ PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
 	micropython.c \
 	)
 
-ifeq ($(PB_MCU_FAMILY),STM32)
-PY_EXTRA_SRC_C += $(addprefix bricks/_common_stm32/,\
-	mphalport.c \
-	)
-
-ifeq ($(PB_MCU_SERIES),F0)
-SRC_S += shared/runtime/gchelper_thumb1.s
-else
-SRC_S += shared/runtime/gchelper_thumb2.s
-endif
-endif
-
+# TODO: NXT should eventually use the same mphalport.c as well.
 ifeq ($(PB_MCU_FAMILY),AT91SAM7)
 PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
 	mphalport.c \
 	)
+else
+PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
+	mphalport.c \
+	)
+endif
 
+# Not all MCUs support thumb2 instructions.
+ifeq ($(PB_MCU_SERIES),$(filter $(PB_MCU_SERIES),AT91SAM7 F0 TIAM1808))
 SRC_S += shared/runtime/gchelper_thumb1.s
+else
+SRC_S += shared/runtime/gchelper_thumb2.s
 endif
 
 # Skipping uart_irda_cir.c, gpio_v2.c, and hsi2c.c usbphyGS70.c, which
@@ -315,14 +313,6 @@ EV3_SRC_S = $(addprefix lib/pbio/platform/ev3/,\
 	exceptionhandler.S \
 	start.S \
 	)
-
-ifeq ($(PB_MCU_FAMILY),TIAM1808)
-PY_EXTRA_SRC_C += $(addprefix bricks/ev3/,\
-	mphalport.c \
-	)
-
-SRC_S += shared/runtime/gchelper_thumb1.s
-endif
 
 # STM32 Bluetooth stack
 
