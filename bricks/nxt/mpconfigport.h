@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2023 The Pybricks Authors
 
-#include <stdint.h>
-
-#define MICROPY_BANNER_NAME_AND_VERSION         "Pybricks MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE
 #define MICROPY_HW_BOARD_NAME                   "LEGO MINDSTORMS NXT Brick"
 #define MICROPY_HW_MCU_NAME                     "AT91SAM7S256"
 
