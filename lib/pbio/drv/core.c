@@ -18,6 +18,7 @@
 #include "clock/clock.h"
 #include "counter/counter.h"
 #include "display/display.h"
+#include "i2c/i2c.h"
 #include "imu/imu.h"
 #include "led/led_array.h"
 #include "led/led.h"
@@ -49,6 +50,7 @@ void pbdrv_init(void) {
     pbdrv_charger_init();
     pbdrv_counter_init();
     pbdrv_display_init();
+    pbdrv_i2c_init();
     pbdrv_imu_init();
     pbdrv_led_array_init();
     pbdrv_led_init();

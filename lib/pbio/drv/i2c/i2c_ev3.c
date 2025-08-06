@@ -16,7 +16,6 @@
 #include <pbio/util.h>
 
 #include <pbdrv/i2c.h>
-#include "i2c_ev3.h"
 
 #include "../rproc/rproc_ev3.h"
 
@@ -33,11 +32,8 @@
 #endif
 
 struct _pbdrv_i2c_dev_t {
-    /** Platform-specific data */
-    const pbdrv_i2c_ev3_platform_data_t *pdata;
-    //
-    // TODO: i2c state goes here.
-    //
+    bool is_initialized;
+    uint8_t pru_i2c_idx;
 };
 
 static pbdrv_i2c_dev_t i2c_devs[PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES];
@@ -47,7 +43,7 @@ pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
         return PBIO_ERROR_INVALID_ARG;
     }
     pbdrv_i2c_dev_t *dev = &i2c_devs[id];
-    if (!dev->pdata) {
+    if (!dev->is_initialized) {
         // has not been initialized yet
         return PBIO_ERROR_AGAIN;
     }
@@ -62,9 +58,9 @@ pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const cha
 
 void pbdrv_i2c_init(void) {
     for (int i = 0; i < PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES; i++) {
-        const pbdrv_i2c_ev3_platform_data_t *pdata = &pbdrv_i2c_ev3_platform_data[i];
         pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
-        i2c->pdata = pdata;
+        i2c->pru_i2c_idx = i;
+        i2c->is_initialized = true;
     }
 }
 
