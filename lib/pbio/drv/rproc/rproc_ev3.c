@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/soc_AM1808.h>
 #include <tiam1808/pruss.h>
 #include <tiam1808/psc.h>
@@ -56,6 +57,10 @@ void pbdrv_rproc_init(void) {
     unsigned int *fw_start = (unsigned int *)&pbdrv_rproc_ev3_pru1_fw_start;
     uint32_t fw_sz = &pbdrv_rproc_ev3_pru1_fw_end - &pbdrv_rproc_ev3_pru1_fw_start;
     PRUSSDRVPruWriteMemory(PRUSS0_PRU1_IRAM, 0, fw_start, fw_sz);
+    // Clear data RAM
+    for (int i = 0; i < PRUSS_DATARAM_SIZE; i += 4) {
+        HWREG(DATARAM1_PHYS_BASE + i) = 0;
+    }
     // Set constant table C30 to point to shared memory
     PRUSSDRVPruSetCTable(1, 30, (((uint32_t)&pbdrv_rproc_ev3_pru1_shared_ram) >> 8) & 0xffff);
     PRUSSDRVPruEnable(1);
