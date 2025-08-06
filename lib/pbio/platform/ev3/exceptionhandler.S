@@ -68,7 +68,7 @@ CommonPanicHandler:
         @ NOTE: Assumes we never use User mode
         and     r0, #MASK_SR_MODE
         mrs     r1, cpsr
-        and     r2, r1, #MASK_SR_MODE
+        bic     r2, r1, #MASK_SR_MODE
         orr     r2, r0
         msr     cpsr, r2
         mov     r3, r13
