@@ -18,6 +18,8 @@
 #include <pbdrv/i2c.h>
 #include "i2c_ev3.h"
 
+#include "../rproc/rproc_ev3.h"
+
 #define DEBUG 1
 #if DEBUG
 #include <stdio.h>
@@ -38,10 +40,10 @@ struct _pbdrv_i2c_dev_t {
     //
 };
 
-static pbdrv_i2c_dev_t i2c_devs[PBDRV_CONFIG_I2C_EV3_NUM_DEV];
+static pbdrv_i2c_dev_t i2c_devs[PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES];
 
 pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
-    if (id >= PBDRV_CONFIG_I2C_EV3_NUM_DEV) {
+    if (id >= PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES) {
         return PBIO_ERROR_INVALID_ARG;
     }
     pbdrv_i2c_dev_t *dev = &i2c_devs[id];
@@ -59,7 +61,7 @@ pbio_error_t pbdrv_i2c_placeholder_operation(pbdrv_i2c_dev_t *i2c_dev, const cha
 }
 
 void pbdrv_i2c_init(void) {
-    for (int i = 0; i < PBDRV_CONFIG_I2C_EV3_NUM_DEV; i++) {
+    for (int i = 0; i < PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES; i++) {
         const pbdrv_i2c_ev3_platform_data_t *pdata = &pbdrv_i2c_ev3_platform_data[i];
         pbdrv_i2c_dev_t *i2c = &i2c_devs[i];
         i2c->pdata = pdata;

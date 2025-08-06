@@ -41,7 +41,6 @@
 
 #define PBDRV_CONFIG_I2C                            (1)
 #define PBDRV_CONFIG_I2C_EV3                        (1)
-#define PBDRV_CONFIG_I2C_EV3_NUM_DEV                (4)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)

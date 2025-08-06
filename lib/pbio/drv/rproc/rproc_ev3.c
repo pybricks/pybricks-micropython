@@ -45,6 +45,12 @@ void pbdrv_rproc_init(void) {
     TimerPeriodSet(SOC_TMR_0_REGS, TMR_TIMER34, 256 * 256 - 1);
     TimerEnable(SOC_TMR_0_REGS, TMR_TIMER34, TMR_ENABLE_CONT);
 
+    // Enable Timer2 "12" half for 20 kHz = 2 * 10 kHz
+    // This is used by the PRU to time I2C bits
+    TimerConfigure(SOC_TMR_2_REGS, TMR_CFG_32BIT_UNCH_CLK_BOTH_INT);
+    TimerPeriodSet(SOC_TMR_2_REGS, TMR_TIMER12, SOC_SYSCLK_2_FREQ / (2 * PBDRV_RPROC_EV3_PRU1_I2C_CLK_SPEED_HZ) - 1);
+    TimerEnable(SOC_TMR_2_REGS, TMR_TIMER12, TMR_ENABLE_CONT);
+
     // Clear shared command memory
     memset((void *)&pbdrv_rproc_ev3_pru1_shared_ram, 0, sizeof(pbdrv_rproc_ev3_pru1_shared_ram));
 
