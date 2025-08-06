@@ -20,7 +20,7 @@ static pbio_error_t pbdrv_pwm_tiam1808_set_duty(pbdrv_pwm_dev_t *dev, uint32_t c
         return PBIO_SUCCESS;
     }
 
-    pbdrv_rproc_ev3_pru1_shared_ram.pwms[ch] = value;
+    pbdrv_rproc_ev3_pru1_shared_ram.pwm_duty_cycle[ch] = value;
     return PBIO_SUCCESS;
 }
 
