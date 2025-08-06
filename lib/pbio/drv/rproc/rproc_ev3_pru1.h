@@ -19,6 +19,12 @@ typedef struct {
         // PWM duty cycle for each channel, range [0-255]
         uint8_t pwm_duty_cycle[PBDRV_RPROC_EV3_PRU1_NUM_PWM_CHANNELS];
     };
+    // Because the PRU needs to manipulate the GPIO direction
+    // for doing I2C, and because these registers do *not*
+    // support atomic bit access, we give the PRU full ownership
+    // of them and route ARM accesses through the PRU.
+    uint32_t gpio_bank_01_dir_set;
+    uint32_t gpio_bank_01_dir_clr;
 } pbdrv_rproc_ev3_pru1_shared_ram_t;
 
 #endif // _INTERNAL_PBDRV_RPROC_EV3_PRU1_H_
