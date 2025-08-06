@@ -59,4 +59,4 @@
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 #define PYBRICKS_OPT_NATIVE_MOD                 (0)
 
-#include "../_common_stm32/mpconfigport.h"
+#include "../_common/mpconfigport.h"
