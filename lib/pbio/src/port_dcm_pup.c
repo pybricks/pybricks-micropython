@@ -281,11 +281,6 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         #endif
     }
 
-    // When DCM completes and proceeds to UART in a separate process, disallow
-    // getting any devices from here. This will cause the device assertion to
-    // raise.
-    dcm->dev_id_match_count = 0;
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -322,7 +317,12 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
                 *type_id = dcm->prev_type_id;
                 return PBIO_SUCCESS;
             }
-        // fallthrough
+            return PBIO_ERROR_NO_DEV;
+        case LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART:
+            if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) {
+                return PBIO_SUCCESS;
+            }
+            return PBIO_ERROR_NO_DEV;
         default:
             return PBIO_ERROR_NO_DEV;
     }
