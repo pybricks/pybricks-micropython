@@ -52,7 +52,7 @@
 #define PBDRV_CONFIG_DISPLAY_NUM_ROWS               (128)
 
 #define PBDRV_CONFIG_GPIO                           (1)
-#define PBDRV_CONFIG_GPIO_TIAM1808                  (1)
+#define PBDRV_CONFIG_GPIO_EV3                       (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)

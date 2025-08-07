@@ -3,7 +3,7 @@
 
 #include "pbdrv/config.h"
 
-#if PBDRV_CONFIG_GPIO_TIAM1808
+#if PBDRV_CONFIG_GPIO_EV3
 
 #include <stdint.h>
 
@@ -103,4 +103,4 @@ void pbdrv_gpio_set_pull(const pbdrv_gpio_t *gpio, pbdrv_gpio_pull_t pull) {
     // Not implemented for TI AM1808 since EV3 does not use software pull-up/pull-down.
 }
 
-#endif // PBDRV_CONFIG_GPIO_TIAM1808
+#endif // PBDRV_CONFIG_GPIO_EV3
