@@ -624,8 +624,8 @@ $(BUILD)/u-boot.bin:
 $(BUILD)/pru_ledpwm.bin:
 	$(ECHO) "Downloading pru_ledpwm.bin"
 	$(Q)mkdir -p $(dir $@)
-	$(Q)curl -sL -o $@ https://github.com/pybricks/pybricks-pru/releases/download/v0.0.1/pru_ledpwm.bin
-	$(Q)echo "c0138addb8ebb3d0f531499b6f45ccc71f524afbb6ce55ca3ab462a001ec28d2  $@" | sha256sum -c --strict
+	$(Q)curl -sL -o $@ https://github.com/pybricks/pybricks-pru/releases/download/v1.0.0/pru_ledpwm.bin
+	$(Q)echo "b4f1225e277bb22efa5394ce782cc19a3e2fdd54367e40b9d09e9ca99c6ef6d0  $@" | sha256sum -c --strict
 
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 
