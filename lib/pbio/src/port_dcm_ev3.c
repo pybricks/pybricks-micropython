@@ -455,8 +455,8 @@ pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     return dcm;
 }
 
-static pbio_error_t must_equal(lego_device_type_id_t candidate, lego_device_type_id_t expected) {
-    return candidate == expected ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
+static pbio_error_t matches_category(pbio_port_dcm_t *dcm, pbio_port_dcm_category_t expected) {
+    return dcm->category == expected ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
 }
 
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *expected_type_id) {
@@ -475,45 +475,32 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 
     // Still busy detecting.
-    if (!dcm->connected) {
+    if (!dcm->connected || dcm->category == DCM_CATEGORY_NONE) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    switch (dcm->category) {
-        case DCM_CATEGORY_NONE:
-            return PBIO_ERROR_NO_DEV;
-        case DCM_CATEGORY_EV3_ANALOG:
-            // This is the only known EV3 analog sensor.
-            return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR);
-        case DCM_CATEGORY_NXT_COLOR:
-            // Only one sensor in this category.
-            return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR);
-        case DCM_CATEGORY_NXT_TEMPERATURE:
-            // Only one sensor in this category.
-            return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR);
-        case DCM_CATEGORY_NXT_LIGHT:
-            // For legacy compatibility, allow anything wired like a NXT light
-            // sensor to be detected and used as a generic analog sensor.
-            if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_ANALOG) {
-                *expected_type_id = LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR;
-                return PBIO_SUCCESS;
-            } else {
-                // If a specific type is requested, it must be the light sensor.
-                return must_equal(*expected_type_id, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR);
-            }
-        case DCM_CATEGORY_NXT_ANALOG_OTHER:
-            // In principle, the sound sensor can be distinguished using ADCP6,
-            // but we pass both here for simplicity.
-            if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_ANALOG ||
-                *expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR ||
-                *expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR) {
-                return PBIO_SUCCESS;
-            } else {
-                return PBIO_ERROR_NO_DEV;
-            }
-        case DCM_CATEGORY_NXT_I2C:
-            // TODO: Check standard LEGO I2C device ID.
-            return PBIO_ERROR_NO_DEV;
+    switch (*expected_type_id) {
+        case LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART:
+            return matches_category(dcm, DCM_CATEGORY_LUMP);
+        case LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR:
+            return matches_category(dcm, DCM_CATEGORY_EV3_ANALOG);
+        case LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR:
+            return matches_category(dcm, DCM_CATEGORY_NXT_COLOR);
+        case LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR:
+            return matches_category(dcm, DCM_CATEGORY_NXT_TEMPERATURE);
+        case LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR:
+            return matches_category(dcm, DCM_CATEGORY_NXT_LIGHT);
+        case LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR:
+            return matches_category(dcm, DCM_CATEGORY_NXT_ANALOG_OTHER);
+        case LEGO_DEVICE_TYPE_ID_NXT_ANALOG:
+            // Allow any NXT analog device as well as anything wired like the
+            // NXT Light Sensor.
+            return (dcm->category == DCM_CATEGORY_NXT_ANALOG_OTHER || dcm->category == DCM_CATEGORY_NXT_LIGHT) ?
+                   PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
+        case LEGO_DEVICE_TYPE_ID_NXT_I2C:
+            // Temperature sensor is also an I2C sensor.
+            return (dcm->category == DCM_CATEGORY_NXT_I2C || dcm->category == DCM_CATEGORY_NXT_TEMPERATURE) ?
+                   PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
         default:
             return PBIO_ERROR_NO_DEV;
     }
