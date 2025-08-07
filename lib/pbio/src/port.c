@@ -92,7 +92,22 @@ struct _pbio_port_t {
 
 static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
 
-pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context) {
+static bool pbio_port_dcm_test_type_id(pbio_port_t *port, lego_device_type_id_t range) {
+    return pbio_port_dcm_assert_type_id(port->connection_manager, &range) == PBIO_SUCCESS;
+}
+
+/**
+ * This is the high level process that monitors and drives official LEGO
+ * devices that support some form of automatic detection. There is one process
+ * for each port, running in parallel.
+ *
+ * It starts with a platform-specific auto-detection routine by setting,
+ * clearing and testing several of the GPIO and ADC pins. Besides detection,
+ * this routine also monitors simple analog devices. This routine exists once
+ * a "smart" device is detected that requires going through a LEGO UART or I2C
+ * protocol.
+ */
+static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, void *context) {
 
     pbio_port_t *port = context;
 
@@ -108,28 +123,30 @@ pbio_error_t pbio_port_process_pup_thread(pbio_os_state_t *state, void *context)
     // peripherals are available and initialized.
 
     for (;;) {
-
-        // Run passive device connection manager until UART device is detected.
+        // Run passive device connection manager until smart device is detected.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
         PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
-        // Synchronize with LUMP data stream from sensor and parse device info.
-        pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
-        PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
-        if (err != PBIO_SUCCESS) {
-            // Synchronization failed. Retry.
-            continue;
+        // Active device detected. Check type to decide next steps.
+        if (pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART)) {
+
+            // Synchronize with LUMP data stream from sensor and parse device info.
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
+            PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
+            if (err != PBIO_SUCCESS) {
+                // Synchronization failed. Retry.
+                continue;
+            }
+
+            // Exchange sensor data with the LUMP device until it is disconnected.
+            // The send thread detects this when the keep alive messages time out.
+            pbio_port_p1p2_set_power(port, pbio_port_lump_get_power_requirements(port->lump_dev));
+            PBIO_OS_AWAIT_RACE(state, &port->child1, &port->child2,
+                pbio_port_lump_data_recv_thread(&port->child1, port->lump_dev, port->uart_dev),
+                pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->timer)
+                );
+            pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
         }
-
-        // Exchange sensor data with the LUMP device until it is disconnected.
-        // The send thread detects this when the keep alive messages time out.
-        pbio_port_p1p2_set_power(port, pbio_port_lump_get_power_requirements(port->lump_dev));
-        PBIO_OS_AWAIT_RACE(state, &port->child1, &port->child2,
-            pbio_port_lump_data_recv_thread(&port->child1, port->lump_dev, port->uart_dev),
-            pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->timer)
-            );
-
-        pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
     }
 
     // Unreachable.
@@ -513,7 +530,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_LEGO_DCM:
             // Physical modes for this mode will be set by the process so this
             // is all we need to do here.
-            pbio_os_process_init(&port->process, pbio_port_process_pup_thread);
+            pbio_os_process_init(&port->process, pbio_port_process_lego_dcm_thread);
             // Returning e-again allows user module to wait for the port to be
             // ready after first entering LEGO mode, avoiding NODEV errors when
             // switching from direct access modes back to LEGO mode.

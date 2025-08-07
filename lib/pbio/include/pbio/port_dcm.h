@@ -71,6 +71,10 @@ static inline pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
 }
 
 static inline pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {
+    // Fixme: need a DCM implementation for CI tests. For now just pass LUMP.
+    if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) {
+        return PBIO_SUCCESS;
+    }
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
