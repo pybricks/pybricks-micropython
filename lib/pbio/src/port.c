@@ -125,6 +125,7 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
     for (;;) {
         // Run passive device connection manager until smart device is detected.
         pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
         PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
         // Active device detected. Check type to decide next steps.
@@ -145,7 +146,6 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
                 pbio_port_lump_data_recv_thread(&port->child1, port->lump_dev, port->uart_dev),
                 pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->timer)
                 );
-            pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
         }
     }
 
