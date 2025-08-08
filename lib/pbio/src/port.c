@@ -215,18 +215,40 @@ pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_d
 /**
  * Gets the I2C interface of the port.
  *
+ * Also initializes GPIO pins in I2C mode.
+ *
  * @param [in]  port        The port instance.
  * @param [out] i2c_dev     The I2C device.
  * @return                  ::PBIO_SUCCESS on success, otherwise
  *                          ::PBIO_ERROR_NOT_SUPPORTED if this port does not support I2C.
+ *                          ::PBIO_ERROR_INVALID_OP if this port is not in a compatible mode.
+ *                          ::PBIO_ERROR_NO_DEV if it is in LEGO mode but no I2C device is detected.
  */
 pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev) {
-    // User access to I2C device is only allowed in direct I2C mode.
-    if (port->mode != PBIO_PORT_MODE_I2C) {
+
+    if (!port->i2c_dev) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
+    // In case of direct access without device type checks, start right away.
+    if (port->mode == PBIO_PORT_MODE_I2C) {
+        *i2c_dev = port->i2c_dev;
+        return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
+    }
+
+    // Otherwise we must be in LEGO mode.
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
+
+    // And must have detected an I2C device.
+    lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_NXT_I2C;
+    pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &type_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     *i2c_dev = port->i2c_dev;
-    return PBIO_SUCCESS;
+    return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
 }
 
 /**

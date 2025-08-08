@@ -46,6 +46,17 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_i
         pbdrv_gpio_alt(&pins->uart_tx, pins->uart_tx_alt_uart);
         pbdrv_gpio_out_low(&pins->uart_buf);
         return PBIO_SUCCESS;
+    } else if (mode == PBDRV_IOPORT_P5P6_MODE_I2C) {
+        // First reset all pins to inputs by going to GPIO mode recursively.
+        pbio_error_t err = pbdrv_ioport_p5p6_set_mode(pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        pbdrv_gpio_out_low(&pins->p5);
+        pbdrv_gpio_input(&pins->p5);
+        pbdrv_gpio_out_low(&pins->p6);
+        pbdrv_gpio_input(&pins->p6);
+        return PBIO_SUCCESS;
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_QUADRATURE) {
         // In PoweredUP, this is only used for two motors in boost. Its counter
         // driver does all the required setup. Its mode can never change. The
