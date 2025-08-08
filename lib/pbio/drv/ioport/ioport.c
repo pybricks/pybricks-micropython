@@ -10,16 +10,9 @@
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 
-pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_uart_dev_t *uart_dev, pbdrv_ioport_p5p6_mode_t mode) {
+pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_ioport_p5p6_mode_t mode) {
 
     if (mode == PBDRV_IOPORT_P5P6_MODE_GPIO_ADC) {
-
-        // Disables UART IRQ if it was enabled.
-        if (uart_dev) {
-            // Revisit: If we call this we should also re-enable IRQs
-            // when starting a new UART operation.
-            // pbdrv_uart_stop(uart_dev);
-        }
 
         // Reset pins if this port has GPIO pins.
         if (!pins) {
@@ -44,7 +37,7 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_u
         return PBIO_SUCCESS;
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_UART) {
         // First reset all pins to inputs by going to GPIO mode recursively.
-        pbio_error_t err = pbdrv_ioport_p5p6_set_mode(pins, uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        pbio_error_t err = pbdrv_ioport_p5p6_set_mode(pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
         if (err != PBIO_SUCCESS) {
             return err;
         }
