@@ -562,6 +562,10 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
             // access UART from their own event loop.
             pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
             return PBIO_SUCCESS;
+        case PBIO_PORT_MODE_I2C:
+            // Enable I2C on the port. User controlled; no process needed here.
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
+            return PBIO_SUCCESS;
         case PBIO_PORT_MODE_QUADRATURE:
             return PBIO_SUCCESS;
         default:
