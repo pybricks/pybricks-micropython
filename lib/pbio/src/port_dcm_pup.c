@@ -74,6 +74,8 @@ static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
  * Thread that detects the device type. It monitors the ID1 and ID2 pins
  * on the port to see when devices are connected or disconnected.
  *
+ * It ends once a LEGO UART device is connected or nothing is connected.
+ *
  * @param [in]  state       The process thread state.
  * @param [in]  timer       The timer to use for timing.
  * @param [in]  dcm         The device connection manager.
@@ -86,8 +88,10 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     dcm->prev_type_id = LEGO_DEVICE_TYPE_ID_NONE;
     dcm->dev_id_match_count = 0;
 
-    // Keep running until a UART device is definitively found.
-    while (dcm->dev_id_match_count < AFFIRMATIVE_MATCH_COUNT || dcm->prev_type_id != LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART) {
+    // Repeat until we definitively have a UART device or no device is
+    // detected. So it stays here as long as a passive motor device is
+    // attached.
+    while (dcm->dev_id_match_count < AFFIRMATIVE_MATCH_COUNT || (dcm->prev_type_id != LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART && dcm->prev_type_id != LEGO_DEVICE_TYPE_ID_NONE)) {
 
         dcm->type_id = LEGO_DEVICE_TYPE_ID_NONE;
         dcm->dev_id1_group = DEV_ID_GROUP_OPEN;
