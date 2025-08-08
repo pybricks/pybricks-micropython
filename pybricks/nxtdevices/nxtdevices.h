@@ -13,13 +13,13 @@
 extern const mp_obj_type_t pb_type_nxtdevices_TouchSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_LightSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_ColorSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;
 
 #if PYBRICKS_PY_EV3DEVDEVICES
 
 extern const mp_obj_type_t pb_type_nxtdevices_EnergyMeter;
 extern const mp_obj_type_t pb_type_nxtdevices_SoundSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_TemperatureSensor;
-extern const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;
 
 int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert);
 
