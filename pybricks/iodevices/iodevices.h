@@ -13,6 +13,10 @@
 extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 extern const mp_obj_type_t pb_type_uart_device;
 
+#if PYBRICKS_PY_IODEVICES_I2CDEVICE
+extern const mp_obj_type_t pb_type_iodevices_I2CDevice;
+#endif
+
 #if PYBRICKS_PY_PUPDEVICES
 
 extern const mp_obj_type_t pb_type_iodevices_LWP3Device;
@@ -24,7 +28,6 @@ extern const mp_obj_type_t pb_type_iodevices_XboxController;
 
 extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
 extern const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
-extern const mp_obj_type_t pb_type_iodevices_I2CDevice;
 
 #endif // PYBRICKS_PY_EV3DEVICES
 
