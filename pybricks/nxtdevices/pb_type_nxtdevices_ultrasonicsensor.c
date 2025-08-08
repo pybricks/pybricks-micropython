@@ -66,7 +66,7 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     pb_assert(pbio_port_get_i2c_dev(port, &i2c_dev));
     assert_i2c_string(i2c_dev, i2c_address, 0x08, "LEGO");
     assert_i2c_string(i2c_dev, i2c_address, 0x10, "Sonar");
-
+    pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
     self->i2c_dev = i2c_dev;
