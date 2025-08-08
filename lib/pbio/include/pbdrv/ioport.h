@@ -138,13 +138,12 @@ static inline void pbdrv_ioport_enable_vcc(bool enable) {
  * pins to inputs even if GPIO mode is already active.
  *
  * @param [in]  pins          The pins to set the mode for.
- * @param [in]  uart_dev      The UART device to use for UART mode.
  * @param [in]  mode          The mode state to set.
  * @return                    ::PBIO_SUCCESS on success, otherwise
  *                            ::PBIO_ERROR_NOT_SUPPORTED if the mode is not supported.
  *                            ::PBIO_ERROR_INVALID_OP if changing the mode is not permitted in the current state.
  */
-pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_uart_dev_t *uart_dev, pbdrv_ioport_p5p6_mode_t mode);
+pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_ioport_p5p6_mode_t mode);
 
 extern const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV];
 

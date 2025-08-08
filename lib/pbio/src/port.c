@@ -124,14 +124,14 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
 
     for (;;) {
         // Run passive device connection manager until smart device is detected.
-        pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
         PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
         // Active device detected. Check type to decide next steps.
         if (pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART)) {
 
             // Synchronize with LUMP data stream from sensor and parse device info.
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
             PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
             if (err != PBIO_SUCCESS) {
                 // Synchronization failed. Retry.
@@ -524,7 +524,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
 
     switch (mode) {
         case PBIO_PORT_MODE_NONE:
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
             pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
             return PBIO_SUCCESS;
         case PBIO_PORT_MODE_LEGO_DCM:
@@ -538,7 +538,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_UART:
             // Enable UART on the port. No process needed here. User can
             // access UART from their own event loop.
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, port->uart_dev, PBDRV_IOPORT_P5P6_MODE_UART);
+            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
             return PBIO_SUCCESS;
         case PBIO_PORT_MODE_QUADRATURE:
             return PBIO_SUCCESS;
