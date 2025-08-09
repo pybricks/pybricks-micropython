@@ -578,6 +578,9 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_geometry_vector_obj, 2, 3, pb_geometry_ve
 
 // pybricks.tools.cross
 static mp_obj_t pb_type_matrix_cross(mp_obj_t a_in, mp_obj_t b_in) {
+    if (!mp_obj_is_type(a_in, &pb_type_Matrix) || !mp_obj_is_type(b_in, &pb_type_Matrix)) {
+        mp_raise_TypeError(MP_ERROR_TEXT("arguments must be Matrix objects"));
+    }
 
     // Get a and b vectors
     pb_type_Matrix_obj_t *a = MP_OBJ_TO_PTR(a_in);
