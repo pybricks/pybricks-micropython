@@ -984,7 +984,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
                 prev_status_flags = ~0;
             }
         } else if (!was_transmitting && is_transmitting) {
-            pbio_os_timer_set(&tx_timeout_timer, 5);
+            pbio_os_timer_set(&tx_timeout_timer, 50);
         }
         was_transmitting = is_transmitting;
 
