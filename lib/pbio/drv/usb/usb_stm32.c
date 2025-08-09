@@ -515,7 +515,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
         if (transmitting) {
             // If the FIFO isn't emptied quickly, then there probably isn't an
             // app anymore. This timer is used to detect such a condition.
-            etimer_set(&transmit_timer, 5);
+            etimer_set(&transmit_timer, 50);
         }
     }
 
