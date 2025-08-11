@@ -152,8 +152,8 @@ MP_DEFINE_CONST_OBJ_TYPE(operation_type,
 static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         device_obj_t, self,
-        PB_ARG_DEFAULT_NONE(write_data),
-        PB_ARG_DEFAULT_INT(read_size, 0)
+        PB_ARG_REQUIRED(write_data),
+        PB_ARG_REQUIRED(read_length)
         );
 
     uint8_t *write_data = (uint8_t *)mp_obj_str_get_data(write_data_in, &self->write_len);
@@ -161,10 +161,14 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
     self->state = 0;
 
     // Pre-allocate the return value so we have something to write the result to.
-    self->read_result = mp_obj_malloc(mp_obj_str_t, &mp_type_bytes);
-    self->read_result->len = mp_obj_get_int(read_size_in);
-    self->read_result->hash = 0;
-    self->read_result->data = m_new(byte, self->read_result->len);
+    size_t len = pb_obj_get_positive_int(read_length_in);
+    if (len) {
+        self->read_result = mp_obj_new_bytes(NULL, len);
+        self->read_result->hash = 0;
+        self->read_result->data = m_new(byte, self->read_result->len);
+    } else {
+        self->read_result = (mp_obj_str_t *)&mp_const_empty_bytes_obj;
+    }
 
     // Kick off the operation. This will immediately raise if a transaction is
     // in progress.
@@ -195,11 +199,79 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
 
     return operation_get_result_obj(self);
 }
-// See also experimental_globals_table below. This function object is added there to make it importable.
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_then_read_obj, 0, write_then_read);
+
+// pybricks.iodevices.I2CDevice.read
+static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        device_obj_t, self,
+        PB_ARG_DEFAULT_NONE(reg),
+        PB_ARG_DEFAULT_INT(length, 1)
+        );
+
+    // Write payload is one byte representing the register we want to read,
+    // or no write for reg=None.
+    const mp_obj_str_t *write_data = reg_in == mp_const_none ?
+        &mp_const_empty_bytes_obj :
+        &(mp_obj_str_t) {
+        .base = {
+            .type = &mp_type_bytes,
+        },
+        .hash = 0,
+        .len = 1,
+        .data = &(const byte) {
+            mp_obj_get_int(reg_in),
+        },
+    };
+
+    // Call write_then_read with parsed arguments.
+    const mp_obj_t write_then_read_args[] = {
+        MP_OBJ_FROM_PTR(self),
+        MP_OBJ_FROM_PTR(write_data),
+        length_in,
+    };
+    return write_then_read(MP_ARRAY_SIZE(write_then_read_args), write_then_read_args, (mp_map_t *)&mp_const_empty_map);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
+
+// pybricks.iodevices.I2CDevice.write
+static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        device_obj_t, self,
+        PB_ARG_DEFAULT_NONE(reg),
+        PB_ARG_DEFAULT_NONE(data)
+        );
+
+    // Treat none as empty bytes, needed for common operation.
+    if (data_in == mp_const_none) {
+        data_in = mp_const_empty_bytes;
+    }
+
+    // If a register is provided, we need to concatenate it with write data.
+    if (reg_in != mp_const_none) {
+        size_t original_len;
+        const char *original_data = mp_obj_str_get_data(data_in, &original_len);
+        mp_obj_str_t *reg_and_data = mp_obj_new_bytes(NULL, original_len + 1);
+        byte *bytes = m_new(byte, reg_and_data->len);
+        bytes[0] = pb_obj_get_positive_int(reg_in);
+        memcpy(&reg_and_data[1], original_data, original_len);
+        data_in = MP_OBJ_FROM_PTR(reg_and_data);
+    }
+
+    // Call write_then_read with parsed arguments.
+    const mp_obj_t write_then_read_args[] = {
+        MP_OBJ_FROM_PTR(self),
+        data_in,
+        MP_OBJ_NEW_SMALL_INT(0),
+    };
+    return write_then_read(MP_ARRAY_SIZE(write_then_read_args), write_then_read_args, (mp_map_t *)&mp_const_empty_map);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 
 // dir(pybricks.iodevices.I2CDevice)
 static const mp_rom_map_elem_t locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&write_obj) },
     { MP_ROM_QSTR(MP_QSTR_write_then_read), MP_ROM_PTR(&write_then_read_obj) },
 };
 static MP_DEFINE_CONST_DICT(locals_dict, locals_dict_table);
