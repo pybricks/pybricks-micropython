@@ -6,6 +6,8 @@
 #if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_I2CDEVICE
 
 #include "py/mphal.h"
+#include "py/objstr.h"
+
 
 #include <pbdrv/i2c.h>
 #include <pbio/port_interface.h>
@@ -31,10 +33,12 @@ typedef struct {
     pbio_os_state_t state;
     uint8_t address;
     bool nxt_quirk;
-    size_t read_len;
     size_t write_len;
-    size_t read_buf_len;
-    uint8_t read_buf[];
+    /**
+     * The read buffer is allocated as a bytes object when the operation
+     * begins. It is returned to the user on completion.
+     */
+    mp_obj_str_t *read_result;
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
@@ -42,7 +46,6 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(address),
-        PB_ARG_DEFAULT_INT(max_read_size, 32),
         PB_ARG_DEFAULT_FALSE(custom),
         PB_ARG_DEFAULT_FALSE(powered),
         PB_ARG_DEFAULT_FALSE(nxt_quirk)
@@ -69,11 +72,9 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     pbdrv_i2c_dev_t *i2c_dev;
     pb_assert(pbio_port_get_i2c_dev(port, &i2c_dev));
 
-    size_t read_buf_len = mp_obj_get_int(max_read_size_in);
-    device_obj_t *self = mp_obj_malloc_var(device_obj_t, read_buf, uint8_t, read_buf_len, type);
+    device_obj_t *self = mp_obj_malloc(device_obj_t, type);
     self->i2c_dev = i2c_dev;
     self->address = mp_obj_get_int(address_in);
-    self->read_buf_len = read_buf_len;
     self->nxt_quirk = mp_obj_is_true(nxt_quirk_in);
     if (mp_obj_is_true(powered_in)) {
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
@@ -105,14 +106,17 @@ static pbio_error_t operation_iterate_once(device_obj_t *device) {
         device->address,
         NULL, // Already memcpy'd on initial iteration. No need to provide here.
         device->write_len,
-        device->read_buf,
-        device->read_len,
+        (uint8_t *)device->read_result->data,
+        device->read_result->len,
         device->nxt_quirk
         );
 }
 
-static mp_obj_t operation_get_return_obj(device_obj_t *device) {
-    return mp_obj_new_bytes(device->read_buf, device->read_len);
+static mp_obj_t operation_get_result_obj(device_obj_t *device) {
+    mp_obj_t result = MP_OBJ_FROM_PTR(device->read_result);
+    // The device should not hold up garbage collection of the result.
+    device->read_result = MP_OBJ_NULL;
+    return result;
 }
 
 static mp_obj_t operation_iternext(mp_obj_t self_in) {
@@ -129,15 +133,8 @@ static mp_obj_t operation_iternext(mp_obj_t self_in) {
     // Raises on Timeout and other I/O errors. Proceeds on success.
     pb_assert(err);
 
-    mp_obj_t result = operation_get_return_obj(device);
-
-    // None is treated as a special case.
-    if (result == mp_const_none) {
-        return MP_OBJ_STOP_ITERATION;
-    }
-
-    // Otherwise, set return value via stop iteration.
-    return mp_make_stop_iteration(result);
+    // Set return value via stop iteration.
+    return mp_make_stop_iteration(operation_get_result_obj(device));
 }
 
 static const mp_rom_map_elem_t operation_locals_dict_table[] = {
@@ -162,17 +159,19 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
     uint8_t *write_data = (uint8_t *)mp_obj_str_get_data(write_data_in, &self->write_len);
 
     self->state = 0;
-    self->read_len = mp_obj_get_int(read_size_in);
-    if (self->read_len > self->read_buf_len) {
-        self->read_len = self->read_buf_len;
-    }
+
+    // Pre-allocate the return value so we have something to write the result to.
+    self->read_result = mp_obj_malloc(mp_obj_str_t, &mp_type_bytes);
+    self->read_result->len = mp_obj_get_int(read_size_in);
+    self->read_result->hash = 0;
+    self->read_result->data = m_new(byte, self->read_result->len);
 
     // Kick off the operation. This will immediately raise if a transaction is
     // in progress.
     pbio_error_t err = pbdrv_i2c_write_then_read(
         &self->state, self->i2c_dev, self->address,
         write_data, self->write_len,
-        self->read_buf, self->read_len, self->nxt_quirk);
+        (uint8_t *)self->read_result->data, self->read_result->len, self->nxt_quirk);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
@@ -193,7 +192,8 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
         MICROPY_EVENT_POLL_HOOK;
     }
     pb_assert(err);
-    return operation_get_return_obj(self);
+
+    return operation_get_result_obj(self);
 }
 // See also experimental_globals_table below. This function object is added there to make it importable.
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_then_read_obj, 0, write_then_read);
