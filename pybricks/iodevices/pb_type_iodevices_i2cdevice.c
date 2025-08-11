@@ -158,24 +158,24 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
 
     uint8_t *write_data = (uint8_t *)mp_obj_str_get_data(write_data_in, &self->write_len);
 
-    self->state = 0;
-
     // Pre-allocate the return value so we have something to write the result to.
     size_t len = pb_obj_get_positive_int(read_length_in);
+    mp_obj_str_t *read_result;
     if (len) {
-        self->read_result = mp_obj_new_bytes(NULL, len);
-        self->read_result->hash = 0;
-        self->read_result->data = m_new(byte, self->read_result->len);
+        read_result = mp_obj_new_bytes(NULL, len);
+        read_result->hash = 0;
+        read_result->data = m_new(byte, read_result->len);
     } else {
-        self->read_result = (mp_obj_str_t *)&mp_const_empty_bytes_obj;
+        read_result = (mp_obj_str_t *)&mp_const_empty_bytes_obj;
     }
 
     // Kick off the operation. This will immediately raise if a transaction is
     // in progress.
+    pbio_os_state_t state = 0;
     pbio_error_t err = pbdrv_i2c_write_then_read(
-        &self->state, self->i2c_dev, self->address,
+        &state, self->i2c_dev, self->address,
         write_data, self->write_len,
-        (uint8_t *)self->read_result->data, self->read_result->len, self->nxt_quirk);
+        (uint8_t *)read_result->data, read_result->len, self->nxt_quirk);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
@@ -183,6 +183,13 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
     } else if (err != PBIO_ERROR_AGAIN) {
         pb_assert(err);
     }
+
+    // The initial operation above can fail if an I2C transaction is already in
+    // progress. If so, we don't want to reset it state or allow the return
+    // result to be garbage collected. Now that the first iteration succeeded,
+    // save the state and assign the new result buffer.
+    self->state = state;
+    self->read_result = read_result;
 
     // If runloop active, return an awaitable object.
     if (pb_module_tools_run_loop_is_active()) {
