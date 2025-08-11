@@ -27,7 +27,7 @@
 #include "../drv/rproc/rproc.h"
 #include "../rproc/rproc_ev3.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #include <stdio.h>
 #include <inttypes.h>
