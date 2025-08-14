@@ -50,6 +50,7 @@ struct _pbdrv_i2c_dev_t {
     volatile bool is_busy;
     bool is_initialized;
     uint8_t pru_i2c_idx;
+    pbio_os_timer_t timer;
 };
 
 static pbdrv_i2c_dev_t i2c_devs[PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES];
@@ -129,6 +130,15 @@ pbio_error_t pbdrv_i2c_write_then_read(
     if (wlen) {
         memcpy(i2c_dev->buffer, wdata, wlen);
     }
+
+    if (nxt_quirk) {
+        // NXT sensors affected by the quirk can't be accessed too quickly.
+        // This ensures a minimum delay without slowing down code that polls
+        // less frequently.
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&i2c_dev->timer));
+        pbio_os_timer_set(&i2c_dev->timer, 100);
+    }
+
     i2c_dev->is_busy = true;
     pbdrv_cache_prepare_before_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
 
@@ -217,6 +227,7 @@ void pbdrv_i2c_init(void) {
         i2c->pru_i2c_idx = i;
         i2c->buffer = pbdrv_i2c_buffers[i];
         i2c->is_initialized = true;
+        pbio_os_timer_set(&i2c->timer, 0);
     }
 
     pbio_busy_count_up();
