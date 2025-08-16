@@ -92,8 +92,8 @@ void pbio_image_init_sub(pbio_image_t *image, const pbio_image_t *source,
 
 /**
  * Fill an image with a value.
- * @param [in,out] image  Image to fill.
- * @param [in]     value  Pixel value.
+ * @param [in] image  Image to fill.
+ * @param [in] value  Pixel value.
  */
 void pbio_image_fill(pbio_image_t *image, uint8_t value) {
     uint8_t *p = image->pixels;
@@ -105,12 +105,12 @@ void pbio_image_fill(pbio_image_t *image, uint8_t value) {
 
 /**
  * Draw an image inside another image.
- * @param [in,out] image   Destination image to draw into.
- * @param [in]     source  Source image.
- * @param [in]     x       X coordinate of the top-left point in destination
- *                         image.
- * @param [in]     y       Y coordinate of the top-left point in destination
- *                         image.
+ * @param [in] image   Destination image to draw into.
+ * @param [in] source  Source image.
+ * @param [in] x       X coordinate of the top-left point in destination
+ *                     image.
+ * @param [in] y       Y coordinate of the top-left point in destination
+ *                     image.
  *
  * Source image pixels are copied into destination image.
  *
@@ -139,13 +139,13 @@ void pbio_image_draw_image(pbio_image_t *image, const pbio_image_t *source,
 
 /**
  * Draw an image inside another image with transparency.
- * @param [in,out] image   Destination image to draw into.
- * @param [in]     source  Source image.
- * @param [in]     x       X coordinate of the top-left point in destination
- *                         image.
- * @param [in]     y       Y coordinate of the top-left point in destination
- *                         image.
- * @param [in]     value   Pixel value in source image considered transparent.
+ * @param [in] image   Destination image to draw into.
+ * @param [in] source  Source image.
+ * @param [in] x       X coordinate of the top-left point in destination
+ *                     image.
+ * @param [in] y       Y coordinate of the top-left point in destination
+ *                     image.
+ * @param [in] value   Pixel value in source image considered transparent.
  *
  * Source image pixels are copied into destination image. When a source pixel
  * matches the transparent value, the corresponding destination pixel is left
@@ -183,10 +183,10 @@ void pbio_image_draw_image_transparent(pbio_image_t *image,
 
 /**
  * Draw a single pixel.
- * @param [in,out] image  Image to draw into.
- * @param [in]     x      X coordinate of the pixel.
- * @param [in]     y      Y coordinate of the pixel.
- * @param [in]     value  New pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x      X coordinate of the pixel.
+ * @param [in] y      Y coordinate of the pixel.
+ * @param [in] value  New pixel value.
  *
  * Clipping: pixel is not drawn if coordinate is outside of the image.
  */
@@ -203,11 +203,11 @@ void pbio_image_draw_pixel(pbio_image_t *image, int x, int y, uint8_t value) {
 
 /**
  * Draw a horizontal line.
- * @param [in,out] image  Image to draw into.
- * @param [in]     x      X coordinate of the leftmost pixel.
- * @param [in]     y      Y coordinate of the line.
- * @param [in]     l      Length of the line.
- * @param [in]     value  Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x      X coordinate of the leftmost pixel.
+ * @param [in] y      Y coordinate of the line.
+ * @param [in] l      Length of the line.
+ * @param [in] value  Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -232,11 +232,11 @@ void pbio_image_draw_hline(pbio_image_t *image, int x, int y, int l,
 
 /**
  * Draw a vertical line.
- * @param [in,out] image  Image to draw into.
- * @param [in]     x      X coordinate of the line.
- * @param [in]     y      Y coordinate of the topmost pixel.
- * @param [in]     l      Length of the line.
- * @param [in]     value  Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x      X coordinate of the line.
+ * @param [in] y      Y coordinate of the topmost pixel.
+ * @param [in] l      Length of the line.
+ * @param [in] value  Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -264,12 +264,12 @@ void pbio_image_draw_vline(pbio_image_t *image, int x, int y, int l,
 
 /**
  * Draw a line with a flat slope (less or equal to 1).
- * @param [in,out] image      Image to draw into.
- * @param [in]     x1         X coordinate of the first end.
- * @param [in]     y1         Y coordinate of the first end.
- * @param [in]     x2         X coordinate of the second end.
- * @param [in]     y2         Y coordinate of the second end.
- * @param [in]     value      Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x1     X coordinate of the first end.
+ * @param [in] y1     Y coordinate of the first end.
+ * @param [in] x2     X coordinate of the second end.
+ * @param [in] y2     Y coordinate of the second end.
+ * @param [in] value  Pixel value.
  *
  * This is an internal function, x2 must be greater or equal to x1.
  *
@@ -332,12 +332,12 @@ static void pbio_image_draw_line_flat(pbio_image_t *image, int x1, int y1,
 
 /**
  * Draw a line with a steep slope (more than 1).
- * @param [in,out] image      Image to draw into.
- * @param [in]     x1         X coordinate of the first end.
- * @param [in]     y1         Y coordinate of the first end.
- * @param [in]     x2         X coordinate of the second end.
- * @param [in]     y2         Y coordinate of the second end.
- * @param [in]     value      Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x1     X coordinate of the first end.
+ * @param [in] y1     Y coordinate of the first end.
+ * @param [in] x2     X coordinate of the second end.
+ * @param [in] y2     Y coordinate of the second end.
+ * @param [in] value  Pixel value.
  *
  * This is an internal function, y2 must be greater or equal to y1.
  *
@@ -400,12 +400,12 @@ static void pbio_image_draw_line_steep(pbio_image_t *image, int x1, int y1,
 
 /**
  * Draw a line.
- * @param [in,out] image      Image to draw into.
- * @param [in]     x1         X coordinate of the first end.
- * @param [in]     y1         Y coordinate of the first end.
- * @param [in]     x2         X coordinate of the second end.
- * @param [in]     y2         Y coordinate of the second end.
- * @param [in]     value      Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x1     X coordinate of the first end.
+ * @param [in] y1     Y coordinate of the first end.
+ * @param [in] x2     X coordinate of the second end.
+ * @param [in] y2     Y coordinate of the second end.
+ * @param [in] value  Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -435,13 +435,13 @@ void pbio_image_draw_line(pbio_image_t *image, int x1, int y1, int x2, int y2,
 
 /**
  * Draw a thick line.
- * @param [in,out] image      Image to draw into.
- * @param [in]     x1         X coordinate of the first end.
- * @param [in]     y1         Y coordinate of the first end.
- * @param [in]     x2         X coordinate of the second end.
- * @param [in]     y2         Y coordinate of the second end.
- * @param [in]     thickness  Line thickness.
- * @param [in]     value      Pixel value.
+ * @param [in] image      Image to draw into.
+ * @param [in] x1         X coordinate of the first end.
+ * @param [in] y1         Y coordinate of the first end.
+ * @param [in] x2         X coordinate of the second end.
+ * @param [in] y2         Y coordinate of the second end.
+ * @param [in] thickness  Line thickness.
+ * @param [in] value      Pixel value.
  *
  * When line thickness is odd, pixels are centered on the line. When even,
  * line is thicker on left side, when looking from first end to second end.
@@ -499,12 +499,12 @@ void pbio_image_draw_thick_line(pbio_image_t *image, int x1, int y1, int x2,
 
 /**
  * Draw a rectangle.
- * @param [in,out] image   Image to draw into.
- * @param [in]     x       X coordinate of the top-left corner.
- * @param [in]     y       Y coordinate of the top-left corner.
- * @param [in]     width   Rectangle width.
- * @param [in]     height  Rectangle height.
- * @param [in]     value   Pixel value.
+ * @param [in] image   Image to draw into.
+ * @param [in] x       X coordinate of the top-left corner.
+ * @param [in] y       Y coordinate of the top-left corner.
+ * @param [in] width   Rectangle width.
+ * @param [in] height  Rectangle height.
+ * @param [in] value   Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -523,12 +523,12 @@ void pbio_image_draw_rect(pbio_image_t *image, int x, int y, int width,
 
 /**
  * Draw a filled rectangle.
- * @param [in,out] image   Image to draw into.
- * @param [in]     x       X coordinate of the top-left corner.
- * @param [in]     y       Y coordinate of the top-left corner.
- * @param [in]     width   Rectangle width.
- * @param [in]     height  Rectangle height.
- * @param [in]     value   Pixel value.
+ * @param [in] image   Image to draw into.
+ * @param [in] x       X coordinate of the top-left corner.
+ * @param [in] y       Y coordinate of the top-left corner.
+ * @param [in] width   Rectangle width.
+ * @param [in] height  Rectangle height.
+ * @param [in] value   Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -555,13 +555,13 @@ void pbio_image_fill_rect(pbio_image_t *image, int x, int y, int width,
 
 /**
  * Draw a rounded rectangle.
- * @param [in,out] image   Image to draw into.
- * @param [in]     x       X coordinate of the top-left corner.
- * @param [in]     y       Y coordinate of the top-left corner.
- * @param [in]     width   Rectangle width.
- * @param [in]     height  Rectangle height.
- * @param [in]     r       Corner radius.
- * @param [in]     value   Pixel value.
+ * @param [in] image   Image to draw into.
+ * @param [in] x       X coordinate of the top-left corner.
+ * @param [in] y       Y coordinate of the top-left corner.
+ * @param [in] width   Rectangle width.
+ * @param [in] height  Rectangle height.
+ * @param [in] r       Corner radius.
+ * @param [in] value   Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -617,13 +617,13 @@ void pbio_image_draw_rounded_rect(pbio_image_t *image, int x, int y,
 
 /**
  * Draw a filled rounded rectangle.
- * @param [in,out] image   Image to draw into.
- * @param [in]     x       X coordinate of the top-left corner.
- * @param [in]     y       Y coordinate of the top-left corner.
- * @param [in]     width   Rectangle width.
- * @param [in]     height  Rectangle height.
- * @param [in]     r       Corner radius.
- * @param [in]     value   Pixel value.
+ * @param [in] image   Image to draw into.
+ * @param [in] x       X coordinate of the top-left corner.
+ * @param [in] y       Y coordinate of the top-left corner.
+ * @param [in] width   Rectangle width.
+ * @param [in] height  Rectangle height.
+ * @param [in] r       Corner radius.
+ * @param [in] value   Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -676,11 +676,11 @@ void pbio_image_fill_rounded_rect(pbio_image_t *image, int x, int y,
 
 /**
  * Draw a circle.
- * @param [in,out] image   Image to draw into.
- * @param [in]     x       X coordinate of the circle center.
- * @param [in]     y       Y coordinate of the circle center.
- * @param [in]     r       Circle radius.
- * @param [in]     value   Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x      X coordinate of the circle center.
+ * @param [in] y      Y coordinate of the circle center.
+ * @param [in] r      Circle radius.
+ * @param [in] value  Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
@@ -714,11 +714,11 @@ void pbio_image_draw_circle(pbio_image_t *image, int x, int y, int r,
 
 /**
  * Draw a disc.
- * @param [in,out] image   Image to draw into.
- * @param [in]     x       X coordinate of the disc center.
- * @param [in]     y       Y coordinate of the disc center.
- * @param [in]     r       Disc radius.
- * @param [in]     value   Pixel value.
+ * @param [in] image  Image to draw into.
+ * @param [in] x      X coordinate of the disc center.
+ * @param [in] y      Y coordinate of the disc center.
+ * @param [in] r      Disc radius.
+ * @param [in] value  Pixel value.
  *
  * Clipping: drawing is clipped to image dimensions.
  */
