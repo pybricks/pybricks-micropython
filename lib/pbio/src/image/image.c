@@ -693,7 +693,7 @@ void pbio_image_draw_circle(pbio_image_t *image, int x, int y, int r,
 
     // Draw.
     int dx = 0, dy = r;
-    int r2 = r * r;
+    int err = 5 - r * 4;
     while (dx <= dy) {
         pbio_image_draw_pixel(image, x + dx, y + dy, value);
         pbio_image_draw_pixel(image, x - dx, y + dy, value);
@@ -703,10 +703,12 @@ void pbio_image_draw_circle(pbio_image_t *image, int x, int y, int r,
         pbio_image_draw_pixel(image, x - dy, y + dx, value);
         pbio_image_draw_pixel(image, x + dy, y - dx, value);
         pbio_image_draw_pixel(image, x - dy, y - dx, value);
-        dx++;
-        if (dx * dx + dy * dy > r2) {
+        if (err > 0) {
             dy--;
+            err -= dy * 8;
         }
+        dx++;
+        err += 4 + dx * 8;
     }
 }
 
@@ -729,7 +731,7 @@ void pbio_image_fill_circle(pbio_image_t *image, int x, int y, int r,
 
     // Draw.
     int dx = 0, dy = r;
-    int r2 = r * r;
+    int err = 5 - r * 4;
     while (dx <= dy) {
         // Optimization opportunity: when dy is not moving, the same pixels
         // are drawn again and again.
@@ -739,10 +741,12 @@ void pbio_image_fill_circle(pbio_image_t *image, int x, int y, int r,
             pbio_image_draw_hline(image, x - dy, y + dx, 1 + 2 * dy, value);
             pbio_image_draw_hline(image, x - dy, y - dx, 1 + 2 * dy, value);
         }
-        dx++;
-        if (dx * dx + dy * dy > r2) {
+        if (err > 0) {
             dy--;
+            err -= dy * 8;
         }
+        dx++;
+        err += 4 + dx * 8;
     }
 }
 
