@@ -153,6 +153,7 @@ extern struct testcase_t pbio_angle_tests[];
 extern struct testcase_t pbio_battery_tests[];
 extern struct testcase_t pbio_color_tests[];
 extern struct testcase_t pbio_drivebase_tests[];
+extern struct testcase_t pbio_image_tests[];
 extern struct testcase_t pbio_light_animation_tests[];
 extern struct testcase_t pbio_color_light_tests[];
 extern struct testcase_t pbio_light_matrix_tests[];
@@ -171,6 +172,7 @@ static struct testgroup_t test_groups[] = {
     { "src/battery/", pbio_battery_tests },
     { "src/color/", pbio_color_tests },
     { "src/drivebase/", pbio_drivebase_tests },
+    { "src/image/", pbio_image_tests },
     { "src/light/", pbio_light_animation_tests },
     { "src/light/", pbio_color_light_tests },
     { "src/light/", pbio_light_matrix_tests },
