@@ -17,10 +17,10 @@ static const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LightSensor),       MP_ROM_PTR(&pb_type_nxtdevices_LightSensor)      },
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),       MP_ROM_PTR(&pb_type_nxtdevices_ColorSensor)      },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),  MP_ROM_PTR(&pb_type_nxtdevices_UltrasonicSensor) },
+    { MP_ROM_QSTR(MP_QSTR_TemperatureSensor), MP_ROM_PTR(&pb_type_nxtdevices_TemperatureSensor)},
     #if PYBRICKS_PY_EV3DEVDEVICES
     { MP_ROM_QSTR(MP_QSTR_EnergyMeter),       MP_ROM_PTR(&pb_type_nxtdevices_EnergyMeter)      },
     { MP_ROM_QSTR(MP_QSTR_SoundSensor),       MP_ROM_PTR(&pb_type_nxtdevices_SoundSensor)      },
-    { MP_ROM_QSTR(MP_QSTR_TemperatureSensor), MP_ROM_PTR(&pb_type_nxtdevices_TemperatureSensor)},
     #endif
 };
 static MP_DEFINE_CONST_DICT(pb_module_nxtdevices_globals, nxtdevices_globals_table);
