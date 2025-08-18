@@ -283,7 +283,7 @@ static const mp_rom_map_elem_t locals_dict_table[] = {
 static MP_DEFINE_CONST_DICT(locals_dict, locals_dict_table);
 
 // type(pybricks.iodevices.I2CDevice)
-MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_I2CDevice,
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_i2c_device,
     MP_QSTR_I2CDevice,
     MP_TYPE_FLAG_NONE,
     make_new, make_new,

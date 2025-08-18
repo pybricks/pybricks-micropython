@@ -14,7 +14,7 @@ extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 extern const mp_obj_type_t pb_type_uart_device;
 
 #if PYBRICKS_PY_IODEVICES_I2CDEVICE
-extern const mp_obj_type_t pb_type_iodevices_I2CDevice;
+extern const mp_obj_type_t pb_type_i2c_device;
 #endif
 
 #if PYBRICKS_PY_PUPDEVICES
