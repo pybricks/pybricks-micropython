@@ -38,7 +38,7 @@ struct _device_obj_t {
      * The following are buffered parameters for one ongoing I2C operation, See
      * ::pbdrv_i2c_write_then_read for details on each parameter. We need to
      * buffer these arguments so we can keep calling the protothread until it
-     * is complete. We don't need to buffer the write buffer here because it is
+     * is complete. We don't need to buffer the write data here because it is
      * immediately copied to the driver on the first call to the protothread.
      */
     pbdrv_i2c_dev_t *i2c_dev;
@@ -47,11 +47,8 @@ struct _device_obj_t {
     bool nxt_quirk;
     return_map_t return_map;
     size_t write_len;
-    /**
-     * The read buffer is allocated as a bytes object when the operation
-     * begins. It is returned to the user on completion.
-     */
-    mp_obj_str_t *read_result;
+    size_t read_len;
+    uint8_t *read_buf;
 };
 
 // pybricks.iodevices.I2CDevice.__init__
@@ -119,17 +116,10 @@ static pbio_error_t operation_iterate_once(device_obj_t *device) {
         device->address,
         NULL, // Already memcpy'd on initial iteration. No need to provide here.
         device->write_len,
-        (uint8_t *)device->read_result->data,
-        device->read_result->len,
+        &device->read_buf,
+        device->read_len,
         device->nxt_quirk
         );
-}
-
-static mp_obj_t operation_get_result_obj(device_obj_t *device) {
-    mp_obj_t result = device->return_map ? device->return_map(device) : mp_const_none;
-    // The device should not hold up garbage collection of the result.
-    device->read_result = MP_OBJ_NULL;
-    return result;
 }
 
 static mp_obj_t operation_iternext(mp_obj_t op_in) {
@@ -146,8 +136,13 @@ static mp_obj_t operation_iternext(mp_obj_t op_in) {
     // Raises on Timeout and other I/O errors. Proceeds on success.
     pb_assert(err);
 
+    // For no return map, return basic stop iteration, which results None.
+    if (!device->return_map) {
+        return MP_OBJ_STOP_ITERATION;
+    }
+
     // Set return value via stop iteration.
-    return mp_make_stop_iteration(operation_get_result_obj(device));
+    return mp_make_stop_iteration(device->return_map(device));
 }
 
 static const mp_rom_map_elem_t operation_locals_dict_table[] = {
@@ -163,24 +158,14 @@ MP_DEFINE_CONST_OBJ_TYPE(operation_type,
 
 static mp_obj_t start_operation(device_obj_t *device, const uint8_t *write_data, size_t write_len, size_t read_len, return_map_t return_map) {
 
-    device->write_len = write_len;
-
-    mp_obj_str_t *read_result;
-    if (read_len) {
-        read_result = mp_obj_new_bytes(NULL, read_len);
-        read_result->hash = 0;
-        read_result->data = m_new(byte, read_result->len);
-    } else {
-        read_result = (mp_obj_str_t *)&mp_const_empty_bytes_obj;
-    }
-
     // Kick off the operation. This will immediately raise if a transaction is
     // in progress.
     pbio_os_state_t state = 0;
+    uint8_t *read_buf = NULL;
     pbio_error_t err = pbdrv_i2c_write_then_read(
         &state, device->i2c_dev, device->address,
-        (uint8_t *)write_data, device->write_len,
-        (uint8_t *)read_result->data, read_result->len, device->nxt_quirk);
+        (uint8_t *)write_data, write_len,
+        &read_buf, read_len, device->nxt_quirk);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
@@ -193,8 +178,10 @@ static mp_obj_t start_operation(device_obj_t *device, const uint8_t *write_data,
     // progress. If so, we don't want to reset it state or allow the return
     // result to be garbage collected. Now that the first iteration succeeded,
     // save the state and assign the new result buffer.
+    device->read_len = read_len;
+    device->write_len = write_len;
     device->state = state;
-    device->read_result = read_result;
+    device->read_buf = NULL;
     device->return_map = return_map;
 
     // If runloop active, return an awaitable object.
@@ -210,11 +197,15 @@ static mp_obj_t start_operation(device_obj_t *device, const uint8_t *write_data,
     }
     pb_assert(err);
 
-    return operation_get_result_obj(device);
+    if (!device->return_map) {
+        return mp_const_none;
+    }
+    return device->return_map(device);
 }
 
 static mp_obj_t return_map_bytes(device_obj_t *device) {
-    return MP_OBJ_FROM_PTR(device->read_result);
+    // Operation was successfull, so data is not NULL if read len is nonzero.
+    return mp_obj_new_bytes(device->read_buf, device->read_len);
 }
 
 // pybricks.iodevices.I2CDevice.write_then_read
