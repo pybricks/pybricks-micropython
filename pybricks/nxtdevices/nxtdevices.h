@@ -13,6 +13,7 @@
 extern const mp_obj_type_t pb_type_nxtdevices_TouchSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_LightSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_ColorSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;
 
 #if PYBRICKS_PY_EV3DEVDEVICES
 
