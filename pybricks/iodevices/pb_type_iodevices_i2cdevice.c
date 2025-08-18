@@ -17,10 +17,22 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+
 #include <pybricks/util_pb/pb_error.h>
 
+typedef struct _device_obj_t device_obj_t;
+
+/**
+ * Given a completed I2C operation, maps the resulting read buffer to an object
+ * of a desired form. For example, it could map two bytes to a single floating
+ * point value representing temperature.
+ *
+ * @param [in]  device   The device object.
+ */
+typedef mp_obj_t (*return_map_t)(device_obj_t *device);
+
 // Object representing a pybricks.iodevices.I2CDevice instance.
-typedef struct {
+struct _device_obj_t {
     mp_obj_base_t base;
     /**
      * The following are buffered parameters for one ongoing I2C operation, See
@@ -33,13 +45,14 @@ typedef struct {
     pbio_os_state_t state;
     uint8_t address;
     bool nxt_quirk;
+    return_map_t return_map;
     size_t write_len;
     /**
      * The read buffer is allocated as a bytes object when the operation
      * begins. It is returned to the user on completion.
      */
     mp_obj_str_t *read_result;
-} device_obj_t;
+};
 
 // pybricks.iodevices.I2CDevice.__init__
 static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -72,15 +85,15 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     pbdrv_i2c_dev_t *i2c_dev;
     pb_assert(pbio_port_get_i2c_dev(port, &i2c_dev));
 
-    device_obj_t *self = mp_obj_malloc(device_obj_t, type);
-    self->i2c_dev = i2c_dev;
-    self->address = mp_obj_get_int(address_in);
-    self->nxt_quirk = mp_obj_is_true(nxt_quirk_in);
+    device_obj_t *device = mp_obj_malloc(device_obj_t, type);
+    device->i2c_dev = i2c_dev;
+    device->address = mp_obj_get_int(address_in);
+    device->nxt_quirk = mp_obj_is_true(nxt_quirk_in);
     if (mp_obj_is_true(powered_in)) {
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
     }
 
-    return MP_OBJ_FROM_PTR(self);
+    return MP_OBJ_FROM_PTR(device);
 }
 
 // Object representing the iterable that is returned when calling an I2C
@@ -92,10 +105,10 @@ typedef struct {
     mp_obj_t device_obj;
 } operation_obj_t;
 
-static mp_obj_t operation_close(mp_obj_t self_in) {
+static mp_obj_t operation_close(mp_obj_t op_in) {
     // Close is not implemented but needs to exist.
-    operation_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    (void)self;
+    operation_obj_t *op = MP_OBJ_TO_PTR(op_in);
+    (void)op;
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(operation_close_obj, operation_close);
@@ -113,15 +126,15 @@ static pbio_error_t operation_iterate_once(device_obj_t *device) {
 }
 
 static mp_obj_t operation_get_result_obj(device_obj_t *device) {
-    mp_obj_t result = MP_OBJ_FROM_PTR(device->read_result);
+    mp_obj_t result = device->return_map ? device->return_map(device) : mp_const_none;
     // The device should not hold up garbage collection of the result.
     device->read_result = MP_OBJ_NULL;
     return result;
 }
 
-static mp_obj_t operation_iternext(mp_obj_t self_in) {
-    operation_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    device_obj_t *device = MP_OBJ_TO_PTR(self->device_obj);
+static mp_obj_t operation_iternext(mp_obj_t op_in) {
+    operation_obj_t *op = MP_OBJ_TO_PTR(op_in);
+    device_obj_t *device = MP_OBJ_TO_PTR(op->device_obj);
 
     pbio_error_t err = operation_iterate_once(device);
 
@@ -148,21 +161,13 @@ MP_DEFINE_CONST_OBJ_TYPE(operation_type,
     iter, operation_iternext,
     locals_dict, &operation_locals_dict);
 
-// pybricks.iodevices.I2CDevice.write_then_read
-static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        device_obj_t, self,
-        PB_ARG_REQUIRED(write_data),
-        PB_ARG_REQUIRED(read_length)
-        );
+static mp_obj_t start_operation(device_obj_t *device, const uint8_t *write_data, size_t write_len, size_t read_len, return_map_t return_map) {
 
-    uint8_t *write_data = (uint8_t *)mp_obj_str_get_data(write_data_in, &self->write_len);
+    device->write_len = write_len;
 
-    // Pre-allocate the return value so we have something to write the result to.
-    size_t len = pb_obj_get_positive_int(read_length_in);
     mp_obj_str_t *read_result;
-    if (len) {
-        read_result = mp_obj_new_bytes(NULL, len);
+    if (read_len) {
+        read_result = mp_obj_new_bytes(NULL, read_len);
         read_result->hash = 0;
         read_result->data = m_new(byte, read_result->len);
     } else {
@@ -173,9 +178,9 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
     // in progress.
     pbio_os_state_t state = 0;
     pbio_error_t err = pbdrv_i2c_write_then_read(
-        &state, self->i2c_dev, self->address,
-        write_data, self->write_len,
-        (uint8_t *)read_result->data, read_result->len, self->nxt_quirk);
+        &state, device->i2c_dev, device->address,
+        (uint8_t *)write_data, device->write_len,
+        (uint8_t *)read_result->data, read_result->len, device->nxt_quirk);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
@@ -188,30 +193,47 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
     // progress. If so, we don't want to reset it state or allow the return
     // result to be garbage collected. Now that the first iteration succeeded,
     // save the state and assign the new result buffer.
-    self->state = state;
-    self->read_result = read_result;
+    device->state = state;
+    device->read_result = read_result;
+    device->return_map = return_map;
 
     // If runloop active, return an awaitable object.
     if (pb_module_tools_run_loop_is_active()) {
         operation_obj_t *operation = mp_obj_malloc(operation_obj_t, &operation_type);
-        operation->device_obj = MP_OBJ_FROM_PTR(self);
+        operation->device_obj = MP_OBJ_FROM_PTR(device);
         return MP_OBJ_FROM_PTR(operation);
     }
 
     // Otherwise block and wait for the result here.
-    while ((err = operation_iterate_once(self)) == PBIO_ERROR_AGAIN) {
+    while ((err = operation_iterate_once(device)) == PBIO_ERROR_AGAIN) {
         MICROPY_EVENT_POLL_HOOK;
     }
     pb_assert(err);
 
-    return operation_get_result_obj(self);
+    return operation_get_result_obj(device);
+}
+
+static mp_obj_t return_map_bytes(device_obj_t *device) {
+    return MP_OBJ_FROM_PTR(device->read_result);
+}
+
+// pybricks.iodevices.I2CDevice.write_then_read
+static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        device_obj_t, device,
+        PB_ARG_REQUIRED(write_data),
+        PB_ARG_REQUIRED(read_length)
+        );
+
+    size_t write_len;
+    return start_operation(device, (const uint8_t *)mp_obj_str_get_data(write_data_in, &write_len), write_len, pb_obj_get_positive_int(read_length_in), return_map_bytes);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_then_read_obj, 0, write_then_read);
 
 // pybricks.iodevices.I2CDevice.read
 static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        device_obj_t, self,
+        device_obj_t, device,
         PB_ARG_DEFAULT_NONE(reg),
         PB_ARG_DEFAULT_INT(length, 1)
         );
@@ -233,7 +255,7 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
 
     // Call write_then_read with parsed arguments.
     const mp_obj_t write_then_read_args[] = {
-        MP_OBJ_FROM_PTR(self),
+        MP_OBJ_FROM_PTR(device),
         MP_OBJ_FROM_PTR(write_data),
         length_in,
     };
@@ -244,7 +266,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
 // pybricks.iodevices.I2CDevice.write
 static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        device_obj_t, self,
+        device_obj_t, device,
         PB_ARG_DEFAULT_NONE(reg),
         PB_ARG_DEFAULT_NONE(data)
         );
@@ -267,7 +289,7 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
 
     // Call write_then_read with parsed arguments.
     const mp_obj_t write_then_read_args[] = {
-        MP_OBJ_FROM_PTR(self),
+        MP_OBJ_FROM_PTR(device),
         data_in,
         MP_OBJ_NEW_SMALL_INT(0),
     };
