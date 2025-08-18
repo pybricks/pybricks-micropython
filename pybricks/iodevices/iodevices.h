@@ -14,7 +14,21 @@ extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 extern const mp_obj_type_t pb_type_uart_device;
 
 #if PYBRICKS_PY_IODEVICES_I2CDEVICE
+
 extern const mp_obj_type_t pb_type_i2c_device;
+/**
+ * Given a completed I2C operation, maps the resulting read buffer to an object
+ * of a desired form. For example, it could map two bytes to a single floating
+ * point value representing temperature.
+ *
+ * @param [in]  data   The data read.
+ * @param [in]  len    The data length.
+ */
+typedef mp_obj_t (*pb_type_i2c_device_return_map_t)(const uint8_t *data, size_t len);
+
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, mp_obj_t address_in, bool custom, bool powered, bool nxt_quirk);
+mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8_t *write_data, size_t write_len, size_t read_len, pb_type_i2c_device_return_map_t return_map);
+
 #endif
 
 #if PYBRICKS_PY_PUPDEVICES
