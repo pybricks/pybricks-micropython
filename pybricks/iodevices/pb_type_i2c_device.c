@@ -13,6 +13,7 @@
 #include <pbio/port_interface.h>
 
 #include <pybricks/common.h>
+#include <pybricks/iodevices/iodevices.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
@@ -20,19 +21,8 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
-typedef struct _device_obj_t device_obj_t;
-
-/**
- * Given a completed I2C operation, maps the resulting read buffer to an object
- * of a desired form. For example, it could map two bytes to a single floating
- * point value representing temperature.
- *
- * @param [in]  device   The device object.
- */
-typedef mp_obj_t (*return_map_t)(device_obj_t *device);
-
 // Object representing a pybricks.iodevices.I2CDevice instance.
-struct _device_obj_t {
+typedef struct {
     mp_obj_base_t base;
     /**
      * The following are buffered parameters for one ongoing I2C operation, See
@@ -45,21 +35,14 @@ struct _device_obj_t {
     pbio_os_state_t state;
     uint8_t address;
     bool nxt_quirk;
-    return_map_t return_map;
+    pb_type_i2c_device_return_map_t return_map;
     size_t write_len;
     size_t read_len;
     uint8_t *read_buf;
-};
+} device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port),
-        PB_ARG_REQUIRED(address),
-        PB_ARG_DEFAULT_FALSE(custom),
-        PB_ARG_DEFAULT_FALSE(powered),
-        PB_ARG_DEFAULT_FALSE(nxt_quirk)
-        );
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, mp_obj_t address_in, bool custom, bool powered, bool nxt_quirk) {
 
     pb_module_tools_assert_blocking();
 
@@ -69,7 +52,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     pb_assert(pbio_port_get_port(port_id, &port));
 
     // Set the port mode to LEGO DCM or raw I2C mode.
-    pbio_error_t err = pbio_port_set_mode(port, mp_obj_is_true(custom_in) ? PBIO_PORT_MODE_I2C : PBIO_PORT_MODE_LEGO_DCM);
+    pbio_error_t err = pbio_port_set_mode(port, custom ? PBIO_PORT_MODE_I2C : PBIO_PORT_MODE_LEGO_DCM);
     if (err == PBIO_ERROR_AGAIN) {
         // If coming from a different mode, give port some time to get started.
         // This happens when the user has a custom device and decides to switch
@@ -82,15 +65,28 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     pbdrv_i2c_dev_t *i2c_dev;
     pb_assert(pbio_port_get_i2c_dev(port, &i2c_dev));
 
-    device_obj_t *device = mp_obj_malloc(device_obj_t, type);
+    device_obj_t *device = mp_obj_malloc(device_obj_t, &pb_type_i2c_device);
     device->i2c_dev = i2c_dev;
     device->address = mp_obj_get_int(address_in);
-    device->nxt_quirk = mp_obj_is_true(nxt_quirk_in);
-    if (mp_obj_is_true(powered_in)) {
+    device->nxt_quirk = nxt_quirk;
+    if (powered) {
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
     }
 
     return MP_OBJ_FROM_PTR(device);
+}
+
+// wrapper to parse args for __init__
+static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port),
+        PB_ARG_REQUIRED(address),
+        PB_ARG_DEFAULT_FALSE(custom),
+        PB_ARG_DEFAULT_FALSE(powered),
+        PB_ARG_DEFAULT_FALSE(nxt_quirk)
+        );
+
+    return pb_type_i2c_device_make_new(port_in, address_in, mp_obj_is_true(custom_in), mp_obj_is_true(powered_in), mp_obj_is_true(nxt_quirk_in));
 }
 
 // Object representing the iterable that is returned when calling an I2C
@@ -142,7 +138,7 @@ static mp_obj_t operation_iternext(mp_obj_t op_in) {
     }
 
     // Set return value via stop iteration.
-    return mp_make_stop_iteration(device->return_map(device));
+    return mp_make_stop_iteration(device->return_map(device->read_buf, device->read_len));
 }
 
 static const mp_rom_map_elem_t operation_locals_dict_table[] = {
@@ -156,7 +152,10 @@ MP_DEFINE_CONST_OBJ_TYPE(operation_type,
     iter, operation_iternext,
     locals_dict, &operation_locals_dict);
 
-static mp_obj_t start_operation(device_obj_t *device, const uint8_t *write_data, size_t write_len, size_t read_len, return_map_t return_map) {
+mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8_t *write_data, size_t write_len, size_t read_len, pb_type_i2c_device_return_map_t return_map) {
+
+    pb_assert_type(i2c_device_obj, &pb_type_i2c_device);
+    device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
 
     // Kick off the operation. This will immediately raise if a transaction is
     // in progress.
@@ -200,12 +199,7 @@ static mp_obj_t start_operation(device_obj_t *device, const uint8_t *write_data,
     if (!device->return_map) {
         return mp_const_none;
     }
-    return device->return_map(device);
-}
-
-static mp_obj_t return_map_bytes(device_obj_t *device) {
-    // Operation was successfull, so data is not NULL if read len is nonzero.
-    return mp_obj_new_bytes(device->read_buf, device->read_len);
+    return device->return_map(device->read_buf, device->read_len);
 }
 
 // pybricks.iodevices.I2CDevice.write_then_read
@@ -217,7 +211,7 @@ static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_
         );
 
     size_t write_len;
-    return start_operation(device, (const uint8_t *)mp_obj_str_get_data(write_data_in, &write_len), write_len, pb_obj_get_positive_int(read_length_in), return_map_bytes);
+    return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), (const uint8_t *)mp_obj_str_get_data(write_data_in, &write_len), write_len, pb_obj_get_positive_int(read_length_in), mp_obj_new_bytes);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_then_read_obj, 0, write_then_read);
 
@@ -236,7 +230,7 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
         &(uint8_t) { mp_obj_get_int(reg_in) };
     size_t write_len = reg_in == mp_const_none ? 0 : 1;
 
-    return start_operation(device, write_data, write_len, pb_obj_get_positive_int(length_in), return_map_bytes);
+    return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), write_data, write_len, pb_obj_get_positive_int(length_in), mp_obj_new_bytes);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
 
@@ -259,7 +253,7 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
 
     // No register given, write data as is.
     if (reg_in == mp_const_none) {
-        return start_operation(device, (const uint8_t *)user_data, user_len, 0, NULL);
+        return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), (const uint8_t *)user_data, user_len, 0, NULL);
     }
 
     // Otherwise need to prefix write data with given register.
@@ -270,7 +264,7 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     write_data[0] = pb_obj_get_positive_int(reg_in);
     memcpy(&write_data[1], user_data, user_len);
 
-    return start_operation(device, write_data, user_len + 1, 0, NULL);
+    return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), write_data, user_len + 1, 0, NULL);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 
