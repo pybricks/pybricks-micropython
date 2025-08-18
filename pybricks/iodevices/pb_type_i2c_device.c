@@ -42,7 +42,7 @@ typedef struct {
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, mp_obj_t address_in, bool custom, bool powered, bool nxt_quirk) {
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, uint8_t address, bool custom, bool powered, bool nxt_quirk) {
 
     pb_module_tools_assert_blocking();
 
@@ -67,7 +67,7 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, mp_obj_t address_in, bool
 
     device_obj_t *device = mp_obj_malloc(device_obj_t, &pb_type_i2c_device);
     device->i2c_dev = i2c_dev;
-    device->address = mp_obj_get_int(address_in);
+    device->address = address;
     device->nxt_quirk = nxt_quirk;
     if (powered) {
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
@@ -86,7 +86,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         PB_ARG_DEFAULT_FALSE(nxt_quirk)
         );
 
-    return pb_type_i2c_device_make_new(port_in, address_in, mp_obj_is_true(custom_in), mp_obj_is_true(powered_in), mp_obj_is_true(nxt_quirk_in));
+    return pb_type_i2c_device_make_new(port_in, mp_obj_get_int(address_in), mp_obj_is_true(custom_in), mp_obj_is_true(powered_in), mp_obj_is_true(nxt_quirk_in));
 }
 
 // Object representing the iterable that is returned when calling an I2C
@@ -200,6 +200,25 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
         return mp_const_none;
     }
     return device->return_map(device->read_buf, device->read_len);
+}
+
+/**
+ * Helper utility to verify that expected device is attached by asserting an
+ * expected manufacturer or id string. Raises ::PBIO_ERROR_NO_DEV if expected
+ * string is not found.
+ */
+void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8_t reg, const char *string) {
+    pb_module_tools_assert_blocking();
+
+    const uint8_t write_data[] = { reg };
+    mp_obj_t result = pb_type_i2c_device_start_operation(i2c_device_obj, write_data, MP_ARRAY_SIZE(write_data), strlen(string) - 1, mp_obj_new_bytes);
+
+    size_t result_len;
+    const char *result_data = mp_obj_str_get_data(result, &result_len);
+
+    if (memcmp(string, result_data, strlen(string) - 1)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
 }
 
 // pybricks.iodevices.I2CDevice.write_then_read
