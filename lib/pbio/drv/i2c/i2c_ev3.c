@@ -106,7 +106,7 @@ pbio_error_t pbdrv_i2c_write_then_read(
     uint8_t dev_addr,
     const uint8_t *wdata,
     size_t wlen,
-    uint8_t *rdata,
+    uint8_t **rdata,
     size_t rlen,
     bool nxt_quirk) {
 
@@ -115,7 +115,7 @@ pbio_error_t pbdrv_i2c_write_then_read(
     if (wlen && !wdata) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    if (rlen && !rdata) {
+    if (*rdata) {
         return PBIO_ERROR_INVALID_ARG;
     }
     if (wlen > 0xff || rlen > 0xff) {
@@ -171,10 +171,10 @@ pbio_error_t pbdrv_i2c_write_then_read(
             return PBIO_ERROR_FAILED;
     }
 
-    // If we got here, there's no error. Copy RX data.
+    // If we got here, there's no error. Tell caller where to read RX data.
     pbdrv_cache_prepare_after_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
     if (rlen) {
-        memcpy(rdata, &i2c_dev->buffer[wlen], rlen);
+        *rdata = &i2c_dev->buffer[wlen];
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
