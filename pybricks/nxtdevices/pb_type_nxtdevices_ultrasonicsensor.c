@@ -1,20 +1,27 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2023 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES
+#if PYBRICKS_PY_NXTDEVICES
+
+#include "py/mphal.h"
+
+#include <pbdrv/i2c.h>
+#include <pbio/port_interface.h>
 
 #include <pybricks/common.h>
+#include <pybricks/iodevices/iodevices.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/common/pb_type_device.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
-    pb_type_device_obj_base_t device_base;
+    mp_obj_base_t base;
+    mp_obj_t *i2c_device_obj;
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -23,14 +30,26 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_ULTRASONIC_SENSOR);
+    self->i2c_device_obj = pb_type_i2c_device_make_new(port_in, 0x01, false, true, true);
+
+    // NXT Ultrasonic Sensor appears to need some time after initializing I2C pins before it can receive data.
+    mp_hal_delay_ms(100);
+
+    pb_type_i2c_device_assert_string_at_register(self->i2c_device_obj, 0x08, "LEGO");
+    pb_type_i2c_device_assert_string_at_register(self->i2c_device_obj, 0x10, "Sonar");
+
     return MP_OBJ_FROM_PTR(self);
+}
+
+static mp_obj_t map_distance(const uint8_t *data, size_t len) {
+    return mp_obj_new_int(data[0] * 10);
 }
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 static mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
-    int8_t *distance = pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM);
-    return mp_obj_new_int(distance[0] * 10);
+    nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    const uint8_t write_data[] = { 0x42 };
+    return pb_type_i2c_device_start_operation(self->i2c_device_obj, write_data, MP_ARRAY_SIZE(write_data), 1, map_distance);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_distance_obj, nxtdevices_UltrasonicSensor_distance);
 
@@ -47,4 +66,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_nxtdevices_UltrasonicSensor,
     make_new, nxtdevices_UltrasonicSensor_make_new,
     locals_dict, &nxtdevices_UltrasonicSensor_locals_dict);
 
-#endif // PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVDEVICES
+#endif // PYBRICKS_PY_NXTDEVICES

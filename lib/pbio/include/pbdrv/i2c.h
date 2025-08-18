@@ -47,8 +47,9 @@ pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev);
  *                          If this is not 0 and \p rlen is not 0,
  *                          a write will be sent followed by a read in
  *                          a single transaction.
- * @param [out] rdata       Buffer for data read from the device.
- *                          Can be null if \p rlen is 0.
+ * @param [out] rdata       Pointer to data read from the device. Only valid
+ *                          immediately on successfull completion.
+ *                          Returns null if \p rlen is 0 or the operation failed.
  * @param [in]  rlen        Size of \p rdata.
  * @param [in]  nxt_quirk   Whether to use NXT I2C transaction quirk.
  * @return                  ::PBIO_SUCCESS on success.
@@ -59,7 +60,7 @@ pbio_error_t pbdrv_i2c_write_then_read(
     uint8_t dev_addr,
     const uint8_t *wdata,
     size_t wlen,
-    uint8_t *rdata,
+    uint8_t **rdata,
     size_t rlen,
     bool nxt_quirk);
 
@@ -76,7 +77,7 @@ static inline pbio_error_t pbdrv_i2c_write_then_read(
     uint8_t dev_addr,
     const uint8_t *wdata,
     size_t wlen,
-    uint8_t *rdata,
+    uint8_t **rdata,
     size_t rlen,
     bool nxt_quirk) {
     return PBIO_ERROR_NOT_SUPPORTED;
