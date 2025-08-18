@@ -231,26 +231,12 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
 
     // Write payload is one byte representing the register we want to read,
     // or no write for reg=None.
-    const mp_obj_str_t *write_data = reg_in == mp_const_none ?
-        &mp_const_empty_bytes_obj :
-        &(mp_obj_str_t) {
-        .base = {
-            .type = &mp_type_bytes,
-        },
-        .hash = 0,
-        .len = 1,
-        .data = &(const byte) {
-            mp_obj_get_int(reg_in),
-        },
-    };
+    uint8_t *write_data = reg_in == mp_const_none ?
+        NULL :
+        &(uint8_t) { mp_obj_get_int(reg_in) };
+    size_t write_len = reg_in == mp_const_none ? 0 : 1;
 
-    // Call write_then_read with parsed arguments.
-    const mp_obj_t write_then_read_args[] = {
-        MP_OBJ_FROM_PTR(device),
-        MP_OBJ_FROM_PTR(write_data),
-        length_in,
-    };
-    return write_then_read(MP_ARRAY_SIZE(write_then_read_args), write_then_read_args, (mp_map_t *)&mp_const_empty_map);
+    return start_operation(device, write_data, write_len, pb_obj_get_positive_int(length_in), return_map_bytes);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
 
@@ -262,29 +248,29 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
         PB_ARG_DEFAULT_NONE(data)
         );
 
-    // Treat none as empty bytes, needed for common operation.
+    // Treat none data as empty bytes.
     if (data_in == mp_const_none) {
         data_in = mp_const_empty_bytes;
     }
 
-    // If a register is provided, we need to concatenate it with write data.
-    if (reg_in != mp_const_none) {
-        size_t original_len;
-        const char *original_data = mp_obj_str_get_data(data_in, &original_len);
-        mp_obj_str_t *reg_and_data = mp_obj_new_bytes(NULL, original_len + 1);
-        byte *bytes = m_new(byte, reg_and_data->len);
-        bytes[0] = pb_obj_get_positive_int(reg_in);
-        memcpy(&reg_and_data[1], original_data, original_len);
-        data_in = MP_OBJ_FROM_PTR(reg_and_data);
+    // Assert data is bytes.
+    size_t user_len;
+    const char *user_data = mp_obj_str_get_data(data_in, &user_len);
+
+    // No register given, write data as is.
+    if (reg_in == mp_const_none) {
+        return start_operation(device, (const uint8_t *)user_data, user_len, 0, NULL);
     }
 
-    // Call write_then_read with parsed arguments.
-    const mp_obj_t write_then_read_args[] = {
-        MP_OBJ_FROM_PTR(device),
-        data_in,
-        MP_OBJ_NEW_SMALL_INT(0),
-    };
-    return write_then_read(MP_ARRAY_SIZE(write_then_read_args), write_then_read_args, (mp_map_t *)&mp_const_empty_map);
+    // Otherwise need to prefix write data with given register.
+    uint8_t write_data[256];
+    if (user_len > MP_ARRAY_SIZE(write_data) - 1) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    write_data[0] = pb_obj_get_positive_int(reg_in);
+    memcpy(&write_data[1], user_data, user_len);
+
+    return start_operation(device, write_data, user_len + 1, 0, NULL);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 
