@@ -79,11 +79,11 @@ enum {
  */
 enum {
     // The maximum ADC clock speed according to the datasheet is 20 MHz.
-    // However, because the SPI peripheral does not have a fractional clock generator,
-    // the closest achievable in-spec speed is a division factor of 8.
-    //
-    // 150 MHz / 8 = 18.75 MHz actual
-    ADC_SPI_CLK_SPEED = 20000000,
+    // However, likely due to capacitance, it takes more time to settle even
+    // when maxing out other delays like C2T/T2C/WDELAY. Slowing down the
+    // SCLK adds even more settling time since each CS triggers a conversion
+    // and triggers the acquisition of the previous conversion.
+    ADC_SPI_CLK_SPEED = 1000000,
     // Time between the end of one SPI operation and start of the next.
     ADC_SAMPLE_PERIOD = 2,
 };
