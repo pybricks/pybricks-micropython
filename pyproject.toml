@@ -11,7 +11,7 @@ python = ">=3.10,<3.13"
 
 
 [tool.poetry.group.dev.dependencies]
-eventlet = "^0.33.3"
+eventlet = "^0.40.3"
 flake8 = "^3.8.3"
 matplotlib = "^3.4.3"
 nbstripout = "^0.5.0"

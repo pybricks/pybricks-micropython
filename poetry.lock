@@ -933,20 +933,22 @@ files = [
 
 [[package]]
 name = "eventlet"
-version = "0.33.3"
+version = "0.40.3"
 description = "Highly concurrent networking library"
 optional = false
-python-versions = "*"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "eventlet-0.33.3-py2.py3-none-any.whl", hash = "sha256:e43b9ae05ba4bb477a10307699c9aff7ff86121b2640f9184d29059f5a687df8"},
-    {file = "eventlet-0.33.3.tar.gz", hash = "sha256:722803e7eadff295347539da363d68ae155b8b26ae6a634474d0a920be73cfda"},
+    {file = "eventlet-0.40.3-py3-none-any.whl", hash = "sha256:e681cae6ee956cfb066a966b5c0541e734cc14879bda6058024104790595ac9d"},
+    {file = "eventlet-0.40.3.tar.gz", hash = "sha256:290852db0065d78cec17a821b78c8a51cafb820a792796a354592ae4d5fceeb0"},
 ]
 
 [package.dependencies]
 dnspython = ">=1.15.0"
-greenlet = ">=0.3"
-six = ">=1.10.0"
+greenlet = ">=1.0"
+
+[package.extras]
+dev = ["black", "build", "commitizen", "isort", "pip-tools", "pre-commit", "twine"]
 
 [[package]]
 name = "exceptiongroup"
@@ -2022,6 +2024,7 @@ files = [
     {file = "mpy_cross_v5-1.0.2-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:a3d9c151318c5c4d298fb477497b15ccb2bcde4f0d7e32a7b02179482429a52e"},
     {file = "mpy_cross_v5-1.0.2-py3-none-win32.whl", hash = "sha256:121c22ba2fef5549ceb0640d046c0606857d83cf93aa1bda8084fee8366aa148"},
     {file = "mpy_cross_v5-1.0.2-py3-none-win_amd64.whl", hash = "sha256:bc003357bdc69912a0affa2bb87cefe531bcdcd21e1646f939a4773d6801b435"},
+    {file = "mpy_cross_v5-1.0.2-py3-none-win_arm64.whl", hash = "sha256:c784926367bddc89d0e2943c7fd2bc67548146c00899f59c49f6afd5ea004e4b"},
     {file = "mpy_cross_v5-1.0.2.tar.gz", hash = "sha256:50797bd49e675d262d44816c407f8c8074b4d4304ff9b8dd7aec35f3210b29ce"},
 ]
 
@@ -2041,6 +2044,7 @@ files = [
     {file = "mpy_cross_v6-1.0.2-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:99978e8bf6acb3265da72157559080792bcf4646db3c797546e581972fb13c0d"},
     {file = "mpy_cross_v6-1.0.2-py3-none-win32.whl", hash = "sha256:db7ca32c3c74ee3ca18d9032a7d0fd6f77054f0dc1830fba607b50183721a738"},
     {file = "mpy_cross_v6-1.0.2-py3-none-win_amd64.whl", hash = "sha256:5a63e082d9084e4e51ba023d844dc92ea32f777536e46969895b9fc89011a8db"},
+    {file = "mpy_cross_v6-1.0.2-py3-none-win_arm64.whl", hash = "sha256:ce23505da1e25c8f56508e9992bce7be80f522ef4b366238cb8ddc32dff71ef3"},
     {file = "mpy_cross_v6-1.0.2.tar.gz", hash = "sha256:8e67d5ddf4fd49274a0eb6efe60a919a90c57925c0b2127154b75f23d18f7f96"},
 ]
 
@@ -4608,4 +4612,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "8c4fa43596a47d7181188c58238cf62395d0ed1a4e1c051c6dec5dc336d92b25"
+content-hash = "d9390cb516e60c74e7e9e67ebbf8d2ecb7b87308cb1db12aef94e695a5429729"
