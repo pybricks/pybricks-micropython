@@ -914,6 +914,15 @@ pbio_error_t ev3_spi_process_thread(pbio_os_state_t *state, void *context) {
     // failure, it can reset the user data to factory defaults, and save it
     // properly on shutdown.
     pbdrv_block_device_load_err = err;
+
+    // Read one set of ADC samples before continuing boot.
+    // This ensures that e.g. the low-battery warning doesn't falsely trigger.
+    pbdrv_block_device_ev3_spi_begin_for_adc(
+        channel_cmd,
+        channel_data,
+        PBDRV_CONFIG_ADC_EV3_ADC_NUM_CHANNELS + PBDRV_ADC_EV3_NUM_DELAY_SAMPLES);
+    PBIO_OS_AWAIT_WHILE(state, (spi_dev.status & SPI_STATUS_WAIT_ANY));
+
     pbio_busy_count_down();
 
     pbio_os_timer_set(&timer, ADC_SAMPLE_PERIOD);
