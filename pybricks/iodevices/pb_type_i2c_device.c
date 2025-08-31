@@ -221,19 +221,6 @@ void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8
     }
 }
 
-// pybricks.iodevices.I2CDevice.write_then_read
-static mp_obj_t write_then_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        device_obj_t, device,
-        PB_ARG_REQUIRED(write_data),
-        PB_ARG_REQUIRED(read_length)
-        );
-
-    size_t write_len;
-    return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), (const uint8_t *)mp_obj_str_get_data(write_data_in, &write_len), write_len, pb_obj_get_positive_int(read_length_in), mp_obj_new_bytes);
-}
-static MP_DEFINE_CONST_FUN_OBJ_KW(write_then_read_obj, 0, write_then_read);
-
 // pybricks.iodevices.I2CDevice.read
 static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -291,7 +278,6 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 static const mp_rom_map_elem_t locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&write_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write_then_read), MP_ROM_PTR(&write_then_read_obj) },
 };
 static MP_DEFINE_CONST_DICT(locals_dict, locals_dict_table);
 
