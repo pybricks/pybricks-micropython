@@ -419,8 +419,8 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     // Optionally used by some ports to get angle information.
     pbdrv_counter_get_dev(port->pdata->counter_driver_index, &port->counter);
 
-    // Configure basic quadrature-only ports such as BOOST A&B or NXT A&B&C
-    // without device kind and type id detection.
+    // Configure basic quadrature-only ports such as BOOST A&B or NXT/EV3 motor
+    // ports. May also support device detection in their counter driver.
     if (port->pdata->supported_modes == PBIO_PORT_MODE_QUADRATURE) {
         pbio_port_set_mode(port, PBIO_PORT_MODE_QUADRATURE);
         return;
@@ -560,14 +560,12 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_UART:
             // Enable UART on the port. No process needed here. User can
             // access UART from their own event loop.
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
-            return PBIO_SUCCESS;
+            return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
         case PBIO_PORT_MODE_I2C:
             // Enable I2C on the port. User controlled; no process needed here.
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
-            return PBIO_SUCCESS;
+            return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
         case PBIO_PORT_MODE_QUADRATURE:
-            return PBIO_SUCCESS;
+            return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_QUADRATURE);
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }

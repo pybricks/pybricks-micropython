@@ -10,34 +10,42 @@
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 
+/**
+ * Resets pins to the default state, which is input with the buffer disabled.
+ */
+static pbio_error_t pbdrv_ioport_p5p6_pin_reset(const pbdrv_ioport_pins_t *pins) {
+
+    if (!pins) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
+    pbdrv_gpio_input(&pins->p5);
+    pbdrv_gpio_input(&pins->p6);
+    pbdrv_gpio_input(&pins->uart_tx);
+    pbdrv_gpio_input(&pins->uart_rx);
+    pbdrv_gpio_out_high(&pins->uart_buf);
+
+    // These should be set by default already, but it seems that the
+    // bootloader on the Technic hub changes these and causes wrong
+    // detection if we don't make sure pull is disabled.
+    pbdrv_gpio_set_pull(&pins->p5, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->p6, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->uart_buf, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->uart_tx, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
+
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_ioport_p5p6_mode_t mode) {
 
+    pbio_error_t err;
+
     if (mode == PBDRV_IOPORT_P5P6_MODE_GPIO_ADC) {
-
-        // Reset pins if this port has GPIO pins.
-        if (!pins) {
-            return PBIO_ERROR_NOT_SUPPORTED;
-        }
-
-        pbdrv_gpio_input(&pins->p5);
-        pbdrv_gpio_input(&pins->p6);
-        pbdrv_gpio_input(&pins->uart_tx);
-        pbdrv_gpio_input(&pins->uart_rx);
-        pbdrv_gpio_out_high(&pins->uart_buf);
-
-        // These should be set by default already, but it seems that the
-        // bootloader on the Technic hub changes these and causes wrong
-        // detection if we don't make sure pull is disabled.
-        pbdrv_gpio_set_pull(&pins->p5, PBDRV_GPIO_PULL_NONE);
-        pbdrv_gpio_set_pull(&pins->p6, PBDRV_GPIO_PULL_NONE);
-        pbdrv_gpio_set_pull(&pins->uart_buf, PBDRV_GPIO_PULL_NONE);
-        pbdrv_gpio_set_pull(&pins->uart_tx, PBDRV_GPIO_PULL_NONE);
-        pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
-
-        return PBIO_SUCCESS;
+        // This is the same as the default mode.
+        return pbdrv_ioport_p5p6_pin_reset(pins);
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_UART) {
-        // First reset all pins to inputs by going to GPIO mode recursively.
-        pbio_error_t err = pbdrv_ioport_p5p6_set_mode(pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        err = pbdrv_ioport_p5p6_pin_reset(pins);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -47,22 +55,22 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_i
         pbdrv_gpio_out_low(&pins->uart_buf);
         return PBIO_SUCCESS;
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_I2C) {
-        // First reset all pins to inputs by going to GPIO mode recursively.
-        pbio_error_t err = pbdrv_ioport_p5p6_set_mode(pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        err = pbdrv_ioport_p5p6_pin_reset(pins);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+        // Required for EV3 I2C implementation.
         pbdrv_gpio_out_low(&pins->p5);
         pbdrv_gpio_input(&pins->p5);
         pbdrv_gpio_out_low(&pins->p6);
         pbdrv_gpio_input(&pins->p6);
         return PBIO_SUCCESS;
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_QUADRATURE) {
-        // In PoweredUP, this is only used for two motors in boost. Its counter
-        // driver does all the required setup. Its mode can never change. The
-        // initial driver init does not check errors for default modes since
-        // they are supported by definition. We can return an error for all
-        // other ports.
+        // Ports with this mode support only this mode and nothing else. The
+        // counter drivers are automatically started on boot. This mode is only
+        // set at port init when default ports are set, for which the return
+        // value is not checked. This mode should never change at runtime
+        // either, so always just return an error.
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
