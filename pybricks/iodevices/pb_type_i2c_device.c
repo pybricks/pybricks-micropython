@@ -18,7 +18,6 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-
 #include <pybricks/util_pb/pb_error.h>
 
 // Object representing a pybricks.iodevices.I2CDevice instance.
@@ -262,8 +261,10 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
         return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), (const uint8_t *)user_data, user_len, 0, NULL);
     }
 
-    // Otherwise need to prefix write data with given register.
-    uint8_t write_data[256];
+    // Otherwise need to prefix write data with given register. We're limiting
+    // write data to 32 bytes in this case. To send more data, the user can
+    // use reg=None and prefix the address to the data themselves.
+    uint8_t write_data[33];
     if (user_len > MP_ARRAY_SIZE(write_data) - 1) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
