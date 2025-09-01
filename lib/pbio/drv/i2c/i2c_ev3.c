@@ -43,6 +43,9 @@
 // Rounded up to a nice power of 2 and multiple of cache lines
 #define PRU_I2C_MAX_BYTES_PER_TXN   512
 
+// Number of times we try the operation before NAK is raised as an IO error.
+#define PRU_I2C_MAX_NUM_TRIES_ON_NAK (2)
+
 static uint8_t pbdrv_i2c_buffers[PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES][PRU_I2C_MAX_BYTES_PER_TXN] PBDRV_DMA_BUF;
 
 struct _pbdrv_i2c_dev_t {
@@ -51,6 +54,7 @@ struct _pbdrv_i2c_dev_t {
     bool is_initialized;
     uint8_t pru_i2c_idx;
     pbio_os_timer_t timer;
+    size_t try_count;
 };
 
 static pbdrv_i2c_dev_t i2c_devs[PBDRV_RPROC_EV3_PRU1_NUM_I2C_BUSES];
@@ -131,53 +135,58 @@ pbio_error_t pbdrv_i2c_write_then_read(
         memcpy(i2c_dev->buffer, wdata, wlen);
     }
 
-    if (nxt_quirk) {
-        // NXT sensors affected by the quirk can't be accessed too quickly.
-        // This ensures a minimum delay without slowing down code that polls
-        // less frequently.
-        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&i2c_dev->timer));
-        pbio_os_timer_set(&i2c_dev->timer, 100);
-    }
+    for (i2c_dev->try_count = 0; i2c_dev->try_count < PRU_I2C_MAX_NUM_TRIES_ON_NAK; i2c_dev->try_count++) {
 
-    i2c_dev->is_busy = true;
-    pbdrv_cache_prepare_before_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
+        if (nxt_quirk) {
+            // NXT sensors affected by the quirk can't be accessed too quickly.
+            // The timer is set after awaiting so we don't unnecessarily slow
+            // down code that polls less frequently.
+            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&i2c_dev->timer));
+            pbio_os_timer_set(&i2c_dev->timer, 100);
+        }
 
-    // Kick off transfer
-    pbdrv_rproc_ev3_pru1_shared_ram.i2c[i2c_dev->pru_i2c_idx].flags = PBDRV_RPROC_EV3_PRU1_I2C_PACK_FLAGS(
-        dev_addr,
-        rlen,
-        wlen,
-        PBDRV_RPROC_EV3_PRU1_I2C_CMD_START | (nxt_quirk ? PBDRV_RPROC_EV3_PRU1_I2C_CMD_NXT_QUIRK : 0)
-        );
+        i2c_dev->is_busy = true;
+        pbdrv_cache_prepare_before_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
 
-    // Wait for transfer to finish
-    PBIO_OS_AWAIT_WHILE(state, i2c_dev->is_busy);
+        // Kick off transfer
+        pbdrv_rproc_ev3_pru1_shared_ram.i2c[i2c_dev->pru_i2c_idx].flags = PBDRV_RPROC_EV3_PRU1_I2C_PACK_FLAGS(
+            dev_addr,
+            rlen,
+            wlen,
+            PBDRV_RPROC_EV3_PRU1_I2C_CMD_START | (nxt_quirk ? PBDRV_RPROC_EV3_PRU1_I2C_CMD_NXT_QUIRK : 0)
+            );
 
-    uint32_t flags = pbdrv_rproc_ev3_pru1_shared_ram.i2c[i2c_dev->pru_i2c_idx].flags;
-    debug_pr("i2c %d done flags %08x\r\n", i2c_dev->pru_i2c_idx, flags);
-    if (!(flags & PBDRV_RPROC_EV3_PRU1_I2C_STAT_DONE)) {
-        debug_pr("i2c %d not actually done???\r\n", i2c_dev->pru_i2c_idx);
-        return PBIO_ERROR_FAILED;
-    }
-    switch (flags & PBDRV_RPROC_EV3_PRU1_I2C_STAT_MASK) {
-        case PBDRV_RPROC_EV3_PRU1_I2C_STAT_OK:
-            break;
-        case PBDRV_RPROC_EV3_PRU1_I2C_STAT_TIMEOUT:
-            return PBIO_ERROR_TIMEDOUT;
-        case PBDRV_RPROC_EV3_PRU1_I2C_STAT_NAK:
-            return PBIO_ERROR_IO;
-        default:
-            debug_pr("i2c %d unknown error occurred???\r\n", i2c_dev->pru_i2c_idx);
+        // Wait for transfer to finish
+        PBIO_OS_AWAIT_WHILE(state, i2c_dev->is_busy);
+
+        uint32_t flags = pbdrv_rproc_ev3_pru1_shared_ram.i2c[i2c_dev->pru_i2c_idx].flags;
+        debug_pr("i2c %d done flags %08x\r\n", i2c_dev->pru_i2c_idx, flags);
+        if (!(flags & PBDRV_RPROC_EV3_PRU1_I2C_STAT_DONE)) {
+            debug_pr("i2c %d not actually done\r\n", i2c_dev->pru_i2c_idx);
             return PBIO_ERROR_FAILED;
+        }
+
+        flags &= PBDRV_RPROC_EV3_PRU1_I2C_STAT_MASK;
+
+        if (flags == PBDRV_RPROC_EV3_PRU1_I2C_STAT_OK) {
+            // Success, exit loop.
+            pbdrv_cache_prepare_after_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
+            if (rlen) {
+                *rdata = &i2c_dev->buffer[wlen];
+            }
+            return PBIO_SUCCESS;
+        } else if (flags == PBDRV_RPROC_EV3_PRU1_I2C_STAT_TIMEOUT) {
+            return PBIO_ERROR_TIMEDOUT;
+        } else if (flags != PBDRV_RPROC_EV3_PRU1_I2C_STAT_NAK) {
+            // Many known NXT devices occasionally get NAK. Retrying usually
+            // helps. Everything else is unexpected and raised immediately.
+            debug_pr("i2c %d unknown error occurred\r\n", i2c_dev->pru_i2c_idx);
+            return PBIO_ERROR_FAILED;
+        }
     }
 
-    // If we got here, there's no error. Tell caller where to read RX data.
-    pbdrv_cache_prepare_after_dma(i2c_dev->buffer, PRU_I2C_MAX_BYTES_PER_TXN);
-    if (rlen) {
-        *rdata = &i2c_dev->buffer[wlen];
-    }
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    // Didn't succeed even after trying allowed number of times.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
 
 static pbio_os_process_t ev3_i2c_init_process;
