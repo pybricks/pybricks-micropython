@@ -7,7 +7,6 @@
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6           (1)
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6_3_NATIVE  (0)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (5)
-#define PBSYS_CONFIG_HMI_SLOT_0_STARTS_REPL         (1)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (21)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (1)
