@@ -36,7 +36,7 @@ PROCESS(pbdrv_usb_process, "USB");
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4);
-static uint8_t usb_status_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(PBSYS_STATUS_REPORT_SIZE)] __aligned(4);
+static uint8_t usb_status_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE)] __aligned(4);
 static uint8_t usb_stdout_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static volatile uint32_t usb_in_sz;
 static volatile uint32_t usb_response_sz;

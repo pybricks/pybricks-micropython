@@ -56,16 +56,12 @@ static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool s
 /**
  * Gets the Pybricks status report and writes it to @p buf.
  *
- * The buffer must be at least ::PBSYS_STATUS_REPORT_SIZE bytes.
+ * The buffer must be at least ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE bytes.
  *
  * @param [in]  buf        The buffer to hold the binary data.
  * @return                 The number of bytes written to @p buf.
  */
 uint32_t pbsys_status_get_status_report(uint8_t *buf) {
-
-    _Static_assert(PBSYS_STATUS_REPORT_SIZE == PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
-        "size of status report does not match size of event");
-
     return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
 }
 
