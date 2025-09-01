@@ -28,7 +28,7 @@ static struct {
     pbio_pybricks_user_program_id_t slot;
 } pbsys_status;
 
-static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
+static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool set) {
     uint32_t new_flags = set ? pbsys_status.flags | PBIO_PYBRICKS_STATUS_FLAG(status) : pbsys_status.flags & ~PBIO_PYBRICKS_STATUS_FLAG(status);
 
     if (pbsys_status.flags == new_flags) {
@@ -112,7 +112,7 @@ void pbsys_status_set_program_id(pbio_pybricks_user_program_id_t program_id) {
  * Sets a system status status indication.
  * @param [in]  status   The status indication to set.
  */
-void pbsys_status_set(pbio_pybricks_status_t status) {
+void pbsys_status_set(pbio_pybricks_status_flags_t status) {
     assert(status < NUM_PBIO_PYBRICKS_STATUS);
     pbsys_status_update_flag(status, true);
 }
@@ -121,7 +121,7 @@ void pbsys_status_set(pbio_pybricks_status_t status) {
  * Clears a system status status indication.
  * @param [in]  status   The status indication to clear.
  */
-void pbsys_status_clear(pbio_pybricks_status_t status) {
+void pbsys_status_clear(pbio_pybricks_status_flags_t status) {
     assert(status < NUM_PBIO_PYBRICKS_STATUS);
     pbsys_status_update_flag(status, false);
 }
@@ -131,7 +131,7 @@ void pbsys_status_clear(pbio_pybricks_status_t status) {
  * @param [in]  status  The status indication  to to test.
  * @return              *true* if @p status is set, otherwise *false*.
  */
-bool pbsys_status_test(pbio_pybricks_status_t status) {
+bool pbsys_status_test(pbio_pybricks_status_flags_t status) {
     assert(status < NUM_PBIO_PYBRICKS_STATUS);
     return !!(pbsys_status.flags & PBIO_PYBRICKS_STATUS_FLAG(status));
 }
@@ -148,7 +148,7 @@ bool pbsys_status_test(pbio_pybricks_status_t status) {
  * @return              *true* if @p status has been set to @p state for at
  *                      least @p ms, otherwise *false*.
  */
-bool pbsys_status_test_debounce(pbio_pybricks_status_t status, bool state, uint32_t ms) {
+bool pbsys_status_test_debounce(pbio_pybricks_status_flags_t status, bool state, uint32_t ms) {
     assert(status < NUM_PBIO_PYBRICKS_STATUS);
     if (pbsys_status_test(status) != state) {
         return false;

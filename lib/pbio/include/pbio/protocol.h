@@ -235,7 +235,7 @@ typedef enum {
      * Status report event.
      *
      * The payload is one 32-bit little-endian unsigned integer containing
-     * ::pbio_pybricks_status_t flags and a one byte program identifier
+     * ::pbio_pybricks_status_flags_t flags and a one byte program identifier
      * representing the currently active program if it is running.
      *
      * @since Pybricks Profile v1.0.0. Program identifier added in Pybricks Profile v1.4.0.
@@ -331,12 +331,12 @@ typedef enum {
     PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED = 9,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
-} pbio_pybricks_status_t;
+} pbio_pybricks_status_flags_t;
 
 /**
  * Converts a status value to a bit flag.
  *
- * @param [in]  status  A ::pbio_pybricks_status_t value.
+ * @param [in]  status  A ::pbio_pybricks_status_flags_t value.
  * @return              A bit flag corresponding to @p status.
  */
 #define PBIO_PYBRICKS_STATUS_FLAG(status) (1 << status)
