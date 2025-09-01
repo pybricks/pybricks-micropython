@@ -222,43 +222,9 @@ static void pbsys_status_light_update_patterns(void) {
     }
 }
 
-#if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-static uint8_t animation_progress;
-
-static uint32_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
-    // The brightness pattern has the form /\ through which we cycle in N steps.
-    // It is reset back to the start when the user program starts.
-    const uint8_t animation_progress_max = 200;
-
-    pbio_color_hsv_t hsv = {
-        .h = PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE,
-        .s = 100,
-        .v = animation_progress < animation_progress_max / 2 ?
-            animation_progress :
-            animation_progress_max - animation_progress,
-    };
-
-    pbsys_status_light_main->funcs->set_hsv(pbsys_status_light_main, &hsv);
-
-    // This increment controls the speed of the pattern and wraps on completion
-    animation_progress = (animation_progress + 4) % animation_progress_max;
-
-    return 40;
-}
-#endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-
 void pbsys_status_light_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
     if (event == PBSYS_STATUS_CHANGE_SET || event == PBSYS_STATUS_CHANGE_CLEARED) {
         pbsys_status_light_update_patterns();
-    }
-    if (event == PBSYS_STATUS_CHANGE_SET && (pbio_pybricks_status_t)(intptr_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
-        #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-        animation_progress = 0;
-        pbio_light_animation_init(&pbsys_status_light_main->animation, default_user_program_light_animation_next);
-        pbio_light_animation_start(&pbsys_status_light_main->animation);
-        #else
-        pbio_color_light_off(pbsys_status_light_main);
-        #endif // PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     }
 }
 

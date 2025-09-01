@@ -140,6 +140,41 @@ void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbi
     pbio_light_animation_start(&light->animation);
 }
 
+static uint8_t breathe_animation_progress;
+static uint16_t breathe_animation_hue;
+
+static uint32_t pbio_color_light_breathe_next(pbio_light_animation_t *animation) {
+
+    pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
+
+    // The brightness pattern has the form /\ through which we cycle in N steps.
+    // It is reset back to the start when the user program starts.
+    const uint8_t animation_progress_max = 200;
+
+    pbio_color_hsv_t hsv = {
+        .h = breathe_animation_hue,
+        .s = 100,
+        .v = breathe_animation_progress < animation_progress_max / 2 ?
+            breathe_animation_progress :
+            animation_progress_max - breathe_animation_progress,
+    };
+
+    light->funcs->set_hsv(light, &hsv);
+
+    // This increment controls the speed of the pattern and wraps on completion
+    breathe_animation_progress = (breathe_animation_progress + 4) % animation_progress_max;
+
+    return 40;
+}
+
+void pbio_color_light_start_breathe_animation(pbio_color_light_t *light, uint16_t hue) {
+    pbio_color_light_stop_animation(light);
+    breathe_animation_progress = 0;
+    breathe_animation_hue = hue;
+    pbio_light_animation_init(&light->animation, pbio_color_light_breathe_next);
+    pbio_light_animation_start(&light->animation);
+}
+
 static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
 
