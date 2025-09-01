@@ -231,7 +231,7 @@ static uint32_t default_user_program_light_animation_next(pbio_light_animation_t
     const uint8_t animation_progress_max = 200;
 
     pbio_color_hsv_t hsv = {
-        .h = PBIO_COLOR_HUE_BLUE,
+        .h = PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE,
         .s = 100,
         .v = animation_progress < animation_progress_max / 2 ?
             animation_progress :
