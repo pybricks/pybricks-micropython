@@ -883,6 +883,10 @@ bool pbdrv_usb_connection_is_active(void) {
     return nx_usb_is_connected();
 }
 
+void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
+    // todo
+}
+
 void nx_usb_read(uint8_t *data, uint32_t length) {
     pbdrv_usb_nxt_state.rx_data = data;
     pbdrv_usb_nxt_state.rx_size = length;

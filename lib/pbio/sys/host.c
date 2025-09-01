@@ -23,6 +23,16 @@ void pbsys_host_init(void) {
 }
 
 /**
+ * Schedules sending a status update to connected hosts.
+ *
+ * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
+ */
+void pbsys_host_schedule_status_update(const uint8_t *buf) {
+    pbdrv_bluetooth_schedule_status_update(buf);
+    pbdrv_usb_schedule_status_update(buf);
+}
+
+/**
  * Tests if the hub is connected to the host with BLE or USB.
  *
  * Connected implies an active connection to a Pybricks app, not just

@@ -1109,4 +1109,8 @@ void pbdrv_bluetooth_stop_observing(pbio_task_t *task) {
     start_task(task, stop_observing_task, NULL);
 }
 
+void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
+    // todo
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK

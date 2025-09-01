@@ -277,6 +277,13 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
 void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event);
 
 /**
+ * Schedules Pybricks status to be sent via a characteristic notification.
+ *
+ * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
+ */
+void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg);
+
+/**
  * Requests for @p data to be sent via a characteristic notification.
  *
  * It is up to the caller to verify that notifications are enabled and
@@ -422,6 +429,9 @@ static inline void pbdrv_bluetooth_stop_advertising(void) {
 
 static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     return false;
+}
+
+static inline void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
 }
 
 static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {

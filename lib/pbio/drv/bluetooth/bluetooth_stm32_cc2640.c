@@ -2428,4 +2428,8 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *pData, uint8_t da
     return bleSUCCESS;
 }
 
+void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
+    // todo
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640

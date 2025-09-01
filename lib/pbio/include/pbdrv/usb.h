@@ -41,6 +41,13 @@ typedef enum {
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void);
 
 /**
+ * Schedules Pybricks status to be sent soon.
+ *
+ * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
+ */
+void pbdrv_usb_schedule_status_update(const uint8_t *status_msg);
+
+/**
  * Transmits the given buffer over the USB stdout stream.
  * @return              The result of the operation.
  */
@@ -73,6 +80,9 @@ bool pbdrv_usb_connection_is_active(void);
 
 static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
+}
+
+static inline void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
 }
 
 static inline pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {

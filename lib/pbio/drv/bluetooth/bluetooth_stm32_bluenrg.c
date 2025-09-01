@@ -1556,4 +1556,8 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     PROCESS_END();
 }
 
+void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
+    // todo
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG

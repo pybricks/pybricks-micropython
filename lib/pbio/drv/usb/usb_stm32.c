@@ -389,6 +389,10 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return pbdrv_usb_bcd;
 }
 
+void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
+    // todo
+}
+
 // Event loop
 
 PROCESS_THREAD(pbdrv_usb_process, ev, data) {

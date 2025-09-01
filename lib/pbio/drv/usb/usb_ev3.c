@@ -879,6 +879,10 @@ static void usb_device_intr(void) {
     HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
 
+void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
+    // todo
+}
+
 static pbio_os_process_t pbdrv_usb_ev3_process;
 
 static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *context) {
