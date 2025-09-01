@@ -68,7 +68,7 @@ static void pbsys_hub_light_matrix_show_idle_ui(uint8_t brightness) {
         for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
             bool is_on = r < 3 && c > 0 && c < 4;
             #if PBSYS_CONFIG_HMI_NUM_SLOTS
-            is_on |= (r == 4 && c == pbsys_hmi_get_selected_program_slot());
+            is_on |= (r == 4 && c == pbsys_status_get_selected_slot());
             #endif
             pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, is_on ? brightness : 0);
         }

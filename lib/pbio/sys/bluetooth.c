@@ -198,7 +198,7 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
         // wait for status to change or timeout
         PT_WAIT_UNTIL(pt, pbsys_status_get_flags() != old_status_flags ||
             #if PBSYS_CONFIG_HMI_NUM_SLOTS
-            pbsys_hmi_get_selected_program_slot() != old_program_slot ||
+            pbsys_status_get_selected_slot() != old_program_slot ||
             #endif
             etimer_expired(&timer));
 

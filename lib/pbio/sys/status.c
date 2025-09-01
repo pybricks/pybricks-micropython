@@ -23,6 +23,8 @@ static struct {
     uint32_t changed_time[NUM_PBIO_PYBRICKS_STATUS];
     /** Currently active program identifier, if it is running according to the flags. */
     pbio_pybricks_user_program_id_t program_id;
+    /** Currently selected program slot */
+    pbio_pybricks_user_program_id_t slot;
 } pbsys_status;
 
 static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
@@ -59,16 +61,39 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
  * @return                 The number of bytes written to @p buf.
  */
 uint32_t pbsys_status_get_status_report(uint8_t *buf) {
-    #if PBSYS_CONFIG_HMI_NUM_SLOTS
-    uint8_t slot = pbsys_hmi_get_selected_program_slot();
-    #else
-    uint8_t slot = 0;
-    #endif
 
     _Static_assert(PBSYS_STATUS_REPORT_SIZE == PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
         "size of status report does not match size of event");
 
-    return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, slot);
+    return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
+}
+
+/**
+ * Increments or decrements the currently active slot.
+ *
+ * It does not wrap around. This is safe to call even if the maximum or minimum
+ * slot is already reached.
+ *
+ * @param [in]  increment   @c true for increment @c false for decrement
+ */
+void pbsys_status_increment_selected_slot(bool increment) {
+    #if PBSYS_CONFIG_HMI_NUM_SLOTS
+    if (increment && pbsys_status.slot + 1 < PBSYS_CONFIG_HMI_NUM_SLOTS) {
+        pbsys_status.slot++;
+    }
+    if (!increment && pbsys_status.slot > 0) {
+        pbsys_status.slot--;
+    }
+    #endif
+}
+
+/**
+ * Gets the currently selected program slot.
+ *
+ * @return The currently selected program slot (zero-indexed).
+ */
+pbio_pybricks_user_program_id_t pbsys_status_get_selected_slot(void) {
+    return pbsys_status.slot;
 }
 
 /**

@@ -171,7 +171,7 @@ static pbio_error_t pbsys_storage_prepare_receive(void) {
     return PBIO_SUCCESS;
     #endif // PBSYS_CONFIG_STORAGE_NUM_SLOTS == 1
 
-    incoming_slot = pbsys_hmi_get_selected_program_slot();
+    incoming_slot = pbsys_status_get_selected_slot();
 
     // There are three cases:
     // - The current slot is already the last used slot
@@ -309,7 +309,7 @@ void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
     //          extended to providing access to the active slot. Do we really
     //          want that though? Maybe REPL should just really be independent.
     //
-    uint8_t slot = program->id < PBSYS_CONFIG_STORAGE_NUM_SLOTS ? program->id : pbsys_hmi_get_selected_program_slot();
+    uint8_t slot = program->id < PBSYS_CONFIG_STORAGE_NUM_SLOTS ? program->id : pbsys_status_get_selected_slot();
 
     // Only requested slot is available to user.
     program->code_start = map->program_data + map->slot_info[slot].offset;

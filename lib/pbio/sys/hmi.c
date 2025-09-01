@@ -37,20 +37,6 @@
 #define DEBUG_PRINT(...)
 #endif
 
-// The selected slot is not persistent across reboot, so that the first slot
-// is always active on boot. This allows consistently starting programs without
-// visibility of the display.
-static uint8_t selected_slot = 0;
-
-/**
- * Gets the currently selected program slot.
- *
- * @return The currently selected program slot (zero-indexed).
- */
-uint8_t pbsys_hmi_get_selected_program_slot(void) {
-    return selected_slot;
-}
-
 void pbsys_hmi_init(void) {
     pbsys_status_light_init();
     pbsys_hub_light_matrix_init();
@@ -110,7 +96,7 @@ static pbio_error_t pbsys_hmi_launch_program_with_button(pbio_os_state_t *state)
 
         if (pressed & PBIO_BUTTON_CENTER) {
 
-            pbio_error_t err = pbsys_main_program_request_start(selected_slot, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
+            pbio_error_t err = pbsys_main_program_request_start(pbsys_status_get_selected_slot(), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
 
             if (err == PBIO_SUCCESS) {
                 // Program is available so we can leave this UI thread and
@@ -124,14 +110,14 @@ static pbio_error_t pbsys_hmi_launch_program_with_button(pbio_os_state_t *state)
         }
 
         // On right, increment slot when possible.
-        if ((pressed & PBIO_BUTTON_RIGHT) && selected_slot < 4) {
-            selected_slot++;
+        if (pressed & PBIO_BUTTON_RIGHT) {
+            pbsys_status_increment_selected_slot(true);
             pbsys_hub_light_matrix_update_program_slot();
         }
 
         // On left, decrement slot when possible.
-        if ((pressed & PBIO_BUTTON_LEFT) && selected_slot > 0) {
-            selected_slot--;
+        if (pressed & PBIO_BUTTON_LEFT) {
+            pbsys_status_increment_selected_slot(false);
             pbsys_hub_light_matrix_update_program_slot();
         }
     }

@@ -49,7 +49,7 @@ pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
             }
             // Use payload as program ID, otherwise use active user slot.
             return pbio_pybricks_error_from_pbio_error(
-                pbsys_main_program_request_start((size == 2 ? data[1] : pbsys_hmi_get_selected_program_slot()), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE));
+                pbsys_main_program_request_start((size == 2 ? data[1] : pbsys_status_get_selected_slot()), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE));
         }
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
         case PBIO_PYBRICKS_COMMAND_START_REPL:
