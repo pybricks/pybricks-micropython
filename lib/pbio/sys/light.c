@@ -182,7 +182,7 @@ void pbsys_status_light_init(void) {
     #endif
 }
 
-static void pbsys_status_light_update_patterns(void) {
+void pbsys_status_light_handle_status_change(void) {
 
     // Warning pattern precedence.
     pbsys_status_light_indication_warning_t warning_indication = PBSYS_STATUS_LIGHT_INDICATION_WARNING_NONE;
@@ -219,12 +219,6 @@ static void pbsys_status_light_update_patterns(void) {
 
         warning_pattern_state->indication = warning_indication;
         warning_pattern_state->pattern_index = warning_pattern_state->pattern_count = 0;
-    }
-}
-
-void pbsys_status_light_handle_status_change(pbsys_status_change_t event, pbio_pybricks_status_t data) {
-    if (event == PBSYS_STATUS_CHANGE_SET || event == PBSYS_STATUS_CHANGE_CLEARED) {
-        pbsys_status_light_update_patterns();
     }
 }
 
