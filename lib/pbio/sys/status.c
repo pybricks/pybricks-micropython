@@ -7,11 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbio/os.h>
 
-#include <pbdrv/clock.h>
 #include <pbsys/status.h>
 
 #include "hmi.h"
@@ -28,6 +25,26 @@ static struct {
     pbio_pybricks_user_program_id_t slot;
 } pbsys_status;
 
+/**
+ * Let other processes and external hosts know that the status changed.
+ */
+static void pbsys_status_update_emit(void) {
+
+    uint8_t buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
+    pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
+
+    // TODO: Here we will call pbsys_host_schedule_status_update(buf), which
+    //       sets the status in host drivers such as USB and bluetooth so they
+    //       can write it out when possible.
+
+    // Other processes may be awaiting status changes, so poll.
+    pbio_os_request_poll();
+
+    // REVISIT: Can be deleted once all processes that poll the status are
+    // updated to use the new pbio os event loop.
+    process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
+}
+
 static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool set) {
     uint32_t new_flags = set ? pbsys_status.flags | PBIO_PYBRICKS_STATUS_FLAG(status) : pbsys_status.flags & ~PBIO_PYBRICKS_STATUS_FLAG(status);
 
@@ -39,18 +56,11 @@ static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool s
     pbsys_status.flags = new_flags;
     pbsys_status.changed_time[status] = pbdrv_clock_get_ms();
 
-    // status light is the only subscriber to status changes, so call its handler
-    // directly. All other processes just poll the status as needed. If we ever
-    // need more subscribers, we could register callbacks and call them here.
+    // Let everyone know about new flags.
+    pbsys_status_update_emit();
+
+    // Status light may need updating if flags have changed.
     pbsys_status_light_handle_status_change();
-
-    // Other processes may be awaiting status changes, so poll.
-    pbio_os_request_poll();
-
-    // REVISIT: Can be deleted once all processes that poll the status are
-    // updated to use the new pbio os event loop.
-    process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
-
 }
 
 /**
@@ -77,9 +87,11 @@ void pbsys_status_increment_selected_slot(bool increment) {
     #if PBSYS_CONFIG_HMI_NUM_SLOTS
     if (increment && pbsys_status.slot + 1 < PBSYS_CONFIG_HMI_NUM_SLOTS) {
         pbsys_status.slot++;
+        pbsys_status_update_emit();
     }
     if (!increment && pbsys_status.slot > 0) {
         pbsys_status.slot--;
+        pbsys_status_update_emit();
     }
     #endif
 }
@@ -101,7 +113,12 @@ pbio_pybricks_user_program_id_t pbsys_status_get_selected_slot(void) {
  * @param [in]  program_id   The identifier to set.
  */
 void pbsys_status_set_program_id(pbio_pybricks_user_program_id_t program_id) {
+    if (pbsys_status.program_id == program_id) {
+        return;
+    }
+
     pbsys_status.program_id = program_id;
+    pbsys_status_update_emit();
 }
 
 /**
