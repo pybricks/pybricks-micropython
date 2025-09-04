@@ -99,6 +99,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	tools/pb_module_tools.c \
 	tools/pb_type_app_data.c \
 	tools/pb_type_awaitable.c \
+	tools/pb_type_async.c \
 	tools/pb_type_matrix.c \
 	tools/pb_type_stopwatch.c \
 	tools/pb_type_task.c \
