@@ -22,6 +22,7 @@
 #include <pybricks/parameters/pb_type_button.h>
 #include <pybricks/pupdevices.h>
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_async.h>
 #include <pybricks/tools/pb_type_awaitable.h>
 #include <pybricks/common/pb_type_device.h>
 
@@ -104,10 +105,11 @@ mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values);
 
 // pybricks.common.DCMotor and pybricks.common.Motor
 typedef struct {
-    pb_type_device_obj_base_t device_base;
+    mp_obj_base_t base;
     pbio_servo_t *srv;
     pbio_dcmotor_t *dcmotor;
     pbio_port_id_t port_id;
+    pb_type_async_t *last_awaitable;
     #if PYBRICKS_PY_COMMON_MOTOR_MODEL
     mp_obj_t model;
     #endif
