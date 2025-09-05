@@ -48,8 +48,10 @@ typedef struct {
      * methods returned us.
      *
      * Special values:
-     *      MP_OBJ_NULL: This iterable has completed or has been closed.
+     *      MP_OBJ_NULL: This iterable has been fully exhausted and can be reused.
      *      MP_OBJ_SENTINEL: This iterable will yield once and complete next time.
+     *      MP_OBJ_STOP_ITERATION: This iterable is cancelled and will exhaust
+     *                             when it is iterated again.
      */
     mp_obj_t parent_obj;
     /**
@@ -70,8 +72,8 @@ typedef struct {
     pbio_os_state_t state;
 } pb_type_async_t;
 
-mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config);
+mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **prev);
 
-void pb_type_async_cancel(pb_type_async_t *iter);
+void pb_type_async_schedule_cancel(pb_type_async_t *iter);
 
 #endif // PYBRICKS_INCLUDED_ASYNC_H
