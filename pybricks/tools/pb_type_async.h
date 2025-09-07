@@ -49,13 +49,15 @@ typedef struct {
      *
      * Special values:
      *      MP_OBJ_NULL: This iterable has been fully exhausted and can be reused.
-     *      MP_OBJ_SENTINEL: This iterable will yield once and complete next time.
-     *      MP_OBJ_STOP_ITERATION: This iterable is cancelled and will exhaust
+     *      MP_OBJ_SENTINEL: This iterable is cancelled and will exhaust
      *                             when it is iterated again.
      */
     mp_obj_t parent_obj;
     /**
      * The iterable function associated with this operation. Usually a protothread.
+     *
+     * Special values:
+     *      NULL: This iterable will yield once and complete next time.
      */
     pb_type_async_iterate_once_t iter_once;
     /**

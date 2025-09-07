@@ -24,7 +24,7 @@ void pb_type_async_schedule_cancel(pb_type_async_t *iter) {
     }
     // Don't set it to MP_OBJ_NULL right away, or the calling code wouldn't
     // know it was exhausted, and it would await on the renewed operation.
-    iter->parent_obj = MP_OBJ_STOP_ITERATION;
+    iter->parent_obj = MP_OBJ_SENTINEL;
 }
 
 mp_obj_t pb_type_async_close(mp_obj_t iter_in) {
@@ -43,21 +43,21 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_async_close_obj, pb_type_async_close);
 static mp_obj_t pb_type_async_iternext(mp_obj_t iter_in) {
     pb_type_async_t *iter = MP_OBJ_TO_PTR(iter_in);
 
-    // On special case of sentinel, yield once now and complete next time.
-    if (iter->parent_obj == MP_OBJ_SENTINEL) {
-        pb_type_async_schedule_cancel(iter);
-        return mp_const_none;
-    }
-
     // It was scheduled for cancellation externally (or exhausted normally
     // previously). We are hereby letting the calling code know we are
     // exhausted, so now we can set parent_obj to MP_OBJ_NULL to indicate it is
     // ready to be used again. This assumes user did not keep a reference to it
     // and does not next() or await it again. It is safe if they do, but the
     // user code would be awaiting whatever it is re-used for.
-    if (iter->parent_obj == MP_OBJ_STOP_ITERATION || iter->parent_obj == MP_OBJ_NULL || !iter->iter_once) {
+    if (iter->parent_obj == MP_OBJ_SENTINEL || iter->parent_obj == MP_OBJ_NULL) {
         iter->parent_obj = MP_OBJ_NULL;
         return MP_OBJ_STOP_ITERATION;
+    }
+
+    // Special case without iterator means yield exactly once and then complete.
+    if (!iter->iter_once) {
+        pb_type_async_schedule_cancel(iter);
+        return mp_const_none;
     }
 
     // Run one iteration of the protothread.
