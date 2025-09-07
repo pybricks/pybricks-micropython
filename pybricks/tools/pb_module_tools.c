@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_TOOLS
 
+#include <string.h>
+
 #include "py/builtin.h"
 #include "py/gc.h"
 #include "py/mphal.h"
@@ -14,6 +16,7 @@
 
 #include <pbio/int_math.h>
 #include <pbio/task.h>
+#include <pbio/util.h>
 #include <pbsys/light.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
@@ -21,6 +24,7 @@
 #include <pybricks/parameters.h>
 #include <pybricks/common.h>
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_async.h>
 #include <pybricks/tools/pb_type_matrix.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
@@ -42,14 +46,20 @@ void pb_module_tools_assert_blocking(void) {
     }
 }
 
-// The awaitables for the wait() function have no object associated with
-// it (unlike e.g. a motor), so we make a starting point here. These never
-// have to cancel each other so shouldn't need to be in a list, but this lets
-// us share the same code with other awaitables. It also minimizes allocation.
-MP_REGISTER_ROOT_POINTER(mp_obj_t wait_awaitables);
+/**
+ * Statically allocated wait objects that can be re-used without allocation
+ * once exhausted. Should be sufficient for trivial applications.
+ *
+ * More are allocated as needed. If a user has more than this many parallel
+ * waits, the user can probably afford to allocate anyway.
+ *
+ * This is set to zero each time MicroPython starts.
+ */
+static pb_type_async_t waits[6];
 
-static bool pb_module_tools_wait_test_completion(mp_obj_t obj, uint32_t end_time) {
-    return mp_hal_ticks_ms() - end_time < UINT32_MAX / 2;
+static pbio_error_t pb_module_tools_wait_iter_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    // Not a protothread, but using the state variable to store final time.
+    return pbio_util_time_has_passed(pbdrv_clock_get_ms(), (uint32_t)*state) ? PBIO_SUCCESS: PBIO_ERROR_AGAIN;
 }
 
 static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -58,8 +68,7 @@ static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
 
     mp_int_t time = pb_obj_get_int(time_in);
 
-    // outside run loop, do blocking wait. This would be handled below as well,
-    // but for this very simple call we'd rather avoid the overhead.
+    // Outside run loop, do blocking wait to avoid async overhead.
     if (!pb_module_tools_run_loop_is_active()) {
         if (time > 0) {
             mp_hal_delay_ms(time);
@@ -67,18 +76,27 @@ static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         return mp_const_none;
     }
 
-    // Require that duration is nonnegative small int. This makes it cheaper to
-    // test completion state in iteration loop.
-    time = pbio_int_math_bind(time, 0, INT32_MAX >> 2);
+    // Find statically allocated candidate that can be re-used again because
+    // it was never used or used and exhausted. If it stays at NULL then a new
+    // awaitable is allocated.
+    pb_type_async_t *reuse = NULL;
+    for (uint32_t i = 0; i < MP_ARRAY_SIZE(waits); i++) {
+        if (waits[i].parent_obj == MP_OBJ_NULL) {
+            reuse = &waits[i];
+            break;
+        }
+    }
 
-    return pb_type_awaitable_await_or_wait(
-        NULL, // wait functions are not associated with an object
-        MP_STATE_PORT(wait_awaitables),
-        mp_hal_ticks_ms() + time,
-        time > 0 ? pb_module_tools_wait_test_completion : pb_type_awaitable_test_completion_yield_once,
-        pb_type_awaitable_return_none,
-        pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_NONE);
+    pb_type_async_t config = {
+        // Not associated with any parent object.
+        .parent_obj = mp_const_none,
+        // Yield once for duration 0 to avoid blocking loops.
+        .iter_once = time == 0 ? NULL : pb_module_tools_wait_iter_once,
+        // No protothread here; use it to encode end time.
+        .state = pbdrv_clock_get_ms() + (uint32_t)time,
+    };
+
+    return pb_type_async_wait_or_await(&config, &reuse);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
 
@@ -249,7 +267,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 0, pb_module_too
 
 // Reset global awaitable state when user program starts.
 void pb_module_tools_init(void) {
-    MP_STATE_PORT(wait_awaitables) = mp_obj_new_list(0, NULL);
+    memset(waits, 0, sizeof(waits));
     MP_STATE_PORT(pbio_task_awaitables) = mp_obj_new_list(0, NULL);
     run_loop_is_active = false;
 }
