@@ -8,6 +8,7 @@
 #include <pbio/image.h>
 
 #include <string.h>
+#include <limits.h>
 
 /**
  * Clip range between 0 and given length, return if out.
@@ -748,6 +749,157 @@ void pbio_image_fill_circle(pbio_image_t *image, int x, int y, int r,
         dx++;
         err += 4 + dx * 8;
     }
+}
+
+/**
+ * Draw a single glyph.
+ * @param [in] image  Image to draw into.
+ * @param [in] font   Font to use for drawing.
+ * @param [in] glyph  Glyph to draw.
+ * @param [in] x      X coordinate of the baseline.
+ * @param [in] y      Y coordinate of the baseline.
+ * @param [in] value  Pixel value.
+ */
+static void pbio_image_draw_text_glyph(pbio_image_t *image,
+    const pbio_font_t *font, const pbio_font_glyph_t *glyph, int x, int y,
+    uint8_t value) {
+    const uint8_t *src = &font->data[glyph->data_index];
+    uint8_t bits;
+    for (int dy = 0; dy < glyph->height; dy++) {
+        for (int dx = 0; dx < glyph->width; dx++) {
+            if ((dx & 7) == 0) {
+                bits = *src++;
+            }
+            if (bits & 128) {
+                pbio_image_draw_pixel(image, x + glyph->left + dx,
+                    y - glyph->top + dy, value);
+            }
+            bits <<= 1;
+        }
+    }
+}
+
+/**
+ * Draw text.
+ * @param [in] image     Image to draw into.
+ * @param [in] font      Font to use for drawing.
+ * @param [in] x         X coordinate of the baseline.
+ * @param [in] y         Y coordinate of the baseline.
+ * @param [in] text      Text string.
+ * @param [in] text_len  Text length.
+ * @param [in] value     Pixel value.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ *
+ * Text uses ASCII encoding. Newlines are handled, text is flush left.
+ */
+void pbio_image_draw_text(pbio_image_t *image, const pbio_font_t *font, int x,
+    int y, const char *text, size_t text_len, uint8_t value) {
+    int x_left = x;
+    const char *p;
+    char c, prev = 0;
+    const pbio_font_glyph_t *g;
+    const pbio_font_kerning_t *k;
+
+    for (p = text; p != text + text_len; p++) {
+        c = *p;
+        if (c == '\n') {
+            x = x_left;
+            y += font->line_height;
+        } else if (c >= font->first && c <= font->last) {
+            g = &font->glyphs[c - font->first];
+
+            /* Apply kerning. */
+            if (font->kernings && prev) {
+                for (k = &font->kernings[g->kerning_index];
+                     k != &font->kernings[(g + 1)->kerning_index]; k++) {
+                    if (prev == k->previous) {
+                        x += k->kerning;
+                        break;
+                    }
+                }
+            }
+
+            /* Draw glyph. */
+            pbio_image_draw_text_glyph(image, font, g, x, y, value);
+
+            /* Advance pen. */
+            x += g->advance;
+        }
+        prev = c;
+    }
+}
+
+/**
+ * Determine the bounding box of a text to be drawn.
+ * @param [in]  font      Font to use for drawing.
+ * @param [in]  text      Text string.
+ * @param [in]  text_len  Text length.
+ * @param [out] rect      Rectangle covering the drawn text.
+ *
+ * Text uses ASCII encoding. Newlines are handled, text is flush left.
+ */
+void pbio_image_bbox_text(const pbio_font_t *font, const char *text,
+    size_t text_len, pbio_image_rect_t *rect) {
+    int x, y;
+    int xmin, ymin, xmax, ymax;
+    const char *p;
+    char c, prev = 0;
+    const pbio_font_glyph_t *g;
+    const pbio_font_kerning_t *k;
+
+    x = 0;
+    y = 0;
+
+    xmin = ymin = INT_MAX;
+    xmax = ymax = -INT_MAX;
+
+    for (p = text; p != text + text_len; p++) {
+        c = *p;
+        if (c == '\n') {
+            x = 0;
+            y += font->line_height;
+        } else if (c >= font->first && c <= font->last) {
+            g = &font->glyphs[c - font->first];
+
+            /* Apply kerning. */
+            if (font->kernings && prev) {
+                for (k = &font->kernings[g->kerning_index];
+                     k != &font->kernings[(g + 1)->kerning_index]; k++) {
+                    if (prev == k->previous) {
+                        x += k->kerning;
+                        break;
+                    }
+                }
+            }
+
+            /* Update min/max. */
+            if (xmin > x + g->left) {
+                xmin = x + g->left;
+            }
+            if (xmax < x + g->left + g->width) {
+                xmax = x + g->left + g->width;
+            }
+            if (ymin > y - g->top) {
+                ymin = y - g->top;
+            }
+            if (ymax < y - g->top + g->height) {
+                ymax = y - g->top + g->height;
+            }
+
+            /* Advance pen. */
+            x += g->advance;
+        }
+        prev = c;
+    }
+
+    if (xmin > xmax) {
+        xmin = ymin = xmax = ymax = 0;
+    }
+    rect->x = xmin;
+    rect->y = ymin;
+    rect->width = xmax - xmin;
+    rect->height = ymax - ymin;
 }
 
 #endif // PBIO_CONFIG_IMAGE
