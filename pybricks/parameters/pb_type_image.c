@@ -21,6 +21,8 @@
 #include <pbio/image.h>
 #include <pbio/int_math.h>
 
+#include <pbsys/light.h>
+
 #include <pbdrv/display.h>
 
 extern const mp_obj_type_t pb_type_Image;
@@ -46,6 +48,18 @@ static int get_color(mp_obj_t obj) {
     const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(obj);
     int32_t v = pbio_int_math_bind(hsv->v, 0, 100);
     return max - v * max / 100;
+}
+
+static void display_stop_running_animation(const pb_type_Image_obj_t *img) {
+    if (img->is_display) {
+        pbsys_hub_light_matrix_free_display();
+    }
+}
+
+static void display_update(const pb_type_Image_obj_t *img) {
+    if (img->is_display) {
+        pbdrv_display_update();
+    }
 }
 
 mp_obj_t pb_type_Image_display_obj_new(void) {
@@ -175,11 +189,11 @@ static void pb_type_Image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 static mp_obj_t pb_type_Image_clear(mp_obj_t self_in) {
     pb_type_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
+    display_stop_running_animation(self);
+
     pbio_image_fill(&self->image, 0);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }
@@ -196,12 +210,12 @@ static mp_obj_t pb_type_Image_load_image(size_t n_args, const mp_obj_t *pos_args
     int x = (self->image.width - source->image.width) / 2;
     int y = (self->image.height - source->image.height) / 2;
 
+    display_stop_running_animation(self);
+
     pbio_image_fill(&self->image, 0);
     pbio_image_draw_image(&self->image, &source->image, x, y);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }
@@ -220,6 +234,8 @@ static mp_obj_t pb_type_Image_draw_image(size_t n_args, const mp_obj_t *pos_args
     pb_assert_type(source_in, &pb_type_Image);
     pb_type_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
 
+    display_stop_running_animation(self);
+
     if (transparent_in == mp_const_none) {
         pbio_image_draw_image(&self->image, &source->image, x, y);
     } else {
@@ -228,9 +244,7 @@ static mp_obj_t pb_type_Image_draw_image(size_t n_args, const mp_obj_t *pos_args
         pbio_image_draw_image_transparent(&self->image, &source->image, x, y, transparent_value);
     }
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }
@@ -247,11 +261,11 @@ static mp_obj_t pb_type_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args
     mp_int_t y = pb_obj_get_int(y_in);
     int color = get_color(color_in);
 
+    display_stop_running_animation(self);
+
     pbio_image_draw_pixel(&self->image, x, y, color);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }
@@ -274,11 +288,11 @@ static mp_obj_t pb_type_Image_draw_line(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t width = pb_obj_get_int(width_in);
     int color = get_color(color_in);
 
+    display_stop_running_animation(self);
+
     pbio_image_draw_thick_line(&self->image, x1, y1, x2, y2, width, color);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }
@@ -303,6 +317,8 @@ static mp_obj_t pb_type_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, 
     bool fill = mp_obj_is_true(fill_in);
     int color = get_color(color_in);
 
+    display_stop_running_animation(self);
+
     int width = x2 - x1 + 1;
     int height = y2 - y1 + 1;
     if (fill) {
@@ -311,9 +327,7 @@ static mp_obj_t pb_type_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, 
         pbio_image_draw_rounded_rect(&self->image, x1, y1, width, height, r, color);
     }
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }
@@ -334,15 +348,15 @@ static mp_obj_t pb_type_Image_draw_circle(size_t n_args, const mp_obj_t *pos_arg
     bool fill = mp_obj_is_true(fill_in);
     int color = get_color(color_in);
 
+    display_stop_running_animation(self);
+
     if (fill) {
         pbio_image_fill_circle(&self->image, x, y, r, color);
     } else {
         pbio_image_draw_circle(&self->image, x, y, r, color);
     }
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    display_update(self);
 
     return mp_const_none;
 }

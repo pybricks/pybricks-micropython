@@ -54,6 +54,14 @@ static pbio_error_t pbsys_hub_light_matrix_set_pixel(pbio_light_matrix_t *light_
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+static void pbsys_hub_light_matrix_clear_display(void) {
+    #if PBSYS_CONFIG_HUB_LIGHT_MATRIX_DISPLAY
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_fill(display, 0);
+    pbdrv_display_update();
+    #endif
+}
+
 static const pbio_light_matrix_funcs_t pbsys_hub_light_matrix_funcs = {
     .set_pixel = pbsys_hub_light_matrix_set_pixel,
 };
@@ -166,7 +174,21 @@ void pbsys_hub_light_matrix_handle_user_program_start(bool start) {
         pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
     } else {
         // If the user program has ended, show stop sign and selected slot.
+        // Clear display if the user program drawn to it.
+        if (!pbio_light_animation_is_started(&pbsys_hub_light_matrix->animation)) {
+            pbsys_hub_light_matrix_clear_display();
+        }
         pbsys_hub_light_matrix_show_idle_ui(100);
+    }
+}
+
+/**
+ * Free display for user program, stop running animation.
+ */
+void pbsys_hub_light_matrix_free_display(void) {
+    if (pbio_light_animation_is_started(&pbsys_hub_light_matrix->animation)) {
+        pbio_light_animation_stop(&pbsys_hub_light_matrix->animation);
+        pbsys_hub_light_matrix_clear_display();
     }
 }
 
