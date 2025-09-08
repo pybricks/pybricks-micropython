@@ -145,34 +145,20 @@ void pb_module_tools_pbio_task_do_blocking(pbio_task_t *task, mp_int_t timeout) 
     }
 }
 
-// The awaitables associated with pbio tasks can originate from different
-// objects. At the moment, they are only associated with Bluetooth tasks, and
-// they cannot run at the same time. So we keep a single list of awaitables
-// here instead of with each Bluetooth-related MicroPython object.
-MP_REGISTER_ROOT_POINTER(mp_obj_t pbio_task_awaitables);
-
-static bool pb_module_tools_pbio_task_test_completion(mp_obj_t obj, uint32_t end_time) {
-    pbio_task_t *task = MP_OBJ_TO_PTR(obj);
-
-    // Keep going if not done yet.
-    if (task->status == PBIO_ERROR_AGAIN) {
-        return false;
-    }
-
-    // If done, make sure it was successful.
-    pb_assert(task->status);
-    return true;
+static pbio_error_t pb_module_tools_pbio_task_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    pbio_task_t *task = MP_OBJ_TO_PTR(parent_obj);
+    return task->status;
 }
 
 mp_obj_t pb_module_tools_pbio_task_wait_or_await(pbio_task_t *task) {
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(task),
-        MP_STATE_PORT(pbio_task_awaitables),
-        pb_type_awaitable_end_time_none,
-        pb_module_tools_pbio_task_test_completion,
-        pb_type_awaitable_return_none,
-        pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+    pb_type_async_t config = {
+        .parent_obj = MP_OBJ_FROM_PTR(task),
+        .iter_once = pb_module_tools_pbio_task_iterate_once,
+    };
+
+    // REVISIT: pbio tasks will be deprecated. Instead, protothreads can now
+    // be safely awaited.
+    return pb_type_async_wait_or_await(&config, NULL);
 }
 
 /**
@@ -268,7 +254,6 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 0, pb_module_too
 // Reset global awaitable state when user program starts.
 void pb_module_tools_init(void) {
     memset(waits, 0, sizeof(waits));
-    MP_STATE_PORT(pbio_task_awaitables) = mp_obj_new_list(0, NULL);
     run_loop_is_active = false;
 }
 
