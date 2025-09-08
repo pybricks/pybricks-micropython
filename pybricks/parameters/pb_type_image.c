@@ -348,6 +348,42 @@ static mp_obj_t pb_type_Image_draw_circle(size_t n_args, const mp_obj_t *pos_arg
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_draw_circle_obj, 1, pb_type_Image_draw_circle);
 
+static mp_obj_t pb_type_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_Image_obj_t, self,
+        PB_ARG_REQUIRED(x),
+        PB_ARG_REQUIRED(y),
+        PB_ARG_REQUIRED(text),
+        PB_ARG_DEFAULT_NONE(text_color),
+        PB_ARG_DEFAULT_NONE(background_color));
+
+    mp_int_t x = pb_obj_get_int(x_in);
+    mp_int_t y = pb_obj_get_int(y_in);
+    size_t text_len;
+    const char *text = mp_obj_str_get_data(text_in, &text_len);
+    int text_color = get_color(text_color_in);
+
+    const pbio_font_t *font = &pbio_font_terminus_normal_16;
+
+    if (background_color_in != mp_const_none) {
+        int background_color = get_color(background_color_in);
+        pbio_image_rect_t rect;
+
+        pbio_image_bbox_text(font, text, text_len, &rect);
+        pbio_image_fill_rect(&self->image, x + rect.x - 1, y + rect.y - 1 + font->top_max,
+            rect.width + 2, rect.height + 2, background_color);
+    }
+
+    pbio_image_draw_text(&self->image, font, x, y + font->top_max, text, text_len, text_color);
+
+    if (self->is_display) {
+        pbdrv_display_update();
+    }
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_draw_text_obj, 1, pb_type_Image_draw_text);
+
 // dir(pybricks.media.Image)
 static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     // REVISIT: consider close() method and __enter__/__exit__ for context manager
@@ -361,6 +397,7 @@ static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_line), MP_ROM_PTR(&pb_type_Image_draw_line_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_box), MP_ROM_PTR(&pb_type_Image_draw_box_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&pb_type_Image_draw_circle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_draw_text), MP_ROM_PTR(&pb_type_Image_draw_text_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_type_Image_locals_dict, pb_type_Image_locals_dict_table);
 
