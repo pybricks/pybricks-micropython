@@ -69,47 +69,35 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
 
     pb_type_Image_obj_t *self;
 
-    if (mp_obj_is_type(source_in, &pb_type_Image)) {
-        pb_type_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
-        if (!mp_obj_is_true(sub_in)) {
-            // Copy.
-            int width = source->image.width;
-            int height = source->image.height;
+    pb_assert_type(source_in, &pb_type_Image);
+    pb_type_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
+    if (!mp_obj_is_true(sub_in)) {
+        // Copy.
+        int width = source->image.width;
+        int height = source->image.height;
 
-            void *buf = umm_malloc(width * height * sizeof(uint8_t));
-            if (!buf) {
-                mp_raise_type(&mp_type_MemoryError);
-            }
-
-            self = mp_obj_malloc_with_finaliser(pb_type_Image_obj_t, &pb_type_Image);
-            self->owner = MP_OBJ_NULL;
-            self->is_display = false;
-            pbio_image_init(&self->image, buf, width, height, width);
-            pbio_image_draw_image(&self->image, &source->image, 0, 0);
-        } else {
-            // Sub-image.
-            mp_int_t x1 = pb_obj_get_int(x1_in);
-            mp_int_t y1 = pb_obj_get_int(y1_in);
-            mp_int_t x2 = x2_in == mp_const_none ? source->image.width - 1 : pb_obj_get_int(x2_in);
-            mp_int_t y2 = y2_in == mp_const_none ? source->image.height - 1 : pb_obj_get_int(y2_in);
-            self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
-            self->owner = source_in;
-            self->is_display = false;
-            int width = x2 - x1 + 1;
-            int height = y2 - y1 + 1;
-            pbio_image_init_sub(&self->image, &source->image, x1, y1, width, height);
+        void *buf = umm_malloc(width * height * sizeof(uint8_t));
+        if (!buf) {
+            mp_raise_type(&mp_type_MemoryError);
         }
-    } else if (mp_obj_equal(source_in, MP_OBJ_NEW_QSTR(MP_QSTR__screen_))) {
-        // Screen.
-        self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+
+        self = mp_obj_malloc_with_finaliser(pb_type_Image_obj_t, &pb_type_Image);
         self->owner = MP_OBJ_NULL;
-        self->is_display = true;
-        self->image = *pbdrv_display_get_image();
-    } else if (mp_obj_is_str(source_in)) {
-        // TODO: load from image "files".
-        mp_raise_NotImplementedError(MP_ERROR_TEXT("'_screen_' is the only supported source string"));
+        self->is_display = false;
+        pbio_image_init(&self->image, buf, width, height, width);
+        pbio_image_draw_image(&self->image, &source->image, 0, 0);
     } else {
-        mp_raise_TypeError(MP_ERROR_TEXT("source must be Image or str"));
+        // Sub-image.
+        mp_int_t x1 = pb_obj_get_int(x1_in);
+        mp_int_t y1 = pb_obj_get_int(y1_in);
+        mp_int_t x2 = x2_in == mp_const_none ? source->image.width - 1 : pb_obj_get_int(x2_in);
+        mp_int_t y2 = y2_in == mp_const_none ? source->image.height - 1 : pb_obj_get_int(y2_in);
+        self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+        self->owner = source_in;
+        self->is_display = false;
+        int width = x2 - x1 + 1;
+        int height = y2 - y1 + 1;
+        pbio_image_init_sub(&self->image, &source->image, x1, y1, width, height);
     }
 
     return MP_OBJ_FROM_PTR(self);
