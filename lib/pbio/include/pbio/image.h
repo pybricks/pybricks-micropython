@@ -10,8 +10,10 @@
 #define _PBIO_IMAGE_H_
 
 #include <pbio/config.h>
+#include <pbio/font.h>
 
 #include <stdint.h>
+#include <stddef.h>
 
 /**
  * Image container.
@@ -50,6 +52,28 @@ typedef struct _pbio_image_t {
      */
     int stride;
 } pbio_image_t;
+
+/**
+ * Coordinates of a rectangle.
+ */
+typedef struct _pbio_image_rect_t {
+    /**
+     * X coordinate.
+     */
+    int x;
+    /**
+     * Y coordinate.
+     */
+    int y;
+    /**
+     * Number of columns.
+     */
+    int width;
+    /**
+     * Number of rows.
+     */
+    int height;
+} pbio_image_rect_t;
 
 #if PBIO_CONFIG_IMAGE
 
@@ -98,6 +122,12 @@ void pbio_image_draw_circle(pbio_image_t *image, int x, int y, int r,
 
 void pbio_image_fill_circle(pbio_image_t *image, int x, int y, int r,
     uint8_t value);
+
+void pbio_image_draw_text(pbio_image_t *image, const pbio_font_t *font, int x,
+    int y, const char *text, size_t text_len, uint8_t value);
+
+void pbio_image_bbox_text(const pbio_font_t *font, const char *text,
+    size_t text_len, pbio_image_rect_t *rect);
 
 #endif // PBIO_CONFIG_IMAGE
 

@@ -819,6 +819,88 @@ static void test_image_fill_circle(void *env) {
     tt_want_clipping_correct();
 }
 
+static void test_image_draw_text(void *env) {
+    pbio_image_t small, outer, inner, full;
+    pbio_image_rect_t rect = { -1, -1, -1, -1 };
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_text(&small, &pbio_font_liberationsans_regular_14, 0, 9,
+        "hi!", 3, '*');
+    tt_want_small_image(
+        ".*...........*......"
+        ".*...........*......"
+        ".*.***...*...*......"
+        ".**...*..*...*......"
+        ".*....*..*...*......"
+        ".*....*..*...*......"
+        ".*....*..*..........");
+
+    pbio_image_bbox_text(&pbio_font_liberationsans_regular_14, "hi!", 3, &rect);
+    tt_want(rect.x == 1);
+    tt_want(rect.y == -10);
+    tt_want(rect.width == 13);
+    tt_want(rect.height == 10);
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_text(&small, &pbio_font_liberationsans_regular_14, 0, 7,
+        "AV.", 3, '*');
+    tt_want_small_image(
+        "..**.**..**...**...."
+        "..*...*...*...*....."
+        "..*...*...*...*....."
+        ".*******...*.*......"
+        ".*.....*...*.*......"
+        ".*.....*...*.*......"
+        "**.....**...*....**.");
+
+    pbio_image_bbox_text(&pbio_font_liberationsans_regular_14, "AV.", 3, &rect);
+    tt_want_int_op(rect.x, ==, 0);
+    tt_want_int_op(rect.y, ==, -10);
+    tt_want_int_op(rect.width, ==, 19);
+    tt_want_int_op(rect.height, ==, 10);
+
+    test_image_prepare_small_image(&small);
+    pbio_image_draw_text(&small, &pbio_font_terminus_normal_16, 0, 7,
+        "AVA", 3, '*');
+    tt_want_small_image(
+        ".*....*..*....*..*.."
+        ".*....*..*....*..*.."
+        ".******...*..*...***"
+        ".*....*...*..*...*.."
+        ".*....*...*..*...*.."
+        ".*....*....**....*.."
+        ".*....*....**....*..");
+
+    pbio_image_bbox_text(&pbio_font_terminus_normal_16, "MMM", 3, &rect);
+    tt_want_int_op(rect.x, ==, 0);
+    tt_want_int_op(rect.y, ==, -12);
+    tt_want_int_op(rect.width, ==, 24);
+    tt_want_int_op(rect.height, ==, 16);
+
+    pbio_image_bbox_text(&pbio_font_terminus_normal_16, "III", 3, &rect);
+    tt_want_int_op(rect.x, ==, 0);
+    tt_want_int_op(rect.y, ==, -12);
+    tt_want_int_op(rect.width, ==, 24);
+    tt_want_int_op(rect.height, ==, 16);
+
+    const char text[] =
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n"
+        "MMMMMMMMMMMMMMMMMMM\n";
+    test_image_prepare_images(&outer, &inner, &full);
+    pbio_image_draw_text(&inner, &pbio_font_liberationsans_regular_14, -7, 7,
+        text, strlen(text), 0xff);
+    pbio_image_draw_text(&full, &pbio_font_liberationsans_regular_14,
+        INNER_IMAGE_X - 7, INNER_IMAGE_Y + 7, text, strlen(text), 0xff);
+    tt_want_clipping_correct();
+}
+
 struct testcase_t pbio_image_tests[] = {
     PBIO_TEST(test_image_fill),
     PBIO_TEST(test_image_draw_image),
@@ -831,5 +913,6 @@ struct testcase_t pbio_image_tests[] = {
     PBIO_TEST(test_image_fill_rounded_rect),
     PBIO_TEST(test_image_draw_circle),
     PBIO_TEST(test_image_fill_circle),
+    PBIO_TEST(test_image_draw_text),
     END_OF_TESTCASES
 };
