@@ -65,19 +65,11 @@ void *pb_type_device_get_data_blocking(mp_obj_t self_in, uint8_t mode) {
  * data has been written to the device, including the neccessary delays for
  * discarding stale data or the time needed to externally process written data.
  *
- * @param [in]  self_in     The sensor object instance.
- * @param [in]  end_time    Not used.
- * @return                  True if operation is complete (device ready),
- *                          false otherwise.
+ * See ::pbio_port_lump_is_ready for details.
  */
-static bool pb_pup_device_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static pbio_error_t pb_pup_device_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(self_in);
-    pbio_error_t err = pbio_port_lump_is_ready(sensor->lump_dev);
-    if (err == PBIO_ERROR_AGAIN) {
-        return false;
-    }
-    pb_assert(err);
-    return true;
+    return pbio_port_lump_is_ready(sensor->lump_dev);
 }
 
 /**
@@ -100,14 +92,12 @@ mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw
     pb_type_device_obj_base_t *sensor = MP_OBJ_TO_PTR(sensor_in);
     pb_assert(pbio_port_lump_set_mode(sensor->lump_dev, method->mode));
 
-    return pb_type_awaitable_await_or_wait(
-        sensor_in,
-        sensor->awaitables,
-        pb_type_awaitable_end_time_none,
-        pb_pup_device_test_completion,
-        method->get_values,
-        pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_NONE);
+    pb_type_async_t config = {
+        .iter_once = pb_pup_device_iter_once,
+        .parent_obj = sensor_in,
+        .return_map = method->get_values,
+    };
+    return pb_type_async_wait_or_await(&config, &sensor->last_awaitable);
 }
 
 /**
@@ -132,14 +122,11 @@ MP_DEFINE_CONST_OBJ_TYPE(
  */
 mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode, const void *data, uint8_t size) {
     pb_assert(pbio_port_lump_set_mode_with_data(sensor->lump_dev, mode, data, size));
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(sensor),
-        sensor->awaitables,
-        pb_type_awaitable_end_time_none,
-        pb_pup_device_test_completion,
-        pb_type_awaitable_return_none,
-        pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+    pb_type_async_t config = {
+        .iter_once = pb_pup_device_iter_once,
+        .parent_obj = MP_OBJ_FROM_PTR(sensor),
+    };
+    return pb_type_async_wait_or_await(&config, &sensor->last_awaitable);
 }
 
 void pb_device_set_lego_mode(pbio_port_t *port) {
@@ -174,7 +161,7 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
         mp_hal_delay_ms(50);
     }
     pb_assert(err);
-    self->awaitables = mp_obj_new_list(0, NULL);
+    self->last_awaitable = NULL;
     return actual_id;
 }
 

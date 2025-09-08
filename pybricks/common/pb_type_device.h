@@ -10,7 +10,7 @@
 
 
 #include <pbio/port_lump.h>
-#include <pybricks/tools/pb_type_awaitable.h>
+#include <pybricks/tools/pb_type_async.h>
 
 /**
  * Used in place of mp_obj_base_t in all pupdevices. This lets us share
@@ -19,7 +19,7 @@
 typedef struct _pb_type_device_obj_base_t {
     mp_obj_base_t base;
     pbio_port_lump_dev_t *lump_dev;
-    mp_obj_t awaitables;
+    pb_type_async_t *last_awaitable;
 } pb_type_device_obj_base_t;
 
 #if PYBRICKS_PY_DEVICES
@@ -33,7 +33,7 @@ typedef struct _pb_type_device_obj_base_t {
  */
 typedef struct {
     mp_obj_base_t base;
-    pb_type_awaitable_return_t get_values;
+    pb_type_async_return_map_t get_values;
     uint8_t mode;
 } pb_type_device_method_obj_t;
 
