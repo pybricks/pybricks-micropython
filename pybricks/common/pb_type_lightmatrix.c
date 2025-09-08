@@ -12,6 +12,7 @@
 #include "py/objstr.h"
 
 #include <pybricks/common.h>
+#include <pybricks/tools/pb_type_async.h>
 #include <pybricks/tools/pb_type_matrix.h>
 #include <pybricks/parameters.h>
 
@@ -20,6 +21,14 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_type_enum.h>
 
+typedef struct {
+    const char *data;
+    size_t len;
+    pbio_os_timer_t timer;
+    uint32_t idx;
+    uint32_t on_time;
+    uint32_t off_time;
+} text_animation_state_t;
 
 // pybricks._common.LightMatrix class object
 typedef struct _common_LightMatrix_obj_t {
@@ -27,8 +36,8 @@ typedef struct _common_LightMatrix_obj_t {
     pbio_light_matrix_t *light_matrix;
     uint8_t *data;
     uint8_t frames;
-    // Frozen Python implementation of the async text() method.
-    mp_obj_t async_text_method;
+    pb_type_async_t *text_iter;
+    text_animation_state_t text;
 } common_LightMatrix_obj_t;
 
 // Renews memory for a given number of frames
@@ -273,6 +282,41 @@ static mp_obj_t common_LightMatrix_pixel(size_t n_args, const mp_obj_t *pos_args
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(common_LightMatrix_pixel_obj, 1, common_LightMatrix_pixel);
 
+static pbio_error_t pb_type_lightmatrix_text_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+
+    common_LightMatrix_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+    text_animation_state_t *text = &self->text;
+    pbio_error_t err;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (text->idx = 0; text->idx < text->len; text->idx++) {
+
+        // Raise on invalid character.
+        if (text->data[text->idx] < 32 || text->data[text->idx] > 126) {
+            return PBIO_ERROR_INVALID_ARG;
+        }
+
+        // On time.
+        err = pbio_light_matrix_set_rows(self->light_matrix, pb_font_5x5[text->data[text->idx] - 32]);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        PBIO_OS_AWAIT_MS(state, &text->timer, text->on_time);
+
+        // Off time so we can see multiple of the same characters.
+        if (text->off_time > 0 || text->idx == text->len - 1) {
+            err = pbio_light_matrix_clear(self->light_matrix);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            PBIO_OS_AWAIT_MS(state, &text->timer, text->off_time);
+        }
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 // pybricks._common.LightMatrix.text
 static mp_obj_t common_LightMatrix_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -281,45 +325,20 @@ static mp_obj_t common_LightMatrix_text(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_DEFAULT_INT(on, 500),
         PB_ARG_DEFAULT_INT(off, 50));
 
-    if (pb_module_tools_run_loop_is_active()) {
-        if (self->async_text_method == MP_OBJ_NULL) {
-            self->async_text_method = pb_function_import_helper(MP_QSTR__light_matrix, MP_QSTR_light_matrix_text_async);
-        }
-        mp_obj_t args[] = {
-            MP_OBJ_FROM_PTR(self),
-            text_in,
-            on_in,
-            off_in,
-        };
-        return mp_call_function_n_kw(self->async_text_method, MP_ARRAY_SIZE(args), 0, args);
-    }
+    text_animation_state_t *text = &self->text;
 
-    // Assert that the input is a single text
-    GET_STR_DATA_LEN(text_in, text, text_len);
+    text->on_time = pb_obj_get_int(on_in);
+    text->off_time = pb_obj_get_int(off_in);
+    text->idx = 0;
+    text->data = mp_obj_str_get_data(text_in, &text->len);
 
-    // Make sure all characters are valid
-    for (size_t i = 0; i < text_len; i++) {
-        if (text[0] < 32 || text[0] > 126) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
-    }
-
-    mp_int_t on = pb_obj_get_int(on_in);
-    mp_int_t off = pb_obj_get_int(off_in);
-
-    // Display all characters one by one
-    for (size_t i = 0; i < text_len; i++) {
-        pb_assert(pbio_light_matrix_set_rows(self->light_matrix, pb_font_5x5[text[i] - 32]));
-        mp_hal_delay_ms(on);
-
-        // Some off time so we can see multiple of the same characters
-        if (off > 0 || i == text_len - 1) {
-            pb_assert(pbio_light_matrix_clear(self->light_matrix));
-            mp_hal_delay_ms(off);
-        }
-    }
-
-    return mp_const_none;
+    pb_type_async_t config = {
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .iter_once = pb_type_lightmatrix_text_iterate_once,
+    };
+    // New operation always wins; ongoing animation is cancelled.
+    pb_type_async_schedule_cancel(self->text_iter);
+    return pb_type_async_wait_or_await(&config, &self->text_iter);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(common_LightMatrix_text_obj, 1, common_LightMatrix_text);
 
@@ -348,7 +367,7 @@ mp_obj_t pb_type_LightMatrix_obj_new(pbio_light_matrix_t *light_matrix) {
     common_LightMatrix_obj_t *self = mp_obj_malloc(common_LightMatrix_obj_t, &pb_type_LightMatrix);
     self->light_matrix = light_matrix;
     pbio_light_matrix_set_orientation(light_matrix, PBIO_GEOMETRY_SIDE_TOP);
-    self->async_text_method = MP_OBJ_NULL;
+    self->text_iter = NULL;
     return MP_OBJ_FROM_PTR(self);
 }
 
