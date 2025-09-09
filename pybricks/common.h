@@ -23,7 +23,6 @@
 #include <pybricks/pupdevices.h>
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_async.h>
-#include <pybricks/tools/pb_type_awaitable.h>
 #include <pybricks/common/pb_type_device.h>
 
 void pb_package_pybricks_init(bool import_all);
