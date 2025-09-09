@@ -21,7 +21,7 @@
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
-    mp_obj_t *i2c_device_obj;
+    mp_obj_t i2c_device_obj;
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -30,7 +30,7 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
-    self->i2c_device_obj = pb_type_i2c_device_make_new(port_in, 0x01, false, true, true);
+    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x01, false, true, true);
 
     // NXT Ultrasonic Sensor appears to need some time after initializing I2C pins before it can receive data.
     mp_hal_delay_ms(100);
@@ -41,7 +41,7 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-static mp_obj_t map_distance(const uint8_t *data, size_t len) {
+static mp_obj_t map_distance(mp_obj_t self_in, const uint8_t *data, size_t len) {
     return mp_obj_new_int(data[0] * 10);
 }
 

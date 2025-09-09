@@ -14,7 +14,6 @@
 #include "py/objstr.h"
 
 #include <pybricks/tools.h>
-#include <pybricks/tools/pb_type_awaitable.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>

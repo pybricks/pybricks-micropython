@@ -15,14 +15,29 @@
 #include <pybricks/common.h>
 #include <pybricks/iodevices/iodevices.h>
 #include <pybricks/parameters.h>
+#include <pybricks/tools/pb_type_async.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-// Object representing a pybricks.iodevices.I2CDevice instance.
+/**
+ * Object representing a pybricks.iodevices.I2CDevice instance.
+ *
+ * Also used by sensor classes for I2C Devices.
+ */
 typedef struct {
     mp_obj_base_t base;
+    /**
+     * Object that owns this I2C device, such as an Ultrasonic Sensor instance.
+     * Gets passed to all return mappings.
+     * Equals MP_OBJ_NULL when this is the standalone I2CDevice class instance.
+     */
+    mp_obj_t sensor_obj;
+    /**
+     * Generic reusable awaitable operation.
+     */
+    pb_type_async_t *iter;
     /**
      * The following are buffered parameters for one ongoing I2C operation, See
      * ::pbdrv_i2c_write_then_read for details on each parameter. We need to
@@ -31,17 +46,19 @@ typedef struct {
      * immediately copied to the driver on the first call to the protothread.
      */
     pbdrv_i2c_dev_t *i2c_dev;
-    pbio_os_state_t state;
     uint8_t address;
     bool nxt_quirk;
-    pb_type_i2c_device_return_map_t return_map;
     size_t write_len;
     size_t read_len;
     uint8_t *read_buf;
+    /**
+     * Maps bytes read to the user return object.
+     */
+    pb_type_i2c_device_return_map_t return_map;
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, uint8_t address, bool custom, bool powered, bool nxt_quirk) {
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint8_t address, bool custom, bool powered, bool nxt_quirk) {
 
     pb_module_tools_assert_blocking();
 
@@ -68,6 +85,8 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t port_in, uint8_t address, bool cus
     device->i2c_dev = i2c_dev;
     device->address = address;
     device->nxt_quirk = nxt_quirk;
+    device->sensor_obj = sensor_obj;
+    device->iter = NULL;
     if (powered) {
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
     }
@@ -85,29 +104,25 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         PB_ARG_DEFAULT_FALSE(nxt_quirk)
         );
 
-    return pb_type_i2c_device_make_new(port_in, mp_obj_get_int(address_in), mp_obj_is_true(custom_in), mp_obj_is_true(powered_in), mp_obj_is_true(nxt_quirk_in));
+    return pb_type_i2c_device_make_new(
+        MP_OBJ_NULL,
+        port_in,
+        mp_obj_get_int(address_in),
+        mp_obj_is_true(custom_in),
+        mp_obj_is_true(powered_in),
+        mp_obj_is_true(nxt_quirk_in)
+        );
 }
 
-// Object representing the iterable that is returned when calling an I2C
-// method. This object can then be awaited (iterated). It has a reference to
-// the device from which it was created. Only one operation can be active at
-// one time.
-typedef struct {
-    mp_obj_base_t base;
-    mp_obj_t device_obj;
-} operation_obj_t;
+/**
+ * This keeps calling the I2C protothread with cached parameters until completion.
+ */
+static pbio_error_t pb_type_i2c_device_iterate_once(pbio_os_state_t *state, mp_obj_t i2c_device_obj) {
 
-static mp_obj_t operation_close(mp_obj_t op_in) {
-    // Close is not implemented but needs to exist.
-    operation_obj_t *op = MP_OBJ_TO_PTR(op_in);
-    (void)op;
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_1(operation_close_obj, operation_close);
+    device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
 
-static pbio_error_t operation_iterate_once(device_obj_t *device) {
     return pbdrv_i2c_write_then_read(
-        &device->state, device->i2c_dev,
+        state, device->i2c_dev,
         device->address,
         NULL, // Already memcpy'd on initial iteration. No need to provide here.
         device->write_len,
@@ -117,39 +132,22 @@ static pbio_error_t operation_iterate_once(device_obj_t *device) {
         );
 }
 
-static mp_obj_t operation_iternext(mp_obj_t op_in) {
-    operation_obj_t *op = MP_OBJ_TO_PTR(op_in);
-    device_obj_t *device = MP_OBJ_TO_PTR(op->device_obj);
+/**
+ * This is the callable form required by the shared awaitable code.
+ *
+ * For classes that have an I2C class instance such as the Ultrasonic Sensor,
+ * the I2C object is not of interest, but rather the sensor object. So this
+ * wrapper essentially passes the containing object to the return map.
+ */
+static mp_obj_t pb_type_i2c_device_return_generic(mp_obj_t i2c_device_obj) {
+    device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
 
-    pbio_error_t err = operation_iterate_once(device);
-
-    // Yielded, keep going.
-    if (err == PBIO_ERROR_AGAIN) {
+    if (!device->return_map) {
         return mp_const_none;
     }
 
-    // Raises on Timeout and other I/O errors. Proceeds on success.
-    pb_assert(err);
-
-    // For no return map, return basic stop iteration, which results None.
-    if (!device->return_map) {
-        return MP_OBJ_STOP_ITERATION;
-    }
-
-    // Set return value via stop iteration.
-    return mp_make_stop_iteration(device->return_map(device->read_buf, device->read_len));
+    return device->return_map(device->sensor_obj, device->read_buf, device->read_len);
 }
-
-static const mp_rom_map_elem_t operation_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&operation_close_obj) },
-};
-MP_DEFINE_CONST_DICT(operation_locals_dict, operation_locals_dict_table);
-
-MP_DEFINE_CONST_OBJ_TYPE(operation_type,
-    MP_QSTR_I2COperation,
-    MP_TYPE_FLAG_ITER_IS_ITERNEXT,
-    iter, operation_iternext,
-    locals_dict, &operation_locals_dict);
 
 mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8_t *write_data, size_t write_len, size_t read_len, pb_type_i2c_device_return_map_t return_map) {
 
@@ -173,32 +171,23 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
     }
 
     // The initial operation above can fail if an I2C transaction is already in
-    // progress. If so, we don't want to reset it state or allow the return
+    // progress. If so, we don't want to reset its state or allow the return
     // result to be garbage collected. Now that the first iteration succeeded,
-    // save the state and assign the new result buffer.
+    // save the state.
     device->read_len = read_len;
     device->write_len = write_len;
-    device->state = state;
     device->read_buf = NULL;
     device->return_map = return_map;
 
-    // If runloop active, return an awaitable object.
-    if (pb_module_tools_run_loop_is_active()) {
-        operation_obj_t *operation = mp_obj_malloc(operation_obj_t, &operation_type);
-        operation->device_obj = MP_OBJ_FROM_PTR(device);
-        return MP_OBJ_FROM_PTR(operation);
-    }
-
-    // Otherwise block and wait for the result here.
-    while ((err = operation_iterate_once(device)) == PBIO_ERROR_AGAIN) {
-        MICROPY_EVENT_POLL_HOOK;
-    }
-    pb_assert(err);
-
-    if (!device->return_map) {
-        return mp_const_none;
-    }
-    return device->return_map(device->read_buf, device->read_len);
+    pb_type_async_t config = {
+        .parent_obj = i2c_device_obj,
+        .iter_once = pb_type_i2c_device_iterate_once,
+        .state = state,
+        .return_map = return_map ? pb_type_i2c_device_return_generic : NULL,
+    };
+    // New operation always wins; ongoing sound awaitable is cancelled.
+    pb_type_async_schedule_cancel(device->iter);
+    return pb_type_async_wait_or_await(&config, &device->iter);
 }
 
 /**
@@ -207,17 +196,22 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
  * string is not found.
  */
 void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8_t reg, const char *string) {
+
+    device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
+
     pb_module_tools_assert_blocking();
 
+    size_t read_len = strlen(string);
     const uint8_t write_data[] = { reg };
-    mp_obj_t result = pb_type_i2c_device_start_operation(i2c_device_obj, write_data, MP_ARRAY_SIZE(write_data), strlen(string) - 1, mp_obj_new_bytes);
+    pb_type_i2c_device_start_operation(i2c_device_obj, write_data, MP_ARRAY_SIZE(write_data), read_len, NULL);
 
-    size_t result_len;
-    const char *result_data = mp_obj_str_get_data(result, &result_len);
-
-    if (memcmp(string, result_data, strlen(string) - 1)) {
+    if (memcmp(string, device->read_buf, read_len)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
+}
+
+static mp_obj_t pb_type_i2c_device_return_bytes(mp_obj_t self_in, const uint8_t *data, size_t len) {
+    return mp_obj_new_bytes(data, len);
 }
 
 // pybricks.iodevices.I2CDevice.read
@@ -235,7 +229,13 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
         &(uint8_t) { mp_obj_get_int(reg_in) };
     size_t write_len = reg_in == mp_const_none ? 0 : 1;
 
-    return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), write_data, write_len, pb_obj_get_positive_int(length_in), mp_obj_new_bytes);
+    return pb_type_i2c_device_start_operation(
+        MP_OBJ_FROM_PTR(device),
+        write_data,
+        write_len,
+        pb_obj_get_positive_int(length_in),
+        pb_type_i2c_device_return_bytes
+        );
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
 
