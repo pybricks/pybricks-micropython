@@ -20,7 +20,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/tools.h>
-#include <pybricks/tools/pb_type_awaitable.h>
+#include <pybricks/tools/pb_type_async.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -29,11 +29,11 @@ typedef struct {
     mp_obj_base_t base;
 
     // State of awaitable sound
+    pb_type_async_t *iter;
+    pbio_os_timer_t timer;
     mp_obj_t notes_generator;
     uint32_t note_duration;
-    uint32_t beep_end_time;
-    uint32_t release_end_time;
-    mp_obj_t awaitables;
+    uint32_t scaled_duration;
 
     // volume in 0..100 range
     uint8_t volume;
@@ -61,45 +61,33 @@ static mp_obj_t pb_type_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, 
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_volume_obj, 1, pb_type_Speaker_volume);
 
-static void pb_type_Speaker_start_beep(uint32_t frequency, uint16_t sample_attenuator) {
-    pbdrv_beep_start(frequency, sample_attenuator);
-}
-
-static void pb_type_Speaker_stop_beep(void) {
-    pbdrv_sound_stop();
-}
-
 static mp_obj_t pb_type_Speaker_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     pb_type_Speaker_obj_t *self = mp_obj_malloc(pb_type_Speaker_obj_t, type);
-
-    // List of awaitables associated with speaker. By keeping track,
-    // we can cancel them as needed when a new sound is started.
-    self->awaitables = mp_obj_new_list(0, NULL);
 
     // REVISIT: If a user creates two Speaker instances, this will reset the volume settings for both.
     // If done only once per singleton, however, altered volume settings would be persisted between program runs.
     self->volume = PBDRV_CONFIG_SOUND_DEFAULT_VOLUME;
     self->sample_attenuator = INT16_MAX;
 
+    self->iter = NULL;
+
     return MP_OBJ_FROM_PTR(self);
 }
 
-static bool pb_type_Speaker_beep_test_completion(mp_obj_t self_in, uint32_t end_time) {
-    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    if (mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX) {
-        pb_type_Speaker_stop_beep();
-        return true;
-    }
-    return false;
+static mp_obj_t pb_type_Speaker_close(mp_obj_t self_in) {
+    pbdrv_sound_stop();
+    return mp_const_none;
 }
 
-static void pb_type_Speaker_cancel(mp_obj_t self_in) {
-    pb_type_Speaker_stop_beep();
-    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    self->beep_end_time = mp_hal_ticks_ms();
-    self->release_end_time = self->beep_end_time;
-    self->notes_generator = MP_OBJ_NULL;
+static pbio_error_t pb_type_Speaker_beep_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+    // The beep has already been started. We just need to await the duration
+    // and then stop.
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&self->timer));
+    pbdrv_sound_stop();
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -111,28 +99,27 @@ static mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
     mp_int_t frequency = pb_obj_get_int(frequency_in);
     mp_int_t duration = pb_obj_get_int(duration_in);
 
-    pb_type_Speaker_start_beep(frequency, self->sample_attenuator);
+    pbdrv_beep_start(frequency, self->sample_attenuator);
 
     if (duration < 0) {
         return mp_const_none;
     }
 
-    self->beep_end_time = mp_hal_ticks_ms() + (uint32_t)duration;
-    self->release_end_time = self->beep_end_time;
-    self->notes_generator = MP_OBJ_NULL;
+    pbio_os_timer_set(&self->timer, pb_obj_get_int(duration_in));
 
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
-        self->awaitables,
-        pb_type_awaitable_end_time_none,
-        pb_type_Speaker_beep_test_completion,
-        pb_type_awaitable_return_none,
-        pb_type_Speaker_cancel,
-        PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+    pb_type_async_t config = {
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .iter_once = pb_type_Speaker_beep_iterate_once,
+        .close = pb_type_Speaker_close,
+    };
+    // New operation always wins; ongoing sound awaitable is cancelled.
+    pb_type_async_schedule_cancel(self->iter);
+    return pb_type_async_wait_or_await(&config, &self->iter);
+
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
 
-static void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj, int duration) {
+static void pb_type_Speaker_get_note(mp_obj_t obj, uint32_t note_ms, uint32_t *frequency, uint32_t *total_ms, uint32_t *on_ms) {
     const char *note = mp_obj_str_get_str(obj);
     int pos = 0;
     mp_float_t freq;
@@ -274,13 +261,13 @@ static void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
         fraction = fraction * 10 + fraction2;
     }
 
-    duration /= fraction;
+    *total_ms = note_ms / fraction;
 
     // optional decorations
 
     if (note[pos++] == '.') {
         // dotted note has length extended by 1/2
-        duration = 3 * duration / 2;
+        *total_ms = 3 * *total_ms / 2;
     } else {
         pos--;
     }
@@ -292,39 +279,35 @@ static void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
         pos--;
     }
 
-    pb_type_Speaker_start_beep((uint32_t)freq, self->sample_attenuator);
-
-    uint32_t time_now = mp_hal_ticks_ms();
-    self->release_end_time = time_now + duration;
-    self->beep_end_time = release ? time_now + 7 * duration / 8 : time_now + duration;
+    *frequency = (uint32_t)freq;
+    *on_ms = release ? 7 * (*total_ms) / 8 : *total_ms;
 }
 
-static bool pb_type_Speaker_notes_test_completion(mp_obj_t self_in, uint32_t end_time) {
-    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+static pbio_error_t pb_type_Speaker_play_notes_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    pb_type_Speaker_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+    mp_obj_t item;
 
-    bool release_done = mp_hal_ticks_ms() - self->release_end_time < (uint32_t)INT32_MAX;
-    bool beep_done = mp_hal_ticks_ms() - self->beep_end_time < (uint32_t)INT32_MAX;
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    if (self->notes_generator != MP_OBJ_NULL && release_done && beep_done) {
-        // Full note done, so get next note.
-        mp_obj_t item = mp_iternext(self->notes_generator);
+    while ((item = mp_iternext(self->notes_generator)) != MP_OBJ_STOP_ITERATION) {
 
-        // If there is no next note, generator is done.
-        if (item == MP_OBJ_STOP_ITERATION) {
-            return true;
-        }
+        // Parse next note.
+        uint32_t frequency;
+        uint32_t beep_time;
+        pb_type_Speaker_get_note(item, self->note_duration, &frequency, &self->scaled_duration, &beep_time);
 
-        // Start the note.
-        pb_type_Speaker_play_note(self, item, self->note_duration);
-        return false;
+        // On portion of the note.
+        pbdrv_beep_start(frequency, self->sample_attenuator);
+        pbio_os_timer_set(&self->timer, beep_time);
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&self->timer));
+
+        // Off portion of the note.
+        pbdrv_sound_stop();
+        self->timer.duration = self->scaled_duration;
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&self->timer));
     }
 
-    if (beep_done) {
-        // Time to release.
-        pb_type_Speaker_stop_beep();
-    }
-
-    return false;
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -335,16 +318,15 @@ static mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
 
     self->notes_generator = mp_getiter(notes_in, NULL);
     self->note_duration = 4 * 60 * 1000 / pb_obj_get_int(tempo_in);
-    self->beep_end_time = mp_hal_ticks_ms();
-    self->release_end_time = self->beep_end_time;
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
-        self->awaitables,
-        pb_type_awaitable_end_time_none,
-        pb_type_Speaker_notes_test_completion,
-        pb_type_awaitable_return_none,
-        pb_type_Speaker_cancel,
-        PB_TYPE_AWAITABLE_OPT_CANCEL_ALL);
+
+    pb_type_async_t config = {
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .iter_once = pb_type_Speaker_play_notes_iterate_once,
+        .close = pb_type_Speaker_close,
+    };
+    // New operation always wins; ongoing sound awaitable is cancelled.
+    pb_type_async_schedule_cancel(self->iter);
+    return pb_type_async_wait_or_await(&config, &self->iter);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 
