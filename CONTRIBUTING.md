@@ -215,6 +215,16 @@ Before committing your changes, be sure to run:
 This will automatically fix common problems in files that follow the MicroPython
 style.
 
+This can be run automatically before making a commit using [pre-commit][]. To
+enable it, run:
+
+    poetry run pre-commit install
+
+It will install a pre-commit git hook for this repository. On every commit,
+the coding style will be checked and fixed before the commit is done.
+
+[pre-commit]: https://pre-commit.com/
+
 
 ### Logical commits
 
