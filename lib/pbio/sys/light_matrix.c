@@ -158,6 +158,13 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
  * @param start   @c true for start or @c false for stop.
  */
 void pbsys_hub_light_matrix_handle_user_program_start(bool start) {
+
+    #if PBSYS_CONFIG_HUB_LIGHT_MATRIX_DISPLAY
+    pbio_image_fill(pbdrv_display_get_image(), 0);
+    pbdrv_display_update();
+    return;
+    #endif
+
     if (start) {
         // The user animation updates only a subset of pixels to save time,
         // so the rest must be cleared before it starts.
