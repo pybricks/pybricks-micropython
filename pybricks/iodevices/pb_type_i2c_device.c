@@ -31,7 +31,9 @@ typedef struct {
     /**
      * Object that owns this I2C device, such as an Ultrasonic Sensor instance.
      * Gets passed to all return mappings.
-     * Equals MP_OBJ_NULL when this is the standalone I2CDevice class instance.
+     *
+     * In case of the standalone I2CDevice class instance, this value is instead
+     * used to store an optional user callable to map bytes to a return object.
      */
     mp_obj_t sensor_obj;
     /**
@@ -105,7 +107,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         );
 
     return pb_type_i2c_device_make_new(
-        MP_OBJ_NULL,
+        MP_OBJ_NULL, // Not associated with any particular sensor instance.
         port_in,
         mp_obj_get_int(address_in),
         mp_obj_is_true(custom_in),
@@ -210,8 +212,20 @@ void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8
     }
 }
 
+/**
+ * I2C result mapping that just returns a bytes object.
+ */
 static mp_obj_t pb_type_i2c_device_return_bytes(mp_obj_t self_in, const uint8_t *data, size_t len) {
     return mp_obj_new_bytes(data, len);
+}
+
+/**
+ * I2C result mapping that calls user provided callback with self and bytes as argument.
+ */
+static mp_obj_t pb_type_i2c_device_return_user_map(mp_obj_t callable_obj, const uint8_t *data, size_t len) {
+    // If user provides bound method, MicroPython takes care of providing
+    // self as the first argument. We just need to pass in data arg.
+    return mp_call_function_1(callable_obj, mp_obj_new_bytes(data, len));
 }
 
 // pybricks.iodevices.I2CDevice.read
@@ -219,7 +233,8 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         device_obj_t, device,
         PB_ARG_DEFAULT_NONE(reg),
-        PB_ARG_DEFAULT_INT(length, 1)
+        PB_ARG_DEFAULT_INT(length, 1),
+        PB_ARG_DEFAULT_NONE(map)
         );
 
     // Write payload is one byte representing the register we want to read,
@@ -229,12 +244,18 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
         &(uint8_t) { mp_obj_get_int(reg_in) };
     size_t write_len = reg_in == mp_const_none ? 0 : 1;
 
+    // Optional user provided callback method of the form def my_method(self, data)
+    // We can use sensor_obj for this since it isn't used by I2CDevice instances,
+    // and we are already passing this to the mapping anyway, so we can conviently
+    // use it to pass the callable object in this case.
+    device->sensor_obj = mp_obj_is_callable(map_in) ? map_in : MP_OBJ_NULL;
+
     return pb_type_i2c_device_start_operation(
         MP_OBJ_FROM_PTR(device),
         write_data,
         write_len,
         pb_obj_get_positive_int(length_in),
-        pb_type_i2c_device_return_bytes
+        mp_obj_is_callable(map_in) ? pb_type_i2c_device_return_user_map : pb_type_i2c_device_return_bytes
         );
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
