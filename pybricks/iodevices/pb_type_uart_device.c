@@ -16,10 +16,10 @@
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/tools/pb_type_async.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/common/pb_type_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // pybricks.iodevices.uart_device class object
@@ -28,12 +28,10 @@ typedef struct _pb_type_uart_device_obj_t {
     pbio_port_t *port;
     pbdrv_uart_dev_t *uart_dev;
     uint32_t timeout;
-    pbio_os_state_t write_pt;
+    pb_type_async_t *write_iter;
     mp_obj_t write_obj;
-    mp_obj_t write_awaitables;
-    pbio_os_state_t read_pt;
+    pb_type_async_t *read_iter;
     mp_obj_t read_obj;
-    mp_obj_t read_awaitables;
 } pb_type_uart_device_obj_t;
 
 // pybricks.iodevices.UARTDevice.__init__
@@ -62,31 +60,27 @@ static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n
     pb_assert(pbio_port_get_port(port_id, &self->port));
     pbio_port_set_mode(self->port, PBIO_PORT_MODE_UART);
     pb_assert(pbio_port_get_uart_dev(self->port, &self->uart_dev));
+    pbdrv_uart_flush(self->uart_dev);
 
-    // List of awaitables associated with reading and writing.
-    self->write_awaitables = mp_obj_new_list(0, NULL);
-    self->read_awaitables = mp_obj_new_list(0, NULL);
+    // Awaitables associated with reading and writing.
+    self->write_iter = NULL;
+    self->read_iter = NULL;
 
     return MP_OBJ_FROM_PTR(self);
 }
 
-static bool pb_type_uart_device_write_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static pbio_error_t pb_type_uart_device_write_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
     GET_STR_DATA_LEN(self->write_obj, data, data_len);
+    return pbdrv_uart_write(state, self->uart_dev, (uint8_t *)data, data_len, self->timeout);
+}
 
-    // Runs one iteration of the write protothread.
-    pbio_error_t err = pbdrv_uart_write(&self->read_pt, self->uart_dev, (uint8_t *)data, data_len, self->timeout);
-    if (err == PBIO_ERROR_AGAIN) {
-        // Not done yet, so return false.
-        return false;
-    }
-
-    // Complete or stopped, so allow written object to be garbage collected.
-    self->write_obj = mp_const_none;
-
-    // Either completed or timed out, so assert it.
-    pb_assert(err);
-    return true;
+static mp_obj_t pb_type_uart_device_write_return_map(mp_obj_t self_in) {
+    pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Write always returns none, but this is effectively a completion callback.
+    // So we can use it to disconnect the write object so it can be garbage collected.
+    self->write_obj = MP_OBJ_NULL;
+    return mp_const_none;
 }
 
 // pybricks.iodevices.UARTDevice.write
@@ -101,20 +95,16 @@ static mp_obj_t pb_type_uart_device_write(size_t n_args, const mp_obj_t *pos_arg
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Reset protothread state.
-    self->write_pt = 0;
-
     // Prevents this object from being garbage collected while the write is in progress.
     self->write_obj = data_in;
 
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
-        self->write_awaitables,
-        pb_type_awaitable_end_time_none,
-        pb_type_uart_device_write_test_completion,
-        pb_type_awaitable_return_none,
-        pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+    pb_type_async_t config = {
+        .iter_once = pb_type_uart_device_write_iter_once,
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .return_map = pb_type_uart_device_write_return_map,
+    };
+    pb_type_async_schedule_cancel(self->write_iter);
+    return pb_type_async_wait_or_await(&config, &self->write_iter);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_write_obj, 1, pb_type_uart_device_write);
 
@@ -127,27 +117,16 @@ static mp_obj_t pb_type_uart_device_in_waiting(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_uart_device_in_waiting_obj, pb_type_uart_device_in_waiting);
 
-static bool pb_type_uart_device_read_test_completion(mp_obj_t self_in, uint32_t end_time) {
+static pbio_error_t pb_type_uart_device_read_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
     mp_obj_str_t *str = MP_OBJ_TO_PTR(self->read_obj);
-
-    // Runs one iteration of the read protothread.
-    pbio_error_t err = pbdrv_uart_read(&self->read_pt, self->uart_dev, (uint8_t *)str->data, str->len, self->timeout);
-    if (err == PBIO_ERROR_AGAIN) {
-        // Not done yet, so return false.
-        return false;
-    }
-
-    // Either completed or timed out, so assert it.
-    pb_assert(err);
-    return true;
+    return pbdrv_uart_read(state, self->uart_dev, (uint8_t *)str->data, str->len, self->timeout);
 }
 
-static mp_obj_t pb_type_uart_device_read_return_value(mp_obj_t self_in) {
+static mp_obj_t pb_type_uart_device_read_return_map(mp_obj_t self_in) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_obj_t ret = self->read_obj;
-    self->read_obj = mp_const_none;
+    self->read_obj = MP_OBJ_NULL;
     return ret;
 }
 
@@ -162,17 +141,13 @@ static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args
     mp_obj_t args[] = { length_in };
     self->read_obj = MP_OBJ_TYPE_GET_SLOT(&mp_type_bytes, make_new)((mp_obj_t)&mp_type_bytes, MP_ARRAY_SIZE(args), 0, args);
 
-    // Reset protothread state.
-    self->read_pt = 0;
-
-    return pb_type_awaitable_await_or_wait(
-        MP_OBJ_FROM_PTR(self),
-        self->read_awaitables,
-        pb_type_awaitable_end_time_none,
-        pb_type_uart_device_read_test_completion,
-        pb_type_uart_device_read_return_value,
-        pb_type_awaitable_cancel_none,
-        PB_TYPE_AWAITABLE_OPT_RAISE_ON_BUSY);
+    pb_type_async_t config = {
+        .iter_once = pb_type_uart_device_read_iter_once,
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .return_map = pb_type_uart_device_read_return_map,
+    };
+    pb_type_async_schedule_cancel(self->read_iter);
+    return pb_type_async_wait_or_await(&config, &self->read_iter);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_read_obj, 1, pb_type_uart_device_read);
 
