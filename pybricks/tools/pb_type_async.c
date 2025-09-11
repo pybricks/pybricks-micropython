@@ -14,12 +14,14 @@
 /**
  * Cancels the iterable so it will stop awaiting.
  *
- * This will not call close(). Safe to call even if iter is NULL.
+ * This will not call close(). Safe to call even if iter is NULL or if it is
+ * already complete.
  *
  * @param [in] iter The awaitable object.
  */
 void pb_type_async_schedule_cancel(pb_type_async_t *iter) {
-    if (!iter) {
+    if (!iter || iter->parent_obj == MP_OBJ_NULL) {
+        // Don't schedule if already complete.
         return;
     }
     // Don't set it to MP_OBJ_NULL right away, or the calling code wouldn't
