@@ -967,6 +967,8 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
         is_transmitting = usb_tx_response_is_not_ready || usb_tx_status_is_not_ready || usb_tx_stdout_is_not_ready;
         if (was_transmitting && is_transmitting) {
             if (pbio_os_timer_is_expired(&tx_timeout_timer)) {
+                // TODO: these state flags should also be reset when USB is
+                // disconnected and if a host resets the device.
                 // Flush _all_ TX packets
                 while (HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_TXRDY) {
                     HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_FLUSH;
@@ -984,7 +986,9 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
                 prev_status_flags = ~0;
             }
         } else if (!was_transmitting && is_transmitting) {
-            pbio_os_timer_set(&tx_timeout_timer, 50);
+            // TODO: remove this timer - apps can "sleep" for a while, so this
+            // will break apps that do that
+            pbio_os_timer_set(&tx_timeout_timer, 5000);
         }
         was_transmitting = is_transmitting;
 
