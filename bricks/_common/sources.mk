@@ -232,6 +232,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/task.c \
 	src/trajectory.c \
 	src/util.c \
+	sys/battery_temp.c \
 	sys/battery.c \
 	sys/bluetooth.c \
 	sys/command.c \

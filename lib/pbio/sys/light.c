@@ -192,7 +192,7 @@ void pbsys_status_light_handle_status_change(void) {
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
         warning_indication = PBSYS_STATUS_LIGHT_INDICATION_WARNING_SHUTDOWN_REQUESTED;
     #endif
-    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT)) {
+    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT) || pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_WARNING)) {
         warning_indication = PBSYS_STATUS_LIGHT_INDICATION_WARNING_HIGH_CURRENT;
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING)) {
         warning_indication = PBSYS_STATUS_LIGHT_INDICATION_WARNING_LOW_VOLTAGE;

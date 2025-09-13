@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2022 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 // Provides battery status indication and shutdown on low battery.
 
@@ -8,10 +8,12 @@
 
 #include <pbdrv/battery.h>
 #include <pbio/battery.h>
+#include <pbio/os.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/config.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/usb.h>
+#include <pbsys/config.h>
 #include <pbsys/status.h>
 
 // These values are for Alkaline (AA/AAA) batteries
@@ -25,7 +27,22 @@
 #define LIION_LOW_MV            6800    // 3.4V per cell
 #define LIION_CRITICAL_MV       6000    // 3.0V per cell
 
+#if PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION
+
+#include <math.h>
+
+#define PBSYS_BATTERY_TEMP_TIMER_PERIOD_MS 400
+
+static pbio_os_timer_t pbsys_battery_temp_timer;
+
+extern float pbsys_battery_temp_update(float V_bat, float I_bat);
+
+#endif // PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION
+
 void pbsys_battery_init(void) {
+    #if PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION
+    pbio_os_timer_set(&pbsys_battery_temp_timer, PBSYS_BATTERY_TEMP_TIMER_PERIOD_MS);
+    #endif
 }
 
 /**
@@ -60,6 +77,44 @@ void pbsys_battery_poll(void) {
     if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
     }
+
+    #if PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION
+    if (!is_liion && pbio_os_timer_is_expired(&pbsys_battery_temp_timer)) {
+        pbio_os_timer_extend(&pbsys_battery_temp_timer);
+
+        uint16_t voltage_mv;
+        uint16_t current_ma;
+        if (pbdrv_battery_get_voltage_now(&voltage_mv) == PBIO_SUCCESS &&
+            pbdrv_battery_get_current_now(&current_ma) == PBIO_SUCCESS) {
+
+            static float old_temp;
+            float new_temp = pbsys_battery_temp_update(voltage_mv / 1000.0f, current_ma / 1000.0f);
+            if (fabsf(new_temp - old_temp) > 0.1f) {
+                old_temp = new_temp;
+            }
+
+            const float high_temp_warning = 25.0f;
+            const float high_temp_critical = 30.0f;
+
+            if (old_temp >= high_temp_warning) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_WARNING);
+            } else if (old_temp < high_temp_warning) {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_WARNING);
+            }
+
+            if (old_temp >= high_temp_critical) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_SHUTDOWN);
+            } else if (old_temp < high_temp_critical) {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_SHUTDOWN);
+            }
+
+            // Shut down on high temperature so we don't damage AAA batteries.
+            if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_SHUTDOWN, true, 3000)) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
+            }
+        }
+    }
+    #endif
 }
 
 /**
