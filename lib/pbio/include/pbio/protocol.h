@@ -329,6 +329,18 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED = 9,
+    /**
+     * Battery temperature is critically high.
+     *
+     * @since Pybricks Profile v1.5.0
+     */
+    PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_SHUTDOWN = 10,
+    /**
+     * Battery temperature is high.
+     *
+     * @since Pybricks Profile v1.5.0
+     */
+    PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_WARNING = 11,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_flags_t;
