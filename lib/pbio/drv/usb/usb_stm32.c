@@ -399,7 +399,6 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static bool bcd_busy;
     static pbio_pybricks_error_t result;
     static struct etimer status_timer;
-    static struct etimer transmit_timer;
     static uint32_t prev_status_flags = ~0;
     static uint32_t new_status_flags;
 
@@ -474,13 +473,6 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
         }
 
         if (transmitting) {
-            if (etimer_expired(&transmit_timer)) {
-                // Transmission has taken too long, so reset the state to allow
-                // new transmissions. This can happen if the host stops reading
-                // data for some reason.
-                pbdrv_usb_stm32_reset_tx_state();
-            }
-
             continue;
         }
 
@@ -510,12 +502,6 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
                 transmitting = true;
                 USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
             }
-        }
-
-        if (transmitting) {
-            // If the FIFO isn't emptied quickly, then there probably isn't an
-            // app anymore. This timer is used to detect such a condition.
-            etimer_set(&transmit_timer, 50);
         }
     }
 
