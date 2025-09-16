@@ -1803,7 +1803,62 @@ static bool get_npi_rx_size(uint8_t *rx_size) {
     return true;
 }
 
+typedef struct {
+    const uint8_t *uuid128; // Null means uuid16 is used.
+    uint16_t uuid16;
+    uint8_t permissions;
+} gatt_add_attribute_t;
+
+static const gatt_add_attribute_t gatt_init_attributes[] = {
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid16 = DEVICE_NAME_UUID,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid16 = APPEARANCE_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid16 = PERI_CONN_PARAM_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+};
+
+static PT_THREAD(gatt_add_attributes(struct pt *pt, const gatt_add_attribute_t *attrs, size_t num_attrs)) {
+    static size_t i;
+
+    PT_BEGIN(pt);
+
+    for (i = 0; i < num_attrs; i++) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        const gatt_add_attribute_t *attr = &attrs[i];
+        if (attr->uuid128) {
+            GATT_AddAttribute2(attr->uuid128, attr->permissions);
+        } else {
+            GATT_AddAttribute(attr->uuid16, attr->permissions);
+        }
+        PT_WAIT_UNTIL(pt, hci_command_status);
+    }
+
+    PT_END(pt);
+}
+
 static PT_THREAD(gatt_init(struct pt *pt)) {
+
+    static struct pt sub;
+
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -1823,34 +1878,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(DEVICE_NAME_UUID, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(APPEARANCE_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(PERI_CONN_PARAM_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
+    PT_SPAWN(pt, &sub, gatt_add_attributes(&sub, gatt_init_attributes, PBIO_ARRAY_SIZE(gatt_init_attributes)));
 
     // the response to the last GATT_AddAttribute contains the first and last handles
     // that were allocated.
@@ -1861,17 +1889,66 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
     PT_END(pt);
 }
 
+static const struct {
+    uint8_t param_id;
+    uint16_t value;
+} gap_params[] = {
+    // Set scan timeout on btchip to infinite. Separate timeout
+    // is implemented to stop program and thus scan
+    {TGAP_GEN_DISC_SCAN, 0},
+    // Set scan timeout on btchip to infinite. Separate timeout
+    // is implemented to stop program and thus scan
+    {TGAP_LIM_DISC_SCAN, 0},
+    {TGAP_GEN_DISC_ADV_INT_MIN, 40},
+    {TGAP_GEN_DISC_ADV_INT_MAX, 40},
+    {TGAP_CONN_ADV_INT_MIN, 40},
+    {TGAP_CONN_ADV_INT_MAX, 40},
+    // scan interval general discovery: 48 * 0.625ms = 30ms
+    {TGAP_GEN_DISC_SCAN_INT, 48},
+    // scan window general discovery: 48 * 0.625ms = 30ms
+    {TGAP_GEN_DISC_SCAN_WIND, 48},
+    {TGAP_CONN_EST_INT_MIN, 40},
+    {TGAP_CONN_EST_INT_MAX, 40},
+    // scan interval connection established: 48 * 0.625ms = 30ms
+    {TGAP_CONN_EST_SCAN_INT, 48},
+    // scan window connection established: 48 * 0.625ms = 30ms
+    {TGAP_CONN_EST_SCAN_WIND, 48},
+    {TGAP_CONN_EST_SUPERV_TIMEOUT, 60},
+    // When acting as a central, make the hub reject connection parameter
+    // changes requested by peripherals. This ensures that things like
+    // broadcasting keep working. May need to revisit this if we ever have
+    // peripherals that only work with their own connection parameters.
+    {TGAP_REJECT_CONN_PARAMS, 1},
+    {TGAP_CONN_EST_LATENCY, 0},
+    {TGAP_CONN_EST_MIN_CE_LEN, 4},
+    {TGAP_CONN_EST_MAX_CE_LEN, 4},
+    {TGAP_FILTER_ADV_REPORTS, 0},
+};
+
+static const struct {
+    uint16_t param_id;
+    uint8_t value;
+} bond_params[] = {
+    {GAPBOND_PAIRING_MODE, GAPBOND_PAIRING_MODE_NO_PAIRING},
+    {GAPBOND_MITM_PROTECTION, 0}, // disabled
+    {GAPBOND_IO_CAPABILITIES, GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT},
+    {GAPBOND_BONDING_ENABLED, 1}, // // enabled, as in allowed. It won't happen by default.
+    {GAPBOND_SECURE_CONNECTION, GAPBOND_SECURE_CONNECTION_NONE},
+};
+
 static PT_THREAD(gap_init(struct pt *pt)) {
 
-    static uint8_t buf[1];
+    static size_t idx;
 
     PT_BEGIN(pt);
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = GAPBOND_PAIRING_MODE_NO_PAIRING;
-    GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
+    // Configure bond manager.
+    for (idx = 0; idx < PBIO_ARRAY_SIZE(bond_params); idx++) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_BondMgrSetParameter(bond_params[idx].param_id, 1, (uint8_t *)&bond_params[idx].value);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+    }
 
     // Read the number of bonds stored in flash.
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -1898,131 +1975,13 @@ static PT_THREAD(gap_init(struct pt *pt)) {
         DEBUG_PRINT("New bond count: %d\n", read_buf[12]);
     }
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = 0; // disabled
-    GAP_BondMgrSetParameter(GAPBOND_MITM_PROTECTION, 1, buf);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT;
-    GAP_BondMgrSetParameter(GAPBOND_IO_CAPABILITIES, 1, buf);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = 1; // enabled, as in allowed. It won't happen by default.
-    GAP_BondMgrSetParameter(GAPBOND_BONDING_ENABLED, 1, buf);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    buf[0] = GAPBOND_SECURE_CONNECTION_NONE;
-    GAP_BondMgrSetParameter(GAPBOND_SECURE_CONNECTION, 1, buf);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // Set scan timeout on btchip to infinite. Separate timeout
-    // is implemented to stop program and thus scan
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_SCAN, 0);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // Set scan timeout on btchip to infinite. Separate timeout
-    // is implemented to stop program and thus scan
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_LIM_DISC_SCAN, 0);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MIN, 40);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MAX, 40);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_ADV_INT_MIN, 40);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_ADV_INT_MAX, 40);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // scan interval general discovery: 48 * 0.625ms = 30ms
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_SCAN_INT, 48);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // scan window general discovery: 48 * 0.625ms = 30ms
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_SCAN_WIND, 48);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_INT_MIN, 40);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_INT_MAX, 40);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // scan interval connection established: 48 * 0.625ms = 30ms
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_SCAN_INT, 48);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // scan window connection established: 48 * 0.625ms = 30ms
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_SCAN_WIND, 48);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_SUPERV_TIMEOUT, 60);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    // When acting as a central, make the hub reject connection parameter
-    // changes requested by peripherals. This ensures that things like
-    // broadcasting keep working. May need to revisit this if we ever have
-    // peripherals that only work with their own connection parameters.
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_REJECT_CONN_PARAMS, 1);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_LATENCY, 0);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_MIN_CE_LEN, 4);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_MAX_CE_LEN, 4);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_FILTER_ADV_REPORTS, 0);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
+    // Configure GAP parameters.
+    for (idx = 0; idx < PBIO_ARRAY_SIZE(gap_params); idx++) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_SetParamValue(gap_params[idx].param_id, gap_params[idx].value);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+    }
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_deviceInit(GAP_PROFILE_PERIPHERAL | GAP_PROFILE_CENTRAL, 8, NULL, NULL, 0);
@@ -2109,7 +2068,20 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     PT_END(pt);
 }
 
+static const uint16_t gat_uuid_permit_read[] = {
+    GATT_CHARACTER_UUID,
+    FIRMWARE_REVISION_STRING_UUID,
+    GATT_CHARACTER_UUID,
+    SOFTWARE_REVISION_STRING_UUID,
+    GATT_CHARACTER_UUID,
+    // Should be last. This is the only one where we read the response.
+    PNP_ID_UUID,
+};
+
 static PT_THREAD(init_device_information_service(struct pt *pt)) {
+
+    static size_t idx;
+
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -2117,35 +2089,12 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(FIRMWARE_REVISION_STRING_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(SOFTWARE_REVISION_STRING_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(PNP_ID_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
+    for (idx = 0; idx < PBIO_ARRAY_SIZE(gat_uuid_permit_read); idx++) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GATT_AddAttribute(gat_uuid_permit_read[idx], GATT_PERMIT_READ);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+        // ignoring response data
+    }
 
     // the response to the last GATT_AddAttribute contains the first and last handles
     // that were allocated.
@@ -2156,7 +2105,33 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_END(pt);
 }
 
+static const gatt_add_attribute_t pybricks_gatt_attributes[] = {
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid128 = pbio_pybricks_command_event_char_uuid,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+    {
+        .uuid16 = GATT_CLIENT_CHAR_CFG_UUID,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid128 = pbio_pybricks_hub_capabilities_char_uuid,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+};
+
 static PT_THREAD(init_pybricks_service(struct pt *pt)) {
+
+    static struct pt sub;
+
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -2164,29 +2139,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(pbio_pybricks_command_event_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CLIENT_CHAR_CFG_UUID, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(pbio_pybricks_hub_capabilities_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
+    PT_SPAWN(pt, &sub, gatt_add_attributes(&sub, pybricks_gatt_attributes, PBIO_ARRAY_SIZE(pybricks_gatt_attributes)));
 
     // the response to the last GATT_AddAttribute contains the first and last handles
     // that were allocated.
@@ -2199,7 +2152,34 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     PT_END(pt);
 }
 
+
+static const gatt_add_attribute_t uart_gatt_attributes[] = {
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid128 = pbio_nus_rx_char_uuid,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+    {
+        .uuid16 = GATT_CHARACTER_UUID,
+        .permissions = GATT_PERMIT_READ,
+    },
+    {
+        .uuid128 = pbio_nus_tx_char_uuid,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+    {
+        .uuid16 = GATT_CLIENT_CHAR_CFG_UUID,
+        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
+    },
+};
+
 static PT_THREAD(init_uart_service(struct pt *pt)) {
+
+    static struct pt sub;
+
     PT_BEGIN(pt);
 
     // add the Nordic UART service (inspired by Add_Sample_Service() from
@@ -2211,29 +2191,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(pbio_nus_rx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(pbio_nus_tx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CLIENT_CHAR_CFG_UUID, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
+    PT_SPAWN(pt, &sub, gatt_add_attributes(&sub, uart_gatt_attributes, PBIO_ARRAY_SIZE(uart_gatt_attributes)));
 
     // the response to the last GATT_AddAttribute contains the first and last handles
     // that were allocated.
