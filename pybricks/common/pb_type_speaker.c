@@ -113,8 +113,7 @@ static mp_obj_t pb_type_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp
         .close = pb_type_Speaker_close,
     };
     // New operation always wins; ongoing sound awaitable is cancelled.
-    pb_type_async_schedule_cancel(self->iter);
-    return pb_type_async_wait_or_await(&config, &self->iter);
+    return pb_type_async_wait_or_await(&config, &self->iter, true);
 
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_beep_obj, 1, pb_type_Speaker_beep);
@@ -325,8 +324,7 @@ static mp_obj_t pb_type_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_ar
         .close = pb_type_Speaker_close,
     };
     // New operation always wins; ongoing sound awaitable is cancelled.
-    pb_type_async_schedule_cancel(self->iter);
-    return pb_type_async_wait_or_await(&config, &self->iter);
+    return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Speaker_play_notes_obj, 1, pb_type_Speaker_play_notes);
 

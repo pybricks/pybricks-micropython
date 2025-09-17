@@ -96,7 +96,7 @@ static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
         .state = pbdrv_clock_get_ms() + (uint32_t)time,
     };
 
-    return pb_type_async_wait_or_await(&config, &reuse);
+    return pb_type_async_wait_or_await(&config, &reuse, false);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
 
@@ -158,7 +158,7 @@ mp_obj_t pb_module_tools_pbio_task_wait_or_await(pbio_task_t *task) {
 
     // REVISIT: pbio tasks will be deprecated. Instead, protothreads can now
     // be safely awaited.
-    return pb_type_async_wait_or_await(&config, NULL);
+    return pb_type_async_wait_or_await(&config, NULL, false);
 }
 
 /**

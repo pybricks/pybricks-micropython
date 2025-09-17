@@ -12,14 +12,19 @@
 #include <pybricks/util_pb/pb_error.h>
 
 /**
- * Cancels the iterable so it will stop awaiting.
+ * Makes the iterable exhaust the next time it is iterated.
  *
  * This will not call close(). Safe to call even if iter is NULL or if it is
  * already complete.
  *
+ * This is useful when all we need is for the ongoing awaitable to stop, with
+ * the newly created iterable taking care of the hardware. For example, if the
+ * new operation takes over the speaker, the old one only has to stop iterating,
+ * not stop the speaker as it would do with close().
+ *
  * @param [in] iter The awaitable object.
  */
-void pb_type_async_schedule_cancel(pb_type_async_t *iter) {
+void pb_type_async_schedule_stop_iteration(pb_type_async_t *iter) {
     if (!iter || iter->parent_obj == MP_OBJ_NULL) {
         // Don't schedule if already complete.
         return;
@@ -58,7 +63,7 @@ static mp_obj_t pb_type_async_iternext(mp_obj_t iter_in) {
 
     // Special case without iterator means yield exactly once and then complete.
     if (!iter->iter_once) {
-        pb_type_async_schedule_cancel(iter);
+        pb_type_async_schedule_stop_iteration(iter);
         return mp_const_none;
     }
 
@@ -98,22 +103,35 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_async,
  * Returns an awaitable operation if the runloop is active, or awaits the
  * operation here and now.
  *
- * @param  [in]  config     Configuration of the operation
- * @param  [in]  prev       Candidate iterable object that might be re-used.
+ * @param  [in]       config     Configuration of the operation
+ * @param  [in, out]  prev       Candidate iterable object that might be re-used, otherwise assigned newly allocated object.
+ * @param  [in]       stop_prev  Whether to stop ongoing awaitable if it is active.
  * @returns An awaitable if the runloop is active, otherwise the mapped return value.
  */
-mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **prev) {
+mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **prev, bool stop_prev) {
 
     config->base.type = &pb_type_async;
 
     // Return allocated awaitable if runloop active.
     if (pb_module_tools_run_loop_is_active()) {
+
+        // Optionally schedule ongoing awaitable to stop (next time) if busy.
+        if (prev && stop_prev) {
+            pb_type_async_schedule_stop_iteration(*prev);
+        }
+
         // Re-use existing awaitable if exists and is free, otherwise allocate
         // another one. This allows many resources with one concurrent physical
         // operation like a motor to operate without re-allocation.
         pb_type_async_t *iter = (prev && *prev && (*prev)->parent_obj == MP_OBJ_NULL) ?
             *prev : (pb_type_async_t *)m_malloc(sizeof(pb_type_async_t));
+
+        // Copy the confuration to the object on heap so it lives on.
         *iter = *config;
+
+        // Attaches newly defined awaitable (or no-op if reused) to the parent
+        // object. The object that was here before is detached, so we no longer
+        // prevent it from being garbage collected.
         if (prev) {
             *prev = iter;
         }

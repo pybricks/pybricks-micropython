@@ -97,7 +97,7 @@ mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw
         .parent_obj = sensor_in,
         .return_map = method->get_values,
     };
-    return pb_type_async_wait_or_await(&config, &sensor->last_awaitable);
+    return pb_type_async_wait_or_await(&config, &sensor->last_awaitable, false);
 }
 
 /**
@@ -126,7 +126,7 @@ mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode
         .iter_once = pb_pup_device_iter_once,
         .parent_obj = MP_OBJ_FROM_PTR(sensor),
     };
-    return pb_type_async_wait_or_await(&config, &sensor->last_awaitable);
+    return pb_type_async_wait_or_await(&config, &sensor->last_awaitable, false);
 }
 
 void pb_device_set_lego_mode(pbio_port_t *port) {

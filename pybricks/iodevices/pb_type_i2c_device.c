@@ -188,8 +188,7 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
         .return_map = return_map ? pb_type_i2c_device_return_generic : NULL,
     };
     // New operation always wins; ongoing sound awaitable is cancelled.
-    pb_type_async_schedule_cancel(device->iter);
-    return pb_type_async_wait_or_await(&config, &device->iter);
+    return pb_type_async_wait_or_await(&config, &device->iter, true);
 }
 
 /**

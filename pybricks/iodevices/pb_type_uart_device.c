@@ -103,8 +103,7 @@ static mp_obj_t pb_type_uart_device_write(size_t n_args, const mp_obj_t *pos_arg
         .parent_obj = MP_OBJ_FROM_PTR(self),
         .return_map = pb_type_uart_device_write_return_map,
     };
-    pb_type_async_schedule_cancel(self->write_iter);
-    return pb_type_async_wait_or_await(&config, &self->write_iter);
+    return pb_type_async_wait_or_await(&config, &self->write_iter, true);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_write_obj, 1, pb_type_uart_device_write);
 
@@ -146,8 +145,7 @@ static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args
         .parent_obj = MP_OBJ_FROM_PTR(self),
         .return_map = pb_type_uart_device_read_return_map,
     };
-    pb_type_async_schedule_cancel(self->read_iter);
-    return pb_type_async_wait_or_await(&config, &self->read_iter);
+    return pb_type_async_wait_or_await(&config, &self->read_iter, true);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_read_obj, 1, pb_type_uart_device_read);
 

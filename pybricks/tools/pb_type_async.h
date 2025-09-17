@@ -40,7 +40,7 @@ typedef mp_obj_t (*pb_type_async_return_map_t)(mp_obj_t parent_obj);
  */
 typedef pbio_error_t (*pb_type_async_iterate_once_t)(pbio_os_state_t *state, mp_obj_t parent_obj);
 
-// Object representing the iterable that is returned by an awaitable operation.
+/** Object representing the iterable that is returned by an awaitable operation. */
 typedef struct {
     mp_obj_base_t base;
     /**
@@ -49,8 +49,7 @@ typedef struct {
      *
      * Special values:
      *      MP_OBJ_NULL: This iterable has been fully exhausted and can be reused.
-     *      MP_OBJ_SENTINEL: This iterable is cancelled and will exhaust
-     *                             when it is iterated again.
+     *      MP_OBJ_SENTINEL: This iterable is will raise StopIteration when it is iterated again.
      */
     mp_obj_t parent_obj;
     /**
@@ -74,8 +73,8 @@ typedef struct {
     pbio_os_state_t state;
 } pb_type_async_t;
 
-mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **prev);
+mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **prev, bool stop_prev);
 
-void pb_type_async_schedule_cancel(pb_type_async_t *iter);
+void pb_type_async_schedule_stop_iteration(pb_type_async_t *iter);
 
 #endif // PYBRICKS_INCLUDED_ASYNC_H

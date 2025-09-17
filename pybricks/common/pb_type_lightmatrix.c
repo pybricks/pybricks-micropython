@@ -337,8 +337,7 @@ static mp_obj_t common_LightMatrix_text(size_t n_args, const mp_obj_t *pos_args,
         .iter_once = pb_type_lightmatrix_text_iterate_once,
     };
     // New operation always wins; ongoing animation is cancelled.
-    pb_type_async_schedule_cancel(self->text_iter);
-    return pb_type_async_wait_or_await(&config, &self->text_iter);
+    return pb_type_async_wait_or_await(&config, &self->text_iter, true);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(common_LightMatrix_text_obj, 1, common_LightMatrix_text);
 

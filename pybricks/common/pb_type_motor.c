@@ -243,7 +243,7 @@ static mp_obj_t pb_type_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_arg
 
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_reset_angle_obj, 1, pb_type_Motor_reset_angle);
@@ -268,7 +268,7 @@ static mp_obj_t pb_type_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_ma
 
     mp_int_t speed = pb_obj_get_int(speed_in);
     pb_assert(pbio_servo_run_forever(self->srv, speed));
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_obj, 1, pb_type_Motor_run);
@@ -277,7 +277,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_run_obj, 1, pb_type_Motor_run);
 static mp_obj_t pb_type_Motor_hold(mp_obj_t self_in) {
     pb_type_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_servo_stop(self->srv, PBIO_CONTROL_ON_COMPLETION_HOLD));
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Motor_hold_obj, pb_type_Motor_hold);
@@ -313,8 +313,7 @@ static mp_obj_t pb_type_motor_wait_or_await(pb_type_Motor_obj_t *self, bool retu
         .return_map = return_final_angle ? pb_type_motor_get_final_angle : NULL,
     };
     // New operation always wins; ongoing awaitable motor motion is cancelled.
-    pb_type_async_schedule_cancel(self->last_awaitable);
-    return pb_type_async_wait_or_await(&config, &self->last_awaitable);
+    return pb_type_async_wait_or_await(&config, &self->last_awaitable, true);
 }
 
 // pybricks.common.Motor.run_time
@@ -429,7 +428,7 @@ static mp_obj_t pb_type_Motor_track_target(size_t n_args, const mp_obj_t *pos_ar
 
     mp_int_t target_angle = pb_obj_get_int(target_angle_in);
     pb_assert(pbio_servo_track_target(self->srv, target_angle));
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Motor_track_target_obj, 1, pb_type_Motor_track_target);

@@ -100,7 +100,7 @@ static mp_obj_t pb_type_DriveBase_stop(mp_obj_t self_in) {
 
     // Cancel awaitables.
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
 
     // Stop hardware.
     pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_COAST));
@@ -119,8 +119,7 @@ static mp_obj_t await_or_wait(pb_type_DriveBase_obj_t *self) {
         .close = pb_type_DriveBase_stop,
     };
     // New operation always wins; ongoing awaitable motion is cancelled.
-    pb_type_async_schedule_cancel(self->last_awaitable);
-    return pb_type_async_wait_or_await(&config, &self->last_awaitable);
+    return pb_type_async_wait_or_await(&config, &self->last_awaitable, true);
 }
 
 // pybricks.robotics.DriveBase.straight
@@ -237,7 +236,7 @@ static mp_obj_t pb_type_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
     // Cancel awaitables but not hardware. Drive forever will handle this.
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
 
     pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
     return mp_const_none;
@@ -249,7 +248,7 @@ static mp_obj_t pb_type_DriveBase_brake(mp_obj_t self_in) {
 
     // Cancel awaitables.
     pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_async_schedule_cancel(self->last_awaitable);
+    pb_type_async_schedule_stop_iteration(self->last_awaitable);
 
     // Stop hardware.
     pb_assert(pbio_drivebase_stop(self->db, PBIO_CONTROL_ON_COMPLETION_BRAKE));
