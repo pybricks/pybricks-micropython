@@ -396,12 +396,6 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
     return pb_type_async_wait_or_await(&config, &lwp3device->iter, true);
 }
 
-void pb_type_lwp3device_start_cleanup(void) {
-
-    #if PYBRICKS_PY_IODEVICES
-    MP_STATE_PORT(notification_buffer) = NULL;
-    #endif
-}
 
 mp_obj_t pb_type_remote_button_pressed(void) {
     pb_lwp3device_t *remote = &pb_lwp3device_singleton;
@@ -530,10 +524,13 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
 
 #if PYBRICKS_PY_IODEVICES
 
+// pointer to dynamically allocated memory - needed for driver callback
+static uint8_t *notification_buffer;
+
 static pbio_pybricks_error_t handle_lwp3_generic_notification(const uint8_t *value, uint32_t size) {
     pb_lwp3device_t *self = &pb_lwp3device_singleton;
 
-    if (!MP_STATE_PORT(notification_buffer) || !self->noti_num) {
+    if (!notification_buffer || !self->noti_num) {
         // Allocated data not ready, but no error.
         return PBIO_PYBRICKS_ERROR_OK;
     }
@@ -543,7 +540,7 @@ static pbio_pybricks_error_t handle_lwp3_generic_notification(const uint8_t *val
         self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
     }
 
-    memcpy(&MP_STATE_PORT(notification_buffer)[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
+    memcpy(&notification_buffer[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
     self->noti_idx_write = (self->noti_idx_write + 1) % self->noti_num;
 
     // After writing it is full if the _next_ write will override the
@@ -553,6 +550,11 @@ static pbio_pybricks_error_t handle_lwp3_generic_notification(const uint8_t *val
     return PBIO_PYBRICKS_ERROR_OK;
 }
 
+typedef struct {
+    mp_obj_base_t base;
+    uint8_t notification_buffer[];
+} lwp3_device_obj_t;
+
 static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(hub_kind),
@@ -561,7 +563,7 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_FALSE(pair),
         PB_ARG_DEFAULT_INT(num_notifications, 8));
 
-    mp_obj_base_t *obj = mp_obj_malloc(mp_obj_base_t, type);
+
     pb_lwp3device_t *self = &pb_lwp3device_singleton;
 
     uint8_t hub_kind = pb_obj_get_positive_int(hub_kind_in);
@@ -570,11 +572,13 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     self->noti_num = mp_obj_get_int(num_notifications_in);
     self->noti_num = self->noti_num > 0 ? self->noti_num : 1;
 
-    if (MP_STATE_PORT(notification_buffer)) {
+    if (notification_buffer) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Can use only one LWP3Device"));
     }
 
-    MP_STATE_PORT(notification_buffer) = m_malloc0(LWP3_MAX_MESSAGE_SIZE * self->noti_num);
+    lwp3_device_obj_t *obj = mp_obj_malloc_var_with_finaliser(lwp3_device_obj_t, uint8_t, LWP3_MAX_MESSAGE_SIZE * self->noti_num, type);
+    notification_buffer = obj->notification_buffer;
+    memset(notification_buffer, 0, LWP3_MAX_MESSAGE_SIZE * self->noti_num);
     self->noti_idx_read = 0;
     self->noti_idx_write = 0;
     self->noti_data_full = false;
@@ -608,7 +612,7 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
 
     pb_lwp3device_assert_connected();
 
-    if (!self->noti_num || !MP_STATE_PORT(notification_buffer)) {
+    if (!self->noti_num || !notification_buffer) {
         pb_assert(PBIO_ERROR_FAILED);
     }
 
@@ -622,7 +626,7 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
     self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
 
     // First byte is the size.
-    uint8_t len = MP_STATE_PORT(notification_buffer)[index * LWP3_MAX_MESSAGE_SIZE];
+    uint8_t len = notification_buffer[index * LWP3_MAX_MESSAGE_SIZE];
     if (len < LWP3_HEADER_SIZE || len > LWP3_MAX_MESSAGE_SIZE) {
         // This is rare but it can happen sometimes. It is better to just
         // ignore it rather than raise and crash the user application.
@@ -632,10 +636,16 @@ static mp_obj_t lwp3device_read(mp_obj_t self_in) {
     // Allocation of the return object may drive the runloop and process
     // new incoming messages, so copy data atomically before that happens.
     uint8_t message[LWP3_MAX_MESSAGE_SIZE];
-    memcpy(message, &MP_STATE_PORT(notification_buffer)[index * LWP3_MAX_MESSAGE_SIZE], len);
+    memcpy(message, &notification_buffer[index * LWP3_MAX_MESSAGE_SIZE], len);
     return mp_obj_new_bytes(message, len);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
+
+mp_obj_t lwp3device_data_close(mp_obj_t self_in) {
+    notification_buffer = NULL;
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_data_close_obj, lwp3device_data_close);
 
 static const mp_rom_map_elem_t pb_type_iodevices_LWP3Device_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },

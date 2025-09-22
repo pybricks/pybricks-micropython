@@ -190,15 +190,3 @@ void pb_package_pybricks_init(bool import_all) {
     pb_module_tools_init();
 }
 #endif // PYBRICKS_OPT_COMPILER
-
-// REVISIT: move these to object finalizers if we enable finalizers in the GC
-void pb_package_pybricks_deinit(void) {
-
-    #if PYBRICKS_PY_COMMON_BLE
-    pb_type_ble_start_cleanup();
-    #endif
-
-    #if PYBRICKS_PY_PUPDEVICES_REMOTE
-    pb_type_lwp3device_start_cleanup();
-    #endif
-}

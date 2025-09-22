@@ -86,8 +86,6 @@ void pb_virtualhub_port_init(void) {
 
 // MICROPY_PORT_DEINIT_FUNC
 void pb_virtualhub_port_deinit(void) {
-
-    pb_package_pybricks_deinit();
 }
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
