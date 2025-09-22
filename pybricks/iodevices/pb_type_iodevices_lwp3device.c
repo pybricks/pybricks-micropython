@@ -234,7 +234,7 @@ static mp_obj_t wait_or_await_operation(void) {
     return pb_type_async_wait_or_await(&config, &lwp3device->iter, true);
 }
 
-static mp_obj_t pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
+static mp_obj_t pb_type_pupdevices_Remote_light_on(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {
     pb_assert(pb_type_pupdevices_Remote_write_light_msg(hsv));
     return wait_or_await_operation();
 }
@@ -397,7 +397,7 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
 }
 
 
-mp_obj_t pb_type_remote_button_pressed(void) {
+mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     pb_lwp3device_t *remote = &pb_lwp3device_singleton;
 
     pb_lwp3device_assert_connected();
@@ -448,8 +448,8 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     pb_module_tools_assert_blocking();
 
     pb_type_pupdevices_Remote_obj_t *self = mp_obj_malloc(pb_type_pupdevices_Remote_obj_t, type);
-    self->buttons = pb_type_Keypad_obj_new(pb_type_remote_button_pressed);
-    self->light = pb_type_ColorLight_external_obj_new(NULL, pb_type_pupdevices_Remote_light_on);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
+    self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
 
     pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), name_in, timeout_in, LWP3_HUB_KIND_HANDSET, handle_remote_notification, false);
 
