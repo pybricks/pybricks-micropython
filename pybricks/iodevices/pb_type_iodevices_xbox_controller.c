@@ -179,7 +179,7 @@ static xbox_input_map_t *pb_xbox_get_buttons(void) {
     return buttons;
 }
 
-static mp_obj_t pb_xbox_button_pressed(void) {
+static mp_obj_t pb_xbox_button_pressed(mp_obj_t self_in) {
     xbox_input_map_t *buttons = pb_xbox_get_buttons();
 
     // At most 16 simultaneous button presses, plus up to two dpad directions.
@@ -385,7 +385,7 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->iter = NULL;
 
     pb_xbox_t *xbox = &pb_xbox_singleton;
-    self->buttons = pb_type_Keypad_obj_new(pb_xbox_button_pressed);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_xbox_button_pressed);
 
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory

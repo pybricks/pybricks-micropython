@@ -24,7 +24,7 @@ typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_t system;
 } hubs_EV3Brick_obj_t;
 
-static mp_obj_t pb_type_ev3brick_button_pressed(void) {
+static mp_obj_t pb_type_ev3brick_button_pressed(mp_obj_t parent_obj) {
     pbio_button_flags_t flags = pbdrv_button_get_pressed();
     mp_obj_t pressed[5];
     size_t num = 0;
@@ -50,7 +50,7 @@ static mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_EV3Brick_obj_t *self = mp_obj_malloc(hubs_EV3Brick_obj_t, type);
 
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
-    self->buttons = pb_type_Keypad_obj_new(pb_type_ev3brick_button_pressed);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_ev3brick_button_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->screen = pb_type_Image_display_obj_new();
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));

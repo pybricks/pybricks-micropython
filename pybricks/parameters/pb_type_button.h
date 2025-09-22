@@ -22,8 +22,8 @@ extern const pb_obj_button_t pb_type_button;
 mp_obj_t pb_type_button_new(qstr name);
 pbio_button_flags_t pb_type_button_get_button_flag(mp_obj_t obj);
 
-typedef mp_obj_t (*pb_type_button_get_pressed_t)(void);
-mp_obj_t pb_type_button_pressed_hub_single_button(void);
+typedef mp_obj_t (*pb_type_button_get_pressed_t)(mp_obj_t parent_obj);
+mp_obj_t pb_type_button_pressed_hub_single_button(mp_obj_t parent_obj);
 
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON
 

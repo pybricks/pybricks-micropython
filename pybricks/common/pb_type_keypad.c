@@ -17,13 +17,14 @@
 // pybricks._common.Keypad class object
 typedef struct _common_Keypad_obj_t {
     mp_obj_base_t base;
+    mp_obj_t parent_obj;
     pb_type_button_get_pressed_t get_pressed;
 } common_Keypad_obj_t;
 
 // pybricks._common.Keypad.pressed
 static mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
     common_Keypad_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return self->get_pressed();
+    return self->get_pressed(self->parent_obj);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Keypad_pressed_obj, common_Keypad_pressed);
 
@@ -40,9 +41,10 @@ static MP_DEFINE_CONST_OBJ_TYPE(pb_type_Keypad,
     locals_dict, &common_Keypad_locals_dict);
 
 // pybricks._common.Keypad.__init__
-mp_obj_t pb_type_Keypad_obj_new(pb_type_button_get_pressed_t get_pressed) {
+mp_obj_t pb_type_Keypad_obj_new(mp_obj_t parent_obj, pb_type_button_get_pressed_t get_pressed) {
     common_Keypad_obj_t *self = mp_obj_malloc(common_Keypad_obj_t, &pb_type_Keypad);
     self->get_pressed = get_pressed;
+    self->parent_obj = parent_obj;
     return MP_OBJ_FROM_PTR(self);
 }
 
