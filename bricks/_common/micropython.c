@@ -423,9 +423,6 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
 }
 
 void pbsys_main_run_program_cleanup(void) {
-
-    pb_package_pybricks_deinit();
-
     gc_sweep_all();
     mp_deinit();
 }

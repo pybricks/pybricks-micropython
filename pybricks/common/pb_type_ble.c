@@ -91,6 +91,11 @@ typedef enum {
  *                          is not allocated in the table.
  */
 static observed_data_t *lookup_observed_data(uint8_t channel) {
+
+    if (!observed_data) {
+        return NULL;
+    }
+
     for (size_t i = 0; i < num_observed_data; i++) {
         observed_data_t *data = &observed_data[i];
 
@@ -502,8 +507,16 @@ static mp_obj_t pb_module_ble_version(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_version_obj, pb_module_ble_version);
 
+mp_obj_t pb_module_ble_data_close(mp_obj_t self_in) {
+    observed_data = NULL;
+    num_observed_data = 0;
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_data_close_obj, pb_module_ble_data_close);
+
 static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_broadcast), MP_ROM_PTR(&pb_module_ble_broadcast_obj) },
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_module_ble_data_close_obj) },
     { MP_ROM_QSTR(MP_QSTR_observe), MP_ROM_PTR(&pb_module_ble_observe_obj) },
     { MP_ROM_QSTR(MP_QSTR_signal_strength), MP_ROM_PTR(&pb_module_ble_signal_strength_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
@@ -544,8 +557,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
-
-    pb_obj_BLE_t *self = mp_obj_malloc_var(pb_obj_BLE_t, observed_data, observed_data_t, num_observe_channels, &pb_type_BLE);
+    pb_obj_BLE_t *self = mp_obj_malloc_var_with_finaliser(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_BLE);
     self->broadcast_channel = broadcast_channel_in;
 
     for (mp_int_t i = 0; i < num_observe_channels; i++) {
@@ -575,12 +587,6 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     }
 
     return MP_OBJ_FROM_PTR(self);
-}
-
-void pb_type_ble_start_cleanup(void) {
-
-    observed_data = NULL;
-    num_observed_data = 0;
 }
 
 #endif // PYBRICKS_PY_COMMON_BLE
