@@ -8,9 +8,12 @@
 
 #include <stdbool.h>
 
+#include <pbdrv/bluetooth.h>
+#include <pbdrv/display.h>
 #include <pbdrv/sound.h>
 
 #include <pbio/battery.h>
+#include <pbio/image.h>
 #include <pbio/imu.h>
 #include <pbio/motor_process.h>
 #include <pbio/port_interface.h>
@@ -51,26 +54,62 @@ void pbio_deinit(void) {
 }
 
 /**
- * Stops all user-level background processes. Called when the user application
- * completes to get these modules back into their default state. Drivers and
- * OS-level processes continue running.
+ * Stops resources like motors or sounds or peripheral procedures that take a
+ * long time.
  *
- * @param [in]  reset  Whether to reset all user-level processes to a clean
- *                     state (true), or whether to only stop active outputs
- *                     like sound or motors (false). The latter is useful to
- *                     preserve the state for debugging, without sound or
- *                     movement getting in the way, or out of control.
+ * Useful to get the system in a safe state for the user without doing a full
+ * reset. Applications can all this to enter a user debug mode like the
+ * MicroPython REPL.
  */
-void pbio_stop_all(bool reset) {
-    #if PBIO_CONFIG_LIGHT
-    if (reset) {
-        pbio_light_animation_stop_all();
-    }
-    #endif
+void pbio_main_soft_stop(void) {
 
-    pbio_port_stop_user_actions(reset);
+    pbio_port_stop_user_actions(false);
 
     pbdrv_sound_stop();
+
+    pbdrv_bluetooth_cancel_operation_request();
+}
+
+static void wait_for_bluetooth(void) {
+    pbio_os_state_t unused;
+    while (pbdrv_bluetooth_await_advertise_or_scan_command(&unused, NULL) == PBIO_ERROR_AGAIN ||
+           pbdrv_bluetooth_await_peripheral_command(&unused, NULL) == PBIO_ERROR_AGAIN) {
+
+        // Run event loop until Bluetooth is idle.
+        pbio_os_run_processes_and_wait_for_event();
+    }
+}
+
+/**
+ * Stops all application-level background processes. Called when the user
+ * application completes to get these modules back into their default state.
+ * Drivers and OS-level processes continue running.
+ */
+void pbio_main_stop_application_resources() {
+
+    pbio_main_soft_stop();
+
+    // Let ongoing task finish first.
+    wait_for_bluetooth();
+
+    // Stop broadcasting, observing and disconnect peripheral.
+    pbdrv_bluetooth_start_broadcasting(NULL, 0);
+    wait_for_bluetooth();
+
+    pbdrv_bluetooth_start_observing(NULL);
+    wait_for_bluetooth();
+
+    pbdrv_bluetooth_peripheral_disconnect();
+    wait_for_bluetooth();
+
+    #if PBIO_CONFIG_LIGHT
+    pbio_light_animation_stop_all();
+    #endif
+
+    #if PBDRV_CONFIG_DISPLAY
+    pbio_image_fill(pbdrv_display_get_image(), 0);
+    pbdrv_display_update();
+    #endif
 }
 
 /** @} */

@@ -111,6 +111,15 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program);
 void pbsys_main_run_program(pbsys_main_program_t *program);
 
 /**
+ * Cleans up after running main application program, such as wiping application
+ * heap.
+ *
+ * This is separate from ::pbsys_main_run_program so that the system can
+ * safely close resources and unset callbacks before this cleanup runs.
+ */
+void pbsys_main_run_program_cleanup(void);
+
+/**
  * Stops (cancels) the main application program.
  *
  * This should be provided by the application running on top of pbio.

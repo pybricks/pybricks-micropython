@@ -396,29 +396,11 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
     return pb_type_async_wait_or_await(&config, &lwp3device->iter, true);
 }
 
-
-static void wait_for_bluetooth(void) {
-    pbio_os_state_t state;
-    while (pbdrv_bluetooth_await_peripheral_command(&state, NULL) == PBIO_ERROR_AGAIN) {
-        MICROPY_VM_HOOK_LOOP;
-        // REVISIT: CANCEL SCAN
-
-        // Stop waiting (and potentially blocking) in case of forced shutdown.
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-            break;
-        }
-    }
-}
-
 void pb_type_lwp3device_start_cleanup(void) {
 
     #if PYBRICKS_PY_IODEVICES
     MP_STATE_PORT(notification_buffer) = NULL;
     #endif
-
-    wait_for_bluetooth();
-    pbdrv_bluetooth_peripheral_disconnect();
-    wait_for_bluetooth();
 }
 
 mp_obj_t pb_type_remote_button_pressed(void) {

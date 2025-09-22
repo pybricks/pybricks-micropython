@@ -153,11 +153,9 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
 }
 
 /**
- * Updates light matrix behavior when program is started or stopped.
- *
- * @param start   @c true for start or @c false for stop.
+ * Updates light matrix behavior when program is started.
  */
-void pbsys_hub_light_matrix_handle_user_program_start(bool start) {
+void pbsys_hub_light_matrix_handle_user_program_start(void) {
 
     #if PBSYS_CONFIG_HUB_LIGHT_MATRIX_DISPLAY
     pbio_image_fill(pbdrv_display_get_image(), 0);
@@ -165,16 +163,11 @@ void pbsys_hub_light_matrix_handle_user_program_start(bool start) {
     return;
     #endif
 
-    if (start) {
-        // The user animation updates only a subset of pixels to save time,
-        // so the rest must be cleared before it starts.
-        pbsys_hub_light_matrix_user_program_animation_clear();
-        pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
-        pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
-    } else {
-        // If the user program has ended, show stop sign and selected slot.
-        pbsys_hub_light_matrix_show_idle_ui(100);
-    }
+    // The user animation updates only a subset of pixels to save time,
+    // so the rest must be cleared before it starts.
+    pbsys_hub_light_matrix_user_program_animation_clear();
+    pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
+    pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
 }
 
 #endif // PBSYS_CONFIG_HUB_LIGHT_MATRIX

@@ -10,6 +10,7 @@
 
 void pbio_init(bool start_processes);
 void pbio_deinit(void);
-void pbio_stop_all(bool reset);
+void pbio_main_stop_application_resources();
+void pbio_main_soft_stop(void);
 
 #endif // _PBIO_MAIN_H_

@@ -577,25 +577,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     return MP_OBJ_FROM_PTR(self);
 }
 
-static void wait_for_bluetooth(void) {
-    pbio_os_state_t state;
-    while (pbdrv_bluetooth_await_advertise_or_scan_command(&state, NULL) == PBIO_ERROR_AGAIN) {
-        MICROPY_VM_HOOK_LOOP;
-
-        // Stop waiting (and potentially blocking) in case of forced shutdown.
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-            break;
-        }
-    }
-}
-
 void pb_type_ble_start_cleanup(void) {
-
-    wait_for_bluetooth();
-    pbdrv_bluetooth_start_broadcasting(NULL, 0);
-    wait_for_bluetooth();
-    pbdrv_bluetooth_start_observing(NULL);
-    wait_for_bluetooth();
 
     observed_data = NULL;
     num_observed_data = 0;
