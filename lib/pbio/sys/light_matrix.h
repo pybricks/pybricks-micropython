@@ -11,12 +11,12 @@
 #if PBSYS_CONFIG_HUB_LIGHT_MATRIX
 void pbsys_hub_light_matrix_init(void);
 void pbsys_hub_light_matrix_deinit(void);
-void pbsys_hub_light_matrix_handle_user_program_start(bool start);
+void pbsys_hub_light_matrix_handle_user_program_start(void);
 void pbsys_hub_light_matrix_update_program_slot(void);
 #else
 #define pbsys_hub_light_matrix_init()
 #define pbsys_hub_light_matrix_deinit()
-#define pbsys_hub_light_matrix_handle_user_program_start(start)
+#define pbsys_hub_light_matrix_handle_user_program_start()
 #define pbsys_hub_light_matrix_update_program_slot()
 #endif
 

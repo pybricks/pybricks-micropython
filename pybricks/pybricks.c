@@ -201,13 +201,4 @@ void pb_package_pybricks_deinit(void) {
     #if PYBRICKS_PY_PUPDEVICES_REMOTE
     pb_type_lwp3device_start_cleanup();
     #endif
-
-    while (!pbsys_host_tx_is_idle()) {
-        MICROPY_VM_HOOK_LOOP
-
-        // Stop waiting (and potentially blocking) in case of forced shutdown.
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-            break;
-        }
-    }
 }

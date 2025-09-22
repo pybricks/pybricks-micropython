@@ -296,7 +296,12 @@ pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, vo
     // of interest and will be cancelled if the active function supports it.
     pbio_os_timer_set(&peri->watchdog, 10);
 
-    return peripheral_singleton.func ? peripheral_singleton.err : PBIO_SUCCESS;
+    return peri->func ? peri->err : PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_cancel_operation_request(void) {
+    // Only some peripheral actions support cancellation.
+    peripheral_singleton.cancel = true;
 }
 
 //
