@@ -53,17 +53,28 @@ void pbsys_program_stop_set_buttons(pbio_button_flags_t buttons) {
 }
 
 /**
- * This is called periodically to monitor the user program.
+ * This is called periodically to monitor the power button and shutdown requests.
  */
 void pbsys_program_stop_poll(void) {
+
+    pbio_button_flags_t btn = pbdrv_button_get_pressed();
+
+    if (btn & PBIO_BUTTON_CENTER) {
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
+
+        // power off when button is held down for 2 seconds
+        if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 2000)) {
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
+        }
+    } else {
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
+    }
 
     // Cancel user application program if shutdown was requested.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
         pbsys_program_stop(true);
         return;
     }
-
-    pbio_button_flags_t btn = pbdrv_button_get_pressed();
 
     if (!stop_buttons) {
         return;

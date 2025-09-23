@@ -7,8 +7,6 @@
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 
-void pbsys_hmi_init(void);
-void pbsys_hmi_poll(void);
 pbio_error_t pbsys_hmi_await_program_selection(void);
 
 #endif // _PBSYS_SYS_HMI_H_

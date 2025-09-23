@@ -35,8 +35,8 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_battery_poll();
-            pbsys_hmi_poll();
             pbsys_program_stop_poll();
+            pbsys_status_light_poll();
 
             // keep the hub from resetting itself
             pbdrv_watchdog_update();
@@ -53,7 +53,8 @@ void pbsys_init(void) {
 
     pbsys_battery_init();
     pbsys_host_init();
-    pbsys_hmi_init();
+    pbsys_status_light_init();
+    pbsys_hub_light_matrix_init();
 
     process_start(&pbsys_system_process);
 
