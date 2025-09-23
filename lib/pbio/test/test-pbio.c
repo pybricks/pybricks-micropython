@@ -163,7 +163,7 @@ extern struct testcase_t pbio_servo_tests[];
 extern struct testcase_t pbio_task_tests[];
 extern struct testcase_t pbio_trajectory_tests[];
 extern struct testcase_t pbio_util_tests[];
-extern struct testcase_t pbsys_bluetooth_tests[];
+extern struct testcase_t pbdrv_bluetooth_tests[];
 extern struct testcase_t pbsys_status_tests[];
 static struct testgroup_t test_groups[] = {
     { "drv/bluetooth/", pbdrv_bluetooth_tests },
@@ -182,7 +182,7 @@ static struct testgroup_t test_groups[] = {
     { "src/task/", pbio_task_tests, },
     { "src/trajectory/", pbio_trajectory_tests },
     { "src/util/", pbio_util_tests, },
-    { "sys/bluetooth/", pbsys_bluetooth_tests, },
+    { "sys/bluetooth/", pbdrv_bluetooth_tests, },
     { "sys/status/", pbsys_status_tests, },
     END_OF_GROUPS
 };

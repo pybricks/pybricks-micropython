@@ -17,7 +17,6 @@
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 
-#include "bluetooth.h"
 #include "storage.h"
 
 /**

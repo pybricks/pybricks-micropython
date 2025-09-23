@@ -3,6 +3,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 

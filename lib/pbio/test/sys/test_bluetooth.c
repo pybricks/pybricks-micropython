@@ -18,7 +18,6 @@
 #include <test-pbio.h>
 
 #include "../drv/clock/clock_test.h"
-#include "../../sys/bluetooth.h"
 
 static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_BEGIN(pt);
@@ -61,7 +60,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
         size = strlen(test_data_1);
-        pbsys_bluetooth_tx((const uint8_t *)test_data_1, &size) == PBIO_SUCCESS;
+        pbdrv_bluetooth_tx((const uint8_t *)test_data_1, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen(test_data_1));
@@ -75,7 +74,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, ({
         pbio_test_clock_tick(1);
         size = strlen(test_data_2);
-        pbsys_bluetooth_tx((const uint8_t *)test_data_2, &size) == PBIO_SUCCESS;
+        pbdrv_bluetooth_tx((const uint8_t *)test_data_2, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen(test_data_2));
@@ -113,7 +112,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_END(pt);
 }
 
-struct testcase_t pbsys_bluetooth_tests[] = {
+struct testcase_t pbdrv_bluetooth_tests[] = {
     PBIO_PT_THREAD_TEST(test_bluetooth),
     END_OF_TESTCASES
 };

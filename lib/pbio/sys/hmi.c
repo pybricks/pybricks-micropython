@@ -142,6 +142,8 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
     bool bluetooth_button_is_pressed = false;
     #endif
 
+    static pbio_os_state_t sub;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
@@ -161,12 +163,7 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
         }
 
         // Start with Bluetooth off.
-        pbdrv_bluetooth_power_on(false);
-        PBIO_OS_AWAIT_WHILE(state, pbdrv_bluetooth_is_ready());
-        // Hack: this is a remnant of pbsys/bluetooth. It needs to be included
-        // in the pbdrv_bluetooth_power_on(false) once it is made awaitable.
-        static pbio_os_timer_t timer;
-        PBIO_OS_AWAIT_MS(state, &timer, 150);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, false));
 
         // Since bluetooth is off, we just have to wait for a program start
         // with the buttons or until Bluetooth is enabled with the button or as
@@ -184,9 +181,10 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
         }
 
         // Enable bluetooth and begin advertising.
-        pbdrv_bluetooth_power_on(true);
-        PBIO_OS_AWAIT_UNTIL(state, pbdrv_bluetooth_is_ready());
-        pbdrv_bluetooth_start_advertising();
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, true));
+        pbdrv_bluetooth_start_advertising(true);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
         pbsys_storage_settings_bluetooth_enabled_set(true);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
@@ -204,7 +202,9 @@ static pbio_error_t pbsys_hmi_monitor_bluetooth_state(pbio_os_state_t *state) {
             // automatically.
             continue;
         }
-        pbdrv_bluetooth_stop_advertising();
+
+        pbdrv_bluetooth_start_advertising(false);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
         if (pbsys_main_program_start_is_requested()) {
             // Done, ready to run the program.
