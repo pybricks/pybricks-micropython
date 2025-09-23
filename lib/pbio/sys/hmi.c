@@ -37,33 +37,6 @@
 #define DEBUG_PRINT(...)
 #endif
 
-void pbsys_hmi_init(void) {
-    pbsys_status_light_init();
-    pbsys_hub_light_matrix_init();
-}
-
-/**
- * Polls the HMI.
- *
- * This is called periodically to update the current HMI state.
- */
-void pbsys_hmi_poll(void) {
-    pbio_button_flags_t btn = pbdrv_button_get_pressed();
-
-    if (btn & PBIO_BUTTON_CENTER) {
-        pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-
-        // power off when button is held down for 2 seconds
-        if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 2000)) {
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
-        }
-    } else {
-        pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
-    }
-
-    pbsys_status_light_poll();
-}
-
 /**
  * Registers button presses to update the visual UI state and request the
  * launch of a program.
