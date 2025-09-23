@@ -15,7 +15,6 @@
 #include "py/stream.h"
 
 #include <pbio/int_math.h>
-#include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbsys/light.h>
 #include <pbsys/program_stop.h>
@@ -99,67 +98,6 @@ static mp_obj_t pb_module_tools_wait(size_t n_args, const mp_obj_t *pos_args, mp
     return pb_type_async_wait_or_await(&config, &reuse, false);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_wait_obj, 0, pb_module_tools_wait);
-
-/**
- * Waits for a task to complete.
- *
- * If an exception is raised while waiting, then the task is canceled.
- *
- * @param [in]  task    The task
- * @param [in]  timeout The timeout in milliseconds or -1 to wait forever.
- */
-void pb_module_tools_pbio_task_do_blocking(pbio_task_t *task, mp_int_t timeout) {
-
-    pb_module_tools_assert_blocking();
-
-    nlr_buf_t nlr;
-
-    if (nlr_push(&nlr) == 0) {
-        mp_uint_t start = mp_hal_ticks_ms();
-
-        while (timeout < 0 || mp_hal_ticks_ms() - start < (mp_uint_t)timeout) {
-            MICROPY_EVENT_POLL_HOOK
-
-            if (task->status != PBIO_ERROR_AGAIN) {
-                nlr_pop();
-                pb_assert(task->status);
-                return;
-            }
-        }
-
-        mp_raise_OSError(MP_ETIMEDOUT);
-        MP_UNREACHABLE
-    } else {
-        pbio_task_cancel(task);
-
-        while (task->status == PBIO_ERROR_AGAIN) {
-            MICROPY_VM_HOOK_LOOP
-
-            // Stop waiting (and potentially blocking) in case of forced shutdown.
-            if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-                break;
-            }
-        }
-
-        nlr_jump(nlr.ret_val);
-    }
-}
-
-static pbio_error_t pb_module_tools_pbio_task_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
-    pbio_task_t *task = MP_OBJ_TO_PTR(parent_obj);
-    return task->status;
-}
-
-mp_obj_t pb_module_tools_pbio_task_wait_or_await(pbio_task_t *task) {
-    pb_type_async_t config = {
-        .parent_obj = MP_OBJ_FROM_PTR(task),
-        .iter_once = pb_module_tools_pbio_task_iterate_once,
-    };
-
-    // REVISIT: pbio tasks will be deprecated. Instead, protothreads can now
-    // be safely awaited.
-    return pb_type_async_wait_or_await(&config, NULL, false);
-}
 
 /**
  * Reads one byte from stdin without blocking if a byte is available, and

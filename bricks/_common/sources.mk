@@ -123,8 +123,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/block_device/block_device_flash_stm32.c \
 	drv/block_device/block_device_test.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
+	drv/bluetooth/bluetooth.c \
 	drv/bluetooth/bluetooth_btstack_control_gpio.c \
-	drv/bluetooth/bluetooth_btstack_run_loop_contiki.c \
 	drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.c \
 	drv/bluetooth/bluetooth_btstack.c \
 	drv/bluetooth/bluetooth_init_cc2564C_1.4.c \
@@ -229,12 +229,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/protocol/pybricks.c \
 	src/servo.c \
 	src/tacho.c \
-	src/task.c \
 	src/trajectory.c \
 	src/util.c \
 	sys/battery_temp.c \
 	sys/battery.c \
-	sys/bluetooth.c \
 	sys/command.c \
 	sys/core.c \
 	sys/hmi.c \

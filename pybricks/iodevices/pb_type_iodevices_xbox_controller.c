@@ -13,8 +13,6 @@
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
-#include <pbio/task.h>
-
 #include <pbsys/config.h>
 #include <pbsys/storage_settings.h>
 
@@ -78,14 +76,13 @@ typedef struct __attribute__((packed)) {
 } xbox_input_map_t;
 
 typedef struct {
-    pbio_task_t task;
     xbox_input_map_t state;
 } pb_xbox_t;
 
 static pb_xbox_t pb_xbox_singleton;
 
 // Handles LEGO Wireless protocol messages from the XBOX Device.
-static pbio_pybricks_error_t handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint32_t size) {
+static pbio_pybricks_error_t handle_notification(const uint8_t *value, uint32_t size) {
     pb_xbox_t *xbox = &pb_xbox_singleton;
     if (size <= sizeof(xbox_input_map_t)) {
         memcpy(&xbox->state, &value[0], size);
@@ -173,19 +170,8 @@ typedef struct _pb_type_xbox_obj_t {
     mp_obj_base_t base;
     mp_obj_t buttons;
     mp_int_t joystick_deadzone;
+    pb_type_async_t *iter;
 } pb_type_xbox_obj_t;
-
-static void pb_xbox_discover_and_read(pbdrv_bluetooth_peripheral_char_t *char_info) {
-    pb_xbox_t *xbox = &pb_xbox_singleton;
-
-    // Discover characteristic and optionally enable notifications.
-    pbdrv_bluetooth_periperal_discover_characteristic(&xbox->task, char_info);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-
-    // Read characteristic.
-    pbdrv_bluetooth_periperal_read_characteristic(&xbox->task, char_info);
-    pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-}
 
 static xbox_input_map_t *pb_xbox_get_buttons(void) {
     xbox_input_map_t *buttons = &pb_xbox_singleton.state;
@@ -276,6 +262,105 @@ static mp_obj_t pb_xbox_button_pressed(void) {
     return mp_obj_new_set(count, items);
 }
 
+static pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+    .match_adv = xbox_advertisement_matches,
+    .match_adv_rsp = xbox_advertisement_response_matches,
+    .notification_handler = handle_notification,
+    // Option flags are variable.
+};
+
+static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_obj) {
+
+    pbio_os_state_t unused;
+
+    pbio_error_t err;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Connect with bonding enabled. On some computers, the pairing step will
+    // fail if the hub is still connected to Pybricks Code. Since it is unclear
+    // which computer will have this problem, recommend to disconnect the hub
+    // if this happens.
+    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    if (err == PBIO_ERROR_INVALID_OP) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+            "Failed to pair. Disconnect the hub from the computer "
+            "and re-start the program with the green button on the hub\n."
+            ));
+    }
+    pb_assert(err);
+    DEBUG_PRINT("Connected to XBOX controller.\n");
+
+    // It seems we need to read the (unused) map only once after pairing
+    // to make the controller active. We'll still read it every time to
+    // catch the case where user might not have done this at least once.
+    // Connecting takes about a second longer this way, but we can provide
+    // better error messages.
+    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_xbox_char_hid_map));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    if (err != PBIO_SUCCESS) {
+        goto disconnect;
+    }
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_xbox_char_hid_map));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    if (err != PBIO_SUCCESS) {
+        goto disconnect;
+    }
+
+    // This is the main characteristic that notifies us of button state.
+    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_xbox_char_hid_report));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    if (err != PBIO_SUCCESS) {
+        goto disconnect;
+    }
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_xbox_char_hid_report));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    if (err != PBIO_SUCCESS) {
+        goto disconnect;
+    }
+
+    return PBIO_SUCCESS;
+
+disconnect:
+    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pbdrv_bluetooth_peripheral_disconnect();
+    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+
+    // If the controller was most recently connected to another device like the
+    // actual Xbox or a phone, the controller needs to be not just turned on,
+    // but also put into pairing mode before connecting to the hub. Otherwise,
+    // it will appear to connect and even bond, but return errors when trying
+    // to read the HID characteristics. So inform the user to press/hold the
+    // pair button to put it into the right mode.
+
+    mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+        "Connected, but not allowed to read buttons. "
+        "Is the controller in pairing mode?"
+        ));
+
+    PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
+}
+
+static mp_obj_t pb_type_xbox_connect(mp_obj_t self_in) {
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    pb_type_async_t config = {
+        .iter_once = xbox_connect_thread,
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+    };
+    return pb_type_async_wait_or_await(&config, &self->iter, true);
+}
+
+static mp_obj_t pb_type_xbox_await_operation(mp_obj_t self_in) {
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_async_t config = {
+        .iter_once = pbdrv_bluetooth_await_peripheral_command,
+        .parent_obj = self_in,
+    };
+    return pb_type_async_wait_or_await(&config, &self->iter, true);
+}
+
 static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -293,20 +378,14 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
     #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
 
+    pb_module_tools_assert_blocking();
+
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
     self->joystick_deadzone = pb_obj_get_pct(joystick_deadzone_in);
+    self->iter = NULL;
 
     pb_xbox_t *xbox = &pb_xbox_singleton;
-
-    // REVISIT: for now, we only allow a single connection to a XBOX device.
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
-        pb_assert(PBIO_ERROR_BUSY);
-    }
-
-    // HACK: scan and connect may block sending other Bluetooth messages, so we
-    // need to make sure the stdout queue is drained first to avoid unexpected
-    // behavior
-    mp_hal_stdout_tx_flush();
+    self->buttons = pb_type_Keypad_obj_new(pb_xbox_button_pressed);
 
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory
@@ -314,71 +393,19 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
 
     // Xbox Controller requires pairing.
-    pbdrv_bluetooth_peripheral_options_t options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
+    scan_config.options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
 
     // By default, disconnect Technic Hub from host, as this is required for
     // most hosts. Stay connected only if the user explicitly requests it.
     #if PYBRICKS_HUB_TECHNICHUB
     if (!mp_obj_is_true(stay_connected_in) && pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
-        options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
+        scan_config.options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
         mp_printf(&mp_plat_print, "The hub may disconnect from the computer for better connectivity with the controller.\n");
         mp_hal_delay_ms(500);
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
-    // Connect with bonding enabled. On some computers, the pairing step will
-    // fail if the hub is still connected to Pybricks Code. Since it is unclear
-    // which computer will have this problem, recommend to disconnect the hub
-    // if this happens.
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        pbdrv_bluetooth_peripheral_scan_and_connect(
-            &xbox->task,
-            xbox_advertisement_matches,
-            xbox_advertisement_response_matches,
-            handle_notification,
-            options);
-        pb_module_tools_pbio_task_do_blocking(&xbox->task, -1);
-        nlr_pop();
-    } else {
-        if (xbox->task.status == PBIO_ERROR_INVALID_OP) {
-            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
-                "Failed to pair. Disconnect the hub from the computer "
-                "and re-start the program with the green button on the hub\n."
-                ));
-        }
-        nlr_jump(nlr.ret_val);
-    }
-    DEBUG_PRINT("Connected to XBOX controller.\n");
-
-    // If the controller was most recently connected to another device like the
-    // actual Xbox or a phone, the controller needs to be not just turned on,
-    // but also put into pairing mode before connecting to the hub. Otherwise,
-    // it will appear to connect and even bond, but return errors when trying
-    // to read the HID characteristics. So inform the user to press/hold the
-    // pair button to put it into the right mode.
-    if (nlr_push(&nlr) == 0) {
-        // It seems we need to read the (unused) map only once after pairing
-        // to make the controller active. We'll still read it every time to
-        // catch the case where user might not have done this at least once.
-        // Connecting takes about a second longer this way, but we can provide
-        // better error messages.
-        pb_xbox_discover_and_read(&pb_xbox_char_hid_map);
-
-        // This is the main characteristic that notifies us of button state.
-        pb_xbox_discover_and_read(&pb_xbox_char_hid_report);
-        nlr_pop();
-    } else {
-        if (xbox->task.status != PBIO_SUCCESS) {
-            mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
-                "Connected, but not allowed to read buttons. "
-                "Is the controller in pairing mode?"
-                ));
-        }
-        nlr_jump(nlr.ret_val);
-    }
-
-    self->buttons = pb_type_Keypad_obj_new(pb_xbox_button_pressed);
+    pb_type_xbox_connect(MP_OBJ_FROM_PTR(self));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -486,8 +513,6 @@ static mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t
         PB_ARG_DEFAULT_INT(delay, 100));
 
     (void)self;
-    pb_xbox_assert_connected();
-    pb_xbox_t *xbox = &pb_xbox_singleton;
 
     // 1 unit is 10ms, max duration is 250=2500ms.
     mp_int_t duration = pb_obj_get_positive_int(duration_in) / 10;
@@ -543,17 +568,8 @@ static mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t
     // REVISIT: Discover this handle dynamically.
     const uint16_t handle = 34;
 
-    static struct {
-        pbdrv_bluetooth_value_t value;
-        char payload[sizeof(command)];
-    } __attribute__((packed)) msg = {
-    };
-    msg.value.size = sizeof(command);
-    memcpy(msg.payload, &command, sizeof(command));
-    pbio_set_uint16_le(msg.value.handle, handle);
-
-    pbdrv_bluetooth_peripheral_write(&xbox->task, &msg.value);
-    return pb_module_tools_pbio_task_wait_or_await(&xbox->task);
+    pbdrv_bluetooth_peripheral_write_characteristic(handle, (const uint8_t *)&command, sizeof(command));
+    return pb_type_xbox_await_operation(MP_OBJ_TO_PTR(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_xbox_rumble_obj, 1, pb_xbox_rumble);
 

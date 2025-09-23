@@ -10,6 +10,8 @@
 #include <btstack_control.h>
 #include <btstack_uart_block.h>
 
+void pbdrv_bluetooth_btstack_run_loop_trigger(void);
+
 typedef struct {
     const btstack_uart_block_t *(*uart_block_instance)(void);
     const btstack_chipset_t *(*chipset_instance)(void);

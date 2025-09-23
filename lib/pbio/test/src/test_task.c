@@ -11,7 +11,6 @@
 #include <tinytest_macros.h>
 
 #include <pbio/error.h>
-#include <pbio/task.h>
 #include <test-pbio.h>
 
 static PT_THREAD(no_yield_task_thread(struct pt *pt, pbio_task_t *task)) {
