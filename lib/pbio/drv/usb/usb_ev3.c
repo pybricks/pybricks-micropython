@@ -879,8 +879,31 @@ static void usb_device_intr(void) {
     HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
 
+/**
+ * Pybricks system command handler.
+ */
+static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
+
+void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+    pbdrv_usb_receive_handler = handler;
+}
+
+/**
+ * Buffer for scheduled status message.
+ */
+static uint8_t pbdrv_usb_status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
+static bool pbdrv_usb_status_data_pending;
+
 void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
-    // todo
+    // Ignore if message identical to last.
+    if (!memcmp(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data))) {
+        return;
+    }
+
+    // Schedule to send whenever the USB process gets round to it.
+    memcpy(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data));
+    pbdrv_usb_status_data_pending = true;
+    pbio_os_request_poll();
 }
 
 static pbio_os_process_t pbdrv_usb_ev3_process;
@@ -891,8 +914,6 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
     static pbio_os_timer_t keepalive_timer;
     static bool was_transmitting = false;
     static bool is_transmitting = false;
-    static uint32_t prev_status_flags = ~0;
-    static uint32_t new_status_flags = 0;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -900,7 +921,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
         if (pbdrv_usb_config == 0) {
             pbdrv_usb_is_events_subscribed = false;
             // Resend status flags when host subscribes
-            prev_status_flags = ~0;
+            pbdrv_usb_status_data_pending = true;
         }
 
         if (usb_rx_is_ready) {
@@ -925,7 +946,10 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
                         usb_send_response = true;
                         break;
                     case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
-                        result = pbsys_command(ep1_rx_buf + 1, usb_rx_sz - 1);
+                        if (!pbdrv_usb_receive_handler) {
+                            break;
+                        }
+                        result = pbdrv_usb_receive_handler(ep1_rx_buf + 1, usb_rx_sz - 1);
                         ep1_tx_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
                         pbio_set_uint32_le(&ep1_tx_response_buf[1], result);
                         usb_send_response = true;
@@ -945,9 +969,8 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
         }
 
         // Send status flags if they've changed (and we can)
-        new_status_flags = pbsys_status_get_flags();
         if (pbdrv_usb_is_events_subscribed && !usb_tx_status_is_not_ready &&
-            (new_status_flags != prev_status_flags || pbio_os_timer_is_expired(&keepalive_timer))) {
+            (pbdrv_usb_status_data_pending || pbio_os_timer_is_expired(&keepalive_timer))) {
             ep1_tx_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
             uint32_t usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&ep1_tx_status_buf[1]));
 
@@ -955,9 +978,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
             pbdrv_cache_prepare_before_dma(ep1_tx_status_buf, sizeof(ep1_tx_status_buf));
             usb_setup_tx_dma_desc(CPPI_DESC_TX_STATUS, ep1_tx_status_buf, usb_status_sz);
 
-            prev_status_flags = new_status_flags;
-
-            if (new_status_flags != prev_status_flags) {
+            if (pbdrv_usb_status_data_pending) {
                 // If we are sending a status because the flags have changed,
                 // we can bump out the keepalive timer.
                 pbio_os_timer_set(&keepalive_timer, 1000);
@@ -965,6 +986,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
                 // Otherwise, we want to send keepalives at a particular rate.
                 pbio_os_timer_extend(&keepalive_timer);
             }
+            pbdrv_usb_status_data_pending = false;
         }
 
         // Handle timeouts
@@ -985,7 +1007,7 @@ static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *c
                 usb_tx_stdout_is_not_ready = false;
                 pbdrv_usb_is_events_subscribed = false;
                 // Resend status flags when host subscribes
-                prev_status_flags = ~0;
+                pbdrv_usb_status_data_pending = true;
             }
         } else if (!was_transmitting && is_transmitting) {
             pbio_os_timer_set(&tx_timeout_timer, 50);

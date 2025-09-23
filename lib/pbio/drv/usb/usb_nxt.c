@@ -14,6 +14,8 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/usb.h>
+
 #include <pbio/protocol.h>
 #include <pbio/version.h>
 #include <pbsys/config.h>
@@ -885,6 +887,16 @@ bool pbdrv_usb_connection_is_active(void) {
 
 void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
     // todo
+}
+
+uint32_t pbdrv_usb_stdout_tx_available(void) {
+    return UINT32_MAX;
+}
+
+static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
+
+void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+    pbdrv_usb_receive_handler = handler;
 }
 
 void nx_usb_read(uint8_t *data, uint32_t length) {

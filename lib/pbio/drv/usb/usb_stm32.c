@@ -389,8 +389,31 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return pbdrv_usb_bcd;
 }
 
+/**
+ * Pybricks system command handler.
+ */
+static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
+
+void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+    pbdrv_usb_receive_handler = handler;
+}
+
+/**
+ * Buffer for scheduled status message.
+ */
+static uint8_t pbdrv_usb_status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
+static bool pbdrv_usb_status_data_pending;
+
 void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
-    // todo
+    // Ignore if message identical to last.
+    if (!memcmp(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data))) {
+        return;
+    }
+
+    // Schedule to send whenever the Bluetooth process gets round to it.
+    memcpy(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data));
+    pbdrv_usb_status_data_pending = true;
+    process_poll(&pbdrv_usb_process);
 }
 
 // Event loop
@@ -404,8 +427,6 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static pbio_pybricks_error_t result;
     static struct etimer status_timer;
     static struct etimer transmit_timer;
-    static uint32_t prev_status_flags = ~0;
-    static uint32_t new_status_flags;
 
     PROCESS_POLLHANDLER({
         if (!bcd_busy && pbio_oneshot(!vbus_active, &no_vbus_oneshot)) {
@@ -463,8 +484,8 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
                     usb_response_sz = sizeof(usb_response_buf);
                     break;
                 case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
-                    if (usb_response_sz == 0) {
-                        result = pbsys_command(usb_in_buf + 1, usb_in_sz - 1);
+                    if (usb_response_sz == 0 && pbdrv_usb_receive_handler) {
+                        result = pbdrv_usb_receive_handler(usb_in_buf + 1, usb_in_sz - 1);
                         usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
                         pbio_set_uint32_le(&usb_response_buf[1], result);
                         usb_response_sz = sizeof(usb_response_buf);
@@ -488,25 +509,26 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
             continue;
         }
 
-        new_status_flags = pbsys_status_get_flags();
-
         // Transmit. Give priority to response, then status updates, then stdout.
         if (usb_response_sz) {
             transmitting = true;
             USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
         } else if (pbdrv_usb_stm32_is_events_subscribed) {
-            if ((new_status_flags != prev_status_flags) || etimer_expired(&status_timer)) {
+            if (pbdrv_usb_status_data_pending || etimer_expired(&status_timer)) {
+                pbdrv_usb_status_data_pending = false;
+
                 usb_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
                 _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
                     "size of status report does not match size of event");
-                usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&usb_status_buf[1]));
+
+                memcpy(&usb_status_buf[1], pbdrv_usb_status_data, sizeof(pbdrv_usb_status_data));
+                usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(pbdrv_usb_status_data));
 
                 // REVISIT: we really shouldn't need a status timer on USB since
                 // it's not a lossy transport. We just need to make sure we send
                 // status updates when they change and send the current status
                 // immediately after subscribing to events.
                 etimer_restart(&status_timer);
-                prev_status_flags = new_status_flags;
 
                 transmitting = true;
                 USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);

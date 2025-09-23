@@ -9,9 +9,10 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
-#include <pbsys/host.h>
 
 #include "bluetooth.h"
+#include <pbsys/command.h>
+#include <pbsys/host.h>
 
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
@@ -19,7 +20,9 @@ static lwrb_t pbsys_host_stdin_ring_buf;
 void pbsys_host_init(void) {
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_STDIN_BUF_SIZE];
     lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
+
     pbsys_bluetooth_init();
+    pbdrv_usb_set_receive_handler(pbsys_command);
 }
 
 /**
