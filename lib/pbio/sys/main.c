@@ -102,15 +102,6 @@ int main(int argc, char **argv) {
         pbsys_status_set_program_id(program.id);
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_host_stdin_set_callback(pbsys_main_stdin_event);
-        pbsys_hub_light_matrix_handle_user_program_start();
-
-        #if PBSYS_CONFIG_STATUS_LIGHT
-        #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
-        pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
-        #else
-        pbio_color_light_off(pbsys_status_light_main);
-        #endif
-        #endif
 
         // Handle pending events triggered by the status change, such as
         // starting status light animation.
