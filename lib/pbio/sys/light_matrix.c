@@ -166,6 +166,7 @@ void pbsys_hub_light_matrix_handle_user_program_start(void) {
     // The user animation updates only a subset of pixels to save time,
     // so the rest must be cleared before it starts.
     pbsys_hub_light_matrix_user_program_animation_clear();
+    pbio_light_animation_stop_all();
     pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
     pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
 }
