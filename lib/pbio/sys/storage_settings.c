@@ -25,7 +25,7 @@
  * @param [in]  settings  Settings to populate.
  */
 void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
     settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #endif
     #if PBIO_CONFIG_IMU
@@ -45,7 +45,7 @@ void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *sett
 }
 
 bool pbsys_storage_settings_bluetooth_enabled_get(void) {
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
     pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
     if (!settings) {
         return false;
@@ -53,10 +53,10 @@ bool pbsys_storage_settings_bluetooth_enabled_get(void) {
     return settings->flags & PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
     #else
     return true;
-    #endif // PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
 }
 void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
-    #if PBSYS_CONFIG_BLUETOOTH_TOGGLE
+    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
     pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
 
     bool current_value = pbsys_storage_settings_bluetooth_enabled_get();

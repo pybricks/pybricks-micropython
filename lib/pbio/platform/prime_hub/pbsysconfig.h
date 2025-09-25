@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2023 The Pybricks Authors
+// Copyright (c) 2020-2025 The Pybricks Authors
 
 #define PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL             (1)
 #define PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW        (1)
@@ -9,8 +9,11 @@
 #define PBSYS_CONFIG_BATTERY_CHARGER                (1)
 #define PBSYS_CONFIG_BLUETOOTH                      (1)
 #define PBSYS_CONFIG_BLUETOOTH_TOGGLE               (1)
-#define PBSYS_CONFIG_BLUETOOTH_TOGGLE_BUTTON        (512) // PBIO_BUTTON_RIGHT_UP, but enum value cannot be used here.
+#define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (5)
+#define PBSYS_CONFIG_HMI_PUP                        (1)
+#define PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_BUTTONS     (1)
+#define PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON       (512) // PBIO_BUTTON_RIGHT_UP, but enum value cannot be used here.
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (1)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX_LED_ARRAY     (1)
 #define PBSYS_CONFIG_HOST                           (1)
