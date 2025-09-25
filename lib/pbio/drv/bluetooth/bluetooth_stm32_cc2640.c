@@ -1840,6 +1840,13 @@ static pbio_error_t init_uart_service(pbio_os_state_t *state, void *context) {
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // Disconnect gracefully if connected to host.
+    if (conn_handle != NO_CONNECTION) {
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        GAP_TerminateLinkReq(conn_handle, 0x13);
+        PBIO_OS_AWAIT_UNTIL(state, conn_handle == NO_CONNECTION);
+    }
+
     pybricks_notify_en = uart_tx_notify_en = false;
     conn_handle = peripheral_singleton.con_handle = NO_CONNECTION;
 

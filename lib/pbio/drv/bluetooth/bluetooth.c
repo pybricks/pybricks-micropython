@@ -11,6 +11,7 @@
 
 #include <pbdrv/bluetooth.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -411,6 +412,8 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
     return advertising_or_scan_func ? advertising_or_scan_err : PBIO_SUCCESS;
 }
 
+static bool shutting_down;
+
 /**
  * This is the main high level pbdrv/bluetooth thread. It is driven forward by
  * the platform-specific HCI process whenever there is new data to process or
@@ -434,7 +437,9 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    for (;;) {
+    while (!shutting_down) {
+
+        DEBUG_PRINT("Bluetooth disable requested.\n");
 
         pbdrv_bluetooth_is_broadcasting = false;
         pbdrv_bluetooth_is_observing = false;
@@ -447,7 +452,10 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
         pbio_os_request_poll();
 
         // Bluetooth is now disabled. Await system processes to ask for enable.
-        PBIO_OS_AWAIT_UNTIL(state, power_on_requested);
+        PBIO_OS_AWAIT_UNTIL(state, power_on_requested || shutting_down);
+        if (shutting_down) {
+            break;
+        }
         DEBUG_PRINT("Bluetooth enable requested.\n");
 
         PBIO_OS_AWAIT(state, &sub, err = pbdrv_bluetooth_controller_initialize(&sub, &timer));
@@ -463,9 +471,11 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
         pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
 
         // Service scheduled tasks as long as Bluetooth is enabled.
-        while (power_on_requested) {
+        while (power_on_requested && !shutting_down) {
 
-            // REVISIT: Only needed if there is nothing to do
+            // In principle, this wait is only needed if there is nothing to do.
+            // In practice, leaving it here helps rather than hurts since it
+            // allows short stdout messages to be queued rather than sent separately.
             PBIO_OS_AWAIT_MS(state, &timer, 1);
 
             // Handle pending status update, if any.
@@ -534,11 +544,26 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
                 observe_restart_requested = false;
             }
         }
-
-        DEBUG_PRINT("Bluetooth disable requested.\n");
     }
 
+    DEBUG_PRINT("Shutdown requested.\n");
+
+    // Power down the chip. This will disconnect from the host first.
+    // The peripheral has already been disconnected in the cleanup that runs after
+    // every program. If we change that behavior, we can do the disconnect here.
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
+
+    pbio_busy_count_down();
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbdrv_bluetooth_deinit(void) {
+    pbio_busy_count_up();
+    pbdrv_bluetooth_cancel_operation_request();
+    shutting_down = true;
+    pbio_os_request_poll();
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640
