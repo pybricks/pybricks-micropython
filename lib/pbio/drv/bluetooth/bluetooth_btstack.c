@@ -858,7 +858,11 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // TODO: Reset state
+    // Disconnect gracefully if connected to host.
+    if (le_con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(le_con_handle);
+        PBIO_OS_AWAIT_UNTIL(state, le_con_handle == HCI_CON_HANDLE_INVALID);
+    }
 
     hci_power_control(HCI_POWER_OFF);
     PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_OFF);

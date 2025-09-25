@@ -233,6 +233,11 @@ typedef void (*pbdrv_bluetooth_start_observing_callback_t)(pbdrv_bluetooth_ad_ty
 void pbdrv_bluetooth_init(void);
 
 /**
+ * Deinitializes the Bluetooth driver.
+ */
+void pbdrv_bluetooth_deinit(void);
+
+/**
  * Turns the Bluetooth chip power on or off. Await the operation.
  *
  * If it is already in the requested power state, this completes successfully
@@ -501,6 +506,9 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
+}
+
+static inline void pbdrv_bluetooth_deinit(void) {
 }
 
 static inline pbio_error_t pbdrv_bluetooth_power_on(pbio_os_state_t *state, bool on) {
