@@ -13,10 +13,13 @@
 #include <stdint.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/display.h>
 
 #include <pbio/button.h>
 #include <pbio/os.h>
 #include <pbsys/host.h>
+#include <pbio/image.h>
+#include <pbsys/light.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/storage_settings.h>
@@ -116,6 +119,14 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }
         pbdrv_button_get_pressed();
     }));
+
+    // Clear UI from display to start user program.
+    pbio_image_fill(pbdrv_display_get_image(), 0);
+    pbdrv_display_update();
+
+    // Start light or display animations.
+    pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
