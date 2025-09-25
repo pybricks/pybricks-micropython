@@ -164,7 +164,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }
         #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
 
-        #if PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_BUTTONS
+        #if PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_ENABLE
         // On right, increment slot when possible, then start waiting on new inputs.
         if (pbdrv_button_get_pressed() & PBIO_BUTTON_RIGHT) {
             pbsys_status_increment_selected_slot(true);
@@ -175,7 +175,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             pbsys_status_increment_selected_slot(false);
             continue;
         }
-        #endif // PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_BUTTONS
+        #endif // PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_ENABLE
 
         // On center, attempt to start program.
         if (pbdrv_button_get_pressed() & PBIO_BUTTON_CENTER) {

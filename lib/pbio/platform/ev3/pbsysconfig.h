@@ -8,6 +8,7 @@
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6_3_NATIVE  (0)
 #define PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION        (1)
 #define PBSYS_CONFIG_HMI                            (1)
+#define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 7) // top left, back button
 #define PBSYS_CONFIG_HMI_LCD                        (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (5)
 #define PBSYS_CONFIG_HOST                           (1)

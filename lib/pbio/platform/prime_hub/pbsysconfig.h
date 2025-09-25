@@ -10,10 +10,11 @@
 #define PBSYS_CONFIG_BLUETOOTH                      (1)
 #define PBSYS_CONFIG_BLUETOOTH_TOGGLE               (1)
 #define PBSYS_CONFIG_HMI                            (1)
+#define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 5) // center
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (5)
 #define PBSYS_CONFIG_HMI_PUP                        (1)
-#define PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_BUTTONS     (1)
-#define PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON       (512) // PBIO_BUTTON_RIGHT_UP, but enum value cannot be used here.
+#define PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON       (1 << 9) // right up
+#define PBSYS_CONFIG_HMI_PUP_LEFT_RIGHT_ENABLE      (1)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (1)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX_LED_ARRAY     (1)
 #define PBSYS_CONFIG_HOST                           (1)
