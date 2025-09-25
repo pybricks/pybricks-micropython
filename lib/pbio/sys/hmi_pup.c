@@ -194,7 +194,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     // Stop advertising if we are still doing so.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
-        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
         DEBUG_PRINT("Stop advertising on HMI exit.\n");
         pbdrv_bluetooth_start_advertising(false);
         PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
@@ -209,6 +208,11 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }
         pbdrv_button_get_pressed();
     }));
+
+    // We have already stopped advertising above, but it is nicer to keep the
+    // visual active until you release the button. Otherwise, it appears as if
+    // the hub is already off when you are shutting down.
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
     // Start run animations
     pbsys_hub_light_matrix_handle_user_program_start();
