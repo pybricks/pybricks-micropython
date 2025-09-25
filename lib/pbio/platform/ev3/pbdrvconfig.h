@@ -45,6 +45,7 @@
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (6)
+#define PBDRV_CONFIG_BUTTON_INSTANT_RESET           (0)
 
 #define PBDRV_CONFIG_DISPLAY                        (1)
 #define PBDRV_CONFIG_DISPLAY_EV3                    (1)
