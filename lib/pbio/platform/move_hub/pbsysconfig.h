@@ -11,6 +11,7 @@
 #define PBSYS_CONFIG_BATTERY_CHARGER                (0)
 #define PBSYS_CONFIG_BLUETOOTH                      (1)
 #define PBSYS_CONFIG_HMI                            (1)
+#define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 5) // center
 #define PBSYS_CONFIG_HMI_PUP                        (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (0)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (0)

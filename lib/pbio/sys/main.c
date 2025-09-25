@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
         // Get system back in idle state.
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
         pbsys_host_stdin_set_callback(NULL);
-        pbsys_program_stop_set_buttons(PBIO_BUTTON_CENTER);
+        pbsys_program_stop_set_buttons(PBSYS_CONFIG_HMI_STOP_BUTTON);
         program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
 
         // Handle pending events triggered by the status change, such as

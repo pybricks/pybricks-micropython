@@ -16,7 +16,7 @@
 #include <pbsys/program_stop.h>
 
 // Button combination that will trigger user program stop callback
-static pbio_button_flags_t stop_buttons = PBIO_BUTTON_CENTER;
+static pbio_button_flags_t stop_buttons = PBSYS_CONFIG_HMI_STOP_BUTTON;
 // State for button press one-shot
 static bool stop_button_pressed;
 
@@ -59,7 +59,7 @@ void pbsys_program_stop_poll(void) {
 
     pbio_button_flags_t btn = pbdrv_button_get_pressed();
 
-    if (btn & PBIO_BUTTON_CENTER) {
+    if (btn & PBSYS_CONFIG_HMI_STOP_BUTTON) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
 
         // power off when button is held down for 2 seconds

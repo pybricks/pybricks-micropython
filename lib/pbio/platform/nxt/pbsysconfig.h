@@ -7,6 +7,7 @@
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6           (1)
 #define PBSYS_CONFIG_FEATURE_PROGRAM_FORMAT_MULTI_MPY_V6_3_NATIVE  (0)
 #define PBSYS_CONFIG_HMI                            (1)
+#define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 2) // down
 #define PBSYS_CONFIG_HMI_NONE                       (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (0)
 #define PBSYS_CONFIG_HOST                           (1)
