@@ -167,7 +167,9 @@ $(BUILD_PREFIX)/%.d: %.c
 	$(Q)mkdir -p $(dir $@)
 	$(Q)$(CC) $(CFLAGS) -MM -MT $(patsubst %.d,%.o,$@) $< > $@
 
+ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
+endif
 
 $(BUILD_PREFIX)/%.o: %.c $(BUILD_PREFIX)/%.d Makefile
 	$(Q)mkdir -p $(dir $@)
