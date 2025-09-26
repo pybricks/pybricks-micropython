@@ -42,8 +42,9 @@ pb_type_device_obj_base_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t o
  * @param [in] context    Sensor base object.
  * @param [in] hsv        Requested color, will be rounded to nearest color.
  */
-static mp_obj_t pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
-    pb_type_device_obj_base_t *sensor = context;
+static mp_obj_t pupdevices_ColorDistanceSensor_light_on(mp_obj_t parent_obj, const pbio_color_hsv_t *hsv) {
+
+    pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
 
     // Even though the mode takes a 0-10 value for color, only red, green and blue
     // actually turn on the light. So we just pick the closest of these 3 to the
@@ -59,7 +60,7 @@ static mp_obj_t pupdevices_ColorDistanceSensor_light_on(void *context, const pbi
         color = 9; // red
     }
 
-    return pb_type_device_set_data(sensor, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__COL_O, &color, sizeof(color));
+    return pb_type_device_set_data(&self->device_base, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__COL_O, &color, sizeof(color));
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
@@ -71,7 +72,7 @@ static mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
-    self->light = pb_type_ColorLight_external_obj_new(&self->device_base, pupdevices_ColorDistanceSensor_light_on);
+    self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pupdevices_ColorDistanceSensor_light_on);
 
     // Save default color settings
     pb_color_map_save_default(&self->color_map);

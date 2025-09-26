@@ -314,7 +314,7 @@ static void run_user_program(void) {
             // The global scope is preserved to facilitate debugging, but we
             // stop active resources like motors and sounds. They are stopped
             // but not reset so the user can restart them in the REPL.
-            pbio_stop_all(false);
+            pbio_main_soft_stop();
 
             // Enter REPL.
             run_repl();
@@ -420,11 +420,9 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
             run_user_program();
             break;
     }
+}
 
-    // De-init bluetooth resources (including flushing stdout) that may use
-    // memory allocated by MicroPython before we wipe it.
-    pb_package_pybricks_deinit();
-
+void pbsys_main_run_program_cleanup(void) {
     gc_sweep_all();
     mp_deinit();
 }

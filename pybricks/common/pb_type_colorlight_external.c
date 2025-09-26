@@ -20,7 +20,7 @@
 // pybricks._common.ColorLight class object
 typedef struct {
     mp_obj_base_t base;
-    void *context;
+    mp_obj_t parent_obj;
     pb_type_ColorLight_on_t on;
 
 } common_ColorLight_external_obj_t;
@@ -32,14 +32,14 @@ static mp_obj_t common_ColorLight_external_on(size_t n_args, const mp_obj_t *pos
         common_ColorLight_external_obj_t, self,
         PB_ARG_REQUIRED(color));
 
-    return self->on(self->context, pb_type_Color_get_hsv(color_in));
+    return self->on(self->parent_obj, pb_type_Color_get_hsv(color_in));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_external_on_obj, 1, common_ColorLight_external_on);
 
 // pybricks._common.ColorLight.off
 static mp_obj_t common_ColorLight_external_off(mp_obj_t self_in) {
     common_ColorLight_external_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return self->on(self->context, &pb_Color_NONE_obj.hsv);
+    return self->on(self->parent_obj, &pb_Color_NONE_obj.hsv);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_external_off_obj, common_ColorLight_external_off);
 
@@ -57,9 +57,9 @@ static MP_DEFINE_CONST_OBJ_TYPE(pb_type_ColorLight_external,
     locals_dict, &common_ColorLight_external_locals_dict);
 
 // pybricks._common.ColorLight.__init__
-mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on) {
+mp_obj_t pb_type_ColorLight_external_obj_new(mp_obj_t parent_obj, pb_type_ColorLight_on_t on) {
     common_ColorLight_external_obj_t *light = mp_obj_malloc(common_ColorLight_external_obj_t, &pb_type_ColorLight_external);
-    light->context = context;
+    light->parent_obj = parent_obj;
     light->on = on;
     return MP_OBJ_FROM_PTR(light);
 }

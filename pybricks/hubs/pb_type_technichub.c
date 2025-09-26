@@ -42,7 +42,7 @@ static mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_arg
     #if PYBRICKS_PY_COMMON_BLE
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
-    self->button = pb_type_Keypad_obj_new(pb_type_button_pressed_hub_single_button);
+    self->button = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_button_pressed_hub_single_button);
     self->imu = pb_type_IMU_obj_new(MP_OBJ_FROM_PTR(self), top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);

@@ -25,7 +25,7 @@ typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_t system;
 } hubs_NXTBrick_obj_t;
 
-static mp_obj_t pb_type_nxtbrick_button_pressed(void) {
+static mp_obj_t pb_type_nxtbrick_button_pressed(mp_obj_t parent_obj) {
     pbio_button_flags_t flags = pbdrv_button_get_pressed();
     mp_obj_t pressed[4];
     size_t num = 0;
@@ -47,7 +47,7 @@ static mp_obj_t pb_type_nxtbrick_button_pressed(void) {
 static mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_NXTBrick_obj_t *self = mp_obj_malloc(hubs_NXTBrick_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
-    self->buttons = pb_type_Keypad_obj_new(pb_type_nxtbrick_button_pressed);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_nxtbrick_button_pressed);
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);

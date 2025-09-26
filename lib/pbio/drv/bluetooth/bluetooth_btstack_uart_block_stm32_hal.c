@@ -16,7 +16,7 @@
 #include <stm32f4xx_ll_rcc.h>
 #include <stm32f4xx_ll_usart.h>
 
-#include "bluetooth_btstack_run_loop_contiki.h"
+#include "bluetooth_btstack.h"
 #include "bluetooth_btstack_uart_block_stm32_hal.h"
 
 static UART_HandleTypeDef btstack_huart;
@@ -38,12 +38,12 @@ static void (*block_received)(void);
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     send_complete = true;
-    pbdrv_bluetooth_btstack_run_loop_contiki_trigger();
+    pbdrv_bluetooth_btstack_run_loop_trigger();
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     receive_complete = true;
-    pbdrv_bluetooth_btstack_run_loop_contiki_trigger();
+    pbdrv_bluetooth_btstack_run_loop_trigger();
 }
 
 static int btstack_uart_block_stm32_hal_init(const btstack_uart_config_t *config) {

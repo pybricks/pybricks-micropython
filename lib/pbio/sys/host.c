@@ -9,9 +9,9 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
-#include <pbsys/host.h>
 
-#include "bluetooth.h"
+#include <pbsys/command.h>
+#include <pbsys/host.h>
 
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
@@ -19,7 +19,19 @@ static lwrb_t pbsys_host_stdin_ring_buf;
 void pbsys_host_init(void) {
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_STDIN_BUF_SIZE];
     lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
-    pbsys_bluetooth_init();
+
+    pbdrv_bluetooth_set_receive_handler(pbsys_command);
+    pbdrv_usb_set_receive_handler(pbsys_command);
+}
+
+/**
+ * Schedules sending a status update to connected hosts.
+ *
+ * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
+ */
+void pbsys_host_schedule_status_update(const uint8_t *buf) {
+    pbdrv_bluetooth_schedule_status_update(buf);
+    pbdrv_usb_schedule_status_update(buf);
 }
 
 /**
@@ -50,7 +62,7 @@ uint32_t pbsys_host_stdin_get_free(void) {
  * Writes data to the stdin buffer.
  *
  * This does not currently return the number of bytes written, so first call
- * pbsys_bluetooth_stdin_get_free() to ensure enough free space.
+ * pbdrv_bluetooth_stdin_get_free() to ensure enough free space.
  *
  * @param [in]  data    The data to write to the stdin buffer.
  * @param [in]  size    The size of @p data in bytes.
@@ -131,12 +143,12 @@ pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
  */
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
     #if PBSYS_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY)
-    return pbsys_bluetooth_tx(data, size);
+    return pbdrv_bluetooth_tx(data, size);
     #elif !PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
     return pbdrv_usb_stdout_tx(data, size);
     #elif PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
 
-    uint32_t bt_avail = pbsys_bluetooth_tx_available();
+    uint32_t bt_avail = pbdrv_bluetooth_tx_available();
     uint32_t usb_avail = pbdrv_usb_stdout_tx_available();
     uint32_t available = bt_avail < usb_avail ? bt_avail : usb_avail;
 
@@ -159,7 +171,7 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
     // functions should always succeed since we already checked tx_available().
     // And if both somehow got disconnected at the same time, it is not a big deal
     // if we return PBIO_SUCCESS without actually sending anything.
-    (void)pbsys_bluetooth_tx(data, size);
+    (void)pbdrv_bluetooth_tx(data, size);
     (void)pbdrv_usb_stdout_tx(data, size);
 
     return PBIO_SUCCESS;
@@ -183,9 +195,9 @@ bool pbsys_host_tx_is_idle(void) {
     #if PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
     // The USB part is a bit of a hack since it depends on the USB driver not
     // buffering more than one packet at a time to actually be accurate.
-    return pbsys_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_available();
+    return pbdrv_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_available();
     #else
-    return pbsys_bluetooth_tx_is_idle();
+    return pbdrv_bluetooth_tx_is_idle();
     #endif
 }
 

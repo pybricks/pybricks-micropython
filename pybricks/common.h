@@ -26,7 +26,6 @@
 #include <pybricks/common/pb_type_device.h>
 
 void pb_package_pybricks_init(bool import_all);
-void pb_package_pybricks_deinit(void);
 
 #if PYBRICKS_PY_COMMON_BLE
 mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in);
@@ -69,7 +68,7 @@ void pb_type_LightMatrix_display_char(pbio_light_matrix_t *light_matrix, mp_obj_
 
 #if PYBRICKS_PY_COMMON_KEYPAD
 // pybricks._common.KeyPad()
-mp_obj_t pb_type_Keypad_obj_new(pb_type_button_get_pressed_t get_pressed);
+mp_obj_t pb_type_Keypad_obj_new(mp_obj_t parent_obj, pb_type_button_get_pressed_t get_pressed);
 #endif
 
 // pybricks._common.Battery()

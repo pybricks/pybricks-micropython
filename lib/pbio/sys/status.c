@@ -9,6 +9,7 @@
 
 #include <pbio/os.h>
 
+#include <pbsys/host.h>
 #include <pbsys/status.h>
 
 #include "hmi.h"
@@ -32,10 +33,7 @@ static void pbsys_status_update_emit(void) {
 
     uint8_t buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
     pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
-
-    // TODO: Here we will call pbsys_host_schedule_status_update(buf), which
-    //       sets the status in host drivers such as USB and bluetooth so they
-    //       can write it out when possible.
+    pbsys_host_schedule_status_update(buf);
 
     // Other processes may be awaiting status changes, so poll.
     pbio_os_request_poll();
@@ -67,6 +65,8 @@ static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool s
  * Gets the Pybricks status report and writes it to @p buf.
  *
  * The buffer must be at least ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE bytes.
+ *
+ * REVISIT: This can be dropped once ::pbsys_host_schedule_status_update is implemented.
  *
  * @param [in]  buf        The buffer to hold the binary data.
  * @return                 The number of bytes written to @p buf.

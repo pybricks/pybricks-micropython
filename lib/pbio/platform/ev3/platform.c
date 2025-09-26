@@ -55,10 +55,13 @@
 
 #include <umm_malloc.h>
 
+#include <pbio/port_interface.h>
+#include <pbio/button.h>
+
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/ioport.h>
-#include <pbio/port_interface.h>
+#include <pbdrv/reset.h>
 
 #include "exceptionhandler.h"
 
@@ -852,18 +855,16 @@ void SystemInit(void) {
     umm_init_heap(&pb_umm_heap_start, &pb_umm_heap_end - &pb_umm_heap_start);
 }
 
-
-#include <pbio/button.h>
-#include <pbdrv/reset.h>
-
 /*
- * This is called from the IRQ handler after every systick. This should be
- * removed when the final user interface is implemented. For now this serves
- * as a very convenient way to power off the EV3 for fast iteration.
+ * This is called from the IRQ handler after every systick. Can be enabled
+ * to run emergency poweroff for faster iteration and debugging. User data
+ * is not saved when powering off this way.
  */
 void lazy_poweroff_hook(void) {
+    #if PBDRV_CONFIG_BUTTON_INSTANT_RESET
     if (pbdrv_button_get_pressed() & PBIO_BUTTON_LEFT_UP) {
         pbdrv_reset_power_off();
         return;
     }
+    #endif
 }

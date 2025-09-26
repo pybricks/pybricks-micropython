@@ -14,6 +14,7 @@
 #include "py/objstr.h"
 
 #include <pybricks/tools.h>
+#include <pybricks/tools/pb_type_async.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -21,11 +22,9 @@
 
 typedef struct _pb_type_app_data_obj_t {
     mp_obj_base_t base;
-    pbio_task_t tx_task;
-    pbdrv_bluetooth_send_context_t tx_context;
+    pb_type_async_t *tx_iter;
     mp_obj_t rx_format;
     mp_obj_str_t rx_bytes_obj;
-    uint8_t tx_buffer[20]; // REVISIT: Could be the negotiated MTU - 3 for better throughput https://github.com/pybricks/support/issues/1727
     uint8_t rx_buffer[] __attribute__((aligned(4)));
 } pb_type_app_data_obj_t;
 
@@ -63,23 +62,36 @@ static mp_obj_t pb_type_app_data_get_values(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_app_data_get_values_obj, pb_type_app_data_get_values);
 
+static pbio_error_t app_data_write_bytes_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    // No need to pass in buffered arguments since they were copied on the
+    // inital run. We can just keep calling this until completion.
+    return pbdrv_bluetooth_send_event_notification(state, 0, NULL, 0);
+}
+
 static mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in) {
-    pb_type_app_data_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Copy data to local buffer. Needs to remain valid while sending.
-    size_t len;
-    const char *data = mp_obj_str_get_data(data_in, &len);
+    // The first call will copy given data (or raise errors) so we don't need
+    // to buffer things here.
+    size_t size;
+    const uint8_t *data = (const uint8_t *)mp_obj_str_get_data(data_in, &size);
+    pbio_os_state_t state = 0;
+    pbio_error_t err = pbdrv_bluetooth_send_event_notification(&state, PBIO_PYBRICKS_EVENT_WRITE_STDOUT, data, size);
 
-    if (len > sizeof(self->tx_buffer) - 1) {
-        mp_raise_msg_varg(&mp_type_ValueError,
-            MP_ERROR_TEXT("Cannot send more than %d bytes\n"), sizeof(self->tx_buffer) - 1);
+    // Expect yield after the initial call.
+    if (err == PBIO_SUCCESS) {
+        pb_assert(PBIO_ERROR_FAILED);
+    } else if (err != PBIO_ERROR_AGAIN) {
+        pb_assert(err);
     }
 
-    memcpy(self->tx_buffer + 1, data, len);
-    self->tx_context.size = len + 1;
+    pb_type_async_t config = {
+        .parent_obj = self_in,
+        .iter_once = app_data_write_bytes_iterate_once,
+        .state = state,
+    };
 
-    pbdrv_bluetooth_send_queued(&self->tx_task, &self->tx_context);
-    return pb_module_tools_pbio_task_wait_or_await(&self->tx_task);
+    pb_type_app_data_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return pb_type_async_wait_or_await(&config, &self->tx_iter, true);
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(pb_type_app_data_write_bytes_obj, pb_type_app_data_write_bytes);
 
@@ -111,11 +123,7 @@ static mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_ar
     // Activate callback now that we have allocated the rx_buffer.
     pbsys_command_set_write_app_data_callback(handle_incoming_app_data);
 
-    // Prepare tx context. Only the length and data is variable.
-    app_data_instance->tx_context.done = NULL;
-    app_data_instance->tx_context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
-    app_data_instance->tx_context.data = app_data_instance->tx_buffer;
-    app_data_instance->tx_buffer[0] = PBIO_PYBRICKS_EVENT_WRITE_APP_DATA;
+    app_data_instance->tx_iter = NULL;
 
     return MP_OBJ_FROM_PTR(app_data_instance);
 }

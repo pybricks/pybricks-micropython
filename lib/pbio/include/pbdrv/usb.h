@@ -10,9 +10,11 @@
 #define _PBDRV_USB_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
+#include <pbio/protocol.h>
 
 /**
  * Indicates battery charging capabilites that were detected on a USB port.
@@ -32,6 +34,14 @@ typedef enum {
     PBDRV_USB_BCD_DEDICATED_CHARGING = 4,
 } pbdrv_usb_bcd_t;
 
+/**
+ * Callback that is called when receiving a Pybricks command.
+ *
+ * @param [in]  data        The data that was received.
+ * @param [in]  size        The size of @p data in bytes.
+ */
+typedef pbio_pybricks_error_t (*pbdrv_usb_receive_handler_t)(const uint8_t *data, uint32_t size);
+
 #if PBDRV_CONFIG_USB
 
 /**
@@ -39,6 +49,20 @@ typedef enum {
  * @return              The result.
  */
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void);
+
+/**
+ * Registers a callback that will be called when Pybricks data is received.
+ *
+ * @param [in]  handler     The function that will be called.
+ */
+void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler);
+
+/**
+ * Schedules Pybricks status to be sent soon.
+ *
+ * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
+ */
+void pbdrv_usb_schedule_status_update(const uint8_t *status_msg);
 
 /**
  * Transmits the given buffer over the USB stdout stream.
@@ -73,6 +97,12 @@ bool pbdrv_usb_connection_is_active(void);
 
 static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
+}
+
+static inline void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+}
+
+static inline void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
 }
 
 static inline pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {

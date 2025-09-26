@@ -190,30 +190,3 @@ void pb_package_pybricks_init(bool import_all) {
     pb_module_tools_init();
 }
 #endif // PYBRICKS_OPT_COMPILER
-
-// REVISIT: move these to object finalizers if we enable finalizers in the GC
-void pb_package_pybricks_deinit(void) {
-    #if PYBRICKS_PY_COMMON_BLE
-    pb_type_ble_start_cleanup();
-    #endif
-
-    #if PYBRICKS_PY_PUPDEVICES_REMOTE
-    // Disconnect from remote or LWP3 device.
-    pb_type_lwp3device_start_cleanup();
-    #endif // PYBRICKS_PY_PUPDEVICES_REMOTE
-
-    #if PYBRICKS_PY_COMMON_BLE || PYBRICKS_PY_PUPDEVICES_REMOTE
-    // By queueing and awaiting a task that does nothing, we know that all user
-    // tasks and deinit tasks queued before it have completed.
-    static pbio_task_t noop_task;
-    pbdrv_bluetooth_queue_noop(&noop_task);
-    while (noop_task.status == PBIO_ERROR_AGAIN || !pbsys_host_tx_is_idle()) {
-        MICROPY_VM_HOOK_LOOP
-
-        // Stop waiting (and potentially blocking) in case of forced shutdown.
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
-            break;
-        }
-    }
-    #endif // PYBRICKS_PY_COMMON_BLE || PYBRICKS_PY_PUPDEVICES_REMOTE
-}
