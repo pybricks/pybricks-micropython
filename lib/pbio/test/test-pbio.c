@@ -12,6 +12,7 @@
 #include <tinytest_macros.h>
 
 #include "../drv/motor_driver/motor_driver_virtual_simulation.h"
+#include "../drv/clock/clock_test.h"
 
 #include <pbdrv/core.h>
 
@@ -120,7 +121,8 @@ void pbio_test_run_thread_with_pbio_os_processes(void *env) {
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while ((test_thread(&state, NULL)) == PBIO_ERROR_AGAIN) {
-        pbio_os_run_processes_once();
+        pbio_os_run_processes_and_wait_for_event();
+        pbio_test_clock_tick(1);
         if (timeout > 0) {
             clock_gettime(CLOCK_MONOTONIC, &now_time);
             if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {
@@ -147,7 +149,7 @@ struct testcase_setup_t pbio_test_setup = {
     .cleanup_fn = cleanup,
 };
 
-extern struct testcase_t pbdrv_bluetooth_tests[];
+extern struct testcase_t pbdrv_bluetooth_btstack_tests[];
 extern struct testcase_t pbdrv_pwm_tests[];
 extern struct testcase_t pbio_angle_tests[];
 extern struct testcase_t pbio_battery_tests[];
@@ -160,13 +162,12 @@ extern struct testcase_t pbio_light_matrix_tests[];
 extern struct testcase_t pbio_int_math_tests[];
 extern struct testcase_t pbio_port_lump_tests[];
 extern struct testcase_t pbio_servo_tests[];
-extern struct testcase_t pbio_task_tests[];
 extern struct testcase_t pbio_trajectory_tests[];
 extern struct testcase_t pbio_util_tests[];
 extern struct testcase_t pbdrv_bluetooth_tests[];
 extern struct testcase_t pbsys_status_tests[];
 static struct testgroup_t test_groups[] = {
-    { "drv/bluetooth/", pbdrv_bluetooth_tests },
+    { "drv/bluetooth/", pbdrv_bluetooth_btstack_tests },
     { "drv/pwm/", pbdrv_pwm_tests },
     { "src/angle/", pbio_angle_tests },
     { "src/battery/", pbio_battery_tests },
@@ -179,7 +180,6 @@ static struct testgroup_t test_groups[] = {
     { "src/math/", pbio_int_math_tests },
     { "src/port_lump/", pbio_port_lump_tests },
     { "src/servo/", pbio_servo_tests },
-    { "src/task/", pbio_task_tests, },
     { "src/trajectory/", pbio_trajectory_tests },
     { "src/util/", pbio_util_tests, },
     { "sys/bluetooth/", pbdrv_bluetooth_tests, },

@@ -5,49 +5,43 @@
 #include <stdio.h>
 
 #include <btstack.h>
-#include <contiki.h>
+
 #include <tinytest_macros.h>
 #include <tinytest.h>
 
 #include <pbdrv/bluetooth.h>
 
+#include <pbio/os.h>
 #include <pbio/util.h>
 #include <pbsys/host.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <test-pbio.h>
 
-#include "../drv/clock/clock_test.h"
+static pbio_error_t test_bluetooth(pbio_os_state_t *state, void *context) {
 
-static PT_THREAD(test_bluetooth(struct pt *pt)) {
-    PT_BEGIN(pt);
+    static pbio_os_state_t sub;
+
+    PBIO_OS_ASYNC_BEGIN(state);
 
     pbsys_host_init();
 
     // power should be initialized to off
     tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_OFF);
 
-    pbdrv_bluetooth_power_on(true);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, false));
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, true));
 
-    // wait for the power on delay
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
-        pbio_test_bluetooth_get_control_state() == PBIO_TEST_BLUETOOTH_STATE_ON;
-    }));
+    tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_ON);
 
-    pbdrv_bluetooth_start_advertising();
+    pbdrv_bluetooth_start_advertising(true);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
-        pbio_test_bluetooth_is_advertising_enabled();
-    }));
+    tt_want(pbio_test_bluetooth_is_advertising_enabled());
 
     pbio_test_bluetooth_connect();
 
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
-        pbio_test_bluetooth_is_connected();
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, pbio_test_bluetooth_is_connected());
 
     // TODO: enable pybricks service notifications and do concurrent pybricks service and uart service calls
 
@@ -55,31 +49,22 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     static const char *test_data_1 = "test\n";
     static const char *test_data_2 = "test2\n";
-    uint32_t size;
+    static uint32_t size;
 
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
+    PBIO_OS_AWAIT_UNTIL(state, ({
         size = strlen(test_data_1);
         pbdrv_bluetooth_tx((const uint8_t *)test_data_1, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen(test_data_1));
 
-    // yielding here should allow the pbsys bluetooth process to run and queue
-    // the data in the uart buffer
-    PT_YIELD(pt);
-
-    // this next data should get pushed in the UART buffer but wait until the
-    // previous request is finished before sending
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
+    // this next data should get pushed in the buffer too
+    PBIO_OS_AWAIT_UNTIL(state, ({
         size = strlen(test_data_2);
         pbdrv_bluetooth_tx((const uint8_t *)test_data_2, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen(test_data_2));
-
-    PT_YIELD(pt);
 
     static const char *test_data_3 = "\x06test3\n";
     size = strlen(test_data_3);
@@ -87,8 +72,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     static uint8_t rx_data[20];
 
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
+    PBIO_OS_AWAIT_UNTIL(state, ({
         size = PBIO_ARRAY_SIZE(rx_data);
         pbsys_host_stdin_read(rx_data, &size) == PBIO_SUCCESS;
     }));
@@ -104,15 +88,14 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     static uint32_t count;
     count = pbio_test_bluetooth_get_pybricks_service_notification_count();
 
-    PT_WAIT_UNTIL(pt, ({
-        pbio_test_clock_tick(1);
+    PBIO_OS_AWAIT_UNTIL(state, ({
         pbio_test_bluetooth_get_pybricks_service_notification_count() != count;
     }));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 struct testcase_t pbdrv_bluetooth_tests[] = {
-    PBIO_PT_THREAD_TEST(test_bluetooth),
+    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_bluetooth),
     END_OF_TESTCASES
 };

@@ -15,7 +15,6 @@
 
 #include <test-pbio.h>
 
-#include "../../drv/bluetooth/bluetooth_btstack_run_loop_contiki.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/clock/clock_test.h"
 
@@ -790,7 +789,7 @@ static PT_THREAD(test_btstack_run_loop_contiki_poll(struct pt *pt)) {
     PT_END(pt);
 }
 
-struct testcase_t pbdrv_bluetooth_tests[] = {
+struct testcase_t pbdrv_bluetooth_btstack_tests[] = {
     PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_timer),
     PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_poll),
     END_OF_TESTCASES
