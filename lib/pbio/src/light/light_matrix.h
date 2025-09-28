@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <pbdrv/led.h>
+
 #include <pbio/error.h>
 #include <pbio/light_matrix.h>
 
@@ -11,25 +13,9 @@
 #ifndef _PBIO_LIGHT_LIGHT_MATRIX_H_
 #define _PBIO_LIGHT_LIGHT_MATRIX_H_
 
-/** Implementation-specific callbacks for a light matrix. */
-typedef struct {
-    /**
-     * Sets the light at @p row, @p col to @p brightness.
-     *
-     * @param [in]  light_matrix  The light matrix instance.
-     * @param [in]  row         The row index (0 to size-1).
-     * @param [in]  col         The column index (0 to size-1).
-     * @param [in]  brightness  The apparent brightness (0 to 100).
-     * @return                  Success/failure of the operation.
-     */
-    pbio_error_t (*set_pixel)(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness);
-} pbio_light_matrix_funcs_t;
-
 struct _pbio_light_matrix_t {
     /** Animation instance for background animation. */
     pbio_light_animation_t animation;
-    /** Implementation specific callback functions. */
-    const pbio_light_matrix_funcs_t *funcs;
     /** Animation cell data. */
     const uint8_t *animation_cells;
     /** The number of cells in @p animation_cells */
@@ -42,8 +28,8 @@ struct _pbio_light_matrix_t {
     uint8_t size;
     /** Orientation of the matrix: which side is "up". */
     pbio_geometry_side_t up_side;
+    /** The driver for this light matrix. */
+    pbdrv_led_array_dev_t *led_array_dev;
 };
-
-void pbio_light_matrix_init(pbio_light_matrix_t *light_matrix, uint8_t size, const pbio_light_matrix_funcs_t *funcs);
 
 #endif // _PBIO_LIGHT_LIGHT_MATRIX_H_

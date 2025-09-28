@@ -58,17 +58,17 @@ static PT_THREAD(test_light_matrix(struct pt *pt)) {
 
     // set pixel should only set one pixel
     test_light_matrix_reset();
-    tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix, 0, 0, 100), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix, 0, 0, 100, true), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(100, 0, 0, 0, 0, 0, 0, 0, 0);
 
     tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix,
-        MATRIX_SIZE - 1, MATRIX_SIZE - 1, 100), ==, PBIO_SUCCESS);
+        MATRIX_SIZE - 1, MATRIX_SIZE - 1, 100, true), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(100, 0, 0, 0, 0, 0, 0, 0, 100);
 
     // out of bounds checking
-    tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix, MATRIX_SIZE, 0, 100), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix, MATRIX_SIZE, 0, 100, true), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(100, 0, 0, 0, 0, 0, 0, 0, 100);
-    tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix, 0, MATRIX_SIZE, 100), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbio_light_matrix_set_pixel(&test_light_matrix, 0, MATRIX_SIZE, 100, true), ==, PBIO_SUCCESS);
     tt_want_light_matrix_data(100, 0, 0, 0, 0, 0, 0, 0, 100);
 
     // bitwise mapping

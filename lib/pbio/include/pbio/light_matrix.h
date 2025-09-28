@@ -20,16 +20,21 @@ typedef struct _pbio_light_matrix_t pbio_light_matrix_t;
 
 #if PBIO_CONFIG_LIGHT_MATRIX
 
+pbio_error_t pbio_light_matrix_get_dev(uint8_t index, uint8_t size, pbio_light_matrix_t **light_matrix);
 uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix);
 void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_geometry_side_t up_side);
 pbio_error_t pbio_light_matrix_clear(pbio_light_matrix_t *light_matrix);
 pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const uint8_t *rows);
-pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness);
+pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness, bool clear_animation);
 pbio_error_t pbio_light_matrix_set_image(pbio_light_matrix_t *light_matrix, const uint8_t *image);
 void pbio_light_matrix_start_animation(pbio_light_matrix_t *light_matrix, const uint8_t *cells, uint8_t num_cells, uint16_t interval);
 void pbio_light_matrix_stop_animation(pbio_light_matrix_t *light_matrix);
 
 #else // PBIO_CONFIG_LIGHT_MATRIX
+
+static inline pbio_error_t pbio_light_matrix_get_dev(uint8_t index, uint8_t size, pbio_light_matrix_t **light_matrix) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 static inline uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix) {
     return 0;
@@ -46,7 +51,7 @@ static inline pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
+static inline pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness, bool clear_animation) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

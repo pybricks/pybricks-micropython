@@ -14,6 +14,41 @@
 #include "animation.h"
 #include "light_matrix.h"
 
+static pbio_light_matrix_t light_matrices[PBIO_CONFIG_LIGHT_MATRIX_NUM_DEV];
+
+/**
+ * Gets and initializes the light matrix.
+ *
+ * Skips initialization if already initialized.
+ *
+ * @param [in]   index           Device index.
+ * @param [in]   size            The size of the square light matrix.
+ * @param [out]  light_matrix    The light matrix
+ * @return   ::PBIO_SUCCESS if device is available and initialization succeeds or completed previously.
+ *           ::PBIO_ERROR_NO_DEV if this index is invalid.
+ */
+pbio_error_t pbio_light_matrix_get_dev(uint8_t index, uint8_t size, pbio_light_matrix_t **light_matrix) {
+    if (index >= PBIO_CONFIG_LIGHT_MATRIX_NUM_DEV) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    pbio_light_matrix_t *dev = &light_matrices[index];
+    *light_matrix = dev;
+
+    if (dev->led_array_dev) {
+        // Already configured.
+        return PBIO_SUCCESS;
+    }
+
+    pbio_error_t err = pbdrv_led_array_get_dev(index, &dev->led_array_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    dev->size = size;
+    pbio_light_animation_init(&dev->animation, NULL);
+    return PBIO_SUCCESS;
+}
+
 /**
  * Sets the pixel to a given brightness.
  *
@@ -54,23 +89,12 @@ static pbio_error_t _pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matr
         }
     }
 
-    // Set the pixel brightness
-    return light_matrix->funcs->set_pixel(light_matrix, row, col, brightness);
-}
+    if (!light_matrix->led_array_dev) {
+        return PBIO_ERROR_NO_DEV;
+    }
 
-/**
- * Initializes the required fields in a ::pbio_light_matrix_t.
- *
- * This function must be called before using the ::pbio_light_matrix_t.
- *
- * @param [in]  light_matrix  The struct to initialize.
- * @param [in]  size        The size of the light matrix.
- * @param [in]  funcs       The instance-specific callback functions.
- */
-void pbio_light_matrix_init(pbio_light_matrix_t *light_matrix, uint8_t size, const pbio_light_matrix_funcs_t *funcs) {
-    light_matrix->size = size;
-    light_matrix->funcs = funcs;
-    pbio_light_animation_init(&light_matrix->animation, NULL);
+    // Set the pixel brightness
+    return pbdrv_led_array_set_brightness(light_matrix->led_array_dev, row * light_matrix->size + col, brightness);
 }
 
 /**
@@ -173,12 +197,13 @@ pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const
  * @param [in]  row         Row index (0 to size-1)
  * @param [in]  col         Column index (0 to size-1)
  * @param [in]  brightness  Brightness (0 to 100)
+ * @param [in]  clear_animation Whether to clear the matrix if an animation was active.
  * @return                  ::PBIO_SUCCESS on success or an
  *                          implementation-specific error on failure.
  */
-pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
+pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness, bool clear_animation) {
 
-    if (pbio_light_animation_is_started(&light_matrix->animation)) {
+    if (clear_animation && pbio_light_animation_is_started(&light_matrix->animation)) {
         pbio_light_matrix_clear(light_matrix);
     }
     return _pbio_light_matrix_set_pixel(light_matrix, row, col, brightness);

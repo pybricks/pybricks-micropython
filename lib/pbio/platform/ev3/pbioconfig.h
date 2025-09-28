@@ -8,7 +8,6 @@
 #define PBIO_CONFIG_IMAGE                   (1)
 #define PBIO_CONFIG_IMU                     (0)
 #define PBIO_CONFIG_LIGHT                   (1)
-#define PBIO_CONFIG_LIGHT_MATRIX            (1)
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_PORT                    (1)

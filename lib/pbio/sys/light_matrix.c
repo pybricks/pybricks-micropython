@@ -23,40 +23,8 @@
 
 #if PBSYS_CONFIG_HUB_LIGHT_MATRIX
 
-typedef struct {
-    /** Struct for PBIO light matrix implementation. */
-    pbio_light_matrix_t light_matrix;
-} pbsys_hub_light_matrix_t;
-
-static pbsys_hub_light_matrix_t pbsys_hub_light_matrix_instance;
-
-/** The hub built-in light matrix instance. */
-pbio_light_matrix_t *pbsys_hub_light_matrix = &pbsys_hub_light_matrix_instance.light_matrix;
-
-static pbio_error_t pbsys_hub_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
-    #if PBSYS_CONFIG_HUB_LIGHT_MATRIX_LED_ARRAY
-    // REVISIT: currently hub light matrix is hard-coded as LED array at index 0
-    // on all platforms
-    pbdrv_led_array_dev_t *array;
-    if (pbdrv_led_array_get_dev(0, &array) == PBIO_SUCCESS) {
-        return pbdrv_led_array_set_brightness(array, row * light_matrix->size + col, brightness);
-    }
-    #elif PBSYS_CONFIG_HUB_LIGHT_MATRIX_DISPLAY
-    pbio_image_t *display = pbdrv_display_get_image();
-    uint8_t value = brightness * (pbdrv_display_get_max_value() + 1) / 100;
-    const uint32_t size = PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBSYS_CONFIG_HMI_NUM_SLOTS;
-    const uint32_t width = size * 4 / 5;
-    const uint32_t offset = (PBDRV_CONFIG_DISPLAY_NUM_COLS - (PBSYS_CONFIG_HMI_NUM_SLOTS * size)) / 2;
-    pbio_image_fill_rect(display, col * size + offset, row * size, width, width, value);
-    pbdrv_display_update();
-    return PBIO_SUCCESS;
-    #endif
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static const pbio_light_matrix_funcs_t pbsys_hub_light_matrix_funcs = {
-    .set_pixel = pbsys_hub_light_matrix_set_pixel,
-};
+// revisit, we will drop this in the next commit
+pbio_light_matrix_t *pbsys_hub_light_matrix;
 
 /**
  * Displays the idle UI. Has a square stop sign and selected slot on bottom row.
@@ -70,7 +38,7 @@ static void pbsys_hub_light_matrix_show_idle_ui(uint8_t brightness) {
             #if PBSYS_CONFIG_HMI_NUM_SLOTS
             is_on |= (r == 4 && c == pbsys_status_get_selected_slot());
             #endif
-            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, is_on ? brightness : 0);
+            pbio_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, is_on ? brightness : 0, false);
         }
     }
 }
@@ -109,7 +77,7 @@ static void pbsys_hub_light_matrix_start_power_animation(void) {
 }
 
 void pbsys_hub_light_matrix_init(void) {
-    pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
+    pbio_light_matrix_get_dev(0, 5, &pbsys_hub_light_matrix);
     pbsys_hub_light_matrix_start_power_animation();
 }
 
@@ -124,7 +92,7 @@ void pbsys_hub_light_matrix_deinit(void) {
 static void pbsys_hub_light_matrix_user_program_animation_clear(void) {
     for (uint8_t r = 0; r < 3; r++) {
         for (uint8_t c = 1; c < 4; c++) {
-            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, 0);
+            pbio_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, 0, true);
         }
     }
 }
@@ -144,7 +112,7 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
         uint8_t brightness = offset > 200 ? 0 : (offset < 100 ? offset : 200 - offset);
 
         // Set the brightness for this pixel
-        pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, indexes[i] / 5, indexes[i] % 5, brightness);
+        pbio_light_matrix_set_pixel(pbsys_hub_light_matrix, indexes[i] / 5, indexes[i] % 5, brightness, false);
     }
     // This increment controls the speed of the pattern
     cycle += 9;
