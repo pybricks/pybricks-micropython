@@ -12,7 +12,7 @@
 
 #include <pbio/util.h>
 
-#include "animation.h"
+#include <pbio/light_animation.h>
 
 /**
  * This is used as a value for the next_animation field to indicate when an

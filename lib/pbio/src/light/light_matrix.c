@@ -11,8 +11,8 @@
 #include <pbio/light_matrix.h>
 #include <pbio/util.h>
 
-#include "animation.h"
-#include "light_matrix.h"
+#include <pbio/light_animation.h>
+#include <pbio/light_matrix.h>
 
 static pbio_light_matrix_t light_matrices[PBIO_CONFIG_LIGHT_MATRIX_NUM_DEV];
 

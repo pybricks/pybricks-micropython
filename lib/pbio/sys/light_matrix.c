@@ -18,7 +18,7 @@
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 
-#include "../src/light/light_matrix.h"
+#include <pbio/light_matrix.h>
 #include "hmi.h"
 
 #if PBSYS_CONFIG_HUB_LIGHT_MATRIX

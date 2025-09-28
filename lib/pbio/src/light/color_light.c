@@ -14,7 +14,7 @@
 #include <pbio/light.h>
 #include <pbio/util.h>
 
-#include "animation.h"
+#include <pbio/light_animation.h>
 #include "color_light.h"
 
 /**

@@ -7,7 +7,7 @@
 #include <pbio/error.h>
 #include <pbio/light.h>
 
-#include "animation.h"
+#include <pbio/light_animation.h>
 
 #ifndef _PBIO_LIGHT_COLOR_LIGHT_H_
 #define _PBIO_LIGHT_COLOR_LIGHT_H_

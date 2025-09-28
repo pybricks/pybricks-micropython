@@ -15,10 +15,9 @@
 #include <pbio/battery.h>
 #include <pbio/image.h>
 #include <pbio/imu.h>
+#include <pbio/light_animation.h>
 #include <pbio/motor_process.h>
 #include <pbio/port_interface.h>
-
-#include "light/animation.h"
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,

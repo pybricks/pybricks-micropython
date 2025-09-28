@@ -13,7 +13,6 @@
 #include <pbio/error.h>
 #include <pbio/light_matrix.h>
 
-#include "../src/light/light_matrix.h"
 #include "../drv/clock/clock_test.h"
 #include "../drv/pwm/pwm.h"
 #include "../drv/led/led_array.h"
