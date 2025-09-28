@@ -304,6 +304,4 @@ pbio_error_t pbio_port_process_none_thread(pbio_os_state_t *state, void *context
 
 void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t func, void *context);
 
-void pbio_os_process_init(pbio_os_process_t *process, pbio_os_process_func_t func);
-
 #endif // _PBIO_OS_H_

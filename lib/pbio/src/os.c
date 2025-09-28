@@ -57,7 +57,6 @@ void pbio_os_request_poll(void) {
     poll_request_is_pending = true;
 }
 
-static pbio_os_process_t *process_list = NULL;
 
 /**
  * Placeholder thread that does nothing and never completes.
@@ -69,50 +68,42 @@ pbio_error_t pbio_port_process_none_thread(pbio_os_state_t *state, void *context
     return PBIO_ERROR_AGAIN;
 }
 
+static pbio_os_process_t *process_list = NULL;
+
+static void add_process(pbio_os_process_t *process) {
+
+    pbio_os_process_t **pp = &process_list;
+
+    while (*pp) {
+        if (*pp == process) {
+            // Already in the list.
+            return;
+        }
+        pp = &(*pp)->next;
+    }
+
+    // Insert at end.
+    *pp = process;
+    process->next = NULL;
+}
+
 /**
  * Adds a process to the list of processes to run and starts it soon.
  *
- * @param process   The process to start.
+ * @param process   The process to start. Can be an existing process which will be reset.
  * @param func      The process thread function.
  * @param context   The context to pass to the process.
  */
 void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t func, void *context) {
 
-    // Add the new process to the end of the list.
-    pbio_os_process_t *last = process_list;
-    if (!last) {
-        process_list = process;
-    } else {
-        while (last->next) {
-            last = last->next;
-        }
-        last->next = process;
-    }
+    // Add the new process to the end of the list if not already in it.
+    add_process(process);
 
-    // Initialize the process.
-    process->next = NULL;
     process->context = context;
-
-    pbio_os_process_init(process, func);
-}
-
-/**
- * Initializes a process to the initial state with a protothread function to run.
- *
- * Can also be used to reset a process to the initial state or to change the
- * protothread function. Doing so should be done with caution, but can be useful
- * to make a process behave in distinct operation modes.
- *
- * @param process   The process to start.
- * @param func      The process thread function. Choose NULL if it does not need changing.
- */
-void pbio_os_process_init(pbio_os_process_t *process, pbio_os_process_func_t func) {
     process->err = PBIO_ERROR_AGAIN;
     process->state = 0;
     process->request = PBIO_OS_PROCESS_REQUEST_TYPE_NONE;
-    if (func) {
-        process->func = func;
-    }
+    process->func = func;
 
     // Request a poll to start the process soon, running to its first yield.
     pbio_os_request_poll();
