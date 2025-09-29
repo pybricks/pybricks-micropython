@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/watchdog.h>
 
 #include <pbio/busy_count.h>
@@ -36,6 +37,11 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
             pbsys_battery_poll();
             pbsys_program_stop_poll();
             pbsys_status_light_poll();
+
+            // Revisit: Use pbio/sys/host callback to indicate connection changes.
+            if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+            }
 
             // keep the hub from resetting itself
             pbdrv_watchdog_update();
