@@ -90,7 +90,7 @@
 #define PBDRV_CONFIG_SOUND_DEFAULT_VOLUME           75
 
 #define PBDRV_CONFIG_UART                           (1)
-#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (1)
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)
