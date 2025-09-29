@@ -16,7 +16,6 @@
 
 #include "hmi.h"
 #include "light.h"
-#include "light_matrix.h"
 #include "storage.h"
 #include "program_stop.h"
 
@@ -52,9 +51,9 @@ void pbsys_init(void) {
     pbsys_storage_init();
 
     pbsys_battery_init();
+    pbsys_hmi_init();
     pbsys_host_init();
     pbsys_status_light_init();
-    pbsys_hub_light_matrix_init();
 
     process_start(&pbsys_system_process);
 
@@ -65,11 +64,8 @@ void pbsys_init(void) {
 
 void pbsys_deinit(void) {
 
-    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-
     pbsys_storage_deinit();
-    pbsys_hub_light_matrix_deinit();
+    pbsys_hmi_deinit();
 
     uint32_t start = pbdrv_clock_get_ms();
 

@@ -25,7 +25,6 @@
 #include <pbsys/storage_settings.h>
 
 #include "hmi.h"
-#include "light_matrix.h"
 
 #define DEBUG 0
 
@@ -36,6 +35,39 @@
 #define DEBUG_PRINT(...)
 #endif
 
+static void hmi_lcd_grid_show_pixel(uint8_t row, uint8_t col, bool on) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    uint8_t value = on ? pbdrv_display_get_max_value(): 0;
+    const uint32_t size = PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBSYS_CONFIG_HMI_NUM_SLOTS;
+    const uint32_t width = size * 4 / 5;
+    const uint32_t offset = (PBDRV_CONFIG_DISPLAY_NUM_COLS - (PBSYS_CONFIG_HMI_NUM_SLOTS * size)) / 2;
+    pbio_image_fill_rect(display, col * size + offset, row * size, width, width, value);
+    pbdrv_display_update();
+}
+
+static void hmi_lcd_show_program_slot(void) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_fill(display, 0);
+
+    for (uint8_t r = 0; r < PBSYS_CONFIG_HMI_NUM_SLOTS; r++) {
+        for (uint8_t c = 0; c < PBSYS_CONFIG_HMI_NUM_SLOTS; c++) {
+            bool is_on = r < 3 && c > 0 && c < 4;
+            is_on |= (r == 4 && c == pbsys_status_get_selected_slot());
+            hmi_lcd_grid_show_pixel(r, c, is_on);
+        }
+    }
+}
+
+void pbsys_hmi_init(void) {
+
+}
+
+void pbsys_hmi_deinit(void) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_fill(display, 0);
+    pbdrv_display_update();
+}
+
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -45,7 +77,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         DEBUG_PRINT("Start HMI loop\n");
 
         // Visually indicate current state on supported hubs.
-        pbsys_hub_light_matrix_update_program_slot();
+        hmi_lcd_show_program_slot();
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.

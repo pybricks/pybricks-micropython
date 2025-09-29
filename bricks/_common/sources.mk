@@ -239,7 +239,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/hmi_pup.c \
 	sys/hmi_none.c \
 	sys/host.c \
-	sys/light_matrix.c \
 	sys/light.c \
 	sys/main.c \
 	sys/program_stop.c \

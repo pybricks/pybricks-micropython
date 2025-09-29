@@ -17,6 +17,12 @@
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
+void pbsys_hmi_init(void) {
+}
+
+void pbsys_hmi_deinit(void) {
+}
+
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
     while (pbdrv_button_get_pressed()) {

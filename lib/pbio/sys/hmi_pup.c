@@ -13,8 +13,11 @@
 #include <stdint.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/led.h>
 
 #include <pbio/button.h>
+#include <pbio/busy_count.h>
+#include <pbio/light_matrix.h>
 #include <pbio/os.h>
 #include <pbsys/host.h>
 #include <pbsys/light.h>
@@ -23,7 +26,6 @@
 #include <pbsys/storage_settings.h>
 
 #include "hmi.h"
-#include "light_matrix.h"
 
 #define DEBUG 0
 
@@ -33,6 +35,110 @@
 #else
 #define DEBUG_PRINT(...)
 #endif
+
+#if PBIO_CONFIG_LIGHT_MATRIX
+
+pbio_light_matrix_t *pbsys_hub_light_matrix;
+
+/**
+ * Displays the idle UI. Has a square stop sign and selected slot on bottom row.
+ *
+ * @param brightness   Brightness (0--100%).
+ */
+static void light_matrix_show_idle_ui(uint8_t brightness) {
+    for (uint8_t r = 0; r < PBSYS_CONFIG_HMI_NUM_SLOTS; r++) {
+        for (uint8_t c = 0; c < PBSYS_CONFIG_HMI_NUM_SLOTS; c++) {
+            bool is_on = r < 3 && c > 0 && c < 4;
+            is_on |= (r == 4 && c == pbsys_status_get_selected_slot());
+            pbio_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, is_on ? brightness : 0, true);
+        }
+    }
+}
+
+/**
+ * Bootup and shutdown animation. This is a process rather than an animation
+ * process so we can await completion, and later add sound.
+ */
+static pbio_error_t boot_animation_process_boot_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_timer_t timer;
+    static uint8_t step;
+
+    const int num_steps = 10;
+
+    // Makes the brightness increment or decrement.
+    bool booting = context;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (step = 1; step <= num_steps; step++) {
+        uint8_t brightness = booting ? step * (100 / num_steps) : 100 - (100 / num_steps) * step;
+        light_matrix_show_idle_ui(brightness);
+        PBIO_OS_AWAIT_MS(state, &timer, 200 / num_steps);
+    }
+    pbio_busy_count_down();
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Animation frame for program running animation.
+ */
+static uint32_t pbio_light_matrix_5x5_spinner_animation_next(pbio_light_animation_t *animation) {
+
+    // The indexes of pixels to light up
+    static const uint8_t indexes[] = { 1, 2, 3, 8, 13, 12, 11, 6 };
+
+    // Each pixel has a repeating brightness pattern of the form /\_ through
+    // which we can cycle in 256 steps.
+    static uint8_t cycle = 0;
+
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(indexes); i++) {
+        // The pixels are spread equally across the pattern.
+        uint8_t offset = cycle + i * (UINT8_MAX / PBIO_ARRAY_SIZE(indexes));
+        uint8_t brightness = offset > 200 ? 0 : (offset < 100 ? offset : 200 - offset);
+
+        // Set the brightness for this pixel
+        pbio_light_matrix_set_pixel(pbsys_hub_light_matrix, indexes[i] / 5, indexes[i] % 5, brightness, false);
+    }
+    // This increment controls the speed of the pattern
+    cycle += 9;
+
+    return 40;
+}
+
+static void light_matrix_start_run_animation(void) {
+    // Central pixel in spinner is off and will not be updated.
+    pbio_light_matrix_set_pixel(pbsys_hub_light_matrix, 1, 2, 0, true);
+    pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbio_light_matrix_5x5_spinner_animation_next);
+    pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
+}
+
+static pbio_os_process_t boot_animation_process;
+
+#endif
+
+void pbsys_hmi_init(void) {
+    #if PBIO_CONFIG_LIGHT_MATRIX
+    pbio_busy_count_up();
+    pbio_error_t err = pbio_light_matrix_get_dev(0, 5, &pbsys_hub_light_matrix);
+    if (err != PBIO_SUCCESS) {
+        // Effectively stopping boot if we can't get hardware.
+        return;
+    }
+    pbio_os_process_start(&boot_animation_process, boot_animation_process_boot_thread, (void *)true);
+    #endif
+}
+
+void pbsys_hmi_deinit(void) {
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+
+    #if PBIO_CONFIG_LIGHT_MATRIX
+    pbio_busy_count_up();
+    pbio_os_process_start(&boot_animation_process, boot_animation_process_boot_thread, (void *)false);
+    #endif
+}
 
 /**
  * The HMI is a loop running the following steps:
@@ -67,7 +173,9 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         DEBUG_PRINT("Start HMI loop\n");
 
         // Visually indicate current state on supported hubs.
-        pbsys_hub_light_matrix_update_program_slot();
+        #if PBIO_CONFIG_LIGHT_MATRIX
+        light_matrix_show_idle_ui(100);
+        #endif
 
         // Initialize Bluetooth depending on current state.
         if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
@@ -215,7 +323,10 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
     // Start run animations
-    pbsys_hub_light_matrix_handle_user_program_start();
+    #if PBIO_CONFIG_LIGHT_MATRIX
+    light_matrix_start_run_animation();
+    #endif
+
     #if PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS
     pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
     #else

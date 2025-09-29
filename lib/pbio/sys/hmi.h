@@ -11,9 +11,17 @@
 
 #if PBSYS_CONFIG_HMI
 
+void pbsys_hmi_init(void);
+void pbsys_hmi_deinit(void);
+
 pbio_error_t pbsys_hmi_await_program_selection(void);
 
 #else
+
+static inline void pbsys_hmi_init(void) {
+}
+static inline void pbsys_hmi_deinit(void) {
+}
 
 static inline pbio_error_t pbsys_hmi_await_program_selection(void) {
     return PBIO_ERROR_NOT_SUPPORTED;

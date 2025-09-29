@@ -19,7 +19,6 @@
 #include <pbsys/status.h>
 
 #include "hmi.h"
-#include "light_matrix.h"
 #include "program_stop.h"
 #include "storage.h"
 #include <pbsys/program_stop.h>
