@@ -5,6 +5,7 @@
 #include <pbio/port_interface.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
+#include "../../drv/led/led_array_pwm.h"
 
 const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
     .bank = NULL,
@@ -126,5 +127,18 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
         .initial_speed = 0,
         .endstop_angle_negative = -INFINITY,
         .endstop_angle_positive = INFINITY,
+    },
+};
+
+const pbdrv_led_array_pwm_platform_data_t pbdrv_led_array_pwm_platform_data[PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV] = {
+    {
+        .pwm_chs = (const uint8_t[]) {
+            0, 1, 2,
+            3, 4, 5,
+            6, 7, 8
+        },
+        .num_pwm_chs = 9,
+        .pwm_id = 0,
+        .id = 0,
     },
 };

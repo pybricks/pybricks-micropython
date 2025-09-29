@@ -26,7 +26,9 @@
 #define PBDRV_CONFIG_LED_NUM_DEV                            (0)
 
 #define PBDRV_CONFIG_LED_ARRAY                              (1)
-#define PBDRV_CONFIG_LED_ARRAY_NUM_DEV                      (0)
+#define PBDRV_CONFIG_LED_ARRAY_NUM_DEV                      (1)
+#define PBDRV_CONFIG_LED_ARRAY_PWM                          (1)
+#define PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV                  (1)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (6)
