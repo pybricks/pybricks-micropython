@@ -161,6 +161,10 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
         mp_hal_delay_ms(50);
     }
     pb_assert(err);
+    while ((err = pbio_port_lump_is_ready(self->lump_dev)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(50);
+    }
+    pb_assert(err);
     self->last_awaitable = NULL;
     return actual_id;
 }
