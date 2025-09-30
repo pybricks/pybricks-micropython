@@ -7,6 +7,10 @@
 
 #if PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32
 
+#if PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE < PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SIZE + 2048
+#error "Application RAM not big enough."
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
