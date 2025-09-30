@@ -91,7 +91,7 @@ typedef enum {
      */
     DCM_CATEGORY_NXT_I2C = PIN_STATE_ADC1_4800_to_5000 | PIN_STATE_P5_HIGH | PIN_STATE_MASK_P6,
     /**
-     * Device is NXT Temperature sensor (special case of I2C).
+     * Device is NXT Temperature sensor or Energy Meter (special case of I2C).
      */
     DCM_CATEGORY_NXT_TEMPERATURE = DCM_CATEGORY_NXT_I2C | PIN_STATE_P2_HIGH,
     /**
