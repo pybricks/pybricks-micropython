@@ -8,9 +8,11 @@
 
 #include "pbio/config.h"
 
+#include <pbio/error.h>
+
 void pbio_init(bool start_processes);
 void pbio_deinit(void);
-void pbio_main_stop_application_resources();
+pbio_error_t pbio_main_stop_application_resources(void);
 void pbio_main_soft_stop(void);
 
 #endif // _PBIO_MAIN_H_

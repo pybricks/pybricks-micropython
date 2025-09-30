@@ -24,6 +24,7 @@
 #define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31
 
 void pbdrv_bluetooth_init_hci(void);
+void pbdrv_bluetooth_controller_reset_hard(void);
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer);
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer);
 

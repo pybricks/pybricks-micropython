@@ -69,37 +69,28 @@ void pbio_main_soft_stop(void) {
     pbdrv_bluetooth_cancel_operation_request();
 }
 
-static void wait_for_bluetooth(void) {
-    pbio_os_state_t unused;
-    while (pbdrv_bluetooth_await_advertise_or_scan_command(&unused, NULL) == PBIO_ERROR_AGAIN ||
-           pbdrv_bluetooth_await_peripheral_command(&unused, NULL) == PBIO_ERROR_AGAIN) {
-
-        // Run event loop until Bluetooth is idle.
-        pbio_os_run_processes_and_wait_for_event();
-    }
-}
-
 /**
  * Stops all application-level background processes. Called when the user
  * application completes to get these modules back into their default state.
  * Drivers and OS-level processes continue running.
+ *
+ * @return   ::PBIO_SUCCESS when completed
+ *           ::PBIO_ERROR_TIMEDOUT if it could not stop processes in a reasonable
+ *             amount of time.
  */
-void pbio_main_stop_application_resources() {
+pbio_error_t pbio_main_stop_application_resources(void) {
 
     pbio_main_soft_stop();
 
-    // Let ongoing task finish first.
-    wait_for_bluetooth();
+    pbio_error_t err;
+    pbio_os_state_t state = 0;
+    pbio_os_timer_t timer;
+    pbio_os_timer_set(&timer, 5000);
 
-    // Stop broadcasting, observing and disconnect peripheral.
-    pbdrv_bluetooth_start_broadcasting(NULL, 0);
-    wait_for_bluetooth();
-
-    pbdrv_bluetooth_start_observing(NULL);
-    wait_for_bluetooth();
-
-    pbdrv_bluetooth_peripheral_disconnect();
-    wait_for_bluetooth();
+    // Run event loop until Bluetooth is idle or times out.
+    while ((err = pbdrv_bluetooth_close_user_tasks(&state, &timer)) == PBIO_ERROR_AGAIN) {
+        pbio_os_run_processes_and_wait_for_event();
+    }
 
     #if PBIO_CONFIG_LIGHT
     pbio_light_animation_stop_all();
@@ -109,6 +100,10 @@ void pbio_main_stop_application_resources() {
     pbio_image_fill(pbdrv_display_get_image(), 0);
     pbdrv_display_update();
     #endif
+
+    pbio_os_run_processes_and_wait_for_event();
+
+    return err;
 }
 
 /** @} */

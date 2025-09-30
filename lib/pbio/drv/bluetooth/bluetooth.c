@@ -559,7 +559,52 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
+
+    static pbio_os_state_t sub;
+
+    if (pbio_os_timer_is_expired(timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbdrv_bluetooth_cancel_operation_request();
+
+    // Let ongoing user tasks finish first.
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, NULL));
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    // Disconnect peripheral.
+    pbdrv_bluetooth_peripheral_disconnect();
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, NULL));
+
+    // Stop scanning.
+    pbdrv_bluetooth_start_observing(NULL);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    // Stop advertising.
+    pbdrv_bluetooth_start_broadcasting(NULL, 0);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 void pbdrv_bluetooth_deinit(void) {
+
+    // Under normal operation ::pbdrv_bluetooth_close_user_tasks completes
+    // normally and there should be no user activity at this point. If there
+    // is, a task got stuck, so exit forcefully.
+    pbio_os_state_t unused;
+    if (pbdrv_bluetooth_await_advertise_or_scan_command(&unused, NULL) != PBIO_SUCCESS ||
+        pbdrv_bluetooth_await_peripheral_command(&unused, NULL) != PBIO_SUCCESS) {
+
+        // Hard reset without waitng on completion of any process.
+        pbdrv_bluetooth_controller_reset_hard();
+        return;
+    }
+
+    // Gracefully disconnect from host and power down.
     pbio_busy_count_up();
     pbdrv_bluetooth_cancel_operation_request();
     shutting_down = true;

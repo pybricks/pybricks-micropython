@@ -848,6 +848,10 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
     return "v1.4";
 }
 
+void pbdrv_bluetooth_controller_reset_hard(void) {
+    hci_power_control(HCI_POWER_OFF);
+}
+
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     // The event handler also pushes the bluetooth process along, but shouldn't
@@ -864,7 +868,7 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
         PBIO_OS_AWAIT_UNTIL(state, le_con_handle == HCI_CON_HANDLE_INVALID);
     }
 
-    hci_power_control(HCI_POWER_OFF);
+    pbdrv_bluetooth_controller_reset_hard();
     PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_OFF);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

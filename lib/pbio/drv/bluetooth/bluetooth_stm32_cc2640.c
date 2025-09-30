@@ -1837,6 +1837,14 @@ static pbio_error_t init_uart_service(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+void pbdrv_bluetooth_controller_reset_hard(void) {
+    pybricks_notify_en = uart_tx_notify_en = false;
+    conn_handle = peripheral_singleton.con_handle = NO_CONNECTION;
+
+    spi_set_mrdy(false);
+    bluetooth_reset(RESET_STATE_OUT_LOW);
+}
+
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1847,11 +1855,8 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
         PBIO_OS_AWAIT_UNTIL(state, conn_handle == NO_CONNECTION);
     }
 
-    pybricks_notify_en = uart_tx_notify_en = false;
-    conn_handle = peripheral_singleton.con_handle = NO_CONNECTION;
+    pbdrv_bluetooth_controller_reset_hard();
 
-    spi_set_mrdy(false);
-    bluetooth_reset(RESET_STATE_OUT_LOW);
     PBIO_OS_AWAIT_MS(state, timer, 150);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

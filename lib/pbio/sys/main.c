@@ -114,7 +114,12 @@ int main(int argc, char **argv) {
         pbsys_main_run_program(&program);
 
         // Stop motors, user animations, user bluetooth activity, etc.
-        pbio_main_stop_application_resources();
+        err = pbio_main_stop_application_resources();
+        if (err != PBIO_SUCCESS) {
+            // If we couldn't get the system back in a normal state, proceed
+            // towards shutdown.
+            break;
+        }
 
         // Get system back in idle state.
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);

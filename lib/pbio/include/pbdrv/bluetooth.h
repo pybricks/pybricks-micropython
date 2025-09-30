@@ -503,6 +503,19 @@ void pbdrv_bluetooth_restart_observing_request(void);
  */
 pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context);
 
+/**
+ * Awaits user activity to complete, usually called during cleanup after running
+ * a user program. This will disconnect from the peripheral and stop scanning
+ * and advertising.
+ *
+ * @param [in]  state          Protothread state.
+ * @param [in]  timer          Timer used to give up if this takes too long.
+ * @return                     ::PBIO_SUCCESS on completion.
+ *                             ::PBIO_ERROR_AGAIN while awaiting.
+ *                             ::PBIO_ERROR_TIMEDOUT if the timer expired.
+ */
+pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
+
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
@@ -601,6 +614,11 @@ static inline pbio_error_t pbdrv_bluetooth_start_observing(
 static inline pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+
+static inline pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 
 #endif // PBDRV_CONFIG_BLUETOOTH
 
