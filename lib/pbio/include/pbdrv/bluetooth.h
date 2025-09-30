@@ -616,7 +616,8 @@ static inline pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_
 }
 
 static inline pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+    // Should not hold up systems without Bluetooth.
+    return PBIO_SUCCESS;
 }
 
 
