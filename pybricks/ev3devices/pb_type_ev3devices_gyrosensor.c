@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_EV3DEVICES
 
+#include "py/mphal.h"
+
 #include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
 #include <pybricks/parameters.h>
@@ -44,8 +46,15 @@ static mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
     ev3devices_GyroSensor_obj_t *self = mp_obj_malloc(ev3devices_GyroSensor_obj_t, type);
     pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_EV3_GYRO_SENSOR);
 
-    // Make sure device is in expected mode.
-    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__G_A);
+    // Make sure device is in expected mode. If not, wait briefly to allow some
+    // data to come in before we switch. This sensor does not appear to accept
+    // the mode change otherwise. The sensor stays in this mode, so we only
+    // need this once.
+    void *data;
+    if (pbio_port_lump_get_data(self->device_base.lump_dev, LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__G_A, &data) != PBIO_SUCCESS) {
+        mp_hal_delay_ms(100);
+        pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__G_A);
+    }
 
     self->direction = pb_type_enum_get_value(direction_in, &pb_enum_type_Direction);
 
