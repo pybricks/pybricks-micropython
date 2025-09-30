@@ -13,13 +13,13 @@
 extern const mp_obj_type_t pb_type_ev3devices_ColorSensor;
 extern const mp_obj_type_t pb_type_ev3devices_InfraredSensor;
 extern const mp_obj_type_t pb_type_ev3devices_TouchSensor;
+extern const mp_obj_type_t pb_type_ev3devices_UltrasonicSensor;
 
 #endif // PYBRICKS_PY_EV3DEVICES
 
 #if PYBRICKS_PY_EV3DEVDEVICES
 
 extern const mp_obj_type_t pb_type_ev3devices_GyroSensor;
-extern const mp_obj_type_t pb_type_ev3devices_UltrasonicSensor;
 
 #endif // PYBRICKS_PY_EV3DEVDEVICES
 
