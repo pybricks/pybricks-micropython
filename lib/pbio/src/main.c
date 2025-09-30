@@ -80,6 +80,7 @@ void pbio_main_soft_stop(void) {
  */
 pbio_error_t pbio_main_stop_application_resources(void) {
 
+    pbio_port_stop_user_actions(true);
     pbio_main_soft_stop();
 
     pbio_error_t err;
