@@ -39,7 +39,7 @@ Q(pybricks.nxtdevices)
 Q(pybricks.parameters)
 #endif
 
-#if PYBRICKS_PY_PUPDEVICES
+#if PYBRICKS_PY_PUPDEVICES || PYBRICKS_PY_EV3_PUP_ALIAS
 Q(pybricks.pupdevices)
 #endif
 

@@ -18,6 +18,9 @@ static const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_InfraredSensor),   MP_ROM_PTR(&pb_type_ev3devices_InfraredSensor)  },
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&pb_type_ev3devices_TouchSensor)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&pb_type_ev3devices_UltrasonicSensor)},
+    #if PYBRICKS_PY_EV3_PUP_ALIAS
+    { MP_ROM_QSTR(MP_QSTR_ForceSensor),      MP_ROM_PTR(&pb_type_ev3devices_TouchSensor)     },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(pb_module_ev3devices_globals, ev3devices_globals_table);
 
@@ -28,6 +31,9 @@ const mp_obj_module_t pb_module_ev3devices = {
 
 #if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_ev3devices, pb_module_ev3devices);
+#if PYBRICKS_PY_EV3_PUP_ALIAS
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_pupdevices, pb_module_ev3devices);
+#endif
 #endif
 
 #endif // PYBRICKS_PY_EV3DEVICES
