@@ -157,15 +157,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     static pbio_os_state_t sub;
 
-    /**
-     * Persistent state indicating whether we were connected the last time the
-     * HMI ran. If it was connected before but not now, we know we became
-     * disconnected. This is when we restart Bluetooth to get a new address and
-     * avoid reconnection issues. We also want to do that on boot, so we start
-     * this in true.
-     */
-    static bool previously_connected = true;
-
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
@@ -182,28 +173,15 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             DEBUG_PRINT("Connected: yes\n");
             pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
             pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-            previously_connected = true;
             // No need to stop advertising since this is automatic.
         } else {
             // Not connected right now.
             DEBUG_PRINT("Connected: No\n");
-            if (previously_connected) {
-                // Became disconnected just now or some time throughout the
-                // last user program run. Reset Bluetooth to get a new address.
-                // Also used the very first time we power on.
-                DEBUG_PRINT("Reset Bluetooth.\n");
-                PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, false));
-            }
             pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-            previously_connected = false;
 
-            // Enable or disable Bluetooth depending on user setting. This is
-            // a safe no-op if this was already set.
-            DEBUG_PRINT("Bluetooth is configured to be: %s. \n", pbsys_storage_settings_bluetooth_enabled_get() ? "on" : "off");
-            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, pbsys_storage_settings_bluetooth_enabled_get()));
-
-            // Update advertising state.
+            // Enable or disable advertising depending on user setting.
             bool do_advertise = pbsys_storage_settings_bluetooth_enabled_get();
+            DEBUG_PRINT("Advertising is configured to be: %s. \n", do_advertise ? "on" : "off");
             if (do_advertise) {
                 pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
             } else {
@@ -243,11 +221,11 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             // Wait for button press, external program start, or connection change.
             pbdrv_button_get_pressed() ||
             pbsys_main_program_start_is_requested() ||
-            pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) != previously_connected;
+            pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) != pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
         }));
 
         // Became connected or disconnected, so go back to handle it.
-        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) != previously_connected) {
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) != pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)) {
             DEBUG_PRINT("Connection changed.\n");
             continue;
         }
@@ -296,11 +274,9 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     }
 
     // Stop advertising if we are still doing so.
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
-        DEBUG_PRINT("Stop advertising on HMI exit.\n");
-        pbdrv_bluetooth_start_advertising(false);
-        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
-    }
+    DEBUG_PRINT("Stop advertising on HMI exit.\n");
+    pbdrv_bluetooth_start_advertising(false);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
     // Wait for all buttons to be released so the user doesn't accidentally
     // push their robot off course.

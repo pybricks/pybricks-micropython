@@ -378,12 +378,6 @@ disconnect:
 
 static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj_t timeout_in, lwp3_hub_kind_t hub_kind, pbdrv_bluetooth_receive_handler_t notification_handler, bool pair) {
 
-    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-    if (!pbsys_storage_settings_bluetooth_enabled_get()) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
-    }
-    #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     self->iter = NULL;

@@ -27,38 +27,6 @@
 #define DEBUG_PRINT(...)
 #endif
 
-/**
- * Bluetooth power state. True means on (or on requested) False means off (or off requested).
- */
-static bool power_on_requested;
-
-/**
- * Bluetooth power enable busy state. True means that the operation is busy.
- *
- * Starts off in the reset state, so starts busy.
- */
-static bool power_change_busy = true;
-
-pbio_error_t pbdrv_bluetooth_power_on(pbio_os_state_t *state, bool on) {
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // Await ongoing state change if any.
-    PBIO_OS_AWAIT_WHILE(state, power_change_busy);
-
-    // Already in requested state.
-    if (power_on_requested == on) {
-        return PBIO_SUCCESS;
-    }
-
-    // Kick the Bluetooth process and await Bluetooth to become ready again.
-    power_change_busy = true;
-    power_on_requested = on;
-    pbio_os_request_poll();
-    PBIO_OS_AWAIT_WHILE(state, power_change_busy);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
 pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -98,6 +66,7 @@ void pbdrv_bluetooth_init(void) {
     // as soon as the previous one completes + 1 byte for ring buf pointer
     static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE * 2 + 1];
     lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
+    pbio_busy_count_up();
 
     pbdrv_bluetooth_init_hci();
 }
@@ -450,112 +419,98 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+init:
+
+    DEBUG_PRINT("Bluetooth reset.\n");
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
+
+    DEBUG_PRINT("Bluetooth enable.\n");
+
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_bluetooth_controller_initialize(&sub, &timer));
+    if (err != PBIO_SUCCESS) {
+        DEBUG_PRINT("Initialization failed. Reset and retry.\n");
+        goto init;
+    }
+
+    DEBUG_PRINT("Bluetooth is now on and initialized.\n");
+
+    pbio_busy_count_down();
+
+    pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
+
+    // Service scheduled tasks as long as Bluetooth is enabled.
     while (!shutting_down) {
 
-        DEBUG_PRINT("Bluetooth disable requested.\n");
+        // In principle, this wait is only needed if there is nothing to do.
+        // In practice, leaving it here helps rather than hurts since it
+        // allows short stdout messages to be queued rather than sent separately.
+        PBIO_OS_AWAIT_MS(state, &timer, 1);
 
-        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
-        pbdrv_bluetooth_is_observing = false;
-        observe_restart_requested = false;
+        // Handle pending status update, if any.
+        if (can_send && (status_data_pending || pbio_os_timer_is_expired(&status_timer))) {
 
-        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
+            // When a status is pending, cache it here while we write it out,
+            // so a new status can be set in the mean time without losing it.
+            static uint8_t status_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
+            memcpy(status_buf, status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+            status_data_pending = false;
 
-        DEBUG_PRINT("Bluetooth is now off.\n");
-        power_change_busy = false;
-        pbio_os_request_poll();
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, status_buf, sizeof(status_buf)));
 
-        // Bluetooth is now disabled. Await system processes to ask for enable.
-        PBIO_OS_AWAIT_UNTIL(state, power_on_requested || shutting_down);
-        if (shutting_down) {
-            break;
-        }
-        DEBUG_PRINT("Bluetooth enable requested.\n");
-
-        PBIO_OS_AWAIT(state, &sub, err = pbdrv_bluetooth_controller_initialize(&sub, &timer));
-        if (err != PBIO_SUCCESS) {
-            DEBUG_PRINT("Initialization failed. Reset and retry.\n");
-            continue;
+            pbio_os_timer_set(&status_timer, status_timer.duration);
         }
 
-        DEBUG_PRINT("Bluetooth is now on and initialized.\n");
-        power_change_busy = false;
-        pbio_os_request_poll();
+        // Handle pending stdout, if any.
+        if (can_send && lwrb_get_full(&stdout_ring_buf) != 0) {
+            stdout_send_busy = true;
 
-        pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
+            static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE] = { PBIO_PYBRICKS_EVENT_WRITE_STDOUT };
+            static uint16_t stdout_len;
 
-        // Service scheduled tasks as long as Bluetooth is enabled.
-        while (power_on_requested && !shutting_down) {
+            stdout_len = lwrb_read(&stdout_ring_buf, &stdout_buf[1], PBDRV_BLUETOOTH_MAX_CHAR_SIZE - 1) + 1;
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, stdout_buf, stdout_len));
 
-            // In principle, this wait is only needed if there is nothing to do.
-            // In practice, leaving it here helps rather than hurts since it
-            // allows short stdout messages to be queued rather than sent separately.
-            PBIO_OS_AWAIT_MS(state, &timer, 1);
+            stdout_send_busy = false;
+        }
 
-            // Handle pending status update, if any.
-            if (can_send && (status_data_pending || pbio_os_timer_is_expired(&status_timer))) {
+        // Handle pending user value notification, if any.
+        if (can_send && user_notification_size) {
 
-                // When a status is pending, cache it here while we write it out,
-                // so a new status can be set in the mean time without losing it.
-                static uint8_t status_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
-                memcpy(status_buf, status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-                status_data_pending = false;
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub,
+                user_notification_send_buf,
+                user_notification_size));
 
-                PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, status_buf, sizeof(status_buf)));
+            user_notification_size = 0;
+        }
 
-                pbio_os_timer_set(&status_timer, status_timer.duration);
-            }
+        // Handle pending advertising/scan enable/disable task, if any.
+        if (advertising_or_scan_func) {
+            PBIO_OS_AWAIT(state, &sub, advertising_or_scan_err = advertising_or_scan_func(&sub, NULL));
+            advertising_or_scan_func = NULL;
+        }
 
-            // Handle pending stdout, if any.
-            if (can_send && lwrb_get_full(&stdout_ring_buf) != 0) {
-                stdout_send_busy = true;
+        // Handle pending peripheral task, if any.
+        if (peri->func) {
 
-                static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE] = { PBIO_PYBRICKS_EVENT_WRITE_STDOUT };
-                static uint16_t stdout_len;
-
-                stdout_len = lwrb_read(&stdout_ring_buf, &stdout_buf[1], PBDRV_BLUETOOTH_MAX_CHAR_SIZE - 1) + 1;
-                PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, stdout_buf, stdout_len));
-
-                stdout_send_busy = false;
-            }
-
-            // Handle pending user value notification, if any.
-            if (can_send && user_notification_size) {
-
-                PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub,
-                    user_notification_send_buf,
-                    user_notification_size));
-
-                user_notification_size = 0;
-            }
-
-            // Handle pending advertising/scan enable/disable task, if any.
-            if (advertising_or_scan_func) {
-                PBIO_OS_AWAIT(state, &sub, advertising_or_scan_err = advertising_or_scan_func(&sub, NULL));
-                advertising_or_scan_func = NULL;
-            }
-
-            // Handle pending peripheral task, if any.
-            if (peri->func) {
-
-                // If currently observing, stop if we need to scan for a peripheral.
-                if (pbdrv_bluetooth_is_observing && peri->func == pbdrv_bluetooth_peripheral_scan_and_connect_func) {
-                    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
-                    observe_restart_requested = true;
-                }
-
-                PBIO_OS_AWAIT(state, &sub, peri->err = peri->func(&sub, peri));
-                peri->func = NULL;
-                peri->cancel = false;
-            }
-
-            // Restart if we stopped it temporarily to scan for a peripheral or
-            // when externaly requested.
-            if (observe_restart_requested) {
-                DEBUG_PRINT("Restart observe.\n");
+            // If currently observing, stop if we need to scan for a peripheral.
+            if (pbdrv_bluetooth_is_observing && peri->func == pbdrv_bluetooth_peripheral_scan_and_connect_func) {
                 PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
-                PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_start_observing_func(&sub, NULL));
-                observe_restart_requested = false;
+                observe_restart_requested = true;
             }
+
+            PBIO_OS_AWAIT(state, &sub, peri->err = peri->func(&sub, peri));
+            peri->func = NULL;
+            peri->cancel = false;
+        }
+
+        // Restart if we stopped it temporarily to scan for a peripheral or
+        // when externaly requested.
+        if (observe_restart_requested) {
+            DEBUG_PRINT("Restart observe.\n");
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_start_observing_func(&sub, NULL));
+            observe_restart_requested = false;
         }
     }
 

@@ -26,12 +26,7 @@ static pbio_error_t test_bluetooth(pbio_os_state_t *state, void *context) {
 
     pbsys_host_init();
 
-    // power should be initialized to off
-    tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_OFF);
-
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, false));
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, true));
-
+    // power should be initialized by the time pbdrv completes.
     tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_ON);
 
     pbdrv_bluetooth_start_advertising(true);

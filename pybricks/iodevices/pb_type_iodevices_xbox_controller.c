@@ -372,12 +372,6 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         #endif // PYBRICKS_HUB_TECHNICHUB
         );
 
-    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-    if (!pbsys_storage_settings_bluetooth_enabled_get()) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Bluetooth not enabled"));
-    }
-    #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-
     pb_module_tools_assert_blocking();
 
     pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);

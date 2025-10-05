@@ -238,19 +238,6 @@ void pbdrv_bluetooth_init(void);
 void pbdrv_bluetooth_deinit(void);
 
 /**
- * Turns the Bluetooth chip power on or off. Await the operation.
- *
- * If it is already in the requested power state, this completes successfully
- * right away.
- *
- * @param [in]  state   The protothread state.
- * @param [in]  on      If true, turns power on, otherwise turns power off.
- * @return              ::PBIO_SUCCESS on completion,
- *                      ::PBIO_ERROR_AGAIN while awaiting.
- */
-pbio_error_t pbdrv_bluetooth_power_on(pbio_os_state_t *state, bool on);
-
-/**
  * Gets the bluetooth hub name.
  */
 const char *pbdrv_bluetooth_get_hub_name(void);
@@ -522,10 +509,6 @@ static inline void pbdrv_bluetooth_init(void) {
 }
 
 static inline void pbdrv_bluetooth_deinit(void) {
-}
-
-static inline pbio_error_t pbdrv_bluetooth_power_on(pbio_os_state_t *state, bool on) {
-    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline const char *pbdrv_bluetooth_get_hub_name(void) {
