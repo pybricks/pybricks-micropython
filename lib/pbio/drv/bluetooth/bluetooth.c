@@ -317,7 +317,17 @@ void pbdrv_bluetooth_cancel_operation_request(void) {
 static pbio_os_process_func_t advertising_or_scan_func;
 static pbio_error_t advertising_or_scan_err;
 
+pbdrv_bluetooth_advertising_state_t pbdrv_bluetooth_advertising_state;
+
 pbio_error_t pbdrv_bluetooth_start_advertising(bool start) {
+
+    bool is_advertising = pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
+
+    // Already in requested state. This makes it safe to call stop advertising
+    // even if it already stopped on becoming connected;
+    if (start == is_advertising) {
+        return PBIO_SUCCESS;
+    }
 
     if (advertising_or_scan_func) {
         return PBIO_ERROR_BUSY;
@@ -349,9 +359,13 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size
         return PBIO_ERROR_INVALID_ARG;
     }
 
+    bool is_broadcasting = pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
+
     // This means stop broadcasting.
     if (!data || !size) {
-        if (!pbdrv_bluetooth_is_broadcasting) {
+
+        if (!is_broadcasting) {
+            // Already stopped.
             return PBIO_SUCCESS;
         }
         advertising_or_scan_err = PBIO_ERROR_AGAIN;
@@ -362,7 +376,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size
 
     // Avoid I/O operations if the user tries to broadcast the same data
     // over and over in a tight loop.
-    if (pbdrv_bluetooth_is_broadcasting && pbdrv_bluetooth_broadcast_data_size == size && !memcmp(pbdrv_bluetooth_broadcast_data, data, size)) {
+    if (is_broadcasting && pbdrv_bluetooth_broadcast_data_size == size && !memcmp(pbdrv_bluetooth_broadcast_data, data, size)) {
         return PBIO_SUCCESS;
     }
     pbdrv_bluetooth_broadcast_data_size = size;
@@ -376,7 +390,6 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size
     return PBIO_SUCCESS;
 }
 
-bool pbdrv_bluetooth_is_broadcasting;
 bool pbdrv_bluetooth_is_observing;
 pbdrv_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
 
@@ -441,7 +454,7 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
 
         DEBUG_PRINT("Bluetooth disable requested.\n");
 
-        pbdrv_bluetooth_is_broadcasting = false;
+        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
         pbdrv_bluetooth_is_observing = false;
         observe_restart_requested = false;
 

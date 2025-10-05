@@ -281,6 +281,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
                 // don't start advertising again on disconnect
                 gap_advertisements_enable(false);
+                pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
             } else {
                 // If we aren't waiting for a peripheral connection, this must be a different connection.
                 if (handset.con_state != CON_STATE_WAIT_CONNECT) {
@@ -548,6 +549,8 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 
     PBIO_OS_AWAIT_UNTIL(state, event_packet && HCI_EVENT_IS_COMMAND_COMPLETE(event_packet, hci_le_set_advertising_data));
 
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -556,8 +559,10 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_BEGIN(state);
 
     gap_advertisements_enable(false);
-    pbdrv_bluetooth_is_broadcasting = false;
+
     // REVISIT: use callback to await operation
+
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -797,17 +802,18 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     gap_advertisements_set_data(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
 
     // If already broadcasting, await set data and return.
-    if (pbdrv_bluetooth_is_broadcasting) {
+    if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
         PBIO_OS_AWAIT_UNTIL(state, event_packet && HCI_EVENT_IS_COMMAND_COMPLETE(event_packet, hci_le_set_advertising_data));
         return PBIO_SUCCESS;
     }
 
-    pbdrv_bluetooth_is_broadcasting = true;
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0xA0, 0xA0, PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
     gap_advertisements_enable(true);
 
     PBIO_OS_AWAIT_UNTIL(state, event_packet && HCI_EVENT_IS_COMMAND_COMPLETE(event_packet, hci_le_set_advertise_enable));
+
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }

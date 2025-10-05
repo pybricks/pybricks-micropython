@@ -265,6 +265,8 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // aci_gap_set_discoverable_end();
 
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -281,10 +283,9 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     // This protothread is also shared with stop broadcasting. Either way,
     // nothing is advertising or broadcasting after this, so reset that state.
     // even if it wasn't active.
-    pbdrv_bluetooth_is_broadcasting = false;
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-    ;
 }
 
 
@@ -588,7 +589,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    if (!pbdrv_bluetooth_is_broadcasting) {
+    if (pbdrv_bluetooth_advertising_state != PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         aci_gap_set_non_connectable_begin(ADV_NONCONN_IND, STATIC_RANDOM_ADDR);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
@@ -620,7 +621,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
         // Errors from deleting are ignored since we should only get an error
         // if the AD does not exist, which is OK.
 
-        pbdrv_bluetooth_is_broadcasting = true;
+        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
     }
 
     // This has to be done _after_ other data is delete to make sure it fits.
@@ -898,6 +899,7 @@ static void handle_event(hci_event_pckt *event) {
                     evt_le_connection_complete *subevt = (evt_le_connection_complete *)evt->data;
                     if (subevt->role == GAP_PERIPHERAL_ROLE) {
                         conn_handle = subevt->handle;
+                        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
                     } else {
                         peri->con_handle = subevt->handle;
                     }

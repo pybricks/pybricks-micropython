@@ -203,19 +203,14 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_power_on(&sub, pbsys_storage_settings_bluetooth_enabled_get()));
 
             // Update advertising state.
-            if (pbsys_storage_settings_bluetooth_enabled_get()) {
-                // Start advertising if we aren't already.
-                if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
-                    pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-                    DEBUG_PRINT("Start advertising.\n");
-                    pbdrv_bluetooth_start_advertising(true);
-                    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
-                }
+            bool do_advertise = pbsys_storage_settings_bluetooth_enabled_get();
+            if (do_advertise) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
             } else {
-                // Not advertising if Bluetooth is disabled. The physical state
-                // is already off, but we need the blinking to stop too.
                 pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
             }
+            pbdrv_bluetooth_start_advertising(do_advertise);
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
         }
 
         // Buttons could be pressed at the end of the user program, so wait for

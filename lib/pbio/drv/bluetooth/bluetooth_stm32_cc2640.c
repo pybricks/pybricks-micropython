@@ -296,6 +296,8 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // ignoring response data
 
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -315,10 +317,8 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     // Status could also be bleIncorrectMode which means "Not advertising".
     // This is not expected, but should be safe to ignore.
 
-    // This protothread is also shared with stop broadcasting. Either way,
-    // nothing is advertising or broadcasting after this, so reset that state.
-    // even if it wasn't active.
-    pbdrv_bluetooth_is_broadcasting = false;
+    // This protothread is also shared with stop broadcasting.
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -804,7 +804,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     HCI_LE_setAdvertisingData(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
 
-    if (pbdrv_bluetooth_is_broadcasting) {
+    if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
         // Already broadcasting, so just updating the data as above is enough.
         return PBIO_SUCCESS;
     }
@@ -823,7 +823,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     // wait for make discoverable done event
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
 
-    pbdrv_bluetooth_is_broadcasting = true;
+    pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -1318,6 +1318,9 @@ static void handle_event(uint8_t *packet) {
                         DBG("link: %04x", conn_handle);
                         // assume minimum MTU until we get an exchange MTU request
                         conn_mtu = ATT_MTU_SIZE;
+
+                        // Establishing the link implicitly stops advertising.
+                        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
 
                         // On 2019 and newer MacBooks, the default interval was
                         // measured to be 15 ms. This caused advertisement to

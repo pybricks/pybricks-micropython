@@ -52,7 +52,14 @@ extern size_t pbdrv_bluetooth_char_write_size;
 extern uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
 extern uint8_t pbdrv_bluetooth_broadcast_data_size;
 
-extern bool pbdrv_bluetooth_is_broadcasting;
+typedef enum {
+    PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE,
+    PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS,
+    PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING,
+} pbdrv_bluetooth_advertising_state_t;
+
+extern pbdrv_bluetooth_advertising_state_t pbdrv_bluetooth_advertising_state;
+
 extern bool pbdrv_bluetooth_is_observing;
 extern pbdrv_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
 
