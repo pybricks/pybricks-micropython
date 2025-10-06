@@ -166,6 +166,14 @@ int main(int argc, char **argv) {
             pbdrv_reset(PBDRV_RESET_ACTION_RESET);
         }
     }
+    #else
+    // Delay poweroff until we are definitively sure that the button has been
+    // released. This prevent the hub from unintentionally powering back on.
+    pbio_os_timer_t timer;
+    pbio_os_timer_set(&timer, 100);
+    while (!pbio_os_timer_is_expired(&timer)) {
+        pbio_os_run_processes_and_wait_for_event();
+    }
     #endif
 
     // Platform-specific power off.
