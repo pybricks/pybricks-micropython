@@ -14,6 +14,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/led.h>
+#include <pbdrv/usb.h>
 
 #include <pbio/button.h>
 #include <pbio/busy_count.h>
@@ -133,11 +134,23 @@ void pbsys_hmi_init(void) {
 void pbsys_hmi_deinit(void) {
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
 
     #if PBIO_CONFIG_LIGHT_MATRIX
     pbio_busy_count_up();
     pbio_os_process_start(&boot_animation_process, boot_animation_process_boot_thread, (void *)false);
     #endif
+}
+
+/**
+ * Tests if the BLE or USB connection has changed.
+ *
+ * @return  @c true if the system status is different from the driver status. @c false if unchanged.
+ */
+static bool host_connection_changed(void) {
+    return
+        pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) != pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED) ||
+        pbdrv_usb_connection_is_active() != pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
 }
 
 /**
@@ -168,28 +181,36 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         light_matrix_show_idle_ui(100);
         #endif
 
-        // Initialize Bluetooth depending on current state.
-        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
-            DEBUG_PRINT("Connected: yes\n");
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-            // No need to stop advertising since this is automatic.
+        // Update USB state.
+        DEBUG_PRINT("USB Connected: ");
+        if (pbdrv_usb_connection_is_active()) {
+            DEBUG_PRINT("Yes.\n");
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
         } else {
-            // Not connected right now.
-            DEBUG_PRINT("Connected: No\n");
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-
-            // Enable or disable advertising depending on user setting.
-            bool do_advertise = pbsys_storage_settings_bluetooth_enabled_get();
-            DEBUG_PRINT("Advertising is configured to be: %s. \n", do_advertise ? "on" : "off");
-            if (do_advertise) {
-                pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-            } else {
-                pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-            }
-            pbdrv_bluetooth_start_advertising(do_advertise);
-            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+            DEBUG_PRINT("No.\n");
+            pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
         }
+
+        // Update BLE state.
+        DEBUG_PRINT("BLE Connected: ");
+        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+            DEBUG_PRINT("Yes.\n");
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+        } else {
+            DEBUG_PRINT("No.\n");
+            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+        }
+
+        // Advertise if BLE enabled and there is no host connection.
+        bool advertise = pbsys_storage_settings_bluetooth_enabled_get() && !pbsys_host_is_connected();
+        DEBUG_PRINT("BLE Advertising: %s. \n", advertise ? "on" : "off");
+        if (advertise) {
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+        } else {
+            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+        }
+        pbdrv_bluetooth_start_advertising(advertise);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
@@ -221,24 +242,24 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             // Wait for button press, external program start, or connection change.
             pbdrv_button_get_pressed() ||
             pbsys_main_program_start_is_requested() ||
-            pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) != pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+            host_connection_changed();
         }));
 
         // Became connected or disconnected, so go back to handle it.
-        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) != pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)) {
+        if (host_connection_changed()) {
             DEBUG_PRINT("Connection changed.\n");
             continue;
         }
 
-        // External progran request takes precedence over buttons.
+        // External program request takes precedence over buttons.
         if (pbsys_main_program_start_is_requested()) {
             DEBUG_PRINT("Start program from Pybricks Code.\n");
             break;
         }
 
         #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-        // Toggle Bluetooth enable setting if Bluetooth button pressed. Only if disconnected.
-        if ((pbdrv_button_get_pressed() & PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON) && !pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+        // Toggle Bluetooth enable setting if Bluetooth button pressed. Only when disconnected.
+        if ((pbdrv_button_get_pressed() & PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON) && !pbsys_host_is_connected()) {
             pbsys_storage_settings_bluetooth_enabled_set(!pbsys_storage_settings_bluetooth_enabled_get());
             DEBUG_PRINT("Toggling Bluetooth to: %s. \n", pbsys_storage_settings_bluetooth_enabled_get() ? "on" : "off");
             continue;

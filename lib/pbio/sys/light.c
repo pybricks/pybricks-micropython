@@ -29,10 +29,11 @@ typedef enum {
 } pbsys_status_light_indication_warning_t;
 
 typedef enum {
-    PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_NONE,
-    PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING,
-    PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE,
-} pbsys_status_light_indication_ble_t;
+    PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE,
+    PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING,
+    PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED,
+    PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY,
+} pbsys_status_light_indication_usb_ble_t;
 
 /** A single element of a status light indication pattern. */
 typedef struct {
@@ -95,12 +96,12 @@ pbsys_status_light_indication_pattern_warning[] = {
 
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern_ble[] = {
-    [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_NONE] =
+    [PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
     },
     // Two blue blinks, pause, then repeat.
-    [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING] =
+    [PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_BLUE, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
@@ -109,9 +110,14 @@ pbsys_status_light_indication_pattern_ble[] = {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Blue, always on.
-    [PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE] =
+    [PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
+    },
+    // Green, always on.
+    [PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_GREEN),
     },
 };
 
@@ -198,23 +204,25 @@ void pbsys_status_light_handle_status_change(void) {
         warning_indication = PBSYS_STATUS_LIGHT_INDICATION_WARNING_LOW_VOLTAGE;
     }
 
-    // BLE pattern precedence.
-    pbsys_status_light_indication_ble_t ble_indication = PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_NONE;
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
-        ble_indication = PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_ADVERTISING;
+    // USB/BLE pattern precedence.
+    pbsys_status_light_indication_usb_ble_t usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE;
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED)) {
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY;
+    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING;
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)
                #if !PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
                // Hubs without Bluetooth light show idle state only when program not running.
                && !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
                #endif
                ) {
-        ble_indication = PBSYS_STATUS_LIGHT_INDICATION_BLUETOOTH_BLE_CONNECTED_IDLE;
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED;
     }
 
     // If the indication changed, then reset the indication pattern to the
     // beginning. Reset both so that patterns with the same length stay in sync.
-    if (ble_pattern_state->indication != ble_indication || warning_pattern_state->indication != warning_indication) {
-        ble_pattern_state->indication = ble_indication;
+    if (ble_pattern_state->indication != usb_ble_indication || warning_pattern_state->indication != warning_indication) {
+        ble_pattern_state->indication = usb_ble_indication;
         ble_pattern_state->pattern_index = ble_pattern_state->pattern_count = 0;
 
         warning_pattern_state->indication = warning_indication;

@@ -5,6 +5,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/watchdog.h>
+#include <pbdrv/usb.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/main.h>
@@ -38,9 +39,12 @@ PROCESS_THREAD(pbsys_system_process, ev, data) {
             pbsys_program_stop_poll();
             pbsys_status_light_poll();
 
-            // Revisit: Use pbio/sys/host callback to indicate connection changes.
-            if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+            // Revisit: Move to HMI process running parallel to user code.
+            if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
                 pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
+            }
+            if (!pbdrv_usb_connection_is_active()) {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
             }
 
             // keep the hub from resetting itself

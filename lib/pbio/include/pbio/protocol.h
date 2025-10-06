@@ -341,6 +341,12 @@ typedef enum {
      * @since Pybricks Profile v1.5.0
      */
     PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_WARNING = 11,
+    /**
+     * Hub is connected to a host (like Pybricks Code) via USB.
+     *
+     * @since Pybricks Profile v1.5.0
+     */
+    PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED = 12,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_flags_t;
