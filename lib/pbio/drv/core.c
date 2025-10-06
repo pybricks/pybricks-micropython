@@ -73,25 +73,12 @@ void pbdrv_init(void) {
     __asm volatile ("cpsie i" : : : "memory");
     #endif
 
-    // Some hubs turn on power to the I/O ports in the bootloader. This causes
-    // us to miss the initial synchronization window, so we lose more time.
-    // This is fixed by power cycling them here and allowing some reset time.
-    #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
-    pbdrv_ioport_enable_vcc(false);
-    uint32_t ioport_reset_time = pbdrv_clock_get_ms();
-    #endif
-
     // Wait for all async pbdrv drivers to initialize before starting
     // higher level system processes.
     while (pbio_busy_count_busy()) {
         pbio_os_run_processes_once();
     }
 
-    #if PBDRV_CONFIG_IOPORT_PUP_QUIRK_POWER_CYCLE
-    while (pbdrv_clock_get_ms() - ioport_reset_time < 500) {
-        pbio_os_run_processes_once();
-    }
-    #endif
     pbdrv_ioport_enable_vcc(true);
 }
 
