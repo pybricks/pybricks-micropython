@@ -143,34 +143,27 @@ void pbsys_hmi_deinit(void) {
 }
 
 /**
- * Tests if the BLE or USB connection has changed.
- *
- * @return  @c true if the system status is different from the driver status. @c false if unchanged.
- */
-static bool host_connection_changed(void) {
-    return
-        pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) != pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED) ||
-        pbdrv_usb_connection_is_active() != pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
-}
-
-/**
  * The HMI is a loop running the following steps:
  *
- *    - Update Bluetooth state, based on current state. This enables or
- *      disables bluetooth and starts/stop advertising.
  *    - Wait for any buttons to be released in case they were pressed
- *    - Wait for a button press, external program start, or connection change.
- *    - If valid program requested, break out of loop to start program. Otherwise,
- *      update state based on what happened and start over.
+ *    - Wait for a button press, external program start, while monitoring idle
+ *      timeout and BLE advertising.
+ *    - If valid program requested, break out of loop to start program.
+ *      Otherwise, update state based on what happened and start over.
  *    - After leaving the loop, wait for all buttons to be released.
  *
  * The three waiting operations are cancelled if poweroff is requested.
  */
-static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
+static pbio_error_t run_ui(pbio_os_state_t *state) {
 
     static pbio_os_state_t sub;
 
+    static pbio_os_timer_t idle_timer;
+    static pbio_os_timer_t input_timer;
+
     PBIO_OS_ASYNC_BEGIN(state);
+
+    pbio_os_timer_set(&idle_timer, PBSYS_CONFIG_HMI_IDLE_TIMEOUT_MS);
 
     for (;;) {
 
@@ -180,37 +173,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         #if PBIO_CONFIG_LIGHT_MATRIX
         light_matrix_show_idle_ui(100);
         #endif
-
-        // Update USB state.
-        DEBUG_PRINT("USB Connected: ");
-        if (pbdrv_usb_connection_is_active()) {
-            DEBUG_PRINT("Yes.\n");
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
-        } else {
-            DEBUG_PRINT("No.\n");
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
-        }
-
-        // Update BLE state.
-        DEBUG_PRINT("BLE Connected: ");
-        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
-            DEBUG_PRINT("Yes.\n");
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-        } else {
-            DEBUG_PRINT("No.\n");
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-        }
-
-        // Advertise if BLE enabled and there is no host connection.
-        bool advertise = pbsys_storage_settings_bluetooth_enabled_get() && !pbsys_host_is_connected();
-        DEBUG_PRINT("BLE Advertising: %s. \n", advertise ? "on" : "off");
-        if (advertise) {
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-        } else {
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-        }
-        pbdrv_bluetooth_start_advertising(advertise);
-        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
@@ -223,9 +185,11 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }));
 
         DEBUG_PRINT("Start waiting for input.\n");
+
         // Wait on a button, external program start, or connection change. Stop
         // waiting on timeout or shutdown.
-        PBIO_OS_AWAIT_UNTIL(state, ({
+        while (!pbdrv_button_get_pressed() && !pbsys_main_program_start_is_requested()) {
+
             // Shutdown may be requested by a background process such as critical
             // battery or holding the power button.
             if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
@@ -234,21 +198,23 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
             // Exit on timeout except while connected to host.
             if (pbsys_host_is_connected()) {
-                pbio_os_timer_set(timer, timer->duration);
-            } else if (pbio_os_timer_is_expired(timer)) {
+                pbio_os_timer_set(&idle_timer, idle_timer.duration);
+            } else if (pbio_os_timer_is_expired(&idle_timer)) {
                 return PBIO_ERROR_TIMEDOUT;
             }
 
-            // Wait for button press, external program start, or connection change.
-            pbdrv_button_get_pressed() ||
-            pbsys_main_program_start_is_requested() ||
-            host_connection_changed();
-        }));
+            // Advertise if BLE enabled and there is no host connection.
+            bool advertise = pbsys_storage_settings_bluetooth_enabled_get() && !pbsys_host_is_connected();
+            if (advertise) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+            } else {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+            }
+            pbdrv_bluetooth_start_advertising(advertise);
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
-        // Became connected or disconnected, so go back to handle it.
-        if (host_connection_changed()) {
-            DEBUG_PRINT("Connection changed.\n");
-            continue;
+            // Don't block the loop.
+            PBIO_OS_AWAIT_MS(state, &input_timer, 10);
         }
 
         // External program request takes precedence over buttons.
@@ -261,7 +227,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         // Toggle Bluetooth enable setting if Bluetooth button pressed. Only when disconnected.
         if ((pbdrv_button_get_pressed() & PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON) && !pbsys_host_is_connected()) {
             pbsys_storage_settings_bluetooth_enabled_set(!pbsys_storage_settings_bluetooth_enabled_get());
-            DEBUG_PRINT("Toggling Bluetooth to: %s. \n", pbsys_storage_settings_bluetooth_enabled_get() ? "on" : "off");
+            DEBUG_PRINT("Toggling BLE advertising to: %s. \n", pbsys_storage_settings_bluetooth_enabled_get() ? "on" : "off");
             continue;
         }
         #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
@@ -339,13 +305,10 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
  */
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
-    pbio_os_timer_t idle_timer;
-    pbio_os_timer_set(&idle_timer, PBSYS_CONFIG_HMI_IDLE_TIMEOUT_MS);
-
     pbio_os_state_t state = 0;
 
     pbio_error_t err;
-    while ((err = run_ui(&state, &idle_timer)) == PBIO_ERROR_AGAIN) {
+    while ((err = run_ui(&state)) == PBIO_ERROR_AGAIN) {
         // run all processes and wait for next event.
         pbio_os_run_processes_and_wait_for_event();
     }
