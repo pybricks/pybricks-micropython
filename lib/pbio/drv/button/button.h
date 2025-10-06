@@ -15,9 +15,15 @@
  */
 void pbdrv_button_init(void);
 
+/**
+ * De-initializes the low level button driver.
+ */
+void pbdrv_button_deinit(void);
+
 #else
 
 #define pbdrv_button_init()
+#define pbdrv_button_deinit()
 
 #endif
 

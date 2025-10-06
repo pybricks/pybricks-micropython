@@ -14,6 +14,9 @@
 void pbdrv_button_init(void) {
 }
 
+void pbdrv_button_deinit(void) {
+}
+
 pbio_button_flags_t pbdrv_button_get_pressed(void) {
 
     nx_avr_button_t button = nx_avr_get_button();
