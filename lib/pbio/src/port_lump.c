@@ -7,13 +7,13 @@
 
 #include <string.h>
 
-#include <contiki.h>
-
 #include <pbio/os.h>
 #include <pbio/util.h>
 
 #include <pbio/port_interface.h>
 #include <pbio/port_lump.h>
+
+#include <pbdrv/clock.h>
 #include <pbdrv/ioport.h>
 
 #define DEBUG 0

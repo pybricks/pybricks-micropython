@@ -5,8 +5,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbdrv/charger.h>
 #include <pbdrv/led.h>
 #include <pbio/color.h>

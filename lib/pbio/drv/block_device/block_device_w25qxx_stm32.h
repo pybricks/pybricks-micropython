@@ -12,8 +12,6 @@
 
 #if PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32
 
-#include <contiki.h>
-
 #include <pbdrv/gpio.h>
 
 #include <pbio/error.h>

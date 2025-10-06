@@ -2,8 +2,6 @@
 // Copyright (c) 2013, 2014 Damien P. George
 // Copyright (c) 2018-2021 The Pybricks Authors
 
-#include <contiki.h>
-
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_CLOCK_STM32
@@ -81,7 +79,6 @@ void SysTick_Handler(void) {
     // work properly.
     SysTick->CTRL;
 
-    etimer_request_poll();
     pbio_os_request_poll();
 }
 

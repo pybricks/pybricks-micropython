@@ -9,8 +9,6 @@
 #include "py/objstr.h"
 #include "py/runtime.h"
 
-#include <contiki.h>
-
 #include <pbdrv/uart.h>
 #include <pbio/port_interface.h>
 

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2020-2023 The Pybricks Authors
 
-#include <contiki.h>
-
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
@@ -39,8 +37,6 @@ void pbdrv_init(void) {
 
     // it is important that clocks go first since almost everything depends on clocks
     pbdrv_clock_init();
-    process_init();
-    process_start(&etimer_process);
 
     // the rest of the drivers should be implemented so that init order doesn't matter
     pbdrv_adc_init();

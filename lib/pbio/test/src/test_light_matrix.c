@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 #include <test-pbio.h>

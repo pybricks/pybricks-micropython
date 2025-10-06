@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <pbdrv/clock.h>
+
 #include <pbio/os.h>
 
 #include <pbsys/host.h>
@@ -37,10 +39,6 @@ static void pbsys_status_update_emit(void) {
 
     // Other processes may be awaiting status changes, so poll.
     pbio_os_request_poll();
-
-    // REVISIT: Can be deleted once all processes that poll the status are
-    // updated to use the new pbio os event loop.
-    process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
 }
 
 static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool set) {

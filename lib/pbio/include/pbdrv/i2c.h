@@ -15,7 +15,6 @@
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/port.h>
-#include <contiki.h>
 
 typedef struct _pbdrv_i2c_dev_t pbdrv_i2c_dev_t;
 

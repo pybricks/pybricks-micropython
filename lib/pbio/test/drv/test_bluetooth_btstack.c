@@ -9,7 +9,6 @@
 #include <btstack.h>
 #include <btstack_chipset_cc256x.h>
 #include <contiki-lib.h>
-#include <contiki.h>
 #include <tinytest_macros.h>
 #include <tinytest.h>
 

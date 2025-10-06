@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 

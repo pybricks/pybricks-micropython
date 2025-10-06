@@ -18,7 +18,6 @@
 
 #include <pbio/main.h>
 
-#include <contiki.h>
 #include <pbio/os.h>
 
 #define PBIO_TEST_TIMEOUT 1 // seconds

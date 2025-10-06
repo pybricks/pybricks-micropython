@@ -7,18 +7,6 @@
 
 LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
-# Contiki
-
-CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
-	lib/list.c \
-	lib/memb.c \
-	lib/ringbuf.c \
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
-	)
-
 # Pybricks modules
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\

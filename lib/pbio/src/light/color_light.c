@@ -7,8 +7,6 @@
 
 #if PBIO_CONFIG_LIGHT
 
-#include <contiki.h>
-
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/light.h>

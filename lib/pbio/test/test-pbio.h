@@ -6,7 +6,6 @@
 
 #include <stdint.h>
 
-#include <contiki.h>
 
 #include <pbio/button.h>
 #include <pbio/int_math.h>

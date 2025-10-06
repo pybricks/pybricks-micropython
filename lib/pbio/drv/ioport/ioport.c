@@ -5,8 +5,6 @@
 
 #if PBDRV_CONFIG_IOPORT
 
-#include <contiki.h>
-
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 

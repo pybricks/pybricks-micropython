@@ -39,8 +39,6 @@
 
 #include <stdbool.h>
 
-#include <contiki.h>
-
 #include <pbdrv/adc.h>
 #include <pbdrv/battery.h>
 #include <pbdrv/clock.h>

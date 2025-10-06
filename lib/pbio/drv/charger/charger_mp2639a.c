@@ -17,8 +17,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbdrv/adc.h>
 #include <pbdrv/charger.h>
 #include <pbdrv/gpio.h>

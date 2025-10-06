@@ -110,7 +110,6 @@ endif
 ifeq ($(PB_LIB_STM32_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
-INC += -I$(PBTOP)/lib/contiki-core
 INC += -I$(PBTOP)/lib/lego
 INC += -I$(PBTOP)/lib/lwrb/src/include
 INC += -I$(PBTOP)/lib/pbio/include
@@ -516,7 +515,6 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 
-OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LWRB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LEGO_SPEC_SRC_C:.c=.o))

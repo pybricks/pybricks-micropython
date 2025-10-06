@@ -20,8 +20,6 @@
 #include <signal.h>
 #include <stdio.h>
 
-#include <contiki.h>
-
 #define NSEC_PER_MSEC       1000000
 
 #define TIMER_SIGNAL        SIGRTMIN
@@ -35,7 +33,6 @@ static void handle_signal(int sig) {
     // for MicroPython to ensure that any blocking syscall on the
     // main thread is interrupted and the event poll hook runs.
     if (pthread_self() == main_thread) {
-        etimer_request_poll();
         pbio_os_request_poll();
     } else {
         pthread_kill(main_thread, TIMER_SIGNAL);
