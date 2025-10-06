@@ -858,13 +858,36 @@ void pbdrv_bluetooth_controller_reset_hard(void) {
     hci_power_control(HCI_POWER_OFF);
 }
 
+/**
+ * btstack's hci_power_control() synchronously emits an event that would cause
+ * it to re-enter the event loop. This would not be safe to call from within
+ * the event loop. This wrapper ensures it is called at most once.
+ */
+static pbio_error_t bluetooth_btstack_handle_power_control(pbio_os_state_t *state, HCI_POWER_MODE power_mode, HCI_STATE end_state) {
+
+    bool do_it_this_time = false;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    do_it_this_time = true;
+    PBIO_OS_ASYNC_SET_CHECKPOINT(state);
+
+    // The first time we get here, do_it_this_time = true, so we call
+    // hci_power_control. When it re-enters at the checkpoint above, it will
+    // be false, so move on.
+    if (do_it_this_time) {
+        hci_power_control(power_mode);
+    }
+
+    // Wait for the power state to take effect.
+    PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == end_state);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
-    // The event handler also pushes the bluetooth process along, but shouldn't
-    // be needing to touch the power state.
-    if (event_packet) {
-        return PBIO_ERROR_AGAIN;
-    }
+    static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -874,24 +897,20 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
         PBIO_OS_AWAIT_UNTIL(state, le_con_handle == HCI_CON_HANDLE_INVALID);
     }
 
-    pbdrv_bluetooth_controller_reset_hard();
-    PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_OFF);
+    // Wait for power off.
+    PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_OFF, HCI_STATE_OFF));
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
-    // The event handler also pushes the bluetooth process along, but shouldn't
-    // be needing to touch the power state.
-    if (event_packet) {
-        return PBIO_ERROR_AGAIN;
-    }
+    static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    hci_power_control(HCI_POWER_ON);
-    PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_WORKING);
+    // Wait for power on.
+    PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_ON, HCI_STATE_WORKING));
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
