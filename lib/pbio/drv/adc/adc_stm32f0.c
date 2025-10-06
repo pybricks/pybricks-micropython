@@ -8,8 +8,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbdrv/adc.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
@@ -19,8 +17,6 @@
 #if PBDRV_CONFIG_ADC_STM32F0_RANDOM
 #include "../random/random_adc.h"
 #endif
-
-PROCESS(pbdrv_adc_process, "ADC");
 
 static void pbdrv_adc_calibrate(void) {
     // NB: it takes more than this to make sure ADC is disabled
@@ -62,8 +58,6 @@ void pbdrv_adc_init(void) {
     // TODO: LEGO firmware reads CH 3 during init 10 times and averages it.
     // Not sure what this is measuring or what it would be used for. Perhaps
     // some kind of ID resistor?
-
-    process_start(&pbdrv_adc_process);
 }
 
 pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
@@ -90,19 +84,6 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     #endif
 
     return PBIO_SUCCESS;
-}
-
-PROCESS_THREAD(pbdrv_adc_process, ev, data) {
-    // TODO: use DMA for background updates and add filtering
-    // PROCESS_POLLHANDLER(pbdrv_adc_poll());
-
-    PROCESS_BEGIN();
-
-    while (true) {
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
 }
 
 #endif // PBDRV_CONFIG_ADC_STM32F0
