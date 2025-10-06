@@ -66,7 +66,6 @@ void pbdrv_bluetooth_init(void) {
     // as soon as the previous one completes + 1 byte for ring buf pointer
     static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE * 2 + 1];
     lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
-    pbio_busy_count_up();
 
     pbdrv_bluetooth_init_hci();
 }
@@ -434,8 +433,6 @@ init:
     }
 
     DEBUG_PRINT("Bluetooth is now on and initialized.\n");
-
-    pbio_busy_count_down();
 
     pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
 
