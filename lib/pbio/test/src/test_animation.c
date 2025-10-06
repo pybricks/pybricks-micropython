@@ -15,8 +15,6 @@
 
 #define TEST_ANIMATION_TIME 10
 
-PROCESS_NAME(pbio_light_animation_process);
-
 static uint8_t test_animation_set_hsv_call_count;
 
 static uint32_t test_animation_next(pbio_light_animation_t *animation) {
@@ -24,36 +22,42 @@ static uint32_t test_animation_next(pbio_light_animation_t *animation) {
     return TEST_ANIMATION_TIME;
 }
 
-static PT_THREAD(test_light_animation(struct pt *pt)) {
-    PT_BEGIN(pt);
+#define YIELD(state)      \
+    do {                                        \
+        do_yield_now = 1;                       \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);    \
+        if (do_yield_now) {                     \
+            return PBIO_ERROR_AGAIN;            \
+        }                                       \
+    } while (0)
+
+static pbio_error_t test_light_animation(pbio_os_state_t *state, void *context) {
+    PBIO_OS_ASYNC_BEGIN(state);
 
     static pbio_light_animation_t test_animation;
     pbio_light_animation_init(&test_animation, test_animation_next);
 
-    // process should not be running yet
-    tt_want(!process_is_running(&pbio_light_animation_process));
+    // animation should not be started yet
     tt_want(!pbio_light_animation_is_started(&test_animation));
 
-    // starting animation should start process and set a timer at 0ms to call
+    // starting animation should set a timer at 0ms to call
     // next() after handling pending events
     pbio_light_animation_start(&test_animation);
     tt_want(pbio_light_animation_is_started(&test_animation));
-    tt_want(process_is_running(&pbio_light_animation_process));
-    pbio_handle_pending_events();
+    YIELD(state);
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
 
     // next() should not be called again until after a delay
-    pbio_test_clock_tick(TEST_ANIMATION_TIME - 1);
-    PT_YIELD(pt);
+    pbio_test_clock_tick(TEST_ANIMATION_TIME - 2);
+    YIELD(state);
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
     pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    YIELD(state);
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 2);
 
-    // stopping the animation stops the process
+    // stopping the animation stops the animation
     pbio_light_animation_stop(&test_animation);
     tt_want(!pbio_light_animation_is_started(&test_animation));
-    tt_want(!process_is_running(&pbio_light_animation_process));
 
     // exercise multiple animations for code coverage
     static pbio_light_animation_t test_animation2;
@@ -65,27 +69,23 @@ static PT_THREAD(test_light_animation(struct pt *pt)) {
     pbio_light_animation_stop(&test_animation);
     tt_want(!pbio_light_animation_is_started(&test_animation));
     tt_want(pbio_light_animation_is_started(&test_animation2));
-    tt_want(process_is_running(&pbio_light_animation_process));
     pbio_light_animation_stop(&test_animation2);
     tt_want(!pbio_light_animation_is_started(&test_animation));
     tt_want(!pbio_light_animation_is_started(&test_animation2));
-    tt_want(!process_is_running(&pbio_light_animation_process));
 
     // stopping all animations stops the process
     pbio_light_animation_start(&test_animation);
     pbio_light_animation_start(&test_animation2);
     tt_want(pbio_light_animation_is_started(&test_animation));
     tt_want(pbio_light_animation_is_started(&test_animation2));
-    tt_want(process_is_running(&pbio_light_animation_process));
     pbio_light_animation_stop_all();
     tt_want(!pbio_light_animation_is_started(&test_animation));
     tt_want(!pbio_light_animation_is_started(&test_animation2));
-    tt_want(!process_is_running(&pbio_light_animation_process));
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 struct testcase_t pbio_light_animation_tests[] = {
-    PBIO_PT_THREAD_TEST(test_light_animation),
+    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_light_animation),
     END_OF_TESTCASES
 };
