@@ -139,14 +139,11 @@ int main(int argc, char **argv) {
     // Stop system processes and selected drivers in reverse order. This will
     // also save user data to flash,
     pbsys_deinit();
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // Now lower-level processes may shutdown and/or power off.
     pbio_deinit();
     pbdrv_deinit();
-
-    // REVISIT: We should use the deinit hooks above to gracefully request exit
-    // instead of having the drivers rely on system statuses.
-    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // The power could be held on due to someone pressing the center button
     // so we have this loop to keep handling events to drive processes that
