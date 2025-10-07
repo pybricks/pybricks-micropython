@@ -34,6 +34,7 @@
 #include "py/mphal.h"
 #include "py/objmodule.h"
 #include "py/persistentcode.h"
+#include "py/reader.h"
 #include "py/repl.h"
 #include "py/runtime.h"
 #include "py/stackctrl.h"
@@ -72,35 +73,6 @@ bool pbsys_main_stdin_event(uint8_t c) {
     }
 
     return false;
-}
-
-// The following defines a reader for use by micropython/py/persistentcode.c.
-typedef struct _mp_vfs_map_minimal_t {
-    const byte *cur;
-    const byte *end;
-} mp_vfs_map_minimal_t;
-
-mp_uint_t mp_vfs_map_minimal_readbyte(void *data) {
-    mp_vfs_map_minimal_t *blob = (mp_vfs_map_minimal_t *)data;
-    return (blob->cur < blob->end) ? *blob->cur++ : MP_READER_EOF;
-}
-
-const uint8_t *mp_vfs_map_minimal_read_bytes(mp_reader_t *reader, size_t len) {
-    mp_vfs_map_minimal_t *blob = (mp_vfs_map_minimal_t *)reader->data;
-    const uint8_t *ptr = blob->cur;
-    blob->cur += len;
-    return ptr;
-}
-
-static void mp_vfs_map_minimal_close(void *data) {
-}
-
-static void mp_vfs_map_minimal_new_reader(mp_reader_t *reader, mp_vfs_map_minimal_t *data, const byte *buf, size_t len) {
-    data->cur = buf;
-    data->end = buf + len;
-    reader->data = data;
-    reader->readbyte = mp_vfs_map_minimal_readbyte;
-    reader->close = mp_vfs_map_minimal_close;
 }
 
 // Prints the exception that ended the program.
@@ -270,8 +242,7 @@ static void run_user_program(void) {
 
         // This is similar to __import__ except we don't push/pop globals
         mp_reader_t reader;
-        mp_vfs_map_minimal_t data;
-        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size));
+        mp_reader_new_mem(&reader, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size), MP_READER_IS_ROM);
         mp_module_context_t *context = m_new_obj(mp_module_context_t);
         context->module.globals = mp_globals_get();
         mp_compiled_module_t compiled_module;
@@ -472,8 +443,7 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
     if (info) {
         // Parse the static script data.
         mp_reader_t reader;
-        mp_vfs_map_minimal_t data;
-        mp_vfs_map_minimal_new_reader(&reader, &data, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size));
+        mp_reader_new_mem(&reader, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size), MP_READER_IS_ROM);
 
         // Create new module and execute in its own context.
         mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);

@@ -116,7 +116,8 @@
 #define MICROPY_PERSISTENT_CODE_LOAD            (1)
 #define MICROPY_ENABLE_EXTERNAL_IMPORT          (0)
 #define MICROPY_HAS_FILE_READER                 (0)
-#define MICROPY_VFS_MAP_MINIMAL                 (1)
+#define MICROPY_VFS_ROM                         (1)
+#define MICROPY_VFS_ROM_IOCTL                   (0)
 #if PYBRICKS_OPT_CUSTOM_IMPORT
 #define mp_builtin___import__ pb_builtin_import
 #endif
