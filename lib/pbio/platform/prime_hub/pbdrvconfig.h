@@ -34,7 +34,7 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR 0x08007d80
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (258 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          ((256 + 16) * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32      (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q256 (1)
 // Carve out 256K from the reserved 1M area at the start of the flash.
