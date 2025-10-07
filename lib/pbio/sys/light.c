@@ -150,11 +150,11 @@ static pbsys_status_light_t pbsys_status_light_instance_main;
 pbio_color_light_t *pbsys_status_light_main = &pbsys_status_light_instance_main.color_light;
 
 #if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
-static pbsys_status_light_t pbsys_status_light_instance_ble;
-static pbsys_status_light_pattern_state_t *ble_pattern_state = &pbsys_status_light_instance_ble.pattern_state;
+static pbsys_status_light_t pbsys_status_light_instance_usb_ble;
+static pbsys_status_light_pattern_state_t *usb_ble_pattern_state = &pbsys_status_light_instance_usb_ble.pattern_state;
 static pbsys_status_light_pattern_state_t *warning_pattern_state = &pbsys_status_light_instance_main.pattern_state;
 #else
-static pbsys_status_light_pattern_state_t *ble_pattern_state = &pbsys_status_light_instance_main.pattern_state;
+static pbsys_status_light_pattern_state_t *usb_ble_pattern_state = &pbsys_status_light_instance_main.pattern_state;
 static pbsys_status_light_pattern_state_t *warning_pattern_state = &pbsys_status_light_instance_main.pattern_overlay_state;
 #endif
 
@@ -183,8 +183,8 @@ void pbsys_status_light_init(void) {
     pbdrv_led_get_dev(0, &pbsys_status_light_instance_main.led);
     pbio_color_light_init(pbsys_status_light_main, &pbsys_status_light_funcs);
     #if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
-    pbdrv_led_get_dev(2, &pbsys_status_light_instance_ble.led);
-    pbio_color_light_init(&pbsys_status_light_instance_ble.color_light, &pbsys_status_light_funcs);
+    pbdrv_led_get_dev(2, &pbsys_status_light_instance_usb_ble.led);
+    pbio_color_light_init(&pbsys_status_light_instance_usb_ble.color_light, &pbsys_status_light_funcs);
     #endif
 }
 
@@ -210,20 +210,22 @@ void pbsys_status_light_handle_status_change(void) {
         usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY;
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
         usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING;
-    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)
-               #if !PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
-               // Hubs without Bluetooth light show idle state only when program not running.
-               && !pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
-               #endif
-               ) {
+    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)) {
         usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED;
     }
 
+    #if !PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
+    // Hubs without Bluetooth light don't show connectivity state if program is running.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE;
+    }
+    #endif
+
     // If the indication changed, then reset the indication pattern to the
     // beginning. Reset both so that patterns with the same length stay in sync.
-    if (ble_pattern_state->indication != usb_ble_indication || warning_pattern_state->indication != warning_indication) {
-        ble_pattern_state->indication = usb_ble_indication;
-        ble_pattern_state->pattern_index = ble_pattern_state->pattern_count = 0;
+    if (usb_ble_pattern_state->indication != usb_ble_indication || warning_pattern_state->indication != warning_indication) {
+        usb_ble_pattern_state->indication = usb_ble_indication;
+        usb_ble_pattern_state->pattern_index = usb_ble_pattern_state->pattern_count = 0;
 
         warning_pattern_state->indication = warning_indication;
         warning_pattern_state->pattern_index = warning_pattern_state->pattern_count = 0;
@@ -347,7 +349,7 @@ void pbsys_status_light_poll(void) {
         warning_pattern_state, pbsys_status_light_indication_pattern_warning);
 
     pbio_color_t new_ble_color = pbsys_status_light_pattern_next(
-        ble_pattern_state, pbsys_status_light_indication_pattern_ble);
+        usb_ble_pattern_state, pbsys_status_light_indication_pattern_ble);
 
 
     pbio_color_t new_main_color = new_warning_color;
@@ -366,7 +368,7 @@ void pbsys_status_light_poll(void) {
 
     pbsys_status_light_set_pattern_or_user_color(&pbsys_status_light_instance_main, new_main_color);
     #if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
-    pbsys_status_light_set_pattern_or_user_color(&pbsys_status_light_instance_ble, new_ble_color);
+    pbsys_status_light_set_pattern_or_user_color(&pbsys_status_light_instance_usb_ble, new_ble_color);
     #endif
 
     // REVISIT: We should be able to make updating the state event driven instead of polled.
