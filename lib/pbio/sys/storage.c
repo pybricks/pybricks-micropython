@@ -73,10 +73,11 @@ static uint32_t pbsys_storage_get_used_program_data_size(void) {
  * @returns             Maximum program size in bytes.
  */
 uint32_t pbsys_storage_get_maximum_program_size(void) {
-    // FIXME: This is the total size of *all* slots. This is not a
-    // good indicator of the free space for multi-slot hubs. We need to inform
-    // the host dynamically about the available size of the current slot.
-    return pbdrv_block_device_get_writable_size() - sizeof(pbsys_storage_data_map_t);
+    // FIXME: This is overly conservative since only the sum of of all program
+    // slots is the limiting factor. However, then we would need to inform the
+    // host dynamically about the available size of the current slot. Until
+    // we have that, it is safer to use an absolute limit.
+    return ((pbdrv_block_device_get_writable_size() - sizeof(pbsys_storage_data_map_t)) / PBSYS_CONFIG_STORAGE_NUM_SLOTS / sizeof(uint32_t)) * sizeof(uint32_t);
 }
 
 /**
@@ -266,7 +267,7 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
 }
 
 /**
- * Writes program data to user RAM.
+ * Writes program data to user RAM, from the offset of the incoming slot.
  *
  * Should be combined with at least one call to ::pbsys_storage_set_program_size.
  *
@@ -280,10 +281,7 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
  *                          Otherwise ::PBIO_SUCCESS.
  */
 pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, uint32_t size) {
-    // REVISIT: This protects against writing beyond the limit, but we should
-    // be informing the host about this ahead of time instead of failing during
-    // runtime.
-    if (map->slot_info[incoming_slot].offset + offset + size > pbsys_storage_get_maximum_program_size()) {
+    if (offset + size > pbsys_storage_get_maximum_program_size()) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
