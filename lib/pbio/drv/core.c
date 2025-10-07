@@ -76,7 +76,7 @@ void pbdrv_init(void) {
     // Wait for all async pbdrv drivers to initialize before starting
     // higher level system processes.
     while (pbio_busy_count_busy()) {
-        pbio_os_run_processes_once();
+        pbio_os_run_processes_and_wait_for_event();
     }
 
     pbdrv_ioport_enable_vcc(true);
@@ -91,7 +91,7 @@ void pbdrv_deinit(void) {
     pbdrv_bluetooth_deinit();
 
     while (pbio_busy_count_busy()) {
-        pbio_os_run_processes_once();
+        pbio_os_run_processes_and_wait_for_event();
     }
 
 }

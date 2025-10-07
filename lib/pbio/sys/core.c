@@ -78,7 +78,7 @@ void pbsys_init(void) {
     pbio_os_process_start(&pbsys_system_poll_process, pbsys_system_poll_process_thread, NULL);
 
     while (pbio_busy_count_busy()) {
-        pbio_os_run_processes_once();
+        pbio_os_run_processes_and_wait_for_event();
     }
 }
 
@@ -94,6 +94,6 @@ void pbsys_deinit(void) {
     // Wait for all relevant pbsys processes to end, but at least 500 ms so we
     // see a shutdown animation even if the button is released sooner.
     while (pbio_busy_count_busy() || pbdrv_clock_get_ms() - start < 500) {
-        pbio_os_run_processes_once();
+        pbio_os_run_processes_and_wait_for_event();
     }
 }
