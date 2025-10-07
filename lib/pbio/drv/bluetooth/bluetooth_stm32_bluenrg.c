@@ -1308,9 +1308,13 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, {
             // Iterate the main Bluetooth thread once when some data is
-            // available or new data can be sent. It runs forever, so we don't
-            // check the busy state or returned error.
-            pbdrv_bluetooth_process_thread(&main_thread_state, NULL);
+            // available or new data can be sent.
+            pbio_error_t err = pbdrv_bluetooth_process_thread(&main_thread_state, NULL);
+
+            // Exit this spi process once the high level Bluetooth process completes.
+            if (err != PBIO_ERROR_AGAIN) {
+                return err;
+            }
 
             // - spi_irq is set by the interrupt handler when there is new
             //   data to be processed, which also polls this process in order
