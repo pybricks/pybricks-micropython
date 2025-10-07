@@ -89,11 +89,8 @@ void pbsys_deinit(void) {
     pbsys_storage_deinit();
     pbsys_hmi_deinit();
 
-    uint32_t start = pbdrv_clock_get_ms();
-
-    // Wait for all relevant pbsys processes to end, but at least 500 ms so we
-    // see a shutdown animation even if the button is released sooner.
-    while (pbio_busy_count_busy() || pbdrv_clock_get_ms() - start < 500) {
+    // Wait for all relevant pbsys processes to end.
+    while (pbio_busy_count_busy()) {
         pbio_os_run_processes_and_wait_for_event();
     }
 }

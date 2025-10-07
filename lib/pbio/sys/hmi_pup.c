@@ -82,6 +82,9 @@ static pbio_error_t boot_animation_process_boot_thread(pbio_os_state_t *state, v
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+// Boot and shutdown animation are the same.
+static pbio_os_process_func_t boot_animation_process_shutdown_thread = boot_animation_process_boot_thread;
+
 /**
  * Animation frame for program running animation.
  */
@@ -115,9 +118,23 @@ static void light_matrix_start_run_animation(void) {
     pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
 }
 
-static pbio_os_process_t boot_animation_process;
+#else
+
+/**
+ * This shutdown "animation" just pauses for half a second. The actual animation
+ * is handled by the system light based on the shutdown status.
+ */
+static pbio_error_t boot_animation_process_shutdown_thread(pbio_os_state_t *state, void *context) {
+    static pbio_os_timer_t timer;
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT_MS(state, &timer, 500);
+    pbio_busy_count_down();
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
 
 #endif
+
+static pbio_os_process_t boot_animation_process;
 
 void pbsys_hmi_init(void) {
     #if PBIO_CONFIG_LIGHT_MATRIX
@@ -136,10 +153,8 @@ void pbsys_hmi_deinit(void) {
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
 
-    #if PBIO_CONFIG_LIGHT_MATRIX
     pbio_busy_count_up();
-    pbio_os_process_start(&boot_animation_process, boot_animation_process_boot_thread, (void *)false);
-    #endif
+    pbio_os_process_start(&boot_animation_process, boot_animation_process_shutdown_thread, (void *)false);
 }
 
 /**
