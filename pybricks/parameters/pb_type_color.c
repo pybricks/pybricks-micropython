@@ -5,12 +5,6 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
-#if !MICROPY_MODULE_BUILTIN_INIT
-// The color dictionary is built in the module __init__, so we get a segfault
-// if this is not enabled.
-#error "pybricks.parameters.Color requires that MICROPY_MODULE_BUILTIN_INIT is enabled"
-#endif
-
 #include <pbio/color.h>
 #include <pbio/int_math.h>
 
