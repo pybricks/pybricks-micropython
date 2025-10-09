@@ -27,10 +27,6 @@ Q(pybricks.hubs)
 Q(pybricks.iodevices)
 #endif
 
-#if PYBRICKS_PY_MEDIA
-Q(pybricks.media)
-#endif
-
 #if PYBRICKS_PY_NXTDEVICES
 Q(pybricks.nxtdevices)
 #endif

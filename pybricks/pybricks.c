@@ -66,9 +66,6 @@ extern const mp_obj_module_t pb_module_pupdevices;
 #if PYBRICKS_PY_IODEVICES
 extern const mp_obj_module_t pb_module_iodevices;
 #endif
-#if PYBRICKS_PY_MEDIA
-extern const mp_obj_module_t pb_module_media;
-#endif
 #if PYBRICKS_PY_PARAMETERS
 extern const mp_obj_module_t pb_module_parameters;
 #endif
@@ -101,9 +98,6 @@ static const mp_rom_map_elem_t pybricks_globals_table[] = {
     #endif
     #if PYBRICKS_PY_IODEVICES
     { MP_ROM_QSTR(MP_QSTR_iodevices), MP_ROM_PTR(&pb_module_iodevices) },
-    #endif
-    #if PYBRICKS_PY_MEDIA
-    { MP_ROM_QSTR(MP_QSTR_media), MP_ROM_PTR(&pb_module_media) },
     #endif
     #if PYBRICKS_PY_PARAMETERS
     { MP_ROM_QSTR(MP_QSTR_parameters), MP_ROM_PTR(&pb_module_parameters) },
