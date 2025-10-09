@@ -234,11 +234,8 @@ static void run_user_program(void) {
     if (nlr_push(&nlr) == 0) {
         nlr_set_abort(&nlr);
 
-        mpy_info_t *info = mpy_data_find(MP_QSTR___main__);
-
-        if (!info) {
-            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("no __main__ module"));
-        }
+        // Main program is in the first mpy file.
+        mpy_info_t *info = mpy_first;
 
         // This is similar to __import__ except we don't push/pop globals
         mp_reader_t reader;
