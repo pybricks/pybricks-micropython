@@ -144,36 +144,6 @@ static void run_repl(void) {
 }
 #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 
-// From micropython/py/builtinimport.c, but copied because it is static.
-static void do_execute_raw_code(mp_module_context_t *context, const mp_raw_code_t *rc, const mp_module_context_t *mc) {
-
-    // execute the module in its context
-    mp_obj_dict_t *mod_globals = context->module.globals;
-
-    // save context
-    mp_obj_dict_t *volatile old_globals = mp_globals_get();
-    mp_obj_dict_t *volatile old_locals = mp_locals_get();
-
-    // set new context
-    mp_globals_set(mod_globals);
-    mp_locals_set(mod_globals);
-
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_obj_t module_fun = mp_make_function_from_proto_fun(rc, mc, NULL);
-        mp_call_function_0(module_fun);
-
-        // finish nlr block, restore context
-        nlr_pop();
-        mp_globals_set(old_globals);
-        mp_locals_set(old_locals);
-    } else {
-        // exception; restore context and re-raise same exception
-        mp_globals_set(old_globals);
-        mp_locals_set(old_locals);
-        nlr_jump(nlr.ret_val);
-    }
-}
 
 /** mpy info and data for one script or module. */
 typedef struct {
@@ -222,6 +192,44 @@ static mpy_info_t *mpy_data_find(qstr name) {
     return NULL;
 }
 
+// From micropython/py/builtinimport.c, but copied because it is static.
+static void do_execute_proto_fun(const mp_module_context_t *context, mp_proto_fun_t proto_fun) {
+
+    // execute the module in its context
+    mp_obj_dict_t *mod_globals = context->module.globals;
+
+    // save context
+    nlr_jump_callback_node_globals_locals_t ctx;
+    ctx.globals = mp_globals_get();
+    ctx.locals = mp_locals_get();
+
+    // set new context
+    mp_globals_set(mod_globals);
+    mp_locals_set(mod_globals);
+
+    // set exception handler to restore context if an exception is raised
+    nlr_push_jump_callback(&ctx.callback, mp_globals_locals_set_from_nlr_jump_callback);
+
+    // make and execute the function
+    mp_obj_t module_fun = mp_make_function_from_proto_fun(proto_fun, context, NULL);
+    mp_call_function_0(module_fun);
+
+    // deregister exception handler and restore context
+    nlr_pop_jump_callback(true);
+}
+
+static void execute_rom_mpy_in_context(mp_module_context_t *module_context, mpy_info_t *mpy_info) {
+    // Prepare to execute in its own context.
+    mp_compiled_module_t compiled_module;
+    compiled_module.context = module_context;
+
+    // Execute the MPY file in the new module context.
+    mp_reader_t reader;
+    mp_reader_new_mem(&reader, mpy_data_get_buf(mpy_info), pbio_get_uint32_le(mpy_info->mpy_size), MP_READER_IS_ROM);
+    mp_raw_code_load(&reader, &compiled_module);
+    do_execute_proto_fun(compiled_module.context, compiled_module.rc);
+}
+
 /**
  * Runs the __main__ module from user RAM.
  */
@@ -234,22 +242,15 @@ static void run_user_program(void) {
     if (nlr_push(&nlr) == 0) {
         nlr_set_abort(&nlr);
 
-        // Main program is in the first mpy file.
-        mpy_info_t *info = mpy_first;
-
-        // This is similar to __import__ except we don't push/pop globals
-        mp_reader_t reader;
-        mp_reader_new_mem(&reader, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size), MP_READER_IS_ROM);
-        mp_module_context_t *context = m_new_obj(mp_module_context_t);
-        context->module.globals = mp_globals_get();
-        mp_compiled_module_t compiled_module;
-        compiled_module.context = context;
-        mp_raw_code_load(&reader, &compiled_module);
-        mp_obj_t module_fun = mp_make_function_from_proto_fun(compiled_module.rc, context, NULL);
-
         // Run the script while letting CTRL-C interrupt it.
         mp_hal_set_interrupt_char(CHAR_CTRL_C);
-        mp_call_function_0(module_fun);
+
+        // Main program runs in __main__ module which is already initialized.
+        mp_module_context_t main_context = {
+            .module = mp_module___main__
+        };
+        execute_rom_mpy_in_context(&main_context, mpy_first);
+
         mp_hal_set_interrupt_char(-1);
 
         // Handle any pending exceptions (and any callbacks)
@@ -438,20 +439,14 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
 
     // If a downloaded module was found but not yet loaded, load it.
     if (info) {
-        // Parse the static script data.
-        mp_reader_t reader;
-        mp_reader_new_mem(&reader, mpy_data_get_buf(info), pbio_get_uint32_le(info->mpy_size), MP_READER_IS_ROM);
+        // Create new module.
+        mp_module_context_t *module_context = mp_obj_new_module(module_name_qstr);
 
-        // Create new module and execute in its own context.
-        mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);
-        mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
-        mp_compiled_module_t compiled_module;
-        compiled_module.context = context;
-        mp_raw_code_load(&reader, &compiled_module);
-        do_execute_raw_code(context, compiled_module.rc, compiled_module.context);
+        // Execute the module in that context.
+        execute_rom_mpy_in_context(module_context, info);
 
         // Return the newly imported module.
-        return module_obj;
+        return MP_OBJ_FROM_PTR(module_context);
     }
 
     // Allow importing of frozen modules if any were included in the firmware.
@@ -462,13 +457,15 @@ mp_obj_t pb_builtin_import(size_t n_args, const mp_obj_t *args) {
     char module_path[(1 << (8 * MICROPY_QSTR_BYTES_IN_LEN)) + sizeof(ext)] = { 0 };
     strcpy(module_path, mp_obj_str_get_str(args[0]));
     strcpy(module_path + qstr_len(module_name_qstr), ext);
-    if (mp_find_frozen_module(module_path, &frozen_type, &modref) == MP_IMPORT_STAT_FILE) {
-        // Create new module and execute in its own context, then return it.
-        mp_obj_t module_obj = mp_obj_new_module(module_name_qstr);
-        mp_module_context_t *context = MP_OBJ_TO_PTR(module_obj);
+    if (mp_find_frozen_module(module_path, &frozen_type, &modref) == MP_IMPORT_STAT_FILE && frozen_type == MP_FROZEN_MPY) {
+        // Create new module to be returned.
+        mp_module_context_t *module_context = mp_obj_new_module(module_name_qstr);
+        mp_obj_t module_obj = MP_OBJ_FROM_PTR(module_context);
+
+        // Execute frozen code in the new module context.
         const mp_frozen_module_t *frozen = modref;
-        context->constants = frozen->constants;
-        do_execute_raw_code(context, frozen->proto_fun, context);
+        module_context->constants = frozen->constants;
+        do_execute_proto_fun(module_context, frozen->proto_fun);
         return module_obj;
     }
     #endif
