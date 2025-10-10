@@ -324,9 +324,18 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
     mpy_info_t *mpy_info = (mpy_info_t *)program->code_start;
     program->name = mpy_info->mpy_name;
 
-    // TODO: Now that we have moved these checks to the MicroPython
-    // application code, we can check that a valid program is in fact
-    // present by checking the MicroPython format.
+    // This is the same test done when loading the mpy. Do it early so we don't
+    // start MicroPython and so the system knows this is valid. Revisit: Consider
+    // making this part of the public API upstream.
+    uint8_t *header = mpy_data_get_buf(mpy_info);
+    uint8_t arch = MPY_FEATURE_DECODE_ARCH(header[2]);
+    if (header[0] != 'M'
+        || header[1] != MPY_VERSION
+        || (arch != MP_NATIVE_ARCH_NONE && MPY_FEATURE_DECODE_SUB_VERSION(header[2]) != MPY_SUB_VERSION)
+        || header[3] > MP_SMALL_INT_BITS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     return PBIO_SUCCESS;
 }
 
