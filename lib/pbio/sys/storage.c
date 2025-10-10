@@ -302,18 +302,17 @@ pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, u
  * @param [in]  offset      The program data structure.
  */
 void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
-    //
-    // REVISIT: We used to provide access to user code on the REPL. This is now
-    //          extended to providing access to the active slot. Do we really
-    //          want that though? Maybe REPL should just really be independent.
-    //
-    uint8_t slot = program->id < PBSYS_CONFIG_STORAGE_NUM_SLOTS ? program->id : pbsys_status_get_selected_slot();
-
     // Only requested slot is available to user.
-    program->code_start = map->program_data + map->slot_info[slot].offset;
-    program->code_end = map->program_data + map->slot_info[slot].offset + map->slot_info[slot].size;
+    if (program->id < PBSYS_CONFIG_STORAGE_NUM_SLOTS) {
+        program->code_start = map->program_data + map->slot_info[program->id].offset;
+        program->code_end = map->program_data + map->slot_info[program->id].offset + map->slot_info[program->id].size;
+    } else {
+        // Builtin programs have no stored associated with them.
+        program->code_start = NULL;
+        program->code_end = NULL;
+    }
 
-    // User ram starts after the last slot.
+    // User ram starts after the last slot, even if a non-slot program is run.
     program->user_ram_start = map->program_data + pbsys_storage_get_used_program_data_size();
     program->user_ram_end = ((void *)map) + PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE;
 }

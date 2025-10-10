@@ -60,8 +60,7 @@ pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id
 
     program.id = id;
 
-    // Builtin user programs are also allowed to access user program,
-    // so load data in all cases.
+    // Load applicable data for this slot.
     pbsys_storage_get_program_data(&program);
 
     pbio_error_t err = pbsys_main_program_validate(&program);
