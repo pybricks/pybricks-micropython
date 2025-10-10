@@ -65,8 +65,8 @@
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
-                    "name": "PBIO_TEST_DATA_PARSER",
-                    "value": "./tools/virtual-hub-animator/data_server.py"
+                    "name": "PBIO_TEST_CONNECT_SOCKET",
+                    "value": "true"
                 },
             ],
             "externalConsole": false,
@@ -84,6 +84,13 @@
                 }
             ],
             "preLaunchTask": "build virtualhub"
+        },
+        {
+            "name":"Virtual Hub Animation",
+            "type":"debugpy",
+            "request":"launch",
+            "program":"${workspaceFolder}/lib/pbio/platform/virtual_hub/animation.py",
+            "console":"integratedTerminal"
         },
         {
             "name": "test-pbio",

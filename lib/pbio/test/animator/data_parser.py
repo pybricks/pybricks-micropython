@@ -4,19 +4,38 @@
 # driver outputs it at intervals of 40 ms (25 fps).
 
 from collections import namedtuple
+import socket
 
-# Get live output from process.
-with open("output.txt", "w") as f:
-    while True:
-        try:
-            data = input()
-        except EOFError:
-            break
-        f.write(data)
+HOST = "127.0.0.1"
+PORT = 5002
 
-# Load angle data from file
-with open("output.txt", "r") as f:
-    angles = [line.split(" ") for line in f]
+angles = []
+
+print(f"Listening on {HOST}:{PORT}")
+
+
+# Wait for a connection once and writes results when simulator disconnects.
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.bind((HOST, PORT))
+    s.listen(1)
+    conn, addr = s.accept()
+    print(f"Client connected: {addr}")
+    with conn:
+        # receive until client disconnects
+        buffer = b""
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                print("Client disconnected.")
+                break
+            buffer += data
+            while b"\n" in buffer:
+                line, buffer = buffer.split(b"\n", 1)
+                values = list(map(int, line.decode().strip().split()))
+                print("Angles:", values)
+                angles.append(values)
+
 
 if len(angles) < 1:
     exit()
@@ -36,7 +55,7 @@ FRAME_INFO = (
 )
 
 # Write the CSS component with frames.
-with open("../results/frames.css", "w") as frame_file:
+with open("lib/pbio/test/results/frames.css", "w") as frame_file:
     for info in FRAME_INFO:
         # CSS rows for each frame.
         frames = "".join(

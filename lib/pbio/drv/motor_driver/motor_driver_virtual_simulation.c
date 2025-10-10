@@ -5,10 +5,13 @@
 
 #if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
 
+#include <arpa/inet.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 #include <unistd.h>
 
 #include <contiki.h>
@@ -145,8 +148,35 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
     return PBIO_SUCCESS;
 }
 
-static pid_t data_parser_pid;
-static FILE *data_parser_in;
+static int data_socket = -1;
+
+static void animation_socket_connect(void) {
+
+    struct sockaddr_in serv_addr;
+    data_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (data_socket < 0) {
+        perror("socket() failed");
+        return;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(5002);
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+        perror("inet_pton() failed");
+        close(data_socket);
+        data_socket = -1;
+        return;
+    }
+
+    if (connect(data_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("connect() failed. Animation not running?");
+        close(data_socket);
+        data_socket = -1;
+        return;
+    }
+
+    printf("Connected to animation socket.\n");
+}
 
 PROCESS(pbdrv_motor_driver_virtual_simulation_process, "pbdrv_motor_driver_virtual_simulation");
 
@@ -166,27 +196,29 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&tick_timer));
 
         // If data parser pipe is connected, output the motor angles.
-        if (data_parser_in && timer_expired(&frame_timer)) {
+        if (data_socket >= 0 && timer_expired(&frame_timer)) {
             timer_reset(&frame_timer);
-
+            char buf[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV * 20];
+            size_t len = 0;
             // Output motor angles on one line.
             for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
                 driver = &motor_driver_devs[dev_index];
-                fprintf(data_parser_in, "%d ", ((int32_t)(driver->angle / 1000)));
-            }
-            fprintf(data_parser_in, "\r\n");
 
-            // Check that process is still running.
-            pid_t p = waitpid(data_parser_pid, NULL, WNOHANG);
-            if (p == -1 || p == data_parser_pid) {
-                fclose(data_parser_in);
-                printf("Process failed or ended.");
-                exit(1);
+                // Append each motor angle to the buffer
+                len += snprintf(buf + len, sizeof(buf) - len, "%d ", (int)(driver->angle / 1000));
             }
-            if (fflush(data_parser_in) == -1) {
-                printf("Flush failed.");
-                fclose(data_parser_in);
-                exit(1);
+
+            // Replace last space with newline
+            buf[len++] = '\r';
+            buf[len++] = '\n';
+            buf[len] = '\0';
+
+            // Send the constructed message
+            ssize_t sent = send(data_socket, buf, len, MSG_NOSIGNAL);
+            if (sent == -1) {
+                perror("send() failed");
+                close(data_socket);
+                data_socket = -1;
             }
         }
 
@@ -252,51 +284,6 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
     PROCESS_END();
 }
 
-// Optionally starts script that receives motor angles through a pipe
-// for visualization and debugging purposes.
-static void pbdrv_motor_driver_virtual_simulation_prepare_parser(void) {
-
-    const char *data_parser_cmd = getenv("PBIO_TEST_DATA_PARSER");
-
-    // Skip if no data parser is given.
-    if (!data_parser_cmd) {
-        return;
-    }
-
-    // Create the pipe to parser script.
-    int data_parser_stdin[2];
-    if (pipe(data_parser_stdin) == -1) {
-        printf("pipe(data_parser_in) failed\n");
-        return;
-    }
-
-    // For the process to run the parser in parallel.
-    data_parser_pid = fork();
-    if (data_parser_pid == -1) {
-        printf("fork() failed");
-        return;
-    }
-
-    // The child process executes the data parser.
-    if (data_parser_pid == 0) {
-        dup2(data_parser_stdin[0], STDIN_FILENO);
-        close(data_parser_stdin[1]);
-        char *args[] = {NULL, NULL};
-        if (execvp(data_parser_cmd, args) == -1) {
-            printf("Failed to start data parser.");
-        }
-        exit(EXIT_FAILURE);
-    }
-
-    // Get file streams for pipes to data parser.
-    close(data_parser_stdin[0]);
-    data_parser_in = fdopen(data_parser_stdin[1], "w");
-    if (data_parser_in == NULL) {
-        printf("fdopen(data_parser_stdin[1], \"w\") failed");
-        exit(1);
-    }
-}
-
 static bool simulation_enabled = true;
 
 void pbdrv_motor_driver_disable_process(void) {
@@ -334,8 +321,11 @@ void pbdrv_motor_driver_init(void) {
         }
     }
 
+    // Skip if no data parser is given.
+    if (getenv("PBIO_TEST_CONNECT_SOCKET")) {
+        animation_socket_connect();
+    }
 
-    pbdrv_motor_driver_virtual_simulation_prepare_parser();
     if (simulation_enabled) {
         process_start(&pbdrv_motor_driver_virtual_simulation_process);
     }

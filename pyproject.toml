@@ -10,7 +10,6 @@ package-mode = false
 python = ">=3.10,<4.0"
 freetype-py = "^2.5.1"
 
-
 [tool.poetry.group.dev.dependencies]
 eventlet = "^0.40.3"
 flake8 = "^3.8.3"
