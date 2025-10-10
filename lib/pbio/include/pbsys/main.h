@@ -65,6 +65,10 @@ typedef struct _pbsys_main_program_t {
      */
     pbio_pybricks_user_program_id_t id;
     /**
+     * Null-terminated user program name as defined by application-specific interface.
+     */
+    const char *name;
+    /**
      * Whether a request was made to start the program, and how.
      */
     pbsys_main_program_start_request_type_t start_request_type;

@@ -37,6 +37,7 @@
 #include "py/reader.h"
 #include "py/repl.h"
 #include "py/runtime.h"
+#include "py/smallint.h"
 #include "py/stackctrl.h"
 #include "py/stream.h"
 
@@ -318,6 +319,10 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
     if (program_size == 0 || program_size > pbsys_storage_get_maximum_program_size()) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
+
+    // Application-specific name may be used in system UI.
+    mpy_info_t *mpy_info = (mpy_info_t *)program->code_start;
+    program->name = mpy_info->mpy_name;
 
     // TODO: Now that we have moved these checks to the MicroPython
     // application code, we can check that a valid program is in fact
