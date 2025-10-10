@@ -25,6 +25,7 @@ python-socketio = "^5.7.2"
 scipy = "^1.8.1"
 sympy = "^1.10.1"
 pre-commit = ">=3.6.2"
+pygame = "^2.6.1"
 
 [tool.poetry.group.stats.dependencies]
 azure-data-tables = "^12.4.2"
