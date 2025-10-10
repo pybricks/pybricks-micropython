@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/display.h>
@@ -22,9 +23,11 @@
 #include <pbsys/light.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
+#include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 
 #include "hmi.h"
+#include "storage.h"
 
 #define DEBUG 0
 
@@ -120,9 +123,21 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         DEBUG_PRINT("Start HMI loop\n");
 
         // Visually indicate current slot.
+        uint8_t selected_slot = pbsys_status_get_selected_slot();
         for (uint8_t c = 0; c < PBSYS_CONFIG_HMI_NUM_SLOTS; c++) {
-            hmi_lcd_grid_show_pixel(4, c, c == pbsys_status_get_selected_slot());
+            hmi_lcd_grid_show_pixel(4, c, c == selected_slot);
         }
+
+        pbsys_main_program_t program;
+        program.id = selected_slot;
+        pbsys_storage_get_program_data(&program);
+        const char *name = pbsys_main_program_validate(&program) == PBIO_SUCCESS ?
+            program.name : "------";
+
+        pbio_image_t *display = pbdrv_display_get_image();
+        pbio_image_fill_rect(display, 0, 82, 178, 14, 0);
+        pbio_image_draw_text(display, &pbio_font_liberationsans_regular_14, 20, 92, name, strlen(name), 3);
+
         pbdrv_display_update();
 
         // Buttons could be pressed at the end of the user program, so wait for
