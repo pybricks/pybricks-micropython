@@ -14,6 +14,8 @@
 #include "py/runtime.h"
 #include "py/stream.h"
 
+#include <pbdrv/clock.h>
+
 #include <pbio/int_math.h>
 #include <pbio/util.h>
 #include <pbsys/light.h>
