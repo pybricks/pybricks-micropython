@@ -322,7 +322,7 @@ void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
  */
 static pbio_error_t pbsys_storage_deinit_process_thread(pbio_os_state_t *state, void *context) {
 
-    pbio_error_t err;
+    pbio_error_t err = PBIO_ERROR_AGAIN;
 
     static pbio_os_state_t sub;
 
