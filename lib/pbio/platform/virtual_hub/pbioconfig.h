@@ -27,6 +27,3 @@
 #define PBIO_CONFIG_TACHO                   (1)
 
 #define PBIO_CONFIG_ENABLE_SYS              (1)
-
-#include <signal.h>
-#define PBIO_CONFIG_OS_IRQ_FLAGS_TYPE       sigset_t
