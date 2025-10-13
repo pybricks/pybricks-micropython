@@ -383,7 +383,7 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
             break;
         #endif
 
-        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW && MICROPY_MODULE_FROZEN
         case PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW:
             pb_package_pybricks_init(false);
             pyexec_frozen_module("_builtin_port_view.py", false);
