@@ -16,16 +16,51 @@
 #include <pbio/port_lump.h>
 #include <pbdrv/ioport.h>
 
-#define DEBUG 0
-#if DEBUG
+#define DEBUG 2
+
+#if DEBUG == 1
 #include <stdio.h>
 #include <inttypes.h>
 #include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-#define debug_pr pbdrv_uart_debug_printf
-#define DBG_ERR(expr) expr
+#define debug_pr printf
+#elif DEBUG == 2 && PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE > (20 * 1024)
+#include <stdarg.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <pbsys/host.h>
+int debug_pr(const char *format, ...) {
+    char buffer[256];
+    va_list args;
+    int len;
+
+
+    va_start(args, format);
+    len = vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    if (len < 0) {
+        return len;
+    }
+
+    if ((size_t)len >= sizeof(buffer)) {
+        len = sizeof(buffer) - 1;
+    }
+
+    if (len > 0 && buffer[len - 1] == '\n' && (size_t)len + 1 < sizeof(buffer)) {
+        buffer[len - 1] = '\r';
+        buffer[len] = '\n';
+        len++;
+    }
+
+    // Write the formatted string using pbsys_host_stdout_write
+    uint32_t size = len;
+    pbsys_host_stdout_write((const uint8_t *)buffer, &size);
+
+    return len;  // Return the number of characters written
+}
 #else
 #define debug_pr(...)
-#define DBG_ERR(expr)
 #endif
 
 #define EV3_UART_MAX_MESSAGE_SIZE   (LUMP_MAX_MSG_SIZE + 3)

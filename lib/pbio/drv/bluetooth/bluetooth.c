@@ -62,9 +62,13 @@ static lwrb_t stdout_ring_buf;
 static bool stdout_send_busy;
 
 void pbdrv_bluetooth_init(void) {
-    // enough for two packets, one currently being sent and one to be ready
+    // enough for 200 packets, one currently being sent and one to be ready
     // as soon as the previous one completes + 1 byte for ring buf pointer
+    #if PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE > (20 * 1024)
+    static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE * 200 + 1];
+    #else
     static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE * 2 + 1];
+    #endif
     lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
 
     pbdrv_bluetooth_init_hci();
