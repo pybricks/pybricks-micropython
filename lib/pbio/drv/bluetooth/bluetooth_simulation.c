@@ -6,11 +6,12 @@
 #if PBDRV_CONFIG_BLUETOOTH_SIMULATION
 
 #include <errno.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <termios.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "bluetooth.h"
 #include <pbdrv/bluetooth.h>
@@ -169,13 +170,31 @@ static pbio_error_t pbdrv_bluetooth_simulation_process_thread(pbio_os_state_t *s
     return bluetooth_thread_err;
 }
 
-void pbdrv_bluetooth_init_hci(void) {
-    struct termios oldt, newt;
+static struct termios oldt;
 
+static void restore_terminal_settings(void) {
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+}
+
+static void handle_signal(int sig) {
+    restore_terminal_settings();
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
+void pbdrv_bluetooth_init_hci(void) {
+    struct termios newt;
+
+    // Save the original terminal settings
     if (tcgetattr(STDIN_FILENO, &oldt) != 0) {
         printf("DEBUG: Failed to get terminal attributes\n");
         return;
     }
+
+    // Register the cleanup function to restore terminal settings on exit
+    atexit(restore_terminal_settings);
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
 
     newt = oldt;
 
