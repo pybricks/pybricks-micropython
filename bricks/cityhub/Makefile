@@ -10,4 +10,4 @@ PB_LIB_STM32_HAL = 1
 PB_LIB_BLE5STACK = 1
 PB_FROZEN_MODULES = 1
 
-include ../_common/arm_none_eabi.mk
+include ../_common/common.mk

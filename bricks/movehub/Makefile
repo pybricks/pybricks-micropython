@@ -11,4 +11,4 @@ PB_LIB_BLUENRG = 1
 PB_FROZEN_MODULES = 0
 MICROPY_ROM_TEXT_COMPRESSION = 0 # Needed for PYBRICKS_OPT_TERSE_ERR
 
-include ../_common/arm_none_eabi.mk
+include ../_common/common.mk

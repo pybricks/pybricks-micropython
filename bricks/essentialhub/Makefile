@@ -16,4 +16,4 @@ DFU_VID = 0x0694
 DFU_PID = 0x000C
 PB_FROZEN_MODULES = 1
 
-include ../_common/arm_none_eabi.mk
+include ../_common/common.mk

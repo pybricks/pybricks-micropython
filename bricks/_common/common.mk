@@ -5,7 +5,7 @@
 # This file is shared by all bare-metal Arm Pybricks ports.
 
 THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
-PBTOP := ../$(patsubst %/_common/arm_none_eabi.mk,%,$(THIS_MAKEFILE))
+PBTOP := ../$(patsubst %/_common/common.mk,%,$(THIS_MAKEFILE))
 
 # Bricks must specify the following variables in their Makefile
 

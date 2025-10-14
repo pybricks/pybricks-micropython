@@ -3,4 +3,4 @@ PB_MCU_FAMILY = TIAM1808
 
 PB_LIB_UMM_MALLOC = 1
 
-include ../_common/arm_none_eabi.mk
+include ../_common/common.mk
