@@ -11,4 +11,7 @@ PB_LIB_BLE5STACK = 1
 PB_LIB_LSM6DS3TR_C = 1
 PB_FROZEN_MODULES = 1
 
+# Reduce code size at the cost of slower performance.
+override CSUPEROPT = -Os
+
 include ../_common/common.mk

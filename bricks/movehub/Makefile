@@ -11,4 +11,7 @@ PB_LIB_BLUENRG = 1
 PB_FROZEN_MODULES = 0
 MICROPY_ROM_TEXT_COMPRESSION = 0 # Needed for PYBRICKS_OPT_TERSE_ERR
 
+# Reduce code size at the cost of slower performance.
+override CSUPEROPT = -Os
+
 include ../_common/common.mk
