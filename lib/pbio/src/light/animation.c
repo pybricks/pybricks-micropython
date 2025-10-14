@@ -8,11 +8,9 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include <contiki.h>
-
-#include <pbio/util.h>
-
 #include <pbio/light_animation.h>
+#include <pbio/os.h>
+#include <pbio/util.h>
 
 /**
  * This is used as a value for the next_animation field to indicate when an
@@ -20,7 +18,6 @@
  */
 #define PBIO_LIGHT_ANIMATION_STOPPED ((pbio_light_animation_t *)1)
 
-PROCESS(pbio_light_animation_process, "light animation");
 static pbio_light_animation_t *pbio_light_animation_list_head;
 
 /**
@@ -46,14 +43,12 @@ void pbio_light_animation_init(pbio_light_animation_t *animation, pbio_light_ani
 void pbio_light_animation_start(pbio_light_animation_t *animation) {
     assert(animation->next_animation == PBIO_LIGHT_ANIMATION_STOPPED);
 
+    // Insert at head of active list.
     animation->next_animation = pbio_light_animation_list_head;
     pbio_light_animation_list_head = animation;
 
-    process_start(&pbio_light_animation_process);
     // Fake a timer event to load the first cell.
-    PROCESS_CONTEXT_BEGIN(&pbio_light_animation_process);
-    etimer_set(&animation->timer, 0);
-    PROCESS_CONTEXT_END(&pbio_light_animation_process);
+    pbio_os_timer_set(&animation->timer, 0);
 
     assert(animation->next_animation != PBIO_LIGHT_ANIMATION_STOPPED);
 }
@@ -69,13 +64,8 @@ void pbio_light_animation_stop(pbio_light_animation_t *animation) {
     assert(pbio_light_animation_list_head != NULL);
     assert(animation->next_animation != PBIO_LIGHT_ANIMATION_STOPPED);
 
-    etimer_stop(&animation->timer);
-
     if (pbio_light_animation_list_head == animation) {
         pbio_light_animation_list_head = animation->next_animation;
-        if (pbio_light_animation_list_head == NULL) {
-            process_exit(&pbio_light_animation_process);
-        }
     } else {
         for (pbio_light_animation_t *a = pbio_light_animation_list_head; a != NULL; a = a->next_animation) {
             if (a->next_animation == animation) {
@@ -110,20 +100,22 @@ bool pbio_light_animation_is_started(pbio_light_animation_t *animation) {
     return animation->next_animation != PBIO_LIGHT_ANIMATION_STOPPED;
 }
 
-PROCESS_THREAD(pbio_light_animation_process, ev, data) {
-    PROCESS_BEGIN();
+static pbio_error_t pbio_light_animation_process_thread(pbio_os_state_t *state, void *context) {
 
-    for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(data));
-        struct etimer *timer = data;
-        pbio_light_animation_t *animation = PBIO_CONTAINER_OF(timer, pbio_light_animation_t, timer);
-        if (pbio_light_animation_is_started(animation)) {
-            clock_time_t interval = animation->next(animation);
-            etimer_reset_with_new_interval(&animation->timer, interval);
+    for (pbio_light_animation_t *a = pbio_light_animation_list_head; a != NULL; a = a->next_animation) {
+        if (pbio_os_timer_is_expired(&a->timer)) {
+            pbio_os_timer_set(&a->timer, a->next(a));
         }
     }
 
-    PROCESS_END();
+    // This process does not have a state. It is effectively just a poll handler.
+    return PBIO_ERROR_AGAIN;
+}
+
+void pbio_light_animation_init_module(void) {
+
+    static pbio_os_process_t pbio_light_animation_process;
+    pbio_os_process_start(&pbio_light_animation_process, pbio_light_animation_process_thread, NULL);
 }
 
 #endif // PBIO_CONFIG_LIGHT
