@@ -25,12 +25,12 @@ void pbsys_hmi_deinit(void) {
 
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
-    while (pbdrv_button_get_pressed()) {
+    do {
         if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
             return PBIO_ERROR_CANCELED;
         }
         pbio_os_run_processes_and_wait_for_event();
-    }
+    } while (pbdrv_button_get_pressed());
 
     return pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
 }
