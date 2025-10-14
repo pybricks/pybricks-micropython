@@ -348,9 +348,9 @@ const char *pbsys_main_get_application_version_hash(void) {
 // Runs MicroPython with the given program data.
 void pbsys_main_run_program(pbsys_main_program_t *program) {
 
+    #if PBDRV_CONFIG_STACK_EMBEDDED
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
-    // Note: stack control relies on main thread being initialised above
     char *stack_start;
     char *stack_end;
     pbdrv_stack_get_info(&stack_start, &stack_end);
@@ -361,6 +361,9 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
     mp_stack_ctrl_init();
     #endif
     mp_stack_set_limit(MP_STATE_THREAD(stack_top) - stack_start - 1024);
+    #else
+    mp_cstack_init_with_sp_here(1024 * 1024);
+    #endif
 
     // MicroPython heap is the free RAM after program data.
     gc_init(program->user_ram_start, program->user_ram_end);
