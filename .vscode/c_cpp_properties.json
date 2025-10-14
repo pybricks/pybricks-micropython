@@ -386,7 +386,30 @@
                 "UNIX"
             ],
             "cStandard": "c11"
-        }
+        },
+        {
+            "name": "simhub",
+            "includePath": [
+                "${workspaceFolder}/bricks/simhub",
+                "${workspaceFolder}/bricks/simhub/build",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/sim_hub",
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}",
+                "/usr/include/python3.10"
+            ],
+            "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
+                "MICROPY_USE_READLINE=1"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-x64"
+        },
     ],
     "version": 4
 }

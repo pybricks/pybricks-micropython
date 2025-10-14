@@ -93,6 +93,38 @@
             "console":"integratedTerminal"
         },
         {
+            "name": "simhub",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bricks/simhub/build/firmware.elf",
+            "args": [
+                "${workspaceFolder}/tests/virtualhub/motor/car.py"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PBIO_TEST_CONNECT_SOCKET",
+                    "value": "true"
+                },
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore timer signal",
+                    "text": "handle SIG34 noprint pass",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build simhub"
+        },
+        {
             "name": "test-pbio",
             "type": "cppdbg",
             "request": "launch",

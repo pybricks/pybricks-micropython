@@ -42,6 +42,14 @@
             "command": "poetry run make -C bricks/virtualhub DEBUG=1 COPT=-O0 CROSS_COMPILE= -j"
         },
         {
+            "options": {
+                "cwd": "${workspaceFolder}/bricks/simhub"
+            },
+            "label": "build simhub",
+            "type": "shell",
+            "command": "poetry run make DEBUG=1 COPT=-O0 -j",
+        },
+        {
             "label": "build test-pbio",
             "type": "shell",
             "command": "poetry run make -C lib/pbio/test DEBUG=1 -j"
