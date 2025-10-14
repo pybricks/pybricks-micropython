@@ -45,9 +45,9 @@
             "options": {
                 "cwd": "${workspaceFolder}/bricks/simhub"
             },
-            "label": "build simhub",
+            "label": "build simhub (debug)",
             "type": "shell",
-            "command": "poetry run make DEBUG=1 COPT=-O0 -j",
+            "command": "poetry run make DEBUG=1 BUILD=debug COPT=-DPBDRV_CONFIG_CLOCK_LINUX -j",
         },
         {
             "label": "build test-pbio",

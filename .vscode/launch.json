@@ -96,7 +96,7 @@
             "name": "simhub",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/simhub/build/firmware.elf",
+            "program": "${workspaceFolder}/bricks/simhub/debug/firmware.elf",
             "args": [
                 "${workspaceFolder}/tests/virtualhub/motor/car.py"
             ],
@@ -122,7 +122,7 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "build simhub"
+            "preLaunchTask": "build simhub (debug)"
         },
         {
             "name": "test-pbio",
