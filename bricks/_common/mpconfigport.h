@@ -141,8 +141,13 @@ typedef long mp_off_t;
 
 #include "pbio_os_config.h"
 
+#if PBDRV_CONFIG_STACK_EMBEDDED
 #define MICROPY_BEGIN_ATOMIC_SECTION()     pbio_os_hook_disable_irq()
 #define MICROPY_END_ATOMIC_SECTION(state)  pbio_os_hook_enable_irq(state)
+#else
+#define MICROPY_BEGIN_ATOMIC_SECTION() (0)
+#define MICROPY_END_ATOMIC_SECTION(state) (void)(state)
+#endif
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \
