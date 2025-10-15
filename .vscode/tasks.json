@@ -47,7 +47,7 @@
             },
             "label": "build simhub (debug)",
             "type": "shell",
-            "command": "poetry run make DEBUG=1 BUILD=debug COPT=-DPBDRV_CONFIG_CLOCK_LINUX -j",
+            "command": "make -C ../../micropython/mpy-cross -j && poetry run make DEBUG=1 BUILD=build-debug COPT=-DPBDRV_CONFIG_CLOCK_LINUX -j",
         },
         {
             "label": "build test-pbio",

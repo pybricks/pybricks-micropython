@@ -96,7 +96,7 @@
             "name": "simhub",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/simhub/debug/firmware.elf",
+            "program": "${workspaceFolder}/bricks/simhub/build-debug/firmware.elf",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [

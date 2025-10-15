@@ -86,9 +86,7 @@ simhub: mpy-cross
 
 clean-simhub: clean-mpy-cross
 	@$(MAKE) -C bricks/simhub clean
-	@$(MAKE) -C bricks/simhub clean
-	@$(MAKE) -C bricks/simhub clean BUILD=debug
-
+	@$(MAKE) -C bricks/simhub clean BUILD=build-debug
 
 mpy-cross:
 	@$(MAKE) -C micropython/mpy-cross CROSS_COMPILE=$(HOST_CROSS_COMPILE)
