@@ -97,15 +97,16 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/simhub/debug/firmware.elf",
-            "args": [
-                "${workspaceFolder}/tests/virtualhub/motor/car.py"
-            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
+                },
+                {
+                    "name": "TEST_SCRIPT",
+                    "value": "${workspaceFolder}/tests/virtualhub/basics/hello.py"
                 },
             ],
             "externalConsole": false,

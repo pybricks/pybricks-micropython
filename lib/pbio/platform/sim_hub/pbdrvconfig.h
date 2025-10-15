@@ -5,7 +5,7 @@
 #define PBDRV_CONFIG_BATTERY_TEST                           (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                           (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (10 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (50 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST                      (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
