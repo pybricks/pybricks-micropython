@@ -43,7 +43,7 @@ struct _pbdrv_uart_dev_t {
     /** The current position in read_buf. */
     uint8_t read_pos;
     /** The buffer of the ongoing write function. */
-    uint8_t *write_buf;
+    const uint8_t *write_buf;
     /** The length of write_buf in bytes. */
     uint8_t write_length;
     /** The current position in write_buf. */
@@ -108,7 +108,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
