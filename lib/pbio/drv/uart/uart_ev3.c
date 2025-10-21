@@ -58,15 +58,15 @@ struct _pbdrv_uart_dev_t {
     /** The buffer passed to the read function. */
     uint8_t *read_buf;
     /** The length of read_buf in bytes. */
-    uint8_t read_length;
+    uint32_t read_length;
     /** The current position in read_buf. */
-    uint8_t read_pos;
+    uint32_t read_pos;
     /** The buffer passed to the write function. */
     const uint8_t *write_buf;
     /** The length of write_buf in bytes. */
-    uint8_t write_length;
+    uint32_t write_length;
     /** The current position in write_buf. */
-    volatile uint8_t write_pos;
+    volatile uint32_t write_pos;
 };
 
 static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_EV3_NUM_UART];
@@ -89,7 +89,7 @@ int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart) {
     return ringbuf_get(&uart->rx_buf);
 }
 
-pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -131,7 +131,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static pbio_error_t pbdrv_uart_write_pru(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout) {
+static pbio_error_t pbdrv_uart_write_pru(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
@@ -178,7 +178,7 @@ static pbio_error_t pbdrv_uart_write_pru(pbio_os_state_t *state, pbdrv_uart_dev_
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_uart_write_hw(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_write_hw(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
@@ -240,7 +240,7 @@ pbio_error_t pbdrv_uart_write_hw(pbio_os_state_t *state, pbdrv_uart_dev_t *uart,
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint32_t length, uint32_t timeout) {
     const pbdrv_uart_ev3_platform_data_t *pdata = uart->pdata;
 
     if (pdata->uart_kind == EV3_UART_HW) {

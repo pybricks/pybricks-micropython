@@ -33,11 +33,11 @@ struct _pbdrv_uart_dev_t {
     volatile uint8_t rx_ring_buf_head;
     uint8_t rx_ring_buf_tail;
     uint8_t *rx_buf;
-    uint8_t rx_buf_size;
-    uint8_t rx_buf_index;
+    uint32_t rx_buf_size;
+    uint32_t rx_buf_index;
     const uint8_t *tx_buf;
-    uint8_t tx_buf_size;
-    uint8_t tx_buf_index;
+    uint32_t tx_buf_size;
+    uint32_t tx_buf_index;
     pbio_os_timer_t rx_timer;
     pbio_os_timer_t tx_timer;
     uint8_t irq;
@@ -59,7 +59,7 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -102,7 +102,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
