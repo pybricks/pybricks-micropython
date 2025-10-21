@@ -34,7 +34,7 @@ struct _pbdrv_uart_dev_t {
     uint8_t *rx_msg;
     uint8_t rx_msg_length;
     pbio_error_t rx_msg_result;
-    uint8_t *tx_msg;
+    const uint8_t *tx_msg;
     pbio_os_timer_t tx_timer;
     uint8_t tx_msg_length;
     pbio_error_t tx_msg_result;
@@ -1134,7 +1134,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev,
     PBIO_OS_ASYNC_END(uart_dev->rx_msg_result);
 }
 
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, const uint8_t *msg, uint8_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 

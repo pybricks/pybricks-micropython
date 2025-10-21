@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <errno.h>
 
@@ -481,7 +482,7 @@ int32_t pbdrv_uart_ev3_pru_get_break_state(uint8_t line) {
     return 0;
 }
 
-int32_t pbdrv_uart_ev3_pru_write_bytes(uint8_t line, uint8_t *pdata, int32_t size) {
+int32_t pbdrv_uart_ev3_pru_write_bytes(uint8_t line, const uint8_t *pdata, int32_t size) {
     omapl_pru_suart_t *suart = &suartdevs[line];
 
     if (suart->write_busy || size == 0) {
