@@ -45,7 +45,7 @@ int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev);
  * @param [in]  timeout   The timeout in milliseconds or 0 for no timeout.
  * @return The error code.
  */
-pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout);
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint32_t length, uint32_t timeout);
 
 /**
  * Asynchronously write to the UART.
@@ -58,7 +58,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev,
  *
  * @return The error code.
  */
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout);
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint32_t length, uint32_t timeout);
 
 #else // PBDRV_CONFIG_UART
 
@@ -70,13 +70,13 @@ static inline void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t
 }
 static inline void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev) {
 }
-static inline pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
+static inline pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint32_t length, uint32_t timeout) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
+static inline pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint32_t length, uint32_t timeout) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
@@ -97,11 +97,11 @@ static inline int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev) {
     return -1;
 }
 
-static inline pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
+static inline pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint32_t length, uint32_t timeout) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
+static inline pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint32_t length, uint32_t timeout) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

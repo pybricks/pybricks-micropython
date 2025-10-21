@@ -169,9 +169,9 @@ struct _pbio_port_lump_dev_t {
     /** New baud rate that will be set with ev3_uart_change_bitrate. */
     uint32_t new_baud_rate;
     /** Size of the current message being transmitted. */
-    uint8_t tx_msg_size;
+    uint32_t tx_msg_size;
     /** Size of the current message being received. */
-    uint8_t rx_msg_size;
+    uint32_t rx_msg_size;
     /** Total number of errors that have occurred. */
     uint32_t err_count;
     /** Flag that indicates that good DATA lump_dev->msg has been received since last watchdog timeout. */

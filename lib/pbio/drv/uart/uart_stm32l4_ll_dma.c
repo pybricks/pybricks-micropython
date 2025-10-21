@@ -34,9 +34,9 @@ struct _pbdrv_uart_dev_t {
     pbio_os_timer_t rx_timer;
     pbio_os_timer_t tx_timer;
     volatile uint8_t *rx_data;
-    uint8_t rx_tail;
+    uint32_t rx_tail;
     uint8_t *read_buf;
-    uint8_t read_length;
+    uint32_t read_length;
 };
 
 static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART];
@@ -55,8 +55,8 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
-static void volatile_copy(volatile uint8_t *src, uint8_t *dst, uint8_t size) {
-    for (int i = 0; i < size; i++) {
+static void volatile_copy(volatile uint8_t *src, uint8_t *dst, uint32_t size) {
+    for (uint32_t i = 0; i < size; i++) {
         dst[i] = src[i];
     }
 }
@@ -187,7 +187,7 @@ static uint32_t pbdrv_uart_get_num_available(pbdrv_uart_dev_t *uart) {
     return (rx_head - uart->rx_tail) & (RX_DATA_SIZE - 1);
 }
 
-pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -227,7 +227,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint8_t length, uint32_t timeout) {
+pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, const uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
 
