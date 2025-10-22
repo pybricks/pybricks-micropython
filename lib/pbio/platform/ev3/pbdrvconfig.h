@@ -107,3 +107,5 @@
 
 #define PBDRV_CONFIG_WATCHDOG                       (1)
 #define PBDRV_CONFIG_WATCHDOG_EV3                   (1)
+
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART     (1)

@@ -124,6 +124,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/block_device/block_device_w25qxx_stm32.c \
 	drv/bluetooth/bluetooth.c \
 	drv/bluetooth/bluetooth_btstack_control_gpio.c \
+	drv/bluetooth/bluetooth_btstack_uart_block_ev3.c \
 	drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.c \
 	drv/bluetooth/bluetooth_btstack.c \
 	drv/bluetooth/bluetooth_init_cc2564C_1.4.c \
