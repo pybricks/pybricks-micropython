@@ -48,6 +48,7 @@
 #include <tiam1808/hw/hw_syscfg1_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/ecap.h>
 #include <tiam1808/i2c.h>
 #include <tiam1808/psc.h>
 #include <tiam1808/timer.h>
@@ -784,8 +785,8 @@ void SystemInit(void) {
     IntChannelSet(SYS_INT_CCERRINT, 2);
     IntSystemEnable(SYS_INT_CCERRINT);
 
-
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_ECAP0_1_2, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
     // Must set the power enable bin before disabling the pull up on the power
     // pin below, otherwise the hub will power off.
@@ -795,11 +796,41 @@ void SystemInit(void) {
     HWREG(SOC_SYSCFG_1_REGS + SYSCFG1_PUPD_ENA) &= ~0xFFFFFFFF;
 
     // UART for Bluetooth. Other UARTS are configured by port module.
-    // TODO: Add CTS/RTS pins.
     const pbdrv_gpio_t bluetooth_uart_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3);
     const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
+    const pbdrv_gpio_t bluetooth_uart_cts = PBDRV_GPIO_EV3_PIN(0, 31, 28, 0, 8);
+    const pbdrv_gpio_t bluetooth_uart_rts = PBDRV_GPIO_EV3_PIN(0, 27, 24, 0, 9);
+    const pbdrv_gpio_t bluetooth_enable = PBDRV_GPIO_EV3_PIN(9, 27, 24, 4, 9);
     pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
     pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
+    pbdrv_gpio_alt(&bluetooth_uart_cts, SYSCFG_PINMUX0_PINMUX0_31_28_UART2_CTS);
+    pbdrv_gpio_alt(&bluetooth_uart_rts, SYSCFG_PINMUX0_PINMUX0_27_24_UART2_RTS);
+    pbdrv_gpio_alt(&bluetooth_enable, SYSCFG_PINMUX4_PINMUX4_27_24_GPIO1_1);
+    // For power saving, the bluetooth module disabled until its use is
+    // requested.
+    pbdrv_gpio_out_low(&bluetooth_enable);
+
+    // Configure ECAP2 to emit the slow clock signal for the bluetooth module.
+    ECAPOperatingModeSelect(SOC_ECAP_2_REGS, ECAP_APWM_MODE);
+    // Calculate the number of clock ticks the APWM period should last. Note
+    // that the following float operations are all constant and optimized away.
+    // APWM is clocked by sysclk2 by default.
+    // Target frequency is 32.767 kHz, see cc2560 datasheet.
+    const float period_cycles = SOC_SYSCLK_2_FREQ / 32767.0;
+    // APWM counter counts up to aprd inclusive.
+    const int aprd = period_cycles - 1;
+    const int cmp = aprd / 2;
+    ECAPAPWMCaptureConfig(SOC_ECAP_2_REGS, cmp, aprd);
+    // Set the polarity to active high. It doesn't matter which it is but for
+    // the sake of determinism we set it explicitly.
+    ECAPAPWMPolarityConfig(SOC_ECAP_2_REGS, ECAP_APWM_ACTIVE_HIGH);
+    // Disable input and output synchronization.
+    ECAPSyncInOutSelect(SOC_ECAP_2_REGS, ECAP_SYNC_IN_DISABLE, ECAP_SYNC_OUT_DISABLE);
+    // Start the counter running.
+    ECAPCounterControl(SOC_ECAP_2_REGS, ECAP_COUNTER_FREE_RUNNING);
+    // Set gp0[7] to output the ECAP2 APWM signal.
+    const pbdrv_gpio_t bluetooth_slow_clock = PBDRV_GPIO_EV3_PIN(1, 3, 0, 0, 7);
+    pbdrv_gpio_alt(&bluetooth_slow_clock, SYSCFG_PINMUX1_PINMUX1_3_0_ECAP2);
 
     // Read the EV3 Bluetooth MAC address from the I2C boot EEPROM
 
