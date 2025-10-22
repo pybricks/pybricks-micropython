@@ -67,6 +67,8 @@
 #include "exceptionhandler.h"
 
 #include "../../drv/block_device/block_device_ev3.h"
+#include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
+#include "../../drv/bluetooth/bluetooth_btstack_uart_block_ev3.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/display/display_ev3.h"
 #include "../../drv/gpio/gpio_ev3.h"
@@ -757,6 +759,15 @@ enum {
 };
 uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 
+static const pbdrv_gpio_t bluetooth_enable = PBDRV_GPIO_EV3_PIN(9, 27, 24, 4, 9);
+const pbdrv_bluetooth_btstack_control_gpio_platform_data_t pbdrv_bluetooth_btstack_control_gpio_platform_data = {
+    .enable_gpio = bluetooth_enable,
+};
+
+const pbdrv_bluetooth_btstack_uart_block_ev3_platform_data_t pbdrv_bluetooth_btstack_uart_block_ev3_platform_data = {
+    .uart_id = UART2,
+};
+
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
 // initialization (low level in pbdrv, high level in pbio), and system level
@@ -800,7 +811,7 @@ void SystemInit(void) {
     const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
     const pbdrv_gpio_t bluetooth_uart_cts = PBDRV_GPIO_EV3_PIN(0, 31, 28, 0, 8);
     const pbdrv_gpio_t bluetooth_uart_rts = PBDRV_GPIO_EV3_PIN(0, 27, 24, 0, 9);
-    const pbdrv_gpio_t bluetooth_enable = PBDRV_GPIO_EV3_PIN(9, 27, 24, 4, 9);
+
     pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
     pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
     pbdrv_gpio_alt(&bluetooth_uart_cts, SYSCFG_PINMUX0_PINMUX0_31_28_UART2_CTS);
