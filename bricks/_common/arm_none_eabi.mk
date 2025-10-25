@@ -206,6 +206,7 @@ CFLAGS += -Og -ggdb
 else ifeq ($(DEBUG), 2)
 CFLAGS += -Os -DNDEBUG -flto=auto
 else
+CSUPEROPT = -Os
 CFLAGS += -Os -DNDEBUG -flto=auto
 CFLAGS += -fdata-sections -ffunction-sections
 endif
