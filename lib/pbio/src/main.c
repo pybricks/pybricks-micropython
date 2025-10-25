@@ -32,6 +32,7 @@ void pbio_init(bool start_processes) {
 
     pbio_battery_init();
     pbio_imu_init();
+    pbio_light_animation_init_module();
 
     if (!start_processes) {
         return;
