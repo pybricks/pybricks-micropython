@@ -7,6 +7,8 @@
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <btstack.h>
@@ -46,9 +48,8 @@ static pbdrv_uart_dev_t *uart_device() {
         &pbdrv_bluetooth_btstack_uart_block_ev3_platform_data;
     pbdrv_uart_dev_t *uart;
     pbio_error_t err = pbdrv_uart_get_instance(pdata->uart_id, &uart);
-    if (err != PBIO_SUCCESS) {
-        return NULL;
-    }
+    (void)err;
+    assert(err == PBIO_SUCCESS);
     return uart;
 }
 

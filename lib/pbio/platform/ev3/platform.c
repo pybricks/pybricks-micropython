@@ -36,6 +36,7 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <math.h>
 #include <string.h>
 
 #include <tiam1808/armv5/am1808/edma_event.h>
@@ -827,11 +828,11 @@ void SystemInit(void) {
     // that the following float operations are all constant and optimized away.
     // APWM is clocked by sysclk2 by default.
     // Target frequency is 32.767 kHz, see cc2560 datasheet.
-    const float period_cycles = SOC_SYSCLK_2_FREQ / 32767.0;
-    // APWM counter counts up to aprd inclusive.
-    const int aprd = period_cycles - 1;
-    const int cmp = aprd / 2;
-    ECAPAPWMCaptureConfig(SOC_ECAP_2_REGS, cmp, aprd);
+    // Note that the APWM module wraps on the cycle after reaching the period 
+    // value, which means we need to subtract one from the desired period to get
+    // a period length in cycles that matches the desired frequency.
+    const int aprd = round(SOC_SYSCLK_2_FREQ / 32767.0) - 1;
+    ECAPAPWMCaptureConfig(SOC_ECAP_2_REGS, aprd / 2, aprd);
     // Set the polarity to active high. It doesn't matter which it is but for
     // the sake of determinism we set it explicitly.
     ECAPAPWMPolarityConfig(SOC_ECAP_2_REGS, ECAP_APWM_ACTIVE_HIGH);
