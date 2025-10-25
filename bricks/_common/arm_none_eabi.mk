@@ -52,7 +52,7 @@ $(error failed)
 endif
 endif
 endif
-ifeq ($(PB_LIB_BTSTACK),1)
+ifeq ($(or $(PB_LIB_BTSTACK),$(PB_LIB_BTSTACK_CLASSIC)),1)
 ifeq ("$(wildcard $(PBTOP)/lib/btstack/README.md)","")
 $(info GIT cloning btstack submodule)
 $(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/btstack))
@@ -124,7 +124,7 @@ endif
 ifeq ($(PB_LIB_BLE5STACK),1)
 INC += -I$(PBTOP)/lib/ble5stack/central
 endif
-ifeq ($(PB_LIB_BTSTACK),1)
+ifeq ($(or $(PB_LIB_BTSTACK),$(PB_LIB_BTSTACK_CLASSIC)),1)
 INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
 INC += -I$(PBTOP)/lib/btstack/src
 endif
@@ -359,7 +359,7 @@ BTSTACK_SRC_C = $(addprefix lib/btstack/src/,\
 	l2cap.c \
 	)
 
-BTSTACK_SRC_C += $(addprefix lib/btstack/src/ble/,\
+BTSTACK_BLE_SRC_C += $(addprefix lib/btstack/src/ble/,\
 	att_db_util.c \
 	att_db.c \
 	att_dispatch.c \
@@ -509,8 +509,13 @@ ifeq ($(PB_LIB_BLE5STACK),1)
 OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 
+ifeq ($(PB_LIB_BTSTACK_CLASSIC),1)
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+endif
+
 ifeq ($(PB_LIB_BTSTACK),1)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_BLE_SRC_C:.c=.o))
 endif
 
 ifeq ($(PB_LIB_STM32_HAL),1)
