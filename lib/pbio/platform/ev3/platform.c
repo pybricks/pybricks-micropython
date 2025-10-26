@@ -828,7 +828,7 @@ void SystemInit(void) {
     // that the following float operations are all constant and optimized away.
     // APWM is clocked by sysclk2 by default.
     // Target frequency is 32.767 kHz, see cc2560 datasheet.
-    // Note that the APWM module wraps on the cycle after reaching the period 
+    // Note that the APWM module wraps on the cycle after reaching the period
     // value, which means we need to subtract one from the desired period to get
     // a period length in cycles that matches the desired frequency.
     const int aprd = round(SOC_SYSCLK_2_FREQ / 32767.0) - 1;
@@ -849,7 +849,7 @@ void SystemInit(void) {
     pbdrv_gpio_alt(&bt_clock_en, SYSCFG_PINMUX1_PINMUX1_11_8_GPIO0_5);
     pbdrv_gpio_input(&bt_clock_en);
 
-    // From the ev3dev configuration: 
+    // From the ev3dev configuration:
     //
     // There is a PIC microcontroller for interfacing with an Apple MFi
     // chip. This interferes with normal Bluetooth operation, so we need
@@ -863,8 +863,8 @@ void SystemInit(void) {
     const pbdrv_gpio_t bt_pic_rts = PBDRV_GPIO_EV3_PIN(9, 7, 4, 4, 14);
     pbdrv_gpio_alt(&bt_pic_rts, SYSCFG_PINMUX9_PINMUX9_7_4_GPIO4_14);
     pbdrv_gpio_out_high(&bt_pic_rts);
-    // This pin doesn't strictly need to be set, but we do so here for
-    // documentation purposes.
+    // CTS technically does not need to be configured, but for documentation
+    // purposes we do.
     const pbdrv_gpio_t bt_pic_cts = PBDRV_GPIO_EV3_PIN(12, 3, 0, 5, 7);
     pbdrv_gpio_alt(&bt_pic_cts, SYSCFG_PINMUX12_PINMUX12_3_0_GPIO5_7);
     pbdrv_gpio_input(&bt_pic_cts);
