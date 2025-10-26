@@ -31,7 +31,7 @@ static int write_buf_len;
 // Should the reader and writer processes shut down?
 static bool start_shutdown;
 
-// How many threads have processes have exited since the request to shut down?
+// Count of threads that have finished since start_shutdown was set.
 static int8_t threads_shutdown_complete;
 
 // Called when a block finishes sending.
