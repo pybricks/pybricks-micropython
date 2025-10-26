@@ -844,6 +844,31 @@ void SystemInit(void) {
     const pbdrv_gpio_t bluetooth_slow_clock = PBDRV_GPIO_EV3_PIN(1, 3, 0, 0, 7);
     pbdrv_gpio_alt(&bluetooth_slow_clock, SYSCFG_PINMUX1_PINMUX1_3_0_ECAP2);
 
+    // Don't interfere with the BT clock's enable pin.
+    const pbdrv_gpio_t bt_clock_en = PBDRV_GPIO_EV3_PIN(1, 11, 8, 0, 5);
+    pbdrv_gpio_alt(&bt_clock_en, SYSCFG_PINMUX1_PINMUX1_11_8_GPIO0_5);
+    pbdrv_gpio_input(&bt_clock_en);
+
+    // From the ev3dev configuration: 
+    //
+    // There is a PIC microcontroller for interfacing with an Apple MFi
+    // chip. This interferes with normal Bluetooth operation, so we need
+    // to make sure it is turned off. Note: The publicly available
+    // schematics from LEGO don't show that these pins are connected to
+    // anything, but they are present in the source code from LEGO.
+    const pbdrv_gpio_t bt_pic_en = PBDRV_GPIO_EV3_PIN(8, 19, 16, 3, 3);
+    pbdrv_gpio_alt(&bt_pic_en, SYSCFG_PINMUX8_PINMUX8_19_16_GPIO3_3);
+    pbdrv_gpio_out_low(&bt_pic_en);
+    // Hold RTS high (we're not ready to receive anything from the PIC).
+    const pbdrv_gpio_t bt_pic_rts = PBDRV_GPIO_EV3_PIN(9, 7, 4, 4, 14);
+    pbdrv_gpio_alt(&bt_pic_rts, SYSCFG_PINMUX9_PINMUX9_7_4_GPIO4_14);
+    pbdrv_gpio_out_high(&bt_pic_rts);
+    // This pin doesn't strictly need to be set, but we do so here for
+    // documentation purposes.
+    const pbdrv_gpio_t bt_pic_cts = PBDRV_GPIO_EV3_PIN(12, 3, 0, 5, 7);
+    pbdrv_gpio_alt(&bt_pic_cts, SYSCFG_PINMUX12_PINMUX12_3_0_GPIO5_7);
+    pbdrv_gpio_input(&bt_pic_cts);
+
     // Read the EV3 Bluetooth MAC address from the I2C boot EEPROM
 
     // Set up pin mux
