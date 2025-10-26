@@ -2,6 +2,6 @@ PBIO_PLATFORM = ev3
 PB_MCU_FAMILY = TIAM1808
 
 PB_LIB_UMM_MALLOC = 1
-PB_LIB_BTSTACK_CLASSIC = 1
+PB_LIB_BTSTACK = classic
 
 include ../_common/arm_none_eabi.mk
