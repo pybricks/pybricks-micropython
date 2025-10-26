@@ -185,8 +185,7 @@ static const btstack_uart_block_t pbdrv_bluetooth_btstack_uart_block_ev3_block_e
     .set_wakeup_handler = NULL,
 };
 
-const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_ev3_instance(
-    void) {
+const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_ev3_instance(void) {
     return &pbdrv_bluetooth_btstack_uart_block_ev3_block_ev3;
 }
 
