@@ -149,11 +149,13 @@ typedef long mp_off_t;
 #define MICROPY_END_ATOMIC_SECTION(state) (void)(state)
 #endif
 
+#ifndef MICROPY_VM_HOOK_LOOP
 #define MICROPY_VM_HOOK_LOOP \
     do { \
         extern bool pbio_os_run_processes_once(void); \
         pbio_os_run_processes_once(); \
     } while (0);
+#endif
 
 #define MICROPY_GC_HOOK_LOOP(i) do { \
         if (((i) & 0xf) == 0) { \

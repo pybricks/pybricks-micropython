@@ -53,4 +53,7 @@ void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
     MP_THREAD_GIL_EXIT();
     pselect(0, NULL, NULL, NULL, &timeout, &origmask);
     MP_THREAD_GIL_ENTER();
+
+    // There is a new timer event to handle.
+    pbio_os_request_poll();
 }

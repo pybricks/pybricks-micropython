@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <pbdrv/config.h>
 
 #define MICROPY_HW_BOARD_NAME                   "Desktop"
 #define MICROPY_HW_MCU_NAME                     "Desktop"
@@ -52,5 +53,33 @@
 #define PYBRICKS_OPT_EXTRA_LEVEL2               (0)
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (0)
 #define PYBRICKS_OPT_NATIVE_MOD                 (0)
+
+#if PBDRV_CONFIG_CLOCK_TEST
+#define MICROPY_VM_HOOK_LOOP \
+    do { \
+        static uint32_t count; \
+        if ((count % 16) == 0) { \
+            extern void pbio_test_clock_tick(uint32_t ticks); \
+            pbio_test_clock_tick(1); \
+        } \
+        extern bool pbio_os_run_processes_once(void); \
+        pbio_os_run_processes_once(); \
+    } while (0);
+#else
+#define MICROPY_VM_HOOK_LOOP \
+    do { \
+        static uint32_t clock_last; \
+        extern uint32_t pbdrv_clock_get_ms(void); \
+        uint32_t clock_now = pbdrv_clock_get_ms(); \
+        if (clock_last != clock_now) { \
+            extern void pbio_os_request_poll(void); \
+            pbio_os_request_poll(); \
+            clock_last = clock_now; \
+        } \
+        extern bool pbio_os_run_processes_once(void); \
+        pbio_os_run_processes_once(); \
+    } while (0);
+#endif
+
 
 #include "../_common/mpconfigport.h"
