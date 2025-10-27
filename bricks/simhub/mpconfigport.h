@@ -54,19 +54,30 @@
 #define PYBRICKS_OPT_CUSTOM_IMPORT              (0)
 #define PYBRICKS_OPT_NATIVE_MOD                 (0)
 
+// The Virtual Hub has no hardware interrupt that requests polling every 1ms.
+// We solve this by polling manually as appropriate for the simulation, as
+// indicated below.
 #if PBDRV_CONFIG_CLOCK_TEST
-#define MICROPY_VM_HOOK_LOOP \
+// In the CI variant ("counting clock"), the clock is advanced on every
+// pbio_os_hook_wait_for_interrupt, which is called from mp_hal_delay_ms. But
+// the user could be running a tight loop without any waits. We still want to
+// advance the clock in those cases, which we mimic here by advancing the clock
+// every couple of MicroPython byte codes. This also polls to the event loop.
+#define PYBRICKS_VM_HOOK_LOOP_EXTRA \
     do { \
         static uint32_t count; \
         if ((count % 16) == 0) { \
             extern void pbio_test_clock_tick(uint32_t ticks); \
             pbio_test_clock_tick(1); \
         } \
-        extern bool pbio_os_run_processes_once(void); \
-        pbio_os_run_processes_once(); \
     } while (0);
 #else
-#define MICROPY_VM_HOOK_LOOP \
+// When using the wall clock, time advances automatically but we still need to
+// request polling. This is done at the end of pbio_os_hook_wait_for_interrupt.
+// As above, we also need something to move it along with blocking user loops.
+// Instead of guessing with a number of instructions, here we can just poll
+// whenever the wall clock changes.
+#define PYBRICKS_VM_HOOK_LOOP_EXTRA \
     do { \
         static uint32_t clock_last; \
         extern uint32_t pbdrv_clock_get_ms(void); \
@@ -76,8 +87,6 @@
             pbio_os_request_poll(); \
             clock_last = clock_now; \
         } \
-        extern bool pbio_os_run_processes_once(void); \
-        pbio_os_run_processes_once(); \
     } while (0);
 #endif
 

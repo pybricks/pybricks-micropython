@@ -153,7 +153,7 @@ OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
 
-ifeq ($(PB_MCU_FAMILY),desktop)
+ifeq ($(PB_MCU_FAMILY),native)
 UNAME_S := $(shell uname -s)
 LD = $(CC)
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 $(COPT) -D_GNU_SOURCE
@@ -163,7 +163,7 @@ else ifeq ($(UNAME_S),Darwin)
 LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
 endif
 LIBS =
-else # end desktop, begin embedded
+else # end native, begin embedded
 CROSS_COMPILE ?= arm-none-eabi-
 ifeq ($(PB_MCU_FAMILY),STM32)
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0 -msoft-float
@@ -250,7 +250,7 @@ PY_EXTRA_SRC_C = $(addprefix shared/,\
 	runtime/stdout_helpers.c \
 	)
 
-ifeq ($(PB_MCU_FAMILY),desktop)
+ifeq ($(PB_MCU_FAMILY),native)
 PY_EXTRA_SRC_C += $(addprefix shared/,\
 	runtime/gchelper_generic.c \
 	)
@@ -286,7 +286,7 @@ PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
 endif
 
 # Not all MCUs support thumb2 instructions.
-ifeq ($(PB_MCU_FAMILY),desktop)
+ifeq ($(PB_MCU_FAMILY),native)
 SRC_S +=
 else ifeq ($(PB_MCU_SERIES),$(filter $(PB_MCU_SERIES),AT91SAM7 F0 TIAM1808))
 SRC_S += shared/runtime/gchelper_thumb1.s
@@ -587,7 +587,7 @@ CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 MPY_TOOL_FLAGS += -mlongint-impl none
 endif
 
-ifneq ($(PB_MCU_FAMILY),desktop)
+ifneq ($(PB_MCU_FAMILY),native)
 # Main firmware build targets
 TARGETS := $(BUILD)/firmware.zip
 else

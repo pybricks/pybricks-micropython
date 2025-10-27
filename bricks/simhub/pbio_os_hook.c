@@ -11,16 +11,26 @@
 
 #if PBDRV_CONFIG_CLOCK_TEST
 #include <pbdrv/../../drv/clock/clock_test.h>
-#endif
 
 pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
     sigset_t sigmask;
-
-    #if PBDRV_CONFIG_CLOCK_TEST
     sigemptyset(&sigmask);
     return sigmask;
-    #endif
+}
 
+void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
+}
+
+void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
+    // All events have been handled at this time. Advance the clock
+    // and continue immediately.
+    pbio_test_clock_tick(1);
+}
+
+#else
+
+pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
+    sigset_t sigmask;
     sigfillset(&sigmask);
     sigset_t origmask;
     pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
@@ -28,21 +38,11 @@ pbio_os_irq_flags_t pbio_os_hook_disable_irq(void) {
 }
 
 void pbio_os_hook_enable_irq(pbio_os_irq_flags_t flags) {
-    #if PBDRV_CONFIG_CLOCK_TEST
-    return;
-    #endif
-
     sigset_t origmask = (sigset_t)flags;
     pthread_sigmask(SIG_SETMASK, &origmask, NULL);
 }
 
 void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
-    #if PBDRV_CONFIG_CLOCK_TEST
-    // All events have been handled at this time. Advance the clock
-    // and continue immediately.
-    pbio_test_clock_tick(1);
-    return;
-    #endif
 
     struct timespec timeout = {
         .tv_sec = 0,
@@ -57,3 +57,5 @@ void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
     // There is a new timer event to handle.
     pbio_os_request_poll();
 }
+
+#endif
