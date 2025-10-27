@@ -385,7 +385,17 @@ pbio_error_t pbdrv_bluetooth_start_observing(pbdrv_bluetooth_start_observing_cal
 static bool observe_restart_requested;
 
 void pbdrv_bluetooth_restart_observing_request(void) {
+
+    static pbio_os_timer_t restart_timer;
+
+    // Don't request restart too often.
+    if (observe_restart_requested || !pbio_os_timer_is_expired(&restart_timer)) {
+        return;
+    }
+
+    // Request restart to be handled on main loop.
     observe_restart_requested = true;
+    pbio_os_timer_set(&restart_timer, 10000);
     pbio_os_request_poll();
 }
 
