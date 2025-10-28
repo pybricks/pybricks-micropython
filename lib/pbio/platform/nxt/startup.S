@@ -42,7 +42,7 @@
 
         .global nx_start
         .extern SystemInit
-        .extern main
+        .extern _main
 
 
 /**********************************************************
@@ -229,7 +229,7 @@ wait_mclk_3:
         bx  r5
 
         /* Start the main kernel code using an interworking branch. */
-        ldr r5, =main
+        ldr r5, =_main
         mov lr, pc
         bx  r5
 

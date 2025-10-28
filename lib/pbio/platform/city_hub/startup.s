@@ -8,7 +8,7 @@
   *                - Set the initial PC == Reset_Handler,
   *                - Set the vector table entries with the exceptions ISR address
   *                - Branches to main in the C library (which eventually
-  *                  calls main()).
+  *                  calls _main()).
   *            After Reset the Cortex-M0 processor is in Thread mode,
   *            priority is Privileged, and the Stack is set to Main.
   ******************************************************************************
@@ -102,7 +102,7 @@ LoopFillZerobss:
 /* Call static constructors */
 /*  bl __libc_init_array */
 /* Call the application's entry point.*/
-  bl main
+  bl _main
 
 LoopForever:
     b LoopForever

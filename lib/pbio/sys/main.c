@@ -75,10 +75,8 @@ pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id
 
 /**
  * Initializes the PBIO library, runs custom main program, and handles shutdown.
- *
- * @param [in]  main    The main program.
  */
-int main(int argc, char **argv) {
+void _main(void) {
 
     pbdrv_init();
     pbio_init(true);

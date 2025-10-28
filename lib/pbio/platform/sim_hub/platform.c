@@ -130,3 +130,8 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
         .endstop_angle_positive = INFINITY,
     },
 };
+
+int main(int argc, char **argv) {
+    extern void _main(void);
+    _main();
+}
