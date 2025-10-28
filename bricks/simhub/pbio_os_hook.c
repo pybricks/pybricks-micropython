@@ -56,6 +56,8 @@ void pbio_os_hook_wait_for_interrupt(pbio_os_irq_flags_t flags) {
 
     // There is a new timer event to handle.
     pbio_os_request_poll();
+    extern void etimer_request_poll();
+    etimer_request_poll();
 }
 
 #endif
