@@ -2,7 +2,9 @@
 import pygame
 import socket
 import threading
+import queue
 from pathlib import Path
+import struct
 
 
 HOST = "127.0.0.1"
@@ -11,37 +13,26 @@ SCREEN_WIDTH = 1400
 SCREEN_HEIGHT = 1000
 FPS = 25
 
-# Initialize shared state
-angles = [0, 0, 0, 0, 0, 0]
+PBIO_PYBRICKS_EVENT_STATUS_REPORT = 0
+PBIO_PYBRICKS_EVENT_WRITE_STDOUT = 1
+PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2
+PBIO_PYBRICKS_EVENT_WRITE_PORT_VIEW = 3
+
+# Incoming events (stdout, status, app data, port view)
+data_queue = queue.Queue()
 
 
 # Handles socket communication. Accepts new connection when client disconnects.
 # This means it can stay open at all times even when restarting pybricks-micropython
 # for fast debugging.
 def socket_listener_thread():
-    global angles
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((HOST, PORT))
-        s.listen(1)
-        print(f"Listening on {HOST}:{PORT}")
-        while True:
-            conn, addr = s.accept()
-            print(f"Client connected: {addr}")
-            with conn:
-                buffer = b""
-                while True:
-                    data = conn.recv(1024)
-                    if not data:
-                        print("Client disconnected.")
-                        break
-                    buffer += data
-                    while b"\n" in buffer:
-                        line, buffer = buffer.split(b"\n", 1)
-                        try:
-                            angles = list(map(int, line.decode().strip().split()))
-                        except ValueError:
-                            print("Invalid data received:", line.decode().strip())
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((HOST, PORT))
+    print(f"Listening on {HOST}:{PORT}")
+
+    while True:
+        data, _ = sock.recvfrom(1024)
+        data_queue.put(data)
 
 
 def blit_rotate_at_center(screen, image, position, angle):
@@ -63,10 +54,31 @@ def load_and_scale_image(filename, scale=0.25):
     return pygame.transform.smoothscale(image, scaled_size)
 
 
-# Main Pygame function
-def main():
+# Hub state
+angles = [0] * 6
+
+
+def update_state():
     global angles
 
+    while not data_queue.empty():
+        data = data_queue.get_nowait()
+        print(data)
+        if not isinstance(data, bytes) or len(data) < 2:
+            continue
+        event = data[0]
+        payload = data[1:]
+
+        if event == PBIO_PYBRICKS_EVENT_WRITE_STDOUT:
+            try:
+                print(payload.decode(), end="")
+            except UnicodeDecodeError:
+                print(payload)
+        elif event == PBIO_PYBRICKS_EVENT_WRITE_PORT_VIEW:
+            angles = struct.unpack("<iiiiii", payload)
+
+
+def main():
     # Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -90,6 +102,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        # Parse queued incoming data.
+        update_state()
 
         # Clear screen.
         screen.fill((161, 168, 175))

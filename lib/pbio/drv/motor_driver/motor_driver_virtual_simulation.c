@@ -149,11 +149,11 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
 }
 
 static int data_socket = -1;
+static struct sockaddr_in serv_addr;
 
 static void animation_socket_connect(void) {
 
-    struct sockaddr_in serv_addr;
-    data_socket = socket(AF_INET, SOCK_STREAM, 0);
+    data_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (data_socket < 0) {
         perror("socket() failed");
         return;
@@ -167,15 +167,6 @@ static void animation_socket_connect(void) {
         data_socket = -1;
         return;
     }
-
-    if (connect(data_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("connect() failed. Animation not running?");
-        close(data_socket);
-        data_socket = -1;
-        return;
-    }
-
-    printf("Connected to animation socket.\n");
 }
 
 PROCESS(pbdrv_motor_driver_virtual_simulation_process, "pbdrv_motor_driver_virtual_simulation");
@@ -198,24 +189,16 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
         // If data parser pipe is connected, output the motor angles.
         if (data_socket >= 0 && timer_expired(&frame_timer)) {
             timer_reset(&frame_timer);
-            char buf[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV * 20];
-            size_t len = 0;
+            uint8_t buf[sizeof(uint32_t) * PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV + 1] = { 3 };
             // Output motor angles on one line.
             for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
                 driver = &motor_driver_devs[dev_index];
-
-                // Append each motor angle to the buffer
-                len += snprintf(buf + len, sizeof(buf) - len, "%d ", (int)(driver->angle / 1000));
+                pbio_set_uint32_le(&buf[dev_index * sizeof(uint32_t) + 1], (uint32_t)(driver->angle / 1000));
             }
 
-            // Replace last space with newline
-            buf[len++] = '\r';
-            buf[len++] = '\n';
-            buf[len] = '\0';
-
             // Send the constructed message
-            ssize_t sent = send(data_socket, buf, len, MSG_NOSIGNAL);
-            if (sent == -1) {
+            ssize_t sent = sendto(data_socket, buf, sizeof(buf), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+            if (sent < 0) {
                 perror("send() failed");
                 close(data_socket);
                 data_socket = -1;
