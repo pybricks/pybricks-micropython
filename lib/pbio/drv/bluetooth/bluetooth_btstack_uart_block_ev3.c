@@ -18,6 +18,15 @@
 
 #include "bluetooth_btstack_uart_block_ev3.h"
 
+#define DEBUG 1
+
+#if DEBUG
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+#define DEBUG_PRINT pbdrv_uart_debug_printf
+#else
+#define DEBUG_PRINT(...)
+#endif
+
 // If a read has been requested, a pointer to the buffer and its length, else
 // null and zero.
 static uint8_t *read_buf;
@@ -30,9 +39,6 @@ static int write_buf_len;
 
 // Should the reader and writer processes shut down?
 static bool start_shutdown;
-
-// Count of threads that have finished since start_shutdown was set.
-static int8_t threads_shutdown_complete;
 
 // Called when a block finishes sending.
 static void (*block_sent)(void);
@@ -54,6 +60,8 @@ static pbdrv_uart_dev_t *pbdrv_bluetooth_btstack_uart_block_ev3_uart_device() {
 }
 
 static int pbdrv_bluetooth_btstack_uart_block_ev3_init(const btstack_uart_config_t *config) {
+    block_received = NULL;
+    block_sent = NULL;
     pbdrv_uart_set_baud_rate(pbdrv_bluetooth_btstack_uart_block_ev3_uart_device(), config->baudrate);
     // TODO: add parity, flow control APIs and obey them.
 
@@ -63,7 +71,8 @@ static int pbdrv_bluetooth_btstack_uart_block_ev3_init(const btstack_uart_config
 static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_read_process(pbio_os_state_t *state, void *context) {
     pbdrv_uart_dev_t *const uart = pbdrv_bluetooth_btstack_uart_block_ev3_uart_device();
 
-    pbio_os_state_t read_state;
+    static pbio_os_state_t read_state;
+    static pbio_error_t err;
     PBIO_OS_ASYNC_BEGIN(state);
 
     while (true) {
@@ -72,8 +81,27 @@ static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_read_process(pbio_
             break;
         }
 
+        // Come up for air every 500ms to check for shutdown. If we don't do this,
+        // reads will hang permanently during a bluetooth module shutdown, which
+        // deadlocks the shutdown process since this UART block then will not close.
+        //
+        // This is kinda unsatisfying though because *what if* a read is pending
+        // and the message happens to come in just after 500ms and gets split up.
+        // Things are going to get confusing! There should probably be a way
+        // to cancel pending reads and writes in the UART interface.
+        // That way we don't have to set a timeout and only interrupt a read
+        // if we need to do so explicitly.
         PBIO_OS_AWAIT(state, &read_state,
-            pbdrv_uart_read(state, uart, read_buf, read_buf_len, /*timeout=*/ 0));
+            (err = pbdrv_uart_read(&read_state, uart, read_buf, read_buf_len, 500)));
+
+        if (err == PBIO_ERROR_TIMEDOUT) {
+            // Just a timeout, go back to waiting.
+            continue;
+        }
+        if (err != PBIO_SUCCESS) {
+            DEBUG_PRINT("UART read error: %d\n", err);
+        }
+
         read_buf = NULL;
         read_buf_len = 0;
         if (block_received) {
@@ -81,14 +109,14 @@ static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_read_process(pbio_
         }
     }
 
-    ++threads_shutdown_complete;
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_write_process(pbio_os_state_t *state, void *context) {
     pbdrv_uart_dev_t *const uart = pbdrv_bluetooth_btstack_uart_block_ev3_uart_device();
 
-    pbio_os_state_t write_state;
+    static pbio_os_state_t write_state;
+    static pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -99,7 +127,12 @@ static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_write_process(pbio
         }
 
         PBIO_OS_AWAIT(state, &write_state,
-            pbdrv_uart_write(&write_state, uart, (uint8_t *)write_buf, write_buf_len, /*timeout=*/ 0));
+            (err = pbdrv_uart_write(&write_state, uart, (uint8_t *)write_buf, write_buf_len, /*timeout=*/ 0)));
+
+        if (err != PBIO_SUCCESS) {
+            DEBUG_PRINT("UART write error: %d\n", err);
+        }
+
         write_buf = NULL;
         write_buf_len = 0;
         if (block_sent) {
@@ -107,7 +140,6 @@ static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_write_process(pbio
         }
     }
 
-    ++threads_shutdown_complete;
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -118,22 +150,21 @@ static int pbdrv_bluetooth_btstack_uart_block_ev3_open(void) {
     read_buf = NULL;
     read_buf_len = 0;
     start_shutdown = false;
-    threads_shutdown_complete = 0;
-    block_received = NULL;
-    block_sent = NULL;
 
-    pbio_os_process_start(&reader_process, pbdrv_bluetooth_btstack_uart_block_ev3_do_read_process, NULL);
+    DEBUG_PRINT("Starting UART read/write processes\n");
     pbio_os_process_start(&writer_process, pbdrv_bluetooth_btstack_uart_block_ev3_do_write_process, NULL);
+    pbio_os_process_start(&reader_process, pbdrv_bluetooth_btstack_uart_block_ev3_do_read_process, NULL);
 
     return 0;
 }
 
 static int pbdrv_bluetooth_btstack_uart_block_ev3_close(void) {
     start_shutdown = true;
-    while (threads_shutdown_complete < 2) {
-        pbio_os_run_processes_and_wait_for_event();
+    DEBUG_PRINT("Waiting for UART read/write processes to shut down...\n");
+    while (reader_process.err != PBIO_SUCCESS || writer_process.err != PBIO_SUCCESS) {
+        pbio_os_request_poll();
+        pbio_os_run_processes_once();
     }
-
     return 0;
 }
 
