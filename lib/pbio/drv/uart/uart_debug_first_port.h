@@ -6,12 +6,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
 
 void pbdrv_uart_debug_printf(const char *format, ...);
+void pbdrv_uart_debug_vprintf(const char *format, va_list argptr);
 
 int32_t pbdrv_uart_debug_get_char(void);
 
@@ -22,6 +24,7 @@ void pbdrv_uart_debug_init(void);
 #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
 
 #define pbdrv_uart_debug_printf(...)
+#define pbdrv_uart_debug_vprintf(format, argptr)
 
 #define pbdrv_uart_debug_get_char() (-1)
 
