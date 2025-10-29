@@ -13,7 +13,11 @@
 #include "adc/adc.h"
 #include "battery/battery.h"
 #include "block_device/block_device.h"
+#ifndef PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
 #include "bluetooth/bluetooth.h"
+#else
+#include "bluetooth/bluetooth_btstack_classic.h"
+#endif
 #include "button/button.h"
 #include "charger/charger.h"
 #include "clock/clock.h"
