@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbsys/config.h>
 
 /**
@@ -36,6 +37,7 @@ uint32_t pbsys_host_stdin_get_available(void);
 pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size);
 bool pbsys_host_tx_is_idle(void);
+pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size);
 
 #else // PBSYS_CONFIG_HOST
 
@@ -50,6 +52,10 @@ bool pbsys_host_tx_is_idle(void);
 #define pbsys_host_stdin_read(data, size) PBIO_ERROR_NOT_SUPPORTED
 #define pbsys_host_stdout_write(data, size) { (void)(data); (void)(size); PBIO_ERROR_NOT_SUPPORTED; }
 #define pbsys_host_tx_is_idle() false
+
+static inline pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #endif // PBSYS_CONFIG_HOST
 

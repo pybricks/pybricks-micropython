@@ -209,4 +209,25 @@ bool pbsys_host_tx_is_idle(void) {
     #endif
 }
 
+/**
+ * Transmits data over any connected transport that is subscribed to Pybricks
+ * protocol events, and awaits until it is written.
+ *
+ * @param event_type  [in]  Event type.
+ * @param data        [in]  The data to transmit.
+ * @param size        [in]  The size of the data to transmit.
+ *                          contains the number of bytes actually processed.
+ * @return                  ::PBIO_ERROR_AGAIN while the operation is in progress.
+ *                          ::PBIO_ERROR_NODEV if there is no connection to send it to.
+ *                          ::PBIO_ERROR_BUSY if another transfer is already queued or in progress.
+ *                          ::PBIO_SUCCESS on completion.
+ */
+pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
+    #if BLE_ONLY
+    return pbdrv_bluetooth_send_event_notification(state, event_type, data, size);
+    #else
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+    #endif
+}
+
 #endif // PBSYS_CONFIG_HOST

@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include <pbsys/command.h>
-#include <pbdrv/bluetooth.h>
+#include <pbsys/host.h>
 
 #include "py/mphal.h"
 #include "py/objstr.h"
@@ -65,7 +65,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_app_data_get_values_obj, pb_type_app_da
 static pbio_error_t app_data_write_bytes_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
     // No need to pass in buffered arguments since they were copied on the
     // inital run. We can just keep calling this until completion.
-    return pbdrv_bluetooth_send_event_notification(state, 0, NULL, 0);
+    return pbsys_host_send_event(state, 0, NULL, 0);
 }
 
 static mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in) {
@@ -75,7 +75,7 @@ static mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in)
     size_t size;
     const uint8_t *data = (const uint8_t *)mp_obj_str_get_data(data_in, &size);
     pbio_os_state_t state = 0;
-    pbio_error_t err = pbdrv_bluetooth_send_event_notification(&state, PBIO_PYBRICKS_EVENT_WRITE_STDOUT, data, size);
+    pbio_error_t err = pbsys_host_send_event(&state, PBIO_PYBRICKS_EVENT_WRITE_STDOUT, data, size);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
