@@ -1,3 +1,5 @@
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
+
 #include "bluetooth_init_cc2560x.h"
 
 #include <stdint.h>
@@ -4306,3 +4308,5 @@ pbio_error_t pbdrv_bluetooth_get_init_script(uint16_t lmp_subversion, pbdrv_blue
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 }
+
+#endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
