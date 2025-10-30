@@ -328,6 +328,7 @@ bool pbdrv_bluetooth_tx_is_idle(void);
  * @param [in] data     Data to send.
  * @param [in] size     Data size, not counting event type byte.
  * @return              ::PBIO_SUCCESS on completion.
+ *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
  *                      ::PBIO_ERROR_AGAIN while awaiting.
  *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
  *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.

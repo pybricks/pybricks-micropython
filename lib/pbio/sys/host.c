@@ -218,7 +218,7 @@ bool pbsys_host_tx_is_idle(void) {
  * @param size        [in]  The size of the data to transmit.
  *                          contains the number of bytes actually processed.
  * @return                  ::PBIO_ERROR_AGAIN while the operation is in progress.
- *                          ::PBIO_ERROR_NODEV if there is no connection to send it to.
+ *                          ::PBIO_ERROR_INVALID_OP if there is no connection to send it to.
  *                          ::PBIO_ERROR_BUSY if another transfer is already queued or in progress.
  *                          ::PBIO_SUCCESS on completion.
  */

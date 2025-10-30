@@ -107,13 +107,17 @@ bool pbdrv_bluetooth_tx_is_idle(void) {
 }
 
 /**
- * Buffer for generic notification, but not buffered or schedules.
+ * Buffer for generic awaitable notification.
  */
 static uint8_t user_notification_send_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
 static size_t user_notification_size;
 
 pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
     PBIO_OS_ASYNC_BEGIN(state);
+
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     if (size + 1 > PBIO_ARRAY_SIZE(user_notification_send_buf)) {
         return PBIO_ERROR_INVALID_ARG;
@@ -130,7 +134,8 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
     memcpy(&user_notification_send_buf[1], data, size);
     pbio_os_request_poll();
 
-    // Await until main process has finished sending user data.
+    // Await until main process has finished sending user data. If it
+    // disconnected while sending, this completes as well.
     PBIO_OS_AWAIT_WHILE(state, user_notification_size);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
