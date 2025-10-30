@@ -13,6 +13,10 @@
 #include <pbsys/command.h>
 #include <pbsys/host.h>
 
+#define BLE_ONLY (PBSYS_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY))
+#define USB_ONLY (!PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
+#define BLE_AND_USB (PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
+
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
 
@@ -142,11 +146,11 @@ pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
  *                          ::PBIO_SUCCESS if at least some data was queued.
  */
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
-    #if PBSYS_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY)
+    #if BLE_ONLY
     return pbdrv_bluetooth_tx(data, size);
-    #elif !PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
+    #elif USB_ONLY
     return pbdrv_usb_stdout_tx(data, size);
-    #elif PBSYS_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
+    #elif BLE_AND_USB
 
     uint32_t bt_avail = pbdrv_bluetooth_tx_available();
     uint32_t usb_avail = pbdrv_usb_stdout_tx_available();
@@ -192,12 +196,16 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
  *                      listening, false if there is still data queued to be sent.
  */
 bool pbsys_host_tx_is_idle(void) {
-    #if PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY
     // The USB part is a bit of a hack since it depends on the USB driver not
     // buffering more than one packet at a time to actually be accurate.
+    #if BLE_ONLY
+    return pbdrv_bluetooth_tx_is_idle();
+    #elif USB_ONLY
+    return pbdrv_usb_stdout_tx_available();
+    #elif BLE_AND_USB
     return pbdrv_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_available();
     #else
-    return pbdrv_bluetooth_tx_is_idle();
+    return true;
     #endif
 }
 
