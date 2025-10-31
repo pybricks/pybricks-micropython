@@ -162,7 +162,7 @@ LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 else ifeq ($(UNAME_S),Darwin)
 LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
 endif
-LIBS =
+LIBS = -lm
 else # end native, begin embedded
 CROSS_COMPILE ?= arm-none-eabi-
 ifeq ($(PB_MCU_FAMILY),STM32)
@@ -230,7 +230,7 @@ CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 endif
 
-LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
+LIBS += "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 # Sources and libraries common to all pybricks bricks
 
