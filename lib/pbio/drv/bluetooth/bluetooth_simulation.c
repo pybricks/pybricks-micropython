@@ -60,15 +60,9 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
         return PBIO_SUCCESS;
     }
 
-    int ret = write(STDOUT_FILENO, data, size);
-    // uint32_t ret = *size;
-    // int r = write(STDOUT_FILENO, data, *size);
-    // if (r >= 0) {
-    //     // in case of an error in the syscall, report no bytes written
-    //     ret = 0;
-    // }
+    int ret = write(STDOUT_FILENO, data + 1, size - 1);
     (void)ret;
-    // return PBIO_SUCCESS;
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
