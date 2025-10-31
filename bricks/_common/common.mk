@@ -253,6 +253,7 @@ PY_EXTRA_SRC_C = $(addprefix shared/,\
 ifeq ($(PB_MCU_FAMILY),native)
 PY_EXTRA_SRC_C += $(addprefix shared/,\
 	runtime/gchelper_generic.c \
+	runtime/sys_stdio_mphal.c \
 	)
 PY_EXTRA_SRC_C += $(addprefix bricks/simhub/,\
 	pbio_os_hook.c \
