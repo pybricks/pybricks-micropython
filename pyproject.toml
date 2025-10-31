@@ -17,7 +17,7 @@ matplotlib = "^3.4.3"
 nbstripout = "^0.5.0"
 notebook = "^6.4.12"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
-pybricksdev = ">=1.2.0"
+pybricksdev = "^2.3.0"
 pycryptodomex = "^3.9.9"
 python-dotenv = "^0.15.0"
 python-socketio = "^5.7.2"
