@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 
         // Pybricksdev helper script, pipes multi-mpy to us.
         char command[512];
-        snprintf(command, sizeof(command), "python ./bricks/simhub/make_mpy.py %s", argv[1]);
+        snprintf(command, sizeof(command), "pybricksdev compile --bin %s", argv[argc - 1]);
         FILE *pipe = popen(command, "r");
         if (!pipe) {
             printf("Failed to compile program with Pybricksdev\n");
