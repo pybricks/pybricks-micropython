@@ -852,6 +852,10 @@ void pbdrv_usb_init(void) {
     *AT91C_PIOA_CODR = (1 << 16);
 }
 
+void pbdrv_usb_deinit(void) {
+    // todo
+}
+
 bool nx_usb_can_write(void) {
     return pbdrv_usb_nxt_state.status == USB_READY;
 }

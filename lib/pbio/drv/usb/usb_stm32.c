@@ -10,7 +10,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <contiki.h>
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_pcd_ex.h>
 #include <usbd_core.h>
@@ -20,6 +19,7 @@
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
 #include <pbio/protocol.h>
+#include <pbio/os.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
 #include <pbsys/command.h>
@@ -30,7 +30,15 @@
 #include "../charger/charger.h"
 #include "./usb_stm32.h"
 
-PROCESS(pbdrv_usb_process, "USB");
+#define DEBUG 0
+
+#if DEBUG
+#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
+// Remember to set PBDRV_CONFIG_UART_DEBUG_FIRST_PORT in pbdrvconfig.
+#define DEBUG_PRINT pbdrv_uart_debug_printf
+#else
+#define DEBUG_PRINT(...)
+#endif
 
 // These buffers need to be 32-bit aligned because the USB driver moves data
 // to/from FIFOs in 32-bit chunks.
@@ -52,48 +60,48 @@ static volatile bool vbus_active;
 static pbdrv_usb_bcd_t pbdrv_usb_bcd;
 
 /**
- * Battery charger detection task.
+ * Waits for USB to be plugged in and runs battery charger detection task.
  *
- * This is basically HAL_PCDEx_BCD_VBUSDetect() converted to a protothread.
+ * Based on HAL_PCDEx_BCD_VBUSDetect().
  *
  * @param [in]  pt  The protothread.
  */
-static PT_THREAD(pbdrv_usb_stm32_bcd_detect(struct pt *pt)) {
-    static struct etimer timer;
+static pbio_error_t pbdrv_usb_stm32_wait_until_usb_detected(pbio_os_state_t *state) {
+    static pbio_os_timer_t timer;
     USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    // disable all other USB functions
+    pbdrv_usb_bcd = PBDRV_USB_BCD_NONE;
+
+    // Wait until USB plugged in.
+    PBIO_OS_AWAIT_UNTIL(state, vbus_active);
+
+    // Disable all other USB functions.
     HAL_PCDEx_ActivateBCD(&hpcd);
 
-    /* Enable DCD : Data Contact Detect */
+    // Enable Data Contact Detect.
     USBx->GCCFG |= USB_OTG_GCCFG_DCDEN;
 
-    /* Wait Detect flag or a timeout is happen*/
-    etimer_set(&timer, 1000);
-    while (!(USBx->GCCFG & USB_OTG_GCCFG_DCDET)) {
-        /* Check for the Timeout */
-        if (etimer_expired(&timer)) {
-            USBx->GCCFG &= ~USB_OTG_GCCFG_DCDEN;
-            HAL_PCDEx_DeActivateBCD(&hpcd);
-            pbdrv_usb_bcd = PBDRV_USB_BCD_NONSTANDARD;
-            PT_EXIT(pt);
-        }
-        PT_YIELD(pt);
+    // Wait Detect flag or a timeout.
+    pbio_os_timer_set(&timer, 1000);
+    PBIO_OS_AWAIT_UNTIL(state, (USBx->GCCFG & USB_OTG_GCCFG_DCDET) || pbio_os_timer_is_expired(&timer));
+    if (pbio_os_timer_is_expired(&timer)) {
+        USBx->GCCFG &= ~USB_OTG_GCCFG_DCDEN;
+        HAL_PCDEx_DeActivateBCD(&hpcd);
+        pbdrv_usb_bcd = PBDRV_USB_BCD_NONSTANDARD;
+        return PBIO_SUCCESS;
     }
 
-    /* Correct response received */
-    etimer_set(&timer, 100);
-    PT_WAIT_UNTIL(pt, etimer_expired(&timer));
+    // Correct response received.
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
 
-    /*Primary detection: checks if connected to Standard Downstream Port
-    (without charging capability) */
+    // Primary detection: checks if connected to Standard Downstream Port
+    // without charging capability.
     USBx->GCCFG &= ~USB_OTG_GCCFG_DCDEN;
     USBx->GCCFG |= USB_OTG_GCCFG_PDEN;
 
-    etimer_set(&timer, 100);
-    PT_WAIT_UNTIL(pt, etimer_expired(&timer));
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
 
     if (!(USBx->GCCFG & USB_OTG_GCCFG_PDET)) {
         /* Case of Standard Downstream Port */
@@ -105,8 +113,7 @@ static PT_THREAD(pbdrv_usb_stm32_bcd_detect(struct pt *pt)) {
         USBx->GCCFG &= ~USB_OTG_GCCFG_PDEN;
         USBx->GCCFG |= USB_OTG_GCCFG_SDEN;
 
-        etimer_set(&timer, 100);
-        PT_WAIT_UNTIL(pt, etimer_expired(&timer));
+        PBIO_OS_AWAIT_MS(state, &timer, 100);
 
         if ((USBx->GCCFG) & USB_OTG_GCCFG_SDET) {
             /* case Dedicated Charging Port  */
@@ -122,7 +129,14 @@ static PT_THREAD(pbdrv_usb_stm32_bcd_detect(struct pt *pt)) {
     // enable all other USB functions
     HAL_PCDEx_DeActivateBCD(&hpcd);
 
-    PT_END(pt);
+    // USB was unplugged in the middle of all this, so start over.
+    if (!vbus_active) {
+        PBIO_OS_ASYNC_RESET(state);
+        pbio_os_request_poll();
+        return PBIO_ERROR_AGAIN;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // Device-specific USB driver implementation.
@@ -142,7 +156,7 @@ void pbdrv_usb_stm32_handle_otg_fs_irq(void) {
  */
 void pbdrv_usb_stm32_handle_vbus_irq(bool active) {
     vbus_active = active;
-    process_poll(&pbdrv_usb_process);
+    pbio_os_request_poll();
 }
 
 /**
@@ -185,7 +199,7 @@ pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
 
     usb_stdout_sz = 1 + 1 + *size;
 
-    process_poll(&pbdrv_usb_process);
+    pbio_os_request_poll();
 
     return PBIO_SUCCESS;
 }
@@ -258,7 +272,7 @@ static USBD_StatusTypeDef Pybricks_Itf_DeInit(void) {
 static USBD_StatusTypeDef Pybricks_Itf_Receive(uint8_t *Buf, uint32_t Len) {
 
     usb_in_sz = Len;
-    process_poll(&pbdrv_usb_process);
+    pbio_os_request_poll();
     return USBD_OK;
 }
 
@@ -288,7 +302,7 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
     }
 
     transmitting = false;
-    process_poll(&pbdrv_usb_process);
+    pbio_os_request_poll();
     return ret;
 }
 
@@ -362,29 +376,6 @@ USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
     .ReadCharacteristic = Pybricks_Itf_ReadCharacteristic,
 };
 
-// Common USB driver implementation.
-
-void pbdrv_usb_init(void) {
-    // Link the driver data structures
-    husbd.pData = &hpcd;
-    hpcd.pData = &husbd;
-
-    #if PBDRV_CONFIG_USB_CHARGE_ONLY
-    USBD_Init(&husbd, NULL, 0);
-    #else
-    USBD_Pybricks_Desc_Init();
-    USBD_Init(&husbd, &USBD_Pybricks_Desc, 0);
-    USBD_RegisterClass(&husbd, &USBD_Pybricks_ClassDriver);
-    USBD_Pybricks_RegisterInterface(&husbd, &USBD_Pybricks_fops);
-    USBD_Start(&husbd);
-    #endif
-
-    process_start(&pbdrv_usb_process);
-
-    // VBUS may already be active
-    process_poll(&pbdrv_usb_process);
-}
-
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return pbdrv_usb_bcd;
 }
@@ -413,139 +404,148 @@ void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
     // Schedule to send whenever the Bluetooth process gets round to it.
     memcpy(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data));
     pbdrv_usb_status_data_pending = true;
-    process_poll(&pbdrv_usb_process);
+    pbio_os_request_poll();
 }
 
-// Event loop
+/**
+ * Non-blocking poll handler to process pending incoming messages.
+ */
+static void pbdrv_usb_handle_data_in(void) {
+    if (!usb_in_sz) {
+        return;
+    }
 
-PROCESS_THREAD(pbdrv_usb_process, ev, data) {
-    static struct pt bcd_pt;
-    static PBIO_ONESHOT(no_vbus_oneshot);
-    static PBIO_ONESHOT(bcd_oneshot);
-    static PBIO_ONESHOT(pwrdn_oneshot);
-    static bool bcd_busy;
-    static pbio_pybricks_error_t result;
-    static struct etimer status_timer;
-    static struct etimer transmit_timer;
+    switch (usb_in_buf[0]) {
+        case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
+            pbdrv_usb_stm32_is_events_subscribed = usb_in_buf[1];
+            usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
+            pbio_set_uint32_le(&usb_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
+            usb_response_sz = sizeof(usb_response_buf);
 
-    PROCESS_POLLHANDLER({
-        if (!bcd_busy && pbio_oneshot(!vbus_active, &no_vbus_oneshot)) {
-            pbdrv_usb_bcd = PBDRV_USB_BCD_NONE;
-        }
-
-        // pbdrv_usb_stm32_bcd_detect() needs to run completely to the end,
-        // otherwise the USB will be left in an inconsistent state. So we
-        // have to wait for both the completion of the previous call and the
-        // oneshot trigger before starting again.
-        if (!bcd_busy && pbio_oneshot(vbus_active, &bcd_oneshot)) {
-            PT_INIT(&bcd_pt);
-            bcd_busy = true;
-        }
-    })
-
-    PROCESS_BEGIN();
-
-    etimer_set(&status_timer, 500);
-
-    for (;;) {
-        PROCESS_WAIT_EVENT();
-
-        if (bcd_busy) {
-            bcd_busy = PT_SCHEDULE(pbdrv_usb_stm32_bcd_detect(&bcd_pt));
-
-            if (bcd_busy) {
-                // All other USB functions are halted if BCD is busy
-                continue;
+            // Schedule sending current status immediately after subscribing.
+            pbdrv_usb_status_data_pending = true;
+            break;
+        case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
+            if (usb_response_sz == 0 && pbdrv_usb_receive_handler) {
+                pbio_pybricks_error_t result = pbdrv_usb_receive_handler(usb_in_buf + 1, usb_in_sz - 1);
+                usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
+                pbio_set_uint32_le(&usb_response_buf[1], result);
+                usb_response_sz = sizeof(usb_response_buf);
             }
+            break;
+    }
+
+    // Prepare to receive the next packet
+    usb_in_sz = 0;
+    USBD_Pybricks_ReceivePacket(&husbd);
+}
+
+static void pbdrv_usb_handle_data_out(void) {
+    #if PBDRV_CONFIG_USB_CHARGE_ONLY
+    // Nothing to do when only charging.
+    return;
+    #endif
+
+    static pbio_os_timer_t transmit_timer;
+
+    if (transmitting) {
+        if (pbio_os_timer_is_expired(&transmit_timer)) {
+            // Transmission has taken too long, so reset the state to allow
+            // new transmissions. This can happen if the host stops reading
+            // data for some reason.
+            pbdrv_usb_stm32_reset_tx_state();
         }
+        // Still transmitting or expired, so can't do anything else for now.
+        return;
+    }
 
-        #if PBDRV_CONFIG_USB_CHARGE_ONLY
-        // Communication logic skipped when charging only.
-        continue;
-        #endif
+    // We are not currently transmitting, so we can transmit something new.
+    // Give priority to response, then status updates, then stdout.
+    if (usb_response_sz) {
+        transmitting = true;
+        USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
+    } else if (pbdrv_usb_stm32_is_events_subscribed) {
+        if (pbdrv_usb_status_data_pending) {
+            pbdrv_usb_status_data_pending = false;
 
-        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
-            if (pbio_oneshot(true, &pwrdn_oneshot)) {
-                USBD_Stop(&husbd);
-                USBD_DeInit(&husbd);
-            }
+            usb_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+            _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
+                "size of status report does not match size of event");
 
-            // USB communication is stopped after a shutdown, but
-            // the process is still needed to track the BCD state
-            continue;
-        }
+            memcpy(&usb_status_buf[1], pbdrv_usb_status_data, sizeof(pbdrv_usb_status_data));
+            usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(pbdrv_usb_status_data));
 
-        if (usb_in_sz) {
-            switch (usb_in_buf[0]) {
-                case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
-                    pbdrv_usb_stm32_is_events_subscribed = usb_in_buf[1];
-                    usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
-                    pbio_set_uint32_le(&usb_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
-                    usb_response_sz = sizeof(usb_response_buf);
-                    break;
-                case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
-                    if (usb_response_sz == 0 && pbdrv_usb_receive_handler) {
-                        result = pbdrv_usb_receive_handler(usb_in_buf + 1, usb_in_sz - 1);
-                        usb_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
-                        pbio_set_uint32_le(&usb_response_buf[1], result);
-                        usb_response_sz = sizeof(usb_response_buf);
-                    }
-                    break;
-            }
-
-            // Prepare to receive the next packet
-            usb_in_sz = 0;
-            USBD_Pybricks_ReceivePacket(&husbd);
-        }
-
-        if (transmitting) {
-            if (etimer_expired(&transmit_timer)) {
-                // Transmission has taken too long, so reset the state to allow
-                // new transmissions. This can happen if the host stops reading
-                // data for some reason.
-                pbdrv_usb_stm32_reset_tx_state();
-            }
-
-            continue;
-        }
-
-        // Transmit. Give priority to response, then status updates, then stdout.
-        if (usb_response_sz) {
             transmitting = true;
-            USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, usb_response_sz);
-        } else if (pbdrv_usb_stm32_is_events_subscribed) {
-            if (pbdrv_usb_status_data_pending || etimer_expired(&status_timer)) {
-                pbdrv_usb_status_data_pending = false;
-
-                usb_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
-                _Static_assert(sizeof(usb_status_buf) + 1 >= PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE,
-                    "size of status report does not match size of event");
-
-                memcpy(&usb_status_buf[1], pbdrv_usb_status_data, sizeof(pbdrv_usb_status_data));
-                usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(pbdrv_usb_status_data));
-
-                // REVISIT: we really shouldn't need a status timer on USB since
-                // it's not a lossy transport. We just need to make sure we send
-                // status updates when they change and send the current status
-                // immediately after subscribing to events.
-                etimer_restart(&status_timer);
-
-                transmitting = true;
-                USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
-            } else if (usb_stdout_sz) {
-                transmitting = true;
-                USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
-            }
-        }
-
-        if (transmitting) {
-            // If the FIFO isn't emptied quickly, then there probably isn't an
-            // app anymore. This timer is used to detect such a condition.
-            etimer_set(&transmit_timer, 50);
+            USBD_Pybricks_TransmitPacket(&husbd, usb_status_buf, usb_status_sz);
+        } else if (usb_stdout_sz) {
+            transmitting = true;
+            USBD_Pybricks_TransmitPacket(&husbd, usb_stdout_buf, usb_stdout_sz);
         }
     }
 
-    PROCESS_END();
+    if (transmitting) {
+        // If the FIFO isn't emptied quickly, then there probably isn't an
+        // app anymore. This timer is used to detect such a condition.
+        pbio_os_timer_set(&transmit_timer, 50);
+    }
+}
+
+static pbio_os_process_t pbdrv_usb_process;
+
+static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_state_t sub;
+
+    // Runs every time. If there is no connection, there just won't be data.
+    pbdrv_usb_handle_data_in();
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (;;) {
+        DEBUG_PRINT("Waiting for USB to be plugged in.\n");
+        PBIO_OS_AWAIT(state, &sub, pbdrv_usb_stm32_wait_until_usb_detected(&sub));
+        DEBUG_PRINT("Detected USB bcd type: %d\n", pbdrv_usb_bcd);
+
+        // Handle outgoing data until unplugged or process cancelled.
+        DEBUG_PRINT("Ready to transmit.\n");
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);
+        if (vbus_active && pbdrv_usb_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
+            pbdrv_usb_handle_data_out();
+            return PBIO_ERROR_AGAIN;
+        }
+
+        PBIO_OS_AWAIT_WHILE(state, vbus_active);
+        pbdrv_usb_stm32_reset_tx_state();
+        DEBUG_PRINT("USB unplugged.\n");
+    }
+
+    // Unreachable. On cancellation, the charger detection process keeps
+    // running. It will just skip the data handler.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+}
+
+void pbdrv_usb_init(void) {
+    // Link the driver data structures
+    husbd.pData = &hpcd;
+    hpcd.pData = &husbd;
+
+    #if PBDRV_CONFIG_USB_CHARGE_ONLY
+    USBD_Init(&husbd, NULL, 0);
+    #else
+    USBD_Pybricks_Desc_Init();
+    USBD_Init(&husbd, &USBD_Pybricks_Desc, 0);
+    USBD_RegisterClass(&husbd, &USBD_Pybricks_ClassDriver);
+    USBD_Pybricks_RegisterInterface(&husbd, &USBD_Pybricks_fops);
+    USBD_Start(&husbd);
+    #endif
+
+    pbio_os_process_start(&pbdrv_usb_process, pbdrv_usb_process_thread, NULL);
+}
+
+void pbdrv_usb_deinit(void) {
+    USBD_Stop(&husbd);
+    USBD_DeInit(&husbd);
+    pbio_os_process_make_request(&pbdrv_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
 #endif // PBDRV_CONFIG_USB_STM32F4

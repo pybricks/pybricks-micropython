@@ -1110,6 +1110,10 @@ void pbdrv_usb_init(void) {
     pbio_os_process_start(&pbdrv_usb_ev3_process, pbdrv_usb_ev3_process_thread, NULL);
 }
 
+void pbdrv_usb_deinit(void) {
+    // todo
+}
+
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     // This function is not used on EV3
     return PBDRV_USB_BCD_NONE;
