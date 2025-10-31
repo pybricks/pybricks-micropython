@@ -31,6 +31,9 @@ void pbsys_hmi_init(void) {
 void pbsys_hmi_deinit(void) {
 }
 
+uint8_t pbsys_hmi_native_program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+uint32_t pbsys_hmi_native_program_size;
+
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
     pbio_os_run_processes_and_wait_for_event();
@@ -42,36 +45,15 @@ pbio_error_t pbsys_hmi_await_program_selection(void) {
     }
     ran_once = true;
 
-    // Test if script is provided via environment.
-    const char *script_path = getenv("TEST_SCRIPT");
-    if (!script_path) {
-        // No script given, just start REPL
+    // Start REPL if no program given.
+    if (pbsys_hmi_native_program_size == 0) {
         return pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_REPL, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
-    }
-
-    // Pybricksdev helper script, pipes multi-mpy to us.
-    char command[512];
-    snprintf(command, sizeof(command), "python ./bricks/simhub/make_mpy.py %s", script_path);
-    FILE *pipe = popen(command, "r");
-    if (!pipe) {
-        perror("Failed to compile program with Pybricksdev\n");
-        return PBIO_ERROR_CANCELED;
-    }
-
-    // Read the multi-mpy file from pipe.
-    uint8_t program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
-    size_t read_size = fread(program_buf, 1, sizeof(program_buf), pipe);
-    pclose(pipe);
-
-    if (read_size == 0) {
-        perror("Error reading from pipe");
-        return PBIO_ERROR_CANCELED;
     }
 
     // Load the program in storage, as if receiving it.
     pbsys_storage_set_program_size(0);
-    pbsys_storage_set_program_data(0, program_buf, read_size);
-    pbsys_storage_set_program_size(read_size);
+    pbsys_storage_set_program_data(0, pbsys_hmi_native_program_buf, pbsys_hmi_native_program_size);
+    pbsys_storage_set_program_size(pbsys_hmi_native_program_size);
 
     return pbsys_main_program_request_start(PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
 }

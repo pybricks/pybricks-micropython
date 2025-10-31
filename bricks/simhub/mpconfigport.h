@@ -92,5 +92,9 @@
     } while (0);
 #endif
 
+// Allow printf for conventional purposes on native host, such as printing
+// the help info for the executable. This will not go through the simulated
+// i/o drivers, but just to stdout.
+#define MICROPY_USE_INTERNAL_PRINTF             (0)
 
 #include "../_common/mpconfigport.h"

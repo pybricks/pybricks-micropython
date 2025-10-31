@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2023 The Pybricks Authors
+// Copyright (c) 2025 The Pybricks Authors
+
+#include <stdio.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 
@@ -131,7 +133,32 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
 };
 
+extern uint8_t pbsys_hmi_native_program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+extern uint32_t pbsys_hmi_native_program_size;
+
 int main(int argc, char **argv) {
+
+    if (argc > 1) {
+
+        // Pybricksdev helper script, pipes multi-mpy to us.
+        char command[512];
+        snprintf(command, sizeof(command), "python ./bricks/simhub/make_mpy.py %s", argv[1]);
+        FILE *pipe = popen(command, "r");
+        if (!pipe) {
+            printf("Failed to compile program with Pybricksdev\n");
+            return 0;
+        }
+
+        // Read the multi-mpy file from pipe.
+        pbsys_hmi_native_program_size = fread(pbsys_hmi_native_program_buf, 1, sizeof(pbsys_hmi_native_program_buf), pipe);
+        pclose(pipe);
+
+        if (pbsys_hmi_native_program_size == 0) {
+            printf("Error reading from pipe\n");
+            return 0;
+        }
+    }
+
     extern void _main(void);
     _main();
 }
