@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Runs tests on virtualhub.
+# Runs tests on simhub.
 #
 # Use `--list-test` to list tests or `--include <regex>` to run single tests.
 #
@@ -12,7 +12,7 @@ if [[ $CI != "true" ]]; then
 fi
 
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
-BRICK_DIR="$SCRIPT_DIR/bricks/virtualhub"
+BRICK_DIR="$SCRIPT_DIR/bricks/simhub"
 MP_TEST_DIR="$SCRIPT_DIR/micropython/tests"
 PB_TEST_DIR=$"$SCRIPT_DIR/tests"
 BUILD_DIR="$BRICK_DIR/build${COVERAGE:+-coverage}"
@@ -20,9 +20,7 @@ PBIO_DIR="$SCRIPT_DIR/lib/pbio"
 
 make -s -j $(nproc --all) -C "$BRICK_DIR"
 
-export MICROPY_MICROPYTHON="$BUILD_DIR/virtualhub-micropython"
-export PYTHONPATH="$PBIO_DIR/cpython"
-export PBIO_VIRTUAL_PLATFORM_MODULE=pbio_virtual.platform.robot
+export MICROPY_MICROPYTHON="$BUILD_DIR/firmware.elf"
 
 cd "$MP_TEST_DIR"
 ./run-tests.py --test-dirs $(find "$PB_TEST_DIR/virtualhub" -type d -and ! -wholename "*/build/*"  -and ! -wholename "*/run_test.py") "$@" || \
