@@ -15,10 +15,10 @@
 #define PBDRV_CONFIG_BUTTON_TEST                            (1)
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
-#ifdef PBDRV_CONFIG_CLOCK_LOCAL
-#define PBDRV_CONFIG_CLOCK_LINUX                            (1)
-#else
+#ifdef PBDRV_CONFIG_CLOCK_CI
 #define PBDRV_CONFIG_CLOCK_TEST                             (1)
+#else
+#define PBDRV_CONFIG_CLOCK_LINUX                            (1)
 #endif
 
 #define PBDRV_CONFIG_COUNTER                                (1)
