@@ -406,6 +406,10 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
             run_user_program();
             break;
     }
+
+    // Ensure everything is written before the user application is considered
+    // done, so that the host does not receive stdout after receiving stop.
+    mp_hal_stdout_tx_flush();
 }
 
 void pbsys_main_run_program_cleanup(void) {
