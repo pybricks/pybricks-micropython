@@ -1,3 +1,2 @@
+// qstrs specific to this port
 // *FORMAT-OFF*
-
-Q(stop button pressed)

@@ -37,15 +37,10 @@
             "detail": "Build the PrimeHub project"
         },
         {
-            "label": "build virtualhub",
-            "type": "shell",
-            "command": "poetry run make -C bricks/virtualhub DEBUG=1 COPT=-O0 CROSS_COMPILE= -j"
-        },
-        {
             "options": {
-                "cwd": "${workspaceFolder}/bricks/simhub"
+                "cwd": "${workspaceFolder}/bricks/virtualhub"
             },
-            "label": "build simhub (debug)",
+            "label": "build virtualhub (debug)",
             "type": "shell",
             "command": "make -C ../../micropython/mpy-cross -j && poetry run make DEBUG=1 BUILD=build-debug -j",
         },

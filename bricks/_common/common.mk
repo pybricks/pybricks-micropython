@@ -258,7 +258,7 @@ PY_EXTRA_SRC_C += $(addprefix shared/,\
 	runtime/gchelper_generic.c \
 	runtime/sys_stdio_mphal.c \
 	)
-PY_EXTRA_SRC_C += $(addprefix bricks/simhub/,\
+PY_EXTRA_SRC_C += $(addprefix bricks/virtualhub/,\
 	pbio_os_hook.c \
 	)
 else

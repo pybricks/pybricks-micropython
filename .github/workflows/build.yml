@@ -173,7 +173,7 @@ jobs:
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        file: bricks/simhub/build-coverage/lcov.info
+        file: bricks/virtualhub/build-coverage/lcov.info
         flag-name: virtualhub
         parallel: true
 

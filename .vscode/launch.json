@@ -54,38 +54,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "virtualhub",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/virtualhub-micropython",
-            "args": [
-                "${workspaceFolder}/tests/virtualhub/motor/car.py"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [
-                {
-                    "name": "PBIO_TEST_CONNECT_SOCKET",
-                    "value": "true"
-                },
-            ],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "Ignore timer signal",
-                    "text": "handle SIG34 noprint pass",
-                    "ignoreFailures": false
-                }
-            ],
-            "preLaunchTask": "build virtualhub"
-        },
-        {
             "name":"Virtual Hub Animation",
             "type":"debugpy",
             "request":"launch",
@@ -93,12 +61,12 @@
             "console":"integratedTerminal"
         },
         {
-            "name": "simhub",
+            "name": "virtualhub",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/simhub/build-debug/firmware.elf",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/firmware.elf",
             "args": [
-                "${workspaceFolder}/tests/virtualhub/basics/hello.py",
+                "${workspaceFolder}/tests/virtualhub/motor/car.py",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -122,7 +90,7 @@
                     "ignoreFailures": false
                 }
             ],
-            "preLaunchTask": "build simhub (debug)"
+            "preLaunchTask": "build virtualhub (debug)"
         },
         {
             "name": "test-pbio",

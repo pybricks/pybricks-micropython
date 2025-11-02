@@ -342,31 +342,6 @@
             "intelliSenseMode": "gcc-arm"
         },
         {
-            "name": "virtualhub",
-            "includePath": [
-                "${workspaceFolder}/bricks/virtualhub",
-                "${workspaceFolder}/bricks/virtualhub/build",
-                "${workspaceFolder}/lib/contiki-core",
-                "${workspaceFolder}/lib/lego",
-                "${workspaceFolder}/lib/lwrb/src/include",
-                "${workspaceFolder}/lib/pbio",
-                "${workspaceFolder}/lib/pbio/include",
-                "${workspaceFolder}/lib/pbio/platform/virtual_hub",
-                "${workspaceFolder}/micropython/ports/unix",
-                "${workspaceFolder}/micropython",
-                "${workspaceFolder}",
-                "/usr/include/python3.10"
-            ],
-            "defines": [
-                "UNIX",
-                "MICROPY_MODULE_FROZEN_MPY",
-                "MICROPY_USE_READLINE=1"
-            ],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c11",
-            "intelliSenseMode": "gcc-x64"
-        },
-        {
             "name": "pbio/test",
             "includePath": [
                 "${workspaceFolder}/lib/btstack/chipset/cc256x",
@@ -388,16 +363,16 @@
             "cStandard": "c11"
         },
         {
-            "name": "simhub",
+            "name": "virtualhub",
             "includePath": [
-                "${workspaceFolder}/bricks/simhub",
-                "${workspaceFolder}/bricks/simhub/build",
+                "${workspaceFolder}/bricks/virtualhub",
+                "${workspaceFolder}/bricks/virtualhub/build",
                 "${workspaceFolder}/lib/contiki-core",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/lwrb/src/include",
                 "${workspaceFolder}/lib/pbio",
                 "${workspaceFolder}/lib/pbio/include",
-                "${workspaceFolder}/lib/pbio/platform/sim_hub",
+                "${workspaceFolder}/lib/pbio/platform/virtual_hub",
                 "${workspaceFolder}/micropython",
                 "${workspaceFolder}",
                 "/usr/include/python3.10"

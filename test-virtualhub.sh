@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Runs tests on simhub.
+# Runs tests on virtualhub.
 #
 # Use `--list-test` to list tests or `--include <regex>` to run single tests.
 #
@@ -15,7 +15,7 @@ COVERAGE=1
 export COVERAGE
 
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
-BRICK_DIR="$SCRIPT_DIR/bricks/simhub"
+BRICK_DIR="$SCRIPT_DIR/bricks/virtualhub"
 MP_TEST_DIR="$SCRIPT_DIR/micropython/tests"
 PB_TEST_DIR=$"$SCRIPT_DIR/tests"
 BUILD_DIR_NAME="build${COVERAGE:+-coverage}"
