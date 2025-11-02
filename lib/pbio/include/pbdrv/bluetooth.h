@@ -221,7 +221,7 @@ typedef void (*pbdrv_bluetooth_start_observing_callback_t)(pbdrv_bluetooth_ad_ty
 #define PBDRV_BLUETOOTH_MAX_MTU_SIZE 23
 #endif
 
-#if PBDRV_CONFIG_BLUETOOTH
+#if PBDRV_CONFIG_BLUETOOTH || PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 //
 // General purpose functions: initialization and power/connected state.
@@ -259,7 +259,10 @@ const char *pbdrv_bluetooth_get_fw_version(void);
  *                          otherwise false.
  */
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
+#endif // PBDRV_CONFIG_BLUETOOTH || PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
+// The following functions are LE-only.
+#if PBDRV_CONFIG_BLUETOOTH
 /**
  * Registers a callback that will be called when Pybricks data is received via a
  * characteristic write.
@@ -503,8 +506,10 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
  *                             ::PBIO_ERROR_TIMEDOUT if the timer expired.
  */
 pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
+#endif
 
-#else // PBDRV_CONFIG_BLUETOOTH
+// Stub definitions for common bluetooth functions when bluetooth is not enabled.
+#if !PBDRV_CONFIG_BLUETOOTH_CLASSIC && !PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
 }
@@ -523,6 +528,11 @@ static inline const char *pbdrv_bluetooth_get_fw_version(void) {
 static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     return false;
 }
+
+#endif // !PBDRV_CONFIG_BLUETOOTH_CLASSIC && !PBDRV_CONFIG_BLUETOOTH
+
+// Stub definitions for LE-only functions when LE is not enabled.
+#if !PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
 }
