@@ -129,6 +129,12 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
 #define STDIN_HEADER_SIZE (1)
 
 static void pbdrv_bluetooth_simulation_tick_handler() {
+    #ifdef PBDRV_CONFIG_RUN_ON_CI
+    // CI and MicroPython test suite have lots of problems with stdin. It is
+    // only needed for the REPL and interactive input, so don't bother on CI.
+    return;
+    #endif
+
     uint8_t buf[256 + STDIN_HEADER_SIZE];
 
     // This has been made non-blocking in platform.c.

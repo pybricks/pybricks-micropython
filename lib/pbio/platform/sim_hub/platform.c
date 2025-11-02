@@ -139,6 +139,9 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
 };
 
+// The 'embedded' main.
+extern void _main(void);
+
 int main(int argc, char **argv) {
 
     // Parse given program, else otherwise default to REPL.
@@ -164,6 +167,13 @@ int main(int argc, char **argv) {
             return 0;
         }
     }
+
+    #ifdef PBDRV_CONFIG_RUN_ON_CI
+    // On the CI modifying settings for stdin causes problems. The REPL isn't
+    // used on CI anyway.
+    _main();
+    return 0;
+    #endif
 
     // Save the original terminal settings
     struct termios term_old, term_new;
@@ -197,8 +207,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    // Runs the 'embedded' main.
-    extern void _main(void);
+    // Simulate running embedded main.
     _main();
 
     // Restore stdin flags.

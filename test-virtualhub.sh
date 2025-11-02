@@ -18,7 +18,7 @@ PB_TEST_DIR=$"$SCRIPT_DIR/tests"
 BUILD_DIR="$BRICK_DIR/build${COVERAGE:+-coverage}"
 PBIO_DIR="$SCRIPT_DIR/lib/pbio"
 
-make -s -j $(nproc --all) -C "$BRICK_DIR"
+make -s -j $(nproc --all) -C "$BRICK_DIR" COPT=-DPBDRV_CONFIG_RUN_ON_CI
 
 export MICROPY_MICROPYTHON="$BUILD_DIR/firmware.elf"
 
