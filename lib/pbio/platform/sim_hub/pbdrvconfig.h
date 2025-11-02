@@ -15,7 +15,7 @@
 #define PBDRV_CONFIG_BUTTON_TEST                            (1)
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
-#ifdef PBDRV_CONFIG_CLOCK_CI
+#ifdef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_CLOCK_TEST                             (1)
 #else
 #define PBDRV_CONFIG_CLOCK_LINUX                            (1)

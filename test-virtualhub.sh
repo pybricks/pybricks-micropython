@@ -11,14 +11,16 @@ if [[ $CI != "true" ]]; then
     NOT_CI="true"
 fi
 
+: ${COVERAGE:=1}
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 BRICK_DIR="$SCRIPT_DIR/bricks/simhub"
 MP_TEST_DIR="$SCRIPT_DIR/micropython/tests"
 PB_TEST_DIR=$"$SCRIPT_DIR/tests"
-BUILD_DIR="$BRICK_DIR/build${COVERAGE:+-coverage}"
+BUILD_DIR_NAME="build${COVERAGE:+-coverage}"
+BUILD_DIR="$BRICK_DIR/$BUILD_DIR_NAME"
 PBIO_DIR="$SCRIPT_DIR/lib/pbio"
 
-make -s -j $(nproc --all) -C "$BRICK_DIR" COPT=-DPBDRV_CONFIG_RUN_ON_CI
+make -s -j $(nproc --all) -C "$BRICK_DIR" BUILD="$BUILD_DIR_NAME" COPT=-DPBDRV_CONFIG_RUN_ON_CI
 
 export MICROPY_MICROPYTHON="$BUILD_DIR/firmware.elf"
 

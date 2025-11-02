@@ -213,8 +213,11 @@ CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 endif # end embedded, begin common
 
 # Tune for Debugging or Optimization
-ifeq ($(DEBUG), 1)
-CFLAGS += -Og -ggdb
+ifeq ($(COVERAGE), 1)
+CFLAGS += --coverage -fprofile-arcs -ftest-coverage
+LDFLAGS += --coverage
+else ifeq ($(DEBUG), 1)
+CFLAGS += -O0 -ggdb
 else ifeq ($(DEBUG), 2)
 CFLAGS += -Os -DNDEBUG -flto=auto
 else
