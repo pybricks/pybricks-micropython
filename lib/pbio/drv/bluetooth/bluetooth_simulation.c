@@ -6,11 +6,9 @@
 #if PBDRV_CONFIG_BLUETOOTH_SIMULATION
 
 #include <errno.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <unistd.h>
 
 #include "bluetooth.h"
@@ -132,6 +130,8 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
 
 static void pbdrv_bluetooth_simulation_tick_handler() {
     uint8_t buf[256 + STDIN_HEADER_SIZE];
+
+    // This has been made non-blocking in platform.c.
     ssize_t r = read(STDIN_FILENO, buf + STDIN_HEADER_SIZE, sizeof(buf) - STDIN_HEADER_SIZE);
 
     if (r > 0) {
@@ -170,59 +170,7 @@ static pbio_error_t pbdrv_bluetooth_simulation_process_thread(pbio_os_state_t *s
     return bluetooth_thread_err;
 }
 
-static struct termios oldt;
-
-static void restore_terminal_settings(void) {
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-}
-
-static void handle_signal(int sig) {
-    restore_terminal_settings();
-    signal(sig, SIG_DFL);
-    raise(sig);
-}
-
 void pbdrv_bluetooth_init_hci(void) {
-    struct termios newt;
-
-    // Save the original terminal settings
-    if (tcgetattr(STDIN_FILENO, &oldt) != 0) {
-        printf("DEBUG: Failed to get terminal attributes\n");
-        return;
-    }
-
-    // Register the cleanup function to restore terminal settings on exit
-    atexit(restore_terminal_settings);
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
-
-    newt = oldt;
-
-    // Get one char at a time instead of newline and disable CTRL+C for exit.
-    newt.c_lflag &= ~(ICANON | ECHO | ISIG);
-
-    // MicroPython REPL expects \r for newline.
-    newt.c_iflag |= INLCR;
-    newt.c_iflag &= ~ICRNL;
-
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) != 0) {
-        printf("Failed to set terminal attributes\n");
-        return;
-    }
-
-    // Set stdin non-blocking so we can service it in the runloop like on
-    // embedded hubs.
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-    if (flags == -1) {
-        printf("Failed to get fcntl flags\n");
-        return;
-    }
-
-    if (fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1) {
-        printf("Failed to set non-blocking\n");
-        return;
-    }
-
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
     bluetooth_thread_state = 0;
     pbio_os_process_start(&pbdrv_bluetooth_simulation_process, pbdrv_bluetooth_simulation_process_thread, NULL);

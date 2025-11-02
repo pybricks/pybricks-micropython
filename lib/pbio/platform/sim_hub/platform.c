@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 The Pybricks Authors
 
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 
@@ -133,11 +139,9 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
 };
 
-extern uint8_t pbsys_hmi_native_program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
-extern uint32_t pbsys_hmi_native_program_size;
-
 int main(int argc, char **argv) {
 
+    // Parse given program, else otherwise default to REPL.
     if (argc > 1) {
 
         // Pybricksdev helper script, pipes multi-mpy to us.
@@ -150,6 +154,8 @@ int main(int argc, char **argv) {
         }
 
         // Read the multi-mpy file from pipe.
+        extern uint8_t pbsys_hmi_native_program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
+        extern uint32_t pbsys_hmi_native_program_size;
         pbsys_hmi_native_program_size = fread(pbsys_hmi_native_program_buf, 1, sizeof(pbsys_hmi_native_program_buf), pipe);
         pclose(pipe);
 
@@ -159,6 +165,52 @@ int main(int argc, char **argv) {
         }
     }
 
+    // Save the original terminal settings
+    struct termios term_old, term_new;
+    if (tcgetattr(STDIN_FILENO, &term_old) != 0) {
+        printf("DEBUG: Failed to get terminal attributes\n");
+        return 0;
+    }
+    term_new = term_old;
+
+    // Get one char at a time instead of newline and disable CTRL+C for exit.
+    term_new.c_lflag &= ~(ICANON | ECHO | ISIG);
+
+    // MicroPython REPL expects \r for newline.
+    term_new.c_iflag |= INLCR;
+    term_new.c_iflag &= ~ICRNL;
+
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &term_new) != 0) {
+        printf("Failed to set terminal attributes\n");
+        return 0;
+    }
+
+    // Set stdin non-blocking so we can service it in the runloop like on
+    // embedded hubs.
+    int stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    if (stdin_flags == -1) {
+        printf("Failed to get fcntl flags\n");
+        return 0;
+    }
+    if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags | O_NONBLOCK) == -1) {
+        printf("Failed to set non-blocking\n");
+        return 0;
+    }
+
+    // Runs the 'embedded' main.
     extern void _main(void);
     _main();
+
+    // Restore stdin flags.
+    if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags) == -1) {
+        printf("Failed to restore stdin flags\n");
+    }
+
+    // Restore terminal settings.
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &term_old) != 0) {
+        printf("Failed to restore terminal attributes\n");
+        return 0;
+    }
+
+    return 0;
 }
