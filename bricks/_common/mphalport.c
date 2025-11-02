@@ -71,16 +71,18 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
             return len - remaining;
         }
 
-        // May raise, so long print can be stopped.
-        MICROPY_EVENT_POLL_HOOK
+        // Allow long prints to be interrupted.
+        if (remaining) {
+            MICROPY_EVENT_POLL_HOOK
+        }
     }
 
     return len;
 }
 
 void mp_hal_stdout_tx_flush(void) {
+    // Don't raise, just wait for data to clear.
     while (!pbsys_host_tx_is_idle()) {
-        // Don't raise, just wait for data to clear.
         MICROPY_VM_HOOK_LOOP;
     }
 }
