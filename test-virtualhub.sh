@@ -11,7 +11,9 @@ if [[ $CI != "true" ]]; then
     NOT_CI="true"
 fi
 
-: ${COVERAGE:=1}
+COVERAGE=1
+export COVERAGE
+
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 BRICK_DIR="$SCRIPT_DIR/bricks/simhub"
 MP_TEST_DIR="$SCRIPT_DIR/micropython/tests"

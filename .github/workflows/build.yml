@@ -145,8 +145,10 @@ jobs:
     needs: [mpy_cross]
     runs-on: ubuntu-24.04
     steps:
-    - name: Install depedencies
-      run: sudo apt-get update && sudo apt-get install lcov python3-numpy --yes
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install lcov pipx
+    - name: Install Pybricksdev
+      run: pipx install pybricksdev
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
@@ -166,12 +168,12 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/build/mpy-cross
     - name: Build and test
-      run: COVERAGE=1 ./test-virtualhub.sh
+      run: ./test-virtualhub.sh
     - name: Coveralls
       uses: coverallsapp/github-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        file: bricks/virtualhub/build-coverage/lcov.info
+        file: bricks/simhub/build-coverage/lcov.info
         flag-name: virtualhub
         parallel: true
 
