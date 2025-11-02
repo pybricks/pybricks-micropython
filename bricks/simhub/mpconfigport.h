@@ -65,11 +65,8 @@
 // every couple of MicroPython byte codes. This also polls to the event loop.
 #define PYBRICKS_VM_HOOK_LOOP_EXTRA \
     do { \
-        static uint32_t count; \
-        if ((count % 16) == 0) { \
-            extern void pbio_test_clock_tick(uint32_t ticks); \
-            pbio_test_clock_tick(1); \
-        } \
+        extern void pbio_clock_test_advance_eventually(void); \
+        pbio_clock_test_advance_eventually(); \
     } while (0);
 #else
 // When using the wall clock, time advances automatically but we still need to

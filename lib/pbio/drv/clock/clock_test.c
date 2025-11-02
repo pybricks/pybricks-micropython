@@ -26,6 +26,23 @@ void pbio_test_clock_tick(uint32_t ticks) {
     pbio_os_request_poll();
 }
 
+/**
+ * Simulates incrementing the clock after a certain number of CPU cycles.
+ *
+ * This should be called from loops that take a very small but nonzero amount
+ * of time.
+ */
+void pbio_clock_test_advance_eventually(void) {
+
+    static uint32_t count = 0;
+
+    if (++count % 16) {
+        return;
+    }
+
+    pbio_test_clock_tick(1);
+}
+
 void pbdrv_clock_init(void) {
 }
 
