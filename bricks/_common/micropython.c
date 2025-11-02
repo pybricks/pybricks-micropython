@@ -78,6 +78,10 @@ bool pbsys_main_stdin_event(uint8_t c) {
 
 // Prints the exception that ended the program.
 static void print_final_exception(mp_obj_t exc, int ret) {
+
+    // Ensure exception prints on new line.
+    mp_hal_stdout_tx_flush();
+
     nlr_buf_t nlr;
     nlr.ret_val = NULL;
 

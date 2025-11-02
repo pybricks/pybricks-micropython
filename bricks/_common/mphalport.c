@@ -5,8 +5,7 @@
 // Contains the MicroPython HAL for STM32-based Pybricks ports.
 
 #include <stdint.h>
-
-#include <contiki.h>
+#include <string.h>
 
 #include <pbdrv/clock.h>
 #include <pbdrv/config.h>
@@ -55,6 +54,8 @@ int mp_hal_stdin_rx_chr(void) {
     return c;
 }
 
+static bool ended_on_new_line = true;
+
 // Send string of given length
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
     size_t remaining = len;
@@ -63,6 +64,7 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
         uint32_t size = remaining;
         pbio_error_t err = pbsys_host_stdout_write((const uint8_t *)str, &size);
         if (err == PBIO_SUCCESS) {
+            ended_on_new_line = str[size - 1] == '\n';
             str += size;
             remaining -= size;
         } else if (err != PBIO_ERROR_AGAIN) {
@@ -84,5 +86,16 @@ void mp_hal_stdout_tx_flush(void) {
     // Don't raise, just wait for data to clear.
     while (!pbsys_host_tx_is_idle()) {
         MICROPY_VM_HOOK_LOOP;
+    }
+
+    // A program may be interrupted in the middle of a long print, or the user
+    // may have printed without a newline. Ensure we end on a new line.
+    if (!ended_on_new_line) {
+        const char *eol = "\r\n";
+        uint32_t size = strlen(eol);
+        pbsys_host_stdout_write((const uint8_t *)eol, &size);
+        while (!pbsys_host_tx_is_idle()) {
+            MICROPY_VM_HOOK_LOOP;
+        }
     }
 }
