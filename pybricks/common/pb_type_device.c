@@ -50,7 +50,7 @@ void *pb_type_device_get_data_blocking(mp_obj_t self_in, uint8_t mode) {
     pb_assert(pbio_port_lump_set_mode(sensor->lump_dev, mode));
     pbio_error_t err;
     while ((err = pbio_port_lump_is_ready(sensor->lump_dev)) == PBIO_ERROR_AGAIN) {
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     }
     pb_assert(err);
     void *data = NULL;

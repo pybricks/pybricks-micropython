@@ -27,7 +27,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         // This macro will execute the necessary idle behaviour.  It may
         // raise an exception, switch threads or enter sleep mode (waiting for
         // (at least) the SysTick interrupt).
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
@@ -48,7 +48,7 @@ int mp_hal_stdin_rx_chr(void) {
 
     // wait for rx interrupt
     while (size = 1, pbsys_host_stdin_read(&c, &size) != PBIO_SUCCESS) {
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     }
 
     return c;
@@ -75,7 +75,7 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
 
         // Allow long prints to be interrupted.
         if (remaining) {
-            MICROPY_EVENT_POLL_HOOK
+            mp_event_wait_indefinite();
         }
     }
 

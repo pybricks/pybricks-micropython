@@ -142,7 +142,7 @@ mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **
     // Otherwise wait for completion here without allocating the iterable.
     pbio_error_t err;
     while ((err = config->iter_once(&config->state, config->parent_obj)) == PBIO_ERROR_AGAIN) {
-        MICROPY_EVENT_POLL_HOOK;
+        mp_event_wait_indefinite();
     }
     pb_assert(err);
     return config->return_map ? config->return_map(config->parent_obj) : mp_const_none;

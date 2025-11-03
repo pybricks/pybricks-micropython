@@ -99,12 +99,15 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_set_stop_button_obj, pb_type_Sys
 
 static mp_obj_t pb_type_System_shutdown(void) {
 
-    // Start shutdown.
+    // Request shutdown. This will make the program_stop module call
+    // pbsys_main_stop_program, which schedules mp_sched_vm_abort to stop
+    // the MicroPython application (gracefully as far as pbsys is concerned).
+    // Then, pbsys will proceed to shutdown instead of running another program.
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
 
-    // Keep running MicroPython until we are stopped.
+    // Keep running MicroPython until mp_sched_vm_abort is eventually handled.
     for (;;) {
-        MICROPY_EVENT_POLL_HOOK;
+        mp_event_wait_indefinite();
     }
 
     return mp_const_none;

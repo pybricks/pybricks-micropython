@@ -220,7 +220,7 @@ static pbio_button_flags_t pb_module_tools_hub_menu_wait_for_press(bool press) {
 
     pbio_button_flags_t btn;
     while ((bool)(btn = pbdrv_button_get_pressed()) == !press) {
-        MICROPY_EVENT_POLL_HOOK;
+        mp_event_wait_indefinite();
     }
     return btn;
 }

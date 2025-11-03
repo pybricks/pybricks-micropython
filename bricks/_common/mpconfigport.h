@@ -167,10 +167,18 @@ typedef long mp_off_t;
         } \
 } while (0)
 
-#define MICROPY_EVENT_POLL_HOOK \
+#define MICROPY_INTERNAL_EVENT_HOOK \
     do { \
-        extern void pb_event_poll_hook(void); \
-        pb_event_poll_hook(); \
+        PYBRICKS_VM_HOOK_LOOP_EXTRA \
+        extern bool pbio_os_run_processes_once(void); \
+        while (pbio_os_run_processes_once()) { \
+        } \
+    } while (0);
+
+#define MICROPY_INTERNAL_WFE(TIMEOUT_MS) \
+    do { \
+        extern void pbio_os_run_processes_and_wait_for_event(void); \
+        pbio_os_run_processes_and_wait_for_event(); \
     } while (0);
 
 // We need to provide a declaration/definition of alloca()

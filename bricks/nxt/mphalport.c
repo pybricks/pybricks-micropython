@@ -28,7 +28,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         // This macro will execute the necessary idle behaviour.  It may
         // raise an exception, switch threads or enter sleep mode (waiting for
         // (at least) the SysTick interrupt).
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     } while (pbdrv_clock_get_ms() - start < Delay);
 }
 
@@ -53,7 +53,7 @@ extern bool nx_bt_is_ready(void);
 int mp_hal_stdin_rx_chr(void) {
 
     while (!nx_bt_is_ready()) {
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     }
 
     uint8_t rx_char;
@@ -63,7 +63,7 @@ int mp_hal_stdin_rx_chr(void) {
 
     // wait for data to be read
     while (nx_bt_stream_data_read() != sizeof(rx_char)) {
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     }
 
     return rx_char;
@@ -73,7 +73,7 @@ int mp_hal_stdin_rx_chr(void) {
 mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
 
     while (!nx_bt_is_ready()) {
-        MICROPY_EVENT_POLL_HOOK
+        mp_event_wait_indefinite();
     }
 
     // Nothing to do if disconnected or empty data
@@ -83,7 +83,7 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
 
     nx_bt_stream_write((uint8_t *)str, len);
     while (!nx_bt_stream_data_written()) {
-        MICROPY_EVENT_POLL_HOOK;
+        mp_event_wait_indefinite();
     }
 
     return len;
