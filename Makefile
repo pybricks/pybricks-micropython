@@ -80,6 +80,7 @@ virtualhub: mpy-cross
 clean-virtualhub: clean-mpy-cross
 	@$(MAKE) -C bricks/virtualhub clean
 	@$(MAKE) -C bricks/virtualhub clean BUILD=build-debug
+	@$(MAKE) -C bricks/virtualhub clean BUILD=build-coverage
 
 mpy-cross:
 	@$(MAKE) -C micropython/mpy-cross CROSS_COMPILE=$(HOST_CROSS_COMPILE)
