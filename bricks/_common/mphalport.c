@@ -82,7 +82,7 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
     return len;
 }
 
-void mp_hal_stdout_tx_flush(void) {
+static void pb_stdout_flush(void) {
     // Don't raise, just wait for data to clear.
     while (!pbsys_host_tx_is_idle()) {
         MICROPY_VM_HOOK_LOOP;
@@ -95,7 +95,7 @@ void mp_hal_stdout_tx_flush(void) {
  */
 void pb_stdout_flush_to_new_line(void) {
 
-    mp_hal_stdout_tx_flush();
+    pb_stdout_flush();
 
     // A program may be interrupted in the middle of a long print, or the user
     // may have printed without a newline. Ensure we end on a new line.
@@ -109,6 +109,6 @@ void pb_stdout_flush_to_new_line(void) {
         pbsys_host_stdout_write((const uint8_t *)eol, &size);
         ended_on_new_line = true;
 
-        mp_hal_stdout_tx_flush();
+        pb_stdout_flush();
     }
 }
