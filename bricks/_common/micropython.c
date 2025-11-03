@@ -69,7 +69,7 @@ bool pbsys_main_stdin_event(uint8_t c) {
 static void print_final_exception(mp_obj_t exc, int ret) {
 
     // Ensure exception prints on new line.
-    mp_hal_stdout_tx_flush();
+    pb_stdout_flush_to_new_line();
 
     nlr_buf_t nlr;
     nlr.ret_val = NULL;
@@ -402,7 +402,7 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
 
     // Ensure everything is written before the user application is considered
     // done, so that the host does not receive stdout after receiving stop.
-    mp_hal_stdout_tx_flush();
+    pb_stdout_flush_to_new_line();
 }
 
 void pbsys_main_run_program_cleanup(void) {

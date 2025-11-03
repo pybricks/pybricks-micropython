@@ -87,15 +87,28 @@ void mp_hal_stdout_tx_flush(void) {
     while (!pbsys_host_tx_is_idle()) {
         MICROPY_VM_HOOK_LOOP;
     }
+}
+
+/**
+ * Flushes stdout and adds a newline if the last printed character was not a
+ * new line.
+ */
+void pb_stdout_flush_to_new_line(void) {
+
+    mp_hal_stdout_tx_flush();
 
     // A program may be interrupted in the middle of a long print, or the user
     // may have printed without a newline. Ensure we end on a new line.
     if (!ended_on_new_line) {
+
+        // We have just flushed, so we should be able to easily buffer two more
+        // characters. It is only for aesthetics, so it is not critical if this
+        // fails. We flush again below just in case.
         const char *eol = "\r\n";
         uint32_t size = strlen(eol);
         pbsys_host_stdout_write((const uint8_t *)eol, &size);
-        while (!pbsys_host_tx_is_idle()) {
-            MICROPY_VM_HOOK_LOOP;
-        }
+        ended_on_new_line = true;
+
+        mp_hal_stdout_tx_flush();
     }
 }

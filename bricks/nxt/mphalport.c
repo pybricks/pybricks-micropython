@@ -92,3 +92,7 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
 void mp_hal_stdout_tx_flush(void) {
     // currently not buffered
 }
+
+void pb_stdout_flush_to_new_line(void) {
+    // currently not buffered
+}
