@@ -11,9 +11,10 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 
-#define BUF_SIZE (256)
+#define BUF_SIZE (1024)
 
 static uint8_t ring_buf[BUF_SIZE];
 static size_t ring_head = 0;
@@ -24,21 +25,16 @@ static pbdrv_uart_dev_t *debug_uart = NULL;
 /**
  * Formats and stores a string in the UART debug ring buffer.
  *
- * This function works similarly to printf, but instead of printing to the
+ * This function works similarly to vprintf, but instead of printing to the
  * standard output. The formatted string will be written to the UART when the
  * buffer is processed.
  *
  * @param format The format string, similar to printf.
- * @param ... The variable arguments, similar to printf.
+ * @param va_list The variable arguments, as a va_list.
  */
-void pbdrv_uart_debug_printf(const char *format, ...) {
-
+void pbdrv_uart_debug_vprintf(const char *format, va_list args) {
     char buf[BUF_SIZE];
-    va_list args;
-    va_start(args, format);
-    vsnprintf(buf, sizeof(ring_buf), format, args);
-    va_end(args);
-
+    vsnprintf(buf, sizeof(buf), format, args);
     size_t len = strlen(buf);
     for (size_t i = 0; i < len; i++) {
         ring_buf[ring_head] = buf[i];
@@ -52,6 +48,23 @@ void pbdrv_uart_debug_printf(const char *format, ...) {
 
     // Request print process to write out new data.
     pbio_os_request_poll();
+}
+
+/**
+ * Formats and stores a string in the UART debug ring buffer.
+ *
+ * This function works similarly to printf, but instead of printing to the
+ * standard output. The formatted string will be written to the UART when the
+ * buffer is processed.
+ *
+ * @param format The format string, similar to printf.
+ * @param ... The variable arguments, similar to printf.
+ */
+void pbdrv_uart_debug_printf(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    pbdrv_uart_debug_vprintf(format, args);
+    va_end(args);
 }
 
 /**
@@ -86,16 +99,14 @@ static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void
         PBIO_OS_AWAIT_UNTIL(state, ring_head != ring_tail);
 
         // Write up to the end of the buffer without wrapping.
-        size_t end = ring_head > ring_tail ? ring_head: BUF_SIZE;
+        size_t end = ring_head > ring_tail ? ring_head : BUF_SIZE;
         write_size = end - ring_tail;
-        PBIO_OS_AWAIT(state, &child, pbdrv_uart_write(&child, debug_uart, &ring_buf[ring_tail], write_size, 100));
+        PBIO_OS_AWAIT(state, &child, (err = pbdrv_uart_write(&child, debug_uart, &ring_buf[ring_tail], write_size, 100)));
         ring_tail = (ring_tail + write_size) % BUF_SIZE;
 
-        // Reset on failure.
         if (err != PBIO_SUCCESS) {
-            ring_head = 0;
+            ring_head = snprintf((char *)ring_buf, BUF_SIZE, "UART debug write error %d\n", err);
             ring_tail = 0;
-            continue;
         }
 
         // Poll to write again if not fully finished, i.e. when wrapping.
