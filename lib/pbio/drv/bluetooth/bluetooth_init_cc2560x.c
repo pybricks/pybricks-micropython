@@ -1,3 +1,5 @@
+#include <pbdrvconfig.h>
+
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
 
 #include "bluetooth_init_cc2560x.h"
