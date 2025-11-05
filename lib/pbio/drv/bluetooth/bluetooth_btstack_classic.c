@@ -128,7 +128,7 @@ static void pbdrv_bluetooth_btstack_classic_handle_hci_event_packet(uint8_t *pac
             if (gap_event_inquiry_result_get_name_available(packet)) {
                 const uint8_t *name = gap_event_inquiry_result_get_name(packet);
                 const size_t name_len = gap_event_inquiry_result_get_name_len(packet);
-                strncpy(result.name, (const char *)name, name_len);
+                snprintf(result.name, sizeof(result.name), "%.*s", (int)name_len, name);
             }
             result.class_of_device = gap_event_inquiry_result_get_class_of_device(packet);
             pending_inquiry_result_handler(pending_inquiry_result_handler_context, &result);
@@ -441,7 +441,7 @@ static pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state
 
     l2cap_init();
 
-    hci_set_inquiry_mode(0x01);  // Enable RSSI responses for inquiry scans.
+    hci_set_inquiry_mode(INQUIRY_MODE_RSSI_AND_EIR);
 
     // TODO: add classic-specific initializations (SDP, RFCOMM, etc.)
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
