@@ -32,6 +32,10 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
 void pb_type_ble_start_cleanup(void);
 #endif
 
+#if PYBRICKS_PY_COMMON_BTC
+mp_obj_t pb_type_BTC_new(void);
+#endif
+
 #if PYBRICKS_PY_COMMON_CHARGER
 
 extern const mp_obj_type_t pb_type_Charger;

@@ -17,6 +17,9 @@
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
+    #if PYBRICKS_PY_COMMON_BTC
+    mp_obj_t btc;
+    #endif
     mp_obj_t buttons;
     mp_obj_t light;
     mp_obj_t screen;
@@ -50,6 +53,9 @@ static mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_EV3Brick_obj_t *self = mp_obj_malloc(hubs_EV3Brick_obj_t, type);
 
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
+    #if PYBRICKS_PY_COMMON_BTC
+    self->btc = pb_type_BTC_new();
+    #endif
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_ev3brick_button_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->screen = pb_type_Image_display_obj_new();
@@ -61,6 +67,9 @@ static mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 
 static const pb_attr_dict_entry_t hubs_EV3Brick_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_EV3Brick_obj_t, battery),
+    #if PYBRICKS_PY_COMMON_BTC
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_btc, hubs_EV3Brick_obj_t, btc),
+    #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_EV3Brick_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_EV3Brick_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_EV3Brick_obj_t, screen),
