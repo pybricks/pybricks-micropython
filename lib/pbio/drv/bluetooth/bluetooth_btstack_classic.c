@@ -61,6 +61,98 @@ static const hci_transport_config_uart_t hci_transport_config = {
     .device_name = NULL,
 };
 
+typedef struct {
+    uint8_t status;
+    uint8_t hci_version;
+    uint16_t hci_revision;
+    uint8_t lmp_pal_version;
+    uint16_t manufacturer;
+    uint16_t lmp_pal_subversion;
+} pbdrv_bluetooth_local_version_info_t;
+
+// Pending request datastructures. There is a common pattern to how we handle
+// all of the operations in this file.
+//
+// * The caller *sets* the pending request variable or handler.
+// * The packet handler *fills* the pending request variable or calls the handler.
+// * The packet handler *clears* the pending request variable or handler to indicate operation completion.
+static pbdrv_bluetooth_local_version_info_t *pending_local_version_info_request;
+static int32_t pending_inquiry_response_count;
+static int32_t pending_inquiry_response_limit;
+static void *pending_inquiry_result_handler_context;
+static pbdrv_bluetooth_inquiry_result_handler_t pending_inquiry_result_handler;
+
+static void pbdrv_bluetooth_btstack_classic_handle_hci_event_packet(uint8_t *packet, uint16_t size);
+
+static void pbdrv_bluetooth_btstack_classic_handle_packet(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    switch (packet_type) {
+        case HCI_EVENT_PACKET:
+            pbdrv_bluetooth_btstack_classic_handle_hci_event_packet(packet, size);
+    }
+}
+
+static void pbdrv_bluetooth_btstack_classic_handle_hci_event_packet(uint8_t *packet, uint16_t size) {
+    switch (hci_event_packet_get_type(packet)) {
+        case HCI_EVENT_COMMAND_COMPLETE: {
+            const uint8_t *rp = hci_event_command_complete_get_return_parameters(packet);
+            switch (hci_event_command_complete_get_command_opcode(packet)) {
+                case HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION: {
+                    pbdrv_bluetooth_local_version_info_t *ret = pending_local_version_info_request;
+                    if (!ret) {
+                        return;
+                    }
+                    ret->status = rp[0];
+                    ret->hci_version = rp[1];
+                    ret->hci_revision = rp[2] | ((uint16_t)rp[3] << 8);
+                    ret->lmp_pal_version = rp[4];
+                    ret->manufacturer = rp[5] | ((uint16_t)rp[6] << 8);
+                    ret->lmp_pal_subversion = rp[7] | ((uint16_t)rp[8] << 8);
+                    pending_local_version_info_request = NULL;
+                    pbio_os_request_poll();
+                    return;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+        case GAP_EVENT_INQUIRY_RESULT: {
+            if (!pending_inquiry_result_handler) {
+                return;
+            }
+            pbdrv_bluetooth_inquiry_result_t result;
+            gap_event_inquiry_result_get_bd_addr(packet, result.bdaddr);
+            if (gap_event_inquiry_result_get_rssi_available(packet)) {
+                result.rssi = gap_event_inquiry_result_get_rssi(packet);
+            }
+            if (gap_event_inquiry_result_get_name_available(packet)) {
+                const uint8_t *name = gap_event_inquiry_result_get_name(packet);
+                const size_t name_len = gap_event_inquiry_result_get_name_len(packet);
+                strncpy(result.name, (const char *)name, name_len);
+            }
+            result.class_of_device = gap_event_inquiry_result_get_class_of_device(packet);
+            pending_inquiry_result_handler(pending_inquiry_result_handler_context, &result);
+            if (pending_inquiry_response_limit > 0) {
+                pending_inquiry_response_count++;
+                if (pending_inquiry_response_count >= pending_inquiry_response_limit) {
+                    gap_inquiry_stop();
+                }
+            }
+            break;
+        }
+        case GAP_EVENT_INQUIRY_COMPLETE: {
+            if (pending_inquiry_result_handler) {
+                pending_inquiry_result_handler = NULL;
+                pending_inquiry_result_handler_context = NULL;
+                pbio_os_request_poll();
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     // TODO: implement classic connection check
     return false;
@@ -98,87 +190,33 @@ const char *pbdrv_bluetooth_get_hub_name(void) {
     return "Pybricks Hub";
 }
 
-// Storage for last read-local-version result so it can be inspected later.
-static volatile bool version_pending;
-static volatile bool version_done;
-typedef struct {
-    uint8_t status;
-    uint8_t hci_version;
-    uint16_t hci_revision;
-    uint8_t lmp_pal_version;
-    uint16_t manufacturer;
-    uint16_t lmp_pal_subversion;
-} pbdrv_bluetooth_local_version_info_t;
-static pbdrv_bluetooth_local_version_info_t *version_out;
-
-static void bluetooth_classic_hello_hci_event_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-    if (packet_type != HCI_EVENT_PACKET) {
-        return;
-    }
-
-    if (hci_event_packet_get_type(packet) != HCI_EVENT_COMMAND_COMPLETE) {
-        return;
-    }
-
-    if (hci_event_command_complete_get_command_opcode(packet) != HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION) {
-        return;
-    }
-
-    const uint8_t *rp = hci_event_command_complete_get_return_parameters(packet);
-    // return parameters layout (spec): status, hci_version, hci_revision (le, 2), lmp_pal_version,
-    // manufacturer (le, 2), lmp_pal_subversion (le, 2)
-    if (version_out) {
-        version_out->status = rp[0];
-        version_out->hci_version = rp[1];
-        version_out->hci_revision = rp[2] | ((uint16_t)rp[3] << 8);
-        version_out->lmp_pal_version = rp[4];
-        version_out->manufacturer = rp[5] | ((uint16_t)rp[6] << 8);
-        version_out->lmp_pal_subversion = rp[7] | ((uint16_t)rp[8] << 8);
-    }
-
-    version_done = true;
-    // Wake PBIO poll loop so awaiting threads are resumed.
-    pbio_os_request_poll();
-}
-
-static btstack_packet_callback_registration_t bluetooth_classic_hello_hci_handler_reg;
-
-/**
- * PBIO async function that sends HCI Read Local Version Information and waits
- * for the command complete event. The parsed result is written to `out`.
- */
+// Reads the local version information from the Bluetooth controller.
 pbio_error_t pbdrv_bluetooth_read_local_version_information(pbio_os_state_t *state, pbdrv_bluetooth_local_version_info_t *out) {
     PBIO_OS_ASYNC_BEGIN(state);
-
-    pbdrv_uart_debug_printf("Reading local version information...\n");
-
-    // Ensure HCI is up first.
     PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_WORKING);
-
-    // Prepare to receive the command-complete event.
-    version_done = false;
-    version_out = out;
-    bluetooth_classic_hello_hci_handler_reg.callback = &bluetooth_classic_hello_hci_event_handler;
-    hci_add_event_handler(&bluetooth_classic_hello_hci_handler_reg);
-    version_pending = true;
-
-    pbdrv_uart_debug_printf("HCI is working, sending command...\n");
-
-    // Send the HCI command.
+    pending_local_version_info_request = out;
     hci_send_cmd(&hci_read_local_version_information);
+    PBIO_OS_AWAIT_UNTIL(state, !pending_local_version_info_request);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
 
-    pbdrv_uart_debug_printf("Command sent, awaiting response...\n");
-
-    // Wait for the event handler to set hello_done.
-    PBIO_OS_AWAIT_UNTIL(state, version_done == true);
-
-    pbdrv_uart_debug_printf("Command finished.\n");
-
-    // Clean up handler registration.
-    hci_remove_event_handler(&bluetooth_classic_hello_hci_handler_reg);
-    version_pending = false;
-    version_out = NULL;
-
+pbio_error_t pbdrv_bluetooth_inquiry_scan(
+    pbio_os_state_t *state,
+    int32_t max_responses,
+    int32_t timeout,
+    void *context,
+    pbdrv_bluetooth_inquiry_result_handler_t result_handler) {
+    PBIO_OS_ASYNC_BEGIN(state);
+    if (pending_inquiry_result_handler) {
+        return PBIO_ERROR_BUSY;
+    }
+    PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_WORKING);
+    pending_inquiry_response_count = 0;
+    pending_inquiry_response_limit = max_responses;
+    pending_inquiry_result_handler = result_handler;
+    pending_inquiry_result_handler_context = context;
+    gap_inquiry_start(timeout);
+    PBIO_OS_AWAIT_UNTIL(state, !pending_inquiry_result_handler);
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -328,7 +366,7 @@ void pbdrv_bluetooth_init(void) {
     // loop, and kick off the hci process thread. The rest of initialization
     // moves forward in pbdrv_bluetooth_process_thread. Note that the bluetooth
     // thread is driven by the HCI thread.
-    hci_dump_init(&bluetooth_btstack_classic_hci_dump);
+    // hci_dump_init(&bluetooth_btstack_classic_hci_dump);
     btstack_memory_init();
     btstack_run_loop_init(&bluetooth_btstack_classic_run_loop);
     hci_init(hci_transport_h4_instance_for_uart(pdata->uart_block_instance()), &hci_transport_config);
@@ -344,6 +382,10 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
 }
 
 static bool shutting_down;
+static btstack_packet_callback_registration_t pbdrv_bluetooth_btstack_packet_handler_reg = {
+    .item = { NULL },
+    .callback = pbdrv_bluetooth_btstack_classic_handle_packet,
+};
 
 static pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     static pbio_os_state_t sub;
@@ -367,6 +409,8 @@ static pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state
     static uint16_t lmp_subversion = 0;
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    hci_add_event_handler(&pbdrv_bluetooth_btstack_packet_handler_reg);
     pbdrv_uart_debug_printf("Starting btstack classic HCI...\n");
 
     if (lmp_subversion == 0) {
@@ -396,6 +440,8 @@ static pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state
     // hci_add_event_handler(...)
 
     l2cap_init();
+
+    hci_set_inquiry_mode(0x01);  // Enable RSSI responses for inquiry scans.
 
     // TODO: add classic-specific initializations (SDP, RFCOMM, etc.)
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
@@ -432,6 +478,8 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
 
     // Power down the chip.
     PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
+
+    hci_remove_event_handler(&pbdrv_bluetooth_btstack_packet_handler_reg);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
