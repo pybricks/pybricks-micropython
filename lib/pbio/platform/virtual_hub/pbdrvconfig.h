@@ -40,3 +40,8 @@
 #define PBDRV_CONFIG_HAS_PORT_E (1)
 #define PBDRV_CONFIG_HAS_PORT_F (1)
 #define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL                   (1)
+
+#define PBDRV_CONFIG_USB                                    (0)
+#define PBDRV_CONFIG_USB_SIMULATION                         (0)
+#define PBDRV_CONFIG_USB_MFG_STR                            u"Pybricks"
+#define PBDRV_CONFIG_USB_PROD_STR                           u"Virtual Hub"
