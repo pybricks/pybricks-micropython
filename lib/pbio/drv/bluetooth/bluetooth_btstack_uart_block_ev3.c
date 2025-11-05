@@ -100,6 +100,10 @@ static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_read_process(pbio_
         }
         if (err != PBIO_SUCCESS) {
             DEBUG_PRINT("UART read error: %d\n", err);
+            // TODO: in the event of UART errors, the connection to the
+            // bluetooth module is in a bad state and the whole module needs to
+            // be reset.
+            return err;
         }
 
         read_buf = NULL;
@@ -131,6 +135,7 @@ static pbio_error_t pbdrv_bluetooth_btstack_uart_block_ev3_do_write_process(pbio
 
         if (err != PBIO_SUCCESS) {
             DEBUG_PRINT("UART write error: %d\n", err);
+            return err;
         }
 
         write_buf = NULL;
