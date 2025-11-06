@@ -25,6 +25,8 @@
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
 
+#include "usb.h"
+
 #include <lego/usb.h>
 
 #include <tiam1808/armv5/am1808/interrupt.h>
@@ -48,6 +50,13 @@
 #define EP0_BUF_SZ              64
 #define PYBRICKS_EP_PKT_SZ_FS   64
 #define PYBRICKS_EP_PKT_SZ_HS   512
+
+// All buffers must allow the highest possible packet size. When writing
+// to them, pbdrv_usb_max_package_size() gets the actual limit based on
+// active speed mode.
+#if PBDRV_CONFIG_USB_MAX_PACKET_SIZE != PYBRICKS_EP_PKT_SZ_HS
+#error Inconsistent USB packet size
+#endif
 
 /**
  * Indices for string descriptors
@@ -217,15 +226,10 @@ static uint32_t pbdrv_usb_setup_misc_tx_byte;
 // Whether the device is using USB high-speed mode or not
 static bool pbdrv_usb_is_usb_hs;
 
-// Whether there is a host app listening to events
-static bool pbdrv_usb_is_events_subscribed;
-
 // Buffers, used for different logical flows on the data endpoint
 static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS] PBDRV_DMA_BUF;
-static uint8_t ep1_tx_response_buf[PYBRICKS_EP_PKT_SZ_HS];
-static uint8_t ep1_tx_status_buf[PYBRICKS_EP_PKT_SZ_HS];
-static uint8_t ep1_tx_stdout_buf[PYBRICKS_EP_PKT_SZ_HS];
-static uint32_t ep1_tx_stdout_sz;
+static uint8_t ep1_tx_response_buf[PYBRICKS_EP_PKT_SZ_HS] = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
+static uint8_t ep1_tx_event_buf[PYBRICKS_EP_PKT_SZ_HS] = { PBIO_PYBRICKS_IN_EP_MSG_EVENT };
 
 // Buffer status flags
 static volatile bool usb_rx_is_ready;
@@ -874,42 +878,10 @@ static void usb_device_intr(void) {
     HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
 
-/**
- * Pybricks system command handler.
- */
-static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
+uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
 
-void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
-    pbdrv_usb_receive_handler = handler;
-}
-
-/**
- * Buffer for scheduled status message.
- */
-static uint8_t pbdrv_usb_status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
-static bool pbdrv_usb_status_data_pending;
-
-void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
-    // Ignore if message identical to last.
-    if (!memcmp(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data))) {
-        return;
-    }
-
-    // Schedule to send whenever the USB process gets round to it.
-    memcpy(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data));
-    pbdrv_usb_status_data_pending = true;
-    pbio_os_request_poll();
-}
-
-// True if we are expected to send a response to a recent incoming message.
-static bool usb_send_response;
-
-/**
- * Non-blocking poll handler to process pending incoming messages.
- */
-static void pbdrv_usb_handle_data_in(void) {
     if (!usb_rx_is_ready) {
-        return;
+        return 0;
     }
 
     // This barrier prevents *subsequent* memory reads from being
@@ -918,134 +890,24 @@ static void pbdrv_usb_handle_data_in(void) {
     pbdrv_compiler_memory_barrier();
 
     uint32_t usb_rx_sz = PBDRV_UNCACHED(cppi_descriptors[CPPI_DESC_RX].word0).pktLength;
-    pbio_pybricks_error_t result;
 
     // Skip empty commands.
     if (usb_rx_sz) {
         pbdrv_cache_prepare_after_dma(ep1_rx_buf, sizeof(ep1_rx_buf));
-
-        switch (ep1_rx_buf[0]) {
-            case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
-                pbdrv_usb_is_events_subscribed = ep1_rx_buf[1];
-                ep1_tx_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
-                pbio_set_uint32_le(&ep1_tx_response_buf[1], PBIO_PYBRICKS_ERROR_OK);
-                usb_send_response = true;
-                // Request to resend status flags now that the host has subscribed.
-                // Our response will take priority, status follows right after.
-                pbdrv_usb_status_data_pending = true;
-                break;
-            case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
-                if (!pbdrv_usb_receive_handler) {
-                    break;
-                }
-                result = pbdrv_usb_receive_handler(ep1_rx_buf + 1, usb_rx_sz - 1);
-                ep1_tx_response_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
-                pbio_set_uint32_le(&ep1_tx_response_buf[1], result);
-                usb_send_response = true;
-                break;
-        }
+        memcpy(data, ep1_rx_buf, usb_rx_sz);
     }
 
     // Re-queue RX buffer after processing is complete
     usb_rx_is_ready = false;
     usb_setup_rx_dma_desc();
+
+    return usb_rx_sz;
 }
 
-static pbio_error_t pbdrv_usb_handle_data_out(void) {
-
-    static pbio_os_timer_t transmit_timer;
-
-    if (transmitting) {
-        if (!pbio_os_timer_is_expired(&transmit_timer)) {
-            // Still transmitting, can't do anything for now.
-            return PBIO_SUCCESS;
-        }
-
-        // Transmission has taken too long, so reset the state to allow
-        // new transmissions. This can happen if the host stops reading
-        // data for some reason. This need some time to complete, so delegate
-        // the reset back to the process.
-        return PBIO_ERROR_TIMEDOUT;
-    }
-
-    // Transmit. Give priority to response, then status updates, then stdout.
-    if (usb_send_response) {
-        usb_send_response = false;
-        transmitting = true;
-        pbdrv_cache_prepare_before_dma(ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
-        usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t)));
-    } else if (pbdrv_usb_is_events_subscribed) {
-        if (pbdrv_usb_status_data_pending) {
-            pbdrv_usb_status_data_pending = false;
-            ep1_tx_status_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
-            uint32_t usb_status_sz = PBIO_PYBRICKS_USB_MESSAGE_SIZE(pbsys_status_get_status_report(&ep1_tx_status_buf[1]));
-
-            transmitting = true;
-            pbdrv_cache_prepare_before_dma(ep1_tx_status_buf, sizeof(ep1_tx_status_buf));
-            usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, ep1_tx_status_buf, usb_status_sz);
-        } else if (ep1_tx_stdout_sz) {
-            transmitting = true;
-            pbdrv_cache_prepare_before_dma(ep1_tx_stdout_buf, sizeof(ep1_tx_stdout_buf));
-            usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, ep1_tx_stdout_buf, ep1_tx_stdout_sz);
-            ep1_tx_stdout_sz = 0;
-        }
-    }
-
-    if (transmitting) {
-        // If the FIFO isn't emptied quickly, then there probably isn't an
-        // app anymore. This timer is used to detect such a condition.
-        pbio_os_timer_set(&transmit_timer, 50);
-    }
-
-    return PBIO_SUCCESS;
+void pbdrv_usb_deinit_device(void) {
 }
 
-static pbio_os_process_t pbdrv_usb_ev3_process;
-
-static pbio_error_t pbdrv_usb_ev3_process_thread(pbio_os_state_t *state, void *context) {
-
-    static pbio_os_timer_t timer;
-
-    pbdrv_usb_handle_data_in();
-
-    if (pbdrv_usb_config == 0) {
-        pbdrv_usb_is_events_subscribed = false;
-    }
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // Process pending outgoing data until shutdown requested.
-    while (pbdrv_usb_ev3_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
-
-        PBIO_OS_ASYNC_SET_CHECKPOINT(state);
-        pbio_error_t err = pbdrv_usb_handle_data_out();
-        if (err == PBIO_SUCCESS) {
-            return PBIO_ERROR_AGAIN;
-        }
-
-        transmitting = false;
-        ep1_tx_stdout_sz = 0;
-        pbdrv_usb_is_events_subscribed = false;
-
-        // Flush _all_ TX packets
-        while (HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_TXRDY) {
-            HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_FLUSH;
-            // We need to wait a bit until the DMA refills the FIFO.
-            // There doesn't seem to be a good way to figure out if
-            // there are packets in flight *within* the DMA engine itself
-            // (i.e. no longer in the queue but in the transfer engine).
-            PBIO_OS_AWAIT_MS(state, &timer, 1);
-        }
-    }
-
-    PBIO_OS_ASYNC_END(PBIO_ERROR_CANCELED);
-}
-
-void pbdrv_usb_deinit(void) {
-    pbio_os_process_make_request(&pbdrv_usb_ev3_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
-}
-
-void pbdrv_usb_init(void) {
+void pbdrv_usb_init_device(void) {
     // If we came straight from a firmware update, we need to send a disconnect
     // to the host, then reset the USB controller.
     USBDevDisconnect(USB0_BASE);
@@ -1126,9 +988,15 @@ void pbdrv_usb_init(void) {
 
     // Finally signal a connection
     USBDevConnect(USB0_BASE);
+}
 
-    // We are basically done. USB is event-driven, and so we don't have to block boot.
-    pbio_os_process_start(&pbdrv_usb_ev3_process, pbdrv_usb_ev3_process_thread, NULL);
+pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+bool pbdrv_usb_is_ready(void) {
+    // REVISIT: Return whether physically plugged in.
+    return true;
 }
 
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
@@ -1136,73 +1004,63 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-bool pbdrv_usb_connection_is_active(void) {
-    return pbdrv_usb_is_events_subscribed;
+uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
+    *buf = message_type == PBIO_PYBRICKS_IN_EP_MSG_RESPONSE ? ep1_tx_response_buf : ep1_tx_event_buf;
+    return pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
 }
 
-/**
- * Queues data to be transmitted via USB.
- * @param data  [in]        The data to be sent.
- * @param size  [in, out]   The size of @p data in bytes. After return, @p size
- *                          contains the number of bytes actually written.
- * @return                  ::PBIO_SUCCESS if some @p data was queued, ::PBIO_ERROR_AGAIN
- *                          if no @p data could not be queued at this time (e.g. buffer
- *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
- *                          active USB connection
- */
-pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
-    if (!pbdrv_usb_is_events_subscribed) {
-        // If the app hasn't subscribed to events, we can't send stdout.
-        return PBIO_ERROR_INVALID_OP;
+pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    transmitting = false;
+
+    // Flush _all_ TX packets
+    while (HWREGB(USB0_BASE + USB_O_TXCSRL1) & USB_TXCSRL1_TXRDY) {
+        HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_FLUSH;
+        // We need to wait a bit until the DMA refills the FIFO.
+        // There doesn't seem to be a good way to figure out if
+        // there are packets in flight *within* the DMA engine itself
+        // (i.e. no longer in the queue but in the transfer engine).
+        PBIO_OS_AWAIT_MS(state, &timer, 1);
     }
 
-    uint8_t *ptr = ep1_tx_stdout_buf;
-    uint32_t ptr_len = pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
-
-    if (transmitting) {
-        *size = 0;
-        return PBIO_ERROR_AGAIN;
-    }
-
-    *ptr++ = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
-    ptr_len--;
-
-    *ptr++ = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
-    ptr_len--;
-
-    if (*size > ptr_len) {
-        *size = ptr_len;
-    }
-    memcpy(ptr, data, *size);
-    ep1_tx_stdout_sz = 2 + *size;
-    pbio_os_request_poll();
-
-    return PBIO_SUCCESS;
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-// REVISIT: These two functions do not keep track of how much data
-// is held in the DMA engine or the packet FIFO (i.e. the DMA engine
-// has returned the descriptor to us (and thus we can queue more),
-// but the hardware is still buffering data which we cannot see without
-// performing much more accurate accounting)
-uint32_t pbdrv_usb_stdout_tx_available(void) {
-    if (!pbdrv_usb_is_events_subscribed) {
-        return UINT32_MAX;
+pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    transmitting = true;
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+
+    if (data == ep1_tx_response_buf) {
+        pbdrv_cache_prepare_before_dma(ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
+        usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, size);
+    } else if (data == ep1_tx_event_buf) {
+        pbdrv_cache_prepare_before_dma(ep1_tx_event_buf, sizeof(ep1_tx_event_buf));
+        usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, ep1_tx_event_buf, size);
+    } else {
+        transmitting = false;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
-    if (transmitting) {
-        return 0;
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
+
+    if (pbio_os_timer_is_expired(&timer)) {
+        // Transmission has taken too long, so reset the state to allow
+        // new transmissions. This can happen if the host stops reading
+        // data for some reason. This need some time to complete, so delegate
+        // the reset back to the process.
+        return PBIO_ERROR_TIMEDOUT;
     }
 
-    // Subtract 2 bytes for header
-    if (pbdrv_usb_is_usb_hs) {
-        return PYBRICKS_EP_PKT_SZ_HS - 2;
-    }
-    return PYBRICKS_EP_PKT_SZ_FS - 2;
-}
-
-bool pbdrv_usb_stdout_tx_is_idle(void) {
-    return !transmitting;
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 #endif // PBDRV_CONFIG_USB_EV3

@@ -3,7 +3,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_USB_SIMULATION
+#if PBDRV_CONFIG_USB
 
 #include <errno.h>
 #include <signal.h>
@@ -224,4 +224,4 @@ void pbdrv_usb_deinit(void) {
     pbio_os_process_make_request(&pbdrv_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
-#endif // PBDRV_CONFIG_USB_SIMULATION
+#endif // PBDRV_CONFIG_USB

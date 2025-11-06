@@ -96,6 +96,7 @@
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)
 
 #define PBDRV_CONFIG_USB                            (1)
+#define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (512)
 #define PBDRV_CONFIG_USB_EV3                        (1)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_EV3

@@ -31,6 +31,8 @@
 
 #include <lego/usb.h>
 
+#include "usb.h"
+
 #include "usb_ch9.h"
 #include "usb_common_desc.h"
 
@@ -810,7 +812,7 @@ void pbdrv_usb_nxt_deinit(void) {
     nx_systick_wait_ms(200);
 }
 
-void pbdrv_usb_init(void) {
+void pbdrv_usb_init_device(void) {
     pbdrv_usb_nxt_deinit();
     memset((void *)&pbdrv_usb_nxt_state, 0, sizeof(pbdrv_usb_nxt_state));
 
@@ -852,8 +854,8 @@ void pbdrv_usb_init(void) {
     *AT91C_PIOA_CODR = (1 << 16);
 }
 
-void pbdrv_usb_deinit(void) {
-    // todo
+void pbdrv_usb_deinit_device(void) {
+    pbdrv_usb_nxt_deinit();
 }
 
 bool nx_usb_can_write(void) {
@@ -885,24 +887,6 @@ bool nx_usb_is_connected(void) {
     return pbdrv_usb_nxt_state.status != USB_UNINITIALIZED;
 }
 
-bool pbdrv_usb_connection_is_active(void) {
-    return nx_usb_is_connected();
-}
-
-void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
-    // todo
-}
-
-uint32_t pbdrv_usb_stdout_tx_available(void) {
-    return UINT32_MAX;
-}
-
-static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
-
-void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
-    pbdrv_usb_receive_handler = handler;
-}
-
 void nx_usb_read(uint8_t *data, uint32_t length) {
     pbdrv_usb_nxt_state.rx_data = data;
     pbdrv_usb_nxt_state.rx_size = length;
@@ -916,6 +900,66 @@ void nx_usb_read(uint8_t *data, uint32_t length) {
 
 uint32_t nx_usb_data_read(void) {
     return pbdrv_usb_nxt_state.rx_len;
+}
+
+pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+bool pbdrv_usb_is_ready(void) {
+    return true;
+}
+
+pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
+    return PBDRV_USB_BCD_NONE;
+}
+
+static uint8_t pbdrv_usb_tx_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE];
+
+uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
+    // TODO. For now using the same buffer for everything. The higher level
+    // code sends only one thing at once anyway.
+    pbdrv_usb_tx_buf[0] = message_type;
+    *buf = pbdrv_usb_tx_buf;
+    return sizeof(pbdrv_usb_tx_buf);
+}
+
+pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // TODO: Transmit and await completion
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+
+    PBIO_OS_AWAIT_UNTIL(state, /*!transmitting ||*/ pbio_os_timer_is_expired(&timer));
+    if (pbio_os_timer_is_expired(&timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
+    // TODO. Can be async. See EV3.
+    return PBIO_SUCCESS;
+}
+
+uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
+
+    // Nothing received yet.
+    if (0) {
+        return 0;
+    }
+
+    uint32_t size = 0;
+
+    // TODO: memcpy to data
+
+    // TODO: Reset to start waiting for new data.
+
+    return size;
 }
 
 #endif // PBDRV_CONFIG_USB_NXT

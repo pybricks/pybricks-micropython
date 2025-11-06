@@ -114,6 +114,7 @@
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (6)
 
 #define PBDRV_CONFIG_USB                            (1)
+#define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (64)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        0xFFFF
 #define PBDRV_CONFIG_USB_PID_0                      LEGO_USB_PID_SPIKE_PRIME
