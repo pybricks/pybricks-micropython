@@ -924,16 +924,30 @@ uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_
     return sizeof(pbdrv_usb_tx_buf);
 }
 
+// As a stepping stone, we use RFCOMM to provide the REPL through this USB
+// module. This should be removed when USB is fully implemented.
+#include <nxos/drivers/bt.h>
+
+extern bool nx_bt_is_ready(void);
+
 pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // TODO: Transmit and await completion
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+    if (!nx_bt_is_ready()) {
+        return PBIO_SUCCESS;
+    }
 
-    PBIO_OS_AWAIT_UNTIL(state, /*!transmitting ||*/ pbio_os_timer_is_expired(&timer));
+    // Only map USB stdout messages to this RFCOMM test.
+    if (size < 2 || data[0] != PBIO_PYBRICKS_IN_EP_MSG_EVENT || data[1] != PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
+        return PBIO_SUCCESS;
+    }
+
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT * 100);
+    nx_bt_stream_write((uint8_t *)data + 2, size - 2);
+    PBIO_OS_AWAIT_UNTIL(state, nx_bt_stream_data_written() || pbio_os_timer_is_expired(&timer));
     if (pbio_os_timer_is_expired(&timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
@@ -948,18 +962,34 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
 
 uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
 
+    // Use RFCOMM as mock input.
+    static uint8_t byte[1];
+    static bool initialized;
+    if (!initialized && nx_bt_is_ready()) {
+        initialized = true;
+
+        // nxos API requires size in advance, so start reading one byte.
+        nx_bt_stream_read(byte, sizeof(byte));
+
+        // First USB message is the pretend-subscribe message.
+        const uint8_t subscribe[] = { PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1};
+        memcpy(data, subscribe, sizeof(subscribe));
+        return sizeof(subscribe);
+    }
+
     // Nothing received yet.
-    if (0) {
+    if (!initialized || !nx_bt_stream_data_read()) {
         return 0;
     }
 
-    uint32_t size = 0;
+    // Pretend to send a single-character stdin message.
+    const uint8_t stdin[] = { PBIO_PYBRICKS_OUT_EP_MSG_COMMAND, PBIO_PYBRICKS_COMMAND_WRITE_STDIN, byte[0]};
+    memcpy(data, stdin, sizeof(stdin));
 
-    // TODO: memcpy to data
+    // Start waiting for another character.
+    nx_bt_stream_read(byte, sizeof(byte));
 
-    // TODO: Reset to start waiting for new data.
-
-    return size;
+    return sizeof(stdin);
 }
 
 #endif // PBDRV_CONFIG_USB_NXT

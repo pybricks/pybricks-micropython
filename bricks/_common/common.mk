@@ -276,18 +276,8 @@ endif
 
 PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
 	micropython.c \
-	)
-
-# TODO: NXT should eventually use the same mphalport.c as well.
-ifeq ($(PB_MCU_FAMILY),AT91SAM7)
-PY_EXTRA_SRC_C += $(addprefix bricks/nxt/,\
 	mphalport.c \
 	)
-else
-PY_EXTRA_SRC_C += $(addprefix bricks/_common/,\
-	mphalport.c \
-	)
-endif
 
 # Not all MCUs support thumb2 instructions.
 ifeq ($(PB_MCU_FAMILY),native)

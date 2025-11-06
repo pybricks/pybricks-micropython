@@ -93,17 +93,6 @@ static pbio_error_t legacy_bluetooth_connect_process_thread(pbio_os_state_t *sta
     nx_display_cursor_set_pos(0, 0);
 
     nx_display_string("RFCOMM ready.\n");
-    nx_display_string("Press a key.\n");
-
-    // Receive one character to get going.
-    static uint8_t flush_buf[1];
-    nx_bt_stream_read(flush_buf, sizeof(flush_buf));
-
-    while (nx_bt_stream_data_read() != sizeof(flush_buf)) {
-        PBIO_OS_AWAIT_MS(state, &timer, 2);
-    }
-
-    nx_display_string("Let's code!\n");
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
