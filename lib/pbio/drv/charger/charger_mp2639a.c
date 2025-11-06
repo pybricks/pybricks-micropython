@@ -187,13 +187,15 @@ pbio_error_t pbdrv_charger_mp2639a_process_thread(pbio_os_state_t *state, void *
 
     #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
     while (pbdrv_pwm_get_dev(platform.mode_pwm_id, &mode_pwm) != PBIO_SUCCESS) {
-        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
+        pbio_os_request_poll();
+        PBIO_OS_AWAIT_ONCE(state);
     }
     #endif
 
     #if PBDRV_CONFIG_CHARGER_MP2639A_ISET_PWM
     while (pbdrv_pwm_get_dev(platform.iset_pwm_id, &iset_pwm) != PBIO_SUCCESS) {
-        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
+        pbio_os_request_poll();
+        PBIO_OS_AWAIT_ONCE(state);
     }
     #endif
 

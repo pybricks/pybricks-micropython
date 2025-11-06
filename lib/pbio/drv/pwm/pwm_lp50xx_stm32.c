@@ -123,7 +123,8 @@ static pbio_error_t pbdrv_pwm_lp50xx_stm32_process_thread(pbio_os_state_t *state
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Need to allow all drivers to init first.
-    PBIO_OS_AWAIT_ONCE_AND_POLL(state);
+    pbio_os_request_poll();
+    PBIO_OS_AWAIT_ONCE(state);
 
     static const struct {
         uint8_t reg;

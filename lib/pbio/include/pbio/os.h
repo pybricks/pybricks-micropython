@@ -253,25 +253,15 @@ struct _pbio_os_process_t {
     } while (0)
 
 /**
- * Yields the protothread here once and polls to request handling again
- * immediately.
- *
- * Can be useful if several protothreads are started at the same time but not
- * in any particular order. PBIO_OS_AWAIT_ONCE_AND_POLL can be used in a loop
- * until the other protothreads have finished initializing as defined by
- * mutually defined state variables.
- *
- * Should be used sparingly as it can cause busy waiting. Processes will keep
- * running, but there will always be another event pending after this is used.
+ * Yields the protothread here once.
  *
  * @param [in]  state     Protothread state.
  */
-#define PBIO_OS_AWAIT_ONCE_AND_POLL(state)      \
+#define PBIO_OS_AWAIT_ONCE(state)               \
     do {                                        \
         do_yield_now = 1;                       \
         PBIO_OS_ASYNC_SET_CHECKPOINT(state);    \
         if (do_yield_now) {                     \
-            pbio_os_request_poll();             \
             return PBIO_ERROR_AGAIN;            \
         }                                       \
     } while (0)

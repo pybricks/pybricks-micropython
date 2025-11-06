@@ -90,7 +90,8 @@ static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void
     PBIO_OS_ASYNC_BEGIN(state);
 
     while (pbdrv_uart_get_instance(0, &debug_uart) != PBIO_SUCCESS) {
-        PBIO_OS_AWAIT_ONCE_AND_POLL(state);
+        pbio_os_request_poll();
+        PBIO_OS_AWAIT_ONCE(state);
     }
 
     pbdrv_uart_set_baud_rate(debug_uart, 115200);
