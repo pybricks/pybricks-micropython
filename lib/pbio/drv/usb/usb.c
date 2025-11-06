@@ -17,33 +17,208 @@
 #include <pbio/error.h>
 #include <pbio/os.h>
 
-void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+#include <lwrb/lwrb.h>
+
+/**
+ * Host is subscribed to our outgoing event messages.
+ */
+static bool pbdrv_usb_events_subscribed;
+
+bool pbdrv_usb_connection_is_active(void) {
+    return pbdrv_usb_events_subscribed;
 }
+
+/**
+ * Pybricks system command handler.
+ */
+static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
+
+void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+    pbdrv_usb_receive_handler = handler;
+}
+
+/**
+ * Buffer scheduled status.
+ */
+static uint8_t status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
+static bool status_data_pending;
 
 void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
+    // Ignore if message identical to last.
+    if (!memcmp(status_data, status_msg, sizeof(status_data))) {
+        return;
+    }
+
+    // Schedule to send whenever the Bluetooth process gets round to it.
+    memcpy(status_data, status_msg, sizeof(status_data));
+    status_data_pending = true;
+    pbio_os_request_poll();
 }
 
+/**
+ * Buffer for scheduled stdout.
+ */
+static lwrb_t stdout_ring_buf;
+
 pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
+
+    if (!pbdrv_usb_connection_is_active()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Buffer data to send it more efficiently even if the caller is only
+    // writing one byte at a time.
+    if ((*size = lwrb_write(&stdout_ring_buf, data, *size)) == 0) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // Poke the process to start tx soon-ish. This way, we can accumulate
+    // data bytes before actually transmitting.
+    pbio_os_request_poll();
+
     return PBIO_SUCCESS;
 }
 
 uint32_t pbdrv_usb_stdout_tx_available(void) {
-    return UINT32_MAX;
+    if (!pbdrv_usb_connection_is_active()) {
+        return UINT32_MAX;
+    }
+    return lwrb_get_free(&stdout_ring_buf);
 }
 
 bool pbdrv_usb_stdout_tx_is_idle(void) {
-    return true;
+    if (!pbdrv_usb_connection_is_active()) {
+        return true;
+    }
+    return lwrb_get_full(&stdout_ring_buf) == 0;
 }
 
-bool pbdrv_usb_connection_is_active(void) {
-    return false;
+static bool respond_soon;
+static pbio_pybricks_error_t respond_result;
+
+/**
+ * Non-blocking poll handler to process pending incoming messages.
+ */
+static void pbdrv_usb_handle_data_in(void) {
+
+    // Ignore incoming data if we haven't sent our previous response yet.
+    if (respond_soon) {
+        return;
+    }
+
+    static uint8_t data_in[PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE];
+    uint32_t size = pbdrv_usb_get_data_in(data_in);
+
+    // Expecting at least EP_MSG and payload.
+    if (size < 2) {
+        return;
+    }
+
+    switch (data_in[0]) {
+        case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
+            pbdrv_usb_events_subscribed = data_in[1];
+            respond_result = PBIO_PYBRICKS_ERROR_OK;
+            respond_soon = true;
+
+            // Schedule sending current status immediately after subscribing.
+            status_data_pending = true;
+            break;
+        case PBIO_PYBRICKS_OUT_EP_MSG_COMMAND:
+            if (pbdrv_usb_receive_handler) {
+                respond_result = pbdrv_usb_receive_handler(data_in + 1, size - 1);
+                respond_soon = true;
+            }
+            break;
+    }
+}
+
+static void pbdrv_usb_reset_state(void) {
+    pbdrv_usb_events_subscribed = false;
+    respond_soon = false;
+    status_data_pending = false;
+    lwrb_reset(&stdout_ring_buf);
+}
+
+static pbio_os_process_t pbdrv_usb_process;
+
+static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_state_t sub;
+
+    static uint8_t out_data[PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE];
+    static uint32_t out_size;
+
+    pbio_error_t err;
+
+    // Runs every time. If there is no connection, there just won't be data.
+    pbdrv_usb_handle_data_in();
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (;;) {
+
+        // Run charger detection: wait for USB to become physically plugged in.
+        PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_wait_for_charger(&sub));
+
+        while (pbdrv_usb_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL && pbdrv_usb_is_ready()) {
+
+            // Find out what we should send, if anything, priotizing response, then
+            // status, then stdout, then other events.
+            if (respond_soon) {
+                // Pack the response to the most recent message.
+                out_data[0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE;
+                pbio_set_uint32_le(&out_data[1], respond_result);
+                out_size = sizeof(uint32_t) + 1;
+                respond_soon = false;
+            } else if (pbdrv_usb_connection_is_active() && status_data_pending) {
+                // Send out status if pending (already includes event code).
+                out_data[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+                memcpy(&out_data[1], status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+                out_size = PBIO_PYBRICKS_USB_MESSAGE_SIZE(PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+                status_data_pending = false;
+            } else if (pbdrv_usb_connection_is_active() && lwrb_get_full(&stdout_ring_buf) != 0) {
+                // Send out stdout if anything is buffered.
+                out_data[0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+                out_data[1] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+                out_size = lwrb_read(&stdout_ring_buf, &out_data[2], PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE - 2) + 2;
+            }
+
+            // If there was anything to send, send it.
+            if (out_size) {
+                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx(&sub, out_data, out_size));
+                out_size = 0;
+                if (err != PBIO_SUCCESS) {
+                    pbdrv_usb_reset_state();
+                    PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
+                }
+            } else {
+                // Otherwise yield once before going and check again.
+                PBIO_OS_AWAIT_ONCE(state);
+            }
+        }
+
+        PBIO_OS_AWAIT_WHILE(state, pbdrv_usb_is_ready());
+        pbdrv_usb_reset_state();
+        pbdrv_usb_tx_reset(&sub);
+    }
+
+    // Unreachable. On cancellation, the charger detection step in the above
+    // loop keeps running. It will just skip the data handler.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbdrv_usb_init(void) {
     pbdrv_usb_init_device();
+
+    static uint8_t stdout_buf[PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE * 2];
+    lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
+
+    pbio_os_process_start(&pbdrv_usb_process, pbdrv_usb_process_thread, NULL);
 }
 
 void pbdrv_usb_deinit(void) {
+    pbdrv_usb_deinit_device();
+    pbio_os_process_make_request(&pbdrv_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
 #endif // PBDRV_CONFIG_USB_SIMULATION
