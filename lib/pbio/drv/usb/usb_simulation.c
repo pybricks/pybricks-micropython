@@ -29,6 +29,15 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
+static uint8_t pbdrv_usb_tx_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE];
+
+uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
+    // We can just use the same buffer for any transfer in this simulation.
+    pbdrv_usb_tx_buf[0] = message_type;
+    *buf = pbdrv_usb_tx_buf;
+    return sizeof(pbdrv_usb_tx_buf);
+}
+
 pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
@@ -53,13 +62,13 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-static uint8_t usb_in_buf[PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE];
+static uint8_t usb_in_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE];
 static uint32_t usb_in_size;
 
 uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
 
     // Invalid size.
-    if (usb_in_size > PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE) {
+    if (usb_in_size > PBDRV_CONFIG_USB_MAX_PACKET_SIZE) {
         usb_in_size = 0;
     }
 

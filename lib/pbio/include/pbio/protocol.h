@@ -457,7 +457,7 @@ enum {
 // 0 is skipped to avoid a zeroed buffer from being misinterpreted as a message.
 
 /** Hub to host messages via the Pybricks interface IN endpoint. */
-enum {
+typedef enum {
     /**
      * Analog of BLE status response. Emitted in response to every OUT message
      * received.
@@ -465,15 +465,15 @@ enum {
     PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
     /**Analog to BLE notification. Only emitted if subscribed. */
     PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
-};
+} pbio_pybricks_usb_in_ep_msg_t;
 
 /** Host to hub messages via the Pybricks USB interface OUT endpoint. */
-enum {
+typedef enum {
     /** Analog of BLE Client Characteristic Configuration Descriptor (CCCD). */
     PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
     /** Analog of BLE Client Characteristic Write with response. */
     PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
-};
+} pbio_pybricks_usb_out_ep_msg_t;
 
 /**
  * Size of USB messages for Pybricks USB interface.

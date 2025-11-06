@@ -12,11 +12,10 @@
 
 #include <pbio/error.h>
 #include <pbio/os.h>
+#include <pbio/protocol.h>
 
 #include <stdint.h>
 
-// revisit, this is also defined elsewhere
-#define PBDRV_USB_PYBRICKS_MAX_PACKET_SIZE (64u)
 #define PBDRV_USB_TRANSMIT_TIMEOUT (50)
 
 /**
@@ -48,6 +47,15 @@ void pbdrv_usb_deinit_device(void);
  * @return              Number of bytes copied. Zero means nothing was available.
  */
 uint32_t pbdrv_usb_get_data_in(uint8_t *data);
+
+/**
+ * Gets the buffer to match the given endpoint mesage type.
+ *
+ * @param [in]  message_type The message type to find the buffer for
+ * @param [out] buf          The corresponding buffer to write data to before sending.
+ * @return                   Maximum size to write.
+ */
+uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf);
 
 /**
  * Sends and awaits message from hub to host via the Pybricks USB interface OUT endpoint.
@@ -124,6 +132,10 @@ static inline pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
 
 static inline bool pbdrv_usb_is_ready(void) {
     return false;
+}
+
+static inline uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
+    return 0;
 }
 
 
