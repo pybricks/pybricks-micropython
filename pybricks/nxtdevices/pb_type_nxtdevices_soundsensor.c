@@ -38,7 +38,7 @@ static mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
         nxtdevices_SoundSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(audible_only));
 
-    uint32_t analog;
+    uint32_t analog = 0;
     pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR, mp_obj_is_true(audible_only_in), &analog));
     return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
 }

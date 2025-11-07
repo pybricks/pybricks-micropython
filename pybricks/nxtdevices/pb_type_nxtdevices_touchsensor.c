@@ -25,7 +25,7 @@ typedef struct _nxtdevices_TouchSensor_obj_t {
 // pybricks.nxtdevices.TouchSensor.pressed
 static mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint32_t analog;
+    uint32_t analog = 0;
     pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR, false, &analog));
     return mp_obj_new_bool(analog < 3000);
 }
