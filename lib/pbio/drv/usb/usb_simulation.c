@@ -65,7 +65,7 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
 static uint8_t usb_in_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE];
 static uint32_t usb_in_size;
 
-uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
+uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
 
     // Invalid size.
     if (usb_in_size > PBDRV_CONFIG_USB_MAX_PACKET_SIZE) {

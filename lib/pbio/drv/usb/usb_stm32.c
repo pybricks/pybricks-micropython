@@ -338,7 +338,7 @@ pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
+uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
 
     if (!usb_in_sz) {
         return 0;

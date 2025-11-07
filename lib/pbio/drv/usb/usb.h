@@ -46,7 +46,7 @@ void pbdrv_usb_deinit_device(void);
  * @param [in] data     Buffer to copy the message to.
  * @return              Number of bytes copied. Zero means nothing was available.
  */
-uint32_t pbdrv_usb_get_data_in(uint8_t *data);
+uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 
 /**
  * Gets the buffer to match the given endpoint mesage type.
@@ -114,11 +114,11 @@ static inline void pbdrv_usb_init_device(void) {
 static inline void pbdrv_usb_deinit_device(void) {
 }
 
-static inline pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, size_t size) {
+static inline pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-static inline uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
+static inline uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
     return 0;
 }
 

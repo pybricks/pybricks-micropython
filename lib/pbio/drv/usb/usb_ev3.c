@@ -878,7 +878,7 @@ static void usb_device_intr(void) {
     HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
 
-uint32_t pbdrv_usb_get_data_in(uint8_t *data) {
+uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
 
     if (!usb_rx_is_ready) {
         return 0;
