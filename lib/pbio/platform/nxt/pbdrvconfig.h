@@ -20,6 +20,10 @@
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_NXT                      (1)
 
+#define PBDRV_CONFIG_COUNTER                        (1)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                (3)
+#define PBDRV_CONFIG_COUNTER_NXT                    (1)
+
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (7)
