@@ -7,15 +7,19 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/reset.h>
+#include <pbdrv/config.h>
+#include <pbdrv/ioport.h>
+
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
+#include <pbio/port_interface.h>
 
 #include <pbsys/core.h>
 #include <pbsys/main.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
+
 
 #include <nxos/_display.h>
 #include <nxos/assert.h>
@@ -28,6 +32,84 @@
 #include <nxos/drivers/i2c.h>
 #include <nxos/drivers/systick.h>
 #include <nxos/interrupts.h>
+
+const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+    .bank = NULL,
+    .pin = 0,
+};
+
+const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+    {
+        .port_id = PBIO_PORT_ID_A,
+        .motor_driver_index = 0,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 0,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_B,
+        .motor_driver_index = 1,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 1,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_C,
+        .motor_driver_index = 2,
+        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .external_port_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .counter_driver_index = 2,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
+    },
+    {
+        .port_id = PBIO_PORT_ID_1,
+        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 0,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+    },
+    {
+        .port_id = PBIO_PORT_ID_2,
+        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 1,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+    },
+    {
+        .port_id = PBIO_PORT_ID_3,
+        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
+        .external_port_index = 2,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 2,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+    },
+    {
+        .port_id = PBIO_PORT_ID_4,
+        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
+        .external_port_index = 3,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 3,
+        .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = NULL,
+        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+    },
+};
 
 const char *pin = "1234";
 

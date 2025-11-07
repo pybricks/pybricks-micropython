@@ -24,6 +24,9 @@
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (3)
 #define PBDRV_CONFIG_COUNTER_NXT                    (1)
 
+#define PBDRV_CONFIG_GPIO                           (1)
+#define PBDRV_CONFIG_GPIO_VIRTUAL                   (1) // TODO: Implement NXT GPIO driver
+
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (7)
