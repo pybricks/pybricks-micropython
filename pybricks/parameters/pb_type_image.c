@@ -137,6 +137,7 @@ static mp_obj_t pb_type_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_
     self->owner = MP_OBJ_NULL;
     self->is_display = false;
     pbio_image_init(&self->image, buf, width, height, width);
+    pbio_image_fill(&self->image, 0);
 
     return MP_OBJ_FROM_PTR(self);
 }
