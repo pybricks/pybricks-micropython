@@ -5,15 +5,6 @@
 
 #if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
 
-#include <arpa/inet.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <unistd.h>
-
 #include <contiki.h>
 
 #include <pbdrv/clock.h>
@@ -185,27 +176,6 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
     return PBIO_SUCCESS;
 }
 
-static int data_socket = -1;
-static struct sockaddr_in serv_addr;
-
-static void animation_socket_connect(void) {
-
-    data_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (data_socket < 0) {
-        perror("socket() failed");
-        return;
-    }
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5002);
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        perror("inet_pton() failed");
-        close(data_socket);
-        data_socket = -1;
-        return;
-    }
-}
-
 PROCESS(pbdrv_motor_driver_virtual_simulation_process, "pbdrv_motor_driver_virtual_simulation");
 
 PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
@@ -222,25 +192,6 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&tick_timer));
-
-        // If data parser pipe is connected, output the motor angles.
-        if (data_socket >= 0 && timer_expired(&frame_timer)) {
-            timer_reset(&frame_timer);
-            uint8_t buf[sizeof(uint32_t) * PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV + 1] = { 3 };
-            // Output motor angles on one line.
-            for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
-                driver = &motor_driver_devs[dev_index];
-                pbio_set_uint32_le(&buf[dev_index * sizeof(uint32_t) + 1], (uint32_t)(driver->angle / 1000));
-            }
-
-            // Send the constructed message
-            ssize_t sent = sendto(data_socket, buf, sizeof(buf), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-            if (sent < 0) {
-                perror("send() failed");
-                close(data_socket);
-                data_socket = -1;
-            }
-        }
 
         for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
             driver = &motor_driver_devs[dev_index];
@@ -316,11 +267,6 @@ void pbdrv_counter_init(void) {
 
 void pbdrv_motor_driver_init(void) {
     simulation_init();
-
-    // Skip if no data parser is given.
-    if (getenv("PBIO_TEST_CONNECT_SOCKET")) {
-        animation_socket_connect();
-    }
 
     if (simulation_enabled) {
         process_start(&pbdrv_motor_driver_virtual_simulation_process);

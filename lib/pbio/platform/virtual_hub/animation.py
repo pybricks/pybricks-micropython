@@ -59,11 +59,8 @@ angles = [0] * 6
 
 
 def update_state():
-    global angles
-
     while not data_queue.empty():
         data = data_queue.get_nowait()
-        print(data)
         if not isinstance(data, bytes) or len(data) < 2:
             continue
         event = data[0]
@@ -75,7 +72,10 @@ def update_state():
             except UnicodeDecodeError:
                 print(payload)
         elif event == PBIO_PYBRICKS_EVENT_WRITE_PORT_VIEW:
-            angles = struct.unpack("<iiiiii", payload)
+            if len(payload) == 6:
+                type_id, index, angle = struct.unpack("<bbi", payload[0:6])
+                if type_id == 96:
+                    angles[index] = angle
 
 
 def main():

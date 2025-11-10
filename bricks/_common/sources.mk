@@ -251,6 +251,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/status.c \
 	sys/storage_settings.c \
 	sys/storage.c \
+	sys/telemetry.c \
 	)
 
 # LEGO specification library
