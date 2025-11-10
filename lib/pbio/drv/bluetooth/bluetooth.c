@@ -38,6 +38,13 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
 //
 
 /**
+ * Each event has a buffer of maximum packet size. They are prioritized by
+ * ascending event number, so status gets sent first, then stdout, etc.
+ */
+static uint32_t pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_NUM_EVENTS];
+static uint8_t pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_NUM_EVENTS][PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
+
+/**
  * Buffer scheduled status.
  */
 static uint8_t status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
@@ -59,7 +66,6 @@ void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
  * Buffer for scheduled stdout.
  */
 static lwrb_t stdout_ring_buf;
-static bool stdout_send_busy;
 
 void pbdrv_bluetooth_init(void) {
     // enough for two packets, one currently being sent and one to be ready
@@ -103,14 +109,8 @@ bool pbdrv_bluetooth_tx_is_idle(void) {
         return true;
     }
 
-    return !stdout_send_busy && lwrb_get_full(&stdout_ring_buf) == 0;
+    return lwrb_get_full(&stdout_ring_buf) == 0 && !pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
 }
-
-/**
- * Buffer for generic awaitable notification.
- */
-static uint8_t user_notification_send_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
-static size_t user_notification_size;
 
 pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
     PBIO_OS_ASYNC_BEGIN(state);
@@ -119,24 +119,24 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
         return PBIO_ERROR_INVALID_OP;
     }
 
-    if (size + 1 > PBIO_ARRAY_SIZE(user_notification_send_buf)) {
+    if (size + 1 > PBIO_ARRAY_SIZE(pbdrv_bluetooth_noti_buf[0]) || event_type >= PBIO_PYBRICKS_EVENT_NUM_EVENTS) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Existing user notification ongoing.
-    if (user_notification_size) {
+    // Existing notification waiting to be sent first.
+    if (pbdrv_bluetooth_noti_size[event_type]) {
         return PBIO_ERROR_BUSY;
     }
 
     // Copy to local buffer and set size so main thread knows to handle it.
-    user_notification_size = size + 1;
-    user_notification_send_buf[0] = event_type;
-    memcpy(&user_notification_send_buf[1], data, size);
+    pbdrv_bluetooth_noti_size[event_type] = size + 1;
+    pbdrv_bluetooth_noti_buf[event_type][0] = event_type;
+    memcpy(&pbdrv_bluetooth_noti_buf[event_type][1], data, size);
     pbio_os_request_poll();
 
     // Await until main process has finished sending user data. If it
     // disconnected while sending, this completes as well.
-    PBIO_OS_AWAIT_WHILE(state, user_notification_size);
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_bluetooth_noti_size[event_type]);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -408,6 +408,53 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
     return advertising_or_scan_func ? advertising_or_scan_err : PBIO_SUCCESS;
 }
 
+/**
+ * Updates send buffers by draining relevant data buffers and find which event
+ * has the highest priority to send.
+ */
+static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
+
+    static pbio_os_timer_t status_timer;
+
+    // Prepare status.
+    if (status_data_pending || pbio_os_timer_is_expired(&status_timer)) {
+        // When a status is pending, drain it here while we write it out,
+        // so a new status can be set in the mean time without losing it.
+        memcpy(pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT], status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+        pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_STATUS_REPORT] = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
+        status_data_pending = false;
+        pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
+    }
+
+    // Prepare stdout, drain into chunk of maximum send size.
+    if (lwrb_get_full(&stdout_ring_buf) != 0) {
+        // Message always starts with event byte.
+        if (!pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) {
+            pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT][0] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+            pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] = 1;
+        }
+        // Drain ring buffer to send buffer as much as we can.
+        uint32_t stdout_free = sizeof(pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
+        if (stdout_free) {
+            uint8_t *dest = &pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT][sizeof(pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - stdout_free];
+            pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] += lwrb_read(&stdout_ring_buf, dest, stdout_free);
+        }
+    }
+
+    // Other events are awaited as-is and don't allow setting new data until
+    // they have been transmitted, so don't need further processing/draining.
+
+    // Return highest priority pending event, ready for sending.s
+    for (uint32_t i = 0; i < PBIO_PYBRICKS_EVENT_NUM_EVENTS; i++) {
+        if (pbdrv_bluetooth_noti_size[i]) {
+            *len = &pbdrv_bluetooth_noti_size[i];
+            *buf = pbdrv_bluetooth_noti_buf[i];
+            return true;
+        }
+    }
+    return false;
+}
+
 static bool shutting_down;
 
 /**
@@ -424,7 +471,6 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
 
     static pbio_os_state_t sub;
     static pbio_os_timer_t timer;
-    static pbio_os_timer_t status_timer;
     pbio_error_t err;
 
     // Shorthand notation accessible throughout.
@@ -449,8 +495,6 @@ init:
 
     DEBUG_PRINT("Bluetooth is now on and initialized.\n");
 
-    pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
-
     // Service scheduled tasks as long as Bluetooth is enabled.
     while (!shutting_down) {
 
@@ -459,41 +503,12 @@ init:
         // allows short stdout messages to be queued rather than sent separately.
         PBIO_OS_AWAIT_MS(state, &timer, 1);
 
-        // Handle pending status update, if any.
-        if (can_send && (status_data_pending || pbio_os_timer_is_expired(&status_timer))) {
-
-            // When a status is pending, cache it here while we write it out,
-            // so a new status can be set in the mean time without losing it.
-            static uint8_t status_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
-            memcpy(status_buf, status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-            status_data_pending = false;
-
-            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, status_buf, sizeof(status_buf)));
-
-            pbio_os_timer_set(&status_timer, status_timer.duration);
-        }
-
-        // Handle pending stdout, if any.
-        if (can_send && lwrb_get_full(&stdout_ring_buf) != 0) {
-            stdout_send_busy = true;
-
-            static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE] = { PBIO_PYBRICKS_EVENT_WRITE_STDOUT };
-            static uint16_t stdout_len;
-
-            stdout_len = lwrb_read(&stdout_ring_buf, &stdout_buf[1], PBDRV_BLUETOOTH_MAX_CHAR_SIZE - 1) + 1;
-            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, stdout_buf, stdout_len));
-
-            stdout_send_busy = false;
-        }
-
-        // Handle pending user value notification, if any.
-        if (can_send && user_notification_size) {
-
-            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub,
-                user_notification_send_buf,
-                user_notification_size));
-
-            user_notification_size = 0;
+        // Send one event notification (status, stdout, ...)
+        static uint32_t *noti_size;
+        static uint8_t *noti_buf;
+        if (can_send && update_and_get_event_buffer(&noti_buf, &noti_size)) {
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, noti_buf, *noti_size));
+            *noti_size = 0;
         }
 
         // Handle pending advertising/scan enable/disable task, if any.
