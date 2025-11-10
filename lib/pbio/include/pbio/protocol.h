@@ -261,6 +261,10 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2,
+    /**
+     * The total number of events that can be queued and sent.
+     */
+    PBIO_PYBRICKS_EVENT_NUM_EVENTS,
 } pbio_pybricks_event_t;
 
 /**

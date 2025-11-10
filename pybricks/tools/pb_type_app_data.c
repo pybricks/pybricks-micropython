@@ -75,7 +75,7 @@ static mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in)
     size_t size;
     const uint8_t *data = (const uint8_t *)mp_obj_str_get_data(data_in, &size);
     pbio_os_state_t state = 0;
-    pbio_error_t err = pbsys_host_send_event(&state, PBIO_PYBRICKS_EVENT_WRITE_STDOUT, data, size);
+    pbio_error_t err = pbsys_host_send_event(&state, PBIO_PYBRICKS_EVENT_WRITE_APP_DATA, data, size);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
