@@ -55,7 +55,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     },
     {
         .port_id = PBIO_PORT_ID_D,
-        .motor_driver_index = 3,
+        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 3,
         .counter_driver_index = 3,
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,

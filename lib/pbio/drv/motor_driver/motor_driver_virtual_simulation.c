@@ -78,8 +78,49 @@ static const pbio_simulation_model_t model_technic_m_angular = {
 
 static pbdrv_motor_driver_dev_t motor_driver_devs[PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV];
 
+static void simulation_init(void) {
+
+    // This simulation implements the counter and motor driver in one, with
+    // a common initialization. We don't know which will initialize first, so
+    // both will call this and we need to run it just once.
+    static bool has_initialized = false;
+    if (has_initialized) {
+        return;
+    }
+    has_initialized = true;
+
+    // Initialize driver from platform data.
+    for (uint32_t dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
+        // Get driver and platform data.
+        pbdrv_motor_driver_dev_t *driver = &motor_driver_devs[dev_index];
+        driver->pdata = &pbdrv_motor_driver_virtual_simulation_platform_data[dev_index];
+        driver->angle = driver->pdata->initial_angle;
+        driver->speed = driver->pdata->initial_speed;
+        driver->current = 0;
+        driver->torque = 0;
+        driver->voltage = 0;
+
+        // Select model corresponding to device ID.
+        switch (driver->pdata->type_id) {
+            case LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR:
+                driver->model = &model_technic_m_angular; // TODO
+                break;
+            case LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR:
+                driver->model = &model_technic_m_angular;
+                break;
+            case LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR:
+                driver->model = &model_technic_m_angular; // TODO
+                break;
+            default:
+            case LEGO_DEVICE_TYPE_ID_NONE:
+                driver->model = NULL;
+                break;
+        }
+    }
+}
+
 pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
-    if (id >= PBIO_ARRAY_SIZE(motor_driver_devs)) {
+    if (id >= PBIO_ARRAY_SIZE(motor_driver_devs) || motor_driver_devs[id].pdata->type_id == LEGO_DEVICE_TYPE_ID_NONE) {
         return PBIO_ERROR_NO_DEV;
     }
     *dev = &motor_driver_devs[id].counter;
@@ -132,10 +173,6 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
     *driver = &motor_driver_devs[id];
 
     return PBIO_SUCCESS;
-}
-
-void pbdrv_counter_init(void) {
-    // No init needed. Motor driver init does all we need.
 }
 
 pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver) {
@@ -273,36 +310,12 @@ void pbdrv_motor_driver_disable_process(void) {
     simulation_enabled = false;
 }
 
+void pbdrv_counter_init(void) {
+    simulation_init();
+}
+
 void pbdrv_motor_driver_init(void) {
-
-    // Initialize driver from platform data.
-    for (uint32_t dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
-        // Get driver and platform data.
-        pbdrv_motor_driver_dev_t *driver = &motor_driver_devs[dev_index];
-        driver->pdata = &pbdrv_motor_driver_virtual_simulation_platform_data[dev_index];
-        driver->angle = driver->pdata->initial_angle;
-        driver->speed = driver->pdata->initial_speed;
-        driver->current = 0;
-        driver->torque = 0;
-        driver->voltage = 0;
-
-        // Select model corresponding to device ID.
-        switch (driver->pdata->type_id) {
-            case LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR:
-                driver->model = &model_technic_m_angular; // TODO
-                break;
-            case LEGO_DEVICE_TYPE_ID_SPIKE_M_MOTOR:
-                driver->model = &model_technic_m_angular;
-                break;
-            case LEGO_DEVICE_TYPE_ID_SPIKE_L_MOTOR:
-                driver->model = &model_technic_m_angular; // TODO
-                break;
-            default:
-            case LEGO_DEVICE_TYPE_ID_NONE:
-                driver->model = NULL;
-                break;
-        }
-    }
+    simulation_init();
 
     // Skip if no data parser is given.
     if (getenv("PBIO_TEST_CONNECT_SOCKET")) {
