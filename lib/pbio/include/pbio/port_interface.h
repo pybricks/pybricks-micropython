@@ -70,6 +70,8 @@ void pbio_port_stop_user_actions(bool reset);
 
 pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port);
 
+pbio_port_t *pbio_port_by_index(uint8_t index);
+
 pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_dcmotor_t **dcmotor);
 
 pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_servo_t **servo);
@@ -105,6 +107,10 @@ static inline void pbio_port_stop_user_actions(bool reset) {
 
 static inline pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
     return PBIO_ERROR_NO_DEV;
+}
+
+static inline pbio_port_t *pbio_port_by_index(uint8_t index) {
+    return NULL;
 }
 
 static inline pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_dcmotor_t **dcmotor) {

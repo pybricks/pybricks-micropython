@@ -468,6 +468,19 @@ pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
 }
 
 /**
+ * Gets port by index. Useful for modules that need to iterate over all ports.
+ *
+ * @param [in]  index   Port index.
+ * @return Port.
+ */
+pbio_port_t *pbio_port_by_index(uint8_t index) {
+    if (index > PBIO_CONFIG_PORT_NUM_DEV) {
+        index = 0;
+    }
+    return &ports[index];
+}
+
+/**
  * Stops all user-level background processes related to ports
  *
  * @param [in]  reset  Whether to reset all user-level processes to a clean
