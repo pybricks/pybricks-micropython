@@ -252,15 +252,27 @@ typedef enum {
     PBIO_PYBRICKS_EVENT_WRITE_STDOUT = 1,
 
     /**
-     * App data sent from the hub to the host. This is similar to stdout, but
-     * typically used for data that should not be shown in the user terminal,
-     * such as sensor telemetry.
+     * User data sent from the hub to the host app. This is similar to stdout,
+     * but typically used for data that should not be shown in the user
+     * terminal.
      *
      * The payload is a variable number of bytes that was written to app data.
      *
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2,
+
+    /**
+     * Telemetry data sent from the hub to the host.
+     *
+     * The payload is a variable number of bytes that was written to app data.
+     *
+     * Pybricks profile version defines exact encoding of this data.
+     *
+     * @since Unreleased. Should not be considered final.
+     */
+    PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY = 3,
+
     /**
      * The total number of events that can be queued and sent.
      */
