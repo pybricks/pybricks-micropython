@@ -131,6 +131,16 @@ static void test_image_prepare_small_image(pbio_image_t *small) {
         SMALL_IMAGE_HEIGHT, SMALL_IMAGE_WIDTH);
 }
 
+static void test_image_small_refill(void) {
+    for (int y = 0; y < SMALL_IMAGE_HEIGHT; y++) {
+        for (int x = 0; x < SMALL_IMAGE_WIDTH; x++) {
+            if (test_image_small_pixels[y][x] == 0) {
+                test_image_small_pixels[y][x] = '.';
+            }
+        }
+    }
+}
+
 static bool test_image_small_equal(const char *expected) {
     return memcmp(test_image_small_pixels, expected,
         sizeof(test_image_small_pixels)) == 0;
@@ -901,6 +911,35 @@ static void test_image_draw_text(void *env) {
     tt_want_clipping_correct();
 }
 
+static void test_image_print(void *env) {
+    pbio_image_t small;
+
+    test_image_prepare_small_image(&small);
+    small.print_font = &pbio_font_terminus_normal_16;
+    small.print_value = '*';
+    pbio_image_print(&small, "HI", 2);
+    test_image_small_refill();
+    tt_want_small_image(
+        "...................."
+        "...................."
+        ".*....*...***......."
+        ".*....*....*........"
+        ".*....*....*........"
+        ".*....*....*........"
+        ".******....*........");
+
+    pbio_image_print(&small, "XYZ", 3);
+    test_image_small_refill();
+    tt_want_small_image(
+        "...................."
+        "...................."
+        ".******............."
+        "......*............."
+        "......*............."
+        ".....*.............."
+        "....*...............");
+}
+
 struct testcase_t pbio_image_tests[] = {
     PBIO_TEST(test_image_fill),
     PBIO_TEST(test_image_draw_image),
@@ -914,5 +953,6 @@ struct testcase_t pbio_image_tests[] = {
     PBIO_TEST(test_image_draw_circle),
     PBIO_TEST(test_image_fill_circle),
     PBIO_TEST(test_image_draw_text),
+    PBIO_TEST(test_image_print),
     END_OF_TESTCASES
 };

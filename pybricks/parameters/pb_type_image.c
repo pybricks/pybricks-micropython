@@ -373,6 +373,28 @@ static mp_obj_t pb_type_Image_draw_text(size_t n_args, const mp_obj_t *pos_args,
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_draw_text_obj, 1, pb_type_Image_draw_text);
 
+static mp_obj_t pb_type_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    // TODO, this is a draft.
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_Image_obj_t, self,
+        PB_ARG_REQUIRED(text));
+
+    size_t text_len;
+    const char *text = mp_obj_str_get_data(text_in, &text_len);
+
+    self->image.print_font = &pbio_font_terminus_normal_16;
+    self->image.print_value = 3;
+
+    pbio_image_print(&self->image, text, text_len);
+
+    if (self->is_display) {
+        pbdrv_display_update();
+    }
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_print_obj, 1, pb_type_Image_print);
+
 // dir(pybricks.media.Image)
 static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     // REVISIT: consider close() method and __enter__/__exit__ for context manager
@@ -387,6 +409,7 @@ static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_box), MP_ROM_PTR(&pb_type_Image_draw_box_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&pb_type_Image_draw_circle_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_text), MP_ROM_PTR(&pb_type_Image_draw_text_obj) },
+    { MP_ROM_QSTR(MP_QSTR_print), MP_ROM_PTR(&pb_type_Image_print_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_type_Image_locals_dict, pb_type_Image_locals_dict_table);
 

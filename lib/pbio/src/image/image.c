@@ -50,6 +50,10 @@ void pbio_image_init(pbio_image_t *image, uint8_t *pixels, int width,
     image->width = width;
     image->height = height;
     image->stride = stride;
+    image->print_font = NULL;
+    image->print_x_left = 0;
+    image->print_y_top = 0;
+    image->print_value = 0;
 }
 
 /**
@@ -89,12 +93,18 @@ void pbio_image_init_sub(pbio_image_t *image, const pbio_image_t *source,
     // Select the right part of source image.
     pbio_image_init(image, source->pixels + y * source->stride + x, x2 - x,
         y2 - y, source->stride);
+
+    // Reuse the same font and value.
+    image->print_font = source->print_font;
+    image->print_value = source->print_value;
 }
 
 /**
  * Fill an image with a value.
  * @param [in] image  Image to fill.
  * @param [in] value  Pixel value.
+ *
+ * This also resets the text printing position.
  */
 void pbio_image_fill(pbio_image_t *image, uint8_t value) {
     uint8_t *p = image->pixels;
@@ -102,6 +112,8 @@ void pbio_image_fill(pbio_image_t *image, uint8_t value) {
         memset(p, value, image->width);
         p += image->stride;
     }
+    image->print_x_left = 0;
+    image->print_y_top = 0;
 }
 
 /**
@@ -900,6 +912,97 @@ void pbio_image_bbox_text(const pbio_font_t *font, const char *text,
     rect->y = ymin;
     rect->width = xmax - xmin;
     rect->height = ymax - ymin;
+}
+
+/**
+ * Scroll the whole image up by a number of pixels.
+ * @param [in] image  Image to scroll.
+ * @param [in] n      Number of pixels to scroll.
+ */
+static void pbio_image_scroll_up(pbio_image_t *image, int n) {
+    uint8_t *dst = image->pixels;
+    uint8_t *src = image->pixels + n * image->stride;
+    int y;
+    for (y = 0; y < image->height - n; y++) {
+        memcpy(dst, src, image->width);
+        src += image->stride;
+        dst += image->stride;
+    }
+    for (; y < image->height; y++) {
+        memset(dst, 0, image->width);
+        dst += image->stride;
+    }
+}
+
+/**
+ * Print text inside image, like in a terminal, scroll when bottom is reached.
+ * @param [in] image     Image to draw into.
+ * @param [in] text      Text string.
+ * @param [in] text_len  Text length.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ *
+ * Text uses ASCII encoding. Newlines are handled, text is flush left.
+ */
+void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len) {
+    const char *p;
+    int x, y_top;
+    char c, prev = 0;
+    const pbio_font_t *font;
+    const pbio_font_glyph_t *g;
+    const pbio_font_kerning_t *k;
+
+    font = image->print_font;
+    if (!font) {
+        return;
+    }
+    x = image->print_x_left;
+    y_top = image->print_y_top;
+
+    for (p = text; p != text + text_len; p++) {
+        c = *p;
+        if (c == '\n') {
+            x = 0;
+            y_top += font->line_height;
+        } else if (c >= font->first && c <= font->last) {
+            g = &font->glyphs[c - font->first];
+
+            /* Apply kerning. */
+            if (font->kernings && prev) {
+                for (k = &font->kernings[g->kerning_index];
+                     k != &font->kernings[(g + 1)->kerning_index]; k++) {
+                    if (prev == k->previous) {
+                        x += k->kerning;
+                        break;
+                    }
+                }
+            }
+
+            /* Wrap? */
+            if (x + g->left + g->width > image->width) {
+                x = 0;
+                y_top += font->line_height;
+            }
+
+            /* Scroll? */
+            if (y_top + font->top_max - g->top + g->height > image->height &&
+                y_top >= font->line_height) {
+                pbio_image_scroll_up(image, font->line_height);
+                y_top -= font->line_height;
+            }
+
+            /* Draw glyph. */
+            pbio_image_draw_text_glyph(image, font, g, x, y_top + font->top_max,
+                image->print_value);
+
+            /* Advance pen. */
+            x += g->advance;
+        }
+        prev = c;
+    }
+
+    image->print_x_left = x;
+    image->print_y_top = y_top;
 }
 
 #endif // PBIO_CONFIG_IMAGE

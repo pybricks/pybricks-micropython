@@ -51,6 +51,22 @@ typedef struct _pbio_image_t {
      * using negative value.
      */
     int stride;
+    /**
+     * Font for text printing (pbio_image_print* functions).
+     */
+    const pbio_font_t *print_font;
+    /**
+     * Left X coordinate for text printing (pbio_image_print* functions).
+     */
+    int print_x_left;
+    /**
+     * Top Y coordinate for text printing (pbio_image_print* functions).
+     */
+    int print_y_top;
+    /**
+     * Pixel value for text printing (pbio_image_print* functions).
+     */
+    uint8_t print_value;
 } pbio_image_t;
 
 /**
@@ -128,6 +144,8 @@ void pbio_image_draw_text(pbio_image_t *image, const pbio_font_t *font, int x,
 
 void pbio_image_bbox_text(const pbio_font_t *font, const char *text,
     size_t text_len, pbio_image_rect_t *rect);
+
+void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len);
 
 #endif // PBIO_CONFIG_IMAGE
 
