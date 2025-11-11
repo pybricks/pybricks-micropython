@@ -222,8 +222,9 @@ else ifeq ($(DEBUG), 2)
 CFLAGS += -Os -DNDEBUG -flto=auto
 else
 CFLAGS += -Os -DNDEBUG -flto=auto
-CFLAGS += -fdata-sections -ffunction-sections
 endif
+
+CFLAGS += -fdata-sections -ffunction-sections
 
 ifeq ($(PB_MCU_FAMILY),STM32)
 # Required for STM32 library
