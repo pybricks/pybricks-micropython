@@ -23,6 +23,11 @@
 
 #define PBDRV_CONFIG_COUNTER                                (1)
 
+#define PBDRV_CONFIG_DISPLAY                                (1)
+#define PBDRV_CONFIG_DISPLAY_VIRTUAL                        (1)
+#define PBDRV_CONFIG_DISPLAY_NUM_COLS                       (178)
+#define PBDRV_CONFIG_DISPLAY_NUM_ROWS                       (128)
+
 #define PBDRV_CONFIG_GPIO                                   (1)
 #define PBDRV_CONFIG_GPIO_VIRTUAL                           (1)
 
