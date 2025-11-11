@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 
 #include "bluetooth.h"
 #include <pbdrv/bluetooth.h>
@@ -51,10 +50,6 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     return false;
 }
 
-// Socket used to send data to Python animation.
-static int data_socket = -1;
-static struct sockaddr_in serv_addr;
-
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -64,18 +59,8 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
         (void)ret;
     }
 
-    // No output configured, so done.
-    if (data_socket < 0) {
-        return PBIO_SUCCESS;
-    }
-
-    // Send the value notification via socket.
-    ssize_t sent = sendto(data_socket, data, size, 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-    if (sent < 0) {
-        printf("send() failed");
-        close(data_socket);
-        data_socket = -1;
-    }
+    extern void virtual_hub_socket_send(const uint8_t *data, uint32_t size);
+    virtual_hub_socket_send(data, size);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -195,24 +180,6 @@ void pbdrv_bluetooth_init_hci(void) {
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
     bluetooth_thread_state = 0;
     pbio_os_process_start(&pbdrv_bluetooth_simulation_process, pbdrv_bluetooth_simulation_process_thread, NULL);
-
-    // Configure socket if specified.
-    if (getenv("PBIO_TEST_CONNECT_SOCKET")) {
-        data_socket = socket(AF_INET, SOCK_DGRAM, 0);
-        if (data_socket < 0) {
-            printf("socket() failed");
-            return;
-        }
-        serv_addr.sin_family = AF_INET;
-        serv_addr.sin_port = htons(5002);
-        if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-            printf("inet_pton() failed");
-            close(data_socket);
-            data_socket = -1;
-            return;
-        }
-    }
-
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_SIMULATION
