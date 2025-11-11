@@ -367,6 +367,7 @@
             "includePath": [
                 "${workspaceFolder}/bricks/virtualhub",
                 "${workspaceFolder}/bricks/virtualhub/build",
+                "${workspaceFolder}/bricks/virtualhub/build-debug",
                 "${workspaceFolder}/lib/contiki-core",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/lwrb/src/include",
@@ -375,6 +376,7 @@
                 "${workspaceFolder}/lib/pbio/platform/virtual_hub",
                 "${workspaceFolder}/micropython",
                 "${workspaceFolder}",
+                "${workspaceFolder}/lib/umm_malloc/src",
                 "/usr/include/python3.10"
             ],
             "defines": [

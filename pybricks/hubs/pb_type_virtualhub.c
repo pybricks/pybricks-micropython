@@ -17,12 +17,14 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
+#include <pybricks/parameters.h>
 
 typedef struct _hubs_VirtualHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
     mp_obj_t buttons;
     mp_obj_t light;
+    mp_obj_t screen;
     mp_obj_t system;
 } hubs_VirtualHub_obj_t;
 
@@ -32,6 +34,7 @@ static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_button_pressed_hub_single_button);
     // FIXME: Implement lights.
     // self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
+    self->screen = pb_type_Image_display_obj_new();
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -40,6 +43,7 @@ static const pb_attr_dict_entry_t hubs_VirtualHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_VirtualHub_obj_t, battery),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_VirtualHub_obj_t, buttons),
     // PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_VirtualHub_obj_t, light),
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_screen, hubs_VirtualHub_obj_t, screen),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_VirtualHub_obj_t, system),
     PB_ATTR_DICT_SENTINEL
 };

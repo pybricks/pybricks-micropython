@@ -17,6 +17,8 @@
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 
+#include <umm_malloc.h>
+
 const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
     .bank = NULL,
     .pin = 0,
@@ -143,6 +145,10 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
 extern void _main(void);
 
 int main(int argc, char **argv) {
+
+    // Separate heap for large allocations - defined in linker script.
+    static uint8_t umm_heap[1024 * 1024 * 2];
+    umm_init_heap(umm_heap, sizeof(umm_heap));
 
     // Parse given program, else otherwise default to REPL.
     if (argc > 1) {
