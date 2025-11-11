@@ -144,13 +144,13 @@ static bool pbdrv_display_user_frame_update_requested;
 /**
  * Display buffer in the format ready for sending to the st7586s display driver.
  *
- * Three pixels are encoded in one byte as | A B C | A B C | A B
+ * Three pixels are encoded in one byte as  (MSB) | A B C | A B C | A B | (LSB)
  *
  * A  B (C)
  * --------------------
  * 0  0  0  Empty
- * 1  0  0  Dark Grey
  * 0  1  0  Light Grey
+ * 1  0  0  Dark Grey
  * 1  1  1  Black
  *
  * Column C is essentially redundant, but required for the first and second
@@ -175,16 +175,15 @@ static uint8_t st7586s_send_buf[ST7586S_NUM_COL_TRIPLETS * ST7586S_NUM_ROWS] __a
  * @return Encoded triplet.
  */
 static uint8_t encode_triplet(uint8_t p0, uint8_t p1, uint8_t p2) {
-    if (p0 >= 3) {
-        p0 = 7;
-    }
-    if (p1 >= 3) {
-        p1 = 7;
-    }
-    if (p2 >= 3) {
-        p2 = 7;
-    }
-    return p0 << 6 | p1 << 3 | p2;
+    // As described above, the first two pixels are the normal binary
+    // representation shifted left by one, with an extra bit set for black.
+    // The third pixel is not shifted, so contains just two bits.
+    p0 = p0 >= 3 ? 0b111 : (p0 << 1);
+    p1 = p1 >= 3 ? 0b111 : (p1 << 1);
+    p2 = p2 >= 3 ? 0b11 : p2;
+
+    // Three pixels are then concatenated to one byte.
+    return p0 << 5 | p1 << 2 | p2;
 }
 
 /**
