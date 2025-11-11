@@ -29,9 +29,9 @@
 static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CONFIG_DISPLAY_NUM_COLS] __attribute__((section(".noinit"), used));
 
 /**
- * "Hardware" buffer of the virtual display.
+ * Image corresponding to the display.
  */
-static uint8_t pbdrv_display_hardware_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CONFIG_DISPLAY_NUM_COLS] __attribute__((section(".noinit"), used));
+static pbio_image_t display_image;
 
 /**
  * Flag to indicate that the user frame has been updated and needs to be
@@ -57,16 +57,12 @@ static pbio_error_t pbdrv_display_virtual_process_thread(pbio_os_state_t *state,
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
         pbdrv_display_user_frame_update_requested = false;
-        memcpy(pbdrv_display_hardware_frame, pbdrv_display_user_frame, sizeof(pbdrv_display_hardware_frame));
+        extern void virtual_hub_socket_send(const uint8_t *data, uint32_t size);
+        virtual_hub_socket_send(display_image.pixels, sizeof(pbdrv_display_user_frame));
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
-
-/**
- * Image corresponding to the display.
- */
-static pbio_image_t display_image;
 
 /**
  * Initialize the display driver.
