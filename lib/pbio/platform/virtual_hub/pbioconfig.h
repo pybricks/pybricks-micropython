@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2025 The Pybricks Authors
 
 #define PBIO_CONFIG_BATTERY                 (1)
 #define PBIO_CONFIG_DCMOTOR                 (6)
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (6)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (1)
+#define PBIO_CONFIG_IMAGE                   (1)
 #define PBIO_CONFIG_LIGHT                   (0)
 #define PBIO_CONFIG_LOGGER                  (1)
 #define PBIO_CONFIG_LIGHT_MATRIX            (0)
