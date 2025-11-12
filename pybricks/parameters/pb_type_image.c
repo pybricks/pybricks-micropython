@@ -378,15 +378,35 @@ static mp_obj_t pb_type_Image_draw_text(size_t n_args, const mp_obj_t *pos_args,
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_draw_text_obj, 1, pb_type_Image_draw_text);
 
 static mp_obj_t pb_type_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    // TODO, this is a draft.
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pb_type_Image_obj_t, self,
-        PB_ARG_REQUIRED(text));
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_sep, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR__space_)} },
+        { MP_QSTR_end, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR__0x0a_)} },
+    };
+    mp_arg_val_t parsed_args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(0, NULL, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, parsed_args);
+    pb_type_Image_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    size_t sep_len, end_len;
+    const char *sep = mp_obj_str_get_data(parsed_args[0].u_obj, &sep_len);
+    const char *end = mp_obj_str_get_data(parsed_args[1].u_obj, &end_len);
 
-    size_t text_len;
-    const char *text = mp_obj_str_get_data(text_in, &text_len);
+    vstr_t vstr;
+    mp_print_t print;
+    vstr_init_print(&vstr, 16, &print);
+
+    for (size_t i = 1; i < n_args; i++) {
+        if (i > 1) {
+            mp_print_strn(&print, sep, sep_len, 0, 0, 0);
+        }
+        mp_obj_print_helper(&print, pos_args[i], PRINT_STR);
+    }
+    mp_print_strn(&print, end, end_len, 0, 0, 0);
+
+    size_t text_len = vstr_len(&vstr);
+    const char *text = vstr_str(&vstr);
 
     pbio_image_print(&self->image, text, text_len);
+
+    vstr_clear(&vstr);
 
     if (self->is_display) {
         pbdrv_display_update();
