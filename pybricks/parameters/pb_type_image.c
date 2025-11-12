@@ -85,6 +85,8 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
         self->owner = MP_OBJ_NULL;
         self->is_display = false;
         pbio_image_init(&self->image, buf, width, height, width);
+        self->image.print_font = source->image.print_font;
+        self->image.print_value = source->image.print_value;
         pbio_image_draw_image(&self->image, &source->image, 0, 0);
     } else {
         // Sub-image.
@@ -137,6 +139,8 @@ static mp_obj_t pb_type_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_
     self->owner = MP_OBJ_NULL;
     self->is_display = false;
     pbio_image_init(&self->image, buf, width, height, width);
+    self->image.print_font = display->print_font;
+    self->image.print_value = display->print_value;
     pbio_image_fill(&self->image, 0);
 
     return MP_OBJ_FROM_PTR(self);
@@ -352,7 +356,7 @@ static mp_obj_t pb_type_Image_draw_text(size_t n_args, const mp_obj_t *pos_args,
     const char *text = mp_obj_str_get_data(text_in, &text_len);
     int text_color = get_color(text_color_in);
 
-    const pbio_font_t *font = &pbio_font_terminus_normal_16;
+    const pbio_font_t *font = self->image.print_font;
 
     if (background_color_in != mp_const_none) {
         int background_color = get_color(background_color_in);
@@ -381,9 +385,6 @@ static mp_obj_t pb_type_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_
 
     size_t text_len;
     const char *text = mp_obj_str_get_data(text_in, &text_len);
-
-    self->image.print_font = &pbio_font_terminus_normal_16;
-    self->image.print_value = 3;
 
     pbio_image_print(&self->image, text, text_len);
 

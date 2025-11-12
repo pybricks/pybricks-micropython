@@ -124,6 +124,11 @@ static volatile spi_status_t spi_status = SPI_STATUS_ERROR;
 #define ST7586S_NUM_ROWS (PBDRV_CONFIG_DISPLAY_NUM_ROWS)
 
 /**
+ * Maximum pixel value.
+ */
+#define ST7586S_VALUE_MAX 3
+
+/**
  * User frame buffer. Each value is one pixel with value:
  *
  *  0: Empty / White
@@ -178,9 +183,9 @@ static uint8_t encode_triplet(uint8_t p0, uint8_t p1, uint8_t p2) {
     // As described above, the first two pixels are the normal binary
     // representation shifted left by one, with an extra bit set for black.
     // The third pixel is not shifted, so contains just two bits.
-    p0 = p0 >= 3 ? 0b111 : (p0 << 1);
-    p1 = p1 >= 3 ? 0b111 : (p1 << 1);
-    p2 = p2 >= 3 ? 0b11 : p2;
+    p0 = p0 >= ST7586S_VALUE_MAX ? 0b111 : (p0 << 1);
+    p1 = p1 >= ST7586S_VALUE_MAX ? 0b111 : (p1 << 1);
+    p2 = p2 >= ST7586S_VALUE_MAX ? 0b11 : p2;
 
     // Three pixels are then concatenated to one byte.
     return p0 << 5 | p1 << 2 | p2;
@@ -465,6 +470,8 @@ void pbdrv_display_init(void) {
     pbio_image_init(&display_image, (uint8_t *)pbdrv_display_user_frame,
         PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
         ST7586S_NUM_COL_TRIPLETS * 3);
+    display_image.print_font = &pbio_font_terminus_normal_16;
+    display_image.print_value = ST7586S_VALUE_MAX;
 
     // Start display process and ask pbdrv to wait until it is initialized.
     pbio_busy_count_up();
@@ -476,7 +483,7 @@ pbio_image_t *pbdrv_display_get_image(void) {
 }
 
 uint8_t pbdrv_display_get_max_value(void) {
-    return 3;
+    return ST7586S_VALUE_MAX;
 }
 
 void pbdrv_display_update(void) {

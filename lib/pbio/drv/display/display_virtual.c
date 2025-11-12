@@ -73,6 +73,8 @@ void pbdrv_display_init(void) {
     pbio_image_init(&display_image, (uint8_t *)pbdrv_display_user_frame,
         PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
         PBDRV_CONFIG_DISPLAY_NUM_COLS);
+    display_image.print_font = &pbio_font_terminus_normal_16;
+    display_image.print_value = 3;
 
     pbio_os_process_start(&pbdrv_display_virtual_process, pbdrv_display_virtual_process_thread, NULL);
 }
