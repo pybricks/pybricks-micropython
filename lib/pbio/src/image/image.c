@@ -9,6 +9,8 @@
 
 #include <string.h>
 #include <limits.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /**
  * Clip range between 0 and given length, return if out.
@@ -1003,6 +1005,109 @@ void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len) {
 
     image->print_x_left = x;
     image->print_y_top = y_top;
+}
+
+/**
+ * Print unsigned number inside image, like in a terminal, scroll when bottom is
+ * reached.
+ * @param [in] image   Image to draw into.
+ * @param [in] number  Number.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ */
+void pbio_image_print_uint(pbio_image_t *image, uint32_t number) {
+    char buf[10], *p;
+
+    p = &buf[10];
+
+    if (number == 0) {
+        *--p = '0';
+    } else {
+        while (number) {
+            uint32_t r = number / 10;
+            uint32_t d = number - r * 10;
+            *--p = d + '0';
+            number = r;
+        }
+    }
+
+    pbio_image_print(image, p, &buf[10] - p);
+}
+
+/**
+ * Print signed number inside image, like in a terminal, scroll when bottom is
+ * reached.
+ * @param [in] image   Image to draw into.
+ * @param [in] number  Number.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ */
+void pbio_image_print_int(pbio_image_t *image, int32_t number) {
+    if (number < 0) {
+        pbio_image_print(image, "-", 1);
+        number = -number;
+    }
+    pbio_image_print_uint(image, number);
+}
+
+/**
+ * Print unsigned number inside image as hexadecimal, like in a terminal,
+ * scroll when bottom is reached.
+ * @param [in] image   Image to draw into.
+ * @param [in] number  Number.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ */
+void pbio_image_print_hex(pbio_image_t *image, uint32_t number) {
+    char buf[8], *p;
+
+    p = &buf[8];
+
+    if (number == 0) {
+        *--p = '0';
+    } else {
+        while (number) {
+            uint32_t d = number & 0xf;
+            *--p = "0123456789abcdef"[d];
+            number >>= 4;
+        }
+    }
+
+    pbio_image_print(image, p, &buf[8] - p);
+}
+
+/**
+ * Print formatted output inside image, like in a terminal, scroll when bottom
+ * is reached.
+ * @param [in] image  Image to draw into.
+ * @param [in] fmt    Printf-like format string.
+ * @return            Same as printf.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ */
+int pbio_image_printf(pbio_image_t *image, const char *fmt, ...) {
+    va_list ap;
+    int r;
+    char buf[128];
+
+    va_start(ap, fmt);
+    r = vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+
+    // Not supposed to return an error, but there are bugged libc, so just in
+    // case, stop here.
+    if (r < 0) {
+        return r;
+    }
+
+    // Truncate if too long.
+    if (r >= (int)sizeof(buf)) {
+        r = sizeof(buf);
+    }
+
+    pbio_image_print(image, buf, r);
+
+    return r;
 }
 
 #endif // PBIO_CONFIG_IMAGE

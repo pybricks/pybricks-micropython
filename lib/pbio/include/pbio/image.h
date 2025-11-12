@@ -147,6 +147,14 @@ void pbio_image_bbox_text(const pbio_font_t *font, const char *text,
 
 void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len);
 
+void pbio_image_print_uint(pbio_image_t *image, uint32_t number);
+
+void pbio_image_print_int(pbio_image_t *image, int32_t number);
+
+void pbio_image_print_hex(pbio_image_t *image, uint32_t number);
+
+int pbio_image_printf(pbio_image_t *image, const char *fmt, ...);
+
 #endif // PBIO_CONFIG_IMAGE
 
 #endif // _PBIO_IMAGE_H_
