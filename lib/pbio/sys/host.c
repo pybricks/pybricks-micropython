@@ -201,9 +201,9 @@ bool pbsys_host_tx_is_idle(void) {
     #if BLE_ONLY
     return pbdrv_bluetooth_tx_is_idle();
     #elif USB_ONLY
-    return pbdrv_usb_stdout_tx_available();
+    return pbdrv_usb_stdout_tx_is_idle();
     #elif BLE_AND_USB
-    return pbdrv_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_available();
+    return pbdrv_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_is_idle();
     #else
     return true;
     #endif
