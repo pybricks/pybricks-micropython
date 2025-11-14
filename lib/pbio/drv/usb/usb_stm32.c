@@ -49,7 +49,6 @@
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
-static uint8_t usb_event_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_EVENT };
 static volatile uint32_t usb_in_sz;
 static volatile bool transmitting;
 
@@ -222,15 +221,9 @@ static USBD_StatusTypeDef Pybricks_Itf_Receive(uint8_t *Buf, uint32_t Len) {
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, uint8_t epnum) {
-    USBD_StatusTypeDef ret = USBD_OK;
-
-    if (Buf != usb_response_buf && Buf != usb_event_buf) {
-        ret = USBD_FAIL;
-    }
-
     transmitting = false;
     pbio_os_request_poll();
-    return ret;
+    return USBD_OK;
 }
 
 static USBD_StatusTypeDef Pybricks_Itf_ReadCharacteristic(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {
@@ -303,34 +296,51 @@ USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
     .ReadCharacteristic = Pybricks_Itf_ReadCharacteristic,
 };
 
-uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
-
-    if (message_type == PBIO_PYBRICKS_IN_EP_MSG_RESPONSE) {
-        *buf = usb_response_buf;
-        return sizeof(usb_response_buf);
-    }
-
-    *buf = usb_event_buf;
-    return sizeof(usb_event_buf);
-}
-
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     pbdrv_usb_stm32_reset_tx_state();
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    if (transmitting) {
+        return PBIO_ERROR_BUSY;
+    }
+
     transmitting = true;
     pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
     USBD_Pybricks_TransmitPacket(&husbd, (uint8_t *)data, size);
-
     PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
 
+    if (pbio_os_timer_is_expired(&timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (transmitting) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    transmitting = true;
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+
+    pbio_set_uint32_le(&usb_response_buf[1], code);
+
+    USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, sizeof(usb_response_buf));
+
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
     if (pbio_os_timer_is_expired(&timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }

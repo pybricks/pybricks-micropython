@@ -40,6 +40,17 @@ void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
     pbdrv_usb_receive_handler = handler;
 }
 
+//
+// Functions related to sending value notifications (stdout, status, app data).
+//
+
+/**
+ * Each event has a buffer of maximum packet size. They are prioritized by
+ * ascending event number, so status gets sent first, then stdout, etc.
+ */
+static uint8_t pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_NUM_EVENTS][PBDRV_CONFIG_USB_MAX_PACKET_SIZE] __attribute__((aligned(4)));
+static uint32_t pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_NUM_EVENTS];
+
 /**
  * Buffer scheduled status.
  */
@@ -93,8 +104,55 @@ bool pbdrv_usb_stdout_tx_is_idle(void) {
     if (!pbdrv_usb_connection_is_active()) {
         return true;
     }
-    return lwrb_get_full(&pbdrv_usb_stdout_ring_buf) == 0;
+    return lwrb_get_full(&pbdrv_usb_stdout_ring_buf) == 0 && !pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
 }
+
+/**
+ * Updates send buffers by draining relevant data buffers and find which event
+ * has the highest priority to send.
+ */
+static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
+
+    // Prepare status.
+    if (pbdrv_usb_status_data_pending) {
+        // When a status is pending, drain it here while we write it out,
+        // so a new status can be set in the mean time without losing it.
+        // This is offset by one for the endpoint message type. The status
+        // already starts with the event type.
+        memcpy(&pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT][1], pbdrv_usb_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+        pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_STATUS_REPORT] = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE + 1;
+        pbdrv_usb_status_data_pending = false;
+    }
+
+    // Prepare stdout, drain into chunk of maximum send size.
+    if (lwrb_get_full(&pbdrv_usb_stdout_ring_buf) != 0) {
+        // Message always starts with endpoint type and event byte, but these are already set.
+        if (!pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) {
+            pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] = 2;
+        }
+        // Drain ring buffer to send buffer as much as we can.
+        uint32_t stdout_free = sizeof(pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
+        if (stdout_free) {
+            uint8_t *dest = &pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT][sizeof(pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - stdout_free];
+            pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] += lwrb_read(&pbdrv_usb_stdout_ring_buf, dest, stdout_free);
+        }
+    }
+
+    // Other events are awaited as-is and don't allow setting new data until
+    // they have been transmitted, so don't need further processing/draining.
+
+    // Return highest priority pending event, ready for sending.s
+    for (uint32_t i = 0; i < PBIO_PYBRICKS_EVENT_NUM_EVENTS; i++) {
+        if (pbdrv_usb_noti_size[i]) {
+            *len = &pbdrv_usb_noti_size[i];
+            *buf = pbdrv_usb_noti_buf[i];
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 static bool pbdrv_usb_respond_soon;
 static pbio_pybricks_error_t pbdrv_usb_respond_result;
@@ -142,6 +200,7 @@ static void pbdrv_usb_reset_state(void) {
     pbdrv_usb_respond_soon = false;
     pbdrv_usb_status_data_pending = false;
     lwrb_reset(&pbdrv_usb_stdout_ring_buf);
+    memset(pbdrv_usb_noti_size, 0, sizeof(pbdrv_usb_noti_size));
 }
 
 static pbio_os_process_t pbdrv_usb_process;
@@ -150,8 +209,8 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 
     static pbio_os_state_t sub;
 
-    static uint8_t *out_data;
-    static uint32_t out_size;
+    static uint32_t *noti_size;
+    static uint8_t *noti_buf;
 
     pbio_error_t err;
 
@@ -170,28 +229,21 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
             // Find out what we should send, if anything, priotizing response, then
             // status, then stdout, then other events.
             if (pbdrv_usb_respond_soon) {
-                // Pack the response to the most recent message.
-                pbdrv_usb_tx_get_buf(PBIO_PYBRICKS_IN_EP_MSG_RESPONSE, &out_data);
-                pbio_set_uint32_le(&out_data[1], pbdrv_usb_respond_result);
-                out_size = sizeof(uint32_t) + 1;
+                // Double buffer response so we're ready for another.
+                static pbio_pybricks_error_t error_code;
+                error_code = pbdrv_usb_respond_result;
                 pbdrv_usb_respond_soon = false;
-            } else if (pbdrv_usb_connection_is_active() && pbdrv_usb_status_data_pending) {
-                // Send out status if pending (already includes event code).
-                pbdrv_usb_tx_get_buf(PBIO_PYBRICKS_IN_EP_MSG_EVENT, &out_data);
-                memcpy(&out_data[1], pbdrv_usb_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-                out_size = PBIO_PYBRICKS_USB_MESSAGE_SIZE(PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-                pbdrv_usb_status_data_pending = false;
-            } else if (pbdrv_usb_connection_is_active() && lwrb_get_full(&pbdrv_usb_stdout_ring_buf) != 0) {
-                // Send out stdout if anything is buffered.
-                uint32_t max_size = pbdrv_usb_tx_get_buf(PBIO_PYBRICKS_IN_EP_MSG_EVENT, &out_data);
-                out_data[1] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
-                out_size = lwrb_read(&pbdrv_usb_stdout_ring_buf, &out_data[2], max_size - 2) + 2;
-            }
 
-            // If there was anything to send, send it.
-            if (out_size) {
-                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx(&sub, out_data, out_size));
-                out_size = 0;
+                // Send the response.
+                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_response(&sub, error_code));
+                if (err != PBIO_SUCCESS) {
+                    pbdrv_usb_reset_state();
+                    PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
+                }
+            } else if (pbdrv_usb_connection_is_active() && update_and_get_event_buffer(&noti_buf, &noti_size)) {
+                // Send out pending event if any.
+                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_event(&sub, noti_buf, *noti_size));
+                *noti_size = 0;
                 if (err != PBIO_SUCCESS) {
                     pbdrv_usb_reset_state();
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
@@ -214,6 +266,11 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 
 void pbdrv_usb_init(void) {
     pbdrv_usb_init_device();
+
+    for (int8_t i = 0; i < PBIO_PYBRICKS_EVENT_NUM_EVENTS; i++) {
+        pbdrv_usb_noti_buf[i][0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
+        pbdrv_usb_noti_buf[i][1] = i; // event type
+    }
 
     static uint8_t stdout_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE * 2];
     lwrb_init(&pbdrv_usb_stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));

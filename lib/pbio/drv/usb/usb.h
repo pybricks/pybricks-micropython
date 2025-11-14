@@ -49,20 +49,13 @@ void pbdrv_usb_deinit_device(void);
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 
 /**
- * Gets the buffer to match the given endpoint mesage type.
- *
- * @param [in]  message_type The message type to find the buffer for
- * @param [out] buf          The corresponding buffer to write data to before sending.
- * @return                   Maximum size to write.
- */
-uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf);
-
-/**
- * Sends and awaits message from hub to host via the Pybricks USB interface OUT endpoint.
+ * Sends and awaits event message from hub to host via the Pybricks USB interface OUT endpoint.
  *
  * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
  *
  * The USB process ensures that only one call is made at once.
+ *
+ * Data must include the endpoint type and event code, so size is at least 2.
  *
  * @param [in] state    Protothread state.
  * @param [in] data     Data to send.
@@ -74,7 +67,24 @@ uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_
  *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.
  *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
  */
-pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
+
+/**
+ * Sends and awaits response to an earlier incoming message.
+ *
+ * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
+ *
+ * The USB process ensures that only one call is made at once.
+ *
+ * @param [in] state    Protothread state.
+ * @param [in] code     Error code to send.
+ * @return              ::PBIO_SUCCESS on completion.
+ *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
+ *                      ::PBIO_ERROR_AGAIN while awaiting.
+ *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
+ *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
+ */
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code);
 
 /**
  * Resets the driver transmission state.
@@ -132,10 +142,6 @@ static inline pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
 
 static inline bool pbdrv_usb_is_ready(void) {
     return false;
-}
-
-static inline uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
-    return 0;
 }
 
 

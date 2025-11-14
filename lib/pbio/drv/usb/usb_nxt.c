@@ -914,23 +914,13 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-static uint8_t pbdrv_usb_tx_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE];
-
-uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
-    // TODO. For now using the same buffer for everything. The higher level
-    // code sends only one thing at once anyway.
-    pbdrv_usb_tx_buf[0] = message_type;
-    *buf = pbdrv_usb_tx_buf;
-    return sizeof(pbdrv_usb_tx_buf);
-}
-
 // As a stepping stone, we use RFCOMM to provide the REPL through this USB
 // module. This should be removed when USB is fully implemented.
 #include <nxos/drivers/bt.h>
 
 extern bool nx_bt_is_ready(void);
 
-pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
@@ -953,6 +943,11 @@ pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t 
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
+    // Not yet implemented, but must respond with success as to not reset USB.
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {

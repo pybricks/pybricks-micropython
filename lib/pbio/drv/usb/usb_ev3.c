@@ -228,8 +228,6 @@ static bool pbdrv_usb_is_usb_hs;
 
 // Buffers, used for different logical flows on the data endpoint
 static uint8_t ep1_rx_buf[PYBRICKS_EP_PKT_SZ_HS] PBDRV_DMA_BUF;
-static uint8_t ep1_tx_response_buf[PYBRICKS_EP_PKT_SZ_HS] = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
-static uint8_t ep1_tx_event_buf[PYBRICKS_EP_PKT_SZ_HS] = { PBIO_PYBRICKS_IN_EP_MSG_EVENT };
 
 // Buffer status flags
 static volatile bool usb_rx_is_ready;
@@ -1004,11 +1002,6 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
-    *buf = message_type == PBIO_PYBRICKS_IN_EP_MSG_RESPONSE ? ep1_tx_response_buf : ep1_tx_event_buf;
-    return pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS;
-}
-
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
 
     static pbio_os_timer_t timer;
@@ -1030,25 +1023,22 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    if (transmitting) {
+        return PBIO_ERROR_BUSY;
+    }
+
     transmitting = true;
     pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
 
-    if (data == ep1_tx_response_buf) {
-        pbdrv_cache_prepare_before_dma(ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
-        usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, size);
-    } else if (data == ep1_tx_event_buf) {
-        pbdrv_cache_prepare_before_dma(ep1_tx_event_buf, sizeof(ep1_tx_event_buf));
-        usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, ep1_tx_event_buf, size);
-    } else {
-        transmitting = false;
-        return PBIO_ERROR_INVALID_ARG;
-    }
+    // Transmit event.
+    pbdrv_cache_prepare_before_dma(data, size);
+    usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, (uint8_t *)data, size);
 
     PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
 
@@ -1057,6 +1047,37 @@ pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t 
         // new transmissions. This can happen if the host stops reading
         // data for some reason. This need some time to complete, so delegate
         // the reset back to the process.
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
+
+    static pbio_os_timer_t timer;
+
+    static uint8_t ep1_tx_response_buf[1 + sizeof(uint32_t)] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (transmitting) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    transmitting = true;
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+
+    // Response is just the error code.
+    pbio_set_uint32_le(&ep1_tx_response_buf[1], code);
+
+    // Transmit response.
+    pbdrv_cache_prepare_before_dma(ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
+    usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
+
+    // Wait until complete or trigger reset on timeout.
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
+    if (pbio_os_timer_is_expired(&timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
 

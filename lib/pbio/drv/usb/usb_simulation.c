@@ -29,16 +29,7 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-static uint8_t pbdrv_usb_tx_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE];
-
-uint32_t pbdrv_usb_tx_get_buf(pbio_pybricks_usb_in_ep_msg_t message_type, uint8_t **buf) {
-    // We can just use the same buffer for any transfer in this simulation.
-    pbdrv_usb_tx_buf[0] = message_type;
-    *buf = pbdrv_usb_tx_buf;
-    return sizeof(pbdrv_usb_tx_buf);
-}
-
-pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
@@ -51,6 +42,26 @@ pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t 
 
     int ret = write(STDOUT_FILENO, data + 2, size - 2);
     (void)ret;
+
+    // Simulate some I/O time.
+    PBIO_OS_AWAIT_MS(state, &timer, 2);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
+
+    static pbio_os_timer_t timer;
+
+    static uint8_t response_buf[1 + sizeof(uint32_t)] __attribute__((aligned(4))) =
+    { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Response is just the error code.
+    pbio_set_uint32_le(&response_buf[1], code);
+
+    // Simulation never actually sends this.
 
     // Simulate some I/O time.
     PBIO_OS_AWAIT_MS(state, &timer, 2);
