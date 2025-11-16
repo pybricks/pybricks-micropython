@@ -7,10 +7,12 @@
 """Convert a font to format used by pbio."""
 
 import argparse
-import freetype
+import re
 from dataclasses import dataclass
 from pathlib import PurePath
-import re
+
+import freetype
+from PIL import Image
 
 # Fixed point 26.6 format.
 Q = 6
@@ -66,7 +68,7 @@ class Glyph:
     advance: int
     left: int
     top: int
-    data: [int]
+    data: list[int]
     kernings: dict[int, int]
 
 
@@ -77,14 +79,12 @@ class Font:
         self,
         name: str,
         ident: str,
-        face: freetype.Face,
         size: int,
         first: int,
         last: int,
         license: str,
-        copyright: [str],
+        copyright: list[str],
     ):
-        """Convert a face to pbio font format."""
         self.name = name
         self.ident = ident
         self.size = size
@@ -92,9 +92,13 @@ class Font:
         self.last = last
         self.license = license
         self.copyright = copyright
-        self.glyphs = []
+        self.glyphs: list[Glyph] = []
 
-        face.set_pixel_sizes(options.size, options.size)
+    def load_face(self, font: str, face_index: int) -> None:
+        """Load font from FreeType face."""
+        face = freetype.Face(font, face_index)
+
+        face.set_pixel_sizes(self.size, self.size)
 
         load_flags = (
             freetype.FT_LOAD_RENDER
@@ -105,12 +109,12 @@ class Font:
         self.line_height = face.size.height >> Q
         self.top_max = 0
 
-        for c in range(first, last + 1):
+        for c in range(self.first, self.last + 1):
             face.load_char(c, load_flags)
             bitmap = face.glyph.bitmap
             kernings = {}
             if face.has_kerning:
-                for prev in range(options.first, options.last + 1):
+                for prev in range(self.first, self.last + 1):
                     kerning = face.get_kerning(prev, c).x >> Q
                     if kerning != 0:
                         kernings[prev] = kerning
@@ -121,14 +125,14 @@ class Font:
                 face.glyph.advance.x >> Q,
                 face.glyph.bitmap_left,
                 face.glyph.bitmap_top,
-                self.read_bitmap(bitmap),
+                self.read_face_bitmap(bitmap),
                 kernings,
             )
             self.glyphs.append(glyph)
             self.top_max = max(self.top_max, glyph.top)
 
     @staticmethod
-    def read_bitmap(bitmap: freetype.Bitmap) -> [int]:
+    def read_face_bitmap(bitmap: freetype.Bitmap) -> list[int]:
         """Read a freetype bitmap."""
         data = []
         assert bitmap.pixel_mode == freetype.FT_PIXEL_MODE_MONO
@@ -137,9 +141,56 @@ class Font:
             data += bitmap.buffer[index : index + (bitmap.width + 7) // 8]
         return data
 
+    def load_image(self, filename: str) -> None:
+        """Load font from image."""
+        im = Image.open(filename).convert("1", dither=Image.Dither.NONE)
+        imwidth, imheight = im.size
+        rows = imheight // self.size
+        cols = (self.last - self.first + 1 + (rows - 1)) // rows
+        gwidth = imwidth // cols
+        gheight = self.size
+        data = list(im.getdata())
+
+        self.line_height = gheight
+        self.top_max = gheight
+
+        pad = (gwidth + 7) // 8 * 8 - gwidth
+
+        for c in range(self.first, self.last + 1):
+            index = c - self.first
+            row = index // cols
+            col = index % cols
+            start = row * gheight * imwidth + col * gwidth
+            pixels = list(
+                data[start + y * imwidth : start + y * imwidth + gwidth]
+                for y in range(gheight)
+            )
+            glyph = Glyph(
+                c,
+                gwidth,
+                gheight,
+                gwidth + 1,
+                0,
+                gheight,
+                self.read_image_bitmap(pixels),
+                {},
+            )
+            self.glyphs.append(glyph)
+
+    @staticmethod
+    def read_image_bitmap(pixels: list[list[int]]) -> list[int]:
+        """Read a glyph bitmap from image data."""
+        bitmap: list[int] = []
+        for row in pixels:
+            n_bytes = (len(row) + 7) // 8
+            msb = n_bytes * 8 - 1
+            binary = sum(1 << (msb - i) if p < 128 else 0 for (i, p) in enumerate(row))
+            bitmap.extend(binary.to_bytes(n_bytes, byteorder="big"))
+        return bitmap
+
     def dump(self) -> str:
         """Return the font in source code format."""
-        data = []
+        data: list[int] = []
         data_indices = []
         for g in self.glyphs:
             data_indices.append(len(data))
@@ -148,7 +199,7 @@ class Font:
             ", ".join(f"{x:#04x}" for x in data[i : i + 12])
             for i in range(0, len(data), 12)
         )
-        kernings = []
+        kernings: list[str] = []
         kerning_indices = []
         for g in self.glyphs:
             kerning_indices.append(len(kernings))
@@ -173,6 +224,7 @@ class Font:
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument("font", help="Font file")
 p.add_argument("size", type=int, help="Font pixel size")
+p.add_argument("--image", action="store_true", help="Convert from image")
 p.add_argument("--face-index", type=int, default=0, help="Face index inside font file")
 p.add_argument("-f", "--first", type=int, default=32, help="First glyph")
 p.add_argument("-l", "--last", type=int, default=127, help="Last glyph")
@@ -187,15 +239,17 @@ name = PurePath(options.font).stem
 ident = "{}_{}".format(
     re.sub(r"[^a-z0-9_]", "", name.lower().replace("-", "_")), options.size
 )
-face = freetype.Face(options.font, options.face_index)
 font = Font(
     name,
     ident,
-    face,
     options.size,
     options.first,
     options.last,
     options.license,
     options.copyright,
 )
+if not options.image:
+    font.load_face(options.font, options.face_index)
+else:
+    font.load_image(options.font)
 print(font.dump())

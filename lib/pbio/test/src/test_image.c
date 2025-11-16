@@ -938,6 +938,20 @@ static void test_image_print(void *env) {
         "......*............."
         ".....*.............."
         "....*...............");
+
+    test_image_prepare_small_image(&small);
+    small.print_font = &pbio_font_mono_8x5_8;
+    small.print_value = '*';
+    pbio_image_print(&small, "HI!", 3);
+    test_image_small_refill();
+    tt_want_small_image(
+        "*...*..***....*....."
+        "*...*...*.....*....."
+        "*...*...*.....*....."
+        "*****...*.....*....."
+        "*...*...*.....*....."
+        "*...*...*..........."
+        "*...*..***....*.....");
 }
 
 struct testcase_t pbio_image_tests[] = {

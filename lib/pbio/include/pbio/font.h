@@ -108,6 +108,7 @@ typedef struct _pbio_font_t {
 
 extern const pbio_font_t pbio_font_liberationsans_regular_14;
 extern const pbio_font_t pbio_font_terminus_normal_16;
+extern const pbio_font_t pbio_font_mono_8x5_8;
 
 #endif // PBIO_CONFIG_IMAGE
 

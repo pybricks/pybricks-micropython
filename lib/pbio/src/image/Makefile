@@ -16,10 +16,19 @@ TERMINUS_COPYRIGHT = \
 	--copyright '  with Reserved Font Name "Terminus Font".'
 TERMINUS_NORMAL = /usr/share/fonts/opentype/terminus/terminus-normal.otb
 
-all: font_liberationsans_regular_14.c font_terminus_normal_16.c
+NXOS_LICENSE = "GPL-2.0-only"
+NXOS_COPYRIGHT = \
+	--copyright "Copyright (c) 2008 the NxOS developers"
+
+all: font_liberationsans_regular_14.c font_terminus_normal_16.c font_mono_8x5_8.c
 
 font_liberationsans_regular_14.c: $(LIBERATION_SANS_REGULAR) $(FONTCONVERT)
 	python3 $(FONTCONVERT) $< 14 --license $(LIBERATION_LICENSE) $(LIBERATION_COPYRIGHT) > $@
 
 font_terminus_normal_16.c: $(TERMINUS_NORMAL) $(FONTCONVERT)
 	python3 $(FONTCONVERT) $< 16 --license $(TERMINUS_LICENSE) $(TERMINUS_COPYRIGHT) > $@
+
+font_mono_8x5_8.c: mono_8x5.png $(FONTCONVERT)
+	python3 $(FONTCONVERT) --image $< 8 --license $(NXOS_LICENSE) $(NXOS_COPYRIGHT) > $@
+
+.DELETE_ON_ERROR:
