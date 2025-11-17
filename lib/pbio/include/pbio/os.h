@@ -183,6 +183,8 @@ struct _pbio_os_process_t {
  * This macro is used for declaring that a protothread ends. It must
  * always be used together with a matching PBIO_OS_ASYNC_BEGIN() macro.
  *
+ * Protothread must not be called after exiting.
+ *
  * @param [in]  err    Error code to return.
  */
 #define PBIO_OS_ASYNC_END(err) }; return err; }
@@ -230,6 +232,36 @@ struct _pbio_os_process_t {
         if ((calling_statement) == PBIO_ERROR_AGAIN) {           \
             return PBIO_ERROR_AGAIN;                             \
         }                                                        \
+    } while (0)
+
+
+/**
+ * Awaits two protothreads until both have either completed or errored.
+ *
+ * @param [in]  host_state             State of the host protothread in which this macro is used.
+ * @param [in]  err_1                  Error of the first sub protothread.
+ * @param [in]  sub_state_1            State of the first sub protothread.
+ * @param [in]  calling_statement_1    (Error-assigning) calling statement of the first sub protothread.
+ * @param [in]  err_2                  Error of the second sub protothread.
+ * @param [in]  sub_state_2            State of the second sub protothread.
+ * @param [in]  calling_statement_2    (Error-assigning) calling statement of the second sub protothread.
+ */
+#define PBIO_OS_AWAIT_GATHER(host_state, err_1, sub_state_1, calling_statement_1, err_2, sub_state_2, calling_statement_2) \
+    do {                                                                                                   \
+        *err_1 = PBIO_ERROR_AGAIN;                                                                         \
+        *err_2 = PBIO_ERROR_AGAIN;                                                                         \
+        PBIO_OS_ASYNC_RESET((sub_state_1));                                                                \
+        PBIO_OS_ASYNC_RESET((sub_state_2));                                                                \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(host_state);                                                          \
+        if (*err_1 == PBIO_ERROR_AGAIN) {                                                                  \
+            *err_1 = (calling_statement_1);                                                                \
+        }                                                                                                  \
+        if (*err_2 == PBIO_ERROR_AGAIN) {                                                                  \
+            *err_2 = (calling_statement_2);                                                                \
+        }                                                                                                  \
+        if (*err_1 == PBIO_ERROR_AGAIN || *err_2 == PBIO_ERROR_AGAIN) {                                    \
+            return PBIO_ERROR_AGAIN;                                                                       \
+        }                                                                                                  \
     } while (0)
 
 /**
