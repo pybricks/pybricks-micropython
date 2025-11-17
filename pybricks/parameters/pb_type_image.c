@@ -25,7 +25,7 @@
 
 extern const mp_obj_type_t pb_type_Image;
 
-// pybricks.media.Image class object
+// pybricks.parameters.Image class object
 typedef struct _pb_type_Image_obj_t {
     mp_obj_base_t base;
     // For images with shared memory, we need to keep a reference to the object
@@ -416,7 +416,7 @@ static mp_obj_t pb_type_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_print_obj, 1, pb_type_Image_print);
 
-// dir(pybricks.media.Image)
+// dir(pybricks.parameters.Image)
 static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     // REVISIT: consider close() method and __enter__/__exit__ for context manager
     // to deterministically free memory if needed.
@@ -434,7 +434,7 @@ static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
 };
 static MP_DEFINE_CONST_DICT(pb_type_Image_locals_dict, pb_type_Image_locals_dict_table);
 
-// type(pybricks.media.Image)
+// type(pybricks.parameters.Image)
 MP_DEFINE_CONST_OBJ_TYPE(pb_type_Image,
     MP_QSTR_Image,
     MP_TYPE_FLAG_NONE,
