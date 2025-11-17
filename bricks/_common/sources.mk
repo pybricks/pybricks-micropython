@@ -64,6 +64,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
 	parameters/pb_type_direction.c \
+	parameters/pb_type_font.c \
 	parameters/pb_type_icon.c \
 	parameters/pb_type_image.c \
 	parameters/pb_type_port.c \

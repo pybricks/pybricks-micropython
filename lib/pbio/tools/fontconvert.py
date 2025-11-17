@@ -53,6 +53,8 @@ const pbio_font_t {ident} = {{
     .glyphs = {ident}_glyphs,
     .data = {ident}_data,
     .kernings = {ident}_kernings,
+    .family_name = "{self.family_name}",
+    .style_name = "{self.style_name}",
 }};
 
 #endif // PBIO_CONFIG_IMAGE"""
@@ -97,6 +99,9 @@ class Font:
     def load_face(self, font: str, face_index: int) -> None:
         """Load font from FreeType face."""
         face = freetype.Face(font, face_index)
+
+        self.family_name = face.family_name.decode()
+        self.style_name = face.style_name.decode()
 
         face.set_pixel_sizes(self.size, self.size)
 
@@ -153,6 +158,8 @@ class Font:
 
         self.line_height = gheight
         self.top_max = gheight
+        self.family_name = self.name.replace("_", " ").capitalize()
+        self.style_name = "Regular"
 
         pad = (gwidth + 7) // 8 * 8 - gwidth
 

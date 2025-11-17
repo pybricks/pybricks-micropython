@@ -192,6 +192,8 @@ const pbio_font_t pbio_font_mono_8x5_8 = {
     .glyphs = pbio_font_mono_8x5_8_glyphs,
     .data = pbio_font_mono_8x5_8_data,
     .kernings = pbio_font_mono_8x5_8_kernings,
+    .family_name = "Mono 8x5",
+    .style_name = "Regular",
 };
 
 #endif // PBIO_CONFIG_IMAGE

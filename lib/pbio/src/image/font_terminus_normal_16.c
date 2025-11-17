@@ -257,6 +257,8 @@ const pbio_font_t pbio_font_terminus_normal_16 = {
     .glyphs = pbio_font_terminus_normal_16_glyphs,
     .data = pbio_font_terminus_normal_16_data,
     .kernings = pbio_font_terminus_normal_16_kernings,
+    .family_name = "Terminus",
+    .style_name = "Medium",
 };
 
 #endif // PBIO_CONFIG_IMAGE

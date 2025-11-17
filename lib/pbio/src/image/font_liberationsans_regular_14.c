@@ -254,6 +254,8 @@ const pbio_font_t pbio_font_liberationsans_regular_14 = {
     .glyphs = pbio_font_liberationsans_regular_14_glyphs,
     .data = pbio_font_liberationsans_regular_14_data,
     .kernings = pbio_font_liberationsans_regular_14_kernings,
+    .family_name = "Liberation Sans",
+    .style_name = "Regular",
 };
 
 #endif // PBIO_CONFIG_IMAGE

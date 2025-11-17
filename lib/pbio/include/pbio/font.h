@@ -102,6 +102,14 @@ typedef struct _pbio_font_t {
      * Kerning table, may be NULL if no kerning.
      */
     const pbio_font_kerning_t *kernings;
+    /**
+     * Family name, describes the typeface family.
+     */
+    const char *family_name;
+    /**
+     * Style name, describes the typeface style (like "Italic", "Bold"...).
+     */
+    const char *style_name;
 } pbio_font_t;
 
 #if PBIO_CONFIG_IMAGE
