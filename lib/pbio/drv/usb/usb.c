@@ -63,7 +63,7 @@ void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
         return;
     }
 
-    // Schedule to send whenever the Bluetooth process gets round to it.
+    // Schedule to send whenever the USB process gets round to it.
     memcpy(pbdrv_usb_status_data, status_msg, sizeof(pbdrv_usb_status_data));
     pbdrv_usb_status_data_pending = true;
     pbio_os_request_poll();
@@ -105,6 +105,35 @@ bool pbdrv_usb_stdout_tx_is_idle(void) {
         return true;
     }
     return lwrb_get_full(&pbdrv_usb_stdout_ring_buf) == 0 && !pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
+}
+
+pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (!pbdrv_usb_connection_is_active()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (size + 2 > PBIO_ARRAY_SIZE(pbdrv_usb_noti_buf[0]) || event_type >= PBIO_PYBRICKS_EVENT_NUM_EVENTS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Existing notification waiting to be sent first.
+    if (pbdrv_usb_noti_size[event_type]) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Copy to local buffer and set size so main thread knows to handle it. The
+    // first two bytes (end point message type and event type) are already set.
+    pbdrv_usb_noti_size[event_type] = size + 2;
+    memcpy(&pbdrv_usb_noti_buf[event_type][2], data, size);
+    pbio_os_request_poll();
+
+    // Await until main process has finished sending user data. If it
+    // disconnected while sending, this completes as well.
+    PBIO_OS_AWAIT_WHILE(state, pbdrv_usb_noti_size[event_type]);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /**

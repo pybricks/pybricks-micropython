@@ -218,6 +218,7 @@ bool pbsys_host_tx_is_idle(void) {
  * @param size        [in]  The size of the data to transmit.
  *                          contains the number of bytes actually processed.
  * @return                  ::PBIO_ERROR_AGAIN while the operation is in progress.
+ *                          ::PBIO_ERROR_INVALID_ARG if invalid event type or size too big.
  *                          ::PBIO_ERROR_INVALID_OP if there is no connection to send it to.
  *                          ::PBIO_ERROR_BUSY if another transfer is already queued or in progress.
  *                          ::PBIO_SUCCESS on completion.
@@ -225,9 +226,31 @@ bool pbsys_host_tx_is_idle(void) {
 pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
     #if BLE_ONLY
     return pbdrv_bluetooth_send_event_notification(state, event_type, data, size);
-    #else
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    #elif USB_ONLY
+    return pbdrv_usb_send_event_notification(state, event_type, data, size);
     #endif
+
+    static pbio_os_state_t ble_state;
+    static pbio_os_state_t usb_state;
+
+    static pbio_error_t ble_err;
+    static pbio_error_t usb_err;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    PBIO_OS_AWAIT_GATHER(state,
+        &ble_err, &ble_state, pbdrv_bluetooth_send_event_notification(&ble_state, event_type, data, size),
+        &usb_err, &usb_state, pbdrv_usb_send_event_notification(&usb_state, event_type, data, size)
+        );
+
+    // If any output is successful, the whole will be considered successful.
+    if (ble_err == PBIO_SUCCESS || usb_err == PBIO_SUCCESS) {
+        return PBIO_SUCCESS;
+    }
+
+    // Both have failed. In most cases, this means being fully disconnected so
+    // it does not matter which one we return. Otherwise return the ble error.
+    PBIO_OS_ASYNC_END(ble_err != PBIO_SUCCESS ? ble_err : usb_err);
 }
 
 #endif // PBSYS_CONFIG_HOST

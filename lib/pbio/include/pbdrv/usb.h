@@ -14,6 +14,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
+#include <pbio/os.h>
 #include <pbio/protocol.h>
 
 /**
@@ -93,6 +94,25 @@ bool pbdrv_usb_stdout_tx_is_idle(void);
  */
 bool pbdrv_usb_connection_is_active(void);
 
+/**
+ * Sends a value notification and await it.
+ *
+ * Uses the same mechanism as stdout or status events, but is user-awaitable.
+ *
+ * This does not not use a ringbuffer. Await operation before sending more.
+ *
+ * @param [in] state    Protothread state.
+ * @param [in] event    Event type (status, stdout, or app data, etc.)
+ * @param [in] data     Data to send.
+ * @param [in] size     Data size, not counting event type byte.
+ * @return              ::PBIO_SUCCESS on completion.
+ *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
+ *                      ::PBIO_ERROR_AGAIN while awaiting.
+ *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
+ *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.
+ */
+pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size);
+
 #else // PBDRV_CONFIG_USB
 
 static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
@@ -119,6 +139,10 @@ static inline bool pbdrv_usb_stdout_tx_is_idle(void) {
 
 static inline bool pbdrv_usb_connection_is_active(void) {
     return false;
+}
+
+static inline pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBDRV_CONFIG_USB
