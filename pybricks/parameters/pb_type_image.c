@@ -416,6 +416,15 @@ static mp_obj_t pb_type_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_Image_print_obj, 1, pb_type_Image_print);
 
+static mp_obj_t pb_type_Image_set_font(mp_obj_t self_in, mp_obj_t font_in) {
+    pb_type_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    self->image.print_font = pb_type_Font_get_font(font_in);
+
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_type_Image_set_font_obj, pb_type_Image_set_font);
+
 // dir(pybricks.parameters.Image)
 static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     // REVISIT: consider close() method and __enter__/__exit__ for context manager
@@ -431,6 +440,7 @@ static const mp_rom_map_elem_t pb_type_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&pb_type_Image_draw_circle_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_text), MP_ROM_PTR(&pb_type_Image_draw_text_obj) },
     { MP_ROM_QSTR(MP_QSTR_print), MP_ROM_PTR(&pb_type_Image_print_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_font), MP_ROM_PTR(&pb_type_Image_set_font_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_type_Image_locals_dict, pb_type_Image_locals_dict_table);
 
