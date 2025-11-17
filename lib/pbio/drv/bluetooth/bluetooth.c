@@ -16,6 +16,8 @@
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 
+#include <lwrb/lwrb.h>
+
 #include "./bluetooth.h"
 
 #define DEBUG 0

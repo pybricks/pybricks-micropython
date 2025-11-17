@@ -17,8 +17,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <lwrb/lwrb.h>
-
 #define PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL (500)
 #define PBDRV_BLUETOOTH_MAX_CHAR_SIZE 20
 #define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31

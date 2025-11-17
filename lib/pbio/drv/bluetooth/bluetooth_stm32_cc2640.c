@@ -30,7 +30,6 @@
 #include <pbsys/storage.h>
 
 #include <lego/lwp3.h>
-#include <lwrb/lwrb.h>
 
 #include <att.h>
 #include <gap.h>
