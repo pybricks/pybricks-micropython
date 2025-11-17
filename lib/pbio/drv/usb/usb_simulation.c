@@ -110,6 +110,12 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
     usb_in_buf[1] = 1;
     usb_in_size = 2;
 
+    #ifdef PBDRV_CONFIG_RUN_ON_CI
+    // CI and MicroPython test suite have lots of problems with stdin. It is
+    // only needed for the REPL and interactive input, so don't bother on CI.
+    return PBIO_SUCCESS;
+    #endif
+
     for (;;) {
 
         PBIO_OS_AWAIT_MS(state, &timer, 1);
