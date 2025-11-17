@@ -11,8 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <contiki.h>
-#include <contiki-lib.h>
+#include <lwrb/lwrb.h>
 
 #include <pbdrv/cache.h>
 #include <pbdrv/uart.h>
@@ -50,7 +49,7 @@ struct _pbdrv_uart_dev_t {
     /** Platform-specific data */
     const pbdrv_uart_ev3_platform_data_t *pdata;
     /** Circular buffer for caching received bytes. */
-    struct ringbuf rx_buf;
+    lwrb_t rx_buf;
     /** Timer for read timeout. */
     pbio_os_timer_t read_timer;
     /** Timer for write timeout. */
@@ -85,10 +84,6 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
-int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart) {
-    return ringbuf_get(&uart->rx_buf);
-}
-
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -112,19 +107,13 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
         // all available data if there have been multiple polls since our last
         // re-entry. If there is already enough data in the buffer, this
         // protothread completes right away without yielding once first.
-        while (uart->read_pos < uart->read_length) {
-            int c = ringbuf_get(&uart->rx_buf);
-            if (c == -1) {
-                break;
-            }
-            uart->read_buf[uart->read_pos++] = c;
-        }
+        uart->read_pos += lwrb_read(&uart->rx_buf, &uart->read_buf[uart->read_pos], uart->read_length - uart->read_pos);
         uart->read_pos == uart->read_length || (timeout && pbio_os_timer_is_expired(&uart->read_timer));
     }));
 
     uart->read_buf = NULL;
 
-    if ((timeout && pbio_os_timer_is_expired(&uart->read_timer))) {
+    if (timeout && pbio_os_timer_is_expired(&uart->read_timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
 
@@ -270,9 +259,7 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     uart->read_length = 0;
     uart->read_pos = 0;
     // Discard all received bytes.
-    while (ringbuf_get(&uart->rx_buf) != -1) {
-        ;
-    }
+    lwrb_reset(&uart->rx_buf);
 }
 
 /**
@@ -297,7 +284,8 @@ void pbdrv_uart_ev3_hw_handle_irq(pbdrv_uart_dev_t *uart) {
 
         if (c != -1 && !err) {
             // Push valid characters into the ring buffer
-            ringbuf_put(&uart->rx_buf, c);
+            uint8_t rx = c;
+            lwrb_write(&uart->rx_buf, &rx, 1);
         }
     }
 
@@ -321,7 +309,7 @@ void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_dev_t *uart) {
 
     uint8_t rx;
     while (pbdrv_uart_ev3_pru_read_bytes(uart->pdata->peripheral_id, &rx, 1)) {
-        ringbuf_put(&uart->rx_buf, rx);
+        lwrb_write(&uart->rx_buf, &rx, 1);
     }
     pbio_os_request_poll();
 }
@@ -394,7 +382,7 @@ void pbdrv_uart_init(void) {
         uint8_t *rx_data = pbdrv_uart_rx_data[i];
         pbdrv_uart_dev_t *uart = &uart_devs[i];
         uart->pdata = pdata;
-        ringbuf_init(&uart->rx_buf, rx_data, RX_DATA_SIZE);
+        lwrb_init(&uart->rx_buf, rx_data, RX_DATA_SIZE);
 
         // Initialize the peripheral depending on the uart kind.
         if (pdata->uart_kind == EV3_UART_HW) {

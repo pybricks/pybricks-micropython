@@ -33,6 +33,12 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud);
 void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev);
 
+/**
+ * Get a character from the UART.
+ *
+ * @param uart_dev The UART device
+ * @return The character read, or -1 if no character is available
+ */
 int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev);
 
 /**
@@ -87,12 +93,6 @@ static inline void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
 static inline void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
 
-/**
- * Get a character from the UART.
- *
- * @param uart_dev The UART device
- * @return The character read, or -1 if no character is available
- */
 static inline int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev) {
     return -1;
 }
