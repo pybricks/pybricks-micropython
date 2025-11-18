@@ -110,9 +110,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_uart_device_write_obj, 1, pb_type_uart
 // pybricks.iodevices.UARTDevice.in_waiting
 static mp_obj_t pb_type_uart_device_in_waiting(mp_obj_t self_in) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    (void)self;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    return mp_obj_new_int(0);
+    return mp_obj_new_int(pbdrv_uart_in_waiting(self->uart_dev));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_uart_device_in_waiting_obj, pb_type_uart_device_in_waiting);
 

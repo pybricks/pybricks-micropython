@@ -73,10 +73,13 @@ void pbdrv_uart_debug_printf(const char *format, ...) {
  * @return The character received or -1 if no character is available.
  */
 int32_t pbdrv_uart_debug_get_char(void) {
-    if (!debug_uart) {
+    if (!debug_uart || !pbdrv_uart_in_waiting(debug_uart)) {
         return -1;
     }
-    return pbdrv_uart_get_char(debug_uart);
+    pbio_os_state_t state = 0;
+    uint8_t rx = 0;
+    pbdrv_uart_read(&state, debug_uart, &rx, 1, 0);
+    return rx;
 }
 
 static pbio_os_process_t pbdrv_uart_debug_process;

@@ -66,6 +66,10 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     return PBIO_SUCCESS;
 }
 
+uint32_t pbdrv_uart_in_waiting(pbdrv_uart_dev_t *uart_dev) {
+    return lwrb_get_full(&uart_dev->rx_buf);
+}
+
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint32_t length, uint32_t timeout) {
 
     PBIO_OS_ASYNC_BEGIN(state);
