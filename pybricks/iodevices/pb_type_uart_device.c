@@ -31,7 +31,7 @@ typedef struct _pb_type_uart_device_obj_t {
     pb_type_async_t *write_iter;
     mp_obj_t write_obj;
     pb_type_async_t *read_iter;
-    mp_obj_t read_obj;
+    mp_obj_str_t *read_obj;
 } pb_type_uart_device_obj_t;
 
 // pybricks.iodevices.UARTDevice.__init__
@@ -116,15 +116,14 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_uart_device_in_waiting_obj, pb_type_uar
 
 static pbio_error_t pb_type_uart_device_read_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_obj_str_t *str = MP_OBJ_TO_PTR(self->read_obj);
-    return pbdrv_uart_read(state, self->uart_dev, (uint8_t *)str->data, str->len, self->timeout);
+    return pbdrv_uart_read(state, self->uart_dev, (uint8_t *)self->read_obj->data, self->read_obj->len, self->timeout);
 }
 
 static mp_obj_t pb_type_uart_device_read_return_map(mp_obj_t self_in) {
     pb_type_uart_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_obj_t ret = self->read_obj;
-    self->read_obj = MP_OBJ_NULL;
-    return ret;
+    mp_obj_str_t *result = self->read_obj;
+    self->read_obj = NULL;
+    return pb_obj_new_bytes_finish(result);
 }
 
 // pybricks.iodevices.UARTDevice.read
@@ -134,9 +133,8 @@ static mp_obj_t pb_type_uart_device_read(size_t n_args, const mp_obj_t *pos_args
         pb_type_uart_device_obj_t, self,
         PB_ARG_DEFAULT_INT(length, 1));
 
-    // Creates zeroed bytes object of given length, by calling Python function bytes(length).
-    mp_obj_t args[] = { length_in };
-    self->read_obj = MP_OBJ_TYPE_GET_SLOT(&mp_type_bytes, make_new)((mp_obj_t)&mp_type_bytes, MP_ARRAY_SIZE(args), 0, args);
+    // Allocate new buffer that we'll read into.
+    self->read_obj = pb_obj_new_bytes_prepare(pb_obj_get_positive_int(length_in));
 
     pb_type_async_t config = {
         .iter_once = pb_type_uart_device_read_iter_once,

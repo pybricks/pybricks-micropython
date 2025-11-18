@@ -259,3 +259,35 @@ bool pb_obj_parsed_args_all_none(mp_arg_val_t *parsed_args, size_t num_parsed_ar
     }
     return true;
 }
+
+/**
+ * Allocates a new bytes object without copying any data or computing a hash.
+ *
+ * Should be followed up by ::pb_obj_new_bytes_finish after copying data.
+ *
+ * Data is 0-terminated just as with mp_obj_new_bytes.
+ *
+ * @param [in] len   Size of the data, not counting 0 terminator.
+ * @return           Allocated bytes object.
+ */
+mp_obj_str_t *pb_obj_new_bytes_prepare(size_t len) {
+    mp_obj_str_t *self = mp_obj_malloc(mp_obj_str_t, &mp_type_bytes);
+
+    byte *data = m_new(byte, len + 1);
+    data[len] = '\0';
+
+    self->len = len;
+    self->data = data;
+    return self;
+}
+
+/**
+ * Computes and sets the hash of a bytes object.
+ *
+ * @param [in] self   Bytes object.
+ * @return            Object with has set.
+ */
+mp_obj_t pb_obj_new_bytes_finish(mp_obj_str_t *self) {
+    self->hash = qstr_compute_hash(self->data, self->len);
+    return MP_OBJ_FROM_PTR(self);
+}
