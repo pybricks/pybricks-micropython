@@ -115,10 +115,13 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth.c \
 	drv/bluetooth/bluetooth_btstack_stm32_hal.c \
 	drv/bluetooth/bluetooth_btstack.c \
+	drv/bluetooth/bluetooth_btstack_ev3.c \
 	drv/bluetooth/bluetooth_simulation.c \
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
 	drv/bluetooth/firmware/bluetooth_init_cc2564C_1.4.c \
+	drv/bluetooth/firmware/bluetooth_init_cc2560.c \
+	drv/bluetooth/firmware/bluetooth_init_cc2560a.c \
 	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_gpio.c \
 	drv/button/button_nxt.c \

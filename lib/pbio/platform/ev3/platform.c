@@ -36,6 +36,7 @@
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <math.h>
 #include <string.h>
 
 #include <tiam1808/armv5/am1808/edma_event.h>
@@ -48,10 +49,13 @@
 #include <tiam1808/hw/hw_syscfg1_AM1808.h>
 #include <tiam1808/hw/hw_types.h>
 #include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/ecap.h>
 #include <tiam1808/i2c.h>
 #include <tiam1808/psc.h>
 #include <tiam1808/timer.h>
 #include <tiam1808/uart.h>
+
+#include <btstack_chipset_cc256x.h>
 
 #include <umm_malloc.h>
 
@@ -66,6 +70,8 @@
 #include "exceptionhandler.h"
 
 #include "../../drv/block_device/block_device_ev3.h"
+#include "../../drv/bluetooth/bluetooth_btstack.h"
+#include "../../drv/bluetooth/bluetooth_btstack_ev3.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/display/display_ev3.h"
 #include "../../drv/gpio/gpio_ev3.h"
@@ -193,7 +199,6 @@ enum {
     UART0, // sensor 2
     PRU0_LINE1, // sensor 3
     PRU0_LINE0, // sensor 4
-    UART2, // Bluetooth
 };
 
 static void pbdrv_uart_ev3_handle_irq_uart0(void) {
@@ -202,10 +207,6 @@ static void pbdrv_uart_ev3_handle_irq_uart0(void) {
 
 static void pbdrv_uart_ev3_handle_irq_uart1(void) {
     pbdrv_uart_ev3_handle_irq(UART1);
-}
-
-static void pbdrv_uart_ev3_handle_irq_uart2(void) {
-    pbdrv_uart_ev3_handle_irq(UART2);
 }
 
 static void pbdrv_uart_ev3_handle_irq_pru0_line0(void) {
@@ -249,15 +250,6 @@ const pbdrv_uart_ev3_platform_data_t
         .sys_int_uart_tx_int_id = SYS_INT_EVTOUT0, // One common IRQ handler
         .sys_int_uart_rx_int_id = SYS_INT_EVTOUT0,
         .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line0,
-    },
-    [UART2] = {
-        // TODO: Add CTS/RTS pins.
-        .uart_kind = EV3_UART_HW,
-        .base_address = SOC_UART_2_REGS,
-        .peripheral_id = HW_PSC_UART2,
-        .sys_int_uart_tx_int_id = EDMA3_CHA_UART2_TX,
-        .sys_int_uart_rx_int_id = SYS_INT_UARTINT2,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_uart2,
     },
 };
 
@@ -543,7 +535,12 @@ static void Edma3CompleteCallback(unsigned int tccNum, unsigned int status) {
             pbdrv_uart_ev3_handle_tx_complete(UART1);
             return;
         case EDMA3_CHA_UART2_TX:
-            pbdrv_uart_ev3_handle_tx_complete(UART2);
+            // Note that UART2 is used for Bluetooth and has no general pbdrv_uart
+            // mapping.
+            pbdrv_bluetooth_btstack_ev3_handle_tx_complete();
+            return;
+        case EDMA3_CHA_UART2_RX:
+            pbdrv_bluetooth_btstack_ev3_handle_rx_complete();
             return;
         default:
             return;
@@ -756,6 +753,17 @@ enum {
 };
 uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 
+const uint8_t UID_BASE[16];
+
+const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
+    .transport_instance = pbdrv_bluetooth_btstack_ev3_transport_instance,
+    .transport_config = pbdrv_bluetooth_btstack_ev3_transport_config,
+    .chipset_instance = btstack_chipset_cc256x_instance,
+    .control_instance = pbdrv_bluetooth_btstack_ev3_control_instance,
+    .er_key = UID_BASE,
+    .ir_key = UID_BASE,
+};
+
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
 // initialization (low level in pbdrv, high level in pbio), and system level
@@ -784,8 +792,8 @@ void SystemInit(void) {
     IntChannelSet(SYS_INT_CCERRINT, 2);
     IntSystemEnable(SYS_INT_CCERRINT);
 
-
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_GPIO, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_ECAP0_1_2, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
 
     // Must set the power enable bin before disabling the pull up on the power
     // pin below, otherwise the hub will power off.
@@ -793,13 +801,6 @@ void SystemInit(void) {
 
     // Disable all pull-up/pull-down groups.
     HWREG(SOC_SYSCFG_1_REGS + SYSCFG1_PUPD_ENA) &= ~0xFFFFFFFF;
-
-    // UART for Bluetooth. Other UARTS are configured by port module.
-    // TODO: Add CTS/RTS pins.
-    const pbdrv_gpio_t bluetooth_uart_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3);
-    const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
-    pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
-    pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
 
     // Read the EV3 Bluetooth MAC address from the I2C boot EEPROM
 

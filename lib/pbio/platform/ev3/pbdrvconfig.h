@@ -42,6 +42,15 @@
 #define PBDRV_CONFIG_I2C                            (1)
 #define PBDRV_CONFIG_I2C_EV3                        (1)
 
+#define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         515
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC      (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3          (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2560X      (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND     LWP3_HUB_KIND_TECHNIC_LARGE
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR 0x08007d80
+
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (6)
@@ -93,7 +102,7 @@
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
-#define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)
+#define PBDRV_CONFIG_UART_EV3_NUM_UART              (4)
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (512)
