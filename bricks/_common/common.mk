@@ -52,7 +52,7 @@ $(error failed)
 endif
 endif
 endif
-ifeq ($(PB_LIB_BTSTACK),1)
+ifneq ($(strip $(PB_LIB_BTSTACK)),)
 ifeq ("$(wildcard $(PBTOP)/lib/btstack/README.md)","")
 $(info GIT cloning btstack submodule)
 $(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/btstack))
@@ -121,7 +121,7 @@ endif
 ifeq ($(PB_LIB_BLE5STACK),1)
 INC += -I$(PBTOP)/lib/ble5stack/central
 endif
-ifeq ($(PB_LIB_BTSTACK),1)
+ifneq ($(strip $(PB_LIB_BTSTACK)),)
 INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
 INC += -I$(PBTOP)/lib/btstack/src
 endif
@@ -379,7 +379,7 @@ BTSTACK_SRC_C = $(addprefix lib/btstack/src/,\
 	l2cap.c \
 	)
 
-BTSTACK_SRC_C += $(addprefix lib/btstack/src/ble/,\
+BTSTACK_BLE_SRC_C += $(addprefix lib/btstack/src/ble/,\
 	att_db_util.c \
 	att_db.c \
 	att_dispatch.c \
@@ -528,8 +528,13 @@ ifeq ($(PB_LIB_BLE5STACK),1)
 OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 
-ifeq ($(PB_LIB_BTSTACK),1)
+ifeq ($(PB_LIB_BTSTACK),classic)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+endif
+
+ifeq ($(PB_LIB_BTSTACK),lowenergy)
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_BLE_SRC_C:.c=.o))
 endif
 
 ifeq ($(PB_LIB_STM32_HAL),1)
@@ -589,9 +594,9 @@ endif
 
 all: $(TARGETS)
 
-# handle BTStack .gatt files
+# handle BTStack .gatt files (only for BLE / lowenergy)
 
-ifeq ($(PB_LIB_BTSTACK),1)
+ifeq ($(PB_LIB_BTSTACK),lowenergy)
 
 GATT_FILES := $(addprefix lib/pbio/drv/bluetooth/,\
 	pybricks_service.gatt \

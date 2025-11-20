@@ -955,22 +955,27 @@ static pbio_error_t bluetooth_btstack_handle_power_control(pbio_os_state_t *stat
 
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     // Disconnect gracefully if connected to host.
     if (le_con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(le_con_handle);
         PBIO_OS_AWAIT_UNTIL(state, le_con_handle == HCI_CON_HANDLE_INVALID);
     }
-    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
     // Wait for power off.
     PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_OFF, HCI_STATE_OFF));
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+
+    #else
+    // Revisit: CC2560X seems to dislike the reset command, but this is not
+    // LE specific. Find a way to properly reset.
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+    #endif
 }
 
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer) {

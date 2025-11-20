@@ -57,6 +57,8 @@
         {
             "name": "ev3",
             "includePath": [
+                "${workspaceFolder}/lib/btstack/chipset/cc256x",
+                "${workspaceFolder}/lib/btstack/src",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/lwrb/src/include",
                 "${workspaceFolder}/lib/pbio/include",
