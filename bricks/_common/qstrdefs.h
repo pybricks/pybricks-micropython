@@ -15,6 +15,10 @@ Q(pybricks.ev3devices)
 Q(pybricks.experimental)
 #endif
 
+#if PYBRICKS_PY_COMMON_BTC
+Q(pybricks.experimental.btc)
+#endif
+
 #if MICROPY_PY_BUILTINS_FLOAT // backwards compatibility with Pybricks V3.2, maps to pybricks.tools
 Q(pybricks.geometry)
 #endif

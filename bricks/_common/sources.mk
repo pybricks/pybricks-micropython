@@ -33,6 +33,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	ev3devices/pb_type_ev3devices_infraredsensor.c \
 	ev3devices/pb_type_ev3devices_touchsensor.c \
 	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
+	experimental/pb_module_btc.c \
 	experimental/pb_module_experimental.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_buildhat.c \
@@ -117,6 +118,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth.c \
 	drv/bluetooth/bluetooth_btstack_stm32_hal.c \
 	drv/bluetooth/bluetooth_btstack.c \
+	drv/bluetooth/bluetooth_btstack_classic.c \
 	drv/bluetooth/bluetooth_btstack_ev3.c \
 	drv/bluetooth/bluetooth_simulation.c \
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
