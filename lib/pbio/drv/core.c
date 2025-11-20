@@ -14,6 +14,7 @@
 #include "battery/battery.h"
 #include "block_device/block_device.h"
 #include "bluetooth/bluetooth.h"
+#include "bluetooth/bluetooth_btstack_classic.h"
 #include "button/button.h"
 #include "charger/charger.h"
 #include "clock/clock.h"

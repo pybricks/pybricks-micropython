@@ -391,6 +391,10 @@ void pbdrv_uart_init(void) {
 
     for (int i = 0; i < PBDRV_CONFIG_UART_EV3_NUM_UART; i++) {
         const pbdrv_uart_ev3_platform_data_t *pdata = &pbdrv_uart_ev3_platform_data[i];
+        if (pdata->base_address == SOC_UART_2_REGS && PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART) {
+            // UART2 is set up in the Bluetooth driver, since it is fully managed there.
+            continue;
+        }
         uint8_t *rx_data = pbdrv_uart_rx_data[i];
         pbdrv_uart_dev_t *uart = &uart_devs[i];
         uart->pdata = pdata;
