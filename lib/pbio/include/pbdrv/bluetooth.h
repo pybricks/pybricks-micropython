@@ -18,6 +18,12 @@
 #include <pbio/protocol.h>
 #include <lego/lwp3.h>
 
+// The bluetooth_classic.h header defines some functions which would be defined
+// here, if bluetooth classic is enabled. Various parts of the codebase with
+// non-specific bluetooth dependencies use these functions, so let's reexport
+// the classic header here.
+#include "bluetooth_classic.h"
+
 /**
  * BLE characteristic connection identifiers.
  */
@@ -220,6 +226,7 @@ typedef void (*pbdrv_bluetooth_start_observing_callback_t)(pbdrv_bluetooth_ad_ty
 /** The maximum allowable MTU size for this chip. */
 #define PBDRV_BLUETOOTH_MAX_MTU_SIZE 23
 #endif
+
 
 #if PBDRV_CONFIG_BLUETOOTH
 
@@ -503,9 +510,11 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
  *                             ::PBIO_ERROR_TIMEDOUT if the timer expired.
  */
 pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
+#else
 
-#else // PBDRV_CONFIG_BLUETOOTH
-
+#if !PBDRV_CONFIG_BLUETOOTH_CLASSIC
+// These three functions are also declared and used by the bluetooth classic
+// code. We don't want to redefine them here if bluetooth classic is enabled.
 static inline void pbdrv_bluetooth_init(void) {
 }
 
@@ -515,6 +524,7 @@ static inline void pbdrv_bluetooth_deinit(void) {
 static inline const char *pbdrv_bluetooth_get_hub_name(void) {
     return "Pybricks Hub";
 }
+#endif
 
 static inline const char *pbdrv_bluetooth_get_fw_version(void) {
     return "";
@@ -523,6 +533,11 @@ static inline const char *pbdrv_bluetooth_get_fw_version(void) {
 static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     return false;
 }
+
+#endif // !PBDRV_CONFIG_BLUETOOTH_CLASSIC && !PBDRV_CONFIG_BLUETOOTH
+
+// Stub definitions for LE-only functions when LE is not enabled.
+#if !PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
 }
