@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2025 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PYBRICKS_IODEVICES_H
 #define PYBRICKS_INCLUDED_PYBRICKS_IODEVICES_H
@@ -12,10 +12,27 @@
 
 #include <pybricks/tools/pb_type_async.h>
 
+#if PYBRICKS_PY_IODEVICES_PUP_DEVICE
 extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
-extern const mp_obj_type_t pb_type_uart_device;
+#endif
 
-#if PYBRICKS_PY_IODEVICES_I2CDEVICE
+#if PYBRICKS_PY_IODEVICES_UART_DEVICE
+extern const mp_obj_type_t pb_type_uart_device;
+#endif
+
+#if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
+extern const mp_obj_type_t pb_type_iodevices_LWP3Device;
+#endif
+
+#if PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
+extern const mp_obj_type_t pb_type_iodevices_XboxController;
+#endif
+
+#if PYBRICKS_PY_IODEVICES_ANALOG_SENSOR
+extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
+#endif
+
+#if PYBRICKS_PY_IODEVICES_I2C_DEVICE
 
 extern const mp_obj_type_t pb_type_i2c_device;
 /**
@@ -35,19 +52,6 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
 void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8_t reg, const char *string);
 
 #endif
-
-#if PYBRICKS_PY_PUPDEVICES
-
-extern const mp_obj_type_t pb_type_iodevices_LWP3Device;
-extern const mp_obj_type_t pb_type_iodevices_XboxController;
-
-#endif // PYBRICKS_PY_PUPDEVICES
-
-#if PYBRICKS_PY_EV3DEVICES
-
-extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
-
-#endif // PYBRICKS_PY_EV3DEVICES
 
 #endif // PYBRICKS_PY_IODEVICES
 

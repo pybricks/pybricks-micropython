@@ -32,6 +32,7 @@
 #define PYBRICKS_PY_EXPERIMENTAL                (1)
 #define PYBRICKS_PY_HUBS                        (1)
 #define PYBRICKS_PY_IODEVICES                   (1)
+#define PYBRICKS_PY_IODEVICES_PUP_DEVICE         (1)
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (1)
 #define PYBRICKS_PY_MEDIA_IMAGE                 (0)
 #define PYBRICKS_PY_NXTDEVICES                  (0)
