@@ -43,6 +43,7 @@
 #define PBDRV_CONFIG_I2C_EV3                        (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC              (1)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         515
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC      (1)
