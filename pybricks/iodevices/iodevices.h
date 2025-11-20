@@ -46,7 +46,6 @@ extern const mp_obj_type_t pb_type_iodevices_XboxController;
 #if PYBRICKS_PY_EV3DEVICES
 
 extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
-extern const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
 
 #endif // PYBRICKS_PY_EV3DEVICES
 
