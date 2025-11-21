@@ -56,29 +56,6 @@ typedef enum {
     #endif
 } pbio_port_id_t;
 
-
-/**
- * Kind (category) of attached device, if any.
- */
-typedef enum {
-    /**
-     * No (known) device is connected.
-     */
-    PBIO_PORT_DEVICE_KIND_NONE,
-    /**
-     * Known DC motor or powered device like a light.
-     */
-    PBIO_PORT_DEVICE_KIND_DC_DEVICE,
-    /**
-     * A sensor with the LUMP protocol.
-     */
-    PBIO_PORT_DEVICE_KIND_LUMP,
-    /**
-     * A motor with quadrature encoders without intermediate processing.
-     */
-    PBIO_PORT_DEVICE_KIND_QUADRATURE_MOTOR,
-} port_port_device_kind_t;
-
 /**
  * Power state across the P1P2 pins when full on/off is required. Used for some
  * sensors that cannot run on the voltage provided by P4 alone.
