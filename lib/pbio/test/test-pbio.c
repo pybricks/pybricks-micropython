@@ -15,6 +15,7 @@
 #include "../drv/clock/clock_test.h"
 
 #include <pbdrv/core.h>
+#include <pbsys/core.h>
 
 #include <pbio/main.h>
 
@@ -22,71 +23,10 @@
 
 #define PBIO_TEST_TIMEOUT 1 // seconds
 
-static void pbio_test_run_thread(void *env, bool start_pbio_processes) {
-    PT_THREAD((*test_thread)(struct pt *pt)) = env;
-    struct pt pt;
-    struct timespec start_time, now_time;
-    int timeout = PBIO_TEST_TIMEOUT;
-
-    const char *pbio_test_timeout = getenv("PBIO_TEST_TIMEOUT");
-    if (pbio_test_timeout) {
-        timeout = atoi(pbio_test_timeout);
-    }
-
-    // REVISIT: we may also want to enable debug logging in non-thread tests
-    int debug = 0;
-    const char *pbio_test_debug = getenv("PBIO_TEST_DEBUG");
-    if (pbio_test_debug) {
-        debug = atoi(pbio_test_debug);
-    }
-
-    if (debug) {
-        hci_dump_init(hci_dump_posix_stdout_get_instance());
-    }
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, debug);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, 1);
-
-    // Pbdrv doesn't have a hook for enabling processes. The simulation driver
-    // throws off timing for tests that rely on the clock. So we disable it
-    // when not needed.
-    if (!start_pbio_processes) {
-        pbdrv_motor_driver_disable_process();
-    }
-
-    pbdrv_init();
-    pbio_init(start_pbio_processes);
-
-    PT_INIT(&pt);
-    clock_gettime(CLOCK_MONOTONIC, &start_time);
-
-    while (PT_SCHEDULE(test_thread(&pt))) {
-        pbio_os_run_processes_once();
-        if (timeout > 0) {
-            clock_gettime(CLOCK_MONOTONIC, &now_time);
-            if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {
-                tt_abort_printf(("Test timed out on line %d", pt.lc));
-            }
-        }
-    }
-
-end:;
-}
-
-void pbio_test_run_thread_with_pbio_processes(void *env) {
-    pbio_test_run_thread(env, true);
-}
-
-void pbio_test_run_thread_without_pbio_processes(void *env) {
-    pbio_test_run_thread(env, false);
-}
-
-void pbio_test_run_thread_with_pbio_os_processes(void *env) {
+void pbio_test_run_thread(void *env) {
 
     pbio_os_process_func_t test_thread = env;
 
-    pbio_os_state_t state = 0;
-
     struct timespec start_time, now_time;
     int timeout = PBIO_TEST_TIMEOUT;
 
@@ -103,33 +43,35 @@ void pbio_test_run_thread_with_pbio_os_processes(void *env) {
     }
 
     if (debug) {
-        hci_dump_init(hci_dump_posix_stdout_get_instance());
+        //     hci_dump_init(hci_dump_posix_stdout_get_instance());
     }
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, debug);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, 1);
-
-    // Pbdrv doesn't have a hook for enabling processes. The simulation driver
-    // throws off timing for tests that rely on the clock. So we disable it
-    // when not needed.
-    pbdrv_motor_driver_disable_process();
+    // hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, debug);
+    // hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);
+    // hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, 1);
 
     pbdrv_init();
-    pbio_init(true);
+    pbio_init();
+    pbsys_init();
 
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
-    while ((test_thread(&state, NULL)) == PBIO_ERROR_AGAIN) {
+    // The test runs as a process parallel to everything else.
+    pbio_os_process_t current_test_process = { 0 };
+    pbio_os_process_start(&current_test_process, test_thread, NULL);
+
+    while (current_test_process.err == PBIO_ERROR_AGAIN) {
+
+        // This is the equivalent of the application (like MicroPython) pushing
+        // along the event loop. On idle, this advances the test clock by 1ms.
         pbio_os_run_processes_and_wait_for_event();
-        pbio_test_clock_tick(1);
+
         if (timeout > 0) {
             clock_gettime(CLOCK_MONOTONIC, &now_time);
             if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {
-                tt_abort_printf(("Test timed out on line %d", state));
+                tt_abort_printf(("Test timed out on line %d", current_test_process.state));
             }
         }
     }
-
 end:;
 }
 

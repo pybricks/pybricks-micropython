@@ -249,12 +249,6 @@ pbio_error_t pbdrv_motor_driver_virtual_simulation_process_thread(pbio_os_state_
     PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
-static bool simulation_enabled = true;
-
-void pbdrv_motor_driver_disable_process(void) {
-    simulation_enabled = false;
-}
-
 void pbdrv_counter_init(void) {
     simulation_init();
 }
@@ -262,10 +256,8 @@ void pbdrv_counter_init(void) {
 void pbdrv_motor_driver_init(void) {
     simulation_init();
 
-    if (simulation_enabled) {
-        static pbio_os_process_t process;
-        pbio_os_process_start(&process, pbdrv_motor_driver_virtual_simulation_process_thread, NULL);
-    }
+    static pbio_os_process_t process;
+    pbio_os_process_start(&process, pbdrv_motor_driver_virtual_simulation_process_thread, NULL);
 }
 
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION

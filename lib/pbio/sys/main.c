@@ -79,7 +79,7 @@ pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id
 void _main(void) {
 
     pbdrv_init();
-    pbio_init(true);
+    pbio_init();
     pbsys_init();
 
     // Keep loading and running user programs until shutdown is requested.
