@@ -296,11 +296,16 @@ pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *exp
     // Return requested device.
     *dcmotor = port->dcmotor;
 
+    // Quadrature ports don't have any way to detect DC motors, so just pass.
+    if (port->mode == PBIO_PORT_MODE_QUADRATURE && LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR) {
+        return PBIO_SUCCESS;
+    }
+
     // In LEGO mode, we require that something valid is indeed attached.
     if (port->mode == PBIO_PORT_MODE_LEGO_DCM && port->connection_manager) {
         return pbio_port_dcm_assert_type_id(port->connection_manager, expected_type_id);
     }
-    return PBIO_SUCCESS;
+    return PBIO_ERROR_NO_DEV;
 }
 
 /**

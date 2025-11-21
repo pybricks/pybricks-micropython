@@ -30,7 +30,7 @@
 #define PYBRICKS_PY_HUBS                        (1)
 #define PYBRICKS_PY_IODEVICES                   (1)
 #define PYBRICKS_PY_IODEVICES_ANALOG_SENSOR     (1)
-#define PYBRICKS_PY_IODEVICES_DC_MOTOR          (0)
+#define PYBRICKS_PY_IODEVICES_DC_MOTOR          (1)
 #define PYBRICKS_PY_IODEVICES_I2C_DEVICE        (1)
 #define PYBRICKS_PY_IODEVICES_LUMP_DEVICE       (0)
 #define PYBRICKS_PY_IODEVICES_LWP3_DEVICE       (0)
