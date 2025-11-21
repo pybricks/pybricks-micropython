@@ -26,8 +26,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbio/error.h>
 #include <pbio/util.h>
 
@@ -44,8 +42,6 @@ static ADC_HandleTypeDef pbdrv_adc_hadc;
 static uint32_t pbdrv_adc_dma_buffer[PBDRV_CONFIG_ADC_STM32_HAL_ADC_NUM_CHANNELS];
 static uint32_t pbdrv_adc_error_count;
 static uint32_t pbdrv_adc_last_error;
-
-PROCESS(pbdrv_adc_process, "ADC");
 
 pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
@@ -66,7 +62,7 @@ void pbdrv_adc_stm32_hal_handle_irq(void) {
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    process_poll(&pbdrv_adc_process);
+    // not used
 }
 
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
@@ -74,18 +70,6 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
     pbdrv_adc_last_error = hadc->ErrorCode;
 }
 
-static void pbdrv_adc_poll(void) {
-    // TODO: filter incoming analog values
-}
-
-static void pbdrv_adc_exit(void) {
-    HAL_NVIC_DisableIRQ(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ);
-    HAL_TIM_Base_Stop(&pbdrv_adc_htim);
-    HAL_TIM_Base_DeInit(&pbdrv_adc_htim);
-    HAL_ADC_Stop_DMA(&pbdrv_adc_hadc);
-    HAL_ADC_DeInit(&pbdrv_adc_hadc);
-    HAL_DMA_DeInit(&pbdrv_adc_hdma);
-}
 
 void pbdrv_adc_init(void) {
 
@@ -150,21 +134,6 @@ void pbdrv_adc_init(void) {
     HAL_NVIC_EnableIRQ(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ);
     HAL_ADC_Start_DMA(&pbdrv_adc_hadc, pbdrv_adc_dma_buffer, PBIO_ARRAY_SIZE(pbdrv_adc_dma_buffer));
     HAL_TIM_Base_Start(&pbdrv_adc_htim);
-
-    process_start(&pbdrv_adc_process);
-}
-
-PROCESS_THREAD(pbdrv_adc_process, ev, data) {
-    PROCESS_POLLHANDLER(pbdrv_adc_poll());
-    PROCESS_EXITHANDLER(pbdrv_adc_exit());
-
-    PROCESS_BEGIN();
-
-    while (true) {
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
 }
 
 #endif // PBDRV_CONFIG_ADC_STM32_HAL
