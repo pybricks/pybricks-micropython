@@ -120,7 +120,7 @@ static pbio_error_t pbdrv_uart_debug_process_thread(pbio_os_state_t *state, void
             // error down, unless we're near the end of the ring buffer. If so,
             // then we'll just have to be sad.
             char errbuf[128];
-            snprintf(errbuf, sizeof(errbuf), "UART debug write error %d\n", err);
+            snprintf(errbuf, sizeof(errbuf), "UART debug write error %d\r\n", err);
             lwrb_write(&ring_buffer, (const uint8_t *)errbuf, strlen(errbuf));
         }
     }
