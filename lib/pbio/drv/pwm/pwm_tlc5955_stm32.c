@@ -11,8 +11,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include STM32_HAL_H
 
 #include <pbdrv/pwm.h>
@@ -20,6 +18,7 @@
 #include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
+#include <pbio/os.h>
 
 #include "pwm_tlc5955_stm32.h"
 #include "pwm.h"
@@ -126,8 +125,8 @@ typedef struct {
     DMA_HandleTypeDef hdma_rx;
     /** HAL Tx DMA data */
     DMA_HandleTypeDef hdma_tx;
-    /** Protothread */
-    struct pt pt;
+    /** Process */
+    pbio_os_process_t process;
     /** Pointer to generic PWM device instance */
     pbdrv_pwm_dev_t *pwm;
     /** Grayscale latch register data */
@@ -136,7 +135,6 @@ typedef struct {
     bool changed;
 } pbdrv_pwm_tlc5955_stm32_priv_t;
 
-PROCESS(pwm_tlc5955_stm32, "pwm_tlc5955_stm32");
 static pbdrv_pwm_tlc5955_stm32_priv_t dev_priv[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV];
 
 // Control latch data setting dot correction to 100%, max current to 3.2 mA,
@@ -157,7 +155,7 @@ static pbio_error_t pbdrv_pwm_tlc5955_stm32_set_duty(pbdrv_pwm_dev_t *dev, uint3
     priv->grayscale_latch[ch * 2 + 1] = value >> 8;
     priv->grayscale_latch[ch * 2 + 2] = value;
     priv->changed = true;
-    process_poll(&pwm_tlc5955_stm32);
+    pbio_os_request_poll();
 
     return PBIO_SUCCESS;
 }
@@ -165,6 +163,47 @@ static pbio_error_t pbdrv_pwm_tlc5955_stm32_set_duty(pbdrv_pwm_dev_t *dev, uint3
 static const pbdrv_pwm_driver_funcs_t pbdrv_pwm_tlc5955_stm32_funcs = {
     .set_duty = pbdrv_pwm_tlc5955_stm32_set_duty,
 };
+
+// toggles LAT signal on and off to latch data in shift register
+static void pbdrv_pwm_tlc5955_toggle_latch(pbdrv_pwm_tlc5955_stm32_priv_t *priv) {
+    const pbdrv_pwm_tlc5955_stm32_platform_data_t *pdata = priv->pwm->pdata;
+    HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_RESET);
+}
+
+static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *state, void *context) {
+
+    pbdrv_pwm_tlc5955_stm32_priv_t *priv = context;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // need to allow all drivers to init first
+    PBIO_OS_AWAIT_ONCE(state);
+
+    HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
+    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
+    pbdrv_pwm_tlc5955_toggle_latch(priv);
+
+    // have to send twice for max current to take effect
+    HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
+    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
+    pbdrv_pwm_tlc5955_toggle_latch(priv);
+
+    // initialization is finished so consumers can use this PWM device now.
+    priv->pwm->funcs = &pbdrv_pwm_tlc5955_stm32_funcs;
+    pbio_busy_count_down();
+
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, priv->changed);
+        HAL_SPI_Transmit_DMA(&priv->hspi, priv->grayscale_latch, TLC5955_DATA_SIZE);
+        priv->changed = false;
+        PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
+        pbdrv_pwm_tlc5955_toggle_latch(priv);
+    }
+
+    // Unreachable
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+}
 
 void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
     for (int i = 0; i < PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV; i++) {
@@ -234,50 +273,15 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         HAL_NVIC_SetPriority(pdata->spi_irq, 7, 2);
         HAL_NVIC_EnableIRQ(pdata->spi_irq);
 
-        PT_INIT(&priv->pt);
         priv->pwm = pwm;
         priv->grayscale_latch = grayscale_latch[i];
         pwm->pdata = pdata;
         pwm->priv = priv;
         // don't set funcs yet since we are not fully initialized
         pbio_busy_count_up();
+
+        pbio_os_process_start(&priv->process, pbdrv_pwm_tlc5955_stm32_process_thread, priv);
     }
-
-    process_start(&pwm_tlc5955_stm32);
-}
-
-// toggles LAT signal on and off to latch data in shift register
-static void pbdrv_pwm_tlc5955_toggle_latch(pbdrv_pwm_tlc5955_stm32_priv_t *priv) {
-    const pbdrv_pwm_tlc5955_stm32_platform_data_t *pdata = priv->pwm->pdata;
-    HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_RESET);
-}
-
-static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_priv_t * priv, process_event_t ev)) {
-    PT_BEGIN(&priv->pt);
-
-    HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
-    PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
-    pbdrv_pwm_tlc5955_toggle_latch(priv);
-
-    // have to send twice for max current to take effect
-    HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
-    PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
-    pbdrv_pwm_tlc5955_toggle_latch(priv);
-
-    // initialization is finished so consumers can use this PWM device now.
-    priv->pwm->funcs = &pbdrv_pwm_tlc5955_stm32_funcs;
-    pbio_busy_count_down();
-
-    for (;;) {
-        PT_WAIT_UNTIL(&priv->pt, priv->changed);
-        HAL_SPI_Transmit_DMA(&priv->hspi, priv->grayscale_latch, TLC5955_DATA_SIZE);
-        priv->changed = false;
-        PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
-        pbdrv_pwm_tlc5955_toggle_latch(priv);
-    }
-
-    PT_END(&priv->pt);
 }
 
 /**
@@ -311,24 +315,7 @@ void pbdrv_pwm_tlc5955_stm32_spi_irq(uint8_t index) {
  * Tx transfer complete. Needs to be called from handler in platform.c.
  */
 void pbdrv_pwm_tlc5955_stm32_spi_tx_complete(void) {
-    process_poll(&pwm_tlc5955_stm32);
-}
-
-PROCESS_THREAD(pwm_tlc5955_stm32, ev, data) {
-    PROCESS_BEGIN();
-
-    // need to allow all drivers to init first
-    PROCESS_PAUSE();
-
-    for (;;) {
-        for (int i = 0; i < PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV; i++) {
-            pbdrv_pwm_tlc5955_stm32_priv_t *priv = &dev_priv[i];
-            pbdrv_pwm_tlc5955_stm32_handle_event(priv, ev);
-        }
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
+    pbio_os_request_poll();
 }
 
 #endif // PBDRV_CONFIG_PWM_TLC5955_STM32
