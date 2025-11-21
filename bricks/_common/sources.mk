@@ -70,6 +70,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
 	nxtdevices/pb_type_nxtdevices_touchsensor.c \
 	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
+	nxtdevices/pb_type_nxtdevices_vernieradapter.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_axis.c \
 	parameters/pb_type_button.c \

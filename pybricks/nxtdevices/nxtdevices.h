@@ -17,6 +17,7 @@ extern const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_TemperatureSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_SoundSensor;
 extern const mp_obj_type_t pb_type_nxtdevices_EnergyMeter;
+extern const mp_obj_type_t pb_type_nxtdevices_VernierAdapter;
 
 #endif // PYBRICKS_PY_NXTDEVICES
 
