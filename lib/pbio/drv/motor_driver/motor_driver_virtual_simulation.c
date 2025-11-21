@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022-2023 The Pybricks Authors
+// Copyright (c) 2022-2025 The Pybricks Authors
 
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
-
-#include <contiki.h>
 
 #include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
@@ -176,22 +174,20 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
     return PBIO_SUCCESS;
 }
 
-PROCESS(pbdrv_motor_driver_virtual_simulation_process, "pbdrv_motor_driver_virtual_simulation");
-
-PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
-    static struct etimer tick_timer;
-    static struct timer frame_timer;
+pbio_error_t pbdrv_motor_driver_virtual_simulation_process_thread(pbio_os_state_t *state, void *context) {
+    static pbio_os_timer_t timer;
 
     static uint32_t dev_index;
     static pbdrv_motor_driver_dev_t *driver;
 
-    PROCESS_BEGIN();
+    PBIO_OS_ASYNC_BEGIN(state);
 
-    etimer_set(&tick_timer, 1);
-    timer_set(&frame_timer, 40);
+    // Matches LTI model discretization time step.
+    pbio_os_timer_set(&timer, 1);
 
     for (;;) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&tick_timer));
+        PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
+        pbio_os_timer_extend(&timer);
 
         for (dev_index = 0; dev_index < PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV; dev_index++) {
             driver = &motor_driver_devs[dev_index];
@@ -248,11 +244,9 @@ PROCESS_THREAD(pbdrv_motor_driver_virtual_simulation_process, ev, data) {
             driver->speed = speed_next;
             driver->current = current_next;
         }
-
-        etimer_reset(&tick_timer);
     }
 
-    PROCESS_END();
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 static bool simulation_enabled = true;
@@ -269,7 +263,8 @@ void pbdrv_motor_driver_init(void) {
     simulation_init();
 
     if (simulation_enabled) {
-        process_start(&pbdrv_motor_driver_virtual_simulation_process);
+        static pbio_os_process_t process;
+        pbio_os_process_start(&process, pbdrv_motor_driver_virtual_simulation_process_thread, NULL);
     }
 }
 
