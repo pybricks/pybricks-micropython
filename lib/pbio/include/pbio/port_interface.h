@@ -58,6 +58,11 @@ typedef enum {
      * the I2C device directly.
      */
     PBIO_PORT_MODE_I2C = 1 << 3,
+    /**
+     * The port is in GPIO mode and ADC. No port process is running. User code
+     * may access GPIOs on P5 and P6 and read the ADC on P1 and P6.
+     */
+    PBIO_PORT_MODE_GPIO_ADC = 1 << 4,
 } pbio_port_mode_t;
 
 #if PBIO_CONFIG_PORT

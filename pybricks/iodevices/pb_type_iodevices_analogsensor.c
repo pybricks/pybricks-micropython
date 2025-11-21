@@ -5,34 +5,55 @@
 
 #if PYBRICKS_PY_IODEVICES_ANALOG_SENSOR
 
-#include "py/obj.h"
+#include "py/mphal.h"
 #include "py/smallint.h"
 
+#include <pbio/int_math.h>
+#include <pbio/port_interface.h>
+#include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/common/pb_type_device.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // pybricks.iodevices.AnalogSensor class object
 typedef struct _iodevices_AnalogSensor_obj_t {
-    pb_type_device_obj_base_t device_base;
+    mp_obj_base_t base;
+    pbio_port_t *port;
     bool active;
 } iodevices_AnalogSensor_obj_t;
 
 // pybricks.iodevices.AnalogSensor.__init__
 static mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
+        PB_ARG_REQUIRED(port),
+        PB_ARG_DEFAULT_FALSE(custom)
+        );
 
+    pb_module_tools_assert_blocking();
+
+    // Get the port instance.
     iodevices_AnalogSensor_obj_t *self = mp_obj_malloc(iodevices_AnalogSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_NXT_ANALOG);
+    pb_assert(pbio_port_get_port(pb_type_enum_get_value(port_in, &pb_enum_type_Port), &self->port));
 
-    // Initialize NXT sensors to passive state
-    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_NXT_ANALOG__PASSIVE);
+    // Set the port mode to LEGO DCM or raw ADC mode.
+    pbio_error_t err = pbio_port_set_mode(self->port, mp_obj_is_true(custom_in) ? PBIO_PORT_MODE_GPIO_ADC : PBIO_PORT_MODE_LEGO_DCM);
+    if (err == PBIO_ERROR_AGAIN) {
+        // If coming from a different mode, give port some time to get started.
+        // This happens when the user has a custom device and decides to switch
+        // back to LEGO mode. This should be rare, so we can afford to wait.
+        mp_hal_delay_ms(1000);
+        err = pbio_port_set_mode(self->port, PBIO_PORT_MODE_LEGO_DCM);
+    }
+    pb_assert(err);
+
+    // Start as passive by default.
+    uint32_t analog;
+    self->active = false;
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_ANALOG, self->active, &analog));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -40,17 +61,17 @@ static mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *type, size_
 // pybricks.iodevices.AnalogSensor.voltage
 static mp_obj_t iodevices_AnalogSensor_voltage(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t mode = self->active ?LEGO_DEVICE_MODE_NXT_ANALOG__ACTIVE :LEGO_DEVICE_MODE_NXT_ANALOG__PASSIVE;
-    int32_t *voltage = pb_type_device_get_data_blocking(self_in, mode);
-    return mp_obj_new_int(voltage[0]);
+    uint32_t voltage;
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_ANALOG, self->active, &voltage));
+    return mp_obj_new_int(voltage);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_voltage_obj, iodevices_AnalogSensor_voltage);
 
 // pybricks.iodevices.AnalogSensor.resistance
 static mp_obj_t iodevices_AnalogSensor_resistance(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t mode = self->active ?LEGO_DEVICE_MODE_NXT_ANALOG__ACTIVE :LEGO_DEVICE_MODE_NXT_ANALOG__PASSIVE;
-    int32_t voltage = *(int32_t *)pb_type_device_get_data_blocking(self_in, mode);
+    uint32_t voltage;
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_ANALOG, self->active, &voltage));
 
     // Open terminal/infinite resistance, return infinite resistance
     const int32_t vmax = 4972;
@@ -65,8 +86,9 @@ static MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_resistance_obj, iodevice
 // pybricks.iodevices.AnalogSensor.active
 static mp_obj_t iodevices_AnalogSensor_active(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ANALOG__ACTIVE);
     self->active = true;
+    uint32_t voltage;
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_ANALOG, self->active, &voltage));
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_active_obj, iodevices_AnalogSensor_active);
@@ -74,8 +96,9 @@ static MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_active_obj, iodevices_An
 // pybricks.iodevices.AnalogSensor.passive
 static mp_obj_t iodevices_AnalogSensor_passive(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_device_get_data_blocking(self_in, LEGO_DEVICE_MODE_NXT_ANALOG__PASSIVE);
     self->active = false;
+    uint32_t voltage;
+    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_NXT_ANALOG, self->active, &voltage));
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_passive_obj, iodevices_AnalogSensor_passive);
