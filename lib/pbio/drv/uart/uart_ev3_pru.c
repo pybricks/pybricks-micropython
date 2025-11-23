@@ -29,6 +29,7 @@
 
 #if PBDRV_CONFIG_UART_EV3_PRU
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -68,6 +69,15 @@ struct circ_buf {
 #define DMA_PHYS_ADDRESS ((uint32_t)DA8XX_SHARED_RAM_BASE)
 #define DMA_VADDRESS_BUFF (DA8XX_SHARED_RAM_BASE)
 
+#define OVERSAMPLE_RATE (SUART_DEFAULT_OVRSMPL)
+
+// FIFO timeout when this number of bits *should* have been received, but
+// nothing has.
+#define FIFO_TIMEOUT_SYMBOLS (32)
+// The number of symbols the PRU SUART sees each time it reads the McASP
+// register.
+#define MCASP_SYMBOLS_PER_INTERRUPT (4 * 8)
+
 // TODO: Align with global config
 #define CORE_CLK_MHZ (300)
 #define OSCIN_MHZ (24)
@@ -81,16 +91,23 @@ struct circ_buf {
 
 #define NR_SUART (2)
 #define SUART_CNTX_SZ 512
-#define SUART_FIFO_TIMEOUT_DFLT 10 // 5
-#define SUART_FIFO_TIMEOUT_MIN 4
-#define SUART_FIFO_TIMEOUT_MAX 500
 #define BUFFER_SIZE (1024) /* Needs to be a 2 size */
 #define BUFFER_MASK (BUFFER_SIZE - 1)
 
 #define __suart_err(fmt, args ...)
 
-/* Default timeout set to 5ms */
-static int32_t suart_timeout = SUART_FIFO_TIMEOUT_DFLT;
+static inline int suart_oversampling_rate_to_num(int x) {
+    if (x == SUART_8X_OVRSMPL) {
+        return 8;
+    }
+    if (x == SUART_16X_OVRSMPL) {
+        return 16;
+    }
+    assert(false);
+    // This is more conservative -- we will get the interrupts less frequently,
+    // but everything should still work.
+    return 16;
+}
 
 struct uart_icount {
     uint32_t rx;
@@ -325,7 +342,7 @@ int32_t pru_suart_startup(omapl_pru_suart_t *suart) {
     /* Seed RX if port is half-rx or full-duplex */
     if ((suart_get_duplex(suart) & ePRU_SUART_HALF_RX) == ePRU_SUART_HALF_RX) {
         suart_pru_to_host_intr_enable(suart->suart_hdl.uartNum, PRU_RX_INTR, true);
-        pru_softuart_read(&suart->suart_hdl, (uint32_t *)&suart->suart_dma_addr.dma_phys_addr_rx, SUART_FIFO_LEN);
+        pru_softuart_read(&suart->suart_hdl, (uint32_t *)&suart->suart_dma_addr.dma_phys_addr_rx, 8);
     }
     return retval;
 }
@@ -350,7 +367,6 @@ void pru_suart_release_port(omapl_pru_suart_t *suart) {
 
 int32_t pru_suart_request_port(omapl_pru_suart_t *suart) {
     suart_config pru_suart_config;
-    uint32_t timeout = 0;
     uint32_t err = 0;
 
     err = pru_softuart_open(&suart->suart_hdl);
@@ -360,18 +376,12 @@ int32_t pru_suart_request_port(omapl_pru_suart_t *suart) {
         goto exit;
     }
 
-    /* set fifo timeout */
-    if (SUART_FIFO_TIMEOUT_MIN > suart_timeout) {
-        __suart_err("fifo timeout less than %d ms not supported\n", SUART_FIFO_TIMEOUT_MIN);
-        suart_timeout = SUART_FIFO_TIMEOUT_MIN;
-    } else if (SUART_FIFO_TIMEOUT_MAX < suart_timeout) {
-        __suart_err("fifo timeout more than %d ms not supported\n", SUART_FIFO_TIMEOUT_MAX);
-        suart_timeout = SUART_FIFO_TIMEOUT_MAX;
-    }
-
-    /* This is only for x8 */
-    timeout = (SUART_DEFAULT_BAUD * suart_timeout) / 1000;
-    pru_set_fifo_timeout(timeout);
+    // We want the PRU to interrupt us any time there is data in the FIFO
+    // and we haven't seen any new data for a period of FIFO_TIMEOUT_SYMBOLS
+    // symbols. For example, if FIFO_TIMEOUT_SYMBOLS is 32, the we will get an
+    // interrupt if the line is silent for the time it would ordinarily take
+    // to send four bytes.
+    pru_set_fifo_timeout(FIFO_TIMEOUT_SYMBOLS * suart_oversampling_rate_to_num(OVERSAMPLE_RATE) / MCASP_SYMBOLS_PER_INTERRUPT);
 
     if (suart->suart_hdl.uartNum == PRU_SUART_UART1) {
         pru_suart_config.TXSerializer = PRU_SUART1_CONFIG_TX_SER;
@@ -406,7 +416,7 @@ int32_t pru_suart_request_port(omapl_pru_suart_t *suart) {
     pru_suart_config.rxClkDivisor = 1;
     pru_suart_config.txBitsPerChar = ePRU_SUART_DATA_BITS8;
     pru_suart_config.rxBitsPerChar = ePRU_SUART_DATA_BITS8;     /* including start and stop bit 8 + 2 */
-    pru_suart_config.Oversampling = SUART_DEFAULT_OVRSMPL;
+    pru_suart_config.Oversampling = OVERSAMPLE_RATE;
 
     if (PRU_SUART_SUCCESS !=
         pru_softuart_setconfig(&suart->suart_hdl,
