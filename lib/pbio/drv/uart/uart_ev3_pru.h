@@ -4,13 +4,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <lwrb/lwrb.h>
+
 int pbdrv_uart_ev3_pru_load_firmware(uint8_t *firmware_data, uint32_t firmware_size);
 int pbdrv_uart_ev3_pru_activate(uint8_t line);
 
-void pbdrv_uart_ev3_pru_handle_irq_data(uint8_t line);
+void pbdrv_uart_ev3_pru_handle_irq_data(uint8_t line, lwrb_t *rx_dest);
 void pbdrv_uart_ev3_pru_set_baudrate(uint8_t line, uint32_t baud);
 
-int pbdrv_uart_ev3_pru_read_bytes(uint8_t line, uint8_t *pdata, int32_t size);
 int pbdrv_uart_ev3_pru_write_bytes(uint8_t line, const uint8_t *pdata, int32_t size);
 bool pbdrv_uart_ev3_pru_can_write(uint8_t line);
 
