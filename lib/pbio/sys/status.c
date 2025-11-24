@@ -16,6 +16,7 @@
 
 #include "hmi.h"
 #include "light.h"
+#include "storage.h"
 
 static struct {
     /** Status indications as bit flags */
@@ -83,6 +84,9 @@ uint32_t pbsys_status_get_status_report(uint8_t *buf) {
  */
 void pbsys_status_increment_selected_slot(bool increment) {
     #if PBSYS_CONFIG_HMI_NUM_SLOTS
+    if (!pbsys_storage_slot_change_is_allowed()) {
+        return;
+    }
     if (increment && pbsys_status.slot + 1 < PBSYS_CONFIG_HMI_NUM_SLOTS) {
         pbsys_status.slot++;
         pbsys_status_update_emit();

@@ -24,9 +24,16 @@
 #include "hmi.h"
 
 /**
- * Slot at which incoming program data is currently being received.
+ * State of incoming program data.
  */
-static uint8_t incoming_slot = 0;
+static struct {
+    /** Where incoming program data is placed. */
+    uint8_t slot;
+    /** Currently downloading. */
+    bool busy;
+    /** Latest incoming message time. Only relevant while busy. */
+    pbio_os_timer_t timer;
+} download_state;
 
 /**
  * Map of loaded data. This is kept in memory between successive runs of the
@@ -164,15 +171,15 @@ pbio_error_t pbsys_storage_get_user_data(uint32_t offset, uint8_t **data, uint32
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbsys_storage_prepare_receive(void) {
+static void pbsys_storage_prepare_receive(void) {
 
     #if PBSYS_CONFIG_STORAGE_NUM_SLOTS == 1
-    map->slot_info[incoming_slot].size = 0;
-    map->slot_info[incoming_slot].offset = 0;
-    return PBIO_SUCCESS;
+    map->slot_info[download_state.slot].size = 0;
+    map->slot_info[download_state.slot].offset = 0;
+    return;
     #endif // PBSYS_CONFIG_STORAGE_NUM_SLOTS == 1
 
-    incoming_slot = pbsys_status_get_selected_slot();
+    download_state.slot = pbsys_status_get_selected_slot();
 
     // There are three cases:
     // - The current slot is already the last used slot
@@ -181,28 +188,28 @@ static pbio_error_t pbsys_storage_prepare_receive(void) {
 
     // Current slot will be erased (and later overwritten), so discount its size.
     uint32_t used_before_erase = pbsys_storage_get_used_program_data_size();
-    uint32_t used_after_erase = used_before_erase - map->slot_info[incoming_slot].size;
+    uint32_t used_after_erase = used_before_erase - map->slot_info[download_state.slot].size;
 
     // A slot is last if its starting offset equals the remaining used space after deleting it.
-    bool is_last_slot = map->slot_info[incoming_slot].offset == used_after_erase;
-    bool is_empty = map->slot_info[incoming_slot].size == 0;
+    bool is_last_slot = map->slot_info[download_state.slot].offset == used_after_erase;
+    bool is_empty = map->slot_info[download_state.slot].size == 0;
 
     // No need to move anything in these cases. Incoming program will be appended.
     if (is_empty || is_last_slot) {
-        map->slot_info[incoming_slot].size = 0;
-        map->slot_info[incoming_slot].offset = used_after_erase;
-        return PBIO_SUCCESS;
+        map->slot_info[download_state.slot].size = 0;
+        map->slot_info[download_state.slot].offset = used_after_erase;
+        return;
     }
 
     // There could be any number of programs sequentially placed after the
     // program we will now delete.
-    uint32_t remaining_programs_offset_before_erase = map->slot_info[incoming_slot].offset + map->slot_info[incoming_slot].size;
+    uint32_t remaining_programs_offset_before_erase = map->slot_info[download_state.slot].offset + map->slot_info[download_state.slot].size;
     uint32_t remaining_programs_size = used_before_erase - remaining_programs_offset_before_erase;
 
     // They'll be shifted into the newly available space, so shift left by
     // the size of the deleted slot.
-    uint32_t gap_to_shift_left = map->slot_info[incoming_slot].size;
-    uint32_t destination = map->slot_info[incoming_slot].offset;
+    uint32_t gap_to_shift_left = map->slot_info[download_state.slot].size;
+    uint32_t destination = map->slot_info[download_state.slot].offset;
     uint32_t source = destination + gap_to_shift_left;
 
     // All the slots that will be moved will have to get their offsets
@@ -217,19 +224,17 @@ static pbio_error_t pbsys_storage_prepare_receive(void) {
     memmove(map->program_data + destination, map->program_data + source, remaining_programs_size);
 
     // The active slot is now at the end, and ready to receive programs.
-    map->slot_info[incoming_slot].size = 0;
-    map->slot_info[incoming_slot].offset = used_after_erase;
+    map->slot_info[download_state.slot].size = 0;
+    map->slot_info[download_state.slot].offset = used_after_erase;
 
-    return PBIO_SUCCESS;
+    return;
 }
 
 /**
  * Writes the user program metadata.
  *
  * REVISIT: At the moment, the host sends size 0, then the new program, and
- * then the new size. This implicitly protects the program from being run while
- * something is downloaded. This implementation follows that assumption. This
- * should instead be protected by a system status flag.
+ * then the new size. Should be replaced by a dedicated file transport protocol.
  *
  * @param [in]  size    The size of the user program in bytes.
  *
@@ -246,11 +251,16 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
     // Pybricks Code sends size 0 to clear the state before sending the new
     // program, then sends the size on completion.
     if (new_size == 0) {
-        return pbsys_storage_prepare_receive();
+        pbsys_storage_prepare_receive();
+
+        // Keep track of busy state to disallow some operations while busy.
+        download_state.busy = true;
+        pbio_os_timer_set(&download_state.timer, 1000);
+        return PBIO_SUCCESS;
     }
 
     // Expecting that the slot has been cleared as per the above.
-    if (incoming_slot >= PBSYS_CONFIG_STORAGE_NUM_SLOTS || map->slot_info[incoming_slot].size != 0) {
+    if (download_state.slot >= PBSYS_CONFIG_STORAGE_NUM_SLOTS || map->slot_info[download_state.slot].size != 0) {
         return PBIO_ERROR_FAILED;
     }
 
@@ -258,12 +268,33 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
     new_size = (new_size + 3) / 4 * 4;
 
     // Set information for the incoming slot.
-    map->slot_info[incoming_slot].size = new_size;
+    map->slot_info[download_state.slot].size = new_size;
 
     // Program download complete, so request saving on poweroff.
     pbsys_storage_request_write();
+    download_state.busy = false;
 
     return PBIO_SUCCESS;
+}
+
+/**
+ * Tests whether a slot change is allowed.
+ *
+ * @return True when allowed, false if not, i.e. when new a new program is being downloaded.
+ */
+bool pbsys_storage_slot_change_is_allowed(void) {
+    #if !PBSYS_CONFIG_HMI_NUM_SLOTS
+    return false;
+    #endif
+
+    if (download_state.busy && pbio_os_timer_is_expired(&download_state.timer)) {
+        // Download must have been interrupted midway through. Give up
+        // and unblock anything waiting on download to complete.
+        download_state.busy = false;
+    }
+
+    // Slot change is allowed when no longer busy.
+    return !download_state.busy;
 }
 
 /**
@@ -290,7 +321,15 @@ pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, u
         return PBIO_ERROR_BUSY;
     }
 
-    memcpy(map->program_data + map->slot_info[incoming_slot].offset + offset, data, size);
+    // A program transfer should have been started.
+    if (!download_state.busy) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // New data means we're still going, so don't time out.
+    pbio_os_timer_reset(&download_state.timer);
+
+    memcpy(map->program_data + map->slot_info[download_state.slot].offset + offset, data, size);
 
     return PBIO_SUCCESS;
 }
