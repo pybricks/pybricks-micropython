@@ -9,7 +9,6 @@
 #include <btstack.h>
 #include <btstack_chipset_cc256x.h>
 #include <contiki-lib.h>
-#include <contiki.h>
 #include <tinytest_macros.h>
 #include <tinytest.h>
 
@@ -27,8 +26,6 @@ typedef struct {
 } queue_item_t;
 
 LIST(receive_queue);
-PROCESS(test_uart_receive_process, "UART receive");
-PROCESS(test_uart_send_process, "UART send");
 
 static queue_item_t *new_item(const void *buffer, uint16_t length) {
     queue_item_t *item = malloc(sizeof(queue_item_t));
@@ -51,7 +48,7 @@ static void free_item(queue_item_t *item) {
 
 static void queue_packet(const uint8_t *buffer, uint16_t length) {
     list_add(receive_queue, new_item(buffer, length));
-    process_poll(&test_uart_receive_process);
+    pbio_os_request_poll();
 }
 
 #define queue_command_complete(opcode, ...) {                       \
@@ -231,18 +228,18 @@ static uint16_t test_uartsend_buffer_length;
 static void (*test_uart_received_block_handler)(void);
 static void (*test_uart_sent_block_handler)(void);
 
-PROCESS_THREAD(test_uart_receive_process, ev, data) {
+static pbio_error_t test_uart_receive_process_thread(pbio_os_state_t *state, void *context) {
     static queue_item_t *item;
     static int i;
 
-    PROCESS_BEGIN();
+    PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
-        PROCESS_WAIT_UNTIL(*receive_queue);
+        PBIO_OS_AWAIT_UNTIL(state, *receive_queue);
         item = list_pop(receive_queue);
 
         for (i = 0; i < item->length;) {
-            PROCESS_WAIT_UNTIL(test_uartreceive_buffer_length > 0);
+            PBIO_OS_AWAIT_UNTIL(state, test_uartreceive_buffer_length > 0);
             tt_want_uint_op(test_uartreceive_buffer_length, <=, item->length - i);
             memcpy(test_uartreceive_buffer, &item->buffer[i],
                 test_uartreceive_buffer_length);
@@ -257,7 +254,7 @@ PROCESS_THREAD(test_uart_receive_process, ev, data) {
         free_item(item);
     }
 
-    PROCESS_END();
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // this simulates the replies from the Bluetooth chip
@@ -495,11 +492,11 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
     }
 }
 
-PROCESS_THREAD(test_uart_send_process, ev, data) {
-    PROCESS_BEGIN();
+static pbio_error_t test_uart_send_process_thread(pbio_os_state_t *state, void *context) {
+    PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
-        PROCESS_WAIT_UNTIL(test_uartsend_buffer_length > 0);
+        PBIO_OS_AWAIT_UNTIL(state, test_uartsend_buffer_length > 0);
 
         handle_send(test_uartsend_buffer,
             test_uartsend_buffer_length);
@@ -509,15 +506,18 @@ PROCESS_THREAD(test_uart_send_process, ev, data) {
         test_uart_sent_block_handler();
     }
 
-    PROCESS_END();
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // test bluetooth btstack driver uart block implementation
 
 static int test_uart_block_init(const btstack_uart_config_t *uart_config) {
     log_debug("%s", __func__);
-    process_start(&test_uart_receive_process);
-    process_start(&test_uart_send_process);
+    static pbio_os_process_t receive_process;
+    pbio_os_process_start(&receive_process, test_uart_receive_process_thread, NULL);
+
+    static pbio_os_process_t send_process;
+    pbio_os_process_start(&send_process, test_uart_send_process_thread, NULL);
     return 0;
 }
 
@@ -548,13 +548,13 @@ static int test_uart_block_set_baudrate(uint32_t baudrate) {
 static void test_uart_block_receive_block(uint8_t *buffer, uint16_t length) {
     test_uartreceive_buffer = buffer;
     test_uartreceive_buffer_length = length;
-    process_poll(&test_uart_receive_process);
+    pbio_os_request_poll();
 }
 
 static void test_uart_block_send_block(const uint8_t *buffer, uint16_t length) {
     test_uartsend_buffer = buffer;
     test_uartsend_buffer_length = length;
-    process_poll(&test_uart_send_process);
+    pbio_os_request_poll();
 }
 
 static const btstack_uart_block_t *test_uart_block_instance(void) {
@@ -618,11 +618,13 @@ static void handle_timer_timeout(btstack_timer_source_t *ts) {
     (*callback_count)++;
 }
 
-static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
+static pbio_error_t test_btstack_run_loop_contiki_timer(pbio_os_state_t *state, void *context) {
     static btstack_timer_source_t timer_source, timer_source_2, timer_source_3;
     static uint32_t callback_count, callback_count_2, callback_count_3;
 
-    PT_BEGIN(pt);
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // common btstack timer init
     btstack_run_loop_set_timer_handler(&timer_source, handle_timer_timeout);
@@ -640,13 +642,11 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_add_timer(&timer_source);
 
     // should not expire early
-    pbio_test_clock_tick(9);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 9);
     tt_want_uint_op(callback_count, ==, 0);
 
     // now it should be done
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
     tt_want_uint_op(callback_count, ==, 1);
 
 
@@ -661,29 +661,29 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_add_timer(&timer_source_3);
 
     // should not expire early
-    pbio_test_clock_tick(4);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 4);
+
     tt_want_uint_op(callback_count, ==, 0);
     tt_want_uint_op(callback_count_2, ==, 0);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // only timer 2 should be called back after 5 ms
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
+
     tt_want_uint_op(callback_count, ==, 0);
     tt_want_uint_op(callback_count_2, ==, 1);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // then timer 1 after 10 ms
-    pbio_test_clock_tick(5);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 5);
+
     tt_want_uint_op(callback_count, ==, 1);
     tt_want_uint_op(callback_count_2, ==, 1);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // and finally timer 3
-    pbio_test_clock_tick(5);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 5);
+
     tt_want_uint_op(callback_count, ==, 1);
     tt_want_uint_op(callback_count_2, ==, 1);
     tt_want_uint_op(callback_count_3, ==, 1);
@@ -695,28 +695,26 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_set_timer(&timer_source, 15);
     btstack_run_loop_add_timer(&timer_source);
 
-    pbio_test_clock_tick(5);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 5);
 
     btstack_run_loop_set_timer(&timer_source_2, 10);
     btstack_run_loop_add_timer(&timer_source_2);
 
-    pbio_test_clock_tick(5);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 5);
 
     btstack_run_loop_set_timer(&timer_source_3, 5);
     btstack_run_loop_add_timer(&timer_source_3);
 
     // none should have timeout out yet
-    pbio_test_clock_tick(4);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 4);
+
     tt_want_uint_op(callback_count, ==, 0);
     tt_want_uint_op(callback_count_2, ==, 0);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // then all at the same time
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
+
     tt_want_uint_op(callback_count, ==, 1);
     tt_want_uint_op(callback_count_2, ==, 1);
     tt_want_uint_op(callback_count_3, ==, 1);
@@ -732,17 +730,17 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_add_timer(&timer_source);
 
     // should not expire early
-    pbio_test_clock_tick(9);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 9);
+
     tt_want_uint_op(callback_count, ==, 0);
     btstack_run_loop_remove_timer(&timer_source);
 
     // it should have been canceled
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
+
     tt_want_uint_op(callback_count, ==, 0);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static void handle_data_source(btstack_data_source_t *ds,  btstack_data_source_callback_type_t callback_type) {
@@ -757,11 +755,11 @@ static void handle_data_source(btstack_data_source_t *ds,  btstack_data_source_c
     }
 }
 
-static PT_THREAD(test_btstack_run_loop_contiki_poll(struct pt *pt)) {
+static pbio_error_t test_btstack_run_loop_contiki_poll(pbio_os_state_t *state, void *context) {
     static btstack_data_source_t data_source;
     static uint32_t callback_count;
 
-    PT_BEGIN(pt);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     callback_count = 0;
     btstack_run_loop_set_data_source_handle(&data_source, &callback_count);
@@ -770,27 +768,27 @@ static PT_THREAD(test_btstack_run_loop_contiki_poll(struct pt *pt)) {
     btstack_run_loop_add_data_source(&data_source);
 
     pbdrv_bluetooth_btstack_run_loop_trigger();
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_ONCE(state);
     tt_want_uint_op(callback_count, ==, 1);
 
     callback_count = 0;
     btstack_run_loop_disable_data_source_callbacks(&data_source, DATA_SOURCE_CALLBACK_POLL);
     pbdrv_bluetooth_btstack_run_loop_trigger();
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_ONCE(state);
     tt_want_uint_op(callback_count, ==, 0);
 
     callback_count = 0;
     btstack_run_loop_enable_data_source_callbacks(&data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_remove_data_source(&data_source);
     pbdrv_bluetooth_btstack_run_loop_trigger();
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_ONCE(state);
     tt_want_uint_op(callback_count, ==, 0);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 struct testcase_t pbdrv_bluetooth_btstack_tests[] = {
-    PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_timer),
-    PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_poll),
+    PBIO_THREAD_TEST(test_btstack_run_loop_contiki_timer),
+    PBIO_THREAD_TEST(test_btstack_run_loop_contiki_poll),
     END_OF_TESTCASES
 };

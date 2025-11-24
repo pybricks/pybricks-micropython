@@ -24,14 +24,14 @@
 
 #include "stm32f0xx.h"
 #include "uart_stm32f0.h"
+#include <lwrb/lwrb.h>
 
 #define UART_RING_BUF_SIZE 32   // must be a power of 2!
 
 struct _pbdrv_uart_dev_t {
     USART_TypeDef *USART;
-    uint8_t rx_ring_buf[UART_RING_BUF_SIZE];
-    volatile uint8_t rx_ring_buf_head;
-    uint8_t rx_ring_buf_tail;
+    lwrb_t rx_ring_buf;
+    uint8_t rx_ring_buf_data[UART_RING_BUF_SIZE];
     uint8_t *rx_buf;
     uint32_t rx_buf_size;
     uint32_t rx_buf_index;
@@ -57,6 +57,10 @@ pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
     }
     *uart_dev = dev;
     return PBIO_SUCCESS;
+}
+
+uint32_t pbdrv_uart_in_waiting(pbdrv_uart_dev_t *uart_dev) {
+    return lwrb_get_full(&uart_dev->rx_ring_buf);
 }
 
 pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uint8_t *msg, uint32_t length, uint32_t timeout) {
@@ -86,10 +90,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
         // all available data if there have been multiple polls since our last
         // re-entry. If there is already enough data in the buffer, this
         // protothread completes right away without yielding once first.
-        while (uart->rx_ring_buf_head != uart->rx_ring_buf_tail && uart->rx_buf_index < uart->rx_buf_size) {
-            uart->rx_buf[uart->rx_buf_index++] = uart->rx_ring_buf[uart->rx_ring_buf_tail];
-            uart->rx_ring_buf_tail = (uart->rx_ring_buf_tail + 1) & (UART_RING_BUF_SIZE - 1);
-        }
+        uart->rx_buf_index += lwrb_read(&uart->rx_ring_buf, &uart->rx_buf[uart->rx_buf_index], uart->rx_buf_size - uart->rx_buf_index);
         uart->rx_buf_index == uart->rx_buf_size || (timeout && pbio_os_timer_is_expired(&uart->rx_timer));
     }));
 
@@ -144,8 +145,7 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     uart->rx_buf = NULL;
     uart->tx_buf = NULL;
-    uart->rx_ring_buf_head = 0;
-    uart->rx_ring_buf_tail = 0;
+    lwrb_reset(&uart->rx_ring_buf);
     uart->rx_buf_size = 0;
     uart->rx_buf_index = 0;
 }
@@ -156,9 +156,8 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
 
     // receive next byte
     if (isr & USART_ISR_RXNE) {
-        // REVISIT: Do we need to have an overrun error when the ring buffer gets full?
-        uart->rx_ring_buf[uart->rx_ring_buf_head] = uart->USART->RDR;
-        uart->rx_ring_buf_head = (uart->rx_ring_buf_head + 1) & (UART_RING_BUF_SIZE - 1);
+        uint8_t c = uart->USART->RDR;
+        lwrb_write(&uart->rx_ring_buf, &c, 1);
         pbio_os_request_poll();
     }
 
@@ -191,8 +190,9 @@ void pbdrv_uart_init(void) {
         const pbdrv_uart_stm32f0_platform_data_t *pdata = &pbdrv_uart_stm32f0_platform_data[i];
         pbdrv_uart_dev_t *uart = &uart_devs[i];
 
-        uart->USART = pdata->uart,
-        uart->irq = pdata->irq,
+        uart->USART = pdata->uart;
+        uart->irq = pdata->irq;
+        lwrb_init(&uart->rx_ring_buf, uart->rx_ring_buf_data, UART_RING_BUF_SIZE);
 
         uart->USART->CR3 |= USART_CR3_OVRDIS;
         uart->USART->CR1 |= USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;

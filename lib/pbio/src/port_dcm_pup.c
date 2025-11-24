@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2025 The Pybricks Authors
 
-#include <contiki.h>
 #include <pbio/config.h>
 
 #include <pbio/port_interface.h>

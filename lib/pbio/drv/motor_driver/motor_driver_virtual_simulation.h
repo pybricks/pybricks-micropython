@@ -39,8 +39,6 @@ extern const pbdrv_motor_driver_virtual_simulation_platform_data_t
 
 void pbdrv_motor_driver_virtual_simulation_get_angle(pbdrv_motor_driver_dev_t *dev, int32_t *rotations, int32_t *millidegrees);
 
-void pbdrv_motor_driver_disable_process(void);
-
 #endif // PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION
 
 #endif // _INTERNAL_PBDRV_MOTOR_DRIVER_VIRTUAL_SIMULATION_H_

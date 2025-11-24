@@ -123,7 +123,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
 
     uart->read_buf = NULL;
 
-    if ((timeout && pbio_os_timer_is_expired(&uart->read_timer))) {
+    if (timeout && pbio_os_timer_is_expired(&uart->read_timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
 

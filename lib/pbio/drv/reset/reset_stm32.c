@@ -7,7 +7,6 @@
 
 #if PBDRV_CONFIG_RESET_STM32
 
-#include <contiki.h>
 #include STM32_H
 
 #include <pbdrv/reset.h>

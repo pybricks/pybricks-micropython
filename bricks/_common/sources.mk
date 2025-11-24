@@ -7,18 +7,6 @@
 
 LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
-# Contiki
-
-CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
-	lib/list.c \
-	lib/memb.c \
-	lib/ringbuf.c \
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
-	)
-
 # Pybricks modules
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
@@ -70,6 +58,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
 	nxtdevices/pb_type_nxtdevices_touchsensor.c \
 	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
+	nxtdevices/pb_type_nxtdevices_vernieradapter.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_axis.c \
 	parameters/pb_type_button.c \

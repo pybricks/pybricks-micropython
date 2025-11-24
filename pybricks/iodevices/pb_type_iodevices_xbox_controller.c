@@ -4,7 +4,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
+#if PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
 
 #include <stdint.h>
 #include <string.h>
@@ -592,4 +592,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_XboxController,
     attr, pb_attribute_handler,
     protocol, pb_type_xbox_attr_dict);
 
-#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
+#endif // PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER

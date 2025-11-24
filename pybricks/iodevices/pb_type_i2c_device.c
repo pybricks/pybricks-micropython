@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_I2CDEVICE
+#if PYBRICKS_PY_IODEVICES_I2C_DEVICE
 
 #include "py/mphal.h"
 #include "py/objstr.h"
@@ -309,4 +309,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_i2c_device,
     make_new, make_new,
     locals_dict, &locals_dict);
 
-#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_IODEVICES_I2CDEVICE
+#endif // PYBRICKS_PY_IODEVICES_I2C_DEVICE

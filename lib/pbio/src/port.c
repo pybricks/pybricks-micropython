@@ -296,11 +296,16 @@ pbio_error_t pbio_port_get_dcmotor(pbio_port_t *port, lego_device_type_id_t *exp
     // Return requested device.
     *dcmotor = port->dcmotor;
 
+    // Quadrature ports don't have any way to detect DC motors, so just pass.
+    if (port->mode == PBIO_PORT_MODE_QUADRATURE && LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR) {
+        return PBIO_SUCCESS;
+    }
+
     // In LEGO mode, we require that something valid is indeed attached.
     if (port->mode == PBIO_PORT_MODE_LEGO_DCM && port->connection_manager) {
         return pbio_port_dcm_assert_type_id(port->connection_manager, expected_type_id);
     }
-    return PBIO_SUCCESS;
+    return PBIO_ERROR_NO_DEV;
 }
 
 /**
@@ -358,14 +363,20 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
  * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
  */
 pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, bool active, uint32_t *value) {
-    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+    // Only allow LEGO DCM mode and raw ADC mode.
+    if (!port->connection_manager || !(port->mode == PBIO_PORT_MODE_LEGO_DCM || port->mode == PBIO_PORT_MODE_GPIO_ADC)) {
         return PBIO_ERROR_INVALID_OP;
     }
-    lego_device_type_id_t expected_type_id = type_id;
-    pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &expected_type_id);
-    if (err != PBIO_SUCCESS) {
-        return err;
+
+    // In LEGO mode, assert attached device, else pass anything.
+    if (port->mode == PBIO_PORT_MODE_LEGO_DCM) {
+        lego_device_type_id_t expected_type_id = type_id;
+        pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &expected_type_id);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
+
     *value = pbio_port_dcm_get_analog_value(port->connection_manager, port->pdata->pins, active);
     return PBIO_SUCCESS;
 }
@@ -559,6 +570,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
 
     switch (mode) {
         case PBIO_PORT_MODE_NONE:
+        case PBIO_PORT_MODE_GPIO_ADC:
             pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
             pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
             return PBIO_SUCCESS;

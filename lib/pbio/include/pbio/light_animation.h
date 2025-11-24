@@ -7,7 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <contiki.h>
+#include <pbio/os.h>
+#include <pbio/config.h>
 
 typedef struct _pbio_light_animation_t pbio_light_animation_t;
 
@@ -24,17 +25,40 @@ typedef uint32_t (*pbio_light_animation_next_t)(pbio_light_animation_t *animatio
 
 struct _pbio_light_animation_t {
     /** Animation update timer. */
-    struct etimer timer;
+    pbio_os_timer_t timer;
     /** Animation iterator callback. */
     pbio_light_animation_next_t next;
     /** Linked list */
     pbio_light_animation_t *next_animation;
 };
 
+#if PBIO_CONFIG_LIGHT
+
 void pbio_light_animation_init(pbio_light_animation_t *animation, pbio_light_animation_next_t next);
 void pbio_light_animation_start(pbio_light_animation_t *animation);
 void pbio_light_animation_stop(pbio_light_animation_t *animation);
 void pbio_light_animation_stop_all(void);
 bool pbio_light_animation_is_started(pbio_light_animation_t *animation);
+
+#else // PBIO_CONFIG_LIGHT
+
+static inline void pbio_light_animation_init(pbio_light_animation_t *animation, pbio_light_animation_next_t next) {
+}
+
+static inline void pbio_light_animation_start(pbio_light_animation_t *animation) {
+}
+
+static inline void pbio_light_animation_stop(pbio_light_animation_t *animation) {
+}
+
+static inline void pbio_light_animation_stop_all(void) {
+}
+
+static inline bool pbio_light_animation_is_started(pbio_light_animation_t *animation) {
+    return false;
+}
+
+#endif // PBIO_CONFIG_LIGHT
+
 
 #endif // _PBIO_LIGHT_ANIMATION_H_

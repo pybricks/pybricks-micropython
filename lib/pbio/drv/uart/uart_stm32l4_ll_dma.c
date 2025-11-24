@@ -181,7 +181,7 @@ static bool dma_is_ht(DMA_TypeDef *DMAx, uint32_t channel) {
     }
 }
 
-static uint32_t pbdrv_uart_get_num_available(pbdrv_uart_dev_t *uart) {
+uint32_t pbdrv_uart_in_waiting(pbdrv_uart_dev_t *uart) {
     // Head is the last position that DMA wrote to.
     uint32_t rx_head = RX_DATA_SIZE - LL_DMA_GetDataLength(uart->pdata->rx_dma, uart->pdata->rx_dma_ch);
     return (rx_head - uart->rx_tail) & (RX_DATA_SIZE - 1);
@@ -204,7 +204,7 @@ pbio_error_t pbdrv_uart_read(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, uin
 
     // Wait until we have enough data or timeout. If there is enough data
     // already, this completes right away without yielding once first.
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_uart_get_num_available(uart) >= uart->read_length || (timeout && pbio_os_timer_is_expired(&uart->rx_timer)));
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_uart_in_waiting(uart) >= uart->read_length || (timeout && pbio_os_timer_is_expired(&uart->rx_timer)));
     if (timeout && pbio_os_timer_is_expired(&uart->rx_timer)) {
         uart->read_buf = NULL;
         uart->read_length = 0;

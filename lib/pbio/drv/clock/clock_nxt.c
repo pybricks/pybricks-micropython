@@ -12,7 +12,6 @@
 #include <pbio/os.h>
 
 #include <at91sam7s256.h>
-#include <contiki.h>
 #include <nxos/nxt.h>
 #include <nxos/interrupts.h>
 #include <nxos/drivers/aic.h>
@@ -42,7 +41,6 @@ static void systick_isr(void) {
 
     /* Do the system timekeeping. */
     pbdrv_clock_ticks++;
-    etimer_request_poll();
     pbio_os_request_poll();
 
     /* Keeping up with the AVR link is a crucial task in the system, and

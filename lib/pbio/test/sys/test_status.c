@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
@@ -13,27 +12,11 @@
 
 #include "../../drv/clock/clock_test.h"
 
-PROCESS(status_test_process, "status test");
+static pbio_error_t test_status(pbio_os_state_t *state, void *context) {
 
-static process_event_t last_event;
-static process_data_t last_data;
+    static pbio_os_timer_t timer;
 
-PROCESS_THREAD(status_test_process, ev, data) {
-    PROCESS_BEGIN();
-
-    for (;;) {
-        PROCESS_WAIT_EVENT();
-        last_event = ev;
-        last_data = data;
-    }
-
-    PROCESS_END();
-}
-
-static PT_THREAD(test_status(struct pt *pt)) {
-    PT_BEGIN(pt);
-
-    process_start(&status_test_process);
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // use the last valid flag for edge case
     static const pbio_pybricks_status_flags_t test_flag = NUM_PBIO_PYBRICKS_STATUS - 1;
@@ -48,12 +31,10 @@ static PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
     // ensure that debounce works
-    pbio_test_clock_tick(9);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 9);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
     tt_want(pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
@@ -62,10 +43,6 @@ static PT_THREAD(test_status(struct pt *pt)) {
     tt_want(pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
-    last_event = PROCESS_EVENT_NONE;
-    PT_YIELD(pt);
-    tt_want_uint_op(last_event, ==, PROCESS_EVENT_NONE);
-
     // ensure that clearing a flag works as expected
     pbsys_status_clear(test_flag);
     tt_want(!pbsys_status_test(test_flag));
@@ -73,13 +50,10 @@ static PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
     // ensure that debounce works
-    last_event = PROCESS_EVENT_NONE;
-    pbio_test_clock_tick(9);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 9);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(pbsys_status_test_debounce(test_flag, false, 10));
 
@@ -88,14 +62,10 @@ static PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(pbsys_status_test_debounce(test_flag, false, 10));
 
-    last_event = PROCESS_EVENT_NONE;
-    PT_YIELD(pt);
-    tt_want_uint_op(last_event, ==, PROCESS_EVENT_NONE);
-
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 struct testcase_t pbsys_status_tests[] = {
-    PBIO_PT_THREAD_TEST(test_status),
+    PBIO_THREAD_TEST(test_status),
     END_OF_TESTCASES
 };

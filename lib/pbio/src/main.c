@@ -23,19 +23,11 @@
  * Initialize the Pybricks I/O Library. This function must be called once,
  * usually at the beginning of a program, before using any other functions in
  * the library.
- *
- * @param [in]  start_processes  Whether to start all user-level background
- *                               processes. This is always enabled, except in
- *                               tests that test one driver at a time.
  */
-void pbio_init(bool start_processes) {
+void pbio_init(void) {
 
     pbio_battery_init();
     pbio_imu_init();
-
-    if (!start_processes) {
-        return;
-    }
 
     // This will also initialize the dcmotor and servo pbio object instances.
     pbio_port_init();

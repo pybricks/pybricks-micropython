@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 #include <test-pbio.h>
@@ -40,8 +39,11 @@ static void test_light_matrix_reset(void) {
     memset(test_light_matrix_set_pixel_last_brightness, 0, DATA_SIZE);
 }
 
-static PT_THREAD(test_light_matrix(struct pt *pt)) {
-    PT_BEGIN(pt);
+static pbio_error_t test_light_matrix(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_timer_t timer;
+
+    PBIO_OS_ASYNC_BEGIN(state);
 
     pbdrv_pwm_init();
     pbdrv_led_array_init();
@@ -82,36 +84,31 @@ static PT_THREAD(test_light_matrix(struct pt *pt)) {
     // set_pixel() after handling pending events.
     test_light_matrix_reset();
     pbio_light_matrix_start_animation(test_light_matrix, test_animation, 2, INTERVAL);
-    pbio_handle_pending_events();
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
     tt_want_light_matrix_data(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
     // set_pixel() should not be called again until after a delay and it should
     // receive the next hue in the list
-    pbio_test_clock_tick(INTERVAL - 1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, INTERVAL - 1);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], ==, 1);
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], !=, 1);
     tt_want_light_matrix_data(11, 12, 13, 14, 15, 16, 17, 18, 19);
 
     // then the next animation update should wrap back to the start of the list
-    pbio_test_clock_tick(INTERVAL - 1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, INTERVAL - 1);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], ==, 11);
-    pbio_test_clock_tick(1);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], !=, 11);
     tt_want_light_matrix_data(1, 2, 3, 4, 5, 6, 7, 8, 9);
 
     // stopping the animation should not change any pixels
     test_light_matrix_reset();
     pbio_light_matrix_stop_animation(test_light_matrix);
-    pbio_test_clock_tick(INTERVAL * 2);
-    PT_YIELD(pt);
+    PBIO_OS_AWAIT_MS(state, &timer, INTERVAL * 2);
     tt_want_light_matrix_data(0);
 
-    PT_END(pt);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static void test_light_matrix_rotation(void *env) {
@@ -182,7 +179,7 @@ static void test_light_matrix_rotation(void *env) {
 }
 
 struct testcase_t pbio_light_matrix_tests[] = {
-    PBIO_PT_THREAD_TEST(test_light_matrix),
+    PBIO_THREAD_TEST(test_light_matrix),
     PBIO_TEST(test_light_matrix_rotation),
     END_OF_TESTCASES
 };

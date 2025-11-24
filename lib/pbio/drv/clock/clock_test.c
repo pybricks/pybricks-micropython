@@ -12,7 +12,6 @@
 
 #include <stdint.h>
 
-#include <contiki.h>
 
 static uint32_t clock_ticks;
 
@@ -22,7 +21,6 @@ static uint32_t clock_ticks;
  */
 void pbio_test_clock_tick(uint32_t ticks) {
     clock_ticks += ticks;
-    etimer_request_poll();
     pbio_os_request_poll();
 }
 

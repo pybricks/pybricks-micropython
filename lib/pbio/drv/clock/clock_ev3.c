@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-#include <contiki.h>
+#include <pbdrv/clock.h>
 
 #include <pbio/os.h>
 
@@ -44,7 +44,6 @@ void systick_isr_C(void) {
 
     pbdrv_clock_ticks++;
 
-    etimer_request_poll();
     pbio_os_request_poll();
 }
 

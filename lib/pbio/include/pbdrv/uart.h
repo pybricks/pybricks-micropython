@@ -33,7 +33,13 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud);
 void pbdrv_uart_stop(pbdrv_uart_dev_t *uart_dev);
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev);
 
-int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev);
+/**
+ * Gets the number of bytes in the incoming buffer.
+ *
+ * @param uart_dev The UART device
+ * @return The number of bytes that can be read, or 0 if no data is available
+ */
+uint32_t pbdrv_uart_in_waiting(pbdrv_uart_dev_t *uart_dev);
 
 /**
  * Asynchronously read from the UART.
@@ -87,14 +93,8 @@ static inline void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
 static inline void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 }
 
-/**
- * Get a character from the UART.
- *
- * @param uart_dev The UART device
- * @return The character read, or -1 if no character is available
- */
-static inline int32_t pbdrv_uart_get_char(pbdrv_uart_dev_t *uart_dev) {
-    return -1;
+static inline uint32_t pbdrv_uart_in_waiting(pbdrv_uart_dev_t *uart_dev) {
+    return 0;
 }
 
 static inline pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint32_t length, uint32_t timeout) {

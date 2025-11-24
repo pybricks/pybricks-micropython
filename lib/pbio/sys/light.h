@@ -4,8 +4,6 @@
 #ifndef _PBSYS_SYS_LIGHT_H_
 #define _PBSYS_SYS_LIGHT_H_
 
-#include <contiki.h>
-
 #include <pbio/color.h>
 #include <pbsys/config.h>
 

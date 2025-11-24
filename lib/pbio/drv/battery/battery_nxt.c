@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <contiki.h>
 #include <nxos/drivers/avr.h>
 
 #include <pbdrv/battery.h>

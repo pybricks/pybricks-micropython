@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES
+#if PYBRICKS_PY_IODEVICES_PUP_DEVICE
 
 #include <string.h>
 
@@ -301,4 +301,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_PUPDevice,
     make_new, iodevices_PUPDevice_make_new,
     locals_dict, &iodevices_PUPDevice_locals_dict);
 
-#endif // PYBRICKS_PY_IODEVICES
+#endif // PYBRICKS_PY_IODEVICES_PUP_DEVICE

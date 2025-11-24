@@ -83,8 +83,6 @@
         if (clock_last != clock_now) { \
             extern void pbio_os_request_poll(void); \
             pbio_os_request_poll(); \
-            extern void etimer_request_poll(); \
-            etimer_request_poll(); \
             clock_last = clock_now; \
         } \
     } while (0);

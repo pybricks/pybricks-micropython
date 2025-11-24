@@ -130,10 +130,6 @@ typedef enum {
     LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR,                 /**< MINDSTORMS EV3 Large Motor */
     LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR,                /**< MINDSTORMS EV3 Medium Motor */
 
-    // ev3dev devices
-    LEGO_DEVICE_TYPE_ID_EV3DEV_DC_MOTOR,                 /**< generic ev3dev rcx-motor */
-    LEGO_DEVICE_TYPE_ID_EV3DEV_LEGO_SENSOR,              /**< generic ev3dev-supported sensor */
-
     // Generic & Custom devices
     LEGO_DEVICE_TYPE_ID_NXT_ANALOG,                      /**< MINDSTORMS NXT-style Analog Sensor */
     LEGO_DEVICE_TYPE_ID_NXT_I2C,                         /**< MINDSTORMS NXT-style I2C Sensor */

@@ -132,17 +132,7 @@ void pbio_os_process_make_request(pbio_os_process_t *process, pbio_os_process_re
  */
 bool pbio_os_run_processes_once(void) {
 
-    // DELETEME: Legacy hook to drive Contiki processes until all are migrated.
-    extern int process_run(void);
-    bool pbio_event_pending = process_run();
-
     if (!poll_request_is_pending) {
-
-        // DELETEME: Legacy pbio event loop hook until all processes migrated.
-        if (pbio_event_pending) {
-            return true;
-        }
-
         return false;
     }
 
@@ -158,7 +148,7 @@ bool pbio_os_run_processes_once(void) {
     }
 
     // Poll requests may have been set while running the processes.
-    return poll_request_is_pending || pbio_event_pending;
+    return poll_request_is_pending;
 }
 
 /**
@@ -180,14 +170,6 @@ void pbio_os_run_processes_and_wait_for_event(void) {
     // which still wakes up the CPU on interrupt even though interrupts are
     // otherwise disabled.
     pbio_os_irq_flags_t irq_flags = pbio_os_hook_disable_irq();
-
-    // DELETEME: Legacy hook for pbio event loop that plays the same role as
-    // the pending flag. Here it ensures we don't enter sleep if there are
-    // pending events. Can be removed when all processes are migrated.
-    extern int process_nevents(void);
-    if (process_nevents()) {
-        poll_request_is_pending = true;
-    }
 
     if (!poll_request_is_pending) {
         pbio_os_hook_wait_for_interrupt(irq_flags);

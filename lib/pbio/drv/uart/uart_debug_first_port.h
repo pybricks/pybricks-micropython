@@ -15,8 +15,6 @@
 void pbdrv_uart_debug_printf(const char *format, ...);
 void pbdrv_uart_debug_vprintf(const char *format, va_list argptr);
 
-int32_t pbdrv_uart_debug_get_char(void);
-
 bool pbdrv_uart_debug_is_done(void);
 
 void pbdrv_uart_debug_init(void);
@@ -25,8 +23,6 @@ void pbdrv_uart_debug_init(void);
 
 #define pbdrv_uart_debug_printf(...)
 #define pbdrv_uart_debug_vprintf(format, argptr)
-
-#define pbdrv_uart_debug_get_char() (-1)
 
 #define pbdrv_uart_debug_is_done() (true)
 

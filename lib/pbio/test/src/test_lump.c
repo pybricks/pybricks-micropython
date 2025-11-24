@@ -49,17 +49,15 @@ pbdrv_uart_dev_t test_uart;
  * the parent process that the buffer is ready to be read.
  */
 static void simulate_uart_complete_irq(void) {
-    process_poll(test_uart.parent_process);
+    pbio_os_request_poll();
 }
 
 pbio_error_t simulate_rx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t length) {
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     // First uartdev reads one byte header
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.rx_msg_result == PBIO_ERROR_AGAIN);
     tt_uint_op(test_uart.rx_msg_length, ==, 1);
     memcpy(test_uart.rx_msg, msg, 1);
     test_uart.rx_msg_result = PBIO_SUCCESS;
@@ -71,10 +69,7 @@ pbio_error_t simulate_rx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t
     }
 
     // then read rest of message
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.rx_msg_result == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.rx_msg_result == PBIO_ERROR_AGAIN);
     tt_uint_op(test_uart.rx_msg_length, ==, length - 1);
     memcpy(test_uart.rx_msg, &msg[1], length - 1);
     test_uart.rx_msg_result = PBIO_SUCCESS;
@@ -88,10 +83,7 @@ end:
 pbio_error_t simulate_tx_msg(pbio_os_state_t *state, const uint8_t *msg, uint8_t length) {
     PBIO_OS_ASYNC_BEGIN(state);
 
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.tx_msg_result == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.tx_msg_result == PBIO_ERROR_AGAIN);
     tt_uint_op(test_uart.tx_msg_length, ==, length);
 
     for (int i = 0; i < length; i++) {
@@ -243,17 +235,11 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 115200;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 115200);
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 2400;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 2400);
 
     // send BOOST Color and Distance sensor info
     SIMULATE_RX_MSG(msg0);
@@ -343,10 +329,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     SIMULATE_TX_MSG(msg83);
 
     // wait for baud rate change
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 115200;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 115200);
 
     // Simulate setting default mode
     SIMULATE_TX_MSG(msg83b);
@@ -364,10 +347,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     }
 
     // Wait for default mode to complete
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN);
 
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
@@ -439,10 +419,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     // data message with new mode
     SIMULATE_RX_MSG(msg88);
 
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN);
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
     type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
@@ -452,10 +429,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
 
 
     // also do mode 8 since it requires the extended mode flag
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_lump_set_mode(lump_dev, 8)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_lump_set_mode(lump_dev, 8)) == PBIO_ERROR_AGAIN);
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
     // wait for mode change message to be sent
@@ -468,10 +442,7 @@ static pbio_error_t test_boost_color_distance_sensor(pbio_os_state_t *state, voi
     SIMULATE_RX_MSG(msg90);
     SIMULATE_RX_MSG(msg91);
 
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_lump_is_ready(lump_dev)) == PBIO_ERROR_AGAIN);
     tt_uint_op(err, ==, PBIO_SUCCESS);
     type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
     tt_uint_op(pbio_port_lump_assert_type_id(lump_dev, &type_id), ==, PBIO_SUCCESS);
@@ -549,17 +520,11 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // starting baud rate of hub
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 115200;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 115200);
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 2400;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 2400);
 
     // send BOOST Interactive Motor info
     SIMULATE_RX_MSG(msg0);
@@ -601,10 +566,7 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
     SIMULATE_TX_MSG(msg34);
 
     // wait for baud rate change
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 115200;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 115200);
 
 
     // Simulate setting default mode
@@ -620,10 +582,7 @@ static pbio_error_t test_boost_interactive_motor(pbio_os_state_t *state, void *c
         SIMULATE_TX_MSG(msg37);
     }
 
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN);
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
     type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
@@ -739,10 +698,7 @@ static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *conte
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 115200;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 115200);
 
     // this device supports syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
@@ -823,10 +779,7 @@ static pbio_error_t test_technic_large_motor(pbio_os_state_t *state, void *conte
         SIMULATE_TX_MSG(msg58);
     }
 
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN);
 
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
@@ -951,10 +904,7 @@ static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context)
     tt_uint_op(pbio_port_get_port(PBIO_PORT_ID_D, &port), ==, PBIO_SUCCESS);
 
     // baud rate for sync messages
-    PBIO_OS_AWAIT_UNTIL(state, ({
-        pbio_test_clock_tick(1);
-        test_uart.baud == 115200;
-    }));
+    PBIO_OS_AWAIT_UNTIL(state, test_uart.baud == 115200);
 
     // this device supports syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
@@ -1035,10 +985,7 @@ static pbio_error_t test_technic_xl_motor(pbio_os_state_t *state, void *context)
         SIMULATE_TX_MSG(msg58);
     }
 
-    PBIO_OS_AWAIT_WHILE(state, ({
-        pbio_test_clock_tick(1);
-        (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN;
-    }));
+    PBIO_OS_AWAIT_WHILE(state, (err = pbio_port_get_lump_device(port, &expected_id, &lump_dev)) == PBIO_ERROR_AGAIN);
     tt_uint_op(err, ==, PBIO_SUCCESS);
 
     type_id = LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART;
@@ -1080,10 +1027,10 @@ end:
 }
 
 struct testcase_t pbio_port_lump_tests[] = {
-    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_boost_color_distance_sensor),
-    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_boost_interactive_motor),
-    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_technic_large_motor),
-    PBIO_PT_THREAD_TEST_WITH_PBIO_OS(test_technic_xl_motor),
+    PBIO_THREAD_TEST(test_boost_color_distance_sensor),
+    PBIO_THREAD_TEST(test_boost_interactive_motor),
+    PBIO_THREAD_TEST(test_technic_large_motor),
+    PBIO_THREAD_TEST(test_technic_xl_motor),
     END_OF_TESTCASES
 };
 

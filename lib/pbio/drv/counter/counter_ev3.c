@@ -34,11 +34,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-#define debug_pr pbdrv_uart_debug_printf
-#define DBG_ERR(expr) expr
+#define DEBUG_PRINT pbdrv_uart_debug_printf
 #else
-#define debug_pr(...)
-#define DBG_ERR(expr)
+#define DEBUG_PRINT(...)
 #endif
 
 struct _pbdrv_counter_dev_t {
@@ -97,6 +95,8 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
 #define ADC_EV3_LARGE_0 (32)
 #define ADC_EV3_LARGE_1 (917)
 #define ADC_NXT_LARGE_1 (1014)
+#define ADC_MINDSENSORS_GLIDEWHEEL_0 (0)
+#define ADC_MINDSENSORS_GLIDEWHEEL_1 (1023)
 
 static bool adc_is_close(uint32_t adc, uint32_t reference) {
     uint32_t error = adc > reference ? adc - reference : reference - adc;
@@ -118,6 +118,10 @@ static bool adc_is_close(uint32_t adc, uint32_t reference) {
  * adc process poll us to maintain a minium count of unchanged states.
  */
 static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
+
+    if (adc == ADC_MINDSENSORS_GLIDEWHEEL_0 || adc == ADC_MINDSENSORS_GLIDEWHEEL_1) {
+        return LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR;
+    }
 
     if (adc_is_close(adc, ADC_EV3_MEDIUM_0) || adc_is_close(adc, ADC_EV3_MEDIUM_1)) {
         return LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR;

@@ -553,7 +553,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
     protocol, pb_type_pupdevices_Remote_attr_dict,
     locals_dict, &pb_type_pupdevices_Remote_locals_dict);
 
-#if PYBRICKS_PY_IODEVICES
+#if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
 
 static pbio_pybricks_error_t handle_lwp3_generic_notification(const uint8_t *value, uint32_t size) {
 
@@ -689,6 +689,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_iodevices_LWP3Device,
 
 MP_REGISTER_ROOT_POINTER(uint8_t * notification_buffer);
 
-#endif // PYBRICKS_PY_IODEVICES
+#endif // PYBRICKS_PY_IODEVICES_LWP3_DEVICE
 
 #endif // PYBRICKS_PY_PUPDEVICES_REMOTE
