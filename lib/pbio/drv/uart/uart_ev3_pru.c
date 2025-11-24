@@ -36,6 +36,8 @@
 
 #include <errno.h>
 
+#include <lwrb/lwrb.h>
+
 #include "./uart_ev3_pru_lib/omapl_suart_board.h"
 #include "./uart_ev3_pru_lib/suart_api.h"
 #include "./uart_ev3_pru_lib/suart_utils.h"
@@ -112,9 +114,7 @@ typedef struct {
     suart_struct_handle suart_hdl;
     struct suart_dma suart_dma_addr;
     uint32_t break_rcvt;
-    struct circ_buf read_buf;
     struct circ_buf write_buf;
-    uint8_t read_data[BUFFER_SIZE];
     uint8_t write_data[BUFFER_SIZE];
     uint32_t baud;
     volatile bool write_busy;
@@ -177,12 +177,11 @@ static void omapl_pru_tx_chars(omapl_pru_suart_t *suart) {
     }
 }
 
-static void omapl_pru_rx_chars(omapl_pru_suart_t *suart) {
+static void omapl_pru_rx_chars(omapl_pru_suart_t *suart, lwrb_t *rx_dest) {
     uint16_t rx_status, data_len = SUART_FIFO_LEN;
     uint32_t data_len_read = 0;
     uint8_t suart_data[SUART_FIFO_LEN + 1];
-    struct circ_buf *buf;
-    uint32_t index, space;
+    uint32_t space;
 
     if (!(suart_get_duplex(suart) & ePRU_SUART_HALF_RX)) {
         return;
@@ -211,28 +210,24 @@ static void omapl_pru_rx_chars(omapl_pru_suart_t *suart) {
         }
 
     } else {
-        buf = &suart->read_buf;
-
         // Receive data into ring buffer
-        space = CIRC_SPACE(buf->head, buf->tail, BUFFER_SIZE);
+        space = lwrb_get_free(rx_dest);
 
         if (space < data_len_read) {
             data_len_read = space;
             pru_suart_stop_rx(suart);
         }
 
-        for (index = 0; index < data_len_read; index++)
-        {
-            buf->buf[buf->head] = suart_data[index];
-            buf->head = (buf->head + 1) & BUFFER_MASK;
-        }
+        // TODO: we could just have pru_softuart_read_data read directly
+        // into the lwrb buffer via lwrb_get_linear_block_write_address.
+        lwrb_write(rx_dest, suart_data, data_len_read);
     }
 
     pru_softuart_clrRxStatus(&suart->suart_hdl);
 
 }
 
-void pbdrv_uart_ev3_pru_handle_irq_data(uint8_t id) {
+void pbdrv_uart_ev3_pru_handle_irq_data(uint8_t id, lwrb_t *rx_dest) {
     omapl_pru_suart_t *suart = &suartdevs[id];
     uint16_t txrx_flag;
     uint32_t ret;
@@ -247,7 +242,7 @@ void pbdrv_uart_ev3_pru_handle_irq_data(uint8_t id) {
         }
         if ((PRU_RX_INTR & txrx_flag) == PRU_RX_INTR) {
             pru_intr_clr_isrstatus(uartNum, PRU_RX_INTR);
-            omapl_pru_rx_chars(suart);
+            omapl_pru_rx_chars(suart, rx_dest);
         }
 
         if ((PRU_TX_INTR & txrx_flag) == PRU_TX_INTR) {
@@ -425,16 +420,12 @@ int32_t pbdrv_uart_ev3_pru_activate(uint8_t line) {
     pru_suart_request_port(suart);
 
     int32_t retval = 0;
-    struct circ_buf *buf;
-    buf = &suart->read_buf;
 
     retval = pru_suart_startup(suart);
     suart->break_rcvt = 0;
 
     // When activating port flush buffer
     pru_softuart_clrRxFifo(&suart->suart_hdl);
-    buf->head = 0;
-    buf->tail = 0;
 
     return retval;
 }
@@ -517,40 +508,9 @@ bool pbdrv_uart_ev3_pru_tx_empty(uint8_t line) {
     return pru_suart_tx_empty(suart);
 }
 
-int32_t pbdrv_uart_ev3_pru_read_bytes(uint8_t line, uint8_t *pdata, int32_t size) {
-    omapl_pru_suart_t *suart = &suartdevs[line];
-    struct circ_buf *buf;
-    int32_t space, index;
-
-    buf = &suart->read_buf;
-
-    // Deliver data from ring buffer
-    space = CIRC_CNT(buf->head, buf->tail, BUFFER_SIZE);
-
-    if (size > space) {
-        size = space;
-    }
-
-    for (index = 0; index < size; index++)
-    {
-        pdata[index] = buf->buf[buf->tail];
-        buf->tail = (buf->tail + 1) & BUFFER_MASK;
-    }
-
-    return size;
-}
-
-int32_t pbdrv_uart_ev3_pru_size_data_rx_buffer(uint8_t line) {
-    omapl_pru_suart_t *suart = &suartdevs[line];
-    struct circ_buf *buf;
-    buf = &suart->read_buf;
-
-    return CIRC_CNT(buf->head, buf->tail, BUFFER_SIZE);
-}
-
 int32_t pbdrv_uart_ev3_pru_load_firmware(uint8_t *firmware_data, uint32_t firmware_size) {
 
-    static arm_pru_iomap pru_arm_iomap = {0};
+    static arm_pru_iomap pru_arm_iomap = { 0 };
 
     pru_arm_iomap.pru_io_addr = OMAPL138_PRU_MEM_BASE;
     pru_arm_iomap.mcasp_io_addr = DAVINCI_DA8XX_MCASP0_REG_BASE;
@@ -569,7 +529,6 @@ int32_t pbdrv_uart_ev3_pru_load_firmware(uint8_t *firmware_data, uint32_t firmwa
         suart->suart_hdl.uartNum = i + 1;
         suart->break_rcvt = 0;
         suart->baud = 0;
-        suart->read_buf.buf = (char *)&suart->read_data[0];
         suart->write_buf.buf = (char *)&suart->write_data[0];
         suart->suart_dma_addr.dma_vaddr_buff_tx = DMA_VADDRESS_BUFF + (2 * SUART_CNTX_SZ * i);
         suart->suart_dma_addr.dma_vaddr_buff_rx = DMA_VADDRESS_BUFF + ((2 * SUART_CNTX_SZ * i) + SUART_CNTX_SZ);
