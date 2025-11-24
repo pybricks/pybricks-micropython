@@ -213,7 +213,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state) {
 
             // Exit on timeout except while connected to host.
             if (pbsys_host_is_connected()) {
-                pbio_os_timer_set(&idle_timer, idle_timer.duration);
+                pbio_os_timer_reset(&idle_timer);
             } else if (pbio_os_timer_is_expired(&idle_timer)) {
                 return PBIO_ERROR_TIMEDOUT;
             }
