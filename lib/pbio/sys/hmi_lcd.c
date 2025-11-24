@@ -128,16 +128,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             hmi_lcd_grid_show_pixel(4, c, c == selected_slot);
         }
 
-        pbsys_main_program_t program;
-        program.id = selected_slot;
-        pbsys_storage_get_program_data(&program);
-        const char *name = pbsys_main_program_validate(&program) == PBIO_SUCCESS ?
-            program.name : "------";
-
-        pbio_image_t *display = pbdrv_display_get_image();
-        pbio_image_fill_rect(display, 0, 82, 178, 14, 0);
-        pbio_image_draw_text(display, &pbio_font_liberationsans_regular_14, 20, 92, name, strlen(name), 3);
-
         pbdrv_display_update();
 
         // Buttons could be pressed at the end of the user program, so wait for
