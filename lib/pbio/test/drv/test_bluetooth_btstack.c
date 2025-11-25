@@ -8,6 +8,7 @@
 
 #include <btstack.h>
 #include <btstack_chipset_cc256x.h>
+#include <hci_transport_h4.h>
 #include <contiki-lib.h>
 #include <tinytest_macros.h>
 #include <tinytest.h>
@@ -557,7 +558,7 @@ static void test_uart_block_send_block(const uint8_t *buffer, uint16_t length) {
     pbio_os_request_poll();
 }
 
-static const btstack_uart_block_t *test_uart_block_instance(void) {
+static const hci_transport_t *test_transport_instance(void) {
     static const btstack_uart_block_t uart_block = {
         .init = test_uart_block_init,
         .open = test_uart_block_open,
@@ -569,7 +570,20 @@ static const btstack_uart_block_t *test_uart_block_instance(void) {
         .send_block = test_uart_block_send_block,
     };
 
-    return &uart_block;
+    return hci_transport_h4_instance_for_uart(&uart_block);
+}
+
+static const void *test_transport_config(void) {
+    static const hci_transport_config_uart_t config = {
+        .type = HCI_TRANSPORT_CONFIG_UART,
+        // Note: we use nonsensical values here because our test uart block
+        // does not actually make use of these configuration values.
+        .baudrate_init = 1,
+        .baudrate_main = 1,
+        .flowcontrol = 1,
+        .device_name = NULL,
+    };
+    return &config;
 }
 
 // test bluetooth btstack control driver implementation
@@ -604,7 +618,8 @@ static const btstack_control_t *test_control_instance(void) {
 static const sm_key_t test_key;
 
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
-    .uart_block_instance = test_uart_block_instance,
+    .transport_instance = test_transport_instance,
+    .transport_config = test_transport_config,
     .chipset_instance = btstack_chipset_cc256x_instance,
     .control_instance = test_control_instance,
     .er_key = test_key,

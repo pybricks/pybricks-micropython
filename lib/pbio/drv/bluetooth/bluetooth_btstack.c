@@ -23,7 +23,6 @@
 
 #include "bluetooth_btstack.h"
 #include "genhdr/pybricks_service.h"
-#include "hci_transport_h4.h"
 #include "pybricks_service_server.h"
 
 #ifdef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
@@ -100,17 +99,6 @@ static pup_handset_t handset;
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
-// note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
-// go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could go
-// to 4000000, which is the max rating of the CC2564C.
-
-static const hci_transport_config_uart_t config = {
-    .type = HCI_TRANSPORT_CONFIG_UART,
-    .baudrate_init = 115200,
-    .baudrate_main = 3000000,
-    .flowcontrol = 1,
-    .device_name = NULL,
-};
 
 /**
  * Converts BTStack error to most appropriate PBIO error.
@@ -1058,7 +1046,7 @@ void pbdrv_bluetooth_init_hci(void) {
     btstack_memory_init();
     btstack_run_loop_init(&bluetooth_btstack_run_loop);
 
-    hci_init(hci_transport_h4_instance_for_uart(pdata->uart_block_instance()), &config);
+    hci_init(pdata->transport_instance(), pdata->transport_config());
     hci_set_chipset(pdata->chipset_instance());
     hci_set_control(pdata->control_instance());
 
