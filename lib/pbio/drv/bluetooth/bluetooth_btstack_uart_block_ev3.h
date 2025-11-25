@@ -7,13 +7,11 @@
 #ifndef PBDRV_BLUETOOTH_BLUETOOTH_BTSTACK_UART_BLOCK_EV3_H
 #define PBDRV_BLUETOOTH_BLUETOOTH_BTSTACK_UART_BLOCK_EV3_H
 
-#include <pbdrv/config.h>
+#include <pbdrvconfig.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3
 
 #include <btstack_uart_block.h>
-#include <pbdrv/uart.h>
-#include <stdint.h>
 
 // Returns the UART block driver instance.
 const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_ev3_instance(
@@ -23,6 +21,6 @@ const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_ev3_instance(
 void pbdrv_bluetooth_btstack_uart_block_ev3_handle_tx_complete(void);
 void pbdrv_bluetooth_btstack_uart_block_ev3_handle_rx_complete(void);
 
-#endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
+#endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3
 
 #endif  // PBDRV_BLUETOOTH_BLUETOOTH_BTSTACK_UART_BLOCK_EV3_H

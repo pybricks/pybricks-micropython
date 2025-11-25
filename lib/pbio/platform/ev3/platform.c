@@ -70,7 +70,7 @@
 #include "exceptionhandler.h"
 
 #include "../../drv/block_device/block_device_ev3.h"
-#include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
+#include "../../drv/bluetooth/bluetooth_btstack_control_ev3.h"
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_ev3.h"
 #include "../../drv/bluetooth/bluetooth_btstack_classic.h"
 #include "../../drv/button/button_gpio.h"
@@ -200,7 +200,6 @@ enum {
     UART0, // sensor 2
     PRU0_LINE1, // sensor 3
     PRU0_LINE0, // sensor 4
-    UART2, // Bluetooth
 };
 
 static void pbdrv_uart_ev3_handle_irq_uart0(void) {
@@ -209,10 +208,6 @@ static void pbdrv_uart_ev3_handle_irq_uart0(void) {
 
 static void pbdrv_uart_ev3_handle_irq_uart1(void) {
     pbdrv_uart_ev3_handle_irq(UART1);
-}
-
-static void pbdrv_uart_ev3_handle_irq_uart2(void) {
-    pbdrv_uart_ev3_handle_irq(UART2);
 }
 
 static void pbdrv_uart_ev3_handle_irq_pru0_line0(void) {
@@ -256,15 +251,6 @@ const pbdrv_uart_ev3_platform_data_t
         .sys_int_uart_tx_int_id = SYS_INT_EVTOUT0, // One common IRQ handler
         .sys_int_uart_rx_int_id = SYS_INT_EVTOUT0,
         .isr_handler = pbdrv_uart_ev3_handle_irq_pru0_line0,
-    },
-    [UART2] = {
-        // TODO: Add CTS/RTS pins.
-        .uart_kind = EV3_UART_HW,
-        .base_address = SOC_UART_2_REGS,
-        .peripheral_id = HW_PSC_UART2,
-        .sys_int_uart_tx_int_id = EDMA3_CHA_UART2_TX,
-        .sys_int_uart_rx_int_id = EDMA3_CHA_UART2_RX,
-        .isr_handler = pbdrv_uart_ev3_handle_irq_uart2,
     },
 };
 
@@ -550,21 +536,12 @@ static void Edma3CompleteCallback(unsigned int tccNum, unsigned int status) {
             pbdrv_uart_ev3_handle_tx_complete(UART1);
             return;
         case EDMA3_CHA_UART2_TX:
-            // Check if Bluetooth is using this UART, call its handler instead
-            #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
+            // Note that UART2 is used for Bluetooth and has no general pbdrv_uart
+            // mapping.
             pbdrv_bluetooth_btstack_uart_block_ev3_handle_tx_complete();
-            #else
-            pbdrv_uart_ev3_handle_tx_complete(UART2);
-            #endif
             return;
         case EDMA3_CHA_UART2_RX:
-            // Check if Bluetooth is using this UART, call its handler instead
-            #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
             pbdrv_bluetooth_btstack_uart_block_ev3_handle_rx_complete();
-            #else
-            // Regular UART driver doesn't use DMA for RX
-            // This case should not normally occur
-            #endif
             return;
         default:
             return;
@@ -777,92 +754,11 @@ enum {
 };
 uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 
-static const pbdrv_gpio_t bluetooth_enable = PBDRV_GPIO_EV3_PIN(9, 27, 24, 4, 9);
-const pbdrv_bluetooth_btstack_control_gpio_platform_data_t pbdrv_bluetooth_btstack_control_gpio_platform_data = {
-    .enable_gpio = bluetooth_enable,
-};
-
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
     .uart_block_instance = pbdrv_bluetooth_btstack_uart_block_ev3_instance,
     .chipset_instance = btstack_chipset_cc256x_instance,
-    .control_instance = pbdrv_bluetooth_btstack_control_gpio_instance,
+    .control_instance = pbdrv_bluetooth_control_ev3_instance,
 };
-
-// The chipset code requires for these symbols to be defined. We are not going to
-// use them on ev3, though, because the ev3 could have either the cc2560 or the
-// cc2560a, and they use different init scripts. We will detect which one to use
-// at runtime in the btstack driver.
-const uint32_t cc256x_init_script_size;
-const uint8_t cc256x_init_script[] = {};
-
-static void setup_bluetooth_pins() {
-    // Before setting up the bluetooth module, turn on the UART.
-    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART2, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
-
-    // From the ev3dev configuration:
-    //
-    // There is a PIC microcontroller for interfacing with an Apple MFi
-    // chip. This interferes with normal Bluetooth operation, so we need
-    // to make sure it is turned off. Note: The publicly available
-    // schematics from LEGO don't show that these pins are connected to
-    // anything, but they are present in the source code from LEGO.
-    const pbdrv_gpio_t bt_pic_en = PBDRV_GPIO_EV3_PIN(8, 19, 16, 3, 3);
-    pbdrv_gpio_alt(&bt_pic_en, SYSCFG_PINMUX8_PINMUX8_19_16_GPIO3_3);
-    pbdrv_gpio_out_low(&bt_pic_en);
-    // Hold RTS high (we're not ready to receive anything from the PIC).
-    const pbdrv_gpio_t bt_pic_rts = PBDRV_GPIO_EV3_PIN(9, 7, 4, 4, 14);
-    pbdrv_gpio_alt(&bt_pic_rts, SYSCFG_PINMUX9_PINMUX9_7_4_GPIO4_14);
-    pbdrv_gpio_out_high(&bt_pic_rts);
-    // CTS technically does not need to be configured, but for documentation
-    // purposes we do.
-    const pbdrv_gpio_t bt_pic_cts = PBDRV_GPIO_EV3_PIN(12, 3, 0, 5, 7);
-    pbdrv_gpio_alt(&bt_pic_cts, SYSCFG_PINMUX12_PINMUX12_3_0_GPIO5_7);
-    pbdrv_gpio_input(&bt_pic_cts);
-    // Don't interfere with the BT clock's enable pin.
-    const pbdrv_gpio_t bt_clock_en = PBDRV_GPIO_EV3_PIN(1, 11, 8, 0, 5);
-    pbdrv_gpio_alt(&bt_clock_en, SYSCFG_PINMUX1_PINMUX1_11_8_GPIO0_5);
-    pbdrv_gpio_input(&bt_clock_en);
-
-    // Configure ECAP2 to emit the slow clock signal for the bluetooth module.
-    ECAPOperatingModeSelect(SOC_ECAP_2_REGS, ECAP_APWM_MODE);
-    // Calculate the number of clock ticks the APWM period should last. Note
-    // that the following float operations are all constant and optimized away.
-    // APWM is clocked by sysclk2 by default.
-    // Target frequency is 32.767 kHz, see cc2560 datasheet.
-    // Note that the APWM module wraps on the cycle after reaching the period
-    // value, which means we need to subtract one from the desired period to get
-    // a period length in cycles that matches the desired frequency.
-    const int aprd = round(SOC_SYSCLK_2_FREQ / 32767.0) - 1;
-    ECAPAPWMCaptureConfig(SOC_ECAP_2_REGS, aprd / 2, aprd);
-    // Set the polarity to active high. It doesn't matter which it is but for
-    // the sake of determinism we set it explicitly.
-    ECAPAPWMPolarityConfig(SOC_ECAP_2_REGS, ECAP_APWM_ACTIVE_HIGH);
-    // Disable input and output synchronization.
-    ECAPSyncInOutSelect(SOC_ECAP_2_REGS, ECAP_SYNC_IN_DISABLE, ECAP_SYNC_OUT_DISABLE);
-    // Start the counter running.
-    ECAPCounterControl(SOC_ECAP_2_REGS, ECAP_COUNTER_FREE_RUNNING);
-    // Set gp0[7] to output the ECAP2 APWM signal.
-    const pbdrv_gpio_t bluetooth_slow_clock = PBDRV_GPIO_EV3_PIN(1, 3, 0, 0, 7);
-    pbdrv_gpio_alt(&bluetooth_slow_clock, SYSCFG_PINMUX1_PINMUX1_3_0_ECAP2);
-
-    // UART for Bluetooth. Other UARTS are configured by port module.
-    const pbdrv_gpio_t bluetooth_uart_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3);
-    const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
-    const pbdrv_gpio_t bluetooth_uart_rts = PBDRV_GPIO_EV3_PIN(0, 27, 24, 0, 9);
-    const pbdrv_gpio_t bluetooth_uart_cts = PBDRV_GPIO_EV3_PIN(0, 31, 28, 0, 8);
-    pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
-    pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
-    pbdrv_gpio_alt(&bluetooth_uart_rts, SYSCFG_PINMUX0_PINMUX0_27_24_UART2_RTS);
-    pbdrv_gpio_alt(&bluetooth_uart_cts, SYSCFG_PINMUX0_PINMUX0_31_28_UART2_CTS);
-
-    // bluetooth nSHUTDN pin low (module off).
-    pbdrv_gpio_alt(&bluetooth_enable, SYSCFG_PINMUX9_PINMUX9_27_24_GPIO4_9);
-    pbdrv_gpio_out_low(&bluetooth_enable);
-
-    // CTS/RTS aren't used on the other UARTs, so there is no general facility
-    // for setting up flow control. Set it up directly here.
-    UARTModemControlSet(SOC_UART_2_REGS, UART_RTS | UART_AUTOFLOW);
-}
 
 // Called from assembly code in startup.s. After this, the "main" function in
 // lib/pbio/sys/main.c is called. That contains all calls to the driver
@@ -901,8 +797,6 @@ void SystemInit(void) {
 
     // Disable all pull-up/pull-down groups.
     HWREG(SOC_SYSCFG_1_REGS + SYSCFG1_PUPD_ENA) &= ~0xFFFFFFFF;
-
-    setup_bluetooth_pins();
 
     // Read the EV3 Bluetooth MAC address from the I2C boot EEPROM
 

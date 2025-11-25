@@ -93,7 +93,7 @@
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
-#define PBDRV_CONFIG_UART_EV3_NUM_UART              (5)
+#define PBDRV_CONFIG_UART_EV3_NUM_UART              (4)
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (512)
@@ -111,5 +111,4 @@
 
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC      (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART     (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CONTROL_GPIO (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3          (1)

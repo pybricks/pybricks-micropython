@@ -4311,4 +4311,9 @@ pbio_error_t pbdrv_bluetooth_get_init_script(uint16_t lmp_subversion, pbdrv_blue
     }
 }
 
+// Note: the cc256x chipset code requres these symbols to be defined, or a link
+// error results. However, we never use them at runtime.
+const uint32_t cc256x_init_script_size;
+const uint8_t cc256x_init_script[] = {};
+
 #endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC

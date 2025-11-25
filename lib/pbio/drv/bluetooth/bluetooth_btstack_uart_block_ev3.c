@@ -5,7 +5,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3
 
 #include <assert.h>
 #include <stdbool.h>
@@ -14,11 +14,13 @@
 #include <btstack.h>
 #include <btstack_uart_block.h>
 #include <btstack_run_loop.h>
+#include <pbdrv/gpio.h>
 #include <pbdrv/uart.h>
 #include <pbdrv/cache.h>
 #include <pbio/os.h>
 
 #include "bluetooth_btstack_uart_block_ev3.h"
+#include "../gpio/gpio_ev3.h"
 #include "../uart/uart_ev3.h"
 
 #include <tiam1808/armv5/am1808/edma_event.h>
@@ -26,7 +28,10 @@
 #include <tiam1808/edma.h>
 #include <tiam1808/hw/hw_edma3cc.h>
 #include <tiam1808/hw/hw_types.h>
+#include <tiam1808/hw/hw_syscfg0_AM1808.h>
+#include <tiam1808/hw/hw_syscfg1_AM1808.h>
 #include <tiam1808/hw/soc_AM1808.h>
+#include <tiam1808/psc.h>
 #include <tiam1808/uart.h>
 
 #define DEBUG 0
@@ -119,8 +124,22 @@ static void pbdrv_bluetooth_btstack_classic_poll(struct btstack_data_source *ds,
 }
 
 static int pbdrv_bluetooth_btstack_uart_block_ev3_init(const btstack_uart_config_t *config) {
+    DEBUG_PRINT("[btc] Initializing UART block EV3\n");
     block_received = NULL;
     block_sent = NULL;
+
+    // Before setting up the bluetooth module, turn on the UART.
+    PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART2, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
+
+    // Configure the UART pins.
+    const pbdrv_gpio_t bluetooth_uart_rx = PBDRV_GPIO_EV3_PIN(4, 19, 16, 1, 3);
+    const pbdrv_gpio_t bluetooth_uart_tx = PBDRV_GPIO_EV3_PIN(4, 23, 20, 1, 2);
+    const pbdrv_gpio_t bluetooth_uart_rts = PBDRV_GPIO_EV3_PIN(0, 27, 24, 0, 9);
+    const pbdrv_gpio_t bluetooth_uart_cts = PBDRV_GPIO_EV3_PIN(0, 31, 28, 0, 8);
+    pbdrv_gpio_alt(&bluetooth_uart_rx, SYSCFG_PINMUX4_PINMUX4_19_16_UART2_RXD);
+    pbdrv_gpio_alt(&bluetooth_uart_tx, SYSCFG_PINMUX4_PINMUX4_23_20_UART2_TXD);
+    pbdrv_gpio_alt(&bluetooth_uart_rts, SYSCFG_PINMUX0_PINMUX0_27_24_UART2_RTS);
+    pbdrv_gpio_alt(&bluetooth_uart_cts, SYSCFG_PINMUX0_PINMUX0_31_28_UART2_CTS);
 
     UARTEnable(UART_PORT);
     UARTConfigSetExpClk(UART_PORT, SOC_UART_2_MODULE_FREQ, config->baudrate, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_16);
@@ -129,6 +148,7 @@ static int pbdrv_bluetooth_btstack_uart_block_ev3_init(const btstack_uart_config
 }
 
 static int pbdrv_bluetooth_btstack_uart_block_ev3_open(void) {
+    DEBUG_PRINT("Bluetooth: Opening UART block EV3\n");
     write_buf = NULL;
     write_buf_len = 0;
     read_buf = NULL;
@@ -136,9 +156,11 @@ static int pbdrv_bluetooth_btstack_uart_block_ev3_open(void) {
     dma_write_complete = false;
     dma_read_complete = false;
 
-    // Set up the FIFOs and auto flow control. The fifo interrupt triggers on
-    // the first byte received. Note that enabling the FIFO also flushes it.
+    // Note: this also clears the FIFO in case it contained anything before.
     UARTFIFOEnable(UART_PORT);
+    // Flow control is important for the CC256x: for one thing, the volume of
+    // data is such that without it we could get into trouble. For another
+    // thing, pulling CTS low is how the module signals that it's ready to talk.
     UARTModemControlSet(UART_PORT, UART_RTS | UART_AUTOFLOW);
 
     // Set up the UART DMA channels.
@@ -155,6 +177,11 @@ static int pbdrv_bluetooth_btstack_uart_block_ev3_open(void) {
 static int pbdrv_bluetooth_btstack_uart_block_ev3_close(void) {
     btstack_run_loop_disable_data_source_callbacks(&pbdrv_bluetooth_btstack_classic_poll_data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_remove_data_source(&pbdrv_bluetooth_btstack_classic_poll_data_source);
+
+    UARTDMADisable(UART_PORT, (UART_RX_TRIG_LEVEL_1 | UART_FIFO_MODE));
+    EDMA3FreeChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_TX, EDMA3_TRIG_MODE_EVENT, DMA_CHA_TX, DMA_EVENT_QUEUE);
+    EDMA3FreeChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_RX, EDMA3_TRIG_MODE_EVENT, DMA_CHA_RX, DMA_EVENT_QUEUE);
+    UARTDisable(UART_PORT);
     return 0;
 }
 
@@ -272,4 +299,4 @@ const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_ev3_instance(void
     return &pbdrv_bluetooth_btstack_uart_block_ev3_block_ev3;
 }
 
-#endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3_UART
+#endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3
