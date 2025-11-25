@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Download and Run",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "pybricksdev",
             "console": "integratedTerminal",
@@ -18,7 +18,7 @@
         },
         {
             "name": "Powered Up Tests",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tests/pup/run_all.py",
             "cwd": "${workspaceFolder}/tests/pup",
@@ -27,7 +27,7 @@
         },
         {
             "name": "Motor Test",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tests/motors/run_test.py",
             "args": ["${file}", "--show"],
@@ -35,7 +35,7 @@
         },
         {
             "name": "Run via USB REPL",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "pybricksdev",
             "console": "integratedTerminal",
@@ -47,7 +47,7 @@
         },
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "args": [],
