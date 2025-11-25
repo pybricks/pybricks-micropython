@@ -97,16 +97,12 @@ struct circ_buf {
 #define __suart_err(fmt, args ...)
 
 static inline int suart_oversampling_rate_to_num(int x) {
-    if (x == SUART_8X_OVRSMPL) {
+    switch (x) {
+    case SUART_8X_OVRSMPL:
         return 8;
-    }
-    if (x == SUART_16X_OVRSMPL) {
+    default:
         return 16;
     }
-    assert(false);
-    // This is more conservative -- we will get the interrupts less frequently,
-    // but everything should still work.
-    return 16;
 }
 
 struct uart_icount {
