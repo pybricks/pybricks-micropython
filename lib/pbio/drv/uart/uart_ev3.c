@@ -43,7 +43,7 @@
  * functions to use.
  */
 
-#define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!
+#define RX_DATA_SIZE 256
 
 struct _pbdrv_uart_dev_t {
     /** Platform-specific data */
@@ -309,12 +309,8 @@ void pbdrv_uart_ev3_pru_handle_irq(pbdrv_uart_dev_t *uart) {
     // This calls what is mostly equivalent the original LEGO/ev3dev IRQ
     // handler. This is using its own ring buffer that we pull data from below.
     // REVISIT: Pass in our ringbuffer so it can be filled directly.
-    pbdrv_uart_ev3_pru_handle_irq_data(uart->pdata->peripheral_id);
+    pbdrv_uart_ev3_pru_handle_irq_data(uart->pdata->peripheral_id, &uart->rx_buf);
 
-    uint8_t rx;
-    while (pbdrv_uart_ev3_pru_read_bytes(uart->pdata->peripheral_id, &rx, 1)) {
-        lwrb_write(&uart->rx_buf, &rx, 1);
-    }
     pbio_os_request_poll();
 }
 
