@@ -510,7 +510,7 @@ bool pbdrv_uart_ev3_pru_tx_empty(uint8_t line) {
 
 int32_t pbdrv_uart_ev3_pru_load_firmware(uint8_t *firmware_data, uint32_t firmware_size) {
 
-    static arm_pru_iomap pru_arm_iomap = { 0 };
+    static arm_pru_iomap pru_arm_iomap;
 
     pru_arm_iomap.pru_io_addr = OMAPL138_PRU_MEM_BASE;
     pru_arm_iomap.mcasp_io_addr = DAVINCI_DA8XX_MCASP0_REG_BASE;
