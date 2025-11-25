@@ -4,24 +4,94 @@
 
 ## [Unreleased]
 
+## [4.0.0b1] - 2025-11-25
+
 ### Added
-- Experimental support for USB connectivity on SPIKE Prime ([pybricks-micropython#208]).
+- Experimental support for USB connectivity on SPIKE Prime ([pybricks-micropython#208]). Currently disabled by default.
 - Initial support for `pybricks.iodevices.UARTDevice` ([support#220]). 
 - Enabled previously hidden support for multiple code
-  slots ([pybricks-micropython#264], [pybricks-micropython#312]). A new
-  (unreleased) version of Pybricks Code is needed to use this.
+  slots ([pybricks-micropython#264], [pybricks-micropython#312]).
+- Added the following status flags to the Pybricks protocol:
+  - `PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_SHUTDOWN = 10`
+  - `PBIO_PYBRICKS_STATUS_BATTERY_HIGH_TEMP_WARNING = 11`
+  - `PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED = 12`
+- New embedded firmware for LEGO MINDSTORMS EV3:
+  - Fast boot on TI AM1808.
+  - New clock driver.
+  - New display driver.
+  - New SPI storage driver.
+  - New USB controller.
+  - New motor driver.
+  - New UART driver with hardware and PRU support.
+  - New PRU firmware for LED PWM control.
+  - New GPIO driver.
+  - New ADC driver.
+  - New DCM driver for EV3 auto-detection.
+- Enabled the original `pybricks.ev3devices` to run on the new embedded EV3 port:
+  - Color Sensor.
+  - Touch Sensor.
+  - Infrared Sensor and Beacon.
+  - Gyro Sensor in angle + rate mode, with calibration option.
+  - Ultrasonic Sensor.
+  - Large and Medium Motor.
+- Enabled the original `pybricks.nxtdevices` to run on the new embedded EV3 port:
+  - Touch Sensor, including 1.0 version without auto-detection.
+  - Color Sensor, with background process for background light cancellation.
+  - Light Sensor, with background process for background light cancellation.
+  - Ultrasonic Sensor, including I2C quirks for LEGO Devices.
+  - Sound Sensor.
+  - Temperature Sensor in I2C mode.
+  - Energy Meter.
+  - vernier Adapter.
+- Enabled all original `pybricks.iodevices`, all async-compatible:
+  - `PUPDevice` / `LUMPDevice` on Powered Up and EV3.
+  - `AnalogSensor` on EV3.
+  - `I2CDevice` on EV3.
+  - `UARTDevice` on EV3 and Powered Up. Added ability to reset protocol.
+  - `DCMotor` on EV3
+- Added new `pbio/image` module for image frame handling and display support.
+- Added a new Virtual Hub to simulate the embedded Pybricks ports.
 
 ### Changed
-- Extensive overhaul of UART and port drivers on all hubs. This affects all
-  official LEGO sensors on all hubs.
+- Extensive overhaul of UART drivers on all hubs. This affects all
+  official LEGO UART sensors on all hubs.
+- Extensive overhaul of the `pbio/port` module. LEGO mode can now be disabled
+  to enable direct access to UART or I2C or ADC on compatible platforms.
+- Extensive overhaul of MicroPython async drivers to make it work across
+  Bluetooth drivers.
+- Extensive overhaul of Bluetooth drivers to split out common code and make
+  async code more stable and safely cancellable.
+- Overhaul of Bluetooth and USB events through a unified `pbio/sys/host` interface.
 - LWP3Device.read() now gives buffered notification values instead of blocking
   until a value arrives.
+- Replaced Contiki runloop with new Pybricks protothreads.
+- Enabled `flto` for smaller firmware build size.
+- Upgraded to MicroPython 1.26. The MPY minor version has changed to v6.3.
+  This only affects people using native code in their user programs.
+- Update NXT build to follow along with EV3 wherever possible.
+- Unified `mphalport` and `micropython.c` interface for all hubs.
+- Improved power-off sequence to better handle sensors turning off and internal
+  devices like the IMU turning off.
+- Restored line numbers in error messages on Move Hub
+- Enabled `CSUPEROPT` on Move Hub and Technic Hub to reduce build size at a
+  slight reduction in VM speed.
 
 ### Fixed
 - Reduced hanging when broadcasting and observing at the same time with Technic
   Hub ([support#2206]).
 - Fixed hub shutting down immediately after disconnecting Bluetooth when
   no program had run for a while.
+- Fixed some error messages not printing on a new line if a program ends.
+- Fix speaker when playing a frequency of 0.
+- pybricks.tools: Fix crash when cross() args are wrong type.
+
+### Removed
+- Removed support for Pybricks on ev3dev. The official 2.0 release remains
+  available for anyone who needs Pybricks on Debian Linux.
+- Removed the experimental build of Pybricks on EV3RT. This is no longer needed
+  now that the embedded build is ready.
+- Removed unix-variant of the Virtual Hub. This has been replaced with a simulated
+  embedded hub.
 
 [support#220]: https://github.com/pybricks/support/issues/220
 [support#2206]: https://github.com/pybricks/support/issues/2206
@@ -1099,7 +1169,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...HEAD
+[4.0.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...v4.0.0b1
 [3.6.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b5...v3.6.0
 [3.6.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b4...v3.6.0b5
