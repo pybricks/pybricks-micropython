@@ -98,10 +98,10 @@ struct circ_buf {
 
 static inline int suart_oversampling_rate_to_num(int x) {
     switch (x) {
-    case SUART_8X_OVRSMPL:
-        return 8;
-    default:
-        return 16;
+        case SUART_8X_OVRSMPL:
+            return 8;
+        default:
+            return 16;
     }
 }
 
