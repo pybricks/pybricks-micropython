@@ -342,6 +342,9 @@ int32_t pru_suart_startup(omapl_pru_suart_t *suart) {
     /* Seed RX if port is half-rx or full-duplex */
     if ((suart_get_duplex(suart) & ePRU_SUART_HALF_RX) == ePRU_SUART_HALF_RX) {
         suart_pru_to_host_intr_enable(suart->suart_hdl.uartNum, PRU_RX_INTR, true);
+        // Note: the final argument is effectively the trigger threshold of the UART RX FIFO.
+        // We chose 8 to give ourselves some breathing room in case we are slow to process the
+        // FIFO interrupt.
         pru_softuart_read(&suart->suart_hdl, (uint32_t *)&suart->suart_dma_addr.dma_phys_addr_rx, 8);
     }
     return retval;
