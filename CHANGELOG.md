@@ -4,9 +4,14 @@
 
 ## [Unreleased]
 
+### Changed
+- Make 3D orientation default for heading and drivebase heading control ([support#1962]).
+
 ### Fixed
 - Fixed Essential Hub button being disabled after power off so it could not be
   switched on again.
+
+[support#1962]: https://github.com/pybricks/support/issues/1962
 
 ## [4.0.0b2] - 2025-11-25
 

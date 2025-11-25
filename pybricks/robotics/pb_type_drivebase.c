@@ -373,12 +373,6 @@ static mp_obj_t pb_type_DriveBase_use_gyro(size_t n_args, const mp_obj_t *pos_ar
 
     pbio_imu_heading_type_t type = PBIO_IMU_HEADING_TYPE_NONE;
     if (mp_obj_is_true(use_gyro_in)) {
-        type = PBIO_IMU_HEADING_TYPE_1D;
-    }
-
-    // Allows testing of 3D heading calculation before it becomes the default
-    // in a future release.
-    if (use_gyro_in == MP_OBJ_NEW_QSTR(MP_QSTR_3D)) {
         type = PBIO_IMU_HEADING_TYPE_3D;
     }
 

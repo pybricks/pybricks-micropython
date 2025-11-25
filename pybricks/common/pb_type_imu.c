@@ -297,18 +297,10 @@ static mp_obj_t pb_type_imu_settings(size_t n_args, const mp_obj_t *pos_args, mp
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_settings_obj, 1, pb_type_imu_settings);
 
 // pybricks._common.IMU.heading
-static mp_obj_t pb_type_imu_heading(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pb_type_imu_obj_t, self,
-        PB_ARG_DEFAULT_NONE(heading_type));
-
-    (void)self;
-    pbio_imu_heading_type_t type = heading_type_in == MP_OBJ_NEW_QSTR(MP_QSTR_3D) ?
-        PBIO_IMU_HEADING_TYPE_3D : PBIO_IMU_HEADING_TYPE_1D;
-
-    return mp_obj_new_float(pbio_imu_get_heading(type));
+static mp_obj_t pb_type_imu_heading(mp_obj_t self_in) {
+    return mp_obj_new_float(pbio_imu_get_heading(PBIO_IMU_HEADING_TYPE_3D));
 }
-static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_imu_heading_obj, 1, pb_type_imu_heading);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_imu_heading_obj, pb_type_imu_heading);
 
 // pybricks._common.IMU.orientation
 static mp_obj_t common_IMU_orientation(mp_obj_t self_in) {
