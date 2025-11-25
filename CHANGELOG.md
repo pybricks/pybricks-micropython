@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [4.0.0b2] - 2025-11-25
+
+### Fixed
+- Enable CI releases for v4.x.
+
 ## [4.0.0b1] - 2025-11-25
 
 ### Added
@@ -1169,7 +1174,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...HEAD
+[4.0.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...v4.0.0b2
 [4.0.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...v4.0.0b1
 [3.6.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b5...v3.6.0
