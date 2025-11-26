@@ -62,7 +62,7 @@ const pb_type_Color_obj_t pb_Color_MAGENTA_obj = {
 
 const pb_type_Color_obj_t pb_Color_NONE_obj = {
     {&pb_type_Color},
-    .hsv = {0, 0, -40}
+    .hsv = {0, 0, 0}
 };
 
 const pb_type_Color_obj_t pb_Color_BLACK_obj = {

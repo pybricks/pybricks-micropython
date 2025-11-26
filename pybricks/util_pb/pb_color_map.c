@@ -73,7 +73,23 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     int32_t cost_now = INT32_MAX;
     int32_t cost_min = INT32_MAX;
 
-    pbio_color_distance_func_t distance_func = pbio_color_get_distance_bicone_squared;
+    pbio_color_distance_func_t distance_func = pbio_color_get_distance_saturation_heuristic;
+
+    // If user only provides fully saturated colors (hue, 100, 100) and/or fully
+    // desaturated colors (0, 0, value), use a simplified heuristic matcher for
+    // better default results that are distance independent. Otherwise use a
+    // bicone color distance measure.
+    for (size_t i = 0; i < n; i++) {
+        const pbio_color_hsv_t *candidate = pb_type_Color_get_hsv(colors[i]);
+
+        // Use bicone mapping if custom (realistic) colors provided.
+        bool idealized_grayscale = candidate->s == 0 && candidate->h == 0;
+        bool idealized_color = candidate->s == 100 && candidate->v == 100;
+        if (!idealized_grayscale && !idealized_color) {
+            distance_func = pbio_color_get_distance_bicone_squared;
+            break;
+        }
+    }
 
     // Compute cost for each candidate
     for (size_t i = 0; i < n; i++) {

@@ -122,6 +122,7 @@ void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_c
 typedef int32_t (*pbio_color_distance_func_t)(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
 
 int32_t pbio_color_get_distance_bicone_squared(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
+int32_t pbio_color_get_distance_saturation_heuristic(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
 
 #endif // _PBIO_COLOR_H_
 
