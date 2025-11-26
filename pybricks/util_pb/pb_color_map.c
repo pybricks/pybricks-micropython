@@ -75,11 +75,13 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     int32_t cost_now = INT32_MAX;
     int32_t cost_min = INT32_MAX;
 
+    pbio_color_distance_func_t distance_func = pbio_color_get_distance_bicone_squared;
+
     // Compute cost for each candidate
     for (size_t i = 0; i < n; i++) {
 
         // Evaluate the cost function
-        cost_now = pbio_color_get_bicone_squared_distance(hsv, pb_type_Color_get_hsv(colors[i]));
+        cost_now = distance_func(hsv, pb_type_Color_get_hsv(colors[i]));
 
         // If cost is less than before, update the minimum and the match
         if (cost_now < cost_min) {
