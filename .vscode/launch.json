@@ -75,6 +75,10 @@
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
                 },
+                {
+                    "name": "UB500_INDEX",
+                    "value": "0"
+                }
             ],
             "externalConsole": false,
             "MIMode": "gdb",

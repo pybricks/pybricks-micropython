@@ -386,6 +386,10 @@
                 "${workspaceFolder}/bricks/virtualhub",
                 "${workspaceFolder}/bricks/virtualhub/build",
                 "${workspaceFolder}/bricks/virtualhub/build-debug",
+                "${workspaceFolder}/lib/btstack/chipset/realtek",
+                "${workspaceFolder}/lib/btstack/platform/libusb",
+                "${workspaceFolder}/lib/btstack/platform/posix",
+                "${workspaceFolder}/lib/btstack/src",
                 "${workspaceFolder}/lib/lego",
                 "${workspaceFolder}/lib/lwrb/src/include",
                 "${workspaceFolder}/lib/pbio",
@@ -394,7 +398,8 @@
                 "${workspaceFolder}/micropython",
                 "${workspaceFolder}",
                 "${workspaceFolder}/lib/umm_malloc/src",
-                "/usr/include/python3.10"
+                "/usr/include/python3.10",
+                "/usr/include/libusb-1.0"
             ],
             "defines": [
                 "MICROPY_MODULE_FROZEN_MPY",

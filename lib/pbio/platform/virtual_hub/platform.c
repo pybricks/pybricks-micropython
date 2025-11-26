@@ -11,6 +11,8 @@
 #include <arpa/inet.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
+#include "../../drv/bluetooth/bluetooth_btstack.h"
+#include "../../drv/bluetooth/bluetooth_btstack_posix.h"
 
 #include "pbio_os_config.h"
 
@@ -140,6 +142,15 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
         .endstop_angle_negative = -INFINITY,
         .endstop_angle_positive = INFINITY,
     },
+};
+
+const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
+    .transport_instance = pbdrv_bluetooth_btstack_posix_transport_instance,
+    .transport_config = pbdrv_bluetooth_btstack_posix_transport_config,
+    .chipset_instance = NULL,
+    .control_instance = pbdrv_bluetooth_btstack_posix_control_instance,
+    .er_key = (const uint8_t *)"placeholderplaceholder",
+    .ir_key = (const uint8_t *)"placeholderplaceholder",
 };
 
 // Socket used to send data to Python animation.
