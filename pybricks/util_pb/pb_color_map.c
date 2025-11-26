@@ -33,15 +33,13 @@ void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv)
     pbio_color_rgb_to_hsv(rgb, hsv);
 
     // Slight shift for lower hues to make yellow somewhat more accurate
-    if (hsv->h < 40) {
-        uint8_t offset = ((hsv->h - 20) << 8) / 20;
-        int32_t scale = 200 - ((100 * (offset * offset)) >> 16);
-        hsv->h = hsv->h * scale / 100;
+    if (hsv->h >= 350) {
+        hsv->h = (350 + 2 * (hsv->h - 350)) % 360;
+    } else if (hsv->h < 40) {
+        hsv->h += 10;
+    } else if (hsv->h < 60) {
+        hsv->h = 50 + (hsv->h - 40) / 2;
     }
-
-    // Value and saturation correction
-    hsv->s = hsv->s * (200 - hsv->s) / 100;
-    hsv->v = hsv->v * (200 - hsv->v) / 100;
 }
 
 static const mp_rom_obj_tuple_t pb_color_map_default = {

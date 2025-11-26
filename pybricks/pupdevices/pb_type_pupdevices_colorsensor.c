@@ -71,6 +71,14 @@ static void get_hsv_reflected(mp_obj_t self_in, pbio_color_hsv_t *hsv) {
         .b = data[2] == 1024 ? 255 : data[2] >> 2,
     };
     pb_color_map_rgb_to_hsv(&rgb, hsv);
+
+    // Approximately double saturation for low values to get similar results
+    // as other sensors.
+    hsv->s = hsv->s * (200 - hsv->s) / 100;
+
+    // Approximately +50% low values to get similar results
+    // as with other sensors.
+    hsv->v = hsv->v * (150 - hsv->v / 2) / 100;
 }
 
 // Helper for getting HSV with the light off, scale saturation and value to
