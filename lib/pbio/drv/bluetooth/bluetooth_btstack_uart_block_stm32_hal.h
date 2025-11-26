@@ -7,9 +7,11 @@
 #define _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_UART_BLOCK_STM32_HAL_H_
 
 #include <stm32f4xx.h>
-#include <btstack_uart_block.h>
+#include <hci_transport.h>
 
-const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_stm32_hal_instance(void);
+const hci_transport_t *pbdrv_bluetooth_btstack_transport_stm32_hal_instance(void);
+
+const void *pbdrv_bluetooth_btstack_transport_stm32_hal_config(void);
 
 
 /** BlueKitchen BTStack driver platform-specific data. */

@@ -13,7 +13,8 @@
 void pbdrv_bluetooth_btstack_run_loop_trigger(void);
 
 typedef struct {
-    const btstack_uart_block_t *(*uart_block_instance)(void);
+    const hci_transport_t *(*transport_instance)(void);
+    const void *(*transport_config)(void);
     const btstack_chipset_t *(*chipset_instance)(void);
     const btstack_control_t *(*control_instance)(void);
     const uint8_t *er_key;

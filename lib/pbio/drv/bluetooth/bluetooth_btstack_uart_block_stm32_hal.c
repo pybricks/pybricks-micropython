@@ -18,6 +18,7 @@
 
 #include "bluetooth_btstack.h"
 #include "bluetooth_btstack_uart_block_stm32_hal.h"
+#include "hci_transport_h4.h"
 
 static UART_HandleTypeDef btstack_huart;
 static DMA_HandleTypeDef btstack_rx_hdma;
@@ -209,8 +210,22 @@ static const btstack_uart_block_t btstack_uart_block_stm32_hal = {
     .set_wakeup_handler = NULL,
 };
 
-const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_stm32_hal_instance(void) {
-    return &btstack_uart_block_stm32_hal;
+const hci_transport_t *pbdrv_bluetooth_btstack_transport_stm32_hal_instance(void) {
+    return hci_transport_h4_instance_for_uart(&btstack_uart_block_stm32_hal);
+}
+
+const void *pbdrv_bluetooth_btstack_transport_stm32_hal_config(void) {
+    // Note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
+    // go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could
+    // go to 4000000, which is the max rating of the CC2564C.
+    static const hci_transport_config_uart_t config = {
+        .type = HCI_TRANSPORT_CONFIG_UART,
+        .baudrate_init = 115200,
+        .baudrate_main = 3000000,
+        .flowcontrol = 1,
+        .device_name = NULL,
+    };
+    return &config;
 }
 
 void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq(void) {

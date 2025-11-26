@@ -119,7 +119,8 @@ void USART2_IRQHandler(void) {
 }
 
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
-    .uart_block_instance = pbdrv_bluetooth_btstack_uart_block_stm32_hal_instance,
+    .transport_instance = pbdrv_bluetooth_btstack_transport_stm32_hal_instance,
+    .transport_config = pbdrv_bluetooth_btstack_transport_stm32_hal_config,
     .chipset_instance = btstack_chipset_cc256x_instance,
     .control_instance = pbdrv_bluetooth_btstack_control_gpio_instance,
     .er_key = (const uint8_t *)UID_BASE,
