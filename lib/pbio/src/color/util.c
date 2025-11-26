@@ -13,7 +13,7 @@
  * @param [in]  hsv_b    The second HSV color.
  * @returns              Squared distance (0 to 400000000).
  */
-int32_t pbio_color_get_bicone_squared_distance(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b) {
+int32_t pbio_color_get_distance_bicone_squared(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b) {
 
     // Chroma (= radial coordinate in bicone) of a and b (0-10000).
     int32_t radius_a = pbio_color_hsv_get_v(hsv_a) * hsv_a->s;
