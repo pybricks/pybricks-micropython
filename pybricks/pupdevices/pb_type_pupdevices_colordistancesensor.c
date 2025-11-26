@@ -90,6 +90,10 @@ static void get_hsv_data(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_
     rgb.g = 1187 * raw[1] / 2048;
     rgb.b = 1187 * raw[2] / 2048;
     pb_color_map_rgb_to_hsv(&rgb, hsv);
+
+    // Approximately double low values to get similar results
+    // as with other sensors.
+    hsv->v = hsv->v * (200 - hsv->v) / 100;
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.color
