@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed Essential Hub button being disabled after power off so it could not be
+  switched on again.
+
 ## [4.0.0b2] - 2025-11-25
 
 ### Fixed
