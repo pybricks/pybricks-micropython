@@ -85,7 +85,6 @@ void pbdrv_deinit(void) {
 
     pbdrv_imu_deinit();
     pbdrv_bluetooth_deinit();
-    pbdrv_button_deinit();
     pbdrv_usb_deinit();
 
     while (pbio_busy_count_busy()) {

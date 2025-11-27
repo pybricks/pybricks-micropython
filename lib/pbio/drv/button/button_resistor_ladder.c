@@ -48,9 +48,6 @@ void pbdrv_button_init(void) {
     pbio_os_process_start(&pbdrv_button_init_process, pbdrv_button_init_process_thread, NULL);
 }
 
-void pbdrv_button_deinit(void) {
-}
-
 pbio_button_flags_t pbdrv_button_get_pressed(void) {
     pbdrv_resistor_ladder_ch_flags_t flags;
     pbio_error_t err;
