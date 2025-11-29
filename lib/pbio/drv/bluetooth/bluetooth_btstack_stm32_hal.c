@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2025 The Pybricks Authors
 
-// STM32 HAL UART driver for BlueKitchen BTStack.
+// STM32 HAL UART and GPIO driver for BlueKitchen BTStack.
 
 // IMPORTANT: This driver requires a patched STM32 HAL to fix some data loss
 // issues. See https://github.com/micropython/stm32lib/pull/12.
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_UART
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32
 
 #include <btstack.h>
 #undef UNUSED // btstack and stm32 both define UNUSED
@@ -17,8 +17,45 @@
 #include <stm32f4xx_ll_usart.h>
 
 #include "bluetooth_btstack.h"
-#include "bluetooth_btstack_uart_block_stm32_hal.h"
+#include "bluetooth_btstack_stm32_hal.h"
 #include "hci_transport_h4.h"
+
+#include <pbdrv/gpio.h>
+
+static int btstack_control_gpio_on(void) {
+    const pbdrv_bluetooth_btstack_stm32_platform_data_t *pdata =
+        &pbdrv_bluetooth_btstack_stm32_platform_data;
+
+    pbdrv_gpio_out_high(&pdata->enable_gpio);
+
+    return 0;
+}
+
+static int btstack_control_gpio_off(void) {
+    const pbdrv_bluetooth_btstack_stm32_platform_data_t *pdata =
+        &pbdrv_bluetooth_btstack_stm32_platform_data;
+
+    pbdrv_gpio_out_low(&pdata->enable_gpio);
+
+    return 0;
+}
+
+static void btstack_control_gpio_init(const void *config) {
+    btstack_control_gpio_off();
+}
+
+static const btstack_control_t btstack_control_gpio = {
+    .init = btstack_control_gpio_init,
+    .on = btstack_control_gpio_on,
+    .off = btstack_control_gpio_off,
+    .sleep = NULL,
+    .wake = NULL,
+    .register_for_power_notifications = NULL,
+};
+
+const btstack_control_t *pbdrv_bluetooth_btstack_stm32_hal_control_instance(void) {
+    return &btstack_control_gpio;
+}
 
 static UART_HandleTypeDef btstack_huart;
 static DMA_HandleTypeDef btstack_rx_hdma;
@@ -47,9 +84,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     pbdrv_bluetooth_btstack_run_loop_trigger();
 }
 
-static int btstack_uart_block_stm32_hal_init(const btstack_uart_config_t *config) {
-    const pbdrv_bluetooth_btstack_uart_block_stm32_platform_data_t *pdata =
-        &pbdrv_bluetooth_btstack_uart_block_stm32_platform_data;
+static int btstack_stm32_hal_init(const btstack_uart_config_t *config) {
+    const pbdrv_bluetooth_btstack_stm32_platform_data_t *pdata =
+        &pbdrv_bluetooth_btstack_stm32_platform_data;
 
     uart_config = config;
 
@@ -106,7 +143,7 @@ static int btstack_uart_block_stm32_hal_init(const btstack_uart_config_t *config
     return 0;
 }
 
-static void btstack_uart_block_stm32_hal_process(btstack_data_source_t *ds, btstack_data_source_callback_type_t callback_type) {
+static void btstack_stm32_hal_process(btstack_data_source_t *ds, btstack_data_source_callback_type_t callback_type) {
     switch (callback_type) {
         case DATA_SOURCE_CALLBACK_POLL:
             if (send_complete) {
@@ -127,7 +164,7 @@ static void btstack_uart_block_stm32_hal_process(btstack_data_source_t *ds, btst
     }
 }
 
-static int btstack_uart_block_stm32_hal_set_baudrate(uint32_t baud) {
+static int btstack_stm32_hal_set_baudrate(uint32_t baud) {
     USART_TypeDef *usart = btstack_huart.Instance;
     uint32_t periphclk = LL_RCC_PERIPH_FREQUENCY_NO;
     LL_RCC_ClocksTypeDef rcc_clocks;
@@ -155,18 +192,18 @@ static int btstack_uart_block_stm32_hal_set_baudrate(uint32_t baud) {
     return 0;
 }
 
-static int btstack_uart_block_stm32_hal_open(void) {
-    btstack_uart_block_stm32_hal_set_baudrate(uart_config->baudrate);
+static int btstack_stm32_hal_open(void) {
+    btstack_stm32_hal_set_baudrate(uart_config->baudrate);
 
     // set up polling data_source
-    btstack_run_loop_set_data_source_handler(&transport_data_source, &btstack_uart_block_stm32_hal_process);
+    btstack_run_loop_set_data_source_handler(&transport_data_source, &btstack_stm32_hal_process);
     btstack_run_loop_enable_data_source_callbacks(&transport_data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_add_data_source(&transport_data_source);
 
     return 0;
 }
 
-static int btstack_uart_block_stm32_hal_close(void) {
+static int btstack_stm32_hal_close(void) {
     // remove data source
     btstack_run_loop_disable_data_source_callbacks(&transport_data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_remove_data_source(&transport_data_source);
@@ -174,47 +211,47 @@ static int btstack_uart_block_stm32_hal_close(void) {
     return 0;
 }
 
-static void btstack_uart_block_stm32_hal_set_block_received(void (*handler)(void)) {
+static void btstack_stm32_hal_set_block_received(void (*handler)(void)) {
     block_received = handler;
 }
 
-static void btstack_uart_block_stm32_hal_set_block_sent(void (*handler)(void)) {
+static void btstack_stm32_hal_set_block_sent(void (*handler)(void)) {
     block_sent = handler;
 }
 
-static int btstack_uart_block_stm32_hal_set_parity(int parity) {
+static int btstack_stm32_hal_set_parity(int parity) {
     return 0;
 }
 
-static void btstack_uart_block_stm32_hal_receive_block(uint8_t *buffer, uint16_t len) {
+static void btstack_stm32_hal_receive_block(uint8_t *buffer, uint16_t len) {
     HAL_UART_Receive_DMA(&btstack_huart, buffer, len);
 }
 
-static void btstack_uart_block_stm32_hal_send_block(const uint8_t *data, uint16_t size) {
+static void btstack_stm32_hal_send_block(const uint8_t *data, uint16_t size) {
     HAL_UART_Transmit_DMA(&btstack_huart, (uint8_t *)data, size);
 }
 
-static const btstack_uart_block_t btstack_uart_block_stm32_hal = {
-    .init = btstack_uart_block_stm32_hal_init,
-    .open = btstack_uart_block_stm32_hal_open,
-    .close = btstack_uart_block_stm32_hal_close,
-    .set_block_received = btstack_uart_block_stm32_hal_set_block_received,
-    .set_block_sent = btstack_uart_block_stm32_hal_set_block_sent,
-    .set_baudrate = btstack_uart_block_stm32_hal_set_baudrate,
-    .set_parity = btstack_uart_block_stm32_hal_set_parity,
+static const btstack_uart_block_t btstack_stm32_hal = {
+    .init = btstack_stm32_hal_init,
+    .open = btstack_stm32_hal_open,
+    .close = btstack_stm32_hal_close,
+    .set_block_received = btstack_stm32_hal_set_block_received,
+    .set_block_sent = btstack_stm32_hal_set_block_sent,
+    .set_baudrate = btstack_stm32_hal_set_baudrate,
+    .set_parity = btstack_stm32_hal_set_parity,
     .set_flowcontrol = NULL,
-    .receive_block = btstack_uart_block_stm32_hal_receive_block,
-    .send_block = btstack_uart_block_stm32_hal_send_block,
+    .receive_block = btstack_stm32_hal_receive_block,
+    .send_block = btstack_stm32_hal_send_block,
     .get_supported_sleep_modes = NULL,
     .set_sleep = NULL,
     .set_wakeup_handler = NULL,
 };
 
-const hci_transport_t *pbdrv_bluetooth_btstack_transport_stm32_hal_instance(void) {
-    return hci_transport_h4_instance_for_uart(&btstack_uart_block_stm32_hal);
+const hci_transport_t *pbdrv_bluetooth_btstack_stm32_hal_transport_instance(void) {
+    return hci_transport_h4_instance_for_uart(&btstack_stm32_hal);
 }
 
-const void *pbdrv_bluetooth_btstack_transport_stm32_hal_config(void) {
+const void *pbdrv_bluetooth_btstack_stm32_hal_transport_config(void) {
     // Note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
     // go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could
     // go to 4000000, which is the max rating of the CC2564C.
@@ -228,16 +265,16 @@ const void *pbdrv_bluetooth_btstack_transport_stm32_hal_config(void) {
     return &config;
 }
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq(void) {
+void pbdrv_bluetooth_btstack_stm32_hal_handle_tx_dma_irq(void) {
     HAL_DMA_IRQHandler(&btstack_tx_hdma);
 }
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq(void) {
+void pbdrv_bluetooth_btstack_stm32_hal_handle_rx_dma_irq(void) {
     HAL_DMA_IRQHandler(&btstack_rx_hdma);
 }
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq(void) {
+void pbdrv_bluetooth_btstack_stm32_hal_handle_uart_irq(void) {
     HAL_UART_IRQHandler(&btstack_huart);
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_UART
+#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32

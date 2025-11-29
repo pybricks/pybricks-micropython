@@ -15,8 +15,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/block_device/block_device_w25qxx_stm32.h"
-#include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
-#include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
+#include "../../drv/bluetooth/bluetooth_btstack_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/charger/charger_mp2639a.h"
@@ -71,14 +70,11 @@ enum {
 
 // Bluetooth
 
-const pbdrv_bluetooth_btstack_control_gpio_platform_data_t pbdrv_bluetooth_btstack_control_gpio_platform_data = {
+const pbdrv_bluetooth_btstack_stm32_platform_data_t pbdrv_bluetooth_btstack_stm32_platform_data = {
     .enable_gpio = {
         .bank = GPIOC,
         .pin = 8,
     },
-};
-
-const pbdrv_bluetooth_btstack_uart_block_stm32_platform_data_t pbdrv_bluetooth_btstack_uart_block_stm32_platform_data = {
     .uart = USART2,
     .uart_irq = USART2_IRQn,
     .tx_dma = DMA1_Stream6,
@@ -110,22 +106,22 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
 }
 
 void DMA1_Stream6_IRQHandler(void) {
-    pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq();
+    pbdrv_bluetooth_btstack_stm32_hal_handle_tx_dma_irq();
 }
 
 void DMA1_Stream7_IRQHandler(void) {
-    pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq();
+    pbdrv_bluetooth_btstack_stm32_hal_handle_rx_dma_irq();
 }
 
 void USART2_IRQHandler(void) {
-    pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq();
+    pbdrv_bluetooth_btstack_stm32_hal_handle_uart_irq();
 }
 
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
-    .transport_instance = pbdrv_bluetooth_btstack_transport_stm32_hal_instance,
-    .transport_config = pbdrv_bluetooth_btstack_transport_stm32_hal_config,
+    .transport_instance = pbdrv_bluetooth_btstack_stm32_hal_transport_instance,
+    .transport_config = pbdrv_bluetooth_btstack_stm32_hal_transport_config,
     .chipset_instance = btstack_chipset_cc256x_instance,
-    .control_instance = pbdrv_bluetooth_btstack_control_gpio_instance,
+    .control_instance = pbdrv_bluetooth_btstack_stm32_hal_control_instance,
     .er_key = (const uint8_t *)UID_BASE,
     .ir_key = (const uint8_t *)UID_BASE,
 };
