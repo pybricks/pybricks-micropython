@@ -178,7 +178,7 @@ static void virtual_hub_socket_init(void) {
 }
 
 // The 'embedded' main.
-extern void _main(void);
+extern void pbsys_main(void);
 
 int main(int argc, char **argv) {
 
@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
     #ifdef PBDRV_CONFIG_RUN_ON_CI
     // On the CI modifying settings for stdin causes problems. The REPL isn't
     // used on CI anyway.
-    _main();
+    pbsys_main();
     return 0;
     #endif
 
@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
     }
 
     // Simulate running embedded main.
-    _main();
+    pbsys_main();
 
     // Restore stdin flags.
     if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags) == -1) {

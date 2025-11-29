@@ -9,7 +9,7 @@
   *                - Set the vector table entries with the exceptions ISR address,
   *                - Configure the clock system
   *                - Branches to main in the C library (which eventually
-  *                  calls _main()).
+  *                  calls pbsys_main()).
   *            After Reset the Cortex-M4 processor is in Thread mode,
   *            priority is Privileged, and the Stack is set to Main.
   ******************************************************************************
@@ -67,7 +67,7 @@ defined in linker script */
  * @brief  This is the code that gets called when the processor first
  *          starts execution following a reset event. Only the absolutely
  *          necessary set is performed, after which the application
- *          supplied _main() routine is called.
+ *          supplied pbsys_main() routine is called.
  * @param  None
  * @retval : None
 */
@@ -112,7 +112,7 @@ LoopFillZerobss:
 /* Call static constructors */
     @ bl __libc_init_array
 /* Call the application's entry point.*/
-	bl	_main
+	bl	pbsys_main
 
 LoopForever:
     b LoopForever

@@ -47,8 +47,8 @@
 @******************************************************************************
 @
 @ The reset handler sets up the stack pointers for all the modes. The FIQ and
-@ IRQ shall be disabled during this. Then, clearthe BSS sections, switch to the
-@ _main() function.
+@ IRQ shall be disabled during this. Then, clear the BSS sections, switch to the
+@ pbsys_main() function.
 @
 Entry:
          @ U-Boot invokes us with caches and MMU enabled (since we use the
@@ -126,12 +126,11 @@ Enter_main:
          MOV   lr, pc                          @ Dummy return
          BLX   r10                             @ Branch to SystemInit
 
-         LDR   r10, =_main                     @ Get the address of _main
+         LDR   r10, =pbsys_main                     @ Get the address of pbsys_main
          MOV   r0, #0                          @ Set the first argument to 0
          MOV   r1, #0                          @ Set the second argument to NULL (0)
          MOV   lr, pc                          @ Dummy return
-         BLX   r10                             @ Branch to _main
-
+         BLX   r10                             @ Branch to pbsys_main
          SUB   pc, pc, #0x08                   @ looping
 
 @*****************************************************************************
