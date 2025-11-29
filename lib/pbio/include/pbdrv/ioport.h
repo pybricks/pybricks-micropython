@@ -145,7 +145,9 @@ static inline void pbdrv_ioport_enable_vcc(bool enable) {
  */
 pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_ioport_p5p6_mode_t mode);
 
+#if PBIO_CONFIG_PORT
 extern const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV];
+#endif // PBIO_CONFIG_PORT
 
 #if PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 extern const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin;
