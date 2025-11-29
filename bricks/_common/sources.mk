@@ -113,10 +113,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/block_device/block_device_test.c \
 	drv/block_device/block_device_w25qxx_stm32.c \
 	drv/bluetooth/bluetooth.c \
-	drv/bluetooth/bluetooth_btstack_control_gpio.c \
-	drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.c \
+	drv/bluetooth/bluetooth_btstack_stm32_hal.c \
 	drv/bluetooth/bluetooth_btstack.c \
-	drv/bluetooth/bluetooth_init_cc2564C_1.4.c \
 	drv/bluetooth/bluetooth_simulation.c \
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
@@ -189,6 +187,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/watchdog/watchdog_ev3.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
+	platform/prime_hub/bluetooth_init_cc2564C_1.4.c \
 	src/angle.c \
 	src/battery.c \
 	src/busy_count.c \
