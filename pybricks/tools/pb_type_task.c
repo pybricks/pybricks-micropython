@@ -138,7 +138,7 @@ MP_DEFINE_CONST_DICT(pb_type_Task_locals_dict, pb_type_Task_locals_dict_table);
 static mp_obj_t pb_type_Task_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     // Whether to race until one task is done (True) or wait for all tasks (False).
-    bool race = n_kw == 1 && mp_obj_is_true(args[n_args - 1]);
+    bool race = n_kw == 1 && mp_obj_is_true(args[n_args + 1]);
 
     pb_type_Task_obj_t *self = mp_obj_malloc(pb_type_Task_obj_t, type);
     self->num_tasks = n_args;

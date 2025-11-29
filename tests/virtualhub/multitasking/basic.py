@@ -163,11 +163,40 @@ async def test_race_2():
         print(type(e), e.args)
 
 
+async def test_race_false():
+    print("test_race_false")
+
+    task1_cancel = CallCounter()
+    task2_cancel = CallCounter()
+
+    task1 = return_after(1, task1_cancel)
+    task2 = return_after(2, task2_cancel)
+
+    # returns [0, 1] - both allowed to complete
+    print(await multitask(task1, task2, race=False))
+
+    # neither should be canceled
+    print(task1_cancel.count, task2_cancel.count)
+
+    # both should raise StopIteration because they are done
+
+    try:
+        next(task1)
+    except StopIteration as e:
+        print(type(e), e.args)
+
+    try:
+        next(task2)
+    except StopIteration as e:
+        print(type(e), e.args)
+
+
 async def main():
     await test_all_1()
     await test_all_2()
     await test_race_1()
     await test_race_2()
+    await test_race_false()
 
 
 run_task(main())
