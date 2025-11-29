@@ -8,10 +8,12 @@
 - Make 3D orientation default for heading and drivebase heading control ([support#1962]).
 
 ### Fixed
+- Fixed `race=False` ignored in `pybricks.tools.multitask()`. ([support#2468])
 - Fixed Essential Hub button being disabled after power off so it could not be
   switched on again.
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
+[support#2468]: https://github.com/pybricks/support/issues/2468
 
 ## [4.0.0b2] - 2025-11-25
 
@@ -22,7 +24,7 @@
 
 ### Added
 - Experimental support for USB connectivity on SPIKE Prime ([pybricks-micropython#208]). Currently disabled by default.
-- Initial support for `pybricks.iodevices.UARTDevice` ([support#220]). 
+- Initial support for `pybricks.iodevices.UARTDevice` ([support#220]).
 - Enabled previously hidden support for multiple code
   slots ([pybricks-micropython#264], [pybricks-micropython#312]).
 - Added the following status flags to the Pybricks protocol:
@@ -185,7 +187,7 @@
 - Fixed battery charging timeout if it didn't reach 100% after about 6 hours.
   This is same behavior observed in official firmware. ([pybricks-micropython#292]).
 - Fixed inconsistent battery level reported to user. Now it uses the same value
-  as used by the light indicator ([support#2055]). 
+  as used by the light indicator ([support#2055]).
 - Fixed `DriveBase.angle()` getting an incorrectly rounded gyro value, which
   could cause `turn(360)` to be off by a degree ([support#1844]).
 - Fixed `hub` silently ignoring non-orthogonal base axis when it should raise.

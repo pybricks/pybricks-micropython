@@ -18,3 +18,8 @@ test_race_2
 1 0
 <class 'StopIteration'> ()
 <class 'StopIteration'> ()
+test_race_false
+(0, 1)
+0 0
+<class 'StopIteration'> ()
+<class 'StopIteration'> ()
