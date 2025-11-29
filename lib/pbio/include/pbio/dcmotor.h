@@ -104,7 +104,7 @@ static inline pbio_dcmotor_t *pbio_dcmotor_init_instance(uint8_t index, pbdrv_mo
     return NULL;
 }
 
-static inline pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
+static inline pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, lego_device_type_id_t type, pbio_direction_t direction) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
