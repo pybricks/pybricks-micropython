@@ -5,6 +5,7 @@
 
 #if PBIO_CONFIG_PORT_LUMP
 
+#include <assert.h>
 #include <string.h>
 
 #include <pbio/os.h>
@@ -704,6 +705,10 @@ static void ev3_uart_prepare_tx_msg(pbio_port_lump_dev_t *lump_dev, lump_msg_typ
     } else if (i <= 32) {
         size = LUMP_MSG_SIZE_32;
         len = 32;
+    } else {
+        // Can't return error here, so just assert.
+        assert(false);
+        size = 0;
     }
 
     // pad with zeros
