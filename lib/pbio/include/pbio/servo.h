@@ -140,6 +140,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, lego_device_type_id_t type, pbi
 
 /** @cond INTERNAL */
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_dcmotor_actuation_t actuation_type, int32_t payload);
+int32_t pbio_servo_get_max_voltage(lego_device_type_id_t id);
 const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(lego_device_type_id_t id);
 void pbio_servo_update_all(void);
 /** @endcond */

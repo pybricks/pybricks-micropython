@@ -19,6 +19,7 @@
 #include <pbio/int_math.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
+#include <pbio/servo.h>
 
 #if PBIO_BATTERY_MAX_DUTY != PBDRV_MOTOR_DRIVER_MAX_DUTY
 #error "this file is written with the assumption that we can pass battery duty to motor driver without scaling"
@@ -120,7 +121,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, lego_device_type_id_t t
     }
 
     // Load settings for this motor
-    dcmotor->max_voltage = pbio_dcmotor_get_max_voltage(type);
+    dcmotor->max_voltage = pbio_servo_get_max_voltage(type);
     dcmotor->max_voltage_hardware = dcmotor->max_voltage;
 
     // Set direction and state
