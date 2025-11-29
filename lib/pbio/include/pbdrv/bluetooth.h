@@ -595,6 +595,9 @@ static inline pbio_error_t pbdrv_bluetooth_start_observing(
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+static inline void pbdrv_bluetooth_restart_observing_request(void) {
+}
+
 static inline pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
