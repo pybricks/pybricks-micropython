@@ -69,7 +69,6 @@ typedef struct _pbio_dcmotor_t {
 bool pbio_dcmotor_all_coasting(void);
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
-int32_t pbio_dcmotor_get_max_voltage(lego_device_type_id_t id);
 /** @endcond */
 
 /** @name Initialization Functions */
@@ -112,10 +111,6 @@ static inline pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_dire
 static inline void pbio_dcmotor_get_state(const pbio_dcmotor_t *dcmotor, pbio_dcmotor_actuation_t *actuation, int32_t *voltage_now) {
     *actuation = PBIO_DCMOTOR_ACTUATION_COAST;
     *voltage_now = 0;
-}
-
-static inline int32_t pbio_dcmotor_get_max_voltage(lego_device_type_id_t id) {
-    return 0;
 }
 
 static inline void pbio_dcmotor_get_settings(const pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {

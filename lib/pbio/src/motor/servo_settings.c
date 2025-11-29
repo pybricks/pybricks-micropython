@@ -322,7 +322,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
  * @param [in]  id          Device type id.
  * @return                  Maximum voltage (mV) for the given motor type.
  */
-int32_t pbio_dcmotor_get_max_voltage(lego_device_type_id_t id) {
+int32_t pbio_servo_get_max_voltage(lego_device_type_id_t id) {
     if (id == LEGO_DEVICE_TYPE_ID_SPIKE_S_MOTOR) {
         return 6000;
     }

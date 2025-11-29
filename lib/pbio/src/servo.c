@@ -252,7 +252,7 @@ static pbio_error_t pbio_servo_initialize_settings(pbio_servo_t *srv, lego_devic
     // Initialize maximum torque as the stall torque for maximum voltage.
     // In practice, the nominal voltage is a bit lower than the 9V values.
     // REVISIT: Select nominal voltage based on battery type instead of 7500.
-    int32_t max_voltage = pbio_dcmotor_get_max_voltage(type);
+    int32_t max_voltage = pbio_servo_get_max_voltage(type);
     int32_t nominal_voltage = pbio_int_math_min(max_voltage, 7500);
     int32_t nominal_torque = pbio_observer_voltage_to_torque(srv->observer.model, nominal_voltage);
 
