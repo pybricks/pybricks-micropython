@@ -366,7 +366,7 @@ static void test_color_hsv_cost(void *env) {
     color_a.h = 0;
     color_a.s = 100;
     color_a.v = 100;
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_a), ==, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_a), ==, 0);
 
     // blacks with different saturations/hues should be the same
     color_a.h = 230;
@@ -376,7 +376,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 23;
     color_b.s = 99;
     color_b.v = 0;
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), ==, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), ==, 0);
 
     // colors with different hues should be different when value>0 and saturation>0
     color_a.h = 230;
@@ -386,7 +386,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 23;
     color_b.s = 99;
     color_b.v = 100;
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
 
     // grays with different hues should be the same
     color_a.h = 230;
@@ -396,7 +396,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 23;
     color_b.s = 0;
     color_b.v = 50;
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), ==, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), ==, 0);
 
     // distance should be greater when saturation is greater
     color_a.h = 30;
@@ -407,7 +407,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 20;
     color_b.v = 70;
 
-    dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
 
     color_a.h = 30;
     color_a.s = 40;
@@ -417,7 +417,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 40;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), >, dist);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, dist);
 
     // resolve colors that are close
     color_a.h = 30;
@@ -428,7 +428,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 20;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
 
     color_a.h = 30;
     color_a.s = 20;
@@ -438,7 +438,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 25;
     color_b.v = 70;
 
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
 
     color_a.h = 30;
     color_a.s = 20;
@@ -448,7 +448,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 20;
     color_b.v = 75;
 
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
 
     // hues 360 and 0 should be the same
     color_a.h = 360;
@@ -458,7 +458,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 0;
     color_b.s = 100;
     color_b.v = 100;
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), ==, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), ==, 0);
 
     // distance between hues 359 and 1 should be smaller than hues 1 and 5
     color_a.h = 359;
@@ -468,7 +468,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.h = 1;
     color_b.s = 100;
     color_b.v = 100;
-    dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
 
     color_a.h = 1;
     color_a.s = 100;
@@ -478,7 +478,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 100;
     color_b.v = 100;
 
-    tt_want_int_op(pbio_color_get_bicone_squared_distance(&color_a, &color_b), >, dist);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, dist);
 
     // check distance is monotonous along several color paths. This should catch potential int overflows
     int prev_dist = 0;
@@ -495,7 +495,7 @@ static void test_color_hsv_cost(void *env) {
 
     while (color_a.s < 100) {
         color_a.s += 5;
-        dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -520,7 +520,7 @@ static void test_color_hsv_cost(void *env) {
 
     while (color_a.v < 100) {
         color_a.v += 5;
-        dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -545,7 +545,7 @@ static void test_color_hsv_cost(void *env) {
 
     while (color_a.v < 100) {
         color_a.v += 5;
-        dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -573,7 +573,7 @@ static void test_color_hsv_cost(void *env) {
         color_a.h = i < 0 ? 180 : 0;
         color_a.v = 10000 / (200 - color_a.s); // constant lightness
 
-        dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -592,7 +592,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 100;
     color_b.v = 100;
 
-    dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
     tt_want_int_op(dist, >, 390000000);
     tt_want_int_op(dist, <, 410000000);
 
@@ -604,7 +604,7 @@ static void test_color_hsv_cost(void *env) {
     color_b.s = 0;
     color_b.v = 100;
 
-    dist = pbio_color_get_bicone_squared_distance(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
     tt_want_int_op(dist, >, 390000000);
     tt_want_int_op(dist, <, 410000000);
 }

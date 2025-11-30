@@ -33,15 +33,13 @@ void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv)
     pbio_color_rgb_to_hsv(rgb, hsv);
 
     // Slight shift for lower hues to make yellow somewhat more accurate
-    if (hsv->h < 40) {
-        uint8_t offset = ((hsv->h - 20) << 8) / 20;
-        int32_t scale = 200 - ((100 * (offset * offset)) >> 16);
-        hsv->h = hsv->h * scale / 100;
+    if (hsv->h >= 350) {
+        hsv->h = (350 + 2 * (hsv->h - 350)) % 360;
+    } else if (hsv->h < 40) {
+        hsv->h += 10;
+    } else if (hsv->h < 60) {
+        hsv->h = 50 + (hsv->h - 40) / 2;
     }
-
-    // Value and saturation correction
-    hsv->s = hsv->s * (200 - hsv->s) / 100;
-    hsv->v = hsv->v * (200 - hsv->v) / 100;
 }
 
 static const mp_rom_obj_tuple_t pb_color_map_default = {
@@ -75,11 +73,29 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     int32_t cost_now = INT32_MAX;
     int32_t cost_min = INT32_MAX;
 
+    pbio_color_distance_func_t distance_func = pbio_color_get_distance_saturation_heuristic;
+
+    // If user only provides fully saturated colors (hue, 100, 100) and/or fully
+    // desaturated colors (0, 0, value), use a simplified heuristic matcher for
+    // better default results that are distance independent. Otherwise use a
+    // bicone color distance measure.
+    for (size_t i = 0; i < n; i++) {
+        const pbio_color_hsv_t *candidate = pb_type_Color_get_hsv(colors[i]);
+
+        // Use bicone mapping if custom (realistic) colors provided.
+        bool idealized_grayscale = candidate->s == 0 && candidate->h == 0;
+        bool idealized_color = candidate->s == 100 && candidate->v == 100;
+        if (!idealized_grayscale && !idealized_color) {
+            distance_func = pbio_color_get_distance_bicone_squared;
+            break;
+        }
+    }
+
     // Compute cost for each candidate
     for (size_t i = 0; i < n; i++) {
 
         // Evaluate the cost function
-        cost_now = pbio_color_get_bicone_squared_distance(hsv, pb_type_Color_get_hsv(colors[i]));
+        cost_now = distance_func(hsv, pb_type_Color_get_hsv(colors[i]));
 
         // If cost is less than before, update the minimum and the match
         if (cost_now < cost_min) {
