@@ -39,6 +39,15 @@ static inline bool pbsys_storage_slot_change_is_allowed(void) {
     return false;
 }
 static inline void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
+    program->code_start = NULL;
+    program->code_end = NULL;
+
+    // Must be defined in linker script.
+    extern uint8_t pbsys_storage_heap_start;
+    extern uint8_t pbsys_storage_heap_end;
+
+    program->user_ram_start = &pbsys_storage_heap_start;
+    program->user_ram_end = &pbsys_storage_heap_end;
 }
 
 #endif // PBSYS_CONFIG_STORAGE

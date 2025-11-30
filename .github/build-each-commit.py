@@ -65,6 +65,7 @@ for commit in pybricks.iter_commits(
         "essentialhub",
         "nxt",
         "ev3",
+        "buildhat",
     ]:
         pybricks.submodule("micropython").module().git.submodule(
             "update", "--init", "lib/micropython-lib"
@@ -79,6 +80,11 @@ for commit in pybricks.iter_commits(
         )
     if args.hub == "ev3":
         pybricks.git.submodule("update", "--init", "--checkout", "lib/umm_malloc")
+
+    if args.hub == "buildhat":
+        pybricks.submodule("micropython").module().git.submodule(
+            "update", "--init", "lib/pico-sdk"
+        )
 
     # build the firmware
     subprocess.check_call(

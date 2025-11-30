@@ -20,7 +20,16 @@ PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
 PYBRICKS_BRANCH = "origin/master"
 
-HUBS = ["movehub", "cityhub", "technichub", "primehub", "essentialhub", "nxt", "ev3"]
+HUBS = [
+    "movehub",
+    "cityhub",
+    "technichub",
+    "primehub",
+    "essentialhub",
+    "nxt",
+    "ev3",
+    "buildhat",
+]
 
 GITHUB_RUN_NUMBER = os.environ.get("GITHUB_RUN_NUMBER")
 
@@ -92,6 +101,9 @@ for commit in pybricks.iter_commits(
     pybricks.git.submodule("update", "--init", "micropython")
     pybricks.submodule("micropython").module().git.submodule(
         "update", "--init", "lib/micropython-lib"
+    )
+    pybricks.submodule("micropython").module().git.submodule(
+        "update", "--init", "lib/pico-sdk"
     )
     pybricks.submodule("micropython").module().git.submodule(
         "update", "--init", "lib/stm32lib"
