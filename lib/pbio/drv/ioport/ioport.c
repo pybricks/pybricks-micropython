@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2022 The Pybricks Authors
 
+#include <stdbool.h>
+
 #include <pbdrv/config.h>
-
-#if PBDRV_CONFIG_IOPORT
-
 #include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
+
+#if PBDRV_CONFIG_IOPORT
 
 /**
  * Resets pins to the default state, which is input with the buffer disabled.
@@ -75,6 +76,8 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_i
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+#endif // PBDRV_CONFIG_IOPORT
+
 #if PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
 void pbdrv_ioport_enable_vcc(bool enable) {
     if (enable) {
@@ -84,5 +87,3 @@ void pbdrv_ioport_enable_vcc(bool enable) {
     }
 }
 #endif // PBDRV_CONFIG_HAS_PORT_VCC_CONTROL
-
-#endif // PBDRV_CONFIG_IOPORT
