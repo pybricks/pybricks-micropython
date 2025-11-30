@@ -9,6 +9,8 @@
 #define PBSYS_CONFIG_BATTERY                        (1)
 #define PBSYS_CONFIG_BATTERY_CHARGER                (0)
 #define PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION        (1)
+#define PBSYS_CONFIG_BATTERY                        (1)
+#define PBSYS_CONFIG_BATTERY_CHARGER                (0)
 #define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 7) // top left, back button
 #define PBSYS_CONFIG_HMI_LCD                        (1)

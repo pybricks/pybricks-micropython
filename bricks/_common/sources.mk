@@ -35,6 +35,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
 	experimental/pb_module_experimental.c \
 	hubs/pb_module_hubs.c \
+	hubs/pb_type_buildhat.c \
 	hubs/pb_type_cityhub.c \
 	hubs/pb_type_essentialhub.c \
 	hubs/pb_type_ev3brick.c \
@@ -131,6 +132,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/clock/clock_linux.c \
 	drv/clock/clock_none.c \
 	drv/clock/clock_nxt.c \
+	drv/clock/clock_pico.c \
 	drv/clock/clock_stm32.c \
 	drv/clock/clock_test.c \
 	drv/core.c \
@@ -140,6 +142,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/display/display_ev3.c \
 	drv/display/display_virtual.c \
 	drv/gpio/gpio_ev3.c \
+	drv/gpio/gpio_pico.c \
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \

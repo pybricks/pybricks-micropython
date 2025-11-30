@@ -16,6 +16,7 @@ This is the recommended development environment used by the Pybricks maintainers
 - [GNU Make][make]
 
 Optional:
+- [Cmake][cmake] v3.x (only needed if building for the Raspberry Pi Build HAT)
 - [Emscripten][emsdk] v1.39.x (only needed if building mpy-cross JavaScript package)
 - [Yarn][yarn] v1.x (only needed if building JavaScript packages)
 
@@ -26,6 +27,7 @@ Optional:
 [arm-gcc]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 [gcc]: https://gcc.gnu.org/
 [make]: https://www.gnu.org/software/make/
+[cmake]: https://cmake.org/
 [emsdk]: https://emscripten.org/docs/getting_started/downloads.html
 [yarn]: https://classic.yarnpkg.com/en/docs/install
 

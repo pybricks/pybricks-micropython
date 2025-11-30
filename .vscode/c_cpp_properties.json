@@ -295,6 +295,31 @@
             "intelliSenseMode": "gcc-arm"
         },
         {
+            "name": "buildhat",
+            "includePath": [
+                "${workspaceFolder}/bricks/buildhat",
+                "${workspaceFolder}/bricks/buildhat/build*/**",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/build_hat",
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}/micropython/lib/pico-sdk/src/common/**",
+                "${workspaceFolder}/micropython/lib/pico-sdk/src/rp2040/**",
+                "${workspaceFolder}/micropython/lib/pico-sdk/src/rp2_common/**",
+                "${workspaceFolder}"
+            ],
+            "defines": [
+                "PICO_RP2040=1",
+                "PICO_ON_DEVICE=1",
+                "MICROPY_MODULE_FROZEN_MPY",
+                "MICROPY_ROM_TEXT_COMPRESSION"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
             "name": "debug",
             "includePath": [
                 "${workspaceFolder}/lib/cmsis/inc",
