@@ -6,6 +6,8 @@
 #ifndef _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_H_
 #define _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_H_
 
+#ifdef PBDRV_CONFIG_BLUETOOTH_BTSTACK
+
 #include <btstack_chipset.h>
 #include <btstack_control.h>
 #include <btstack_uart_block.h>
@@ -23,5 +25,7 @@ typedef struct {
 
 // defined in platform.c
 extern const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data;
+
+#endif  // PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
 #endif // _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_H_
