@@ -223,6 +223,30 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
     switch (hci_event_packet_get_type(packet)) {
+        case HCI_EVENT_COMMAND_COMPLETE: {
+            const uint8_t *rp = hci_event_command_complete_get_return_parameters(packet);
+            switch (hci_event_command_complete_get_command_opcode(packet)) {
+                case HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION: {
+                    uint16_t lmp_pal_subversion = pbio_get_uint16_le(&rp[7]);
+                    pbdrv_bluetooth_btstack_set_chipset(lmp_pal_subversion);
+
+                    #if DEBUG
+                    // Show version in ev3dev format.
+                    uint16_t chip = (lmp_pal_subversion & 0x7C00) >> 10;
+                    uint16_t min_ver = (lmp_pal_subversion & 0x007F);
+                    uint16_t maj_ver = (lmp_pal_subversion & 0x0380) >> 7;
+                    if (lmp_pal_subversion & 0x8000) {
+                        maj_ver |= 0x0008;
+                    }
+                    DEBUG_PRINT("LMP %04x: TIInit_%d.%d.%d.bts\n", lmp_pal_subversion, chip, maj_ver, min_ver);
+                    #endif
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
         #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
         case GATT_EVENT_SERVICE_QUERY_RESULT: {
             // Service discovery not used.
