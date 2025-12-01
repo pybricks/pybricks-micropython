@@ -22,6 +22,11 @@
 
 #include <pbdrv/gpio.h>
 
+void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion) {
+    // All platforms supported by this abstraction use a cc2560x with the same
+    // init script, so nothing to do here.
+}
+
 static int btstack_control_gpio_on(void) {
     const pbdrv_bluetooth_btstack_stm32_platform_data_t *pdata =
         &pbdrv_bluetooth_btstack_stm32_platform_data;
