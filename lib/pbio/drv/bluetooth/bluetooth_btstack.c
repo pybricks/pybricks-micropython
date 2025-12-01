@@ -13,6 +13,7 @@
 #include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack.h>
+#include <btstack_run_loop.h>
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
@@ -990,81 +991,25 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static void bluetooth_btstack_run_loop_init(void) {
-    // Not used. Bluetooth process is started like a regular pbdrv process.
-}
-
-static btstack_linked_list_t data_sources;
-
-static void bluetooth_btstack_run_loop_add_data_source(btstack_data_source_t *ds) {
-    btstack_linked_list_add(&data_sources, &ds->item);
-}
-
-static bool bluetooth_btstack_run_loop_remove_data_source(btstack_data_source_t *ds) {
-    return btstack_linked_list_remove(&data_sources, &ds->item);
-}
-
-static void bluetooth_btstack_run_loop_enable_data_source_callbacks(btstack_data_source_t *ds, uint16_t callback_types) {
-    ds->flags |= callback_types;
-}
-
-static void bluetooth_btstack_run_loop_disable_data_source_callbacks(btstack_data_source_t *ds, uint16_t callback_types) {
-    ds->flags &= ~callback_types;
-}
-
-static btstack_linked_list_t timers;
-
 static void bluetooth_btstack_run_loop_set_timer(btstack_timer_source_t *ts, uint32_t timeout_in_ms) {
     ts->timeout = pbdrv_clock_get_ms() + timeout_in_ms;
 }
 
-static void bluetooth_btstack_run_loop_add_timer(btstack_timer_source_t *ts) {
-    btstack_linked_item_t *it;
-    for (it = (void *)&timers; it->next; it = it->next) {
-        // don't add timer that's already in there
-        btstack_timer_source_t *next = (void *)it->next;
-        if (next == ts) {
-            // timer was already in the list!
-            assert(0);
-            return;
-        }
-        // exit if new timeout before list timeout
-        int32_t delta = btstack_time_delta(ts->timeout, next->timeout);
-        if (delta < 0) {
-            break;
-        }
-    }
-
-    ts->item.next = it->next;
-    it->next = &ts->item;
-}
-
-static bool bluetooth_btstack_run_loop_remove_timer(btstack_timer_source_t *ts) {
-    if (btstack_linked_list_remove(&timers, &ts->item)) {
-        return true;
-    }
-    return false;
-}
-
-static void bluetooth_btstack_run_loop_execute(void) {
-    // not used
-}
-
-static void bluetooth_btstack_run_loop_dump_timer(void) {
+void bluetooth_btstack_run_loop_execute() {
     // not used
 }
 
 static const btstack_run_loop_t bluetooth_btstack_run_loop = {
-    .init = bluetooth_btstack_run_loop_init,
-    .add_data_source = bluetooth_btstack_run_loop_add_data_source,
-    .remove_data_source = bluetooth_btstack_run_loop_remove_data_source,
-    .enable_data_source_callbacks = bluetooth_btstack_run_loop_enable_data_source_callbacks,
-    .disable_data_source_callbacks = bluetooth_btstack_run_loop_disable_data_source_callbacks,
+    .init = btstack_run_loop_base_init,
+    .add_data_source = btstack_run_loop_base_add_data_source,
+    .remove_data_source = btstack_run_loop_base_remove_data_source,
+    .enable_data_source_callbacks = btstack_run_loop_base_enable_data_source_callbacks,
+    .disable_data_source_callbacks = btstack_run_loop_base_disable_data_source_callbacks,
     .set_timer = bluetooth_btstack_run_loop_set_timer,
-    .add_timer = bluetooth_btstack_run_loop_add_timer,
-    .remove_timer = bluetooth_btstack_run_loop_remove_timer,
+    .add_timer = btstack_run_loop_base_add_timer,
+    .remove_timer = btstack_run_loop_base_remove_timer,
     .execute = bluetooth_btstack_run_loop_execute,
-    .dump_timer = bluetooth_btstack_run_loop_dump_timer,
+    .dump_timer = btstack_run_loop_base_dump_timer,
     .get_time_ms = pbdrv_clock_get_ms,
 };
 
@@ -1085,15 +1030,7 @@ static pbio_error_t pbdrv_bluetooth_hci_process_thread(pbio_os_state_t *state, v
 
     if (do_poll_handler) {
         do_poll_handler = false;
-
-        btstack_data_source_t *ds, *next;
-        for (ds = (void *)data_sources; ds != NULL; ds = next) {
-            // cache pointer to next data_source to allow data source to remove itself
-            next = (void *)ds->item.next;
-            if (ds->flags & DATA_SOURCE_CALLBACK_POLL) {
-                ds->process(ds, DATA_SOURCE_CALLBACK_POLL);
-            }
-        }
+        btstack_run_loop_base_poll_data_sources();
     }
 
     static pbio_os_timer_t btstack_timer = {
@@ -1102,18 +1039,7 @@ static pbio_error_t pbdrv_bluetooth_hci_process_thread(pbio_os_state_t *state, v
 
     if (pbio_os_timer_is_expired(&btstack_timer)) {
         pbio_os_timer_extend(&btstack_timer);
-
-        // process all BTStack timers in list that have expired
-        while (timers) {
-            btstack_timer_source_t *ts = (void *)timers;
-            int32_t delta = btstack_time_delta(ts->timeout, pbdrv_clock_get_ms());
-            if (delta > 0) {
-                // we have reached unexpired timers
-                break;
-            }
-            btstack_run_loop_remove_timer(ts);
-            ts->process(ts);
-        }
+        btstack_run_loop_base_process_timers(pbdrv_clock_get_ms());
     }
 
     // Also propagate non-btstack events like polls or timers.
