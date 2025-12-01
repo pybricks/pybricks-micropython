@@ -6,6 +6,10 @@
 // TODO: need to handle high battery current
 // TODO: need to handle battery pack switch and Li-ion batteries for Technic Hub and NXT
 
+#include <pbsys/config.h>
+
+#if PBSYS_CONFIG_BATTERY
+
 #include <pbdrv/battery.h>
 #include <pbio/battery.h>
 #include <pbio/os.h>
@@ -125,3 +129,5 @@ void pbsys_battery_poll(void) {
 bool pbsys_battery_is_full(void) {
     return pbio_battery_get_average_voltage() >= LIION_FULL_MV;
 }
+
+#endif // PBSYS_CONFIG_BATTERY
