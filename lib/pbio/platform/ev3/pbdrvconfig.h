@@ -49,12 +49,12 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3          (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2560X      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND     LWP3_HUB_KIND_TECHNIC_LARGE
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR 0x08007d80
+#undef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (6)
-#define PBDRV_CONFIG_BUTTON_INSTANT_RESET           (0)
+#define PBDRV_CONFIG_BUTTON_INSTANT_RESET           (1)
 
 #define PBDRV_CONFIG_DISPLAY                        (1)
 #define PBDRV_CONFIG_DISPLAY_EV3                    (1)
@@ -99,7 +99,7 @@
 #define PBDRV_CONFIG_SOUND_DEFAULT_VOLUME           75
 
 #define PBDRV_CONFIG_UART                           (1)
-#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (1)
 #define PBDRV_CONFIG_UART_EV3                       (1)
 #define PBDRV_CONFIG_UART_EV3_PRU                   (1)
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (4)

@@ -15,7 +15,7 @@
 #include <string.h>
 #include <lwrb/lwrb.h>
 
-#define BUF_SIZE (1024)
+#define BUF_SIZE (1024 * 256)
 
 static uint8_t ring_buf_storage[BUF_SIZE];
 static lwrb_t ring_buffer;

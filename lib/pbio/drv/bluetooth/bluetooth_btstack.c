@@ -42,7 +42,7 @@
 #define HUB_VARIANT 0x0000
 #endif
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #include <pbdrv/../../drv/uart/uart_debug_first_port.h>

@@ -42,7 +42,7 @@
 #include <tiam1808/psc.h>
 #include <tiam1808/uart.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #include <pbdrv/../../drv/uart/uart_debug_first_port.h>
