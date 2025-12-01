@@ -42,7 +42,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 #define BTSTACK_FILE__ "pybricks_service_server.c"
 
@@ -168,4 +168,4 @@ int pybricks_service_server_send(hci_con_handle_t con_handle, const uint8_t *dat
     return att_server_notify(con_handle, pybricks_command_event_value_handle, data, size);
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK
+#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
