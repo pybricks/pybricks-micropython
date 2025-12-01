@@ -911,19 +911,17 @@ void pbdrv_bluetooth_controller_reset_hard(void) {
  */
 static pbio_error_t bluetooth_btstack_handle_power_control(pbio_os_state_t *state, HCI_POWER_MODE power_mode, HCI_STATE end_state) {
 
-    bool do_it_this_time = false;
+    static bool busy_handling_power_control;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    do_it_this_time = true;
-    PBIO_OS_ASYNC_SET_CHECKPOINT(state);
-
-    // The first time we get here, do_it_this_time = true, so we call
-    // hci_power_control. When it re-enters at the checkpoint above, it will
-    // be false, so move on.
-    if (do_it_this_time) {
-        hci_power_control(power_mode);
+    if (busy_handling_power_control) {
+        return PBIO_ERROR_AGAIN;
     }
+
+    busy_handling_power_control = true;
+    hci_power_control(power_mode); // causes synchronous re-entry.
+    busy_handling_power_control = false;
 
     // Wait for the power state to take effect.
     PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == end_state);
