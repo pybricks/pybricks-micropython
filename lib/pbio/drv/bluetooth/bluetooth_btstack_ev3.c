@@ -427,7 +427,7 @@ const void *pbdrv_bluetooth_btstack_ev3_transport_config(void) {
         // Note: theoretically the AM1808 should be able to go up to 1875000 or
         // higher, but we observed random lost transfers at that speed. 921600 seems
         // stable and is still plenty of bandwidth for Bluetooth classic.
-        .baudrate_main = 921600,
+        .baudrate_main = 115200,
         .flowcontrol = 1,
         .device_name = NULL,
     };
