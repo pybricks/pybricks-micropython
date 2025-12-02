@@ -174,6 +174,11 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }
         // On left, decrement slot when possible, then start waiting on new inputs.
         if (pbdrv_button_get_pressed() & PBIO_BUTTON_LEFT) {
+
+            static pbio_os_state_t sub;
+            pbdrv_bluetooth_start_advertising(true);
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
             pbsys_status_increment_selected_slot(false);
             continue;
         }
