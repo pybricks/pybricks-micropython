@@ -50,7 +50,7 @@
 static void pbdrv_hci_dump_reset(void) {
 }
 static void pbdrv_hci_dump_log_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len) {
-    pbdrv_uart_debug_printf("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
+    // pbdrv_uart_debug_printf("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
 }
 static void pbdrv_hci_dump_log_message(int log_level, const char *format, va_list argptr) {
     pbdrv_uart_debug_vprintf(format, argptr);
