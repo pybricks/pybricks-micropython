@@ -8,14 +8,8 @@
 // - AKA TIInit_6.12.26.bts
 // - initscripts-TIInit_6.12.26_ble_add-on_v1.4.bts
 #include <stdint.h>
-#include "btstack_chipset_cc256x.h"
 
-
-const uint16_t cc256x_init_script_lmp_subversion = 0x9a1a;
-
-uint16_t btstack_chipset_cc256x_lmp_subversion(void) {
-    return cc256x_init_script_lmp_subversion;
-}
+#include "../bluetooth_btstack.h"
 
 #if defined(__GNUC__) && defined(__MSP430X__) && (__MSP430X__ > 0)
 __attribute__((section(".fartext")))
@@ -23,7 +17,8 @@ __attribute__((section(".fartext")))
 #ifdef __AVR__
 __attribute__((__progmem__))
 #endif
-const uint8_t cc256x_init_script[] = {
+
+static const uint8_t cc2564c_init_script[] = {
 
     // #--------------------------------------------------------------------------------
     // # Description : Orca C ROM Initialization Script
@@ -600,6 +595,10 @@ const uint8_t cc256x_init_script[] = {
 
 };
 
-const uint32_t cc256x_init_script_size = 6646;
+const pbdrv_bluetooth_btstack_chipset_info_t cc2564c_info = {
+    .lmp_version = 0x9a1a,
+    .init_script = cc2564c_init_script,
+    .init_script_size = sizeof(cc2564c_init_script),
+};
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C

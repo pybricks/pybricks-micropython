@@ -125,10 +125,6 @@ PBIO_SRC = $(PBIO_DIR)/platform/test/platform.c \
 	$(shell find $(PBIO_DIR)/sys -name "*.c") \
 	$(shell find $(PBIO_DIR)/src/motor -name "*.c") \
 
-PBIO_SRC += $(addprefix $(PBIO_DIR)/,\
-	platform/prime_hub/bluetooth_init_cc2564C_1.4.c \
-	)
-
 # tests
 TEST_INC = -I. -I$(PBIO_DIR)/platform/test
 TEST_SRC = $(shell find . -name "*.c")

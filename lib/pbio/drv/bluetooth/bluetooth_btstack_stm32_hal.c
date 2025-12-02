@@ -20,12 +20,23 @@
 #include "bluetooth_btstack_stm32_hal.h"
 #include "hci_transport_h4.h"
 
+#include "btstack_chipset_cc256x.h"
+
 #include <pbdrv/gpio.h>
 
 void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion) {
+
+    const pbdrv_bluetooth_btstack_platform_data_t *pdata =
+        &pbdrv_bluetooth_btstack_platform_data;
+
     // All platforms supported by this abstraction use a cc2560x with the same
-    // init script, so nothing to do here.
-}
+    // init script.
+    extern const pbdrv_bluetooth_btstack_chipset_info_t cc2564c_info;
+    btstack_chipset_cc256x_set_init_script((uint8_t *)cc2564c_info.init_script, cc2564c_info.init_script_size);
+
+    // Needed to apply init script.
+    hci_set_chipset(pdata->chipset_instance());
+};
 
 static int btstack_control_gpio_on(void) {
     const pbdrv_bluetooth_btstack_stm32_platform_data_t *pdata =

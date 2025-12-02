@@ -118,6 +118,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_simulation.c \
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
+	drv/bluetooth/firmware/bluetooth_init_cc2564C_1.4.c \
 	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_gpio.c \
 	drv/button/button_nxt.c \
@@ -187,7 +188,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/watchdog/watchdog_ev3.c \
 	drv/watchdog/watchdog_stm32.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
-	platform/prime_hub/bluetooth_init_cc2564C_1.4.c \
 	src/angle.c \
 	src/battery.c \
 	src/busy_count.c \
