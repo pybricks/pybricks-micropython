@@ -1117,6 +1117,10 @@ static pbio_error_t pbdrv_bluetooth_hci_process_thread(pbio_os_state_t *state, v
     return bluetooth_thread_err;
 }
 
+// Have to be defined, but are not used.
+const uint32_t cc256x_init_script_size = 0;
+const uint8_t cc256x_init_script[] = {};
+
 void pbdrv_bluetooth_init_hci(void) {
 
     static btstack_packet_callback_registration_t hci_event_callback_registration;

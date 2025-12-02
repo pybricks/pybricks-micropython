@@ -6,9 +6,20 @@
 #ifndef _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_H_
 #define _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_H_
 
+#include <btstack.h>
 #include <btstack_chipset.h>
 #include <btstack_control.h>
 #include <btstack_uart_block.h>
+
+/** Chipset info */
+typedef struct {
+    /** Version */
+    const uint16_t lmp_version;
+    /** Initialization script */
+    const uint8_t *init_script;
+    /** Initialization script size */
+    const uint32_t init_script_size;
+} pbdrv_bluetooth_btstack_chipset_info_t;
 
 void pbdrv_bluetooth_btstack_run_loop_trigger(void);
 
