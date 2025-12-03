@@ -285,7 +285,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 
         PBIO_OS_AWAIT_WHILE(state, pbdrv_usb_is_ready());
         pbdrv_usb_reset_state();
-        pbdrv_usb_tx_reset(&sub);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
     }
 
     // Unreachable. On cancellation, the charger detection step in the above
