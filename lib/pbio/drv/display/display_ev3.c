@@ -486,6 +486,34 @@ uint8_t pbdrv_display_get_max_value(void) {
     return ST7586S_VALUE_MAX;
 }
 
+uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
+    // Method to compute those values: take a picture of the EV3 screen
+    // displaying the four gray levels, take a sample for each level, then,
+    // using python:
+    //
+    // import numpy as np
+    // measures = np.array([28, 36, 41, 47]) # %
+    // measures = measures - measures[0]
+    // measures = measures / measures[-1] * 100 * 100
+    // splits = (measures[0:-1] + measures[1:]) / 2
+    // print([int(x) for x in splits])
+    static const uint16_t splits_x100[] = { 2105, 5526, 8421 };
+    uint16_t l_x100 = v * (100 - s / 2);
+    if (l_x100 < splits_x100[1]) {
+        if (l_x100 < splits_x100[0]) {
+            return 3;
+        } else {
+            return 2;
+        }
+    } else {
+        if (l_x100 < splits_x100[2]) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+}
+
 void pbdrv_display_update(void) {
     pbdrv_display_user_frame_update_requested = true;
     pbio_os_request_poll();

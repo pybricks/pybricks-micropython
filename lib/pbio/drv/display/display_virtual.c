@@ -87,6 +87,25 @@ uint8_t pbdrv_display_get_max_value(void) {
     return 3;
 }
 
+uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
+    // Method to compute those values: see EV3 driver.
+    static const uint16_t splits_x100[] = { 2105, 5526, 8421 };
+    uint16_t l_x100 = v * (100 - s / 2);
+    if (l_x100 < splits_x100[1]) {
+        if (l_x100 < splits_x100[0]) {
+            return 3;
+        } else {
+            return 2;
+        }
+    } else {
+        if (l_x100 < splits_x100[2]) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+}
+
 void pbdrv_display_update(void) {
     pbdrv_display_user_frame_update_requested = true;
     pbio_os_request_poll();
