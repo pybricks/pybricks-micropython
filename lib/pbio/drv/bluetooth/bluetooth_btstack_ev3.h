@@ -22,7 +22,6 @@ const hci_transport_t *pbdrv_bluetooth_btstack_ev3_transport_instance(void);
 
 const void *pbdrv_bluetooth_btstack_ev3_transport_config(void);
 
-void pbdrv_bluetooth_btstack_ev3_handle_rx_complete(void);
 void pbdrv_bluetooth_btstack_ev3_handle_tx_complete(void);
 
 #endif // _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_EV3_H_

@@ -16,6 +16,7 @@
 #include "btstack_chipset_cc256x.h"
 #include "hci_transport_h4.h"
 
+#include <lwrb/lwrb.h>
 
 #include "bluetooth_btstack.h"
 #include "bluetooth_btstack_ev3.h"
@@ -167,6 +168,14 @@ const btstack_control_t *pbdrv_bluetooth_btstack_ev3_control_instance(void) {
     return &ev3_control;
 }
 
+// When data becomes available on the RX line, it gets written here first. We
+// keep a ring buffer for the RX data rather than writing it directly to the
+// btstack RX buffer because sometimes, BTStack has not requested a packet yet
+// when we see incoming data, and we need somewhere to write that data to.
+// Idea: we could also just disable the RX interrupt until BTStack requests a
+// packet. But this seems to work fine and it is a lot simpler.
+static uint8_t uart_rx_pending[HCI_INCOMING_PACKET_BUFFER_SIZE];
+static lwrb_t uart_rx_pending_ring_buffer;
 
 // If a read has been requested, a pointer to the buffer and its length, else
 // null and zero.
@@ -185,13 +194,24 @@ static void (*block_received)(void);
 
 static btstack_data_source_t pbdrv_bluetooth_btstack_classic_poll_data_source;
 static volatile bool dma_write_complete;
-static volatile bool dma_read_complete;
 
 #define UART_PORT (SOC_UART_2_REGS)
 #define DMA_CHA_TX (EDMA3_CHA_UART2_TX)
-#define DMA_CHA_RX (EDMA3_CHA_UART2_RX)
+#define UART_RX_INTR (SYS_INT_UARTINT2)
+#define UART_RX_INTR_TRIG_LEVEL (UART_RX_TRIG_LEVEL_8)
 #define EDMA_BASE (SOC_EDMA30CC_0_REGS)
 #define DMA_EVENT_QUEUE (0)
+
+// The highest speed not greater than 3 Mbaud that can be exactly represented
+// with the AM1808's UART clock divider and a relatively high oversampling rate.
+// The formula is (CLOCK / (OVERSAMPLING_RATE * DIVISOR)) = BAUDRATE. Here are
+// some example calculations:
+//
+// 150000000 / (13 * 4) ~= 2884615 (we chose this)
+// 150000000 / (13 * 3) ~= 3846... (too fast)
+// 150000000 / (16 * 3) ~= 3125000 (also too fast)
+#define EV3_UART_BAUD_RATE_MAIN (2884615)
+#define EV3_UART_OVER_SAMP_RATE (UART_OVER_SAMP_RATE_13)
 
 void pbdrv_bluetooth_btstack_ev3_handle_tx_complete(void) {
     EDMA3DisableTransfer(EDMA_BASE, DMA_CHA_TX, EDMA3_TRIG_MODE_EVENT);
@@ -199,21 +219,25 @@ void pbdrv_bluetooth_btstack_ev3_handle_tx_complete(void) {
     pbdrv_bluetooth_btstack_run_loop_trigger();
 }
 
-void pbdrv_bluetooth_btstack_ev3_handle_rx_complete(void) {
-    EDMA3DisableTransfer(EDMA_BASE, DMA_CHA_RX, EDMA3_TRIG_MODE_EVENT);
-    dma_read_complete = true;
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+static void uart_rx_interrupt_handler(void) {
+    IntSystemStatusClear(UART_RX_INTR);
+    int c;
+    while ((c = UARTCharGetNonBlocking(UART_PORT)) >= 0) {
+        lwrb_write(&uart_rx_pending_ring_buffer, (uint8_t *)&c, 1);
+    }
+    if (read_buf && (size_t)read_buf_len <= lwrb_get_full(&uart_rx_pending_ring_buffer)) {
+        pbdrv_bluetooth_btstack_run_loop_trigger();
+    }
 }
 
 static void pbdrv_bluetooth_btstack_classic_drive_read() {
-    if (!read_buf || read_buf_len <= 0 || !dma_read_complete) {
+    if (!read_buf || read_buf_len <= 0 || lwrb_get_full(&uart_rx_pending_ring_buffer) < (size_t)read_buf_len) {
         return;
     }
 
-    pbdrv_cache_prepare_after_dma(read_buf, read_buf_len);
+    lwrb_read(&uart_rx_pending_ring_buffer, read_buf, read_buf_len);
     read_buf = NULL;
     read_buf_len = 0;
-    dma_read_complete = false;
     if (block_received) {
         block_received();
     }
@@ -263,7 +287,7 @@ static int pbdrv_bluetooth_btstack_ev3_init(const btstack_uart_config_t *config)
     pbdrv_gpio_alt(&bluetooth_uart_cts, SYSCFG_PINMUX0_PINMUX0_31_28_UART2_CTS);
 
     UARTEnable(UART_PORT);
-    UARTConfigSetExpClk(UART_PORT, SOC_UART_2_MODULE_FREQ, config->baudrate, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_16);
+    UARTConfigSetExpClk(UART_PORT, SOC_UART_2_MODULE_FREQ, config->baudrate, UART_WORDL_8BITS, EV3_UART_OVER_SAMP_RATE);
 
     return 0;
 }
@@ -275,19 +299,28 @@ static int pbdrv_bluetooth_btstack_ev3_open(void) {
     read_buf = NULL;
     read_buf_len = 0;
     dma_write_complete = false;
-    dma_read_complete = false;
+    lwrb_init(&uart_rx_pending_ring_buffer, uart_rx_pending, sizeof(uart_rx_pending));
 
-    // Note: this also clears the FIFO in case it contained anything before.
+    UARTEnable(UART_PORT);
     UARTFIFOEnable(UART_PORT);
+
     // Flow control is important for the CC256x: for one thing, the volume of
     // data is such that without it we could get into trouble. For another
     // thing, pulling CTS low is how the module signals that it's ready to talk.
     UARTModemControlSet(UART_PORT, UART_RTS | UART_AUTOFLOW);
 
-    // Set up the UART DMA channels.
-    UARTDMAEnable(UART_PORT, UART_DMAMODE | UART_FIFO_MODE | UART_RX_TRIG_LEVEL_1);
+    // Transmit is handled via EDMA3.
+    UARTDMAEnable(UART_PORT, UART_DMAMODE | UART_FIFO_MODE | UART_RX_INTR_TRIG_LEVEL);
     EDMA3RequestChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_TX, DMA_CHA_TX, DMA_EVENT_QUEUE);
-    EDMA3RequestChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_RX, DMA_CHA_RX, DMA_EVENT_QUEUE);
+
+    // Receive is handled via interrupts and direct register access to the RX
+    // FIFO. AS recorded in https://github.com/pybricks/pybricks-micropython/pull/427,
+    // we could not get DMA-based RX to work without stalling at higher
+    // baudrates.
+    IntRegister(UART_RX_INTR, uart_rx_interrupt_handler);
+    IntChannelSet(UART_RX_INTR, 2);
+    IntSystemEnable(UART_RX_INTR);
+    UARTIntEnable(UART_PORT, UART_INT_RXDATA_CTI | UART_INT_LINE_STAT);
 
     btstack_run_loop_set_data_source_handler(&pbdrv_bluetooth_btstack_classic_poll_data_source, pbdrv_bluetooth_btstack_classic_poll);
     btstack_run_loop_enable_data_source_callbacks(&pbdrv_bluetooth_btstack_classic_poll_data_source, DATA_SOURCE_CALLBACK_POLL);
@@ -299,10 +332,12 @@ static int pbdrv_bluetooth_btstack_ev3_close(void) {
     btstack_run_loop_disable_data_source_callbacks(&pbdrv_bluetooth_btstack_classic_poll_data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_remove_data_source(&pbdrv_bluetooth_btstack_classic_poll_data_source);
 
-    UARTDMADisable(UART_PORT, (UART_RX_TRIG_LEVEL_1 | UART_FIFO_MODE));
+    UARTDMADisable(UART_PORT, (UART_RX_INTR_TRIG_LEVEL | UART_FIFO_MODE));
     EDMA3FreeChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_TX, EDMA3_TRIG_MODE_EVENT, DMA_CHA_TX, DMA_EVENT_QUEUE);
-    EDMA3FreeChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_RX, EDMA3_TRIG_MODE_EVENT, DMA_CHA_RX, DMA_EVENT_QUEUE);
+    UARTIntDisable(UART_PORT, UART_INT_RXDATA_CTI | UART_INT_LINE_STAT);
     UARTDisable(UART_PORT);
+
+    lwrb_free(&uart_rx_pending_ring_buffer);
     return 0;
 }
 
@@ -315,7 +350,7 @@ static void pbdrv_bluetooth_btstack_ev3_set_block_sent(void (*handler)(void)) {
 }
 
 static int pbdrv_bluetooth_btstack_ev3_set_baudrate(uint32_t baud) {
-    UARTConfigSetExpClk(UART_PORT, SOC_UART_2_MODULE_FREQ, baud, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_16);
+    UARTConfigSetExpClk(UART_PORT, SOC_UART_2_MODULE_FREQ, baud, UART_WORDL_8BITS, EV3_UART_OVER_SAMP_RATE);
     return 0;
 }
 
@@ -332,34 +367,7 @@ static void pbdrv_bluetooth_btstack_ev3_receive_block(uint8_t *buffer,
 
     read_buf = buffer;
     read_buf_len = len;
-    dma_read_complete = false;
-
-    // Configure DMA transfer parameters for RX
-    volatile EDMA3CCPaRAMEntry paramSet = {
-        // UART receive register address
-        .srcAddr = UART_PORT + UART_RBR,
-        .destAddr = (uint32_t)read_buf,
-        // Number of bytes in an array
-        .aCnt = 1,
-        // Number of such arrays to be transferred
-        .bCnt = len,
-        // Number of frames of aCnt*bBcnt bytes to be transferred
-        .cCnt = 1,
-        // The src index should not increment since it is a h/w register
-        .srcBIdx = 0,
-        // The dst index should increment for every byte being transferred
-        .destBIdx = 1,
-        // Transfer mode
-        .srcCIdx = 0,
-        .destCIdx = 0,
-        .linkAddr = 0xFFFF,
-        .bCntReload = 0,
-        .opt = EDMA3CC_OPT_SAM | ((DMA_CHA_RX << EDMA3CC_OPT_TCC_SHIFT) & EDMA3CC_OPT_TCC) | (1 << EDMA3CC_OPT_TCINTEN_SHIFT),
-    };
-
-    // Save configuration and start transfer
-    EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, DMA_CHA_RX, (EDMA3CCPaRAMEntry *)&paramSet);
-    EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, DMA_CHA_RX, EDMA3_TRIG_MODE_EVENT);
+    pbdrv_bluetooth_btstack_run_loop_trigger();
 }
 
 static void pbdrv_bluetooth_btstack_ev3_send_block(const uint8_t *data,
@@ -398,6 +406,16 @@ static void pbdrv_bluetooth_btstack_ev3_send_block(const uint8_t *data,
     pbdrv_cache_prepare_before_dma(write_buf, size);
     EDMA3SetPaRAM(SOC_EDMA30CC_0_REGS, DMA_CHA_TX, (EDMA3CCPaRAMEntry *)&paramSet);
     EDMA3EnableTransfer(SOC_EDMA30CC_0_REGS, DMA_CHA_TX, EDMA3_TRIG_MODE_EVENT);
+
+    // If we enable transfers after the UART FIFO is empty, for reasons poorly
+    // understood, EDMA3 does not always actually start the transfer.
+    // This is especially visible at higher baudrates. We check for this
+    // condition and manually trigger the DMA transfer if needed. Note that this
+    // trick does not appear to work for RX DMA, which is why we use the
+    // FIFO directly for RX instead.
+    if (HWREG(SOC_UART_2_REGS + UART_LSR) & UART_THR_TSR_EMPTY) {
+        EDMA3SetEvt(SOC_EDMA30CC_0_REGS, DMA_CHA_TX);
+    }
 }
 
 static const btstack_uart_block_t pbdrv_bluetooth_btstack_ev3_block_ev3 = {
@@ -424,10 +442,7 @@ const void *pbdrv_bluetooth_btstack_ev3_transport_config(void) {
     static const hci_transport_config_uart_t config = {
         .type = HCI_TRANSPORT_CONFIG_UART,
         .baudrate_init = 115200,
-        // Note: theoretically the AM1808 should be able to go up to 1875000 or
-        // higher, but we observed random lost transfers at that speed. 921600 seems
-        // stable and is still plenty of bandwidth for Bluetooth classic.
-        .baudrate_main = 921600,
+        .baudrate_main = EV3_UART_BAUD_RATE_MAIN,
         .flowcontrol = 1,
         .device_name = NULL,
     };

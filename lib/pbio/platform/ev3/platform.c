@@ -540,7 +540,7 @@ static void Edma3CompleteCallback(unsigned int tccNum, unsigned int status) {
             pbdrv_bluetooth_btstack_ev3_handle_tx_complete();
             return;
         case EDMA3_CHA_UART2_RX:
-            pbdrv_bluetooth_btstack_ev3_handle_rx_complete();
+            // pbdrv_bluetooth_btstack_ev3_handle_rx_complete();
             return;
         default:
             return;
