@@ -202,6 +202,8 @@ static volatile bool dma_write_complete;
 #define EDMA_BASE (SOC_EDMA30CC_0_REGS)
 #define DMA_EVENT_QUEUE (0)
 
+static volatile bool rx_interrupts_enabled;
+
 // The highest speed not greater than 3 Mbaud that can be exactly represented
 // with the AM1808's UART clock divider and a relatively high oversampling rate.
 // The formula is (CLOCK / (OVERSAMPLING_RATE * DIVISOR)) = BAUDRATE. Here are
@@ -219,11 +221,37 @@ void pbdrv_bluetooth_btstack_ev3_handle_tx_complete(void) {
     pbdrv_bluetooth_btstack_run_loop_trigger();
 }
 
+static inline void uart_rx_interrupt_set_enabled(bool enabled) {
+    if (enabled) {
+        UARTIntEnable(UART_PORT, UART_INT_RXDATA_CTI | UART_INT_LINE_STAT);
+    } else {
+        UARTIntDisable(UART_PORT, UART_INT_RXDATA_CTI | UART_INT_LINE_STAT);
+    }
+    rx_interrupts_enabled = enabled;
+}
+
+static inline bool uart_rx_interrupt_is_enabled(void) {
+    return rx_interrupts_enabled;
+}
+
+static void uart_rx_drain_fifo_into_ring_buffer(void) {
+    int c;
+    int avail = lwrb_get_free(&uart_rx_pending_ring_buffer);
+    while (avail > 0 && (c = UARTCharGetNonBlocking(UART_PORT)) >= 0) {
+        lwrb_write(&uart_rx_pending_ring_buffer, (uint8_t *)&c, 1);
+        avail--;
+    }
+}
+
 static void uart_rx_interrupt_handler(void) {
     IntSystemStatusClear(UART_RX_INTR);
-    int c;
-    while ((c = UARTCharGetNonBlocking(UART_PORT)) >= 0) {
-        lwrb_write(&uart_rx_pending_ring_buffer, (uint8_t *)&c, 1);
+    uart_rx_drain_fifo_into_ring_buffer();
+    if (lwrb_get_free(&uart_rx_pending_ring_buffer) == 0) {
+        // RX buffer full, disable further RX interrupts until btstack consumes
+        // some of the data.
+        uart_rx_interrupt_set_enabled(false);
+        pbdrv_bluetooth_btstack_run_loop_trigger();
+        return;
     }
     if (read_buf && (size_t)read_buf_len <= lwrb_get_full(&uart_rx_pending_ring_buffer)) {
         pbdrv_bluetooth_btstack_run_loop_trigger();
@@ -231,11 +259,43 @@ static void uart_rx_interrupt_handler(void) {
 }
 
 static void pbdrv_bluetooth_btstack_classic_drive_read() {
-    if (!read_buf || read_buf_len <= 0 || lwrb_get_full(&uart_rx_pending_ring_buffer) < (size_t)read_buf_len) {
+    if (!read_buf || read_buf_len <= 0) {
         return;
     }
 
-    lwrb_read(&uart_rx_pending_ring_buffer, read_buf, read_buf_len);
+    int nread = lwrb_read(&uart_rx_pending_ring_buffer, read_buf, read_buf_len);
+    read_buf += nread;
+    read_buf_len -= nread;
+
+    // If UART RX interrupts are disabled (because we previously filled up
+    // our ring buffer), see if we can re-enable them. We must first drain the
+    // FIFO because the interrupt will not trigger if the FIFO is already full
+    // above the trigger level.
+    if (!uart_rx_interrupt_is_enabled()) {
+        // Drain as much of the FIFO as we can directly into the read buffer.
+        int c;
+        while (read_buf_len > 0 && (c = UARTCharGetNonBlocking(UART_PORT)) >= 0) {
+            *read_buf++ = (uint8_t)c;
+            read_buf_len--;
+        }
+
+        // Drain the rest into the ring buffer.
+        uart_rx_drain_fifo_into_ring_buffer();
+
+        // If there's any space available in the ring buffer, re-enable RX
+        // interrupts. Note that if there's not space available, that
+        // necessarily means that the current message has been completely read
+        // and we will arrive back here when the next btstack message request
+        // comes in.
+        if (lwrb_get_free(&uart_rx_pending_ring_buffer) > 0) {
+            uart_rx_interrupt_set_enabled(true);
+        }
+    }
+
+    if (read_buf_len > 0) {
+        return;
+    }
+
     read_buf = NULL;
     read_buf_len = 0;
     if (block_received) {
@@ -320,7 +380,7 @@ static int pbdrv_bluetooth_btstack_ev3_open(void) {
     IntRegister(UART_RX_INTR, uart_rx_interrupt_handler);
     IntChannelSet(UART_RX_INTR, 2);
     IntSystemEnable(UART_RX_INTR);
-    UARTIntEnable(UART_PORT, UART_INT_RXDATA_CTI | UART_INT_LINE_STAT);
+    uart_rx_interrupt_set_enabled(true);
 
     btstack_run_loop_set_data_source_handler(&pbdrv_bluetooth_btstack_classic_poll_data_source, pbdrv_bluetooth_btstack_classic_poll);
     btstack_run_loop_enable_data_source_callbacks(&pbdrv_bluetooth_btstack_classic_poll_data_source, DATA_SOURCE_CALLBACK_POLL);
@@ -334,7 +394,7 @@ static int pbdrv_bluetooth_btstack_ev3_close(void) {
 
     UARTDMADisable(UART_PORT, (UART_RX_INTR_TRIG_LEVEL | UART_FIFO_MODE));
     EDMA3FreeChannel(EDMA_BASE, EDMA3_CHANNEL_TYPE_DMA, DMA_CHA_TX, EDMA3_TRIG_MODE_EVENT, DMA_CHA_TX, DMA_EVENT_QUEUE);
-    UARTIntDisable(UART_PORT, UART_INT_RXDATA_CTI | UART_INT_LINE_STAT);
+    uart_rx_interrupt_set_enabled(false);
     UARTDisable(UART_PORT);
 
     lwrb_free(&uart_rx_pending_ring_buffer);
