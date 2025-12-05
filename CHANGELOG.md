@@ -4,16 +4,30 @@
 
 ## [Unreleased]
 
+## [4.0.0b3] - 2025-12-05
+
+### Added
+- Added preliminary BTstack support for EV3 ([pybricks-micropython#405]).
+
 ### Changed
 - Make 3D orientation default for heading and drivebase heading control ([support#1962]).
+- Improved color detection when using default colors. Also changed the HSV calculation
+  for the SPIKE Color Sensor and Boost Color and Distance Sensor to make them
+  more similar. User code should measure HSV values again in old code ([pybricks-micropython#421]).
 
 ### Fixed
 - Fixed `race=False` ignored in `pybricks.tools.multitask()`. ([support#2468])
 - Fixed Essential Hub button being disabled after power off so it could not be
   switched on again.
+- Fixed `TechnicHub` class being unavailable on Technic Hub in a recent
+  pre-release ([pybricks-micropython#425]).
+
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
+[pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
+[pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
+[pybricks-micropython#425]: https://github.com/pybricks/pybricks-micropython/pull/425
 
 ## [4.0.0b2] - 2025-11-25
 
@@ -1185,7 +1199,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...HEAD
+[4.0.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...v4.0.0b3
 [4.0.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...v4.0.0b2
 [4.0.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...v4.0.0b1
 [3.6.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...v3.6.1
