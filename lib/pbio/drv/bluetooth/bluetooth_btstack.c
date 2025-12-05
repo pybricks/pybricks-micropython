@@ -23,6 +23,7 @@
 
 #include "bluetooth.h"
 #include "bluetooth_btstack.h"
+#include "bluetooth_btstack_classic.h"
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 #include "genhdr/pybricks_service.h"
@@ -1180,6 +1181,10 @@ void pbdrv_bluetooth_init_hci(void) {
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    pbdrv_bluetooth_classic_init();
+    #endif
 
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
     bluetooth_thread_state = 0;
