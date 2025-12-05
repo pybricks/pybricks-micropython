@@ -125,6 +125,7 @@ jobs:
       run: |
         export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
         export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
+        [ "${{ matrix.hub }}" = "buildhat" ] && make -C bricks/${{ matrix.hub }} submodules
         make -C bricks/${{ matrix.hub }}
     - name: Extract firmware.zip for upload
       if: ${{ success()}}
