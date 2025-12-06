@@ -995,7 +995,7 @@ static void bluetooth_btstack_run_loop_set_timer(btstack_timer_source_t *ts, uin
     ts->timeout = pbdrv_clock_get_ms() + timeout_in_ms;
 }
 
-void bluetooth_btstack_run_loop_execute(void) {
+static void bluetooth_btstack_run_loop_execute(void) {
     // not used
 }
 
