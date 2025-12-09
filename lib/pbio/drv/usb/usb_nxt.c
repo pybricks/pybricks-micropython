@@ -223,21 +223,6 @@ static volatile struct {
      */
     uint8_t *tx_data[2];
     uint32_t tx_len[2];
-
-    /* Used to write the data from the EP1
-     */
-    uint8_t *rx_data;
-
-    /* size of the rx data buffer */
-    uint32_t rx_size;
-
-    /* length of the read packet (0 if none) */
-    uint32_t rx_len;
-
-    /* The USB controller has two hardware input buffers. This remembers
-     * the one currently in use.
-     */
-    uint8_t current_rx_bank;
 } pbdrv_usb_nxt_state;
 
 /* The flags in the UDP_CSR register are a little strange: writing to
@@ -315,52 +300,32 @@ static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t le
     pbdrv_usb_nxt_csr_set_flag(endpoint, AT91C_UDP_TXPKTRDY);
 }
 
-/* Read one data packet from the USB controller.
- * Assume that pbdrv_usb_nxt_state.rx_data and pbdrv_usb_nxt_state.rx_len are set.
- */
-static void pbdrv_usb_nxt_read_data(int endpoint) {
-    uint16_t i;
-    uint16_t total;
 
-    /* Given our configuration, we should only be getting packets on
-     * endpoint 1. Ignore data on any other endpoint.
-     * (note: data from EP0 are managed by usb_manage_setup())
-     */
+static uint8_t pbdrv_usb_rx_buf[MAX_RCV_SIZE];
+static volatile uint32_t pbdrv_usb_rx_len;
+
+/*
+ * Read one data packet from the USB controller.
+ */
+static void pbdrv_usb_rx_update(int endpoint) {
+
+    // Given our configuration, we should only get packets on endpoint 1.
+    // Ignore data on any other endpoint. Data from EP0 is handled separately.
     if (endpoint != 1) {
         pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
         return;
     }
 
-    /* must not happen ! */
-    if (pbdrv_usb_nxt_state.rx_len > 0) {
-        return;
+    pbdrv_usb_rx_len = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
+
+    // Read all available bytes.
+    for (uint16_t i = 0; i < pbdrv_usb_rx_len; i++) {
+        pbdrv_usb_rx_buf[i] = AT91C_UDP_FDR[1];
     }
 
-    total = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
-
-    /* we start reading */
-    /* all the bytes will be put in rx_data */
-    for (i = 0;
-         i < total && i < pbdrv_usb_nxt_state.rx_size;
-         i++) {
-        pbdrv_usb_nxt_state.rx_data[i] = AT91C_UDP_FDR[1];
-    }
-
-    pbdrv_usb_nxt_state.rx_len = i;
-
-    /* if we have read all the byte ... */
-    if (i == total) {
-        /* Acknowledge reading the current RX bank, and switch to the other. */
-        pbdrv_usb_nxt_csr_clear_flag(1, pbdrv_usb_nxt_state.current_rx_bank);
-        if (pbdrv_usb_nxt_state.current_rx_bank == AT91C_UDP_RX_DATA_BK0) {
-            pbdrv_usb_nxt_state.current_rx_bank = AT91C_UDP_RX_DATA_BK1;
-        } else {
-            pbdrv_usb_nxt_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
-        }
-    }
-    /* else we let the interruption running :
-     * after this function, the interruption should be disabled until
-     * a new buffer to read is provided */
+    // REVISIT: We could switch between RX banks to keep receiving data while
+    // we process it. At the moment, the higher level code does not use this.
+    pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
 }
 
 /* On the endpoint 0: A stall is USB's way of sending
@@ -514,18 +479,9 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
 
             /* TODO: Make this a little nicer. Not quite sure how. */
 
-            /* we can only active the EP1 if we have a buffer to get the data */
-            /* TODO: This was:
-             *
-             * if (pbdrv_usb_nxt_state.rx_len == 0 && pbdrv_usb_nxt_state.rx_size >= 0) {
-             *
-             * The second part always evaluates to true.
-             */
-            if (pbdrv_usb_nxt_state.rx_len == 0) {
-                AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-                while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT)) {
-                    ;
-                }
+            AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+            while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT)) {
+                ;
             }
 
             AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
@@ -685,7 +641,6 @@ static void pbdrv_usb_nxt_isr(void) {
         *AT91C_UDP_RSTEP = 0;
 
         /* Reset internal state. */
-        pbdrv_usb_nxt_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
         pbdrv_usb_nxt_state.current_config = 0;
 
         /* Reset EP0 to a basic control endpoint. */
@@ -761,7 +716,8 @@ static void pbdrv_usb_nxt_isr(void) {
                 }
             }
 
-            pbdrv_usb_nxt_read_data(endpoint);
+            pbdrv_usb_rx_update(endpoint);
+            pbio_os_request_poll();
 
             return;
         }
@@ -790,6 +746,7 @@ static void pbdrv_usb_nxt_isr(void) {
             } else {
                 /* then it means that we sent all the data and the host has acknowledged it */
                 pbdrv_usb_nxt_state.status = USB_READY;
+                pbio_os_request_poll();
             }
             return;
         }
@@ -858,67 +815,21 @@ void pbdrv_usb_deinit_device(void) {
     pbdrv_usb_nxt_deinit();
 }
 
-bool nx_usb_can_write(void) {
-    return pbdrv_usb_nxt_state.status == USB_READY;
-}
-
-void nx_usb_write(uint8_t *data, uint32_t length) {
-    NX_ASSERT_MSG(pbdrv_usb_nxt_state.status != USB_UNINITIALIZED,
-        "USB not init");
-    NX_ASSERT_MSG(pbdrv_usb_nxt_state.status != USB_SUSPENDED,
-        "USB asleep");
-    NX_ASSERT(data != NULL);
-    NX_ASSERT(length > 0);
-
-    /* TODO: Make call asynchronous */
-    while (pbdrv_usb_nxt_state.status != USB_READY) {
-        ;
-    }
-
-    /* start sending the data */
-    pbdrv_usb_nxt_write_data(2, data, length);
-}
-
-bool nx_usb_data_written(void) {
-    return pbdrv_usb_nxt_state.tx_len[1] == 0;
-}
-
-bool nx_usb_is_connected(void) {
-    return pbdrv_usb_nxt_state.status != USB_UNINITIALIZED;
-}
-
-void nx_usb_read(uint8_t *data, uint32_t length) {
-    pbdrv_usb_nxt_state.rx_data = data;
-    pbdrv_usb_nxt_state.rx_size = length;
-    pbdrv_usb_nxt_state.rx_len = 0;
-
-    if (pbdrv_usb_nxt_state.status > USB_UNINITIALIZED
-        && pbdrv_usb_nxt_state.status != USB_SUSPENDED) {
-        AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-    }
-}
-
-uint32_t nx_usb_data_read(void) {
-    return pbdrv_usb_nxt_state.rx_len;
-}
-
 pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 bool pbdrv_usb_is_ready(void) {
-    return true;
+    return pbdrv_usb_nxt_state.status != USB_UNINITIALIZED;
 }
 
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
-
-// As a stepping stone, we use RFCOMM to provide the REPL through this USB
-// module. This should be removed when USB is fully implemented.
-#include <nxos/drivers/bt.h>
-
-extern bool nx_bt_is_ready(void);
 
 pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
@@ -926,18 +837,15 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    if (!nx_bt_is_ready()) {
-        return PBIO_SUCCESS;
-    }
+    // REVISIT: Won't work if we include this check.
+    // if (pbdrv_usb_nxt_state.status != USB_READY) {
+    //     return PBIO_ERROR_BUSY;
+    // }
 
-    // Only map USB stdout messages to this RFCOMM test.
-    if (size < 2 || data[0] != PBIO_PYBRICKS_IN_EP_MSG_EVENT || data[1] != PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
-        return PBIO_SUCCESS;
-    }
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+    pbdrv_usb_nxt_write_data(2, data, size);
 
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT * 100);
-    nx_bt_stream_write((uint8_t *)data + 2, size - 2);
-    PBIO_OS_AWAIT_UNTIL(state, nx_bt_stream_data_written() || pbio_os_timer_is_expired(&timer));
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || pbio_os_timer_is_expired(&timer));
     if (pbio_os_timer_is_expired(&timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
@@ -946,45 +854,54 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
 }
 
 pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-    // Not yet implemented, but must respond with success as to not reset USB.
-    return PBIO_SUCCESS;
+
+    static pbio_os_timer_t timer;
+
+    static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // REVISIT: Won't work if we include this check.
+    // if (pbdrv_usb_nxt_state.status != USB_READY) {
+    //     return PBIO_ERROR_BUSY;
+    // }
+
+    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
+    pbio_set_uint32_le(&usb_response_buf[1], code);
+    pbdrv_usb_nxt_write_data(2, usb_response_buf, sizeof(usb_response_buf));
+
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || pbio_os_timer_is_expired(&timer));
+    if (pbio_os_timer_is_expired(&timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
-    // TODO. Can be async. See EV3.
+    // REVISIT: Make async.
+    pbdrv_usb_init_device();
     return PBIO_SUCCESS;
 }
 
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
 
-    // Use RFCOMM as mock input.
-    static uint8_t byte[1];
-    static bool initialized;
-    if (!initialized && nx_bt_is_ready()) {
-        initialized = true;
-
-        // nxos API requires size in advance, so start reading one byte.
-        nx_bt_stream_read(byte, sizeof(byte));
-
-        // First USB message is the pretend-subscribe message.
-        const uint8_t subscribe[] = { PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1};
-        memcpy(data, subscribe, sizeof(subscribe));
-        return sizeof(subscribe);
-    }
-
-    // Nothing received yet.
-    if (!initialized || !nx_bt_stream_data_read()) {
+    if (!pbdrv_usb_rx_len) {
         return 0;
     }
 
-    // Pretend to send a single-character stdin message.
-    const uint8_t stdin[] = { PBIO_PYBRICKS_OUT_EP_MSG_COMMAND, PBIO_PYBRICKS_COMMAND_WRITE_STDIN, byte[0]};
-    memcpy(data, stdin, sizeof(stdin));
+    // Copy data saved during interrupt to usb process.
+    memcpy(data, pbdrv_usb_rx_buf, pbdrv_usb_rx_len);
+    uint32_t result = pbdrv_usb_rx_len;
+    pbdrv_usb_rx_len = 0;
 
-    // Start waiting for another character.
-    nx_bt_stream_read(byte, sizeof(byte));
+    // Get ready to receive the next message.
+    if (pbdrv_usb_nxt_state.status > USB_UNINITIALIZED
+        && pbdrv_usb_nxt_state.status != USB_SUSPENDED) {
+        AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+    }
 
-    return sizeof(stdin);
+    return result;
 }
 
 #endif // PBDRV_CONFIG_USB_NXT

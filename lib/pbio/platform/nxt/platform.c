@@ -204,8 +204,6 @@ void SystemInit(void) {
     nx__lcd_init();
     nx__display_init();
     nx__sensors_init();
-    extern void pbdrv_usb_init(void);
-    pbdrv_usb_init();
     nx_i2c_init();
 
     /* Delay a little post-init, to let all the drivers settle down. */
