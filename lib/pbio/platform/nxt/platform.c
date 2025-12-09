@@ -114,68 +114,6 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
 
 char bluetooth_address_string[6 * 3]; // 6 hex bytes separated by ':' and ending in 0.
 
-static void legacy_bluetooth_init_blocking(void) {
-    nx_bt_init();
-
-    nx_bt_set_friendly_name("Pybricks NXT");
-
-    uint8_t local_addr[7];
-    if (nx_bt_get_local_addr(local_addr)) {
-        snprintf(bluetooth_address_string, sizeof(bluetooth_address_string),
-            "%02X:%02X:%02X:%02X:%02X:%02X",
-            local_addr[0], local_addr[1], local_addr[2],
-            local_addr[3], local_addr[4], local_addr[5]);
-    }
-
-    nx_display_string(bluetooth_address_string);
-    nx_display_string("\n");
-}
-
-// REVISIT: This process waits for the user to connect to the NXT brick with
-// Bluetooth classic (RFCOMM). This allows basic I/O until proper Pybricks USB
-// or Bluetooth classic solutions are implemented. Then this process will be
-// removed.
-static pbio_os_process_t legacy_bluetooth_connect_process;
-
-static pbio_error_t legacy_bluetooth_connect_process_thread(pbio_os_state_t *state, void *context) {
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    static pbio_os_timer_t timer;
-
-    static int connection_handle = -1;
-
-    while (!nx_bt_stream_opened()) {
-
-        if (nx_bt_has_dev_waiting_for_pin()) {
-            nx_bt_send_pin("1234");
-            nx_display_string("Please enter pin.\n");
-        } else if (nx_bt_connection_pending()) {
-            nx_display_string("Connecting ...\n");
-            nx_bt_accept_connection(true);
-
-            while ((connection_handle = nx_bt_connection_established()) < 0) {
-                PBIO_OS_AWAIT_MS(state, &timer, 2);
-            }
-
-            nx_bt_stream_open(connection_handle);
-        }
-
-        PBIO_OS_AWAIT_MS(state, &timer, 100);
-    }
-
-    nx_display_clear();
-    nx_display_cursor_set_pos(0, 0);
-
-    nx_display_string("RFCOMM ready.\n");
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-bool nx_bt_is_ready(void) {
-    return legacy_bluetooth_connect_process.err == PBIO_SUCCESS;
-}
-
 // Called from assembly code in startup.S
 void SystemInit(void) {
     nx__aic_init();
@@ -202,9 +140,16 @@ void SystemInit(void) {
     /* Delay a little post-init, to let all the drivers settle down. */
     nx_systick_wait_ms(100);
 
-    // Blocking Bluetooth setup, then await user connection without blocking,
-    // allowing pbio processes to start even if nothing is connected.
-    legacy_bluetooth_init_blocking();
-    pbio_os_process_start(&legacy_bluetooth_connect_process, legacy_bluetooth_connect_process_thread, NULL);
-
+    // Get Bluetooth address for use as unique USB serial number.
+    nx_bt_init();
+    nx_bt_set_friendly_name("Pybricks NXT");
+    uint8_t local_addr[7];
+    if (nx_bt_get_local_addr(local_addr)) {
+        snprintf(bluetooth_address_string, sizeof(bluetooth_address_string),
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            local_addr[0], local_addr[1], local_addr[2],
+            local_addr[3], local_addr[4], local_addr[5]);
+    }
+    nx_display_string(bluetooth_address_string);
+    nx_display_string("\n");
 }
