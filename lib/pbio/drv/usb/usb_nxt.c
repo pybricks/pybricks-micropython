@@ -99,6 +99,7 @@ enum {
     STRING_DESC_LANGID,
     STRING_DESC_MFG,
     STRING_DESC_PRODUCT,
+    STRING_DESC_SERIAL,
 };
 
 /* The following definitions are 'raw' USB setup packets. They are all
@@ -127,7 +128,7 @@ static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
     .bcdDevice = 0x0200,    /* Product revision: 2.0.0. */
     .iManufacturer = STRING_DESC_MFG,
     .iProduct = STRING_DESC_PRODUCT,
-    .iSerialNumber = 0,     // TODO: implement a serial number
+    .iSerialNumber = STRING_DESC_SERIAL,
     .bNumConfigurations = 1,
 };
 
@@ -187,6 +188,15 @@ static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
         .bInterval = 0,
     },
 };
+
+// Serial number descriptor
+typedef struct PBDRV_PACKED {
+    uint8_t bLength;
+    uint8_t bDescriptorType;
+    uint16_t wString[6 * 3]; // 6 hex bytes separated by ':' and ending in 0.
+} pbdrv_usb_serial_number_desc_t;
+
+static pbdrv_usb_serial_number_desc_t pbdrv_usb_str_desc_serial;
 
 typedef enum {
     USB_UNINITIALIZED,
@@ -440,6 +450,10 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                         case STRING_DESC_PRODUCT:
                             desc = &pbdrv_usb_str_desc_prod;
                             size = sizeof(pbdrv_usb_str_desc_prod.s);
+                            break;
+                        case STRING_DESC_SERIAL:
+                            desc = &pbdrv_usb_str_desc_serial;
+                            size = sizeof(pbdrv_usb_str_desc_serial);
                             break;
                     }
 
@@ -770,6 +784,14 @@ void pbdrv_usb_nxt_deinit(void) {
 }
 
 void pbdrv_usb_init_device(void) {
+
+    extern char bluetooth_address_string[PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString)];
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString); i++) {
+        pbdrv_usb_str_desc_serial.wString[i] = bluetooth_address_string[i];
+    }
+    pbdrv_usb_str_desc_serial.bLength = PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString) * 2;
+    pbdrv_usb_str_desc_serial.bDescriptorType = USB_DESC_TYPE_STR,
+
     pbdrv_usb_nxt_deinit();
     memset((void *)&pbdrv_usb_nxt_state, 0, sizeof(pbdrv_usb_nxt_state));
 

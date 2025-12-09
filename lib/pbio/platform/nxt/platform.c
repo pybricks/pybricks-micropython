@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <pbdrv/config.h>
@@ -111,31 +112,23 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     },
 };
 
-const char *pin = "1234";
+char bluetooth_address_string[6 * 3]; // 6 hex bytes separated by ':' and ending in 0.
 
 static void legacy_bluetooth_init_blocking(void) {
     nx_bt_init();
 
-    char *name = "Pybricks NXT";
-    nx_bt_set_friendly_name(name);
+    nx_bt_set_friendly_name("Pybricks NXT");
 
-    nx_display_string("Bluetooth name:\n");
-    nx_display_string(name);
-    nx_display_string("\n");
     uint8_t local_addr[7];
     if (nx_bt_get_local_addr(local_addr)) {
-        for (int i = 0; i < 6; i++) {
-            nx_display_hex(local_addr[i]);
-            nx_display_string(i < 5 ? ":": "\n");
-        }
+        snprintf(bluetooth_address_string, sizeof(bluetooth_address_string),
+            "%02X:%02X:%02X:%02X:%02X:%02X",
+            local_addr[0], local_addr[1], local_addr[2],
+            local_addr[3], local_addr[4], local_addr[5]);
     }
-    nx_display_string("Pin: ");
-    nx_display_string(pin);
-    nx_display_string("\n\nConnect to me as BT serial port.\n");
 
-    nx_bt_set_discoverable(true);
-
-    nx_bt_open_port();
+    nx_display_string(bluetooth_address_string);
+    nx_display_string("\n");
 }
 
 // REVISIT: This process waits for the user to connect to the NXT brick with
@@ -155,7 +148,7 @@ static pbio_error_t legacy_bluetooth_connect_process_thread(pbio_os_state_t *sta
     while (!nx_bt_stream_opened()) {
 
         if (nx_bt_has_dev_waiting_for_pin()) {
-            nx_bt_send_pin((char *)pin);
+            nx_bt_send_pin("1234");
             nx_display_string("Please enter pin.\n");
         } else if (nx_bt_connection_pending()) {
             nx_display_string("Connecting ...\n");
