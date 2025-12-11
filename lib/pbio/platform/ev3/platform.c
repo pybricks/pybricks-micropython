@@ -81,6 +81,7 @@
 #include "../../drv/pwm/pwm_ev3.h"
 #include "../../drv/reset/reset_ev3.h"
 #include "../../drv/uart/uart_ev3.h"
+#include "../../drv/uart/uart_debug_first_port.h"
 
 enum {
     LED_DEV_0_STATUS,
@@ -442,6 +443,12 @@ void ev3_panic_handler(int except_type, ev3_panic_ctx *except_data) {
     PSCModuleControl(SOC_PSC_1_REGS, HW_PSC_UART1, PSC_POWERDOMAIN_ALWAYS_ON, PSC_MDCTL_NEXT_ENABLE);
     UARTConfigSetExpClk(SOC_UART_1_REGS, SOC_UART_1_MODULE_FREQ, 115200, UART_WORDL_8BITS, UART_OVER_SAMP_RATE_13);
     UARTFIFOEnable(SOC_UART_1_REGS);
+
+    // Drain whatever is still left in the UART debug FIFO.
+    int c;
+    while ((c = pbdrv_uart_debug_next_char()) != -1) {
+        UARTCharPut(SOC_UART_1_REGS, (uint8_t)c);
+    }
 
     panic_puts("********************************************************************************\r\n");
     panic_puts("*                            Pybricks on EV3 Panic                             *\r\n");

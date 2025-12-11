@@ -22,6 +22,18 @@ static lwrb_t ring_buffer;
 
 static pbdrv_uart_dev_t *debug_uart = NULL;
 
+int pbdrv_uart_debug_next_char(void) {
+    if (!lwrb_is_ready(&ring_buffer)) {
+        return -1;
+    }
+    uint8_t c;
+    if (lwrb_read(&ring_buffer, &c, 1) == 1) {
+        return c;
+    } else {
+        return -1;
+    }
+}
+
 /**
  * Formats and stores a string in the UART debug ring buffer.
  *
