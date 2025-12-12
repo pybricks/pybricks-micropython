@@ -24,6 +24,10 @@
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (3)
 #define PBDRV_CONFIG_COUNTER_NXT                    (1)
 
+#define PBDRV_CONFIG_DISPLAY                        (0)
+#define PBDRV_CONFIG_DISPLAY_NUM_COLS               (100)
+#define PBDRV_CONFIG_DISPLAY_NUM_ROWS               (64)
+
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_VIRTUAL                   (1) // TODO: Implement NXT GPIO driver
 
