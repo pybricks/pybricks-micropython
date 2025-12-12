@@ -21,6 +21,9 @@ static const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SoundSensor),       MP_ROM_PTR(&pb_type_nxtdevices_SoundSensor)      },
     { MP_ROM_QSTR(MP_QSTR_EnergyMeter),       MP_ROM_PTR(&pb_type_nxtdevices_EnergyMeter)      },
     { MP_ROM_QSTR(MP_QSTR_VernierAdapter),    MP_ROM_PTR(&pb_type_nxtdevices_VernierAdapter)   },
+    #if PYBRICKS_PY_NXT_PUP_ALIAS
+    { MP_ROM_QSTR(MP_QSTR_ForceSensor),       MP_ROM_PTR(&pb_type_nxtdevices_TouchSensor)      },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(pb_module_nxtdevices_globals, nxtdevices_globals_table);
 
@@ -31,6 +34,10 @@ const mp_obj_module_t pb_module_nxtdevices = {
 
 #if !MICROPY_MODULE_BUILTIN_SUBPACKAGES
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_nxtdevices, pb_module_nxtdevices);
+#if PYBRICKS_PY_NXT_PUP_ALIAS
+MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_pupdevices, pb_module_nxtdevices);
 #endif
+#endif
+
 
 #endif // PYBRICKS_PY_NXTDEVICES

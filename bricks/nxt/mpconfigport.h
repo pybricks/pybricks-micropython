@@ -8,6 +8,9 @@
 #define PYBRICKS_HUB_CLASS_NAME                 (MP_QSTR_NXTBrick)
 
 #define PYBRICKS_HUB_NXTBRICK                   (1)
+// On EV3, allow PUP imports for easy beta testing
+#define PYBRICKS_PY_NXT_PUP_ALIAS               (1)
+#define PYBRICKS_HUB_CLASS_NAME_ALIAS           (MP_QSTR_PrimeHub)
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
