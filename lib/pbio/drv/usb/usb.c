@@ -115,7 +115,14 @@ void pbdrv_usb_debug_vprintf(const char *format, va_list args) {
 
     char buf[256];
     size_t len = vsnprintf(buf, sizeof(buf), format, args);
-    lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)buf, len);
+
+    // Buffer result with \r injected before \n.
+    for (size_t i = 0; i < len; i++) {
+        if (buf[i] == '\n') {
+            lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)"\r", 1);
+        }
+        lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)&buf[i], 1);
+    }
 
     pbio_os_request_poll();
 }
