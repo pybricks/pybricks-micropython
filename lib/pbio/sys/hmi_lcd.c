@@ -93,6 +93,7 @@ static void draw_pybricks_logo(uint32_t x, uint32_t y, float scale) {
     pbdrv_display_update();
 }
 
+#if PBSYS_CONFIG_HMI_NUM_SLOTS
 static void hmi_lcd_grid_show_pixel(uint8_t row, uint8_t col, bool on) {
     pbio_image_t *display = pbdrv_display_get_image();
     uint8_t value = on ? pbdrv_display_get_max_value(): 0;
@@ -101,6 +102,7 @@ static void hmi_lcd_grid_show_pixel(uint8_t row, uint8_t col, bool on) {
     const uint32_t offset = (PBDRV_CONFIG_DISPLAY_NUM_COLS - (PBSYS_CONFIG_HMI_NUM_SLOTS * size)) / 2;
     pbio_image_fill_rect(display, col * size + offset, row * size, width, width, value);
 }
+#endif
 
 void pbsys_hmi_init(void) {
 }
@@ -123,10 +125,12 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         DEBUG_PRINT("Start HMI loop\n");
 
         // Visually indicate current slot.
+        #if PBSYS_CONFIG_HMI_NUM_SLOTS
         uint8_t selected_slot = pbsys_status_get_selected_slot();
         for (uint8_t c = 0; c < PBSYS_CONFIG_HMI_NUM_SLOTS; c++) {
             hmi_lcd_grid_show_pixel(4, c, c == selected_slot);
         }
+        #endif
 
         pbdrv_display_update();
 
@@ -204,7 +208,9 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     }));
 
     // Start light or display animations.
+    #if PBIO_CONFIG_LIGHT
     pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
+    #endif
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
