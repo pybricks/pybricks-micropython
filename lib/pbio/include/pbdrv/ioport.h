@@ -86,15 +86,19 @@ typedef struct {
      * ADC channel for pin 6,
      */
     uint8_t adc_p6;
+    #endif // PBDRV_CONFIG_IOPORT_HAS_ADC
+    #if  PBDRV_CONFIG_IOPORT_HAS_GPIO_P1
     /**
      * Pin 1 I/O,
      */
     pbdrv_gpio_t p1;
+    #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P1
+    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     /**
      * Pin 2 I/O.
      */
     pbdrv_gpio_t p2;
-    #endif // PBDRV_CONFIG_IOPORT_HAS_ADC
+    #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
 } pbdrv_ioport_pins_t;
 
 #define PBDRV_IOPORT_INDEX_NOT_AVAILABLE (0xFF)

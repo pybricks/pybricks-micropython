@@ -37,6 +37,8 @@
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
+#define PBDRV_CONFIG_IOPORT_HAS_GPIO_P1             (1)
+#define PBDRV_CONFIG_IOPORT_HAS_GPIO_P2             (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (8)
 
 #define PBDRV_CONFIG_I2C                            (1)
