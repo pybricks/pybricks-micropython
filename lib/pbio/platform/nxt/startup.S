@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2007 the NxOS developers
-// See AUTHORS for a full list of the developers.
+// See lib/pbio/platform/nxt/nxos/AUTHORS for a full list of the developers.
 
 .code 32
 .text

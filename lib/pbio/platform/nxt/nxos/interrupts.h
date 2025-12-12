@@ -7,7 +7,7 @@
 /* Copyright (C) 2007 the NxOS developers
  * Copyright (c) 2023 The Pybricks Authors
  *
- * See AUTHORS for a full list of the developers.
+ * See lib/pbio/platform/nxt/nxos/AUTHORS for a full list of the developers.
  */
 
 #ifndef __NXOS_BASE_INTERRUPTS_H__

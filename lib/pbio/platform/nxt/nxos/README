@@ -1,0 +1,8 @@
+NxOS - an open source alternative operating system for the Lego Mindstorms NXT
+==============================================================================
+
+NxOS is an open source operating system that runs on the Lego Mindstorms NXT
+platform. It aims at providing a comprehensive base system that provides
+easy-to-use APIs to the NXT's hardware, including sensors, display and motors.
+
+This version has been modified for use with Pybricks.

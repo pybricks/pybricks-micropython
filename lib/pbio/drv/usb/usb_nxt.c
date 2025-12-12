@@ -2,7 +2,7 @@
 /* Copyright (C) 2007 the NxOS developers
  * Copyright (C) 2025 the Pybricks Authors
  *
- * See AUTHORS for a full list of the developers.
+ * See lib/pbio/platform/nxt/nxos/AUTHORS for a full list of the developers.
  */
 
 #include <pbdrv/config.h>

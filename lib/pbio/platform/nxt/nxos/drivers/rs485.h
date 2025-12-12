@@ -4,7 +4,7 @@
 
 /* Copyright (c) 2008,2009 the NxOS developers
  *
- * See AUTHORS for a full list of the developers.
+ * See lib/pbio/platform/nxt/nxos/AUTHORS for a full list of the developers.
  *
  * Redistribution of this file is permitted under
  * the terms of the GNU Public License (GPL) version 2.
