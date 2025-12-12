@@ -201,27 +201,32 @@ pbio_error_t pbdrv_rproc_nxt_set_sensor_power(uint8_t index, bool set) {
 }
 
 /**
- * Gets the currently pressed button by reading the ADC value from the AVR.
+ * Gets the currently pressed buttons by reading the ADC value from the AVR.
  *
- * @return A single button flag.
+ * Can be the center button at at most one of the other buttons.
+ *
+ * @return Button flag.
  */
 pbio_button_flags_t pbdrv_rproc_nxt_get_button_pressed(void) {
 
     uint16_t adc = pbdrv_rproc_nxt_received_data.button_adc;
 
-    if (adc > 1023) {
-        return PBIO_BUTTON_CENTER;
+    // Center button is a digital pin.
+    pbio_button_flags_t buttons = 0;
+    if (adc >= 0x07FF) {
+        buttons = PBIO_BUTTON_CENTER;
+        adc -= 0x07FF;
     }
+
+    // Other buttons are on a resistor ladder.
     if (adc > 720) {
-        return PBIO_BUTTON_DOWN;
+        buttons |= PBIO_BUTTON_DOWN;
+    } else if (adc > 270) {
+        buttons |= PBIO_BUTTON_RIGHT;
+    } else if (adc > 60) {
+        buttons |= PBIO_BUTTON_LEFT;
     }
-    if (adc > 270) {
-        return PBIO_BUTTON_RIGHT;
-    }
-    if (adc > 60) {
-        return PBIO_BUTTON_LEFT;
-    }
-    return 0;
+    return buttons;
 }
 
 /**
