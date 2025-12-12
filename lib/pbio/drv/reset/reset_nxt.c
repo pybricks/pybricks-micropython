@@ -15,21 +15,22 @@
 #include <pbdrv/reset.h>
 
 #include "../usb/usb_nxt.h"
+#include "../rproc/rproc_nxt.h"
 
 void pbdrv_reset_init(void) {
 }
 
 void pbdrv_reset(pbdrv_reset_action_t action) {
-    // nxt_lcd_enable(0);
+    if (action == PBDRV_RESET_ACTION_RESET) {
+        AT91C_BASE_RSTC->RSTC_RCR = (0xA5 << 24) | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | AT91C_RSTC_EXTRST;
+    } else {
+        // Use the AVR coprocessor to perform power off or reset in update mode.
+        pbdrv_rproc_nxt_reset_host(action);
+    }
+
+    // Reset should happen soon and coprocessor handling is IRQ driven, so wait
+    // here forever.
     for (;;) {
-        switch (action) {
-            case PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE:
-                nx__avr_firmware_update_mode();
-                break;
-            // TODO: implement case PBDRV_RESET_ACTION_RESET
-            default:
-                break;
-        }
     }
 }
 
@@ -64,15 +65,8 @@ pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
     }
 }
 
-// NOTE: This was nx_core_halt() in NxOS.
 void pbdrv_reset_power_off(void) {
-    if (nx_bt_stream_opened()) {
-        nx_bt_stream_close();
-    }
-
-    nx__lcd_shutdown();
-    pbdrv_usb_nxt_deinit();
-    nx__avr_power_down();
+    pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
 }
 
 #endif // PBDRV_CONFIG_RESET_NXT

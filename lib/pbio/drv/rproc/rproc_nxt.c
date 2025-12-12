@@ -22,6 +22,8 @@
 
 #include <at91sam7s256.h>
 
+#include <pbdrv/reset.h>
+
 #include "nxos/nxt.h"
 #include "nxos/util.h"
 #include "nxos/assert.h"
@@ -325,18 +327,6 @@ void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake) {
     }
 }
 
-void nx__avr_power_down(void) {
-    while (1) {
-        to_avr.power_mode = AVR_POWER_OFF;
-    }
-}
-
-void nx__avr_firmware_update_mode(void) {
-    while (1) {
-        to_avr.power_mode = AVR_RESET_MODE;
-    }
-}
-
 nx_avr_button_t nx_avr_get_button(void) {
     return from_avr.buttons;
 }
@@ -363,6 +353,25 @@ void pbdrv_rproc_init(void) {
     // machine to start transmitting.
     nx__twi_init();
     avr_state.mode = AVR_LINK_DOWN;
+}
+
+/**
+ * Resets the host using the AVR coprocessor.
+ *
+ * @param action The type of reset to perform. Supports only
+ *      ::PBDRV_RESET_ACTION_POWER_OFF and
+ *      ::PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE.
+ */
+void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) {
+    switch (action) {
+        case PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE:
+            to_avr.power_mode = AVR_RESET_MODE;
+            break;
+        case PBDRV_RESET_ACTION_POWER_OFF:
+        default:
+            to_avr.power_mode = AVR_POWER_OFF;
+            break;
+    }
 }
 
 #endif // PBDRV_CONFIG_RPROC_NXT
