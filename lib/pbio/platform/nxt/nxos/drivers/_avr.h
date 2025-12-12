@@ -33,18 +33,6 @@
  */
 /*@{*/
 
-/** Initialize the AVR driver. */
-void nx__avr_init(void);
-
-/** Update the AVR state machine.
- *
- * Called every millisecond to maintain the AVR link.
- *
- * @warning Called by the systick driver when appropriate. Do @b not
- * call directly!
- */
-void nx__avr_fast_update(void);
-
 /** Return the raw sensor value for @a sensor.
  *
  * @param sensor The sensor port, 0 through 3.
@@ -67,29 +55,6 @@ uint32_t nx__avr_get_sensor_value(uint32_t sensor);
  */
 void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake);
 
-/** Order the AVR to power down the NXT.
- *
- * The power down occurs as soon as the command gets transferred to
- * the AVR. This function does not return, but instead goes into an
- * infinite loop after setting the command bytes, waiting to be
- * halted.
- *
- * @warning Do not use this function directly. A hard power-down of
- * the NXT can damage or confuse certain hardware. Calling
- * pbdrv_reset_power_off() will take care of safely shutting down sensitive
- * drivers before powering down the brick.
- */
-void nx__avr_power_down(void);
-
-/** Order the AVR to put the brick in firmware update mode.
- *
- * This will reset the NXT and flash the SAM-BA bootloader to flash
- * memory, then boot back into the SAM-BA bootloader.
- *
- * @note Does not work right now. The command is ignored by the
- * coprocessor, resulting in the brick locking up.
- */
-void nx__avr_firmware_update_mode(void);
 
 /*@}*/
 /*@}*/

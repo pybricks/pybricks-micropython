@@ -23,14 +23,12 @@ void pbdrv_reset_init(void) {
 void pbdrv_reset(pbdrv_reset_action_t action) {
     if (action == PBDRV_RESET_ACTION_RESET) {
         AT91C_BASE_RSTC->RSTC_RCR = (0xA5 << 24) | AT91C_RSTC_PROCRST | AT91C_RSTC_PERRST | AT91C_RSTC_EXTRST;
+        for (;;) {
+        }
     } else {
         // Use the AVR coprocessor to perform power off or reset in update mode.
+        // This does not return.
         pbdrv_rproc_nxt_reset_host(action);
-    }
-
-    // Reset should happen soon and coprocessor handling is IRQ driven, so wait
-    // here forever.
-    for (;;) {
     }
 }
 

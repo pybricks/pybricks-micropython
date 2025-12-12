@@ -43,13 +43,6 @@ static void systick_isr(void) {
     pbdrv_clock_ticks++;
     pbio_os_request_poll();
 
-    /* Keeping up with the AVR link is a crucial task in the system, and
-     * must absolutely be kept up with at all costs.
-     *
-     * As a result, this handler must be *very* fast.
-     */
-    nx__avr_fast_update();
-
     /* The LCD dirty display routine can be done here too, since it is
      * very short.
      */

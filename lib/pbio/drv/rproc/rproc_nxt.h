@@ -6,6 +6,7 @@
 
 #include <pbdrv/reset.h>
 
-void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action);
+void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) __attribute__((noreturn));
+;
 
 #endif // _INTERNAL_PBDRV_RPROC_NXT_H_

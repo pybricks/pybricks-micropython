@@ -24,6 +24,8 @@
 
 #include <pbdrv/reset.h>
 
+#include <pbio/os.h>
+
 #include "nxos/nxt.h"
 #include "nxos/util.h"
 #include "nxos/assert.h"
@@ -37,25 +39,6 @@
 
 const char avr_init_handshake[] =
     "\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
-
-static volatile struct {
-    // The current mode of the AVR state machine.
-    enum {
-        AVR_UNINITIALIZED = 0, // Initialization not completed.
-        AVR_LINK_DOWN,     // No handshake has been sent.
-        AVR_INIT,          // Handshake send in progress.
-        AVR_WAIT_2MS,      // Timed wait after the handshake.
-        AVR_WAIT_1MS,      // More timed wait.
-        AVR_SEND,          // Sending of to_avr in progress.
-        AVR_RECV,          // Reception of from_avr in progress.
-    } mode;
-
-    // Used to detect link failures and restart the AVR link.
-    uint8_t failed_consecutive_checksums;
-} avr_state = {
-    AVR_UNINITIALIZED, // We start uninitialized.
-    0,               // No failed checksums yet.
-};
 
 // Contains all the commands that are periodically sent to the AVR.
 static volatile struct {
@@ -172,7 +155,7 @@ static inline uint16_t unpack_word(uint8_t *word) {
 
 // Deserialize the AVR data structure in raw_from_avr into the from_avr status
 // structure.
-static void avr_unpack_from_avr(void) {
+static pbio_error_t avr_unpack_from_avr(void) {
     uint8_t checksum = 0;
     uint16_t word;
     uint32_t i;
@@ -186,10 +169,7 @@ static void avr_unpack_from_avr(void) {
     }
 
     if (checksum != 0xff) {
-        avr_state.failed_consecutive_checksums++;
-        return;
-    } else {
-        avr_state.failed_consecutive_checksums = 0;
+        return PBIO_ERROR_IO;
     }
 
     // Unpack and store the 4 sensor analog readings.
@@ -228,86 +208,65 @@ static void avr_unpack_from_avr(void) {
     // NXT does not have a floating point unit, the multiplication by 13.848 is
     // approximated by a multiplication by 3545 followed by a division by 256.
     from_avr.battery.charge = (((uint32_t)word & 0x3ff) * 3545) >> 8;
+
+    return PBIO_SUCCESS;
 }
 
-// The main AVR driver state machine. This routine gets called periodically
-// every millisecond by the system timer code.
-//
-// It is called directly in the main system timer interrupt, and so must return
-// as fast as possible.
-void nx__avr_fast_update(void) {
-    // The action taken depends on the state of the AVR communication.
-    switch (avr_state.mode) {
-        case AVR_UNINITIALIZED:
-            // Because the system timer can call this update routine before the driver
-            // is initialized, we have this safe state. It does nothing and immediately
-            // returns.
-            //
-            // When the AVR driver initialization code runs, it will set the state to
-            // AVR_LINK_DOWN, which will kickstart the state machine.
-            return;
+static pbio_os_process_t pbdrv_rproc_nxt_link_process;
 
-        case AVR_LINK_DOWN:
-            // ARM-AVR link is not initialized. We need to send the hello string to
-            // tell the AVR that we are alive. This will (among other things) stop the
-            // "clicking brick" sound, and avoid having the brick powered down after a
-            // few minutes by an AVR that doesn't see us coming up.
-            nx__twi_write_async(AVR_ADDRESS, (uint8_t *)avr_init_handshake,
-                sizeof(avr_init_handshake) - 1);
-            avr_state.failed_consecutive_checksums = 0;
-            avr_state.mode = AVR_INIT;
-            break;
+static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, void *context) {
 
-        case AVR_INIT:
-            // Once the transmission of the handshake is complete, go into a 2
-            // millisecond wait, which is accomplished by the use of two intermediate
-            // state machine states.
-            if (nx__twi_ready()) {
-                avr_state.mode = AVR_WAIT_2MS;
+    static pbio_os_timer_t timer;
+
+    static uint32_t failed_checksums = 0;
+
+    PBIO_OS_ASYNC_BEGIN(state)
+
+    for (;;) {
+        failed_checksums = 0;
+
+        // ARM-AVR link is not initialized. We need to send the hello string to
+        // tell the AVR that we are alive. This will (among other things) stop the
+        // "clicking brick" sound, and avoid having the brick powered down after a
+        // few minutes by an AVR that doesn't see us coming up.
+        nx__twi_write_async(AVR_ADDRESS, (uint8_t *)avr_init_handshake, sizeof(avr_init_handshake) - 1);
+        PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
+
+        // Give the AVR some grace time between messages to run its own code.
+        // Note that the TWI driver is not polling the event loop, so we are in
+        // effect only checking nx__twi_ready once per millisecond
+        // This is fine because of the grace period we add in anyway.
+        pbio_os_timer_set(&timer, 2);
+
+        while (failed_checksums < AVR_MAX_FAILED_CHECKSUMS) {
+
+            // Allow processing on AVR.
+            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
+            pbio_os_timer_extend(&timer);
+
+            // Send commands to AVR.
+            avr_pack_to_avr();
+            nx__twi_write_async(AVR_ADDRESS, raw_to_avr, sizeof(raw_to_avr));
+            PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
+
+            // Allow processing on AVR.
+            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
+            pbio_os_timer_extend(&timer);
+
+            // Get state data from the AVR.
+            memset(raw_from_avr, 0, sizeof(raw_from_avr));
+            nx__twi_read_async(AVR_ADDRESS, raw_from_avr, sizeof(raw_from_avr));
+            PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
+
+            // Start over if we fail too many times.
+            if (avr_unpack_from_avr() != PBIO_SUCCESS) {
+                failed_checksums++;
             }
-            break;
-
-        case AVR_WAIT_2MS:
-            // Wait another millisecond...
-            avr_state.mode = AVR_WAIT_1MS;
-            break;
-
-        case AVR_WAIT_1MS:
-            // Now switch the state to send mode, but also set the receive done flag.
-            // On the next refresh cycle, the communication will be in "production"
-            // mode, and will start by reading data back from the AVR.
-            avr_state.mode = AVR_SEND;
-            break;
-
-        case AVR_SEND:
-            // If the transmission is complete, switch to receive mode and read the
-            // status structure from the AVR.
-            if (nx__twi_ready()) {
-                avr_state.mode = AVR_RECV;
-                memset(raw_from_avr, 0, sizeof(raw_from_avr));
-                nx__twi_read_async(AVR_ADDRESS, raw_from_avr,
-                    sizeof(raw_from_avr));
-            }
-            break;
-
-        case AVR_RECV:
-            // If the transmission is complete, unpack the read data into the from_avr
-            // struct, pack the data in the to_avr struct into a raw buffer, and shovel
-            // that over the i2c bus to the AVR.
-            if (nx__twi_ready()) {
-                avr_unpack_from_avr();
-                // If the number of failed consecutive checksums is over the restart
-                // threshold, consider the link down and reboot the link.
-                if (avr_state.failed_consecutive_checksums >= AVR_MAX_FAILED_CHECKSUMS) {
-                    avr_state.mode = AVR_LINK_DOWN;
-                } else {
-                    avr_state.mode = AVR_SEND;
-                    avr_pack_to_avr();
-                    nx__twi_write_async(AVR_ADDRESS, raw_to_avr, sizeof(raw_to_avr));
-                }
-            }
-            break;
+        }
     }
+
+    // Unreachable.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 uint32_t nx__avr_get_sensor_value(uint32_t n) {
@@ -352,7 +311,8 @@ void pbdrv_rproc_init(void) {
     // Set up the TWI driver to turn on the i2c bus, and kickstart the state
     // machine to start transmitting.
     nx__twi_init();
-    avr_state.mode = AVR_LINK_DOWN;
+
+    pbio_os_process_start(&pbdrv_rproc_nxt_link_process, pbdrv_rproc_nxt_link_process_thread, NULL);
 }
 
 /**
@@ -371,6 +331,12 @@ void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) {
         default:
             to_avr.power_mode = AVR_POWER_OFF;
             break;
+    }
+
+    // The main event loop is no longer running, but we do want communication
+    // with the AVR to keep going to transmit this command.
+    for (;;) {
+        pbdrv_rproc_nxt_link_process_thread(&pbdrv_rproc_nxt_link_process.state, NULL);
     }
 }
 
