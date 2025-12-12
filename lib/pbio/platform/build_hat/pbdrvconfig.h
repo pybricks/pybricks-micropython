@@ -17,6 +17,7 @@
 #define PBDRV_CONFIG_GPIO_PICO                      (1)
 
 #define PBDRV_CONFIG_IOPORT                         (0)
+#define PBDRV_CONFIG_IOPORT_HAS_UART                (1)
 // TODO: Implement IOPORT driver for Build HAT
 
 #define PBDRV_CONFIG_LED                            (0)

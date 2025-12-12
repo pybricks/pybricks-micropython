@@ -20,18 +20,23 @@ static pbio_error_t pbdrv_ioport_p5p6_pin_reset(const pbdrv_ioport_pins_t *pins)
 
     pbdrv_gpio_input(&pins->p5);
     pbdrv_gpio_input(&pins->p6);
+    #if PBDRV_CONFIG_IOPORT_HAS_UART
     pbdrv_gpio_input(&pins->uart_tx);
     pbdrv_gpio_input(&pins->uart_rx);
     pbdrv_gpio_out_high(&pins->uart_buf);
+    #endif
 
     // These should be set by default already, but it seems that the
     // bootloader on the Technic hub changes these and causes wrong
     // detection if we don't make sure pull is disabled.
     pbdrv_gpio_set_pull(&pins->p5, PBDRV_GPIO_PULL_NONE);
     pbdrv_gpio_set_pull(&pins->p6, PBDRV_GPIO_PULL_NONE);
+
+    #if PBDRV_CONFIG_IOPORT_HAS_UART
     pbdrv_gpio_set_pull(&pins->uart_buf, PBDRV_GPIO_PULL_NONE);
     pbdrv_gpio_set_pull(&pins->uart_tx, PBDRV_GPIO_PULL_NONE);
     pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
+    #endif
 
     return PBIO_SUCCESS;
 }
@@ -44,6 +49,7 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_i
         // This is the same as the default mode.
         return pbdrv_ioport_p5p6_pin_reset(pins);
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_UART) {
+        #if PBDRV_CONFIG_IOPORT_HAS_UART
         err = pbdrv_ioport_p5p6_pin_reset(pins);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -53,6 +59,9 @@ pbio_error_t pbdrv_ioport_p5p6_set_mode(const pbdrv_ioport_pins_t *pins, pbdrv_i
         pbdrv_gpio_alt(&pins->uart_tx, pins->uart_tx_alt_uart);
         pbdrv_gpio_out_low(&pins->uart_buf);
         return PBIO_SUCCESS;
+        #else // PBDRV_CONFIG_IOPORT_HAS_UART
+        return PBIO_ERROR_NOT_SUPPORTED;
+        #endif // PBDRV_CONFIG_IOPORT_HAS_UART
     } else if (mode == PBDRV_IOPORT_P5P6_MODE_I2C) {
         err = pbdrv_ioport_p5p6_pin_reset(pins);
         if (err != PBIO_SUCCESS) {

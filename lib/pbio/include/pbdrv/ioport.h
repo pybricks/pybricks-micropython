@@ -50,13 +50,18 @@ typedef enum {
  */
 typedef struct {
     /**
-     * GPIO to enable (set low) or mark (set high) access to the UART pins.
-     */
-    pbdrv_gpio_t uart_buf;
-    /**
      * Pin 5 input.
      */
     pbdrv_gpio_t p5;
+    /**
+     * Pin 6 input or output.
+     */
+    pbdrv_gpio_t p6;
+    #if PBDRV_CONFIG_IOPORT_HAS_UART
+    /**
+     * GPIO to enable (set low) or mark (set high) access to the UART pins.
+     */
+    pbdrv_gpio_t uart_buf;
     /**
      * Pin 5 output or UART TX when buffer enabled.
      */
@@ -66,10 +71,6 @@ typedef struct {
      */
     uint8_t uart_tx_alt_uart;
     /**
-     * Pin 6 input or output.
-     */
-    pbdrv_gpio_t p6;
-    /**
      * Pin 6 input or UART RX when buffer enabled.
      */
     pbdrv_gpio_t uart_rx;
@@ -77,6 +78,7 @@ typedef struct {
      * Pin 6 alt mode index for UART usage.
      */
     uint8_t uart_rx_alt_uart;
+    #endif // PBDRV_CONFIG_IOPORT_HAS_UART
     #if PBDRV_CONFIG_IOPORT_HAS_ADC
     /**
      * ADC channel for pin 1.

@@ -34,6 +34,7 @@
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
+#define PBDRV_CONFIG_IOPORT_HAS_UART                (0)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (7)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (1)

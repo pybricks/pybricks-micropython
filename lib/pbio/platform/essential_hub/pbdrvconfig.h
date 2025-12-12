@@ -69,6 +69,7 @@
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
+#define PBDRV_CONFIG_IOPORT_HAS_UART                (1)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (2)
 
 #define PBDRV_CONFIG_LED                            (1)
