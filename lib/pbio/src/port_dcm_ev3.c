@@ -482,6 +482,7 @@ static pbio_error_t matches_category(pbio_port_dcm_t *dcm, pbio_port_dcm_categor
 
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *expected_type_id) {
 
+    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     // NXT Touch sensors can't be detected definitively, so allow passing none
     // state also. Raise only if something *else* is definitively connected.
     if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR) {
@@ -501,7 +502,6 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 
     switch (*expected_type_id) {
-        #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
         case LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART:
             return matches_category(dcm, DCM_CATEGORY_LUMP);
         case LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR:
@@ -525,10 +525,13 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
                    PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
         default:
             return PBIO_ERROR_NO_DEV;
-        #else
+    }
+    #else
+    switch (*expected_type_id) {
         // On NXT without GPIO2, we can only definitively assert the color
         // sensor and the light sensor.
         case LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART:
+            // This is never supported.
             return PBIO_ERROR_NO_DEV;
         case LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR:
             return matches_category(dcm, DCM_CATEGORY_NXT_COLOR);
@@ -536,8 +539,8 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
             return matches_category(dcm, DCM_CATEGORY_NXT_LIGHT);
         default:
             return PBIO_SUCCESS;
-            #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     }
+    #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
 }
 
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {

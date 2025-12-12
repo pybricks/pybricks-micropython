@@ -71,43 +71,63 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     },
     {
         .port_id = PBIO_PORT_ID_1,
-        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
-        .external_port_index = 0,
-        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .motor_driver_index = 3,
         .i2c_driver_index = 0,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+        .external_port_index = 0,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = {.pin = 23},
+            .p6 = {.pin = 18},
+            .adc_p1 = 0,
+            .adc_p6 = 4,
+        },
+        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_2,
-        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
-        .external_port_index = 1,
-        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .motor_driver_index = 4,
         .i2c_driver_index = 1,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+        .external_port_index = 1,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = {.pin = 28},
+            .p6 = {.pin = 19},
+            .adc_p1 = 1,
+            .adc_p6 = 5,
+        },
+        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_3,
-        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
-        .external_port_index = 2,
-        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .motor_driver_index = 5,
         .i2c_driver_index = 2,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+        .external_port_index = 2,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = {.pin = 29},
+            .p6 = {.pin = 20},
+            .adc_p1 = 2,
+            .adc_p6 = 6,
+        },
+        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_4,
-        .motor_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE, // todo, power pin, see ev3
-        .external_port_index = 3,
-        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .motor_driver_index = 6,
         .i2c_driver_index = 3,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_NONE, // todo, lego mode, nxt dcm
+        .external_port_index = 3,
+        .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .pins = &(pbdrv_ioport_pins_t) {
+            .p5 = {.pin = 30},
+            .p6 = {.pin = 2},
+            .adc_p1 = 3,
+            .adc_p6 = 7,
+        },
+        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
 };
 
@@ -127,13 +147,22 @@ void SystemInit(void) {
     extern void pbdrv_clock_init(void);
     pbdrv_clock_init();
 
+    // Initialize sensor GPIO.
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_ioport_platform_data); i++) {
+        const pbdrv_ioport_pins_t *pins = pbdrv_ioport_platform_data[i].pins;
+        pbdrv_gpio_alt(&pins->p5, false);
+        pbdrv_gpio_input(&pins->p5);
+        pbdrv_gpio_alt(&pins->p6, false);
+        pbdrv_gpio_input(&pins->p6);
+    }
+
     // TODO: we should be able to convert these to generic pbio drivers and use
     // pbio_busy_count_busy instead of busy waiting for 100ms.
     nx__motors_init();
     nx__lcd_init();
     nx__display_init();
-    nx__sensors_init();
-    nx_i2c_init();
+    // nx__sensors_init();
+    // nx_i2c_init();
 
     /* Delay a little post-init, to let all the drivers settle down. */
     nx_systick_wait_ms(100);

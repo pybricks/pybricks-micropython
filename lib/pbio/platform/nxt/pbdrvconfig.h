@@ -33,7 +33,7 @@
 #define PBDRV_CONFIG_GPIO_NXT                       (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
+#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
 #define PBDRV_CONFIG_IOPORT_HAS_UART                (0)
 #define PBDRV_CONFIG_IOPORT_NUM_DEV                 (7)
 

@@ -61,7 +61,7 @@ static struct PBDRV_PACKED {
  */
 static struct PBDRV_PACKED {
     /** Reading of the ADC on pin 1 */
-    uint16_t sensor_adc_pc[NXT_N_SENSORS];
+    uint16_t sensor_adc[NXT_N_SENSORS];
     /** Button value. This is only decoded when needed. */
     uint16_t button_adc;
     /** Version and battery info. */
@@ -233,6 +233,18 @@ pbio_button_flags_t pbdrv_rproc_nxt_get_button_pressed(void) {
         buttons |= PBIO_BUTTON_LEFT;
     }
     return buttons;
+}
+
+/**
+ * Gets the analog value of a sensor ADC pin.
+ */
+pbio_error_t pbdrv_rproc_nxt_get_sensor_adc(uint8_t index, uint16_t *value) {
+    if (index >= NXT_N_SENSORS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    *value = pbdrv_rproc_nxt_received_data.sensor_adc[index];
+    return PBIO_SUCCESS;
 }
 
 /**

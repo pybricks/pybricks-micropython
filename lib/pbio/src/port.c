@@ -441,7 +441,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
     pbdrv_uart_get_instance(port->pdata->uart_driver_index, &port->uart_dev);
     pbdrv_i2c_get_instance(port->pdata->i2c_driver_index, &port->i2c_dev);
 
-    if (port->uart_dev && port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_DCM) {
+    if (port->pdata->supported_modes & PBIO_PORT_MODE_LEGO_DCM) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index);

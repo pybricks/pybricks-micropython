@@ -28,4 +28,6 @@ pbio_button_flags_t pbdrv_rproc_nxt_get_button_pressed(void);
 
 bool pbdrv_rproc_nxt_get_battery_info(uint16_t *voltage);
 
+pbio_error_t pbdrv_rproc_nxt_get_sensor_adc(uint8_t index, uint16_t *value);
+
 #endif // _INTERNAL_PBDRV_RPROC_NXT_H_

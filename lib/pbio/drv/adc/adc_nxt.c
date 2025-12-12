@@ -9,18 +9,34 @@
 #include <stdint.h>
 
 #include <pbdrv/adc.h>
+#include <pbdrv/clock.h>
+
 #include <pbio/error.h>
+#include <pbio/util.h>
+
+#include "../rproc/rproc_nxt.h"
 
 void pbdrv_adc_init(void) {
 }
 
 pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+    *start_time_us = pbdrv_clock_get_ms();
+    // REVISIT: Adjust for use with real timer, account for AVR vs internal update rate.
+    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), *start_time_us + 5));
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-// does a single conversion for the specified channel
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
 
+    if (ch < 4) {
+        return pbdrv_rproc_nxt_get_sensor_adc(ch, value);
+    }
+
+    // TODO: AT91SAM7S256 internal ADC.
     *value = 0;
     return PBIO_SUCCESS;
 }
