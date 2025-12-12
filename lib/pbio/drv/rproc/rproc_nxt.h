@@ -13,6 +13,8 @@ void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) __attribute__((nore
 
 pbio_error_t pbdrv_rproc_nxt_set_duty_cycle(uint8_t index, int32_t duty_cycle_percent, bool slow_decay);
 
+pbio_error_t pbdrv_rproc_nxt_set_sensor_power(uint8_t index, bool set);
+
 pbio_button_flags_t pbdrv_rproc_nxt_get_button_pressed(void);
 
 bool pbdrv_rproc_nxt_get_battery_info(uint16_t *voltage);

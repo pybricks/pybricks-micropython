@@ -156,7 +156,7 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
 /**
  * Sets the duty cycle for a motor.
  *
- * @param index               Motor index (0-3).
+ * @param index               Motor index (0-2).
  * @param duty_cycle_percent  Duty cycle percentage (-100 to 100).
  * @param slow_decay          True for slow decay mode, false for fast decay.
  *
@@ -175,6 +175,26 @@ pbio_error_t pbdrv_rproc_nxt_set_duty_cycle(uint8_t index, int32_t duty_cycle_pe
     } else {
         pbdrv_rproc_nxt_send_data.motor_decay_mode &= ~(1 << index);
     }
+
+    pbdrv_rproc_nxt_send_data.changed = true;
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Sets the power pin for a sensor.
+ *
+ * @param index               Sensor index (0-3).
+ * @param set                 True to turn on sensor power, false to turn it off.
+ *
+ * @return ::PBIO_SUCCESS on success.
+ *         ::PBIO_ERROR_INVALID_ARG if the index is out of range.
+ */
+pbio_error_t pbdrv_rproc_nxt_set_sensor_power(uint8_t index, bool set) {
+    if (index >= NXT_N_MOTORS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // TODO.
 
     pbdrv_rproc_nxt_send_data.changed = true;
     return PBIO_SUCCESS;
