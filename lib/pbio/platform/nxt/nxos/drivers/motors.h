@@ -33,40 +33,6 @@
  */
 /*@{*/
 
-/** Stop all rotation on @a motor, optionally applying a @a brake.
- *
- * @param motor The motor port.
- * @param brake Hard braking if true, coasting stop if false.
- */
-void nx_motors_stop(uint8_t motor, bool brake);
-
-/** Set @a motor to rotate at the given @a speed.
- *
- * @param motor The motor port.
- * @param speed The rotation speed.
- */
-void nx_motors_rotate(uint8_t motor, int8_t speed);
-
-/** Rotate @a motor @a angle degrees at @a speed.
- *
- * @a motor The motor port.
- * @a speed The rotation speed.
- * @a angle The angle of rotation.
- * @a brake Hard braking at the end of rotation if true, coasting stop
- * if false.
- */
-void nx_motors_rotate_angle(uint8_t motor, int8_t speed, uint32_t angle, bool brake);
-
-/** Rotate @a motor at @a speed for @a ms milliseconds.
- *
- * @a motor The motor port.
- * @a speed The rotation speed.
- * @a ms The duration of the rotation in milliseconds.
- * @a brake Hard braking at the end of rotation if true, coasting stop
- * if false.
- */
-void nx_motors_rotate_time(uint8_t motor, int8_t speed, uint32_t ms, bool brake);
-
 /** Return the internal tachometer counter value for @a motor.
  *
  * This tachometer count, if taken modulo 360, will give the angle in

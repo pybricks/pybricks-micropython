@@ -15,8 +15,6 @@
 #include "nxos/assert.h"
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/aic.h"
-#include "nxos/drivers/_avr.h"
-
 #include "nxos/drivers/_sensors.h"
 
 static const nx__sensors_pins sensors_pinmap[NXT_N_SENSORS] = {
@@ -114,10 +112,7 @@ void nx_sensors_analog_enable(uint32_t sensor) {
 }
 
 uint32_t nx_sensors_analog_get(uint32_t sensor) {
-  NX_ASSERT(sensor < NXT_N_SENSORS);
-  NX_ASSERT(sensors_mode[sensor] == ANALOG);
-
-  return nx__avr_get_sensor_value(sensor);
+  return 0; // delete me
 }
 
 void nx_sensors_analog_digi_set(uint32_t sensor, nx_sensors_data_pin pin) {

@@ -16,8 +16,6 @@
 #include "nxos/interrupts.h"
 #include "nxos/assert.h"
 #include "nxos/drivers/aic.h"
-#include "nxos/drivers/_avr.h"
-
 #include "nxos/drivers/_motors.h"
 
 /* The following are easier mnemonics for the pins used by the
@@ -89,16 +87,10 @@ static void motors_isr(void) {
   int i;
   uint32_t changes;
   uint32_t pins;
-  uint32_t time;
 
   /* Acknowledge the interrupt and grab the state of the pins. */
   changes = *AT91C_PIOA_ISR;
   pins = *AT91C_PIOA_PDSR;
-
-  /* Grab the time, as we're going to use it to check for timed
-   * rotation end.
-   */
-  time = pbdrv_clock_get_ms();
 
   /* Check each motor's tachymeter. */
   for (i=0; i<NXT_N_MOTORS; i++) {
@@ -116,16 +108,6 @@ static void motors_isr(void) {
         motors_state[i].current_count++;
       else
         motors_state[i].current_count--;
-
-      /* If we are in angle rotation mode, check to see if we've
-       * reached the target tachymeter value. If so, shut down the
-       * motor.
-       */
-      if ((motors_state[i].mode == MOTOR_ON_ANGLE &&
-           motors_state[i].current_count == motors_state[i].target) ||
-          (motors_state[i].mode == MOTOR_ON_TIME &&
-           time >= motors_state[i].target))
-        nx_motors_stop(i, motors_state[i].brake);
     }
   }
 }
@@ -159,95 +141,6 @@ void nx__motors_init(void)
   *AT91C_PIOA_IER = MOTORS_TACH;
 
   nx_interrupts_enable(state);
-}
-
-void nx_motors_stop(uint8_t motor, bool brake) {
-  NX_ASSERT(motor < NXT_N_MOTORS);
-
-  motors_state[motor].mode = MOTOR_STOP;
-  nx__avr_set_motor(motor, 0, brake);
-}
-
-void nx_motors_rotate(uint8_t motor, int8_t speed) {
-  NX_ASSERT(motor < NXT_N_MOTORS);
-
-  /* Cap the given motor speed. */
-  if (speed > 0 && speed > 100)
-    speed = 100;
-  else if (speed < 0 && speed < -100)
-    speed = -100;
-
-  /* Continuous mode has no target or brake parameter, just set the
-   * mode and fire up the motor.
-   */
-  motors_state[motor].mode = MOTOR_ON_CONTINUOUS;
-  nx__avr_set_motor(motor, speed, false);
-}
-
-void nx_motors_rotate_angle(uint8_t motor, int8_t speed, uint32_t angle, bool brake) {
-  NX_ASSERT(motor < NXT_N_MOTORS);
-  NX_ASSERT(speed <= 100);
-  NX_ASSERT(speed >= -100);
-
-  /* If we're not moving, we can never reach the target. Take a
-   * shortcut.
-   */
-  if (speed == 0) {
-    nx_motors_stop(motor, brake);
-    return;
-  }
-
-  /* Set the motor to configuration mode. This way, if we are
-   * overriding another intelligent mode, the tachymeter interrupt
-   * handler will ignore the motor while we tweak its settings.
-   */
-  motors_state[motor].mode = MOTOR_CONFIGURING;
-
-  /* Set the target tachymeter value based on the rotation
-   * direction */
-  if (speed < 0)
-    motors_state[motor].target =
-      motors_state[motor].current_count - angle;
-  else
-    motors_state[motor].target =
-      motors_state[motor].current_count + angle;
-
-  /* Remember the brake setting, change to angle target mode and fire
-   * up the motor.
-   */
-  motors_state[motor].brake = brake;
-  motors_state[motor].mode = MOTOR_ON_ANGLE;
-  nx__avr_set_motor(motor, speed, false);
-}
-
-void nx_motors_rotate_time(uint8_t motor, int8_t speed, uint32_t ms, bool brake) {
-  NX_ASSERT(motor < NXT_N_MOTORS);
-  NX_ASSERT(speed <= 100);
-  NX_ASSERT(speed >= -100);
-
-  /* If we're not moving, we can never reach the target. Take a
-   * shortcut.
-   */
-  if (speed == 0) {
-    nx_motors_stop(motor, brake);
-    return;
-  }
-
-  /* Set the motor to configuration mode. This way, if we are
-   * overriding another intelligent mode, the tachymeter interrupt
-   * handler will ignore the motor while we tweak its settings.
-   */
-  motors_state[motor].mode = MOTOR_CONFIGURING;
-
-  /* Set the target system time. */
-  motors_state[motor].target = pbdrv_clock_get_ms() + ms;
-
-  /* Remember the brake setting, change to angle target mode and fire
-   * up the motor.
-   */
-  motors_state[motor].brake = brake;
-  motors_state[motor].mode = MOTOR_ON_TIME;
-  nx__avr_set_motor(motor, speed, false);
 }
 
 uint32_t nx_motors_get_tach_count(uint8_t motor) {

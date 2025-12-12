@@ -11,13 +11,7 @@
 #include <pbdrv/motor_driver.h>
 #include <pbio/error.h>
 
-#include <nxos/nxt.h>
-#include <nxos/drivers/motors.h>
-#include <nxos/drivers/_avr.h>
-
-#if PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV != (NXT_N_MOTORS)
-#error "PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV must be set to the same value as NXT_N_MOTORS"
-#endif
+#include "../rproc/rproc_nxt.h"
 
 struct _pbdrv_motor_driver_dev_t {
     uint8_t index;
@@ -43,13 +37,11 @@ pbio_error_t pbdrv_motor_driver_get_dev(uint8_t id, pbdrv_motor_driver_dev_t **d
 }
 
 pbio_error_t pbdrv_motor_driver_coast(pbdrv_motor_driver_dev_t *driver) {
-    nx__avr_set_motor(driver->index, 0, false);
-    return PBIO_SUCCESS;
+    return pbdrv_rproc_nxt_set_duty_cycle(driver->index, 0, false);
 }
 
 pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver, int16_t duty_cycle) {
-    nx__avr_set_motor(driver->index, 100 * duty_cycle / PBDRV_MOTOR_DRIVER_MAX_DUTY, true);
-    return PBIO_SUCCESS;
+    return pbdrv_rproc_nxt_set_duty_cycle(driver->index, 100 * duty_cycle / PBDRV_MOTOR_DRIVER_MAX_DUTY, true);
 }
 
 void pbdrv_motor_driver_init(void) {

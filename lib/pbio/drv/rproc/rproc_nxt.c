@@ -22,9 +22,12 @@
 
 #include <at91sam7s256.h>
 
+#include <pbdrv/compiler.h>
 #include <pbdrv/reset.h>
 
+#include <pbio/button.h>
 #include <pbio/os.h>
+#include <pbio/int_math.h>
 
 #include "nxos/nxt.h"
 #include "nxos/util.h"
@@ -32,184 +35,60 @@
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/_twi.h"
 
-#include "nxos/drivers/_avr.h"
-
 #define AVR_ADDRESS 1
 #define AVR_MAX_FAILED_CHECKSUMS 3
 
-const char avr_init_handshake[] =
-    "\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
-
-// Contains all the commands that are periodically sent to the AVR.
-static volatile struct {
-    // Tells the AVR to perform power management:
-    enum {
-        AVR_RUN = 0, // No power management (normal runtime mode).
-        AVR_POWER_OFF, // Power down the brick.
-        AVR_RESET_MODE, // Go into SAM-BA reset mode.
-    } power_mode;
-
-    // The speed and braking configuration of the motor ports.
-    int8_t motor_speed[NXT_N_MOTORS];
-    uint8_t motor_brake;
-
-    // TODO: enable controlling of input power. Currently the input
-    // stuff is ignored.
-} to_avr = {
-    AVR_RUN,   // Start in normal power mode.
-    { 0, 0, 0 }, // All motors are off...
-    0          // And set to coast.
+/**
+ * Commands that are periodically sent to the AVR.
+ */
+static struct PBDRV_PACKED {
+    /** Set if the AVR should perform power management. */
+    uint8_t power_mode;
+    /** Motor PWM frequency. If power mode set above, this is its payload */
+    uint8_t motor_pwm_frequency;
+    /** Signed duty cycle percentage for the motors. */
+    int8_t motor_duty_cycle[4];
+    /** Motor bridge decay mode (1=slow, 0=fast). Motor A is LSB. */
+    uint8_t motor_decay_mode;
+    /** Sensor power settings. */
+    uint8_t sensor_power;
+    /** Data has changed. The copy that goes over the wire has the checksum here. */
+    uint8_t changed;
+} pbdrv_rproc_nxt_send_data = {
+    .power_mode = 0,
+    .motor_pwm_frequency = 8,
+    .changed = true,
 };
 
-// Contains all the status data periodically received from the AVR.
-static volatile struct {
-    // The analog reading of the analog pin on all active sensors.
-    uint16_t adc_value[NXT_N_SENSORS];
+/**
+ * Data periodically received from the AVR.
+ */
+static struct PBDRV_PACKED {
+    /** Reading of the ADC on pin 1 */
+    uint16_t sensor_adc_pc[NXT_N_SENSORS];
+    /** Button value. This is only decoded when needed. */
+    uint16_t button_adc;
+    /** Version and battery info. */
+    uint16_t battery_and_version_info;
+    /** Checksum. */
+    uint8_t checksum;
+} pbdrv_rproc_nxt_received_data = {
+    // Suitable initial value (Li-ion, 7311 mV) to avoid low battery-shutdown
+    // if we poll this before the first real reading is available.
+    .battery_and_version_info = 42512,
+};
 
-    // The state of the NXT's buttons. Given the way that the buttons
-    // are handled in hardware, only one button is reported pressed at a
-    // time. See the nx_avr_button_t enumeration for values to test for.
-    uint8_t buttons;
-
-    // Battery information.
-    struct {
-        // True if the power supply is rechargeable battery pack or false if AA
-        // batteries.
-        bool is_accu_pack;
-        uint16_t charge; // The remaining battery charge in mV.
-    } battery;
-
-    // The version of the AVR firmware. The currently supported version is 1.1.
-    struct {
-        uint8_t major;
-        uint8_t minor;
-    } version;
-} from_avr;
-
-// The following two arrays hold the data structures above, converted
-// into the raw ARM-AVR communication format. Data to send is
-// serialized into this buffer prior to sending, and received data is
-// received into here before being deserialized into the status
-// struct.
-static uint8_t raw_from_avr[(2 * NXT_N_SENSORS) + // Sensor A/D value.
-                            2 + // Buttons reading.
-                            2 + // Battery type, charge and AVR firmware version.
-                            1]; // Checksum.
-static uint8_t raw_to_avr[1 + // Power mode
-                          1 + // PWM frequency
-                          4 + // output % for the 4 (?!)  motors
-                          1 + // Output modes (brakes)
-                          1 + // Input modes (sensor power)
-                          1]; // Checksum
-
-// Serialize the to_avr data structure into raw_to_avr, ready for
-// sending to the AVR.
-static void avr_pack_to_avr(void) {
-    uint32_t i;
+/**
+ * Gets the checksum used for sent and received data buffers.
+ *
+ * All data including the checksum should add up to 0xFF.
+ */
+static uint8_t pbdrv_rproc_nxt_get_checksum(uint8_t *data, size_t len) {
     uint8_t checksum = 0;
-
-    memset(raw_to_avr, 0, sizeof(raw_to_avr));
-
-    // Marshal the power mode configuration.
-    switch (to_avr.power_mode) {
-        case AVR_RUN:
-            // Normal operating mode. First byte is 0, and the second (PWM frequency is
-            // set to 8.
-            raw_to_avr[1] = 8;
-            break;
-        case AVR_POWER_OFF:
-            // Tell the AVR to shut us down.
-            raw_to_avr[0] = 0x5A;
-            raw_to_avr[1] = 0;
-            break;
-        case AVR_RESET_MODE:
-            // Tell the AVR to boot SAM-BA.
-            raw_to_avr[0] = 0x5A;
-            raw_to_avr[1] = 0xA5;
-            break;
+    for (size_t i = 0; i < len; i++) {
+        checksum += data[i];
     }
-
-    // Marshal the motor speed settings.
-    raw_to_avr[2] = to_avr.motor_speed[0];
-    raw_to_avr[3] = to_avr.motor_speed[1];
-    raw_to_avr[4] = to_avr.motor_speed[2];
-
-    // raw_to_avr[5] is the value for the 4th motor, which doesn't exist. This is
-    // probably a bug in the AVR firmware, but it is required. So we just latch
-    // the value to zero.
-
-    // Marshal the motor brake settings.
-    raw_to_avr[6] = to_avr.motor_brake;
-
-    // Calculate the checksum.
-    for (i = 0; i < (sizeof(raw_to_avr) - 1); i++) {
-        checksum += raw_to_avr[i];
-    }
-    raw_to_avr[sizeof(raw_to_avr) - 1] = ~checksum;
-}
-
-// Small helper to convert two bytes into an uint16_t.
-static inline uint16_t unpack_word(uint8_t *word) {
-    return (word[1] << 8) | word[0];
-}
-
-// Deserialize the AVR data structure in raw_from_avr into the from_avr status
-// structure.
-static pbio_error_t avr_unpack_from_avr(void) {
-    uint8_t checksum = 0;
-    uint16_t word;
-    uint32_t i;
-    uint8_t *p = raw_from_avr;
-
-    // Compute the checksum of the received data. This is done by doing the
-    // unsigned sum of all the bytes in the received buffer. They should add up
-    // to 0xFF.
-    for (i = 0; i < sizeof(raw_from_avr); i++) {
-        checksum += raw_from_avr[i];
-    }
-
-    if (checksum != 0xff) {
-        return PBIO_ERROR_IO;
-    }
-
-    // Unpack and store the 4 sensor analog readings.
-    for (i = 0; i < NXT_N_SENSORS; i++) {
-        from_avr.adc_value[i] = unpack_word(p);
-        p += 2;
-    }
-
-    // Grab the buttons word (an analog reading), and compute the state of
-    // buttons from that.
-    word = unpack_word(p);
-    p += 2;
-
-    if (word > 1023) {
-        from_avr.buttons = BUTTON_OK;
-    } else if (word > 720) {
-        from_avr.buttons = BUTTON_CANCEL;
-    } else if (word > 270) {
-        from_avr.buttons = BUTTON_RIGHT;
-    } else if (word > 60) {
-        from_avr.buttons = BUTTON_LEFT;
-    } else {
-        from_avr.buttons = BUTTON_NONE;
-    }
-
-    // Process the last word, which is a mix and match of many values.
-    word = unpack_word(p);
-
-    // Extract the AVR firmware version, as well as the type of power supply
-    // connected.
-    from_avr.version.major = (word >> 13) & 0x3;
-    from_avr.version.minor = (word >> 10) & 0x7;
-    from_avr.battery.is_accu_pack = word & 0x8000;
-
-    // The rest of the word is the voltage value, in units of 13.848mV. As the
-    // NXT does not have a floating point unit, the multiplication by 13.848 is
-    // approximated by a multiplication by 3545 followed by a division by 256.
-    from_avr.battery.charge = (((uint32_t)word & 0x3ff) * 3545) >> 8;
-
-    return PBIO_SUCCESS;
+    return ~checksum;
 }
 
 static pbio_os_process_t pbdrv_rproc_nxt_link_process;
@@ -229,6 +108,7 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
         // tell the AVR that we are alive. This will (among other things) stop the
         // "clicking brick" sound, and avoid having the brick powered down after a
         // few minutes by an AVR that doesn't see us coming up.
+        static char avr_init_handshake[] = "\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
         nx__twi_write_async(AVR_ADDRESS, (uint8_t *)avr_init_handshake, sizeof(avr_init_handshake) - 1);
         PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
 
@@ -244,9 +124,18 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
             PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
             pbio_os_timer_extend(&timer);
 
-            // Send commands to AVR.
-            avr_pack_to_avr();
-            nx__twi_write_async(AVR_ADDRESS, raw_to_avr, sizeof(raw_to_avr));
+            // Double buffer command to send to AVR.
+            static uint8_t send_buf[sizeof(pbdrv_rproc_nxt_send_data)];
+
+            // Copy data and set checksum if changed.
+            if (pbdrv_rproc_nxt_send_data.changed) {
+                pbdrv_rproc_nxt_send_data.changed = false;
+
+                memcpy(send_buf, &pbdrv_rproc_nxt_send_data, sizeof(send_buf) - 1);
+                send_buf[sizeof(send_buf) - 1] = pbdrv_rproc_nxt_get_checksum(send_buf, sizeof(send_buf) - 1);
+            }
+
+            nx__twi_write_async(AVR_ADDRESS, send_buf, sizeof(send_buf));
             PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
 
             // Allow processing on AVR.
@@ -254,12 +143,13 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
             pbio_os_timer_extend(&timer);
 
             // Get state data from the AVR.
-            memset(raw_from_avr, 0, sizeof(raw_from_avr));
-            nx__twi_read_async(AVR_ADDRESS, raw_from_avr, sizeof(raw_from_avr));
+            static uint8_t recv_buf[sizeof(pbdrv_rproc_nxt_received_data)];
+            nx__twi_read_async(AVR_ADDRESS, recv_buf, sizeof(recv_buf));
             PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
-
-            // Start over if we fail too many times.
-            if (avr_unpack_from_avr() != PBIO_SUCCESS) {
+            if (pbdrv_rproc_nxt_get_checksum(recv_buf, sizeof(recv_buf)) == 0) {
+                memcpy(&pbdrv_rproc_nxt_received_data, recv_buf, sizeof(recv_buf));
+            } else {
+                // Start over if we fail too many times.
                 failed_checksums++;
             }
         }
@@ -269,42 +159,77 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
     PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
-uint32_t nx__avr_get_sensor_value(uint32_t n) {
-    NX_ASSERT(n < NXT_N_SENSORS);
+/**
+ * Sets the duty cycle for a motor.
+ *
+ * @param index               Motor index (0-3).
+ * @param duty_cycle_percent  Duty cycle percentage (-100 to 100).
+ * @param slow_decay          True for slow decay mode, false for fast decay.
+ *
+ * @return ::PBIO_SUCCESS on success.
+ *         ::PBIO_ERROR_INVALID_ARG if the index is out of range.
+ */
+pbio_error_t pbdrv_rproc_nxt_set_duty_cycle(uint8_t index, int32_t duty_cycle_percent, bool slow_decay) {
+    if (index >= NXT_N_MOTORS) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
-    return from_avr.adc_value[n];
-}
+    pbdrv_rproc_nxt_send_data.motor_duty_cycle[index] = pbio_int_math_clamp(duty_cycle_percent, 100);
 
-void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake) {
-    NX_ASSERT(motor < NXT_N_MOTORS);
-
-    to_avr.motor_speed[motor] = power_percent;
-    if (brake) {
-        to_avr.motor_brake |= (1 << motor);
+    if (slow_decay) {
+        pbdrv_rproc_nxt_send_data.motor_decay_mode |= (1 << index);
     } else {
-        to_avr.motor_brake &= ~(1 << motor);
+        pbdrv_rproc_nxt_send_data.motor_decay_mode &= ~(1 << index);
     }
+
+    pbdrv_rproc_nxt_send_data.changed = true;
+    return PBIO_SUCCESS;
 }
 
-nx_avr_button_t nx_avr_get_button(void) {
-    return from_avr.buttons;
-}
+/**
+ * Gets the currently pressed button by reading the ADC value from the AVR.
+ *
+ * @return A single button flag.
+ */
+pbio_button_flags_t pbdrv_rproc_nxt_get_button_pressed(void) {
 
-uint32_t nx_avr_get_battery_voltage(void) {
-    return from_avr.battery.charge;
-}
+    uint16_t adc = pbdrv_rproc_nxt_received_data.button_adc;
 
-bool nx_avr_battery_is_accu_pack(void) {
-    return from_avr.battery.is_accu_pack;
-}
-
-void nx_avr_get_version(uint8_t *major, uint8_t *minor) {
-    if (major) {
-        *major = from_avr.version.major;
+    if (adc > 1023) {
+        return PBIO_BUTTON_CENTER;
     }
-    if (minor) {
-        *minor = from_avr.version.minor;
+    if (adc > 720) {
+        return PBIO_BUTTON_DOWN;
     }
+    if (adc > 270) {
+        return PBIO_BUTTON_RIGHT;
+    }
+    if (adc > 60) {
+        return PBIO_BUTTON_LEFT;
+    }
+    return 0;
+}
+
+/**
+ * Gets battery information from the AVR.
+ *
+ * @param [in] voltage Pointer to store the battery voltage in millivolts.
+ * @return True if the button in the battery compartment is pressed, else false.
+ */
+bool pbdrv_rproc_nxt_get_battery_info(uint16_t *voltage) {
+    uint16_t data = pbdrv_rproc_nxt_received_data.battery_and_version_info;
+
+    // This data also contains:
+    // avr.version.major = (data >> 13) & 0x3;
+    // avr.version.minor = (data >> 10) & 0x7;
+
+    // The data contains the voltage value, in units of 13.848mV. The
+    // multiplication by 13.848 is approximated by a multiplication by 3545
+    // followed by a division by 256.
+    *voltage = ((data & 0x3ff) * 3545) >> 8;
+
+    // Bit 15 represents the battery compartment button, pressed if high.
+    return data & 0x8000;
 }
 
 void pbdrv_rproc_init(void) {
@@ -325,13 +250,16 @@ void pbdrv_rproc_init(void) {
 void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) {
     switch (action) {
         case PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE:
-            to_avr.power_mode = AVR_RESET_MODE;
+            pbdrv_rproc_nxt_send_data.power_mode = 0x5A;
+            pbdrv_rproc_nxt_send_data.motor_pwm_frequency = 0xA5;
             break;
         case PBDRV_RESET_ACTION_POWER_OFF:
         default:
-            to_avr.power_mode = AVR_POWER_OFF;
+            pbdrv_rproc_nxt_send_data.power_mode = 0x5A;
+            pbdrv_rproc_nxt_send_data.motor_pwm_frequency = 0;
             break;
     }
+    pbdrv_rproc_nxt_send_data.changed = true;
 
     // The main event loop is no longer running, but we do want communication
     // with the AVR to keep going to transmit this command.

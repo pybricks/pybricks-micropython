@@ -25,7 +25,6 @@
 #include <nxos/_display.h>
 #include <nxos/assert.h>
 #include <nxos/drivers/_aic.h>
-#include <nxos/drivers/_avr.h>
 #include <nxos/drivers/_lcd.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_sensors.h>

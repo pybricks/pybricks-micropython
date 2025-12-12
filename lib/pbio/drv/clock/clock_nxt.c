@@ -15,7 +15,6 @@
 #include <nxos/nxt.h>
 #include <nxos/interrupts.h>
 #include <nxos/drivers/aic.h>
-#include <nxos/drivers/_avr.h>
 #include <nxos/drivers/_lcd.h>
 
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get
