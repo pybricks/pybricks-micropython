@@ -7,6 +7,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -105,6 +106,25 @@ bool pbdrv_usb_stdout_tx_is_idle(void) {
         return true;
     }
     return lwrb_get_full(&pbdrv_usb_stdout_ring_buf) == 0 && !pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
+}
+
+void pbdrv_usb_debug_vprintf(const char *format, va_list args) {
+    if (!lwrb_is_ready(&pbdrv_usb_stdout_ring_buf)) {
+        return;
+    }
+
+    char buf[256];
+    size_t len = vsnprintf(buf, sizeof(buf), format, args);
+    lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)buf, len);
+
+    pbio_os_request_poll();
+}
+
+void pbdrv_usb_debug_printf(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    pbdrv_usb_debug_vprintf(format, args);
+    va_end(args);
 }
 
 pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
@@ -301,7 +321,7 @@ void pbdrv_usb_init(void) {
         pbdrv_usb_noti_buf[i][1] = i; // event type
     }
 
-    static uint8_t stdout_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE * 2];
+    static uint8_t stdout_buf[PBDRV_CONFIG_USB_MAX_PACKET_SIZE * PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS];
     lwrb_init(&pbdrv_usb_stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
 
     pbio_os_process_start(&pbdrv_usb_process, pbdrv_usb_process_thread, NULL);

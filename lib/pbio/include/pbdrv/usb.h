@@ -11,6 +11,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
@@ -113,6 +114,22 @@ bool pbdrv_usb_connection_is_active(void);
  */
 pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size);
 
+/**
+ * Formats and stores a string in the USB stdout ring buffer using a va_list.
+ *
+ * @param format    The format string, similar to printf.
+ * @param args      The variable arguments, as a va_list.
+ */
+void pbdrv_usb_debug_vprintf(const char *format, va_list args);
+
+/**
+ * Formats and stores a string in the USB stdout ring buffer.
+ *
+ * @param format    The format string, similar to printf.
+ * @param ...       The variable arguments, similar to printf.
+ */
+void pbdrv_usb_debug_printf(const char *format, ...);
+
 #else // PBDRV_CONFIG_USB
 
 static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
@@ -143,6 +160,12 @@ static inline bool pbdrv_usb_connection_is_active(void) {
 
 static inline pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_usb_debug_vprintf(const char *format, va_list args) {
+}
+
+static inline void pbdrv_usb_debug_printf(const char *format, ...) {
 }
 
 #endif // PBDRV_CONFIG_USB

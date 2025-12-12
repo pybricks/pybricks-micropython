@@ -48,6 +48,7 @@
 
 #define PBDRV_CONFIG_USB                                    (0)
 #define PBDRV_CONFIG_USB_MAX_PACKET_SIZE                    (64)
+#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS               (2)
 #define PBDRV_CONFIG_USB_SIMULATION                         (0)
 #define PBDRV_CONFIG_USB_MFG_STR                            u"Pybricks"
 #define PBDRV_CONFIG_USB_PROD_STR                           u"Virtual Hub"
