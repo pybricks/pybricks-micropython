@@ -264,8 +264,8 @@ void pbdrv_rproc_init(void) {
 void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) {
     switch (action) {
         case PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE:
-            pbdrv_rproc_nxt_send_data.power_mode = 0x5A;
-            pbdrv_rproc_nxt_send_data.motor_pwm_frequency = 0xA5;
+            pbdrv_rproc_nxt_send_data.power_mode = 0xA5;
+            pbdrv_rproc_nxt_send_data.motor_pwm_frequency = 0x5A;
             break;
         case PBDRV_RESET_ACTION_POWER_OFF:
         default:
