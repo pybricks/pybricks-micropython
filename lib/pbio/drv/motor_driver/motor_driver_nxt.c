@@ -84,7 +84,11 @@ pbio_error_t pbdrv_motor_driver_set_duty_cycle(pbdrv_motor_driver_dev_t *driver,
     }
 
     // Set sensor power only if 100% reverse duty cycle is requested.
-    return pbdrv_rproc_nxt_set_sensor_power(driver->index, duty_cycle == -PBDRV_MOTOR_DRIVER_MAX_DUTY);
+    pbdrv_rproc_nxt_sensor_power_t power_type = duty_cycle == -PBDRV_MOTOR_DRIVER_MAX_DUTY ?
+        PBDRV_RPROC_NXT_SENSOR_POWER_ON :
+        PBDRV_RPROC_NXT_SENSOR_POWER_OFF;
+
+    return pbdrv_rproc_nxt_set_sensor_power(driver->index, power_type);
 }
 
 void pbdrv_motor_driver_init(void) {
