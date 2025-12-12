@@ -369,14 +369,16 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
         debug_pr("Reading NXT Light Sensor until disconnected.\n");
         // While plugged in, get reflected and ambient light intensity.
-        while (!pbdrv_gpio_input(&pins->p2)) {
+        while (!pbdrv_gpio_input(&pins->p5)) {
             // Reflected intensity.
             pbdrv_gpio_out_high(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 1);
-
-            // Ambient intensity.
-            pbdrv_gpio_out_low(&pins->p5);
+            // Ambient intensity. Achieved by setting P5 low. But the NXT light
+            // sensor pulls it low, so we can set as input, and use that input
+            // to detect that the device is still present. We could use P2 for
+            // that purpose, but it is only available on EV3.
+            pbdrv_gpio_input(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 1);
         }
@@ -405,7 +407,8 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         debug_pr("Finished initializing NXT Color Sensor.\n");
 
         // While plugged in, toggle through available colors and measure intensity.
-        while (!pbdrv_gpio_input(&pins->p2)) {
+        // Plugged in can be tested with P2, but NXT does not have it, so use ADC1.
+        while (pbio_port_dcm_get_mv(pins, 1) < 100) {
 
             pbdrv_gpio_out_low(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
@@ -416,7 +419,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 6);
 
             pbdrv_gpio_out_low(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 2000));
+            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.g = pbio_port_dcm_get_mv(pins, 6);
 
             pbdrv_gpio_out_high(&pins->p5);
