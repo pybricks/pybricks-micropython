@@ -3,7 +3,8 @@
 
 // platform-specific configuration for LEGO MINDSTORMS NXT
 
-#define PBDRV_CONFIG_ADC                            (0)
+#define PBDRV_CONFIG_ADC                            (1)
+#define PBDRV_CONFIG_ADC_NXT                        (1)
 
 #define PBDRV_CONFIG_BATTERY                        (1)
 #define PBDRV_CONFIG_BATTERY_NXT                    (1)
@@ -29,7 +30,7 @@
 #define PBDRV_CONFIG_DISPLAY_NUM_ROWS               (64)
 
 #define PBDRV_CONFIG_GPIO                           (1)
-#define PBDRV_CONFIG_GPIO_VIRTUAL                   (1) // TODO: Implement NXT GPIO driver
+#define PBDRV_CONFIG_GPIO_NXT                       (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)

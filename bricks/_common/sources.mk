@@ -103,6 +103,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/adc/adc_ev3.c \
+	drv/adc/adc_nxt.c \
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
@@ -144,6 +145,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/display/display_ev3.c \
 	drv/display/display_virtual.c \
 	drv/gpio/gpio_ev3.c \
+	drv/gpio/gpio_nxt.c \
 	drv/gpio/gpio_pico.c \
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
