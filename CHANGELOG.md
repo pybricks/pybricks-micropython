@@ -16,15 +16,18 @@
   more similar. User code should measure HSV values again in old code ([pybricks-micropython#421]).
 
 ### Fixed
-- Fixed `race=False` ignored in `pybricks.tools.multitask()`. ([support#2468])
+- Fixed `race=False` ignored in `pybricks.tools.multitask()` ([support#2468]).
 - Fixed Essential Hub button being disabled after power off so it could not be
   switched on again.
 - Fixed `TechnicHub` class being unavailable on Technic Hub in a recent
   pre-release ([pybricks-micropython#425]).
+- Fixed internal rounding error that could could cause a Drive Base to be 1 mm
+  off after driving 3 meters, depending on configuration parameters ([support#2500]).
 
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
+[support#2500]: https://github.com/pybricks/support/issues/2500
 [pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
 [pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
 [pybricks-micropython#425]: https://github.com/pybricks/pybricks-micropython/pull/425

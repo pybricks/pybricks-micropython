@@ -34,6 +34,13 @@ def expect_state(
 # Expect zeroed state on startup.
 expect_state(0, 0, 0, 0)
 
+# In the idealized simulation, we should be exactly on target
+# after settling for a while.
+drive_base.straight(1000)
+wait(1000)
+assert abs(drive_base.distance() - 1000) <= 1
+drive_base.straight(-1000)
+
 # Drive straight forward and back again.
 drive_base.straight(500)
 expect_state(500, 0, 0, 0)
