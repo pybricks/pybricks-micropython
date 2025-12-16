@@ -95,6 +95,8 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
 
 pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode);
 
+pbio_error_t pbio_port_set_type(pbio_port_t *port, lego_device_type_id_t type_id);
+
 pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_dev);
 
 pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev);
@@ -151,6 +153,10 @@ static inline pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port
 }
 
 static inline pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_set_type(pbio_port_t *port, lego_device_type_id_t type_id) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

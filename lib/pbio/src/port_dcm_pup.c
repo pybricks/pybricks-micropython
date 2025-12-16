@@ -301,6 +301,12 @@ pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     return dcm;
 }
 
+pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t type_id) {
+    // This platform can detect everything in LEGO mode, so no need to manually
+    // set it. Instead, when custom devices are used we switch the port mode.
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {
 
     // Require definitive detection before returning the device type.

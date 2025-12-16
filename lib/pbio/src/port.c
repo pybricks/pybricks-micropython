@@ -354,6 +354,28 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
 }
 
 /**
+ * Overrides the type ID of a LEGO device.
+ *
+ * This is used to activate necessary background processes when automatic
+ * detection is not sufficient.
+ *
+ * @param [in]  port        The port instance.
+ * @param [in]  type_id     The type identifier to set.
+ * @return                  ::PBIO_SUCCESS on success,
+ *                          ::PBIO_ERROR_INVALID_OP when LEGO mode is not active.
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if not available on this platform or this device type.
+ */
+pbio_error_t pbio_port_set_type(pbio_port_t *port, lego_device_type_id_t type_id) {
+    // Setting the ID manually is only needed for a few LEGO devices due to
+    // detection limitations. Custom devices should instead use a different
+    // port mode.
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    return pbio_port_dcm_set_type_id(port->connection_manager, type_id);
+}
+
+/**
  * Gets the analog value of the LEGO device.
  *
  * @param [in]  port        The port instance.

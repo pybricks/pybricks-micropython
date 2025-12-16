@@ -50,6 +50,17 @@ pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index);
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id);
 
 /**
+ * Sets the device id of a device connected to the port on platforms without
+ * device detection.
+ *
+ * @param [in]  lump_dev    The connection manager instance.
+ * @param [out] type_id     The device id to set.
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if this type does not support setting.
+ */
+pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t type_id);
+
+/**
  * Gets the analog value of the device connected to the port.
  *
  * @param [in]  dcm         The device connection manager.
@@ -70,6 +81,10 @@ pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm)
 
 static inline pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     return NULL;
+}
+
+static inline pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t type_id) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *type_id) {

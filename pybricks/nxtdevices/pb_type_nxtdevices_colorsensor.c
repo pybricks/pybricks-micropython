@@ -47,6 +47,11 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(pbio_port_get_port(port_id, &self->port));
 
+    pb_module_tools_assert_blocking();
+
+    // On NXT, this activates the background process to drive this sensor.
+    pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR));
+
     // Assert that the device is there.
     pbio_port_dcm_analog_rgba_t *rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));

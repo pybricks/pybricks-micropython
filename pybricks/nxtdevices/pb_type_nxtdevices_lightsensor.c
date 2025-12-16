@@ -56,6 +56,9 @@ static mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
 
     pb_module_tools_assert_blocking();
 
+    // On NXT, this activates the background process to drive this sensor.
+    pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR));
+
     // Assert that the device is there.
     pbio_port_dcm_analog_rgba_t *rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));

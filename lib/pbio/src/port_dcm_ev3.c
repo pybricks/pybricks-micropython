@@ -17,12 +17,10 @@
 #if DEBUG
 #include <stdio.h>
 #include <inttypes.h>
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-#define debug_pr pbdrv_uart_debug_printf
-#define DBG_ERR(expr) expr
+#include <pbdrv/usb.h>
+#define debug_pr pbdrv_usb_debug_printf
 #else
 #define debug_pr(...)
-#define DBG_ERR(expr)
 #endif
 
 /**
@@ -48,11 +46,7 @@ typedef enum {
     /**
      * Pin 2 GPIO is high.
      */
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     PIN_STATE_P2_HIGH = 1 << 4,
-    #else
-    PIN_STATE_P2_HIGH = 0,
-    #endif
     /**
      * Pin 5 GPIO is high.
      */
@@ -76,7 +70,6 @@ typedef enum {
  * only one known device.
  */
 typedef enum {
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     /**
      * Device category is EV3 UART sensor. P6 and ADC6 are arbitrary (can be set by sensor TX).
      */
@@ -85,7 +78,6 @@ typedef enum {
      * Device category is EV3 analog sensor.
      */
     DCM_CATEGORY_EV3_ANALOG = PIN_STATE_ADC1_100_to_3100 | PIN_STATE_P2_HIGH,
-    #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     /**
      * No device is connected.
      */
@@ -145,6 +137,7 @@ static uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pi
     return pbio_port_dcm_adc_to_mv(adc);
 }
 
+#if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
 /**
  * Maps the passive port state to device category.
  *
@@ -156,29 +149,21 @@ static uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pi
  */
 static pbio_port_dcm_category_t pbio_port_dcm_get_category(pbio_port_dcm_pin_state_t state) {
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     if ((state | PIN_STATE_MASK_P6) == DCM_CATEGORY_LUMP) {
         return DCM_CATEGORY_LUMP;
     }
-    #endif
 
     if ((state | PIN_STATE_MASK_P6) == DCM_CATEGORY_NXT_COLOR) {
         return DCM_CATEGORY_NXT_COLOR;
     }
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     if ((state | PIN_STATE_MASK_P1) == DCM_CATEGORY_NXT_ANALOG_OTHER) {
         return DCM_CATEGORY_NXT_ANALOG_OTHER;
     }
-    #endif
 
     if ((state | PIN_STATE_MASK_P1) == DCM_CATEGORY_NXT_LIGHT) {
         return DCM_CATEGORY_NXT_LIGHT;
     }
-
-    #if !PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
-    return DCM_CATEGORY_NONE;
-    #endif
 
     // All other can be tested for equality.
     return (pbio_port_dcm_category_t)state;
@@ -219,7 +204,7 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
         state |= PIN_STATE_P6_HIGH;
     }
 
-    #if DEBUG == 2 && PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+    #if DEBUG == 2
     debug_pr("%d::: p1: %dmv p2:%d p5:%d p6:%d (%d mv)\n",
         pbio_port_dcm_get_category(state),
         adc1,
@@ -231,6 +216,7 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
 
     return state;
 }
+#endif
 
 typedef struct __attribute__((__packed__)) {
     uint32_t calibration[3][4];
@@ -353,6 +339,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     dcm->connected = false;
 
     // Wait for any device to be connected.
+    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     for (dcm->count = 0; dcm->count < DCM_LOOP_STEADY_STATE_COUNT; dcm->count++) {
         pbio_port_dcm_pin_state_t pin_state = pbio_port_dcm_get_state(pins);
         pbio_port_dcm_category_t category = pbio_port_dcm_get_category(pin_state);
@@ -362,13 +349,15 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         }
         PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
     }
-    debug_pr("Device kind detected: %d\n", dcm->category);
     dcm->connected = true;
+    #else
+    PBIO_OS_AWAIT_UNTIL(state, dcm->category != DCM_CATEGORY_NONE);
+    #endif
+    debug_pr("Device kind detected: %d\n", dcm->category);
 
     // Now run processes for devices that require a process, and otherwise
     // wait for disconnection.
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     if (dcm->category == DCM_CATEGORY_LUMP) {
         debug_pr("Continue as LUMP process\n");
         // Exit EV3 device manager, letting LUMP manager take over.
@@ -384,21 +373,22 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         debug_pr("Stopped NXT temperature sensor process.\n");
         return PBIO_SUCCESS;
     }
-    #endif
 
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
         debug_pr("Reading NXT Light Sensor until disconnected.\n");
         // While plugged in, get reflected and ambient light intensity.
-        while (!pbdrv_gpio_input(&pins->p5)) {
+        #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+        while (!pbdrv_gpio_input(&pins->p2)) {
+        #else
+        while (pbio_port_dcm_get_mv(pins, 1) < 5000 && dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+            #endif
             // Reflected intensity.
             pbdrv_gpio_out_high(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 1);
-            // Ambient intensity. Achieved by setting P5 low. But the NXT light
-            // sensor pulls it low, so we can set as input, and use that input
-            // to detect that the device is still present. We could use P2 for
-            // that purpose, but it is only available on EV3.
-            pbdrv_gpio_input(&pins->p5);
+
+            // Ambient intensity.
+            pbdrv_gpio_out_low(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 1);
 
@@ -429,8 +419,11 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         debug_pr("Finished initializing NXT Color Sensor.\n");
 
         // While plugged in, toggle through available colors and measure intensity.
-        // Plugged in can be tested with P2, but NXT does not have it, so use ADC1.
-        while (pbio_port_dcm_get_mv(pins, 1) < 100) {
+        #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+        while (!pbdrv_gpio_input(&pins->p2)) {
+        #else
+        while (pbio_port_dcm_get_mv(pins, 1) < 100 && dcm->category == DCM_CATEGORY_NXT_COLOR) {
+            #endif
 
             pbdrv_gpio_out_low(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
@@ -486,6 +479,28 @@ static pbio_error_t matches_category(pbio_port_dcm_t *dcm, pbio_port_dcm_categor
     return dcm->category == expected ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
 }
 
+pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t type_id) {
+
+    // Without autodetection, we manually set the category to get the background
+    // processes going.
+    if (type_id == LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR) {
+        #if !PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+        dcm->category = DCM_CATEGORY_NXT_COLOR;
+        pbio_os_request_poll();
+        #endif
+        return PBIO_SUCCESS;
+    }
+    if (type_id == LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR) {
+        #if !PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+        dcm->category = DCM_CATEGORY_NXT_LIGHT;
+        pbio_os_request_poll();
+        #endif
+        return PBIO_SUCCESS;
+    }
+
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *expected_type_id) {
 
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
@@ -533,12 +548,10 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
             return PBIO_ERROR_NO_DEV;
     }
     #else
+    // NXT without GPIO2 can't detect devices, so pass all. For the NXT Light
+    // and NXT Color sensor we do require that the sensor process is still
+    // running.
     switch (*expected_type_id) {
-        // On NXT without GPIO2, we can only definitively assert the color
-        // sensor and the light sensor.
-        case LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART:
-            // This is never supported.
-            return PBIO_ERROR_NO_DEV;
         case LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR:
             return matches_category(dcm, DCM_CATEGORY_NXT_COLOR);
         case LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR:
@@ -546,7 +559,7 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
         default:
             return PBIO_SUCCESS;
     }
-    #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+    #endif
 }
 
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
@@ -607,6 +620,7 @@ pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm)
         calibrated->g = 0;
         calibrated->b = 0;
         calibrated->a = pbio_int_math_bind((ambient - 1200) / 4, 0, 1000);
+        calibrated->last_sample_time = rgba->last_sample_time;
         return calibrated;
     }
 
@@ -627,6 +641,7 @@ pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm)
         calibrated->g = scale_rgb(rgba->g, rgba->a, data->calibration[row][1]);
         calibrated->b = scale_rgb(rgba->b, rgba->a, data->calibration[row][2]);
         calibrated->a = scale_rgb(rgba->a, 220, data->calibration[row][3] / 4);
+        calibrated->last_sample_time = rgba->last_sample_time;
 
         debug_pr("Calibration row: %d because tr0: %d tr1: %d a: %d\n", row,
             pbio_port_dcm_adc_to_mv(data->threshold_high),
