@@ -23,11 +23,10 @@ pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start
 
     PBIO_OS_ASYNC_BEGIN(state);
     *start_time_us = pbdrv_clock_get_ms();
-    // REVISIT: Adjust for use with real timer, account for AVR vs internal update rate.
-    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), *start_time_us + 5));
+    // REVISIT: Pass channel ID to this function so we can adjust the wait time
+    // to the specific sample coming in. The AVR adc samples will be slower.
+    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), *start_time_us + 7));
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-
-    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
