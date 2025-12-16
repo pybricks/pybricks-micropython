@@ -32,9 +32,9 @@ typedef struct _pb_type_nxtdevices_colorsensor_obj_t {
 // pybricks.nxtdevices.ColorSensor.ambient
 static mp_obj_t pb_type_nxtdevices_colorsensor_ambient(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_port_dcm_analog_rgba_t *rgba;
+    pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
-    return pb_obj_new_fraction(rgba->a, 10);
+    return pb_obj_new_fraction(rgba.a, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_ambient_obj, pb_type_nxtdevices_colorsensor_ambient);
 
@@ -53,14 +53,14 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR));
 
     // Assert that the device is there.
-    pbio_port_dcm_analog_rgba_t *rgba;
+    pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
 
     // Wait for a recent sample. On EV3 with autodetection this never waits in
     // practice. On NXT we activate this sensor process manually the first time,
     // so we need to wait a little while to get a new sample.
     uint32_t start_time = pbdrv_clock_get_ms();
-    while (!pbio_util_time_has_passed(rgba->last_sample_time, start_time - 100)) {
+    while (!pbio_util_time_has_passed(rgba.last_sample_time, start_time - 100)) {
         pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
         mp_hal_delay_ms(10);
     }
@@ -78,14 +78,14 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
  * @param  [out] hsv   The HSV data.
  */
 static void get_hsv_data(pb_type_nxtdevices_colorsensor_obj_t *self, pbio_color_hsv_t *hsv) {
-    pbio_port_dcm_analog_rgba_t *rgba;
+    pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
 
     // Values are capped between 0--1000, so scale to get a range of 0..255.
     pbio_color_rgb_t rgb;
-    rgb.r = rgba->r >> 2;
-    rgb.g = rgba->g >> 2;
-    rgb.b = rgba->b >> 2;
+    rgb.r = rgba.r >> 2;
+    rgb.g = rgba.g >> 2;
+    rgb.b = rgba.b >> 2;
     pb_color_map_rgb_to_hsv(&rgb, hsv);
 }
 
@@ -110,9 +110,9 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_hsv_obj, pb_type
 // pybricks.nxtdevices.ColorSensor.reflection
 static mp_obj_t pb_type_nxtdevices_colorsensor_reflection(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_port_dcm_analog_rgba_t *rgba;
+    pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
-    return pb_obj_new_fraction((rgba->r + rgba->g + rgba->b) / 3, 10);
+    return pb_obj_new_fraction((rgba.r + rgba.g + rgba.b) / 3, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_reflection_obj, pb_type_nxtdevices_colorsensor_reflection);
 

@@ -341,8 +341,8 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return 0;
 }
 
-pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm) {
-    return NULL;
+pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_PUP

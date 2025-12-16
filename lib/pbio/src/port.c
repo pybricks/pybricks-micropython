@@ -411,15 +411,18 @@ pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t
  * @param [out] rgba        The analog color values.
  * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
  */
-pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t **rgba) {
+pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t *rgba) {
 
-    *rgba = pbio_port_dcm_get_analog_rgba(port->connection_manager);
-    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM || !*rgba) {
+    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    lego_device_type_id_t expected_type_id = type_id;
-    return pbio_port_dcm_assert_type_id(port->connection_manager, &expected_type_id);
+    pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &type_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    return pbio_port_dcm_get_analog_rgba(port->connection_manager, rgba);
 }
 
 /**

@@ -73,9 +73,12 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
  * Gets the analog color values of the device connected to the port.
  *
  * @param [in]  dcm         The device connection manager.
- * @return                  The analog color values.
+ * @param [in]  rgba        Analog values struct to hold the result.
+ * @return                  ::PBIO_SUCCESS if values are retrieved
+ *                          ::PBIO_ERROR_NO_DEV if there is no device that
+ *                          can produce these values.
  */
-pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm);
+pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba);
 
 #else // PBIO_CONFIG_PORT_DCM
 
@@ -99,8 +102,8 @@ static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, cons
     return 0;
 }
 
-static inline pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm) {
-    return NULL;
+static inline pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {

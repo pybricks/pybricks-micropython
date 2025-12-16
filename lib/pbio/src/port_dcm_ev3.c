@@ -311,7 +311,6 @@ struct _pbio_port_dcm_t {
     bool connected;
     pbio_port_dcm_category_t category;
     pbio_port_dcm_analog_rgba_t nxt_rgba;
-    pbio_port_dcm_analog_rgba_t nxt_rgba_calibrated;
     pbio_port_dcm_nxt_color_sensor_state_t nxt_color_state;
 };
 
@@ -601,10 +600,9 @@ enum {
     NXT_COLOR_CALIBRATION_LOW_AMBIENT = 2,
 };
 
-pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm) {
+pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *calibrated) {
 
     pbio_port_dcm_analog_rgba_t *rgba = &dcm->nxt_rgba;
-    pbio_port_dcm_analog_rgba_t *calibrated = &dcm->nxt_rgba_calibrated;
 
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
         // Intensity is inverted.
@@ -621,7 +619,7 @@ pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm)
         calibrated->b = 0;
         calibrated->a = pbio_int_math_bind((ambient - 1200) / 4, 0, 1000);
         calibrated->last_sample_time = rgba->last_sample_time;
-        return calibrated;
+        return PBIO_SUCCESS;
     }
 
     if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
@@ -655,10 +653,10 @@ pbio_port_dcm_analog_rgba_t *pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm)
         debug_pr("old: r: %d, g: %d, b: %d, a: %d\n", rgba->r, rgba->g, rgba->b, rgba->a);
         debug_pr("new: r: %d, g: %d, b: %d, a: %d\n", calibrated->r, calibrated->g, calibrated->b, calibrated->a);
 
-        return calibrated;
+        return PBIO_SUCCESS;
     }
 
-    return NULL;
+    return PBIO_ERROR_NO_DEV;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM_EV3
