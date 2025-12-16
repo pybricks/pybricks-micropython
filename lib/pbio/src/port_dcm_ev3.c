@@ -613,11 +613,12 @@ pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_a
         // With higher ambient light, contrast is less pronounced due to the
         // nonlinearity of the sensor. Scale up the difference to compensate.
         // Also normalize to approximately 0--1000.
-        uint32_t scale = ambient <= 825 ? 0: ambient - 825;
+        uint32_t scale = ambient <= 1000 ? 0: (ambient - 1000) * 2;
+        debug_pr("NXT Light Sensor: Ambient: %d Reflection: %d Diff: %d Scale: %d\n", ambient, reflection, difference, scale);
         calibrated->r = pbio_int_math_clamp(difference * scale / 1200, 1000);
         calibrated->g = 0;
         calibrated->b = 0;
-        calibrated->a = pbio_int_math_bind((ambient - 1200) / 4, 0, 1000);
+        calibrated->a = ambient <= 1000 ? 0 : pbio_int_math_bind((ambient - 1000) / 4, 0, 1000);
         calibrated->last_sample_time = rgba->last_sample_time;
         return PBIO_SUCCESS;
     }

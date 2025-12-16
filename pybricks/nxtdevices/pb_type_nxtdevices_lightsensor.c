@@ -31,7 +31,7 @@ static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-    return mp_obj_new_int(rgba.a);
+    return pb_obj_new_fraction(rgba.a, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
@@ -41,7 +41,7 @@ static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
 
     pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-    return mp_obj_new_int(rgba.r);
+    return pb_obj_new_fraction(rgba.r, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
