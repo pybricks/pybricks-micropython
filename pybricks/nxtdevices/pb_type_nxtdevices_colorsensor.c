@@ -5,8 +5,13 @@
 
 #if PYBRICKS_PY_NXTDEVICES
 
+#include "py/mphal.h"
+
+#include <pbdrv/clock.h>
+
 #include <pbio/int_math.h>
 #include <pbio/port_interface.h>
+#include <pbio/util.h>
 #include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>
@@ -42,14 +47,23 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(pbio_port_get_port(port_id, &self->port));
 
-    // Measure once. This will assert that the device is there.
-    mp_obj_t self_obj = MP_OBJ_FROM_PTR(self);
-    pb_type_nxtdevices_colorsensor_ambient(self_obj);
+    // Assert that the device is there.
+    pbio_port_dcm_analog_rgba_t *rgba;
+    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
+
+    // Wait for a recent sample. On EV3 with autodetection this never waits in
+    // practice. On NXT we activate this sensor process manually the first time,
+    // so we need to wait a little while to get a new sample.
+    uint32_t start_time = pbdrv_clock_get_ms();
+    while (!pbio_util_time_has_passed(rgba->last_sample_time, start_time - 100)) {
+        pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
+        mp_hal_delay_ms(10);
+    }
 
     // Save default settings
     pb_color_map_save_default(&self->color_map);
 
-    return self_obj;
+    return MP_OBJ_FROM_PTR(self);
 }
 
 /**

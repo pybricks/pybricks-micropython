@@ -6,8 +6,10 @@
 #include <pbio/port_interface.h>
 #include <pbio/port_dcm.h>
 #include <pbio/int_math.h>
-#include <pbdrv/ioport.h>
+
 #include <pbdrv/adc.h>
+#include <pbdrv/clock.h>
+#include <pbdrv/ioport.h>
 
 #if PBIO_CONFIG_PORT_DCM_EV3
 
@@ -399,6 +401,8 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             pbdrv_gpio_input(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 1);
+
+            dcm->nxt_rgba.last_sample_time = pbdrv_clock_get_ms();
         }
         return PBIO_SUCCESS;
     }
@@ -443,6 +447,8 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             pbdrv_gpio_out_high(&pins->p5);
             PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, 200));
             dcm->nxt_rgba.b = pbio_port_dcm_get_mv(pins, 6);
+
+            dcm->nxt_rgba.last_sample_time = pbdrv_clock_get_ms();
         }
         pbdrv_gpio_out_low(&pins->p5);
         debug_pr("Color Sensor disconnected.\n");

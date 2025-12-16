@@ -23,6 +23,8 @@ typedef struct {
     uint32_t b;
     /** Ambient analog value. */
     uint32_t a;
+    /** Time of most recent full update. */
+    uint32_t last_sample_time;
 } pbio_port_dcm_analog_rgba_t;
 
 #if PBIO_CONFIG_PORT_DCM
