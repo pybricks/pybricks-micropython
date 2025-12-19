@@ -8,8 +8,11 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (50 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_TEST                      (1)
 
+// Use Bluetooth simulation locally.
+#ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
 #define PBDRV_CONFIG_BLUETOOTH_SIMULATION                   (1)
+#endif // PBDRV_CONFIG_RUN_ON_CI
 
 #define PBDRV_CONFIG_BUTTON                                 (1)
 #define PBDRV_CONFIG_BUTTON_TEST                            (1)
@@ -46,9 +49,12 @@
 #define PBDRV_CONFIG_HAS_PORT_F (1)
 #define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL                   (1)
 
-#define PBDRV_CONFIG_USB                                    (0)
+// USB mock driver used on CI.
+#ifdef PBDRV_CONFIG_RUN_ON_CI
+#define PBDRV_CONFIG_USB                                    (1)
+#define PBDRV_CONFIG_USB_SIMULATION                         (1)
 #define PBDRV_CONFIG_USB_MAX_PACKET_SIZE                    (64)
 #define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS               (2)
-#define PBDRV_CONFIG_USB_SIMULATION                         (0)
 #define PBDRV_CONFIG_USB_MFG_STR                            u"Pybricks"
 #define PBDRV_CONFIG_USB_PROD_STR                           u"Virtual Hub"
+#endif // PBDRV_CONFIG_RUN_ON_CI
