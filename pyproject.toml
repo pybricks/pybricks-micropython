@@ -14,8 +14,6 @@ freetype-py = "^2.5.1"
 eventlet = "^0.40.3"
 flake8 = "^3.8.3"
 matplotlib = "^3.4.3"
-nbstripout = "^0.5.0"
-notebook = "^6.4.12"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
 pybricksdev = "^2.3.0"
 pycryptodomex = "^3.9.9"
