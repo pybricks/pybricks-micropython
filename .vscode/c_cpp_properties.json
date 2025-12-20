@@ -281,7 +281,8 @@
                 "${workspaceFolder}/bricks/nxt/build",
                 "${workspaceFolder}/lib/pbio/include",
                 "${workspaceFolder}",
-                "${workspaceFolder}/micropython"
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}/lib/umm_malloc/src"
             ],
             "defines": [
                 "MICROPY_MODULE_FROZEN_MPY",

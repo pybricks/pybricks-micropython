@@ -11,6 +11,8 @@
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 
+#include <umm_malloc.h>
+
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
@@ -173,4 +175,9 @@ void SystemInit(void) {
             local_addr[0], local_addr[1], local_addr[2],
             local_addr[3], local_addr[4], local_addr[5]);
     }
+
+    // Separate heap for large allocations - defined in linker script.
+    extern char pb_umm_heap_start;
+    extern char pb_umm_heap_end;
+    umm_init_heap(&pb_umm_heap_start, &pb_umm_heap_end - &pb_umm_heap_start);
 }

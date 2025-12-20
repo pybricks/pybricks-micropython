@@ -29,6 +29,9 @@ RAM_BASE = 2M;
 RAM_SIZE = 64k;
 SAMBA_RESERVED_SIZE = 8k;
 
+/* Extra heap for large allocations (images, etc). */
+pb_umm_heap_size = 8k;
+
 SECTIONS {
   /*
    * Interrupt vectors. These are loaded to the bottom of memory at
@@ -90,6 +93,11 @@ SECTIONS {
   {
       . = ALIGN(4);
       *(.noinit)
+
+      . = ALIGN(4);
+      pb_umm_heap_start = .;
+      . = . + pb_umm_heap_size;
+      pb_umm_heap_end = .;
   } > ram
 
   /*
