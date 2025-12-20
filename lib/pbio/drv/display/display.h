@@ -12,10 +12,14 @@
 #if PBDRV_CONFIG_DISPLAY
 
 void pbdrv_display_init(void);
+void pbdrv_display_deinit(void);
 
 #else // PBDRV_CONFIG_DISPLAY
 
 static inline void pbdrv_display_init(void) {
+}
+
+static inline void pbdrv_display_deinit(void) {
 }
 
 #endif // PBDRV_CONFIG_DISPLAY

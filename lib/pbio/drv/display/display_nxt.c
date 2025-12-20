@@ -239,19 +239,6 @@ void nx__lcd_dirty_display(void) {
     spi_state.screen_dirty = true;
 }
 
-void nx__lcd_shutdown(void) {
-    // When power to the controller goes out, there is the risk that
-    // some capacitors mounted around the controller might damage it
-    // when discharging in an uncontrolled fashion. To avoid this, the
-    // spec recommends putting the controller into reset mode before
-    // shutdown, which activates a drain circuit to empty the board
-    // capacitors gracefully.
-    *AT91C_SPI_IDR = ~0;
-    *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
-    spi_write_command_byte(RESET());
-    nx_systick_wait_ms(20);
-}
-
 void nx__lcd_sync_refresh(void) {
     int i, j;
 
@@ -352,6 +339,19 @@ uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
 }
 
 void pbdrv_display_update(void) {
+}
+
+void pbdrv_display_deinit(void) {
+    // When power to the controller goes out, there is the risk that
+    // some capacitors mounted around the controller might damage it
+    // when discharging in an uncontrolled fashion. To avoid this, the
+    // spec recommends putting the controller into reset mode before
+    // shutdown, which activates a drain circuit to empty the board
+    // capacitors gracefully.
+    *AT91C_SPI_IDR = ~0;
+    *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
+    spi_write_command_byte(RESET());
+    nx_systick_wait_ms(20);
 }
 
 #endif // PBDRV_CONFIG_DISPLAY_NXT

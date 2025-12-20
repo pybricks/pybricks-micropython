@@ -61,15 +61,6 @@ void nx__lcd_set_display(uint8_t *display_buffer);
 /** Mark the display as requiring a refresh cycle. */
 void nx__lcd_dirty_display(void);
 
-/** Safely power off the LCD controller.
- *
- * The LCD controller must be powered off this way in order to drain
- * several capacitors connected to the display. Failure to do so may
- * damage the LCD display (although in practice the screen seems to
- * take hard poweroffs fairly happily).
- */
-void nx__lcd_shutdown(void);
-
 /** Display an abort message.
  *
  * This will take the kernel offline (the technical term for "crash")

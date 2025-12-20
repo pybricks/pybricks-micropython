@@ -84,6 +84,7 @@ void pbdrv_init(void) {
 void pbdrv_deinit(void) {
 
     pbdrv_imu_deinit();
+    pbdrv_display_deinit();
     pbdrv_bluetooth_deinit();
     pbdrv_usb_deinit();
 

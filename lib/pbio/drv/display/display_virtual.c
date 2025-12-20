@@ -111,4 +111,7 @@ void pbdrv_display_update(void) {
     pbio_os_request_poll();
 }
 
+void pbdrv_display_deinit(void) {
+}
+
 #endif // PBDRV_CONFIG_DISPLAY_VIRTUAL
