@@ -525,7 +525,6 @@ endif
 NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	_abort.c \
 	assert.c \
-	display.c \
 	drivers/_efc.c \
 	drivers/_twi.c \
 	drivers/_uart.c \

@@ -39,8 +39,6 @@
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/aic.h"
 
-#include "nxos/drivers/_lcd.h"
-
 /*
  * Internal command bytes implementing part of the basic command set of
  * the UC1601.
@@ -229,7 +227,7 @@ void pbdrv_display_nxt_convert_page(int page) {
     }
 }
 
-void nx__lcd_sync_refresh(void) {
+void pbdrv_display_nxt_sync_refresh(void) {
     int i, j;
 
     // Start the data transfer.

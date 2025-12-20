@@ -16,7 +16,6 @@
 
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
-#include "nxos/display.h"
 #include "nxos/util.h"
 #include "nxos/drivers/i2c_memory.h"
 #include "nxos/drivers/radar.h"
@@ -171,39 +170,4 @@ bool nx_radar_set_interval(uint32_t sensor, uint8_t interval) {
 bool nx_radar_set_op_mode(uint32_t sensor, radar_op_mode mode) {
   uint8_t val = mode;
   return nx_radar_write(sensor, RADAR_OP_MODE, &val);
-}
-
-/** Display connected radar's information. */
-void nx_radar_info(uint32_t sensor) {
-  uint8_t buf[8];
-
-  // Product ID (LEGO)
-  memset(buf, 0, 8);
-  nx_radar_read(sensor, RADAR_PRODUCT_ID, buf);
-  nx_display_string((char *)buf);
-  nx_display_string(" ");
-
-  // Sensor Type (Sonar)
-  memset(buf, 0, 8);
-  nx_radar_read(sensor, RADAR_SENSOR_TYPE, buf);
-  nx_display_string((char *)buf);
-  nx_display_string(" ");
-
-  // Version (V1.0)
-  memset(buf, 0, 8);
-  nx_radar_read(sensor, RADAR_VERSION, buf);
-  nx_display_string((char *)buf);
-  nx_display_end_line();
-
-  // Measurement units
-  nx_display_string("Units: ");
-  memset(buf, 0, 8);
-  nx_radar_read(sensor, RADAR_MEASUREMENT_UNITS, buf);
-  nx_display_string((char *)buf);
-  nx_display_end_line();
-
-  // Measurement interval
-  nx_display_string("Interval: ");
-  nx_display_uint(nx_radar_read_value(sensor, RADAR_INTERVAL));
-  nx_display_string(" ms?\n");
 }

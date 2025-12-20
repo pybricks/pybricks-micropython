@@ -9,25 +9,29 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "nxos/display.h"
+#include <pbio/image.h>
+
+#include <pbdrv/display.h>
+
 #include "nxos/interrupts.h"
-#include "nxos/drivers/_lcd.h"
 
 #include "nxos/_abort.h"
 
+#include "../../../drv/display/display_nxt.h"
+
 void nx__abort(bool data, uint32_t pc, uint32_t cpsr) {
   nx_interrupts_disable();
-  nx_display_auto_refresh(false);
-  nx_display_clear();
+  pbio_image_t *display = pbdrv_display_get_image();
+  pbio_image_fill(display, 0);
   if (data) {
-    nx_display_string("Data");
+    pbio_image_print0(display, "Data");
   } else {
-    nx_display_string("Prefetch");
+    pbio_image_print0(display, "Prefetch");
   }
-  nx_display_string(" abort\nPC: ");
-  nx_display_hex(pc);
-  nx_display_string("\nCPSR: ");
-  nx_display_hex(cpsr);
-  nx__lcd_sync_refresh();
+  pbio_image_print0(display, " abort\nPC: ");
+  pbio_image_print_hex(display, pc);
+  pbio_image_print0(display, "\nCPSR: ");
+  pbio_image_print_hex(display, cpsr);
+  pbdrv_display_nxt_sync_refresh();
   while(1);
 }

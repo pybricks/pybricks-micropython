@@ -8,7 +8,6 @@
 #if PBDRV_CONFIG_RESET_NXT
 
 #include <at91sam7s256.h>
-#include <nxos/drivers/_lcd.h>
 #include <nxos/drivers/bt.h>
 
 #include <pbdrv/reset.h>
