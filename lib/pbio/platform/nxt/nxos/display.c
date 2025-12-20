@@ -46,8 +46,6 @@ static struct {
 
 
 static inline void dirty_display(void) {
-  if (display.auto_refresh)
-    nx__lcd_dirty_display();
 }
 
 
@@ -70,7 +68,6 @@ void nx_display_auto_refresh(bool auto_refresh) {
  * auto-refresh is disabled.
  */
 inline void nx_display_refresh(void) {
-  nx__lcd_dirty_display();
 }
 
 
@@ -201,7 +198,6 @@ void nx__display_init(void) {
   display.cursor.x = 0;
   display.cursor.y = 0;
   display.cursor.ignore_lf = false;
-  nx__lcd_set_display(&display.buffer[0][0]);
   display.auto_refresh = true;
   dirty_display();
 }

@@ -2,6 +2,21 @@
 // Copyright (C) 2007 the NxOS developers
 // See lib/pbio/platform/nxt/nxos/AUTHORS for a full list of the developers.
 // Copyright (c) 2025 The Pybricks Authors
+//
+// This driver contains a basic SPI driver to talk to the UltraChip
+// 1601 LCD controller, as well as a higher level API implementing the
+// UC1601's commandset.
+//
+// Note that the SPI driver is not suitable as a general-purpose SPI
+// driver: the MISO pin (Master-In Slave-Out) is instead wired to the
+// UC1601's CD input (used to select whether the transferred data is
+// control commands or display data). Thus, the SPI driver here takes
+// manual control of the MISO pin, and drives it depending on the type
+// of data being transferred.
+//
+// This also means that you can only write to the UC1601, not read
+// back from it. This is not too much of a problem, as we can just
+// introduce a little delay in the places where we really need it.
 
 #include <pbdrv/config.h>
 
@@ -10,8 +25,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <pbdrv/display.h>
+
+#include <pbio/busy_count.h>
+#include <pbio/os.h>
 
 #include <at91sam7s256.h>
 
@@ -54,45 +73,54 @@ typedef enum {
 } spi_mode_t;
 
 /*
- * The SPI device state. Contains some of the actual state of the bus,
- * and transitory state for interrupt-driven DMA transfers.
+ * SPI state.
  */
-static volatile struct {
-    /*
-     * true if the SPI driver is configured for sending commands, false
-     * if it's configured for sending video data.
-     */
-    spi_mode_t mode;
+typedef enum {
+    /* Operation started, bus is busy. */
+    SPI_STATE_WAIT,
+    /* Operation complete, bus is idle. */
+    SPI_STATE_COMPLETE,
+} spi_state_t;
 
-    /*
-     * A pointer to the in-memory screen framebuffer to mirror to
-     * screen, and a flag stating whether the in-memory buffer is dirty
-     * (new content needs mirroring to the LCD device.
-     */
-    uint8_t *screen;
-    bool screen_dirty;
+/*
+ * Current SPI mode, set with spi_set_tx_mode().
+ */
+static spi_mode_t spi_mode;
 
-    /*
-     * State used by the display update code to manage the DMA
-     * transfer.
-     */
-    uint8_t *data;
-    uint8_t page;
-    bool send_padding;
-} spi_state = {
-    SPI_MODE_COMMAND, // We're initialized in command tx mode
-    NULL,  // No screen buffer
-    false, // ... So obviously not dirty
-    NULL,  // No current refresh data pointer
-    0,     // Current state: 1st data page...
-    false  // And about to send display data
-};
+/*
+ * Current SPI state.
+ */
+static volatile spi_state_t spi_state;
+
+/*
+ * User frame buffer. Each value is one pixel with value:
+ *
+ *  0: Empty / White
+ *  1: Black
+ */
+static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CONFIG_DISPLAY_NUM_COLS]
+__attribute__((section(".noinit")));
+
+/*
+ * Flag to indicate that the user frame has been updated and needs to be
+ * encoded and sent to the display driver.
+ */
+static bool pbdrv_display_user_frame_update_requested;
+
+/*
+ * Buffer to send one page of pixels to the display, using its internal
+ * format. Every byte describes a column of 8 pixels, where the least
+ * significant bit is used for the top pixel and the most significant bit is
+ * used for the bottom pixel. If 1, the pixel is lit, or black. If 0, the
+ * pixel is not lit, or white.
+ */
+static uint8_t pbdrv_display_send_buffer[PBDRV_CONFIG_DISPLAY_NUM_COLS];
 
 /*
  * Set the data transmission mode.
  */
 static void spi_set_tx_mode(spi_mode_t mode) {
-    if (spi_state.mode == mode) {
+    if (spi_mode == mode) {
         // Mode hasn't changed, no-op.
         return;
     } else {
@@ -104,7 +132,7 @@ static void spi_set_tx_mode(spi_mode_t mode) {
         }
     }
 
-    spi_state.mode = mode;
+    spi_mode = mode;
 
     if (mode == SPI_MODE_COMMAND) {
         *AT91C_PIOA_CODR = AT91C_PA12_MISO;
@@ -129,59 +157,21 @@ static void spi_write_command_byte(uint8_t command) {
 }
 
 /*
- * Interrupt routine for handling DMA screen refreshing.
+ * Interrupt routine, called when Tx is done.
  */
 static void spi_isr(void) {
-    // If we are in the initial state, determine whether we need to do a
-    // refresh cycle.
-    if (spi_state.page == 0 && !spi_state.send_padding) {
-        // Atomically retrieve the dirty flag and set it to false. This is
-        // to avoid race conditions where a set of the dirty flag could
-        // get squashed by the interrupt handler resetting it.
-        bool dirty = nx_atomic_cas8((uint8_t *)&(spi_state.screen_dirty), false);
-        spi_state.data = dirty ? spi_state.screen: NULL;
-
-        // If the screen is not dirty, or if there is no screen pointer to
-        // source data from, then shut down the DMA refresh interrupt
-        // routine. It'll get reenabled by the screen dirtying function or
-        // the 1kHz interrupt update if the screen becomes dirty.
-        if (!spi_state.data) {
-            *AT91C_SPI_IDR = AT91C_SPI_ENDTX;
-            return;
-        }
-    }
-
-    // Make sure that we are in data TX mode. This is a no-op if we
-    // already are, so it costs next to nothing to make sure of it at
-    // every interrupt.
-    spi_set_tx_mode(SPI_MODE_DATA);
-
-
-    if (!spi_state.send_padding) {
-        // We are at the start of a page, so we need to send 100 bytes of
-        // pixel data to display. We also set the state for the next
-        // interrupt, which is to send end-of-page padding.
-        spi_state.send_padding = true;
-        *AT91C_SPI_TNPR = (uint32_t)spi_state.data;
-        *AT91C_SPI_TNCR = 100;
-    } else {
-        // 100 bytes of displayable data have been transferred. We now
-        // have to send 32 more bytes to get to the end of the page and
-        // wrap around. We also set up the state for the next interrupt,
-        // which is to send the visible part of the next page of data.
-        //
-        // Given that this data is off-screen, we just resend the last 32
-        // bytes of the 100 we just transferred.
-        spi_state.page = (spi_state.page + 1) % 8;
-        spi_state.data += 100;
-        spi_state.send_padding = false;
-        *AT91C_SPI_TNPR = (uint32_t)(spi_state.data - 32);
-        *AT91C_SPI_TNCR = 32;
-    }
+    // Disable interrupts, this event is handled in thread context.
+    *AT91C_SPI_IDR = AT91C_SPI_ENDTX;
+    // Signal the thread context.
+    spi_state = SPI_STATE_COMPLETE;
+    pbio_os_request_poll();
 }
 
 static void spi_init(void) {
     uint32_t state = nx_interrupts_disable();
+
+    spi_mode = SPI_MODE_COMMAND;
+    spi_state = SPI_STATE_COMPLETE;
 
     // Enable power to the SPI and PIO controllers.
     *AT91C_PMC_PCER = (1 << AT91C_ID_SPI) | (1 << AT91C_ID_PIOA);
@@ -226,19 +216,17 @@ static void spi_init(void) {
     nx_interrupts_enable(state);
 }
 
-void nx__lcd_fast_update(void) {
-    if (spi_state.screen_dirty) {
-        *AT91C_SPI_IER = AT91C_SPI_ENDTX;
+void pbdrv_display_nxt_convert_page(int page) {
+    int x, y;
+    for (x = 0; x < PBDRV_CONFIG_DISPLAY_NUM_COLS; x++) {
+        uint8_t b = 0;
+        for (y = 0; y < 8; y++) {
+            if (pbdrv_display_user_frame[page * 8 + y][x]) {
+                b |= 1 << y;
+            }
+        }
+        pbdrv_display_send_buffer[x] = b;
     }
-}
-
-void nx__lcd_set_display(uint8_t *display) {
-    spi_state.screen = display;
-    *AT91C_SPI_IER = AT91C_SPI_ENDTX;
-}
-
-void nx__lcd_dirty_display(void) {
-    spi_state.screen_dirty = true;
 }
 
 void nx__lcd_sync_refresh(void) {
@@ -252,6 +240,8 @@ void nx__lcd_sync_refresh(void) {
         spi_write_command_byte(SET_PAGE_ADDR(i));
         spi_set_tx_mode(SPI_MODE_DATA);
 
+        pbdrv_display_nxt_convert_page(i);
+
         for (j = 0; j < PBDRV_CONFIG_DISPLAY_NUM_COLS; j++) {
             // Wait for the transmit register to empty.
             while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE)) {
@@ -259,13 +249,22 @@ void nx__lcd_sync_refresh(void) {
             }
 
             // Send the data.
-            *AT91C_SPI_TDR = spi_state.screen[i * PBDRV_CONFIG_DISPLAY_NUM_COLS + j];
+            *AT91C_SPI_TDR = pbdrv_display_send_buffer[j];
         }
     }
 }
 
-void pbdrv_display_init(void) {
-    uint32_t i;
+static pbio_os_process_t pbdrv_display_nxt_process;
+
+/*
+ * Display driver process. Initialize the display and updates the display with
+ * the user frame buffer if updated.
+ */
+static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, void *context) {
+    static pbio_os_timer_t timer;
+    static size_t i;
+    static int page;
+
     // This is the command byte sequence that should be sent to the LCD
     // after a reset.
     static const uint8_t lcd_init_sequence[] = {
@@ -312,36 +311,101 @@ void pbdrv_display_init(void) {
         ENABLE(1),
     };
 
+    PBIO_OS_ASYNC_BEGIN(state);
+
     // Initialize the SPI controller to enable communication, then wait
     // a little bit for the UC1601 to register the new SPI bus state.
     spi_init();
-    nx_systick_wait_ms(20);
+    PBIO_OS_AWAIT_MS(state, &timer, 20);
 
     // Issue a reset command, and wait. Normally here we'd check the
     // UC1601 status register, but as noted at the start of the file, we
     // can't read from the LCD controller due to the board setup.
     spi_write_command_byte(RESET());
-    nx_systick_wait_ms(20);
+    PBIO_OS_AWAIT_MS(state, &timer, 20);
 
     // Send every command of the init sequence.
     for (i = 0; i < sizeof(lcd_init_sequence); i++) {
         spi_write_command_byte(lcd_init_sequence[i]);
     }
+
+    // Clear display to start with.
+    memset(&pbdrv_display_user_frame, 0, sizeof(pbdrv_display_user_frame));
+    pbdrv_display_user_frame_update_requested = true;
+
+    // Make sure that we are in data TX mode.
+    spi_set_tx_mode(SPI_MODE_DATA);
+
+    // Done initializing.
+    pbio_busy_count_down();
+
+    // Update the display with the user frame buffer, if changed.
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
+        pbdrv_display_user_frame_update_requested = false;
+        for (page = 0; page < PBDRV_CONFIG_DISPLAY_NUM_ROWS / 8; page++) {
+            // Convert pixel format.
+            pbdrv_display_nxt_convert_page(page);
+            // We are at the start of a page, so we need to send 100 bytes of
+            // pixel data to display.
+            spi_state = SPI_STATE_WAIT;
+            *AT91C_SPI_TNPR = (uint32_t)pbdrv_display_send_buffer;
+            *AT91C_SPI_TNCR = PBDRV_CONFIG_DISPLAY_NUM_COLS;
+            *AT91C_SPI_IER = AT91C_SPI_ENDTX;
+            PBIO_OS_AWAIT_UNTIL(state, spi_state == SPI_STATE_COMPLETE);
+            // 100 bytes of displayable data have been transferred. We now
+            // have to send 32 more bytes to get to the end of the page and
+            // wrap around.
+            //
+            // Given that this data is off-screen, we just resend the first 32
+            // bytes of the 100 we just transferred.
+            spi_state = SPI_STATE_WAIT;
+            *AT91C_SPI_TNPR = (uint32_t)pbdrv_display_send_buffer;
+            *AT91C_SPI_TNCR = 132 - PBDRV_CONFIG_DISPLAY_NUM_COLS;
+            *AT91C_SPI_IER = AT91C_SPI_ENDTX;
+            PBIO_OS_AWAIT_UNTIL(state, spi_state == SPI_STATE_COMPLETE);
+        }
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+// Image corresponding to the display.
+static pbio_image_t pbdrv_display_image;
+
+void pbdrv_display_init(void) {
+    // Initialize image.
+    pbio_image_init(&pbdrv_display_image, (uint8_t *)pbdrv_display_user_frame,
+        PBDRV_CONFIG_DISPLAY_NUM_COLS, PBDRV_CONFIG_DISPLAY_NUM_ROWS,
+        PBDRV_CONFIG_DISPLAY_NUM_COLS);
+    pbdrv_display_image.print_font = &pbio_font_mono_8x5_8;
+    pbdrv_display_image.print_value = 1;
+
+    // Start display process and ask pbdrv to wait until it is initialized.
+    pbio_busy_count_up();
+    pbio_os_process_start(&pbdrv_display_nxt_process, pbdrv_display_nxt_process_thread, NULL);
 }
 
 pbio_image_t *pbdrv_display_get_image(void) {
-    return NULL;
+    return &pbdrv_display_image;
 }
 
 uint8_t pbdrv_display_get_max_value(void) {
-    return 0;
+    return 1;
 }
 
 uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
-    return 0;
+    uint16_t l_x100 = v * (100 - s / 2);
+    if (l_x100 < 50 * 100) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 void pbdrv_display_update(void) {
+    pbdrv_display_user_frame_update_requested = true;
+    pbio_os_request_poll();
 }
 
 void pbdrv_display_deinit(void) {

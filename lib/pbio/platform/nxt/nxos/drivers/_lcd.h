@@ -42,25 +42,6 @@
 /** Height of the LCD display, in bytes. */
 #define LCD_HEIGHT 8 /* == 64 pixels. */
 
-/** Initialize the LCD driver. */
-void nx__lcd_init(void);
-
-/** Periodic update function, called once every millisecond.
- *
- * @warning This is called by the systick driver, and shouldn't be
- * invoked directly unless you really know what you are doing.
- */
-void nx__lcd_fast_update(void);
-
-/** Set the virtual display to mirror to the screen.
- *
- * @param display_buffer The screen buffer to mirror.
- */
-void nx__lcd_set_display(uint8_t *display_buffer);
-
-/** Mark the display as requiring a refresh cycle. */
-void nx__lcd_dirty_display(void);
-
 /** Display an abort message.
  *
  * This will take the kernel offline (the technical term for "crash")
