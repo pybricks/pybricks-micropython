@@ -44,12 +44,14 @@
 #define SET_BIAS_RATIO(bias) (0xE8 | (bias & 3))
 
 /*
- * SPI controller driver.
+ * SPI mode, command or data.
  */
-typedef enum spi_mode {
-    COMMAND,
-    DATA
-} spi_mode;
+typedef enum {
+    /* Command. */
+    SPI_MODE_COMMAND,
+    /* Data. */
+    SPI_MODE_DATA,
+} spi_mode_t;
 
 /*
  * The SPI device state. Contains some of the actual state of the bus,
@@ -60,7 +62,7 @@ static volatile struct {
      * true if the SPI driver is configured for sending commands, false
      * if it's configured for sending video data.
      */
-    spi_mode mode;
+    spi_mode_t mode;
 
     /*
      * A pointer to the in-memory screen framebuffer to mirror to
@@ -78,7 +80,7 @@ static volatile struct {
     uint8_t page;
     bool send_padding;
 } spi_state = {
-    COMMAND, // We're initialized in command tx mode
+    SPI_MODE_COMMAND, // We're initialized in command tx mode
     NULL,  // No screen buffer
     false, // ... So obviously not dirty
     NULL,  // No current refresh data pointer
@@ -89,7 +91,7 @@ static volatile struct {
 /*
  * Set the data transmission mode.
  */
-static void spi_set_tx_mode(spi_mode mode) {
+static void spi_set_tx_mode(spi_mode_t mode) {
     if (spi_state.mode == mode) {
         // Mode hasn't changed, no-op.
         return;
@@ -104,7 +106,7 @@ static void spi_set_tx_mode(spi_mode mode) {
 
     spi_state.mode = mode;
 
-    if (mode == COMMAND) {
+    if (mode == SPI_MODE_COMMAND) {
         *AT91C_PIOA_CODR = AT91C_PA12_MISO;
     } else {
         *AT91C_PIOA_SODR = AT91C_PA12_MISO;
@@ -115,7 +117,7 @@ static void spi_set_tx_mode(spi_mode mode) {
  * Send a command byte to the LCD controller.
  */
 static void spi_write_command_byte(uint8_t command) {
-    spi_set_tx_mode(COMMAND);
+    spi_set_tx_mode(SPI_MODE_COMMAND);
 
     // Wait for the transmit register to empty.
     while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE)) {
@@ -152,7 +154,7 @@ static void spi_isr(void) {
     // Make sure that we are in data TX mode. This is a no-op if we
     // already are, so it costs next to nothing to make sure of it at
     // every interrupt.
-    spi_set_tx_mode(DATA);
+    spi_set_tx_mode(SPI_MODE_DATA);
 
 
     if (!spi_state.send_padding) {
@@ -243,21 +245,21 @@ void nx__lcd_sync_refresh(void) {
     int i, j;
 
     // Start the data transfer.
-    for (i = 0; i < 8; i++) {
-        spi_set_tx_mode(COMMAND);
+    for (i = 0; i < PBDRV_CONFIG_DISPLAY_NUM_ROWS / 8; i++) {
+        spi_set_tx_mode(SPI_MODE_COMMAND);
         spi_write_command_byte(SET_COLUMN_ADDR0(0));
         spi_write_command_byte(SET_COLUMN_ADDR1(0));
         spi_write_command_byte(SET_PAGE_ADDR(i));
-        spi_set_tx_mode(DATA);
+        spi_set_tx_mode(SPI_MODE_DATA);
 
-        for (j = 0; j < 100; j++) {
+        for (j = 0; j < PBDRV_CONFIG_DISPLAY_NUM_COLS; j++) {
             // Wait for the transmit register to empty.
             while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE)) {
                 ;
             }
 
-            // Send the command byte and wait for a reply.
-            *AT91C_SPI_TDR = spi_state.screen[i * 100 + j];
+            // Send the data.
+            *AT91C_SPI_TDR = spi_state.screen[i * PBDRV_CONFIG_DISPLAY_NUM_COLS + j];
         }
     }
 }
@@ -266,7 +268,7 @@ void pbdrv_display_init(void) {
     uint32_t i;
     // This is the command byte sequence that should be sent to the LCD
     // after a reset.
-    const uint8_t lcd_init_sequence[] = {
+    static const uint8_t lcd_init_sequence[] = {
         // LCD power configuration.
         //
         // The LEGO Hardware Developer Kit documentation specifies that the
@@ -321,6 +323,7 @@ void pbdrv_display_init(void) {
     spi_write_command_byte(RESET());
     nx_systick_wait_ms(20);
 
+    // Send every command of the init sequence.
     for (i = 0; i < sizeof(lcd_init_sequence); i++) {
         spi_write_command_byte(lcd_init_sequence[i]);
     }
