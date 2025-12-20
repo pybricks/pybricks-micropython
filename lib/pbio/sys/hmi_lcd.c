@@ -39,20 +39,20 @@
 #endif
 
 // Scaling factors and functions to simplify drawing the logo.
-static float _scale;
+static uint32_t _scale_mul, _scale_div;
 static uint32_t _offset_x;
 static uint32_t _offset_y;
 
 static uint32_t sx(uint32_t x) {
-    return x * _scale + _offset_x + 0.5f;
+    return (x * _scale_mul + _scale_div / 2) / _scale_div + _offset_x;
 }
 
 static uint32_t sy(uint32_t y) {
-    return y * _scale + _offset_y + 0.5f;
+    return (y * _scale_mul + _scale_div / 2) / _scale_div + _offset_y;
 }
 
 static uint32_t sr(uint32_t r) {
-    return r * _scale + 0.5f;
+    return (r * _scale_mul + _scale_div / 2) / _scale_div;
 }
 
 /**
@@ -60,12 +60,13 @@ static uint32_t sr(uint32_t r) {
  *
  * @param  x     [in] Horizontal offset from the left.
  * @param  y     [in] Vertical offset from the top.
- * @param  scale [in] Scale (1.0 is 154 x 84).
+ * @param  width [in] Width (natural size is 154 x 84).
  */
-static void draw_pybricks_logo(uint32_t x, uint32_t y, float scale) {
+static void draw_pybricks_logo(uint32_t x, uint32_t y, uint32_t width) {
     _offset_x = x;
     _offset_y = y;
-    _scale = scale;
+    _scale_mul = width;
+    _scale_div = 154;
 
     pbio_image_t *display = pbdrv_display_get_image();
     pbio_image_fill(display, 0);
@@ -118,7 +119,9 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Centered above 5 code slot indicators.
-    draw_pybricks_logo(27, 12, 0.8);
+    const uint32_t width = PBDRV_CONFIG_DISPLAY_NUM_COLS * 7 / 10;
+    draw_pybricks_logo((PBDRV_CONFIG_DISPLAY_NUM_COLS - width) / 2,
+        PBDRV_CONFIG_DISPLAY_NUM_ROWS / 10, width);
 
     for (;;) {
 
