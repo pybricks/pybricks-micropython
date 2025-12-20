@@ -25,7 +25,6 @@
 #include <nxos/_display.h>
 #include <nxos/assert.h>
 #include <nxos/drivers/_aic.h>
-#include <nxos/drivers/_lcd.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_sensors.h>
 #include <nxos/drivers/bt.h>
@@ -159,7 +158,6 @@ void SystemInit(void) {
     // TODO: we should be able to convert these to generic pbio drivers and use
     // pbio_busy_count_busy instead of busy waiting for 100ms.
     nx__motors_init();
-    nx__lcd_init();
     nx__display_init();
     // nx__sensors_init();
     // nx_i2c_init();

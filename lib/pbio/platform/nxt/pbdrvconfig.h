@@ -25,7 +25,8 @@
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (3)
 #define PBDRV_CONFIG_COUNTER_NXT                    (1)
 
-#define PBDRV_CONFIG_DISPLAY                        (0)
+#define PBDRV_CONFIG_DISPLAY                        (1)
+#define PBDRV_CONFIG_DISPLAY_NXT                    (1)
 #define PBDRV_CONFIG_DISPLAY_NUM_COLS               (100)
 #define PBDRV_CONFIG_DISPLAY_NUM_ROWS               (64)
 

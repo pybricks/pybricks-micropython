@@ -527,7 +527,6 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	assert.c \
 	display.c \
 	drivers/_efc.c \
-	drivers/_lcd.c \
 	drivers/_twi.c \
 	drivers/_uart.c \
 	drivers/aic.c \
