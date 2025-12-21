@@ -338,7 +338,7 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
     pbio_busy_count_down();
 
     // Update the display with the user frame buffer, if changed.
-    for (;;) {
+    while (pbdrv_display_nxt_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
         pbdrv_display_user_frame_update_requested = false;
         for (page = 0; page < PBDRV_CONFIG_DISPLAY_NUM_ROWS / 8; page++) {
@@ -365,7 +365,20 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
         }
     }
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    // When power to the controller goes out, there is the risk that
+    // some capacitors mounted around the controller might damage it
+    // when discharging in an uncontrolled fashion. To avoid this, the
+    // spec recommends putting the controller into reset mode before
+    // shutdown, which activates a drain circuit to empty the board
+    // capacitors gracefully.
+    *AT91C_SPI_IDR = ~0;
+    *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
+    spi_write_command_byte(RESET());
+    PBIO_OS_AWAIT_MS(state, &timer, 20);
+
+    pbio_busy_count_down();
+
+    PBIO_OS_ASYNC_END(PBIO_ERROR_CANCELED);
 }
 
 // Image corresponding to the display.
@@ -407,16 +420,11 @@ void pbdrv_display_update(void) {
 }
 
 void pbdrv_display_deinit(void) {
-    // When power to the controller goes out, there is the risk that
-    // some capacitors mounted around the controller might damage it
-    // when discharging in an uncontrolled fashion. To avoid this, the
-    // spec recommends putting the controller into reset mode before
-    // shutdown, which activates a drain circuit to empty the board
-    // capacitors gracefully.
-    *AT91C_SPI_IDR = ~0;
-    *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
-    spi_write_command_byte(RESET());
-    nx_systick_wait_ms(20);
+    // This doesn't do deinit right away, but it ask the display process to
+    // gracefully exit at a useful spot, and then do deinit. The busy count is
+    // used so all processes can await deinit before actual power off.
+    pbio_busy_count_up();
+    pbio_os_process_make_request(&pbdrv_display_nxt_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
 #endif // PBDRV_CONFIG_DISPLAY_NXT
