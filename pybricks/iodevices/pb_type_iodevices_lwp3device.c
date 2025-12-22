@@ -241,12 +241,15 @@ static pbio_error_t pb_type_pupdevices_Remote_write_light_msg(mp_obj_t self_in, 
         .cmd = LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA,
         .mode = STATUS_LIGHT_MODE_RGB_0,
     };
-    pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
+
+    pbio_color_rgb_t rgb;
+    pbio_color_hsv_to_rgb(hsv, &rgb);
 
     // The red LED on the handset is weak, so we have to reduce green and blue
     // to get the colors right.
-    msg.payload[1] = msg.payload[1] * 3 / 8;
-    msg.payload[2] = msg.payload[2] * 3 / 8;
+    msg.payload[0] = rgb.r;
+    msg.payload[1] = rgb.g * 3 / 8;
+    msg.payload[2] = rgb.b * 3 / 8;
 
     return pbdrv_bluetooth_peripheral_write_characteristic(pb_lwp3device_char.handle, (const uint8_t *)&msg, sizeof(msg));
 }

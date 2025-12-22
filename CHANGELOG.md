@@ -25,10 +25,11 @@
   pre-release ([pybricks-micropython#425]).
 - Fixed internal rounding error that could could cause a Drive Base to be 1 mm
   off after driving 3 meters, depending on configuration parameters ([support#2500]).
-
+- Fixed Powered Up remote light getting the wrong color ([support#2497]).
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
+[support#2497]: https://github.com/pybricks/support/issues/2497
 [support#2500]: https://github.com/pybricks/support/issues/2500
 [pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
 [pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
