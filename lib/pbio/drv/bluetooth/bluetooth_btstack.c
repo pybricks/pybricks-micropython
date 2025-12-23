@@ -1000,6 +1000,17 @@ static void bluetooth_btstack_run_loop_execute(void) {
     // not used
 }
 
+/**
+ * The event loop runs on every system poll, but we only need to go through
+ * the btstack data sources when explicitly requested.
+ */
+static volatile bool pbdrv_bluetooth_btstack_poll_requested;
+
+static void pbdrv_bluetooth_btstack_run_loop_trigger(void) {
+    pbdrv_bluetooth_btstack_poll_requested = true;
+    pbio_os_request_poll();
+}
+
 static const btstack_run_loop_t bluetooth_btstack_run_loop = {
     .init = btstack_run_loop_base_init,
     .add_data_source = btstack_run_loop_base_add_data_source,
@@ -1012,14 +1023,8 @@ static const btstack_run_loop_t bluetooth_btstack_run_loop = {
     .execute = bluetooth_btstack_run_loop_execute,
     .dump_timer = btstack_run_loop_base_dump_timer,
     .get_time_ms = pbdrv_clock_get_ms,
+    .poll_data_sources_from_irq = pbdrv_bluetooth_btstack_run_loop_trigger,
 };
-
-static bool do_poll_handler;
-
-void pbdrv_bluetooth_btstack_run_loop_trigger(void) {
-    do_poll_handler = true;
-    pbio_os_request_poll();
-}
 
 static pbio_os_process_t pbdrv_bluetooth_hci_process;
 
@@ -1029,8 +1034,8 @@ static pbio_os_process_t pbdrv_bluetooth_hci_process;
  */
 static pbio_error_t pbdrv_bluetooth_hci_process_thread(pbio_os_state_t *state, void *context) {
 
-    if (do_poll_handler) {
-        do_poll_handler = false;
+    if (pbdrv_bluetooth_btstack_poll_requested) {
+        pbdrv_bluetooth_btstack_poll_requested = false;
         btstack_run_loop_base_poll_data_sources();
     }
 

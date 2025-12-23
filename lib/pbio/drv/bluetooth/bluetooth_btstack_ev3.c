@@ -222,7 +222,7 @@ static volatile bool rx_interrupts_enabled;
 void pbdrv_bluetooth_btstack_ev3_handle_tx_complete(void) {
     EDMA3DisableTransfer(EDMA_BASE, DMA_CHA_TX, EDMA3_TRIG_MODE_EVENT);
     dma_write_complete = true;
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
 }
 
 static inline void uart_rx_interrupt_set_enabled(bool enabled) {
@@ -254,11 +254,11 @@ static void uart_rx_interrupt_handler(void) {
         // RX buffer full, disable further RX interrupts until btstack consumes
         // some of the data.
         uart_rx_interrupt_set_enabled(false);
-        pbdrv_bluetooth_btstack_run_loop_trigger();
+        btstack_run_loop_poll_data_sources_from_irq();
         return;
     }
     if (read_buf && (size_t)read_buf_len <= lwrb_get_full(&uart_rx_pending_ring_buffer)) {
-        pbdrv_bluetooth_btstack_run_loop_trigger();
+        btstack_run_loop_poll_data_sources_from_irq();
     }
 }
 
@@ -431,7 +431,7 @@ static void pbdrv_bluetooth_btstack_ev3_receive_block(uint8_t *buffer,
 
     read_buf = buffer;
     read_buf_len = len;
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
 }
 
 static void pbdrv_bluetooth_btstack_ev3_send_block(const uint8_t *data,

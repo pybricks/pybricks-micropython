@@ -98,12 +98,12 @@ static void (*block_received)(void);
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
     send_complete = true;
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     receive_complete = true;
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
 }
 
 static int btstack_stm32_hal_init(const btstack_uart_config_t *config) {

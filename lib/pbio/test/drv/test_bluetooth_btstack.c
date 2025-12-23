@@ -789,20 +789,20 @@ static pbio_error_t test_btstack_run_loop_contiki_poll(pbio_os_state_t *state, v
     btstack_run_loop_enable_data_source_callbacks(&data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_add_data_source(&data_source);
 
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
     PBIO_OS_AWAIT_ONCE(state);
     tt_want_uint_op(callback_count, ==, 1);
 
     callback_count = 0;
     btstack_run_loop_disable_data_source_callbacks(&data_source, DATA_SOURCE_CALLBACK_POLL);
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
     PBIO_OS_AWAIT_ONCE(state);
     tt_want_uint_op(callback_count, ==, 0);
 
     callback_count = 0;
     btstack_run_loop_enable_data_source_callbacks(&data_source, DATA_SOURCE_CALLBACK_POLL);
     btstack_run_loop_remove_data_source(&data_source);
-    pbdrv_bluetooth_btstack_run_loop_trigger();
+    btstack_run_loop_poll_data_sources_from_irq();
     PBIO_OS_AWAIT_ONCE(state);
     tt_want_uint_op(callback_count, ==, 0);
 

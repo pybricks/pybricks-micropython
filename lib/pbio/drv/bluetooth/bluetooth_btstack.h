@@ -32,8 +32,6 @@ typedef struct {
     const uint32_t init_script_size;
 } pbdrv_bluetooth_btstack_chipset_info_t;
 
-void pbdrv_bluetooth_btstack_run_loop_trigger(void);
-
 /**
  * Hook called when BTstack reads the local version information.
  *
