@@ -22,6 +22,11 @@
  */
 pbio_error_t pbdrv_bluetooth_btstack_platform_init(void);
 
+/**
+ * Optional platform poll handler, called on every process iteration.
+ */
+void pbdrv_bluetooth_btstack_platform_poll(void);
+
 /** Chipset info */
 typedef struct {
     /** Version */

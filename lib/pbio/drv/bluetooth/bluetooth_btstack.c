@@ -1039,6 +1039,8 @@ static pbio_error_t pbdrv_bluetooth_hci_process_thread(pbio_os_state_t *state, v
         btstack_run_loop_base_poll_data_sources();
     }
 
+    pbdrv_bluetooth_btstack_platform_poll();
+
     static pbio_os_timer_t btstack_timer = {
         .duration = 1,
     };

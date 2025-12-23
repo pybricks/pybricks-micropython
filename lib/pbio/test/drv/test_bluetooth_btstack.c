@@ -777,6 +777,9 @@ pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {
     return PBIO_SUCCESS;
 }
 
+void pbdrv_bluetooth_btstack_platform_poll(void) {
+}
+
 static pbio_error_t test_btstack_run_loop_contiki_poll(pbio_os_state_t *state, void *context) {
     static btstack_data_source_t data_source;
     static uint32_t callback_count;
