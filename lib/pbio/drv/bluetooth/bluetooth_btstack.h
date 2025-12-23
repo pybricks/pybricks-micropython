@@ -38,12 +38,30 @@ typedef struct {
 } pbdrv_bluetooth_btstack_chipset_info_t;
 
 /**
+ * Local HCI version info returned by the chipset.
+ */
+typedef struct {
+    /** HCI version. */
+    uint8_t hci_version;
+    /** HCI revision. */
+    uint16_t hci_revision;
+    /** LMP/PAL version. */
+    uint8_t lmp_pal_version;
+    /** Manufacturer. */
+    uint16_t manufacturer;
+    /** LMP/PAL subversion. */
+    uint16_t lmp_pal_subversion;
+} pbdrv_bluetooth_btstack_local_version_info_t;
+
+/**
  * Hook called when BTstack reads the local version information.
  *
  * This is called _after_ hci_set_chipset but _before_ the init script is sent
  * over the wire, so this can be used to dynamically select the init script.
+ *
+ * @param device_info The device information read from the Bluetooth chip.
  */
-void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion);
+void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info);
 
 typedef struct {
     const hci_transport_t *(*transport_instance)(void);

@@ -216,6 +216,32 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
 }
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
+/**
+ * Parses the HCI Read Local Version Information command response.
+ *
+ * @param [out] info      The device info to populate.
+ * @param [in]  payload   The payload of the HCI event.
+ */
+static void parse_hci_local_version_information(pbdrv_bluetooth_btstack_local_version_info_t *info, const uint8_t *payload) {
+
+    info->hci_version = payload[1];
+    info->hci_revision = pbio_get_uint16_le(&payload[2]);
+    info->lmp_pal_version = payload[4];
+    info->manufacturer = pbio_get_uint16_le(&payload[5]);
+    info->lmp_pal_subversion = pbio_get_uint16_le(&payload[7]);
+
+    #if DEBUG
+    // Show version in ev3dev format.
+    uint16_t chip = (info->lmp_pal_subversion & 0x7C00) >> 10;
+    uint16_t min_ver = (info->lmp_pal_subversion & 0x007F);
+    uint16_t maj_ver = (info->lmp_pal_subversion & 0x0380) >> 7;
+    if (info->lmp_pal_subversion & 0x8000) {
+        maj_ver |= 0x0008;
+    }
+    DEBUG_PRINT("LMP %04x: TIInit_%d.%d.%d.bts\n", info->lmp_pal_subversion, chip, maj_ver, min_ver);
+    #endif
+}
+
 // currently, this function just handles the Powered Up handset control.
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 
@@ -228,19 +254,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             const uint8_t *rp = hci_event_command_complete_get_return_parameters(packet);
             switch (hci_event_command_complete_get_command_opcode(packet)) {
                 case HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION: {
-                    uint16_t lmp_pal_subversion = pbio_get_uint16_le(&rp[7]);
-                    pbdrv_bluetooth_btstack_set_chipset(lmp_pal_subversion);
-
-                    #if DEBUG
-                    // Show version in ev3dev format.
-                    uint16_t chip = (lmp_pal_subversion & 0x7C00) >> 10;
-                    uint16_t min_ver = (lmp_pal_subversion & 0x007F);
-                    uint16_t maj_ver = (lmp_pal_subversion & 0x0380) >> 7;
-                    if (lmp_pal_subversion & 0x8000) {
-                        maj_ver |= 0x0008;
-                    }
-                    DEBUG_PRINT("LMP %04x: TIInit_%d.%d.%d.bts\n", lmp_pal_subversion, chip, maj_ver, min_ver);
-                    #endif
+                    pbdrv_bluetooth_btstack_local_version_info_t info;
+                    parse_hci_local_version_information(&info, rp);
+                    pbdrv_bluetooth_btstack_set_chipset(&info);
                     break;
                 }
                 default:

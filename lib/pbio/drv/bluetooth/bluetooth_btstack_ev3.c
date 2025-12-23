@@ -73,8 +73,8 @@ pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {
 void pbdrv_bluetooth_btstack_platform_poll(void) {
 }
 
-void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion) {
-    const pbdrv_bluetooth_btstack_chipset_info_t *info = lmp_pal_subversion == cc2560_info.lmp_version ?
+void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
+    const pbdrv_bluetooth_btstack_chipset_info_t *info = device_info->lmp_pal_subversion == cc2560_info.lmp_version ?
         &cc2560_info : &cc2560a_info;
     btstack_chipset_cc256x_set_init_script((uint8_t *)info->init_script, info->init_script_size);
 
