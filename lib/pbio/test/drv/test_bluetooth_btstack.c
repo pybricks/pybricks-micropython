@@ -773,6 +773,9 @@ static void handle_data_source(btstack_data_source_t *ds,  btstack_data_source_c
 void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion) {
 }
 
+pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {
+    return PBIO_SUCCESS;
+}
 
 static pbio_error_t test_btstack_run_loop_contiki_poll(pbio_os_state_t *state, void *context) {
     static btstack_data_source_t data_source;

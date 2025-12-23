@@ -24,6 +24,12 @@
 
 #include <pbdrv/gpio.h>
 
+#include <pbio/error.h>
+
+pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {
+    return PBIO_SUCCESS;
+}
+
 void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion) {
 
     const pbdrv_bluetooth_btstack_platform_data_t *pdata =

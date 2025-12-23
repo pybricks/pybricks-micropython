@@ -1055,6 +1055,12 @@ const uint8_t cc256x_init_script[] = {};
 
 void pbdrv_bluetooth_init_hci(void) {
 
+    // Proceed to start Bluetooth process only if platform init passes.
+    pbio_error_t err = pbdrv_bluetooth_btstack_platform_init();
+    if (err != PBIO_SUCCESS) {
+        return;
+    }
+
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE

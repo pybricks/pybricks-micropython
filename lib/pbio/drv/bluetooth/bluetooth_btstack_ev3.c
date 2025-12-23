@@ -66,6 +66,10 @@ static const hci_dump_t bluetooth_btstack_classic_hci_dump = {
 #define DEBUG_PRINT(...)
 #endif
 
+pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {
+    return PBIO_SUCCESS;
+}
+
 void pbdrv_bluetooth_btstack_set_chipset(uint16_t lmp_pal_subversion) {
     const pbdrv_bluetooth_btstack_chipset_info_t *info = lmp_pal_subversion == cc2560_info.lmp_version ?
         &cc2560_info : &cc2560a_info;

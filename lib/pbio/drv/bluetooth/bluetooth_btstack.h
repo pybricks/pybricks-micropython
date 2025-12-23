@@ -11,6 +11,17 @@
 #include <btstack_control.h>
 #include <btstack_uart_block.h>
 
+#include <pbio/error.h>
+
+/**
+ * Optional platform initialization before BTstack takes over.
+ *
+ * Unlike some BTstack init code, this is guaranteed to be called only once.
+ *
+ * @return Any error code to skip Bluetooth or ::PBIO_SUCCESS to proceed.
+ */
+pbio_error_t pbdrv_bluetooth_btstack_platform_init(void);
+
 /** Chipset info */
 typedef struct {
     /** Version */
