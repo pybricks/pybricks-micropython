@@ -293,7 +293,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
 
     // Discover common lwp3 characteristic.
     pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_lwp3device_char));
-    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
