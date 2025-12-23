@@ -815,9 +815,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
+    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(peri->con_handle);
     }
